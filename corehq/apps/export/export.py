@@ -320,13 +320,20 @@ def get_export_file(export_instances, es_filters, temp_path,
     """
     writer = get_export_writer(export_instances, temp_path)
 
+    is_bulk = len(export_instances) > 1
     with writer.open(export_instances):
-        for export_instance in export_instances:
+        for i, export_instance in enumerate(export_instances):
             docs = get_export_documents(export_instance, es_filters)
+            if logging_context and is_bulk:
+                ctx = logging_context._replace(
+                    bulk={"index": i + 1, "total": len(export_instances)},
+                )
+            else:
+                ctx = logging_context
             write_export_instance(writer, export_instance, docs,
                                   progress_tracker,
                                   include_hyperlinks=include_hyperlinks,
-                                  logging_context=logging_context)
+                                  logging_context=ctx)
 
     return ExportFile(writer.path, writer.format)
 
@@ -445,6 +452,8 @@ def _log_export_generated(export_instance, row_count, logging_context):
         data["export_subtype"] = export_instance.xmlns
     elif export_instance.type == CASE_EXPORT:
         data["export_subtype"] = export_instance.case_type
+    if logging_context and logging_context.bulk is not None:
+        data["bulk"] = logging_context.bulk
     export_audit_logger.info(json.dumps(data))
 
 
@@ -501,6 +510,7 @@ def rebuild_export(export_instance, progress_tracker, manual=False):
         username=None,
         trigger="manual_rebuild" if manual else "scheduled_rebuild",
         filters=build_filter_summary(export_instance.filters),
+        bulk=None,
     )
     with TransientTempfile() as temp_path:
         export_file = get_export_file([export_instance], es_filters, temp_path,

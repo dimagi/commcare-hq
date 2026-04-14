@@ -5,6 +5,7 @@ ExportLoggingContext = namedtuple('ExportLoggingContext', [
     'username',
     'trigger',
     'filters',
+    'bulk',
 ])
 
 
