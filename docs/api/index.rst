@@ -41,6 +41,7 @@ please review CommCare's API Authentication Documentation:
     :maxdepth: 1
 
     application-structure
+    import-app
     form-data
     cases-v1
     cases-v2

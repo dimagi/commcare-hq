@@ -2,13 +2,10 @@ import io
 import itertools
 import json
 import os
-import shutil
-import uuid
 import zipfile
 from datetime import datetime
 from mimetypes import guess_all_extensions, guess_type
 
-from django.conf import settings
 from django.contrib import messages
 from django.http import (
     Http404,
@@ -35,7 +32,7 @@ from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
+from soil.util import get_download_context
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -55,7 +52,6 @@ from corehq.apps.case_importer.util import (
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.cache import (
     BulkMultimediaStatusCache,
-    BulkMultimediaStatusCacheNfs,
 )
 from corehq.apps.hqmedia.controller import (
     MultimediaAudioUploadController,
@@ -74,13 +70,13 @@ from corehq.apps.hqmedia.tasks import (
     build_application_zip,
     process_bulk_upload_zip,
 )
+from corehq.apps.hqmedia.utils import save_multimedia_upload
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.middleware import always_allow_browser_caching
-from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError
 
 transient_file_store = TransientFileStore("hqmedia_upload_paths", timeout=1 * 60 * 60)
@@ -629,23 +625,7 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             raise BadMediaFileException(_("Unable to extract the ZIP file."))
 
     def process_upload(self):
-        if hasattr(self.uploaded_file, 'temporary_file_path') and settings.SHARED_DRIVE_CONF.temp_dir:
-            prefix = DownloadBase.new_id_prefix
-            processing_id = prefix + uuid.uuid4().hex
-            path = settings.SHARED_DRIVE_CONF.get_temp_file(suffix='.upload')
-            shutil.move(self.uploaded_file.temporary_file_path(), path)
-            status = BulkMultimediaStatusCacheNfs(processing_id, path)
-            status.save()
-        else:
-            self.uploaded_file.file.seek(0)
-            saved_file = expose_cached_download(
-                self.uploaded_file.file.read(),
-                expiry=BulkMultimediaStatusCache.cache_expiry,
-                file_extension=file_extention_from_filename(self.uploaded_file.name),
-            )
-            processing_id = saved_file.download_id
-            status = BulkMultimediaStatusCache(processing_id)
-            status.save()
+        processing_id, status = save_multimedia_upload(self.uploaded_file)
 
         process_bulk_upload_zip.delay(processing_id, self.domain, self.app_id,
                                       username=self.username,

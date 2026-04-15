@@ -19,10 +19,7 @@ from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case import get_case_pillow
-from corehq.pillows.case_search import (
-    CaseSearchReindexerFactory,
-    delete_case_search_cases,
-)
+from corehq.pillows.case_search import CaseSearchReindexerFactory
 from corehq.util.test_utils import create_and_save_a_case, privilege_enabled
 
 
@@ -48,31 +45,6 @@ class CaseSearchPillowTest(TestCase):
         case = self._make_case(domain=self.domain)
         CaseSearchReindexerFactory(domain=self.domain).build().reindex()
         self._assert_case_in_es(self.domain, case)
-
-    def test_delete_case_search_cases(self):
-        """
-        Tests that cases are correctly removed from the es index
-        """
-        other_domain = "braavos"
-        self._bootstrap_cases_in_es_for_domain(self.domain)
-        case = self._bootstrap_cases_in_es_for_domain(other_domain)
-
-        with self.assertRaises(TypeError):
-            delete_case_search_cases(None)
-        with self.assertRaises(TypeError):
-            delete_case_search_cases({})
-
-        # delete cases from one domain
-        delete_case_search_cases(self.domain)
-
-        # make sure the other domain's cases are still there
-        self._assert_case_in_es(other_domain, case)
-
-        # delete other domains cases
-        delete_case_search_cases(other_domain)
-
-        # make sure nothing is left
-        self._assert_index_empty()
 
     def test_sql_case_search_pillow(self):
         consumer = get_test_kafka_consumer(topics.CASE_SQL)

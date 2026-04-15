@@ -90,7 +90,6 @@ from corehq.messaging.scheduling.models import (
     ConnectMessageSurveyContent,
     CustomContent,
     EmailContent,
-    FCMNotificationContent,
     ImmediateBroadcast,
     IVRSurveyContent,
     RandomTimedEvent,
@@ -634,9 +633,6 @@ class ContentForm(Form):
         elif isinstance(content, SMSCallbackContent):
             result['message'] = content.message
             result['sms_callback_intervals'] = ', '.join(str(i) for i in content.reminder_intervals)
-        elif isinstance(content, FCMNotificationContent):
-            result['subject'] = content.subject
-            result['message'] = content.message
         elif isinstance(content, ConnectMessageContent):
             result['message'] = content.message
         elif isinstance(content, ConnectMessageSurveyContent):
@@ -1129,7 +1125,6 @@ class ScheduleForm(Form):
     CONTENT_IVR_SURVEY = 'ivr_survey'
     CONTENT_SMS_CALLBACK = 'sms_callback'
     CONTENT_CUSTOM_SMS = 'custom_sms'
-    CONTENT_FCM_NOTIFICATION = 'fcm_notification'
     CONTENT_CONNECT_MESSAGE = 'connect_message'
     CONTENT_CONNECT_SURVEY = 'connect_survey'
 
@@ -1538,8 +1533,6 @@ class ScheduleForm(Form):
                 content.include_case_updates_in_partial_submissions
         elif isinstance(content, SMSCallbackContent):
             initial['content'] = self.CONTENT_SMS_CALLBACK
-        elif isinstance(content, FCMNotificationContent):
-            initial['content'] = self.CONTENT_FCM_NOTIFICATION
         elif isinstance(content, ConnectMessageContent):
             initial['content'] = self.CONTENT_CONNECT_MESSAGE
         elif isinstance(content, ConnectMessageSurveyContent):
@@ -3195,10 +3188,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
             ]
 
-        if self.initial.get('content') == self.CONTENT_FCM_NOTIFICATION:
-            self.fields['content'].choices += [
-                (self.CONTENT_FCM_NOTIFICATION, _("Push Notification"))
-            ]
 
     @property
     def current_visit_scheduler_form(self):
@@ -3792,10 +3781,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             if self.cleaned_data.get('content') != self.CONTENT_EMAIL:
                 raise ValidationError(_("Email case property can only be used with Email content"))
 
-        if self.cleaned_data.get('content') == self.CONTENT_FCM_NOTIFICATION:
-            raise ValidationError(
-                _("Push Notifications is no longer available. Please contact Administrator.")
-            )
 
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')

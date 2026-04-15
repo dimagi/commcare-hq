@@ -7,7 +7,7 @@ from typing import List
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -198,10 +198,13 @@ class StaticToggle(object):
 
         return set_toggle(self.slug, item, enabled, namespace)
 
-    def required_decorator(self):
+    def required_decorator(self, plain_message=None):
         """
         Returns a view function decorator that checks to see if the domain
         or user in the request has the appropriate toggle enabled.
+
+        If ``plain_message`` is Truthy, returns a plain-text HTTP 404
+        instead of raising ``Http404`` (useful for API views).
         """
 
         def decorator(view_func):
@@ -221,6 +224,8 @@ class StaticToggle(object):
                         ),
                         fail_silently=True,  # workaround for tests: https://code.djangoproject.com/ticket/17971
                     )
+                if plain_message:
+                    return HttpResponse(plain_message, status=404)
                 raise Http404()
 
             return wrapped_view
@@ -945,7 +950,8 @@ CASE_SEARCH_DEPRECATED = StaticToggle(
     'Case Search: Deprecated',
     TAG_DEPRECATED,
     help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
 CASE_SEARCH_ADVANCED = StaticToggle(
@@ -953,7 +959,8 @@ CASE_SEARCH_ADVANCED = StaticToggle(
     'Advanced Case Search',
     TAG_FROZEN,
     help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
 CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
@@ -961,7 +968,8 @@ CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
     'Case Search: Related Lookups',
     TAG_FROZEN,
     help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[CASE_SEARCH_ADVANCED],
 )
 
 USH_CASE_LIST_MULTI_SELECT = StaticToggle(
@@ -998,10 +1006,7 @@ GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     When enabled this will add a small button to the geocoder widget that, when pressed, and if
     the user grants permission, will perform a reverse geocoding query based on the user's reported location.
     The result will be used to populate the search field of the geocoder widget.
-
-    This is intended as a temporary toggle and will likely get rolled into the "USH_CASE_CLAIM_UPDATES" toggle.
     """,
-    parent_toggles=[USH_CASE_CLAIM_UPDATES],
 )
 
 GEOCODER_USER_PROXIMITY = StaticToggle(
@@ -1015,15 +1020,14 @@ GEOCODER_USER_PROXIMITY = StaticToggle(
        will be filtered out when used in the case search.
     2. Proximity to the users location will be taken into account for the results order.
     """,
-    parent_toggles=[USH_CASE_CLAIM_UPDATES],
 )
 
 USH_SEARCH_FILTER = StaticToggle(
     'case_search_filter',
     "USH Specific toggle to use Search Filter in case search options.",
-    TAG_FROZEN,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
 USH_INLINE_SEARCH = StaticToggle(
@@ -1035,7 +1039,6 @@ USH_INLINE_SEARCH = StaticToggle(
     description="""
     Temporary toggle to manage the release of the 'inline search' / 'case search input' feature.
     """,
-    parent_toggles=[USH_CASE_CLAIM_UPDATES]
 )
 
 USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
@@ -1195,6 +1198,24 @@ VELLUM_ALLOW_BULK_FORM_ACTIONS = StaticToggle(
     description="This shows Bulk Form Actions (mark all questions required, "
                 "set default values to matching case properties) in "
                 "the Form Builder's main dropdown menu.",
+)
+
+LOCKED_ADMIN_QUESTIONS = FeatureRelease(
+    'locked_admin_questions',
+    "Locked Admin Questions",
+    TAG_RELEASE,
+    [NAMESPACE_DOMAIN],
+    owner="Evan Joseph-Pinero",
+    description="Enables Locked Admin Questions workflows in HQ and the form builder.",
+)
+
+EDIT_LOCKED_QUESTIONS = FeatureRelease(
+    'edit_locked_questions',
+    "Edit Locked Admin Questions",
+    TAG_RELEASE,
+    [NAMESPACE_USER],
+    owner="Evan Joseph-Pinero",
+    description="Allows locking and unlocking questions in forms."
 )
 
 CACHE_AND_INDEX = StaticToggle(

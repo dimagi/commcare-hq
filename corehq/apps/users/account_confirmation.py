@@ -6,12 +6,12 @@ from django.utils.translation import override
 
 from dimagi.utils.web import get_static_url_prefix
 
-from corehq.apps.domain.models import SMSAccountConfirmationSettings
 from corehq.apps.domain.utils import (
     encrypt_account_confirmation_info,
     guess_domain_language_for_sms,
 )
 from corehq.apps.registration.utils import project_logo_emails_context
+from corehq.util.context_processors import commcare_hq_names
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -67,12 +67,11 @@ def send_account_confirmation(commcare_user):
 
 def _get_account_confirmation_template_params(commcare_user, message_token, url_name):
     url = absolute_reverse(url_name, args=[commcare_user.domain, message_token])
-    settings_obj = SMSAccountConfirmationSettings.get_settings(commcare_user.domain)
     return {
         'name': commcare_user.full_name,
         'domain': commcare_user.domain,
         'username': commcare_user.raw_username,
         'url': url,
         'url_prefix': get_static_url_prefix(),
-        'hq_name': settings_obj.project_name
+        'hq_name': commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME'],
     }
