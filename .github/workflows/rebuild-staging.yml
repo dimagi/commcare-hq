@@ -1,9 +1,39 @@
 name: Rebuild staging branch
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - '**'
+
+concurrency:
+  group: rebuild-staging
+  cancel-in-progress: false
 
 jobs:
+  check-branch:
+    runs-on: ubuntu-latest
+    outputs:
+      should-rebuild: >-
+        ${{ github.event_name == 'workflow_dispatch'
+            || steps.check.outputs.found == 'true' }}
+    steps:
+    - name: Check if branch is in staging config
+      id: check
+      if: github.event_name == 'push'
+      env:
+        BRANCH: ${{ github.ref_name }}
+      run: |
+        curl -sf https://raw.githubusercontent.com/dimagi/staging-branches/main/commcare-hq-staging.yml \
+          -o staging.yml
+        if grep -qF "$BRANCH" staging.yml; then
+          echo "found=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "Branch '$BRANCH' not found in staging config, skipping rebuild"
+        fi
+
   rebuild-staging:
+    needs: check-branch
+    if: needs.check-branch.outputs.should-rebuild == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -11,6 +41,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
       with:
+        ref: master
         # Full history needed for branch manipulation
         fetch-depth: 0
     - uses: astral-sh/setup-uv@v7
