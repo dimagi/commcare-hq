@@ -12,7 +12,19 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.export.models.export_settings import ExportFileType
+from corehq.apps.sso.models import IdentityProvider
 from corehq.privileges import DEFAULT_EXPORT_SETTINGS
+
+
+def _get_sso_email_domains(account):
+    """
+    Returns the set of lowercased email domains that are configured as
+    authenticated SSO email domains for any active identity provider
+    associated with the given BillingAccount. Empty set means no
+    SSO-based domain restriction applies.
+    """
+    idps = IdentityProvider.objects.filter(owner=account, is_active=True)
+    return {d.lower() for idp in idps for d in idp.get_email_domains()}
 
 
 class EnterpriseSettingsForm(forms.Form):
