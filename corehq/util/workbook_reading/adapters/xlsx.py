@@ -1,3 +1,4 @@
+import zipfile
 from contextlib import contextmanager
 from datetime import datetime, time
 from zipfile import BadZipfile
@@ -9,6 +10,7 @@ from openpyxl.utils.exceptions import InvalidFileException
 from corehq.util.workbook_reading import (
     Cell,
     SpreadsheetFileEncrypted,
+    SpreadsheetFileExternalLinks,
     SpreadsheetFileInvalidError,
     SpreadsheetFileNotFound,
     Workbook,
@@ -24,12 +26,35 @@ from corehq.util.workbook_reading import (
 XLSX_ENCRYPTED_MARKER = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
 
 
+def _raise_if_contains_external_links(filename):
+    """
+    Reject xlsx files that contain external workbook links.
+
+    External links are stored in ``xl/externalLinks/`` inside the xlsx zip and
+    cache the data of another workbook referenced by formulas (e.g. ``VLOOKUP``
+    against ``[Other.xlsx]Sheet1!$A:$E``). It is important to perform this check
+    prior to attempting to load the workbook, since loading files with external
+    links can lead to significant increases in memory usage.
+    """
+    try:
+        with zipfile.ZipFile(filename) as z:
+            if any(name.startswith('xl/externalLinks/') for name in z.namelist()):
+                raise SpreadsheetFileExternalLinks(
+                    'Workbook contains links to another workbook.'
+                )
+    except BadZipfile:
+        # Not a readable zip; let openpyxl.load_workbook handle it
+        pass
+
+
 @contextmanager
 def open_xlsx_workbook(filename):
     try:
         f = open(filename, 'rb')
     except IOError as e:
         raise SpreadsheetFileNotFound(e)
+
+    _raise_if_contains_external_links(filename)
 
     with f as f:
         try:

@@ -35,6 +35,10 @@ class ImporterExcelFileEncrypted(ImporterExcelError):
     """Raised when a file cannot be open because it is encrypted (password-protected)"""
 
 
+class ImporterExcelExternalLinks(ImporterExcelError):
+    """Raised when a file contains links to another workbook"""
+
+
 class ImporterExcelTooManyRows(ImporterError):
     """Raised when case import exceeds MAX_CASE_IMPORTER_ROWS"""
 
