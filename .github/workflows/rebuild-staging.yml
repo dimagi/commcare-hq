@@ -49,14 +49,15 @@ jobs:
           MERGED_BRANCH="${BASH_REMATCH[1]}"
           echo "Detected merged branch: $MERGED_BRANCH"
 
-          # Check if this branch is a standalone entry in the staging config
-          # (not part of a +-joined conflict resolution branch)
-          if grep -qP "^\s*-\s+\Q${MERGED_BRANCH}\E(\s|$)" staging.yml; then
+          # Check if this branch is a standalone entry in .branches
+          # (scopes out +-joined conflict resolution branches and submodule entries)
+          match_count=$(BRANCH="$MERGED_BRANCH" yq '[.branches[] | select(. == env(BRANCH))] | length' staging.yml)
+          if [ "$match_count" != "0" ]; then
             echo "is-merged-staging-branch=true" >> "$GITHUB_OUTPUT"
             echo "merged-branch=$MERGED_BRANCH" >> "$GITHUB_OUTPUT"
             echo "Branch '$MERGED_BRANCH' found in staging config, will trigger removal"
           else
-            echo "Merged branch '$MERGED_BRANCH' not in staging config as standalone entry"
+            echo "Merged branch '$MERGED_BRANCH' not in .branches of staging config"
           fi
         else
           echo "Not a merge commit, skipping merged branch check"
