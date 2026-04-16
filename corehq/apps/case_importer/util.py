@@ -196,8 +196,8 @@ def get_importer_error_message(e):
     elif isinstance(e, ImporterExcelExternalLinks):
         return _(
             'The file you uploaded contains links to another workbook, which '
-            'cannot be processed. You must upload a version of this file that '
-            'does not contain links to another workbook.'
+            'cannot be processed. You must upload a file that does not contain '
+            'links to another workbook.'
         )
     elif isinstance(e, ImporterExcelError):
         return _("The file uploaded has the following error: {}").format(str(e))
