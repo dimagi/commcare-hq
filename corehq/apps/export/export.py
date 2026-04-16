@@ -1,5 +1,7 @@
 import contextlib
 import datetime
+import json
+import logging
 import sys
 import time
 from collections import Counter
@@ -14,7 +16,10 @@ from couchexport.models import Format
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
-from corehq.apps.export.const import MAX_NORMAL_EXPORT_SIZE, MAX_DAILY_EXPORT_SIZE
+from corehq.apps.export.const import (
+    CASE_EXPORT, FORM_EXPORT, MAX_NORMAL_EXPORT_SIZE, MAX_DAILY_EXPORT_SIZE,
+)
+from corehq.apps.export.logging import ExportLoggingContext, build_filter_summary
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.models.new import (
     CaseExportInstance,
@@ -26,6 +31,8 @@ from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.metrics.load_counters import load_counter
 from corehq.util.files import TransientTempfile, safe_filename
 from soil.progress import TaskProgressManager
+
+export_audit_logger = logging.getLogger("commcare.exports.audit")
 
 
 class ExportFile(object):
@@ -286,7 +293,8 @@ def get_export_writer(export_instances, temp_path, allow_pagination=True):
     return writer
 
 
-def get_export_download(domain, export_ids, exports_type, username, es_filters, owner_id, filename=None):
+def get_export_download(domain, export_ids, exports_type, username, es_filters, owner_id,
+                        filename=None, filter_summary=None):
     from corehq.apps.export.tasks import populate_export_download_task
 
     download = DownloadBase()
@@ -298,24 +306,34 @@ def get_export_download(domain, export_ids, exports_type, username, es_filters, 
         es_filters,
         download.download_id,
         owner_id,
-        filename=filename
+        filename=filename,
+        filter_summary=filter_summary,
     ))
     return download
 
 
 def get_export_file(export_instances, es_filters, temp_path,
-                    progress_tracker=None, include_hyperlinks=True):
+                    progress_tracker=None, include_hyperlinks=True,
+                    logging_context=None):
     """
     Return an export file for the given ExportInstance and list of filters
     """
     writer = get_export_writer(export_instances, temp_path)
 
+    is_bulk = len(export_instances) > 1
     with writer.open(export_instances):
-        for export_instance in export_instances:
+        for i, export_instance in enumerate(export_instances):
             docs = get_export_documents(export_instance, es_filters)
+            if logging_context and is_bulk:
+                ctx = logging_context._replace(
+                    bulk={"index": i + 1, "total": len(export_instances)},
+                )
+            else:
+                ctx = logging_context
             write_export_instance(writer, export_instance, docs,
                                   progress_tracker,
-                                  include_hyperlinks=include_hyperlinks)
+                                  include_hyperlinks=include_hyperlinks,
+                                  logging_context=ctx)
 
     return ExportFile(writer.path, writer.format)
 
@@ -344,7 +362,8 @@ def get_export_size(export_instance, filters):
 
 
 def write_export_instance(writer, export_instance, documents,
-                          progress_tracker=None, include_hyperlinks=True):
+                          progress_tracker=None, include_hyperlinks=True,
+                          logging_context=None):
     """
     Write rows to the given open _Writer.
     Rows will be written to each table in the export instance for each of
@@ -409,6 +428,34 @@ def write_export_instance(writer, export_instance, documents,
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
     _record_export_duration(end - start, export_instance)
 
+    _log_export_generated(export_instance, total_rows, logging_context)
+
+
+def _log_export_generated(export_instance, row_count, logging_context):
+    data = {
+        "event": "export_generated",
+        "domain": export_instance.domain,
+        "download_id": logging_context.download_id if logging_context else None,
+        "username": logging_context.username if logging_context else None,
+        "trigger": logging_context.trigger if logging_context else None,
+        "filters": logging_context.filters if logging_context else {},
+        "export_type": export_instance.type,
+        "export_id": export_instance.get_id,
+        "row_count": row_count,
+        "columns": [
+            col.label
+            for table in export_instance.tables if table.selected
+            for col in table.columns if col.selected
+        ],
+    }
+    if export_instance.type == FORM_EXPORT:
+        data["export_subtype"] = export_instance.xmlns
+    elif export_instance.type == CASE_EXPORT:
+        data["export_subtype"] = export_instance.case_type
+    if logging_context and logging_context.bulk is not None:
+        data["bulk"] = logging_context.bulk
+    export_audit_logger.info(json.dumps(data))
+
 
 def _time_in_milliseconds():
     return int(time.time() * 1000)
@@ -446,7 +493,7 @@ def _get_base_query(export_instance):
 
 
 @metrics_track_errors('rebuild_export')
-def rebuild_export(export_instance, progress_tracker):
+def rebuild_export(export_instance, progress_tracker, manual=False):
     """
     Rebuild the given daily saved ExportInstance
     """
@@ -458,10 +505,18 @@ def rebuild_export(export_instance, progress_tracker):
             f"{export_instance.name} is {export_size} rows. Exceeds the limit "
             f"of {MAX_DAILY_EXPORT_SIZE} rows.")
     es_filters = [f.to_es_filter() for f in filters]
+    logging_context = ExportLoggingContext(
+        download_id=None,
+        username=None,
+        trigger="manual_rebuild" if manual else "scheduled_rebuild",
+        filters=build_filter_summary(export_instance.filters),
+        bulk=None,
+    )
     with TransientTempfile() as temp_path:
         export_file = get_export_file([export_instance], es_filters, temp_path,
                                       progress_tracker,
-                                      include_hyperlinks=include_hyperlinks)
+                                      include_hyperlinks=include_hyperlinks,
+                                      logging_context=logging_context)
         with export_file as payload:
             save_export_payload(export_instance, payload)
 
