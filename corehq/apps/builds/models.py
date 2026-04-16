@@ -133,7 +133,7 @@ def validate_semantic_version(value):
 
 
 class CommCareMobileBuild(SyncSQLToCouchMixin, models.Model):
-    version = models.CharField(max_length=8, null=False, validators=[validate_semantic_version])
+    version = models.CharField(max_length=11, null=False, validators=[validate_semantic_version])
     build_number = models.IntegerField(null=True)
     time = models.DateTimeField(null=False)
     couch_id = models.CharField(max_length=126, null=True)
