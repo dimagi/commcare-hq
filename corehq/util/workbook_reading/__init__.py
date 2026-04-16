@@ -1,5 +1,5 @@
 from corehq.util.workbook_reading.exceptions import (
-    CellValueError,
+    CellValueError,  # noqa: F401
     SpreadsheetFileEncrypted,
     SpreadsheetFileError,
     SpreadsheetFileExternalLinks,
