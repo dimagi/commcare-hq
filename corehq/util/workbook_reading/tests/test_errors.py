@@ -1,7 +1,14 @@
 from django.test import SimpleTestCase
 
-from corehq.util.workbook_reading import SpreadsheetFileNotFound, SpreadsheetFileInvalidError, \
-    SpreadsheetFileExtError, open_any_workbook, SpreadsheetFileEncrypted
+from corehq.util.workbook_reading import (
+    SpreadsheetFileEncrypted,
+    SpreadsheetFileExternalLinks,
+    SpreadsheetFileExtError,
+    SpreadsheetFileInvalidError,
+    SpreadsheetFileNotFound,
+    open_any_workbook,
+    open_xlsx_workbook,
+)
 from corehq.util.workbook_reading.tests.utils import (
     get_file,
     run_on_all_adapters,
@@ -56,3 +63,19 @@ def test_file_encrypted(self, open_workbook, ext):
         with open_workbook(get_file('encrypted', ext)):
             pass
     self.assertEqual(str(cxt.exception), 'Workbook is encrypted')
+
+
+class XlsxExternalLinksTest(SimpleTestCase):
+    def test_raises_when_external_links_present(self):
+        with self.assertRaises(SpreadsheetFileExternalLinks):
+            with open_xlsx_workbook(get_file('external_links', 'xlsx')):
+                pass
+
+    def test_does_not_raise_without_external_links(self):
+        with open_xlsx_workbook(get_file('types', 'xlsx')) as workbook:
+            self.assertTrue(workbook.worksheets)
+
+    def test_open_any_workbook_also_raises(self):
+        with self.assertRaises(SpreadsheetFileExternalLinks):
+            with open_any_workbook(get_file('external_links', 'xlsx')):
+                pass
