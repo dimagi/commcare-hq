@@ -123,3 +123,22 @@ class TestTwoFactorCheck(TestCase):
 
             data = json.loads(response.content)
             self.assertDictEqual(data, OTP_AUTH_FAIL_RESPONSE)
+
+    @patch('corehq.apps.domain.decorators._ensure_request_couch_user')
+    @patch('corehq.apps.domain.decorators.Domain.get_by_name', new=lambda _: Mock(two_factor_auth=True))
+    def test_skip_two_factor_check_sets_bypass(self, mock_ensure_couch_user):
+        """When skip_two_factor_check is set (e.g. API key auth via basic auth),
+        two_factor_check should set bypass_two_factor
+        """
+        mock_ensure_couch_user.return_value = self.request.couch_user
+        self.request.skip_two_factor_check = True
+
+        @two_factor_check('dummy_view', api_key=False)
+        def view(request, domain):
+            return request
+
+        request = view(self.request, 'test_domain')
+        self.assertTrue(
+            getattr(request, 'bypass_two_factor', False),
+            "bypass_two_factor should be set when skip_two_factor_check is True",
+        )
