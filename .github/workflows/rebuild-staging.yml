@@ -15,7 +15,12 @@ jobs:
     outputs:
       should-rebuild: >-
         ${{ github.event_name == 'workflow_dispatch'
-            || steps.check.outputs.found == 'true' }}
+            || (steps.check.outputs.found == 'true'
+                && steps.check-merged.outputs.is-merged-staging-branch != 'true') }}
+      is-merged-staging-branch: >-
+        ${{ steps.check-merged.outputs.is-merged-staging-branch }}
+      merged-branch: >-
+        ${{ steps.check-merged.outputs.merged-branch }}
     steps:
     - name: Check if branch is in staging config
       id: check
@@ -30,6 +35,58 @@ jobs:
         else
           echo "Branch '$BRANCH' not found in staging config, skipping rebuild"
         fi
+
+    - name: Check if push to master merged a staging branch
+      id: check-merged
+      if: github.event_name == 'push' && github.ref_name == 'master'
+      env:
+        COMMIT_MSG: ${{ github.event.head_commit.message }}
+      run: |
+        # Extract branch name from the first line of the merge commit message
+        # Format: "Merge pull request #NNN from owner/branch-name"
+        FIRST_LINE="${COMMIT_MSG%%$'\n'*}"
+        if [[ "$FIRST_LINE" =~ ^Merge\ pull\ request\ \#[0-9]+\ from\ [^/]+/(\S+) ]]; then
+          MERGED_BRANCH="${BASH_REMATCH[1]}"
+          echo "Detected merged branch: $MERGED_BRANCH"
+
+          # Check if this branch is a standalone entry in .branches
+          # (scopes out +-joined conflict resolution branches and submodule entries)
+          match_count=$(BRANCH="$MERGED_BRANCH" yq '[.branches[] | select(. == env(BRANCH))] | length' staging.yml)
+          if [ "$match_count" != "0" ]; then
+            echo "is-merged-staging-branch=true" >> "$GITHUB_OUTPUT"
+            echo "merged-branch=$MERGED_BRANCH" >> "$GITHUB_OUTPUT"
+            echo "Branch '$MERGED_BRANCH' found in staging config, will trigger removal"
+          else
+            echo "Merged branch '$MERGED_BRANCH' not in .branches of staging config"
+          fi
+        else
+          echo "Not a merge commit, skipping merged branch check"
+        fi
+
+  remove-merged-branch:
+    needs: check-branch
+    if: needs.check-branch.outputs.is-merged-staging-branch == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Generate GitHub App token
+      id: app-token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ secrets.STAGING_BRANCHES_APP_ID }}
+        private-key: ${{ secrets.STAGING_BRANCHES_APP_PRIVATE_KEY }}
+        owner: dimagi
+        repositories: staging-branches
+
+    - name: Trigger branch removal
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        BRANCH: ${{ needs.check-branch.outputs.merged-branch }}
+      run: |
+        echo "Triggering removal of branch '$BRANCH' from commcare-hq-staging.yml"
+        gh workflow run remove-branch.yml \
+          --repo dimagi/staging-branches \
+          -f file=commcare-hq-staging.yml \
+          -f branch="$BRANCH"
 
   rebuild-staging:
     needs: check-branch
