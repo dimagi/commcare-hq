@@ -442,6 +442,9 @@ def _log_export_generated(export_instance, row_count, logging_context):
         "export_type": export_instance.type,
         "export_id": export_instance.get_id,
         "app_id": export_instance.app_id,
+        "name": export_instance.name,
+        "is_deidentified": export_instance.is_deidentified,
+        "export_format": export_instance.export_format,
         "row_count": row_count,
         "columns": [
             col.label

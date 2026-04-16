@@ -22,6 +22,9 @@ def _make_case_export(case_type="patient"):
     return CaseExportInstance(
         domain="test-domain",
         case_type=case_type,
+        name="Patient Cases",
+        is_deidentified=False,
+        export_format="xlsx",
         tables=[TableConfiguration(
             label="Cases",
             path=MAIN_TABLE,
@@ -61,6 +64,9 @@ class TestLogExportGenerated(SimpleTestCase):
         self.assertEqual(data["export_type"], "case")
         self.assertEqual(data["export_subtype"], "patient")
         self.assertIsNone(data["app_id"])
+        self.assertEqual(data["name"], "Patient Cases")
+        self.assertFalse(data["is_deidentified"])
+        self.assertEqual(data["export_format"], "xlsx")
         self.assertEqual(data["row_count"], 42)
         self.assertEqual(data["columns"], ["name", "dob"])
         self.assertEqual(data["filters"], {"date_range": "2026-01-01 to 2026-03-01"})
