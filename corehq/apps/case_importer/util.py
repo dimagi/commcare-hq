@@ -11,6 +11,7 @@ from memoized import memoized
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.exceptions import (
     ImporterExcelError,
+    ImporterExcelExternalLinks,
     ImporterExcelFileEncrypted,
     ImporterFileNotFound,
     ImporterRawError,
@@ -19,6 +20,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 from corehq.util.workbook_reading import (
     SpreadsheetFileEncrypted,
+    SpreadsheetFileExternalLinks,
     SpreadsheetFileInvalidError,
     SpreadsheetFileNotFound,
     Workbook,
@@ -176,6 +178,8 @@ def get_spreadsheet(filename, worksheet_index=0):
             yield WorksheetWrapper.from_workbook(workbook, worksheet_index)
     except SpreadsheetFileEncrypted as e:
         raise ImporterExcelFileEncrypted(str(e))
+    except SpreadsheetFileExternalLinks as e:
+        raise ImporterExcelExternalLinks(str(e))
     except SpreadsheetFileNotFound as e:
         raise ImporterFileNotFound(str(e))
     except SpreadsheetFileInvalidError as e:
@@ -189,6 +193,12 @@ def get_importer_error_message(e):
     elif isinstance(e, ImporterExcelFileEncrypted):
         return _('The file you want to import is password protected. '
                  'Please choose a file that is not password protected.')
+    elif isinstance(e, ImporterExcelExternalLinks):
+        return _(
+            'The file you uploaded contains links to another workbook, which '
+            'cannot be processed. You must upload a version of this file that '
+            'does not contain links to another workbook.'
+        )
     elif isinstance(e, ImporterExcelError):
         return _("The file uploaded has the following error: {}").format(str(e))
     elif isinstance(e, ImporterRawError):
