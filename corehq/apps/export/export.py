@@ -441,6 +441,7 @@ def _log_export_generated(export_instance, row_count, logging_context):
         "filters": logging_context.filters if logging_context else {},
         "export_type": export_instance.type,
         "export_id": export_instance.get_id,
+        "app_id": export_instance.app_id,
         "row_count": row_count,
         "columns": [
             col.label

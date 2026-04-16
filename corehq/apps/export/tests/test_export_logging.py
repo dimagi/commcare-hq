@@ -60,17 +60,19 @@ class TestLogExportGenerated(SimpleTestCase):
         self.assertEqual(data["trigger"], "user_download")
         self.assertEqual(data["export_type"], "case")
         self.assertEqual(data["export_subtype"], "patient")
+        self.assertIsNone(data["app_id"])
         self.assertEqual(data["row_count"], 42)
         self.assertEqual(data["columns"], ["name", "dob"])
         self.assertEqual(data["filters"], {"date_range": "2026-01-01 to 2026-03-01"})
         self.assertNotIn("bulk", data)
 
     @patch('corehq.apps.export.export.export_audit_logger')
-    def test_form_export_subtype(self, mock_logger):
+    def test_form_export_subtype_and_app_id(self, mock_logger):
         import json
         export = FormExportInstance(
             domain="test-domain",
             xmlns="http://example.com/form",
+            app_id="app-abc123",
             tables=[TableConfiguration(label="Forms", path=MAIN_TABLE, selected=True, columns=[])],
         )
         _log_export_generated(export, row_count=10, logging_context=None)
@@ -78,6 +80,7 @@ class TestLogExportGenerated(SimpleTestCase):
         data = json.loads(mock_logger.info.call_args[0][0])
         self.assertEqual(data["export_type"], "form")
         self.assertEqual(data["export_subtype"], "http://example.com/form")
+        self.assertEqual(data["app_id"], "app-abc123")
 
     @patch('corehq.apps.export.export.export_audit_logger')
     def test_sms_export_no_subtype(self, mock_logger):
