@@ -497,7 +497,7 @@ def _get_base_query(export_instance):
 
 
 @metrics_track_errors('rebuild_export')
-def rebuild_export(export_instance, progress_tracker, manual=False):
+def rebuild_export(export_instance, progress_tracker, manual=False, username=None):
     """
     Rebuild the given daily saved ExportInstance
     """
@@ -511,7 +511,7 @@ def rebuild_export(export_instance, progress_tracker, manual=False):
     es_filters = [f.to_es_filter() for f in filters]
     logging_context = ExportLoggingContext(
         download_id=None,
-        username=None,
+        username=username,
         trigger="manual_rebuild" if manual else "scheduled_rebuild",
         filters=build_filter_summary(export_instance.filters),
         bulk=None,

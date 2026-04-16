@@ -115,9 +115,10 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
 
 
 @task(queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
-def _start_export_task(export_instance_id, manual=False):
+def _start_export_task(export_instance_id, manual=False, username=None):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
-    rebuild_export(export_instance, progress_tracker=_start_export_task, manual=manual)
+    rebuild_export(export_instance, progress_tracker=_start_export_task,
+                   manual=manual, username=username)
 
 
 def _get_saved_export_download_data(export_instance_id):
@@ -129,7 +130,7 @@ def _get_saved_export_download_data(export_instance_id):
     return download_data
 
 
-def rebuild_saved_export(export_instance_id, manual=False):
+def rebuild_saved_export(export_instance_id, manual=False, username=None):
     """Kicks off a celery task to rebuild the export.
 
     If this is called while another one is already running for the same export
@@ -146,7 +147,7 @@ def rebuild_saved_export(export_instance_id, manual=False):
     download_data.set_task(
         _start_export_task.apply_async(
             args=[export_instance_id],
-            kwargs={"manual": manual},
+            kwargs={"manual": manual, "username": username},
             queue=EXPORT_DOWNLOAD_QUEUE if manual else SAVED_EXPORTS_QUEUE,
         )
     )
