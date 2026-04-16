@@ -500,7 +500,7 @@ def two_factor_check(view_func, api_key):
             _ensure_request_couch_user(request)
             if (
                 not api_key
-                and not getattr(request, 'skip_two_factor_check', False)
+                and not getattr(request, 'bypass_two_factor', False)
                 and domain_obj
                 and _two_factor_required(view_func, domain_obj, request)
             ):
@@ -520,7 +520,7 @@ def two_factor_check(view_func, api_key):
                 request.user.otp_device = otp_device
                 request.user.is_verified = lambda: True
                 return fn(request, domain, *args, **kwargs)
-            if api_key or getattr(request, 'skip_two_factor_check', False):
+            if api_key:
                 request.bypass_two_factor = True
             return fn(request, domain, *args, **kwargs)
         return _inner

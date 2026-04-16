@@ -1,16 +1,20 @@
+import base64
 import json
 from unittest.mock import Mock, patch
 
+from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory, TestCase, override_settings
 
 from corehq.apps.domain.decorators import (
     OTP_AUTH_FAIL_RESPONSE,
     _two_factor_required,
+    api_auth,
     two_factor_check,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.sso.tests.generator import create_request_session
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import CouchUser, HQApiKey, HqPermissions, WebUser
 
 
 class TestTwoFactorRequired(TestCase):
@@ -124,21 +128,38 @@ class TestTwoFactorCheck(TestCase):
             data = json.loads(response.content)
             self.assertDictEqual(data, OTP_AUTH_FAIL_RESPONSE)
 
-    @patch('corehq.apps.domain.decorators._ensure_request_couch_user')
-    @patch('corehq.apps.domain.decorators.Domain.get_by_name', new=lambda _: Mock(two_factor_auth=True))
-    def test_skip_two_factor_check_sets_bypass(self, mock_ensure_couch_user):
-        """When skip_two_factor_check is set (e.g. API key auth via basic auth),
-        two_factor_check should set bypass_two_factor
-        """
-        mock_ensure_couch_user.return_value = self.request.couch_user
-        self.request.skip_two_factor_check = True
 
-        @two_factor_check('dummy_view', api_key=False)
-        def view(request, domain):
-            return request
+class TestApiKeyBasicAuthWithTwoFactor(TestCase):
+    domain_name = 'two-factor-api-test'
 
-        request = view(self.request, 'test_domain')
-        self.assertTrue(
-            getattr(request, 'bypass_two_factor', False),
-            "bypass_two_factor should be set when skip_two_factor_check is True",
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = create_domain(cls.domain_name)
+        cls.domain.two_factor_auth = True
+        cls.domain.save()
+        cls.user = WebUser.create( cls.domain_name, 'test@dimagi.com', 'password', None, None, is_admin=True,)
+        cls.api_key = HQApiKey.objects.create(user=cls.user.get_django_user()).plaintext_key
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete(cls.domain_name, deleted_by=None)
+        cls.domain.delete()
+        super().tearDownClass()
+
+    def test_api_key_basic_auth_with_two_factor_domain(self):
+        encoded_creds = base64.b64encode(f'test@dimagi.com:{self.api_key}'.encode()).decode()
+        request = RequestFactory().get(
+            f'/a/{self.domain_name}/api/case/v2/',
+            HTTP_AUTHORIZATION=f'Basic {encoded_creds}',
         )
+        request.user = AnonymousUser()  # User hasn't been established yet
+
+        @api_auth(allow_creds_in_data=False)
+        @require_permission(HqPermissions.edit_data)
+        def view(request, domain):
+            from django.http import HttpResponse
+            return HttpResponse('ok')
+
+        response = view(request, self.domain_name)
+        self.assertEqual(response.status_code, 200)
