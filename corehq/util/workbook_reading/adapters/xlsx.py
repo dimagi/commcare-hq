@@ -54,9 +54,8 @@ def open_xlsx_workbook(filename):
     except IOError as e:
         raise SpreadsheetFileNotFound(e)
 
-    _raise_if_contains_external_links(filename)
-
     with f as f:
+        _raise_if_contains_external_links(filename)
         try:
             openpyxl_workbook = openpyxl.load_workbook(f, read_only=True, data_only=True)
         except InvalidFileException as e:
