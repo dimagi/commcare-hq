@@ -1,13 +1,6 @@
 from collections import defaultdict
 
-from django.contrib import admin
 from django.db import models
-
-from corehq.motech.const import ALGO_AES_CBC
-from corehq.motech.utils import (
-    b64_aes_cbc_decrypt,
-    b64_aes_cbc_encrypt,
-)
 
 
 class SMSTranslations(models.Model):
@@ -57,95 +50,3 @@ class Translation(object):
                 return dict([(key, val[0]) for key, val in translations.items()])
             else:
                 return translations
-
-
-FIELD_NAME_HELP = (
-    'This is the same string that appears in the bulk app translation '
-    "download in the module's sheet for case list or case detail under "
-    '"property", or in the bulk ui translation download, also under '
-    '"property". This could be an XPath, case property name, or UI '
-    'property name. If it is an ID mapping then the property should be '
-    "'&lt;property&gt; (ID Mapping Text)'. For ID mapping values each "
-    "value should be '&lt;id mapping value&gt; (ID Mapping Value)'. "
-    'Create a separate blacklist item for every property.'
-    '<br>'
-    'Example: Case detail for tasks_type could have separate entries for '
-    'each of the following:'
-    '<ul>'
-    '    <li>tasks_type (ID Mapping Text)</li>'
-    '    <li>child (ID Mapping Value)</li>'
-    '    <li>pregnancy (ID Mapping Value)</li>'
-    '</ul>'
-)
-
-
-class TransifexBlacklist(models.Model):
-    """Used for removing case list and case detail translations before an upload to Transifex.
-
-    Note that field_name is not sufficient to exclude properties as you can
-    have two details in the same module that display the same information in a
-    different way e.g. date of birth and age in years. display_text is used to
-    determine which trnaslations to hold back from Transifex
-    """
-
-    domain = models.CharField(max_length=255)
-    app_id = models.CharField(max_length=255)
-    module_id = models.CharField(max_length=255, blank=True)
-    field_type = models.CharField(
-        max_length=100,
-        choices=(
-            ('detail', 'Case Detail'),
-            ('list', 'Case List'),
-            ('ui', 'UI'),
-        )
-    )
-    field_name = models.TextField(help_text=FIELD_NAME_HELP)
-    display_text = models.TextField(
-        blank=True,
-        help_text="The default language's translation for this detail/list. "
-        "If display_text is not filled out then all translations that match "
-        "the field_type and field_name will be blacklisted")
-
-    def __str__(self):
-        return "TransifexBlacklist(domain='{}', field_type='{}', field_name='{}')".format(
-            self.domain,
-            self.field_type,
-            self.field_name,
-        )
-        # app and module omitted to avoid hitting database
-        # app_id and module_id omitted because they are unfriendly
-
-
-class TransifexOrganization(models.Model):
-    slug = models.CharField(max_length=255)
-    name = models.CharField(max_length=255)
-    api_token = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.name + ' (' + self.slug + ')'
-
-    @property
-    def plaintext_api_token(self):
-        if self.api_token == '':
-            return ''
-        ciphertext = self.api_token.split('$', 2)[2]
-        return b64_aes_cbc_decrypt(ciphertext)
-
-    @plaintext_api_token.setter
-    def plaintext_api_token(self, plaintext):
-        ciphertext = b64_aes_cbc_encrypt(plaintext)
-        self.api_token = f'${ALGO_AES_CBC}${ciphertext}'
-
-
-class TransifexProject(models.Model):
-    organization = models.ForeignKey(TransifexOrganization, on_delete=models.CASCADE)
-    slug = models.CharField(max_length=255, unique=True)
-    name = models.CharField(max_length=255)
-    domain = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.name + ' (' + self.slug + ')'
-
-
-admin.site.register(TransifexProject)
-admin.site.register(TransifexBlacklist)

@@ -1,8 +1,13 @@
 import hashlib
 import json
 import logging
+from urllib.parse import quote, unquote
 from xml.sax.saxutils import escape
 
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from diff_match_patch import diff_match_patch
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
 from django.http import (
@@ -17,18 +22,13 @@ from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
-
-from diff_match_patch import diff_match_patch
 from lxml import etree
 from no_exceptions.exceptions import Http400
 from text_unidecode import unidecode
 
-from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
-
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import record_google_analytics_event
 from corehq.apps.app_manager.app_schemas.case_properties import (
     get_all_case_properties,
     get_usercase_properties,
@@ -54,7 +54,12 @@ from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ModuleNotFoundException,
     XFormValidationFailed,
-    FormActionsDiffException,
+)
+from corehq.apps.app_manager.form_action_diff import (
+    from_combined_diff,
+    get_case_mappings,
+    make_multi,
+    update_form_actions,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
@@ -73,7 +78,6 @@ from corehq.apps.app_manager.models import (
     IncompatibleFormTypeException,
     OpenCaseAction,
     UpdateCaseAction,
-    FormActionsDiff,
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import (
     clean_trans,
@@ -105,9 +109,9 @@ from corehq.apps.app_manager.xform import (
     XFormValidationError,
 )
 from corehq.apps.data_dictionary.util import (
+    get_case_property_count,
     get_case_property_deprecated_dict,
     get_case_property_description_dict,
-    get_case_property_count,
 )
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -119,7 +123,10 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.project_limits.const import CASE_PROP_LIMIT_PER_CASE_TYPE_KEY, DEFAULT_CASE_PROPS_PER_CASE_TYPE
+from corehq.project_limits.const import (
+    CASE_PROP_LIMIT_PER_CASE_TYPE_KEY,
+    DEFAULT_CASE_PROPS_PER_CASE_TYPE,
+)
 from corehq.project_limits.models import SystemLimit
 from corehq.util.view_utils import set_file_download
 
@@ -227,11 +234,16 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     form = app.get_form(form_unique_id)
     old_load_from_form = form.actions.load_from_form
 
-    allow_conflicts = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
-    try:
-        form.actions = _get_updates(form.actions, request.POST, allow_conflicts)
-    except FormActionsDiffException as e:
-        return HttpResponseBadRequest(e.get_user_message())
+    actions_json = json.loads(request.POST['actions'])
+    if 'case_mapping_diff' in request.POST:
+        diff = json.loads(request.POST['case_mapping_diff'])
+    elif 'update_diff' in request.POST:
+        # LEGACY can be removed after case_mapping_diff is deployed
+        # and enough time has passed for front-end code to be updated
+        diff = json.loads(request.POST['update_diff'])
+    else:
+        diff = {}
+    update_form_actions(form.actions, actions_json, diff)
 
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
@@ -243,15 +255,17 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
 
     response_json = {}
     app.save(response_json)
+
+    if _case_mapping_diff_has_changes(diff):
+        record_google_analytics_event(
+            METRICS_UPDATE_CASE_PROPERTIES,
+            request.couch_user,
+            {'source': UPDATE_CASE_SOURCE_CASE_MANAGEMENT},
+        )
+    response_json['actions'] = make_multi(form.actions.to_json())
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
     return json_response(response_json)
-
-
-def _get_updates(existing_actions, data, allow_conflicts):
-    updates = json.loads(data['actions'])
-    update_diff = FormActionsDiff(json.loads(data['update_diff']) if 'update_diff' in data else {})
-    return existing_actions.with_updates(updates, update_diff, allow_conflicts)
 
 
 @waf_allow('XSS_BODY')
@@ -336,8 +350,16 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             if xform:
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
-                case_update_diff = _get_case_update_diff(request, form)
-                save_xform(app, form, xform, case_update_diff)
+                case_mapping_diff = _get_case_mapping_diff(request, form)
+                save_xform(app, form, xform, case_mapping_diff)
+                if _case_mapping_diff_has_changes(case_mapping_diff):
+                    # form builder is the only client that submits
+                    # mapping_diff at time of writing, but that could change.
+                    record_google_analytics_event(
+                        METRICS_UPDATE_CASE_PROPERTIES,
+                        request.couch_user,
+                        {'source': UPDATE_CASE_SOURCE_FORM_BUILDER},
+                    )
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception as e:
@@ -441,7 +463,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         set_session_endpoint(form, raw_endpoint_id, app)
 
     if should_edit('access_hidden_forms'):
-        form.respect_relevancy = not ('true' in request.POST.getlist('access_hidden_forms'))
+        form.respect_relevancy = 'true' not in request.POST.getlist('access_hidden_forms')
 
     if should_edit('function_datum_endpoints'):
         if request.POST['function_datum_endpoints']:
@@ -453,6 +475,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
     app.save(resp)
     if ajax:
+        _add_case_management_data(resp, form, request)
         return JsonResponse(resp)
     else:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=form_unique_id)
@@ -530,10 +553,10 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return conflict
 
     xml = apply_patch(patch, form.source)
-    case_update_diff = _get_case_update_diff(request, form)
+    case_mapping_diff = _get_case_mapping_diff(request, form)
 
     try:
-        xml = save_xform(app, form, xml.encode('utf-8'), case_update_diff)
+        xml = save_xform(app, form, xml.encode('utf-8'), case_mapping_diff)
     except XFormException:
         return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
 
@@ -545,23 +568,51 @@ def patch_xform(request, domain, app_id, form_unique_id):
         'sha1': hashlib.sha1(xml).hexdigest()
     }
     app.save(response_json)
+
+    if _case_mapping_diff_has_changes(case_mapping_diff):
+        record_google_analytics_event(
+            METRICS_UPDATE_CASE_PROPERTIES,
+            request.couch_user,
+            {'source': UPDATE_CASE_SOURCE_FORM_BUILDER},
+        )
+
+    _add_case_management_data(response_json, form, request)
     return JsonResponse(response_json)
+
+
+METRICS_UPDATE_CASE_PROPERTIES = 'update_case_properties'
+UPDATE_CASE_SOURCE_FORM_BUILDER = 'formbuilder'
+UPDATE_CASE_SOURCE_CASE_MANAGEMENT = 'casemanagement'
+
+# Characters that JS encodeURI preserves (beyond letters/digits which
+# Python's quote already preserves). Used to match encodeURI behavior
+# so patch coordinates align between JS and Python.
+ENCODE_URI_SAFE = "!#$&'()*+,-./:;=?@_~"
 
 
 def apply_patch(patch, text):
     dmp = diff_match_patch()
-    return dmp.patch_apply(dmp.patch_fromText(patch), text)[0]
+    # JS pre-encodes text with encodeURI before diffing to avoid emoji
+    # breaking the diff (see core.js). Encode source the same way before
+    # applying, then decode.
+    encoded_text = quote(text, safe=ENCODE_URI_SAFE)
+    encoded_result = dmp.patch_apply(dmp.patch_fromText(patch), encoded_text)[0]
+    return unquote(encoded_result)
 
 
-def _get_case_update_diff(request, form):
-    update_diff = None
+def _get_case_mapping_diff(request, form):
+    case_mapping_diff = None
     has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
     if has_vellum_case_mapping and 'mapping_diff' in request.POST:
-        update_diff = FormActionsDiff.from_json(
+        case_mapping_diff = from_combined_diff(
             json.loads(request.POST['mapping_diff']),
             is_registration=form.is_registration_form(),
         )
-    return update_diff
+    return case_mapping_diff
+
+
+def _case_mapping_diff_has_changes(diff):
+    return diff and any(any(v.values()) for v in diff.values())
 
 
 def _get_xform_conflict_response(form, sha1_checksum):
@@ -569,6 +620,17 @@ def _get_xform_conflict_response(form, sha1_checksum):
     if hashlib.sha1(form_xml.encode('utf-8')).hexdigest() != sha1_checksum:
         return json_response({'status': 'conflict', 'xform': form_xml})
     return None
+
+
+def _add_case_management_data(response_json, form, request):
+    """Allow clients to immediately display concurrent edit conflict warnings"""
+    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
+    is_advanced_form = isinstance(form, AdvancedForm)
+    case_type = form.get_module().case_type
+    if case_type and has_vellum_case_mapping and not is_advanced_form:
+        response_json['caseManagement'] = {
+            "mappings": get_case_mappings(form.actions),
+        }
 
 
 @require_GET
@@ -883,10 +945,8 @@ def get_form_view_context(
                 'schedule_options': schedule_options,
             })
     else:
-        # TODO: figure out a cleaner method
-        form.actions.make_multi()
         case_config_options.update({
-            'actions': form.actions,
+            'actions': make_multi(form.actions.to_json()),
             'allowUsercase': allow_usercase,
             'save_url': reverse("edit_form_actions", args=[app.domain, app.id, form.unique_id]),
             'valid_index_names': valid_index_names,
@@ -997,7 +1057,9 @@ def get_form_datums(request, domain, app_id):
 
 
 def _get_form_datums(domain, app_id, form_id):
-    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+    from corehq.apps.app_manager.suite_xml.sections.entries import (
+        EntriesHelper,
+    )
     try:
         app = get_app(domain, app_id)
     except AppInDifferentDomainException as e:

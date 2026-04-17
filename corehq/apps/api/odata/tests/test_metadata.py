@@ -27,7 +27,6 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls._teardownclass()
         cls._teardown_accounting()
         super(TestCaseMetadataDocument, cls).tearDownClass()
 
@@ -81,7 +80,6 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls._teardownclass()
         cls._teardown_accounting()
         super(TestFormMetadataDocument, cls).tearDownClass()
 

@@ -1453,6 +1453,7 @@ class Subscription(models.Model):
             skip_auto_downgrade=self.skip_auto_downgrade,
             skip_auto_downgrade_reason=self.skip_auto_downgrade_reason,
             auto_renew=self.auto_renew,
+            date_end=self.date_end,
         )
 
     @transaction.atomic

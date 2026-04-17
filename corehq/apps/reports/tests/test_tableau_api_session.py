@@ -234,6 +234,7 @@ def _setup_test_tableau_server(test_case, domain):
         secret_id='zxcv5678',
         server=test_case.test_server
     )
+    test_case.connected_app.plaintext_secret_value = 'a' * 32
     test_case.connected_app.save()
     test_case.tableau_instance = FakeTableauInstance()
 
@@ -246,12 +247,12 @@ class TestTableauAPISession(TestCase):
         super(TestTableauAPISession, self).setUp()
 
     def test_connected_app_encryption(self):
-        self.connected_app.plaintext_secret_value = 'qwer1234'
+        self.connected_app.plaintext_secret_value = 'a' * 32
         self.connected_app.save()
 
-        self.assertNotEqual(self.connected_app.encrypted_secret_value, 'qwer1234')
-        self.assertEqual(self.connected_app.plaintext_secret_value, 'qwer1234')
-        self.assertEqual(len(self.connected_app.encrypted_secret_value), 53)
+        self.assertNotEqual(self.connected_app.encrypted_secret_value, 'a' * 32)
+        self.assertEqual(self.connected_app.plaintext_secret_value, 'a' * 32)
+        self.assertEqual(len(self.connected_app.encrypted_secret_value), 97)
 
     def _assert_subset(self, d1, d2):
         self.assertTrue(set(d1.items()).issubset(set(d2.items())))

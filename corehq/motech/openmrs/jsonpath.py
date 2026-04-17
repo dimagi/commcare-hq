@@ -1,6 +1,6 @@
-from operator import gt
+from operator import gt  # noqa: F401 used in doctest
 
-from jsonpath_ng import Fields, JSONPath  # pylint: disable=unused-import,F401
+from jsonpath_ng import Fields, JSONPath  # noqa: F401
 
 
 class Cmp(JSONPath):

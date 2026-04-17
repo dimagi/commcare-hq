@@ -25,7 +25,6 @@ class TestMigrateBackend(TestCase):
         "Application-Deleted": mod.apps.Application,
         "RemoteApp-Deleted": mod.apps.RemoteApp,
         "SavedAppBuild": mod.apps.SavedAppBuild,
-        "CommCareBuild": mod.CommCareBuild,
         "Domain": mod.Domain,
         "InvoicePdf": mod.acct.InvoicePdf,
         "CommCareAudio": mod.hqmedia.CommCareAudio,
@@ -37,7 +36,6 @@ class TestMigrateBackend(TestCase):
         "SMSExportInstance": mod.exports.SMSExportInstance,
     }
     shared_domain_doc_types = {
-        "CommCareBuild",
         "CommCareAudio",
         "CommCareImage",
         "CommCareVideo",

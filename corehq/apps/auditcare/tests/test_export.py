@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from itertools import chain
 from unittest.mock import patch
 
+from django.db.models import Q
 from testil import tempdir
 
 from corehq.apps.auditcare.models import AccessAudit, NavigationEventAudit
@@ -13,10 +14,14 @@ from corehq.apps.auditcare.models import AccessAudit, NavigationEventAudit
 from ..utils.export import (
     AuditWindowQuery,
     ForeignKeyAccessError,
+    build_ip_filter,
+    build_path_exclude_filter,
+    build_path_include_filter,
     get_all_log_events,
     get_date_range_where,
     get_domain_first_access_times,
     get_foreign_names,
+    get_generic_log_event_row,
     navigation_events_by_user,
     write_export_from_all_log_events,
 )
@@ -108,25 +113,25 @@ class TestNavigationEventsQueries(AuditcareTest):
                 items = sorted([unpack(r) for r in rows], key=key)
                 expected_items = [
                     {
-                        'Date': '2021-02-01 03:00:00',
+                        'Date': '2021-02-01 03:00:00.000000 UTC',
                         'Type': 'AccessAudit',
                         'User': 'other@test.com',
                         'Description': 'Login: other@test.com',
                     },
                     {
-                        'Date': '2021-02-01 03:00:00',
+                        'Date': '2021-02-01 03:00:00.000000 UTC',
                         'Type': 'AccessAudit',
                         'User': 'test@test.com',
                         'Description': 'Logout: test@test.com',
                     },
                     {
-                        'Date': '2021-02-01 03:00:00',
+                        'Date': '2021-02-01 03:00:00.000000 UTC',
                         'Type': 'NavigationEventAudit',
                         'User': 'other@test.com',
                         'Description': 'other@test.com',
                     },
                     {
-                        'Date': '2021-02-01 03:00:00',
+                        'Date': '2021-02-01 03:00:00.000000 UTC',
                         'Type': 'NavigationEventAudit',
                         'User': 'test@test.com',
                         'Description': 'test@test.com',
@@ -185,6 +190,60 @@ class TestNavigationEventsQueries(AuditcareTest):
             # remove the session key (not returned by the query)
             del login_event["session_key"]
         self.assertEqual(list(get_domain_first_access_times([domain])), login_events)
+
+
+class TestGetGenericLogEventRow(AuditcareTest):
+
+    def test_date_format_is_sortable_utc_string(self):
+        event = NavigationEventAudit(
+            user="test@test.com",
+            event_date=datetime(2026, 3, 27, 15, 17, 52, 132987),
+            ip_address="10.0.0.1",
+            path="/a/test/dashboard/",
+            headers={"REQUEST_METHOD": "GET"},
+            status_code=200,
+        )
+        row = get_generic_log_event_row(event)
+        self.assertEqual(row[0], "2026-03-27 15:17:52.132987 UTC")
+
+    def test_date_format_with_zero_microseconds(self):
+        event = NavigationEventAudit(
+            user="test@test.com",
+            event_date=datetime(2026, 3, 27, 15, 17, 52, 0),
+            ip_address="10.0.0.1",
+            path="/a/test/dashboard/",
+            headers={"REQUEST_METHOD": "GET"},
+            status_code=200,
+        )
+        row = get_generic_log_event_row(event)
+        self.assertEqual(row[0], "2026-03-27 15:17:52.000000 UTC")
+
+    def test_row_includes_status_code_for_navigation_event(self):
+        event = NavigationEventAudit(
+            user="test@test.com",
+            event_date=datetime(2026, 3, 27, 15, 0),
+            ip_address="10.0.0.1",
+            path="/a/test/dashboard/",
+            headers={"REQUEST_METHOD": "GET"},
+            status_code=200,
+        )
+        row = get_generic_log_event_row(event)
+        # Columns: Date, DocType, Username, Domain, IP, Action, URL, StatusCode, Description
+        self.assertEqual(len(row), 9)
+        self.assertEqual(row[6], "/a/test/dashboard/?")  # URL (was Resource)
+        self.assertEqual(row[7], 200)  # Status Code
+
+    def test_row_has_empty_status_code_for_access_event(self):
+        event = AccessAudit(
+            user="test@test.com",
+            event_date=datetime(2026, 3, 27, 15, 0),
+            ip_address="10.0.0.1",
+            path="/a/test/login/",
+            access_type="i",
+        )
+        row = get_generic_log_event_row(event)
+        self.assertEqual(len(row), 9)
+        self.assertEqual(row[7], "")  # Status Code empty for AccessAudit
 
 
 class TestNavigationEventsQueriesWithoutData(AuditcareTest):
@@ -254,6 +313,60 @@ class TestGetDateRangeWhere(AuditcareTest):
         # End at midnight should add 1 day to include the full day
         self.assertEqual(where["event_date__gt"], datetime(2021, 2, 5, 0, 0))
         self.assertEqual(where["event_date__lt"], datetime(2021, 2, 16, 0, 0))
+
+
+class TestBuildIPFilter(AuditcareTest):
+
+    def test_exact_match(self):
+        q = build_ip_filter([("exact", "10.0.0.1")])
+        self.assertEqual(q, Q(ip_address="10.0.0.1"))
+
+    def test_prefix_match(self):
+        q = build_ip_filter([("startswith", "10.")])
+        self.assertEqual(q, Q(ip_address__startswith="10."))
+
+    def test_multiple_or(self):
+        q = build_ip_filter([("exact", "10.0.0.1"), ("startswith", "192.168.")])
+        self.assertEqual(q, Q(ip_address="10.0.0.1") | Q(ip_address__startswith="192.168."))
+
+    def test_empty_returns_none(self):
+        q = build_ip_filter([])
+        self.assertIsNone(q)
+
+
+class TestBuildPathFilters(AuditcareTest):
+
+    def test_include_contains(self):
+        q = build_path_include_filter(["/api/v1/"], "contains")
+        self.assertEqual(q, Q(path__contains="/api/v1/"))
+
+    def test_include_startswith(self):
+        q = build_path_include_filter(["/a/test/"], "startswith")
+        self.assertEqual(q, Q(path__startswith="/a/test/"))
+
+    def test_include_multiple_or(self):
+        q = build_path_include_filter(["/api/", "/dashboard/"], "contains")
+        self.assertEqual(q, Q(path__contains="/api/") | Q(path__contains="/dashboard/"))
+
+    def test_include_empty_returns_none(self):
+        q = build_path_include_filter([], "contains")
+        self.assertIsNone(q)
+
+    def test_exclude_contains(self):
+        q = build_path_exclude_filter(["/heartbeat/"], "contains")
+        self.assertEqual(q, ~Q(path__contains="/heartbeat/"))
+
+    def test_exclude_startswith(self):
+        q = build_path_exclude_filter(["/a/test/heartbeat/"], "startswith")
+        self.assertEqual(q, ~Q(path__startswith="/a/test/heartbeat/"))
+
+    def test_exclude_multiple_and_not(self):
+        q = build_path_exclude_filter(["/heartbeat/", "/ping/"], "contains")
+        self.assertEqual(q, ~Q(path__contains="/heartbeat/") & ~Q(path__contains="/ping/"))
+
+    def test_exclude_empty_returns_none(self):
+        q = build_path_exclude_filter([], "contains")
+        self.assertIsNone(q)
 
 
 class TestNavigationEventsWithDatetime(AuditcareTest):

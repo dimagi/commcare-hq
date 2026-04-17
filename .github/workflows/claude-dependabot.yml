@@ -1,0 +1,138 @@
+# Claude Dependabot PR Review Workflow
+#
+# Automatically runs Claude analysis on Dependabot PRs to:
+# - Identify dependency changes and their versions
+# - Look up changelogs for updated packages
+# - Assess breaking changes and security impacts
+# - Provide actionable recommendations for the development team
+#
+# Covers all three dependabot ecosystems: uv (Python), npm (JS), github-actions
+#
+# Requirements: ANTHROPIC_API_KEY secret must be configured
+
+name: Claude Dependabot PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to analyze'
+        required: true
+        type: string
+
+jobs:
+  dependabot-review:
+    if: github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+
+    steps:
+      - name: Resolve PR ref
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ inputs.pr_number || github.event.pull_request.number }}"
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          REF=$(gh pr view "$PR_NUMBER" --repo "${{ github.repository }}" --json headRefName --jq '.headRefName')
+          echo "ref=$REF" >> $GITHUB_OUTPUT
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.ref }}
+          fetch-depth: 1
+
+      - name: Run Claude Dependabot Analysis
+        id: claude_review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          allowed_bots: "dependabot[bot]"
+          claude_args: |
+            --allowedTools "Bash(yarn:*),Bash(uv:*),Bash(git:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Read,WebFetch"
+          prompt: |
+            You are reviewing PR #${{ steps.pr.outputs.pr_number }}.
+
+            You are Claude, an AI assistant specialized in reviewing Dependabot dependency update PRs
+            for CommCare HQ — a large Django application that uses uv for Python dependency management
+            and Yarn for JavaScript bundling. The codebase lives primarily under `corehq/`.
+
+            Dependabot is currently configured to propose only **major version** updates for Python
+            (uv) and JavaScript (npm) packages, and **weekly** updates for GitHub Actions.
+
+            Your task is to analyze this PR and post a single review comment with actionable insights.
+
+            **IMPORTANT**: Do NOT mention security vulnerabilities, CVEs, or security advisories
+            in your comment. Security updates are handled through a separate internal process.
+            If this PR is a security-related upgrade, focus only on breaking changes, migration
+            notes, and codebase impact — omit any security details.
+
+            ## Analysis Process
+
+            1. **Identify Changed Dependencies**:
+               - Run `gh pr diff ${{ steps.pr.outputs.pr_number }}` to see what changed
+               - For Python: parse changes in `pyproject.toml` and/or `uv.lock`
+               - For JavaScript: parse changes in `package.json` and/or `yarn.lock`
+               - For GitHub Actions: parse changes in `.github/workflows/*.yml`
+               - List each package with old → new version
+
+            2. **Changelog Research**:
+               - For each updated dependency, use WebFetch to look up its changelog or release notes.
+                 Prefer a `CHANGELOG` / `CHANGELOG.md` in the project's GitHub repo when available —
+                 it's usually the most detailed source. Fall back to the GitHub releases page,
+                 PyPI project page, or npm package page.
+               - Focus on changes between the old and new versions
+               - Identify: breaking changes, deprecations, new features
+
+            3. **Breaking Change Assessment**:
+               - Categorize each change: BREAKING, MAJOR, MINOR, PATCH
+               - For GitHub Actions updates, check for changed inputs/outputs or runner requirements
+               - Check if CommCare HQ uses any affected APIs or features
+
+            4. **Codebase Impact Analysis**:
+               - Search `corehq/` for imports and usage of changed packages
+               - For Python packages, grep for `import <pkg>` and `from <pkg>`
+               - For JS packages, grep for `require('<pkg>')` and `import ... from '<pkg>'`
+               - For GitHub Actions, check which workflows reference the updated action
+               - Identify specific files that may need updates
+
+            ## Output Format
+
+            Post a single comment on the PR using `gh pr comment`. Structure it as:
+
+            ### 🔍 Dependency Analysis Summary
+            - One- or two-sentence narrative of what this PR changes and why it matters
+              (don't re-list the packages and versions — Dependabot's PR body already has that)
+            - Overall risk assessment: **LOW** / **MEDIUM** / **HIGH**
+
+            ### 📋 Detailed Changelog Review
+            For each updated dependency, use the package name as a subheading and cover:
+            - **Changes**: Summary of key changes between versions
+            - **Breaking Changes**: Any breaking changes (or "None")
+            - **Migration Notes**: Required upgrade steps (or "None")
+
+            ### ⚠️ Impact Assessment
+            - **Breaking Changes Found**: Yes/No with details
+            - **Affected Files**: List CommCare HQ files that may need updates
+            - **Test Impact**: Any tests that may need updating
+            - **Configuration Changes**: Required config updates (or "None")
+
+            ### 🛠️ Recommendations
+            - **Action Required**: What the team should do before merging
+            - **Testing Focus**: Areas to test thoroughly
+            - **Follow-up Tasks**: Any additional work needed after merge
+            - **Merge Recommendation**: APPROVE / REVIEW_NEEDED / HOLD
+
+            ### 📚 Useful Links
+            - Links to relevant changelogs, migration guides, documentation
+
+            Be thorough but concise. Focus on actionable insights.
