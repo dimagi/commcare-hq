@@ -594,10 +594,28 @@ def enterprise_admins(request, domain):
 @require_enterprise_admin
 @require_POST
 def add_enterprise_admin(request, domain):
-    """Stub — implemented in a following commit."""
-    return HttpResponseRedirect(
+    account = request.account
+    redirect = HttpResponseRedirect(
         reverse('enterprise_admins', args=[domain]),
     )
+    form = EnterpriseAdminForm(request.POST, account=account)
+    if not form.is_valid():
+        error = form.errors.get('email', [_('Invalid request.')])[0]
+        messages.error(request, error)
+        return redirect
+    email = form.cleaned_data['email']
+    account.enterprise_admin_emails = list(account.enterprise_admin_emails) + [email]
+    account.save()
+    enterprise_admin_logger.info(
+        "Enterprise admin %s added to account %s by %s",
+        email, account.id, request.couch_user.username,
+    )
+    messages.success(
+        request,
+        _("%(email)s has been added as an enterprise administrator.")
+        % {'email': email},
+    )
+    return redirect
 
 
 @toggles.ENTERPRISE_ADMIN_SELF_SERVICE.required_decorator()

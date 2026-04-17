@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from unittest.mock import patch
 
+from django.contrib.messages import get_messages
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -258,3 +259,75 @@ class EnterpriseAdminsGetViewTests(_EnterpriseAdminViewTestBase):
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.admin_user.username)
+
+
+class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
+
+    @property
+    def add_url(self):
+        return reverse('add_enterprise_admin', args=[self.domain_name])
+
+    def _reload_account(self):
+        self.account.refresh_from_db()
+        return self.account
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_valid_email_appends_lowercased(self):
+        response = self.client.post(
+            self.add_url, {'email': 'NewAdmin@Example.com'},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        self.assertIn('newadmin@example.com', account.enterprise_admin_emails)
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_duplicate_email_is_rejected(self):
+        response = self.client.post(
+            self.add_url, {'email': self.admin_user.username},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        count = account.enterprise_admin_emails.count(self.admin_user.username)
+        self.assertEqual(count, 1)
+        msgs = [str(m) for m in get_messages(response.wsgi_request)]
+        self.assertTrue(any('already' in m for m in msgs))
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_invalid_format_is_rejected(self):
+        response = self.client.post(self.add_url, {'email': 'not-an-email'})
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        self.assertNotIn('not-an-email', account.enterprise_admin_emails)
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_respects_sso_domain_restriction(self):
+        _make_idp(self.account, slug='idp-sso', domains=['corp.com'])
+        response = self.client.post(
+            self.add_url, {'email': 'x@other.com'},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        self.assertNotIn('x@other.com', account.enterprise_admin_emails)
+        msgs = [str(m) for m in get_messages(response.wsgi_request)]
+        self.assertTrue(any('not permitted' in m for m in msgs))
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_logs_info(self):
+        with self.assertLogs(
+            'corehq.apps.enterprise.views', level='INFO'
+        ) as cap:
+            self.client.post(
+                self.add_url, {'email': 'logger@example.com'},
+            )
+        self.assertTrue(
+            any('logger@example.com' in line for line in cap.output),
+        )
+
+    @flag_disabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_toggle_disabled_returns_404(self):
+        response = self.client.post(
+            self.add_url, {'email': 'blocked@example.com'},
+        )
+        self.assertEqual(response.status_code, 404)
+        account = self._reload_account()
+        self.assertNotIn('blocked@example.com', account.enterprise_admin_emails)
