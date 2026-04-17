@@ -27,6 +27,31 @@ def _get_sso_email_domains(account):
     return {d.lower() for idp in idps for d in idp.get_email_domains()}
 
 
+class EnterpriseAdminForm(forms.Form):
+    email = forms.EmailField(label=gettext_lazy("Email"))
+
+    def __init__(self, *args, account, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.account = account
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].lower()
+        if self.account.has_enterprise_admin(email):
+            raise ValidationError(
+                _("This user is already an enterprise administrator."),
+            )
+        sso_domains = _get_sso_email_domains(self.account)
+        if sso_domains and email.rsplit("@", 1)[-1] not in sso_domains:
+            raise ValidationError(
+                _(
+                    "This email domain is not permitted. Enterprise admins "
+                    "must use an email at one of: %(domains)s"
+                ),
+                params={"domains": ", ".join(sorted(sso_domains))},
+            )
+        return email
+
+
 class EnterpriseSettingsForm(forms.Form):
     restrict_domain_creation = forms.BooleanField(
         label=gettext_lazy("Restrict Project Space Creation"),
