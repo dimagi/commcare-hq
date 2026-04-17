@@ -1,3 +1,5 @@
+import pytest
+
 from datetime import datetime
 from unittest.mock import patch
 
@@ -21,7 +23,7 @@ class TestPermanentlyDeleteEligibleData(TestCase):
 
         permanently_delete_eligible_data(dry_run=False)
 
-        with self.assertRaises(XFormNotFound):
+        with pytest.raises(XFormNotFound):
             XFormInstance.objects.get_form(form.form_id)
 
     def test_does_not_delete_data(self):
@@ -29,7 +31,7 @@ class TestPermanentlyDeleteEligibleData(TestCase):
 
         permanently_delete_eligible_data(dry_run=False)
 
-        self.assertIsNotNone(XFormInstance.objects.get_form(form.form_id))
+        XFormInstance.objects.get_form(form.form_id)
 
     def test_does_not_delete_data_if_in_dry_run_mode(self):
         before_cutoff = datetime(2020, 1, 1, 12, 29)
