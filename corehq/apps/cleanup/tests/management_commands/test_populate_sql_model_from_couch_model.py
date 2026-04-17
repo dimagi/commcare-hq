@@ -15,7 +15,7 @@ from testil import tempdir
 
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 
-from ..management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
+from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 
 
 class TestPopulateSQLCommand(TestCase):
