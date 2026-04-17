@@ -488,12 +488,6 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
 - If you encounter an authorization error related to CouchDB, try going to your
   `localsettings.py` file and change `COUCH_PASSWORD` to an empty string.
 
-- If you get errors saying "Segmentation fault (core dumped)", with a warning like
-  "RuntimeWarning: greenlet.greenlet size changed, may indicate binary incompatibility.
-  Expected 144 from C header, got 152 from PyObject" check that your Python version is correct (3.9).
-  Alternatively, you can try upgrading `gevent` (`uv pip install --upgrade gevent`) to fix this error
-  on Python 3.8, but you may run into other issues!
-
 ### Step 6: Populate Elasticsearch
 
 To set up elasticsearch indexes run the following:
