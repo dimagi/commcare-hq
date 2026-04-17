@@ -1168,7 +1168,7 @@ MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
 
 # days to commit to keeping soft deleted data in databases
-DATA_RETENTION_WINDOW = 30  # days
+DATA_RETENTION_WINDOW = 90  # days
 
 #### Chatbot configuration
 # Override in localsettings.py
