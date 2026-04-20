@@ -374,28 +374,6 @@ def _get_specific_media(
             'qualifier': 'case_list-menu_item_',
         })
         if (
-            module
-            and hasattr(module, 'search_config')
-            and module.uses_media()
-            and toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain)
-        ):
-            specific_media.extend([
-                {
-                    'menu_refs': app.get_case_search_label_media(
-                        module,
-                        module.search_config.search_label,
-                        to_language=lang,
-                    ),
-                    'default_file_name': _make_file_name(
-                        default_file_name,
-                        'case_search_label_item',
-                        lang,
-                    ),
-                    'qualifier': 'case_search-search_label_media_'
-                }
-            ])
-
-        if (
             toggles.CASE_LIST_LOOKUP.enabled(username)
             or toggles.CASE_LIST_LOOKUP.enabled(app.domain)
             or toggles.BIOMETRIC_INTEGRATION.enabled(app.domain)

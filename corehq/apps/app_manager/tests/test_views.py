@@ -1050,20 +1050,6 @@ class TestGetSpecificMedia(SimpleTestCase):
     def _qualifiers(self, result):
         return [entry.get('qualifier') for entry in result]
 
-    def test_case_search_label_media_included_with_toggle(self):
-        factory = AppFactory(domain=self.domain)
-        module, _ = factory.new_basic_module('cases', 'case')
-        with flag_enabled('SYNC_SEARCH_CASE_CLAIM'):
-            result = _get_specific_media('user', self.domain, factory.app, module, None, 'en')
-        assert 'case_search-search_label_media_' in self._qualifiers(result)
-
-    def test_case_search_label_media_excluded_without_toggle(self):
-        factory = AppFactory(domain=self.domain)
-        module, _ = factory.new_basic_module('cases', 'case')
-        result = _get_specific_media('user', self.domain, factory.app, module, None, 'en')
-        assert 'case_search-search_label_media_' not in self._qualifiers(result)
-
-
 def test_doctests():
     import corehq.apps.app_manager.views.view_generic as module
 
