@@ -9,7 +9,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_auto_generated_built_apps,
     get_latest_build_id,
-    get_build_ids,
 )
 from corehq.apps.app_manager.exceptions import (
     AppInDifferentDomainException,
@@ -158,21 +157,35 @@ def check_build_dependencies(new_build):
     """
     Reports whether the app dependencies have been added or removed.
     """
+    from corehq.apps.app_manager.models import Application
 
     def has_dependencies(build):
         return bool(
             build.profile.get('features', {}).get('dependencies')
         )
 
+    def get_previous_build():
+        domain = new_build.domain
+        app_id = new_build.copy_of
+
+        previous_build_doc = Application.get_db().view(
+            'app_manager/saved_app',
+            startkey=[domain, app_id, new_build.id],
+            endkey=[domain, app_id],
+            descending=True,
+            limit=1,
+            skip=1,
+            reduce=False,
+        ).first()
+
+        if not previous_build_doc:
+            return None
+        return get_app(domain, previous_build_doc['id'])
+
     new_build_has_dependencies = has_dependencies(new_build)
-    app_build_ids = get_build_ids(new_build.domain, new_build.copy_of)
 
-    last_build_has_dependencies = False
-
-    if len(app_build_ids) > 1:
-        previous_build_id = app_build_ids[app_build_ids.index(new_build.id) + 1]
-        previous_build = get_app(new_build.domain, previous_build_id)
-        last_build_has_dependencies = has_dependencies(previous_build) if previous_build else False
+    previous_build = get_previous_build()
+    last_build_has_dependencies = has_dependencies(previous_build) if previous_build else False
 
     if not last_build_has_dependencies and new_build_has_dependencies:
         metrics_counter('commcare.app_build.dependencies_added')
