@@ -30,7 +30,8 @@ class DomainContext:
     @cached_property
     def apps(self):
         return [
-            app for app in self.domain_obj.applications()
+            app
+            for app in self.domain_obj.full_applications(include_builds=False)
             if not app.is_remote_app()
         ]
 
