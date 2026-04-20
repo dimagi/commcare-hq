@@ -50,13 +50,22 @@ class RateLimiter(object):
         allowed = False
         # allow usage if any scope has capacity
         for _limit_scope, rates in self.iter_rates(scope):
-            allow = all(current_rate < limit
-                        for _rate_counter, current_rate, limit in rates)
+            exceeded_windows = [
+                rate_counter.key
+                for rate_counter, current_rate, limit in rates
+                if current_rate >= limit
+            ]
             # for each scope all counters must be below threshold
-            if allow:
+            if not exceeded_windows:
                 allowed = True
             else:
-                metrics_counter('commcare.rate_limit_exceeded', tags={'key': self.feature_key, 'scope': scope})
+                metrics_counter('commcare.rate_limit_exceeded', tags={
+                    'key': self.feature_key,
+                    'scope': scope,
+                    # exceeded_windows are ordered highest-priority
+                    # first (week, day, hour, minute, second)
+                    'window': exceeded_windows[0],
+                })
         return allowed
 
     def get_retry_after(self, scope):
