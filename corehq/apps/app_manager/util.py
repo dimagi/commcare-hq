@@ -188,7 +188,9 @@ def save_xform(app, form, xml, case_mapping_diff=None):
     form.source = xml.decode('utf-8')
 
     from corehq.apps.app_manager.models import ConditionalCaseUpdate
-    if form.is_registration_form():
+    if form.is_registration_form() and case_mapping_diff is None:
+        # Except for AdvancedForms, this is now handled by
+        # Case Management in the Form Builder.
         # For registration forms, assume that the first question is the
         # case name unless something else has been specified
         questions = form.get_questions([app.default_language])
