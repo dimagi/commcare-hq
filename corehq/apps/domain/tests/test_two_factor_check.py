@@ -136,16 +136,12 @@ class TestApiKeyBasicAuthWithTwoFactor(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = create_domain(cls.domain_name)
+        cls.addClassCleanup(cls.domain.delete)
         cls.domain.two_factor_auth = True
         cls.domain.save()
         cls.user = WebUser.create( cls.domain_name, 'test@dimagi.com', 'password', None, None, is_admin=True,)
+        cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
         cls.api_key = HQApiKey.objects.create(user=cls.user.get_django_user()).plaintext_key
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain_name, deleted_by=None)
-        cls.domain.delete()
-        super().tearDownClass()
 
     def test_api_key_basic_auth_with_two_factor_domain(self):
         encoded_creds = base64.b64encode(f'test@dimagi.com:{self.api_key}'.encode()).decode()
