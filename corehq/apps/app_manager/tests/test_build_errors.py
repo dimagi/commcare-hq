@@ -17,7 +17,6 @@ from corehq.apps.app_manager.models import (
     CaseReferences,
     CaseSaveReference,
     CaseSearch,
-    CaseSearchLabel,
     CaseSearchProperty,
     DetailColumn,
     DetailTab,
@@ -384,7 +383,6 @@ class BuildErrorsTest(TestCase):
 
         module.case_details.short.multi_select = True
         module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
             data_registry="so_many_cases",
             data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE,
@@ -423,7 +421,6 @@ class BuildErrorsTest(TestCase):
             ))
         ])
         module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name='name')],
         )
 

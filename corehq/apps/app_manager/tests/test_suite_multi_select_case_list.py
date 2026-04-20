@@ -18,7 +18,6 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
-    CaseSearchLabel,
     CaseSearchProperty,
     ConditionalCaseUpdate,
     FormDatum,
@@ -55,7 +54,6 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
 
         self.module.case_details.short.multi_select = True
         self.module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
         )
         self.module.assign_references()
