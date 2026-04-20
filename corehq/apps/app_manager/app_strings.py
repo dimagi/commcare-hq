@@ -373,25 +373,10 @@ def _create_case_search_app_strings(
         from corehq.apps.app_manager.models import CaseSearch
 
         if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(app.domain):
-            # search label
             yield (
                 id_strings.case_search_locale(module),
-                clean_trans(module.search_config.search_label.label, langs)
+                clean_trans({'en': 'Search All Cases'}, langs)
             )
-            icon = module.search_config.search_label.icon_app_string(
-                lang,
-                for_default,
-                build_profile_id,
-            )
-            if icon:
-                yield id_strings.case_search_icon_locale(module), icon
-            audio = module.search_config.search_label.audio_app_string(
-                lang,
-                for_default,
-                build_profile_id,
-            )
-            if audio:
-                yield id_strings.case_search_audio_locale(module), audio
 
             title_label = module.search_config.get_search_title_label(app, lang, for_default=for_default)
             if app.enable_case_search_title_translation:
@@ -412,7 +397,7 @@ def _create_case_search_app_strings(
             )
             yield (
                 id_strings.case_search_locale(module),
-                clean_trans(CaseSearch.search_label.default().label, langs)
+                clean_trans({'en': 'Search All Cases'}, langs)
             )
 
         for prop in module.search_config.properties:
