@@ -303,7 +303,7 @@ $(function () {
      * iframe in order to complete a full SSO sign in.
      */
     var checkIfSsoMessageReceivedFromExternalTab = function (event) {
-        if (event.originalEvent.key !== 'ssoInactivityMessage') {
+        if (event.originalEvent?.key !== 'ssoInactivityMessage') {
             // ignore other messages
             return;
         }
