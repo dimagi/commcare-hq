@@ -37,7 +37,7 @@ class TestPermanentlyDeleteEligibleData(TestCase):
         with override_settings(DATA_RETENTION_WINDOW=7):
             permanently_delete_eligible_data(dry_run=False)
 
-        XFormInstance.objects.get_form(form.form_id)
+        assert XFormInstance.objects.get_form(form.form_id) is not None
 
     @travel('2020-01-10')
     def test_does_not_delete_data_if_in_dry_run_mode(self):
@@ -46,4 +46,4 @@ class TestPermanentlyDeleteEligibleData(TestCase):
         with override_settings(DATA_RETENTION_WINDOW=7):
             permanently_delete_eligible_data(dry_run=True)
 
-        XFormInstance.objects.get_form(form.form_id)
+        assert XFormInstance.objects.get_form(form.form_id) is not None
