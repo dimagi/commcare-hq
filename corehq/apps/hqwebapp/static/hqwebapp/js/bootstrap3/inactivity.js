@@ -140,7 +140,7 @@ $(function () {
                 // Don't show the popup when user came from versions page
                 selectedAppId = urlParams.appId;
             }
-        } catch (error) {
+        } catch {
             log("Could not parse app id out of " + window.location.hash);
             return;
         }
@@ -223,7 +223,7 @@ $(function () {
                     try {
                         iframeInputValue = iframe.getElementsByTagName('input')[0].value;
                         outerCSRFInput.val(iframeInputValue);
-                    } catch (err) {
+                    } catch {
                         $button.removeClass("btn-default").addClass("btn-danger");
                         error = gettext("There was a problem, please refresh and try again");
                         $button.text(error);
