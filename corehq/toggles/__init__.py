@@ -941,8 +941,9 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Simple Case Search',
     TAG_FROZEN,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    help_link='https://dimagi.atlassian.net/wiki/spaces/uss/pages/3675717639/Simple+Case+Search',
+    description="Basic case search functionality",
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 CASE_SEARCH_DEPRECATED = StaticToggle(
@@ -958,7 +959,8 @@ CASE_SEARCH_ADVANCED = StaticToggle(
     'case_search_advanced',
     'Advanced Case Search',
     TAG_FROZEN,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    help_link='https://dimagi.atlassian.net/wiki/spaces/uss/pages/3676536837/Advanced+Case+Search',
+    description="Complex, fragile case search configuration for USS projects",
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
@@ -967,7 +969,8 @@ CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
     'case_search_related_lookups',
     'Case Search: Related Lookups',
     TAG_FROZEN,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    help_link='https://dimagi.atlassian.net/wiki/spaces/uss/pages/3676635261/Case+Search+Related+Lookups',
+    description="Allows access to less-performant, complex related lookups in case search. USS only.",
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[CASE_SEARCH_ADVANCED],
 )
