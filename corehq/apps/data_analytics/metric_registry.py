@@ -42,6 +42,10 @@ class DomainContext:
     def case_exports(self):
         return get_brief_exports(self.domain, 'case')
 
+    @property
+    def exports(self):
+        return self.case_exports + self.form_exports
+
 
 def get_metrics_registry():
     """
