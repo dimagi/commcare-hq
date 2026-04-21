@@ -6,6 +6,7 @@ from django.db.models import Q
 
 from dimagi.utils.couch.cache import cache_core
 
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.app_manager.const import WORKFLOW_DEFAULT
 from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
@@ -17,7 +18,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.locations.models import LocationType
 from corehq.apps.saved_reports.models import ReportConfig
-from corehq.apps.sso.models import TrustedIdentityProvider
+from corehq.apps.sso.models import IdentityProvider, TrustedIdentityProvider
 
 from .metric_registry import MetricDef
 
@@ -242,7 +243,21 @@ def calc_has_strong_passwords(domain_context):
 
 
 def calc_has_sso(domain_context):
-    """Check if domain has SSO configured."""
+    """Check if domain has SSO configured.
+
+    A domain is SSO-enabled if either:
+    - its BillingAccount owns an active IdentityProvider, or
+    - it trusts an active IdentityProvider owned by another account.
+    """
+    owner = BillingAccount.get_account_by_domain(domain_context.domain)
+    if (
+        owner
+        and IdentityProvider.objects.filter(
+            owner=owner,
+            is_active=True,
+        ).exists()
+    ):
+        return True
     return TrustedIdentityProvider.objects.filter(
         domain=domain_context.domain,
         identity_provider__is_active=True,

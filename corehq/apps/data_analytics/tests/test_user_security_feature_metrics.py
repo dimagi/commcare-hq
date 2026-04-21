@@ -164,16 +164,55 @@ class TestCalcHasStrongPasswords(SimpleTestCase):
         assert calc_has_strong_passwords(ctx) is False
 
 
+_feature_calcs = 'corehq.apps.data_analytics.feature_calcs'
+@patch(f'{_feature_calcs}.BillingAccount.get_account_by_domain')
+@patch(f'{_feature_calcs}.TrustedIdentityProvider.objects')
+@patch(f'{_feature_calcs}.IdentityProvider.objects')
 class TestCalcHasSso(SimpleTestCase):
-
-    @patch('corehq.apps.sso.models.TrustedIdentityProvider.objects')
-    def test_true_when_sso_configured(self, mock_manager):
-        mock_manager.filter.return_value.exists.return_value = True
+    def test_true_when_owner_has_active_idp(
+        self,
+        mock_idp,
+        mock_trusted,
+        mock_get_owner,
+    ):
+        mock_get_owner.return_value = MagicMock()
+        mock_idp.filter.return_value.exists.return_value = True
+        mock_trusted.filter.return_value.exists.return_value = False
         ctx = _make_ctx()
         assert calc_has_sso(ctx) is True
 
-    @patch('corehq.apps.sso.models.TrustedIdentityProvider.objects')
-    def test_false_when_no_sso(self, mock_manager):
-        mock_manager.filter.return_value.exists.return_value = False
+    def test_true_when_domain_trusts_active_idp(
+        self,
+        mock_idp,
+        mock_trusted,
+        mock_get_owner,
+    ):
+        mock_get_owner.return_value = MagicMock()
+        mock_idp.filter.return_value.exists.return_value = False
+        mock_trusted.filter.return_value.exists.return_value = True
+        ctx = _make_ctx()
+        assert calc_has_sso(ctx) is True
+
+    def test_false_when_no_sso(
+        self,
+        mock_idp,
+        mock_trusted,
+        mock_get_owner,
+    ):
+        mock_get_owner.return_value = MagicMock()
+        mock_idp.filter.return_value.exists.return_value = False
+        mock_trusted.filter.return_value.exists.return_value = False
         ctx = _make_ctx()
         assert calc_has_sso(ctx) is False
+
+    def test_false_when_no_billing_account(
+        self,
+        mock_idp,
+        mock_trusted,
+        mock_get_owner,
+    ):
+        mock_get_owner.return_value = None
+        mock_trusted.filter.return_value.exists.return_value = False
+        ctx = _make_ctx()
+        assert calc_has_sso(ctx) is False
+        mock_idp.filter.assert_not_called()
