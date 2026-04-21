@@ -1,0 +1,127 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+
+{% block page_content %}
+  {% if endpoints %}
+    <table class="table table-striped">
+      <caption class="visually-hidden">
+        {% trans "Case Search Endpoints" %}
+      </caption>
+      <thead>
+        <tr>
+          <th>{% trans "Name" %}</th>
+          <th>{% trans "Case Type" %}</th>
+          <th>{% trans "Current Version" %}</th>
+          <th>{% trans "Created" %}</th>
+          <th>{% trans "Actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for endpoint in endpoints %}
+          <tr>
+            <td>{{ endpoint.name }}</td>
+            <td>{{ endpoint.target_name }}</td>
+            <td>
+              {% if endpoint.current_version %}
+                <span class="badge bg-secondary"
+                  >v{{ endpoint.current_version.version_number }}</span
+                >
+              {% else %}
+                <span class="text-muted">{% trans "No version" %}</span>
+              {% endif %}
+            </td>
+            <td>{{ endpoint.created_at|date:"N j, Y" }}</td>
+            <td>
+              <a
+                href="{% url 'case_search_endpoint_edit' domain endpoint.id %}"
+                class="btn btn-sm btn-outline-primary me-1"
+                aria-label="{% blocktrans with name=endpoint.name %}Edit
+                {{ name }}{% endblocktrans %}"
+              >
+                {% trans "Edit" %}
+              </a>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger"
+                data-bs-toggle="modal"
+                data-bs-target="#deactivate-modal-{{ endpoint.id }}"
+                aria-label="{% blocktrans with name=endpoint.name %}Deactivate
+                {{ name }}{% endblocktrans %}"
+              >
+                {% trans "Deactivate" %}
+              </button>
+
+              <div
+                class="modal fade"
+                id="deactivate-modal-{{ endpoint.id }}"
+                tabindex="-1"
+                aria-labelledby="deactivate-modal-label-{{ endpoint.id }}"
+                aria-hidden="true"
+              >
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5
+                        class="modal-title"
+                        id="deactivate-modal-label-{{ endpoint.id }}"
+                      >
+                        {% trans "Deactivate Endpoint" %}
+                      </h5>
+                      <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="{% trans "Close" %}"
+                      ></button>
+                    </div>
+                    <div class="modal-body">
+                      {% blocktrans with name=endpoint.name %}
+                        Are you sure you want to deactivate
+                        <strong>{{ name }}</strong>?
+                      {% endblocktrans %}
+                    </div>
+                    <div class="modal-footer">
+                      <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                      >
+                        {% trans "Cancel" %}
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-danger"
+                        data-bs-dismiss="modal"
+                        data-deactivate-url="{% url 'case_search_endpoint_deactivate' domain endpoint.id %}"
+                        data-csrf-token="{{ csrf_token }}"
+                        onclick="
+                          const btn = this;
+                          fetch(btn.dataset.deactivateUrl, {
+                            method: 'POST',
+                            headers: {'X-CSRFToken': btn.dataset.csrfToken},
+                          }).then(() => btn.closest('tr').remove());
+                        "
+                      >
+                        {% trans "Deactivate" %}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-muted">{% trans "No endpoints configured yet." %}</p>
+  {% endif %}
+  <div class="mb-3">
+    <a
+      href="{% url 'case_search_endpoint_new' domain %}"
+      class="btn btn-primary"
+    >
+      <i class="fa fa-plus"></i> {% trans "New Endpoint" %}
+    </a>
+  </div>
+{% endblock page_content %}
