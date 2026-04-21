@@ -30,7 +30,6 @@ from corehq.apps.app_manager.views.forms import (
     _get_linkable_forms_context,
     get_apps_modules,
 )
-from corehq.apps.app_manager.views.view_generic import _get_specific_media
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.apps import app_adapter
