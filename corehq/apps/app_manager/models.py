@@ -2240,7 +2240,6 @@ class CaseSearch(DocumentSchema):
     - search_label: Removed; search button always uses default label (Apr 2026)
       These fields may still exist in CouchDB documents but are no longer used.
     """
-    command_label = LabelProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
