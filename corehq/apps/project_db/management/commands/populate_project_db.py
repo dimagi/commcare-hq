@@ -23,17 +23,6 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain', help="The project domain to populate.")
-        group = parser.add_mutually_exclusive_group()
-        group.add_argument(
-            '--all',
-            action='store_true',
-            dest='all_case_types',
-            help="Populate tables for all active case types on the domain.",
-        )
-        group.add_argument(
-            '--case-types',
-            help="Comma-separated list of case types to populate.",
-        )
         parser.add_argument(
             '--since',
             help=(
@@ -42,39 +31,18 @@ class Command(BaseCommand):
             ),
         )
 
-    def handle(self, domain, all_case_types, case_types, since, **options):
-        available_types = list(
+    def handle(self, domain, since, **options):
+        case_types = list(
             CaseType.objects.filter(domain=domain, is_deprecated=False)
             .values_list('name', flat=True)
             .order_by('name')
         )
 
-        if not available_types:
+        if not case_types:
             raise CommandError(
                 f"No active case types found for domain '{domain}'. "
                 "Check that the data dictionary is populated."
             )
-
-        if not all_case_types and not case_types:
-            self.stderr.write(
-                f"Please specify --all or --case-types. "
-                f"Active case types for '{domain}':\n"
-            )
-            for name in available_types:
-                self.stderr.write(f"  - {name}\n")
-            return
-
-        if case_types:
-            requested = [t.strip() for t in case_types.split(',')]
-            unknown = set(requested) - set(available_types)
-            if unknown:
-                raise CommandError(
-                    f"Unknown case types: {', '.join(sorted(unknown))}. "
-                    f"Available: {', '.join(available_types)}"
-                )
-            selected_types = requested
-        else:
-            selected_types = available_types
 
         start_date = None
         if since:
@@ -86,7 +54,7 @@ class Command(BaseCommand):
         engine = get_project_db_engine()
         tables = sync_domain_tables(engine, domain)
 
-        for case_type in selected_types:
+        for case_type in case_types:
             table = tables[case_type]
             self._populate_case_type(
                 engine, domain, case_type, table, start_date,

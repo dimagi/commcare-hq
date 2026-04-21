@@ -36,6 +36,7 @@ class Command(BaseCommand):
         parser.add_argument('sql', help="SQL query to execute.")
 
     def handle(self, domain, sql, **options):
+        start = time.monotonic()
         engine = get_project_db_engine()
         schema_name = get_schema_name(domain)
 
@@ -49,12 +50,11 @@ class Command(BaseCommand):
             # Use execution_options postgresql_readonly in sqlalchemy 1.4+
             conn.execute(sqlalchemy.text('SET TRANSACTION READ ONLY'))
             set_local_search_path(conn, domain)
-            start = time.monotonic()
             result = conn.execute(sqlalchemy.text(sql))
             rows = result.fetchall()
-            elapsed = time.monotonic() - start
             columns = list(result.keys())
 
+        elapsed = time.monotonic() - start
         self.stdout.write(f"{len(rows)} rows returned in {elapsed:.3f}s.")
         if not rows:
             return
