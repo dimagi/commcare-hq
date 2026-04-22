@@ -285,6 +285,7 @@ cleanup
  0016_add_deletedsqldoc
  0017_delete_oauth_integrations_models
  0018_delete_ewsghana_models
+ 0019_alter_deletedsqldoc_table
 cloudcare
  0001_initial
  0002_sqlapplicationaccess
