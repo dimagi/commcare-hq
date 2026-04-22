@@ -997,6 +997,13 @@ CASE_SEARCH_CACHE_KEY = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
+CASE_SEARCH_ENDPOINTS = StaticToggle(
+    'case_search_endpoints',
+    'Case Search Endpoints: configurable query builder for case search',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     'ush_case_list_multi_select',
     'USH: Allow selecting multiple cases from the case list',
