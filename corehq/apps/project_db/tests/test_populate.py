@@ -282,44 +282,19 @@ class TestCaseToRowDict:
         }
         assert set(result.keys()) == expected_keys
 
-    def test_parent_index_extracted(self):
-        case = _make_case(live_indices=[
-            _make_index('parent', 'parent-case-001'),
-        ])
+    @pytest.mark.parametrize('indices, expected_parent, expected_host', [
+        ([],                                                    None, None),
+        ([_make_index('parent', 'p1')],                         'p1', None),
+        ([_make_index('host',   'h1')],                         None, 'h1'),
+        ([_make_index('parent', 'p1'),
+          _make_index('host',   'h1')],                         'p1', 'h1'),
+        ([_make_index('custom', 'x1')],                         None, None),
+    ])
+    def test_index_extraction(self, indices, expected_parent, expected_host):
+        case = _make_case(live_indices=indices)
         result = case_to_row_dict(case)
-        assert result['parent_id'] == 'parent-case-001'
-        assert result['host_id'] is None
-
-    def test_host_index_extracted(self):
-        case = _make_case(live_indices=[
-            _make_index('host', 'host-case-001'),
-        ])
-        result = case_to_row_dict(case)
-        assert result['host_id'] == 'host-case-001'
-        assert result['parent_id'] is None
-
-    def test_both_indices_extracted(self):
-        case = _make_case(live_indices=[
-            _make_index('parent', 'parent-case-001'),
-            _make_index('host', 'host-case-001'),
-        ])
-        result = case_to_row_dict(case)
-        assert result['parent_id'] == 'parent-case-001'
-        assert result['host_id'] == 'host-case-001'
-
-    def test_no_indices_gives_none(self):
-        case = _make_case()
-        result = case_to_row_dict(case)
-        assert result['parent_id'] is None
-        assert result['host_id'] is None
-
-    def test_non_standard_index_not_captured(self):
-        case = _make_case(live_indices=[
-            _make_index('custom_rel', 'other-case-001'),
-        ])
-        result = case_to_row_dict(case)
-        assert result['parent_id'] is None
-        assert result['host_id'] is None
+        assert result['parent_id'] == expected_parent
+        assert result['host_id'] == expected_host
 
     def test_case_json_keys_cannot_collide_with_fixed_fields(self):
         """The prop. prefix ensures case_json keys never collide with
