@@ -34,7 +34,7 @@ class TestFullStack:
     def test_full_stack(self):
         self._create_data_dictionary()
         tables = self._build_and_create_tables()
-        self._populate(tables)
+        self._populate()
         self._verify_single_table_query(tables['patient'])
         self._verify_parent_join(tables['patient'], tables['household'])
 
@@ -53,7 +53,7 @@ class TestFullStack:
         self._schemas.update(t.schema for t in tables.values())
         return tables
 
-    def _populate(self, tables):
+    def _populate(self):
         household = CommCareCase(
             case_id='hh-001',
             type='household',
