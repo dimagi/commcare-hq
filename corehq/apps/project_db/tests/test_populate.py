@@ -186,25 +186,16 @@ class TestUpsertCaseTypeCoercion:
 # --- Coercion unit tests (no DB needed) ---
 
 
-class TestCoerceToDate:
-
-    def test_iso_date(self):
-        assert coerce_to_date('2024-03-15') == datetime.date(2024, 3, 15)
-
-    def test_iso_datetime(self):
-        assert coerce_to_date('2024-03-15T10:30:00') == datetime.date(2024, 3, 15)
-
-    def test_none(self):
-        assert coerce_to_date(None) is None
-
-    def test_empty_string(self):
-        assert coerce_to_date('') is None
-
-    def test_invalid_string(self):
-        assert coerce_to_date('not-a-date') is None
-
-    def test_partial_date(self):
-        assert coerce_to_date('2024-13-01') is None
+@pytest.mark.parametrize('value, expected', [
+    ('2024-03-15',          datetime.date(2024, 3, 15)),
+    ('2024-03-15T10:30:00', datetime.date(2024, 3, 15)),
+    (None,                  None),
+    ('',                    None),
+    ('not-a-date',          None),
+    ('2024-13-01',          None),
+])
+def test_coerce_to_date(value, expected):
+    assert coerce_to_date(value) == expected
 
 
 class TestCoerceToNumber:
