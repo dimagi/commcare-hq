@@ -20,7 +20,6 @@ class DeletedSQLDoc(models.Model):
     deleted_by = models.CharField(max_length=126, null=True)
 
     class Meta:
-        db_table = "cleanup_deletedsqldoc"
         constraints = [
             models.UniqueConstraint(fields=['doc_id', 'object_class_path'],
                                     name='deletedsqldoc_unique_id_and_type')

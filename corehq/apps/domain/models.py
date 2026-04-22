@@ -445,6 +445,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     ga_opt_out = BooleanProperty(default=False)
     orphan_case_alerts_warning = BooleanProperty(default=False)
+    exports_use_elasticsearch = BooleanProperty(default=False)
 
     # For domains that have been migrated to a different environment
     redirect_url = StringProperty()
@@ -969,32 +970,6 @@ class OperatorCallLimitSettings(models.Model):
             MaxValueValidator(CALL_LIMIT_MAXIMUM)
         ]
     )
-
-
-class SMSAccountConfirmationSettings(models.Model):
-    PROJECT_NAME_DEFAULT = "CommCare HQ"
-    PROJECT_NAME_MAX_LENGTH = 30
-    CONFIRMATION_LINK_EXPIRY_DAYS_DEFAULT = 14
-    CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM = 1
-    CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM = 30
-
-    domain = models.CharField(max_length=256, db_index=True)
-    project_name = models.CharField(
-        default=PROJECT_NAME_DEFAULT,
-        max_length=PROJECT_NAME_MAX_LENGTH,
-    )
-    confirmation_link_expiry_time = models.IntegerField(
-        default=CONFIRMATION_LINK_EXPIRY_DAYS_DEFAULT,
-        validators=[
-            MinValueValidator(CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM),
-            MaxValueValidator(CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM),
-        ]
-    )
-
-    @staticmethod
-    def get_settings(domain):
-        domain_obj, _ = SMSAccountConfirmationSettings.objects.get_or_create(domain=domain)
-        return domain_obj
 
 
 class AppReleaseModeSetting(models.Model):

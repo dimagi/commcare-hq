@@ -1,3 +1,4 @@
+import attr
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.throttle import BaseThrottle
 
@@ -12,12 +13,17 @@ from corehq.project_limits.shortcuts import get_standard_ratio_rate_definition
 from corehq.toggles import API_THROTTLE_WHITELIST
 
 
+# Weekly windows are intentionally omitted: sustained weekly quotas are
+# not useful for API traffic and result in hard-to-diagnose throttling
+# when a client's 7-day rolling volume hits the cap.
 api_rate_limiter = RateLimiter(
     feature_key='api',
     get_rate_limits=PerUserRateDefinition(
-        per_user_rate_definition=get_standard_ratio_rate_definition(events_per_day=1000),
+        per_user_rate_definition=attr.evolve(
+            get_standard_ratio_rate_definition(events_per_day=1000),
+            per_week=None,
+        ),
         constant_rate_definition=RateDefinition(
-            per_week=100,
             per_day=50,
             per_hour=30,
             per_minute=10,

@@ -140,44 +140,18 @@ outlined in the Mac setup [Supplementary Guide](https://github.com/dimagi/commca
 
 ## Downloading & Running CommCare HQ
 
-### Step 1: Create your virtual environment and activate it
+### Step 1: Clone this repo
 
-Create a virtualenv with `uv`:
 ```sh
-uv venv
-```
-Note: creating a virtualenv this way is not strictly necessary. It would be done
-automatically when `uv sync` is run below. However, `uv sync` does not activate
-the vitualenv.
-
-To activate the environment:
-```sh
-source .venv/bin/activate
+git clone https://github.com/dimagi/commcare-hq.git
+cd commcare-hq
+git submodule update --init --recursive
+git-hooks/install.sh
 ```
 
-For convenience, you can create an alias to activate virtual environments in
-".venv" and "venv" directories. To do that, add the following to your
-`.bashrc` or `.zshrc` file:
-```shell
-alias venv='if [[ -d .venv ]] ; then source .venv/bin/activate ; elif [[ -d venv ]] ; then source venv/bin/activate ; fi'
-```
-Then you can activate virtual environments with
-```shell
-$ venv
-```
+### Step 2: Install requirements and set up your virtual environment
 
-### Step 2: Clone this repo and install requirements
-
-1. Once all the dependencies are in order, please do the following:
-
-    ```sh
-    git clone https://github.com/dimagi/commcare-hq.git
-    cd commcare-hq
-    git submodule update --init --recursive
-    git-hooks/install.sh
-    ```
-
-2. Next, install the appropriate requirements (**only one is necessary**).
+1. Install the appropriate requirements (**only one is necessary**).
 
     NOTE: If this fails you may need to [install the prerequisite system dependencies](#prerequisites).
 
@@ -187,6 +161,23 @@ $ venv
 
     ```sh
     uv sync --compile-bytecode
+    ```
+
+    This will also create a virtual environment in `.venv` if one does not
+    already exist. To activate the environment:
+    ```sh
+    source .venv/bin/activate
+    ```
+
+    For convenience, you can create an alias to activate virtual environments in
+    ".venv" and "venv" directories. To do that, add the following to your
+    `.bashrc` or `.zshrc` file:
+    ```sh
+    alias venv='if [[ -d .venv ]] ; then source .venv/bin/activate ; elif [[ -d venv ]] ; then source venv/bin/activate ; fi'
+    ```
+    Then you can activate virtual environments with
+    ```sh
+    venv
     ```
 
     - Recommended for developers or others with custom requirements: create a
@@ -275,14 +266,14 @@ needs of most developers.
     source .venv/bin/activate
     ```
 
-3. Install `docker compose`
+2. Install `docker compose`
   - **Mac**: comes with Docker Desktop
   - **Linux**:
     ```sh
     sudo apt install docker-compose-plugin
     ```
 
-4. Ensure the elasticsearch config files are world-readable (their containers
+3. Ensure the elasticsearch config files are world-readable (their containers
    will fail to start otherwise).
 
     ```sh
@@ -300,7 +291,7 @@ needs of most developers.
    
    
 
-6. Bring up the docker containers.
+4. Bring up the docker containers.
 
     In either of the following commands, omit the `-d` option to keep the
     containers attached in the foreground.
@@ -311,11 +302,11 @@ needs of most developers.
     ./scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka minio formplayer
     ```
 
-   **Mac OS:** Note that you will encounter many issues at this stage.
-   We recommend visiting the Docker section in the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
+   **Mac OS:** You may encounter issues with formplayer and elasticsearch at this stage.
+   We recommend visiting the Docker section in the [Supplementary Guide](DEV_SETUP_MAC.md#Docker).
 
 
-7. If you are planning on running Formplayer from a binary or source, stop the
+5. If you are planning on running Formplayer from a binary or source, stop the
    formplayer container to avoid port collisions.
 
     ```sh
@@ -391,14 +382,14 @@ If you want to use a partitioned database, change
 You will also need to create the additional databases manually:
 
 ```sh
-$ psql -h localhost -p 5432 -U commcarehq
+psql -h localhost -p 5432 -U commcarehq
 ```
 
 (assuming that "commcarehq" is the username in `DATABASES` in
 `localsettings.py`). When prompted, use the password associated with the
 username, of course.
 
-```sh
+```sql
 commcarehq=# CREATE DATABASE commcarehq_proxy;
 CREATE DATABASE
 commcarehq=# CREATE DATABASE commcarehq_p1;
@@ -410,24 +401,24 @@ commcarehq=# \q
 If you are running formplayer through docker, you will need to create the
 database for the service
 
-```sh
+```sql
 commcarehq=# CREATE DATABASE formplayer;
 CREATE DATABASE
 ```
 Populate your database:
 
 ```sh
-$ ./manage.py sync_couch_views
-$ ./manage.py create_kafka_topics
-$ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
+./manage.py sync_couch_views
+./manage.py create_kafka_topics
+env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
 ```
 
 If you are using a partitioned database, populate the additional
 databases too, and configure PL/Proxy:
 
 ```sh
-$ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate_multi --noinput
-$ ./manage.py configure_pl_proxy_cluster --create_only
+env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate_multi --noinput
+./manage.py configure_pl_proxy_cluster --create_only
 ```
 
 You should run `./manage.py migrate` frequently, but only use the environment
@@ -444,8 +435,8 @@ you do not expect to be using the global changes feed. You can use
 `curl` to create the databases:
 
 ```sh
-$ curl -X PUT http://username:password@127.0.0.1:5984/_users
-$ curl -X PUT http://username:password@127.0.0.1:5984/_replicator
+curl -X PUT http://username:password@127.0.0.1:5984/_users
+curl -X PUT http://username:password@127.0.0.1:5984/_replicator
 ```
 
 where "username" and "password" are the values of "COUCH_USERNAME"
@@ -456,7 +447,7 @@ and "COUCH_PASSWORD" given in `COUCH_DATABASES` set in
 
 **Mac OS M1 Users:** If you see the following error, check the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
 ```sh
-ImportError: failed to find libmagic.  Check your installation
+> ImportError: failed to find libmagic.  Check your installation
 ```
 
 #### Troubleshooting Issues with `migrate`
@@ -496,12 +487,6 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
 
 - If you encounter an authorization error related to CouchDB, try going to your
   `localsettings.py` file and change `COUCH_PASSWORD` to an empty string.
-
-- If you get errors saying "Segmentation fault (core dumped)", with a warning like
-  "RuntimeWarning: greenlet.greenlet size changed, may indicate binary incompatibility.
-  Expected 144 from C header, got 152 from PyObject" check that your Python version is correct (3.9).
-  Alternatively, you can try upgrading `gevent` (`uv pip install --upgrade gevent`) to fix this error
-  on Python 3.8, but you may run into other issues!
 
 ### Step 6: Populate Elasticsearch
 
@@ -565,10 +550,10 @@ have locally, you might run into issues. Here are minimum version requirements
 for these packages.
 
 ```sh
-$ npm --version
-11.6.2
-$ node --version
-v24.11.1
+npm --version
+> 11.6.2
+node --version
+> v24.11.1
 ```
 
 On a clean Ubuntu 22.04 LTS install, the packaged nodejs version is expected to be v12. The
@@ -591,7 +576,7 @@ compile SASS, we need Dart Sass. There is a `sass` npm package that can be insta
 `npm install -g sass`, however this installs the pure javascript version without a binary. For speed in a
 development environment, it is recommended to install `sass` with homebrew:
 
-```shell
+```sh
 brew install sass/sass/sass
 ```
 

@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa
 from django.utils.translation import gettext_noop
 
 STATICALLY_ANALYZABLE_TRANSLATIONS = [

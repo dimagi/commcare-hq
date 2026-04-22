@@ -4850,16 +4850,31 @@ msgstr "USD %s"
 #, python-brace-format
 msgid ""
 "Your Automatic Payment for CommCare Account {account_name} is scheduled in "
+"{num_days} day"
+msgid_plural ""
+"Your Automatic Payment for CommCare Account {account_name} is scheduled in "
 "{num_days} days"
-msgstr ""
+msgstr[0] ""
+"Tu Pago Automático para la Cuenta CommCare {account_name} está programado en"
+" {num_days} días"
+msgstr[1] ""
+"Tu Pago Automático para la Cuenta CommCare {account_name} está programado en"
+" {num_days} días"
+msgstr[2] ""
 "Tu Pago Automático para la Cuenta CommCare {account_name} está programado en"
 " {num_days} días"
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
 #, python-brace-format
 msgid ""
+"Your CommCare Billing Statement for {account_name} is due in {num_days} day"
+msgid_plural ""
 "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
-msgstr ""
+msgstr[0] ""
+"Tu estado de cuenta de CommCare para {account_name} vence en {num_days} días"
+msgstr[1] ""
+"Tu estado de cuenta de CommCare para {account_name} vence en {num_days} días"
+msgstr[2] ""
 "Tu estado de cuenta de CommCare para {account_name} vence en {num_days} días"
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
@@ -9697,6 +9712,34 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
+"              <strong>Save to Case question is missing a case type.</strong>\n"
+"              Please add the \"case_type\" property mapping for \"%(case_tag)s\"\n"
+"            "
+msgstr ""
+"\n"
+"              <strong>La pregunta Guardar en Caso no tiene un tipo de caso.</strong>\n"
+"              Por favor agrega la asignación de propiedad \"case_type\" para \"%(case_tag)s\"\n"
+"            "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              <strong>Save to Case question is missing a case name.</strong>\n"
+"              Please add the \"case_name\" property mapping for \"%(case_tag)s\"\n"
+"            "
+msgstr ""
+"\n"
+"              <strong>La pregunta Guardar en Caso no tiene un nombre de caso.</strong>\n"
+"              Por favor agrega la asignación de propiedad \"case_name\" para \"%(case_tag)s\"\n"
+"            "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
+#, python-format
+msgid ""
+"\n"
 "              Multimedia case property \"%(path)s\" is not supported on apps on\n"
 "              or before v2.5.\n"
 "            "
@@ -10250,18 +10293,20 @@ msgid ""
 "                but cases are not available for this form. Please either remove\n"
 "                the case reference or (1) make sure that the case list is set to\n"
 "                display the case list first and then form, and (2) make sure\n"
-"                that all forms in this case list update or btn-close a case (which  \n"
-"                means registration forms must go in a different case list).\n"
+"                that all forms in this case list update or btn-close a case\n"
+"                (which  means registration forms must go\n"
+"                in a different case list).\n"
 "              "
 msgstr ""
 "\n"
 "                Tu condición de visualización para el formulario\n"
 "                <a href=\"%(form_url)s\">%(form_name)s</a> hace referencia a un caso,\n"
-"                pero los casos no están disponibles para este formulario. Por favor, elimina\n"
+"                pero los casos no están disponibles para este formulario. Por favor elimina\n"
 "                la referencia al caso o (1) asegúrate de que la lista de casos esté configurada para\n"
 "                mostrar primero la lista de casos y luego el formulario, y (2) asegúrate\n"
-"                de que todos los formularios en esta lista de casos actualicen o cierren un caso (lo que  \n"
-"                significa que los formularios de registro deben ir en una lista de casos diferente).\n"
+"                de que todos los formularios en esta lista de casos actualicen o cierren un caso\n"
+"                (lo que significa que los formularios de registro deben ir\n"
+"                en una lista de casos diferente).\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
@@ -10271,15 +10316,17 @@ msgid ""
 "                are not available. Please either remove the case reference or\n"
 "                (1) make sure that the case list is set to display the case list\n"
 "                first and then form, and (2) make sure that all forms in this\n"
-"                case list update or btn-close a case (which means registration forms  \n"
-"                must go in a different case list).\n"
+"                case list update or btn-close a case (which means registration\n"
+"                forms  must go in a different case\n"
+"                list).\n"
 "              "
 msgstr ""
 "\n"
 "                Tienes una condición de visualización que hace referencia a un caso, pero los casos\n"
-"                no están disponibles. Por favor, elimina la referencia al caso o\n"
+"                no están disponibles. Por favor elimina la referencia al caso o\n"
 "                (1) asegúrate de que la lista de casos esté configurada para mostrar primero la lista de casos\n"
-"                y luego el formulario, y (2) asegúrate de que todos los formularios en esta lista de casos actualicen o cierren un caso (lo que significa que los formularios de registro  \n"
+"                y luego el formulario, y (2) asegúrate de que todos los formularios en esta lista de casos\n"
+"                actualicen o cierren un caso (lo que significa que los formularios de registro\n"
 "                deben ir en una lista de casos diferente).\n"
 "              "
 
@@ -23283,6 +23330,22 @@ msgstr "Suscripción Actual"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#, python-format
+msgid ""
+"\n"
+"            For more information on Subscription Management & Billing, please\n"
+"            see the\n"
+"            <a href=\"%(help_url)s\" target=\"_blank\">Help Site</a>.\n"
+"          "
+msgstr ""
+"\n"
+"            Para más información sobre Gestión de Suscripciones y Facturación, por favor\n"
+"            consulta el\n"
+"            <a href=\"%(help_url)s\" target=\"_blank\">Sitio de Ayuda</a>.\n"
+"          "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/views/accounting.py
 #: corehq/apps/styleguide/examples/bootstrap5/select2_manual_form.py
 msgid "Plan"
@@ -25521,6 +25584,28 @@ msgstr "Ingresar"
 msgid "Log In :: CommCare HQ"
 msgstr "Iniciar sesión :: CommCare HQ"
 
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/urls.py
+msgid "Password Change Complete"
+msgstr "Cambio de Contraseña Realizado"
+
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+msgid "Your password was successfully changed."
+msgstr "Su contraseña fue cambiada exitosamente."
+
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+msgid "Sign In"
+msgstr "Iniciar Sesión"
+
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 msgid ""
 "\n"
@@ -25630,25 +25715,6 @@ msgstr ""
 #: corehq/apps/users/forms.py
 msgid "Reset Password"
 msgstr "Restablecer Contraseña"
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/urls.py
-msgid "Password Change Complete"
-msgstr "Cambio de Contraseña Realizado"
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-msgid "Your password was successfully changed."
-msgstr "Su contraseña fue cambiada exitosamente."
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
-msgid "Sign In"
-msgstr "Iniciar Sesión"
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
 #: corehq/apps/domain/urls.py
@@ -32074,7 +32140,8 @@ msgstr ""
 msgid "Confirm the username"
 msgstr "Confirme el nombre de usuario"
 
-#: corehq/apps/hqadmin/forms.py corehq/apps/integration/payments/filters.py
+#: corehq/apps/hqadmin/forms.py corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/payments/filters.py
 msgid "Verified by"
 msgstr "Verificado por"
 
@@ -35197,10 +35264,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                      %(p)s per page\n"
-#| "                    "
 msgid ""
 "\n"
 "                      %(p)s\n"
@@ -35386,17 +35449,17 @@ msgid "Module ID"
 msgstr "ID del módulo"
 
 #: corehq/apps/integration/kyc/filters.py
-#: corehq/apps/integration/kyc/tables.py
-#: corehq/apps/integration/payments/tables.py
-msgid "KYC Status"
-msgstr "Estado KYC"
-
-#: corehq/apps/integration/kyc/filters.py
 #: corehq/apps/integration/payments/filters.py
 #: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
 #: corehq/apps/userreports/reports/filters/factory.py
 msgid "Show all"
 msgstr "Mostrar todos"
+
+#: corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/kyc/tables.py
+#: corehq/apps/integration/payments/tables.py
+msgid "KYC Status"
+msgstr "Estado KYC"
 
 #: corehq/apps/integration/kyc/filters.py
 #: corehq/apps/integration/payments/filters.py
@@ -35428,6 +35491,7 @@ msgstr ""
 "apellido."
 
 #: corehq/apps/integration/kyc/forms.py
+#: corehq/apps/integration/payments/forms.py
 msgid "Provider"
 msgstr "Proveedor"
 
@@ -35796,6 +35860,14 @@ msgstr "Sandbox"
 msgid "Live"
 msgstr "En vivo"
 
+#: corehq/apps/integration/payments/models.py
+msgid "MTN Money"
+msgstr "MTN Money"
+
+#: corehq/apps/integration/payments/models.py
+msgid "Orange Cameroon Money"
+msgstr "Orange Cameroon Money"
+
 #: corehq/apps/integration/payments/services.py
 msgid "Payment request failed"
 msgstr "La solicitud de pago falló"
@@ -35817,6 +35889,10 @@ msgid "Only payments with '{}' set to 'true' are eligible for verification."
 msgstr ""
 "Solo los pagos con '{}' establecido en 'true' son elegibles para "
 "verificación."
+
+#: corehq/apps/integration/payments/services.py
+msgid "Unsupported payment provider"
+msgstr "Proveedor de pago no compatible"
 
 #: corehq/apps/integration/payments/services.py
 msgid "Invalid payee details"
@@ -35970,22 +36046,26 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"      Successfully verified %(success_count)s rows!\n"
+"      Successfully verified %(success_count)s rows! Updated status will\n"
+"      reflect shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      ¡%(success_count)s filas verificadas exitosamente!\n"
+"      ¡%(success_count)s filas verificadas con éxito! El estado actualizado se\n"
+"      reflejará en breve.\n"
 "    "
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_alert.html
 #, python-format
 msgid ""
 "\n"
-"      Failed to verify %(failure_count)s rows!\n"
+"      Failed to verify %(failure_count)s rows! Updated status will reflect\n"
+"      shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      ¡No se pudo verificar %(failure_count)s filas!\n"
+"      ¡No se pudieron verificar %(failure_count)s filas! El estado actualizado se reflejará\n"
+"      en breve.\n"
 "    "
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
@@ -36045,11 +36125,13 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"      Failed to verify %(failure_count)s records for payments!\n"
+"      Failed to verify %(failure_count)s records for payments! Updated status\n"
+"      will reflect shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      ¡No se pudo verificar %(failure_count)s registros para pagos!\n"
+"      ¡No se pudieron verificar %(failure_count)s registros para pagos! El estado actualizado\n"
+"      se reflejará en breve.\n"
 "    "
 
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
@@ -40826,7 +40908,6 @@ msgstr ""
 "Opcional. Deja en blanco para usar el valor predeterminado (medianoche)."
 
 #: corehq/apps/reports/filters/simple.py
-#| msgid "Leave blank to fetch full project"
 msgid "Optional. Leave blank to include the full day."
 msgstr "Opcional. Deja en blanco para incluir el día completo."
 
@@ -45507,6 +45588,18 @@ msgstr "No se encontraron tokens FCM para el destinatario."
 #: corehq/apps/sms/models.py
 msgid "Recipient did not match filters:"
 msgstr "El destinatario no cumple con los filtros:"
+
+#: corehq/apps/sms/models.py
+msgid "Connect user not found for recipient."
+msgstr "Usuario/a Connect no encontrado/a para el destinatario."
+
+#: corehq/apps/sms/models.py
+msgid ""
+"Only Mobile workers with Connect accounts are supported as recipients for "
+"Connect Message and Surveys."
+msgstr ""
+"Solo se admiten Trabajadores/as Móviles con cuentas Connect como "
+"destinatarios/as para Mensajes y Encuestas Connect."
 
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
@@ -52390,11 +52483,6 @@ msgstr "Enviar correo de confirmación"
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                              Would you like to send the account confirmation\n"
-#| "                              email to this account?\n"
-#| "                            "
 msgid ""
 "\n"
 "                            Would you like to send the account confirmation\n"
@@ -52408,12 +52496,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                              The user will be sent an email with instructions\n"
-#| "                              to set a password and be able to login to this\n"
-#| "                              project.\n"
-#| "                            "
 msgid ""
 "\n"
 "                            The user will be sent an email with instructions to\n"
@@ -55020,16 +55102,6 @@ msgstr "Fecha de la última ocurrencia:"
 #: corehq/messaging/scheduling/forms.py
 msgid ""
 "\n"
-"                            Connect Messages can only be sent to users who have a PersonalID account.\n"
-"                        "
-msgstr ""
-"\n"
-"                            Los mensajes Connect solo pueden enviarse a personas usuarias que tengan una cuenta PersonalID.\n"
-"                        "
-
-#: corehq/messaging/scheduling/forms.py
-msgid ""
-"\n"
 "                            The \"Case's Parent Case\" Recipient setting only works for Parent / Child relationships,\n"
 "                            not Parent / Extension or Host / Extension relationships.\n"
 "                        "
@@ -55093,8 +55165,13 @@ msgstr ""
 "favor, selecciona nuevamente a la(s) persona(s) usuaria(s)."
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Connect Messages can only be sent to users."
-msgstr "Los mensajes Connect solo pueden enviarse a personas usuarias."
+#, python-brace-format
+msgid ""
+"The following recipient type(s) are not supported for Connect Messages: "
+"{types}"
+msgstr ""
+"El/los siguiente(s) tipo(s) de destinatario no son compatibles para Mensajes"
+" Connect: {types}"
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Please specify the groups(s) or deselect user groups as recipients"
@@ -55444,9 +55521,6 @@ msgstr ""
 "de correo electrónico"
 
 #: corehq/messaging/scheduling/forms.py
-#| msgid ""
-#| "Push Notifications is no longer available on this environment. Please "
-#| "contact Administrator."
 msgid ""
 "Push Notifications is no longer available. Please contact Administrator."
 msgstr ""
@@ -59723,6 +59797,38 @@ msgstr "Las columnas requeridas son {column_names}"
 msgid "Enter valid JSON"
 msgstr "Ingrese un JSON válido"
 
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      Successfully verified %(success_count)s rows!\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      ¡%(success_count)s filas verificadas exitosamente!\n"
+#~ "    "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      Failed to verify %(failure_count)s records for payments!\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      ¡No se pudo verificar %(failure_count)s registros para pagos!\n"
+#~ "    "
+
+#~ msgid ""
+#~ "\n"
+#~ "                            Connect Messages can only be sent to users who have a PersonalID account.\n"
+#~ "                        "
+#~ msgstr ""
+#~ "\n"
+#~ "                            Los mensajes Connect solo pueden enviarse a personas usuarias que tengan una cuenta PersonalID.\n"
+#~ "                        "
+
+#~ msgid "Connect Messages can only be sent to users."
+#~ msgstr "Los mensajes Connect solo pueden enviarse a personas usuarias."
+
 #~ msgid "no table"
 #~ msgstr "sin tabla"
 
@@ -60917,11 +61023,6 @@ msgstr "Ingrese un JSON válido"
 #~ msgstr ""
 #~ "Las notificaciones push no están disponibles para su proyecto. Por favor, "
 #~ "contacte a la persona administradora."
-
-#~ msgid "'{}' recipient types are not supported for Push Notifications"
-#~ msgstr ""
-#~ "Los tipos de destinatario '{}' no son compatibles con las notificaciones "
-#~ "push"
 
 #~ msgid "Application Testing"
 #~ msgstr "Pruebas de la aplicación"

@@ -238,7 +238,8 @@ class ApiKeyFallbackBackend(object):
 
             for key in keys_qs:
                 if key.plaintext_key == password:
-                    request.skip_two_factor_check = True
+                    request.api_key_authenticated = True
+                    request.bypass_two_factor = True
                     return user
             return None
         except User.DoesNotExist:
