@@ -18,7 +18,7 @@ from ..metric_registry import DomainContext
 def _make_ctx(apps=None, domain_attrs=None):
     domain_obj = MagicMock()
     domain_obj.name = 'test'
-    domain_obj.applications.return_value = apps or []
+    domain_obj.full_applications.return_value = apps or []
     domain_obj.has_custom_logo = False
     if domain_attrs:
         for k, v in domain_attrs.items():

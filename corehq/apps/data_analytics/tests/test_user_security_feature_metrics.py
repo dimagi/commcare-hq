@@ -18,7 +18,7 @@ from ..feature_calcs import (
 def _make_ctx(apps=None, **domain_attrs):
     domain_obj = MagicMock()
     domain_obj.name = 'test'
-    domain_obj.applications.return_value = apps or []
+    domain_obj.full_applications.return_value = apps or []
     for k, v in domain_attrs.items():
         setattr(domain_obj, k, v)
     return DomainContext(domain_obj)

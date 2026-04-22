@@ -4,8 +4,11 @@ from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.data_analytics.metric_registry import DomainContext
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.apps import app_adapter
+from corehq.apps.es.tests.utils import es_test
 
 
+@es_test(requires=[app_adapter], setup_class=True)
 class TestDomainContextLoadsFullApps(TestCase):
     domain = 'data-analytics-apps-test'
 
@@ -22,13 +25,12 @@ class TestDomainContextLoadsFullApps(TestCase):
             ).to_json()
         )
         app.save()
-        cls.addClassCleanup(app.delete)
+        cls.addClassCleanup(app.delete_app)
         cls.addClassCleanup(cls.project.delete)
 
     def test_domain_context_apps_have_modules(self):
         domain_obj = Domain.get_by_name(self.domain)
         ctx = DomainContext(domain_obj)
         [app] = ctx.apps
-        modules = app.get_modules()
-        assert len(modules) == 1
-        assert modules[0].case_type == 'patient'
+        [module] = list(app.get_modules())
+        assert module.case_type == 'patient'
