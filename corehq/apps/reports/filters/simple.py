@@ -111,10 +111,10 @@ class IPAddressFilter(BaseSimpleFilter):
         return results
 
 
-class BaseURLFilter(BaseSimpleFilter):
+class BasePathFilter(BaseSimpleFilter):
     template = "reports/filters/bootstrap3/textarea_with_select.html"
     placeholder = ''
-    mode_slug = None  # override in subclass: e.g. 'url_include_mode'
+    mode_slug = None  # override in subclass: e.g. 'path_include_mode'
 
     @property
     def selected_mode(self):
@@ -134,24 +134,24 @@ class BaseURLFilter(BaseSimpleFilter):
         }
 
 
-class URLIncludeFilter(BaseURLFilter):
-    slug = 'url_include'
-    label = gettext_lazy("URL Include")
-    mode_slug = 'url_include_mode'
-    placeholder = '/a/domain/api/v1/'
+class PathIncludeFilter(BasePathFilter):
+    slug = 'path_include'
+    label = gettext_lazy("URL Path Include")
+    mode_slug = 'path_include_mode'
+    placeholder = '/a/domain/api/v0.5/'
     help_inline = gettext_lazy(
-        "One URL pattern per line. Patterns are OR'd together. "
-        "Leave blank to include all URLs."
+        "One URL path pattern per line. Patterns are OR'd together. "
+        "Leave blank to include all paths."
     )
 
 
-class URLExcludeFilter(BaseURLFilter):
-    slug = 'url_exclude'
-    label = gettext_lazy("URL Exclude")
-    mode_slug = 'url_exclude_mode'
-    placeholder = '/a/domain/heartbeat/'
+class PathExcludeFilter(BasePathFilter):
+    slug = 'path_exclude'
+    label = gettext_lazy("URL Path Exclude")
+    mode_slug = 'path_exclude_mode'
+    placeholder = '/a/domain/phone/heartbeat/'
     help_inline = gettext_lazy(
-        "One URL pattern per line. Matching rows are excluded. "
+        "One URL path pattern per line. Matching rows are excluded. "
         "Patterns are OR'd (any match excludes the row)."
     )
 

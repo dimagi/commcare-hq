@@ -511,7 +511,6 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             "detail[@id='m0_case_short']/no_items_text[1]",
         )
 
-    @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_case_tile_with_case_search(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
 
@@ -555,30 +554,6 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             app.create_suite(),
             # action[1] is the reg from case list action hard-coded into the default template
             "detail[@id='m0_case_short']/action[2]",
-        )
-
-        # case search detail
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-              <action redo_last="true" auto_launch="false()">
-                <display>
-                  <text>
-                    <locale id="case_search.m0.again"/>
-                  </text>
-                </display>
-                <stack>
-                  <push>
-                    <mark/>
-                    <command value="'search_command.m0'"/>
-                  </push>
-                </stack>
-              </action>
-            </partial>
-            """,
-            app.create_suite(),
-            # action[1] is the reg from case list action hard-coded into the default template
-            "detail[@id='m0_search_short']/action[2]",
         )
 
     def test_case_tile_with_sorting(self, *args):

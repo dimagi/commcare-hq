@@ -199,12 +199,12 @@
                description: '{% trans "Only save the answer if form submission will change the property from its previous value." %}',
                placement: 'left'
              }"></span>
-@@ -271,26 +271,26 @@
+@@ -271,34 +271,35 @@
        </thead>
  
        <tbody data-bind="foreach: visible_case_properties">
--      <tr class="form-group"
-+      <tr class="form-group"  {# todo B5: css-form-group #}
+-      <tr class="form-group case-property-mapping"
++      <tr class="form-group case-property-mapping"  {# todo B5: css-form-group #}
            data-bind="css: {
 -                      'has-error': validate,
 +                      'has-error': validate,  {# todo B5: css-has-error #}
@@ -223,6 +223,16 @@
 +        <td data-bind="class: $parent.saveOnlyEditedFormFieldsEnabled ? 'col-md-5' : 'col-md-6'">
            <div class="full-width-select2"
                 data-bind="template: 'case-config:case-properties:question'"></div>
+           <div class="alert alert-warning mt-2" data-bind="visible: $data.conflictingDelete?.()">
+-            <button class="close" aria-label="close" data-bind="click: $parent.dismissConflictingDelete">&times;</button>
+             <p class="alert-heading">
+               <i class="fa fa-triangle-exclamation"></i>
+               {% trans "Property mapping concurrently changed and deleted" %}
+             </p>
+             <p>{% trans "Dismiss this alert to keep the mapping." %}</p>
++            <button type="button" class="btn-close" aria-label="{% trans_html_attr "Close" %}"
++                    data-bind="click: $parent.dismissConflictingDelete"></button>
+           </div>
          </td>
 -        <td class="text-center col-sm-1">
 +        <td class="text-center col-md-1">
@@ -233,7 +243,7 @@
            <div class="full-width-select2"
                 data-bind="template: {
                              name: 'case-config:case-properties:property',
-@@ -333,8 +333,8 @@
+@@ -341,8 +342,8 @@
              <p data-bind="text: $data.description"></p>
            <!-- /ko -->
          </td>
@@ -244,7 +254,7 @@
                   data-bind="click: $parent.switchSaveOnlyIfEdited,
                              checked: $data.save_only_if_edited,
                              disabled: $parent.hasPrivilege"
-@@ -344,7 +344,7 @@
+@@ -352,7 +353,7 @@
        </tbody>
      </table>
      <div data-bind="if: searchAndFilter">

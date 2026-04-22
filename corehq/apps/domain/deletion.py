@@ -345,9 +345,6 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('accounting', _terminate_subscriptions, ['Subscription']),
     CustomDeletion('form_processor', delete_all_cases, ['CommCareCase']),
     CustomDeletion('form_processor', delete_all_forms, ['XFormInstance']),
-    ModelDeletion('aggregate_ucrs', 'AggregateTableDefinition', 'domain', [
-        'PrimaryColumn', 'SecondaryColumn', 'SecondaryTableDefinition', 'TimeAggregationDefinition',
-    ]),
     ModelDeletion('app_manager', 'AppReleaseByLocation', 'domain'),
     ModelDeletion('app_manager', 'ResourceOverride', 'domain'),
     ModelDeletion('app_manager', 'GlobalAppConfig', 'domain'),

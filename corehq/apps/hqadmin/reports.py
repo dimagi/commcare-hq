@@ -16,8 +16,8 @@ from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.auditcare.utils.export import (
     all_audit_events_by_user,
     build_ip_filter,
-    build_url_exclude_filter,
-    build_url_include_filter,
+    build_path_exclude_filter,
+    build_path_include_filter,
     get_generic_log_event_row,
 )
 from corehq.apps.es.aggregations import TermsAggregation
@@ -70,24 +70,17 @@ def truncate_rows_to_minute_boundary(rows, max_records):
     def floor_to_minute(dt):
         return dt.replace(second=0, microsecond=0)
 
-    # Find the minute of the row that pushed us over the limit
     overflow_date = parse_date(rows[max_records][0])
     overflow_minute = floor_to_minute(overflow_date)
 
-    # Find the minute of the first row
     first_minute = floor_to_minute(parse_date(rows[0][0]))
 
-    # If all rows are in the same minute, we can't trim
     if overflow_minute == first_minute:
         return rows[:max_records], None
 
-    # Trim to rows with event_date < overflow_minute
     cutoff = overflow_minute
     trimmed = [r for r in rows if parse_date(r[0]) < cutoff]
-
-    # Guard: if trimmed still exceeds (shouldn't normally happen)
-    if len(trimmed) > max_records:
-        return truncate_rows_to_minute_boundary(trimmed, max_records)
+    assert len(trimmed) <= max_records, (len(trimmed), max_records)
 
     return trimmed, cutoff
 
@@ -179,8 +172,8 @@ class UserAuditReport(AdminReport, DatespanMixin):
         'corehq.apps.reports.filters.simple.SimpleOptionalDomain',
         'corehq.apps.reports.filters.select.UserAuditActionFilter',
         'corehq.apps.reports.filters.simple.IPAddressFilter',
-        'corehq.apps.reports.filters.simple.URLIncludeFilter',
-        'corehq.apps.reports.filters.simple.URLExcludeFilter',
+        'corehq.apps.reports.filters.simple.PathIncludeFilter',
+        'corehq.apps.reports.filters.simple.PathExcludeFilter',
         'corehq.apps.reports.filters.simple.StatusCodeFilter',
     ]
     emailable = False
@@ -208,23 +201,23 @@ class UserAuditReport(AdminReport, DatespanMixin):
         return IPAddressFilter.parse_ip_input(raw)
 
     @property
-    def selected_url_include_patterns(self):
-        raw = self.request.GET.get('url_include', '')
+    def selected_path_include_patterns(self):
+        raw = self.request.GET.get('path_include', '')
         return [line.strip() for line in raw.splitlines() if line.strip()]
 
     @property
-    def selected_url_include_mode(self):
-        mode = self.request.GET.get('url_include_mode', 'contains')
+    def selected_path_include_mode(self):
+        mode = self.request.GET.get('path_include_mode', 'contains')
         return mode if mode in ('contains', 'startswith') else 'contains'
 
     @property
-    def selected_url_exclude_patterns(self):
-        raw = self.request.GET.get('url_exclude', '')
+    def selected_path_exclude_patterns(self):
+        raw = self.request.GET.get('path_exclude', '')
         return [line.strip() for line in raw.splitlines() if line.strip()]
 
     @property
-    def selected_url_exclude_mode(self):
-        mode = self.request.GET.get('url_exclude_mode', 'contains')
+    def selected_path_exclude_mode(self):
+        mode = self.request.GET.get('path_exclude_mode', 'contains')
         return mode if mode in ('contains', 'startswith') else 'contains'
 
     @property
@@ -294,13 +287,12 @@ class UserAuditReport(AdminReport, DatespanMixin):
     # paginating through results by adjusting the date range.
     MAX_RECORDS = 5000
 
-    @property
     @memoized
-    def rows(self):
+    def _compute_rows(self):
         if not (self.selected_domain or self.selected_users):
-            return []
+            return [], None, False
         if self.selected_ip_addresses is None or self.selected_status_codes is None:
-            return []
+            return [], None, False
 
         nav_filters = self._build_nav_filters()
         access_filters = self._build_access_filters()
@@ -323,10 +315,22 @@ class UserAuditReport(AdminReport, DatespanMixin):
             if count > self.MAX_RECORDS:
                 break
 
-        truncated_rows, cutoff_dt = truncate_rows_to_minute_boundary(rows, self.MAX_RECORDS)
-        self._truncation_cutoff = cutoff_dt
-        self._truncation_same_minute = (len(rows) > self.MAX_RECORDS and cutoff_dt is None)
-        return truncated_rows
+        sorted_rows = sorted(rows, key=lambda x: x[0])
+        truncated_rows, cutoff_dt = truncate_rows_to_minute_boundary(sorted_rows, self.MAX_RECORDS)
+        same_minute = len(rows) > self.MAX_RECORDS and cutoff_dt is None
+        return truncated_rows, cutoff_dt, same_minute
+
+    @property
+    def rows(self):
+        return self._compute_rows()[0]
+
+    @property
+    def _truncation_cutoff(self):
+        return self._compute_rows()[1]
+
+    @property
+    def _truncation_same_minute(self):
+        return self._compute_rows()[2]
 
     def _build_common_filters(self):
         filters = Q()
@@ -337,17 +341,17 @@ class UserAuditReport(AdminReport, DatespanMixin):
             if ip_q:
                 filters &= ip_q
 
-        url_include = build_url_include_filter(
-            self.selected_url_include_patterns, self.selected_url_include_mode
+        path_include = build_path_include_filter(
+            self.selected_path_include_patterns, self.selected_path_include_mode
         )
-        if url_include:
-            filters &= url_include
+        if path_include:
+            filters &= path_include
 
-        url_exclude = build_url_exclude_filter(
-            self.selected_url_exclude_patterns, self.selected_url_exclude_mode
+        path_exclude = build_path_exclude_filter(
+            self.selected_path_exclude_patterns, self.selected_path_exclude_mode
         )
-        if url_exclude:
-            filters &= url_exclude
+        if path_exclude:
+            filters &= path_exclude
 
         return filters if filters != Q() else None
 
@@ -399,37 +403,44 @@ class UserAuditReport(AdminReport, DatespanMixin):
                 "Invalid status code filter. Use comma-separated integers (e.g. 200, 403, 500)."
             )
 
-        # URL domain hint
-        if (self.selected_url_include_mode == 'startswith'
+        # Path domain hint
+        if (self.selected_path_include_mode == 'startswith'
                 and self.selected_domain
-                and self.selected_url_include_patterns):
+                and self.selected_path_include_patterns):
             domain_prefix = f'/a/{self.selected_domain}/'
-            if not any(p.startswith(domain_prefix) for p in self.selected_url_include_patterns):
+            if not any(p.startswith(domain_prefix) for p in self.selected_path_include_patterns):
                 context.setdefault('info_message', '')
                 context['info_message'] += _(
-                    'Note: URLs for this domain typically start with "{domain_prefix}".'
+                    'Note: URL paths for this domain typically start with "{domain_prefix}".'
                 ).format(domain_prefix=domain_prefix)
 
-        # Truncation messages (set by rows property)
-        # Access rows to trigger the query and truncation logic
-        _rows = self.rows  # noqa: F841
-        if getattr(self, '_truncation_same_minute', False):
+        if self._truncation_same_minute:
             context['truncation_message'] = _(
                 "Showing {max_records} results, but there are additional events within the "
                 "same minute that are not shown. Try narrowing by username, domain, IP address, "
                 "or other filters to see all results."
             ).format(max_records=self.MAX_RECORDS)
             context['truncation_level'] = 'warning'
-        elif getattr(self, '_truncation_cutoff', None):
+        elif self._truncation_cutoff:
             cutoff = self._truncation_cutoff
-            context['truncation_message'] = _(
-                "Showing events through {cutoff_time}. Your query returned more than "
+            num_rows = len(self.rows)
+            message = _(
+                "Showing {num_rows} events through {cutoff_time}. Your query returned more than "
                 "{max_records} results; the end date/time has been adjusted. "
                 "To see later events, set the start time to {cutoff_time}."
             ).format(
+                num_rows=num_rows,
                 cutoff_time=cutoff.strftime("%Y-%m-%d %H:%M UTC"),
                 max_records=self.MAX_RECORDS,
             )
+            dropped = self.MAX_RECORDS - num_rows
+            if dropped > 500:
+                message += " " + _(
+                    "Note: {dropped} additional results within the cutoff minute were excluded "
+                    "to align with a clean minute boundary. Adding filters (IP address, "
+                    "URL path, status code) may help narrow results."
+                ).format(dropped=dropped)
+            context['truncation_message'] = message
             context['truncation_level'] = 'info'
             context['adjusted_end_date'] = cutoff.strftime("%Y-%m-%d")
             context['adjusted_end_time'] = cutoff.strftime("%H:%M")

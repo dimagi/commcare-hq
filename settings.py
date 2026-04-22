@@ -361,7 +361,6 @@ HQ_APPS = (
     'corehq.apps.reports_core',
     'corehq.apps.saved_reports',
     'corehq.apps.userreports.app_config.UserReports',
-    'corehq.apps.aggregate_ucrs',
     'corehq.apps.data_interfaces.app_config.DataInterfacesAppConfig',
     'corehq.apps.export',
     'corehq.apps.builds',
