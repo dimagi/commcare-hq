@@ -622,10 +622,51 @@ def add_enterprise_admin(request, domain):
 @require_enterprise_admin
 @require_POST
 def remove_enterprise_admin(request, domain):
-    """Stub — implemented in a following commit."""
-    return HttpResponseRedirect(
+    account = request.account
+    redirect = HttpResponseRedirect(
         reverse('enterprise_admins', args=[domain]),
     )
+    email = (request.POST.get('email') or '').lower()
+    current_user_email = request.couch_user.username.lower()
+
+    if email == current_user_email:
+        messages.error(
+            request,
+            _("You cannot remove yourself as an enterprise administrator."),
+        )
+        return redirect
+
+    if len(account.enterprise_admin_emails) <= 1:
+        messages.error(
+            request,
+            _("An enterprise account must have at least one administrator."),
+        )
+        return redirect
+
+    remaining = [
+        e for e in account.enterprise_admin_emails if e.lower() != email
+    ]
+    if len(remaining) == len(account.enterprise_admin_emails):
+        messages.error(
+            request,
+            _("%(email)s is not an enterprise administrator.") % {
+                'email': email,
+            },
+        )
+        return redirect
+
+    account.enterprise_admin_emails = remaining
+    account.save()
+    enterprise_admin_logger.info(
+        "Enterprise admin %s removed from account %s by %s",
+        email, account.id, request.couch_user.username,
+    )
+    messages.success(
+        request,
+        _("%(email)s has been removed as an enterprise administrator.")
+        % {'email': email},
+    )
+    return redirect
 
 
 @require_superuser

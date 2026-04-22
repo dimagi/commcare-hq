@@ -199,6 +199,10 @@ class _EnterpriseAdminViewTestBase(TestCase):
     def list_url(self):
         return reverse('enterprise_admins', args=[self.domain_name])
 
+    def _reload_account(self):
+        self.account.refresh_from_db()
+        return self.account
+
 
 class EnterpriseAdminsGetViewTests(_EnterpriseAdminViewTestBase):
 
@@ -267,10 +271,6 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
     def add_url(self):
         return reverse('add_enterprise_admin', args=[self.domain_name])
 
-    def _reload_account(self):
-        self.account.refresh_from_db()
-        return self.account
-
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_add_valid_email_appends_lowercased(self):
         response = self.client.post(
@@ -331,3 +331,131 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         self.assertEqual(response.status_code, 404)
         account = self._reload_account()
         self.assertNotIn('blocked@example.com', account.enterprise_admin_emails)
+
+
+class RemoveEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.second_admin = WebUser.create(
+            cls.domain_name, 'second-admin@example.com', 'pw',
+            None, None, is_admin=True,
+        )
+        cls.account.enterprise_admin_emails = [
+            cls.admin_user.username,
+            cls.second_admin.username,
+        ]
+        cls.account.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.second_admin.delete(cls.domain_name, deleted_by=None)
+        super().tearDownClass()
+
+    @property
+    def remove_url(self):
+        return reverse('remove_enterprise_admin', args=[self.domain_name])
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_remove_peer_admin(self):
+        response = self.client.post(
+            self.remove_url, {'email': self.second_admin.username},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        self.assertNotIn(
+            self.second_admin.username, account.enterprise_admin_emails,
+        )
+        self.assertIn(
+            self.admin_user.username, account.enterprise_admin_emails,
+        )
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_remove_self_is_blocked(self):
+        response = self.client.post(
+            self.remove_url, {'email': self.admin_user.username},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        self.assertIn(
+            self.admin_user.username, account.enterprise_admin_emails,
+        )
+        msgs = [str(m) for m in get_messages(response.wsgi_request)]
+        self.assertTrue(any('yourself' in m for m in msgs))
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_remove_last_admin_is_blocked(self):
+        # Reduce the admin list to a single entry (the current user, so
+        # require_enterprise_admin still passes), then try to remove a
+        # different email. The self-removal guard passes (target != self),
+        # then the last-admin guard trips.
+        self.account.enterprise_admin_emails = [self.admin_user.username]
+        self.account.save()
+
+        response = self.client.post(
+            self.remove_url, {'email': 'someone-else@example.com'},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        self.assertEqual(
+            account.enterprise_admin_emails, [self.admin_user.username],
+        )
+        msgs = [str(m) for m in get_messages(response.wsgi_request)]
+        self.assertTrue(any('at least one' in m for m in msgs))
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_remove_unknown_email_reports_error(self):
+        response = self.client.post(
+            self.remove_url, {'email': 'ghost@example.com'},
+        )
+        self.assertRedirects(response, self.list_url)
+        msgs = [str(m) for m in get_messages(response.wsgi_request)]
+        self.assertTrue(
+            any('is not an enterprise administrator' in m for m in msgs),
+        )
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_remove_is_case_insensitive(self):
+        response = self.client.post(
+            self.remove_url,
+            {'email': self.second_admin.username.upper()},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        self.assertNotIn(
+            self.second_admin.username, account.enterprise_admin_emails,
+        )
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_remove_logs_info(self):
+        with self.assertLogs(
+            'corehq.apps.enterprise.views', level='INFO',
+        ) as cap:
+            self.client.post(
+                self.remove_url, {'email': self.second_admin.username},
+            )
+        self.assertTrue(
+            any(self.second_admin.username in line for line in cap.output),
+        )
+
+    @flag_disabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_remove_toggle_disabled_returns_404(self):
+        response = self.client.post(
+            self.remove_url, {'email': self.second_admin.username},
+        )
+        self.assertEqual(response.status_code, 404)
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_remove_missing_email_reports_error(self):
+        response = self.client.post(self.remove_url, {})
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        self.assertEqual(
+            sorted(account.enterprise_admin_emails),
+            sorted([self.admin_user.username, self.second_admin.username]),
+        )
+        msgs = [str(m) for m in get_messages(response.wsgi_request)]
+        self.assertTrue(
+            any('is not an enterprise administrator' in m for m in msgs),
+        )
