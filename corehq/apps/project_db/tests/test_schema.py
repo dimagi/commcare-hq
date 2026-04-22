@@ -57,6 +57,14 @@ def test_all_fixed_columns_present():
     }
 
 
+@pytest.mark.parametrize(
+    'column', ['owner_id', 'modified_on', 'parent_id', 'host_id'],
+)
+def test_indexed_column(column):
+    table = build_table_schema('d', 'person')
+    assert f'ix_person_{column}' in {idx.name for idx in table.indexes}
+
+
 class TestBuildTableForCaseType:
 
     def setup_method(self):
@@ -131,23 +139,6 @@ class TestBuildTableForCaseType:
         )
         # fixed + 4 raw text + 1 date + 1 numeric
         assert len(table.columns) == len(FIXED_COLUMNS) + 6
-
-    def test_owner_id_has_index(self):
-        index_names = {idx.name for idx in self.table.indexes}
-        assert 'ix_person_owner_id' in index_names
-
-    def test_modified_on_has_index(self):
-        index_names = {idx.name for idx in self.table.indexes}
-        assert 'ix_person_modified_on' in index_names
-
-    def test_parent_id_has_index(self):
-        index_names = {idx.name for idx in self.table.indexes}
-        assert 'ix_person_parent_id' in index_names
-
-    def test_host_id_has_index(self):
-        index_names = {idx.name for idx in self.table.indexes}
-        assert 'ix_person_host_id' in index_names
-
 
 SCHEMA_GEN_DOMAIN = 'test-schema-gen'
 
