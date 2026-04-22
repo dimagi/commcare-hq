@@ -166,170 +166,109 @@ class TestBuildTablesForDomain:
         assert 'person' not in tables
 
 
-@pytest.mark.django_db
-class TestGetCaseTableSchema:
-
-    def setup_method(self):
-        from corehq.apps.project_db.schema import get_project_db_engine
-        self.engine = get_project_db_engine()
-        self._schemas = []
-
-    def teardown_method(self):
-        with self.engine.begin() as conn:
-            for schema in self._schemas:
-                conn.execute(sqlalchemy.text(
-                    f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'
-                ))
-
-    def test_returns_none_when_table_does_not_exist(self):
-        result = get_case_table_schema('test-domain', 'nonexistent')
-        assert result is None
-
-    def test_reflects_live_schema(self):
-        from corehq.apps.project_db.schema import create_tables
-
-        table = build_table_schema(
-            'test-domain', 'patient',
-            properties=[('color', 'plain')],
-        )
-        self._schemas.append(table.schema)
-        create_tables(self.engine, table.metadata)
-
-        schema = get_case_table_schema('test-domain', 'patient')
-        col_names = {c.name for c in schema.columns}
-        assert 'prop__color' in col_names
-
-
-# --- DDL operations (merged from test_table_manager.py) ---
+DDL_DOMAIN = 'test-ddl-ops'
 
 
 def _table_exists(engine, table_name, schema):
     return table_name in sa_inspect(engine).get_table_names(schema=schema)
 
 
+def _table_columns(engine, table_name, schema):
+    return {
+        c['name']
+        for c in sa_inspect(engine).get_columns(table_name, schema=schema)
+    }
+
+
+def _table_indexes(engine, table_name, schema):
+    return {
+        idx['name']
+        for idx in sa_inspect(engine).get_indexes(table_name, schema=schema)
+    }
+
+
 @pytest.mark.django_db
-class TestCreateTables:
+class TestDDLOperations:
+    """Exercises create_tables, evolve_table, and get_case_table_schema against
+    a live PostgreSQL connection. Each test uses a distinct case type so they
+    can share one schema; the schema is dropped in teardown.
+    """
 
     def setup_method(self):
         self.engine = get_project_db_engine()
-        self._schemas = set()
+        self.schema = get_schema_name(DDL_DOMAIN)
 
     def teardown_method(self):
         with self.engine.begin() as conn:
-            for schema in self._schemas:
-                conn.execute(sqlalchemy.text(
-                    f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'
-                ))
+            conn.execute(sqlalchemy.text(
+                f'DROP SCHEMA IF EXISTS "{self.schema}" CASCADE'
+            ))
 
-    def _build_and_track(self, metadata, domain, case_type, **kwargs):
-        table = build_table_schema(domain, case_type, metadata=metadata, **kwargs)
-        self._schemas.add(table.schema)
+    def _create(self, case_type, properties=None):
+        """Build a table and create it in the DB. Returns the SQLAlchemy Table."""
+        table = build_table_schema(
+            DDL_DOMAIN, case_type,
+            metadata=sqlalchemy.MetaData(),
+            properties=properties or [],
+        )
+        create_tables(self.engine, table.metadata)
         return table
 
     def test_create_table(self):
-        metadata = sqlalchemy.MetaData()
-        table = self._build_and_track(
-            metadata, 'test-table-mgr', 'person',
-            properties=[('name', 'plain')],
-        )
-
-        create_tables(self.engine, metadata)
-
+        table = self._create('create_simple', [('name', 'plain')])
         assert _table_exists(self.engine, table.name, table.schema)
 
     def test_create_is_idempotent(self):
-        metadata = sqlalchemy.MetaData()
-        table = self._build_and_track(
-            metadata, 'test-table-mgr', 'person2',
-            properties=[('name', 'plain')],
-        )
-
-        create_tables(self.engine, metadata)
-        create_tables(self.engine, metadata)
-
+        table = self._create('create_idempotent', [('name', 'plain')])
+        create_tables(self.engine, table.metadata)  # second time
         assert _table_exists(self.engine, table.name, table.schema)
 
-
-@pytest.mark.django_db
-class TestEvolveTable:
-
-    def setup_method(self):
-        self.engine = get_project_db_engine()
-        self._schemas = set()
-
-    def teardown_method(self):
-        with self.engine.begin() as conn:
-            for schema in self._schemas:
-                conn.execute(sqlalchemy.text(
-                    f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'
-                ))
-
-    def _build_and_track(self, metadata, domain, case_type, **kwargs):
-        table = build_table_schema(domain, case_type, metadata=metadata, **kwargs)
-        self._schemas.add(table.schema)
-        return table
-
-    def test_add_new_column(self):
-        metadata = sqlalchemy.MetaData()
-        self._build_and_track(
-            metadata, 'test-table-mgr', 'evolve1',
-            properties=[('name', 'plain')],
-        )
-        create_tables(self.engine, metadata)
-
+    def test_evolve_adds_new_column(self):
+        self._create('evolve_add_col', [('name', 'plain')])
         table2 = build_table_schema(
-            'test-table-mgr', 'evolve1',
+            DDL_DOMAIN, 'evolve_add_col',
             properties=[('name', 'plain'), ('age', 'number')],
         )
 
         evolve_table(self.engine, table2)
 
-        columns = {
-            c['name'] for c in
-            sa_inspect(self.engine).get_columns(table2.name, schema=table2.schema)
-        }
+        columns = _table_columns(self.engine, table2.name, table2.schema)
         assert 'prop__age' in columns
         assert 'prop__age__numeric' in columns
 
-    def test_add_new_index(self):
-        metadata = sqlalchemy.MetaData()
-        self._build_and_track(
-            metadata, 'test-table-mgr', 'evolve-idx',
-            properties=[('name', 'plain')],
-        )
-        create_tables(self.engine, metadata)
-
+    def test_evolve_adds_new_index(self):
+        self._create('evolve_add_idx', [('name', 'plain')])
         table2 = build_table_schema(
-            'test-table-mgr', 'evolve-idx',
+            DDL_DOMAIN, 'evolve_add_idx',
             properties=[('name', 'plain')],
         )
         sqlalchemy.Index(f'ix_{table2.name}_case_name', table2.c['case_name'])
 
         evolve_table(self.engine, table2)
 
-        index_names = {
-            idx['name'] for idx in
-            sa_inspect(self.engine).get_indexes(table2.name, schema=table2.schema)
-        }
-        assert f'ix_{table2.name}_case_name' in index_names
+        indexes = _table_indexes(self.engine, table2.name, table2.schema)
+        assert f'ix_{table2.name}_case_name' in indexes
 
     def test_evolve_does_not_drop_columns(self):
-        metadata = sqlalchemy.MetaData()
-        self._build_and_track(
-            metadata, 'test-table-mgr', 'evolve2',
-            properties=[('name', 'plain'), ('village', 'plain')],
+        self._create(
+            'evolve_no_drop',
+            [('name', 'plain'), ('village', 'plain')],
         )
-        create_tables(self.engine, metadata)
-
         table2 = build_table_schema(
-            'test-table-mgr', 'evolve2',
+            DDL_DOMAIN, 'evolve_no_drop',
             properties=[('name', 'plain')],
         )
 
         evolve_table(self.engine, table2)
 
-        columns = {
-            c['name'] for c in
-            sa_inspect(self.engine).get_columns(table2.name, schema=table2.schema)
-        }
+        columns = _table_columns(self.engine, table2.name, table2.schema)
         assert 'prop__village' in columns
+
+    def test_reflect_returns_none_for_missing_table(self):
+        assert get_case_table_schema(DDL_DOMAIN, 'reflect_missing') is None
+
+    def test_reflect_live_schema(self):
+        self._create('reflect_live', [('color', 'plain')])
+
+        reflected = get_case_table_schema(DDL_DOMAIN, 'reflect_live')
+        assert 'prop__color' in {c.name for c in reflected.columns}
