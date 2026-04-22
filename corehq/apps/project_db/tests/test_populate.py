@@ -198,28 +198,17 @@ def test_coerce_to_date(value, expected):
     assert coerce_to_date(value) == expected
 
 
-class TestCoerceToNumber:
-
-    def test_integer_string(self):
-        assert coerce_to_number('42') == Decimal('42')
-
-    def test_decimal_string(self):
-        assert coerce_to_number('3.14') == Decimal('3.14')
-
-    def test_negative(self):
-        assert coerce_to_number('-7.5') == Decimal('-7.5')
-
-    def test_none(self):
-        assert coerce_to_number(None) is None
-
-    def test_empty_string(self):
-        assert coerce_to_number('') is None
-
-    def test_invalid_string(self):
-        assert coerce_to_number('abc') is None
-
-    def test_whitespace(self):
-        assert coerce_to_number('  ') is None
+@pytest.mark.parametrize('value, expected', [
+    ('42',   Decimal('42')),
+    ('3.14', Decimal('3.14')),
+    ('-7.5', Decimal('-7.5')),
+    (None,   None),
+    ('',     None),
+    ('abc',  None),
+    ('  ',   None),
+])
+def test_coerce_to_number(value, expected):
+    assert coerce_to_number(value) == expected
 
 
 # --- Case adapter unit tests (no DB needed) ---
