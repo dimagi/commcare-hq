@@ -1,5 +1,6 @@
 import pytest
 import sqlalchemy
+from sqlalchemy import Boolean, DateTime, Text
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.project_db.schema import (
@@ -10,19 +11,50 @@ from corehq.apps.project_db.schema import (
     get_schema_name,
 )
 
-# Derive test expectations from the canonical FIXED_COLUMNS definition.
-# Maps column name to (expected_sqlalchemy_type, is_primary_key).
-# FIXED_COLUMNS entries mix classes (Text) and instances (DateTime(timezone=True)),
-# so we normalize: classes pass through, instances yield their type.
-FIXED_COLUMN_EXPECTATIONS = {
-    name: (col_type if isinstance(col_type, type) else type(col_type),
-           kwargs.get('primary_key', False))
-    for name, col_type, kwargs in FIXED_COLUMNS
-}
-
 
 def test_get_schema_name():
     assert str(get_schema_name('my-domain')) == 'projectdb_my-domain'
+
+
+# (name, sa_type, primary_key, nullable, has_timezone)
+# has_timezone=None means don't assert on timezone (non-DateTime column).
+FIXED_COLUMN_SPECS = [
+    ('case_id',            Text,     True,  False, None),
+    ('owner_id',           Text,     False, False, None),
+    ('case_name',          Text,     False, True,  None),
+    ('opened_on',          DateTime, False, True,  True),
+    ('closed_on',          DateTime, False, True,  True),
+    ('modified_on',        DateTime, False, True,  True),
+    ('closed',             Boolean,  False, True,  None),
+    ('external_id',        Text,     False, True,  None),
+    ('server_modified_on', DateTime, False, True,  True),
+    ('parent_id',          Text,     False, True,  None),
+    ('host_id',            Text,     False, True,  None),
+]
+
+
+@pytest.mark.parametrize(
+    'col_name, sa_type, primary_key, nullable, has_timezone',
+    FIXED_COLUMN_SPECS,
+    ids=[spec[0] for spec in FIXED_COLUMN_SPECS],
+)
+def test_fixed_column_definition(
+    col_name, sa_type, primary_key, nullable, has_timezone,
+):
+    table = build_table_schema('d', 'person')
+    col = table.c[col_name]
+    assert isinstance(col.type, sa_type)
+    assert col.primary_key is primary_key
+    assert col.nullable is nullable
+    if has_timezone is not None:
+        assert col.type.timezone is has_timezone
+
+
+def test_all_fixed_columns_present():
+    table = build_table_schema('d', 'person')
+    assert {c.name for c in table.columns} == {
+        spec[0] for spec in FIXED_COLUMN_SPECS
+    }
 
 
 class TestBuildTableForCaseType:
@@ -39,35 +71,6 @@ class TestBuildTableForCaseType:
     def test_table_schema_is_domain_schema(self):
         assert self.table.schema == get_schema_name('test-domain')
 
-    def test_has_all_fixed_columns(self):
-        column_names = {col.name for col in self.table.columns}
-        assert column_names == set(FIXED_COLUMN_EXPECTATIONS)
-
-    def test_column_types(self):
-        for col_name, (expected_type, _) in FIXED_COLUMN_EXPECTATIONS.items():
-            col = self.table.c[col_name]
-            assert isinstance(col.type, expected_type), (
-                f"Column {col_name}: expected {expected_type}, "
-                f"got {type(col.type)}"
-            )
-
-    def test_case_id_is_primary_key(self):
-        pk_columns = [col.name for col in self.table.primary_key.columns]
-        assert pk_columns == ['case_id']
-
-    def test_owner_id_is_not_nullable(self):
-        assert self.table.c.owner_id.nullable is False
-
-    def test_datetime_columns_have_timezone(self):
-        datetime_columns = [
-            'opened_on', 'closed_on', 'modified_on', 'server_modified_on',
-        ]
-        for col_name in datetime_columns:
-            col = self.table.c[col_name]
-            assert col.type.timezone is True, (
-                f"Column {col_name} should have timezone=True"
-            )
-
     def test_plain_property_adds_text_column(self):
         table = build_table_schema(
             'test-domain', 'household',
@@ -82,7 +85,7 @@ class TestBuildTableForCaseType:
             properties=[('village', 'plain')],
         )
         column_names = {col.name for col in table.columns}
-        assert column_names == set(FIXED_COLUMN_EXPECTATIONS) | {'prop__village'}
+        assert column_names == {spec[0] for spec in FIXED_COLUMN_SPECS} | {'prop__village'}
 
     def test_date_property_adds_text_and_date_columns(self):
         table = build_table_schema(
@@ -106,7 +109,7 @@ class TestBuildTableForCaseType:
             properties=[('status', 'select')],
         )
         column_names = {col.name for col in table.columns}
-        assert column_names == set(FIXED_COLUMN_EXPECTATIONS) | {'prop__status'}
+        assert column_names == {spec[0] for spec in FIXED_COLUMN_SPECS} | {'prop__status'}
 
     def test_undefined_property_adds_one_column_only(self):
         table = build_table_schema(
@@ -114,7 +117,7 @@ class TestBuildTableForCaseType:
             properties=[('misc', '')],
         )
         column_names = {col.name for col in table.columns}
-        assert column_names == set(FIXED_COLUMN_EXPECTATIONS) | {'prop__misc'}
+        assert column_names == {spec[0] for spec in FIXED_COLUMN_SPECS} | {'prop__misc'}
 
     def test_multiple_properties_correct_column_count(self):
         table = build_table_schema(
@@ -144,12 +147,6 @@ class TestBuildTableForCaseType:
     def test_host_id_has_index(self):
         index_names = {idx.name for idx in self.table.indexes}
         assert 'ix_person_host_id' in index_names
-
-    def test_parent_id_is_nullable(self):
-        assert self.table.c.parent_id.nullable is True
-
-    def test_host_id_is_nullable(self):
-        assert self.table.c.host_id.nullable is True
 
 
 SCHEMA_GEN_DOMAIN = 'test-schema-gen'
