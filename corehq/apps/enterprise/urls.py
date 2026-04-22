@@ -1,31 +1,31 @@
-from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
-from django.urls import include, re_path as url
+from django.urls import include
+from django.urls import re_path as url
 
 from corehq.apps.enterprise.api import v1_api
+from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.enterprise.views import (
+    EnterpriseBillingStatementsView,
+    ManageEnterpriseMobileWorkersView,
     add_enterprise_admin,
     add_enterprise_permissions_domain,
     disable_enterprise_permissions,
     edit_enterprise_settings,
-    platform_overview,
     enterprise_admins,
     enterprise_dashboard_download,
     enterprise_dashboard_email,
     enterprise_dashboard_total,
     enterprise_permissions,
     enterprise_settings,
+    platform_overview,
     remove_enterprise_admin,
     remove_enterprise_permissions_domain,
     security_center,
     update_enterprise_permissions_source_domain,
-    ManageEnterpriseMobileWorkersView,
 )
-from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
 from corehq.apps.sso.views.enterprise_admin import (
-    ManageSSOEnterpriseView,
     EditIdentityProviderEnterpriseView,
+    ManageSSOEnterpriseView,
 )
-
 
 report_urls = [
     EnterpriseReportDispatcher.url_pattern(),

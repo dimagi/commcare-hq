@@ -4,7 +4,6 @@ from unittest.mock import patch
 from django.contrib.messages import get_messages
 from django.test import Client, TestCase
 from django.urls import reverse
-
 from django_prbac.models import Grant, Role, UserRole
 
 from corehq import privileges
@@ -12,7 +11,10 @@ from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests import generator as accounting_gen
 from corehq.apps.accounting.tests.generator import generate_domain_subscription
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.enterprise.forms import EnterpriseAdminForm, _get_sso_email_domains
+from corehq.apps.enterprise.forms import (
+    EnterpriseAdminForm,
+    _get_sso_email_domains,
+)
 from corehq.apps.sso.models import (
     AuthenticatedEmailDomain,
     IdentityProvider,
