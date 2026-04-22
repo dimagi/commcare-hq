@@ -260,6 +260,7 @@ def _get_base_vellum_options(request, domain, form, displayLang):
             'properties': sorted(get_case_properties(domain, case_type).values_list('name', flat=True)),
             'view_form_url': reverse('view_form', args=[domain, app.id, form.unique_id]),
             'reserved_words': load_case_reserved_words(),
+            'is_registration_form': form.is_registration_form(),
         }
 
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
