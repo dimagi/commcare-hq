@@ -2,8 +2,11 @@ import pytest
 import sqlalchemy
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
-from corehq.apps.project_db.populate import case_to_row_dict, upsert_case
-from corehq.apps.project_db.schema import get_project_db_engine, sync_domain_tables
+from corehq.apps.project_db.populate import send_to_project_db
+from corehq.apps.project_db.schema import (
+    get_project_db_engine,
+    sync_domain_tables,
+)
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 
 DOMAIN = 'test-full-stack'
@@ -11,7 +14,11 @@ DOMAIN = 'test-full-stack'
 
 @pytest.mark.django_db
 class TestFullStack:
-    """Happy-path test: data dictionary → schema → DDL → populate → query."""
+    """Happy-path test: data dictionary -> schema -> DDL -> populate -> query.
+
+    Enters via send_to_project_db (the public API) so this test also covers
+    case-type dispatch and unknown-type skipping.
+    """
 
     def setup_method(self):
         self.engine = get_project_db_engine()
@@ -27,8 +34,7 @@ class TestFullStack:
     def test_full_stack(self):
         self._create_data_dictionary()
         tables = self._build_and_create_tables()
-        self._populate_household(tables['household'])
-        self._populate_patient(tables['patient'])
+        self._populate(tables)
         self._verify_single_table_query(tables['patient'])
         self._verify_parent_join(tables['patient'], tables['household'])
 
@@ -47,21 +53,19 @@ class TestFullStack:
         self._schemas.update(t.schema for t in tables.values())
         return tables
 
-    def _populate_household(self, table):
+    def _populate(self, tables):
         household = CommCareCase(
             case_id='hh-001',
+            type='household',
             owner_id='owner-1',
             name='The Smiths',
             modified_on='2025-06-01',
             server_modified_on='2025-06-01',
             case_json={'district': 'Kamuli'},
         )
-        with self.engine.begin() as conn:
-            upsert_case(conn, table, case_to_row_dict(household))
-
-    def _populate_patient(self, table):
         patient = CommCareCase(
             case_id='pt-001',
+            type='patient',
             owner_id='owner-1',
             name='Alice Smith',
             modified_on='2025-06-01',
@@ -76,8 +80,18 @@ class TestFullStack:
                 relationship_id=CommCareCaseIndex.CHILD,
             ),
         ]
-        with self.engine.begin() as conn:
-            upsert_case(conn, table, case_to_row_dict(patient))
+        # Include an unknown case type to exercise the dispatch-skip path.
+        stranger = CommCareCase(
+            case_id='stranger-001',
+            owner_id='owner-1',
+            name='Unknown',
+            modified_on='2025-06-01',
+            server_modified_on='2025-06-01',
+            case_json={},
+        )
+        stranger.type = 'not_in_dictionary'
+
+        send_to_project_db(DOMAIN, [household, patient, stranger])
 
     def _verify_single_table_query(self, patient_table):
         with self.engine.begin() as conn:
