@@ -21,19 +21,8 @@ FIXED_COLUMN_EXPECTATIONS = {
 }
 
 
-class TestGetSchemaName:
-
-    def test_starts_with_prefix(self):
-        assert get_schema_name('test-domain').startswith('projectdb_')
-
-    def test_contains_domain(self):
-        assert 'my-domain' in get_schema_name('my-domain')
-
-    def test_deterministic(self):
-        assert get_schema_name('domain') == get_schema_name('domain')
-
-    def test_different_domains_produce_different_names(self):
-        assert get_schema_name('domain-a') != get_schema_name('domain-b')
+def test_get_schema_name():
+    assert str(get_schema_name('my-domain')) == 'projectdb_my-domain'
 
 
 class TestBuildTableForCaseType:
