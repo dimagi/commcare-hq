@@ -408,8 +408,6 @@ class DetailContributor(SectionContributor):
                 menu_locale_id=(
                     id_strings.case_search_locale(module)
                 ),
-                media_image=False,
-                media_audio=False,
                 image_locale_id=(
                     id_strings.case_search_icon_locale(module)
                 ),

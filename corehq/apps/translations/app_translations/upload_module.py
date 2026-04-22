@@ -27,6 +27,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.condensed_rows = None
         self.case_list_form_label = None
         self.case_list_menu_item_label = None
+        self.search_label = None
         self.title_label = None
         self.description = None
         self.select_text = None
@@ -86,6 +87,9 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
 
         if self.case_list_menu_item_label:
             self._update_translation(self.case_list_menu_item_label, self.module.case_list.label)
+
+        if self.search_label:
+            self._update_translation(self.search_label, self.module.search_config.search_button_label)
 
         if self.title_label:
             self._update_translation(self.title_label, self.module.search_config.title_label)
@@ -222,6 +226,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.condensed_rows = []
         self.case_list_form_label = None
         self.case_list_menu_item_label = None
+        self.search_label = None
         self.title_label = None
         self.description = None
         self.select_text = None
@@ -276,6 +281,8 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
             elif row['case_property'] == 'case_list_menu_item_label':
                 self.case_list_menu_item_label = row
 
+            elif row['case_property'] == 'search_label':
+                self.search_label = row
             elif row['case_property'] == 'title_label':
                 self.title_label = row
             elif row['case_property'] == 'description':

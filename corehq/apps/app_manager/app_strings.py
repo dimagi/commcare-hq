@@ -375,7 +375,7 @@ def _create_case_search_app_strings(
         if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(app.domain):
             yield (
                 id_strings.case_search_locale(module),
-                clean_trans({'en': 'Search All Cases'}, langs)
+                clean_trans(module.search_config.search_button_label, langs)
             )
 
             title_label = module.search_config.get_search_title_label(app, lang, for_default=for_default)
@@ -397,7 +397,7 @@ def _create_case_search_app_strings(
             )
             yield (
                 id_strings.case_search_locale(module),
-                clean_trans({'en': 'Search All Cases'}, langs)
+                clean_trans(module.search_config.search_button_label, langs)
             )
 
         for prop in module.search_config.properties:
