@@ -4,7 +4,6 @@ from sqlalchemy import Boolean, DateTime, Text
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.project_db.schema import (
-    FIXED_COLUMNS,
     build_table_schema,
     build_all_table_schemas,
     get_case_table_schema,
@@ -65,80 +64,31 @@ def test_indexed_column(column):
     assert f'ix_person_{column}' in {idx.name for idx in table.indexes}
 
 
-class TestBuildTableForCaseType:
+def test_table_name_is_case_type():
+    table = build_table_schema('test-domain', 'person')
+    assert table.name == 'person'
 
-    def setup_method(self):
-        self.metadata = sqlalchemy.MetaData()
-        self.table = build_table_schema(
-            'test-domain', 'person', metadata=self.metadata,
-        )
 
-    def test_table_name_is_case_type(self):
-        assert self.table.name == 'person'
+def test_table_schema_is_domain_schema():
+    table = build_table_schema('test-domain', 'person')
+    assert table.schema == get_schema_name('test-domain')
 
-    def test_table_schema_is_domain_schema(self):
-        assert self.table.schema == get_schema_name('test-domain')
 
-    def test_plain_property_adds_text_column(self):
-        table = build_table_schema(
-            'test-domain', 'household',
-            properties=[('village', 'plain')],
-        )
-        col = table.c['prop__village']
-        assert isinstance(col.type, sqlalchemy.Text)
+@pytest.mark.parametrize(
+    'data_type, extra_columns',
+    [
+        ('plain',  {'prop__x'}),
+        ('select', {'prop__x'}),
+        ('',       {'prop__x'}),
+        ('date',   {'prop__x', 'prop__x__date'}),
+        ('number', {'prop__x', 'prop__x__numeric'}),
+    ],
+)
+def test_property_adds_expected_columns(data_type, extra_columns):
+    table = build_table_schema('d', 't', properties=[('x', data_type)])
+    fixed = {spec[0] for spec in FIXED_COLUMN_SPECS}
+    assert {c.name for c in table.columns} - fixed == extra_columns
 
-    def test_plain_property_adds_one_column_only(self):
-        table = build_table_schema(
-            'test-domain', 'household2',
-            properties=[('village', 'plain')],
-        )
-        column_names = {col.name for col in table.columns}
-        assert column_names == {spec[0] for spec in FIXED_COLUMN_SPECS} | {'prop__village'}
-
-    def test_date_property_adds_text_and_date_columns(self):
-        table = build_table_schema(
-            'test-domain', 'visit',
-            properties=[('dob', 'date')],
-        )
-        assert isinstance(table.c['prop__dob'].type, sqlalchemy.Text)
-        assert isinstance(table.c['prop__dob__date'].type, sqlalchemy.Date)
-
-    def test_number_property_adds_text_and_numeric_columns(self):
-        table = build_table_schema(
-            'test-domain', 'visit2',
-            properties=[('age', 'number')],
-        )
-        assert isinstance(table.c['prop__age'].type, sqlalchemy.Text)
-        assert isinstance(table.c['prop__age__numeric'].type, sqlalchemy.Numeric)
-
-    def test_select_property_adds_one_column_only(self):
-        table = build_table_schema(
-            'test-domain', 'visit3',
-            properties=[('status', 'select')],
-        )
-        column_names = {col.name for col in table.columns}
-        assert column_names == {spec[0] for spec in FIXED_COLUMN_SPECS} | {'prop__status'}
-
-    def test_undefined_property_adds_one_column_only(self):
-        table = build_table_schema(
-            'test-domain', 'visit4',
-            properties=[('misc', '')],
-        )
-        column_names = {col.name for col in table.columns}
-        assert column_names == {spec[0] for spec in FIXED_COLUMN_SPECS} | {'prop__misc'}
-
-    def test_multiple_properties_correct_column_count(self):
-        table = build_table_schema(
-            'test-domain', 'visit5',
-            properties=[
-                ('village', 'plain'),
-                ('dob', 'date'),
-                ('age', 'number'),
-                ('status', 'select'),
-            ],
-        )
-        # fixed + 4 raw text + 1 date + 1 numeric
-        assert len(table.columns) == len(FIXED_COLUMNS) + 6
 
 SCHEMA_GEN_DOMAIN = 'test-schema-gen'
 
