@@ -1,0 +1,47 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% js_entry "hqwebapp/js/bootstrap5/widgets" %}
+
+{% block page_content %}
+  <p class="lead">{% trans "Enterprise Administrators" %}</p>
+
+  <p class="help-block">
+    {% blocktrans trimmed %}
+      Enterprise Administrators can manage subscriptions, billing, and
+      account-level settings for all project spaces in this account. See
+      <a
+        href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/Enterprise+Console#Enterprise-Admins"
+        target="_blank"
+        >Enterprise Console | Enterprise Admins</a
+      >
+      for more on Enterprise Admins.
+    {% endblocktrans %}
+  </p>
+
+  {% include "enterprise/partials/enterprise_admins_table.html" %}
+
+  <hr />
+
+  <h3>{% trans "Add an Administrator" %}</h3>
+  {% if sso_domains %}
+    <p class="help-block">
+      {% blocktrans trimmed with domains=sso_domains|join:", " %}
+        This account uses SSO. New administrators must use an email at one of:
+        {{ domains }}.
+      {% endblocktrans %}
+    </p>
+  {% endif %}
+  <form
+    method="POST"
+    action="{% url 'add_enterprise_admin' domain %}"
+    class="form form-horizontal"
+  >
+    {% csrf_token %}
+    {{ form|crispy }}
+    <button type="submit" class="btn btn-primary">
+      {% trans "Add Administrator" %}
+    </button>
+  </form>
+{% endblock %}
