@@ -408,12 +408,6 @@ class DetailContributor(SectionContributor):
                 menu_locale_id=(
                     id_strings.case_search_locale(module)
                 ),
-                image_locale_id=(
-                    id_strings.case_search_icon_locale(module)
-                ),
-                audio_locale_id=(
-                    id_strings.case_search_audio_locale(module)
-                ),
                 stack=Stack(),
                 for_action_menu=True,
                 **action_kwargs,
