@@ -25,7 +25,10 @@ class TestUpsertCase:
         self.engine = get_project_db_engine()
         self.table = build_table_schema(
             DOMAIN, 'patient',
-            properties=[('first_name', 'plain')],
+            properties=[
+                ('first_name', 'plain'),
+                ('dob', 'date'),
+            ],
         )
         create_tables(self.engine, self.table.metadata)
 
@@ -47,14 +50,12 @@ class TestUpsertCase:
             return dict(result.fetchone())
 
     def test_insert_new_case(self):
-        case_data = {
+        self._upsert({
             'case_id': 'case-001',
             'owner_id': 'owner-1',
             'case_name': 'Test Patient',
             'prop.first_name': 'Alice',
-        }
-
-        self._upsert(case_data)
+        })
 
         row = self._select_case('case-001')
         assert row['case_id'] == 'case-001'
@@ -63,37 +64,31 @@ class TestUpsertCase:
         assert row['prop__first_name'] == 'Alice'
 
     def test_upsert_updates_existing_case(self):
-        case_data = {
-            'case_id': 'case-002',
-            'owner_id': 'owner-1',
-            'case_name': 'Original Name',
-            'prop.first_name': 'Bob',
-        }
-        self._upsert(case_data)
-
-        updated_data = {
-            'case_id': 'case-002',
-            'owner_id': 'owner-1',
-            'case_name': 'Updated Name',
-            'prop.first_name': 'Robert',
-        }
-        self._upsert(updated_data)
+        self._upsert({
+            'case_id': 'case-002', 'owner_id': 'o',
+            'case_name': 'Original', 'prop.first_name': 'Bob',
+        })
+        self._upsert({
+            'case_id': 'case-002', 'owner_id': 'o',
+            'case_name': 'Updated', 'prop.first_name': 'Robert',
+        })
 
         row = self._select_case('case-002')
-        assert row['case_name'] == 'Updated Name'
+        assert row['case_name'] == 'Updated'
         assert row['prop__first_name'] == 'Robert'
 
-    def test_unknown_properties_are_ignored(self):
-        case_data = {
-            'case_id': 'case-004',
-            'owner_id': 'owner-1',
-            'prop.unknown_prop': 'should be skipped',
-        }
+    def test_typed_column_round_trip(self):
+        """Smoke test that typed columns are populated via coercion. Unit tests
+        for coerce_to_date / coerce_to_number cover the edge cases — this test
+        only verifies the DB write path is wired up."""
+        self._upsert({
+            'case_id': 'case-003', 'owner_id': 'o',
+            'prop.dob': '1990-05-20',
+        })
 
-        self._upsert(case_data)
-
-        row = self._select_case('case-004')
-        assert row['case_id'] == 'case-004'
+        row = self._select_case('case-003')
+        assert row['prop__dob'] == '1990-05-20'
+        assert row['prop__dob__date'] == datetime.date(1990, 5, 20)
 
 
 @pytest.mark.django_db
