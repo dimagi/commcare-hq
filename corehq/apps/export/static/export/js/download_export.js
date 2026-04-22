@@ -42,7 +42,10 @@ var downloadFormModel = function (options) {
     self.dateRange = ko.observable(self.defaultDateRange);
     self.getEMW = function () {
         // "expanded mobile worker" => the users (for forms) or case owners (for cases)
-        return reportUtils.urlSerialize($('form[name="exportFiltersForm"]'));
+        return reportUtils.urlSerialize(
+            $('form[name="exportFiltersForm"]'),
+            ['csrfmiddlewaretoken', 'date_range'],
+        );
     };
 
     // Cookie Related
