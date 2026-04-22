@@ -588,6 +588,7 @@ msgstr "La date de fin doit être après la date de début."
 
 #: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/invoice.html
+#: corehq/apps/hqadmin/templates/hqadmin/user_audit_report.html
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
@@ -1313,6 +1314,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
@@ -4987,55 +4989,6 @@ msgstr "Ajouter les utilisateurs:"
 msgid "Action"
 msgstr "Action"
 
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Reference"
-msgstr "Référence"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Constant"
-msgstr "Constante"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "SQL Statement"
-msgstr "Requête SQL"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Sum"
-msgstr "Somme"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Min"
-msgstr "Min"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Max"
-msgstr "Max"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Average"
-msgstr "Moyenne"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Count"
-msgstr "Compte"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Count Unique Values"
-msgstr "Compter les valeurs uniques"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Has a nonzero sum (1 if sum is nonzero else 0)."
-msgstr "A une somme non nulle (1 si la somme est non nulle, sinon 0)."
-
-#: corehq/apps/aggregate_ucrs/models.py corehq/apps/reports/filters/select.py
-msgid "Month"
-msgstr "Mois"
-
-#: corehq/apps/aggregate_ucrs/models.py
-msgid "Week"
-msgstr "Semaine"
-
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid "First name"
@@ -5963,10 +5916,6 @@ msgid "Please log in to the app to check for an update."
 msgstr ""
 "Veuillez vous connecter à l'application pour vérifier s'il y a une mise à "
 "jour."
-
-#: corehq/apps/app_manager/exceptions.py
-msgid "Form Actions Diff failed to be applied successfully"
-msgstr "L'application de la différence des actions de formulaire a échoué"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
@@ -11102,6 +11051,16 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+msgid "Property mapping concurrently changed and deleted"
+msgstr "Le mapping de propriété a été modifié et supprimé simultanément"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+msgid "Dismiss this alert to keep the mapping."
+msgstr "Ignorez cette alerte pour conserver le mapping."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
 msgid ""
 "\n"
 "                Property has been deprecated.\n"
@@ -12882,11 +12841,6 @@ msgstr "Nom d'instance du champ de recherche"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Label for Searching"
 msgstr "Libellé pour la recherche"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Label for Searching Again"
-msgstr "Libellé pour rechercher à nouveau"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -16438,6 +16392,16 @@ msgid ""
 msgstr ""
 "Le fichier que vous souhaitez importer est protégé par un mot de passe. "
 "Veuillez choisir un fichier qui n'est pas protégé par un mot de passe."
+
+#: corehq/apps/case_importer/util.py
+msgid ""
+"The file you uploaded contains links to another workbook, which cannot be "
+"processed. You must upload a file that does not contain links to another "
+"workbook."
+msgstr ""
+"Le fichier que vous avez téléchargé contient des liens vers un autre "
+"classeur, ce qui ne peut pas être traité. Vous devez télécharger un fichier "
+"ne contenant pas de liens vers un autre classeur."
 
 #: corehq/apps/case_importer/util.py
 msgid "The file uploaded has the following error: {}"
@@ -25739,27 +25703,43 @@ msgid "Sign In"
 msgstr "Connexion"
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
+#| msgid ""
+#| "\n"
+#| "                No account? Sign up today, it's free!\n"
+#| "              "
 msgid ""
 "\n"
-"                No account? Sign up today, it's free!\n"
+"                No account? Get started for free.\n"
 "              "
 msgstr ""
 "\n"
-"                Pas de compte ? Inscrivez-vous dès aujourd'hui, c'est gratuit !\n"
+"                Pas de compte ? Commencez gratuitement.\n"
 "              "
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
-msgid "Learn more"
-msgstr "Lire plus"
+#| msgid ""
+#| "\n"
+#| "                    Organization-based data access restrictions are only available\n"
+#| "                    on the Pro plan and above. Saving this role will enable\n"
+#| "                    full organization access for the assigned users.\n"
+#| "                  "
+msgid ""
+"\n"
+"                    Data collection is just the start. Equip your frontline\n"
+"                    team with powerful service delivery apps that work where\n"
+"                    you work, even offline. No coding required.\n"
+"                  "
+msgstr ""
+"\n"
+"                    La collecte de données n'est que le début. Équipez votre équipe de terrain d'applications puissantes pour la prestation de services, qui fonctionnent où vous travaillez, même hors ligne. Aucun codage requis.\n"
+"                  "
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
-msgid ""
-"about how CommCare can be your mobile solution for your frontline workforce."
-msgstr ""
-"sur la façon dont CommCare peut être votre solution mobile pour votre "
-"personnel de première ligne."
+#| msgid "Learn more about CommCare"
+msgid "Learn more about CommCare."
+msgstr "En savoir plus sur CommCare."
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
@@ -25820,13 +25800,17 @@ msgstr ""
 "    "
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
+#| msgid ""
+#| "\n"
+#| "                  No account? Sign up today, it's free!\n"
+#| "                "
 msgid ""
 "\n"
-"                  No account? Sign up today, it's free!\n"
+"                  No account? Get started for free.\n"
 "                "
 msgstr ""
 "\n"
-"                  Pas de compte ? Inscrivez-vous aujourd'hui, c'est gratuit !\n"
+"                  Pas de compte ? Commencez gratuitement.\n"
 "                "
 
 #: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
@@ -32364,13 +32348,21 @@ msgstr "Type de document"
 msgid "Domain"
 msgstr "Domaine"
 
-#: corehq/apps/hqadmin/reports.py
+#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/simple.py
 msgid "IP Address"
 msgstr "Adresse IP"
 
-#: corehq/apps/hqadmin/reports.py
-msgid "Resource"
-msgstr "Ressource"
+#: corehq/apps/hqadmin/reports.py corehq/apps/notifications/forms.py
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
+#: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
+#: corehq/motech/generic_inbound/views.py corehq/motech/views.py
+msgid "URL"
+msgstr "URL"
+
+#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/simple.py
+#: corehq/motech/views.py
+msgid "Status Code"
+msgstr "Code d'état"
 
 #: corehq/apps/hqadmin/reports.py
 msgid ""
@@ -32390,14 +32382,62 @@ msgstr ""
 "deux dates sont identiques. Veuillez ajuster votre plage horaire."
 
 #: corehq/apps/hqadmin/reports.py
+msgid ""
+"Invalid IP address filter. Use single IPs, CIDR notation (/8, /16, /24, "
+"/32), or comma-separated combinations."
+msgstr ""
+"Filtre d'adresse IP invalide. Utilisez des IP uniques, la notation CIDR (/8,"
+" /16, /24, /32), ou des combinaisons séparées par des virgules."
+
+#: corehq/apps/hqadmin/reports.py
+msgid ""
+"Invalid status code filter. Use comma-separated integers (e.g. 200, 403, "
+"500)."
+msgstr ""
+"Filtre de code de statut invalide. Utilisez des entiers séparés par des "
+"virgules (ex : 200, 403, 500)."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid "Note: URL paths for this domain typically start with \"{domain_prefix}\"."
+msgstr ""
+"Remarque : Les chemins d'URL pour ce domaine commencent généralement par "
+"\"{domain_prefix}\"."
+
+#: corehq/apps/hqadmin/reports.py
 #, python-brace-format
 msgid ""
-"Your search returned more than {max_records} records. Please narrow down "
-"your search by selecting a specific user, domain, or a shorter date range."
+"Showing {max_records} results, but there are additional events within the "
+"same minute that are not shown. Try narrowing by username, domain, IP "
+"address, or other filters to see all results."
 msgstr ""
-"Votre recherche a retourné plus de {max_records} enregistrements. Veuillez "
-"affiner votre recherche en sélectionnant un utilisateur, un domaine ou une "
-"période plus courte."
+"Affichage de {max_records} résultats, mais d'autres événements dans la même "
+"minute ne sont pas affichés. Essayez de filtrer par nom d'utilisateur, "
+"domaine, adresse IP ou autres filtres pour voir tous les résultats."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid ""
+"Showing {num_rows} events through {cutoff_time}. Your query returned more "
+"than {max_records} results; the end date/time has been adjusted. To see "
+"later events, set the start time to {cutoff_time}."
+msgstr ""
+"Affichage de {num_rows} événements jusqu'à {cutoff_time}. Votre requête a "
+"retourné plus de {max_records} résultats ; la date/heure de fin a été "
+"ajustée. Pour voir les événements ultérieurs, définissez l'heure de début à "
+"{cutoff_time}."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid ""
+"Note: {dropped} additional results within the cutoff minute were excluded to"
+" align with a clean minute boundary. Adding filters (IP address, URL path, "
+"status code) may help narrow results."
+msgstr ""
+"Remarque : {dropped} résultats supplémentaires dans la minute de coupure ont"
+" été exclus pour respecter une limite propre à la minute. Ajouter des "
+"filtres (adresse IP, chemin d'URL, code de statut) peut aider à affiner les "
+"résultats."
 
 #: corehq/apps/hqadmin/reports.py corehq/tabs/tabclasses.py
 msgid "User List"
@@ -32652,8 +32692,13 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-msgid "%(user_name)s's Information"
-msgstr "Informations sur %(user_name)s"
+#| msgid "%(user_name)s's Information"
+msgid ""
+"%(user_name)s's\n"
+"      Information"
+msgstr ""
+"Informations de %(user_name)s\n"
+"      "
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "This account is disabled."
@@ -32672,10 +32717,84 @@ msgid "Is Superuser"
 msgstr "Est superutilisateur·rice"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+msgid "Offboard Staff User"
+msgstr "Désactiver l'utilisateur du personnel"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 msgid "Domains"
 msgstr "Domaines"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                Are you sure you want to permanently delete\n"
+#| "                <strong>%(attendee_name)s</strong>?\n"
+#| "              "
+msgid ""
+"\n"
+"                The following will be removed from\n"
+"                <strong>%(user_name)s</strong>:\n"
+"              "
+msgstr ""
+"\n"
+"                Les éléments suivants seront retirés de\n"
+"                <strong>%(user_name)s</strong> :\n"
+"              "
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                        %(cc_name)s Help\n"
+#| "                    "
+msgid ""
+"\n"
+"                    %(count)s domain membership\n"
+"                  "
+msgid_plural ""
+"\n"
+"                    %(count)s domain memberships\n"
+"                  "
+msgstr[0] ""
+"\n"
+"                        Aide %(cc_name)s\n"
+"                    "
+msgstr[1] ""
+"\n"
+"                        Aide %(cc_name)s\n"
+"                    "
+msgstr[2] ""
+"\n"
+"                        Aide %(cc_name)s\n"
+"                    "
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#| msgid "Superuser"
+msgid "Superuser access"
+msgstr "Accès superutilisateur"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#| msgid "Accounting Admins"
+msgid "Accounting admin access"
+msgstr "Accès administrateur comptabilité"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                  Are you sure you want to <strong>delete</strong> this rule?\n"
+#| "                "
+msgid ""
+"\n"
+"                  Type <strong>%(confirm_text)s</strong> to confirm\n"
+"                "
+msgstr ""
+"\n"
+"                  Tapez <strong>%(confirm_text)s</strong> pour confirmer\n"
+"                "
 
 #: corehq/apps/hqadmin/views/data.py
 msgid "Missing Form XML"
@@ -32752,6 +32871,41 @@ msgid ""
 msgstr ""
 "Réponse de restauration inattendue {}: {}. Si vous croyez qu'il s'agit d'un "
 "bug, signaler un problème."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+#| msgid "User with ID '{user_id}' not found"
+msgid "User '{username}' not found."
+msgstr "Utilisateur '{username}' non trouvé."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+#| msgid "Update Location Membership"
+msgid "{count} domain membership"
+msgid_plural "{count} domain memberships"
+msgstr[0] "Mettre à jour l'appartenance à l'emplacement"
+msgstr[1] "Mettre à jour l'appartenance à l'emplacement"
+msgstr[2] "Mettre à jour l'appartenance à l'emplacement"
+
+#: corehq/apps/hqadmin/views/users.py
+#| msgid "Grant or revoke superuser access"
+msgid "superuser access"
+msgstr "accès superutilisateur"
+
+#: corehq/apps/hqadmin/views/users.py
+#| msgid "Accounting Admins"
+msgid "accounting admin access"
+msgstr "accès administrateur comptabilité"
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+msgid "Removed {items} from user '{username}'."
+msgstr "{items} retiré(s) de l'utilisateur '{username}'."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+msgid "User '{username}' has no access to remove."
+msgstr "L'utilisateur '{username}' n'a aucun accès à retirer."
 
 #: corehq/apps/hqadmin/views/users.py
 #, python-format
@@ -38134,13 +38288,6 @@ msgid "Here are your keys!"
 msgstr "Voici vos clés !"
 
 #: corehq/apps/notifications/forms.py
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
-#: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
-#: corehq/motech/generic_inbound/views.py corehq/motech/views.py
-msgid "URL"
-msgstr "URL"
-
-#: corehq/apps/notifications/forms.py
 msgid "Domain-specific"
 msgstr "Spécifique au domaine"
 
@@ -41022,6 +41169,10 @@ msgid "Year"
 msgstr "Année"
 
 #: corehq/apps/reports/filters/select.py
+msgid "Month"
+msgstr "Mois"
+
+#: corehq/apps/reports/filters/select.py
 msgid "Click to select a case type"
 msgstr "Cliquer pour sélectionner un type de dossier"
 
@@ -41086,12 +41237,16 @@ msgid "Payload ID"
 msgstr "Identifiant de la charge utile"
 
 #: corehq/apps/reports/filters/simple.py
+#| msgid ""
+#| "Leave this blank to include all users. In that case, domain is required to "
+#| "limit the scope."
 msgid ""
-"Leave this blank to include all users. In that case, domain is required to "
-"limit the scope."
+"One or more usernames, comma-separated. Leave blank to include all users "
+"(requires domain to limit the scope)."
 msgstr ""
-"Laissez ce champ vide pour inclure tous les utilisateurs. Dans ce cas, le "
-"domaine est requis pour limiter la portée."
+"Un ou plusieurs noms d'utilisateur, séparés par des virgules. Laisser vide "
+"pour inclure tous les utilisateurs (nécessite un domaine pour limiter la "
+"portée)."
 
 #: corehq/apps/reports/filters/simple.py
 msgid "Optional"
@@ -41104,6 +41259,47 @@ msgstr "Optionnel. Laisser vide pour utiliser la valeur par défaut (minuit)."
 #: corehq/apps/reports/filters/simple.py
 msgid "Optional. Leave blank to include the full day."
 msgstr "Optionnel. Laisser vide pour inclure la journée complète."
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"Single IP, CIDR (/8, /16, /24, /32), or comma-separated. Example: "
+"10.0.0.0/8, 192.168.1.1"
+msgstr ""
+"IP unique, CIDR (/8, /16, /24, /32), ou séparés par des virgules. Exemple : "
+"10.0.0.0/8, 192.168.1.1"
+
+#: corehq/apps/reports/filters/simple.py
+msgid "URL Path Include"
+msgstr "Inclure le chemin d'URL"
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"One URL path pattern per line. Patterns are OR'd together. Leave blank to "
+"include all paths."
+msgstr ""
+"Un motif de chemin d'URL par ligne. Les motifs sont combinés avec OU. "
+"Laisser vide pour inclure tous les chemins."
+
+#: corehq/apps/reports/filters/simple.py
+#| msgid "Users to exclude"
+msgid "URL Path Exclude"
+msgstr "Exclure le chemin d'URL"
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"One URL path pattern per line. Matching rows are excluded. Patterns are OR'd"
+" (any match excludes the row)."
+msgstr ""
+"Un motif de chemin d'URL par ligne. Les lignes correspondantes sont exclues."
+" Les motifs sont combinés avec OU (toute correspondance exclut la ligne)."
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"Comma-separated status codes. Example: 200, 403, 500. Leave blank to include"
+" all."
+msgstr ""
+"Codes d'état séparés par des virgules. Exemple : 200, 403, 500. Laisser vide"
+" pour tout inclure."
 
 #: corehq/apps/reports/filters/users.py
 msgid "View by Users or Groups"
@@ -42068,6 +42264,10 @@ msgstr ""
 #: corehq/apps/reports/standard/monitoring.py
 msgid "No Form Selected"
 msgstr "Aucun formulaire sélectionné"
+
+#: corehq/apps/reports/standard/monitoring.py
+msgid "Average"
+msgstr "Moyenne"
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "Std. Dev."
@@ -55614,10 +55814,6 @@ msgid "Custom SMS"
 msgstr "SMS personnalisé"
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Push Notification"
-msgstr "Notification push"
-
-#: corehq/messaging/scheduling/forms.py
 msgid "The time from case property"
 msgstr "L'heure à partir de la propriété du dossier"
 
@@ -55770,13 +55966,6 @@ msgid "Email case property can only be used with Email content"
 msgstr ""
 "La propriété e-mail du dossier ne peut être utilisée qu'avec du contenu "
 "e-mail"
-
-#: corehq/messaging/scheduling/forms.py
-msgid ""
-"Push Notifications is no longer available. Please contact Administrator."
-msgstr ""
-"Les notifications push ne sont plus disponibles. Veuillez contacter "
-"l'administrateur."
 
 #: corehq/messaging/scheduling/forms.py
 msgid ""
@@ -58788,10 +58977,6 @@ msgid "Request Body"
 msgstr "Corps de la requête"
 
 #: corehq/motech/views.py
-msgid "Status Code"
-msgstr "Code d'état"
-
-#: corehq/motech/views.py
 msgid "Response Headers"
 msgstr "En-têtes de réponse"
 
@@ -60072,6 +60257,72 @@ msgstr "Les colonnes requises sont {column_names}"
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
 
+#~ msgid "Reference"
+#~ msgstr "Référence"
+
+#~ msgid "Constant"
+#~ msgstr "Constante"
+
+#~ msgid "SQL Statement"
+#~ msgstr "Requête SQL"
+
+#~ msgid "Sum"
+#~ msgstr "Somme"
+
+#~ msgid "Min"
+#~ msgstr "Min"
+
+#~ msgid "Max"
+#~ msgstr "Max"
+
+#~ msgid "Count"
+#~ msgstr "Compte"
+
+#~ msgid "Count Unique Values"
+#~ msgstr "Compter les valeurs uniques"
+
+#~ msgid "Has a nonzero sum (1 if sum is nonzero else 0)."
+#~ msgstr "A une somme non nulle (1 si la somme est non nulle, sinon 0)."
+
+#~ msgid "Week"
+#~ msgstr "Semaine"
+
+#~ msgid "Form Actions Diff failed to be applied successfully"
+#~ msgstr "L'application de la différence des actions de formulaire a échoué"
+
+#~ msgid "Label for Searching Again"
+#~ msgstr "Libellé pour rechercher à nouveau"
+
+#~ msgid "Learn more"
+#~ msgstr "Lire plus"
+
+#~ msgid ""
+#~ "about how CommCare can be your mobile solution for your frontline workforce."
+#~ msgstr ""
+#~ "sur la façon dont CommCare peut être votre solution mobile pour votre "
+#~ "personnel de première ligne."
+
+#~ msgid "Resource"
+#~ msgstr "Ressource"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Your search returned more than {max_records} records. Please narrow down "
+#~ "your search by selecting a specific user, domain, or a shorter date range."
+#~ msgstr ""
+#~ "Votre recherche a retourné plus de {max_records} enregistrements. Veuillez "
+#~ "affiner votre recherche en sélectionnant un utilisateur, un domaine ou une "
+#~ "période plus courte."
+
+#~ msgid "Push Notification"
+#~ msgstr "Notification push"
+
+#~ msgid ""
+#~ "Push Notifications is no longer available. Please contact Administrator."
+#~ msgstr ""
+#~ "Les notifications push ne sont plus disponibles. Veuillez contacter "
+#~ "l'administrateur."
+
 #, python-format
 #~ msgid ""
 #~ "\n"
@@ -60284,18 +60535,6 @@ msgstr "Saisir un JSON valide"
 
 #~ msgid "Delete Attendee"
 #~ msgstr "Supprimer le·la participant·e"
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "                Are you sure you want to permanently delete\n"
-#~ "                <strong>%(attendee_name)s</strong>?\n"
-#~ "              "
-#~ msgstr ""
-#~ "\n"
-#~ "                Êtes-vous sûr de vouloir supprimer définitivement\n"
-#~ "                <strong>%(attendee_name)s</strong> ?\n"
-#~ "              "
 
 #, python-format
 #~ msgid ""
@@ -61629,19 +61868,6 @@ msgstr "Saisir un JSON valide"
 #~ "\n"
 #~ "                    Assurez-vous que tout utilisateur ayant ce rôle ait également un emplacement assigné.\n"
 #~ "                    Les utilisateurs sans emplacement assigné ne pourront pas se connecter.\n"
-#~ "                  "
-
-#~ msgid ""
-#~ "\n"
-#~ "                    Organization-based data access restrictions are only available\n"
-#~ "                    on the Pro plan and above. Saving this role will enable\n"
-#~ "                    full organization access for the assigned users.\n"
-#~ "                  "
-#~ msgstr ""
-#~ "\n"
-#~ "                    Les restrictions d'accès aux données basées sur l'organisation ne sont disponibles\n"
-#~ "                    qu'avec l'offre Pro et supérieure. Enregistrer ce rôle activera\n"
-#~ "                    l'accès complet à l'organisation pour les utilisateurs assignés.\n"
 #~ "                  "
 
 #~ msgid ""
