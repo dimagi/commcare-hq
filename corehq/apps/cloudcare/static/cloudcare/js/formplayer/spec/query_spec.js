@@ -1,7 +1,5 @@
 import Backbone from "backbone";
-import sinon from "sinon";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import Utils from "cloudcare/js/formplayer/utils/utils";
 import QueryListView from "cloudcare/js/formplayer/menus/views/query";
 
 describe('Query', function () {
@@ -20,8 +18,6 @@ describe('Query', function () {
             });
 
             const keyViewCollection = new QueryViewCollection([keyModel]);
-
-            sinon.stub(Utils, 'getStickyQueryInputs').callsFake(function () { return 'fake_value'; });
 
             const keyQueryListView = QueryListView.queryListView({
                 collection: keyViewCollection,

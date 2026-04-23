@@ -1093,14 +1093,6 @@ DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
     parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
 )
 
-WEBAPPS_STICKY_SEARCH = StaticToggle(
-    "webapps_sticky_search",
-    "USH: Sticky search: In web apps, save user's most recent inputs on case search & claim screen.",
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/COVID%3A+Web+Apps+Sticky+Search',
-)
-
 HIDE_SYNC_BUTTON = StaticToggle(
     "hide_sync_button",
     "USH: Hide Sync Button in Web Apps",

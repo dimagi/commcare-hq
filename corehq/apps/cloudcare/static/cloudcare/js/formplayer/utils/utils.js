@@ -4,7 +4,6 @@ import Backbone from "backbone";
 import DOMPurify from "dompurify";
 import {Modal} from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import toggles from "hqwebapp/js/toggles";
 import constants from "cloudcare/js/formplayer/constants";
 import AppsAPI from "cloudcare/js/formplayer/apps/api";
 
@@ -176,21 +175,6 @@ Utils.setCurrentQueryInputs = function (inputs, queryKey) {
     if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
         this.queryInputs = this.queryInputs || {};
         this.queryInputs[queryKey] = inputs;
-    }
-};
-
-Utils.getStickyQueryInputs = function () {
-    if (toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH') && this.stickyQueryInputs) {
-        return this.stickyQueryInputs[sessionStorage.queryKey] || {};
-    }
-    return {};
-};
-
-Utils.setStickyQueryInputs = function (inputs) {
-    const queryKey = sessionStorage.queryKey;
-    if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
-        this.stickyQueryInputs = this.stickyQueryInputs || {};
-        this.stickyQueryInputs[queryKey] = inputs;
     }
 };
 

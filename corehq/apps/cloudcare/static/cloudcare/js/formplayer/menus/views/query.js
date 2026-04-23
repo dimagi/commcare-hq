@@ -68,7 +68,7 @@ var groupDisplays = function (displays, groupHeaders) {
 };
 
 var encodeValue = function (model, searchForBlank) {
-        // transform value entered to that sent to CaseSearch API (and saved for sticky search)
+        // transform value entered to that sent to CaseSearch API
         var value = model.get('value');
         if (value && model.get("input") === "date") {
             value = toIsoDate(value);
@@ -88,7 +88,7 @@ var encodeValue = function (model, searchForBlank) {
         }
     },
     decodeValue = function (model, value) {
-        // transform default values from app config and sticky search values to UI values
+        // transform default values from app config to UI values
         if (!_.isString(value)) {
             return [false, undefined];
         }
@@ -103,7 +103,7 @@ var encodeValue = function (model, searchForBlank) {
             if (model.get("input") === "date") {
                 value = toUiDate(value);
             } else if (model.get("input") === "daterange") {
-                // Take sticky value ("__range__2023-02-14__2023-02-17")
+                // Take encoded value ("__range__2023-02-14__2023-02-17")
                 // or default value ("2023-02-14 to 2023-02-17")
                 // coerce to "02/14/2023 to 02/17/2023", as used by the widget
                 value = (value.replace("__range__", "")
@@ -254,17 +254,8 @@ var QueryView = Marionette.View.extend({
         this.model = this.options.model;
         this.errorMessage = null;
         this._setItemset(this.model.attributes.itemsetChoices, this.model.attributes.itemsetChoicesKey);
-
-        // initialize with default values or with sticky values if either is present
-        var value = decodeValue(this.model, this.model.get('value'))[1],
-            allStickyValues = formplayerUtils.getStickyQueryInputs(),
-            stickyValueEncoded = allStickyValues[this.model.get('id')],
-            [searchForBlank, stickyValue] = decodeValue(this.model, stickyValueEncoded);
-        this.model.set('searchForBlank', searchForBlank);
-        if (stickyValue && !value) {  // Sticky values don't override default values
-            value = stickyValue;
-        }
-        this.model.set('value', value);
+        this.model.set('searchForBlank', false);
+        this.model.set('value', decodeValue(this.model, this.model.get('value'))[1]);
     },
 
     ui: {
@@ -388,14 +379,12 @@ var QueryView = Marionette.View.extend({
             this.model.set('value', $(e.currentTarget).val());
         }
         this.notifyParentOfFieldChange(e);
-        this.parentView.setStickyQueryInputs();
     },
 
     changeDateQueryField: function (e) {
         this.model.set('value', $(e.currentTarget).val());
         var useDynamicSearch = Date(this.model._previousAttributes.value) !== Date($(e.currentTarget).val());
         this.notifyParentOfFieldChange(e, useDynamicSearch);
-        this.parentView.setStickyQueryInputs();
     },
 
     notifyParentOfFieldChange: function (e, useDynamicSearch = true) {
@@ -420,7 +409,6 @@ var QueryView = Marionette.View.extend({
             });
             initMapboxWidget(this.model);
         }
-        self.parentView.setStickyQueryInputs();
     },
 
     _initializeSelect2Dropdown: function () {
@@ -698,7 +686,6 @@ var QueryListView = Marionette.CollectionView.extend({
         self._getChildren().forEach(function (childView) {
             childView.clear();
         });
-        self.setStickyQueryInputs();
         if (self.dynamicSearchEnabled || this.searchOnClear) {
             self.updateSearchResults();
         }
@@ -842,10 +829,6 @@ var QueryListView = Marionette.CollectionView.extend({
                 });
             });
         }
-    },
-
-    setStickyQueryInputs: function () {
-        formplayerUtils.setStickyQueryInputs(this.getAnswers());
     },
 
     onAttach: function () {
