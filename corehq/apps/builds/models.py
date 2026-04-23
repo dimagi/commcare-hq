@@ -144,6 +144,9 @@ class CommCareMobileBuild(SyncSQLToCouchMixin, models.Model):
         )
 
     def save(self, *args, **kwargs):
+        # TODO: replace with auto_now_add=True after couch2sql migration is complete
+        if not self.time:
+            self.time = datetime.utcnow()
         self.full_clean()
         super().save(*args, **kwargs)
 
