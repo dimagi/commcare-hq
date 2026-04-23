@@ -34,19 +34,6 @@ def get_case_mappings(actions):
     return data
 
 
-def from_combined_diff(combined_diff, *, is_registration):
-    """Convert Vellum case mapping diff to `merge_case_mappings` structure"""
-    data = combined_diff.copy()
-    diff = {'update_case': data}
-    if is_registration:
-        open_diff = diff['open_case'] = {}
-        for key in ['add', 'update', 'delete']:
-            if key in data and 'name' in data[key]:
-                data[key] = data[key].copy()
-                open_diff[key] = data[key].pop('name')
-    return diff
-
-
 def make_multi(actions_json):
     """Convert FormActions JSON to case_config_ui.js structure
 
