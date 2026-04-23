@@ -38,8 +38,8 @@ class OpenCaseActionApplyDiffTests(SimpleTestCase):
         merge_case_mappings(diff, actions)
         action = actions.open_case
 
-        multi_paths = [update.question_path for update in [action.name_update] + action.conflicts]
-        assert multi_paths == ['/data/name', '/data/new_name']
+        paths = [update.question_path for update in [action.name_update] + action.conflicts]
+        assert paths == ['/data/name', '/data/new_name']
 
     def test_conflicting_name_addition_is_overwritten(self):
         # added "/name" mapping should overwrite existing "/name" mapping
@@ -56,8 +56,9 @@ class OpenCaseActionApplyDiffTests(SimpleTestCase):
         assert not action.conflicts
 
     def test_merge_case_mappings_remove_name(self):
-        actions = FormActions(open_case=OpenCaseAction.wrap({
-            'name_update_multi': [{'question_path': '/data/name1'}, {'question_path': '/data/name2'}]
+        actions = FormActions(open_case=OpenCaseAction({
+            'name_update': {'question_path': '/data/name1'},
+            'conflicts': [{'question_path': '/data/name2'}],
         }))
 
         diff = {'open_case': {'delete': [{'question_path': '/data/name1'}]}}
@@ -172,20 +173,6 @@ class UpdateCaseActionApplyDiffTests(SimpleTestCase):
         assert set(self._conflicting(actions)) == {'one'}
         paths = {c.question_path for c in self._conflicting(actions)['one']}
         assert paths == {'/data/question1', '/data/question2'}
-
-    def test_add_value_with_legacy_update_multi_conflict(self):
-        form_actions = FormActions({'update_case': {'update_multi': {
-            'one': [{'question_path': '/data/question1'}, {'question_path': '/data/question2'}]
-        }}})
-
-        merge_case_mappings({'update_case': {
-            'add': {'one': [{'question_path': '/data/question3'}]}
-        }}, form_actions)
-        actions = form_actions.update_case
-
-        assert set(actions.conflicts) == {'one'}
-        paths = [update.question_path for update in self._conflicting(actions)['one']]
-        assert set(paths) == {'/data/question1', '/data/question2', '/data/question3'}
 
     def test_add_value_with_existing_conflict(self):
         actions = UpdateCaseAction({
