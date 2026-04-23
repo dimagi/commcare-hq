@@ -16,7 +16,7 @@
 /corehq/blobs/ @millerdev
 /corehq/ex-submodules/casexml/apps/phone/data_providers/case/livequery.py @millerdev
 /corehq/messaging/ @mkangia
-/corehq/motech/ @kaapstorm
+/corehq/motech/ @kaapstorm @Charl1996 @pxwxnvermx @zandre-eng
 /corehq/pillows/ @calellowitz @amitphulera
 /corehq/sql_db/ @calellowitz
 /corehq/tests/ @millerdev
