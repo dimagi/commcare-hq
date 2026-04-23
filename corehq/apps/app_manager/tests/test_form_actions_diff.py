@@ -479,8 +479,10 @@ class FormActionsTests(SimpleTestCase):
         assert actions.update_case.update['two'].update_mode == 'edit'
 
     def test_merge_case_mappings_with_double_addition(self):
-        # a scenario that would have previously caused DiffConflictException
+        # A scenario that would have previously caused DiffConflictException:
         # update + add => delete + add + add (last add wins)
+        # Edge case is probably not possible to create in real life,
+        # although a bug allowed it in the past.
         actions = FormActions(
             open_case=OpenCaseAction({
                 'name_update': {'question_path': '/data/form_name'},
