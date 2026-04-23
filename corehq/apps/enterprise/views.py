@@ -1,6 +1,11 @@
+import codecs
 import json
+import logging
 from datetime import datetime
 
+from couchexport.export import Format
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 from django.conf import settings
 from django.contrib import messages
 from django.core.files.base import ContentFile
@@ -15,58 +20,67 @@ from django.http import (
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext as _, gettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
-
 from django_prbac.utils import has_privilege
 from memoized import memoized
-import codecs
 
+from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import always_allow_project_access
-from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.apps.analytics.tasks import record_google_analytics_event
-from corehq.apps.enterprise.decorators import require_enterprise_admin
-from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
-from corehq.apps.enterprise.metric_events import ENTERPRISE_REPORT_REQUEST
-from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
-from corehq.apps.enterprise.models import EnterprisePermissions
-from corehq.apps.enterprise.tasks import clear_enterprise_permissions_cache_for_all_users
-from couchexport.export import Format
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.parsing import ISO_DATETIME_FORMAT
-
-from corehq import privileges
 from corehq.apps.accounting.models import (
-    CustomerInvoice,
     CustomerBillingRecord,
+    CustomerInvoice,
+    SoftwarePlanEdition,
 )
-from corehq.apps.accounting.utils import quantize_accounting_decimal, log_accounting_error
+from corehq.apps.accounting.utils import (
+    log_accounting_error,
+    quantize_accounting_decimal,
+)
 from corehq.apps.accounting.utils.cards import (
     get_autopay_card_and_owner_for_billing_account,
     serialize_account_card,
 )
 from corehq.apps.accounting.utils.stripe import get_customer_cards
+from corehq.apps.analytics.tasks import record_google_analytics_event
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
 )
-from corehq.apps.domain.views import DomainAccountingSettings, BaseDomainView
-from corehq.apps.domain.views.accounting import PAYMENT_ERROR_MESSAGES, InvoiceStripePaymentView, \
-    BulkStripePaymentView, WireInvoiceView, BillingStatementPdfView
-
-from corehq.apps.enterprise.enterprise import EnterpriseReport, EnterpriseFormReport
-
-from corehq.apps.enterprise.forms import EnterpriseSettingsForm
-from corehq.apps.enterprise.tasks import email_enterprise_report
-
+from corehq.apps.domain.views import BaseDomainView, DomainAccountingSettings
+from corehq.apps.domain.views.accounting import (
+    PAYMENT_ERROR_MESSAGES,
+    BillingStatementPdfView,
+    BulkStripePaymentView,
+    InvoiceStripePaymentView,
+    WireInvoiceView,
+)
+from corehq.apps.enterprise.decorators import require_enterprise_admin
+from corehq.apps.enterprise.enterprise import (
+    EnterpriseFormReport,
+    EnterpriseReport,
+)
+from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
+from corehq.apps.enterprise.forms import (
+    EnterpriseAdminForm,
+    EnterpriseSettingsForm,
+    _get_sso_email_domains,
+)
+from corehq.apps.enterprise.metric_events import ENTERPRISE_REPORT_REQUEST
+from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
+from corehq.apps.enterprise.models import EnterprisePermissions
+from corehq.apps.enterprise.tasks import (
+    clear_enterprise_permissions_cache_for_all_users,
+    email_enterprise_report,
+)
 from corehq.apps.export.utils import get_default_export_settings_if_available
-
-from corehq.apps.hqwebapp.context import get_page_context, Section
+from corehq.apps.hqwebapp.context import Section, get_page_context
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_can_edit_or_view_web_users
-
 from corehq.const import USER_DATE_FORMAT
+
+enterprise_admin_logger = logging.getLogger(__name__)
 
 
 @use_bootstrap5
@@ -555,6 +569,111 @@ def remove_enterprise_permissions_domain(request, domain, target_domain):
             clear_enterprise_permissions_cache_for_all_users.delay(config.id, config.source_domain)
     messages.success(request, _('{} is now excluded from enterprise permissions.').format(target_domain))
     return HttpResponseRedirect(redirect)
+
+
+@use_bootstrap5
+@toggles.ENTERPRISE_ADMIN_SELF_SERVICE.required_decorator()
+@require_enterprise_admin
+def enterprise_admins(request, domain):
+    account = request.account
+    sso_domains = _get_sso_email_domains(account)
+    form = EnterpriseAdminForm(account=account)
+    context = get_page_context(
+        page_url=reverse('enterprise_admins', args=(domain,)),
+        page_title=_('Enterprise Administrators'),
+        page_name=_('Enterprise Administrators'),
+        domain=domain,
+        section=Section(
+            _('Enterprise Console'),
+            reverse('platform_overview', args=(domain,)),
+        ),
+    )
+    context.update({
+        'admin_emails': sorted(account.enterprise_admin_emails),
+        'sso_domains': sorted(sso_domains),
+        'form': form,
+        'current_user_email': request.couch_user.username,
+    })
+    return render(request, 'enterprise/enterprise_admins.html', context)
+
+
+@toggles.ENTERPRISE_ADMIN_SELF_SERVICE.required_decorator()
+@require_enterprise_admin
+@require_POST
+def add_enterprise_admin(request, domain):
+    account = request.account
+    redirect = HttpResponseRedirect(
+        reverse('enterprise_admins', args=[domain]),
+    )
+    form = EnterpriseAdminForm(request.POST, account=account)
+    if not form.is_valid():
+        error = form.errors.get('email', [_('Invalid request.')])[0]
+        messages.error(request, error)
+        return redirect
+    email = form.cleaned_data['email']
+    account.enterprise_admin_emails = list(account.enterprise_admin_emails) + [email]
+    account.save()
+    enterprise_admin_logger.info(
+        "Enterprise admin %s added to account %s by %s",
+        email, account.id, request.couch_user.username,
+    )
+    messages.success(
+        request,
+        _("%(email)s has been added as an enterprise administrator.")
+        % {'email': email},
+    )
+    return redirect
+
+
+@toggles.ENTERPRISE_ADMIN_SELF_SERVICE.required_decorator()
+@require_enterprise_admin
+@require_POST
+def remove_enterprise_admin(request, domain):
+    account = request.account
+    redirect = HttpResponseRedirect(
+        reverse('enterprise_admins', args=[domain]),
+    )
+    email = (request.POST.get('email') or '').lower()
+    current_user_email = request.couch_user.username.lower()
+
+    if email == current_user_email:
+        messages.error(
+            request,
+            _("You cannot remove yourself as an enterprise administrator."),
+        )
+        return redirect
+
+    if len(account.enterprise_admin_emails) <= 1:
+        messages.error(
+            request,
+            _("An enterprise account must have at least one administrator."),
+        )
+        return redirect
+
+    remaining = [
+        e for e in account.enterprise_admin_emails if e.lower() != email
+    ]
+    if len(remaining) == len(account.enterprise_admin_emails):
+        messages.error(
+            request,
+            _("%(email)s is not an enterprise administrator.") % {
+                'email': email,
+            },
+        )
+        return redirect
+
+    account.enterprise_admin_emails = remaining
+    account.save()
+    enterprise_admin_logger.info(
+        "Enterprise admin %s removed from account %s by %s",
+        email, account.id, request.couch_user.username,
+    )
+    messages.success(
+        request,
+        _("%(email)s has been removed as an enterprise administrator.")
+        % {'email': email},
+    )
+    return redirect
 
 
 @require_superuser
