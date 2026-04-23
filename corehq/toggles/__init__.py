@@ -966,6 +966,15 @@ CASE_SEARCH_DEPRECATED = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
+CASE_SEARCH_DEPRECATED_NORMAL_CASE_LIST = StaticToggle(
+    'case_search_deprecated_normal_case_list',
+    'Case Search: Normal case list option Deprecated',
+    TAG_DEPRECATED,
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
+)
+
 CASE_SEARCH_ADVANCED = StaticToggle(
     'case_search_advanced',
     'Advanced Case Search',
