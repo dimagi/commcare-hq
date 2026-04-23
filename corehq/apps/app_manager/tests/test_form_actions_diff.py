@@ -445,7 +445,7 @@ class FormActionsTests(SimpleTestCase):
     def test_merge_case_mappings_with_all_actions_at_once(self):
         actions = FormActions({
             'open_case': {
-                'name_update': {'question_path': 'form_name'},
+                'name_update': {'question_path': 'old_name'},
             },
             'update_case': {
                 'update': {
@@ -458,7 +458,7 @@ class FormActionsTests(SimpleTestCase):
         merge_case_mappings({
             'open_case': {
                 'add': [{'question_path': 'new_name'}],
-                'delete': [{'question_path': 'form_name'}],
+                'delete': [{'question_path': 'old_name'}],
             },
             'update_case': {
                 'add': {'three': [{'question_path': 'three'}]},
