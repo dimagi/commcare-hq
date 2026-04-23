@@ -703,8 +703,9 @@ class CaseMappingDiffHasChangesTests(SimpleTestCase):
 
 
 class ConvertUpdateToAddPlusDeleteTests(SimpleTestCase):
+    # 'update' key in diff is for backward compatibility
 
-    def test_simple(self):
+    def test_simple_update(self):
         diff = {'update': {'one': [{'question_path': '/data/one'}]}}
         snapshot = deepcopy(diff)
 
@@ -716,7 +717,7 @@ class ConvertUpdateToAddPlusDeleteTests(SimpleTestCase):
         }
         assert diff == snapshot, 'original diff should not be mutated'
 
-    def test_extended(self):
+    def test_update_with_add_and_delete(self):
         diff = {
             'add': {'one': [{'question_path': '/data/add'}]},
             'delete': {'one': [{'question_path': '/data/del'}]},
