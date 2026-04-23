@@ -28,27 +28,32 @@ class OpenCaseActionApplyDiffTests(SimpleTestCase):
 
         assert action.name_update.question_path == 'name'
 
-    def test_name_update(self):
-        actions = FormActions(open_case=OpenCaseAction({'name_update': {'question_path': 'name'}}))
+    def test_add_mapping_with_different_question_path_creates_conflict(self):
+        # added "/data/new_name" mapping should conflict with existing "/data/name" mapping
+        actions = FormActions(open_case=OpenCaseAction({
+            'name_update': {'question_path': '/data/name'},
+        }))
 
-        diff = {'open_case': {'add': [{'question_path': 'new_name'}]}}
+        diff = {'open_case': {'add': [{'question_path': '/data/new_name'}]}}
         merge_case_mappings(diff, actions)
         action = actions.open_case
 
         multi_paths = [update.question_path for update in [action.name_update] + action.conflicts]
-        assert multi_paths == ['name', 'new_name']
+        assert multi_paths == ['/data/name', '/data/new_name']
 
     def test_conflicting_name_addition_is_overwritten(self):
+        # added "/name" mapping should overwrite existing "/name" mapping
         actions = FormActions(open_case=OpenCaseAction({
-            'name_update': {'question_path': 'name', 'update_mode': 'always'},
+            'name_update': {'question_path': '/data/name', 'update_mode': 'always'},
         }))
 
-        diff = {'open_case': {'add': [{'question_path': 'name', 'update_mode': 'edit'}]}}
+        diff = {'open_case': {'add': [{'question_path': '/data/name', 'update_mode': 'edit'}]}}
         merge_case_mappings(diff, actions)
         action = actions.open_case
 
-        assert action.name_update.question_path == 'name'
+        assert action.name_update.question_path == '/data/name'
         assert action.name_update.update_mode == 'edit'
+        assert not action.conflicts
 
     def test_merge_case_mappings_remove_name(self):
         actions = FormActions(open_case=OpenCaseAction.wrap({
