@@ -31942,11 +31942,11 @@ msgid_plural ""
 "                  "
 msgstr[0] ""
 "\n"
-"                        %(cc_name)s सहायता\n"
+"                        %(count)s सहायता\n"
 "                    "
 msgstr[1] ""
 "\n"
-"                        %(cc_name)s सहायता\n"
+"                        %(count)s सहायता\n"
 "                    "
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html

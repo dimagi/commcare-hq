@@ -32306,11 +32306,11 @@ msgid_plural ""
 "                  "
 msgstr[0] ""
 "\n"
-"                        Msaada wa %(cc_name)s\n"
+"                        Msaada wa %(count)s\n"
 "                    "
 msgstr[1] ""
 "\n"
-"                        Msaada wa %(cc_name)s\n"
+"                        Msaada wa %(count)s\n"
 "                    "
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
