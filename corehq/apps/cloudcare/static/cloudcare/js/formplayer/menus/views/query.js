@@ -5,7 +5,6 @@ import DOMPurify from "dompurify";
 import Marionette from "backbone.marionette";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import hqTempusDominus from "hqwebapp/js/tempus_dominus";
-import toggles from "hqwebapp/js/toggles";
 import noopMetrics from "analytix/js/noopMetrics";
 import markdown from "cloudcare/js/markdown";
 import cloudcareUtils from "cloudcare/js/utils";
@@ -383,16 +382,15 @@ var QueryView = Marionette.View.extend({
 
     changeDateQueryField: function (e) {
         this.model.set('value', $(e.currentTarget).val());
-        var useDynamicSearch = Date(this.model._previousAttributes.value) !== Date($(e.currentTarget).val());
-        this.notifyParentOfFieldChange(e, useDynamicSearch);
+        this.notifyParentOfFieldChange(e);
     },
 
-    notifyParentOfFieldChange: function (e, useDynamicSearch = true) {
+    notifyParentOfFieldChange: function (e) {
         if (this.model.get('input') === 'address') {
             // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
             return;
         }
-        this.parentView.notifyFieldChange(e, this, useDynamicSearch, formplayerConstants.requestInitiatedByTagsMapping.FIELD_CHANGE);
+        this.parentView.notifyFieldChange(e, this, formplayerConstants.requestInitiatedByTagsMapping.FIELD_CHANGE);
     },
 
     toggleBlankSearch: function (e) {
@@ -556,15 +554,12 @@ var QueryListView = Marionette.CollectionView.extend({
 
     initialize: function (options) {
         this.parentModel = options.collection.models || [];
-        this.dynamicSearchEnabled = options.hasDynamicSearch && this.options.sidebarEnabled;
 
         this.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
             this.handleSmallScreenChange(smallScreenEnabled);
         });
         this.smallScreenListener.listen();
 
-        this.dynamicSearchEnabled = !(options.disableDynamicSearch || this.smallScreenEnabled) &&
-            (toggles.toggleEnabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS') && this.options.sidebarEnabled);
         this.searchOnClear = (options.searchOnClear && !this.smallScreenEnabled);
 
         if (Object.keys(options.groupHeaders).length > 0) {
@@ -645,7 +640,7 @@ var QueryListView = Marionette.CollectionView.extend({
         return answers;
     },
 
-    notifyFieldChange: function (e, changedChildView, useDynamicSearch, initiatedBy) {
+    notifyFieldChange: function (e, changedChildView, initiatedBy) {
         e.preventDefault();
         var self = this;
         self.validateFieldChange(changedChildView, initiatedBy).always(function (response) {
@@ -676,9 +671,6 @@ var QueryListView = Marionette.CollectionView.extend({
                 }
             }
         });
-        if (self.dynamicSearchEnabled && useDynamicSearch) {
-            self.updateSearchResults();
-        }
     },
 
     clearAction: function () {
@@ -686,7 +678,7 @@ var QueryListView = Marionette.CollectionView.extend({
         self._getChildren().forEach(function (childView) {
             childView.clear();
         });
-        if (self.dynamicSearchEnabled || this.searchOnClear) {
+        if (this.searchOnClear) {
             self.updateSearchResults();
         }
     },

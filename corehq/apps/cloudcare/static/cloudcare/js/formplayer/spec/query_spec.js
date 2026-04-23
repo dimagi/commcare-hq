@@ -8,7 +8,7 @@ describe('Query', function () {
         let keyQueryView;
 
         before(function () {
-            initialPageData.register("toggles_dict", { DYNAMICALLY_UPDATE_SEARCH_RESULTS: false });
+            initialPageData.register("toggles_dict", {});
             const QueryViewModel = Backbone.Model.extend();
             const QueryViewCollection = Backbone.Collection.extend();
             const keyModel = new QueryViewModel({

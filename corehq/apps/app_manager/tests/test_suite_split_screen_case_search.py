@@ -64,14 +64,12 @@ class DynamicSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.app = Application.wrap(self.app.to_json())
         self.module = self.app.modules[0]
 
-    @flag_enabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS')
     def test_dynamic_search_suite(self):
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)
         self.assertEqual("true", suite.xpath("./remote-request[1]/session/query/@dynamic_search")[0])
 
     @patch('corehq.apps.app_manager.models.ModuleBase.is_auto_select', return_value=True)
-    @flag_enabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS')
     def test_dynamic_search_suite_disable_with_auto_select(self, mock):
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)

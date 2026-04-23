@@ -1083,16 +1083,6 @@ SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
-DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
-    'dynamically_update_search_results',
-    "In case search with split screen case search enabled, search results update when a search field is updated"
-    " without requiring the user to manually press a button to search.",
-    TAG_DEPRECATED,
-    help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
-)
-
 HIDE_SYNC_BUTTON = StaticToggle(
     "hide_sync_button",
     "USH: Hide Sync Button in Web Apps",
