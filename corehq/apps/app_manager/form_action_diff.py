@@ -185,6 +185,7 @@ def _merge(diff, action):
 
 
 def _drop(prop, path, update, conflicts):
+    """Remove prop->path mapping if it exists"""
     if prop in update and update[prop].question_path == path:
         dropped = update[prop]
         if conflicts.get(prop):
