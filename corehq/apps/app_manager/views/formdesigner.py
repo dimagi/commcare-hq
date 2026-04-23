@@ -327,8 +327,10 @@ def _get_vellum_plugins(domain, form, module, options):
         vellum_plugins.append("saveToCase")
     if toggles.COMMCARE_CONNECT.enabled(domain):
         vellum_plugins.append("commcareConnect")
-    if toggles.LOCKED_ADMIN_QUESTIONS.enabled(domain, namespace=toggles.NAMESPACE_DOMAIN):
-        # replace with privilege check once added to appropriate software plan(s)
+    if (
+        toggles.LOCKED_ADMIN_QUESTIONS.enabled(domain, namespace=toggles.NAMESPACE_DOMAIN)
+        and domain_has_privilege(domain, privileges.LOCKED_ADMIN_QUESTIONS)
+    ):
         vellum_plugins.append("lock")
 
     form_uses_case = (
@@ -363,6 +365,7 @@ def _get_vellum_features(request, domain, app):
         'markdown_tables': app.enable_markdown_tables,
         'use_custom_repeat_button_text': app.build_version >= LooseVersion('2.55'),
         'support_document_upload': app.support_document_upload,
+        'edit_locked_questions': request.couch_user.can_edit_locked_questions_in_apps(),
     })
     return vellum_features
 
