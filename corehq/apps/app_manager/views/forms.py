@@ -60,7 +60,6 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.form_action_diff import (
     collect_locked_advanced_mappings,
     collect_locked_mappings,
-    from_combined_diff,
     get_case_mappings,
     make_multi,
     merge_case_mappings,
@@ -767,12 +766,6 @@ def _get_case_mapping_diff(request, form):
     if has_vellum_case_mapping and not is_advanced_form:
         if 'case_mapping_diff' in request.POST:
             return json.loads(request.POST['case_mapping_diff'])
-        if 'mapping_diff' in request.POST:
-            # Legacy, can be removed when Vellum always sends case_mapping_diff
-            return from_combined_diff(
-                json.loads(request.POST['mapping_diff']),
-                is_registration=form.is_registration_form(),
-            )
         return {}  # not None, prevent name mapping in save_xform
     return None
 
