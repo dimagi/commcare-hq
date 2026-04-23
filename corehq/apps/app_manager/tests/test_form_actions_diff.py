@@ -267,7 +267,9 @@ class UpdateCaseActionApplyDiffTests(SimpleTestCase):
 
         assert actions.update['one'].update_mode == 'edit'
 
-    def test_updating_a_missing_mapping_adds_a_conflict(self):
+    def test_updating_a_deleted_mapping_adds_a_conflict(self):
+        # If the mapping was deleted by a different session, updating it should
+        # create a conflict rather than restoring the original mapping
         actions = UpdateCaseAction({'update': {
             'one': {'question_path': '/data/one'},
         }})
@@ -280,17 +282,16 @@ class UpdateCaseActionApplyDiffTests(SimpleTestCase):
         assert 'two' not in actions.update
         assert [c.question_path for c in actions.conflicts['two']] == ['/data/two']
 
-    def test_updating_a_missing_question_adds_a_conflict(self):
-        # If the specific mapping was deleted by a different session, updating it shouldn't restore it
+    def test_updating_a_changed_mapping_adds_a_conflict(self):
+        # If the mapping was changed by a different session, updating it should
+        # create a conflict rather than updating the original mapping
         actions = UpdateCaseAction({'update': {
             'one': {'question_path': '/data/one'}
         }})
         form_actions = FormActions(update_case=actions)
 
         merge_case_mappings({'update_case': {
-            'update': {
-                'one': [{'question_path': '/data/two', 'update_mode': 'edit'}]
-            }
+            'update': {'one': [{'question_path': '/data/two', 'update_mode': 'edit'}]}
         }}, form_actions)
 
         assert actions.update['one'].question_path == '/data/one'
