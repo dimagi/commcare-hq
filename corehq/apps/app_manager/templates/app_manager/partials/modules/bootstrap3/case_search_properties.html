@@ -236,7 +236,7 @@
                     data-bind="value: workflow"
                     id="search-workflow"
                   >
-                    {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
+                    {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED_NORMAL_CASE_LIST' %}
                       <option
                         value="classic"
                         data-bind="hidden: restrictWorkflowForDataRegistry"
