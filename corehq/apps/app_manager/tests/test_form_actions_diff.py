@@ -84,7 +84,7 @@ class OpenCaseActionApplyDiffTests(SimpleTestCase):
 
         assert action.name_update.update_mode == 'edit'
 
-    def test_merge_case_mappings_updating_missing_name_raises_error(self):
+    def test_merge_case_mappings_updating_missing_mapping_creates_conflict(self):
         actions = FormActions(open_case=OpenCaseAction({'name_update': {'question_path': '/data/name'}}))
 
         diff = {'open_case': {'update': [{'question_path': '/data/missing_name', 'update_mode': 'edit'}]}}
