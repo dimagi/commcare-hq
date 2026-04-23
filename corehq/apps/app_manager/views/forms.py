@@ -343,7 +343,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             if xform:
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
-                case_mapping_diff = _get_case_mapping_diff(request, form)
+                case_mapping_diff = _get_case_mapping_diff(request)
                 save_xform(app, form, xform, case_mapping_diff)
                 if _case_mapping_diff_has_changes(case_mapping_diff):
                     # form builder is the only client that submits
@@ -468,7 +468,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
     app.save(resp)
     if ajax:
-        _add_case_management_data(resp, form, request)
+        _add_case_management_data(resp, form)
         return JsonResponse(resp)
     else:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=form_unique_id)
@@ -546,7 +546,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return conflict
 
     xml = apply_patch(patch, form.source)
-    case_mapping_diff = _get_case_mapping_diff(request, form)
+    case_mapping_diff = _get_case_mapping_diff(request)
 
     try:
         xml = save_xform(app, form, xml.encode('utf-8'), case_mapping_diff)
@@ -569,7 +569,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
             {'source': UPDATE_CASE_SOURCE_FORM_BUILDER},
         )
 
-    _add_case_management_data(response_json, form, request)
+    _add_case_management_data(response_json, form)
     return JsonResponse(response_json)
 
 
@@ -593,14 +593,9 @@ def apply_patch(patch, text):
     return unquote(encoded_result)
 
 
-def _get_case_mapping_diff(request, form):
-    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
-    is_advanced_form = isinstance(form, AdvancedForm)
-    if has_vellum_case_mapping and not is_advanced_form:
-        if 'case_mapping_diff' in request.POST:
-            return json.loads(request.POST['case_mapping_diff'])
-        return {}  # not None, prevent name mapping in save_xform
-    return None
+def _get_case_mapping_diff(request):
+    diff_json = request.POST.get('case_mapping_diff')
+    return json.loads(diff_json) if diff_json else None
 
 
 def _case_mapping_diff_has_changes(diff):
@@ -614,12 +609,9 @@ def _get_xform_conflict_response(form, sha1_checksum):
     return None
 
 
-def _add_case_management_data(response_json, form, request):
+def _add_case_management_data(response_json, form):
     """Allow clients to immediately display concurrent edit conflict warnings"""
-    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
-    is_advanced_form = isinstance(form, AdvancedForm)
-    case_type = form.get_module().case_type
-    if case_type and has_vellum_case_mapping and not is_advanced_form:
+    if form.get_module().case_type and not isinstance(form, AdvancedForm):
         response_json['caseManagement'] = {
             "mappings": get_case_mappings(form.actions),
         }
