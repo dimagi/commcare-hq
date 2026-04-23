@@ -359,12 +359,12 @@ class FormActionsTests(SimpleTestCase):
         assert actions.all_property_names() == {'one'}
 
     def test_get_case_mappings_serializes_all_updates(self):
-        actions = FormActions({
-            'open_case': {
+        actions = FormActions(
+            open_case=OpenCaseAction({
                 'name_update': {'question_path': 'name1'},
                 'conflicts': [{'question_path': 'name2'}],
-            },
-            'update_case': {
+            }),
+            update_case=UpdateCaseAction({
                 'update': {
                     'one': {'question_path': '/A/'},
                     'two': {'question_path': '/C/'},
@@ -373,8 +373,8 @@ class FormActionsTests(SimpleTestCase):
                     'one': [{'question_path': '/B/'}, {'question_path': '/D/'}],
                     'three': [{'question_path': '/E/'}],
                 }
-            },
-        })
+            }),
+        )
 
         json = get_case_mappings(actions)
 
@@ -395,15 +395,15 @@ class FormActionsTests(SimpleTestCase):
         }
 
     def test_get_case_mappings_with_conflicts_and_concurrent_delete(self):
-        actions = FormActions({
-            'open_case': {'name_update': {'question_path': 'name'}},
-            'update_case': {
+        actions = FormActions(
+            open_case=OpenCaseAction({'name_update': {'question_path': 'name'}}),
+            update_case=UpdateCaseAction({
                 'update': {},
                 'conflicts': {
                     'one': [{'question_path': '/A/'}, {'question_path': '/B/'}],
                 }
-            },
-        })
+            }),
+        )
 
         json = get_case_mappings(actions)
 
@@ -423,17 +423,17 @@ class FormActionsTests(SimpleTestCase):
             merge_case_mappings(diff, actions)
 
     def test_merge_empty_diff(self):
-        actions = FormActions({
-            'open_case': {
+        actions = FormActions(
+            open_case=OpenCaseAction({
                 'name_update': {'question_path': 'name'},
-            },
-            'update_case': {
+            }),
+            update_case=UpdateCaseAction({
                 'update': {
                     'one': {'question_path': 'one'},
                     'two': {'question_path': 'two'},
                 }
-            }
-        })
+            }),
+        )
         snapshot = actions.to_json()
 
         merge_case_mappings({}, actions)
@@ -443,17 +443,17 @@ class FormActionsTests(SimpleTestCase):
         assert actions.to_json() == snapshot
 
     def test_merge_case_mappings_with_all_actions_at_once(self):
-        actions = FormActions({
-            'open_case': {
+        actions = FormActions(
+            open_case=OpenCaseAction({
                 'name_update': {'question_path': 'old_name'},
-            },
-            'update_case': {
+            }),
+            update_case=UpdateCaseAction({
                 'update': {
                     'one': {'question_path': 'one'},
                     'two': {'question_path': 'two'},
                 }
-            }
-        })
+            }),
+        )
 
         merge_case_mappings({
             'open_case': {
@@ -476,17 +476,17 @@ class FormActionsTests(SimpleTestCase):
     def test_merge_case_mappings_with_double_addition(self):
         # a scenario that would have previously caused DiffConflictException
         # update + add => delete + add + add (last add wins)
-        actions = FormActions({
-            'open_case': {
+        actions = FormActions(
+            open_case=OpenCaseAction({
                 'name_update': {'question_path': 'form_name'},
-            },
-            'update_case': {
+            }),
+            update_case=UpdateCaseAction({
                 'update': {
                     'one': {'question_path': 'one'},
                     'two': {'question_path': 'two'},
                 }
-            }
-        })
+            }),
+        )
 
         merge_case_mappings({
             'open_case': {
@@ -515,14 +515,10 @@ class FormActionsTests(SimpleTestCase):
     def test_merge_case_mappings_with_double_deletion(self):
         # a scenario that would have previously caused DiffConflictException
         # delete + update => delete + delete + add (conflicting delete)
-        actions = FormActions({
-            'update_case': {
-                'update': {
-                    'one': {'question_path': 'one'},
-                    'two': {'question_path': 'two'},
-                }
-            }
-        })
+        actions = FormActions(update_case=UpdateCaseAction({'update': {
+            'one': {'question_path': 'one'},
+            'two': {'question_path': 'two'},
+        }}))
 
         merge_case_mappings({
             'update_case': {
@@ -542,14 +538,12 @@ class FormActionsTests(SimpleTestCase):
         assert conflict.update_mode == 'edit'
 
     def test_merge_case_mappings_with_conflicting_delete(self):
-        actions = FormActions({
-            'update_case': {
-                'update': {
-                    'one': {'question_path': 'one', 'update_mode': 'always'},
-                    'two': {'question_path': 'two'},
-                }
+        actions = FormActions(update_case=UpdateCaseAction({
+            'update': {
+                'one': {'question_path': 'one', 'update_mode': 'always'},
+                'two': {'question_path': 'two'},
             }
-        })
+        }))
 
         merge_case_mappings({
             'update_case': {
@@ -565,13 +559,11 @@ class FormActionsTests(SimpleTestCase):
         assert conflict.update_mode == 'always'
 
     def test_merge_case_mappings_already_deleted(self):
-        actions = FormActions({
-            'update_case': {
-                'update': {
-                    'two': {'question_path': 'two'},
-                }
+        actions = FormActions(update_case=UpdateCaseAction({
+            'update': {
+                'two': {'question_path': 'two'},
             }
-        })
+        }))
 
         merge_case_mappings({
             'update_case': {
@@ -800,12 +792,12 @@ class CombinedDiffTests(SimpleTestCase):
 class TestMultiTools(SimpleTestCase):
 
     def test_make_multi(self):
-        actions_json = FormActions({
-            'open_case': {
+        actions_json = FormActions(
+            open_case=OpenCaseAction({
                 'name_update': {'question_path': 'form_name'},
                 'conflicts': [{'question_path': 'other_name'}],
-            },
-            'update_case': {
+            }),
+            update_case=UpdateCaseAction({
                 'update': {
                     'one': {'question_path': 'one'},
                     'two': {'question_path': 'two'},
@@ -815,13 +807,13 @@ class TestMultiTools(SimpleTestCase):
                     'two': [{'question_path': 'other_two'}],
                     'three': [{'question_path': 'three'}],
                 },
-            },
-            'usercase_update': {
+            }),
+            usercase_update=UpdateCaseAction({
                 'update': {
                     'one': {'question_path': 'test_path'},
                 },
-            },
-        }).to_json()
+            }),
+        ).to_json()
         snapshot = deepcopy(actions_json)
 
         multi = make_multi(actions_json)
@@ -852,8 +844,8 @@ class TestMultiTools(SimpleTestCase):
         assert actions_json == snapshot, 'actions_json should not be mutated'
 
     def test_make_multi_with_conflicts_and_concurrent_delete(self):
-        actions_json = FormActions({
-            'update_case': {
+        actions_json = FormActions(
+            update_case=UpdateCaseAction({
                 'update': {},
                 'conflicts': {
                     'one': [
@@ -861,8 +853,8 @@ class TestMultiTools(SimpleTestCase):
                         {'question_path': 'other_two'},
                     ],
                 },
-            },
-        }).to_json()
+            }),
+        ).to_json()
         snapshot = deepcopy(actions_json)
 
         multi = make_multi(actions_json)
