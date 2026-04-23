@@ -233,6 +233,11 @@ def _convert_update_to_delete_plus_add(diff):
     is no longer supported by the merge algorithm. This can be removed
     when all clients (Vellum and case_config_ui.js) have been updated to
     not use the 'update' key.
+
+    Note: the only things that change in an 'update' operation are
+    question attributes other than 'question_path' (e.g., 'update_mode').
+    Therefore, the mapping key (case property) and/or 'question_path'
+    will not change when an 'update' operation is merged.
     """
     if diff.get('update'):
         diff = diff.copy()
