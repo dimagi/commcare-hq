@@ -408,6 +408,20 @@ class FormActionsTests(SimpleTestCase):
             ],
         }
 
+    def test_get_case_mappings_omits_empty_case_name_mapping(self):
+        actions = FormActions(
+            open_case=OpenCaseAction(),
+            update_case=UpdateCaseAction({
+                # edge case probably not possible in practice
+                'update': {'one': {'question_path': ''}},
+                'conflicts': {'one': [{'question_path': None}]},
+            }),
+        )
+
+        json = get_case_mappings(actions)
+
+        assert json == {}
+
     def test_merge_case_mappings_raises_on_unrecognized_key(self):
         actions = FormActions()
         diff = {'malicious_key': {'update': {}}}
