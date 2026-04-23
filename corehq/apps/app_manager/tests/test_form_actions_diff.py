@@ -202,7 +202,7 @@ class UpdateCaseActionApplyDiffTests(SimpleTestCase):
         paths = [update.question_path for update in self._conflicting(actions)['one']]
         assert set(paths) == {'/data/question1', '/data/question2', '/data/question3'}
 
-    def test_adding_duplicate_property_does_nothing(self):
+    def test_adding_duplicate_mapping_does_nothing(self):
         actions = UpdateCaseAction({'update': {
             'one': {'question_path': '/data/question1'}
         }})
@@ -215,7 +215,7 @@ class UpdateCaseActionApplyDiffTests(SimpleTestCase):
         assert set(actions.update.keys()) == {'one'}
         assert actions.update['one'].question_path == '/data/question1'
 
-    def test_adding_existing_modified_property_overwrites_the_property(self):
+    def test_adding_existing_mapping_overwrites_the_mapping(self):
         actions = UpdateCaseAction({'update': {
             'one': {'question_path': '/data/one', 'update_mode': 'always'},
         }})
@@ -240,7 +240,7 @@ class UpdateCaseActionApplyDiffTests(SimpleTestCase):
 
         assert set(actions.update.keys()) == {'two'}
 
-    def test_deleting_a_missing_property_does_nothing(self):
+    def test_deleting_a_missing_mapping_does_nothing(self):
         actions = UpdateCaseAction({'update': {
             'one': {'question_path': '/data/one'},
         }})
@@ -267,7 +267,7 @@ class UpdateCaseActionApplyDiffTests(SimpleTestCase):
 
         assert actions.update['one'].update_mode == 'edit'
 
-    def test_updating_a_missing_property_adds_a_conflict(self):
+    def test_updating_a_missing_mapping_adds_a_conflict(self):
         actions = UpdateCaseAction({'update': {
             'one': {'question_path': '/data/one'},
         }})
