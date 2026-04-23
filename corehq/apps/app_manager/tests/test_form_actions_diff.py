@@ -66,7 +66,7 @@ class OpenCaseActionApplyDiffTests(SimpleTestCase):
 
         assert action.name_update.question_path == '/data/name2'
 
-    def test_merge_case_mappings_remove_name_does_nothing_when_name_is_absent(self):
+    def test_merge_case_mappings_delete_mapping_does_nothing_when_the_mapping_is_absent(self):
         actions = FormActions(open_case=OpenCaseAction({'name_update': {'question_path': '/data/name2'}}))
 
         diff = {'open_case': {'delete': [{'question_path': '/data/name1'}]}}
