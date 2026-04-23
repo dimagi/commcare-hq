@@ -234,14 +234,8 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     old_load_from_form = form.actions.load_from_form
 
     actions_json = json.loads(request.POST['actions'])
-    if 'case_mapping_diff' in request.POST:
-        diff = json.loads(request.POST['case_mapping_diff'])
-    elif 'update_diff' in request.POST:
-        # LEGACY can be removed after case_mapping_diff is deployed
-        # and enough time has passed for front-end code to be updated
-        diff = json.loads(request.POST['update_diff'])
-    else:
-        diff = {}
+    diff_json = request.POST.get('case_mapping_diff')
+    diff = json.loads(diff_json) if diff_json else {}
     update_form_actions(form.actions, actions_json, diff)
 
     if old_load_from_form:
