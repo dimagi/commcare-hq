@@ -347,6 +347,8 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
     def _set_referral_properties(self, case, original_case_id, original_case_json):
         # make sure new case is open
         case.closed = False
+        # clear opened_on so that it is set on case creation in receiving domain
+        case.opened_on = None
         case.case_json['cchq_referral_source_domain'] = self.repeater.domain
         case.case_json['cchq_referral_source_case_id'] = original_case_id
 
