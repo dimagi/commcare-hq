@@ -1,0 +1,203 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% js_entry "case_search/js/case_search_endpoint" %}
+
+{% block page_title %}
+  {{ current_page.title }}
+{% endblock %}
+
+{% block page_content %}
+  <div class="row"><div class="col-lg-12">
+  <form method="post"
+        hx-post="{{ request.path_info }}"
+        hq-hx-action="search"
+        hx-target="#results"
+        hx-swap="innerHTML"
+        x-data="{
+          params: [{ id: 0 }],
+          nextParamId: 1,
+          endpointParams: [{ id: 0, required: false, name: '' }],
+          nextEndpointParamId: 1,
+          init() {
+            const dispatchConfig = () => {
+              window.dispatchEvent(new CustomEvent('query-builder:config', {
+                detail: {
+                  types: [{
+                    name: 'text',
+                    operators: [
+                      { name: 'equals', has_value: true },
+                      { name: 'not equals', has_value: true },
+                      { name: 'is empty', has_value: false },
+                    ],
+                  }],
+                  variables: [
+                    { id: 'case_id', name: 'case_id', type: 'text' },
+                    { id: 'name', name: 'name', type: 'text' },
+                  ],
+                  parameters: this.endpointParams
+                    .filter(p => p.name)
+                    .map(p => ({ id: p.name, name: p.name })),
+                },
+              }));
+            };
+            setTimeout(dispatchConfig, 0);
+            this.$watch('endpointParams', dispatchConfig);
+          },
+        }">
+    {% csrf_token %}
+
+    <div class="card mb-3">
+      <div class="card-header">
+        <strong>{% trans "Endpoint Configuration" %}</strong>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info" role="alert">
+          <i class="fa fa-info-circle"></i>
+          {% blocktrans %}
+          This box contains the config that will be stored as part of the
+          endpoint and managed entirely server-side
+          {% endblocktrans %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="endpoint_name">
+            {% trans "Endpoint Name" %}
+          </label>
+          <input type="text"
+                 class="form-control"
+                 id="endpoint_name"
+                 name="endpoint_name">
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="case_type">
+            {% trans "Case Type" %}
+          </label>
+          <input type="text"
+                 class="form-control"
+                 id="case_type"
+                 name="case_type"
+                 required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">
+            {% trans "Endpoint Filter Parameters" %}
+          </label>
+          <div class="form-text mb-2">
+            {% trans "These parameters will be captured and excluded from simple filters, to be used in server-side filtering." %}
+          </div>
+          <template x-for="(endpointParam, index) in endpointParams" :key="endpointParam.id">
+            <div class="row mb-2 align-items-center">
+              <div class="col">
+                <input type="text"
+                       class="form-control"
+                       name="endpoint_param_name"
+                       x-model="endpointParam.name"
+                       placeholder="{% trans_html_attr 'Parameter Name' %}">
+              </div>
+              <div class="col-auto">
+                <div class="form-check">
+                  <input type="checkbox"
+                         class="form-check-input"
+                         :id="'endpointParam_required_' + endpointParam.id"
+                         x-model="endpointParam.required">
+                  <input type="hidden"
+                         name="endpoint_param_required"
+                         :value="endpointParam.required ? 'true' : ''">
+                  <label class="form-check-label"
+                         :for="'endpointParam_required_' + endpointParam.id">
+                    {% trans "Required" %}
+                  </label>
+                </div>
+              </div>
+              <div class="col-auto">
+                <button type="button"
+                        class="btn btn-outline-danger"
+                        @click="endpointParams.splice(index, 1)">
+                  <i class="fa fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+          </template>
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="endpointParams.push({ id: nextEndpointParamId++, required: false, name: '' })">
+            <i class="fa fa-plus"></i> {% trans "Add Parameter" %}
+          </button>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">
+            {% trans "Server-Side Filters" %}
+          </label>
+          {% include "case_search/partials/query_builder_body.html" %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header">
+        <strong>{% trans "Test Query" %}</strong>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info" role="alert">
+          <i class="fa fa-info-circle"></i>
+          {% trans "Use this section to mimic a request from an application" %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="username">
+            {% trans "Username" %}
+          </label>
+          <input type="text"
+                 class="form-control"
+                 id="username"
+                 name="username"
+                 required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">
+            {% trans "Query Parameters" %}
+          </label>
+          <template x-for="(param, index) in params" :key="param.id">
+            <div class="row mb-2 align-items-center">
+              <div class="col">
+                <input type="text"
+                       class="form-control"
+                       name="param_key"
+                       placeholder="{% trans_html_attr 'Key' %}">
+              </div>
+              <div class="col">
+                <input type="text"
+                       class="form-control"
+                       name="param_value"
+                       placeholder="{% trans_html_attr 'Value' %}">
+              </div>
+              <div class="col-auto">
+                <button type="button"
+                        class="btn btn-outline-danger"
+                        @click="params.splice(index, 1)">
+                  <i class="fa fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+          </template>
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="params.push({ id: nextParamId++ })">
+            <i class="fa fa-plus"></i> {% trans "Add Parameter" %}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+      {% trans "Try it out!" %}
+    </button>
+  </form>
+  </div></div>
+
+  <div id="results" class="mt-3"></div>
+{% endblock %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}
