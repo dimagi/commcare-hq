@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from pillowtop.feed.interface import ChangeMeta
+from corehq.apps.pillowtop.feed.interface import ChangeMeta
 
 from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 from corehq.form_processor.models import XFormInstance

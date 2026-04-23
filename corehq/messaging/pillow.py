@@ -5,14 +5,12 @@ import attr
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.models import CommCareCase
 from corehq.messaging.tasks import sync_case_for_messaging
 from corehq.pillows.base import is_couch_change_for_sql_domain
-from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
-from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import BulkPillowProcessor
+from corehq.apps.pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from corehq.apps.pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors import BulkPillowProcessor
 
 
 @attr.s

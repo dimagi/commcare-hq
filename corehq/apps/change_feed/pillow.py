@@ -1,11 +1,11 @@
 from django.db import IntegrityError
-from pillowtop.checkpoints.manager import (
+from corehq.apps.pillowtop.checkpoints.manager import (
     PillowCheckpoint,
     PillowCheckpointEventHandler,
 )
-from pillowtop.feed.couch import CouchChangeFeed, populate_change_metadata
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import PillowProcessor
+from corehq.apps.pillowtop.feed.couch import CouchChangeFeed, populate_change_metadata
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors import PillowProcessor
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import ChangeProducer

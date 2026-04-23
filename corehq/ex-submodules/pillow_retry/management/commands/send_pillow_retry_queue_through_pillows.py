@@ -6,8 +6,8 @@ from django.core.management.base import BaseCommand
 
 from pillow_retry.api import _process_kafka_change
 from pillow_retry.models import PillowError
-from pillowtop import get_pillow_by_name
-from pillowtop.exceptions import PillowNotFoundError
+from corehq.apps.pillowtop import get_pillow_by_name
+from corehq.apps.pillowtop.exceptions import PillowNotFoundError
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.producer import ChangeProducer
@@ -28,7 +28,7 @@ class Command(BaseCommand):
             raise CommandError(f"Unknown pillow: {pillow_name}")
 
         if not isinstance(pillow.get_change_feed(), KafkaChangeFeed):
-            raise CommandError(f"Only Kafka pillows are supported")
+            raise CommandError("Only Kafka pillows are supported")
 
         self.count = 0
         self.start = time.time()

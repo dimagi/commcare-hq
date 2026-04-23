@@ -3,7 +3,7 @@ import datetime
 from django.test import TestCase
 
 from dimagi.utils.dates import add_months_to_date
-from pillowtop.processors.form import mark_latest_submission
+from corehq.apps.pillowtop.processors.form import mark_latest_submission
 
 from corehq import toggles
 from corehq.apps.domain.shortcuts import create_domain

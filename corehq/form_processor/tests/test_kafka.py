@@ -7,8 +7,8 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.test_utils import create_and_save_a_case, create_and_save_a_form
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.sample import TestProcessor
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors.sample import TestProcessor
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 

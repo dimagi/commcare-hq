@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
-from pillowtop.feed.couch import get_current_seq
+from corehq.apps.pillowtop.feed.couch import get_current_seq
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tasks import (

@@ -8,7 +8,7 @@ from corehq.apps.change_feed.producer import producer
 from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow, HEADER_ROW, get_csv_args
 from corehq.toggles import DO_NOT_REPUBLISH_DOCS
 
-from pillowtop.feed.interface import ChangeMeta
+from corehq.apps.pillowtop.feed.interface import ChangeMeta
 
 
 DOC_TYPE_MAP = {

@@ -7,13 +7,13 @@ from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvi
 from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.util.quickcache import quickcache
 from corehq.util.doc_processor.couch import CouchDocumentProvider
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
-from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import ElasticProcessor, PillowProcessor
-from pillowtop.processors.elastic import BulkElasticProcessor
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
-from pillowtop.reindexer.reindexer import ReindexerFactory
+from corehq.apps.pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
+from corehq.apps.pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors import ElasticProcessor, PillowProcessor
+from corehq.apps.pillowtop.processors.elastic import BulkElasticProcessor
+from corehq.apps.pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
+from corehq.apps.pillowtop.reindexer.reindexer import ReindexerFactory
 
 
 def update_unknown_user_from_form_if_necessary(doc_dict):
@@ -84,7 +84,7 @@ def get_user_pillow_old(pillow_id='UserPillow', num_processes=1, process_num=0, 
     """Processes users and sends them to ES.
 
     Processors:
-      - :py:func:`pillowtop.processors.elastic.ElasticProcessor`
+      - :py:func:`corehq.apps.pillowtop.processors.elastic.ElasticProcessor`
     """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
@@ -116,7 +116,7 @@ def get_user_pillow(
     """Processes users and sends them to ES and UCRs.
 
     Processors:
-      - :py:func:`pillowtop.processors.elastic.BulkElasticProcessor`
+      - :py:func:`corehq.apps.pillowtop.processors.elastic.BulkElasticProcessor`
       - :py:func:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
     """
     # Pillow that sends users to ES and UCR

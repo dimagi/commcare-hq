@@ -5,10 +5,10 @@ from unittest.mock import patch
 import pytest
 from django.test import SimpleTestCase, TestCase
 
-from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.feed.interface import ChangeMeta
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.sample import CountingProcessor
+from corehq.apps.pillowtop.checkpoints.manager import PillowCheckpoint
+from corehq.apps.pillowtop.feed.interface import ChangeMeta
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors.sample import CountingProcessor
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import (

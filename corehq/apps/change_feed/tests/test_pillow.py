@@ -6,9 +6,9 @@ from django.test import SimpleTestCase, TestCase
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
 
-from pillowtop.dao.exceptions import DocumentMismatchError
-from pillowtop.feed.interface import Change, ChangeMeta
-from pillowtop.processors.elastic import BulkElasticProcessor
+from corehq.apps.pillowtop.dao.exceptions import DocumentMismatchError
+from corehq.apps.pillowtop.feed.interface import Change, ChangeMeta
+from corehq.apps.pillowtop.processors.elastic import BulkElasticProcessor
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import (

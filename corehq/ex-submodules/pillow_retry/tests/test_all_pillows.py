@@ -5,9 +5,9 @@ from django.test import TestCase
 from unittest.mock import MagicMock
 
 from pillow_retry.models import PillowError
-from pillowtop import get_all_pillow_configs
-from pillowtop.dao.exceptions import DocumentMissingError
-from pillowtop.feed.interface import Change
+from corehq.apps.pillowtop import get_all_pillow_configs
+from corehq.apps.pillowtop.dao.exceptions import DocumentMissingError
+from corehq.apps.pillowtop.feed.interface import Change
 
 
 class ExceptionA(Exception):
@@ -43,7 +43,7 @@ class PillowtopRetryAllPillowsTests(TestCase):
             exc_class_string = 'builtins.Exception'
         else:
             exc_class = DocumentMissingError
-            exc_class_string = 'pillowtop.dao.exceptions.DocumentMissingError'
+            exc_class_string = 'corehq.apps.pillowtop.dao.exceptions.DocumentMissingError'
 
         pillow.process_change = MagicMock(side_effect=exc_class(pillow.pillow_id))
         doc = self._get_random_doc()

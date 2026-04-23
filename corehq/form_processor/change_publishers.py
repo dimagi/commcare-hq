@@ -1,7 +1,7 @@
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
 from corehq.form_processor.signals import sql_case_post_save
-from pillowtop.feed.interface import ChangeMeta
+from corehq.apps.pillowtop.feed.interface import ChangeMeta
 
 
 def publish_form_saved(form):

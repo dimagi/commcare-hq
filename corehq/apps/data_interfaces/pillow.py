@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pillowtop.processors import PillowProcessor
+from corehq.apps.pillowtop.processors import PillowProcessor
 
 from corehq.apps.data_interfaces.deduplication import is_dedupe_xmlns
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CaseDeduplicationActionDefinition

@@ -6,7 +6,7 @@ def _get_pillow_configs_from_settings_dict(pillows_by_group):
     # this sucks, but not sure there's a better way to make it available to fabric
     from manage import init_hq_python_path
     init_hq_python_path()
-    from pillowtop.utils import get_pillow_configs_from_settings_dict
+    from corehq.apps.pillowtop.utils import get_pillow_configs_from_settings_dict
     return get_pillow_configs_from_settings_dict(pillows_by_group)
 
 

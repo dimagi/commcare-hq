@@ -4,11 +4,11 @@ from collections import defaultdict
 
 from datetime import date, datetime
 
-from django.db import DEFAULT_DB_ALIAS, models
+from django.db import models
 
-from dimagi.ext.couchdbkit import *
-from pillowtop.exceptions import PillowNotFoundError
-from pillowtop.utils import (
+from dimagi.ext.couchdbkit import *  # noqa: F401
+from corehq.apps.pillowtop.exceptions import PillowNotFoundError
+from corehq.apps.pillowtop.utils import (
     get_all_pillow_instances,
     get_pillow_by_name,
     safe_force_seq_int,
@@ -82,7 +82,6 @@ class HistoricalPillowCheckpoint(models.Model):
                 return cls.objects.filter(checkpoint_id=checkpoint_id).order_by('-seq_int')[0]
             except IndexError:
                 return None
-
 
     class Meta(object):
         ordering = ['-date_updated']

@@ -4,10 +4,10 @@ from corehq.apps.groups.models import Group
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 
 from corehq.apps.es.groups import group_adapter
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import ElasticProcessor
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
+from corehq.apps.pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors import ElasticProcessor
+from corehq.apps.pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
 
 def get_group_to_elasticsearch_processor():

@@ -4,7 +4,7 @@ from django.test import TestCase, override_settings
 import json
 
 from corehq.util.test_utils import TestFileMixin
-from pillowtop.utils import get_all_pillow_configs
+from corehq.apps.pillowtop.utils import get_all_pillow_configs
 from testapps.test_pillowtop.utils import real_pillow_settings
 
 

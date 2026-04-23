@@ -1,7 +1,7 @@
 from collections import defaultdict
 
-from pillowtop.dao.exceptions import DocumentNotFoundError
-from pillowtop.dao.interface import DocumentStore
+from corehq.apps.pillowtop.dao.exceptions import DocumentNotFoundError
+from corehq.apps.pillowtop.dao.interface import DocumentStore
 
 from corehq.blobs import Error as BlobError
 from corehq.form_processor.backends.sql.dbaccessors import (

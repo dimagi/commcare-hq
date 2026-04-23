@@ -373,7 +373,7 @@ HQ_APPS = (
     'corehq.tabs',
     'soil',
     'phonelog',
-    'pillowtop',
+    'corehq.apps.pillowtop',
     'pillow_retry',
     'corehq.apps.styleguide',
     'corehq.messaging.smsbackends.grapevine',
@@ -1771,17 +1771,17 @@ PILLOWTOPS = {
     'core': [
         {
             'name': 'CaseToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case.get_case_to_elasticsearch_pillow',
         },
         {
             'name': 'XFormToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
         },
         {
             'name': 'case-pillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case.get_case_pillow',
             'params': {
                 'ucr_division': '0f'
@@ -1789,7 +1789,7 @@ PILLOWTOPS = {
         },
         {
             'name': 'xform-pillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.xform.get_xform_pillow',
             'params': {
                 'ucr_division': '0f'
@@ -1797,57 +1797,57 @@ PILLOWTOPS = {
         },
         {
             'name': 'UserPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_user_pillow_old',
         },
         {
             'name': 'user-pillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_user_pillow',
         },
         {
             'name': 'ApplicationToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.application.get_app_to_elasticsearch_pillow',
         },
         {
             'name': 'GroupPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.group.get_group_pillow_old',
         },
         {
             'name': 'GroupToUserPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
         },
         {
             'name': 'group-pillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.groups_to_user.get_group_pillow',
         },
         {
             'name': 'SqlSMSPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.sms.get_sql_sms_pillow',
         },
         {
             'name': 'UserGroupsDbKafkaPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
         },
         {
             'name': 'KafkaDomainPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.domain.get_domain_kafka_to_elasticsearch_pillow',
         },
         {
             'name': 'FormSubmissionMetadataTrackerPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.app_submission_tracker.get_form_submission_metadata_tracker_pillow',
         },
         {
             'name': 'UpdateUserSyncHistoryPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.synclog.get_user_sync_history_pillow',
         },
         {
@@ -1868,58 +1868,58 @@ PILLOWTOPS = {
         },
         {
             'name': 'UnknownUsersPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
         },
         {
             'name': 'case_messaging_sync_pillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.messaging.pillow.get_case_messaging_sync_pillow',
         },
     ],
     'core_ext': [
         {
             'name': 'AppDbChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
         },
         {
             'name': 'DefaultChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
         },
         {
             'name': 'DomainDbKafkaPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
         },
         {
             'name': 'location-ucr-pillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.userreports.pillow.get_location_pillow',
         },
     ],
     'cache': [
         {
             'name': 'CacheInvalidatePillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.cacheinvalidate.get_main_cache_invalidation_pillow',
         },
         {
             'name': 'UserCacheInvalidatePillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.cacheinvalidate.get_user_groups_cache_invalidation_pillow',
         },
     ],
     'experimental': [
         {
             'name': 'CaseSearchToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case_search.get_case_search_to_elasticsearch_pillow',
         },
         {
             'name': 'LedgerToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'class': 'corehq.apps.pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.ledger.get_ledger_to_elasticsearch_pillow',
         },
     ]

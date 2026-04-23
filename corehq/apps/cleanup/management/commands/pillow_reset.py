@@ -8,7 +8,7 @@ from couchdbkit import ResourceNotFound
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime
-from pillowtop.utils import get_pillow_by_name
+from corehq.apps.pillowtop.utils import get_pillow_by_name
 
 
 class Command(BaseCommand):

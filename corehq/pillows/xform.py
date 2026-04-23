@@ -6,15 +6,15 @@ from django.conf import settings
 from dateutil import parser
 
 from couchforms.const import DEVICE_LOG_XMLNS, RESERVED_WORDS
-from pillowtop.checkpoints.manager import (
+from corehq.apps.pillowtop.checkpoints.manager import (
     KafkaPillowCheckpoint,
     get_checkpoint_for_elasticsearch_pillow,
 )
-from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
-from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
-from pillowtop.reindexer.reindexer import (
+from corehq.apps.pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
+from corehq.apps.pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
+from corehq.apps.pillowtop.reindexer.reindexer import (
     ReindexerFactory,
     ResumableBulkElasticPillowReindexer,
 )
@@ -103,7 +103,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
     """XForm change processor that sends form data to Elasticsearch
 
     Processors:
-      - :py:class:`pillowtop.processors.elastic.ElasticProcessor`
+      - :py:class:`corehq.apps.pillowtop.processors.elastic.ElasticProcessor`
     """
 
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, form_adapter.index_name, FORM_TOPICS)
@@ -144,10 +144,10 @@ def get_xform_pillow(
     Processors:
       - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
             - (disabled when skip_ucr=True)
-      - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
+      - :py:class:`corehq.apps.pillowtop.processors.elastic.BulkElasticProcessor`
       - :py:class:`corehq.pillows.user.UnknownUsersProcessor`
             - (disabled when RUN_UNKNOWN_USER_PILLOW=False)
-      - :py:class:`pillowtop.form.FormSubmissionMetadataTrackerProcessor`
+      - :py:class:`corehq.apps.pillowtop.form.FormSubmissionMetadataTrackerProcessor`
             - (disabled when RUN_FORM_META_PILLOW=False)
       - :py:class:`corehq.apps.data_interfaces.pillow.CaseDeduplicationPillow``
     """

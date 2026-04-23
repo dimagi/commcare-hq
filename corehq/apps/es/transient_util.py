@@ -85,7 +85,7 @@ def populate_doc_adapter_map():
         _DOC_MAPPINGS_BY_INDEX[mapping_key] = doc_adapter.mapping
 
     if settings.UNIT_TESTING:
-        from pillowtop.tests.utils import TEST_ES_TYPE, TEST_ES_MAPPING, TEST_ES_INDEX
+        from corehq.apps.pillowtop.tests.utils import TEST_ES_TYPE, TEST_ES_MAPPING, TEST_ES_INDEX
         add_dynamic_adapter("PillowTop", TEST_ES_INDEX, TEST_ES_TYPE, TEST_ES_MAPPING)
 
         from corehq.apps.es.tests.utils import TEST_ES_INFO, TEST_ES_MAPPING

@@ -2,7 +2,7 @@ import json
 
 from django.core.management.base import BaseCommand, CommandError
 
-from pillowtop.utils import get_pillow_by_name
+from corehq.apps.pillowtop.utils import get_pillow_by_name
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 

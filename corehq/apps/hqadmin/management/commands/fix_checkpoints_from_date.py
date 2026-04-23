@@ -5,8 +5,8 @@ import re
 from django.core.management import BaseCommand, CommandError
 
 from corehq.util.argparse_types import date_type
-from pillowtop.models import str_to_kafka_seq
-from pillowtop.utils import get_all_pillow_instances
+from corehq.apps.pillowtop.models import str_to_kafka_seq
+from corehq.apps.pillowtop.utils import get_all_pillow_instances
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 

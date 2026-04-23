@@ -3,7 +3,7 @@ from kafka import TopicPartition
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.util.markup import SimpleTableWriter, TableRowFormatter, CSVRowFormatter
-from pillowtop import get_all_pillow_instances
+from corehq.apps.pillowtop import get_all_pillow_instances
 
 
 class Command(BaseCommand):

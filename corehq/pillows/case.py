@@ -2,14 +2,14 @@ import logging
 
 from django.conf import settings
 
-from pillowtop.checkpoints.manager import (
+from corehq.apps.pillowtop.checkpoints.manager import (
     KafkaPillowCheckpoint,
     get_checkpoint_for_elasticsearch_pillow,
 )
-from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
-from pillowtop.reindexer.reindexer import (
+from corehq.apps.pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
+from corehq.apps.pillowtop.reindexer.reindexer import (
     ReindexerFactory,
     ResumableBulkElasticPillowReindexer,
 )
@@ -44,7 +44,7 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
     """Return a pillow that processes cases to Elasticsearch.
 
     Processors:
-      - :py:class:`pillowtop.processors.elastic.ElasticProcessor`
+      - :py:class:`corehq.apps.pillowtop.processors.elastic.ElasticProcessor`
     """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'CaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
@@ -84,7 +84,7 @@ def get_case_pillow(
 
     Processors:
       - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor` (disabled when skip_ucr=True)
-      - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
+      - :py:class:`corehq.apps.pillowtop.processors.elastic.BulkElasticProcessor`
       - :py:func:`corehq.pillows.case_search.get_case_search_processor`
       - :py:class:`corehq.messaging.pillow.CaseMessagingSyncProcessor`
     """

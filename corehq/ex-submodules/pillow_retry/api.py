@@ -9,9 +9,9 @@ from corehq.apps.change_feed.topics import get_topic_for_doc_type
 from dimagi.utils.logging import notify_error
 from pillow_retry import const
 from pillow_retry.models import PillowError
-from pillowtop.exceptions import PillowNotFoundError
-from pillowtop.feed.couch import CouchChangeFeed
-from pillowtop.utils import get_pillow_by_name
+from corehq.apps.pillowtop.exceptions import PillowNotFoundError
+from corehq.apps.pillowtop.feed.couch import CouchChangeFeed
+from corehq.apps.pillowtop.utils import get_pillow_by_name
 
 
 @memoized

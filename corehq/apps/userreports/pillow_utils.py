@@ -5,7 +5,7 @@ from couchdbkit import ResourceNotFound
 
 from django.core.cache import cache as _django_cache
 
-from pillowtop.logger import pillow_logging
+from corehq.apps.pillowtop.logger import pillow_logging
 
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert

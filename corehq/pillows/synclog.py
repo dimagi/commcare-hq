@@ -3,11 +3,11 @@ from django.db import DEFAULT_DB_ALIAS
 
 from casexml.apps.phone.models import SyncLogSQL
 from dimagi.utils.parsing import string_to_utc_datetime
-from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
-from pillowtop.feed.interface import Change
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.interface import PillowProcessor
-from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
+from corehq.apps.pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from corehq.apps.pillowtop.feed.interface import Change
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors.interface import PillowProcessor
+from corehq.apps.pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
 
 from corehq import toggles
 from corehq.apps.change_feed import topics

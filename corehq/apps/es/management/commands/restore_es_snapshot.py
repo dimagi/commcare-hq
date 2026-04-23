@@ -5,8 +5,8 @@ from django.core.management.base import BaseCommand
 
 from corehq.util.es.elasticsearch import IndicesClient, SnapshotClient
 
-from pillowtop.models import str_to_kafka_seq
-from pillowtop.utils import get_all_pillow_instances
+from corehq.apps.pillowtop.models import str_to_kafka_seq
+from corehq.apps.pillowtop.utils import get_all_pillow_instances
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.elastic import get_es_new
@@ -37,8 +37,8 @@ class Command(BaseCommand):
         date = self.get_date(days_ago)
         indices = self.get_indices(indices)
         confirm = input("This command will close the following es indices to reads and writes "
-                            "for its duration: {}. Are you sure "
-                            "you wish to continue? (y/n)".format(indices))
+                        "for its duration: {}. Are you sure "
+                        "you wish to continue? (y/n)".format(indices))
         if confirm.lower() != "y":
             return
         pillows = input("Have you stopped all pillows? (y/n)")
@@ -48,7 +48,7 @@ class Command(BaseCommand):
         client = self.get_client_and_close_indices(es, indices)
         try:
             self.restore_snapshot(es, date, indices)
-        except:
+        except Exception:
             client.open(indices)
         self.rewind_pillows(date)
 

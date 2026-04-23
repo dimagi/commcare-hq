@@ -11,7 +11,7 @@ from django.db import DEFAULT_DB_ALIAS
 from unittest.mock import patch
 
 from dimagi.utils.parsing import json_format_datetime
-from pillowtop.feed.interface import Change, ChangeMeta
+from corehq.apps.pillowtop.feed.interface import Change, ChangeMeta
 
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.change_feed import data_sources

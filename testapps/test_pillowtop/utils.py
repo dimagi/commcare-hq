@@ -6,8 +6,8 @@ from django.test.utils import override_settings
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.util.decorators import ContextDecorator
-from pillowtop import get_pillow_by_name
-from pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop import get_pillow_by_name
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
 
 
 class process_pillow_changes(ContextDecorator):

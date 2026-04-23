@@ -12,10 +12,10 @@ from corehq.apps.es.cases import case_adapter
 from corehq.util.elastic import ensure_index_deleted
 from pillow_retry.api import process_pillow_retry
 from pillow_retry.models import PillowError
-from pillowtop.feed.couch import populate_change_metadata
-from pillowtop.feed.interface import Change
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.sample import CountingProcessor
+from corehq.apps.pillowtop.feed.couch import populate_change_metadata
+from corehq.apps.pillowtop.feed.interface import Change
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors.sample import CountingProcessor
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 

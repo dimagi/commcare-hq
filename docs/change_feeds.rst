@@ -116,7 +116,7 @@ Contents of the feed
 ~~~~~~~~~~~~~~~~~~~~
 
 Generally the contents of each change in the feed will documents that mirror the ``ChangeMeta`` class in
-`pillowtop.feed.interface <https://github.com/dimagi/commcare-hq/blob/master/corehq/ex-submodules/pillowtop/feed/interface.py#L9>`_,
+`corehq.apps.pillowtop.feed.interface <https://github.com/dimagi/commcare-hq/blob/master/corehq/ex-submodules/pillowtop/feed/interface.py#L9>`_,
 in the form of a serialized JSON dictionary. An example once deserialized might look something like this:
 
 .. code-block:: json

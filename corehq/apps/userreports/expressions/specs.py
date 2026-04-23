@@ -11,7 +11,7 @@ from dimagi.ext.jsonobject import (
     ListProperty,
     StringProperty,
 )
-from pillowtop.dao.exceptions import DocumentNotFoundError
+from corehq.apps.pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,

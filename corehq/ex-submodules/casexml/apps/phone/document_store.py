@@ -1,5 +1,5 @@
 from casexml.apps.phone.models import SyncLogSQL
-from pillowtop.dao.django import DjangoDocumentStore
+from corehq.apps.pillowtop.dao.django import DjangoDocumentStore
 
 
 class SyncLogDocumentStore(DjangoDocumentStore):

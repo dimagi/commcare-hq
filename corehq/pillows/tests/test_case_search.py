@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from attrs import define, field
 
-from pillowtop.processors import elastic
+from corehq.apps.pillowtop.processors import elastic
 
 from .. import case_search as mod
 

@@ -4,7 +4,7 @@ from corehq.apps.es.transient_util import (
     doc_adapter_from_cname,
     iter_doc_adapters,
 )
-from pillowtop.reindexer.reindexer import (
+from corehq.apps.pillowtop.reindexer.reindexer import (
     prepare_index_for_reindex,
     prepare_index_for_usage,
     clean_index
