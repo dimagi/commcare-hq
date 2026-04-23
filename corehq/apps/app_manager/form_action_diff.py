@@ -17,16 +17,20 @@ def get_case_mappings(actions):
     data = {}
     if actions.open_case:
         items = [actions.open_case.name_update] + actions.open_case.conflicts
-        data.update({'name': [to_json(u) for u in items]})
+        name_updates = [to_json(u) for u in items if u.question_path]
+        if name_updates:
+            data['name'] = name_updates
     if actions.update_case:
         conflicts = actions.update_case.conflicts
-        data.update({
-            prop: [to_json(u) for u in [update] + conflicts.get(prop, [])]
-            for prop, update in actions.update_case.update.items()
-        })
+        for prop, update in actions.update_case.update.items():
+            updates = [to_json(u) for u in [update] + conflicts.get(prop, []) if u.question_path]
+            if updates:
+                data[prop] = updates
         # concurrent delete + change -> conflict with no item in update_case.update
         for prop in conflicts.keys() - actions.update_case.update.keys():
-            data[prop] = [to_json(q, conflicting_delete=True) for q in conflicts[prop]]
+            items = [to_json(q, conflicting_delete=True) for q in conflicts[prop] if q.question_path]
+            if items:
+                data[prop] = items
     return data
 
 
