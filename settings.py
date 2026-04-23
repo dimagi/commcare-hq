@@ -1161,7 +1161,7 @@ CONNECTID_CHANNEL_URL = 'http://localhost:8080/messaging/create_channel/'
 CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
 CONNECTID_CREDENTIALS_URL = 'http://localhost:8080/users/add_credential/'
 CONNECTID_CREDENTIALS_CLIENT_ID = ''
-CONNECTID_CREDENTIALS_CLIENT_SECRET = ''
+CONNECTID_CREDENTIALS_SECRET_KEY = ''
 CONNECTID_ADD_USER_ANALYTICS_URL = 'http://localhost:8080/users/add_user_analytics/'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
