@@ -198,18 +198,18 @@ class XFormInstanceManager(RequireDBManager):
         the DATA_RETENTION_WINDOW, meaning the ``deleted_on`` field is
         older than the current time - the DATA_RETENTION_WINDOW.
         :param commit: defaults to False. If True, will delete expired forms
-        :return: dictionary of count of deleted forms
+        :return: count of forms deleted
         """
         expiration_date = get_cutoff_date_for_data_deletion()
-        counts = {}
+        total_count = 0
         for db_name in get_db_aliases_for_partitioned_query():
             queryset = self.using(db_name).filter(deleted_on__lt=expiration_date)
             if commit:
-                deleted_counts = queryset.delete()[1]
+                deleted_count = queryset.delete()[0]
             else:
-                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
-            counts.update(deleted_counts)
-        return counts
+                deleted_count = queryset.count()
+            total_count += deleted_count
+        return total_count
 
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)

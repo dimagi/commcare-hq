@@ -36,11 +36,10 @@ def permanently_delete_eligible_data():
     into a tombstone after the 90 day safety period. This task will be restructured to do that once a day
     in a future PR coming soon (Q1 2024).
     """
-    form_counts = XFormInstance.objects.hard_delete_expired_forms(commit=False)
+    form_count = XFormInstance.objects.hard_delete_expired_forms(commit=False)
 
     logger.info("'permanently_delete_eligible_data' ran with the following results:\n")
-    for table, count in form_counts.items():
-        logger.info(f"{count} {table} objects were deleted.")
+    logger.info(f"{form_count} forms were deleted.")
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
