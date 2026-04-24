@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 # @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def permanently_delete_eligible_data(dry_run=False):
+def permanently_delete_eligible_data(dry_run=True):
     """
     Permanently delete database objects that are eligible for hard deletion.
     To be eligible an object must have a ``deleted_on`` value
@@ -37,7 +37,8 @@ def permanently_delete_eligible_data(dry_run=False):
     in a future PR coming soon (Q1 2024).
     """
     dry_run_tag = '[DRY RUN] ' if dry_run else ''
-    form_counts = XFormInstance.objects.hard_delete_expired_forms(dry_run=dry_run)
+    commit = not dry_run
+    form_counts = XFormInstance.objects.hard_delete_expired_forms(commit=commit)
 
     logger.info(f"{dry_run_tag}'permanently_delete_eligible_data' ran with the following results:\n")
     for table, count in form_counts.items():
