@@ -47,12 +47,7 @@ def calc_has_eof_navigation(domain_context):
     for app in domain_context.apps:
         for module in app.get_modules():
             for form in module.get_forms():
-                workflow = getattr(
-                    form,
-                    'post_form_workflow',
-                    WORKFLOW_DEFAULT,
-                )
-                if workflow != WORKFLOW_DEFAULT:
+                if form.post_form_workflow != WORKFLOW_DEFAULT:
                     return True
     return False
 
