@@ -121,12 +121,12 @@ def calc_case_exports_only(domain_context):
 
 def calc_scheduled_exports(domain_context):
     """Count of scheduled (daily saved) data exports."""
-    return sum(e['is_daily_saved_export'] for e in domain_context.exports)
+    return sum(e['is_daily_saved_export'] for e in domain_context.all_exports)
 
 
 def calc_has_excel_dashboard(domain_context):
     """Returns True if domain has created an Excel dashboard feed"""
-    return any(is_dashboard_feed(e) for e in domain_context.exports)
+    return any(is_dashboard_feed(e) for e in domain_context.all_exports)
 
 
 def calc_case_list_explorer_reports(domain_context):
@@ -154,12 +154,12 @@ def calc_case_list_explorer_reports(domain_context):
 
 def calc_det_configs(domain_context):
     """Count exports with Data Export Tool config enabled."""
-    return sum(e['show_det_config_download'] for e in domain_context.exports)
+    return sum(e['show_det_config_download'] for e in domain_context.all_exports)
 
 
 def calc_odata_feeds(domain_context):
     """Count OData feed configurations."""
-    return sum(e['is_odata_config'] for e in domain_context.exports)
+    return sum(e['is_odata_config'] for e in domain_context.all_exports)
 
 
 def calc_linked_domains(domain_context):

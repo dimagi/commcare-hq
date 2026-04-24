@@ -247,20 +247,20 @@ def _calc_repeaters(ctx):
 def _calc_case_exports(ctx):
     # Returns a count of all exports despite the name. ¯\_("/)_/¯
     # See feature usage metrics "case_exports_only".
-    return len(ctx.form_exports + ctx.case_exports)
+    return len(ctx.all_exports)
 
 
 def _calc_deid_exports(ctx):
     return sum(
         e.get('is_deidentified', False)
-        for e in ctx.form_exports + ctx.case_exports
+        for e in ctx.all_exports
     )
 
 
 def _calc_saved_exports(ctx):
     return sum(
         e.get('is_daily_saved_export', False)
-        for e in ctx.form_exports + ctx.case_exports
+        for e in ctx.all_exports
     )
 
 
