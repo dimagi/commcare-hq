@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 # @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def permanently_delete_eligible_data():
+def permanently_delete_eligible_data(dry_run=False):
     """
     Permanently delete database objects that are eligible for hard deletion.
     To be eligible an object must have a ``deleted_on`` value
