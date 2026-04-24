@@ -15,7 +15,7 @@ from ..feature_calcs import (
 )
 
 
-def _make_ctx(apps=None, **domain_attrs):
+def _make_domain_context(apps=None, **domain_attrs):
     domain_obj = MagicMock()
     domain_obj.name = 'test'
     domain_obj.full_applications.return_value = apps or []
@@ -29,13 +29,13 @@ class TestCalcMobileUserGroups(SimpleTestCase):
     @patch('corehq.apps.groups.models.Group.by_domain')
     def test_counts_groups(self, mock_by_domain):
         mock_by_domain.return_value = [MagicMock(), MagicMock()]
-        ctx = _make_ctx()
+        ctx = _make_domain_context()
         assert calc_mobile_user_groups(ctx) == 2
 
     @patch('corehq.apps.groups.models.Group.by_domain')
     def test_zero_when_no_groups(self, mock_by_domain):
         mock_by_domain.return_value = []
-        ctx = _make_ctx()
+        ctx = _make_domain_context()
         assert calc_mobile_user_groups(ctx) == 0
 
 
@@ -51,7 +51,7 @@ class TestCalcHasUserCaseManagement(SimpleTestCase):
         app = MagicMock()
         app.is_remote_app.return_value = False
         app.get_modules.return_value = [module]
-        ctx = _make_ctx(apps=[app])
+        ctx = _make_domain_context(apps=[app])
         assert calc_has_user_case_management(ctx) is True
 
     @patch('corehq.apps.data_analytics.feature_calcs.actions_use_usercase')
@@ -64,11 +64,11 @@ class TestCalcHasUserCaseManagement(SimpleTestCase):
         app = MagicMock()
         app.is_remote_app.return_value = False
         app.get_modules.return_value = [module]
-        ctx = _make_ctx(apps=[app])
+        ctx = _make_domain_context(apps=[app])
         assert calc_has_user_case_management(ctx) is False
 
     def test_false_when_no_apps(self):
-        ctx = _make_ctx(apps=[])
+        ctx = _make_domain_context(apps=[])
         assert calc_has_user_case_management(ctx) is False
 
     @patch('corehq.apps.app_manager.util.actions_use_usercase')
@@ -79,7 +79,7 @@ class TestCalcHasUserCaseManagement(SimpleTestCase):
         app = MagicMock()
         app.is_remote_app.return_value = False
         app.get_modules.return_value = [module]
-        ctx = _make_ctx(apps=[app])
+        ctx = _make_domain_context(apps=[app])
         assert calc_has_user_case_management(ctx) is False
         mock_fn.assert_not_called()
 
@@ -89,13 +89,13 @@ class TestCalcHasOrganization(SimpleTestCase):
     @patch('corehq.apps.locations.models.LocationType.objects')
     def test_true_when_location_types_exist(self, mock_manager):
         mock_manager.filter.return_value.exists.return_value = True
-        ctx = _make_ctx()
+        ctx = _make_domain_context()
         assert calc_has_organization(ctx) is True
 
     @patch('corehq.apps.locations.models.LocationType.objects')
     def test_false_when_no_location_types(self, mock_manager):
         mock_manager.filter.return_value.exists.return_value = False
-        ctx = _make_ctx()
+        ctx = _make_domain_context()
         assert calc_has_organization(ctx) is False
 
 
@@ -106,13 +106,13 @@ class TestCalcUserProfiles(SimpleTestCase):
         mock_def = MagicMock()
         mock_def.get_profiles.return_value = [MagicMock(), MagicMock(), MagicMock()]
         mock_get.return_value = mock_def
-        ctx = _make_ctx()
+        ctx = _make_domain_context()
         assert calc_user_profiles(ctx) == 3
 
     @patch('corehq.apps.custom_data_fields.models.CustomDataFieldsDefinition.get')
     def test_zero_when_no_definition(self, mock_get):
         mock_get.return_value = None
-        ctx = _make_ctx()
+        ctx = _make_domain_context()
         assert calc_user_profiles(ctx) == 0
 
     @patch('corehq.apps.custom_data_fields.models.CustomDataFieldsDefinition.get')
@@ -120,18 +120,18 @@ class TestCalcUserProfiles(SimpleTestCase):
         mock_def = MagicMock()
         mock_def.get_profiles.return_value = []
         mock_get.return_value = mock_def
-        ctx = _make_ctx()
+        ctx = _make_domain_context()
         assert calc_user_profiles(ctx) == 0
 
 
 class TestCalcHas2faRequired(SimpleTestCase):
 
     def test_true_when_enabled(self):
-        ctx = _make_ctx(two_factor_auth=True)
+        ctx = _make_domain_context(two_factor_auth=True)
         assert calc_has_2fa_required(ctx) is True
 
     def test_false_when_disabled(self):
-        ctx = _make_ctx(two_factor_auth=False)
+        ctx = _make_domain_context(two_factor_auth=False)
         assert calc_has_2fa_required(ctx) is False
 
     def test_false_when_attr_missing(self):
@@ -145,22 +145,22 @@ class TestCalcHas2faRequired(SimpleTestCase):
 class TestCalcHasShortenedTimeout(SimpleTestCase):
 
     def test_true_when_enabled(self):
-        ctx = _make_ctx(secure_sessions=True)
+        ctx = _make_domain_context(secure_sessions=True)
         assert calc_has_shortened_timeout(ctx) is True
 
     def test_false_when_disabled(self):
-        ctx = _make_ctx(secure_sessions=False)
+        ctx = _make_domain_context(secure_sessions=False)
         assert calc_has_shortened_timeout(ctx) is False
 
 
 class TestCalcHasStrongPasswords(SimpleTestCase):
 
     def test_true_when_enabled(self):
-        ctx = _make_ctx(strong_mobile_passwords=True)
+        ctx = _make_domain_context(strong_mobile_passwords=True)
         assert calc_has_strong_passwords(ctx) is True
 
     def test_false_when_disabled(self):
-        ctx = _make_ctx(strong_mobile_passwords=False)
+        ctx = _make_domain_context(strong_mobile_passwords=False)
         assert calc_has_strong_passwords(ctx) is False
 
 
@@ -178,7 +178,7 @@ class TestCalcHasSso(SimpleTestCase):
         mock_get_owner.return_value = MagicMock()
         mock_idp.filter.return_value.exists.return_value = True
         mock_trusted.filter.return_value.exists.return_value = False
-        ctx = _make_ctx()
+        ctx = _make_domain_context()
         assert calc_has_sso(ctx) is True
 
     def test_true_when_domain_trusts_active_idp(
@@ -190,7 +190,7 @@ class TestCalcHasSso(SimpleTestCase):
         mock_get_owner.return_value = MagicMock()
         mock_idp.filter.return_value.exists.return_value = False
         mock_trusted.filter.return_value.exists.return_value = True
-        ctx = _make_ctx()
+        ctx = _make_domain_context()
         assert calc_has_sso(ctx) is True
 
     def test_false_when_no_sso(
@@ -202,7 +202,7 @@ class TestCalcHasSso(SimpleTestCase):
         mock_get_owner.return_value = MagicMock()
         mock_idp.filter.return_value.exists.return_value = False
         mock_trusted.filter.return_value.exists.return_value = False
-        ctx = _make_ctx()
+        ctx = _make_domain_context()
         assert calc_has_sso(ctx) is False
 
     def test_false_when_no_billing_account(
@@ -213,6 +213,6 @@ class TestCalcHasSso(SimpleTestCase):
     ):
         mock_get_owner.return_value = None
         mock_trusted.filter.return_value.exists.return_value = False
-        ctx = _make_ctx()
+        ctx = _make_domain_context()
         assert calc_has_sso(ctx) is False
         mock_idp.filter.assert_not_called()
