@@ -289,7 +289,7 @@
           <div class="alert alert-warning mt-2" data-bind="visible: $data.conflictingDelete?.()">
             <p class="alert-heading">
               <i class="fa fa-triangle-exclamation"></i>
-              {% trans "Property mapping concurrently changed and deleted" %}
+              {% trans "This mapping was changed and deleted in separate sessions" %}
             </p>
             <p>{% trans "Dismiss this alert to keep the mapping." %}</p>
             <button type="button" class="btn-close" aria-label="{% trans_html_attr "Close" %}"

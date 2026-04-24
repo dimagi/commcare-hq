@@ -1147,14 +1147,6 @@ def _ensure_search_index_is_enabled(domain, enabled):
         reindex_case_search_for_domain.delay(domain)
 
 
-FORMBUILDER_SAVE_TO_CASE = StaticToggle(
-    'saas_formbuilder_save_to_case',
-    'Form Builder - Save Questions to Case Properties',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Allows users to save questions to case properties within the Form Builder'
-)
-
 ACTION_TIMES_API = StaticToggle(
     'action_times_api',
     'Enable the Action Times API',
