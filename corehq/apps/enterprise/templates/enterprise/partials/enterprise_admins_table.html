@@ -1,0 +1,40 @@
+{% load i18n %}
+
+{% if admin_emails %}
+  <table class="table table-striped table-responsive">
+    <thead>
+      <tr>
+        <th>{% trans "Email" %}</th>
+        <th><span class="visually-hidden">{% trans "Actions" %}</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for email in admin_emails %}
+        <tr>
+          <td class="col-md-10">{{ email }}</td>
+          <td class="col-md-2">
+            <form
+              method="POST"
+              action="{% url 'remove_enterprise_admin' domain %}"
+              class="form form-horizontal disable-on-submit"
+              onsubmit="return confirm('{% blocktrans trimmed with email=email|escapejs %}
+                Remove {{ email }} as an enterprise administrator?
+              {% endblocktrans %}');"
+            >
+              {% csrf_token %}
+              <input type="hidden" name="email" value="{{ email }}" />
+              <button type="submit" class="btn btn-outline-danger">
+                <i class="fa fa-ban" aria-hidden="true"></i>
+                {% trans "Remove" %}
+              </button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="alert alert-warning">
+    {% trans "There are no enterprise administrators configured for this account." %}
+  </div>
+{% endif %}
