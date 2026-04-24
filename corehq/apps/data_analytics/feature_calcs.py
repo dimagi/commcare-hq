@@ -85,9 +85,8 @@ def calc_has_save_to_case(domain_context):
     for app in domain_context.apps:
         for module in app.get_modules():
             for form in module.get_forms():
-                if getattr(form, 'get_save_to_case_updates', None):
-                    if form.get_save_to_case_updates():
-                        return True
+                if form.get_save_to_case_updates():
+                    return True
     return False
 
 
