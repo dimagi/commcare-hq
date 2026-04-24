@@ -66,11 +66,6 @@ class RateLimiter(object):
                         'limit_scope': _limit_scope,
                         'window': window,
                     })
-        if not allowed:
-            metrics_counter('commcare.rate_limit_rejected', tags={
-                'key': self.feature_key,
-                'scope': scope,
-            })
         return allowed
 
     def get_retry_after(self, scope):
