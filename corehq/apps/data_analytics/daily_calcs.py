@@ -245,6 +245,8 @@ def _calc_repeaters(ctx):
 
 
 def _calc_case_exports(ctx):
+    # Returns a count of all exports despite the name. ¯\_("/)_/¯
+    # See feature usage metrics "case_exports_only".
     return len(ctx.form_exports + ctx.case_exports)
 
 
@@ -409,7 +411,7 @@ DAILY_METRICS = [
               _calc_apps_multi_lang, is_boolean=False, schedule='daily'),
 
     # Export Metrics
-    MetricDef('case_exports', 'cp_n_case_exports',
+    MetricDef('case_exports', 'cp_n_case_exports',  # Aaactually all exports
               _calc_case_exports, is_boolean=False, schedule='daily'),
     MetricDef('deid_exports', 'cp_n_deid_exports',
               _calc_deid_exports, is_boolean=False, schedule='daily'),
