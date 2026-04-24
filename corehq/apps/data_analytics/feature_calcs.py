@@ -35,21 +35,20 @@ def calc_has_multimedia(domain_context):
 
 def calc_has_case_management(domain_context):
     """Check if any app has a case list menu (offline case management)."""
-    for app in domain_context.apps:
-        for module in app.get_modules():
-            if getattr(module, 'case_type', ''):
-                return True
-    return False
+    return any(
+        getattr(module, 'case_type', '')
+        for app in domain_context.apps
+        for module in app.get_modules()
+    )
 
 
 def calc_has_eof_navigation(domain_context):
     """Check if any form has non-default end-of-form navigation."""
-    for app in domain_context.apps:
-        for module in app.get_modules():
-            for form in module.get_forms():
-                if form.post_form_workflow != WORKFLOW_DEFAULT:
-                    return True
-    return False
+    return any(
+        form.post_form_workflow != WORKFLOW_DEFAULT
+        for app in domain_context.apps
+        for form in app.get_forms(bare=True)
+    )
 
 
 def calc_has_web_apps(domain_context):
@@ -77,12 +76,11 @@ def calc_has_save_to_case(domain_context):
     case_references_data and is distinct from ordinary open_case /
     update_case actions.
     """
-    for app in domain_context.apps:
-        for module in app.get_modules():
-            for form in module.get_forms():
-                if form.get_save_to_case_updates():
-                    return True
-    return False
+    return any(
+        form.get_save_to_case_updates()
+        for app in domain_context.apps
+        for form in app.get_forms(bare=True)
+    )
 
 
 def calc_bulk_case_editing_sessions(domain_context):
@@ -94,10 +92,10 @@ def calc_has_custom_branding(domain_context):
     """Check for custom branding: domain logo or app logos."""
     if domain_context.domain_obj.has_custom_logo:
         return True
-    for app in domain_context.apps:
-        if getattr(app, 'logo_refs', None):
-            return True
-    return False
+    return any(
+        getattr(app, 'logo_refs', None)
+        for app in domain_context.apps
+    )
 
 
 # Data & Export Feature metric calculations
@@ -190,12 +188,11 @@ def calc_mobile_user_groups(domain_context):
 
 def calc_has_user_case_management(domain_context):
     """Check if any form uses user case management."""
-    for app in domain_context.apps:
-        for module in app.get_modules():
-            for form in module.get_forms():
-                if actions_use_usercase(form.actions):
-                    return True
-    return False
+    return any(
+        actions_use_usercase(form.actions)
+        for app in domain_context.apps
+        for form in app.get_forms(bare=True)
+    )
 
 
 def calc_has_organization(domain_context):
