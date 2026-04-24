@@ -15,7 +15,6 @@ from corehq.apps.integration.kyc.models import (
     UserDataStore,
 )
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import create_case
 
 DOMAIN = 'test-domain'
@@ -28,6 +27,7 @@ class BaseKycUsersSetup(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(DOMAIN)
+        cls.addClassCleanup(cls.domain_obj.delete)
         cls.web_user = WebUser.create(
             DOMAIN, 'web.user@{DOMAIN}.commcarehq.org', 'Passw0rd!', None, None, is_admin=True,
 
@@ -61,11 +61,6 @@ class BaseKycUsersSetup(TestCase):
             case_json={'other_case_property': 'other_case_value'},
         )
         case_search_adapter.bulk_index([self.user_case, self.other_case], refresh=True)
-        self.addCleanup(
-            CommCareCase.objects.hard_delete_cases,
-            DOMAIN,
-            [self.user_case.case_id, self.other_case.case_id]
-        )
 
 
 class TestGetUserObjectsUsers(BaseKycUsersSetup):
@@ -157,11 +152,6 @@ class TestGetUserObjectsCases(TestCase):
             case_json={'other_case_property': 'other_case_value'},
         )
         case_search_adapter.bulk_index([self.other_case], refresh=True)
-        self.addCleanup(
-            CommCareCase.objects.hard_delete_cases,
-            DOMAIN,
-            [self.other_case.case_id]
-        )
 
     def test_other_case_type(self):
         config = KycConfig(

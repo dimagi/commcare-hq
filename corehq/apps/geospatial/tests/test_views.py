@@ -20,7 +20,7 @@ from corehq.apps.geospatial.views import (
 )
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
+from corehq.form_processor.models import CommCareCaseIndex
 from corehq.form_processor.tests.utils import create_case
 from corehq.util.test_utils import flag_enabled
 
@@ -260,6 +260,7 @@ class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
             created_via=None,
             user_data={GPS_POINT_CASE_PROPERTY: '12.34 45.67'}
         )
+        cls.addClassCleanup(cls.user_a.delete, cls.domain, None)
         cls.user_b = CommCareUser.create(
             cls.domain,
             username='UserB',
@@ -267,17 +268,8 @@ class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
             created_by=None,
             created_via=None
         )
+        cls.addClassCleanup(cls.user_b.delete, cls.domain, None)
         user_adapter.bulk_index([cls.user_a, cls.user_b], refresh=True)
-
-    @classmethod
-    def tearDownClass(cls):
-        CommCareCase.objects.hard_delete_cases(cls.domain, [
-            cls.case_a.case_id,
-            cls.case_b.case_id,
-        ])
-        cls.user_a.delete(cls.domain, None)
-        cls.user_b.delete(cls.domain, None)
-        super().tearDownClass()
 
     def test_get_paginated_cases(self):
         expected_output = {
@@ -572,7 +564,9 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
     def setUp(self):
         super().setUp()
         self.user_a = CommCareUser.create(self.domain, 'User_A', '1234', None, None)
+        self.addCleanup(self.user_a.delete, self.domain, None)
         self.user_b = CommCareUser.create(self.domain, 'User_B', '1234', None, None)
+        self.addCleanup(self.user_b.delete, self.domain, None)
         user_adapter.bulk_index([self.user_a, self.user_b], refresh=True)
 
         self.case_1 = create_case(self.domain, case_id=uuid4().hex, save=True, owner_id=self.user_a.user_id)
@@ -602,12 +596,6 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         case_search_adapter.bulk_index(self.cases, refresh=True)
 
         self.client.login(username=self.username, password=self.password)
-
-    def tearDown(self):
-        self.user_a.delete(self.domain, None, None)
-        self.user_b.delete(self.domain, None, None)
-        CommCareCase.objects.hard_delete_cases(self.domain, [case.case_id for case in self.cases])
-        super().tearDown()
 
     def _create_parent_index(self, case, parent_case_id):
         index = CommCareCaseIndex(
