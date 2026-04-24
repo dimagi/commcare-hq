@@ -249,14 +249,8 @@ def calc_has_sso(domain_context):
     - its BillingAccount owns an active IdentityProvider, or
     - it trusts an active IdentityProvider owned by another account.
     """
-    owner = BillingAccount.get_account_by_domain(domain_context.domain)
-    if (
-        owner
-        and IdentityProvider.objects.filter(
-            owner=owner,
-            is_active=True,
-        ).exists()
-    ):
+    acct = BillingAccount.get_account_by_domain(domain_context.domain)
+    if IdentityProvider.objects.filter(owner=acct, is_active=True).exists():
         return True
     return TrustedIdentityProvider.objects.filter(
         domain=domain_context.domain,
