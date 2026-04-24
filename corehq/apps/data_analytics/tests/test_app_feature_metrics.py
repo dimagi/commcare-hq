@@ -15,14 +15,13 @@ from ..feature_calcs import (
 from ..metric_registry import DomainContext
 
 
-def _make_domain_context(apps=None, domain_attrs=None):
+def _make_domain_context(apps=None, **domain_attrs):
     domain_obj = MagicMock()
     domain_obj.name = 'test'
     domain_obj.full_applications.return_value = apps or []
     domain_obj.has_custom_logo = False
-    if domain_attrs:
-        for k, v in domain_attrs.items():
-            setattr(domain_obj, k, v)
+    for k, v in domain_attrs.items():
+        setattr(domain_obj, k, v)
     return DomainContext(domain_obj)
 
 
@@ -216,32 +215,23 @@ class TestCalcBulkCaseEditingSessions(SimpleTestCase):
 class TestCalcHasCustomBranding(SimpleTestCase):
 
     def test_true_when_domain_has_custom_logo(self):
-        ctx = _make_domain_context(apps=[], domain_attrs={'has_custom_logo': True})
+        ctx = _make_domain_context(apps=[], has_custom_logo=True)
         assert calc_has_custom_branding(ctx) is True
 
     def test_true_when_app_has_logo_refs(self):
         app = MagicMock()
         app.is_remote_app.return_value = False
         app.logo_refs = {'hq_logo_android_home': 'path/to/logo.png'}
-        ctx = _make_domain_context(
-            apps=[app],
-            domain_attrs={'has_custom_logo': False},
-        )
+        ctx = _make_domain_context(apps=[app], has_custom_logo=False)
         assert calc_has_custom_branding(ctx) is True
 
     def test_false_when_no_branding(self):
         app = MagicMock()
         app.is_remote_app.return_value = False
         app.logo_refs = {}
-        ctx = _make_domain_context(
-            apps=[app],
-            domain_attrs={'has_custom_logo': False},
-        )
+        ctx = _make_domain_context(apps=[app], has_custom_logo=False)
         assert calc_has_custom_branding(ctx) is False
 
     def test_false_when_no_apps(self):
-        ctx = _make_domain_context(
-            apps=[],
-            domain_attrs={'has_custom_logo': False},
-        )
+        ctx = _make_domain_context(apps=[], has_custom_logo=False)
         assert calc_has_custom_branding(ctx) is False
