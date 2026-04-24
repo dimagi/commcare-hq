@@ -4254,7 +4254,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         default=const.DEFAULT_LOCATION_FIXTURE_OPTION, choices=const.LOCATION_FIXTURE_OPTIONS,
         required=False
     )
-    split_screen_dynamic_search = BooleanProperty(default=False)
 
     persistent_menu = BooleanProperty(default=False)
     show_breadcrumbs = BooleanProperty(default=True)
