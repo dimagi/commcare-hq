@@ -1368,7 +1368,6 @@ def _gather_and_update_search_properties(params, app, module, lang):
             inline_search=search_properties.get('inline_search', False),
             instance_name=instance_name,
             include_all_related_cases=search_properties.get('include_all_related_cases', False),
-            dynamic_search=app.split_screen_dynamic_search and not module.is_auto_select(),
             search_on_clear=search_properties.get('search_on_clear', False),
         )
 

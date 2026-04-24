@@ -2235,6 +2235,7 @@ class CaseSearch(DocumentSchema):
     Removed fields (do not reuse):
     - again_label: Removed with SSCS migration (Feb 2026)
     - search_again_label: Removed with SSCS migration (Feb 2026)
+    - dynamic_search: Removed deprecated functionality (Apr 2026)
       These fields may still exist in CouchDB documents but are no longer used.
     - command_label: Superseded by search_label (2021 migration)
     - search_label: Removed; search button always uses default label (Apr 2026)
@@ -2257,7 +2258,6 @@ class CaseSearch(DocumentSchema):
     title_label = LabelProperty(default={})
     description = LabelProperty(default={})
     include_all_related_cases = BooleanProperty(default=False)
-    dynamic_search = BooleanProperty(default=False)
     search_on_clear = BooleanProperty(default=False)
 
     # case property referencing another case's ID
