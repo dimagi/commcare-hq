@@ -6,7 +6,6 @@ from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
-    CaseSearchLabel,
     CaseSearchProperty,
     DetailColumn,
     GraphConfiguration,
@@ -41,11 +40,6 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
     def test_case_search_action(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.modules[0].search_config = CaseSearch(
-            search_label=CaseSearchLabel(
-                label={'en': 'Get them'},
-                media_image={'en': "jr://file/commcare/image/1.png"},
-                media_audio={'en': "jr://file/commcare/image/2.mp3"}
-            ),
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
         )
         # wrap to have assign_references called

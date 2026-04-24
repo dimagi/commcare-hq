@@ -2228,15 +2228,6 @@ class CaseSearchCustomSortProperty(DocumentSchema):
     direction = StringProperty()
 
 
-class BaseCaseSearchLabel(NavMenuItemMediaMixin):
-    def get_app(self):
-        return self._module.get_app()
-
-
-class CaseSearchLabel(BaseCaseSearchLabel):
-    label = LabelProperty(default={'en': 'Search All Cases'})
-
-
 class CaseSearch(DocumentSchema):
     """
     Properties and search command label
@@ -2245,9 +2236,11 @@ class CaseSearch(DocumentSchema):
     - again_label: Removed with SSCS migration (Feb 2026)
     - search_again_label: Removed with SSCS migration (Feb 2026)
       These fields may still exist in CouchDB documents but are no longer used.
+    - command_label: Superseded by search_label (2021 migration)
+    - search_label: Removed; search button always uses default label (Apr 2026)
+      These fields may still exist in CouchDB documents but are no longer used.
     """
-    command_label = LabelProperty(default={'en': 'Search All Cases'})
-    search_label = SchemaProperty(CaseSearchLabel)
+    search_button_label = LabelProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
@@ -2406,7 +2399,6 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
         if hasattr(self, 'case_list_form'):
             self.case_list_form._module = self
         if hasattr(self, 'search_config'):
-            self.search_config.search_label._module = self
             self.search_config.title_label._module = self
             self.search_config.description._module = self
 

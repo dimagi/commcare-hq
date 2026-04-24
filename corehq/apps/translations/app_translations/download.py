@@ -211,7 +211,7 @@ def get_module_search_command_rows(langs, module, domain):
     if toggles.CASE_SEARCH_DEPRECATED.enabled(domain):
         return [
             ('search_label', 'list')
-            + tuple(module.search_config.search_label.label.get(lang, '') for lang in langs),
+            + tuple(module.search_config.search_button_label.get(lang, '') for lang in langs),
         ] + rows
     return rows
 

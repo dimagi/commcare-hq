@@ -225,9 +225,6 @@ class AppFactory(object):
         case_module.case_list_form.label = {
             'en': 'New Case',
         }
-        case_module.search_config.search_label.label = {
-            'en': 'Find a Mother',
-        }
         case_module.search_config.title_label = {
             'en': 'Find a Mom',
         }

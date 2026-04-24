@@ -246,16 +246,6 @@ def case_search_locale(module):
     return "case_search.m{module.id}".format(module=module)
 
 
-@pattern('case_search.m%d.icon')
-def case_search_icon_locale(module):
-    return "case_search.m{module.id}.icon".format(module=module)
-
-
-@pattern('case_search.m%d.audio')
-def case_search_audio_locale(module):
-    return "case_search.m{module.id}.audio".format(module=module)
-
-
 @pattern('case_search.m%d.again')
 def case_search_again_locale(module):
     return "case_search.m{module.id}.again".format(module=module)
