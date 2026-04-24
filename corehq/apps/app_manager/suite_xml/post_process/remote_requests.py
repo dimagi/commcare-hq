@@ -218,7 +218,6 @@ class RemoteRequestFactory(object):
             "prompts": self.build_query_prompts(),
             "prompt_groups": self.build_query_prompt_groups(),
             "default_search": self.module.search_config.default_search,
-            "dynamic_search": False,
         }
         if self.module.search_config.search_on_clear and toggles.CASE_SEARCH_ADVANCED.enabled(self.app.domain):
             kwargs["search_on_clear"] = (self.module.search_config.search_on_clear

@@ -396,7 +396,7 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
             <instance id="results" src="jr://instance/remote/results"/>
             <session>
               <query url="http://localhost:8000/a/domain/phone/search/123/"
-                storage-instance="results" template="case" default_search="false" dynamic_search="false">
+                storage-instance="results" template="case" default_search="false">
                 <title>
                     <text>
                         <locale id="case_search.m0.inputs"/>
