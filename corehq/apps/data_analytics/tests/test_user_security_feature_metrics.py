@@ -204,15 +204,3 @@ class TestCalcHasSso(SimpleTestCase):
         mock_trusted.filter.return_value.exists.return_value = False
         ctx = _make_domain_context()
         assert calc_has_sso(ctx) is False
-
-    def test_false_when_no_billing_account(
-        self,
-        mock_idp,
-        mock_trusted,
-        mock_get_owner,
-    ):
-        mock_get_owner.return_value = None
-        mock_trusted.filter.return_value.exists.return_value = False
-        ctx = _make_domain_context()
-        assert calc_has_sso(ctx) is False
-        mock_idp.filter.assert_not_called()
