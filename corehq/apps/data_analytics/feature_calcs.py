@@ -198,10 +198,7 @@ def calc_has_user_case_management(domain_context):
     for app in domain_context.apps:
         for module in app.get_modules():
             for form in module.get_forms():
-                if (
-                    hasattr(form, 'actions')
-                    and actions_use_usercase(form.actions)
-                ):
+                if actions_use_usercase(form.actions):
                     return True
     return False
 
