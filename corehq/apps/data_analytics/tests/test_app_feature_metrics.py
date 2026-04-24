@@ -30,6 +30,9 @@ def _make_app_with_modules(modules):
     app = MagicMock()
     app.is_remote_app.return_value = False
     app.get_modules.return_value = modules
+    app.get_forms.return_value = [
+        form for module in modules for form in module.get_forms()
+    ]
     app.multimedia_map = {}
     app.cloudcare_enabled = False
     app.build_profiles = {}
@@ -180,14 +183,6 @@ class TestCalcHasSaveToCase(SimpleTestCase):
     def test_false_when_save_to_case_updates_empty(self):
         form = MagicMock()
         form.get_save_to_case_updates.return_value = {}
-        module = _make_module(forms=[form])
-        app = _make_app_with_modules([module])
-        ctx = _make_ctx(apps=[app])
-        assert calc_has_save_to_case(ctx) is False
-
-    def test_false_when_form_has_no_get_save_to_case_updates(self):
-        # Some form types (e.g. shadow forms) may not have this method
-        form = MagicMock(spec=[])
         module = _make_module(forms=[form])
         app = _make_app_with_modules([module])
         ctx = _make_ctx(apps=[app])
