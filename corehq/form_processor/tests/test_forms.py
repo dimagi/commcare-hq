@@ -344,7 +344,6 @@ class XFormInstanceManagerTest(TestCase):
         forms = [create_form_for_test(DOMAIN) for i in range(3)]
         form_ids = [form.form_id for form in forms]
         other_form = create_form_for_test('other_domain')
-        self.addCleanup(lambda: XFormInstance.objects.hard_delete_forms('other_domain', [other_form.form_id]))
         forms = XFormInstance.objects.get_forms(form_ids)
         self.assertEqual(3, len(forms))
 
@@ -465,7 +464,6 @@ class DeleteAttachmentsFSDBTests(TestCase):
         self.assertEqual(3, len(forms))
 
         other_form = create_form_for_test('other_domain')
-        self.addCleanup(lambda: XFormInstance.objects.hard_delete_forms('other_domain', [other_form.form_id]))
 
         attachments = sorted(
             get_blob_db().metadb.get_for_parents(form_ids),
