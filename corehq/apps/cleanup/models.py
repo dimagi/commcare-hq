@@ -1,6 +1,13 @@
 from django.db import models
 
 
+def create_tombstone(obj_class_path, doc_id, domain, deleted_on):
+    return DeletedSQLDoc.objects.update_or_create(
+        doc_id=doc_id,
+        object_class_path=obj_class_path,
+        defaults={'deleted_on': deleted_on, 'domain': domain},
+    )
+
 class DeletedCouchDoc(models.Model):
     doc_id = models.CharField(max_length=126)
     doc_type = models.CharField(max_length=126)

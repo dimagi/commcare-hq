@@ -19,6 +19,7 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.cleanup.models import create_tombstone
 from corehq.apps.cleanup.utils import get_cutoff_date_for_data_deletion
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
@@ -678,6 +679,17 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         deleted_on = datetime.utcnow()
         type(self).objects.soft_delete_forms(self.domain, [self.form_id], deleted_on)
         self.deleted_on = deleted_on
+
+    def delete(self, leave_tombstone=True):
+        assert self.deleted_on is not None, "Cannot delete a form that has not been soft deleted first"
+        if leave_tombstone:
+            obj_class_path = f"{self._meta.app_label}.{self._meta.model_name}"
+            create_tombstone(obj_class_path, self.form_id, self.domain, self.deleted_on)
+        else:
+            log.info(f"Deleting form {self.form_id} for domain {self.domain} without leaving tombstone")
+
+        super().delete()
+
 
     def to_json(self, include_attachments=False):
         from ..serializers import XFormInstanceSerializer, lazy_serialize_form_attachments, \
