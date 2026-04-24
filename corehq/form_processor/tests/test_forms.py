@@ -408,7 +408,7 @@ class TestHardDeleteExpiredForms(TestCase):
         valid_form = create_form_for_test(self.domain)
 
         with override_settings(DATA_RETENTION_WINDOW=7):
-            count = XFormInstance.objects.hard_delete_expired_forms(dry_run=False)
+            count = XFormInstance.objects.hard_delete_expired_forms(commit=True)
 
         assert count == {'form_processor.XFormInstance': 1}
         assert XFormInstance.objects.partitioned_get(valid_form.form_id)
@@ -417,7 +417,7 @@ class TestHardDeleteExpiredForms(TestCase):
             assert XFormInstance.objects.partitioned_get(expired_form.form_id)
 
     @travel('2020-01-10')
-    def test_dry_run_prevents_deletion(self):
+    def test_commit_set_to_false_prevents_deletion(self):
         expired_form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1))
         soft_deleted_form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 9))
         valid_form = create_form_for_test(self.domain)
@@ -440,8 +440,8 @@ class TestHardDeleteExpiredForms(TestCase):
             create_form_for_test(self.domain)
 
         with override_settings(DATA_RETENTION_WINDOW=7):
-            dry_run_counts = XFormInstance.objects.hard_delete_expired_forms(dry_run=True)
-            actual_counts = XFormInstance.objects.hard_delete_expired_forms(dry_run=False)
+            dry_run_counts = XFormInstance.objects.hard_delete_expired_forms()
+            actual_counts = XFormInstance.objects.hard_delete_expired_forms(commit=True)
 
         self.assertEqual(dry_run_counts, {'form_processor.XFormInstance': 5})
         self.assertEqual(actual_counts, {'form_processor.XFormInstance': 5})

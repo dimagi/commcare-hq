@@ -192,23 +192,22 @@ class XFormInstanceManager(RequireDBManager):
             )
         return result
 
-    def hard_delete_expired_forms(self, dry_run=True):
+    def hard_delete_expired_forms(self, commit=False):
         """
         Permanently deletes forms that were soft deleted outside of
         the DATA_RETENTION_WINDOW, meaning the ``deleted_on`` field is
         older than the current time - the DATA_RETENTION_WINDOW.
-        :param dry_run: if True, no changes will be committed to the database
-        and this method is effectively read-only
+        :param commit: defaults to False. If True, will delete expired forms
         :return: dictionary of count of deleted forms
         """
         expiration_date = get_cutoff_date_for_data_deletion()
         counts = {}
         for db_name in get_db_aliases_for_partitioned_query():
             queryset = self.using(db_name).filter(deleted_on__lt=expiration_date)
-            if dry_run:
-                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
-            else:
+            if commit:
                 deleted_counts = queryset.delete()[1]
+            else:
+                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
             counts.update(deleted_counts)
         return counts
 
