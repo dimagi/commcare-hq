@@ -169,7 +169,7 @@ _feature_calcs = 'corehq.apps.data_analytics.feature_calcs'
 @patch(f'{_feature_calcs}.TrustedIdentityProvider.objects')
 @patch(f'{_feature_calcs}.IdentityProvider.objects')
 class TestCalcHasSso(SimpleTestCase):
-    def test_true_when_owner_has_active_idp(
+    def test_true_when_billing_account_has_active_idp(
         self,
         mock_idp,
         mock_trusted,
