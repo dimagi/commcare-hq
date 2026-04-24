@@ -32,6 +32,7 @@ class BaseGeospatialViewClass(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
         cls.username = 'test-user'
         cls.password = '1234'
         cls.webuser = WebUser.create(
@@ -43,12 +44,7 @@ class BaseGeospatialViewClass(TestCase):
             is_admin=True,
         )
         cls.webuser.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.webuser.delete(None, None)
-        cls.domain_obj.delete()
-        super().tearDownClass()
+        cls.addClassCleanup(cls.webuser.delete, None, None)
 
     @property
     def endpoint(self):
@@ -561,12 +557,16 @@ def _sample_geojson_data(name='test-2'):
 class TestCasesReassignmentView(BaseGeospatialViewClass):
     urlname = CasesReassignmentView.urlname
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user_a = CommCareUser.create(cls.domain, 'User_A', '1234', None, None)
+        cls.addClassCleanup(cls.user_a.delete, cls.domain, None)
+        cls.user_b = CommCareUser.create(cls.domain, 'User_B', '1234', None, None)
+        cls.addClassCleanup(cls.user_b.delete, cls.domain, None)
+
     def setUp(self):
         super().setUp()
-        self.user_a = CommCareUser.create(self.domain, 'User_A', '1234', None, None)
-        self.addCleanup(self.user_a.delete, self.domain, None)
-        self.user_b = CommCareUser.create(self.domain, 'User_B', '1234', None, None)
-        self.addCleanup(self.user_b.delete, self.domain, None)
         user_adapter.bulk_index([self.user_a, self.user_b], refresh=True)
 
         self.case_1 = create_case(self.domain, case_id=uuid4().hex, save=True, owner_id=self.user_a.user_id)
