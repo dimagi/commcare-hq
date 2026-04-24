@@ -244,9 +244,9 @@ def _calc_repeaters(ctx):
     return Repeater.objects.filter(domain=ctx.domain).count()
 
 
-def _calc_case_exports(ctx):
-    # Returns a count of all exports despite the name. ¯\_("/)_/¯
-    # See feature usage metrics "case_exports_only".
+def _calc_all_exports(ctx):
+    # Exposed as "cp_n_case_exports" despite counting all exports.
+    # ¯\_("/)_/¯ See feature usage metrics "case_exports_only".
     return len(ctx.all_exports)
 
 
@@ -406,7 +406,7 @@ DAILY_METRICS = [
 
     # Export Metrics
     MetricDef('case_exports', 'cp_n_case_exports',  # Aaactually all exports
-              _calc_case_exports, is_boolean=False, schedule='daily'),
+              _calc_all_exports, is_boolean=False, schedule='daily'),
     MetricDef('deid_exports', 'cp_n_deid_exports',
               _calc_deid_exports, is_boolean=False, schedule='daily'),
     MetricDef('saved_exports', 'cp_n_saved_exports',
