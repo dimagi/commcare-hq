@@ -13,7 +13,6 @@ from corehq.apps.cleanup.dbaccessors import (
     find_ucr_tables_for_deleted_domains,
 )
 from corehq.apps.cleanup.tests.util import is_monday
-from corehq.apps.cleanup.utils import get_cutoff_date_for_data_deletion
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import mail_admins_async
 from corehq.form_processor.models import XFormInstance
@@ -27,8 +26,8 @@ logger = logging.getLogger(__name__)
 def permanently_delete_eligible_data(dry_run=False):
     """
     Permanently delete database objects that are eligible for hard deletion.
-    To be eligible means to have a ``deleted_on`` field with a value less than
-    the cutoff date returned from ``get_cutoff_date_for_data_deletion``.
+    To be eligible an object must have a ``deleted_on`` value
+    older than the settings.DATA_RETENTION_WINDOW
     :param dry_run: if True, no changes will be committed to the database
     """
     """
@@ -38,8 +37,7 @@ def permanently_delete_eligible_data(dry_run=False):
     in a future PR coming soon (Q1 2024).
     """
     dry_run_tag = '[DRY RUN] ' if dry_run else ''
-    cutoff_date = get_cutoff_date_for_data_deletion()
-    form_counts = XFormInstance.objects.hard_delete_forms_before_cutoff(cutoff_date, dry_run=dry_run)
+    form_counts = XFormInstance.objects.hard_delete_expired_forms(dry_run=dry_run)
 
     logger.info(f"{dry_run_tag}'permanently_delete_eligible_data' ran with the following results:\n")
     for table, count in form_counts.items():

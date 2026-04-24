@@ -19,6 +19,7 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.cleanup.utils import get_cutoff_date_for_data_deletion
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -191,18 +192,19 @@ class XFormInstanceManager(RequireDBManager):
             )
         return result
 
-    def hard_delete_forms_before_cutoff(self, cutoff, dry_run=True):
+    def hard_delete_expired_forms(self, dry_run=True):
         """
-        Permanently deletes forms with deleted_on set to a datetime earlier than
-        the specified cutoff datetime
-        :param cutoff: datetime used to obtain the forms to be hard deleted
+        Permanently deletes forms that were soft deleted outside of
+        the DATA_RETENTION_WINDOW, meaning the ``deleted_on`` field is
+        older than the current time - the DATA_RETENTION_WINDOW.
         :param dry_run: if True, no changes will be committed to the database
         and this method is effectively read-only
-        :return: dictionary of count of deleted objects per table
+        :return: dictionary of count of deleted forms
         """
+        expiration_date = get_cutoff_date_for_data_deletion()
         counts = {}
         for db_name in get_db_aliases_for_partitioned_query():
-            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
+            queryset = self.using(db_name).filter(deleted_on__lt=expiration_date)
             if dry_run:
                 deleted_counts = {'form_processor.XFormInstance': queryset.count()}
             else:
