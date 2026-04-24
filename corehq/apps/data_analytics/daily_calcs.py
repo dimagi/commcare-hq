@@ -251,17 +251,11 @@ def _calc_case_exports(ctx):
 
 
 def _calc_deid_exports(ctx):
-    return sum(
-        e.get('is_deidentified', False)
-        for e in ctx.all_exports
-    )
+    return sum(e['is_deidentified'] for e in ctx.all_exports)
 
 
 def _calc_saved_exports(ctx):
-    return sum(
-        e.get('is_daily_saved_export', False)
-        for e in ctx.all_exports
-    )
+    return sum(e['is_daily_saved_export'] for e in ctx.all_exports)
 
 
 def _calc_rb_reports(ctx):
