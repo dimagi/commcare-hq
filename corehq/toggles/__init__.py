@@ -1050,17 +1050,6 @@ USH_SEARCH_FILTER = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
-USH_INLINE_SEARCH = StaticToggle(
-    'inline_case_search',
-    "USH Specific toggle to making case search user input available to other parts of the app.",
-    TAG_FROZEN,
-    help_link='https://docs.google.com/document/d/1Mmx1FrYZrcEmWidqSkNjC_gWSJ6xzRFKoP3Rn_xSaj4/edit#',
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Temporary toggle to manage the release of the 'inline search' / 'case search input' feature.
-    """,
-)
-
 USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
     'empty_case_list_text',
     "USH: Allow customizing the text displayed when case list contains no cases in web apps",
