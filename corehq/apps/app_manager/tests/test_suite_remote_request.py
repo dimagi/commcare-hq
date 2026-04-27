@@ -11,7 +11,6 @@ from corehq.apps.app_manager.models import (
     Assertion,
     CaseSearch,
     CaseSearchCustomSortProperty,
-    CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DetailColumn,
@@ -60,7 +59,6 @@ class RemoteRequestSmartLinkTest(SimpleTestCase, SuiteMixin):
         self.factory.form_requires_case(child_form, 'leaf')
 
         child_module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name=field) for field in ['name', 'shape']],
             data_registry="a_registry",
             data_registry_workflow=REGISTRY_WORKFLOW_SMART_LINK,
@@ -163,11 +161,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             ))
         )
         self.module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(
-                label={
-                    'en': 'Search Patients Nationally'
-                }
-            ),
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'}, input_="date"),
@@ -268,11 +261,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         """
         # Regular and advanced modules should get the search detail
         search_config = CaseSearch(
-            search_label=CaseSearchLabel(
-                label={
-                    'en': 'Advanced Search'
-                }
-            ),
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})]
         )
         advanced_module = self.app.add_module(AdvancedModule.new_module("advanced", None))
@@ -344,11 +332,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         shadow_module = self.app.add_module(ShadowModule.new_module("shadow", "en"))
         shadow_module.source_module_id = self.module.get_or_create_unique_id()
         shadow_module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(
-                label={
-                    'en': 'Search from Shadow Module'
-                }
-            ),
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
             ],

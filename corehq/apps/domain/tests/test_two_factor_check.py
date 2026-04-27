@@ -1,16 +1,20 @@
+import base64
 import json
 from unittest.mock import Mock, patch
 
+from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory, TestCase, override_settings
 
 from corehq.apps.domain.decorators import (
     OTP_AUTH_FAIL_RESPONSE,
     _two_factor_required,
+    api_auth,
     two_factor_check,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.sso.tests.generator import create_request_session
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import CouchUser, HQApiKey, HqPermissions, WebUser
 
 
 class TestTwoFactorRequired(TestCase):
@@ -123,3 +127,35 @@ class TestTwoFactorCheck(TestCase):
 
             data = json.loads(response.content)
             self.assertDictEqual(data, OTP_AUTH_FAIL_RESPONSE)
+
+
+class TestApiKeyBasicAuthWithTwoFactor(TestCase):
+    domain_name = 'two-factor-api-test'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = create_domain(cls.domain_name)
+        cls.addClassCleanup(cls.domain.delete)
+        cls.domain.two_factor_auth = True
+        cls.domain.save()
+        cls.user = WebUser.create( cls.domain_name, 'test@dimagi.com', 'password', None, None, is_admin=True,)
+        cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
+        cls.api_key = HQApiKey.objects.create(user=cls.user.get_django_user()).plaintext_key
+
+    def test_api_key_basic_auth_with_two_factor_domain(self):
+        encoded_creds = base64.b64encode(f'test@dimagi.com:{self.api_key}'.encode()).decode()
+        request = RequestFactory().get(
+            f'/a/{self.domain_name}/api/case/v2/',
+            HTTP_AUTHORIZATION=f'Basic {encoded_creds}',
+        )
+        request.user = AnonymousUser()  # User hasn't been established yet
+
+        @api_auth(allow_creds_in_data=False)
+        @require_permission(HqPermissions.edit_data)
+        def view(request, domain):
+            from django.http import HttpResponse
+            return HttpResponse('ok')
+
+        response = view(request, self.domain_name)
+        self.assertEqual(response.status_code, 200)

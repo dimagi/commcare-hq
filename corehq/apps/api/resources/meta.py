@@ -1,3 +1,4 @@
+import attr
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.throttle import BaseThrottle
 
@@ -10,14 +11,20 @@ from corehq.project_limits.rate_limiter import (
 )
 from corehq.project_limits.shortcuts import get_standard_ratio_rate_definition
 from corehq.toggles import API_THROTTLE_WHITELIST
+from corehq.util.metrics import metrics_counter
 
 
+# Weekly windows are intentionally omitted: sustained weekly quotas are
+# not useful for API traffic and result in hard-to-diagnose throttling
+# when a client's 7-day rolling volume hits the cap.
 api_rate_limiter = RateLimiter(
     feature_key='api',
     get_rate_limits=PerUserRateDefinition(
-        per_user_rate_definition=get_standard_ratio_rate_definition(events_per_day=1000),
+        per_user_rate_definition=attr.evolve(
+            get_standard_ratio_rate_definition(events_per_day=1000),
+            per_week=None,
+        ),
         constant_rate_definition=RateDefinition(
-            per_week=100,
             per_day=50,
             per_hour=30,
             per_minute=10,
@@ -54,6 +61,7 @@ class HQThrottle(BaseThrottle):
         from tastypie.models import ApiAccess
 
         api_rate_limiter.report_usage(identifier.domain)
+        metrics_counter('commcare.api.request', tags={'domain': identifier.domain})
         # Write out the access to the DB for logging purposes.
         url = kwargs.get('url', '')
         if len(url) > 255:

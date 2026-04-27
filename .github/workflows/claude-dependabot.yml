@@ -71,6 +71,11 @@ jobs:
 
             Your task is to analyze this PR and post a single review comment with actionable insights.
 
+            **IMPORTANT**: Do NOT mention security vulnerabilities, CVEs, or security advisories
+            in your comment. Security updates are handled through a separate internal process.
+            If this PR is a security-related upgrade, focus only on breaking changes, migration
+            notes, and codebase impact — omit any security details.
+
             ## Analysis Process
 
             1. **Identify Changed Dependencies**:
@@ -86,10 +91,10 @@ jobs:
                  it's usually the most detailed source. Fall back to the GitHub releases page,
                  PyPI project page, or npm package page.
                - Focus on changes between the old and new versions
-               - Identify: breaking changes, deprecations, security fixes, new features
+               - Identify: breaking changes, deprecations, new features
 
             3. **Breaking Change Assessment**:
-               - Categorize each change: BREAKING, MAJOR, MINOR, PATCH, SECURITY
+               - Categorize each change: BREAKING, MAJOR, MINOR, PATCH
                - For GitHub Actions updates, check for changed inputs/outputs or runner requirements
                - Check if CommCare HQ uses any affected APIs or features
 
@@ -113,7 +118,6 @@ jobs:
             For each updated dependency, use the package name as a subheading and cover:
             - **Changes**: Summary of key changes between versions
             - **Breaking Changes**: Any breaking changes (or "None")
-            - **Security Fixes**: Any security improvements (or "None")
             - **Migration Notes**: Required upgrade steps (or "None")
 
             ### ⚠️ Impact Assessment

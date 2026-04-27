@@ -4,12 +4,6 @@
       <text>
         <locale id="case_search.m0"/>
       </text>
-      <text form="image">
-        <locale id="case_search.m0.icon"/>
-      </text>
-      <text form="audio">
-        <locale id="case_search.m0.audio"/>
-      </text>
     </display>
     <stack>
       <push>

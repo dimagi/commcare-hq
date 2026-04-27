@@ -265,8 +265,6 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 'blacklisted_owner_ids_expression': (
                     module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
                 # populate labels even if module_offers_search is false - search_config might just not exist yet
-                'search_label':
-                    module.search_config.search_label.label if hasattr(module, 'search_config') else "",
                 'title_label':
                     module.search_config.title_label if hasattr(module, 'search_config') else "",
                 'description':
@@ -1290,17 +1288,6 @@ def _gather_and_update_search_properties(params, app, module, lang):
         description = module.search_config.description
         description[lang] = search_properties.get('description', '')
 
-        search_label = module.search_config.search_label
-        search_label.label[lang] = search_properties.get('search_label', '')
-        if search_properties.get('search_label_image_for_all'):
-            search_label.use_default_image_for_all = (
-                search_properties.get('search_label_image_for_all') == 'true')
-        if search_properties.get('search_label_audio_for_all'):
-            search_label.use_default_audio_for_all = (
-                search_properties.get('search_label_audio_for_all') == 'true')
-        search_label.set_media("media_image", lang, search_properties.get('search_label_image'))
-        search_label.set_media("media_audio", lang, search_properties.get('search_label_audio'))
-
         try:
             properties = [
                 CaseSearchProperty.wrap(p)
@@ -1356,7 +1343,6 @@ def _gather_and_update_search_properties(params, app, module, lang):
             ).format(instance_name))
 
         module.search_config = CaseSearch(
-            search_label=search_label,
             title_label=title_label,
             description=description,
             properties=properties,
