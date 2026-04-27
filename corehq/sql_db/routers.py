@@ -20,6 +20,7 @@ BLOB_DB_APP = 'blobs'
 SQL_ACCESSORS_APP = 'sql_accessors'
 SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
 SYNCLOGS_APP = 'phone'
+TOMBSTONES_APP = 'tombstones'
 
 
 class MultiDBRouter(object):
@@ -88,7 +89,7 @@ def allow_migrate(db, app_label, model_name=None):
         return True
     elif app_label == BLOB_DB_APP and model_name == 'blobexpiration':
         return False
-    elif app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP, BLOB_DB_APP):
+    elif app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP, BLOB_DB_APP, TOMBSTONES_APP):
         return (
             db == plproxy_config.proxy_db
             or db in plproxy_config.form_processing_dbs
@@ -125,7 +126,7 @@ def db_for_read_write(model, write=True, hints=None):
         if hasattr(model, 'partition_attr'):
             return get_db_for_partitioned_model(model, hints)
         return DEFAULT_DB_ALIAS
-    if app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP):
+    if app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP, TOMBSTONES_APP):
         return get_db_for_partitioned_model(model, hints)
     else:
         default_db = DEFAULT_DB_ALIAS
