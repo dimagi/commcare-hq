@@ -450,8 +450,8 @@ class TestHardDeleteExpiredForms(TestCase):
             dry_run_counts = XFormInstance.objects.hard_delete_expired_forms()
             actual_counts = XFormInstance.objects.hard_delete_expired_forms(commit=True)
 
-        self.assertEqual(dry_run_counts, {'form_processor.XFormInstance': 5})
-        self.assertEqual(actual_counts, {'form_processor.XFormInstance': 5})
+        assert dry_run_counts == {'form_processor.XFormInstance': 5}
+        assert actual_counts == {'form_processor.XFormInstance': 5}
 
 
 class DeleteAttachmentsFSDBTests(TestCase):
