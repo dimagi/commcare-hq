@@ -462,6 +462,13 @@ var loadUpdateAction = {
             return false;
         });
 
+        self.hasLockedMappings = ko.observable(function () {
+            if (self.hasCaseProperties() && _.some(self.case_properties(), property => property.isLocked())) {
+                return true;
+            }
+            return self.hasPreload() && _.some(self.preload(), property => property.isLocked());
+        });
+
         return self;
     },
     unwrap: function (self) {
@@ -680,6 +687,13 @@ var openCaseAction = {
                 }
             }
             return false;
+        });
+
+        self.hasLockedMappings = ko.observable(function () {
+            return (
+                self.hasCaseProperties()
+                && _.some(self.case_properties(), property => property.isLocked())
+            );
         });
 
         return self;
