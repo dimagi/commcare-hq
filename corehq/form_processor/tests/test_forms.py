@@ -417,7 +417,7 @@ class TestHardDeleteExpiredForms(TestCase):
         with override_settings(DATA_RETENTION_WINDOW=7):
             count = XFormInstance.objects.hard_delete_expired_forms(commit=True)
 
-        assert count == 1
+        assert count == {'form_processor.XFormInstance': 1}
         assert XFormInstance.objects.partitioned_get(valid_form.form_id)
         assert XFormInstance.objects.partitioned_get(soft_deleted_form.form_id)
         with pytest.raises(XFormInstance.DoesNotExist):
@@ -432,7 +432,7 @@ class TestHardDeleteExpiredForms(TestCase):
         with override_settings(DATA_RETENTION_WINDOW=7):
             count = XFormInstance.objects.hard_delete_expired_forms()
 
-        assert count == 1
+        assert count == {'form_processor.XFormInstance': 1}
         assert XFormInstance.objects.partitioned_get(valid_form.form_id)
         assert XFormInstance.objects.partitioned_get(soft_deleted_form.form_id)
         assert XFormInstance.objects.partitioned_get(expired_form.form_id)
@@ -450,8 +450,8 @@ class TestHardDeleteExpiredForms(TestCase):
             dry_run_counts = XFormInstance.objects.hard_delete_expired_forms()
             actual_counts = XFormInstance.objects.hard_delete_expired_forms(commit=True)
 
-        self.assertEqual(dry_run_counts, 5)
-        self.assertEqual(actual_counts, 5)
+        self.assertEqual(dry_run_counts, {'form_processor.XFormInstance': 5})
+        self.assertEqual(actual_counts, {'form_processor.XFormInstance': 5})
 
 
 class DeleteAttachmentsFSDBTests(TestCase):

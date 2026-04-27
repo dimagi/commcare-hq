@@ -38,10 +38,11 @@ def permanently_delete_eligible_data(dry_run=True):
     """
     dry_run_tag = '[DRY RUN] ' if dry_run else ''
     commit = not dry_run
-    form_count = XFormInstance.objects.hard_delete_expired_forms(commit=commit)
+    form_counts = XFormInstance.objects.hard_delete_expired_forms(commit=commit)
 
     logger.info(f"{dry_run_tag}'permanently_delete_eligible_data' ran with the following results:\n")
-    logger.info(f"{dry_run_tag}{form_count} forms were deleted.")
+    for table, count in form_counts.items():
+        logger.info(f"{dry_run_tag}{count} {table} objects were deleted.")
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
