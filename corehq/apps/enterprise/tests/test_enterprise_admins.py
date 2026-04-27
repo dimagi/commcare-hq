@@ -11,10 +11,7 @@ from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests import generator as accounting_gen
 from corehq.apps.accounting.tests.generator import generate_domain_subscription
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.enterprise.forms import (
-    EnterpriseAdminForm,
-    _get_sso_email_domains,
-)
+from corehq.apps.enterprise.forms import _get_sso_email_domains
 from corehq.apps.sso.models import (
     AuthenticatedEmailDomain,
     IdentityProvider,
@@ -76,64 +73,6 @@ class GetSsoEmailDomainsTests(TestCase):
     def test_domains_returned_lowercased(self):
         _make_idp(self.account, slug='idp-g', domains=['Mixed.Case.COM'])
         assert _get_sso_email_domains(self.account) == {'mixed.case.com'}
-
-
-class EnterpriseAdminFormTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.account = accounting_gen.billing_account(
-            'admin@example.com', 'contact@example.com',
-            is_customer_account=True,
-        )
-        cls.account.enterprise_admin_emails = ['existing@example.com']
-        cls.account.save()
-
-    def _bind(self, email):
-        return EnterpriseAdminForm({'email': email}, account=self.account)
-
-    def test_valid_email_passes(self):
-        form = self._bind('new@example.com')
-        assert form.is_valid(), form.errors
-        assert form.cleaned_data['email'] == 'new@example.com'
-
-    def test_email_is_lowercased(self):
-        form = self._bind('MixedCase@Example.com')
-        assert form.is_valid(), form.errors
-        assert form.cleaned_data['email'] == 'mixedcase@example.com'
-
-    def test_invalid_email_format_rejected(self):
-        form = self._bind('not-an-email')
-        assert not form.is_valid()
-        assert 'email' in form.errors
-
-    def test_duplicate_email_rejected(self):
-        form = self._bind('existing@example.com')
-        assert not form.is_valid()
-        assert 'already' in form.errors['email'][0]
-
-    def test_duplicate_is_case_insensitive(self):
-        form = self._bind('EXISTING@example.com')
-        assert not form.is_valid()
-
-    def test_no_sso_allows_any_domain(self):
-        form = self._bind('someone@anywhere.com')
-        assert form.is_valid(), form.errors
-
-    def test_sso_restricts_email_domain(self):
-        _make_idp(self.account, slug='idp-sso', domains=['corp.com'])
-        form = self._bind('someone@other.com')
-        assert not form.is_valid()
-        assert 'not permitted' in form.errors['email'][0]
-
-    def test_sso_allows_matching_domain(self):
-        _make_idp(self.account, slug='idp-sso-ok', domains=['corp.com'])
-        form = self._bind('someone@corp.com')
-        assert form.is_valid(), form.errors
-
-    def test_sso_without_domain_rows_allows_any_email(self):
-        _make_idp(self.account, slug='idp-no-domains')
-        form = self._bind('someone@unrestricted.com')
-        assert form.is_valid(), form.errors
 
 
 class _EnterpriseAdminViewTestBase(TestCase):
@@ -300,6 +239,40 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         assert 'x@other.com' not in account.enterprise_admin_emails
         msgs = [str(m) for m in get_messages(response.wsgi_request)]
         assert any('not permitted' in m for m in msgs)
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_with_sso_allows_matching_domain(self):
+        _make_idp(self.account, slug='idp-sso-ok', domains=['corp.com'])
+        response = self.client.post(
+            self.add_url, {'email': 'newperson@corp.com'},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        assert 'newperson@corp.com' in account.enterprise_admin_emails
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_with_sso_no_domain_rows_allows_any_email(self):
+        # An active IdP with no AuthenticatedEmailDomain rows imposes no
+        # domain restriction.
+        _make_idp(self.account, slug='idp-no-domains')
+        response = self.client.post(
+            self.add_url, {'email': 'someone@unrestricted.com'},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        assert 'someone@unrestricted.com' in account.enterprise_admin_emails
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_duplicate_is_case_insensitive(self):
+        response = self.client.post(
+            self.add_url, {'email': self.admin_user.username.upper()},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        count = account.enterprise_admin_emails.count(self.admin_user.username)
+        assert count == 1
+        msgs = [str(m) for m in get_messages(response.wsgi_request)]
+        assert any('already' in m for m in msgs)
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_add_logs_info(self):
