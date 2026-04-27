@@ -6,8 +6,8 @@ from django.contrib.postgres.forms import SimpleArrayField
 from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 from django.utils import timezone
-from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy as _
 from zoneinfo import ZoneInfo
 
 from crispy_forms import bootstrap as twbscrispy
