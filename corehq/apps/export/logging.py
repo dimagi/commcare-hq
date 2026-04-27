@@ -3,7 +3,7 @@ from collections import namedtuple
 ExportLoggingContext = namedtuple('ExportLoggingContext', [
     'download_id',
     'username',
-    'trigger',
+    'trigger',  # "user_download" | "scheduled_rebuild" | "manual_rebuild"
     'filters',
     'bulk',
 ])
