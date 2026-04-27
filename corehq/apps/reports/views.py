@@ -23,8 +23,8 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import (
     require_GET,
     require_http_methods,
