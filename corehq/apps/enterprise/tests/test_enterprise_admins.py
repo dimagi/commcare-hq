@@ -52,42 +52,30 @@ class GetSsoEmailDomainsTests(TestCase):
         )
 
     def test_no_idp_returns_empty_set(self):
-        self.assertEqual(_get_sso_email_domains(self.account), set())
+        assert _get_sso_email_domains(self.account) == set()
 
     def test_idp_without_domain_rows_returns_empty_set(self):
         _make_idp(self.account, slug='idp-a')
-        self.assertEqual(_get_sso_email_domains(self.account), set())
+        assert _get_sso_email_domains(self.account) == set()
 
     def test_single_idp_with_domains(self):
         _make_idp(self.account, slug='idp-b', domains=['foo.com', 'bar.com'])
-        self.assertEqual(
-            _get_sso_email_domains(self.account),
-            {'foo.com', 'bar.com'},
-        )
+        assert _get_sso_email_domains(self.account) == {'foo.com', 'bar.com'}
 
     def test_multiple_active_idps_union_domains(self):
         _make_idp(self.account, slug='idp-c', domains=['foo.com'])
         _make_idp(self.account, slug='idp-d', domains=['baz.com'])
-        self.assertEqual(
-            _get_sso_email_domains(self.account),
-            {'foo.com', 'baz.com'},
-        )
+        assert _get_sso_email_domains(self.account) == {'foo.com', 'baz.com'}
 
     def test_inactive_idp_is_excluded(self):
         _make_idp(self.account, slug='idp-e', is_active=False,
                   domains=['inactive.com'])
         _make_idp(self.account, slug='idp-f', domains=['active.com'])
-        self.assertEqual(
-            _get_sso_email_domains(self.account),
-            {'active.com'},
-        )
+        assert _get_sso_email_domains(self.account) == {'active.com'}
 
     def test_domains_returned_lowercased(self):
         _make_idp(self.account, slug='idp-g', domains=['Mixed.Case.COM'])
-        self.assertEqual(
-            _get_sso_email_domains(self.account),
-            {'mixed.case.com'},
-        )
+        assert _get_sso_email_domains(self.account) == {'mixed.case.com'}
 
 
 class EnterpriseAdminFormTests(TestCase):
@@ -105,47 +93,47 @@ class EnterpriseAdminFormTests(TestCase):
 
     def test_valid_email_passes(self):
         form = self._bind('new@example.com')
-        self.assertTrue(form.is_valid(), form.errors)
-        self.assertEqual(form.cleaned_data['email'], 'new@example.com')
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data['email'] == 'new@example.com'
 
     def test_email_is_lowercased(self):
         form = self._bind('MixedCase@Example.com')
-        self.assertTrue(form.is_valid(), form.errors)
-        self.assertEqual(form.cleaned_data['email'], 'mixedcase@example.com')
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data['email'] == 'mixedcase@example.com'
 
     def test_invalid_email_format_rejected(self):
         form = self._bind('not-an-email')
-        self.assertFalse(form.is_valid())
-        self.assertIn('email', form.errors)
+        assert not form.is_valid()
+        assert 'email' in form.errors
 
     def test_duplicate_email_rejected(self):
         form = self._bind('existing@example.com')
-        self.assertFalse(form.is_valid())
-        self.assertIn('already', form.errors['email'][0])
+        assert not form.is_valid()
+        assert 'already' in form.errors['email'][0]
 
     def test_duplicate_is_case_insensitive(self):
         form = self._bind('EXISTING@example.com')
-        self.assertFalse(form.is_valid())
+        assert not form.is_valid()
 
     def test_no_sso_allows_any_domain(self):
         form = self._bind('someone@anywhere.com')
-        self.assertTrue(form.is_valid(), form.errors)
+        assert form.is_valid(), form.errors
 
     def test_sso_restricts_email_domain(self):
         _make_idp(self.account, slug='idp-sso', domains=['corp.com'])
         form = self._bind('someone@other.com')
-        self.assertFalse(form.is_valid())
-        self.assertIn('not permitted', form.errors['email'][0])
+        assert not form.is_valid()
+        assert 'not permitted' in form.errors['email'][0]
 
     def test_sso_allows_matching_domain(self):
         _make_idp(self.account, slug='idp-sso-ok', domains=['corp.com'])
         form = self._bind('someone@corp.com')
-        self.assertTrue(form.is_valid(), form.errors)
+        assert form.is_valid(), form.errors
 
     def test_sso_without_domain_rows_allows_any_email(self):
         _make_idp(self.account, slug='idp-no-domains')
         form = self._bind('someone@unrestricted.com')
-        self.assertTrue(form.is_valid(), form.errors)
+        assert form.is_valid(), form.errors
 
 
 class _EnterpriseAdminViewTestBase(TestCase):
@@ -211,13 +199,13 @@ class EnterpriseAdminsGetViewTests(_EnterpriseAdminViewTestBase):
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_admin_can_load_page(self):
         response = self.client.get(self.list_url)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         self.assertContains(response, self.admin_user.username)
 
     @flag_disabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_toggle_disabled_returns_404(self):
         response = self.client.get(self.list_url)
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_non_admin_user_gets_404(self):
@@ -228,7 +216,7 @@ class EnterpriseAdminsGetViewTests(_EnterpriseAdminViewTestBase):
         self.addCleanup(outsider.delete, self.domain_name, deleted_by=None)
         self.client.login(username=outsider.username, password='pw')
         response = self.client.get(self.list_url)
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_ops_user_with_accounting_admin_can_load_page(self):
@@ -263,7 +251,7 @@ class EnterpriseAdminsGetViewTests(_EnterpriseAdminViewTestBase):
 
         self.client.login(username=ops_user.username, password='pw')
         response = self.client.get(self.list_url)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         self.assertContains(response, self.admin_user.username)
 
 
@@ -280,7 +268,7 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         )
         self.assertRedirects(response, self.list_url)
         account = self._reload_account()
-        self.assertIn('newadmin@example.com', account.enterprise_admin_emails)
+        assert 'newadmin@example.com' in account.enterprise_admin_emails
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_add_duplicate_email_is_rejected(self):
@@ -290,16 +278,16 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         self.assertRedirects(response, self.list_url)
         account = self._reload_account()
         count = account.enterprise_admin_emails.count(self.admin_user.username)
-        self.assertEqual(count, 1)
+        assert count == 1
         msgs = [str(m) for m in get_messages(response.wsgi_request)]
-        self.assertTrue(any('already' in m for m in msgs))
+        assert any('already' in m for m in msgs)
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_add_invalid_format_is_rejected(self):
         response = self.client.post(self.add_url, {'email': 'not-an-email'})
         self.assertRedirects(response, self.list_url)
         account = self._reload_account()
-        self.assertNotIn('not-an-email', account.enterprise_admin_emails)
+        assert 'not-an-email' not in account.enterprise_admin_emails
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_add_respects_sso_domain_restriction(self):
@@ -309,9 +297,9 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         )
         self.assertRedirects(response, self.list_url)
         account = self._reload_account()
-        self.assertNotIn('x@other.com', account.enterprise_admin_emails)
+        assert 'x@other.com' not in account.enterprise_admin_emails
         msgs = [str(m) for m in get_messages(response.wsgi_request)]
-        self.assertTrue(any('not permitted' in m for m in msgs))
+        assert any('not permitted' in m for m in msgs)
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_add_logs_info(self):
@@ -321,18 +309,16 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
             self.client.post(
                 self.add_url, {'email': 'logger@example.com'},
             )
-        self.assertTrue(
-            any('logger@example.com' in line for line in cap.output),
-        )
+        assert any('logger@example.com' in line for line in cap.output)
 
     @flag_disabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_add_toggle_disabled_returns_404(self):
         response = self.client.post(
             self.add_url, {'email': 'blocked@example.com'},
         )
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
         account = self._reload_account()
-        self.assertNotIn('blocked@example.com', account.enterprise_admin_emails)
+        assert 'blocked@example.com' not in account.enterprise_admin_emails
 
 
 class RemoveEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
@@ -366,12 +352,8 @@ class RemoveEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         )
         self.assertRedirects(response, self.list_url)
         account = self._reload_account()
-        self.assertNotIn(
-            self.second_admin.username, account.enterprise_admin_emails,
-        )
-        self.assertIn(
-            self.admin_user.username, account.enterprise_admin_emails,
-        )
+        assert self.second_admin.username not in account.enterprise_admin_emails
+        assert self.admin_user.username in account.enterprise_admin_emails
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_remove_self_is_blocked(self):
@@ -380,11 +362,9 @@ class RemoveEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         )
         self.assertRedirects(response, self.list_url)
         account = self._reload_account()
-        self.assertIn(
-            self.admin_user.username, account.enterprise_admin_emails,
-        )
+        assert self.admin_user.username in account.enterprise_admin_emails
         msgs = [str(m) for m in get_messages(response.wsgi_request)]
-        self.assertTrue(any('yourself' in m for m in msgs))
+        assert any('yourself' in m for m in msgs)
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_remove_last_admin_is_blocked(self):
@@ -400,11 +380,9 @@ class RemoveEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         )
         self.assertRedirects(response, self.list_url)
         account = self._reload_account()
-        self.assertEqual(
-            account.enterprise_admin_emails, [self.admin_user.username],
-        )
+        assert account.enterprise_admin_emails == [self.admin_user.username]
         msgs = [str(m) for m in get_messages(response.wsgi_request)]
-        self.assertTrue(any('at least one' in m for m in msgs))
+        assert any('at least one' in m for m in msgs)
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_remove_unknown_email_reports_error(self):
@@ -413,9 +391,7 @@ class RemoveEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         )
         self.assertRedirects(response, self.list_url)
         msgs = [str(m) for m in get_messages(response.wsgi_request)]
-        self.assertTrue(
-            any('is not an enterprise administrator' in m for m in msgs),
-        )
+        assert any('is not an enterprise administrator' in m for m in msgs)
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_remove_is_case_insensitive(self):
@@ -425,9 +401,7 @@ class RemoveEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         )
         self.assertRedirects(response, self.list_url)
         account = self._reload_account()
-        self.assertNotIn(
-            self.second_admin.username, account.enterprise_admin_emails,
-        )
+        assert self.second_admin.username not in account.enterprise_admin_emails
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_remove_logs_info(self):
@@ -437,27 +411,22 @@ class RemoveEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
             self.client.post(
                 self.remove_url, {'email': self.second_admin.username},
             )
-        self.assertTrue(
-            any(self.second_admin.username in line for line in cap.output),
-        )
+        assert any(self.second_admin.username in line for line in cap.output)
 
     @flag_disabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_remove_toggle_disabled_returns_404(self):
         response = self.client.post(
             self.remove_url, {'email': self.second_admin.username},
         )
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_remove_missing_email_reports_error(self):
         response = self.client.post(self.remove_url, {})
         self.assertRedirects(response, self.list_url)
         account = self._reload_account()
-        self.assertEqual(
-            sorted(account.enterprise_admin_emails),
-            sorted([self.admin_user.username, self.second_admin.username]),
+        assert sorted(account.enterprise_admin_emails) == sorted(
+            [self.admin_user.username, self.second_admin.username]
         )
         msgs = [str(m) for m in get_messages(response.wsgi_request)]
-        self.assertTrue(
-            any('is not an enterprise administrator' in m for m in msgs),
-        )
+        assert any('is not an enterprise administrator' in m for m in msgs)
