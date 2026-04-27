@@ -22,8 +22,15 @@ const utils = {
                 + " (" + utils._truncateValue(question.hashtagValue || question.value, MAXLEN) + ")";
     },
     _getLabel: function (question, MAXLEN) {
-        return utils._truncateLabel((question.repeat ? '- ' : '')
-                + question.label, question.tag === 'hidden' ? ' (Hidden)' : '', MAXLEN);
+        const suffixes = [
+            question.tag === 'hidden' ? gettext(" (Hidden)") : "",
+            question.locked && question.disabled ? gettext(" (Locked)") : "",
+        ];
+        return utils._truncateLabel(
+            (question.repeat ? '- ' : '') + question.label,
+            suffixes.join(''),
+            MAXLEN,
+        );
     },
     _truncateLabel: function (label, suffix, MAXLEN) {
         suffix = suffix || "";
