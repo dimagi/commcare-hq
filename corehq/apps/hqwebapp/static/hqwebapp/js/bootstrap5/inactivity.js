@@ -144,7 +144,7 @@ $(function () {
                 // Don't show the popup when user came from versions page
                 selectedAppId = urlParams.appId;
             }
-        } catch (error) {
+        } catch {
             // Parsing the app id out of URL hash will fail on the web apps home page, login as, etc.
             // where the hash isn't a JSON object but instead a string like "#apps".
             // In these cases, there's no app to check for a new version.
@@ -232,7 +232,7 @@ $(function () {
                     try {
                         iframeInputValue = iframe.getElementsByTagName('input')[0].value;
                         outerCSRFInput.val(iframeInputValue);
-                    } catch (err) {
+                    } catch {
                         $button.removeClass("btn-default").addClass("btn-outline-danger");
                         error = gettext("There was a problem, please refresh and try again");
                         $button.text(error);
@@ -303,7 +303,7 @@ $(function () {
      * iframe in order to complete a full SSO sign in.
      */
     var checkIfSsoMessageReceivedFromExternalTab = function (event) {
-        if (event.originalEvent.key !== 'ssoInactivityMessage') {
+        if (event.originalEvent?.key !== 'ssoInactivityMessage') {
             // ignore other messages
             return;
         }

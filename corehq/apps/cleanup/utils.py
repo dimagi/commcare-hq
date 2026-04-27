@@ -70,4 +70,4 @@ def migrate_to_deleted_on(db_cls, old_field, should_audit=False):
 
 
 def get_cutoff_date_for_data_deletion():
-    return datetime.utcnow() - timedelta(days=settings.PERMANENT_DELETION_WINDOW)
+    return datetime.utcnow() - timedelta(days=settings.DATA_RETENTION_WINDOW)

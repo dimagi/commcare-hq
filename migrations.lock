@@ -136,6 +136,7 @@ accounting
  0114_custom_icon_badges_priv
  0115_loc_cols_in_user_last_activity_priv
  0116_creditadjustment_payment_type
+ 0117_locked_admin_questions_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -285,6 +286,7 @@ cleanup
  0016_add_deletedsqldoc
  0017_delete_oauth_integrations_models
  0018_delete_ewsghana_models
+ 0019_alter_deletedsqldoc_table
 cloudcare
  0001_initial
  0002_sqlapplicationaccess
@@ -883,6 +885,7 @@ preindex
  0004_initial
  0005_initial
  0006_initial
+ 0007_initial
 products
  0001_initial
 project_limits

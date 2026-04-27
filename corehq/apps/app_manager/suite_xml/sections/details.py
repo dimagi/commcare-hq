@@ -403,19 +403,10 @@ class DetailContributor(SectionContributor):
 
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
 
-        search_label = module.search_config.search_label
         if module.get_app().enable_localized_menu_media:
             action = LocalizedAction(
                 menu_locale_id=(
                     id_strings.case_search_locale(module)
-                ),
-                media_image=search_label.uses_image(build_profile_id=build_profile_id),
-                media_audio=search_label.uses_audio(build_profile_id=build_profile_id),
-                image_locale_id=(
-                    id_strings.case_search_icon_locale(module)
-                ),
-                audio_locale_id=(
-                    id_strings.case_search_audio_locale(module)
                 ),
                 stack=Stack(),
                 for_action_menu=True,
@@ -427,8 +418,6 @@ class DetailContributor(SectionContributor):
                     text=Text(locale_id=(
                         id_strings.case_search_locale(module)
                     )),
-                    media_image=search_label.default_media_image,
-                    media_audio=search_label.default_media_audio
                 ),
                 stack=Stack(),
                 **action_kwargs

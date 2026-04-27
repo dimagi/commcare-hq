@@ -794,6 +794,17 @@ DHIS2_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+EXPORTS_APPS_USE_ELASTICSEARCH = StaticToggle(
+    'exports_apps_use_elasticsearch',
+    'Exports apps use Elasticsearch',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    When enabled, exports page will use Elasticsearch to fetch apps.
+    This toggle is meant to be *only* used by QA domains.
+    """
+)
+
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
@@ -941,8 +952,9 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Simple Case Search',
     TAG_FROZEN,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    help_link='https://dimagi.atlassian.net/wiki/spaces/uss/pages/3675717639/Simple+Case+Search',
+    description="Basic case search functionality",
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 CASE_SEARCH_DEPRECATED = StaticToggle(
@@ -954,11 +966,21 @@ CASE_SEARCH_DEPRECATED = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
+CASE_SEARCH_DEPRECATED_NORMAL_CASE_LIST = StaticToggle(
+    'case_search_deprecated_normal_case_list',
+    'Case Search: Normal case list option Deprecated',
+    TAG_DEPRECATED,
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
+)
+
 CASE_SEARCH_ADVANCED = StaticToggle(
     'case_search_advanced',
     'Advanced Case Search',
     TAG_FROZEN,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    help_link='https://dimagi.atlassian.net/wiki/spaces/uss/pages/3676536837/Advanced+Case+Search',
+    description="Complex, fragile case search configuration for USS projects",
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
@@ -967,9 +989,21 @@ CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
     'case_search_related_lookups',
     'Case Search: Related Lookups',
     TAG_FROZEN,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    help_link='https://dimagi.atlassian.net/wiki/spaces/uss/pages/3676635261/Case+Search+Related+Lookups',
+    description="Allows access to less-performant, complex related lookups in case search. USS only.",
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[CASE_SEARCH_ADVANCED],
+)
+
+CASE_SEARCH_CACHE_KEY = StaticToggle(
+    'case_search_cache_key',
+    'Case Search: Formplayer cache key',
+    TAG_GA_PATH,
+    description="""
+        If set formplayer will use a more specific cache key. This is meant to fix a bug but the
+        perfomance implications are not clear. Hence the FF.""",
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
 USH_CASE_LIST_MULTI_SELECT = StaticToggle(
@@ -1207,15 +1241,6 @@ LOCKED_ADMIN_QUESTIONS = FeatureRelease(
     [NAMESPACE_DOMAIN],
     owner="Evan Joseph-Pinero",
     description="Enables Locked Admin Questions workflows in HQ and the form builder.",
-)
-
-EDIT_LOCKED_QUESTIONS = FeatureRelease(
-    'edit_locked_questions',
-    "Edit Locked Admin Questions",
-    TAG_RELEASE,
-    [NAMESPACE_USER],
-    owner="Evan Joseph-Pinero",
-    description="Allows locking and unlocking questions in forms."
 )
 
 CACHE_AND_INDEX = StaticToggle(
@@ -1466,14 +1491,6 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
-
-
-# EXPORTS_APPS_USE_ELASTICSEARCH = StaticToggle(
-#     'export_apps_use_elasticsearch',
-#     'Use elasticsearch when fetching apps for exports',
-#     TAG_DEPRECATED,
-#     [NAMESPACE_DOMAIN],
-# )
 
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
