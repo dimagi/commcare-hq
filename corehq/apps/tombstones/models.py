@@ -1,7 +1,12 @@
 from django.db import models
 
 
-class Tombstone(models.Model):
+from corehq.sql_db.models import PartitionedModel
+
+
+class Tombstone(PartitionedModel):
+    partition_attr = 'doc_id'
+
     doc_id = models.CharField(max_length=126)
     object_class_path = models.CharField(max_length=255)
     domain = models.CharField(max_length=255)
