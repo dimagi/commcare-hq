@@ -1006,17 +1006,6 @@ CASE_SEARCH_CACHE_KEY = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
-USH_CASE_LIST_MULTI_SELECT = StaticToggle(
-    'ush_case_list_multi_select',
-    'USH: Allow selecting multiple cases from the case list',
-    TAG_FROZEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Allow+selecting+multiple+cases+from+the+case+list',  # noqa: E501
-    description="""
-    Allows user to select multiple cases and load them all into the form.
-    """
-)
-
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
