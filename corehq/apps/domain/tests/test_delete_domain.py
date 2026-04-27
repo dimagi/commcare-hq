@@ -1129,8 +1129,6 @@ class TestDeleteElasticFormsAndCases(TestCase):
         forms = [create_form_for_test(self.domain.name) for i in range(3)]
         form_ids = [f.form_id for f in forms]
         other_form = create_form_for_test(self.other_domain.name)
-        self.addCleanup(XFormInstance.objects.hard_delete_forms, self.domain.name, form_ids)
-        self.addCleanup(XFormInstance.objects.hard_delete_forms, self.other_domain.name, [other_form.form_id])
         form_adapter.bulk_index(forms + [other_form], refresh=True)
 
         mod.delete_all_forms(self.domain.name)
@@ -1145,8 +1143,6 @@ class TestDeleteElasticFormsAndCases(TestCase):
     def test_delete_all_cases_deletes_es_documents(self):
         case1 = create_case(self.domain.name, save=True)
         case2 = create_case(self.other_domain.name, save=True)
-        self.addCleanup(CommCareCase.objects.hard_delete_cases, self.domain.name, [case1.case_id])
-        self.addCleanup(CommCareCase.objects.hard_delete_cases, self.other_domain.name, [case2.case_id])
         case_adapter.bulk_index([case1, case2], refresh=True)
         case_search_adapter.bulk_index([case1, case2], refresh=True)
 
