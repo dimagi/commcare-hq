@@ -1,5 +1,5 @@
-from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.es.case_search import get_case_property_unique_values
