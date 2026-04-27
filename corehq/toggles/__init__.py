@@ -1234,15 +1234,6 @@ LOCKED_ADMIN_QUESTIONS = FeatureRelease(
     description="Enables Locked Admin Questions workflows in HQ and the form builder.",
 )
 
-EDIT_LOCKED_QUESTIONS = FeatureRelease(
-    'edit_locked_questions',
-    "Edit Locked Admin Questions",
-    TAG_RELEASE,
-    [NAMESPACE_USER],
-    owner="Evan Joseph-Pinero",
-    description="Allows locking and unlocking questions in forms."
-)
-
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'REC: Enable the "Cache and Index" format option when choosing sort properties '
