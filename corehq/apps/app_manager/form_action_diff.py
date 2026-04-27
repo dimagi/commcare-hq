@@ -24,7 +24,7 @@ def get_case_mappings(actions):
             prop: [to_json(u) for u in [update] + conflicts.get(prop, [])]
             for prop, update in actions.update_case.update.items()
         })
-        # concurrent delete + change -> conflict with no update
+        # concurrent delete + change -> conflict with no item in update_case.update
         for prop in conflicts.keys() - actions.update_case.update.keys():
             data[prop] = [to_json(q, conflicting_delete=True) for q in conflicts[prop]]
     return data
@@ -179,12 +179,13 @@ def _merge(diff, action):
         conflicted_paths = {q.question_path for q in conflicts.get(prop, [])}
         for ccu in question_map.values():
             if ccu.question_path not in conflicted_paths:
-                # concurrent change + delete -> conflict with no update
+                # concurrent change + delete -> conflict with no item in update_case.update
                 # note order: changed in session A then deleted in session B
                 _add_item(prop, ccu, conflicts)
 
 
 def _drop(prop, path, update, conflicts):
+    """Remove prop->path mapping if it exists"""
     if prop in update and update[prop].question_path == path:
         dropped = update[prop]
         if conflicts.get(prop):
@@ -208,7 +209,7 @@ def _drop(prop, path, update, conflicts):
 def _add_question(prop, question, update, conflicts, is_missing):
     ccu = ConditionalCaseUpdate(question)
     if is_missing:
-        # concurrent delete + change -> conflict with no update
+        # concurrent delete + change -> conflict with no item in update_case.update
         # note order: deleted in session A then changed in session B
         _add_item(prop, ccu, conflicts)
     elif prop not in update or not update[prop].question_path:
@@ -232,6 +233,11 @@ def _convert_update_to_delete_plus_add(diff):
     is no longer supported by the merge algorithm. This can be removed
     when all clients (Vellum and case_config_ui.js) have been updated to
     not use the 'update' key.
+
+    Note: the only things that change in an 'update' operation are
+    question attributes other than 'question_path' (e.g., 'update_mode').
+    Therefore, the mapping key (case property) and/or 'question_path'
+    will not change when an 'update' operation is merged.
     """
     if diff.get('update'):
         diff = diff.copy()
