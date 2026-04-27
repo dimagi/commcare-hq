@@ -633,7 +633,7 @@ def remove_enterprise_admin(request, domain):
     redirect = HttpResponseRedirect(
         reverse('enterprise_admins', args=[domain]),
     )
-    email = (request.POST.get('email') or '').lower()
+    email = request.POST.get('email', '').lower()
     current_user_email = request.couch_user.username.lower()
 
     if email == current_user_email:
