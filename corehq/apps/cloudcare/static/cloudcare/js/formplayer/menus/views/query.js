@@ -529,7 +529,7 @@ var QueryListView = Marionette.CollectionView.extend({
     },
 
     buildChildView(child, ChildViewClass, childViewOptions) {
-        let options = {};
+        let options;
 
         if (child.has("groupName")) {
             const childList = new Backbone.Collection(child.get('displays'));

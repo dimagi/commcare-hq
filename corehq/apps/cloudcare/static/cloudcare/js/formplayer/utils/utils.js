@@ -57,7 +57,7 @@ Utils.currentUrlToObject = function () {
     var url = Backbone.history.getFragment();
     try {
         return Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
-    } catch (e) {
+    } catch {
         // This means that we're on the homepage
         return new Utils.CloudcareUrl({});
     }
