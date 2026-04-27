@@ -52,6 +52,13 @@
 - **pytest conventions**: Use pytest features like Pythonic `assert`
   statements and parametrized tests for repetitive test cases.
 
+- **Class-based vs function-based tests**: Both styles are fine. Pick
+  whichever is more readable and maintainable for the situation —
+  there's no project-wide preference. Class-based tests (e.g.
+  `TestCase`, `SimpleTestCase`) suit shared expensive setup and
+  related test groupings; function-based tests suit standalone cases
+  and pair well with parametrization and explicit fixtures.
+
 - **Explicit fixtures**: Use [pytest-unmagic](https://github.com/dimagi/pytest-unmagic/)
   for explicit test fixtures.
 
