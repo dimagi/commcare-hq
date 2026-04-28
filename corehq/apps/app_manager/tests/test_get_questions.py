@@ -29,7 +29,10 @@ QUESTIONS = [
                      "instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case["
                      "@case_id=instance('commcaresession')/session/data/case_id]/index/parent"
                      "]/parent_property_1"),
-        'constraint': "1 + instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1",
+        'constraint': (
+            "1 + instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]"
+            "/child_property_1"
+        ),
         'comment': None,
         'setvalue': None,
         'is_group': False,
