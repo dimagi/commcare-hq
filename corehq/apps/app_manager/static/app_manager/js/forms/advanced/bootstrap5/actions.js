@@ -603,7 +603,7 @@ var openCaseAction = {
                 return _(self.case_properties()).find(function (p) {
                     return p.key() === 'name' && p.required();
                 }).path();
-            } catch (e) {
+            } catch {
                 return null;
             }
         });
