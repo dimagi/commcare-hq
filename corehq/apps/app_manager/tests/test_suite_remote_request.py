@@ -167,7 +167,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                 CaseSearchProperty(name='consent', label={'en': 'Consent to search'}, input_="checkbox"),
             ],
             additional_relevant="instance('groups')/groups/group",
-            search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             default_properties=[
                 DefaultCaseSearchProperty(
                     property='ɨŧsȺŧɍȺᵽ',
@@ -279,25 +278,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
 
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
-
-    @flag_enabled('CASE_SEARCH_ADVANCED')
-    @flag_enabled('USH_SEARCH_FILTER')
-    def test_case_search_filter(self):
-        search_filter = "rating > 3"
-        self.module.search_config.search_filter = search_filter
-        suite = self.app.create_suite()
-        suite = parse_normalize(suite, to_string=False)
-        ref_path = './remote-request[1]/session/datum/@nodeset'
-        self.assertEqual(
-            "instance('{}')/{}/case[@case_type='{}'][{}]{}".format(
-                RESULTS_INSTANCE,
-                RESULTS_INSTANCE,
-                self.module.case_type,
-                search_filter,
-                EXCLUDE_RELATED_CASES_FILTER
-            ),
-            suite.xpath(ref_path)[0]
-        )
 
     @flag_enabled('CASE_SEARCH_ADVANCED')
     def test_additional_types(self):

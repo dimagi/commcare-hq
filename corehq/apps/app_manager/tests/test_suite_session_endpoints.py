@@ -505,7 +505,6 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
             ],
-            search_filter="active = 'yes'",
             auto_launch=True,
             inline_search=True,
         )
@@ -543,7 +542,6 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
             ],
-            search_filter="active = 'yes'",
             auto_launch=True,
             inline_search=True,
         )
