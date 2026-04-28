@@ -675,7 +675,11 @@ def get_form_questions(request, domain, app_id):
         lang, langs = get_langs(request, app)
     except FormNotFoundException:
         raise Http404()
-    xform_questions = form.get_questions(langs, include_triggers=True)
+    include_locked_status = (
+        domain_has_privilege(domain, "locked_admin_questions")
+        and toggles.LOCKED_ADMIN_QUESTIONS.enabled_for_request(request)
+    )
+    xform_questions = form.get_questions(langs, include_triggers=True, include_locked_status=include_locked_status)
     return json_response(xform_questions)
 
 
@@ -752,7 +756,13 @@ def get_form_view_context(
             )
 
         try:
-            xform_questions = xform.get_questions(langs, include_triggers=True)
+            include_locked_status = (
+                domain_has_privilege(domain, "locked_admin_questions")
+                and toggles.LOCKED_ADMIN_QUESTIONS.enabled_for_request(request)
+            )
+            xform_questions = xform.get_questions(
+                langs, include_triggers=True, include_locked_status=include_locked_status
+            )
             form.validate_form()
         except etree.XMLSyntaxError as e:
             form_errors.append("Syntax Error: %s" % e)

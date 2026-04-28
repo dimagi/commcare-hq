@@ -606,6 +606,10 @@ $(function () {
                     self.updatedDescription(value);
                 },
             });
+            self.isLocked = ko.pureComputed(function () {
+                const question = self.case_transaction.caseConfig.questionMap[self.path()];
+                return !!(question && question.locked);
+            });
             return self;
         },
     };
