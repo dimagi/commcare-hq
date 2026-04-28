@@ -26,7 +26,10 @@ from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS, models
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.translation import override
+# FIXME(gettext_lazy): many of the gettext calls in this file can likely be
+# changed to _ (gettext_lazy), but gettext is necessary for any value being
+# used with jsonobject (which checks isinstance(value, str) at assignment).
+from django.utils.translation import gettext, override
 from django.utils.translation import gettext_lazy as _
 
 from couchdbkit import ResourceNotFound
@@ -2648,14 +2651,14 @@ class Module(ModuleBase, ModuleDetailsMixin):
         detail = Detail(
             columns=[DetailColumn(
                 format='plain',
-                header={(lang or 'en'): _("Name")},
+                header={(lang or 'en'): gettext("Name")},
                 field='name',
                 model='case',
                 hasAutocomplete=True,
             )]
         )
         module = cls(
-            name={(lang or 'en'): name or _("Untitled Menu")},
+            name={(lang or 'en'): name or gettext("Untitled Menu")},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -2675,7 +2678,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def new_form(self, name, lang, attachment=Ellipsis):
         from corehq.apps.app_manager.views.utils import get_blank_form_xml
         lang = lang if lang else "en"
-        name = name if name else _("Untitled Form")
+        name = name if name else gettext("Untitled Form")
         form = Form(
             name={lang: name},
         )
@@ -3142,14 +3145,14 @@ class AdvancedModule(ModuleBase):
         detail = Detail(
             columns=[DetailColumn(
                 format='plain',
-                header={(lang or 'en'): _("Name")},
+                header={(lang or 'en'): gettext("Name")},
                 field='name',
                 model='case',
             )]
         )
 
         module = AdvancedModule(
-            name={(lang or 'en'): name or _("Untitled Menu")},
+            name={(lang or 'en'): name or gettext("Untitled Menu")},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -3161,7 +3164,7 @@ class AdvancedModule(ModuleBase):
                     columns=[
                         DetailColumn(
                             format='plain',
-                            header={(lang or 'en'): _("Product")},
+                            header={(lang or 'en'): gettext("Product")},
                             field='name',
                             model='product',
                         ),
@@ -3176,7 +3179,7 @@ class AdvancedModule(ModuleBase):
     def new_form(self, name, lang, attachment=Ellipsis):
         from corehq.apps.app_manager.views.utils import get_blank_form_xml
         lang = lang if lang else "en"
-        name = name if name else _("Untitled Form")
+        name = name if name else gettext("Untitled Form")
         form = AdvancedForm(
             name={lang: name},
         )
@@ -3191,7 +3194,7 @@ class AdvancedModule(ModuleBase):
 
     def new_shadow_form(self, name, lang):
         lang = lang if lang else "en"
-        name = name if name else _("Untitled Form")
+        name = name if name else gettext("Untitled Form")
         form = ShadowForm(
             name={lang: name},
         )
@@ -3768,7 +3771,7 @@ class ReportModule(ModuleBase):
     @classmethod
     def new_module(cls, name, lang):
         module = ReportModule(
-            name={(lang or 'en'): name or _("Reports")},
+            name={(lang or 'en'): name or gettext("Reports")},
             case_type='',
         )
         module.get_or_create_unique_id()
@@ -3955,13 +3958,13 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         detail = Detail(
             columns=[DetailColumn(
                 format='plain',
-                header={(lang or 'en'): _("Name")},
+                header={(lang or 'en'): gettext("Name")},
                 field='name',
                 model='case',
             )]
         )
         module = ShadowModule(
-            name={(lang or 'en'): name or _("Untitled Menu")},
+            name={(lang or 'en'): name or gettext("Untitled Menu")},
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
@@ -5410,7 +5413,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         if rename:
             for lang, name in copy_source['name'].items():
                 with override(lang):
-                    copy_source['name'][lang] = _('Copy of {name}').format(name=name)
+                    copy_source['name'][lang] = gettext('Copy of {name}').format(name=name)
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         to_app = to_module.get_app()
