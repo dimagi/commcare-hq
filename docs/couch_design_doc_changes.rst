@@ -56,10 +56,12 @@ Reindex Process
 #. Pull up the couchdb dashboard in datadog to keep an eye out for problems such
    as memory usage spikes. The "Active Tasks" graph will show the ``index``
    operation.
-#. Set up a private release and run ``sync_prepare_couchdb_multi`` to create the
-   temporary design document and start reindexing::
+#. Run ``preindex-views`` to set up a private release on the first pillowtop
+   machine and run ``preindex_everything`` with that release.
+   ``preindex_everything`` will create the temporary design document and
+   start reindexing::
 
-     commcare-cloud <env> django-manage --release <release_name> sync_prepare_couchdb_multi
+     commcare-cloud <env> preindex-views --commcare-rev <branch_name>
 
 #. Wait until this command completes - it may hang with no output for hours.
    Keep an eye on datadog.
