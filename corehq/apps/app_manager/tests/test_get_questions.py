@@ -226,6 +226,15 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
 
         self.assertEqual(questions, QUESTIONS)
 
+    def test_get_questions_with_locked_status(self):
+        form = self.app.get_form(self.form_unique_id)
+        questions = form.wrapped_xform().get_questions(['en'], include_locked_status=True)
+
+        locked_question = [q for q in questions if q['value'] == '/data/question2'][0]
+        unlocked_question = [q for q in questions if q['value'] == '/data/question1'][0]
+        self.assertTrue(locked_question['locked'])
+        self.assertFalse(unlocked_question['locked'])
+
     def test_get_questions_with_repeats(self):
         """
         This test ensures that questions that start with the repeat group id

@@ -1262,11 +1262,27 @@ class FormBase(DocumentSchema):
         return self.get_questions([], include_triggers=True, include_groups=True)
 
     @time_method()
-    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations',
-                 'include_fixtures'],
-                timeout=24 * 60 * 60)
-    def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False, include_fixtures=False):
+    @quickcache(
+        [
+            'self.source',
+            'langs',
+            'include_triggers',
+            'include_groups',
+            'include_translations',
+            'include_fixtures',
+            'include_locked_status',
+        ],
+        timeout=24 * 60 * 60,
+    )
+    def get_questions(
+        self,
+        langs,
+        include_triggers=False,
+        include_groups=False,
+        include_translations=False,
+        include_fixtures=False,
+        include_locked_status=False
+    ):
         try:
             return XForm(self.source, domain=self.get_app().domain).get_questions(
                 langs=langs,
@@ -1274,6 +1290,7 @@ class FormBase(DocumentSchema):
                 include_groups=include_groups,
                 include_translations=include_translations,
                 include_fixtures=include_fixtures,
+                include_locked_status=include_locked_status,
             )
         except XFormException as e:
             raise XFormException(_('Error in form "{}": {}').format(trans(self.name), e))
