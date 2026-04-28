@@ -247,14 +247,6 @@
                     <option value="auto_launch">
                       {% trans "Search First" %}
                     </option>
-                    {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
-                      <option
-                        value="see_more"
-                        data-bind="hidden: restrictWorkflowForDataRegistry"
-                      >
-                        {% trans "See More" %}
-                      </option>
-                    {% endif %}
                     <option value="es_only">
                       {% trans "Skip to Default Case Search Results" %}
                     </option>
@@ -415,36 +407,6 @@
                 </p>
               </div>
             </div>
-          {% endif %}
-          {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
-          <div class="form-group">  {# todo B5: css-form-group #}
-            <label
-              for="claim-relevant-condition"
-              class="form-label {% css_label_class %}"
-            >
-              {% trans "Claim Condition" %}
-              <span
-                class="hq-help-template"
-                data-title="{% trans "Claim Condition" %}"
-                data-content="{% trans_html_attr "If this expression evaluates to false, no case will be claimed." %}"
-              >
-              </span>
-            </label>
-            <div class="{% css_field_class %}">
-              <textarea
-                data-bind="
-                          value: additional_relevant,
-                          xpathValidator: {
-                            text: additional_relevant,
-                            allowCaseHashtags: true,
-                            errorHtml: document.getElementById('searchFilterXpathErrorHtml').innerHTML,
-                          }"
-                class="form-control vertical-resize"
-                id="claim-relevant-condition"
-                spellcheck="false"
-              ></textarea>
-            </div>
-          </div>
           {% endif %}
           <div class="form-group">  {# todo B5: css-form-group #}
             <label

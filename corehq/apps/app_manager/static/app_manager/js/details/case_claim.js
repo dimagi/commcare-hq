@@ -242,14 +242,12 @@ var searchConfigModel = function (options, lang, searchFilterObservable, saveBut
                     return "es_only";
                 }
                 return "auto_launch";
-            } else if (self.default_search()) {
-                return "see_more";
             }
             return "classic";
         },
         write: function (value) {
             self.auto_launch(_.contains(["es_only", "auto_launch"], value));
-            self.default_search(_.contains(["es_only", "see_more"], value));
+            self.default_search(value === "es_only");
         },
     });
 
