@@ -376,46 +376,6 @@
               ></textarea>
             </div>
           </div>
-          {% if request|toggle_enabled:'USH_SEARCH_FILTER' %}
-            <div class="form-group">
-              <label
-                for="search-filter"
-                class="control-label {% css_label_class %}"
-              >
-                {% trans "Search Filter" %}
-                <span
-                  class="hq-help-template"
-                  data-title="{% trans "Search Filter" %}"
-                  data-content="{% trans_html_attr "An XPath expression to filter the search results." %}"
-                >
-                </span>
-              </label>
-              <div class="{% css_field_class %}">
-                <textarea
-                  data-bind="
-                          value: search_filter,
-                          xpathValidator: {
-                            text: search_filter,
-                            allowCaseHashtags: true,
-                            errorHtml: document.getElementById('searchFilterXpathErrorHtml').innerHTML,
-                          }"
-                  class="form-control vertical-resize"
-                  id="search-filter"
-                  spellcheck="false"
-                ></textarea>
-                <p class="help-block">
-                  <button
-                    class="pull-right btn-xs btn btn-default"
-                    data-bind="visible: setSearchFilterVisible, enable: setSearchFilterEnabled, click: setSearchFilter"
-                  >
-                    <i class="fa-solid fa-reply"></i>
-                    {% trans "Copy case list filter" %}
-                  </button>
-                  {% trans "Example: age > 5" %}
-                </p>
-              </div>
-            </div>
-          {% endif %}
           {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
           <div class="form-group">
             <label
