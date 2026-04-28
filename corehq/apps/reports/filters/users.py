@@ -1,6 +1,6 @@
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext_lazy, gettext_noop
+from django.utils.translation import gettext_noop
 from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
@@ -35,15 +35,15 @@ from ..util import DatatablesServerSideParams
 
 class UserOrGroupFilter(BaseSingleOptionFilter):
     slug = "view_by"
-    label = gettext_lazy("View by Users or Groups")
-    default_text = gettext_lazy("Users")
-    options = [('groups', gettext_lazy('Groups'))]
+    label = _("View by Users or Groups")
+    default_text = _("Users")
+    options = [('groups', _('Groups'))]
 
 
 class UserTypeFilter(BaseReportFilter):
     # note, don't use this as a guideline for anything.
     slug = "ufilter"
-    label = gettext_lazy("User Type")
+    label = _("User Type")
     template = "reports/filters/bootstrap3/filter_users.html"
 
     @property
@@ -61,8 +61,8 @@ class UserTypeFilter(BaseReportFilter):
 
 class SelectMobileWorkerFilter(BaseSingleOptionFilter):
     slug = 'individual'
-    label = gettext_lazy("Select Mobile Worker")
-    default_text = gettext_lazy("All Mobile Workers")
+    label = _("Select Mobile Worker")
+    default_text = _("All Mobile Workers")
 
     @property
     def filter_context(self):
@@ -204,7 +204,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_types = emwf.selected_user_types(mobile_user_and_group_slugs)
         group_ids = emwf.selected_group_ids(mobile_user_and_group_slugs)
     """
-    location_search_help = mark_safe(gettext_lazy(  # nosec: no user input
+    location_search_help = mark_safe(_(  # nosec: no user input
         'When searching by location, put your location name in quotes to show only exact matches. '
         'To more easily find a location, you may specify multiple levels by separating with a "/". '
         'For example, "Massachusetts/Suffolk/Boston". '
@@ -214,12 +214,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     ))
 
     slug = "emw"
-    label = gettext_lazy("User(s)")
+    label = _("User(s)")
     default_options = None
-    placeholder = gettext_lazy("Add users and groups to filter this report.")
+    placeholder = _("Add users and groups to filter this report.")
     is_cacheable = False
     options_url = 'emwf_options_all_users'
-    filter_help_inline = mark_safe(gettext_lazy(  # nosec: no user input
+    filter_help_inline = mark_safe(_(  # nosec: no user input
         '<i class="fa fa-info-circle"></i> See '
         '<a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947350/Report+and+Export+Filters"'  # noqa: E501
         'target="_blank"> Filter Definitions</a>.'))
@@ -460,7 +460,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
 
 class SubmittedByExpandedMobileWorkerFilter(ExpandedMobileWorkerFilter):
-    label = gettext_lazy("Submitted By")
+    label = _("Submitted By")
 
 
 class EnterpriseUsersUtils(EmwfUtils):
@@ -524,7 +524,7 @@ class AffectedUserFilter(EnterpriseUserFilter):
 
 class ChangedByUserFilter(EnterpriseUserFilter):
     slug = "changed_by_user"
-    label = gettext_lazy("Modified by User(s)")
+    label = _("Modified by User(s)")
 
     def get_default_selections(self):
         return [self.utils.user_type_tuple(HQUserType.WEB),

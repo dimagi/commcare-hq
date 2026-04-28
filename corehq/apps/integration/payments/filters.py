@@ -1,4 +1,3 @@
-from django.utils.translation import gettext_lazy
 from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
@@ -81,4 +80,4 @@ class FunderFilter(BaseCasePropertyFilter):
 
 class PhoneNumberFilter(BaseSimpleFilter):
     slug = 'phone_number'
-    label = gettext_lazy('Phone number')
+    label = _('Phone number')
