@@ -31,7 +31,6 @@ var Router = AppRouter.extend(params);
 var API = {
     listApps: function () {
         FormplayerFrontend.regions.getRegion('breadcrumb').empty();
-        utils.setStickyQueryInputs({});
         appsController.listApps();
     },
     singleApp: function (appId) {

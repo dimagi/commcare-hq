@@ -276,7 +276,6 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 'inline_search': module.search_config.inline_search,
                 'instance_name': module.search_config.instance_name or "",
                 'include_all_related_cases': module.search_config.include_all_related_cases,
-                'dynamic_search': app.split_screen_dynamic_search,
                 'search_on_clear': module.search_config.search_on_clear,
             },
         },
@@ -1368,7 +1367,6 @@ def _gather_and_update_search_properties(params, app, module, lang):
             inline_search=search_properties.get('inline_search', False),
             instance_name=instance_name,
             include_all_related_cases=search_properties.get('include_all_related_cases', False),
-            dynamic_search=app.split_screen_dynamic_search and not module.is_auto_select(),
             search_on_clear=search_properties.get('search_on_clear', False),
         )
 

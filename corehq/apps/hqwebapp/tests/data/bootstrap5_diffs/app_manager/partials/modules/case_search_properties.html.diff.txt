@@ -479,7 +479,7 @@
 @@ -649,18 +649,18 @@
              </div>
            {% endif %}
-           {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' and not app.split_screen_dynamic_search %}
+           {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
 -            <div class="form-group">
 -              <label class="control-label {% css_label_class %}">
 +            <div class="form-group">  {# todo B5: css-form-group #}
