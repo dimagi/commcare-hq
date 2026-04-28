@@ -606,7 +606,8 @@ class SessionEndpointTests(SimpleTestCase, TestXmlMixin):
             """
             <partial>
                 <remote-request>
-                    <post relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0"
+                    <post relevant="count(instance('casedb')/casedb/case"""
+            """[@case_id=instance('commcaresession')/session/data/case_id]) = 0"
                         url="http://localhost:8000/a/test-domain/phone/claim-case/">
                         <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
                     </post>
