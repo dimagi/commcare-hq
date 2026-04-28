@@ -225,7 +225,7 @@
    </div>
    <div class="panel-case-actions-actions">
      <a href="#" role="button" class="case-action-move btn btn-purple grip" data-bind="visible: moveable()">
-@@ -203,25 +203,25 @@
+@@ -212,25 +212,25 @@
      </button>
    </div>
    <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
@@ -261,7 +261,7 @@
                                options: caseConfig.caseTypes,
                                value: case_type,
                                optionsCaption: 'Choose a Case Type...'
-@@ -229,10 +229,10 @@
+@@ -238,10 +238,10 @@
              </div>
              <!-- ko if: actionType == 'load'-->
              &nbsp;{% trans "from" %}
@@ -274,7 +274,7 @@
                                optstrValue: 'id',
                                optstrText: 'module_name',
                                value: details_module">
-@@ -268,7 +268,7 @@
+@@ -277,7 +277,7 @@
  </script>
  
  <script type="text/html" id="auto-select:raw">
@@ -283,7 +283,7 @@
      <strong>{% trans "Raw Config" %}:</strong>&nbsp;&nbsp;
      {% trans "XPath function" %}
      <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
-@@ -277,7 +277,7 @@
+@@ -286,7 +286,7 @@
  </script>
  
  <script type="text/html" id="auto-select:user">
@@ -292,7 +292,7 @@
      <strong>{% trans "User Data Config" %}:</strong>&nbsp;&nbsp;
      {% trans "User data key" %}
      <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
-@@ -286,10 +286,10 @@
+@@ -295,10 +295,10 @@
  </script>
  
  <script type="text/html" id="auto-select:case">
@@ -305,7 +305,7 @@
              value: value_source">
      </select>&nbsp;&nbsp;
      {% trans "Index name" %}
-@@ -299,7 +299,7 @@
+@@ -308,7 +308,7 @@
  </script>
  
  <script type="text/html" id="auto-select:fixture">
@@ -314,7 +314,7 @@
      <strong>{% trans "Lookup Table Config" %}:</strong>&nbsp;&nbsp;
      {% trans "Lookup Table Tag" %}
      <input type="text" class="form-control" data-bind="value: value_source" />&nbsp;&nbsp;
-@@ -312,9 +312,9 @@
+@@ -321,9 +321,9 @@
  <script type="text/html" id="auto-select:usercase">
  </script>
  <script type="text/html" id="case-config:case-action-auto-select">
@@ -326,7 +326,7 @@
    </div>
    <div class="panel-case-actions-actions">
      <a href="#" role="button" class="case-action-move btn btn-purple grip">
-@@ -326,25 +326,25 @@
+@@ -344,25 +344,25 @@
      </button>
    </div>
    <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
@@ -361,7 +361,7 @@
                                  optstr: $parent.auto_select_modes,
                                  value: mode,
                                  optionsCaption: 'Choose a mode...'
-@@ -352,7 +352,7 @@
+@@ -370,7 +370,7 @@
              </div>
              <strong>)</strong>
              <br />
@@ -370,7 +370,7 @@
                <!-- ko template: {name: 'auto-select:' + mode()} --><!-- /ko -->
              </div>
              <!-- /ko -->
-@@ -373,9 +373,9 @@
+@@ -391,9 +391,9 @@
  </script>
  
  <script type="text/html" id="case-config:case-action-load-case-from-fixture">
@@ -382,7 +382,7 @@
    </div>
    <div class="panel-case-actions-actions">
      <a href="#" role="button" class="case-action-move btn btn-purple grip" data-bind="visible: moveable()">
-@@ -387,24 +387,24 @@
+@@ -414,24 +414,24 @@
      </button>
    </div>
    <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
@@ -416,7 +416,7 @@
                                  options: caseConfig.caseTypes,
                                  value: case_type,
                                  optionsCaption: 'Choose a Case Type...'
-@@ -413,10 +413,10 @@
+@@ -440,10 +440,10 @@
  
              <!-- ko if: actionType == 'load'-->
              &nbsp;{% trans "from" %}
@@ -429,7 +429,7 @@
                                  optstrValue: 'id',
                                  optstrText: 'module_name',
                                  value: details_module">
-@@ -429,54 +429,54 @@
+@@ -456,54 +456,54 @@
            <div class="help-block" data-bind="visible: !case_type">
              {% trans "Please select a case type." %}
            </div>
@@ -500,7 +500,7 @@
                  <label>{% trans "Arbitrary Datum id" %}&nbsp;</label>
                  <input type="text" class="form-control" data-bind="value: load_case_from_fixture.arbitrary_datum_id" />
                </div>
-@@ -495,7 +495,7 @@
+@@ -522,7 +522,7 @@
    <div data-bind="saveButton: saveButton"></div>
    <div data-bind="with: caseConfigViewModel">
      <div class="btn-group" data-bind="visible: actionOptions().length">
@@ -509,7 +509,7 @@
          <i class="fa fa-plus"></i>
          <span>{% trans "Add Action" %}</span> <span class="caret"></span>
        </button>
-@@ -510,76 +510,76 @@
+@@ -537,76 +537,76 @@
      </div>
      <div data-bind="visible: !actionOptions().length">
        <i class="fa fa-plus icon-muted"></i>
@@ -614,7 +614,7 @@
                    <input type="text" class="form-control textbox" data-bind="textInput: datum_function" />
                  </td>
                </tr>
-@@ -587,7 +587,7 @@
+@@ -614,7 +614,7 @@
            </table>
            <br><br>
          </div>
