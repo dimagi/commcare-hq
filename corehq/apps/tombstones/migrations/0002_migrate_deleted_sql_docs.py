@@ -3,7 +3,6 @@ from collections import defaultdict
 from django.conf import settings
 from django.db import migrations
 
-from corehq.apps.cleanup.models import DeletedSQLDoc
 from corehq.apps.tombstones.models import Tombstone
 from corehq.sql_db.config import plproxy_config
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
@@ -20,6 +19,7 @@ def copy_deleted_sql_docs_to_tombstones(apps, schema_editor):
         if schema_editor.connection.alias != plproxy_config.proxy_db:
             return
 
+    DeletedSQLDoc = apps.get_model('cleanup', 'DeletedSQLDoc')
     queryset = DeletedSQLDoc.objects.all().order_by('id')
 
     by_shard = defaultdict(list)
