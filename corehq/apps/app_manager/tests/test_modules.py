@@ -314,7 +314,6 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
             auto_launch=True,
             default_search=True,
             additional_relevant="instance('groups')/groups/group",
-            search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             search_button_display_condition="false()",
             blacklisted_owner_ids_expression="instance('commcaresession')/session/context/userid",
             default_properties=[

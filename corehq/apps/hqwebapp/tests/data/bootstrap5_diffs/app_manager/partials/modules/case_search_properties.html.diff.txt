@@ -313,28 +313,6 @@
 @@ -377,10 +377,10 @@
              </div>
            </div>
-           {% if request|toggle_enabled:'USH_SEARCH_FILTER' %}
--            <div class="form-group">
-+            <div class="form-group">  {# todo B5: css-form-group #}
-               <label
-                 for="search-filter"
--                class="control-label {% css_label_class %}"
-+                class="form-label {% css_label_class %}"
-               >
-                 {% trans "Search Filter" %}
-                 <span
-@@ -405,7 +405,7 @@
-                 ></textarea>
-                 <p class="help-block">
-                   <button
--                    class="pull-right btn-xs btn btn-default"
-+                    class="float-end btn-sm btn btn-outline-primary"
-                     data-bind="visible: setSearchFilterVisible, enable: setSearchFilterEnabled, click: setSearchFilter"
-                   >
-                     <i class="fa-solid fa-reply"></i>
-@@ -417,10 +417,10 @@
-             </div>
-           {% endif %}
            {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
 -          <div class="form-group">
 +          <div class="form-group">  {# todo B5: css-form-group #}
@@ -345,7 +323,7 @@
              >
                {% trans "Claim Condition" %}
                <span
-@@ -446,10 +446,10 @@
+@@ -406,10 +406,10 @@
              </div>
            </div>
            {% endif %}
@@ -358,7 +336,7 @@
              >
                {% trans "Don't search cases owned by the following ids" %}
                <span
-@@ -482,10 +482,10 @@
+@@ -442,10 +442,10 @@
              </div>
            </div>
            {% if data_registry_enabled %}
@@ -371,7 +349,7 @@
                >
                  {% trans "Data Registry" %}
                  <span
-@@ -496,7 +496,7 @@
+@@ -456,7 +456,7 @@
                  </span>
                </label>
                <div class="{% css_field_class %}">
@@ -380,7 +358,7 @@
                    class="form-control"
                    id="data-registry"
                    data-bind="value: data_registry"
-@@ -510,15 +510,15 @@
+@@ -470,15 +470,15 @@
                  </select>
                </div>
              </div>
@@ -399,7 +377,7 @@
                    class="form-control"
                    data-bind="value: data_registry_workflow"
                  >
-@@ -529,12 +529,12 @@
+@@ -489,12 +489,12 @@
                </div>
              </div>
              <div
@@ -414,7 +392,7 @@
                >
                  {% trans "Load Additional Data Registry Cases" %}
                  <span
-@@ -556,8 +556,8 @@
+@@ -516,8 +516,8 @@
                      data-bind="visible: additional_registry_cases().length > 0"
                    >
                      <tr>
@@ -425,7 +403,7 @@
                      </tr>
                    </thead>
                    <tbody
-@@ -579,7 +579,7 @@
+@@ -539,7 +539,7 @@
                        </td>
                        <td>
                          <i
@@ -434,7 +412,7 @@
                            class="fa fa-remove"
                            data-bind="click: $parent.removeRegistryQuery"
                          ></i>
-@@ -589,7 +589,7 @@
+@@ -549,7 +549,7 @@
                  </table>
                  <button
                    type="button"
@@ -443,7 +421,7 @@
                    data-bind="click: addRegistryQuery"
                  >
                    <i class="fa fa-plus"></i>
-@@ -599,10 +599,10 @@
+@@ -559,10 +559,10 @@
              </div>
            {% endif %}
            {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
@@ -456,7 +434,7 @@
                >
                  {% trans "Case property with additional case id to add to results" %}
                  <span
-@@ -632,15 +632,15 @@
+@@ -592,15 +592,15 @@
              </div>
            {% endif %}
            {% if request|toggle_enabled:'CASE_SEARCH_RELATED_LOOKUPS' %}
@@ -476,7 +454,7 @@
                        data-bind="checked: include_all_related_cases"
                      />
                    </label>
-@@ -649,18 +649,18 @@
+@@ -609,18 +609,18 @@
              </div>
            {% endif %}
            {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}

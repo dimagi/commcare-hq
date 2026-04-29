@@ -204,12 +204,12 @@ var additionalRegistryCaseModel = function (xpath, saveButton) {
 
 var searchConfigKeys = [
     'auto_launch', 'blacklisted_owner_ids_expression', 'default_search',
-    'title_label', 'description', 'search_button_display_condition', 'search_filter',
+    'title_label', 'description', 'search_button_display_condition',
     'additional_relevant', 'data_registry', 'data_registry_workflow', 'additional_registry_cases',
     'custom_related_case_property', 'inline_search', 'instance_name', 'include_all_related_cases',
     'search_on_clear',
 ];
-var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
+var searchConfigModel = function (options, lang, saveButton) {
     assertProperties.assertRequired(options, searchConfigKeys);
 
     options.title_label = options.title_label[lang] || "";
@@ -266,17 +266,6 @@ var searchConfigModel = function (options, lang, searchFilterObservable, saveBut
     });
 
 
-    // Allow search filter to be copied from another part of the page
-    self.setSearchFilterVisible = ko.computed(function () {
-        return searchFilterObservable && searchFilterObservable();
-    });
-    self.setSearchFilterEnabled = ko.computed(function () {
-        return self.setSearchFilterVisible() && searchFilterObservable() !== self.search_filter();
-    });
-    self.setSearchFilter = function () {
-        self.search_filter(searchFilterObservable());
-    };
-
     subscribeToSave(self, searchConfigKeys, saveButton);
     // media image/audio buttons
     $(".case-search-multimedia-input button").on("click", function () {
@@ -324,10 +313,10 @@ var _getAppearance = function (searchProperty) {
     return appearance;
 };
 
-var searchViewModel = function (searchProperties, defaultProperties, customSortProperties, searchConfigOptions, lang, saveButton, searchFilterObservable) {
+var searchViewModel = function (searchProperties, defaultProperties, customSortProperties, searchConfigOptions, lang, saveButton) {
     var self = {};
 
-    self.searchConfig = searchConfigModel(searchConfigOptions, lang, searchFilterObservable, saveButton);
+    self.searchConfig = searchConfigModel(searchConfigOptions, lang, saveButton);
     self.default_properties = ko.observableArray();
     self.custom_sort_properties = ko.observableArray();
 

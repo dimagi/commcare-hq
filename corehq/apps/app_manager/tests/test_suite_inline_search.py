@@ -58,7 +58,6 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
             ],
-            search_filter="active = 'yes'",
             auto_launch=True,
             inline_search=True,
         )
@@ -81,7 +80,6 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.module = self.app.modules[0]
         self.form = self.module.forms[0]
 
-    @flag_enabled('USH_SEARCH_FILTER')
     def test_inline_search(self):
         suite = self.app.create_suite()
 
@@ -118,7 +116,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                     </display>
                   </prompt>
                 </query>
-                <datum id="case_id" nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+                <datum id="case_id" nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
                     value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             </session>
           </entry>
@@ -130,7 +128,6 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_short']")
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_long']")
 
-    @flag_enabled('USH_SEARCH_FILTER')
     def test_inline_search_case_list_item(self):
         self.module.case_list.show = True
         suite = self.app.create_suite()
@@ -161,14 +158,13 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                     </display>
                   </prompt>
                 </query>
-                <datum id="case_id" nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+                <datum id="case_id" nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
                     value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             </session>
           </entry>
         </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[2]")
 
-    @flag_enabled('USH_SEARCH_FILTER')
     def test_inline_search_multi_select(self):
         self.module.case_details.short.multi_select = True
         self.module.case_details.short.columns.append(
@@ -216,7 +212,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                     </display>
                   </prompt>
                 </query>
-                <instance-datum id="selected_cases" nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+                <instance-datum id="selected_cases" nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
                     value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long" max-select-value="100"/>
             </session>
           </entry>
@@ -355,7 +351,6 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             f"./entry[1]/instance[@id='{instance_id}']",
         )
 
-    @flag_enabled('USH_SEARCH_FILTER')
     def test_inline_search_with_other_relationship_parent_select_(self):
         """Inline search module with 'parent select' relationship is 'other' (None)"""
         module = self.app.add_module(Module.new_module("Followup2", None))
@@ -406,7 +401,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                 </prompt>
               </query>
               <datum id="case_id"
-                nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
+                nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
                 value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             </session>
           </entry>
@@ -414,7 +409,6 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
 
         self.assertXmlPartialEqual(expected_entry, suite, "./entry[1]")
 
-    @flag_enabled('USH_SEARCH_FILTER')
     def test_inline_search_with_parent_relationship_parent_select(self):
         """Inline search module with 'parent select' relationship is 'parent'"""
         module = self.app.add_module(Module.new_module("Followup2", None))
@@ -468,7 +462,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                 </prompt>
               </query>
               <datum id="case_id"
-                nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())][index/parent=instance('commcaresession')/session/data/parent_id]"
+                nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())][index/parent=instance('commcaresession')/session/data/parent_id]"
                 value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             </session>
           </entry>
