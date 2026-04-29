@@ -1260,6 +1260,7 @@ toggles
  0006_alter_toggleeditpermission_tag_slug
 tombstones
  0001_create_tombstone_model
+ 0002_migrate_deleted_sql_docs
 translations
  0001_initial
  0002_transifexblacklist
