@@ -68,7 +68,7 @@
 +  <select class="form-select"
            data-bind="questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
                       value: path,
-                      disable: !$parent.hasPrivilege,
+                      disable: !$parent.hasPrivilege || isLocked(),
 @@ -112,13 +112,13 @@
  
  <script type="text/html"
@@ -86,7 +86,7 @@
      <table class="table table-savecaseprops"
             data-bind="visible: case_preload().length">
        <thead>
-@@ -135,16 +135,16 @@
+@@ -135,19 +135,19 @@
        </thead>
  
        <tbody data-bind="foreach: case_preload">
@@ -97,9 +97,12 @@
 +                       'has-error': validateProperty || validateQuestion,  {# todo B5: css-has-error #}
                       }">
 -        <td class="col-sm-1 text-center">
--          <button class="btn btn-danger" data-bind="click: $parent.removePreload">
 +        <td class="col-md-1 text-center">
-+          <button class="btn btn-outline-danger" data-bind="click: $parent.removePreload">
+           <button
+-            class="btn btn-danger"
++            class="btn btn-outline-danger"
+             data-bind="click: $parent.removePreload, visible: !isLocked()"
+           >
              <i class="fa fa-remove"></i>
            </button>
          </td>
@@ -108,7 +111,7 @@
            <div class="full-width-select2"
                 data-bind="template: {
                              name: 'case-config:case-properties:property',
-@@ -158,10 +158,10 @@
+@@ -161,10 +161,10 @@
               data-bind="html: validateProperty,
                          visible: validateProperty"></p>
          </td>
@@ -121,7 +124,7 @@
            <div class="full-width-select2"
                 data-bind="template: 'case-config:case-properties:question'"></div>
            <p class="help-block"
-@@ -176,7 +176,7 @@
+@@ -179,7 +179,7 @@
        {% trans "No properties will be loaded" %}
      </div>
      <div class="add-property">
@@ -130,7 +133,7 @@
          <i class="fa fa-plus"></i>
          {% trans "Add Property" %}
        </button>
-@@ -186,11 +186,11 @@
+@@ -189,11 +189,11 @@
  
  <script type="text/html"
          id="case-config:case-transaction:case-properties">
@@ -146,7 +149,7 @@
               data-bind="visible: case_properties().length">
            <search-box data-apply-bindings="false"
                        params="value: case_property_query,
-@@ -208,7 +208,7 @@
+@@ -211,7 +211,7 @@
        <!-- /ko -->
      </h4>
    </div>
@@ -155,7 +158,7 @@
      <div class="alert alert-warning" data-bind="visible: hasDeprecatedProperties" >
        <p>
          <i class="fa fa-warning"></i>
-@@ -225,16 +225,16 @@
+@@ -228,16 +228,16 @@
             data-bind="visible: case_properties().length">
        <thead>
        <tr>
@@ -177,7 +180,7 @@
                    data-bind="makeHqHelp: {
                      description: '{% blocktrans trimmed %}
                          User Case Properties allow you to store data about a web or mobile user. Saving a user
-@@ -246,7 +246,7 @@
+@@ -249,7 +249,7 @@
            <!-- ko if: !$data.type || $data.type() == "case-property" -->
              {% trans "Case Property" %}
              <span
@@ -186,7 +189,7 @@
                    data-bind="makeHqHelp: {
                      description: '{% blocktrans trimmed %}
                          Saving a question as a case property makes it accessible and
-@@ -259,9 +259,9 @@
+@@ -262,9 +262,9 @@
          {% comment %} The odd style additions in this block were necessary to put the question mark
          in line with the text when the text is both wrapped and unwrapped. {% endcomment %}
          <!-- ko if: saveOnlyEditedFormFieldsEnabled -->
@@ -199,7 +202,7 @@
                description: '{% trans "Only save the answer if form submission will change the property from its previous value." %}',
                placement: 'left'
              }"></span>
-@@ -271,34 +271,35 @@
+@@ -274,16 +274,16 @@
        </thead>
  
        <tbody data-bind="foreach: visible_case_properties">
@@ -214,10 +217,15 @@
 -        <td class="col-sm-1 text-center"
 +        <td class="col-md-1 text-center"
              data-bind="if: $parent.hasPrivilege">
--          <button class="btn btn-danger" data-bind="click: $parent.removeProperty, visible: !required()">
-+          <button class="btn btn-outline-danger" data-bind="click: $parent.removeProperty, visible: !required()">
-             <i class="fa fa-remove"></i>
-           </button>
+           <!-- ko ifnot: isLocked() -->
+-            <button class="btn btn-danger" data-bind="click: $parent.removeProperty, visible: !required()">
++            <button class="btn btn-outline-danger" data-bind="click: $parent.removeProperty, visible: !required()">
+               <i class="fa fa-remove"></i>
+             </button>
+           <!-- /ko -->
+@@ -295,22 +295,23 @@
+             </i>
+           <!-- /ko -->
          </td>
 -        <td data-bind="class: $parent.saveOnlyEditedFormFieldsEnabled ? 'col-sm-5' : 'col-sm-6'">
 +        <td data-bind="class: $parent.saveOnlyEditedFormFieldsEnabled ? 'col-md-5' : 'col-md-6'">
@@ -243,7 +251,7 @@
            <div class="full-width-select2"
                 data-bind="template: {
                              name: 'case-config:case-properties:property',
-@@ -341,8 +342,8 @@
+@@ -353,8 +354,8 @@
              <p data-bind="text: $data.description"></p>
            <!-- /ko -->
          </td>
@@ -253,8 +261,8 @@
 +          <input type="checkbox"  {# todo B5: css-checkbox #}
                   data-bind="click: $parent.switchSaveOnlyIfEdited,
                              checked: $data.save_only_if_edited,
-                             disabled: $parent.hasPrivilege"
-@@ -352,7 +353,7 @@
+                             disable: !$parent.hasPrivilege || isLocked()"
+@@ -364,7 +365,7 @@
        </tbody>
      </table>
      <div data-bind="if: searchAndFilter">

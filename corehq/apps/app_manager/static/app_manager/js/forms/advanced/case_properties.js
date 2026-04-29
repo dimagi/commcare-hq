@@ -39,6 +39,10 @@ var casePropertyBase = {
             }
             return false;
         });
+        self.isLocked = ko.pureComputed(function () {
+            const question = self.action.caseConfig.questionMap[self.path()];
+            return !!(question && question.locked);
+        });
         return self;
     },
 };

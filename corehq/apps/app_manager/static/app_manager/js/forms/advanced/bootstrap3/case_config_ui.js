@@ -40,7 +40,12 @@ $(function () {
         };
 
         self.home = params.home;
-        self.questions = ko.observable(params.questions);
+        self.questions = ko.observable(
+            _.map(params.questions, question => {
+                question.disabled = question.locked;
+                return question;
+            }),
+        );
         self.save_url = params.save_url;
         self.caseType = params.caseType;
         self.module_id = params.module_id;
