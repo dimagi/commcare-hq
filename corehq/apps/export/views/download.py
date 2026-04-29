@@ -353,6 +353,7 @@ def prepare_custom_export(request, domain):
         es_filters=export_es_filters,
         owner_id=request.couch_user.get_id,
         filename=filename,
+        filter_summary=filter_form_data or {},
     )
 
     return json_response({

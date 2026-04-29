@@ -43,13 +43,8 @@ class TestSqlDataTypes(TestCase):
         super().setUpClass()
         cls.domain = SQL_DOMAIN
         cls.domain_obj = create_sql_domain(SQL_DOMAIN)
+        cls.addClassCleanup(cls.domain_obj.delete)
         cls.set_up_form()
-
-    @classmethod
-    def tearDownClass(cls):
-        XFormInstance.objects.hard_delete_forms(SQL_DOMAIN, [cls.form_id])
-        cls.domain_obj.delete()
-        super().tearDownClass()
 
     @classmethod
     def set_up_form(cls):

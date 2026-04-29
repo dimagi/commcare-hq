@@ -311,36 +311,7 @@
               </div>
             </div>
           {% endif %}
-          {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
-            <div class="form-group" data-bind="hidden: inlineSearchActive">
-              <label
-                for="search_label"
-                class="{% css_label_class %} control-label"
-              >
-                {% trans "Label for Searching" %}
-                <span
-                  class="hq-help-template"
-                  data-title="{% trans "Label for Searching" %}"
-                  data-content="{% trans_html_attr "This text is for the button to enter case search. It is also the header on the search results screen." %}"
-                >
-                </span>
-              </label>
-              <div class="{% css_field_class %}">
-                {% input_trans module.search_config.search_label.label langs input_name='search_label' input_id='search_label' data_bind="value: search_label" %}
-              </div>
-            </div>
-          {% endif %}
           {% if request|toggle_enabled:'SYNC_SEARCH_CASE_CLAIM' %}
-            <div
-              class="case-search-multimedia-input"
-              data-bind="hidden: inlineSearchActive"
-            >
-              <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
-              <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
-              <!-- ko stopBinding: true -->
-              {% include "app_manager/partials/bootstrap3/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
-              <!-- /ko -->
-            </div>
             <div class="form-group">
               <label
                 for="search_screen_title"
@@ -405,46 +376,6 @@
               ></textarea>
             </div>
           </div>
-          {% if request|toggle_enabled:'USH_SEARCH_FILTER' %}
-            <div class="form-group">
-              <label
-                for="search-filter"
-                class="control-label {% css_label_class %}"
-              >
-                {% trans "Search Filter" %}
-                <span
-                  class="hq-help-template"
-                  data-title="{% trans "Search Filter" %}"
-                  data-content="{% trans_html_attr "An XPath expression to filter the search results." %}"
-                >
-                </span>
-              </label>
-              <div class="{% css_field_class %}">
-                <textarea
-                  data-bind="
-                          value: search_filter,
-                          xpathValidator: {
-                            text: search_filter,
-                            allowCaseHashtags: true,
-                            errorHtml: document.getElementById('searchFilterXpathErrorHtml').innerHTML,
-                          }"
-                  class="form-control vertical-resize"
-                  id="search-filter"
-                  spellcheck="false"
-                ></textarea>
-                <p class="help-block">
-                  <button
-                    class="pull-right btn-xs btn btn-default"
-                    data-bind="visible: setSearchFilterVisible, enable: setSearchFilterEnabled, click: setSearchFilter"
-                  >
-                    <i class="fa-solid fa-reply"></i>
-                    {% trans "Copy case list filter" %}
-                  </button>
-                  {% trans "Example: age > 5" %}
-                </p>
-              </div>
-            </div>
-          {% endif %}
           {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
           <div class="form-group">
             <label
@@ -677,7 +608,7 @@
               </div>
             </div>
           {% endif %}
-          {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' and not app.split_screen_dynamic_search %}
+          {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
             <div class="form-group">
               <label class="control-label {% css_label_class %}">
                 {% trans "Clearing search terms resets search results" %}

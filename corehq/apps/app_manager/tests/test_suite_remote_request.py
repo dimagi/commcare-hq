@@ -11,7 +11,6 @@ from corehq.apps.app_manager.models import (
     Assertion,
     CaseSearch,
     CaseSearchCustomSortProperty,
-    CaseSearchLabel,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DetailColumn,
@@ -60,7 +59,6 @@ class RemoteRequestSmartLinkTest(SimpleTestCase, SuiteMixin):
         self.factory.form_requires_case(child_form, 'leaf')
 
         child_module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name=field) for field in ['name', 'shape']],
             data_registry="a_registry",
             data_registry_workflow=REGISTRY_WORKFLOW_SMART_LINK,
@@ -163,18 +161,12 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             ))
         )
         self.module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(
-                label={
-                    'en': 'Search Patients Nationally'
-                }
-            ),
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'}, input_="date"),
                 CaseSearchProperty(name='consent', label={'en': 'Consent to search'}, input_="checkbox"),
             ],
             additional_relevant="instance('groups')/groups/group",
-            search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             default_properties=[
                 DefaultCaseSearchProperty(
                     property='ɨŧsȺŧɍȺᵽ',
@@ -268,11 +260,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         """
         # Regular and advanced modules should get the search detail
         search_config = CaseSearch(
-            search_label=CaseSearchLabel(
-                label={
-                    'en': 'Advanced Search'
-                }
-            ),
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})]
         )
         advanced_module = self.app.add_module(AdvancedModule.new_module("advanced", None))
@@ -291,25 +278,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
 
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
-
-    @flag_enabled('CASE_SEARCH_ADVANCED')
-    @flag_enabled('USH_SEARCH_FILTER')
-    def test_case_search_filter(self):
-        search_filter = "rating > 3"
-        self.module.search_config.search_filter = search_filter
-        suite = self.app.create_suite()
-        suite = parse_normalize(suite, to_string=False)
-        ref_path = './remote-request[1]/session/datum/@nodeset'
-        self.assertEqual(
-            "instance('{}')/{}/case[@case_type='{}'][{}]{}".format(
-                RESULTS_INSTANCE,
-                RESULTS_INSTANCE,
-                self.module.case_type,
-                search_filter,
-                EXCLUDE_RELATED_CASES_FILTER
-            ),
-            suite.xpath(ref_path)[0]
-        )
 
     @flag_enabled('CASE_SEARCH_ADVANCED')
     def test_additional_types(self):
@@ -344,11 +312,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         shadow_module = self.app.add_module(ShadowModule.new_module("shadow", "en"))
         shadow_module.source_module_id = self.module.get_or_create_unique_id()
         shadow_module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(
-                label={
-                    'en': 'Search from Shadow Module'
-                }
-            ),
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
             ],

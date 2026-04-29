@@ -258,9 +258,8 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
 
     if _case_mapping_diff_has_changes(diff):
         record_google_analytics_event(
-            METRICS_UPDATE_CASE_PROPERTIES,
+            METRICS_UPDATE_CASE_PROPERTIES_CASEMGT,
             request.couch_user,
-            {'source': UPDATE_CASE_SOURCE_CASE_MANAGEMENT},
         )
     response_json['actions'] = make_multi(form.actions.to_json())
     response_json['propertiesMap'] = get_all_case_properties(app)
@@ -356,9 +355,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     # form builder is the only client that submits
                     # mapping_diff at time of writing, but that could change.
                     record_google_analytics_event(
-                        METRICS_UPDATE_CASE_PROPERTIES,
+                        METRICS_UPDATE_CASE_PROPERTIES_FORMBUILDER,
                         request.couch_user,
-                        {'source': UPDATE_CASE_SOURCE_FORM_BUILDER},
                     )
             else:
                 raise Exception("You didn't select a form to upload")
@@ -571,18 +569,16 @@ def patch_xform(request, domain, app_id, form_unique_id):
 
     if _case_mapping_diff_has_changes(case_mapping_diff):
         record_google_analytics_event(
-            METRICS_UPDATE_CASE_PROPERTIES,
+            METRICS_UPDATE_CASE_PROPERTIES_FORMBUILDER,
             request.couch_user,
-            {'source': UPDATE_CASE_SOURCE_FORM_BUILDER},
         )
 
     _add_case_management_data(response_json, form, request)
     return JsonResponse(response_json)
 
 
-METRICS_UPDATE_CASE_PROPERTIES = 'update_case_properties'
-UPDATE_CASE_SOURCE_FORM_BUILDER = 'formbuilder'
-UPDATE_CASE_SOURCE_CASE_MANAGEMENT = 'casemanagement'
+METRICS_UPDATE_CASE_PROPERTIES_FORMBUILDER = "update_case_properties_formbuilder"
+METRICS_UPDATE_CASE_PROPERTIES_CASEMGT = "update_case_properties_casetab"
 
 # Characters that JS encodeURI preserves (beyond letters/digits which
 # Python's quote already preserves). Used to match encodeURI behavior

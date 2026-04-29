@@ -26,8 +26,7 @@ Several of these features are simple from an app builder's perspective, but they
 concepts into suite concepts.  Other features force the app builder to understand suite concepts, so they may
 be challenging for app builders to learn but are less prone to interacting poorly with other features:
 
-#. Case search, which maps fairly cleanly to the ``<remote-request>`` element (except when using the
-   ``USH_INLINE_SEARCH`` flag).
+#. Case search, which maps fairly cleanly to the ``<remote-request>`` element
 #. Advanced modules
 
 Display Only Forms

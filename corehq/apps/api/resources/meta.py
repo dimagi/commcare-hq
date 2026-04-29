@@ -11,6 +11,7 @@ from corehq.project_limits.rate_limiter import (
 )
 from corehq.project_limits.shortcuts import get_standard_ratio_rate_definition
 from corehq.toggles import API_THROTTLE_WHITELIST
+from corehq.util.metrics import metrics_counter
 
 
 # Weekly windows are intentionally omitted: sustained weekly quotas are
@@ -60,6 +61,7 @@ class HQThrottle(BaseThrottle):
         from tastypie.models import ApiAccess
 
         api_rate_limiter.report_usage(identifier.domain)
+        metrics_counter('commcare.api.request', tags={'domain': identifier.domain})
         # Write out the access to the DB for logging purposes.
         url = kwargs.get('url', '')
         if len(url) > 255:

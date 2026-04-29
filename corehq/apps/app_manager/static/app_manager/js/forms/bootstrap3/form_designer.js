@@ -75,8 +75,6 @@ $(function () {
         },
     });
 
-    window.CKEDITOR_BASEPATH = initialPageData.get('CKEDITOR_BASEPATH');     // eslint-disable-line no-unused-vars, no-undef
-
     const initVellum = function ($) {
         $(function () {
             $("#edit").hide();

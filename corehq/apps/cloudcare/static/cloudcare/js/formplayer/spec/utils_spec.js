@@ -37,9 +37,7 @@ describe('Utils', function () {
         let stubs = {};
 
         before(function () {
-            initialPageData.register("toggles_dict", {
-                DYNAMICALLY_UPDATE_SEARCH_RESULTS: false,
-            });
+            initialPageData.register("toggles_dict", {});
         });
 
         after(function () {

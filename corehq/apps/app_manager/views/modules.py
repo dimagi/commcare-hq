@@ -257,7 +257,6 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                     module.search_config.custom_sort_properties if module_offers_search(module) else [],
                 'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
                 'default_search': module.search_config.default_search if module_offers_search(module) else False,
-                'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
                 'search_button_display_condition':
                     module.search_config.search_button_display_condition if module_offers_search(module) else "",
                 'additional_relevant':
@@ -265,8 +264,6 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 'blacklisted_owner_ids_expression': (
                     module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
                 # populate labels even if module_offers_search is false - search_config might just not exist yet
-                'search_label':
-                    module.search_config.search_label.label if hasattr(module, 'search_config') else "",
                 'title_label':
                     module.search_config.title_label if hasattr(module, 'search_config') else "",
                 'description':
@@ -278,7 +275,6 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 'inline_search': module.search_config.inline_search,
                 'instance_name': module.search_config.instance_name or "",
                 'include_all_related_cases': module.search_config.include_all_related_cases,
-                'dynamic_search': app.split_screen_dynamic_search,
                 'search_on_clear': module.search_config.search_on_clear,
             },
         },
@@ -1290,17 +1286,6 @@ def _gather_and_update_search_properties(params, app, module, lang):
         description = module.search_config.description
         description[lang] = search_properties.get('description', '')
 
-        search_label = module.search_config.search_label
-        search_label.label[lang] = search_properties.get('search_label', '')
-        if search_properties.get('search_label_image_for_all'):
-            search_label.use_default_image_for_all = (
-                search_properties.get('search_label_image_for_all') == 'true')
-        if search_properties.get('search_label_audio_for_all'):
-            search_label.use_default_audio_for_all = (
-                search_properties.get('search_label_audio_for_all') == 'true')
-        search_label.set_media("media_image", lang, search_properties.get('search_label_image'))
-        search_label.set_media("media_audio", lang, search_properties.get('search_label_audio'))
-
         try:
             properties = [
                 CaseSearchProperty.wrap(p)
@@ -1312,7 +1297,7 @@ def _gather_and_update_search_properties(params, app, module, lang):
         except CaseSearchConfigError as e:
             return HttpResponseBadRequest(e)
         xpath_props = [
-            "search_filter", "blacklisted_owner_ids_expression",
+            "blacklisted_owner_ids_expression",
             "search_button_display_condition", "additional_relevant"
         ]
 
@@ -1356,7 +1341,6 @@ def _gather_and_update_search_properties(params, app, module, lang):
             ).format(instance_name))
 
         module.search_config = CaseSearch(
-            search_label=search_label,
             title_label=title_label,
             description=description,
             properties=properties,
@@ -1364,7 +1348,6 @@ def _gather_and_update_search_properties(params, app, module, lang):
             additional_relevant=search_properties.get('additional_relevant', ''),
             auto_launch=force_auto_launch or bool(search_properties.get('auto_launch')),
             default_search=bool(search_properties.get('default_search')),
-            search_filter=search_properties.get('search_filter', ""),
             search_button_display_condition=search_properties.get('search_button_display_condition', ""),
             blacklisted_owner_ids_expression=search_properties.get('blacklisted_owner_ids_expression', ""),
             default_properties=[
@@ -1382,7 +1365,6 @@ def _gather_and_update_search_properties(params, app, module, lang):
             inline_search=search_properties.get('inline_search', False),
             instance_name=instance_name,
             include_all_related_cases=search_properties.get('include_all_related_cases', False),
-            dynamic_search=app.split_screen_dynamic_search and not module.is_auto_select(),
             search_on_clear=search_properties.get('search_on_clear', False),
         )
 

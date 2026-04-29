@@ -9,7 +9,7 @@
  import editDetails from "app_manager/js/forms/edit_form_details";
  import "jquery-ui/ui/widgets/sortable";
  import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
-@@ -141,7 +141,7 @@
+@@ -139,7 +139,7 @@
          $('#formdesigner .fd-content-left .fd-head-text').text(name);
          $('.variable-form_name').text(name);
          appManager.updatePageTitle(name);

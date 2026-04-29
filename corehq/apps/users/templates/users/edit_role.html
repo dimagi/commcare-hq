@@ -129,7 +129,7 @@
                       class="col-md-1 controls"
                       x-show="area.showEditCheckbox"
                     >
-                      <div class="form-check">
+                      <div>
                         <input
                           class="form-check-input"
                           type="checkbox"
@@ -159,7 +159,7 @@
                       x-show="area.showViewCheckbox"
                     >
                       {# PLACEHOLDER checkbox when editPermission() is true #}
-                      <div class="form-check" x-show="area.editPermission">
+                      <div x-show="area.editPermission">
                         <input
                           class="form-check-input"
                           type="checkbox"
@@ -180,7 +180,7 @@
                       </div>
                       {# end PLACEHOLDER #}
                       {# REAL checkbox that controls viewPermission when editPermission() is false #}
-                      <div class="form-check" x-show="!area.editPermission">
+                      <div x-show="!area.editPermission">
                         <input
                           class="form-check-input"
                           type="checkbox"

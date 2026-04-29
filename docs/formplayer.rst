@@ -271,8 +271,7 @@ For projects using CommCare mobile, case search and claim is typically an unusua
 use web apps, and therefore have guaranteed connectivity, may use it much more heavily, even to the point that the user
 is unaware of their casedb and always uses case search to find cases.
 
-To support this approach, HQ allows apps to be configured with several alternate navigation flows. These workflows
-are gated by the ``USH_CASE_CLAIM_UPDATES`` feature flag.
+To support this approach, HQ allows apps to be configured with several alternate navigation flows.
 
 The default case search and claim workflow shows the user the following screens:
 
