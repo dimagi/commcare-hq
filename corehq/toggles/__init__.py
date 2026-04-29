@@ -1006,31 +1006,6 @@ CASE_SEARCH_CACHE_KEY = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
-USH_CASE_LIST_MULTI_SELECT = StaticToggle(
-    'ush_case_list_multi_select',
-    'USH: Allow selecting multiple cases from the case list',
-    TAG_FROZEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Allow+selecting+multiple+cases+from+the+case+list',  # noqa: E501
-    description="""
-    Allows user to select multiple cases and load them all into the form.
-    """
-)
-
-USH_CASE_CLAIM_UPDATES = StaticToggle(
-    'case_claim_autolaunch',
-    "USH Specific toggle to support several different case search/claim workflows in web apps",
-    TAG_FROZEN,
-    help_link='https://confluence.dimagi.com/display/USH/Case+Search+Configuration',
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    USH Specific toggle to support several different case search/claim workflows in web apps:
-    "search first", "see more", and "skip to default case search results", Geocoder
-    and other options in Webapps Case Search.
-    """,
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
-)
-
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
@@ -1064,32 +1039,11 @@ USH_SEARCH_FILTER = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
-USH_INLINE_SEARCH = StaticToggle(
-    'inline_case_search',
-    "USH Specific toggle to making case search user input available to other parts of the app.",
-    TAG_FROZEN,
-    help_link='https://docs.google.com/document/d/1Mmx1FrYZrcEmWidqSkNjC_gWSJ6xzRFKoP3Rn_xSaj4/edit#',
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Temporary toggle to manage the release of the 'inline search' / 'case search input' feature.
-    """,
-)
-
 USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
     'empty_case_list_text',
     "USH: Allow customizing the text displayed when case list contains no cases in web apps",
     TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
-    'split_screen_case_search',
-    "Split screen case search: In case search, show the search filters in a sidebar on the left and the results"
-    " on the right.",
-    TAG_FROZEN,
-    help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
 HIDE_SYNC_BUTTON = StaticToggle(
