@@ -2187,6 +2187,19 @@ FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
     owner='Simon Kelly'
 )
 
+ENTERPRISE_ADMIN_SELF_SERVICE = FeatureRelease(
+    'enterprise_admin_self_service',
+    'Allow Enterprise Admins to view/add/remove other Enterprise Admins '
+    'from the Enterprise Console',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    owner='Danny Roberts',
+    help_link=(
+        'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/'
+        '2143945885/Enterprise+Console#Enterprise-Admins'
+    ),
+)
+
 APPLICATION_RELEASE_LOGS = StaticToggle(
     'application_release_logs',
     'Show Application release logs',
