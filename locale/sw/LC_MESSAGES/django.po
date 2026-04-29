@@ -10852,8 +10852,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
-msgid "Property mapping concurrently changed and deleted"
-msgstr "Ulinganishaji wa mali ulibadilishwa na kufutwa kwa wakati mmoja"
+msgid "This mapping was changed and deleted in separate sessions"
+msgstr "Ulinganishaji huu ulibadilishwa na kufutwa katika vikao tofauti"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
@@ -12630,11 +12630,6 @@ msgstr "Fanya ingizo la utafutaji lipatikane baada ya utafutaji"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search Input Instance Name"
 msgstr "Jina la Mfano wa Ingizo la Utafutaji"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Label for Searching"
-msgstr "Lebo ya Kutafuta"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -21477,6 +21472,21 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/forms.py
+msgid "Use elasticsearch when fetching apps for exports"
+msgstr ""
+"Tumia elasticsearch wakati wa kuchukua programu kwa ajili ya usafirishaji"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            (Internal) Fetches apps using elasticsearch instead of couch in exports\n"
+"            "
+msgstr ""
+"\n"
+"            (Ya ndani) Inachukua programu kwa kutumia elasticsearch badala ya couch kwenye usafirishaji\n"
+"            "
+
+#: corehq/apps/domain/forms.py
 msgid "Connect Messaging Channel Name"
 msgstr "Jina la Kituo cha Ujumbe cha Connect"
 
@@ -25353,10 +25363,6 @@ msgid "Sign In"
 msgstr "Ingia"
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
-#| msgid ""
-#| "\n"
-#| "                No account? Sign up today, it's free!\n"
-#| "              "
 msgid ""
 "\n"
 "                No account? Get started for free.\n"
@@ -25368,12 +25374,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
-#| msgid ""
-#| "\n"
-#| "                    Organization-based data access restrictions are only available\n"
-#| "                    on the Pro plan and above. Saving this role will enable\n"
-#| "                    full organization access for the assigned users.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    Data collection is just the start. Equip your frontline\n"
@@ -25389,7 +25389,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
-#| msgid "Learn more about CommCare"
 msgid "Learn more about CommCare."
 msgstr "Jifunze zaidi kuhusu CommCare."
 
@@ -25452,10 +25451,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
-#| msgid ""
-#| "\n"
-#| "                  No account? Sign up today, it's free!\n"
-#| "                "
 msgid ""
 "\n"
 "                  No account? Get started for free.\n"
@@ -32238,7 +32233,6 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-#| msgid "%(user_name)s's Information"
 msgid ""
 "%(user_name)s's\n"
 "      Information"
@@ -32274,11 +32268,6 @@ msgstr "Nyanja"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                Are you sure you want to permanently delete\n"
-#| "                <strong>%(attendee_name)s</strong>?\n"
-#| "              "
 msgid ""
 "\n"
 "                The following will be removed from\n"
@@ -32292,10 +32281,6 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                        %(cc_name)s Help\n"
-#| "                    "
 msgid ""
 "\n"
 "                    %(count)s domain membership\n"
@@ -32314,21 +32299,15 @@ msgstr[1] ""
 "                    "
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
-#| msgid "Superuser"
 msgid "Superuser access"
 msgstr "Ufikiaji wa superuser"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
-#| msgid "Accounting Admins"
 msgid "Accounting admin access"
 msgstr "Ufikiaji wa msimamizi wa uhasibu"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Are you sure you want to <strong>delete</strong> this rule?\n"
-#| "                "
 msgid ""
 "\n"
 "                  Type <strong>%(confirm_text)s</strong> to confirm\n"
@@ -32409,25 +32388,21 @@ msgstr ""
 
 #: corehq/apps/hqadmin/views/users.py
 #, python-brace-format
-#| msgid "User with ID '{user_id}' not found"
 msgid "User '{username}' not found."
 msgstr "Mtumiaji '{username}' hakupatikana."
 
 #: corehq/apps/hqadmin/views/users.py
 #, python-brace-format
-#| msgid "Update Location Membership"
 msgid "{count} domain membership"
 msgid_plural "{count} domain memberships"
 msgstr[0] "Sasisha Uanachama wa Eneo"
 msgstr[1] "Sasisha Uanachama wa Eneo"
 
 #: corehq/apps/hqadmin/views/users.py
-#| msgid "Grant or revoke superuser access"
 msgid "superuser access"
 msgstr "ufikiaji wa superuser"
 
 #: corehq/apps/hqadmin/views/users.py
-#| msgid "Accounting Admins"
 msgid "accounting admin access"
 msgstr "ufikiaji wa msimamizi wa uhasibu"
 
@@ -40690,9 +40665,6 @@ msgid "Payload ID"
 msgstr "Kitambulisho cha Payload"
 
 #: corehq/apps/reports/filters/simple.py
-#| msgid ""
-#| "Leave this blank to include all users. In that case, domain is required to "
-#| "limit the scope."
 msgid ""
 "One or more usernames, comma-separated. Leave blank to include all users "
 "(requires domain to limit the scope)."
@@ -40733,7 +40705,6 @@ msgstr ""
 "Acha wazi kujumuisha njia zote."
 
 #: corehq/apps/reports/filters/simple.py
-#| msgid "Users to exclude"
 msgid "URL Path Exclude"
 msgstr "Njia ya URL Toa"
 
@@ -58471,6 +58442,11 @@ msgstr ""
 "Ongeza uongozi wa eneo kuu kwenye usafirishaji wa excel katika Ripoti ya "
 "Shughuli ya Mwisho ya Mtumiaji"
 
+#: corehq/privileges.py
+#| msgid "Show Advanced Questions"
+msgid "Locked Admin Questions"
+msgstr "Maswali ya Msimamizi Yaliyofungwa"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Ripoti za Mjenzi wa Ripoti"
@@ -59461,6 +59437,12 @@ msgstr "Safu zinazohitajika ni {column_names}"
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
 
+#~ msgid "Property mapping concurrently changed and deleted"
+#~ msgstr "Ulinganishaji wa mali ulibadilishwa na kufutwa kwa wakati mmoja"
+
+#~ msgid "Label for Searching"
+#~ msgstr "Lebo ya Kutafuta"
+
 #~ msgid "Reference"
 #~ msgstr "Rejeleo"
 
@@ -59631,19 +59613,6 @@ msgstr "Weka JSON halali"
 #~ msgstr ""
 #~ "Jina la mradi litakalotumika kwenye SMS zinazotumwa kwa uthibitisho wa "
 #~ "akaunti kwa watumiaji."
-
-#~ msgid "Use elasticsearch when fetching apps for exports"
-#~ msgstr ""
-#~ "Tumia elasticsearch wakati wa kuchukua programu kwa ajili ya usafirishaji"
-
-#~ msgid ""
-#~ "\n"
-#~ "            (Internal) Fetches apps using elasticsearch instead of couch in exports\n"
-#~ "            "
-#~ msgstr ""
-#~ "\n"
-#~ "            (Ya ndani) Inachukua programu kwa kutumia elasticsearch badala ya couch kwenye usafirishaji\n"
-#~ "            "
 
 #, python-brace-format
 #~ msgid "Restriction for profile {profile} set successfully."
