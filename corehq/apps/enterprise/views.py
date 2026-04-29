@@ -650,10 +650,7 @@ def remove_enterprise_admin(request, domain):
         )
         return redirect
 
-    remaining = [
-        e for e in account.enterprise_admin_emails if e.lower() != email
-    ]
-    if len(remaining) == len(account.enterprise_admin_emails):
+    if not any(e.lower() == email for e in account.enterprise_admin_emails):
         messages.error(
             request,
             _("%(email)s is not an enterprise administrator.") % {
@@ -662,7 +659,9 @@ def remove_enterprise_admin(request, domain):
         )
         return redirect
 
-    account.enterprise_admin_emails = remaining
+    account.enterprise_admin_emails = [
+        e for e in account.enterprise_admin_emails if e.lower() != email
+    ]
     account.save()
     enterprise_admin_logger.info(
         "Enterprise admin %s removed from account %s by %s",
