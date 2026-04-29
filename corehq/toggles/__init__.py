@@ -1031,14 +1031,6 @@ GEOCODER_USER_PROXIMITY = StaticToggle(
     """,
 )
 
-USH_SEARCH_FILTER = StaticToggle(
-    'case_search_filter',
-    "USH Specific toggle to use Search Filter in case search options.",
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
-)
-
 USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
     'empty_case_list_text',
     "USH: Allow customizing the text displayed when case list contains no cases in web apps",
