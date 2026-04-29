@@ -251,10 +251,8 @@ def _get_base_vellum_options(request, domain, form, displayLang):
         },
     }
 
-    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
-    is_advanced_form = isinstance(form, AdvancedForm)
     case_type = form.get_module().case_type
-    if case_type and has_vellum_case_mapping and not is_advanced_form:
+    if case_type and not isinstance(form, AdvancedForm):
         options['caseManagement'] = {
             'mappings': get_case_mappings(form.actions),
             'properties': sorted(get_case_properties(domain, case_type).values_list('name', flat=True)),

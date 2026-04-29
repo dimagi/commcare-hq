@@ -5,7 +5,6 @@ from django.test import SimpleTestCase
 
 from ..form_action_diff import (
     _convert_update_to_delete_plus_add,
-    from_combined_diff,
     get_case_mappings,
     merge_case_mappings,
     make_multi,
@@ -38,8 +37,8 @@ class OpenCaseActionApplyDiffTests(SimpleTestCase):
         merge_case_mappings(diff, actions)
         action = actions.open_case
 
-        multi_paths = [update.question_path for update in [action.name_update] + action.conflicts]
-        assert multi_paths == ['/data/name', '/data/new_name']
+        paths = [update.question_path for update in [action.name_update] + action.conflicts]
+        assert paths == ['/data/name', '/data/new_name']
 
     def test_conflicting_name_addition_is_overwritten(self):
         # added "/name" mapping should overwrite existing "/name" mapping
@@ -56,8 +55,9 @@ class OpenCaseActionApplyDiffTests(SimpleTestCase):
         assert not action.conflicts
 
     def test_merge_case_mappings_remove_name(self):
-        actions = FormActions(open_case=OpenCaseAction.wrap({
-            'name_update_multi': [{'question_path': '/data/name1'}, {'question_path': '/data/name2'}]
+        actions = FormActions(open_case=OpenCaseAction({
+            'name_update': {'question_path': '/data/name1'},
+            'conflicts': [{'question_path': '/data/name2'}],
         }))
 
         diff = {'open_case': {'delete': [{'question_path': '/data/name1'}]}}
@@ -172,20 +172,6 @@ class UpdateCaseActionApplyDiffTests(SimpleTestCase):
         assert set(self._conflicting(actions)) == {'one'}
         paths = {c.question_path for c in self._conflicting(actions)['one']}
         assert paths == {'/data/question1', '/data/question2'}
-
-    def test_add_value_with_legacy_update_multi_conflict(self):
-        form_actions = FormActions({'update_case': {'update_multi': {
-            'one': [{'question_path': '/data/question1'}, {'question_path': '/data/question2'}]
-        }}})
-
-        merge_case_mappings({'update_case': {
-            'add': {'one': [{'question_path': '/data/question3'}]}
-        }}, form_actions)
-        actions = form_actions.update_case
-
-        assert set(actions.conflicts) == {'one'}
-        paths = [update.question_path for update in self._conflicting(actions)['one']]
-        assert set(paths) == {'/data/question1', '/data/question2', '/data/question3'}
 
     def test_add_value_with_existing_conflict(self):
         actions = UpdateCaseAction({
@@ -420,6 +406,20 @@ class FormActionsTests(SimpleTestCase):
                 {'question_path': '/B/', 'update_mode': 'always', 'conflicting_delete': True},
             ],
         }
+
+    def test_get_case_mappings_omits_empty_case_name_mapping(self):
+        actions = FormActions(
+            open_case=OpenCaseAction(),
+            update_case=UpdateCaseAction({
+                # edge case probably not possible in practice
+                'update': {'one': {'question_path': ''}},
+                'conflicts': {'one': [{'question_path': None}]},
+            }),
+        )
+
+        json = get_case_mappings(actions)
+
+        assert json == {}
 
     def test_merge_case_mappings_raises_on_unrecognized_key(self):
         actions = FormActions()
@@ -739,63 +739,6 @@ class ConvertUpdateToAddPlusDeleteTests(SimpleTestCase):
             ]},
         }
         assert diff == snapshot, 'original diff should not change'
-
-
-class CombinedDiffTests(SimpleTestCase):
-
-    def test_from_combined_diff_non_registration_name_stays_in_update(self):
-        combined_diff = {
-            'add': {
-                'name': [{'question_path': '/data/one'}],
-                'other': [{'question_path': '/data/two'}],
-            },
-            'update': {
-                'name': [{'question_path': '/data/three'}],
-                'other': [{'question_path': '/data/four'}],
-            },
-            'delete': {
-                'name': [{'question_path': '/data/five'}],
-                'other': [{'question_path': '/data/six'}],
-            },
-        }
-        snapshot = deepcopy(combined_diff)
-
-        diff = from_combined_diff(combined_diff, is_registration=False)
-
-        assert not diff.get('open_case')
-        assert diff['update_case'] == combined_diff
-        assert combined_diff == snapshot, 'combined_diff should not be mutated'
-
-    def test_from_combined_diff_registration_name_is_in_open_case(self):
-        combined_diff = {
-            'add': {
-                'name': [{'question_path': '/data/one'}],
-                'other': [{'question_path': '/data/two'}],
-            },
-            'update': {
-                'name': [{'question_path': '/data/three'}],
-                'other': [{'question_path': '/data/four'}],
-            },
-            'delete': {
-                'name': [{'question_path': '/data/five'}],
-                'other': [{'question_path': '/data/six'}],
-            },
-        }
-        snapshot = deepcopy(combined_diff)
-
-        diff = from_combined_diff(combined_diff, is_registration=True)
-
-        assert diff['open_case'] == {
-            'add': [{'question_path': '/data/one'}],
-            'update': [{'question_path': '/data/three'}],
-            'delete': [{'question_path': '/data/five'}],
-        }
-        assert diff['update_case'] == {
-            'add': {'other': [{'question_path': '/data/two'}]},
-            'update': {'other': [{'question_path': '/data/four'}]},
-            'delete': {'other': [{'question_path': '/data/six'}]},
-        }
-        assert combined_diff == snapshot, 'combined_diff should not be mutated'
 
 
 class TestMultiTools(SimpleTestCase):
