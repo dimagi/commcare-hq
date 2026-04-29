@@ -3,7 +3,7 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField
 from django import forms
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.app_execution.exceptions import AppExecutionError
 from corehq.apps.app_execution.models import AppWorkflowConfig
