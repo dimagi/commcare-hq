@@ -577,7 +577,7 @@ def remove_enterprise_permissions_domain(request, domain, target_domain):
 def enterprise_admins(request, domain):
     account = request.account
     sso_domains = _get_sso_email_domains(account)
-    form = EnterpriseAdminForm(account=account)
+    form = EnterpriseAdminForm(account=account, domain=domain)
     context = get_page_context(
         page_url=reverse('enterprise_admins', args=(domain,)),
         page_title=_('Enterprise Administrators'),
@@ -605,7 +605,7 @@ def add_enterprise_admin(request, domain):
     redirect = HttpResponseRedirect(
         reverse('enterprise_admins', args=[domain]),
     )
-    form = EnterpriseAdminForm(request.POST, account=account)
+    form = EnterpriseAdminForm(request.POST, account=account, domain=domain)
     if not form.is_valid():
         error = form.errors.get('email', [_('Invalid request.')])[0]
         messages.error(request, error)

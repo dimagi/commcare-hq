@@ -33,15 +33,5 @@
       {% endblocktrans %}
     </p>
   {% endif %}
-  <form
-    method="POST"
-    action="{% url 'add_enterprise_admin' domain %}"
-    class="form form-horizontal"
-  >
-    {% csrf_token %}
-    {{ form|crispy }}
-    <button type="submit" class="btn btn-primary">
-      {% trans "Add Administrator" %}
-    </button>
-  </form>
+  {% crispy form %}
 {% endblock %}

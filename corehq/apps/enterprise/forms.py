@@ -29,9 +29,23 @@ def _get_sso_email_domains(account):
 class EnterpriseAdminForm(forms.Form):
     email = forms.EmailField(label=gettext_lazy("Email"))
 
-    def __init__(self, *args, account, **kwargs):
+    def __init__(self, *args, account, domain, **kwargs):
         super().__init__(*args, **kwargs)
         self.account = account
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.form_action = reverse(
+            'add_enterprise_admin', args=[domain],
+        )
+        self.helper.layout = crispy.Layout(
+            'email',
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Add Administrator"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+            ),
+        )
 
     def clean_email(self):
         email = self.cleaned_data["email"].lower()
