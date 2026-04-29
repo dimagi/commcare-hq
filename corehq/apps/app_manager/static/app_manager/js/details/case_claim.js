@@ -205,7 +205,7 @@ var additionalRegistryCaseModel = function (xpath, saveButton) {
 var searchConfigKeys = [
     'auto_launch', 'blacklisted_owner_ids_expression', 'default_search',
     'title_label', 'description', 'search_button_display_condition', 'search_filter',
-    'additional_relevant', 'data_registry', 'data_registry_workflow', 'additional_registry_cases',
+    'data_registry', 'data_registry_workflow', 'additional_registry_cases',
     'custom_related_case_property', 'inline_search', 'instance_name', 'include_all_related_cases',
     'search_on_clear',
 ];

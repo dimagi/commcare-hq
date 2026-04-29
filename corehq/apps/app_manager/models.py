@@ -2238,13 +2238,13 @@ class CaseSearch(DocumentSchema):
     - dynamic_search: Removed deprecated functionality (Apr 2026)
     - command_label: Superseded by search_label (2021 migration)
     - search_label: Removed; search button always uses default label (Apr 2026)
+    - additional_relevant: Removing that feature (Apr 2026)
       These fields may still exist in CouchDB documents but are no longer used.
     """
     search_button_label = LabelProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
-    additional_relevant = StringProperty(exclude_if_none=True)  # in "addition" to the default relevancy condition
     search_filter = StringProperty(exclude_if_none=True)
     search_button_display_condition = StringProperty(exclude_if_none=True)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
@@ -2278,8 +2278,6 @@ class CaseSearch(DocumentSchema):
     def get_relevant(self, case_session_var, multi_select=False):
         xpath = CaseClaimXpath(case_session_var)
         default_condition = xpath.multi_case_relevant() if multi_select else xpath.default_relevant()
-        if self.additional_relevant:
-            return f"({default_condition}) and ({self.additional_relevant})"
         return default_condition
 
     def get_search_title_label(self, app, lang, for_default=False):

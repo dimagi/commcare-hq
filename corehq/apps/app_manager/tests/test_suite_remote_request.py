@@ -166,7 +166,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'}, input_="date"),
                 CaseSearchProperty(name='consent', label={'en': 'Consent to search'}, input_="checkbox"),
             ],
-            additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             default_properties=[
                 DefaultCaseSearchProperty(
@@ -195,19 +194,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             config.get_relevant(config.case_session_var),
             "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0")  # noqa: E501
 
-        config.additional_relevant = "double(now()) mod 2 = 0"
-        self.assertEqual(
-            config.get_relevant(config.case_session_var),
-            "(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (double(now()) mod 2 = 0)")  # noqa: E501
-
     def test_search_config_relevant_multi_select(self):
         config = CaseSearch()
 
         self.assertEqual(config.get_relevant(config.case_session_var, multi_select=True), "$case_id != ''")
-
-        config.additional_relevant = "double(now()) mod 2 = 0"
-        self.assertEqual(config.get_relevant(config.case_session_var, multi_select=True),
-                         "($case_id != '') and (double(now()) mod 2 = 0)")
 
     def test_remote_request(self):
         """
