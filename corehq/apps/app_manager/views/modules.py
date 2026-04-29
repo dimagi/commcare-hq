@@ -260,8 +260,6 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
                 'search_button_display_condition':
                     module.search_config.search_button_display_condition if module_offers_search(module) else "",
-                'additional_relevant':
-                    module.search_config.additional_relevant if module_offers_search(module) else "",
                 'blacklisted_owner_ids_expression': (
                     module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
                 # populate labels even if module_offers_search is false - search_config might just not exist yet
@@ -1299,7 +1297,7 @@ def _gather_and_update_search_properties(params, app, module, lang):
             return HttpResponseBadRequest(e)
         xpath_props = [
             "search_filter", "blacklisted_owner_ids_expression",
-            "search_button_display_condition", "additional_relevant"
+            "search_button_display_condition"
         ]
 
         def _check_xpath(xpath, location):
@@ -1346,7 +1344,6 @@ def _gather_and_update_search_properties(params, app, module, lang):
             description=description,
             properties=properties,
             additional_case_types=module.search_config.additional_case_types,
-            additional_relevant=search_properties.get('additional_relevant', ''),
             auto_launch=force_auto_launch or bool(search_properties.get('auto_launch')),
             default_search=bool(search_properties.get('default_search')),
             search_filter=search_properties.get('search_filter', ""),
