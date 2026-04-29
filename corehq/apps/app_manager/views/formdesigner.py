@@ -154,15 +154,11 @@ def _get_form_designer_view(request, domain, app, module, form):
     vellum_options['features'] = _get_vellum_features(request, domain, app)
     context['vellum_options'] = vellum_options
 
-    ckeditor_basepath = "formdesigner" if settings.VELLUM_DEBUG else "app_manager/js/vellum"
-    ckeditor_basepath += "/lib/ckeditor/"
-
     context.update({
         'vellum_debug': settings.VELLUM_DEBUG,
         'nav_form': form,
         'formdesigner': True,
 
-        'CKEDITOR_BASEPATH': ckeditor_basepath,
         'show_live_preview': should_show_preview_app(
             request,
             app,
