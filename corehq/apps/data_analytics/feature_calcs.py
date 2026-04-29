@@ -6,6 +6,7 @@ from django.db.models import Q
 
 from dimagi.utils.couch.cache import cache_core
 
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.app_manager.const import WORKFLOW_DEFAULT
 from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
@@ -17,7 +18,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.locations.models import LocationType
 from corehq.apps.saved_reports.models import ReportConfig
-from corehq.apps.sso.models import TrustedIdentityProvider
+from corehq.apps.sso.models import IdentityProvider, TrustedIdentityProvider
 
 from .metric_registry import MetricDef
 
@@ -128,18 +129,12 @@ def calc_case_exports_only(domain_context):
 
 def calc_scheduled_exports(domain_context):
     """Count of scheduled (daily saved) data exports."""
-    return sum(
-        e.get('is_daily_saved_export', False)
-        for e in domain_context.form_exports + domain_context.case_exports
-    )
+    return sum(e['is_daily_saved_export'] for e in domain_context.exports)
 
 
 def calc_has_excel_dashboard(domain_context):
     """Returns True if domain has created an Excel dashboard feed"""
-    for export in domain_context.form_exports + domain_context.case_exports:
-        if is_dashboard_feed(export):
-            return True
-    return False
+    return any(is_dashboard_feed(e) for e in domain_context.exports)
 
 
 def calc_case_list_explorer_reports(domain_context):
@@ -167,18 +162,12 @@ def calc_case_list_explorer_reports(domain_context):
 
 def calc_det_configs(domain_context):
     """Count exports with Data Export Tool config enabled."""
-    return sum(
-        e.get('show_det_config_download', False)
-        for e in domain_context.form_exports + domain_context.case_exports
-    )
+    return sum(e['show_det_config_download'] for e in domain_context.exports)
 
 
 def calc_odata_feeds(domain_context):
     """Count OData feed configurations."""
-    return sum(
-        e.get('is_odata_config', False)
-        for e in domain_context.form_exports + domain_context.case_exports
-    )
+    return sum(e['is_odata_config'] for e in domain_context.exports)
 
 
 def calc_linked_domains(domain_context):
@@ -254,7 +243,15 @@ def calc_has_strong_passwords(domain_context):
 
 
 def calc_has_sso(domain_context):
-    """Check if domain has SSO configured."""
+    """Check if domain has SSO configured.
+
+    A domain is SSO-enabled if either:
+    - its BillingAccount owns an active IdentityProvider, or
+    - it trusts an active IdentityProvider owned by another account.
+    """
+    acct = BillingAccount.get_account_by_domain(domain_context.domain)
+    if IdentityProvider.objects.filter(owner=acct, is_active=True).exists():
+        return True
     return TrustedIdentityProvider.objects.filter(
         domain=domain_context.domain,
         identity_provider__is_active=True,
