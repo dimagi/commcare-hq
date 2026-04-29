@@ -13,21 +13,66 @@
         <tr>
           <td class="col-md-10">{{ email }}</td>
           <td class="col-md-2">
-            <form
-              method="POST"
-              action="{% url 'remove_enterprise_admin' domain %}"
-              class="form form-horizontal disable-on-submit"
-              onsubmit="return confirm('{% blocktrans trimmed with email=email|escapejs %}
-                Remove {{ email }} as an enterprise administrator?
-              {% endblocktrans %}');"
+            <button
+              type="button"
+              class="btn btn-outline-danger"
+              data-bs-toggle="modal"
+              data-bs-target="#removeAdminModal-{{ forloop.counter }}"
             >
-              {% csrf_token %}
-              <input type="hidden" name="email" value="{{ email }}" />
-              <button type="submit" class="btn btn-outline-danger">
-                <i class="fa fa-trash-can" aria-hidden="true"></i>
-                {% trans "Remove" %}
-              </button>
-            </form>
+              <i class="fa fa-trash-can" aria-hidden="true"></i>
+              {% trans "Remove" %}
+            </button>
+            <div
+              class="modal fade"
+              id="removeAdminModal-{{ forloop.counter }}"
+              tabindex="-1"
+              aria-labelledby="removeAdminModalLabel-{{ forloop.counter }}"
+              aria-hidden="true"
+            >
+              <div class="modal-dialog">
+                <form
+                  method="POST"
+                  action="{% url 'remove_enterprise_admin' domain %}"
+                  class="modal-content disable-on-submit"
+                >
+                  {% csrf_token %}
+                  <input type="hidden" name="email" value="{{ email }}" />
+                  <div class="modal-header">
+                    <h5
+                      class="modal-title"
+                      id="removeAdminModalLabel-{{ forloop.counter }}"
+                    >
+                      {% trans "Remove enterprise administrator?" %}
+                    </h5>
+                    <button
+                      type="button"
+                      class="btn-close"
+                      data-bs-dismiss="modal"
+                      aria-label="{% trans 'Close' %}"
+                    ></button>
+                  </div>
+                  <div class="modal-body">
+                    {% blocktrans trimmed %}
+                      Are you sure you want to remove
+                      <strong>{{ email }}</strong>
+                      as an enterprise administrator?
+                    {% endblocktrans %}
+                  </div>
+                  <div class="modal-footer">
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary"
+                      data-bs-dismiss="modal"
+                    >
+                      {% trans "Cancel" %}
+                    </button>
+                    <button type="submit" class="btn btn-outline-danger">
+                      {% trans "Remove" %}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           </td>
         </tr>
       {% endfor %}
