@@ -35,26 +35,20 @@ def calc_has_multimedia(domain_context):
 
 def calc_has_case_management(domain_context):
     """Check if any app has a case list menu (offline case management)."""
-    for app in domain_context.apps:
-        for module in app.get_modules():
-            if getattr(module, 'case_type', ''):
-                return True
-    return False
+    return any(
+        getattr(module, 'case_type', '')
+        for app in domain_context.apps
+        for module in app.get_modules()
+    )
 
 
 def calc_has_eof_navigation(domain_context):
     """Check if any form has non-default end-of-form navigation."""
-    for app in domain_context.apps:
-        for module in app.get_modules():
-            for form in module.get_forms():
-                workflow = getattr(
-                    form,
-                    'post_form_workflow',
-                    WORKFLOW_DEFAULT,
-                )
-                if workflow != WORKFLOW_DEFAULT:
-                    return True
-    return False
+    return any(
+        form.post_form_workflow != WORKFLOW_DEFAULT
+        for app in domain_context.apps
+        for form in app.get_forms(bare=True)
+    )
 
 
 def calc_has_web_apps(domain_context):
@@ -76,19 +70,15 @@ def calc_has_app_profiles(domain_context):
 def calc_has_save_to_case(domain_context):
     """Check if any form uses the Save To Case feature.
 
-    Save To Case is a Vellum question type that writes form data to a
-    case from inside a repeat group, targeting a case type by reference
-    rather than the form's primary case.  It is stored on the form as
-    case_references_data and is distinct from ordinary open_case /
-    update_case actions.
+    Vellum emits a save entry for every SaveToCase question (see
+    ``caseReferences`` in Vellum's ``src/logic.js``), so index-only and
+    close-only questions are detected too.
     """
-    for app in domain_context.apps:
-        for module in app.get_modules():
-            for form in module.get_forms():
-                if getattr(form, 'get_save_to_case_updates', None):
-                    if form.get_save_to_case_updates():
-                        return True
-    return False
+    return any(
+        form.get_save_to_case_updates()
+        for app in domain_context.apps
+        for form in app.get_forms(bare=True)
+    )
 
 
 def calc_bulk_case_editing_sessions(domain_context):
@@ -100,10 +90,10 @@ def calc_has_custom_branding(domain_context):
     """Check for custom branding: domain logo or app logos."""
     if domain_context.domain_obj.has_custom_logo:
         return True
-    for app in domain_context.apps:
-        if getattr(app, 'logo_refs', None):
-            return True
-    return False
+    return any(
+        getattr(app, 'logo_refs', None)
+        for app in domain_context.apps
+    )
 
 
 # Data & Export Feature metric calculations
@@ -129,12 +119,12 @@ def calc_case_exports_only(domain_context):
 
 def calc_scheduled_exports(domain_context):
     """Count of scheduled (daily saved) data exports."""
-    return sum(e['is_daily_saved_export'] for e in domain_context.exports)
+    return sum(e['is_daily_saved_export'] for e in domain_context.all_exports)
 
 
 def calc_has_excel_dashboard(domain_context):
     """Returns True if domain has created an Excel dashboard feed"""
-    return any(is_dashboard_feed(e) for e in domain_context.exports)
+    return any(is_dashboard_feed(e) for e in domain_context.all_exports)
 
 
 def calc_case_list_explorer_reports(domain_context):
@@ -162,12 +152,12 @@ def calc_case_list_explorer_reports(domain_context):
 
 def calc_det_configs(domain_context):
     """Count exports with Data Export Tool config enabled."""
-    return sum(e['show_det_config_download'] for e in domain_context.exports)
+    return sum(e['show_det_config_download'] for e in domain_context.all_exports)
 
 
 def calc_odata_feeds(domain_context):
     """Count OData feed configurations."""
-    return sum(e['is_odata_config'] for e in domain_context.exports)
+    return sum(e['is_odata_config'] for e in domain_context.all_exports)
 
 
 def calc_linked_domains(domain_context):
@@ -196,15 +186,11 @@ def calc_mobile_user_groups(domain_context):
 
 def calc_has_user_case_management(domain_context):
     """Check if any form uses user case management."""
-    for app in domain_context.apps:
-        for module in app.get_modules():
-            for form in module.get_forms():
-                if (
-                    hasattr(form, 'actions')
-                    and actions_use_usercase(form.actions)
-                ):
-                    return True
-    return False
+    return any(
+        actions_use_usercase(form.actions)
+        for app in domain_context.apps
+        for form in app.get_forms(bare=True)
+    )
 
 
 def calc_has_organization(domain_context):

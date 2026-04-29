@@ -244,22 +244,18 @@ def _calc_repeaters(ctx):
     return Repeater.objects.filter(domain=ctx.domain).count()
 
 
-def _calc_case_exports(ctx):
-    return len(ctx.form_exports + ctx.case_exports)
+def _calc_all_exports(ctx):
+    # Exposed as "cp_n_case_exports" despite counting all exports.
+    # ¯\_("/)_/¯ See feature usage metrics "case_exports_only".
+    return len(ctx.all_exports)
 
 
 def _calc_deid_exports(ctx):
-    return sum(
-        e.get('is_deidentified', False)
-        for e in ctx.form_exports + ctx.case_exports
-    )
+    return sum(e['is_deidentified'] for e in ctx.all_exports)
 
 
 def _calc_saved_exports(ctx):
-    return sum(
-        e.get('is_daily_saved_export', False)
-        for e in ctx.form_exports + ctx.case_exports
-    )
+    return sum(e['is_daily_saved_export'] for e in ctx.all_exports)
 
 
 def _calc_rb_reports(ctx):
@@ -409,8 +405,8 @@ DAILY_METRICS = [
               _calc_apps_multi_lang, is_boolean=False, schedule='daily'),
 
     # Export Metrics
-    MetricDef('case_exports', 'cp_n_case_exports',
-              _calc_case_exports, is_boolean=False, schedule='daily'),
+    MetricDef('case_exports', 'cp_n_case_exports',  # Aaactually all exports
+              _calc_all_exports, is_boolean=False, schedule='daily'),
     MetricDef('deid_exports', 'cp_n_deid_exports',
               _calc_deid_exports, is_boolean=False, schedule='daily'),
     MetricDef('saved_exports', 'cp_n_saved_exports',
