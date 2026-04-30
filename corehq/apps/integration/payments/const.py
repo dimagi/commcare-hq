@@ -1,7 +1,7 @@
 from enum import Enum
 
 from django.db import models
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext, gettext_lazy as _
 
 
 class PaymentProperties(str, Enum):
@@ -144,5 +144,8 @@ class PaymentStatusErrorCode(models.TextChoices):
         'PaymentRequestError',
         _("Error occurred during payment request. Reach out to support if the issue persists.")
     )
-    MaxRetryExceededRequestError = _("Maximum retry attempts exceeded with request error.")
-    MaxRetryExceededPendingStatus = _("Maximum retry attempts exceeded with pending status")
+    # FIXME(gettext_lazy): using a translated string as the enum value never
+    # made sense; fixing properly requires understanding how these values are
+    # used.
+    MaxRetryExceededRequestError = gettext("Maximum retry attempts exceeded with request error.")
+    MaxRetryExceededPendingStatus = gettext("Maximum retry attempts exceeded with pending status")
