@@ -105,6 +105,7 @@ IGNORE_MODELS = {
     "tastypie.ApiKey",  # not domain-specific
     "toggles.ToggleEditPermission",
     "toggle_ui.ToggleAudit",
+    "tombstones.Tombstone",
     "phonenumber.PhoneDevice",
     "users.Permission",
     "util.BouncedEmail",
