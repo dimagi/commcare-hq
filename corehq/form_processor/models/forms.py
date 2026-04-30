@@ -390,7 +390,7 @@ class XFormInstanceManager(RequireDBManager):
         return count
 
     def hard_delete_forms(
-            self, domain, form_ids, return_ids=False, delete_attachments=True, *, publish_changes=True):
+            self, domain, form_ids, return_ids=False, *, publish_changes=True):
         """Delete forms permanently
 
         :param publish_changes: Flag for change feed publication.
@@ -411,7 +411,7 @@ class XFormInstanceManager(RequireDBManager):
             if return_ids:
                 deleted_ids.extend(found_forms)
 
-        if delete_attachments and deleted_count:
+        if deleted_count:
             if deleted_count != len(form_ids):
                 # in the unlikely event that we didn't delete all forms (because they weren't all
                 # in the specified domain), only delete attachments for forms that were deleted.
