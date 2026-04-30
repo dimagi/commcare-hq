@@ -392,6 +392,7 @@ HQ_APPS = (
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
     'corehq.apps.app_execution',
+    'corehq.apps.tombstones',
 
     # custom reports
     'custom.reports.mc',

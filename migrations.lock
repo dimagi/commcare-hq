@@ -1258,6 +1258,8 @@ toggles
  0004_alter_toggleeditpermission_tag_slug
  0005_alter_toggleeditpermission_tag_slug
  0006_alter_toggleeditpermission_tag_slug
+tombstones
+ 0001_create_tombstone_model
 translations
  0001_initial
  0002_transifexblacklist
