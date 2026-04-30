@@ -151,6 +151,24 @@ class CommCareMobileBuild(SyncSQLToCouchMixin, models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
+    def get_build(cls, version, build_number=None):
+        try:
+            if build_number is None:
+                build = cls.objects.filter(version=version).order_by('-time').first()
+                if build is None:
+                    raise cls.DoesNotExist()
+                return build
+            return cls.objects.get(version=version, build_number=build_number)
+        except cls.DoesNotExist:
+            raise KeyError(
+                "Can't find build {label}. For instructions on how to add it, see "
+                "https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/"
+                "README.rst#adding-commcare-builds-to-commcare-hq".format(
+                    label=BuildSpec(version=version, build_number=build_number)
+                )
+            )
+
+    @classmethod
     def _migration_get_fields(cls):
         return [
             "version",
