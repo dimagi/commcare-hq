@@ -11,7 +11,6 @@ from field_audit.models import AuditAction
 
 from dimagi.utils.parsing import json_format_date
 
-import corehq.apps.events.tasks as attendance_tracking_tasks
 from corehq import privileges
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
 from corehq.apps.app_manager.util import enable_usercase
@@ -25,9 +24,7 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.role_utils import (
-    archive_attendance_coordinator_role_for_domain,
     archive_custom_roles_for_domain,
-    enable_attendance_coordinator_role_for_domain,
     get_custom_roles_for_domain,
     reset_initial_roles_for_domain,
     unarchive_roles_for_domain,
@@ -43,7 +40,6 @@ from corehq.messaging.scheduling.tasks import (
     refresh_alert_schedule_instances,
     refresh_timed_schedule_instances,
 )
-from corehq.toggles import ATTENDANCE_TRACKING
 
 
 class BaseModifySubscriptionHandler(object):
@@ -200,7 +196,6 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
             privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
             privileges.PRACTICE_MOBILE_WORKERS: cls.response_practice_mobile_workers,
-            privileges.ATTENDANCE_TRACKING: cls.response_attendance_tracking,
         }
         privs_to_responses.update({
             p: cls.response_report_builder
@@ -259,11 +254,6 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         archive_custom_roles_for_domain(domain.name)
         reset_initial_roles_for_domain(domain.name)
         return True
-
-    @staticmethod
-    def response_attendance_tracking(domain, _new_plan_version):
-        archive_attendance_coordinator_role_for_domain(domain=domain.name)
-        attendance_tracking_tasks.close_mobile_worker_attendee_cases.delay(domain.name)
 
     @staticmethod
     def response_data_cleanup(domain, new_plan_version):
@@ -369,7 +359,6 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         privs_to_respones = {
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
-            privileges.ATTENDANCE_TRACKING: cls.response_add_attendance_coordinator_role,
             privileges.USERCASE: cls.response_enable_usercase,
         }
         privs_to_respones.update({
@@ -385,13 +374,6 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         - Un-archive custom roles.
         """
         unarchive_roles_for_domain(domain.name)
-        return True
-
-    @staticmethod
-    def response_add_attendance_coordinator_role(domain, new_plan_version):
-        if not ATTENDANCE_TRACKING.enabled(domain):
-            return True
-        enable_attendance_coordinator_role_for_domain(domain)
         return True
 
     @staticmethod

@@ -14,8 +14,9 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.models import (
     Application,
     CaseList,
+    CaseReferences,
+    CaseSaveReference,
     CaseSearch,
-    CaseSearchLabel,
     CaseSearchProperty,
     DetailColumn,
     DetailTab,
@@ -24,6 +25,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import get_simple_form
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
@@ -68,6 +70,36 @@ class BuildErrorsTest(TestCase):
         self._clean_unique_id(errors)
         self.assertIn(update_path_error, errors)
         self.assertIn(subcase_path_error, errors)
+
+    def test_save_to_case_create_requires_case_type_and_case_name(self, *args):
+        factory = AppFactory()
+        _, form = factory.new_basic_module('save_to_case', 'household')
+        # Use a minimal valid form source so validate_for_build() runs action checks.
+        # Save-to-case references are set explicitly below via case_references_data.
+        form.source = get_simple_form()
+        form.case_references_data = CaseReferences(
+            load={},
+            save={
+                '/data/save_to_case': CaseSaveReference(
+                    case_type='',
+                    properties=[],
+                    create=True,
+                    close=False,
+                )
+            },
+        )
+
+        errors = form.validate_for_build()
+        self.assertTrue(any(
+            error.get('type') == 'save_to_case_missing_case_type'
+            and error.get('case_tag') == '/data/save_to_case'
+            for error in errors
+        ))
+        self.assertTrue(any(
+            error.get('type') == 'save_to_case_missing_case_name'
+            and error.get('case_tag') == '/data/save_to_case'
+            for error in errors
+        ))
 
     def test_empty_module_errors(self, *args):
         factory = AppFactory(build_version='2.24.0')
@@ -351,7 +383,6 @@ class BuildErrorsTest(TestCase):
 
         module.case_details.short.multi_select = True
         module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
             data_registry="so_many_cases",
             data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE,
@@ -390,7 +421,6 @@ class BuildErrorsTest(TestCase):
             ))
         ])
         module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name='name')],
         )
 

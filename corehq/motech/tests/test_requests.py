@@ -288,7 +288,7 @@ class TestOAuth2CustomHeaders(TestCase):
             client_secret=f"client_secret_{random.randint(10_000, 99_999)}",
         )
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_session_with_custom_headers(self):
         self.connection_settings.custom_headers = {'X-Custom-Header': 'custom-value'}
         self.connection_settings.save()

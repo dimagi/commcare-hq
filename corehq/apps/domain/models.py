@@ -893,22 +893,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return 50000
 
 
-class TransferDomainRequest(models.Model):
-    active = models.BooleanField(default=True, blank=True)
-    request_time = models.DateTimeField(null=True, blank=True)
-    request_ip = models.CharField(max_length=80, null=True, blank=True)
-    confirm_time = models.DateTimeField(null=True, blank=True)
-    confirm_ip = models.CharField(max_length=80, null=True, blank=True)
-    transfer_guid = models.CharField(max_length=32, null=True, blank=True)
-
-    domain = models.CharField(max_length=256)
-    from_username = models.CharField(max_length=80)
-    to_username = models.CharField(max_length=80)
-
-    class Meta(object):
-        app_label = 'domain'
-
-
 class DomainAuditRecordEntry(models.Model):
     domain = models.TextField(unique=True, db_index=True)
     cp_n_downloads_custom_exports = models.BigIntegerField(default=0)
@@ -986,32 +970,6 @@ class OperatorCallLimitSettings(models.Model):
             MaxValueValidator(CALL_LIMIT_MAXIMUM)
         ]
     )
-
-
-class SMSAccountConfirmationSettings(models.Model):
-    PROJECT_NAME_DEFAULT = "CommCare HQ"
-    PROJECT_NAME_MAX_LENGTH = 30
-    CONFIRMATION_LINK_EXPIRY_DAYS_DEFAULT = 14
-    CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM = 1
-    CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM = 30
-
-    domain = models.CharField(max_length=256, db_index=True)
-    project_name = models.CharField(
-        default=PROJECT_NAME_DEFAULT,
-        max_length=PROJECT_NAME_MAX_LENGTH,
-    )
-    confirmation_link_expiry_time = models.IntegerField(
-        default=CONFIRMATION_LINK_EXPIRY_DAYS_DEFAULT,
-        validators=[
-            MinValueValidator(CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM),
-            MaxValueValidator(CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM),
-        ]
-    )
-
-    @staticmethod
-    def get_settings(domain):
-        domain_obj, _ = SMSAccountConfirmationSettings.objects.get_or_create(domain=domain)
-        return domain_obj
 
 
 class AppReleaseModeSetting(models.Model):

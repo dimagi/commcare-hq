@@ -3,6 +3,9 @@ import json
 from django.test.testcases import TestCase
 from django.urls import reverse
 
+from django_prbac.models import Role
+
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP, EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
@@ -76,6 +79,10 @@ class TestZapierIntegration(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestZapierIntegration, cls).setUpClass()
+        # Clear stale caches from prior test classes to ensure
+        # PRBAC roles and privilege checks use fresh data.
+        Role.get_cache().clear()
+        domain_has_privilege.clear(TEST_DOMAIN, 'zapier_integration')
         cls.domain = TEST_DOMAIN
         cls.domain_object, cls.web_user, cls.api_key = bootstrap_domain_for_zapier(cls.domain)
         cls.application = Application.new_app(cls.domain, 'Test App')

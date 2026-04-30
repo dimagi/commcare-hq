@@ -78,6 +78,18 @@ class TestCaseAPIGet(TestCase):
         assert res.status_code == 200
         assert res.json()['case_id'] == self.case_ids[0]
 
+    def test_get_single_case_restrict_fields(self):
+        url = reverse('case_api_detail', args=(self.domain, self.case_ids[0]))
+        res = self.client.get(f'{url}?fields=case_id,case_name')
+        assert res.status_code == 200
+        assert set(res.json().keys()) == {'case_id', 'case_name'}
+
+    def test_get_by_external_id_restrict_fields(self):
+        url = reverse('case_api_detail_ext', args=(self.domain, 'vera'))
+        res = self.client.get(f'{url}?fields=case_id,case_name')
+        assert res.status_code == 200
+        assert set(res.json().keys()) == {'case_id', 'case_name'}
+
     def test_get_single_case_by_external_id(self):
         case_id = '11111111-1111-4111-8111-111111111111'
         external_id = 'ext-get-case'

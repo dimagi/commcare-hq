@@ -81,3 +81,11 @@ def get_deid_transform_function(func_name):
     elif func_name == DEID_ID_TRANSFORM:
         from corehq.apps.export.models import DeIdHash
         return DeIdHash.get_deid
+
+
+def is_dashboard_feed(brief_export):
+    return (
+        brief_export['is_daily_saved_export']
+        and brief_export['export_format'] == 'html'
+        and not brief_export['is_odata_config']
+    )

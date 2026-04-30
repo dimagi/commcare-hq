@@ -94,6 +94,7 @@ export default {
                 key: caseName,
                 required: false,
                 save_only_if_edited: conditionalCaseUpdate.update_mode === 'edit',
+                conflictingDelete: conditionalCaseUpdate.conflicting_delete,
             }));
         });
 
@@ -124,12 +125,16 @@ export default {
             const path = caseProperty.path;
             const updateMode = caseProperty.save_only_if_edited ? 'edit' : 'always';
             if (key || path) {
+                const item = {question_path: path, update_mode: updateMode};
+                if (caseProperty.conflictingDelete) {
+                    item.conflicting_delete = true;
+                }
                 if (_(required).contains(key)) {
                     extraDict[key] = extraDict[key] || [];
-                    extraDict[key].push({question_path: path, update_mode: updateMode});
+                    extraDict[key].push(item);
                 } else {
                     propertyDict[key] = propertyDict[key] || [];
-                    propertyDict[key].push({question_path: path, update_mode: updateMode});
+                    propertyDict[key].push(item);
                 }
             }
         });

@@ -24,7 +24,7 @@
        <button class="btn btn-primary btn-sm">Compare</button>
      {% endif %}
    </p>
-@@ -34,7 +34,7 @@
+@@ -33,7 +33,7 @@
        {% if section %}<tr><th>{{ section }}</th></tr>{% endif %}
        {% for file in files %}
          <tr>
@@ -33,7 +33,7 @@
              {% if file.source %}
                <a class="toggle-next" href="#">{{ file.name }}</a>
              {% else %}
-@@ -44,13 +44,13 @@
+@@ -43,13 +43,13 @@
                {{ file.readable_name }}
              {% endif %}
            </td>

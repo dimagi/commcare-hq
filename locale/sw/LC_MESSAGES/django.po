@@ -210,16 +210,14 @@ msgstr "Tarehe Iliundwa"
 
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/domain/forms.py corehq/apps/events/forms.py
-#: corehq/apps/reports/standard/deployments.py
+#: corehq/apps/domain/forms.py corehq/apps/reports/standard/deployments.py
 #: corehq/messaging/scheduling/forms.py
 msgid "Start Date"
 msgstr "Tarehe ya Kuanza"
 
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/domain/forms.py corehq/apps/events/forms.py
-#: corehq/apps/export/forms.py
+#: corehq/apps/domain/forms.py corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
@@ -332,9 +330,7 @@ msgstr "Akaunti ya Malipo"
 #: corehq/apps/builds/templates/builds/all.html
 #: corehq/apps/builds/templates/builds/edit_menu.html
 #: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
 #: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
@@ -521,7 +517,6 @@ msgid "Update"
 msgstr "Sasisha"
 
 #: corehq/apps/accounting/forms.py corehq/apps/case_search/models.py
-#: corehq/apps/events/templates/events/event_attendees.html
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
@@ -563,6 +558,7 @@ msgstr "Tarehe ya mwisho lazima iwe baada ya tarehe ya kuanza."
 
 #: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/invoice.html
+#: corehq/apps/hqadmin/templates/hqadmin/user_audit_report.html
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
@@ -648,9 +644,7 @@ msgstr "Jina linahitajika kwa jukumu hili jipya."
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
-#: corehq/apps/enterprise/enterprise.py corehq/apps/events/forms.py
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/events/views.py
+#: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
@@ -823,7 +817,6 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
-#: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
 msgid "Phone Number"
@@ -1231,8 +1224,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
-#: corehq/apps/events/templates/events/edit_attendee.html
-#: corehq/apps/events/templates/events/event_attendees.html
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
@@ -1244,6 +1235,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
@@ -1934,11 +1926,7 @@ msgstr "Nambari ya Taarifa"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/enterprise/enterprise.py
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/events/views.py
 #: corehq/apps/hqadmin/templates/hqadmin/email_status.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/standard/cases/basic.py
@@ -4798,16 +4786,27 @@ msgstr "USD %s"
 #, python-brace-format
 msgid ""
 "Your Automatic Payment for CommCare Account {account_name} is scheduled in "
+"{num_days} day"
+msgid_plural ""
+"Your Automatic Payment for CommCare Account {account_name} is scheduled in "
 "{num_days} days"
-msgstr ""
+msgstr[0] ""
+"Malipo Yako ya Kiotomatiki kwa Akaunti ya CommCare {account_name} yamepangwa"
+" kufanyika ndani ya siku {num_days}"
+msgstr[1] ""
 "Malipo Yako ya Kiotomatiki kwa Akaunti ya CommCare {account_name} yamepangwa"
 " kufanyika ndani ya siku {num_days}"
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
 #, python-brace-format
 msgid ""
+"Your CommCare Billing Statement for {account_name} is due in {num_days} day"
+msgid_plural ""
 "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
-msgstr ""
+msgstr[0] ""
+"Taarifa yako ya Ankara ya CommCare kwa {account_name} inapaswa kulipwa ndani"
+" ya {num_days} siku"
+msgstr[1] ""
 "Taarifa yako ya Ankara ya CommCare kwa {account_name} inapaswa kulipwa ndani"
 " ya {num_days} siku"
 
@@ -4872,9 +4871,7 @@ msgstr "Watumiaji Walioungizwa:"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
@@ -4901,75 +4898,6 @@ msgstr "Watumiaji Walioungizwa:"
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 msgid "Action"
 msgstr "Kitendo"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Reference"
-msgstr "Rejeleo"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Constant"
-msgstr "Thabiti"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "SQL Statement"
-msgstr "Kauli ya SQL"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Sum"
-msgstr "Jumla"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Min"
-msgstr "Kiwango cha Chini"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Max"
-msgstr "Kiwango cha Juu"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Average"
-msgstr "Wastani"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Count"
-msgstr "Hesabu"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Count Unique Values"
-msgstr "Hesabu Thamani za Kipekee"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Has a nonzero sum (1 if sum is nonzero else 0)."
-msgstr "Ina jumla isiyo sifuri (1 ikiwa jumla si sifuri vinginevyo 0)."
-
-#: corehq/apps/aggregate_ucrs/models.py corehq/apps/reports/filters/select.py
-msgid "Month"
-msgstr "Mwezi"
-
-#: corehq/apps/aggregate_ucrs/models.py
-msgid "Week"
-msgstr "Wiki"
-
-#: corehq/apps/aggregate_ucrs/models.py
-msgid "no table"
-msgstr "hakuna jedwali"
-
-#: corehq/apps/aggregate_ucrs/templates/aggregate_ucrs/view_aggregate_ucr.html
-msgid "Rebuild Data"
-msgstr "Jenga Upya Data"
-
-#: corehq/apps/aggregate_ucrs/templates/aggregate_ucrs/view_aggregate_ucr.html
-msgid "Preview data"
-msgstr "Onyesha data"
-
-#: corehq/apps/aggregate_ucrs/views.py
-msgid "View Aggregate UCR"
-msgstr "Tazama UCR ya Muhtasari"
-
-#: corehq/apps/aggregate_ucrs/views.py
-msgid "Preview Aggregate UCR"
-msgstr "Onyesha Muhtasari wa UCR"
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
@@ -5536,8 +5464,6 @@ msgstr "Uendeshaji 10 wa Mwisho"
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
 #: corehq/apps/sms/templates/sms/global_gateway_list.html
-#: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
 #: corehq/apps/users/models.py
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
@@ -5601,7 +5527,6 @@ msgstr "Hali:"
 #: corehq/apps/domain/templates/error.html
 #: corehq/apps/integration/kyc/models.py
 #: corehq/apps/integration/payments/const.py
-#: corehq/apps/integration/templates/integration/web_app_integration_err.html
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
@@ -5883,10 +5808,6 @@ msgstr "Toleo la kujenga lililoombwa halijapatikana"
 msgid "Please log in to the app to check for an update."
 msgstr "Tafadhali ingia kwenye programu ili kuangalia kama kuna masasisho."
 
-#: corehq/apps/app_manager/exceptions.py
-msgid "Form Actions Diff failed to be applied successfully"
-msgstr "Tofauti ya Vitendo vya Fomu imeshindwa kutekelezwa kwa mafanikio"
-
 #: corehq/apps/app_manager/fields.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
 #: corehq/apps/sms/models.py corehq/apps/sms/views.py
@@ -5919,16 +5840,13 @@ msgstr "Chanzo cha Data"
 #: corehq/apps/app_manager/fields.py
 #: corehq/apps/cloudcare/templates/cloudcare/config.html
 #: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
 #: corehq/apps/linked_domain/const.py corehq/apps/reports/filters/forms.py
 #: corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
-#: corehq/apps/translations/forms.py
 msgid "Application"
 msgstr "Programu"
 
@@ -6154,7 +6072,6 @@ msgstr "Toleo la CommCare"
 
 #: corehq/apps/app_manager/forms.py
 #: corehq/apps/reports/standard/deployments.py
-#: corehq/apps/translations/forms.py
 msgid "Application Version"
 msgstr "Toleo la Programu"
 
@@ -6525,21 +6442,6 @@ msgstr ""
 msgid "Higher version {} already enabled for this application and location"
 msgstr ""
 "Toleo la juu zaidi {} tayari limewezeshwa kwa programu hii na eneo hili"
-
-#: corehq/apps/app_manager/models.py
-msgid ""
-"Version {} not released. Can not enable profiles for unreleased versions"
-msgstr ""
-"Toleo {} halijachapishwa. Haiwezi kuwezesha wasifu kwa matoleo ambayo "
-"hayajachapishwa"
-
-#: corehq/apps/app_manager/models.py
-msgid ""
-"Latest version available for this profile is {}, which is higher than this "
-"version. Disable any higher versions first."
-msgstr ""
-"Toleo jipya zaidi linalopatikana kwa wasifu huu ni {}, ambalo ni la juu "
-"kuliko toleo hili. Lemaza matoleo ya juu kwanza."
 
 #: corehq/apps/app_manager/models.py
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
@@ -8037,16 +7939,6 @@ msgstr "Weka maelezo ya programu hapa"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/download_index.html
-msgid "Revoke restriction"
-msgstr "Ondoa kizuizi"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/download_index.html
-msgid "Restrict to this version"
-msgstr "Zuia kwa toleo hili"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/download_index.html
 msgid "Bulk application translations"
 msgstr "Tafsiri za programu kwa wingi"
 
@@ -8422,9 +8314,6 @@ msgstr "Sakinisha CommCare"
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-#: corehq/apps/events/templates/events/edit_attendee.html
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/events/templates/events/events_list.html
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -8443,7 +8332,6 @@ msgstr "Sakinisha CommCare"
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/get_demo_modals.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/ko_feedback.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_feedback.html
-#: corehq/apps/integration/templates/integration/base_cloudcare_template.html
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
@@ -9654,6 +9542,34 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
+"              <strong>Save to Case question is missing a case type.</strong>\n"
+"              Please add the \"case_type\" property mapping for \"%(case_tag)s\"\n"
+"            "
+msgstr ""
+"\n"
+"              <strong>Swali la Hifadhi kwa Kesi halina aina ya kesi.</strong>\n"
+"              Tafadhali ongeza ramani ya sifa ya \"case_type\" kwa \"%(case_tag)s\"\n"
+"            "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              <strong>Save to Case question is missing a case name.</strong>\n"
+"              Please add the \"case_name\" property mapping for \"%(case_tag)s\"\n"
+"            "
+msgstr ""
+"\n"
+"              <strong>Swali la Hifadhi kwa Kesi halina jina la kesi.</strong>\n"
+"              Tafadhali ongeza ramani ya sifa ya \"case_name\" kwa \"%(case_tag)s\"\n"
+"            "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
+#, python-format
+msgid ""
+"\n"
 "              Multimedia case property \"%(path)s\" is not supported on apps on\n"
 "              or before v2.5.\n"
 "            "
@@ -9840,7 +9756,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_profiles_select.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_profiles_select.html
-#: corehq/apps/domain/forms.py
 msgid "Build Profile"
 msgstr "Manejo de Casos"
 
@@ -10212,18 +10127,19 @@ msgid ""
 "                but cases are not available for this form. Please either remove\n"
 "                the case reference or (1) make sure that the case list is set to\n"
 "                display the case list first and then form, and (2) make sure\n"
-"                that all forms in this case list update or btn-close a case (which  \n"
-"                means registration forms must go in a different case list).\n"
+"                that all forms in this case list update or btn-close a case\n"
+"                (which  means registration forms must go\n"
+"                in a different case list).\n"
 "              "
 msgstr ""
 "\n"
 "                Masharti yako ya kuonyesha fomu kwa fomu\n"
 "                <a href=\"%(form_url)s\">%(form_name)s</a> yanarejelea kesi,\n"
 "                lakini kesi hazipatikani kwa fomu hii. Tafadhali ondoa\n"
-"                rejea ya kesi au (1) hakikisha kwamba orodha ya kesi imewekwa\n"
-"                kuonyesha orodha ya kesi kwanza kisha fomu, na (2) hakikisha\n"
-"                kwamba fomu zote kwenye orodha hii ya kesi zinasasisha au kufunga kesi (ambayo\n"
-"                inamaanisha fomu za usajili lazima ziwe kwenye orodha tofauti ya kesi).\n"
+"                rejeleo la kesi au (1) hakikisha kuwa orodha ya kesi imewekwa kuonyesha orodha ya kesi kwanza kisha fomu, na (2) hakikisha\n"
+"                kuwa fomu zote kwenye orodha hii ya kesi zinasasisha au kufunga kesi\n"
+"                (ambayo inamaanisha fomu za usajili lazima ziwe\n"
+"                kwenye orodha tofauti ya kesi).\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
@@ -10233,15 +10149,16 @@ msgid ""
 "                are not available. Please either remove the case reference or\n"
 "                (1) make sure that the case list is set to display the case list\n"
 "                first and then form, and (2) make sure that all forms in this\n"
-"                case list update or btn-close a case (which means registration forms  \n"
-"                must go in a different case list).\n"
+"                case list update or btn-close a case (which means registration\n"
+"                forms  must go in a different case\n"
+"                list).\n"
 "              "
 msgstr ""
 "\n"
 "                Una sharti la kuonyesha linalorejelea kesi, lakini kesi\n"
-"                hazipatikani. Tafadhali ondoa rejea ya kesi au\n"
-"                (1) hakikisha kwamba orodha ya kesi imewekwa kuonyesha orodha ya kesi\n"
-"                kwanza kisha fomu, na (2) hakikisha kwamba fomu zote kwenye orodha hii ya kesi zinasasisha au kufunga kesi (ambayo inamaanisha fomu za usajili lazima ziwe kwenye orodha tofauti ya kesi).\n"
+"                hazipatikani. Tafadhali ondoa rejeleo la kesi au\n"
+"                (1) hakikisha kuwa orodha ya kesi imewekwa kuonyesha orodha ya kesi\n"
+"                kwanza kisha fomu, na (2) hakikisha kuwa fomu zote kwenye orodha hii ya kesi zinasasisha au kufunga kesi (ambayo inamaanisha fomu za usajili lazima ziwe kwenye orodha tofauti ya kesi).\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/custom_icon.html
@@ -10297,10 +10214,6 @@ msgstr "Chagua lugha."
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
 msgid "Select a format."
 msgstr "Chagua muundo."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
-msgid "Download only translations eligible for Transifex?"
-msgstr "Pakua tafsiri zinazostahili Transifex pekee?"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
 #: corehq/apps/locations/templates/locations/manage/partials/bulk_upload.html
@@ -10532,11 +10445,6 @@ msgstr "Fomu hii inafungua Kesi ya Mtoto kwenye Orodha ya Kesi"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
 msgid "Case List Configuration"
 msgstr "Usanidi wa Orodha ya Kesi"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-msgid "Override reference id: "
-msgstr "Id ya rejea ya kubatilisha: "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
@@ -10941,6 +10849,16 @@ msgid ""
 msgstr ""
 "Hifadhi jibu tu ikiwa utumaji wa fomu utabadilisha sifa kutoka thamani yake "
 "ya awali."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+msgid "This mapping was changed and deleted in separate sessions"
+msgstr "Ulinganishaji huu ulibadilishwa na kufutwa katika vikao tofauti"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+msgid "Dismiss this alert to keep the mapping."
+msgstr "Futa arifa hii ili kuhifadhi ulinganishaji."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
@@ -12715,16 +12633,6 @@ msgstr "Jina la Mfano wa Ingizo la Utafutaji"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Label for Searching"
-msgstr "Lebo ya Kutafuta"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Label for Searching Again"
-msgstr "Lebo ya Kutafuta Tena"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search Screen Title"
 msgstr "Kichwa cha Skrini ya Utafutaji"
 
@@ -13780,10 +13688,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
-msgid "Manage application profiles here."
-msgstr "Simamia profaili za programu hapa."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid ""
 "\n"
 "        Learn more about Application Profiles on our\n"
@@ -13813,10 +13717,6 @@ msgstr "Lugha Chaguo-msingi"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Upgrade to CommCare 2.30!"
 msgstr "Boresha hadi CommCare 2.30!"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
-msgid "Latest Enabled Version:"
-msgstr "Toleo la Mwisho Lililowezeshwa:"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Add Profile"
@@ -15108,14 +15008,6 @@ msgid "App diff"
 msgstr "Tofauti ya programu"
 
 #: corehq/apps/app_manager/views/releases.py
-msgid "Latest version for profile {} is now {}"
-msgstr "Toleo jipya zaidi kwa wasifu {} sasa ni {}"
-
-#: corehq/apps/app_manager/views/releases.py
-msgid "Latest release now available for profile {}"
-msgstr "Toleo jipya sasa linapatikana kwa wasifu {}"
-
-#: corehq/apps/app_manager/views/releases.py
 msgid "Reverted to version {log.info['version']}"
 msgstr "Imerejeshwa kwenye toleo {log.info['version']}"
 
@@ -16238,6 +16130,16 @@ msgstr ""
 "ambayo haijalindwa kwa nenosiri."
 
 #: corehq/apps/case_importer/util.py
+msgid ""
+"The file you uploaded contains links to another workbook, which cannot be "
+"processed. You must upload a file that does not contain links to another "
+"workbook."
+msgstr ""
+"Faili uliyoipakia ina viungo vya kitabu kingine cha kazi, ambacho hakiwezi "
+"kushughulikiwa. Lazima upakie faili isiyo na viungo vya kitabu kingine cha "
+"kazi."
+
+#: corehq/apps/case_importer/util.py
 msgid "The file uploaded has the following error: {}"
 msgstr "Faili uliyopakia ina hitilafu ifuatayo: {}"
 
@@ -16459,10 +16361,7 @@ msgstr "Ongeza XPath"
 #: corehq/apps/case_search/templates/case_search/profile_case_search.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_geo.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
-#: corehq/apps/reports/filters/simple.py
+#: corehq/apps/domain/forms.py corehq/apps/reports/filters/simple.py
 #: corehq/apps/reports/standard/cases/filters.py
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 #: corehq/apps/styleguide/examples/bootstrap5/select2_ajax_form.py
@@ -16471,8 +16370,6 @@ msgstr "Tafuta"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/custom_data_fields/edit_entity.py
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 msgid "Profile"
 msgstr "Wasifu"
 
@@ -17339,7 +17236,7 @@ msgstr "Mipangilio ya Matumizi"
 msgid "Phone Settings"
 msgstr "Mipangilio ya Simu"
 
-#: corehq/apps/commtrack/forms.py corehq/apps/translations/forms.py
+#: corehq/apps/commtrack/forms.py
 msgid "Submit"
 msgstr "Wasilisha"
 
@@ -20651,7 +20548,6 @@ msgstr "Tarehe ya sifa ya kesi (ya juu)"
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
-#: corehq/apps/events/forms.py corehq/apps/events/views.py
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
@@ -21494,20 +21390,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/forms.py
-msgid "Account confirmation link expiry"
-msgstr "Muda wa mwisho wa kiungo cha uthibitisho wa akaunti"
-
-#: corehq/apps/domain/forms.py
-msgid ""
-"\n"
-"            Default time (in days) for which account confirmation link will be valid.\n"
-"            "
-msgstr ""
-"\n"
-"            Muda chaguo-msingi (kwa siku) ambao kiungo cha uthibitisho wa akaunti kitakuwa halali.\n"
-"            "
-
-#: corehq/apps/domain/forms.py
 msgid "Call limit"
 msgstr "Kikomo cha simu"
 
@@ -21520,18 +21402,6 @@ msgstr ""
 "\n"
 "            Kikomo cha idadi ya simu zinazoruhusiwa kwa opereta kwa kila aina ya simu.\n"
 "            "
-
-#: corehq/apps/domain/forms.py
-msgid "Confirmation SMS project name"
-msgstr "Jina la mradi wa SMS ya uthibitisho"
-
-#: corehq/apps/domain/forms.py
-msgid ""
-"Name of the project to be used in SMS sent for account confirmation to "
-"users."
-msgstr ""
-"Jina la mradi litakalotumika kwenye SMS zinazotumwa kwa uthibitisho wa "
-"akaunti kwa watumiaji."
 
 #: corehq/apps/domain/forms.py
 msgid "Enable Release Mode"
@@ -22148,16 +22018,6 @@ msgid "Please select version"
 msgstr "Tafadhali chagua toleo"
 
 #: corehq/apps/domain/forms.py
-#, python-brace-format
-msgid "Restriction for profile {profile} set successfully."
-msgstr "Kizuizi kwa wasifu {profile} kimewekwa kikamilifu."
-
-#: corehq/apps/domain/forms.py
-#, python-brace-format
-msgid "Restriction for profile {profile} failed: {message}"
-msgstr "Kuweka kizuizi kwa wasifu {profile} kimeshindwa: {message}"
-
-#: corehq/apps/domain/forms.py
 msgid "Using project's timezone: {}"
 msgstr "Inatumia eneo la saa la mradi: {}"
 
@@ -22629,12 +22489,14 @@ msgid "You can only have 3 alerts activated at any one time"
 msgstr "Unaweza kuwa na arifa 3 pekee zimewashwa kwa wakati mmoja"
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/reports/filters/simple.py
 #: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
 #: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
 msgid "Start Time"
 msgstr "Muda wa Kuanza"
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/reports/filters/simple.py
 msgid "End Time"
 msgstr "Muda wa Kumaliza"
 
@@ -23235,6 +23097,22 @@ msgstr "Usajili wa Sasa"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#, python-format
+msgid ""
+"\n"
+"            For more information on Subscription Management & Billing, please\n"
+"            see the\n"
+"            <a href=\"%(help_url)s\" target=\"_blank\">Help Site</a>.\n"
+"          "
+msgstr ""
+"\n"
+"            Kwa maelezo zaidi kuhusu Usimamizi wa Usajili na Malipo, tafadhali\n"
+"            angalia\n"
+"            <a href=\"%(help_url)s\" target=\"_blank\">Tovuti ya Msaada</a>.\n"
+"          "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/views/accounting.py
 #: corehq/apps/styleguide/examples/bootstrap5/select2_manual_form.py
 msgid "Plan"
@@ -23645,21 +23523,6 @@ msgstr ""
 "    </h3>\n"
 "  "
 
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-#: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
-#: corehq/apps/translations/forms.py
-msgid "Add"
-msgstr "Ongeza"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
-msgid "Could not update!"
-msgstr "Haikuweza kusasishwa!"
-
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 msgid "Last Activity"
@@ -23674,6 +23537,11 @@ msgstr "Iliwashwa Tarehe : "
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 msgid "Deactivated On : "
 msgstr "Imezimwa Tarehe : "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
+#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
+msgid "Could not update!"
+msgstr "Haikuweza kusasishwa!"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
@@ -25472,28 +25340,57 @@ msgstr "Ingia"
 msgid "Log In :: CommCare HQ"
 msgstr "Ingia :: CommCare HQ"
 
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/urls.py
+msgid "Password Change Complete"
+msgstr "Mabadiliko ya Nenosiri Yamekamilika"
+
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+msgid "Your password was successfully changed."
+msgstr "Nenosiri lako limebadilishwa kwa mafanikio."
+
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+msgid "Sign In"
+msgstr "Ingia"
+
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 msgid ""
 "\n"
-"                No account? Sign up today, it's free!\n"
+"                No account? Get started for free.\n"
 "              "
 msgstr ""
 "\n"
-"                Huna akaunti? Jisajili leo, ni bure!\n"
+"                Huna akaunti? Anza bure.\n"
 "              "
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
-msgid "Learn more"
-msgstr "Jifunze zaidi"
+msgid ""
+"\n"
+"                    Data collection is just the start. Equip your frontline\n"
+"                    team with powerful service delivery apps that work where\n"
+"                    you work, even offline. No coding required.\n"
+"                  "
+msgstr ""
+"\n"
+"                    Ukusanyaji data ni mwanzo tu. Wekea timu yako ya mstari wa mbele\n"
+"                    programu zenye nguvu za utoaji huduma zinazofanya kazi popote\n"
+"                    unafanya kazi, hata bila mtandao. Hakuna uandishi wa msimbo unaohitajika.\n"
+"                  "
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
-msgid ""
-"about how CommCare can be your mobile solution for your frontline workforce."
-msgstr ""
-"kuhusu jinsi CommCare inaweza kuwa suluhisho lako la simu kwa wafanyakazi "
-"wako wa mstari wa mbele."
+msgid "Learn more about CommCare."
+msgstr "Jifunze zaidi kuhusu CommCare."
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
@@ -25556,11 +25453,11 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
 msgid ""
 "\n"
-"                  No account? Sign up today, it's free!\n"
+"                  No account? Get started for free.\n"
 "                "
 msgstr ""
 "\n"
-"                  Huna akaunti? Jisajili leo, ni bure!\n"
+"                  Huna akaunti? Anza bure.\n"
 "                "
 
 #: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
@@ -25581,25 +25478,6 @@ msgstr ""
 #: corehq/apps/users/forms.py
 msgid "Reset Password"
 msgstr "Badilisha Nenosiri"
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/urls.py
-msgid "Password Change Complete"
-msgstr "Mabadiliko ya Nenosiri Yamekamilika"
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-msgid "Your password was successfully changed."
-msgstr "Nenosiri lako limebadilishwa kwa mafanikio."
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
-msgid "Sign In"
-msgstr "Ingia"
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
 #: corehq/apps/domain/urls.py
@@ -26571,10 +26449,6 @@ msgstr "Bendera za Kipengele na Haki Maalum"
 #: corehq/apps/domain/views/releases.py
 msgid "Manage Releases By Location"
 msgstr "Dhibiti Matoleo Kwa Mahali"
-
-#: corehq/apps/domain/views/releases.py
-msgid "Manage Releases By App Profile"
-msgstr "Dhibiti Matoleo Kwa Wasifu wa Programu"
 
 #: corehq/apps/domain/views/settings.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
@@ -27550,437 +27424,6 @@ msgstr "Tafadhali chagua mradi."
 #: corehq/apps/enterprise/views.py
 msgid "Controlling domain set to {}."
 msgstr "Domeni inayoongoza imewekwa kuwa {}."
-
-#: corehq/apps/events/forms.py
-msgid "Per event day"
-msgstr "Kwa kila siku ya tukio"
-
-#: corehq/apps/events/forms.py
-msgid "Per entire event"
-msgstr "Kwa tukio lote"
-
-#: corehq/apps/events/forms.py
-msgid "Attendance target"
-msgstr "Lengo la Mahudhurio"
-
-#: corehq/apps/events/forms.py
-msgid "The expected amount of attendees."
-msgstr "Idadi inayotarajiwa ya wahudhuriaji."
-
-#: corehq/apps/events/forms.py
-msgid "Allow same day registration"
-msgstr "Ruhusu usajili siku hiyo hiyo"
-
-#: corehq/apps/events/forms.py
-msgid "Attendance recording options"
-msgstr "Chaguzi za kurekodi mahudhurio"
-
-#: corehq/apps/events/forms.py corehq/apps/events/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Attendees"
-msgstr "Wahudhuriaji"
-
-#: corehq/apps/events/forms.py
-msgid "Attendance Takers"
-msgstr "Wachukua Mahudhurio"
-
-#: corehq/apps/events/forms.py
-msgid "Please choose at least one Attendance Taker"
-msgstr "Tafadhali chagua angalau Mchukua Mahudhurio mmoja"
-
-#: corehq/apps/events/forms.py
-#, python-brace-format
-msgid "{self.title_prefix} Attendance Tracking Event"
-msgstr "{self.title_prefix} Tukio la Ufuatiliaji wa Mahudhurio"
-
-#: corehq/apps/events/forms.py
-msgid "Invalid Start Date"
-msgstr "Tarehe ya Kuanza Batili"
-
-#: corehq/apps/events/forms.py
-msgid "You cannot specify the start date in the past"
-msgstr "Huwezi kuweka tarehe ya kuanza iliyopita"
-
-#: corehq/apps/events/forms.py
-msgid "End Date cannot be before Start Date"
-msgstr "Tarehe ya Kumaliza haiwezi kuwa kabla ya Tarehe ya Kuanza"
-
-#: corehq/apps/events/forms.py
-msgid "You cannot specify the end date in the past"
-msgstr "Huwezi kuweka tarehe ya kumaliza iliyopita"
-
-#: corehq/apps/events/forms.py corehq/apps/locations/forms.py
-#: corehq/apps/users/forms.py
-msgid "All Locations"
-msgstr "Maeneo Yote"
-
-#: corehq/apps/events/forms.py corehq/apps/users/validation.py
-msgid "One or more of the locations was not found."
-msgstr "Eneo moja au zaidi halikupatikana."
-
-#: corehq/apps/events/forms.py corehq/apps/users/validation.py
-msgid "Primary location must be one of the user's locations"
-msgstr "Eneo kuu lazima liwe mojawapo ya maeneo ya mtumiaji"
-
-#: corehq/apps/events/forms.py corehq/apps/users/validation.py
-msgid "Primary location can't be empty if the user has any locations set"
-msgstr ""
-"Eneo kuu haliwezi kuwa tupu ikiwa mtumiaji ana maeneo yoyote yaliyowekwa"
-
-#: corehq/apps/events/models.py
-msgid "Attendee list under review"
-msgstr "Orodha ya wahudhuriaji inakaguliwa"
-
-#: corehq/apps/events/models.py
-msgid "Attendee list rejected"
-msgstr "Orodha ya wahudhuriaji imekataliwa"
-
-#: corehq/apps/events/models.py
-msgid "Attendee list accepted"
-msgstr "Orodha ya wahudhuriaji imekubaliwa"
-
-#: corehq/apps/events/models.py
-msgid "Event not started"
-msgstr "Tukio halijaanza"
-
-#: corehq/apps/events/models.py
-msgid "Event in progress"
-msgstr "Tukio linaendelea"
-
-#: corehq/apps/events/templates/events/edit_attendee.html
-msgid "Attendee"
-msgstr "Mhudhuriaji"
-
-#: corehq/apps/events/templates/events/edit_attendee.html
-#, python-format
-msgid ""
-"\n"
-"          This attendee cannot be deleted as\n"
-"          <strong>%(attendee_name)s</strong> has been tracked as having\n"
-"          attended one or more events.\n"
-"        "
-msgstr ""
-"\n"
-"          Huwezi kufuta mshiriki huyu kwa kuwa\n"
-"          <strong>%(attendee_name)s</strong> ameorodheshwa kama\n"
-"          alihudhuria tukio moja au zaidi.\n"
-"        "
-
-#: corehq/apps/events/templates/events/edit_attendee.html
-msgid "Update Attendee"
-msgstr "Sasisha Mhudhuriaji"
-
-#: corehq/apps/events/templates/events/edit_attendee.html
-msgid "Delete Attendee"
-msgstr "Futa Mhudhuriaji"
-
-#: corehq/apps/events/templates/events/edit_attendee.html
-#, python-format
-msgid ""
-"\n"
-"                Are you sure you want to permanently delete\n"
-"                <strong>%(attendee_name)s</strong>?\n"
-"              "
-msgstr ""
-"\n"
-"                Una uhakika unataka kufuta kabisa\n"
-"                <strong>%(attendee_name)s</strong>?\n"
-"              "
-
-#: corehq/apps/events/templates/events/edit_attendee.html
-#, python-format
-msgid ""
-"\n"
-"                This action will delete %(attendee_name)s as a potential\n"
-"                attendee and will remove them from all future events that they\n"
-"                are currently enlisted in.\n"
-"              "
-msgstr ""
-"\n"
-"                Hatua hii itafuta %(attendee_name)s kama mshiriki mtarajiwa\n"
-"                na itawaondoa kwenye matukio yote yajayo ambayo\n"
-"                wamejiandikisha kwa sasa.\n"
-"              "
-
-#: corehq/apps/events/templates/events/edit_attendee.html
-msgid ""
-"\n"
-"                This action cannot be undone.\n"
-"              "
-msgstr ""
-"\n"
-"                Hatua hii haiwezi kutenduliwa.\n"
-"              "
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid ""
-"\n"
-"      Known potential attendees who can be invited to participate in Attendance\n"
-"      Tracking Events.\n"
-"    "
-msgstr ""
-"\n"
-"      Washiriki watarajiwa wanaojulikana ambao wanaweza kualikwa kushiriki kwenye Matukio ya Ufuatiliaji wa Mahudhurio.\n"
-"    "
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid "Create Potential Attendee"
-msgstr "Unda Mhudhuriaji Mtarajiwa"
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid "Enable Mobile Worker Attendees"
-msgstr "Wezesha Wahudhuriaji Wafanyakazi wa Simu"
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid "New Potential Attendees"
-msgstr "Wahudhuriaji Wapya Watarajiwa"
-
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "Pending..."
-msgstr "Inasubiri..."
-
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "NEW"
-msgstr "MPYA"
-
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "ERROR"
-msgstr "KOSA"
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid "Potential Attendees"
-msgstr "Wahudhuriaji Watarajiwa"
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid "Loading potential attendees ..."
-msgstr "Inapakia wahudhuriaji watarajiwa ..."
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid ""
-"\n"
-"            <strong>There was an issue contacting the server.</strong>\n"
-"            Please check your internet connection. If this issue continues,\n"
-"            please\n"
-"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"\n"
-"              >report an issue</a\n"
-"            >.\n"
-"          "
-msgstr ""
-"\n"
-"            <strong>Kulikuwa na tatizo kuwasiliana na seva.</strong>\n"
-"            Tafadhali angalia muunganisho wako wa intaneti. Ikiwa tatizo hili litaendelea,\n"
-"            tafadhali\n"
-"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"\n"
-"              >ripoti tatizo</a\n"
-"            >.\n"
-"          "
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid ""
-"\n"
-"            You currently have no potential attendees.\n"
-"          "
-msgstr ""
-"\n"
-"            Huna wahudhuriaji watarajiwa kwa sasa.\n"
-"          "
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid ""
-"\n"
-"            No matching potential attendees found.\n"
-"          "
-msgstr ""
-"\n"
-"            Hakuna wahudhuriaji watarajiwa waliolingana waliopatikana.\n"
-"          "
-
-#: corehq/apps/events/templates/events/events_list.html
-msgid ""
-"\n"
-"          Attendance tracking events can be used to track attendance of all the\n"
-"          selected attendees.\n"
-"        "
-msgstr ""
-"\n"
-"          Matukio ya ufuatiliaji wa mahudhurio yanaweza kutumika kufuatilia mahudhurio ya washiriki wote waliochaguliwa.\n"
-"        "
-
-#: corehq/apps/events/templates/events/events_list.html
-msgid "Add new event"
-msgstr "Ongeza tukio jipya"
-
-#: corehq/apps/events/templates/events/events_list.html
-msgid "View Attendees"
-msgstr "Tazama Wahudhuriaji"
-
-#: corehq/apps/events/templates/events/events_list.html
-msgid "No Attendees Yet"
-msgstr "Bado Hakuna Wahudhuriaji"
-
-#: corehq/apps/events/templates/events/events_list.html
-msgid "Date Attended"
-msgstr "Tarehe ya Kuhudhuria"
-
-#: corehq/apps/events/templates/events/events_list.html
-msgid "Attendee Name"
-msgstr "Jina la Mhudhuriaji"
-
-#: corehq/apps/events/templates/events/events_list.html
-msgid "Event has not yet started"
-msgstr "Tukio bado halijaanza"
-
-#: corehq/apps/events/templates/events/new_event.html
-msgid ""
-"\n"
-"      There was a problem fetching the list of attendees and attendance takers.\n"
-"      Please try again.\n"
-"    "
-msgstr ""
-"\n"
-"      Kulikuwa na tatizo kupata orodha ya washiriki na wachukua mahudhurio.\n"
-"      Tafadhali jaribu tena.\n"
-"    "
-
-#: corehq/apps/events/views.py
-#: corehq/apps/users/templates/users/roles_and_permissions.html
-#: corehq/privileges.py corehq/tabs/tabclasses.py
-msgid "Attendance Tracking"
-msgstr "Ufuatiliaji wa Mahudhurio"
-
-#: corehq/apps/events/views.py
-msgid "Attendance Tracking Events"
-msgstr "Matukio ya Ufuatiliaji wa Mahudhurio"
-
-#: corehq/apps/events/views.py
-msgid "events per page"
-msgstr "matukio kwa kila ukurasa"
-
-#: corehq/apps/events/views.py
-msgid "You have no events"
-msgstr "Huna matukio"
-
-#: corehq/apps/events/views.py
-msgid "Loading events"
-msgstr "Inapakia matukio"
-
-#: corehq/apps/events/views.py corehq/tabs/tabclasses.py
-msgid "Events"
-msgstr "Matukio"
-
-#: corehq/apps/events/views.py
-msgid "Start date"
-msgstr "Tarehe ya kuanza"
-
-#: corehq/apps/events/views.py
-msgid "End date"
-msgstr "Tarehe ya mwisho"
-
-#: corehq/apps/events/views.py
-msgid "Attendance Target"
-msgstr "Lengo la Mahudhurio"
-
-#: corehq/apps/events/views.py
-msgid "Total attendance"
-msgstr "Jumla ya mahudhurio"
-
-#: corehq/apps/events/views.py
-msgid "Total attendance takers"
-msgstr "Jumla ya wachukua mahudhurio"
-
-#: corehq/apps/events/views.py
-msgid "Add Attendance Tracking Event"
-msgstr "Ongeza Tukio la Ufuatiliaji wa Mahudhurio"
-
-#: corehq/apps/events/views.py
-msgid "Add New Event"
-msgstr "Ongeza Tukio Jipya"
-
-#: corehq/apps/events/views.py
-msgid "Edit Attendance Tracking Event"
-msgstr "Hariri Tukio la Ufuatiliaji wa Mahudhurio"
-
-#: corehq/apps/events/views.py
-msgid "Edit Event"
-msgstr "Hariri Tukio"
-
-#: corehq/apps/events/views.py
-msgid "Attendees per page"
-msgstr "Wahudhuriaji kwa kila ukurasa"
-
-#: corehq/apps/events/views.py
-msgid "You have no attendees"
-msgstr "Huna wahudhuriaji"
-
-#: corehq/apps/events/views.py
-msgid "Loading attendees"
-msgstr "Inapakia wahudhuriaji"
-
-#: corehq/apps/events/views.py
-msgid "Form validation failed: {}"
-msgstr "Uthibitishaji wa fomu umeshindwa: {}"
-
-#: corehq/apps/events/views.py
-msgid "Edit Attendee"
-msgstr "Hariri Mshiriki"
-
-#: corehq/apps/events/views.py
-msgid "Enabling mobile worker attendees status"
-msgstr "Kuwezesha hali ya washiriki wafanyakazi wa simu"
-
-#: corehq/apps/events/views.py
-msgid "Disabling mobile worker attendees status"
-msgstr "Kuzima hali ya washiriki wafanyakazi wa simu"
-
-#: corehq/apps/events/views.py
-msgid "Processing Mobile Workers. This may take some time..."
-msgstr "Inachakata Wafanyakazi wa Simu. Hii inaweza kuchukua muda..."
-
-#: corehq/apps/events/views.py
-msgid "User conversion failed for some reason and we have noted this failure."
-msgstr ""
-"Ubadilishaji wa mtumiaji umeshindikana kwa sababu fulani na tumerekodi "
-"kushindwa huku."
-
-#: corehq/apps/events/views.py
-msgid "Go back to view attendees"
-msgstr "Rudi kutazama washiriki"
-
-#: corehq/apps/events/views.py
-msgid "Mobile workers can now also be selected to attend events."
-msgstr "Wafanyakazi wa simu sasa wanaweza pia kuchaguliwa kuhudhuria matukio."
-
-#: corehq/apps/events/views.py
-msgid "Enabling mobile workers complete!"
-msgstr "Kuwezesha wafanyakazi wa simu kumekamilika!"
-
-#: corehq/apps/events/views.py
-msgid "Enabling mobile worker attendees in progress. This may take a while..."
-msgstr ""
-"Kuwezesha washiriki wafanyakazi wa simu kunaendelea. Hii inaweza kuchukua "
-"muda..."
-
-#: corehq/apps/events/views.py
-msgid "Mobile workers are now removed from the potential attendees list."
-msgstr ""
-"Wafanyakazi wa simu sasa wameondolewa kwenye orodha ya washiriki watarajiwa."
-
-#: corehq/apps/events/views.py
-msgid "Disabling mobile workers complete!"
-msgstr "Kuzima wafanyakazi wa simu kumekamilika!"
-
-#: corehq/apps/events/views.py
-msgid ""
-"Disabling mobile worker attendees in progress. This may take a while..."
-msgstr ""
-"Kuzima washiriki wafanyakazi wa simu kunaendelea. Hii inaweza kuchukua "
-"muda..."
 
 #: corehq/apps/export/det/schema_generator.py
 #, python-brace-format
@@ -29479,6 +28922,11 @@ msgstr "Onyesha Chaguo"
 msgid "Hide Options"
 msgstr "Ficha Chaguo"
 
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+#: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
+msgid "Add"
+msgstr "Ongeza"
+
 #: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
 msgid ""
 "\n"
@@ -30857,11 +30305,6 @@ msgstr "Workbook haina karatasi inayoitwa types"
 
 #: corehq/apps/fixtures/upload/run_upload.py
 #, python-brace-format
-msgid "type {lookup_table_name} is not defined as global"
-msgstr "aina {lookup_table_name} haijaainishwa kama ya kimataifa"
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
 msgid ""
 "The table structure of '{tag}' cannot be changed while also modifying its "
 "data. If you need to do both, include all existing rows in the upload or "
@@ -31001,14 +30444,6 @@ msgstr "Sehemu maalum ya mtumiaji"
 msgid "User's assigned location"
 msgstr "Eneo lililopangiwa la mtumiaji"
 
-#: corehq/apps/geospatial/forms.py corehq/apps/geospatial/models.py
-msgid "Radial Algorithm"
-msgstr "Algoriti ya Mduara"
-
-#: corehq/apps/geospatial/forms.py corehq/apps/geospatial/models.py
-msgid "Road Network Algorithm"
-msgstr "Algoriti ya Mtandao wa Barabara"
-
 #: corehq/apps/geospatial/forms.py
 msgid "Fetch mobile worker location data from custom field"
 msgstr "Chukua data ya eneo la mfanyakazi wa simu kutoka kwenye sehemu maalum"
@@ -31086,38 +30521,6 @@ msgstr ""
 "kesi. Acha wazi ili usijaze."
 
 #: corehq/apps/geospatial/forms.py
-msgid "Select travel mode"
-msgstr "Chagua aina ya usafiri"
-
-#: corehq/apps/geospatial/forms.py
-msgid ""
-"The travel mode of the users. Consider this when specifying the max travel "
-"time to each case."
-msgstr ""
-"Aina ya usafiri wa watumiaji. Fikiria hili unapoweka muda wa juu wa kusafiri"
-" kwa kila kesi."
-
-#: corehq/apps/geospatial/forms.py
-msgid "Disbursement algorithm"
-msgstr "Algoriti ya ugawaji"
-
-#: corehq/apps/geospatial/forms.py
-msgid ""
-"Uses the straight-line distance between users and cases to determine  "
-"allocation of cases. Ideal for when map road coverage is poor."
-msgstr ""
-"Inatumia umbali wa mstari wa moja kwa moja kati ya watumiaji na kesi ili "
-"kubaini ugawaji wa kesi. Inafaa zaidi pale ramani ya barabara haijakamilika."
-
-#: corehq/apps/geospatial/forms.py
-msgid ""
-"Takes distance along roads between users and cases into account to determine"
-" allocation of cases. Ideal for when map road coverage is good."
-msgstr ""
-"Inazingatia umbali wa barabarani kati ya watumiaji na kesi ili kubaini "
-"ugawaji wa kesi. Inafaa zaidi pale ramani ya barabara imekamilika."
-
-#: corehq/apps/geospatial/forms.py
 msgid "Minimum cases assigned per user"
 msgstr "Kesi za chini kabisa zinazogawiwa kwa kila mtumiaji"
 
@@ -31138,18 +30541,6 @@ msgstr ""
 " kama hutaki kuweka kikomo cha juu."
 
 #: corehq/apps/geospatial/forms.py
-msgid "Enter mapbox token"
-msgstr "Weka tokeni ya mapbox"
-
-#: corehq/apps/geospatial/forms.py
-msgid ""
-"Enter your Mapbox API token here. Make sure your token has the correct scope"
-" configured for use of the Mapbox Matrix API."
-msgstr ""
-"Weka tokeni yako ya API ya Mapbox hapa. Hakikisha tokeni yako ina kiwango "
-"sahihi kilichosanidiwa kwa matumizi ya Mapbox Matrix API."
-
-#: corehq/apps/geospatial/forms.py
 msgid "Flag assigned cases"
 msgstr "Weka alama kwenye kesi zilizogawiwa"
 
@@ -31168,10 +30559,6 @@ msgstr "Vigezo vya Ramani ya Kuweka Makundi ya Kesi"
 #: corehq/apps/geospatial/forms.py
 msgid "Algorithms"
 msgstr "Algoriti"
-
-#: corehq/apps/geospatial/forms.py
-msgid "Test API Key"
-msgstr "Jaribu API Key"
 
 #: corehq/apps/geospatial/forms.py
 msgid "Location Data Properties"
@@ -31221,19 +30608,14 @@ msgid "Value for target group count required"
 msgstr "Thamani ya idadi lengwa ya makundi inahitajika"
 
 #: corehq/apps/geospatial/forms.py
-msgid "Mapbox API token required"
-msgstr "Tokeni ya API ya Mapbox inahitajika"
-
-#: corehq/apps/geospatial/forms.py
 msgid "The maximum cases per user cannot be less than the minimum specified"
 msgstr ""
 "Kesi za juu kwa kila mtumiaji haziwezi kuwa chini ya kiwango cha chini "
 "kilichowekwa"
 
 #: corehq/apps/geospatial/models.py
-#, python-format
-msgid "%(value)s is not a valid travel mode"
-msgstr "%(value)s si aina halali ya usafiri"
+msgid "Radial Algorithm"
+msgstr "Algoriti ya Mduara"
 
 #: corehq/apps/geospatial/models.py
 msgid "Min/Max Grouping"
@@ -31242,18 +30624,6 @@ msgstr "Kugawa kwa Kiwango cha Chini/Juu"
 #: corehq/apps/geospatial/models.py
 msgid "Target Size Grouping"
 msgstr "Kugawa kwa Ukubwa Lengwa"
-
-#: corehq/apps/geospatial/models.py
-msgid "Walking"
-msgstr "Kutembea kwa miguu"
-
-#: corehq/apps/geospatial/models.py
-msgid "Cycling"
-msgstr "Kuendesha baiskeli"
-
-#: corehq/apps/geospatial/models.py
-msgid "Driving"
-msgstr "Kuendesha gari"
 
 #: corehq/apps/geospatial/reports.py
 msgid "Microplanning Map"
@@ -32475,7 +31845,8 @@ msgstr ""
 msgid "Confirm the username"
 msgstr "Thibitisha jina la mtumiaji"
 
-#: corehq/apps/hqadmin/forms.py corehq/apps/integration/payments/filters.py
+#: corehq/apps/hqadmin/forms.py corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/payments/filters.py
 msgid "Verified by"
 msgstr "Imethibitishwa na"
 
@@ -32533,13 +31904,21 @@ msgstr "Aina ya Hati"
 msgid "Domain"
 msgstr "Domain"
 
-#: corehq/apps/hqadmin/reports.py
+#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/simple.py
 msgid "IP Address"
 msgstr "Anwani ya IP"
 
-#: corehq/apps/hqadmin/reports.py
-msgid "Resource"
-msgstr "Rasilimali"
+#: corehq/apps/hqadmin/reports.py corehq/apps/notifications/forms.py
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
+#: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
+#: corehq/motech/generic_inbound/views.py corehq/motech/views.py
+msgid "URL"
+msgstr "URL"
+
+#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/simple.py
+#: corehq/motech/views.py
+msgid "Status Code"
+msgstr "Nambari ya Hali"
 
 #: corehq/apps/hqadmin/reports.py
 msgid ""
@@ -32550,14 +31929,66 @@ msgstr ""
 "watumiaji na domain zote kungezidi mipaka ya mfumo."
 
 #: corehq/apps/hqadmin/reports.py
+msgid ""
+"The end time cannot be earlier than the start time when both dates are the "
+"same. Please adjust your time range."
+msgstr ""
+"Muda wa mwisho hauwezi kuwa kabla ya muda wa kuanza ikiwa tarehe zote ni "
+"sawa. Tafadhali rekebisha muda wako."
+
+#: corehq/apps/hqadmin/reports.py
+msgid ""
+"Invalid IP address filter. Use single IPs, CIDR notation (/8, /16, /24, "
+"/32), or comma-separated combinations."
+msgstr ""
+"Kichujio cha anwani ya IP si sahihi. Tumia IP moja, noti ya CIDR (/8, /16, "
+"/24, /32), au mchanganyiko uliotenganishwa kwa koma."
+
+#: corehq/apps/hqadmin/reports.py
+msgid ""
+"Invalid status code filter. Use comma-separated integers (e.g. 200, 403, "
+"500)."
+msgstr ""
+"Kichujio cha msimbo wa hali si sahihi. Tumia nambari zilizotenganishwa kwa "
+"koma (mf. 200, 403, 500)."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid "Note: URL paths for this domain typically start with \"{domain_prefix}\"."
+msgstr "Kumbuka: Njia za URL za domain hii kawaida huanza na \"{domain_prefix}\"."
+
+#: corehq/apps/hqadmin/reports.py
 #, python-brace-format
 msgid ""
-"Your search returned more than {max_records} records. Please narrow down "
-"your search by selecting a specific user, domain, or a shorter date range."
+"Showing {max_records} results, but there are additional events within the "
+"same minute that are not shown. Try narrowing by username, domain, IP "
+"address, or other filters to see all results."
 msgstr ""
-"Utafutaji wako umerejesha rekodi zaidi ya {max_records}. Tafadhali punguza "
-"utafutaji wako kwa kuchagua mtumiaji maalum, domain, au kipindi kifupi cha "
-"tarehe."
+"Inaonyesha matokeo {max_records}, lakini kuna matukio mengine ndani ya "
+"dakika hiyo hiyo ambayo hayaonyeshwi. Jaribu kupunguza kwa jina la mtumiaji,"
+" domain, anwani ya IP, au vichujio vingine ili kuona matokeo yote."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid ""
+"Showing {num_rows} events through {cutoff_time}. Your query returned more "
+"than {max_records} results; the end date/time has been adjusted. To see "
+"later events, set the start time to {cutoff_time}."
+msgstr ""
+"Inaonyesha matukio {num_rows} hadi {cutoff_time}. Utafutaji wako umerejesha "
+"matokeo zaidi ya {max_records}; tarehe/muda wa mwisho umebadilishwa. Ili "
+"kuona matukio ya baadaye, weka muda wa kuanza kuwa {cutoff_time}."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid ""
+"Note: {dropped} additional results within the cutoff minute were excluded to"
+" align with a clean minute boundary. Adding filters (IP address, URL path, "
+"status code) may help narrow results."
+msgstr ""
+"Kumbuka: Matokeo ya ziada {dropped} ndani ya dakika ya mwisho yaliondolewa "
+"ili kulinganisha na mpaka safi wa dakika. Kuongeza vichujio (anwani ya IP, "
+"njia ya URL, msimbo wa hali) kunaweza kusaidia kupunguza matokeo."
 
 #: corehq/apps/hqadmin/reports.py corehq/tabs/tabclasses.py
 msgid "User List"
@@ -32802,8 +32233,12 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-msgid "%(user_name)s's Information"
-msgstr "Taarifa za %(user_name)s"
+msgid ""
+"%(user_name)s's\n"
+"      Information"
+msgstr ""
+"Taarifa za\n"
+"      %(user_name)s"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "This account is disabled."
@@ -32822,10 +32257,65 @@ msgid "Is Superuser"
 msgstr "Ni Mtumiaji Mkuu"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+msgid "Offboard Staff User"
+msgstr "Ondoa Mtumiaji wa Wafanyakazi"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 msgid "Domains"
 msgstr "Nyanja"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+msgid ""
+"\n"
+"                The following will be removed from\n"
+"                <strong>%(user_name)s</strong>:\n"
+"              "
+msgstr ""
+"\n"
+"                Yafuatayo yataondolewa kutoka kwa\n"
+"                <strong>%(user_name)s</strong>:\n"
+"              "
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+msgid ""
+"\n"
+"                    %(count)s domain membership\n"
+"                  "
+msgid_plural ""
+"\n"
+"                    %(count)s domain memberships\n"
+"                  "
+msgstr[0] ""
+"\n"
+"                        Msaada wa %(count)s\n"
+"                    "
+msgstr[1] ""
+"\n"
+"                        Msaada wa %(count)s\n"
+"                    "
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+msgid "Superuser access"
+msgstr "Ufikiaji wa superuser"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+msgid "Accounting admin access"
+msgstr "Ufikiaji wa msimamizi wa uhasibu"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+msgid ""
+"\n"
+"                  Type <strong>%(confirm_text)s</strong> to confirm\n"
+"                "
+msgstr ""
+"\n"
+"                  Andika <strong>%(confirm_text)s</strong> kuthibitisha\n"
+"                "
 
 #: corehq/apps/hqadmin/views/data.py
 msgid "Missing Form XML"
@@ -32895,6 +32385,36 @@ msgid ""
 msgstr ""
 "Jibu lisilotarajiwa la kurejesha {}: {}. Ikiwa unaamini hii ni hitilafu "
 "tafadhali ripoti tatizo."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+msgid "User '{username}' not found."
+msgstr "Mtumiaji '{username}' hakupatikana."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+msgid "{count} domain membership"
+msgid_plural "{count} domain memberships"
+msgstr[0] "Sasisha Uanachama wa Eneo"
+msgstr[1] "Sasisha Uanachama wa Eneo"
+
+#: corehq/apps/hqadmin/views/users.py
+msgid "superuser access"
+msgstr "ufikiaji wa superuser"
+
+#: corehq/apps/hqadmin/views/users.py
+msgid "accounting admin access"
+msgstr "ufikiaji wa msimamizi wa uhasibu"
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+msgid "Removed {items} from user '{username}'."
+msgstr "Imeondoa {items} kutoka kwa mtumiaji '{username}'."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+msgid "User '{username}' has no access to remove."
+msgstr "Mtumiaji '{username}' hana ufikiaji wa kuondoa."
 
 #: corehq/apps/hqadmin/views/users.py
 #, python-format
@@ -33113,11 +32633,6 @@ msgstr ""
 "      <a href=\"%(app_settings_url)s \" target=\"_blank\">Tafsiri za Programu kwa Wingi</a>.\n"
 "    </p>\n"
 "  "
-
-#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
-#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
-msgid "Transifex"
-msgstr "Transifex"
 
 #: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
 #: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
@@ -35586,11 +35101,13 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                      %(p)s per page\n"
+"                      %(p)s\n"
+"                      per page\n"
 "                    "
 msgstr ""
 "\n"
-"                      %(p)s kwa kila ukurasa\n"
+"                      %(p)s\n"
+"                      kwa kila ukurasa\n"
 "                    "
 
 #: corehq/apps/hqwebapp/templates/password_change.html
@@ -35753,96 +35270,6 @@ msgid " to "
 msgstr " hadi "
 
 #: corehq/apps/integration/forms.py
-msgid "Enable AWS Connect Dialer"
-msgstr "Wezesha AWS Connect Dialer"
-
-#: corehq/apps/integration/forms.py
-msgid "AWS Instance ID"
-msgstr "Kitambulisho cha Kesi ya AWS"
-
-#: corehq/apps/integration/forms.py
-msgid ""
-"Enter \"yourinstance\" if your AWS Connect account is\n"
-"                        \"https://yourinstance.awsapps.com/connect/\" "
-msgstr ""
-"Weka \"yourinstance\" ikiwa akaunti yako ya AWS Connect ni\n"
-"                        \"https://yourinstance.awsapps.com/connect/\" "
-
-#: corehq/apps/integration/forms.py
-msgid "Dialer Page Title"
-msgstr "Kichwa cha Ukurasa wa Kipiga Simu"
-
-#: corehq/apps/integration/forms.py
-msgid "A title for the Dialer Page header"
-msgstr "Kichwa kwa kichwa cha ukurasa wa Kipiga Simu"
-
-#: corehq/apps/integration/forms.py
-msgid "Dialer Page Subtitle"
-msgstr "Kichwa kidogo cha Ukurasa wa Kipiga Simu"
-
-#: corehq/apps/integration/forms.py
-msgid "A subtitle for the Dialer Page header"
-msgstr "Kichwa kidogo kwa kichwa cha ukurasa wa Kipiga Simu"
-
-#: corehq/apps/integration/forms.py
-msgid "Enable GAEN OTP server integration"
-msgstr "Washa muunganiko wa seva ya GAEN OTP"
-
-#: corehq/apps/integration/forms.py
-msgid "GAEN Server Type"
-msgstr "Aina ya Seva ya GAEN"
-
-#: corehq/apps/integration/forms.py corehq/apps/reports/forms.py
-msgid "Select server type"
-msgstr "Chagua aina ya seva"
-
-#: corehq/apps/integration/forms.py corehq/apps/integration/models.py
-msgid "NearForm OTP Server"
-msgstr "Seva ya OTP ya NearForm"
-
-#: corehq/apps/integration/forms.py corehq/apps/integration/models.py
-msgid "APHL Exposure Notifications"
-msgstr "Arifa za Mfiduo za APHL"
-
-#: corehq/apps/integration/forms.py
-msgid "Server Endpoint"
-msgstr "Mwisho wa Seva"
-
-#: corehq/apps/integration/forms.py
-msgid "Server Auth Token"
-msgstr "Tokeni ya Uthibitisho ya Seva"
-
-#: corehq/apps/integration/forms.py
-msgid "Enable in Web Apps"
-msgstr "Washa kwenye Programu za Wavuti"
-
-#: corehq/apps/integration/forms.py
-msgid "External Callout URL"
-msgstr "URL ya Mwito wa Nje"
-
-#: corehq/apps/integration/forms.py
-msgid "Enter the base URL for callouts that should be signed"
-msgstr "Weka URL ya msingi kwa miito inayopaswa kusainiwa"
-
-#: corehq/apps/integration/forms.py corehq/apps/settings/views.py
-#: corehq/messaging/smsbackends/telerivet/forms.py
-#: corehq/messaging/smsbackends/trumpia/forms.py
-msgid "API Key"
-msgstr "Ufunguo wa API"
-
-#: corehq/apps/integration/forms.py
-msgid "API Key for CommCare in the external system"
-msgstr "Ufunguo wa API kwa CommCare kwenye mfumo wa nje"
-
-#: corehq/apps/integration/forms.py
-msgid "API Secret"
-msgstr "Siri ya API"
-
-#: corehq/apps/integration/forms.py
-msgid "API secret for message signing"
-msgstr "Siri ya API kwa usainishaji wa ujumbe"
-
-#: corehq/apps/integration/forms.py
 msgid "Enable Simprints Integration"
 msgstr "Washa Muunganiko wa Simprints"
 
@@ -35857,17 +35284,17 @@ msgid "Module ID"
 msgstr "Kitambulisho cha Moduli"
 
 #: corehq/apps/integration/kyc/filters.py
-#: corehq/apps/integration/kyc/tables.py
-#: corehq/apps/integration/payments/tables.py
-msgid "KYC Status"
-msgstr "Hali ya KYC"
-
-#: corehq/apps/integration/kyc/filters.py
 #: corehq/apps/integration/payments/filters.py
 #: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
 #: corehq/apps/userreports/reports/filters/factory.py
 msgid "Show all"
 msgstr "Onyesha zote"
+
+#: corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/kyc/tables.py
+#: corehq/apps/integration/payments/tables.py
+msgid "KYC Status"
+msgstr "Hali ya KYC"
 
 #: corehq/apps/integration/kyc/filters.py
 #: corehq/apps/integration/payments/filters.py
@@ -35898,6 +35325,7 @@ msgstr ""
 " sehemu moja badala ya sehemu tofauti za jina la kwanza na la mwisho."
 
 #: corehq/apps/integration/kyc/forms.py
+#: corehq/apps/integration/payments/forms.py
 msgid "Provider"
 msgstr "Mtoa Huduma"
 
@@ -36254,6 +35682,14 @@ msgstr "Sandbox"
 msgid "Live"
 msgstr "Moja kwa Moja"
 
+#: corehq/apps/integration/payments/models.py
+msgid "MTN Money"
+msgstr "MTN Money"
+
+#: corehq/apps/integration/payments/models.py
+msgid "Orange Cameroon Money"
+msgstr "Orange Cameroon Money"
+
 #: corehq/apps/integration/payments/services.py
 msgid "Payment request failed"
 msgstr "Ombi la malipo limekosa kufanikiwa"
@@ -36275,6 +35711,10 @@ msgid "Only payments with '{}' set to 'true' are eligible for verification."
 msgstr ""
 "Ni malipo tu yenye '{}' imewekwa kuwa 'true' ndiyo yanayostahili "
 "kuthibitishwa."
+
+#: corehq/apps/integration/payments/services.py
+msgid "Unsupported payment provider"
+msgstr "Mtoa huduma wa malipo asiyesaidiwa"
 
 #: corehq/apps/integration/payments/services.py
 msgid "Invalid payee details"
@@ -36392,118 +35832,6 @@ msgstr ""
 msgid "Payments Configuration"
 msgstr "Usanidi wa Malipo"
 
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Dialer"
-msgstr "Kipiga Simu"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "NOT LOGGED IN"
-msgstr "HUJAINGIA"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Login"
-msgstr "Ingia"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Telephone"
-msgstr "Simu"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Phone Number:"
-msgstr "Nambari ya Simu:"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "NOT AVAILABLE"
-msgstr "HAIPATIKANI"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Call Status:"
-msgstr "Hali ya Simu:"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Not Dialed"
-msgstr "Haijapigwa"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Contact ID:"
-msgstr "Kitambulisho cha Mawasiliano:"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Queue Name:"
-msgstr "Jina la Foleni:"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Dial Now"
-msgstr "Piga Sasa"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Preferences"
-msgstr "Mapendeleo"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Auto dial on load"
-msgstr "Piga kiotomatiki unapopakia"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Copy To Clipboard"
-msgstr "Nakili kwenye Ubao wa Kunakili"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Media Devices"
-msgstr "Vifaa vya Midia"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Speakers"
-msgstr "Spika"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Microphone"
-msgstr "Mikrofoni"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Mic. Permission"
-msgstr "Ruhusa ya Mikrofoni"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Web Cam"
-msgstr "Kamera ya Wavuti"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "WebRTC"
-msgstr "WebRTC"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Check Media"
-msgstr "Kagua Midia"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Network"
-msgstr "Mtandao"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Check Network"
-msgstr "Kagua Mtandao"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Agent Training Center"
-msgstr "Kituo cha Mafunzo ya Mawakala"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Agent Support Center"
-msgstr "Kituo cha Usaidizi kwa Mawakala"
-
-#: corehq/apps/integration/templates/integration/web_app_gaen_otp.html
-msgid "Exposure Notification OTP"
-msgstr "OTP ya Taarifa ya Ufunuo"
-
-#: corehq/apps/integration/templates/integration/web_app_gaen_otp.html
-msgid "OTP Code for"
-msgstr "Msimbo wa OTP kwa"
-
-#: corehq/apps/integration/templates/integration/web_app_gaen_otp.html
-msgid "Close OTP and Return"
-msgstr "Funga OTP na Rudi"
-
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
 msgid ""
 "\n"
@@ -36541,22 +35869,24 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"      Successfully verified %(success_count)s rows!\n"
+"      Successfully verified %(success_count)s rows! Updated status will\n"
+"      reflect shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      Safu %(success_count)s zimethibitishwa kwa mafanikio!\n"
+"      Mistari %(success_count)s imethibitishwa kwa mafanikio! Hali iliyosasishwa itaonekana hivi karibuni.\n"
 "    "
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_alert.html
 #, python-format
 msgid ""
 "\n"
-"      Failed to verify %(failure_count)s rows!\n"
+"      Failed to verify %(failure_count)s rows! Updated status will reflect\n"
+"      shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      Imeshindwa kuthibitisha safu %(failure_count)s!\n"
+"      Imeshindwa kuthibitisha mistari %(failure_count)s! Hali iliyosasishwa itaonekana hivi karibuni.\n"
 "    "
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
@@ -36615,11 +35945,12 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"      Failed to verify %(failure_count)s records for payments!\n"
+"      Failed to verify %(failure_count)s records for payments! Updated status\n"
+"      will reflect shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      Imeshindikana kuthibitisha rekodi %(failure_count)s za malipo!\n"
+"      Imeshindwa kuthibitisha rekodi %(failure_count)s za malipo! Hali iliyosasishwa itaonekana hivi karibuni.\n"
 "    "
 
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
@@ -36648,58 +35979,6 @@ msgstr "Mipangilio ya Muunganiko wa Biometriki imesasishwa."
 #: corehq/apps/integration/views.py
 msgid "Could not update Biometric Integration settings."
 msgstr "Imeshindwa kusasisha mipangilio ya Muunganiko wa Biometriki."
-
-#: corehq/apps/integration/views.py
-msgid "OTP Request missing a required argument 'case_id'"
-msgstr "Ombi la OTP linakosa hoja muhimu 'case_id'"
-
-#: corehq/apps/integration/views.py
-msgid "No matching patient record found"
-msgstr "Hakuna rekodi ya mgonjwa inayolingana imepatikana"
-
-#: corehq/apps/integration/views.py
-msgid ""
-"We are having problems communicating with the Exposure Notification server\n"
-"                                 please try again later"
-msgstr ""
-"Tunapata matatizo ya kuwasiliana na seva ya Exposure Notification\n"
-"                                 tafadhali jaribu tena baadaye"
-
-#: corehq/apps/integration/views.py corehq/apps/linked_domain/const.py
-msgid "Dialer Settings"
-msgstr "Mipangilio ya Kipiga Simu"
-
-#: corehq/apps/integration/views.py
-msgid "Dialer Settings Updated"
-msgstr "Mipangilio ya Kipiga Simu Imesasishwa"
-
-#: corehq/apps/integration/views.py
-msgid "Could not update Dialer Settings"
-msgstr "Imeshindwa kusasisha Mipangilio ya Kipiga Simu"
-
-#: corehq/apps/integration/views.py
-msgid "GAEN OTP Server Config"
-msgstr "Mipangilio ya Seva ya GAEN OTP"
-
-#: corehq/apps/integration/views.py
-msgid "GAEN OTP Server Settings Updated"
-msgstr "Mipangilio ya Seva ya GAEN OTP Imesasishwa"
-
-#: corehq/apps/integration/views.py
-msgid "Could not update GAEN OTP Server Settings"
-msgstr "Imeshindwa kusasisha Mipangilio ya Seva ya GAEN OTP"
-
-#: corehq/apps/integration/views.py
-msgid "Signed Callout Settings"
-msgstr "Mipangilio ya Simu Iliyosainiwa"
-
-#: corehq/apps/integration/views.py
-msgid "Callout Settings Updated"
-msgstr "Mipangilio ya Simu Imesasishwa"
-
-#: corehq/apps/integration/views.py
-msgid "Could not update Callout Settings"
-msgstr "Imeshindwa kusasisha Mipangilio ya Simu"
 
 #: corehq/apps/ip_access/middleware.py
 msgid "You cannot access this page from your current IP address"
@@ -36743,14 +36022,6 @@ msgstr "Bendera za Vipengele"
 #: corehq/apps/linked_domain/const.py
 msgid "Case Search Settings"
 msgstr "Mipangilio ya Utafutaji wa Kesi"
-
-#: corehq/apps/linked_domain/const.py
-msgid "OTP Pass-through Settings"
-msgstr "Mipangilio ya OTP Pass-through"
-
-#: corehq/apps/linked_domain/const.py
-msgid "Signed Callout"
-msgstr "Simu Iliyosainiwa"
 
 #: corehq/apps/linked_domain/const.py
 msgid "Tableau Server and Visualizations"
@@ -37741,6 +37012,10 @@ msgstr "Zilizohifadhiwa Pekee"
 msgid "Only include selected location"
 msgstr "Jumuisha eneo lililochaguliwa pekee"
 
+#: corehq/apps/locations/forms.py corehq/apps/users/forms.py
+msgid "All Locations"
+msgstr "Maeneo Yote"
+
 #: corehq/apps/locations/forms.py corehq/apps/locations/views.py
 msgid "Filter and Download Locations"
 msgstr "Chuja na Pakua Maeneo"
@@ -38106,12 +37381,6 @@ msgstr "Maeneo Tanzu"
 
 #: corehq/apps/locations/templates/locations/manage/location.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            <strong>There was an issue creating this location.</strong><br />\n"
-#| "            Please make sure that at least one <a href=\"%(levels_url)s\">Organization Level</a>\n"
-#| "            has been created.\n"
-#| "          "
 msgid ""
 "\n"
 "            <strong>There was an issue creating this location.</strong><br />\n"
@@ -38132,12 +37401,6 @@ msgid "Default monthly consumption values"
 msgstr "Thamani za matumizi ya kila mwezi chaguo-msingi"
 
 #: corehq/apps/locations/templates/locations/manage/location.html
-#| msgid ""
-#| "\n"
-#| "                    Your permissions allow you to <strong>create, update, and delete locations</strong>\n"
-#| "                    and <strong>modify location settings</strong>. However, your project\n"
-#| "                    administrator has not granted you access to change workers at locations.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    Your permissions allow you to\n"
@@ -38463,13 +37726,6 @@ msgstr "faili moja tu inaweza kupakiwa kwa wakati mmoja"
 #: corehq/apps/mobile_auth/utils.py
 msgid "Here are your keys!"
 msgstr "Hizi ndizo funguo zako!"
-
-#: corehq/apps/notifications/forms.py
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
-#: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
-#: corehq/motech/generic_inbound/views.py corehq/motech/views.py
-msgid "URL"
-msgstr "URL"
 
 #: corehq/apps/notifications/forms.py
 msgid "Domain-specific"
@@ -39575,7 +38831,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid ""
 "\n"
@@ -39585,7 +38840,6 @@ msgstr ""
 "Umeongezwa kwenye mradi wa \"%(domain)s\" kwenye %(hq_name)s.\n"
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid ""
 "\n"
@@ -39608,12 +38862,10 @@ msgstr ""
 "Jina lako la mtumiaji la kuingia ni %(username)s\n"
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 msgid "Thanks,"
 msgstr "Asante,"
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid "-The %(hq_name)s team"
 msgstr "-Timu ya %(hq_name)s"
@@ -39681,43 +38933,6 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/email/password_reset_subject_hq.txt
 msgid "Reset Password on CommCare"
 msgstr "Weka Upya Nenosiri kwenye CommCare"
-
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
-#, python-format
-msgid ""
-"\n"
-"Hello %(name)s,\n"
-"\n"
-"Your account with username %(username)s is confirmed successfully.\n"
-"You can now log in and submit data in the \"%(domain)s\" project on %(hq_name)s.\n"
-"\n"
-"Thanks,\n"
-"-The %(hq_name)s team\n"
-msgstr ""
-"\n"
-"Habari %(name)s,\n"
-"\n"
-"Akaunti yako yenye jina la mtumiaji %(username)s imethibitishwa kwa mafanikio.\n"
-"Sasa unaweza kuingia na kutuma data kwenye mradi wa \"%(domain)s\" kwenye %(hq_name)s.\n"
-"\n"
-"Asante,\n"
-"-Timu ya %(hq_name)s\n"
-
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
-#, python-format
-msgid "Hello %(name)s,"
-msgstr "Habari %(name)s,"
-
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
-#, python-format
-msgid ""
-"\n"
-"Once you confirm your account you will be able to access and submit data in the \"%(domain)s\" project on %(hq_name)s.\n"
-"Your username to login is %(username)s\n"
-msgstr ""
-"\n"
-"Mara tu utakapothibitisha akaunti yako utaweza kufikia na kutuma data kwenye mradi wa \"%(domain)s\" kwenye %(hq_name)s.\n"
-"Jina lako la mtumiaji la kuingia ni %(username)s\n"
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/choose_cloud_location.html
 msgid ""
@@ -41382,6 +40597,10 @@ msgid "Year"
 msgstr "Mwaka"
 
 #: corehq/apps/reports/filters/select.py
+msgid "Month"
+msgstr "Mwezi"
+
+#: corehq/apps/reports/filters/select.py
 msgid "Click to select a case type"
 msgstr "Bofya kuchagua aina ya kesi"
 
@@ -41447,15 +40666,63 @@ msgstr "Kitambulisho cha Payload"
 
 #: corehq/apps/reports/filters/simple.py
 msgid ""
-"Leave this blank to include all users. In that case, domain is required to "
-"limit the scope."
+"One or more usernames, comma-separated. Leave blank to include all users "
+"(requires domain to limit the scope)."
 msgstr ""
-"Acha hii wazi kujumuisha watumiaji wote. Katika hali hiyo, domain "
-"inahitajika ili kupunguza wigo."
+"Jina moja au zaidi la mtumiaji, limetenganishwa kwa koma. Acha wazi "
+"kujumuisha watumiaji wote (inahitaji kikoa ili kupunguza wigo)."
 
 #: corehq/apps/reports/filters/simple.py
 msgid "Optional"
 msgstr "Hiari"
+
+#: corehq/apps/reports/filters/simple.py
+msgid "Optional. Leave blank to use default (midnight)."
+msgstr "Hiari. Acha wazi kutumia chaguo-msingi (saa sita usiku)."
+
+#: corehq/apps/reports/filters/simple.py
+msgid "Optional. Leave blank to include the full day."
+msgstr "Hiari. Acha wazi kujumuisha siku nzima."
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"Single IP, CIDR (/8, /16, /24, /32), or comma-separated. Example: "
+"10.0.0.0/8, 192.168.1.1"
+msgstr ""
+"IP moja, CIDR (/8, /16, /24, /32), au limetenganishwa kwa koma. Mfano: "
+"10.0.0.0/8, 192.168.1.1"
+
+#: corehq/apps/reports/filters/simple.py
+msgid "URL Path Include"
+msgstr "Njia ya URL Jumuisha"
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"One URL path pattern per line. Patterns are OR'd together. Leave blank to "
+"include all paths."
+msgstr ""
+"Mfumo mmoja wa njia ya URL kwa kila mstari. Mifumo inachanganywa kwa OR. "
+"Acha wazi kujumuisha njia zote."
+
+#: corehq/apps/reports/filters/simple.py
+msgid "URL Path Exclude"
+msgstr "Njia ya URL Toa"
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"One URL path pattern per line. Matching rows are excluded. Patterns are OR'd"
+" (any match excludes the row)."
+msgstr ""
+"Mfumo mmoja wa njia ya URL kwa kila mstari. Mistari inayolingana "
+"itaondolewa. Mifumo inachanganywa kwa OR (mfanano wowote unaondoa mstari)."
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"Comma-separated status codes. Example: 200, 403, 500. Leave blank to include"
+" all."
+msgstr ""
+"Nambari za hali zimetenganishwa kwa koma. Mfano: 200, 403, 500. Acha wazi "
+"kujumuisha zote."
 
 #: corehq/apps/reports/filters/users.py
 msgid "View by Users or Groups"
@@ -41655,6 +40922,10 @@ msgstr "Inatuma..."
 #: corehq/apps/reports/forms.py
 msgid "Server Type"
 msgstr "Aina ya Seva"
+
+#: corehq/apps/reports/forms.py
+msgid "Select server type"
+msgstr "Chagua aina ya seva"
 
 #: corehq/apps/reports/forms.py corehq/apps/reports/models.py
 msgid "Tableau Server"
@@ -42403,6 +41674,10 @@ msgstr "Takwimu kuhusu muda uliotumika kwenye fomu fulani."
 #: corehq/apps/reports/standard/monitoring.py
 msgid "No Form Selected"
 msgstr "Hakuna Fomu Iliyoteuliwa"
+
+#: corehq/apps/reports/standard/monitoring.py
+msgid "Average"
+msgstr "Wastani"
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "Std. Dev."
@@ -44934,6 +44209,12 @@ msgid "Phone number removed."
 msgstr "Nambari ya simu imeondolewa."
 
 #: corehq/apps/settings/views.py
+#: corehq/messaging/smsbackends/telerivet/forms.py
+#: corehq/messaging/smsbackends/trumpia/forms.py
+msgid "API Key"
+msgstr "Ufunguo wa API"
+
+#: corehq/apps/settings/views.py
 msgid "IP Allowlist"
 msgstr "Orodha ya IP Zinazoruhusiwa"
 
@@ -45343,20 +44624,6 @@ msgstr ""
 "                    arifa. Ikiwa tafsiri hiyo pia haipatikani, nakala ya pili ya akiba ni maandishi katika\n"
 "                    lugha chaguo-msingi ya SMS ya mradi. Ikiwa tafsiri hiyo pia haipatikani, unaweza kuchagua\n"
 "                    kutumia maandishi ambayo hayajatafsiriwa, kama yapo.\n"
-"                "
-
-#: corehq/apps/sms/forms.py
-msgid ""
-"\n"
-"                    Whatsapp-enabled phone number for use with Twilio.\n"
-"                    This should be formatted as a full-length, numeric-only\n"
-"                    phone number, e.g., 16173481000.\n"
-"                "
-msgstr ""
-"\n"
-"                    Nambari ya simu inayoweza kutumika na Whatsapp kwa matumizi na Twilio.\n"
-"                    Hii inapaswa kuandikwa kama nambari kamili ya simu yenye tarakimu pekee,\n"
-"                    mfano, 16173481000.\n"
 "                "
 
 #: corehq/apps/sms/forms.py
@@ -46087,6 +45354,18 @@ msgstr "Hakuna tokeni za FCM zilizopatikana kwa mpokeaji."
 #: corehq/apps/sms/models.py
 msgid "Recipient did not match filters:"
 msgstr "Mpokeaji hakukidhi vichujio:"
+
+#: corehq/apps/sms/models.py
+msgid "Connect user not found for recipient."
+msgstr "Mtumiaji wa Connect hakupatikana kwa mpokeaji."
+
+#: corehq/apps/sms/models.py
+msgid ""
+"Only Mobile workers with Connect accounts are supported as recipients for "
+"Connect Message and Surveys."
+msgstr ""
+"Ni Wafanyakazi wa Simu tu wenye akaunti za Connect wanaosaidiwa kama "
+"wapokeaji wa Ujumbe na Utafiti wa Connect."
 
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
@@ -49043,442 +48322,6 @@ msgstr ""
 "kesi lazima ziwe kwa mpangilio uleule kama kwenye upakuaji wa tafsiri za "
 "programu kwa wingi. Hakuna tafsiri zilizosasishwa kwa safu hii."
 
-#: corehq/apps/translations/forms.py
-msgid "Upload a xls/xlsx/po/zip file"
-msgstr "Pakia faili ya xls/xlsx/po/zip"
-
-#: corehq/apps/translations/forms.py
-msgid "Convert"
-msgstr "Geuza"
-
-#: corehq/apps/translations/forms.py
-msgid "Please ensure columns 'source' and 'translation' in the sheet"
-msgstr ""
-"Tafadhali hakikisha safu 'source' na 'translation' zipo kwenye karatasi"
-
-#: corehq/apps/translations/forms.py
-msgid "Unexpected file passed within zip. Please upload xls/xlsx/po files."
-msgstr ""
-"Faili isiyotegemewa imepita ndani ya zip. Tafadhali pakia faili za "
-"xls/xlsx/po."
-
-#: corehq/apps/translations/forms.py
-msgid "Unexpected file passed. Please upload xls/xlsx/po/zip file."
-msgstr ""
-"Faili isiyotegemewa imepita. Tafadhali pakia faili ya xls/xlsx/po/zip."
-
-#: corehq/apps/translations/forms.py
-msgid "Transifex project"
-msgstr "Mradi wa Transifex"
-
-#: corehq/apps/translations/forms.py
-msgid "Target Language"
-msgstr "Lugha Lengwa"
-
-#: corehq/apps/translations/forms.py
-msgid "Resource Slug"
-msgstr "Resource Slug"
-
-#: corehq/apps/translations/forms.py
-msgid "Leave blank to fetch full project"
-msgstr "Acha wazi ili kupata mradi mzima"
-
-#: corehq/apps/translations/forms.py
-msgid "Leave blank to use current saved state"
-msgstr "Acha wazi kutumia hali iliyohifadhiwa kwa sasa"
-
-#: corehq/apps/translations/forms.py
-msgid ""
-"Check this if you want to maintain different resources separately for "
-"different versions of the application. Leave it unchecked for continuous "
-"update to the same set of resources"
-msgstr ""
-"Chagua hii kama unataka kudumisha rasilimali tofauti kwa matoleo tofauti ya "
-"programu. Acha bila kuchagua kwa masasisho endelevu kwenye seti ileile ya "
-"rasilimali"
-
-#: corehq/apps/translations/forms.py
-msgid "Translated Language"
-msgstr "Lugha Iliyotafsiriwa"
-
-#: corehq/apps/translations/forms.py
-msgid "Select Translated Language"
-msgstr "Chagua Lugha Iliyotafsiriwa"
-
-#: corehq/apps/translations/forms.py
-msgid ""
-"Confirm that resources are completely translated before performing request"
-msgstr ""
-"Thibitisha kuwa rasilimali zimetafsiriwa kikamilifu kabla ya kufanya ombi"
-
-#: corehq/apps/translations/forms.py
-msgid "Please confirm that you want to proceed?"
-msgstr "Tafadhali thibitisha kama unataka kuendelea?"
-
-#: corehq/apps/translations/forms.py
-msgid "Version not available for app"
-msgstr "Toleo halipatikani kwa programu"
-
-#: corehq/apps/translations/forms.py
-msgid ""
-"Check this if you want to update an existing resource, instead of creating "
-"new ones. If you submit this form without this check, duplicate resources "
-"may be created."
-msgstr ""
-"Chagua hii kama unataka kusasisha rasilimali iliyopo, badala ya kuunda mpya."
-" Ukisambaza fomu hii bila kuchagua hapa, rasilimali rudufu zinaweza kuundwa."
-
-#: corehq/apps/translations/forms.py
-msgid "Source Language on Transifex"
-msgstr "Lugha Chanzo kwenye Transifex"
-
-#: corehq/apps/translations/forms.py
-msgid "Lock translations for resources that are being pulled"
-msgstr "Funga tafsiri kwa rasilimali ambazo zinavutwa"
-
-#: corehq/apps/translations/forms.py
-msgid "Please note that this will lock the resource for all languages"
-msgstr "Tafadhali kumbuka kuwa hii itafunga rasilimali kwa lugha zote"
-
-#: corehq/apps/translations/forms.py
-msgid "Add translation to blacklist"
-msgstr "Ongeza tafsiri kwenye orodha ya marufuku"
-
-#: corehq/apps/translations/forms.py
-msgid "From Application"
-msgstr "Kutoka kwa Programu"
-
-#: corehq/apps/translations/forms.py
-msgid "To Application"
-msgstr "Kwenda Programu"
-
-#: corehq/apps/translations/forms.py
-msgid "Upload a xls file mapping old to new ids"
-msgstr "Pakia faili ya xls inayolingisha vitambulisho vya zamani na vipya"
-
-#: corehq/apps/translations/forms.py
-msgid ""
-"We recommend taking a backup if you have not already.Please confirm that you"
-" want to proceed?"
-msgstr ""
-"Tunapendekeza uchukue nakala rudufu ikiwa bado hujafanya hivyo. Tafadhali "
-"thibitisha kuwa unataka kuendelea?"
-
-#: corehq/apps/translations/forms.py
-#, python-brace-format
-msgid ""
-"Could not load file. Please ensure columns {type_header}, {old_id_header} "
-"and {new_id_header} are present"
-msgstr ""
-"Imeshindwa kupakia faili. Tafadhali hakikisha safu {type_header}, "
-"{old_id_header} na {new_id_header} zipo"
-
-#: corehq/apps/translations/forms.py
-msgid "missing value(s) in sheet"
-msgstr "thamani isiyokuwepo kwenye karatasi"
-
-#: corehq/apps/translations/forms.py
-msgid "Could not load file. 'Type' column should be either 'Menu' or 'Form'"
-msgstr ""
-"Imeshindwa kupakia faili. Safu ya 'Type' inapaswa kuwa 'Menu' au 'Form'"
-
-#: corehq/apps/translations/forms.py
-msgid "Source and target app can not be the same"
-msgstr "Programu chanzo na programu lengwa haziwezi kuwa sawa"
-
-#: corehq/apps/translations/integrations/transifex/project_migrator.py
-msgid ""
-"Target app default language and the source app default language don't match"
-msgstr ""
-"Lugha chaguo-msingi ya programu lengwa na lugha chaguo-msingi ya programu "
-"chanzo hazilingani"
-
-#: corehq/apps/translations/integrations/transifex/project_migrator.py
-msgid ""
-"Transifex project source lang and the source app default language don't "
-"match"
-msgstr ""
-"Lugha chanzo ya mradi wa Transifex na lugha chaguo-msingi ya programu chanzo"
-" hazilingani"
-
-#: corehq/apps/translations/integrations/transifex/project_migrator.py
-msgid ""
-"Transifex project source lang and the target app default language don't "
-"match"
-msgstr ""
-"Lugha chanzo ya mradi wa Transifex na lugha chaguo-msingi ya programu lengwa"
-" hazilingani"
-
-#: corehq/apps/translations/integrations/transifex/transifex.py
-msgid "Successfully Uploaded"
-msgstr "Imepakiwa kwa mafanikio"
-
-#: corehq/apps/translations/integrations/transifex/transifex.py
-msgid "Successfully Removed"
-msgstr "Imeondolewa kwa mafanikio"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Translations"
-msgstr "Tafsiri"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap3/download_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap3/migrate_project.html
-#: corehq/apps/translations/templates/translations/bootstrap3/pull_resource.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/download_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/migrate_project.html
-#: corehq/apps/translations/templates/translations/bootstrap5/pull_resource.html
-msgid "Transifex integration not set for this domain"
-msgstr "Muunganiko wa Transifex haujawekwa kwa domain hii"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/apps/translations/templates/translations/bootstrap3/convert_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/convert_translations.html
-msgid "Convert Translations"
-msgstr "Geuza Tafsiri"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/apps/translations/templates/translations/bootstrap3/pull_resource.html
-#: corehq/apps/translations/templates/translations/bootstrap5/pull_resource.html
-#: corehq/tabs/tabclasses.py
-msgid "Pull Resource"
-msgstr "Vuta Rasilimali"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Blacklist Translations"
-msgstr "Tafsiri zilizowekwa kwenye orodha ya marufuku"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "App Translations"
-msgstr "Tafsiri za Programu"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Successfully enqueued request to submit files for translations"
-msgstr ""
-"Ombi la kutuma faili kwa ajili ya tafsiri limewekwa kwenye foleni kwa "
-"mafanikio"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Resources yet to be completely translated, for ex: {}"
-msgstr "Rasilimali bado hazijatafsiriwa kikamilifu, kwa mfano: {}"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Resources not found for this project and version."
-msgstr "Rasilimali hazijapatikana kwa mradi huu na toleo hili."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid ""
-"Resources yet to be completely translated for all languages. Hence, the "
-"request for locking resources can not be performed."
-msgstr ""
-"Rasilimali bado hazijatafsiriwa kikamilifu kwa lugha zote. Hivyo, ombi la "
-"kufunga rasilimali haliwezi kufanyika."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid ""
-"Successfully enqueued request to pull for translations. You should receive "
-"an email shortly."
-msgstr ""
-"Ombi la kuvuta tafsiri limewekwa kwenye foleni kwa mafanikio. Unapaswa "
-"kupokea barua pepe muda si mrefu."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Successfully enqueued request to take backup."
-msgstr "Ombi la kuchukua nakala rudufu limewekwa kwenye foleni kwa mafanikio."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid ""
-"Resources yet to be completely translated for all languages. Hence, the "
-"request for deleting resources can not be performed."
-msgstr ""
-"Rasilimali bado hazijatafsiriwa kikamilifu kwa lugha zote. Hivyo, ombi la "
-"kufuta rasilimali haliwezi kufanyika."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Successfully enqueued request to delete resources."
-msgstr "Ombi la kufuta rasilimali limewekwa kwenye foleni kwa mafanikio."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Source lang selected not available for the project"
-msgstr "Lugha chanzo iliyochaguliwa haipatikani kwa mradi huu"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Create or Update Translations"
-msgstr "Unda au Sasisha Tafsiri"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Push Translations"
-msgstr "Sukuma Tafsiri"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Pull Translations"
-msgstr "Vuta Tafsiri"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Backup Translations"
-msgstr "Nakala Rudufu za Tafsiri"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Delete Translations"
-msgstr "Futa Tafsiri"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/apps/translations/templates/translations/bootstrap3/download_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/download_translations.html
-#: corehq/tabs/tabclasses.py
-msgid "Download Translations"
-msgstr "Pakua Tafsiri"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid ""
-"Missing current Application Version. This can happen if the latest version "
-"was deleted without creating a new one. Please create a new Application "
-"Version before trying again."
-msgstr ""
-"Toleo la sasa la Programu halipo. Hii inaweza kutokea ikiwa toleo la mwisho "
-"lilifutwa bila kuunda jipya. Tafadhali unda Toleo jipya la Programu kabla ya"
-" kujaribu tena."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid ""
-"Missing selected Application Version. Please create a new version before "
-"trying again."
-msgstr ""
-"Toleo la Programu ulilochagua halipo. Tafadhali unda toleo jipya kabla ya "
-"kujaribu tena."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid ""
-"Submitted request to download translations. You should receive an email "
-"shortly."
-msgstr ""
-"Ombi la kupakua tafsiri limewasilishwa. Unapaswa kupokea barua pepe muda si "
-"mrefu."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Migrate Project"
-msgstr "Hamisha Mradi"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid ""
-"Submitted request to migrate project. You should receive an email shortly."
-msgstr ""
-"Ombi la kuhamisha mradi limewasilishwa. Unapaswa kupokea barua pepe muda si "
-"mrefu."
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid "Set Up or Update Resource"
-msgstr "Sanidi au Sasisha Rasilimali"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid ""
-"\n"
-"              Create a new resource or update an existing one in Transifex.\n"
-"            "
-msgstr ""
-"\n"
-"              Unda rasilimali mpya au sasisha iliyopo kwenye Transifex.\n"
-"            "
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid "Push Target Language"
-msgstr "Sukuma Lugha Lengwa"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid ""
-"\n"
-"              Push translations for a target language to Transifex.\n"
-"            "
-msgstr ""
-"\n"
-"              Sukuma tafsiri za lugha lengwa kwenye Transifex.\n"
-"            "
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid "Pull App Translations"
-msgstr "Vuta Tafsiri za Programu"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid ""
-"\n"
-"              Pull all translations for a selected language, which will be emailed to you as an Excel file.\n"
-"            "
-msgstr ""
-"\n"
-"              Vuta tafsiri zote za lugha uliyochagua, ambazo zitatumwa kwako kwa barua pepe kama faili ya Excel.\n"
-"            "
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid "Backup App Translations"
-msgstr "Nakala Rudufu za Tafsiri za Programu"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid ""
-"\n"
-"              Pull all translations for all languages in the project, which will be emailed to you as a zip file.\n"
-"            "
-msgstr ""
-"\n"
-"              Vuta tafsiri zote za lugha zote kwenye mradi, ambazo zitatumwa kwako kwa barua pepe kama faili ya zip.\n"
-"            "
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid "Delete Project Resources"
-msgstr "Futa Rasilimali za Mradi"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid ""
-"\n"
-"                Delete all resources for the selected project. Use caution!\n"
-"              "
-msgstr ""
-"\n"
-"                Futa rasilimali zote za mradi uliochaguliwa. Tumia tahadhari!\n"
-"              "
-
-#: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
-msgid "App"
-msgstr "Casos IRA Tratados"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
-msgid "Module"
-msgstr "Moduli"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
-msgid "Detail/List/UI"
-msgstr "Maelezo/Orodha/UI"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
-msgid "Field Name"
-msgstr "Jina la Sehemu"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
-msgid "Default Display Text"
-msgstr "Maandishi ya Kuonyesha Chaguomsingi"
-
 #: corehq/apps/translations/validator.py
 msgid "Missing translations for {} in uploaded sheet"
 msgstr "Tafsiri zinazokosekana kwa {} kwenye karatasi iliyopakiwa"
@@ -49748,17 +48591,6 @@ msgstr ""
 #: corehq/apps/user_importer/validation.py
 msgid "Target domain {} does not use enterprise permissions of {}"
 msgstr "Kikoa lengwa {} hakitumii ruhusa za biashara za {}"
-
-#: corehq/apps/user_importer/validation.py
-msgid ""
-"When '{}' is True for a new user, {} must be either empty or set to False."
-msgstr ""
-"Wakati '{}' ni Kweli kwa mtumiaji mpya, {} lazima iwe tupu au iwekwe kuwa Si"
-" Kweli."
-
-#: corehq/apps/user_importer/validation.py
-msgid "When '{}' is True for an existing user, {}."
-msgstr "Wakati '{}' ni Kweli kwa mtumiaji aliyepo, {}."
 
 #: corehq/apps/user_importer/validation.py
 msgid ""
@@ -50852,11 +49684,6 @@ msgstr "Hariri Vyanzo Maalum vya Data"
 msgid "Edit Data Sources"
 msgstr "Hariri Vyanzo vya Data"
 
-#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
-msgid "Aggregate Data Sources"
-msgstr "Jumlisha Vyanzo vya Data"
-
 #: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Please note that this datasource is being rebuilt."
 msgstr "Tafadhali kumbuka kuwa chanzo hiki cha data kinajengwa upya."
@@ -51903,46 +50730,6 @@ msgstr ""
 "Mfanyakazi wa Simu."
 
 #: corehq/apps/users/forms.py
-msgid "Require Account Confirmation by SMS?"
-msgstr "Hitaji Uthibitisho wa Akaunti kwa SMS?"
-
-#: corehq/apps/users/forms.py
-msgid ""
-"If checked, the user will be sent a confirmation SMS and asked to set their "
-"password."
-msgstr ""
-"Ikiwa imechaguliwa, mtumiaji atatumwa SMS ya uthibitisho na ataombwa kuweka "
-"nenosiri lao."
-
-#: corehq/apps/users/forms.py
-msgid ""
-"\n"
-"            <div data-bind=\"visible: $root.phoneStatusMessage().length === 0\">\n"
-"                    Please enter number including country code, without (+) and in digits only.\n"
-"            </div>\n"
-"            <div id=\"phone-error\">\n"
-"                <span data-bind=\"visible: $root.phoneStatus() !== $root.STATUS.NONE\">\n"
-"                    <i class=\"fa-solid fa-triangle-exclamation\"\n"
-"                    data-bind=\"visible: $root.phoneStatus() === $root.STATUS.ERROR\"></i>\n"
-"                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->\n"
-"                </span>\n"
-"            </div>\n"
-"        "
-msgstr ""
-"\n"
-"            <div data-bind=\"visible: $root.phoneStatusMessage().length === 0\">\n"
-"                    Tafadhali ingiza nambari ikiwa ni pamoja na msimbo wa nchi, bila (+) na kwa tarakimu pekee.\n"
-"            </div>\n"
-"            <div id=\"phone-error\">\n"
-"                <span data-bind=\"visible: $root.phoneStatus() !== $root.STATUS.NONE\">\n"
-"                    <i class=\"fa-solid fa-triangle-exclamation\"\n"
-"                    data-bind=\"visible: $root.phoneStatus() === $root.STATUS.ERROR\"></i>\n"
-"                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->\n"
-"                </span>\n"
-"            </div>\n"
-"        "
-
-#: corehq/apps/users/forms.py
 msgid ""
 "This password is automatically generated. Please copy it or create your own."
 " It will not be shown again."
@@ -52309,51 +51096,6 @@ msgstr "Tayari una akaunti?"
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
 msgid "Sign In Now"
 msgstr "Ingia Sasa"
-
-#: corehq/apps/users/templates/users/bootstrap3/bulk_clear.html
-#: corehq/apps/users/templates/users/bootstrap5/bulk_clear.html
-msgid ""
-"\n"
-"    <h2>\n"
-"      Bulk Clear Mobile Worker Data\n"
-"    </h2>\n"
-"\n"
-"    <div class=\"alert alert-warning\">\n"
-"      <p>\n"
-"        <i class=\"fa fa-warning\"></i>\n"
-"        This action removes all data associated with a user and is a permanent action. Cleared users:\n"
-"      </p>\n"
-"      <ul>\n"
-"        <li>Will not be able to access their cleared data.</li>\n"
-"        <li>Will not be able to recover cleared data for any reason.</li>\n"
-"      </ul>\n"
-"    </div>\n"
-"\n"
-"    <p class=\"help-block\">\n"
-"      To clear user data in bulk, please upload an Excel file with a single <strong>username</strong> column.\n"
-"    </p>\n"
-"  "
-msgstr ""
-"\n"
-"    <h2>\n"
-"      Futa Data za Watumiaji wa Simu kwa Wingi\n"
-"    </h2>\n"
-"\n"
-"    <div class=\"alert alert-warning\">\n"
-"      <p>\n"
-"        <i class=\"fa fa-warning\"></i>\n"
-"        Hatua hii itaondoa data zote zinazohusiana na mtumiaji na ni hatua ya kudumu. Watumiaji waliofutwa:\n"
-"      </p>\n"
-"      <ul>\n"
-"        <li>Hawataweza kufikia data zao zilizofutwa.</li>\n"
-"        <li>Hawataweza kurejesha data zilizofutwa kwa sababu yoyote ile.</li>\n"
-"      </ul>\n"
-"    </div>\n"
-"\n"
-"    <p class=\"help-block\">\n"
-"      Ili kufuta data za watumiaji kwa wingi, tafadhali pakia faili la Excel lenye safu moja ya <strong>username</strong>.\n"
-"    </p>\n"
-"  "
 
 #: corehq/apps/users/templates/users/bootstrap3/bulk_delete.html
 #: corehq/apps/users/templates/users/bootstrap5/bulk_delete.html
@@ -53095,11 +51837,6 @@ msgstr "Pakua Wafanyakazi wa Simu"
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "Bulk Clear Data"
-msgstr "Futa Data kwa Wingi"
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid "Bulk Delete Mobile Workers"
 msgstr "Futa Wafanyakazi wa Simu kwa Wingi"
 
@@ -53170,6 +51907,21 @@ msgstr ""
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid "New Mobile Workers"
 msgstr "Wafanyakazi Wapya wa Simu"
+
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+msgid "Pending..."
+msgstr "Inasubiri..."
+
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+msgid "NEW"
+msgstr "MPYA"
+
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+msgid "ERROR"
+msgstr "KOSA"
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
@@ -53442,11 +52194,6 @@ msgstr "Imesubiri Tangu"
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "Send Confirmation SMS"
-msgstr "Tuma SMS ya Uthibitisho"
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid "Send Confirmation Email"
 msgstr "Tuma Barua Pepe ya Uthibitisho"
 
@@ -53454,62 +52201,27 @@ msgstr "Tuma Barua Pepe ya Uthibitisho"
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid ""
 "\n"
-"                              Would you like to send the account confirmation\n"
-"                              SMS to this account?\n"
-"                            "
+"                            Would you like to send the account confirmation\n"
+"                            email to this account?\n"
+"                          "
 msgstr ""
 "\n"
-"                              Je, ungependa kutuma SMS ya uthibitisho wa akaunti\n"
-"                              kwenye akaunti hii?\n"
-"                            "
+"                            Je, ungependa kutuma barua pepe ya uthibitisho wa akaunti\n"
+"                            kwa akaunti hii?\n"
+"                          "
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid ""
 "\n"
-"                              Would you like to send the account confirmation\n"
-"                              email to this account?\n"
-"                            "
+"                            The user will be sent an email with instructions to\n"
+"                            set a password and be able to login to this project.\n"
+"                          "
 msgstr ""
 "\n"
-"                              Je, ungependa kutuma barua pepe ya uthibitisho wa akaunti\n"
-"                              kwenye akaunti hii?\n"
-"                            "
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid ""
-"\n"
-"                              The user will be sent a SMS with instructions to\n"
-"                              set a password and be able to login to this\n"
-"                              project.\n"
-"                            "
-msgstr ""
-"\n"
-"                              Mtumiaji atatumia SMS yenye maelekezo ya\n"
-"                              kuweka nenosiri na ataweza kuingia kwenye\n"
-"                              mradi huu.\n"
-"                            "
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid ""
-"\n"
-"                              The user will be sent an email with instructions\n"
-"                              to set a password and be able to login to this\n"
-"                              project.\n"
-"                            "
-msgstr ""
-"\n"
-"                              Mtumiaji atatumia barua pepe yenye maelekezo ya\n"
-"                              kuweka nenosiri na ataweza kuingia kwenye\n"
-"                              mradi huu.\n"
-"                            "
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "Send Account Confirmaton SMS"
-msgstr "Tuma SMS ya Uthibitisho wa Akaunti"
+"                            Mtumiaji atatumwa barua pepe yenye maelekezo ya\n"
+"                            kuweka nenosiri na ataweza kuingia kwenye mradi huu.\n"
+"                          "
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
@@ -53760,14 +52472,18 @@ msgid ""
 "            <strong>There was an issue contacting the server.</strong>\n"
 "            Please check your internet connection. If this issue continues,\n"
 "            please\n"
-"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\">report an issue</a>.\n"
+"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"\n"
+"              >report an issue</a\n"
+"            >.\n"
 "          "
 msgstr ""
 "\n"
 "            <strong>Kulikuwa na tatizo kuwasiliana na seva.</strong>\n"
-"            Tafadhali hakikisha una muunganisho wa intaneti. Ikiwa tatizo hili litaendelea,\n"
+"            Tafadhali angalia muunganisho wako wa intaneti. Ikiwa tatizo hili litaendelea,\n"
 "            tafadhali\n"
-"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\">ripoti tatizo</a>.\n"
+"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"\n"
+"              >ripoti tatizo</a\n"
+"            >.\n"
 "          "
 
 #: corehq/apps/users/templates/users/edit_role.html
@@ -54776,6 +53492,19 @@ msgstr ""
 "Maeneo haya hayawezi kupewa watumiaji kutokana na mipangilio yao ya ngazi ya"
 " shirika: {}."
 
+#: corehq/apps/users/validation.py
+msgid "One or more of the locations was not found."
+msgstr "Eneo moja au zaidi halikupatikana."
+
+#: corehq/apps/users/validation.py
+msgid "Primary location must be one of the user's locations"
+msgstr "Eneo kuu lazima liwe mojawapo ya maeneo ya mtumiaji"
+
+#: corehq/apps/users/validation.py
+msgid "Primary location can't be empty if the user has any locations set"
+msgstr ""
+"Eneo kuu haliwezi kuwa tupu ikiwa mtumiaji ana maeneo yoyote yaliyowekwa"
+
 #: corehq/apps/users/views/__init__.py
 msgid ""
 "There was an error getting data for this user's associated Tableau\n"
@@ -55146,20 +53875,6 @@ msgstr ""
 #: corehq/apps/users/views/mobile/users.py
 msgid "The following users were not found: {}."
 msgstr "Watumiaji wafuatao hawakupatikana: {}."
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Bulk Clear"
-msgstr "Futa Wazi kwa Wingi"
-
-#: corehq/apps/users/views/mobile/users.py
-msgid ""
-"\n"
-"                No users cleared. Please address the above issue(s) and re-upload your updated file.\n"
-"            "
-msgstr ""
-"\n"
-"                Hakuna watumiaji waliosafishwa. Tafadhali shughulikia tatizo lililo juu na upakie tena faili yako iliyosasishwa.\n"
-"            "
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Mobile Workers Bulk Lookup"
@@ -55763,16 +54478,8 @@ msgid "Intervals"
 msgstr "Muda"
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Action on Notification"
-msgstr "Kitendo kwenye Arifa"
-
-#: corehq/messaging/scheduling/forms.py
 msgid "Please fill out at least one translation"
 msgstr "Tafadhali jaza angalau tafsiri moja"
-
-#: corehq/messaging/scheduling/forms.py
-msgid "This field must not exceed {} characters"
-msgstr "Sehemu hii haipaswi kuzidi herufi {}"
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Please specify the reminder intervals or disable them"
@@ -55793,10 +54500,6 @@ msgstr ""
 #: corehq/messaging/scheduling/forms.py
 msgid "Rich Text Message"
 msgstr "Ujumbe wa Maandishi Tajiri"
-
-#: corehq/messaging/scheduling/forms.py
-msgid "Message type"
-msgstr "Aina ya ujumbe"
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Expire After"
@@ -56090,16 +54793,6 @@ msgstr "Tarehe ya tukio la mwisho:"
 #: corehq/messaging/scheduling/forms.py
 msgid ""
 "\n"
-"                            Connect Messages can only be sent to users who have a PersonalID account.\n"
-"                        "
-msgstr ""
-"\n"
-"                            Ujumbe wa Connect unaweza kutumwa tu kwa watumiaji walio na akaunti ya PersonalID.\n"
-"                        "
-
-#: corehq/messaging/scheduling/forms.py
-msgid ""
-"\n"
 "                            The \"Case's Parent Case\" Recipient setting only works for Parent / Child relationships,\n"
 "                            not Parent / Extension or Host / Extension relationships.\n"
 "                        "
@@ -56163,8 +54856,12 @@ msgstr ""
 "chagua tena mtumiaji/watumiaji."
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Connect Messages can only be sent to users."
-msgstr "Ujumbe wa Connect unaweza kutumwa tu kwa watumiaji."
+#, python-brace-format
+msgid ""
+"The following recipient type(s) are not supported for Connect Messages: "
+"{types}"
+msgstr ""
+"Aina zifuatazo za wapokeaji hazisaidiwi kwa Ujumbe wa Connect: {types}"
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Please specify the groups(s) or deselect user groups as recipients"
@@ -56355,10 +55052,6 @@ msgid "Custom SMS"
 msgstr "SMS Maalum"
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Push Notification"
-msgstr "Arifa ya Kusukuma"
-
-#: corehq/messaging/scheduling/forms.py
 msgid "The time from case property"
 msgstr "Muda kutoka kwenye sifa ya kesi"
 
@@ -56507,26 +55200,6 @@ msgstr "Tafadhali ingiza nambari kubwa kuliko 0"
 msgid "Email case property can only be used with Email content"
 msgstr ""
 "Sifa ya kesi ya barua pepe inaweza kutumika tu na maudhui ya Barua Pepe"
-
-#: corehq/messaging/scheduling/forms.py
-msgid ""
-"Push Notifications is no longer available on this environment. Please "
-"contact Administrator."
-msgstr ""
-"Arifa za Kusukuma hazipatikani tena kwenye mazingira haya. Tafadhali "
-"wasiliana na Msimamizi."
-
-#: corehq/messaging/scheduling/forms.py
-msgid ""
-"Push Notifications is not available for your project. Please contact "
-"Administrator."
-msgstr ""
-"Arifa za Kusukuma hazipatikani kwa mradi wako. Tafadhali wasiliana na "
-"Msimamizi."
-
-#: corehq/messaging/scheduling/forms.py
-msgid "'{}' recipient types are not supported for Push Notifications"
-msgstr "Aina za wapokeaji '{}' haziruhusiwi kwa Arifa za Kusukuma"
 
 #: corehq/messaging/scheduling/forms.py
 msgid ""
@@ -59488,10 +58161,6 @@ msgid "Request Body"
 msgstr "Mwili wa Ombi"
 
 #: corehq/motech/views.py
-msgid "Status Code"
-msgstr "Nambari ya Hali"
-
-#: corehq/motech/views.py
 msgid "Response Headers"
 msgstr "Vichwa vya Majibu"
 
@@ -59773,6 +58442,11 @@ msgstr ""
 "Ongeza uongozi wa eneo kuu kwenye usafirishaji wa excel katika Ripoti ya "
 "Shughuli ya Mwisho ya Mtumiaji"
 
+#: corehq/privileges.py
+#| msgid "Show Advanced Questions"
+msgid "Locked Admin Questions"
+msgstr "Maswali ya Msimamizi Yaliyofungwa"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Ripoti za Mjenzi wa Ripoti"
@@ -59848,10 +58522,6 @@ msgstr "Programu Zangu"
 #: corehq/tabs/tabclasses.py
 msgid "New Application"
 msgstr "Programu Mpya"
-
-#: corehq/tabs/tabclasses.py
-msgid "Application Testing"
-msgstr "Upimaji wa Programu"
 
 #: corehq/tabs/tabclasses.py
 msgid "Application Test Flows"
@@ -59958,6 +58628,10 @@ msgstr "Tazama Mahali"
 #: corehq/tabs/tabclasses.py
 msgid "View project spaces where users receive automatic access"
 msgstr "Tazama nafasi za mradi ambapo watumiaji hupata ufikiaji kiotomatiki"
+
+#: corehq/tabs/tabclasses.py
+msgid "Translations"
+msgstr "Tafsiri"
 
 #: corehq/tabs/tabclasses.py
 msgid "Project Administration"
@@ -60083,22 +58757,6 @@ msgstr "Shughuli za Kiutawala"
 msgid "CommCare Reports"
 msgstr "Ripoti za CommCare"
 
-#: corehq/tabs/tabclasses.py
-msgid "View All Attendees"
-msgstr "Tazama Washiriki Wote"
-
-#: corehq/tabs/tabclasses.py
-msgid "Manage attendees for Attendance Tracking Events"
-msgstr "Simamia washiriki kwa Matukio ya Ufuatiliaji wa Mahudhurio"
-
-#: corehq/tabs/tabclasses.py
-msgid "View All Events"
-msgstr "Tazama Matukio Yote"
-
-#: corehq/tabs/tabclasses.py
-msgid "Manage Attendance Tracking Events"
-msgstr "Simamia Matukio ya Ufuatiliaji wa Mahudhurio"
-
 #: corehq/util/auth.py
 msgid "algorithm"
 msgstr "algorithimu"
@@ -60188,14 +58846,6 @@ msgstr "Tarehe ya Ripoti Inakosekana"
 #: custom/abt/reports/late_pmt_2020.py
 msgid "Incorrect or no PMT data submitted"
 msgstr "Data ya PMT imewasilishwa vibaya au haipo"
-
-#: custom/cowin/repeaters.py
-msgid "Register beneficiaries on COWIN"
-msgstr "Sajili walengwa kwenye COWIN"
-
-#: custom/cowin/repeaters.py
-msgid "Update vaccination for beneficiaries on COWIN"
-msgstr "Sasisha chanjo kwa walengwa kwenye COWIN"
 
 #: custom/inddex/filters.py
 msgid "Age Range"
@@ -60787,6 +59437,1292 @@ msgstr "Safu zinazohitajika ni {column_names}"
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
 
+#~ msgid "Property mapping concurrently changed and deleted"
+#~ msgstr "Ulinganishaji wa mali ulibadilishwa na kufutwa kwa wakati mmoja"
+
+#~ msgid "Label for Searching"
+#~ msgstr "Lebo ya Kutafuta"
+
+#~ msgid "Reference"
+#~ msgstr "Rejeleo"
+
+#~ msgid "Constant"
+#~ msgstr "Thabiti"
+
+#~ msgid "SQL Statement"
+#~ msgstr "Kauli ya SQL"
+
+#~ msgid "Sum"
+#~ msgstr "Jumla"
+
+#~ msgid "Min"
+#~ msgstr "Kiwango cha Chini"
+
+#~ msgid "Max"
+#~ msgstr "Kiwango cha Juu"
+
+#~ msgid "Count"
+#~ msgstr "Hesabu"
+
+#~ msgid "Count Unique Values"
+#~ msgstr "Hesabu Thamani za Kipekee"
+
+#~ msgid "Has a nonzero sum (1 if sum is nonzero else 0)."
+#~ msgstr "Ina jumla isiyo sifuri (1 ikiwa jumla si sifuri vinginevyo 0)."
+
+#~ msgid "Week"
+#~ msgstr "Wiki"
+
+#~ msgid "Form Actions Diff failed to be applied successfully"
+#~ msgstr "Tofauti ya Vitendo vya Fomu imeshindwa kutekelezwa kwa mafanikio"
+
+#~ msgid "Label for Searching Again"
+#~ msgstr "Lebo ya Kutafuta Tena"
+
+#~ msgid "Learn more"
+#~ msgstr "Jifunze zaidi"
+
+#~ msgid ""
+#~ "about how CommCare can be your mobile solution for your frontline workforce."
+#~ msgstr ""
+#~ "kuhusu jinsi CommCare inaweza kuwa suluhisho lako la simu kwa wafanyakazi "
+#~ "wako wa mstari wa mbele."
+
+#~ msgid "Resource"
+#~ msgstr "Rasilimali"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Your search returned more than {max_records} records. Please narrow down "
+#~ "your search by selecting a specific user, domain, or a shorter date range."
+#~ msgstr ""
+#~ "Utafutaji wako umerejesha rekodi zaidi ya {max_records}. Tafadhali punguza "
+#~ "utafutaji wako kwa kuchagua mtumiaji maalum, domain, au kipindi kifupi cha "
+#~ "tarehe."
+
+#~ msgid "Push Notification"
+#~ msgstr "Arifa ya Kusukuma"
+
+#~ msgid ""
+#~ "Push Notifications is no longer available. Please contact Administrator."
+#~ msgstr ""
+#~ "Arifa za Kusukuma hazipatikani tena. Tafadhali wasiliana na Msimamizi."
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      Successfully verified %(success_count)s rows!\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Safu %(success_count)s zimethibitishwa kwa mafanikio!\n"
+#~ "    "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      Failed to verify %(failure_count)s records for payments!\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Imeshindikana kuthibitisha rekodi %(failure_count)s za malipo!\n"
+#~ "    "
+
+#~ msgid ""
+#~ "\n"
+#~ "                            Connect Messages can only be sent to users who have a PersonalID account.\n"
+#~ "                        "
+#~ msgstr ""
+#~ "\n"
+#~ "                            Ujumbe wa Connect unaweza kutumwa tu kwa watumiaji walio na akaunti ya PersonalID.\n"
+#~ "                        "
+
+#~ msgid "Connect Messages can only be sent to users."
+#~ msgstr "Ujumbe wa Connect unaweza kutumwa tu kwa watumiaji."
+
+#~ msgid "no table"
+#~ msgstr "hakuna jedwali"
+
+#~ msgid "Rebuild Data"
+#~ msgstr "Jenga Upya Data"
+
+#~ msgid "Preview data"
+#~ msgstr "Onyesha data"
+
+#~ msgid "View Aggregate UCR"
+#~ msgstr "Tazama UCR ya Muhtasari"
+
+#~ msgid "Preview Aggregate UCR"
+#~ msgstr "Onyesha Muhtasari wa UCR"
+
+#~ msgid ""
+#~ "Version {} not released. Can not enable profiles for unreleased versions"
+#~ msgstr ""
+#~ "Toleo {} halijachapishwa. Haiwezi kuwezesha wasifu kwa matoleo ambayo "
+#~ "hayajachapishwa"
+
+#~ msgid ""
+#~ "Latest version available for this profile is {}, which is higher than this "
+#~ "version. Disable any higher versions first."
+#~ msgstr ""
+#~ "Toleo jipya zaidi linalopatikana kwa wasifu huu ni {}, ambalo ni la juu "
+#~ "kuliko toleo hili. Lemaza matoleo ya juu kwanza."
+
+#~ msgid "Revoke restriction"
+#~ msgstr "Ondoa kizuizi"
+
+#~ msgid "Restrict to this version"
+#~ msgstr "Zuia kwa toleo hili"
+
+#~ msgid "Download only translations eligible for Transifex?"
+#~ msgstr "Pakua tafsiri zinazostahili Transifex pekee?"
+
+#~ msgid "Override reference id: "
+#~ msgstr "Id ya rejea ya kubatilisha: "
+
+#~ msgid "Manage application profiles here."
+#~ msgstr "Simamia profaili za programu hapa."
+
+#~ msgid "Latest Enabled Version:"
+#~ msgstr "Toleo la Mwisho Lililowezeshwa:"
+
+#~ msgid "Latest version for profile {} is now {}"
+#~ msgstr "Toleo jipya zaidi kwa wasifu {} sasa ni {}"
+
+#~ msgid "Latest release now available for profile {}"
+#~ msgstr "Toleo jipya sasa linapatikana kwa wasifu {}"
+
+#~ msgid "Account confirmation link expiry"
+#~ msgstr "Muda wa mwisho wa kiungo cha uthibitisho wa akaunti"
+
+#~ msgid ""
+#~ "\n"
+#~ "            Default time (in days) for which account confirmation link will be valid.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "            Muda chaguo-msingi (kwa siku) ambao kiungo cha uthibitisho wa akaunti kitakuwa halali.\n"
+#~ "            "
+
+#~ msgid "Confirmation SMS project name"
+#~ msgstr "Jina la mradi wa SMS ya uthibitisho"
+
+#~ msgid ""
+#~ "Name of the project to be used in SMS sent for account confirmation to "
+#~ "users."
+#~ msgstr ""
+#~ "Jina la mradi litakalotumika kwenye SMS zinazotumwa kwa uthibitisho wa "
+#~ "akaunti kwa watumiaji."
+
+#, python-brace-format
+#~ msgid "Restriction for profile {profile} set successfully."
+#~ msgstr "Kizuizi kwa wasifu {profile} kimewekwa kikamilifu."
+
+#, python-brace-format
+#~ msgid "Restriction for profile {profile} failed: {message}"
+#~ msgstr "Kuweka kizuizi kwa wasifu {profile} kimeshindwa: {message}"
+
+#~ msgid "Manage Releases By App Profile"
+#~ msgstr "Dhibiti Matoleo Kwa Wasifu wa Programu"
+
+#~ msgid "Per event day"
+#~ msgstr "Kwa kila siku ya tukio"
+
+#~ msgid "Per entire event"
+#~ msgstr "Kwa tukio lote"
+
+#~ msgid "Attendance target"
+#~ msgstr "Lengo la Mahudhurio"
+
+#~ msgid "The expected amount of attendees."
+#~ msgstr "Idadi inayotarajiwa ya wahudhuriaji."
+
+#~ msgid "Allow same day registration"
+#~ msgstr "Ruhusu usajili siku hiyo hiyo"
+
+#~ msgid "Attendance recording options"
+#~ msgstr "Chaguzi za kurekodi mahudhurio"
+
+#~ msgid "Attendees"
+#~ msgstr "Wahudhuriaji"
+
+#~ msgid "Attendance Takers"
+#~ msgstr "Wachukua Mahudhurio"
+
+#~ msgid "Please choose at least one Attendance Taker"
+#~ msgstr "Tafadhali chagua angalau Mchukua Mahudhurio mmoja"
+
+#, python-brace-format
+#~ msgid "{self.title_prefix} Attendance Tracking Event"
+#~ msgstr "{self.title_prefix} Tukio la Ufuatiliaji wa Mahudhurio"
+
+#~ msgid "Invalid Start Date"
+#~ msgstr "Tarehe ya Kuanza Batili"
+
+#~ msgid "You cannot specify the start date in the past"
+#~ msgstr "Huwezi kuweka tarehe ya kuanza iliyopita"
+
+#~ msgid "End Date cannot be before Start Date"
+#~ msgstr "Tarehe ya Kumaliza haiwezi kuwa kabla ya Tarehe ya Kuanza"
+
+#~ msgid "You cannot specify the end date in the past"
+#~ msgstr "Huwezi kuweka tarehe ya kumaliza iliyopita"
+
+#~ msgid "Attendee list under review"
+#~ msgstr "Orodha ya wahudhuriaji inakaguliwa"
+
+#~ msgid "Attendee list rejected"
+#~ msgstr "Orodha ya wahudhuriaji imekataliwa"
+
+#~ msgid "Attendee list accepted"
+#~ msgstr "Orodha ya wahudhuriaji imekubaliwa"
+
+#~ msgid "Event not started"
+#~ msgstr "Tukio halijaanza"
+
+#~ msgid "Event in progress"
+#~ msgstr "Tukio linaendelea"
+
+#~ msgid "Attendee"
+#~ msgstr "Mhudhuriaji"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          This attendee cannot be deleted as\n"
+#~ "          <strong>%(attendee_name)s</strong> has been tracked as having\n"
+#~ "          attended one or more events.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Huwezi kufuta mshiriki huyu kwa kuwa\n"
+#~ "          <strong>%(attendee_name)s</strong> ameorodheshwa kama\n"
+#~ "          alihudhuria tukio moja au zaidi.\n"
+#~ "        "
+
+#~ msgid "Update Attendee"
+#~ msgstr "Sasisha Mhudhuriaji"
+
+#~ msgid "Delete Attendee"
+#~ msgstr "Futa Mhudhuriaji"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "                This action will delete %(attendee_name)s as a potential\n"
+#~ "                attendee and will remove them from all future events that they\n"
+#~ "                are currently enlisted in.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                Hatua hii itafuta %(attendee_name)s kama mshiriki mtarajiwa\n"
+#~ "                na itawaondoa kwenye matukio yote yajayo ambayo\n"
+#~ "                wamejiandikisha kwa sasa.\n"
+#~ "              "
+
+#~ msgid ""
+#~ "\n"
+#~ "                This action cannot be undone.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                Hatua hii haiwezi kutenduliwa.\n"
+#~ "              "
+
+#~ msgid ""
+#~ "\n"
+#~ "      Known potential attendees who can be invited to participate in Attendance\n"
+#~ "      Tracking Events.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Washiriki watarajiwa wanaojulikana ambao wanaweza kualikwa kushiriki kwenye Matukio ya Ufuatiliaji wa Mahudhurio.\n"
+#~ "    "
+
+#~ msgid "Create Potential Attendee"
+#~ msgstr "Unda Mhudhuriaji Mtarajiwa"
+
+#~ msgid "Enable Mobile Worker Attendees"
+#~ msgstr "Wezesha Wahudhuriaji Wafanyakazi wa Simu"
+
+#~ msgid "New Potential Attendees"
+#~ msgstr "Wahudhuriaji Wapya Watarajiwa"
+
+#~ msgid "Potential Attendees"
+#~ msgstr "Wahudhuriaji Watarajiwa"
+
+#~ msgid "Loading potential attendees ..."
+#~ msgstr "Inapakia wahudhuriaji watarajiwa ..."
+
+#~ msgid ""
+#~ "\n"
+#~ "            You currently have no potential attendees.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Huna wahudhuriaji watarajiwa kwa sasa.\n"
+#~ "          "
+
+#~ msgid ""
+#~ "\n"
+#~ "            No matching potential attendees found.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Hakuna wahudhuriaji watarajiwa waliolingana waliopatikana.\n"
+#~ "          "
+
+#~ msgid ""
+#~ "\n"
+#~ "          Attendance tracking events can be used to track attendance of all the\n"
+#~ "          selected attendees.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Matukio ya ufuatiliaji wa mahudhurio yanaweza kutumika kufuatilia mahudhurio ya washiriki wote waliochaguliwa.\n"
+#~ "        "
+
+#~ msgid "Add new event"
+#~ msgstr "Ongeza tukio jipya"
+
+#~ msgid "View Attendees"
+#~ msgstr "Tazama Wahudhuriaji"
+
+#~ msgid "No Attendees Yet"
+#~ msgstr "Bado Hakuna Wahudhuriaji"
+
+#~ msgid "Date Attended"
+#~ msgstr "Tarehe ya Kuhudhuria"
+
+#~ msgid "Attendee Name"
+#~ msgstr "Jina la Mhudhuriaji"
+
+#~ msgid "Event has not yet started"
+#~ msgstr "Tukio bado halijaanza"
+
+#~ msgid ""
+#~ "\n"
+#~ "      There was a problem fetching the list of attendees and attendance takers.\n"
+#~ "      Please try again.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Kulikuwa na tatizo kupata orodha ya washiriki na wachukua mahudhurio.\n"
+#~ "      Tafadhali jaribu tena.\n"
+#~ "    "
+
+#~ msgid "Attendance Tracking"
+#~ msgstr "Ufuatiliaji wa Mahudhurio"
+
+#~ msgid "Attendance Tracking Events"
+#~ msgstr "Matukio ya Ufuatiliaji wa Mahudhurio"
+
+#~ msgid "events per page"
+#~ msgstr "matukio kwa kila ukurasa"
+
+#~ msgid "You have no events"
+#~ msgstr "Huna matukio"
+
+#~ msgid "Loading events"
+#~ msgstr "Inapakia matukio"
+
+#~ msgid "Events"
+#~ msgstr "Matukio"
+
+#~ msgid "Start date"
+#~ msgstr "Tarehe ya kuanza"
+
+#~ msgid "End date"
+#~ msgstr "Tarehe ya mwisho"
+
+#~ msgid "Attendance Target"
+#~ msgstr "Lengo la Mahudhurio"
+
+#~ msgid "Total attendance"
+#~ msgstr "Jumla ya mahudhurio"
+
+#~ msgid "Total attendance takers"
+#~ msgstr "Jumla ya wachukua mahudhurio"
+
+#~ msgid "Add Attendance Tracking Event"
+#~ msgstr "Ongeza Tukio la Ufuatiliaji wa Mahudhurio"
+
+#~ msgid "Add New Event"
+#~ msgstr "Ongeza Tukio Jipya"
+
+#~ msgid "Edit Attendance Tracking Event"
+#~ msgstr "Hariri Tukio la Ufuatiliaji wa Mahudhurio"
+
+#~ msgid "Edit Event"
+#~ msgstr "Hariri Tukio"
+
+#~ msgid "Attendees per page"
+#~ msgstr "Wahudhuriaji kwa kila ukurasa"
+
+#~ msgid "You have no attendees"
+#~ msgstr "Huna wahudhuriaji"
+
+#~ msgid "Loading attendees"
+#~ msgstr "Inapakia wahudhuriaji"
+
+#~ msgid "Form validation failed: {}"
+#~ msgstr "Uthibitishaji wa fomu umeshindwa: {}"
+
+#~ msgid "Edit Attendee"
+#~ msgstr "Hariri Mshiriki"
+
+#~ msgid "Enabling mobile worker attendees status"
+#~ msgstr "Kuwezesha hali ya washiriki wafanyakazi wa simu"
+
+#~ msgid "Disabling mobile worker attendees status"
+#~ msgstr "Kuzima hali ya washiriki wafanyakazi wa simu"
+
+#~ msgid "Processing Mobile Workers. This may take some time..."
+#~ msgstr "Inachakata Wafanyakazi wa Simu. Hii inaweza kuchukua muda..."
+
+#~ msgid "User conversion failed for some reason and we have noted this failure."
+#~ msgstr ""
+#~ "Ubadilishaji wa mtumiaji umeshindikana kwa sababu fulani na tumerekodi "
+#~ "kushindwa huku."
+
+#~ msgid "Go back to view attendees"
+#~ msgstr "Rudi kutazama washiriki"
+
+#~ msgid "Mobile workers can now also be selected to attend events."
+#~ msgstr "Wafanyakazi wa simu sasa wanaweza pia kuchaguliwa kuhudhuria matukio."
+
+#~ msgid "Enabling mobile workers complete!"
+#~ msgstr "Kuwezesha wafanyakazi wa simu kumekamilika!"
+
+#~ msgid "Enabling mobile worker attendees in progress. This may take a while..."
+#~ msgstr ""
+#~ "Kuwezesha washiriki wafanyakazi wa simu kunaendelea. Hii inaweza kuchukua "
+#~ "muda..."
+
+#~ msgid "Mobile workers are now removed from the potential attendees list."
+#~ msgstr ""
+#~ "Wafanyakazi wa simu sasa wameondolewa kwenye orodha ya washiriki watarajiwa."
+
+#~ msgid "Disabling mobile workers complete!"
+#~ msgstr "Kuzima wafanyakazi wa simu kumekamilika!"
+
+#~ msgid ""
+#~ "Disabling mobile worker attendees in progress. This may take a while..."
+#~ msgstr ""
+#~ "Kuzima washiriki wafanyakazi wa simu kunaendelea. Hii inaweza kuchukua "
+#~ "muda..."
+
+#, python-brace-format
+#~ msgid "type {lookup_table_name} is not defined as global"
+#~ msgstr "aina {lookup_table_name} haijaainishwa kama ya kimataifa"
+
+#~ msgid "Road Network Algorithm"
+#~ msgstr "Algoriti ya Mtandao wa Barabara"
+
+#~ msgid "Select travel mode"
+#~ msgstr "Chagua aina ya usafiri"
+
+#~ msgid ""
+#~ "The travel mode of the users. Consider this when specifying the max travel "
+#~ "time to each case."
+#~ msgstr ""
+#~ "Aina ya usafiri wa watumiaji. Fikiria hili unapoweka muda wa juu wa kusafiri"
+#~ " kwa kila kesi."
+
+#~ msgid "Disbursement algorithm"
+#~ msgstr "Algoriti ya ugawaji"
+
+#~ msgid ""
+#~ "Uses the straight-line distance between users and cases to determine  "
+#~ "allocation of cases. Ideal for when map road coverage is poor."
+#~ msgstr ""
+#~ "Inatumia umbali wa mstari wa moja kwa moja kati ya watumiaji na kesi ili "
+#~ "kubaini ugawaji wa kesi. Inafaa zaidi pale ramani ya barabara haijakamilika."
+
+#~ msgid ""
+#~ "Takes distance along roads between users and cases into account to determine"
+#~ " allocation of cases. Ideal for when map road coverage is good."
+#~ msgstr ""
+#~ "Inazingatia umbali wa barabarani kati ya watumiaji na kesi ili kubaini "
+#~ "ugawaji wa kesi. Inafaa zaidi pale ramani ya barabara imekamilika."
+
+#~ msgid "Enter mapbox token"
+#~ msgstr "Weka tokeni ya mapbox"
+
+#~ msgid ""
+#~ "Enter your Mapbox API token here. Make sure your token has the correct scope"
+#~ " configured for use of the Mapbox Matrix API."
+#~ msgstr ""
+#~ "Weka tokeni yako ya API ya Mapbox hapa. Hakikisha tokeni yako ina kiwango "
+#~ "sahihi kilichosanidiwa kwa matumizi ya Mapbox Matrix API."
+
+#~ msgid "Test API Key"
+#~ msgstr "Jaribu API Key"
+
+#~ msgid "Mapbox API token required"
+#~ msgstr "Tokeni ya API ya Mapbox inahitajika"
+
+#, python-format
+#~ msgid "%(value)s is not a valid travel mode"
+#~ msgstr "%(value)s si aina halali ya usafiri"
+
+#~ msgid "Walking"
+#~ msgstr "Kutembea kwa miguu"
+
+#~ msgid "Cycling"
+#~ msgstr "Kuendesha baiskeli"
+
+#~ msgid "Driving"
+#~ msgstr "Kuendesha gari"
+
+#~ msgid "Transifex"
+#~ msgstr "Transifex"
+
+#~ msgid "Enable AWS Connect Dialer"
+#~ msgstr "Wezesha AWS Connect Dialer"
+
+#~ msgid "AWS Instance ID"
+#~ msgstr "Kitambulisho cha Kesi ya AWS"
+
+#~ msgid ""
+#~ "Enter \"yourinstance\" if your AWS Connect account is\n"
+#~ "                        \"https://yourinstance.awsapps.com/connect/\" "
+#~ msgstr ""
+#~ "Weka \"yourinstance\" ikiwa akaunti yako ya AWS Connect ni\n"
+#~ "                        \"https://yourinstance.awsapps.com/connect/\" "
+
+#~ msgid "Dialer Page Title"
+#~ msgstr "Kichwa cha Ukurasa wa Kipiga Simu"
+
+#~ msgid "A title for the Dialer Page header"
+#~ msgstr "Kichwa kwa kichwa cha ukurasa wa Kipiga Simu"
+
+#~ msgid "Dialer Page Subtitle"
+#~ msgstr "Kichwa kidogo cha Ukurasa wa Kipiga Simu"
+
+#~ msgid "A subtitle for the Dialer Page header"
+#~ msgstr "Kichwa kidogo kwa kichwa cha ukurasa wa Kipiga Simu"
+
+#~ msgid "Enable GAEN OTP server integration"
+#~ msgstr "Washa muunganiko wa seva ya GAEN OTP"
+
+#~ msgid "GAEN Server Type"
+#~ msgstr "Aina ya Seva ya GAEN"
+
+#~ msgid "NearForm OTP Server"
+#~ msgstr "Seva ya OTP ya NearForm"
+
+#~ msgid "APHL Exposure Notifications"
+#~ msgstr "Arifa za Mfiduo za APHL"
+
+#~ msgid "Server Endpoint"
+#~ msgstr "Mwisho wa Seva"
+
+#~ msgid "Server Auth Token"
+#~ msgstr "Tokeni ya Uthibitisho ya Seva"
+
+#~ msgid "Enable in Web Apps"
+#~ msgstr "Washa kwenye Programu za Wavuti"
+
+#~ msgid "External Callout URL"
+#~ msgstr "URL ya Mwito wa Nje"
+
+#~ msgid "Enter the base URL for callouts that should be signed"
+#~ msgstr "Weka URL ya msingi kwa miito inayopaswa kusainiwa"
+
+#~ msgid "API Key for CommCare in the external system"
+#~ msgstr "Ufunguo wa API kwa CommCare kwenye mfumo wa nje"
+
+#~ msgid "API Secret"
+#~ msgstr "Siri ya API"
+
+#~ msgid "API secret for message signing"
+#~ msgstr "Siri ya API kwa usainishaji wa ujumbe"
+
+#~ msgid "Dialer"
+#~ msgstr "Kipiga Simu"
+
+#~ msgid "NOT LOGGED IN"
+#~ msgstr "HUJAINGIA"
+
+#~ msgid "Login"
+#~ msgstr "Ingia"
+
+#~ msgid "Telephone"
+#~ msgstr "Simu"
+
+#~ msgid "Phone Number:"
+#~ msgstr "Nambari ya Simu:"
+
+#~ msgid "NOT AVAILABLE"
+#~ msgstr "HAIPATIKANI"
+
+#~ msgid "Call Status:"
+#~ msgstr "Hali ya Simu:"
+
+#~ msgid "Not Dialed"
+#~ msgstr "Haijapigwa"
+
+#~ msgid "Contact ID:"
+#~ msgstr "Kitambulisho cha Mawasiliano:"
+
+#~ msgid "Queue Name:"
+#~ msgstr "Jina la Foleni:"
+
+#~ msgid "Dial Now"
+#~ msgstr "Piga Sasa"
+
+#~ msgid "Preferences"
+#~ msgstr "Mapendeleo"
+
+#~ msgid "Auto dial on load"
+#~ msgstr "Piga kiotomatiki unapopakia"
+
+#~ msgid "Copy To Clipboard"
+#~ msgstr "Nakili kwenye Ubao wa Kunakili"
+
+#~ msgid "Media Devices"
+#~ msgstr "Vifaa vya Midia"
+
+#~ msgid "Speakers"
+#~ msgstr "Spika"
+
+#~ msgid "Microphone"
+#~ msgstr "Mikrofoni"
+
+#~ msgid "Mic. Permission"
+#~ msgstr "Ruhusa ya Mikrofoni"
+
+#~ msgid "Web Cam"
+#~ msgstr "Kamera ya Wavuti"
+
+#~ msgid "WebRTC"
+#~ msgstr "WebRTC"
+
+#~ msgid "Check Media"
+#~ msgstr "Kagua Midia"
+
+#~ msgid "Network"
+#~ msgstr "Mtandao"
+
+#~ msgid "Check Network"
+#~ msgstr "Kagua Mtandao"
+
+#~ msgid "Agent Training Center"
+#~ msgstr "Kituo cha Mafunzo ya Mawakala"
+
+#~ msgid "Agent Support Center"
+#~ msgstr "Kituo cha Usaidizi kwa Mawakala"
+
+#~ msgid "Exposure Notification OTP"
+#~ msgstr "OTP ya Taarifa ya Ufunuo"
+
+#~ msgid "OTP Code for"
+#~ msgstr "Msimbo wa OTP kwa"
+
+#~ msgid "Close OTP and Return"
+#~ msgstr "Funga OTP na Rudi"
+
+#~ msgid "OTP Request missing a required argument 'case_id'"
+#~ msgstr "Ombi la OTP linakosa hoja muhimu 'case_id'"
+
+#~ msgid "No matching patient record found"
+#~ msgstr "Hakuna rekodi ya mgonjwa inayolingana imepatikana"
+
+#~ msgid ""
+#~ "We are having problems communicating with the Exposure Notification server\n"
+#~ "                                 please try again later"
+#~ msgstr ""
+#~ "Tunapata matatizo ya kuwasiliana na seva ya Exposure Notification\n"
+#~ "                                 tafadhali jaribu tena baadaye"
+
+#~ msgid "Dialer Settings"
+#~ msgstr "Mipangilio ya Kipiga Simu"
+
+#~ msgid "Dialer Settings Updated"
+#~ msgstr "Mipangilio ya Kipiga Simu Imesasishwa"
+
+#~ msgid "Could not update Dialer Settings"
+#~ msgstr "Imeshindwa kusasisha Mipangilio ya Kipiga Simu"
+
+#~ msgid "GAEN OTP Server Config"
+#~ msgstr "Mipangilio ya Seva ya GAEN OTP"
+
+#~ msgid "GAEN OTP Server Settings Updated"
+#~ msgstr "Mipangilio ya Seva ya GAEN OTP Imesasishwa"
+
+#~ msgid "Could not update GAEN OTP Server Settings"
+#~ msgstr "Imeshindwa kusasisha Mipangilio ya Seva ya GAEN OTP"
+
+#~ msgid "Signed Callout Settings"
+#~ msgstr "Mipangilio ya Simu Iliyosainiwa"
+
+#~ msgid "Callout Settings Updated"
+#~ msgstr "Mipangilio ya Simu Imesasishwa"
+
+#~ msgid "Could not update Callout Settings"
+#~ msgstr "Imeshindwa kusasisha Mipangilio ya Simu"
+
+#~ msgid "OTP Pass-through Settings"
+#~ msgstr "Mipangilio ya OTP Pass-through"
+
+#~ msgid "Signed Callout"
+#~ msgstr "Simu Iliyosainiwa"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "Hello %(name)s,\n"
+#~ "\n"
+#~ "Your account with username %(username)s is confirmed successfully.\n"
+#~ "You can now log in and submit data in the \"%(domain)s\" project on %(hq_name)s.\n"
+#~ "\n"
+#~ "Thanks,\n"
+#~ "-The %(hq_name)s team\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Habari %(name)s,\n"
+#~ "\n"
+#~ "Akaunti yako yenye jina la mtumiaji %(username)s imethibitishwa kwa mafanikio.\n"
+#~ "Sasa unaweza kuingia na kutuma data kwenye mradi wa \"%(domain)s\" kwenye %(hq_name)s.\n"
+#~ "\n"
+#~ "Asante,\n"
+#~ "-Timu ya %(hq_name)s\n"
+
+#, python-format
+#~ msgid "Hello %(name)s,"
+#~ msgstr "Habari %(name)s,"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "Once you confirm your account you will be able to access and submit data in the \"%(domain)s\" project on %(hq_name)s.\n"
+#~ "Your username to login is %(username)s\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Mara tu utakapothibitisha akaunti yako utaweza kufikia na kutuma data kwenye mradi wa \"%(domain)s\" kwenye %(hq_name)s.\n"
+#~ "Jina lako la mtumiaji la kuingia ni %(username)s\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "                    Whatsapp-enabled phone number for use with Twilio.\n"
+#~ "                    This should be formatted as a full-length, numeric-only\n"
+#~ "                    phone number, e.g., 16173481000.\n"
+#~ "                "
+#~ msgstr ""
+#~ "\n"
+#~ "                    Nambari ya simu inayoweza kutumika na Whatsapp kwa matumizi na Twilio.\n"
+#~ "                    Hii inapaswa kuandikwa kama nambari kamili ya simu yenye tarakimu pekee,\n"
+#~ "                    mfano, 16173481000.\n"
+#~ "                "
+
+#~ msgid "Upload a xls/xlsx/po/zip file"
+#~ msgstr "Pakia faili ya xls/xlsx/po/zip"
+
+#~ msgid "Convert"
+#~ msgstr "Geuza"
+
+#~ msgid "Please ensure columns 'source' and 'translation' in the sheet"
+#~ msgstr ""
+#~ "Tafadhali hakikisha safu 'source' na 'translation' zipo kwenye karatasi"
+
+#~ msgid "Unexpected file passed within zip. Please upload xls/xlsx/po files."
+#~ msgstr ""
+#~ "Faili isiyotegemewa imepita ndani ya zip. Tafadhali pakia faili za "
+#~ "xls/xlsx/po."
+
+#~ msgid "Unexpected file passed. Please upload xls/xlsx/po/zip file."
+#~ msgstr ""
+#~ "Faili isiyotegemewa imepita. Tafadhali pakia faili ya xls/xlsx/po/zip."
+
+#~ msgid "Transifex project"
+#~ msgstr "Mradi wa Transifex"
+
+#~ msgid "Target Language"
+#~ msgstr "Lugha Lengwa"
+
+#~ msgid "Resource Slug"
+#~ msgstr "Resource Slug"
+
+#~ msgid "Leave blank to use current saved state"
+#~ msgstr "Acha wazi kutumia hali iliyohifadhiwa kwa sasa"
+
+#~ msgid ""
+#~ "Check this if you want to maintain different resources separately for "
+#~ "different versions of the application. Leave it unchecked for continuous "
+#~ "update to the same set of resources"
+#~ msgstr ""
+#~ "Chagua hii kama unataka kudumisha rasilimali tofauti kwa matoleo tofauti ya "
+#~ "programu. Acha bila kuchagua kwa masasisho endelevu kwenye seti ileile ya "
+#~ "rasilimali"
+
+#~ msgid "Translated Language"
+#~ msgstr "Lugha Iliyotafsiriwa"
+
+#~ msgid "Select Translated Language"
+#~ msgstr "Chagua Lugha Iliyotafsiriwa"
+
+#~ msgid ""
+#~ "Confirm that resources are completely translated before performing request"
+#~ msgstr ""
+#~ "Thibitisha kuwa rasilimali zimetafsiriwa kikamilifu kabla ya kufanya ombi"
+
+#~ msgid "Please confirm that you want to proceed?"
+#~ msgstr "Tafadhali thibitisha kama unataka kuendelea?"
+
+#~ msgid "Version not available for app"
+#~ msgstr "Toleo halipatikani kwa programu"
+
+#~ msgid ""
+#~ "Check this if you want to update an existing resource, instead of creating "
+#~ "new ones. If you submit this form without this check, duplicate resources "
+#~ "may be created."
+#~ msgstr ""
+#~ "Chagua hii kama unataka kusasisha rasilimali iliyopo, badala ya kuunda mpya."
+#~ " Ukisambaza fomu hii bila kuchagua hapa, rasilimali rudufu zinaweza kuundwa."
+
+#~ msgid "Source Language on Transifex"
+#~ msgstr "Lugha Chanzo kwenye Transifex"
+
+#~ msgid "Lock translations for resources that are being pulled"
+#~ msgstr "Funga tafsiri kwa rasilimali ambazo zinavutwa"
+
+#~ msgid "Please note that this will lock the resource for all languages"
+#~ msgstr "Tafadhali kumbuka kuwa hii itafunga rasilimali kwa lugha zote"
+
+#~ msgid "Add translation to blacklist"
+#~ msgstr "Ongeza tafsiri kwenye orodha ya marufuku"
+
+#~ msgid "From Application"
+#~ msgstr "Kutoka kwa Programu"
+
+#~ msgid "To Application"
+#~ msgstr "Kwenda Programu"
+
+#~ msgid "Upload a xls file mapping old to new ids"
+#~ msgstr "Pakia faili ya xls inayolingisha vitambulisho vya zamani na vipya"
+
+#~ msgid ""
+#~ "We recommend taking a backup if you have not already.Please confirm that you"
+#~ " want to proceed?"
+#~ msgstr ""
+#~ "Tunapendekeza uchukue nakala rudufu ikiwa bado hujafanya hivyo. Tafadhali "
+#~ "thibitisha kuwa unataka kuendelea?"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Could not load file. Please ensure columns {type_header}, {old_id_header} "
+#~ "and {new_id_header} are present"
+#~ msgstr ""
+#~ "Imeshindwa kupakia faili. Tafadhali hakikisha safu {type_header}, "
+#~ "{old_id_header} na {new_id_header} zipo"
+
+#~ msgid "missing value(s) in sheet"
+#~ msgstr "thamani isiyokuwepo kwenye karatasi"
+
+#~ msgid "Could not load file. 'Type' column should be either 'Menu' or 'Form'"
+#~ msgstr ""
+#~ "Imeshindwa kupakia faili. Safu ya 'Type' inapaswa kuwa 'Menu' au 'Form'"
+
+#~ msgid "Source and target app can not be the same"
+#~ msgstr "Programu chanzo na programu lengwa haziwezi kuwa sawa"
+
+#~ msgid ""
+#~ "Target app default language and the source app default language don't match"
+#~ msgstr ""
+#~ "Lugha chaguo-msingi ya programu lengwa na lugha chaguo-msingi ya programu "
+#~ "chanzo hazilingani"
+
+#~ msgid ""
+#~ "Transifex project source lang and the source app default language don't "
+#~ "match"
+#~ msgstr ""
+#~ "Lugha chanzo ya mradi wa Transifex na lugha chaguo-msingi ya programu chanzo"
+#~ " hazilingani"
+
+#~ msgid ""
+#~ "Transifex project source lang and the target app default language don't "
+#~ "match"
+#~ msgstr ""
+#~ "Lugha chanzo ya mradi wa Transifex na lugha chaguo-msingi ya programu lengwa"
+#~ " hazilingani"
+
+#~ msgid "Successfully Uploaded"
+#~ msgstr "Imepakiwa kwa mafanikio"
+
+#~ msgid "Successfully Removed"
+#~ msgstr "Imeondolewa kwa mafanikio"
+
+#~ msgid "Transifex integration not set for this domain"
+#~ msgstr "Muunganiko wa Transifex haujawekwa kwa domain hii"
+
+#~ msgid "Convert Translations"
+#~ msgstr "Geuza Tafsiri"
+
+#~ msgid "Pull Resource"
+#~ msgstr "Vuta Rasilimali"
+
+#~ msgid "Blacklist Translations"
+#~ msgstr "Tafsiri zilizowekwa kwenye orodha ya marufuku"
+
+#~ msgid "App Translations"
+#~ msgstr "Tafsiri za Programu"
+
+#~ msgid "Successfully enqueued request to submit files for translations"
+#~ msgstr ""
+#~ "Ombi la kutuma faili kwa ajili ya tafsiri limewekwa kwenye foleni kwa "
+#~ "mafanikio"
+
+#~ msgid "Resources yet to be completely translated, for ex: {}"
+#~ msgstr "Rasilimali bado hazijatafsiriwa kikamilifu, kwa mfano: {}"
+
+#~ msgid "Resources not found for this project and version."
+#~ msgstr "Rasilimali hazijapatikana kwa mradi huu na toleo hili."
+
+#~ msgid ""
+#~ "Resources yet to be completely translated for all languages. Hence, the "
+#~ "request for locking resources can not be performed."
+#~ msgstr ""
+#~ "Rasilimali bado hazijatafsiriwa kikamilifu kwa lugha zote. Hivyo, ombi la "
+#~ "kufunga rasilimali haliwezi kufanyika."
+
+#~ msgid ""
+#~ "Successfully enqueued request to pull for translations. You should receive "
+#~ "an email shortly."
+#~ msgstr ""
+#~ "Ombi la kuvuta tafsiri limewekwa kwenye foleni kwa mafanikio. Unapaswa "
+#~ "kupokea barua pepe muda si mrefu."
+
+#~ msgid "Successfully enqueued request to take backup."
+#~ msgstr "Ombi la kuchukua nakala rudufu limewekwa kwenye foleni kwa mafanikio."
+
+#~ msgid ""
+#~ "Resources yet to be completely translated for all languages. Hence, the "
+#~ "request for deleting resources can not be performed."
+#~ msgstr ""
+#~ "Rasilimali bado hazijatafsiriwa kikamilifu kwa lugha zote. Hivyo, ombi la "
+#~ "kufuta rasilimali haliwezi kufanyika."
+
+#~ msgid "Successfully enqueued request to delete resources."
+#~ msgstr "Ombi la kufuta rasilimali limewekwa kwenye foleni kwa mafanikio."
+
+#~ msgid "Source lang selected not available for the project"
+#~ msgstr "Lugha chanzo iliyochaguliwa haipatikani kwa mradi huu"
+
+#~ msgid "Create or Update Translations"
+#~ msgstr "Unda au Sasisha Tafsiri"
+
+#~ msgid "Push Translations"
+#~ msgstr "Sukuma Tafsiri"
+
+#~ msgid "Pull Translations"
+#~ msgstr "Vuta Tafsiri"
+
+#~ msgid "Backup Translations"
+#~ msgstr "Nakala Rudufu za Tafsiri"
+
+#~ msgid "Delete Translations"
+#~ msgstr "Futa Tafsiri"
+
+#~ msgid "Download Translations"
+#~ msgstr "Pakua Tafsiri"
+
+#~ msgid ""
+#~ "Missing current Application Version. This can happen if the latest version "
+#~ "was deleted without creating a new one. Please create a new Application "
+#~ "Version before trying again."
+#~ msgstr ""
+#~ "Toleo la sasa la Programu halipo. Hii inaweza kutokea ikiwa toleo la mwisho "
+#~ "lilifutwa bila kuunda jipya. Tafadhali unda Toleo jipya la Programu kabla ya"
+#~ " kujaribu tena."
+
+#~ msgid ""
+#~ "Missing selected Application Version. Please create a new version before "
+#~ "trying again."
+#~ msgstr ""
+#~ "Toleo la Programu ulilochagua halipo. Tafadhali unda toleo jipya kabla ya "
+#~ "kujaribu tena."
+
+#~ msgid ""
+#~ "Submitted request to download translations. You should receive an email "
+#~ "shortly."
+#~ msgstr ""
+#~ "Ombi la kupakua tafsiri limewasilishwa. Unapaswa kupokea barua pepe muda si "
+#~ "mrefu."
+
+#~ msgid "Migrate Project"
+#~ msgstr "Hamisha Mradi"
+
+#~ msgid ""
+#~ "Submitted request to migrate project. You should receive an email shortly."
+#~ msgstr ""
+#~ "Ombi la kuhamisha mradi limewasilishwa. Unapaswa kupokea barua pepe muda si "
+#~ "mrefu."
+
+#~ msgid "Set Up or Update Resource"
+#~ msgstr "Sanidi au Sasisha Rasilimali"
+
+#~ msgid ""
+#~ "\n"
+#~ "              Create a new resource or update an existing one in Transifex.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Unda rasilimali mpya au sasisha iliyopo kwenye Transifex.\n"
+#~ "            "
+
+#~ msgid "Push Target Language"
+#~ msgstr "Sukuma Lugha Lengwa"
+
+#~ msgid ""
+#~ "\n"
+#~ "              Push translations for a target language to Transifex.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Sukuma tafsiri za lugha lengwa kwenye Transifex.\n"
+#~ "            "
+
+#~ msgid "Pull App Translations"
+#~ msgstr "Vuta Tafsiri za Programu"
+
+#~ msgid ""
+#~ "\n"
+#~ "              Pull all translations for a selected language, which will be emailed to you as an Excel file.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Vuta tafsiri zote za lugha uliyochagua, ambazo zitatumwa kwako kwa barua pepe kama faili ya Excel.\n"
+#~ "            "
+
+#~ msgid "Backup App Translations"
+#~ msgstr "Nakala Rudufu za Tafsiri za Programu"
+
+#~ msgid ""
+#~ "\n"
+#~ "              Pull all translations for all languages in the project, which will be emailed to you as a zip file.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Vuta tafsiri zote za lugha zote kwenye mradi, ambazo zitatumwa kwako kwa barua pepe kama faili ya zip.\n"
+#~ "            "
+
+#~ msgid "Delete Project Resources"
+#~ msgstr "Futa Rasilimali za Mradi"
+
+#~ msgid ""
+#~ "\n"
+#~ "                Delete all resources for the selected project. Use caution!\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                Futa rasilimali zote za mradi uliochaguliwa. Tumia tahadhari!\n"
+#~ "              "
+
+#~ msgid "App"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Module"
+#~ msgstr "Moduli"
+
+#~ msgid "Detail/List/UI"
+#~ msgstr "Maelezo/Orodha/UI"
+
+#~ msgid "Field Name"
+#~ msgstr "Jina la Sehemu"
+
+#~ msgid "Default Display Text"
+#~ msgstr "Maandishi ya Kuonyesha Chaguomsingi"
+
+#~ msgid ""
+#~ "When '{}' is True for a new user, {} must be either empty or set to False."
+#~ msgstr ""
+#~ "Wakati '{}' ni Kweli kwa mtumiaji mpya, {} lazima iwe tupu au iwekwe kuwa Si"
+#~ " Kweli."
+
+#~ msgid "When '{}' is True for an existing user, {}."
+#~ msgstr "Wakati '{}' ni Kweli kwa mtumiaji aliyepo, {}."
+
+#~ msgid "Aggregate Data Sources"
+#~ msgstr "Jumlisha Vyanzo vya Data"
+
+#~ msgid "Require Account Confirmation by SMS?"
+#~ msgstr "Hitaji Uthibitisho wa Akaunti kwa SMS?"
+
+#~ msgid ""
+#~ "If checked, the user will be sent a confirmation SMS and asked to set their "
+#~ "password."
+#~ msgstr ""
+#~ "Ikiwa imechaguliwa, mtumiaji atatumwa SMS ya uthibitisho na ataombwa kuweka "
+#~ "nenosiri lao."
+
+#~ msgid ""
+#~ "\n"
+#~ "            <div data-bind=\"visible: $root.phoneStatusMessage().length === 0\">\n"
+#~ "                    Please enter number including country code, without (+) and in digits only.\n"
+#~ "            </div>\n"
+#~ "            <div id=\"phone-error\">\n"
+#~ "                <span data-bind=\"visible: $root.phoneStatus() !== $root.STATUS.NONE\">\n"
+#~ "                    <i class=\"fa-solid fa-triangle-exclamation\"\n"
+#~ "                    data-bind=\"visible: $root.phoneStatus() === $root.STATUS.ERROR\"></i>\n"
+#~ "                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->\n"
+#~ "                </span>\n"
+#~ "            </div>\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "            <div data-bind=\"visible: $root.phoneStatusMessage().length === 0\">\n"
+#~ "                    Tafadhali ingiza nambari ikiwa ni pamoja na msimbo wa nchi, bila (+) na kwa tarakimu pekee.\n"
+#~ "            </div>\n"
+#~ "            <div id=\"phone-error\">\n"
+#~ "                <span data-bind=\"visible: $root.phoneStatus() !== $root.STATUS.NONE\">\n"
+#~ "                    <i class=\"fa-solid fa-triangle-exclamation\"\n"
+#~ "                    data-bind=\"visible: $root.phoneStatus() === $root.STATUS.ERROR\"></i>\n"
+#~ "                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->\n"
+#~ "                </span>\n"
+#~ "            </div>\n"
+#~ "        "
+
+#~ msgid ""
+#~ "\n"
+#~ "    <h2>\n"
+#~ "      Bulk Clear Mobile Worker Data\n"
+#~ "    </h2>\n"
+#~ "\n"
+#~ "    <div class=\"alert alert-warning\">\n"
+#~ "      <p>\n"
+#~ "        <i class=\"fa fa-warning\"></i>\n"
+#~ "        This action removes all data associated with a user and is a permanent action. Cleared users:\n"
+#~ "      </p>\n"
+#~ "      <ul>\n"
+#~ "        <li>Will not be able to access their cleared data.</li>\n"
+#~ "        <li>Will not be able to recover cleared data for any reason.</li>\n"
+#~ "      </ul>\n"
+#~ "    </div>\n"
+#~ "\n"
+#~ "    <p class=\"help-block\">\n"
+#~ "      To clear user data in bulk, please upload an Excel file with a single <strong>username</strong> column.\n"
+#~ "    </p>\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    <h2>\n"
+#~ "      Futa Data za Watumiaji wa Simu kwa Wingi\n"
+#~ "    </h2>\n"
+#~ "\n"
+#~ "    <div class=\"alert alert-warning\">\n"
+#~ "      <p>\n"
+#~ "        <i class=\"fa fa-warning\"></i>\n"
+#~ "        Hatua hii itaondoa data zote zinazohusiana na mtumiaji na ni hatua ya kudumu. Watumiaji waliofutwa:\n"
+#~ "      </p>\n"
+#~ "      <ul>\n"
+#~ "        <li>Hawataweza kufikia data zao zilizofutwa.</li>\n"
+#~ "        <li>Hawataweza kurejesha data zilizofutwa kwa sababu yoyote ile.</li>\n"
+#~ "      </ul>\n"
+#~ "    </div>\n"
+#~ "\n"
+#~ "    <p class=\"help-block\">\n"
+#~ "      Ili kufuta data za watumiaji kwa wingi, tafadhali pakia faili la Excel lenye safu moja ya <strong>username</strong>.\n"
+#~ "    </p>\n"
+#~ "  "
+
+#~ msgid "Bulk Clear Data"
+#~ msgstr "Futa Data kwa Wingi"
+
+#~ msgid "Send Confirmation SMS"
+#~ msgstr "Tuma SMS ya Uthibitisho"
+
+#~ msgid ""
+#~ "\n"
+#~ "                              Would you like to send the account confirmation\n"
+#~ "                              SMS to this account?\n"
+#~ "                            "
+#~ msgstr ""
+#~ "\n"
+#~ "                              Je, ungependa kutuma SMS ya uthibitisho wa akaunti\n"
+#~ "                              kwenye akaunti hii?\n"
+#~ "                            "
+
+#~ msgid ""
+#~ "\n"
+#~ "                              The user will be sent a SMS with instructions to\n"
+#~ "                              set a password and be able to login to this\n"
+#~ "                              project.\n"
+#~ "                            "
+#~ msgstr ""
+#~ "\n"
+#~ "                              Mtumiaji atatumia SMS yenye maelekezo ya\n"
+#~ "                              kuweka nenosiri na ataweza kuingia kwenye\n"
+#~ "                              mradi huu.\n"
+#~ "                            "
+
+#~ msgid "Send Account Confirmaton SMS"
+#~ msgstr "Tuma SMS ya Uthibitisho wa Akaunti"
+
+#~ msgid ""
+#~ "\n"
+#~ "            <strong>There was an issue contacting the server.</strong>\n"
+#~ "            Please check your internet connection. If this issue continues,\n"
+#~ "            please\n"
+#~ "            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\">report an issue</a>.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            <strong>Kulikuwa na tatizo kuwasiliana na seva.</strong>\n"
+#~ "            Tafadhali hakikisha una muunganisho wa intaneti. Ikiwa tatizo hili litaendelea,\n"
+#~ "            tafadhali\n"
+#~ "            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\">ripoti tatizo</a>.\n"
+#~ "          "
+
+#~ msgid "Bulk Clear"
+#~ msgstr "Futa Wazi kwa Wingi"
+
+#~ msgid ""
+#~ "\n"
+#~ "                No users cleared. Please address the above issue(s) and re-upload your updated file.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "                Hakuna watumiaji waliosafishwa. Tafadhali shughulikia tatizo lililo juu na upakie tena faili yako iliyosasishwa.\n"
+#~ "            "
+
+#~ msgid "Action on Notification"
+#~ msgstr "Kitendo kwenye Arifa"
+
+#~ msgid "This field must not exceed {} characters"
+#~ msgstr "Sehemu hii haipaswi kuzidi herufi {}"
+
+#~ msgid "Message type"
+#~ msgstr "Aina ya ujumbe"
+
+#~ msgid ""
+#~ "Push Notifications is not available for your project. Please contact "
+#~ "Administrator."
+#~ msgstr ""
+#~ "Arifa za Kusukuma hazipatikani kwa mradi wako. Tafadhali wasiliana na "
+#~ "Msimamizi."
+
+#~ msgid "Application Testing"
+#~ msgstr "Upimaji wa Programu"
+
+#~ msgid "View All Attendees"
+#~ msgstr "Tazama Washiriki Wote"
+
+#~ msgid "Manage attendees for Attendance Tracking Events"
+#~ msgstr "Simamia washiriki kwa Matukio ya Ufuatiliaji wa Mahudhurio"
+
+#~ msgid "View All Events"
+#~ msgstr "Tazama Matukio Yote"
+
+#~ msgid "Manage Attendance Tracking Events"
+#~ msgstr "Simamia Matukio ya Ufuatiliaji wa Mahudhurio"
+
+#~ msgid "Register beneficiaries on COWIN"
+#~ msgstr "Sajili walengwa kwenye COWIN"
+
+#~ msgid "Update vaccination for beneficiaries on COWIN"
+#~ msgstr "Sasisha chanjo kwa walengwa kwenye COWIN"
+
 #~ msgid "The user being transferred to does not exist"
 #~ msgstr "Mtumiaji anayehamishiwa hayupo"
 
@@ -61093,19 +61029,6 @@ msgstr "Weka JSON halali"
 #~ "\n"
 #~ "                    Hakikisha watumiaji wowote waliopangiwa jukumu hili pia wamepangiwa eneo.\n"
 #~ "                    Watumiaji wasio na maeneo yaliyopangiwa hawataruhusiwa kuingia.\n"
-#~ "                  "
-
-#~ msgid ""
-#~ "\n"
-#~ "                    Organization-based data access restrictions are only available\n"
-#~ "                    on the Pro plan and above. Saving this role will enable\n"
-#~ "                    full organization access for the assigned users.\n"
-#~ "                  "
-#~ msgstr ""
-#~ "\n"
-#~ "                    Vizuizi vya ufikiaji wa data kulingana na shirika vinapatikana tu\n"
-#~ "                    kwenye mpango wa Pro na juu zaidi. Kuhifadhi jukumu hili kutawezesha\n"
-#~ "                    ufikiaji kamili wa shirika kwa watumiaji waliopangiwa.\n"
 #~ "                  "
 
 #~ msgid ""

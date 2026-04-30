@@ -121,8 +121,8 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
         sync_mock.return_value = "task_key:123"
         call_command(COMMAND_NAME, 'start', INDEX_CNAME)
 
-    @patch("corehq.apps.es.utils.TASK_POLL_DELAY", 0)
-    def test_reindex_command_copies_all_documents(self):
+    @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.check_task_progress')
+    def test_reindex_command_copies_all_documents(self, mock_check_progress):
         self.adapter.primary.index(TestDoc('key_2', 'val'))
         self.adapter.primary.index(TestDoc('key', 'value'))
 
@@ -135,6 +135,11 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
 
         print("")  # improve test output when using --nocapture option
         call_command(COMMAND_NAME, 'start', INDEX_CNAME)
+        # Re-enable routing (disabled by the command) so ES can
+        # allocate shards, then refresh to ensure reindex completes.
+        # Note: tearDown also re-enables routing for other tests, but
+        # it runs too late for the assertions below.
+        manager.cluster_routing(enabled=True)
         manager.index_refresh(self.adapter.secondary.index_name)
 
         primary_index_docs = self.adapter.search({})['hits']['hits']

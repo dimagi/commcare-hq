@@ -456,8 +456,13 @@ def send_to_sms_queue(queued_sms):
     process_sms.apply_async([queued_sms.pk])
 
 
-@no_result_task(queue='background_queue', default_retry_delay=60 * 60,
-                max_retries=23, bind=True)
+@no_result_task(
+    queue='background_queue',
+    default_retry_delay=60 * 60,
+    max_retries=23,
+    bind=True,
+    durable=True,
+)
 def store_billable(self, msg_couch_id):
     """
     Creates billable in db that contains price of the message
@@ -488,7 +493,7 @@ def store_billable(self, msg_couch_id):
             self.retry(exc=e)
 
 
-@no_result_task(queue='background_queue', acks_late=True)
+@no_result_task(queue='background_queue', acks_late=True, durable=True)
 def delete_phone_numbers_for_owners(owner_ids):
     for p in PhoneNumber.objects.filter(owner_id__in=owner_ids):
         # Clear cache and delete
@@ -555,8 +560,14 @@ def sync_case_phone_number(contact_case):
         phone_number.save()
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
-                default_retry_delay=5 * 60, max_retries=10, bind=True)
+@no_result_task(
+    queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE,
+    acks_late=True,
+    default_retry_delay=5 * 60,
+    max_retries=10,
+    bind=True,
+    durable=True,
+)
 def sync_user_phone_numbers(self, couch_user_id):
     if not settings.USE_PHONE_ENTRIES:
         return
@@ -600,8 +611,14 @@ def _sync_user_phone_numbers(couch_user_id):
                     pass
 
 
-@no_result_task(queue='background_queue', acks_late=True,
-                default_retry_delay=5 * 60, max_retries=10, bind=True)
+@no_result_task(
+    queue='background_queue',
+    acks_late=True,
+    default_retry_delay=5 * 60,
+    max_retries=10,
+    bind=True,
+    durable=True,
+)
 def publish_sms_change(self, sms_id):
     sms = SMS.objects.get(pk=sms_id)
     try:

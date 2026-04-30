@@ -1,4 +1,6 @@
-from corehq.apps.styleguide.examples.bootstrap5.tabs import StyleguideExamplesTab
+from corehq.apps.styleguide.examples.bootstrap5.tabs import (
+    StyleguideExamplesTab,
+)
 from corehq.apps.styleguide.tabs import SGExampleTab, SimpleCrispyFormSGExample
 from corehq.tabs.tabclasses import (
     AccountingTab,
@@ -16,7 +18,6 @@ from corehq.tabs.tabclasses import (
     SetupTab,
     SMSAdminTab,
     TranslationsTab,
-    AttendanceTrackingTab,
 )
 
 MENU_TABS = (
@@ -28,7 +29,6 @@ MENU_TABS = (
     ApplicationsTab,
     CloudcareTab,
     MessagingTab,
-    AttendanceTrackingTab,
     # invisible
     ProjectSettingsTab,
     EnterpriseSettingsTab,

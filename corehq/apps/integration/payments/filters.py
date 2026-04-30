@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy
 
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.es.case_search import get_case_property_unique_values
+from corehq.apps.es.users import UserES
 from corehq.apps.integration.payments.const import (
     PaymentProperties,
     PaymentStatus,
@@ -12,12 +13,19 @@ from corehq.apps.reports.filters.base import (
     BaseSingleOptionFilter,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.users import WebUserFilter
 
 
-class PaymentVerifiedByFilter(WebUserFilter):
+class PaymentVerifiedByFilter(BaseSingleOptionFilter):
     slug = 'verified_by'
     label = _('Verified by')
+    default_text = _('Show all')
+
+    @property
+    def options(self):
+        query = UserES().domain(self.domain).web_users()
+        return [
+            (username, username) for username in query.values_list('username', flat=True)
+        ]
 
 
 class PaymentStatusFilter(BaseSingleOptionFilter):

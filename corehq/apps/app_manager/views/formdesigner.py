@@ -32,6 +32,7 @@ from corehq.apps.app_manager.exceptions import (
     AppManagerException,
     FormNotFoundException,
 )
+from corehq.apps.app_manager.form_action_diff import get_case_mappings
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import ModuleNotFoundException, AdvancedForm
 from corehq.apps.app_manager.templatetags.xforms_extras import translate
@@ -50,7 +51,7 @@ from corehq.apps.app_manager.views.utils import (
     set_lang_cookie,
 )
 from corehq.apps.cloudcare.utils import should_show_preview_app
-from corehq.apps.data_dictionary.util import get_case_properties
+from corehq.apps.data_dictionary.util import get_case_properties, get_data_dict_case_types
 from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
@@ -153,15 +154,11 @@ def _get_form_designer_view(request, domain, app, module, form):
     vellum_options['features'] = _get_vellum_features(request, domain, app)
     context['vellum_options'] = vellum_options
 
-    ckeditor_basepath = "formdesigner" if settings.VELLUM_DEBUG else "app_manager/js/vellum"
-    ckeditor_basepath += "/lib/ckeditor/"
-
     context.update({
         'vellum_debug': settings.VELLUM_DEBUG,
         'nav_form': form,
         'formdesigner': True,
 
-        'CKEDITOR_BASEPATH': ckeditor_basepath,
         'show_live_preview': should_show_preview_app(
             request,
             app,
@@ -255,10 +252,16 @@ def _get_base_vellum_options(request, domain, form, displayLang):
     case_type = form.get_module().case_type
     if case_type and has_vellum_case_mapping and not is_advanced_form:
         options['caseManagement'] = {
-            'mappings': form.actions.get_mappings(),
+            'mappings': get_case_mappings(form.actions),
             'properties': sorted(get_case_properties(domain, case_type).values_list('name', flat=True)),
             'view_form_url': reverse('view_form', args=[domain, app.id, form.unique_id]),
             'reserved_words': load_case_reserved_words(),
+            'is_registration_form': form.is_registration_form(),
+        }
+
+    if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
+        options['saveToCase'] = {
+            'existingCaseTypes': sorted(get_data_dict_case_types(domain, is_deprecated=False)),
         }
 
     return options
@@ -312,8 +315,7 @@ def _get_vellum_plugins(domain, form, module, options):
     privileges.
     """
     vellum_plugins = ["modeliteration", "itemset", "atwho"]
-    if (toggles.COMMTRACK.enabled(domain)
-            or toggles.NON_COMMTRACK_LEDGERS.enabled(domain)):
+    if toggles.COMMTRACK.enabled(domain):
         vellum_plugins.append("commtrack")
     if "caseManagement" in options:
         vellum_plugins.append("caseManagement")
@@ -321,6 +323,11 @@ def _get_vellum_plugins(domain, form, module, options):
         vellum_plugins.append("saveToCase")
     if toggles.COMMCARE_CONNECT.enabled(domain):
         vellum_plugins.append("commcareConnect")
+    if (
+        toggles.LOCKED_ADMIN_QUESTIONS.enabled(domain, namespace=toggles.NAMESPACE_DOMAIN)
+        and domain_has_privilege(domain, privileges.LOCKED_ADMIN_QUESTIONS)
+    ):
+        vellum_plugins.append("lock")
 
     form_uses_case = (
         (module and module.case_type and form.requires_case())
@@ -354,6 +361,7 @@ def _get_vellum_features(request, domain, app):
         'markdown_tables': app.enable_markdown_tables,
         'use_custom_repeat_button_text': app.build_version >= LooseVersion('2.55'),
         'support_document_upload': app.support_document_upload,
+        'edit_locked_questions': request.couch_user.can_edit_locked_questions_in_apps(),
     })
     return vellum_features
 

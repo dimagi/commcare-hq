@@ -340,26 +340,6 @@ msgstr ""
 "Spiacenti, si è verificato un errore durante il download. Se vedi questo "
 "messaggio ripetutamente, segnala un problema."
 
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Active"
-msgstr "Attivo"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Inactive"
-msgstr "Inattivo"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Deactivate"
-msgstr "Disattiva"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Activate"
-msgstr "Attiva"
-
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
 #: corehq/apps/sms/static/sms/js/add_gateway.js
@@ -793,10 +773,6 @@ msgstr "Mappatura ID condizionale"
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Translatable Text"
 msgstr "Testo traducibile"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-msgid "Image"
-msgstr "Immagine"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "The \"%(format)s\" format requires columns with formats: %(dependencies)s."
@@ -1280,8 +1256,6 @@ msgid "save"
 msgstr "salva"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Case Property"
 msgstr "Proprietà del caso"
 
@@ -1298,109 +1272,47 @@ msgstr "Ultimo salvato"
 msgid "[unknown]"
 msgstr "[sconosciuto]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getCurrentMugInput"
-msgstr "getCurrentMugInput"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/229.js
+msgid "\n"
+msgstr "\n"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "jstree"
-msgstr "jstree"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getMugByPath"
-msgstr "getMugByPath"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getData"
-msgstr "ottieniDati"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "loadXML"
-msgstr "loadXML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "createXML"
-msgstr "creaXML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "loadXFormOrError"
-msgstr "loadXFormOrError"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "addQuestion"
-msgstr "aggiungiDomanda"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "nodeIDFromLabel"
-msgstr "nodeIDDaEtichetta"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getSections"
-msgstr "ottieniSezioni"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "collapseSection"
-msgstr "collassaSezione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "Drag question here"
 msgstr "Trascina qui la domanda"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is equal to"
 msgstr "è uguale a"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is not equal to"
 msgstr "non è uguale a"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is less than"
 msgstr "è minore di"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is less than or equal to"
 msgstr "è minore o uguale a"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is greater than"
 msgstr "è maggiore di"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is greater than or equal to"
 msgstr "è maggiore o uguale a"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "has selected value"
 msgstr "ha il valore selezionato"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "True when ALL of the expressions are true."
 msgstr "Vero quando TUTTE le espressioni sono vere."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "True when ANY of the expressions are true."
 msgstr "Vero quando QUALSIASI delle espressioni è vera."
 
@@ -1408,74 +1320,9 @@ msgstr "Vero quando QUALSIASI delle espressioni è vera."
 msgid "{path} is not a valid data parent"
 msgstr "{path} non è un genitore dati valido"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"\"{caseProperty}\" is assigned by another question. You can still save the "
-"form, but will need to have only one question for any case property in order"
-" to build the application"
-msgstr ""
-"\"{caseProperty}\" è assegnata da un'altra domanda. Puoi comunque salvare il"
-" modulo, ma dovrai avere una sola domanda per ogni proprietà del caso per "
-"poter costruire l'applicazione"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Case Management"
-msgstr "Gestione dei casi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"Saving a question as a case property makes it accessible and reusable across"
-" your application. To manage all your case properties from this form, click "
-"on the Manage Case button. "
-msgstr ""
-"Salvare una domanda come proprietà del caso la rende accessibile e "
-"riutilizzabile in tutta l'applicazione. Per gestire tutte le proprietà del "
-"caso da questo modulo, fai clic sul pulsante Gestisci caso."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "**{word}** is a reserved word"
-msgstr "**{word}** è una parola riservata"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"This question is used to update multiple case properties. If you wish to "
-"update these case properties, please visit the [Manage Case Page]({url})"
-msgstr ""
-"Questa domanda viene utilizzata per aggiornare più proprietà del caso. Se "
-"desideri aggiornare queste proprietà del caso, visita la [Pagina Gestione "
-"Caso]({url})"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Command Bar"
-msgstr "Barra dei comandi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Basic"
-msgstr "Base"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Logic"
-msgstr "Logica"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"Use logic to control when questions are asked and what answers are valid. "
-"You can add logic to display a question based on a previous answer, to make "
-"the question required or ensure the answer is in a valid range."
-msgstr ""
-"Usa la logica per controllare quando vengono poste le domande e quali "
-"risposte sono valide. Puoi aggiungere logica per mostrare una domanda in "
-"base a una risposta precedente, rendere la domanda obbligatoria o "
-"assicurarti che la risposta sia in un intervallo valido."
+msgid "New Form"
+msgstr "Nuovo modulo"
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
@@ -2077,15 +1924,14 @@ msgstr "Invia Pagamento"
 msgid "Submit Invoice Request"
 msgstr "Invia Richiesta Fattura"
 
-#: corehq/apps/domain/static/domain/js/bootstrap3/case_search.js
-#: corehq/apps/domain/static/domain/js/bootstrap5/case_search.js
-msgid "You have unchanged settings"
-msgstr "Hai impostazioni non modificate"
-
 #: corehq/apps/domain/static/domain/js/bootstrap3/info_basic.js
 #: corehq/apps/domain/static/domain/js/bootstrap5/info_basic.js
 msgid "Select a Timezone..."
 msgstr "Seleziona un fuso orario..."
+
+#: corehq/apps/domain/static/domain/js/case_search.js
+msgid "You have unchanged settings"
+msgstr "Hai impostazioni non modificate"
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
@@ -2192,38 +2038,6 @@ msgid ""
 "Error sending email, please try again or report an issue if this persists."
 msgstr ""
 "Errore nell'invio dell'email, riprova o segnala un problema se persiste."
-
-#: corehq/apps/events/static/events/js/event_attendees.js
-msgid "Disable Mobile Worker Attendees"
-msgstr "Disabilita Partecipanti Operatori Mobili"
-
-#: corehq/apps/events/static/events/js/event_attendees.js
-msgid "Enable Mobile Worker Attendees"
-msgstr "Abilita Partecipanti Operatori Mobili"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Possible Attendees"
-msgstr "Partecipanti Possibili"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Expected Attendees"
-msgstr "Partecipanti Previsti"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Search Attendees"
-msgstr "Cerca Partecipanti"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Possible Attendance Takers"
-msgstr "Possibili Rilevatori di Presenza"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Selected Attendance Takers"
-msgstr "Rilevatori di Presenza Selezionati"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Search Attendance Takers"
-msgstr "Cerca Rilevatori di Presenza"
 
 #: corehq/apps/export/static/export/js/create_export.js
 msgid "<%- count %> form submission available."
@@ -2482,20 +2296,6 @@ msgid ""
 "Oops! Something went wrong! Please report an issue if the problem persists."
 msgstr ""
 "Ops! Qualcosa è andato storto! Segnala un problema se il problema persiste."
-
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
-msgid "Token successfully verified!"
-msgstr "Token verificato con successo!"
-
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
-msgid ""
-"Invalid API token. Please verify that the token matches the one on your "
-"Mapbox account and has the correct scope configured."
-msgstr ""
-"Token API non valido. Verifica che il token corrisponda a quello del tuo "
-"account Mapbox e che abbia il corretto ambito configurato."
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/gps_capture.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/gps_capture.js
@@ -3088,20 +2888,6 @@ msgstr "Seleziona una posizione"
 #: corehq/apps/locations/static/locations/js/widgets.js
 msgid "Choose a primary location"
 msgstr "Scegli una posizione principale"
-
-#: corehq/apps/prototype/static/prototype/js/example/knockout_pagination.js
-#: corehq/apps/prototype/static/prototype/js/webpack/knockout_pagination.js
-msgid ""
-"Could not load data. Please try again later or report an issue if this "
-"problem persists."
-msgstr ""
-"Impossibile caricare i dati. Per favore riprova più tardi o segnala un "
-"problema se questo problema persiste."
-
-#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap3_amd.js
-#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap5_amd.js
-msgid "yes"
-msgstr "sì"
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
@@ -3946,18 +3732,6 @@ msgstr "Inserisci un indirizzo email valido."
 
 #: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
 #: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
-msgid "Phone number is required when users confirm their own accounts by sms."
-msgstr ""
-"Il numero di telefono è richiesto quando gli utenti confermano i propri "
-"account tramite sms."
-
-#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
-#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
-msgid "Phone number should contain only digits 0-9."
-msgstr "Il numero di telefono deve contenere solo cifre da 0 a 9."
-
-#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
-#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Checking availability..."
 msgstr "Verifica disponibilità..."
 
@@ -4156,6 +3930,10 @@ msgid "View-Only Applications"
 msgstr "Applicazioni in sola visualizzazione"
 
 #: corehq/apps/users/static/users/js/edit_role.js
+msgid "Allow locking and unlocking questions in forms."
+msgstr "Consenti di bloccare e sbloccare le domande nei moduli."
+
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
 "worker roles &amp; permissions (only Admins can edit roles)"
@@ -4191,18 +3969,6 @@ msgid ""
 msgstr ""
 "<strong>Gestisci esportazioni condivise</strong> &mdash; accedi e modifica "
 "il contenuto e la struttura delle esportazioni condivise"
-
-#: corehq/apps/users/static/users/js/edit_role.js
-msgid ""
-"<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
-"events and users"
-msgstr ""
-"<strong>Monitoraggio presenze</strong> &mdash; Coordina eventi e utenti per "
-"il monitoraggio delle presenze"
-
-#: corehq/apps/users/static/users/js/edit_role.js
-msgid "Edit Attendance Tracking Events"
-msgstr "Modifica eventi di monitoraggio presenze"
 
 #: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
@@ -4556,454 +4322,26 @@ msgstr "Fallito! La risposta è: "
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 
-#~ msgid "No Access"
-#~ msgstr "Nessun accesso"
+#~ msgid "Command Bar"
+#~ msgstr "Barra dei comandi"
 
-#~ msgid "Access All"
-#~ msgstr "Accesso completo"
+#~ msgid "Cannot insert $1 into $2"
+#~ msgstr "Impossibile inserire $1 in $2"
 
-#~ msgid "Limited Access"
-#~ msgstr "Accesso limitato"
+#~ msgid "Cannot insert $1 into or after $2"
+#~ msgstr "Impossibile inserire $1 in o dopo $2"
 
-#~ msgid "Select which items the role can access:"
-#~ msgstr "Seleziona a quali elementi il ruolo può accedere:"
+#~ msgid "Cannot insert {type} into tree root"
+#~ msgstr "Impossibile inserire {type} nella radice dell'albero"
 
-#~ msgid "Select which web apps the role has access to:"
-#~ msgstr "Seleziona a quali web app il ruolo ha accesso:"
+#~ msgid "Unsupported paste format"
+#~ msgstr "Formato incolla non supportato"
 
-#, javascript-format
-#~ msgid "Select at least one item from the list for \"%s\""
-#~ msgstr "Seleziona almeno un elemento dall'elenco per \"%s\""
+#~ msgid "Unsupported paste format:"
+#~ msgstr "Formato incolla non supportato:"
 
-#~ msgid "Edit Role: "
-#~ msgstr "Modifica ruolo: "
-
-#~ msgid "View Role: "
-#~ msgstr "Visualizza ruolo: "
-
-#~ msgid "New Role"
-#~ msgstr "Nuovo ruolo"
-
-#~ msgid "\n"
-#~ msgstr "\n"
-
-#~ msgid "New Form"
-#~ msgstr "Nuovo modulo"
-
-#~ msgid "Your location"
-#~ msgstr "La tua posizione"
-
-#~ msgid "Could not enable user properties, please try again later."
-#~ msgstr "Impossibile abilitare le proprietà utente, riprova più tardi."
-
-#~ msgid "Email address is required when users confirm their own accounts."
-#~ msgstr ""
-#~ "L'indirizzo email è richiesto quando gli utenti confermano i propri account."
-
-#~ msgid "Out of range of filter. Will not appear on page refresh."
-#~ msgstr ""
-#~ "Fuori dall'intervallo del filtro. Non apparirà all'aggiornamento della "
-#~ "pagina."
-
-#~ msgid "Case copied"
-#~ msgstr "Caso copiato"
-
-#~ msgid "Cases copied"
-#~ msgstr "Casi copiati"
-
-#~ msgid "Select None"
-#~ msgstr "Nessuna selezione"
-
-#~ msgid "Select All"
-#~ msgstr "Seleziona tutto"
-
-#~ msgid "long"
-#~ msgstr "lungo"
-
-#~ msgid "2-digit"
-#~ msgstr "2 cifre"
-
-#~ msgid "Copy"
-#~ msgstr "Copia"
-
-#~ msgid "Expand All"
-#~ msgstr "Espandi tutto"
-
-#~ msgid "Collapse All"
-#~ msgstr "Comprimi tutto"
-
-#~ msgid "Bulk Update All Questions"
-#~ msgstr "Aggiorna in blocco tutte le domande"
-
-#~ msgid "Click {btn} to start building your form."
-#~ msgstr "Fai clic su {btn} per iniziare a costruire il modulo."
-
-#~ msgid "Question Details"
-#~ msgstr "Dettagli della domanda"
-
-#~ msgid "Expression Editor"
-#~ msgstr "Editor di espressioni"
-
-#~ msgid "Cannot Change Question Type"
-#~ msgstr "Impossibile cambiare il tipo di domanda"
-
-#~ msgid "Change Question Type To"
-#~ msgstr "Cambia tipo di domanda in"
-
-#~ msgid "Show"
-#~ msgstr "Mostra"
-
-#~ msgid "Used By"
-#~ msgstr "Usato da"
-
-#~ msgid "In Property"
-#~ msgstr "Nella proprietà"
-
-#~ msgid "No match for {info} found!"
-#~ msgstr "Nessuna corrispondenza trovata per {info}!"
-
-#~ msgid "Multiple matches for {info} found!"
-#~ msgstr "Trovate più corrispondenze per {info}!"
-
-#~ msgid "Add Key&rarr;Value Pair"
-#~ msgstr "Aggiungi Coppia Chiave&rarr;Valore"
-
-#~ msgid "show in question list"
-#~ msgstr "mostra nell'elenco delle domande"
-
-#~ msgid "Date Format Options"
-#~ msgstr "Opzioni Formato Data"
-
-#~ msgid "No Formatting"
-#~ msgstr "Nessuna formattazione"
-
-#~ msgid "Invalid XPath expression."
-#~ msgstr "Espressione XPath non valida."
-
-#~ msgid ""
-#~ "The {property} for a question is not allowed to reference the question "
-#~ "itself. Please remove the . from the {property} or your form will have "
-#~ "errors."
-#~ msgstr ""
-#~ "La {property} di una domanda non può fare riferimento alla domanda stessa. "
-#~ "Rimuovi il . dalla {property} o il modulo avrà degli errori."
-
-#~ msgid "Unknown question:"
-#~ msgstr "Domanda sconosciuta:"
-
-#~ msgid "Unknown questions:"
-#~ msgstr "Domande sconosciute:"
-
-#~ msgid "no formatting"
-#~ msgstr "nessuna formattazione"
-
-#~ msgid "{question} is required."
-#~ msgstr "{question} è obbligatorio."
-
-#~ msgid "{question} is not allowed."
-#~ msgstr "{question} non è consentito."
-
-#~ msgid "{question} validation failed"
-#~ msgstr "Validazione di {question} non riuscita"
-
-#~ msgid "Unknown (read-only) question type"
-#~ msgstr "Tipo di domanda sconosciuto (sola lettura)"
-
-#~ msgid "Lookup Table Data"
-#~ msgstr "Dati Tabella di Ricerca"
-
-#~ msgid "No Translation Data"
-#~ msgstr "Nessun Dato di Traduzione"
-
-#~ msgid "Question ID"
-#~ msgstr "ID Domanda"
-
-#~ msgid ""
-#~ "The ID '{nodeID}' may cause problems with form parsing. It is recommended to"
-#~ " pick a different Question ID."
-#~ msgstr ""
-#~ "L'ID '{nodeID}' potrebbe causare problemi nell'analisi del modulo. Si "
-#~ "consiglia di scegliere un altro ID Domanda."
-
-#~ msgid ""
-#~ "{nodeID} is not a valid Question ID. It must start with a letter and contain"
-#~ " only letters, numbers, and '-' or '_' characters."
-#~ msgstr ""
-#~ "{nodeID} non è un ID Domanda valido. Deve iniziare con una lettera e "
-#~ "contenere solo lettere, numeri e i caratteri '-' o '_'."
-
-#~ msgid "'meta' is not a valid Question ID."
-#~ msgstr "'meta' non è un ID Domanda valido."
-
-#~ msgid ""
-#~ "Making this change will create a new Question ID (and a new column in "
-#~ "exports)."
-#~ msgstr ""
-#~ "Questa modifica creerà un nuovo ID Domanda (e una nuova colonna nelle "
-#~ "esportazioni)."
-
-#~ msgid ""
-#~ "This question has the same Question ID as another question in the same "
-#~ "group. Please choose a unique Question ID."
-#~ msgstr ""
-#~ "Questa domanda ha lo stesso ID Domanda di un'altra domanda nello stesso "
-#~ "gruppo. Scegli un ID Domanda univoco."
-
-#~ msgid "Default Data Value"
-#~ msgstr "Valore Dati Predefinito"
-
-#~ msgid "Special Hidden Value XMLNS attribute"
-#~ msgstr "Attributo XMLNS Valore Nascosto Speciale"
-
-#~ msgid "Extra Data Attributes"
-#~ msgstr "Attributi Dati Extra"
-
-#~ msgid "Calculate Condition"
-#~ msgstr "Condizione di Calcolo"
-
-#~ msgid ""
-#~ "You cannot have a Validation Error Message with no Validation Condition!"
-#~ msgstr ""
-#~ "Non puoi avere un Messaggio di Errore di Validazione senza una Condizione di"
-#~ " Validazione!"
-
-#~ msgid "Validation Error Message"
-#~ msgstr "Messaggio di Errore di Validazione"
-
-#~ msgid "Required Condition"
-#~ msgstr "Condizione Obbligatoria"
-
-#~ msgid "The condition will be ignored unless you mark the question required."
-#~ msgstr ""
-#~ "La condizione verrà ignorata a meno che tu non segni la domanda come "
-#~ "obbligatoria."
-
-#~ msgid "Extra Bind Attributes"
-#~ msgstr "Attributi Bind Extra"
-
-#~ msgid ""
-#~ "You are referencing a node in this form. This can cause errors in the form"
-#~ msgstr ""
-#~ "Stai facendo riferimento a un nodo in questo modulo. Questo può causare "
-#~ "errori nel modulo"
-
-#~ msgid "Appearance Attribute"
-#~ msgstr "Attributo Aspetto"
-
-#~ msgid "Default Display Text"
-#~ msgstr "Testo di Visualizzazione Predefinito"
-
-#~ msgid "Default Display Text is required"
-#~ msgstr "Il Testo di Visualizzazione Predefinito è obbligatorio"
-
-#~ msgid "Hint Display Text"
-#~ msgstr "Testo Suggerimento"
-
-#~ msgid "Extra Control Attributes"
-#~ msgstr "Attributi di Controllo Extra"
-
-#~ msgid "Raw XML"
-#~ msgstr "XML Grezzo"
-
-#~ msgid "Data Parent"
-#~ msgstr "Genitore Dati"
-
-#~ msgid "Must be valid path"
-#~ msgstr "Deve essere un percorso valido"
-
-#~ msgid ""
-#~ "Data parent of question in repeat group must be (in) the same repeat group"
-#~ msgstr ""
-#~ "Il genitore dati della domanda in un gruppo ripetuto deve essere (nel)lo "
-#~ "stesso gruppo ripetuto"
-
-#~ msgid "Hidden Value"
-#~ msgstr "Valore Nascosto"
-
-#~ msgid "Text"
-#~ msgstr "Testo"
-
-#~ msgid "Phone Number or Numeric ID"
-#~ msgstr "Numero di Telefono o ID Numerico"
-
-#~ msgid "Integer"
-#~ msgstr "Intero"
-
-#~ msgid "Audio Capture"
-#~ msgstr "Acquisizione audio"
-
-#~ msgid "Image Capture"
-#~ msgstr "Acquisizione immagine"
-
-#~ msgid "Image Size"
-#~ msgstr "Dimensione immagine"
-
-#~ msgid "Small"
-#~ msgstr "Piccola"
-
-#~ msgid "Medium"
-#~ msgstr "Media"
-
-#~ msgid "Large"
-#~ msgstr "Grande"
-
-#~ msgid "Original"
-#~ msgstr "Originale"
-
-#~ msgid ""
-#~ "This will resize the image before sending the form. Use this option to send "
-#~ "smaller images in areas of poor connectivity.<ul><li>Small - 0.1 "
-#~ "megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
-#~ "megapixels</li></ul>"
-#~ msgstr ""
-#~ "Questa opzione ridimensionerà l'immagine prima di inviare il modulo. Usa "
-#~ "questa opzione per inviare immagini più piccole in aree con connettività "
-#~ "scarsa.<ul><li>Piccola - 0,1 megapixel</li><li>Media - 0,2 "
-#~ "megapixel</li><li>Grande - 0,5 megapixel</li></ul>"
-
-#~ msgid "Micro-Image"
-#~ msgstr "Micro-immagine"
-
-#~ msgid "Video Capture"
-#~ msgstr "Acquisizione video"
-
-#~ msgid "Signature Capture"
-#~ msgstr "Acquisizione firma"
-
-#~ msgid "Document Upload"
-#~ msgstr "Caricamento documento"
-
-#~ msgid "GPS"
-#~ msgstr "GPS"
-
-#~ msgid "Barcode Scan"
-#~ msgstr "Scansione codice a barre"
-
-#~ msgid "Date and Time"
-#~ msgstr "Data e ora"
-
-#~ msgid "Long"
-#~ msgstr "Lungo"
-
-#~ msgid "Decimal"
-#~ msgstr "Decimale"
-
-#~ msgid "Choice"
-#~ msgstr "Scelta"
-
-#~ msgid "Choice Value"
-#~ msgstr "Valore scelta"
-
-#~ msgid "Whitespace in values is not allowed."
-#~ msgstr "Gli spazi nei valori non sono consentiti."
-
-#~ msgid "This choice value has been used in the same question"
-#~ msgstr "Questo valore di scelta è già stato usato nella stessa domanda"
-
-#~ msgid ""
-#~ "Cannot change a Multiple/Single Choice question to a non-Choice question if "
-#~ "it has Choices. Please remove all Choices and try again."
-#~ msgstr ""
-#~ "Non è possibile cambiare una domanda a scelta multipla/singola in una "
-#~ "domanda non a scelta se contiene delle scelte. Rimuovi tutte le scelte e "
-#~ "riprova."
-
-#~ msgid "Checkbox"
-#~ msgstr "Casella di controllo"
-
-#~ msgid "Multiple Choice"
-#~ msgstr "Scelta multipla"
-
-#~ msgid "Group"
-#~ msgstr "Gruppo"
-
-#~ msgid "Question List"
-#~ msgstr "Elenco domande"
-
-#~ msgid "Repeat Group"
-#~ msgstr "Gruppo ripetuto"
-
-#~ msgid "Repeat Count"
-#~ msgstr "Conteggio ripetizioni"
-
-#~ msgid "Repeat Count is required."
-#~ msgstr "Il conteggio ripetizioni è obbligatorio."
-
-#~ msgid "Extra Repeat Attributes"
-#~ msgstr "Attributi extra di ripetizione"
-
-#~ msgid "You have deleted a question."
-#~ msgstr "Hai eliminato una domanda."
-
-#~ msgid "Undo"
-#~ msgstr "Annulla"
-
-#~ msgid ""
-#~ "Bind Node [{path}] found but has no associated Data node. This bind node "
-#~ "will be discarded!"
-#~ msgstr ""
-#~ "Nodo Bind [{path}] trovato ma non ha un nodo Dati associato. Questo nodo "
-#~ "bind verrà scartato!"
-
-#~ msgid "Not Found"
-#~ msgstr "Non trovato"
-
-#~ msgid ""
-#~ "{type} nodes cannot be used in an output value. Please remove the output "
-#~ "value for '{path}' or your form will have errors."
-#~ msgstr ""
-#~ "I nodi di tipo {type} non possono essere usati in un valore di output. "
-#~ "Rimuovi il valore di output per '{path}' o il modulo avrà degli errori."
-
-#~ msgid ""
-#~ "The {field} for a question is not allowed to reference the question itself. "
-#~ "Please remove the {ref} from the {field} or your form will have errors."
-#~ msgstr ""
-#~ "Il campo {field} di una domanda non può fare riferimento alla domanda "
-#~ "stessa. Rimuovi {ref} dal campo {field} o il modulo avrà degli errori."
-
-#~ msgid "output value"
-#~ msgstr "valore di output"
-
-#~ msgid "Validation Failed"
-#~ msgstr "Validazione non riuscita"
-
-#~ msgid "Please fix the error before leaving this page:"
-#~ msgstr "Correggi l'errore prima di lasciare questa pagina:"
-
-#~ msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
-#~ msgstr "Modifica <span class='property-name'>Espressione</span> (Avanzato)"
-
-#~ msgid "Show Simple Mode"
-#~ msgstr "Mostra modalità semplice"
-
-#~ msgid ""
-#~ "You are currently in Advanced Mode because your logic is too complicated for"
-#~ " Simple Mode."
-#~ msgstr ""
-#~ "Attualmente sei in modalità avanzata perché la tua logica è troppo complessa"
-#~ " per la modalità semplice."
-
-#~ msgid "You can drag a question into the box."
-#~ msgstr "Puoi trascinare una domanda nella casella."
-
-#~ msgid "Guide to Common Logic and Calculations"
-#~ msgstr "Guida alla logica e ai calcoli comuni"
-
-#~ msgid "Edit <span class='property-name'>Expression</span>"
-#~ msgstr "Modifica <span class='property-name'>Espressione</span>"
-
-#~ msgid "Show Advanced Mode"
-#~ msgstr "Mostra Modalità Avanzata"
-
-#~ msgid "Result is"
-#~ msgstr "Il risultato è"
-
-#~ msgid "Expression"
-#~ msgstr "Espressione"
-
-#~ msgid "Add Expression"
-#~ msgstr "Aggiungi Espressione"
+#~ msgid "Unknown question type:"
+#~ msgstr "Tipo di domanda sconosciuto:"
 
 #~ msgid "Error"
 #~ msgstr "Errore"
@@ -5050,11 +4388,17 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ msgid "Multimedia Capture"
 #~ msgstr "Acquisizione Multimediale"
 
+#~ msgid "Multiple Choice"
+#~ msgstr "Scelta multipla"
+
 #~ msgid "Number"
 #~ msgstr "Numero"
 
 #~ msgid "Groups"
 #~ msgstr "Gruppi"
+
+#~ msgid "Hidden Value"
+#~ msgstr "Valore Nascosto"
 
 #~ msgid "Advanced"
 #~ msgstr "Avanzato"
@@ -5173,6 +4517,9 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ msgid "Parsing Error. Please check that your form is valid XML."
 #~ msgstr "Errore di parsing. Controlla che il modulo sia un XML valido."
 
+#~ msgid "Expression Editor"
+#~ msgstr "Editor di espressioni"
+
 #~ msgid "Sorry, {err}"
 #~ msgstr "Spiacente, {err}"
 
@@ -5212,6 +4559,9 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ msgid "Save anyway"
 #~ msgstr "Salva comunque"
 
+#~ msgid "Basic"
+#~ msgstr "Base"
+
 #~ msgid ""
 #~ "The {displaytext} appears in the application. This text will not appear in "
 #~ "data exports."
@@ -5229,6 +4579,19 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ "Puoi configurare una fonte dati esterna come una lista di casi o una tabella"
 #~ " di ricerca da usare come scelte per una domanda a risposta multipla."
 
+#~ msgid "Logic"
+#~ msgstr "Logica"
+
+#~ msgid ""
+#~ "Use logic to control when questions are asked and what answers are valid. "
+#~ "You can add logic to display a question based on a previous answer, to make "
+#~ "the question required or ensure the answer is in a valid range."
+#~ msgstr ""
+#~ "Usa la logica per controllare quando vengono poste le domande e quali "
+#~ "risposte sono valide. Puoi aggiungere logica per mostrare una domanda in "
+#~ "base a una risposta precedente, rendere la domanda obbligatoria o "
+#~ "assicurarti che la risposta sia in un intervallo valido."
+
 #~ msgid "Media"
 #~ msgstr "Media"
 
@@ -5245,6 +4608,52 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ msgstr ""
 #~ "Queste sono impostazioni avanzate e non sono necessarie per la maggior parte"
 #~ " delle applicazioni. Cambiale solo se hai una necessità specifica!"
+
+#~ msgid "Could not load app properties."
+#~ msgstr "Impossibile caricare le proprietà dell'app."
+
+#~ msgid "If this error persists, please report an issue."
+#~ msgstr "Se questo errore persiste, si prega di segnalare un problema."
+
+#~ msgid "Not Found"
+#~ msgstr "Non trovato"
+
+#~ msgid "No Formatting"
+#~ msgstr "Nessuna formattazione"
+
+#~ msgid ""
+#~ "The {field} for a question is not allowed to reference the question itself. "
+#~ "Please remove the {ref} from the {field} or your form will have errors."
+#~ msgstr ""
+#~ "Il campo {field} di una domanda non può fare riferimento alla domanda "
+#~ "stessa. Rimuovi {ref} dal campo {field} o il modulo avrà degli errori."
+
+#~ msgid "output value"
+#~ msgstr "valore di output"
+
+#~ msgid ""
+#~ "{type} nodes cannot be used in an output value. Please remove the output "
+#~ "value for '{path}' or your form will have errors."
+#~ msgstr ""
+#~ "I nodi di tipo {type} non possono essere usati in un valore di output. "
+#~ "Rimuovi il valore di output per '{path}' o il modulo avrà degli errori."
+
+#~ msgid "Invalid XPath expression."
+#~ msgstr "Espressione XPath non valida."
+
+#~ msgid ""
+#~ "The {property} for a question is not allowed to reference the question "
+#~ "itself. Please remove the . from the {property} or your form will have "
+#~ "errors."
+#~ msgstr ""
+#~ "La {property} di una domanda non può fare riferimento alla domanda stessa. "
+#~ "Rimuovi il . dalla {property} o il modulo avrà degli errori."
+
+#~ msgid "Unknown question:"
+#~ msgstr "Domanda sconosciuta:"
+
+#~ msgid "Unknown questions:"
+#~ msgstr "Domande sconosciute:"
 
 #~ msgid ""
 #~ "This question represents advanced content that is not supported by the form "
@@ -5306,23 +4715,11 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ msgid "Document Template"
 #~ msgstr "Modello di documento"
 
-#~ msgid "Edit Data Source"
-#~ msgstr "Modifica fonte dati"
-
-#~ msgid "Query Expression"
-#~ msgstr "Espressione di query"
-
-#~ msgid "Optional Instance Properties"
-#~ msgstr "Proprietà opzionali dell'istanza"
-
-#~ msgid "Instance ID"
-#~ msgstr "ID istanza"
-
-#~ msgid "Instance URI"
-#~ msgstr "URI istanza"
-
 #~ msgid "Lookup table was not found in the project"
 #~ msgstr "La tabella di ricerca non è stata trovata nel progetto"
+
+#~ msgid "Lookup Table Data"
+#~ msgstr "Dati Tabella di Ricerca"
 
 #~ msgid ""
 #~ "You no longer have access to Lookup Tables in your application. Lookup Tables are available on the Standard plan and higher.\n"
@@ -5350,6 +4747,9 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ "Questa è un'espressione XPath che filtrerà l'insieme di scelte dalla tabella"
 #~ " di ricerca"
 
+#~ msgid "{attr} was not found in the lookup table"
+#~ msgstr "{attr} non è stato trovato nella tabella di ricerca"
+
 #~ msgid "Lookup Tables"
 #~ msgstr "Tabelle di Ricerca"
 
@@ -5373,30 +4773,6 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ msgstr ""
 #~ "È possibile cambiare solo in una Tabella di Ricerca a Casella di Selezione"
 
-#~ msgid "{attr} was not found in the lookup table"
-#~ msgstr "{attr} non è stato trovato nella tabella di ricerca"
-
-#~ msgid "Display"
-#~ msgstr "Visualizza"
-
-#~ msgid "auto?"
-#~ msgstr "auto?"
-
-#~ msgid ""
-#~ "Use text formatting to <strong>bold</strong> and <em>italicize</em> words, "
-#~ "use bulleted lists, and <a target='_blank' "
-#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
-#~ msgstr ""
-#~ "Usa la formattazione del testo per <strong>grassetto</strong> e "
-#~ "<em>corsivo</em> delle parole, usa elenchi puntati e <a target='_blank' "
-#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>altro</a>"
-
-#~ msgid "Turn Off Text Formatting"
-#~ msgstr "Disattiva Formattazione Testo"
-
-#~ msgid "Turn On Text Formatting"
-#~ msgstr "Attiva Formattazione Testo"
-
 #~ msgid "custom..."
 #~ msgstr "personalizzato..."
 
@@ -5406,14 +4782,8 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ msgid "Content Type"
 #~ msgstr "Tipo di Contenuto"
 
-#~ msgid ""
-#~ "You have languages in your form that are not specified in the \"Languages\" "
-#~ "page of the application builder. The following language will be deleted on "
-#~ "save unless you add it to the \"Languages\" page:"
-#~ msgstr ""
-#~ "Hai lingue nel tuo modulo che non sono specificate nella pagina \"Lingue\" "
-#~ "del costruttore dell'applicazione. La seguente lingua verrà eliminata al "
-#~ "salvataggio a meno che tu non la aggiunga alla pagina \"Lingue\":"
+#~ msgid "Question ID"
+#~ msgstr "ID Domanda"
 
 #~ msgid "{name} (or multimedia) is required."
 #~ msgstr "{name} (o contenuto multimediale) è obbligatorio."
@@ -5434,6 +4804,12 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 
 #~ msgid "Discarded languages:"
 #~ msgstr "Lingue scartate:"
+
+#~ msgid ""
+#~ "You cannot have a Validation Error Message with no Validation Condition!"
+#~ msgstr ""
+#~ "Non puoi avere un Messaggio di Errore di Validazione senza una Condizione di"
+#~ " Validazione!"
 
 #~ msgid "Validation Message"
 #~ msgstr "Messaggio di Validazione"
@@ -5503,15 +4879,6 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ "Queste aggiorneranno le traduzioni usate nel tuo modulo. Premi 'Aggiorna "
 #~ "Traduzioni' per salvare le modifiche, oppure 'Chiudi' per annullare."
 
-#~ msgid "App Properties"
-#~ msgstr "Proprietà dell'App"
-
-#~ msgid "Could not load app properties."
-#~ msgstr "Impossibile caricare le proprietà dell'app."
-
-#~ msgid "If this error persists, please report an issue."
-#~ msgstr "Se questo errore persiste, si prega di segnalare un problema."
-
 #~ msgid ""
 #~ "The {questionid} is an internal identifier for a question. It does not "
 #~ "appear on the phone. It is the name of the question in data exports."
@@ -5578,39 +4945,6 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ msgid "Model Iteration ID Query"
 #~ msgstr "Query ID Iterazione Modello"
 
-#~ msgid "Property Name"
-#~ msgstr "Nome Proprietà"
-
-#~ msgid "Relevant"
-#~ msgstr "Rilevante"
-
-#~ msgid "Relationship Identifier (e.g. parent or host)"
-#~ msgstr "Identificatore di Relazione (ad es. parent o host)"
-
-#~ msgid "Referenced Case ID"
-#~ msgstr "ID Caso Referenziato"
-
-#~ msgid "Referenced Case Type"
-#~ msgstr "Tipo di Caso Referenziato"
-
-#~ msgid "Relationship (child or extension)"
-#~ msgstr "Relazione (figlio o estensione)"
-
-#~ msgid "Node Name"
-#~ msgstr "Nome Nodo"
-
-#~ msgid "Source"
-#~ msgstr "Origine"
-
-#~ msgid "From"
-#~ msgstr "Da"
-
-#~ msgid "Attachment Name"
-#~ msgstr "Nome Allegato"
-
-#~ msgid "Add Property"
-#~ msgstr "Aggiungi Proprietà"
-
 #~ msgid "Date Modified"
 #~ msgstr "Data Modifica"
 
@@ -5656,6 +4990,626 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ msgid "Relationship must be child or extension"
 #~ msgstr "La relazione deve essere figlio o estensione"
 
+#~ msgid "Update"
+#~ msgstr "Aggiorna"
+
+#~ msgid "Index"
+#~ msgstr "Indice"
+
+#~ msgid "Image"
+#~ msgstr "Immagine"
+
+#~ msgid "Video"
+#~ msgstr "Video"
+
+#~ msgid "Inline Video"
+#~ msgstr "Video in linea"
+
+#~ msgid "HTML"
+#~ msgstr "HTML"
+
+#~ msgid ""
+#~ "The ID '{nodeID}' may cause problems with form parsing. It is recommended to"
+#~ " pick a different Question ID."
+#~ msgstr ""
+#~ "L'ID '{nodeID}' potrebbe causare problemi nell'analisi del modulo. Si "
+#~ "consiglia di scegliere un altro ID Domanda."
+
+#~ msgid "'meta' is not a valid Question ID."
+#~ msgstr "'meta' non è un ID Domanda valido."
+
+#~ msgid ""
+#~ "Making this change will create a new Question ID (and a new column in "
+#~ "exports)."
+#~ msgstr ""
+#~ "Questa modifica creerà un nuovo ID Domanda (e una nuova colonna nelle "
+#~ "esportazioni)."
+
+#~ msgid ""
+#~ "{nodeID} is not a valid Question ID. It must start with a letter and contain"
+#~ " only letters, numbers, and '-' or '_' characters."
+#~ msgstr ""
+#~ "{nodeID} non è un ID Domanda valido. Deve iniziare con una lettera e "
+#~ "contenere solo lettere, numeri e i caratteri '-' o '_'."
+
+#~ msgid ""
+#~ "This question has the same Question ID as another question in the same "
+#~ "group. Please choose a unique Question ID."
+#~ msgstr ""
+#~ "Questa domanda ha lo stesso ID Domanda di un'altra domanda nello stesso "
+#~ "gruppo. Scegli un ID Domanda univoco."
+
+#~ msgid "Default Data Value"
+#~ msgstr "Valore Dati Predefinito"
+
+#~ msgid "Special Hidden Value XMLNS attribute"
+#~ msgstr "Attributo XMLNS Valore Nascosto Speciale"
+
+#~ msgid "Extra Data Attributes"
+#~ msgstr "Attributi Dati Extra"
+
+#~ msgid "Calculate Condition"
+#~ msgstr "Condizione di Calcolo"
+
+#~ msgid "Validation Error Message"
+#~ msgstr "Messaggio di Errore di Validazione"
+
+#~ msgid "Required Condition"
+#~ msgstr "Condizione Obbligatoria"
+
+#~ msgid "The condition will be ignored unless you mark the question required."
+#~ msgstr ""
+#~ "La condizione verrà ignorata a meno che tu non segni la domanda come "
+#~ "obbligatoria."
+
+#~ msgid "Extra Bind Attributes"
+#~ msgstr "Attributi Bind Extra"
+
+#~ msgid ""
+#~ "You are referencing a node in this form. This can cause errors in the form"
+#~ msgstr ""
+#~ "Stai facendo riferimento a un nodo in questo modulo. Questo può causare "
+#~ "errori nel modulo"
+
+#~ msgid "Appearance Attribute"
+#~ msgstr "Attributo Aspetto"
+
+#~ msgid "Default Display Text"
+#~ msgstr "Testo di Visualizzazione Predefinito"
+
+#~ msgid "Default Display Text is required"
+#~ msgstr "Il Testo di Visualizzazione Predefinito è obbligatorio"
+
+#~ msgid "Hint Display Text"
+#~ msgstr "Testo Suggerimento"
+
+#~ msgid "Extra Control Attributes"
+#~ msgstr "Attributi di Controllo Extra"
+
+#~ msgid "Raw XML"
+#~ msgstr "XML Grezzo"
+
+#~ msgid "Data Parent"
+#~ msgstr "Genitore Dati"
+
+#~ msgid ""
+#~ "Data parent of question in repeat group must be (in) the same repeat group"
+#~ msgstr ""
+#~ "Il genitore dati della domanda in un gruppo ripetuto deve essere (nel)lo "
+#~ "stesso gruppo ripetuto"
+
+#~ msgid "Must be valid path"
+#~ msgstr "Deve essere un percorso valido"
+
+#~ msgid "Text"
+#~ msgstr "Testo"
+
+#~ msgid "Phone Number or Numeric ID"
+#~ msgstr "Numero di Telefono o ID Numerico"
+
+#~ msgid "Integer"
+#~ msgstr "Intero"
+
+#~ msgid "Long"
+#~ msgstr "Lungo"
+
+#~ msgid "Decimal"
+#~ msgstr "Decimale"
+
+#~ msgid "Audio Capture"
+#~ msgstr "Acquisizione audio"
+
+#~ msgid "Image Capture"
+#~ msgstr "Acquisizione immagine"
+
+#~ msgid "Image Size"
+#~ msgstr "Dimensione immagine"
+
+#~ msgid "Small"
+#~ msgstr "Piccola"
+
+#~ msgid "Medium"
+#~ msgstr "Media"
+
+#~ msgid "Large"
+#~ msgstr "Grande"
+
+#~ msgid "Original"
+#~ msgstr "Originale"
+
+#~ msgid ""
+#~ "This will resize the image before sending the form. Use this option to send "
+#~ "smaller images in areas of poor connectivity.<ul><li>Small - 0.1 "
+#~ "megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
+#~ "megapixels</li></ul>"
+#~ msgstr ""
+#~ "Questa opzione ridimensionerà l'immagine prima di inviare il modulo. Usa "
+#~ "questa opzione per inviare immagini più piccole in aree con connettività "
+#~ "scarsa.<ul><li>Piccola - 0,1 megapixel</li><li>Media - 0,2 "
+#~ "megapixel</li><li>Grande - 0,5 megapixel</li></ul>"
+
+#~ msgid "Video Capture"
+#~ msgstr "Acquisizione video"
+
+#~ msgid "Signature Capture"
+#~ msgstr "Acquisizione firma"
+
+#~ msgid "Document Upload"
+#~ msgstr "Caricamento documento"
+
+#~ msgid "Date and Time"
+#~ msgstr "Data e ora"
+
+#~ msgid "Choice"
+#~ msgstr "Scelta"
+
+#~ msgid "Choice Value"
+#~ msgstr "Valore scelta"
+
+#~ msgid "Whitespace in values is not allowed."
+#~ msgstr "Gli spazi nei valori non sono consentiti."
+
+#~ msgid "This choice value has been used in the same question"
+#~ msgstr "Questo valore di scelta è già stato usato nella stessa domanda"
+
+#~ msgid ""
+#~ "Cannot change a Multiple/Single Choice question to a non-Choice question if "
+#~ "it has Choices. Please remove all Choices and try again."
+#~ msgstr ""
+#~ "Non è possibile cambiare una domanda a scelta multipla/singola in una "
+#~ "domanda non a scelta se contiene delle scelte. Rimuovi tutte le scelte e "
+#~ "riprova."
+
+#~ msgid "Checkbox"
+#~ msgstr "Casella di controllo"
+
+#~ msgid "Group"
+#~ msgstr "Gruppo"
+
+#~ msgid "Question List"
+#~ msgstr "Elenco domande"
+
+#~ msgid "Repeat Group"
+#~ msgstr "Gruppo ripetuto"
+
+#~ msgid "Repeat Count"
+#~ msgstr "Conteggio ripetizioni"
+
+#~ msgid "Repeat Count is required."
+#~ msgstr "Il conteggio ripetizioni è obbligatorio."
+
+#~ msgid "Extra Repeat Attributes"
+#~ msgstr "Attributi extra di ripetizione"
+
+#~ msgid "GPS"
+#~ msgstr "GPS"
+
+#~ msgid "Barcode Scan"
+#~ msgstr "Scansione codice a barre"
+
+#~ msgid "{question} is not allowed."
+#~ msgstr "{question} non è consentito."
+
+#~ msgid "{question} validation failed"
+#~ msgstr "Validazione di {question} non riuscita"
+
+#~ msgid "{question} is required."
+#~ msgstr "{question} è obbligatorio."
+
+#~ msgid "Unknown (read-only) question type"
+#~ msgstr "Tipo di domanda sconosciuto (sola lettura)"
+
+#~ msgid "No Translation Data"
+#~ msgstr "Nessun Dato di Traduzione"
+
+#~ msgid "getCurrentMugInput"
+#~ msgstr "getCurrentMugInput"
+
+#~ msgid "jstree"
+#~ msgstr "jstree"
+
+#~ msgid "getMugByPath"
+#~ msgstr "getMugByPath"
+
+#~ msgid "getData"
+#~ msgstr "ottieniDati"
+
+#~ msgid "loadXML"
+#~ msgstr "loadXML"
+
+#~ msgid "createXML"
+#~ msgstr "creaXML"
+
+#~ msgid "loadXFormOrError"
+#~ msgstr "loadXFormOrError"
+
+#~ msgid "addQuestion"
+#~ msgstr "aggiungiDomanda"
+
+#~ msgid "nodeIDFromLabel"
+#~ msgstr "nodeIDDaEtichetta"
+
+#~ msgid "getSections"
+#~ msgstr "ottieniSezioni"
+
+#~ msgid "collapseSection"
+#~ msgstr "collassaSezione"
+
+#~ msgid "Active"
+#~ msgstr "Attivo"
+
+#~ msgid "Inactive"
+#~ msgstr "Inattivo"
+
+#~ msgid "Deactivate"
+#~ msgstr "Disattiva"
+
+#~ msgid "Activate"
+#~ msgstr "Attiva"
+
+#~ msgid ""
+#~ "\"{caseProperty}\" is assigned by another question. You can still save the "
+#~ "form, but will need to have only one question for any case property in order"
+#~ " to build the application"
+#~ msgstr ""
+#~ "\"{caseProperty}\" è assegnata da un'altra domanda. Puoi comunque salvare il"
+#~ " modulo, ma dovrai avere una sola domanda per ogni proprietà del caso per "
+#~ "poter costruire l'applicazione"
+
+#~ msgid "Case Management"
+#~ msgstr "Gestione dei casi"
+
+#~ msgid ""
+#~ "Saving a question as a case property makes it accessible and reusable across"
+#~ " your application. To manage all your case properties from this form, click "
+#~ "on the Manage Case button. "
+#~ msgstr ""
+#~ "Salvare una domanda come proprietà del caso la rende accessibile e "
+#~ "riutilizzabile in tutta l'applicazione. Per gestire tutte le proprietà del "
+#~ "caso da questo modulo, fai clic sul pulsante Gestisci caso."
+
+#~ msgid "**{word}** is a reserved word"
+#~ msgstr "**{word}** è una parola riservata"
+
+#~ msgid ""
+#~ "This question is used to update multiple case properties. If you wish to "
+#~ "update these case properties, please visit the [Manage Case Page]({url})"
+#~ msgstr ""
+#~ "Questa domanda viene utilizzata per aggiornare più proprietà del caso. Se "
+#~ "desideri aggiornare queste proprietà del caso, visita la [Pagina Gestione "
+#~ "Caso]({url})"
+
+#~ msgid "Disable Mobile Worker Attendees"
+#~ msgstr "Disabilita Partecipanti Operatori Mobili"
+
+#~ msgid "Enable Mobile Worker Attendees"
+#~ msgstr "Abilita Partecipanti Operatori Mobili"
+
+#~ msgid "Possible Attendees"
+#~ msgstr "Partecipanti Possibili"
+
+#~ msgid "Expected Attendees"
+#~ msgstr "Partecipanti Previsti"
+
+#~ msgid "Search Attendees"
+#~ msgstr "Cerca Partecipanti"
+
+#~ msgid "Possible Attendance Takers"
+#~ msgstr "Possibili Rilevatori di Presenza"
+
+#~ msgid "Selected Attendance Takers"
+#~ msgstr "Rilevatori di Presenza Selezionati"
+
+#~ msgid "Search Attendance Takers"
+#~ msgstr "Cerca Rilevatori di Presenza"
+
+#~ msgid "Token successfully verified!"
+#~ msgstr "Token verificato con successo!"
+
+#~ msgid ""
+#~ "Invalid API token. Please verify that the token matches the one on your "
+#~ "Mapbox account and has the correct scope configured."
+#~ msgstr ""
+#~ "Token API non valido. Verifica che il token corrisponda a quello del tuo "
+#~ "account Mapbox e che abbia il corretto ambito configurato."
+
+#~ msgid ""
+#~ "Could not load data. Please try again later or report an issue if this "
+#~ "problem persists."
+#~ msgstr ""
+#~ "Impossibile caricare i dati. Per favore riprova più tardi o segnala un "
+#~ "problema se questo problema persiste."
+
+#~ msgid "yes"
+#~ msgstr "sì"
+
+#~ msgid "Phone number is required when users confirm their own accounts by sms."
+#~ msgstr ""
+#~ "Il numero di telefono è richiesto quando gli utenti confermano i propri "
+#~ "account tramite sms."
+
+#~ msgid "Phone number should contain only digits 0-9."
+#~ msgstr "Il numero di telefono deve contenere solo cifre da 0 a 9."
+
+#~ msgid ""
+#~ "<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
+#~ "events and users"
+#~ msgstr ""
+#~ "<strong>Monitoraggio presenze</strong> &mdash; Coordina eventi e utenti per "
+#~ "il monitoraggio delle presenze"
+
+#~ msgid "Edit Attendance Tracking Events"
+#~ msgstr "Modifica eventi di monitoraggio presenze"
+
+#~ msgid "No Access"
+#~ msgstr "Nessun accesso"
+
+#~ msgid "Access All"
+#~ msgstr "Accesso completo"
+
+#~ msgid "Limited Access"
+#~ msgstr "Accesso limitato"
+
+#~ msgid "Select which items the role can access:"
+#~ msgstr "Seleziona a quali elementi il ruolo può accedere:"
+
+#~ msgid "Select which web apps the role has access to:"
+#~ msgstr "Seleziona a quali web app il ruolo ha accesso:"
+
+#, javascript-format
+#~ msgid "Select at least one item from the list for \"%s\""
+#~ msgstr "Seleziona almeno un elemento dall'elenco per \"%s\""
+
+#~ msgid "Edit Role: "
+#~ msgstr "Modifica ruolo: "
+
+#~ msgid "View Role: "
+#~ msgstr "Visualizza ruolo: "
+
+#~ msgid "New Role"
+#~ msgstr "Nuovo ruolo"
+
+#~ msgid "Your location"
+#~ msgstr "La tua posizione"
+
+#~ msgid "Could not enable user properties, please try again later."
+#~ msgstr "Impossibile abilitare le proprietà utente, riprova più tardi."
+
+#~ msgid "Email address is required when users confirm their own accounts."
+#~ msgstr ""
+#~ "L'indirizzo email è richiesto quando gli utenti confermano i propri account."
+
+#~ msgid "Out of range of filter. Will not appear on page refresh."
+#~ msgstr ""
+#~ "Fuori dall'intervallo del filtro. Non apparirà all'aggiornamento della "
+#~ "pagina."
+
+#~ msgid "Case copied"
+#~ msgstr "Caso copiato"
+
+#~ msgid "Cases copied"
+#~ msgstr "Casi copiati"
+
+#~ msgid "Select None"
+#~ msgstr "Nessuna selezione"
+
+#~ msgid "Select All"
+#~ msgstr "Seleziona tutto"
+
+#~ msgid "long"
+#~ msgstr "lungo"
+
+#~ msgid "2-digit"
+#~ msgstr "2 cifre"
+
+#~ msgid "Copy"
+#~ msgstr "Copia"
+
+#~ msgid "Expand All"
+#~ msgstr "Espandi tutto"
+
+#~ msgid "Collapse All"
+#~ msgstr "Comprimi tutto"
+
+#~ msgid "Bulk Update All Questions"
+#~ msgstr "Aggiorna in blocco tutte le domande"
+
+#~ msgid "Click {btn} to start building your form."
+#~ msgstr "Fai clic su {btn} per iniziare a costruire il modulo."
+
+#~ msgid "Question Details"
+#~ msgstr "Dettagli della domanda"
+
+#~ msgid "Cannot Change Question Type"
+#~ msgstr "Impossibile cambiare il tipo di domanda"
+
+#~ msgid "Change Question Type To"
+#~ msgstr "Cambia tipo di domanda in"
+
+#~ msgid "Show"
+#~ msgstr "Mostra"
+
+#~ msgid "Used By"
+#~ msgstr "Usato da"
+
+#~ msgid "In Property"
+#~ msgstr "Nella proprietà"
+
+#~ msgid "No match for {info} found!"
+#~ msgstr "Nessuna corrispondenza trovata per {info}!"
+
+#~ msgid "Multiple matches for {info} found!"
+#~ msgstr "Trovate più corrispondenze per {info}!"
+
+#~ msgid "Add Key&rarr;Value Pair"
+#~ msgstr "Aggiungi Coppia Chiave&rarr;Valore"
+
+#~ msgid "show in question list"
+#~ msgstr "mostra nell'elenco delle domande"
+
+#~ msgid "Date Format Options"
+#~ msgstr "Opzioni Formato Data"
+
+#~ msgid "no formatting"
+#~ msgstr "nessuna formattazione"
+
+#~ msgid "Micro-Image"
+#~ msgstr "Micro-immagine"
+
+#~ msgid "You have deleted a question."
+#~ msgstr "Hai eliminato una domanda."
+
+#~ msgid "Undo"
+#~ msgstr "Annulla"
+
+#~ msgid ""
+#~ "Bind Node [{path}] found but has no associated Data node. This bind node "
+#~ "will be discarded!"
+#~ msgstr ""
+#~ "Nodo Bind [{path}] trovato ma non ha un nodo Dati associato. Questo nodo "
+#~ "bind verrà scartato!"
+
+#~ msgid "Validation Failed"
+#~ msgstr "Validazione non riuscita"
+
+#~ msgid "Please fix the error before leaving this page:"
+#~ msgstr "Correggi l'errore prima di lasciare questa pagina:"
+
+#~ msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
+#~ msgstr "Modifica <span class='property-name'>Espressione</span> (Avanzato)"
+
+#~ msgid "Show Simple Mode"
+#~ msgstr "Mostra modalità semplice"
+
+#~ msgid ""
+#~ "You are currently in Advanced Mode because your logic is too complicated for"
+#~ " Simple Mode."
+#~ msgstr ""
+#~ "Attualmente sei in modalità avanzata perché la tua logica è troppo complessa"
+#~ " per la modalità semplice."
+
+#~ msgid "You can drag a question into the box."
+#~ msgstr "Puoi trascinare una domanda nella casella."
+
+#~ msgid "Guide to Common Logic and Calculations"
+#~ msgstr "Guida alla logica e ai calcoli comuni"
+
+#~ msgid "Edit <span class='property-name'>Expression</span>"
+#~ msgstr "Modifica <span class='property-name'>Espressione</span>"
+
+#~ msgid "Show Advanced Mode"
+#~ msgstr "Mostra Modalità Avanzata"
+
+#~ msgid "Result is"
+#~ msgstr "Il risultato è"
+
+#~ msgid "Expression"
+#~ msgstr "Espressione"
+
+#~ msgid "Add Expression"
+#~ msgstr "Aggiungi Espressione"
+
+#~ msgid "Edit Data Source"
+#~ msgstr "Modifica fonte dati"
+
+#~ msgid "Query Expression"
+#~ msgstr "Espressione di query"
+
+#~ msgid "Optional Instance Properties"
+#~ msgstr "Proprietà opzionali dell'istanza"
+
+#~ msgid "Instance ID"
+#~ msgstr "ID istanza"
+
+#~ msgid "Instance URI"
+#~ msgstr "URI istanza"
+
+#~ msgid "Display"
+#~ msgstr "Visualizza"
+
+#~ msgid "auto?"
+#~ msgstr "auto?"
+
+#~ msgid ""
+#~ "Use text formatting to <strong>bold</strong> and <em>italicize</em> words, "
+#~ "use bulleted lists, and <a target='_blank' "
+#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
+#~ msgstr ""
+#~ "Usa la formattazione del testo per <strong>grassetto</strong> e "
+#~ "<em>corsivo</em> delle parole, usa elenchi puntati e <a target='_blank' "
+#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>altro</a>"
+
+#~ msgid "Turn Off Text Formatting"
+#~ msgstr "Disattiva Formattazione Testo"
+
+#~ msgid "Turn On Text Formatting"
+#~ msgstr "Attiva Formattazione Testo"
+
+#~ msgid ""
+#~ "You have languages in your form that are not specified in the \"Languages\" "
+#~ "page of the application builder. The following language will be deleted on "
+#~ "save unless you add it to the \"Languages\" page:"
+#~ msgstr ""
+#~ "Hai lingue nel tuo modulo che non sono specificate nella pagina \"Lingue\" "
+#~ "del costruttore dell'applicazione. La seguente lingua verrà eliminata al "
+#~ "salvataggio a meno che tu non la aggiunga alla pagina \"Lingue\":"
+
+#~ msgid "App Properties"
+#~ msgstr "Proprietà dell'App"
+
+#~ msgid "Property Name"
+#~ msgstr "Nome Proprietà"
+
+#~ msgid "Relevant"
+#~ msgstr "Rilevante"
+
+#~ msgid "Relationship Identifier (e.g. parent or host)"
+#~ msgstr "Identificatore di Relazione (ad es. parent o host)"
+
+#~ msgid "Referenced Case ID"
+#~ msgstr "ID Caso Referenziato"
+
+#~ msgid "Referenced Case Type"
+#~ msgstr "Tipo di Caso Referenziato"
+
+#~ msgid "Relationship (child or extension)"
+#~ msgstr "Relazione (figlio o estensione)"
+
+#~ msgid "Node Name"
+#~ msgstr "Nome Nodo"
+
+#~ msgid "Source"
+#~ msgstr "Origine"
+
+#~ msgid "From"
+#~ msgstr "Da"
+
+#~ msgid "Attachment Name"
+#~ msgstr "Nome Allegato"
+
+#~ msgid "Add Property"
+#~ msgstr "Aggiungi Proprietà"
+
 #~ msgid "Use Attachments"
 #~ msgstr "Usa Allegati"
 
@@ -5667,12 +5621,6 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 
 #~ msgid "Inlined attachments must have an attachment name"
 #~ msgstr "Gli allegati in linea devono avere un nome allegato"
-
-#~ msgid "Update"
-#~ msgstr "Aggiorna"
-
-#~ msgid "Index"
-#~ msgstr "Indice"
 
 #~ msgid "Attachments"
 #~ msgstr "Allegati"
@@ -5709,15 +5657,6 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ msgid "Hide Path"
 #~ msgstr "Nascondi percorso"
 
-#~ msgid "Video"
-#~ msgstr "Video"
-
-#~ msgid "Inline Video"
-#~ msgstr "Video in linea"
-
-#~ msgid "HTML"
-#~ msgstr "HTML"
-
 #~ msgid "Copying and Pasting Questions"
 #~ msgstr "Copia e incolla domande"
 
@@ -5751,24 +5690,6 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 
 #~ msgid "Questions can be copied between forms, and even to other apps."
 #~ msgstr "Le domande possono essere copiate tra moduli e anche in altre app."
-
-#~ msgid "Cannot insert {type} into tree root"
-#~ msgstr "Impossibile inserire {type} nella radice dell'albero"
-
-#~ msgid "Cannot insert $1 into or after $2"
-#~ msgstr "Impossibile inserire $1 in o dopo $2"
-
-#~ msgid "Cannot insert $1 into $2"
-#~ msgstr "Impossibile inserire $1 in $2"
-
-#~ msgid "Unsupported paste format"
-#~ msgstr "Formato incolla non supportato"
-
-#~ msgid "Unsupported paste format:"
-#~ msgstr "Formato incolla non supportato:"
-
-#~ msgid "Unknown question type:"
-#~ msgstr "Tipo di domanda sconosciuto:"
 
 #~ msgid "Enter command"
 #~ msgstr "Inserisci comando"

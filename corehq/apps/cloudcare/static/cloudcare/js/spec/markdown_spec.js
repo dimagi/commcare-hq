@@ -41,44 +41,4 @@ describe('Markdown', function () {
             );
         });
     });
-
-    describe('Markdown integrations', function () {
-        beforeEach(function () {
-            markdown.reset();
-        });
-
-        afterEach(function () {
-            let testDiv = document.getElementById("test-div");
-            if (testDiv) {
-                document.body.removeChild(testDiv);
-            }
-        });
-
-        it('should render GAEN otp urls', function () {
-            initialPageData.register('gaen_otp_enabled', true);
-            initialPageData.registerUrl('gaen_otp_view', '/gaen/');
-            assert.equal(
-                render("[link](cchq://passthrough/gaen_otp/?otp=otp)"),
-                "<p><a href=\"/gaen/?otp=otp\" target=\"gaen_otp\"><u>link</u></a></p>\n",
-            );
-        });
-
-        it('should register listeners for GAEN link clicks', function () {
-            initialPageData.register('gaen_otp_enabled', true);
-            initialPageData.registerUrl('gaen_otp_view', '/gaen/');
-            let renderedLink = render("[link](cchq://passthrough/gaen_otp/?otp=otp)");
-
-            let submitStub = sinon.stub(HTMLFormElement.prototype, "submit");
-
-            let div = document.createElement("div");
-            div.setAttribute("id", "test-div");
-            div.innerHTML = renderedLink;
-            document.body.appendChild(div);
-
-            let link = div.querySelector("a");
-            link.click();
-            assert(submitStub.called, "GAEN listener was not registered");
-        });
-
-    });
 });

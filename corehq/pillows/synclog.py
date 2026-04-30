@@ -2,8 +2,6 @@ from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 
 from casexml.apps.phone.models import SyncLogSQL
-from corehq import toggles
-from corehq.sql_db.util import handle_connection_failure
 from dimagi.utils.parsing import string_to_utc_datetime
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.feed.interface import Change
@@ -11,6 +9,7 @@ from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.interface import PillowProcessor
 from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
 
+from corehq import toggles
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import (
     KafkaChangeFeed,
@@ -29,6 +28,7 @@ from corehq.apps.users.util import (
     update_last_sync,
     update_latest_builds,
 )
+from corehq.sql_db.util import handle_connection_failure
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.interface import (
     BaseDocProcessor,
@@ -120,8 +120,8 @@ class UserSyncHistoryProcessor(PillowProcessor):
 
 
 def mark_last_synclog(domain, user, app_id, build_id, sync_date, latest_build_date, device_id,
-                      device_app_meta, commcare_version=None, build_profile_id=None, fcm_token=None,
-                      fcm_token_timestamp=None, save_user=True):
+                      device_app_meta, commcare_version=None, build_profile_id=None,
+                      save_user=True):
     version = None
     if build_id:
         version = get_version_from_build_id(domain, build_id)
@@ -136,8 +136,7 @@ def mark_last_synclog(domain, user, app_id, build_id, sync_date, latest_build_da
 
     if device_id:
         local_save |= update_device_meta(user, device_id, commcare_version=commcare_version,
-                                         device_app_meta=device_app_meta, fcm_token=fcm_token,
-                                         fcm_token_timestamp=fcm_token_timestamp, save=False)
+                                         device_app_meta=device_app_meta, save=False)
     if local_save and save_user:
         user.save(fire_signals=False)
     return local_save

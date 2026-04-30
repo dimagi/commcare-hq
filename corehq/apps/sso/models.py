@@ -168,6 +168,7 @@ class IdentityProvider(models.Model):
     max_days_until_user_api_key_expiration = models.IntegerField(
         default=None, null=True, blank=True, choices=VALID_API_EXPIRATION_OPTIONS
     )
+    require_api_key_for_api_access = models.BooleanField(default=False)
 
     class Meta:
         app_label = 'sso'

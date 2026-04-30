@@ -331,26 +331,6 @@ msgid ""
 "please report an issue."
 msgstr "عذراً، حدث خطأ أثناء التنزيل. إذا تكرر ذلك يرجى الإبلاغ عن المشكلة."
 
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Active"
-msgstr "نشط"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Inactive"
-msgstr "غير نشط"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Deactivate"
-msgstr "إلغاء التفعيل"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Activate"
-msgstr "تفعيل"
-
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
 #: corehq/apps/sms/static/sms/js/add_gateway.js
@@ -782,10 +762,6 @@ msgstr "تعيين هوية شرطي"
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Translatable Text"
 msgstr "نص قابل للترجمة"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-msgid "Image"
-msgstr "صورة"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "The \"%(format)s\" format requires columns with formats: %(dependencies)s."
@@ -1260,8 +1236,6 @@ msgid "save"
 msgstr "حفظ"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Case Property"
 msgstr "خاصية الحالة"
 
@@ -1278,109 +1252,47 @@ msgstr "آخر حفظ"
 msgid "[unknown]"
 msgstr "[غير معروف]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getCurrentMugInput"
-msgstr "الحصول على إدخال الكوب الحالي"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/229.js
+msgid "\n"
+msgstr "\n"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "jstree"
-msgstr "شجرة JS"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getMugByPath"
-msgstr "getMugByPath"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getData"
-msgstr "الحصول على البيانات"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "loadXML"
-msgstr "تحميل XML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "createXML"
-msgstr "إنشاءXML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "loadXFormOrError"
-msgstr "تحميل XForm أو خطأ"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "addQuestion"
-msgstr "إضافة سؤال"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "nodeIDFromLabel"
-msgstr "معرّف العقدة من التسمية"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getSections"
-msgstr "الحصول على الأقسام"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "collapseSection"
-msgstr "طي القسم"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "Drag question here"
 msgstr "اسحب السؤال هنا"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is equal to"
 msgstr "يساوي"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is not equal to"
 msgstr "لا يساوي"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is less than"
 msgstr "أقل من"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is less than or equal to"
 msgstr "أقل من أو يساوي"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is greater than"
 msgstr "أكبر من"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is greater than or equal to"
 msgstr "أكبر من أو يساوي"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "has selected value"
 msgstr "لديه قيمة محددة"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "True when ALL of the expressions are true."
 msgstr "صحيح عندما تكون جميع التعابير صحيحة."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "True when ANY of the expressions are true."
 msgstr "صحيح عندما يكون أي من التعابير صحيحًا."
 
@@ -1388,70 +1300,9 @@ msgstr "صحيح عندما يكون أي من التعابير صحيحًا."
 msgid "{path} is not a valid data parent"
 msgstr "{path} ليس أصل بيانات صالح"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"\"{caseProperty}\" is assigned by another question. You can still save the "
-"form, but will need to have only one question for any case property in order"
-" to build the application"
-msgstr ""
-"\"{caseProperty}\" تم تعيينه بواسطة سؤال آخر. يمكنك حفظ النموذج، ولكن ستحتاج"
-" إلى وجود سؤال واحد فقط لأي خاصية حالة من أجل بناء التطبيق"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Case Management"
-msgstr "إدارة الحالات"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"Saving a question as a case property makes it accessible and reusable across"
-" your application. To manage all your case properties from this form, click "
-"on the Manage Case button. "
-msgstr ""
-"حفظ سؤال كخاصية حالة يجعله متاحًا وقابلًا لإعادة الاستخدام عبر تطبيقك. "
-"لإدارة جميع خصائص الحالة من هذا النموذج، انقر على زر إدارة الحالة."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "**{word}** is a reserved word"
-msgstr "**{word}** هي كلمة محجوزة"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"This question is used to update multiple case properties. If you wish to "
-"update these case properties, please visit the [Manage Case Page]({url})"
-msgstr ""
-"يتم استخدام هذا السؤال لتحديث عدة خصائص حالة. إذا كنت ترغب في تحديث هذه "
-"الخصائص، يرجى زيارة [صفحة إدارة الحالة]({url})"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Command Bar"
-msgstr "شريط الأوامر"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Basic"
-msgstr "أساسي"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Logic"
-msgstr "المنطق"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"Use logic to control when questions are asked and what answers are valid. "
-"You can add logic to display a question based on a previous answer, to make "
-"the question required or ensure the answer is in a valid range."
-msgstr ""
-"استخدم المنطق للتحكم في متى يتم طرح الأسئلة وما هي الإجابات الصالحة. يمكنك "
-"إضافة منطق لعرض سؤال بناءً على إجابة سابقة، لجعل السؤال مطلوبًا أو لضمان أن "
-"الإجابة ضمن نطاق صالح."
+msgid "New Form"
+msgstr "نموذج جديد"
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
@@ -2038,15 +1889,14 @@ msgstr "إرسال الدفع"
 msgid "Submit Invoice Request"
 msgstr "إرسال طلب فاتورة"
 
-#: corehq/apps/domain/static/domain/js/bootstrap3/case_search.js
-#: corehq/apps/domain/static/domain/js/bootstrap5/case_search.js
-msgid "You have unchanged settings"
-msgstr "لديك إعدادات لم تتغير"
-
 #: corehq/apps/domain/static/domain/js/bootstrap3/info_basic.js
 #: corehq/apps/domain/static/domain/js/bootstrap5/info_basic.js
 msgid "Select a Timezone..."
 msgstr "اختر منطقة زمنية..."
+
+#: corehq/apps/domain/static/domain/js/case_search.js
+msgid "You have unchanged settings"
+msgstr "لديك إعدادات لم تتغير"
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
@@ -2150,38 +2000,6 @@ msgid ""
 msgstr ""
 "حدث خطأ أثناء إرسال البريد الإلكتروني، يرجى المحاولة مرة أخرى أو الإبلاغ عن "
 "المشكلة إذا استمرت."
-
-#: corehq/apps/events/static/events/js/event_attendees.js
-msgid "Disable Mobile Worker Attendees"
-msgstr "تعطيل حضور العاملين عبر الجوال"
-
-#: corehq/apps/events/static/events/js/event_attendees.js
-msgid "Enable Mobile Worker Attendees"
-msgstr "تمكين حضور العاملين عبر الجوال"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Possible Attendees"
-msgstr "الحضور المحتملون"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Expected Attendees"
-msgstr "الحضور المتوقعون"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Search Attendees"
-msgstr "البحث عن الحضور"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Possible Attendance Takers"
-msgstr "مسجلو الحضور المحتملون"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Selected Attendance Takers"
-msgstr "مسجلو الحضور المحددون"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Search Attendance Takers"
-msgstr "البحث عن مسجلي الحضور"
 
 #: corehq/apps/export/static/export/js/create_export.js
 msgid "<%- count %> form submission available."
@@ -2433,20 +2251,6 @@ msgstr "جميع المواقع"
 msgid ""
 "Oops! Something went wrong! Please report an issue if the problem persists."
 msgstr "عذرًا! حدث خطأ ما! يرجى الإبلاغ عن المشكلة إذا استمرت."
-
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
-msgid "Token successfully verified!"
-msgstr "تم التحقق من الرمز بنجاح!"
-
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
-msgid ""
-"Invalid API token. Please verify that the token matches the one on your "
-"Mapbox account and has the correct scope configured."
-msgstr ""
-"رمز API غير صالح. يرجى التأكد من أن الرمز يطابق الرمز الموجود في حساب Mapbox"
-" الخاص بك وأن النطاق مضبوط بشكل صحيح."
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/gps_capture.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/gps_capture.js
@@ -3031,19 +2835,6 @@ msgstr "اختر موقعًا"
 #: corehq/apps/locations/static/locations/js/widgets.js
 msgid "Choose a primary location"
 msgstr "اختر موقعًا رئيسيًا"
-
-#: corehq/apps/prototype/static/prototype/js/example/knockout_pagination.js
-#: corehq/apps/prototype/static/prototype/js/webpack/knockout_pagination.js
-msgid ""
-"Could not load data. Please try again later or report an issue if this "
-"problem persists."
-msgstr ""
-"تعذر تحميل البيانات. يرجى المحاولة لاحقًا أو الإبلاغ عن المشكلة إذا استمرت."
-
-#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap3_amd.js
-#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap5_amd.js
-msgid "yes"
-msgstr "نعم"
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
@@ -3863,17 +3654,6 @@ msgstr "يرجى إدخال عنوان بريد إلكتروني صالح."
 
 #: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
 #: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
-msgid "Phone number is required when users confirm their own accounts by sms."
-msgstr ""
-"رقم الهاتف مطلوب عندما يؤكد المستخدمون حساباتهم بأنفسهم عبر الرسائل القصيرة."
-
-#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
-#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
-msgid "Phone number should contain only digits 0-9."
-msgstr "يجب أن يحتوي رقم الهاتف على أرقام فقط من 0 إلى 9."
-
-#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
-#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Checking availability..."
 msgstr "جارٍ التحقق من التوفر..."
 
@@ -4068,6 +3848,10 @@ msgid "View-Only Applications"
 msgstr "تطبيقات للعرض فقط"
 
 #: corehq/apps/users/static/users/js/edit_role.js
+msgid "Allow locking and unlocking questions in forms."
+msgstr "السماح بقفل وفتح الأسئلة في النماذج."
+
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
 "worker roles &amp; permissions (only Admins can edit roles)"
@@ -4101,17 +3885,6 @@ msgid ""
 msgstr ""
 "<strong>إدارة الصادرات المشتركة</strong> &mdash; الوصول إلى محتوى وهيكل "
 "الصادرات المشتركة وتعديله"
-
-#: corehq/apps/users/static/users/js/edit_role.js
-msgid ""
-"<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
-"events and users"
-msgstr ""
-"<strong>تتبع الحضور</strong> &mdash; تنسيق فعاليات تتبع الحضور والمستخدمين"
-
-#: corehq/apps/users/static/users/js/edit_role.js
-msgid "Edit Attendance Tracking Events"
-msgstr "تعديل فعاليات تتبع الحضور"
 
 #: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
@@ -4459,439 +4232,26 @@ msgstr "فشل! الاستجابة هي: "
 msgid "CommCare HQ was unable to make the request: "
 msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 
-#~ msgid "No Access"
-#~ msgstr "لا يوجد وصول"
+#~ msgid "Command Bar"
+#~ msgstr "شريط الأوامر"
 
-#~ msgid "Access All"
-#~ msgstr "وصول كامل"
+#~ msgid "Cannot insert $1 into $2"
+#~ msgstr "لا يمكن إدراج $1 في $2"
 
-#~ msgid "Limited Access"
-#~ msgstr "وصول محدود"
+#~ msgid "Cannot insert $1 into or after $2"
+#~ msgstr "لا يمكن إدراج $1 في أو بعد $2"
 
-#~ msgid "Select which items the role can access:"
-#~ msgstr "حدد العناصر التي يمكن للدور الوصول إليها:"
+#~ msgid "Cannot insert {type} into tree root"
+#~ msgstr "لا يمكن إدراج {type} في جذر الشجرة"
 
-#~ msgid "Select which web apps the role has access to:"
-#~ msgstr "حدد تطبيقات الويب التي يمكن للدور الوصول إليها:"
+#~ msgid "Unsupported paste format"
+#~ msgstr "تنسيق لصق غير مدعوم"
 
-#, javascript-format
-#~ msgid "Select at least one item from the list for \"%s\""
-#~ msgstr "يرجى اختيار عنصر واحد على الأقل من القائمة لـ \"%s\""
+#~ msgid "Unsupported paste format:"
+#~ msgstr "تنسيق لصق غير مدعوم:"
 
-#~ msgid "Edit Role: "
-#~ msgstr "تعديل الدور: "
-
-#~ msgid "View Role: "
-#~ msgstr "عرض الدور: "
-
-#~ msgid "New Role"
-#~ msgstr "دور جديد"
-
-#~ msgid "\n"
-#~ msgstr "\n"
-
-#~ msgid "New Form"
-#~ msgstr "نموذج جديد"
-
-#~ msgid "Your location"
-#~ msgstr "موقعك"
-
-#~ msgid "Could not enable user properties, please try again later."
-#~ msgstr "تعذر تفعيل خصائص المستخدم، يرجى المحاولة مرة أخرى لاحقًا."
-
-#~ msgid "Email address is required when users confirm their own accounts."
-#~ msgstr "عنوان البريد الإلكتروني مطلوب عندما يؤكد المستخدمون حساباتهم بأنفسهم."
-
-#~ msgid "Out of range of filter. Will not appear on page refresh."
-#~ msgstr "خارج نطاق عامل التصفية. لن يظهر عند تحديث الصفحة."
-
-#~ msgid "Case copied"
-#~ msgstr "تم نسخ الحالة"
-
-#~ msgid "Cases copied"
-#~ msgstr "تم نسخ الحالات"
-
-#~ msgid "Select None"
-#~ msgstr "عدم اختيار أي"
-
-#~ msgid "Select All"
-#~ msgstr "اختيار الكل"
-
-#~ msgid "long"
-#~ msgstr "طويل"
-
-#~ msgid "2-digit"
-#~ msgstr "رقمان"
-
-#~ msgid "Copy"
-#~ msgstr "نسخ"
-
-#~ msgid "Expand All"
-#~ msgstr "توسيع الكل"
-
-#~ msgid "Collapse All"
-#~ msgstr "طي الكل"
-
-#~ msgid "Bulk Update All Questions"
-#~ msgstr "تحديث جميع الأسئلة دفعة واحدة"
-
-#~ msgid "Click {btn} to start building your form."
-#~ msgstr "انقر على {btn} للبدء في بناء النموذج."
-
-#~ msgid "Question Details"
-#~ msgstr "تفاصيل السؤال"
-
-#~ msgid "Expression Editor"
-#~ msgstr "محرر التعبيرات"
-
-#~ msgid "Cannot Change Question Type"
-#~ msgstr "لا يمكن تغيير نوع السؤال"
-
-#~ msgid "Change Question Type To"
-#~ msgstr "تغيير نوع السؤال إلى"
-
-#~ msgid "Show"
-#~ msgstr "عرض"
-
-#~ msgid "Used By"
-#~ msgstr "يستخدم من قبل"
-
-#~ msgid "In Property"
-#~ msgstr "في الخاصية"
-
-#~ msgid "No match for {info} found!"
-#~ msgstr "لم يتم العثور على تطابق لـ {info}!"
-
-#~ msgid "Multiple matches for {info} found!"
-#~ msgstr "تم العثور على تطابقات متعددة لـ {info}!"
-
-#~ msgid "Add Key&rarr;Value Pair"
-#~ msgstr "إضافة زوج مفتاح&rarr;قيمة"
-
-#~ msgid "show in question list"
-#~ msgstr "إظهار في قائمة الأسئلة"
-
-#~ msgid "Date Format Options"
-#~ msgstr "خيارات تنسيق التاريخ"
-
-#~ msgid "No Formatting"
-#~ msgstr "بدون تنسيق"
-
-#~ msgid "Invalid XPath expression."
-#~ msgstr "تعبير XPath غير صالح."
-
-#~ msgid ""
-#~ "The {property} for a question is not allowed to reference the question "
-#~ "itself. Please remove the . from the {property} or your form will have "
-#~ "errors."
-#~ msgstr ""
-#~ "لا يُسمح بأن تشير {property} لسؤال إلى السؤال نفسه. يرجى إزالة . من "
-#~ "{property} وإلا سيحدث أخطاء في النموذج."
-
-#~ msgid "Unknown question:"
-#~ msgstr "سؤال غير معروف:"
-
-#~ msgid "Unknown questions:"
-#~ msgstr "أسئلة غير معروفة:"
-
-#~ msgid "no formatting"
-#~ msgstr "بدون تنسيق"
-
-#~ msgid "{question} is required."
-#~ msgstr "{question} مطلوب."
-
-#~ msgid "{question} is not allowed."
-#~ msgstr "غير مسموح بـ {question}."
-
-#~ msgid "{question} validation failed"
-#~ msgstr "فشل التحقق من {question}"
-
-#~ msgid "Unknown (read-only) question type"
-#~ msgstr "نوع سؤال غير معروف (للقراءة فقط)"
-
-#~ msgid "Lookup Table Data"
-#~ msgstr "بيانات جدول البحث"
-
-#~ msgid "No Translation Data"
-#~ msgstr "لا توجد بيانات ترجمة"
-
-#~ msgid "Question ID"
-#~ msgstr "معرّف السؤال"
-
-#~ msgid ""
-#~ "The ID '{nodeID}' may cause problems with form parsing. It is recommended to"
-#~ " pick a different Question ID."
-#~ msgstr ""
-#~ "قد يتسبب المعرّف '{nodeID}' في مشاكل عند تحليل النموذج. يُنصح باختيار معرّف "
-#~ "سؤال مختلف."
-
-#~ msgid ""
-#~ "{nodeID} is not a valid Question ID. It must start with a letter and contain"
-#~ " only letters, numbers, and '-' or '_' characters."
-#~ msgstr ""
-#~ "{nodeID} ليس معرّف سؤال صالح. يجب أن يبدأ بحرف ويحتوي فقط على أحرف أو أرقام "
-#~ "أو '-' أو '_'."
-
-#~ msgid "'meta' is not a valid Question ID."
-#~ msgstr "'meta' ليس معرّف سؤال صالح."
-
-#~ msgid ""
-#~ "Making this change will create a new Question ID (and a new column in "
-#~ "exports)."
-#~ msgstr ""
-#~ "سيؤدي إجراء هذا التغيير إلى إنشاء معرّف سؤال جديد (وعمود جديد في التصدير)."
-
-#~ msgid ""
-#~ "This question has the same Question ID as another question in the same "
-#~ "group. Please choose a unique Question ID."
-#~ msgstr ""
-#~ "هذا السؤال له نفس معرّف السؤال لسؤال آخر في نفس المجموعة. يرجى اختيار معرّف "
-#~ "سؤال فريد."
-
-#~ msgid "Default Data Value"
-#~ msgstr "قيمة البيانات الافتراضية"
-
-#~ msgid "Special Hidden Value XMLNS attribute"
-#~ msgstr "سمة XMLNS المخفية الخاصة"
-
-#~ msgid "Extra Data Attributes"
-#~ msgstr "سمات بيانات إضافية"
-
-#~ msgid "Calculate Condition"
-#~ msgstr "شرط الحساب"
-
-#~ msgid ""
-#~ "You cannot have a Validation Error Message with no Validation Condition!"
-#~ msgstr "لا يمكنك وجود رسالة خطأ تحقق بدون شرط تحقق!"
-
-#~ msgid "Validation Error Message"
-#~ msgstr "رسالة خطأ التحقق"
-
-#~ msgid "Required Condition"
-#~ msgstr "شرط الإلزام"
-
-#~ msgid "The condition will be ignored unless you mark the question required."
-#~ msgstr "سيتم تجاهل الشرط ما لم تحدد أن السؤال إلزامي."
-
-#~ msgid "Extra Bind Attributes"
-#~ msgstr "سمات ربط إضافية"
-
-#~ msgid ""
-#~ "You are referencing a node in this form. This can cause errors in the form"
-#~ msgstr "أنت تشير إلى عقدة في هذا النموذج. قد يسبب ذلك أخطاء في النموذج"
-
-#~ msgid "Appearance Attribute"
-#~ msgstr "سمة المظهر"
-
-#~ msgid "Default Display Text"
-#~ msgstr "نص العرض الافتراضي"
-
-#~ msgid "Default Display Text is required"
-#~ msgstr "نص العرض الافتراضي مطلوب"
-
-#~ msgid "Hint Display Text"
-#~ msgstr "نص تلميح العرض"
-
-#~ msgid "Extra Control Attributes"
-#~ msgstr "سمات تحكم إضافية"
-
-#~ msgid "Raw XML"
-#~ msgstr "XML خام"
-
-#~ msgid "Data Parent"
-#~ msgstr "الأصل البياني"
-
-#~ msgid "Must be valid path"
-#~ msgstr "يجب أن يكون مسارًا صالحًا"
-
-#~ msgid ""
-#~ "Data parent of question in repeat group must be (in) the same repeat group"
-#~ msgstr ""
-#~ "يجب أن يكون أصل بيانات السؤال في مجموعة التكرار (ضمن) نفس مجموعة التكرار"
-
-#~ msgid "Hidden Value"
-#~ msgstr "قيمة مخفية"
-
-#~ msgid "Text"
-#~ msgstr "نص"
-
-#~ msgid "Phone Number or Numeric ID"
-#~ msgstr "رقم هاتف أو معرّف رقمي"
-
-#~ msgid "Integer"
-#~ msgstr "عدد صحيح"
-
-#~ msgid "Audio Capture"
-#~ msgstr "تسجيل صوتي"
-
-#~ msgid "Image Capture"
-#~ msgstr "التقاط صورة"
-
-#~ msgid "Image Size"
-#~ msgstr "حجم الصورة"
-
-#~ msgid "Small"
-#~ msgstr "صغير"
-
-#~ msgid "Medium"
-#~ msgstr "متوسط"
-
-#~ msgid "Large"
-#~ msgstr "كبير"
-
-#~ msgid "Original"
-#~ msgstr "الأصلي"
-
-#~ msgid ""
-#~ "This will resize the image before sending the form. Use this option to send "
-#~ "smaller images in areas of poor connectivity.<ul><li>Small - 0.1 "
-#~ "megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
-#~ "megapixels</li></ul>"
-#~ msgstr ""
-#~ "سيتم تغيير حجم الصورة قبل إرسال النموذج. استخدم هذا الخيار لإرسال صور أصغر "
-#~ "في المناطق ذات الاتصال الضعيف.<ul><li>صغير - 0.1 ميغابيكسل</li><li>متوسط - "
-#~ "0.2 ميغابيكسل</li><li>كبير - 0.5 ميغابيكسل</li></ul>"
-
-#~ msgid "Micro-Image"
-#~ msgstr "صورة مصغرة"
-
-#~ msgid "Video Capture"
-#~ msgstr "تسجيل فيديو"
-
-#~ msgid "Signature Capture"
-#~ msgstr "التقاط توقيع"
-
-#~ msgid "Document Upload"
-#~ msgstr "رفع مستند"
-
-#~ msgid "GPS"
-#~ msgstr "نظام تحديد المواقع (GPS)"
-
-#~ msgid "Barcode Scan"
-#~ msgstr "مسح الباركود"
-
-#~ msgid "Date and Time"
-#~ msgstr "التاريخ والوقت"
-
-#~ msgid "Long"
-#~ msgstr "طويل"
-
-#~ msgid "Decimal"
-#~ msgstr "عشري"
-
-#~ msgid "Choice"
-#~ msgstr "اختيار"
-
-#~ msgid "Choice Value"
-#~ msgstr "قيمة الاختيار"
-
-#~ msgid "Whitespace in values is not allowed."
-#~ msgstr "لا يُسمح بالمسافات البيضاء في القيم."
-
-#~ msgid "This choice value has been used in the same question"
-#~ msgstr "تم استخدام قيمة هذا الاختيار في نفس السؤال"
-
-#~ msgid ""
-#~ "Cannot change a Multiple/Single Choice question to a non-Choice question if "
-#~ "it has Choices. Please remove all Choices and try again."
-#~ msgstr ""
-#~ "لا يمكن تغيير سؤال اختيار متعدد/مفرد إلى سؤال غير اختياري إذا كان يحتوي على "
-#~ "اختيارات. يرجى إزالة جميع الاختيارات والمحاولة مرة أخرى."
-
-#~ msgid "Checkbox"
-#~ msgstr "مربع اختيار"
-
-#~ msgid "Multiple Choice"
-#~ msgstr "اختيار متعدد"
-
-#~ msgid "Group"
-#~ msgstr "مجموعة"
-
-#~ msgid "Question List"
-#~ msgstr "قائمة الأسئلة"
-
-#~ msgid "Repeat Group"
-#~ msgstr "تكرار المجموعة"
-
-#~ msgid "Repeat Count"
-#~ msgstr "عدد التكرارات"
-
-#~ msgid "Repeat Count is required."
-#~ msgstr "عدد التكرارات مطلوب."
-
-#~ msgid "Extra Repeat Attributes"
-#~ msgstr "سمات تكرار إضافية"
-
-#~ msgid "You have deleted a question."
-#~ msgstr "لقد قمت بحذف سؤال."
-
-#~ msgid "Undo"
-#~ msgstr "تراجع"
-
-#~ msgid ""
-#~ "Bind Node [{path}] found but has no associated Data node. This bind node "
-#~ "will be discarded!"
-#~ msgstr ""
-#~ "تم العثور على عقدة ربط [{path}] ولكن لا يوجد لها عقدة بيانات مرتبطة. سيتم "
-#~ "تجاهل عقدة الربط هذه!"
-
-#~ msgid "Not Found"
-#~ msgstr "غير موجود"
-
-#~ msgid ""
-#~ "{type} nodes cannot be used in an output value. Please remove the output "
-#~ "value for '{path}' or your form will have errors."
-#~ msgstr ""
-#~ "لا يمكن استخدام عقد {type} في قيمة الإخراج. يرجى إزالة قيمة الإخراج لـ "
-#~ "'{path}' أو سيحتوي النموذج على أخطاء."
-
-#~ msgid ""
-#~ "The {field} for a question is not allowed to reference the question itself. "
-#~ "Please remove the {ref} from the {field} or your form will have errors."
-#~ msgstr ""
-#~ "لا يُسمح لـ {field} في السؤال بالإشارة إلى نفس السؤال. يرجى إزالة {ref} من "
-#~ "{field} أو سيحتوي النموذج على أخطاء."
-
-#~ msgid "output value"
-#~ msgstr "قيمة الإخراج"
-
-#~ msgid "Validation Failed"
-#~ msgstr "فشل التحقق"
-
-#~ msgid "Please fix the error before leaving this page:"
-#~ msgstr "يرجى تصحيح الخطأ قبل مغادرة هذه الصفحة:"
-
-#~ msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
-#~ msgstr "تعديل <span class='property-name'>التعبير</span> (متقدم)"
-
-#~ msgid "Show Simple Mode"
-#~ msgstr "إظهار الوضع البسيط"
-
-#~ msgid ""
-#~ "You are currently in Advanced Mode because your logic is too complicated for"
-#~ " Simple Mode."
-#~ msgstr "أنت الآن في الوضع المتقدم لأن المنطق الخاص بك معقد جدًا للوضع البسيط."
-
-#~ msgid "You can drag a question into the box."
-#~ msgstr "يمكنك سحب سؤال إلى المربع."
-
-#~ msgid "Guide to Common Logic and Calculations"
-#~ msgstr "دليل المنطق والحسابات الشائعة"
-
-#~ msgid "Edit <span class='property-name'>Expression</span>"
-#~ msgstr "تعديل <span class='property-name'>التعبير</span>"
-
-#~ msgid "Show Advanced Mode"
-#~ msgstr "إظهار الوضع المتقدم"
-
-#~ msgid "Result is"
-#~ msgstr "النتيجة هي"
-
-#~ msgid "Expression"
-#~ msgstr "التعبير"
-
-#~ msgid "Add Expression"
-#~ msgstr "إضافة تعبير"
+#~ msgid "Unknown question type:"
+#~ msgstr "نوع سؤال غير معروف:"
 
 #~ msgid "Error"
 #~ msgstr "خطأ"
@@ -4935,11 +4295,17 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ msgid "Multimedia Capture"
 #~ msgstr "التقاط الوسائط المتعددة"
 
+#~ msgid "Multiple Choice"
+#~ msgstr "اختيار متعدد"
+
 #~ msgid "Number"
 #~ msgstr "رقم"
 
 #~ msgid "Groups"
 #~ msgstr "مجموعات"
+
+#~ msgid "Hidden Value"
+#~ msgstr "قيمة مخفية"
 
 #~ msgid "Advanced"
 #~ msgstr "متقدم"
@@ -5055,6 +4421,9 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ msgid "Parsing Error. Please check that your form is valid XML."
 #~ msgstr "خطأ في التحليل. يرجى التأكد من أن النموذج الخاص بك هو XML صالح."
 
+#~ msgid "Expression Editor"
+#~ msgstr "محرر التعبيرات"
+
 #~ msgid "Sorry, {err}"
 #~ msgstr "عذرًا، {err}"
 
@@ -5093,6 +4462,9 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ msgid "Save anyway"
 #~ msgstr "الحفظ على أي حال"
 
+#~ msgid "Basic"
+#~ msgstr "أساسي"
+
 #~ msgid ""
 #~ "The {displaytext} appears in the application. This text will not appear in "
 #~ "data exports."
@@ -5107,6 +4479,18 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ msgstr ""
 #~ "يمكنك تكوين مصدر بيانات خارجي مثل قائمة الحالات أو جدول البحث لاستخدامه "
 #~ "كخيارات لسؤال اختيار من متعدد."
+
+#~ msgid "Logic"
+#~ msgstr "المنطق"
+
+#~ msgid ""
+#~ "Use logic to control when questions are asked and what answers are valid. "
+#~ "You can add logic to display a question based on a previous answer, to make "
+#~ "the question required or ensure the answer is in a valid range."
+#~ msgstr ""
+#~ "استخدم المنطق للتحكم في متى يتم طرح الأسئلة وما هي الإجابات الصالحة. يمكنك "
+#~ "إضافة منطق لعرض سؤال بناءً على إجابة سابقة، لجعل السؤال مطلوبًا أو لضمان أن "
+#~ "الإجابة ضمن نطاق صالح."
 
 #~ msgid "Media"
 #~ msgstr "وسائط"
@@ -5123,6 +4507,52 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ msgstr ""
 #~ "هذه إعدادات متقدمة وليست مطلوبة لمعظم التطبيقات. يرجى تغييرها فقط إذا كان "
 #~ "لديك حاجة محددة!"
+
+#~ msgid "Could not load app properties."
+#~ msgstr "تعذَّر تحميل خصائص التطبيق."
+
+#~ msgid "If this error persists, please report an issue."
+#~ msgstr "إذا استمر هذا الخطأ، يرجى الإبلاغ عن المشكلة."
+
+#~ msgid "Not Found"
+#~ msgstr "غير موجود"
+
+#~ msgid "No Formatting"
+#~ msgstr "بدون تنسيق"
+
+#~ msgid ""
+#~ "The {field} for a question is not allowed to reference the question itself. "
+#~ "Please remove the {ref} from the {field} or your form will have errors."
+#~ msgstr ""
+#~ "لا يُسمح لـ {field} في السؤال بالإشارة إلى نفس السؤال. يرجى إزالة {ref} من "
+#~ "{field} أو سيحتوي النموذج على أخطاء."
+
+#~ msgid "output value"
+#~ msgstr "قيمة الإخراج"
+
+#~ msgid ""
+#~ "{type} nodes cannot be used in an output value. Please remove the output "
+#~ "value for '{path}' or your form will have errors."
+#~ msgstr ""
+#~ "لا يمكن استخدام عقد {type} في قيمة الإخراج. يرجى إزالة قيمة الإخراج لـ "
+#~ "'{path}' أو سيحتوي النموذج على أخطاء."
+
+#~ msgid "Invalid XPath expression."
+#~ msgstr "تعبير XPath غير صالح."
+
+#~ msgid ""
+#~ "The {property} for a question is not allowed to reference the question "
+#~ "itself. Please remove the . from the {property} or your form will have "
+#~ "errors."
+#~ msgstr ""
+#~ "لا يُسمح بأن تشير {property} لسؤال إلى السؤال نفسه. يرجى إزالة . من "
+#~ "{property} وإلا سيحدث أخطاء في النموذج."
+
+#~ msgid "Unknown question:"
+#~ msgstr "سؤال غير معروف:"
+
+#~ msgid "Unknown questions:"
+#~ msgstr "أسئلة غير معروفة:"
 
 #~ msgid ""
 #~ "This question represents advanced content that is not supported by the form "
@@ -5184,23 +4614,11 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ msgid "Document Template"
 #~ msgstr "قالب المستند"
 
-#~ msgid "Edit Data Source"
-#~ msgstr "تعديل مصدر البيانات"
-
-#~ msgid "Query Expression"
-#~ msgstr "تعبير الاستعلام"
-
-#~ msgid "Optional Instance Properties"
-#~ msgstr "خصائص المثيل الاختيارية"
-
-#~ msgid "Instance ID"
-#~ msgstr "معرف المثيل"
-
-#~ msgid "Instance URI"
-#~ msgstr "رابط المثيل"
-
 #~ msgid "Lookup table was not found in the project"
 #~ msgstr "لم يتم العثور على جدول البحث في المشروع"
+
+#~ msgid "Lookup Table Data"
+#~ msgstr "بيانات جدول البحث"
 
 #~ msgid ""
 #~ "You no longer have access to Lookup Tables in your application. Lookup Tables are available on the Standard plan and higher.\n"
@@ -5226,6 +4644,9 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ "lookup table"
 #~ msgstr "هذه عبارة عن تعبير XPath سيقوم بتصفية مجموعة الخيارات من جدول البحث"
 
+#~ msgid "{attr} was not found in the lookup table"
+#~ msgstr "لم يتم العثور على {attr} في جدول البحث"
+
 #~ msgid "Lookup Tables"
 #~ msgstr "جداول البحث"
 
@@ -5248,30 +4669,6 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ msgid "Can only change to a Checkbox Lookup Table"
 #~ msgstr "يمكن التغيير فقط إلى جدول بحث خانة اختيار"
 
-#~ msgid "{attr} was not found in the lookup table"
-#~ msgstr "لم يتم العثور على {attr} في جدول البحث"
-
-#~ msgid "Display"
-#~ msgstr "عرض"
-
-#~ msgid "auto?"
-#~ msgstr "تلقائي؟"
-
-#~ msgid ""
-#~ "Use text formatting to <strong>bold</strong> and <em>italicize</em> words, "
-#~ "use bulleted lists, and <a target='_blank' "
-#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
-#~ msgstr ""
-#~ "استخدم تنسيق النص لـ <strong>تغليظ</strong> و<em>إمالة</em> الكلمات، واستخدم"
-#~ " القوائم النقطية، و<a target='_blank' "
-#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>المزيد</a>"
-
-#~ msgid "Turn Off Text Formatting"
-#~ msgstr "إيقاف تنسيق النص"
-
-#~ msgid "Turn On Text Formatting"
-#~ msgstr "تشغيل تنسيق النص"
-
 #~ msgid "custom..."
 #~ msgstr "مخصص..."
 
@@ -5281,13 +4678,8 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ msgid "Content Type"
 #~ msgstr "نوع المحتوى"
 
-#~ msgid ""
-#~ "You have languages in your form that are not specified in the \"Languages\" "
-#~ "page of the application builder. The following language will be deleted on "
-#~ "save unless you add it to the \"Languages\" page:"
-#~ msgstr ""
-#~ "لديك لغات في النموذج الخاص بك غير محددة في صفحة \"اللغات\" في منشئ التطبيق. "
-#~ "سيتم حذف اللغة التالية عند الحفظ ما لم تقم بإضافتها إلى صفحة \"اللغات\":"
+#~ msgid "Question ID"
+#~ msgstr "معرّف السؤال"
 
 #~ msgid "{name} (or multimedia) is required."
 #~ msgstr "{name} (أو وسائط متعددة) مطلوب."
@@ -5306,6 +4698,10 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 
 #~ msgid "Discarded languages:"
 #~ msgstr "اللغات التي تم تجاهلها:"
+
+#~ msgid ""
+#~ "You cannot have a Validation Error Message with no Validation Condition!"
+#~ msgstr "لا يمكنك وجود رسالة خطأ تحقق بدون شرط تحقق!"
 
 #~ msgid "Validation Message"
 #~ msgstr "رسالة التحقق"
@@ -5372,15 +4768,6 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ "لصقها هنا عند الانتهاء. سيتم تحديث الترجمات المستخدمة في النموذج الخاص بك. "
 #~ "اضغط على 'تحديث الترجمات' لحفظ التغييرات، أو 'إغلاق' للإلغاء."
 
-#~ msgid "App Properties"
-#~ msgstr "خصائص التطبيق"
-
-#~ msgid "Could not load app properties."
-#~ msgstr "تعذَّر تحميل خصائص التطبيق."
-
-#~ msgid "If this error persists, please report an issue."
-#~ msgstr "إذا استمر هذا الخطأ، يرجى الإبلاغ عن المشكلة."
-
 #~ msgid ""
 #~ "The {questionid} is an internal identifier for a question. It does not "
 #~ "appear on the phone. It is the name of the question in data exports."
@@ -5441,39 +4828,6 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ msgid "Model Iteration ID Query"
 #~ msgstr "استعلام معرّف تكرار النموذج"
 
-#~ msgid "Property Name"
-#~ msgstr "اسم الخاصية"
-
-#~ msgid "Relevant"
-#~ msgstr "ذو صلة"
-
-#~ msgid "Relationship Identifier (e.g. parent or host)"
-#~ msgstr "معرّف العلاقة (مثل الأصل أو المضيف)"
-
-#~ msgid "Referenced Case ID"
-#~ msgstr "معرّف الحالة المشار إليها"
-
-#~ msgid "Referenced Case Type"
-#~ msgstr "نوع الحالة المشار إليها"
-
-#~ msgid "Relationship (child or extension)"
-#~ msgstr "العلاقة (فرعية أو امتداد)"
-
-#~ msgid "Node Name"
-#~ msgstr "اسم العقدة"
-
-#~ msgid "Source"
-#~ msgstr "المصدر"
-
-#~ msgid "From"
-#~ msgstr "من"
-
-#~ msgid "Attachment Name"
-#~ msgstr "اسم المرفق"
-
-#~ msgid "Add Property"
-#~ msgstr "إضافة خاصية"
-
 #~ msgid "Date Modified"
 #~ msgstr "تاريخ التعديل"
 
@@ -5519,6 +4873,606 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ msgid "Relationship must be child or extension"
 #~ msgstr "يجب أن تكون العلاقة فرعية أو امتداد"
 
+#~ msgid "Update"
+#~ msgstr "تحديث"
+
+#~ msgid "Index"
+#~ msgstr "فهرس"
+
+#~ msgid "Image"
+#~ msgstr "صورة"
+
+#~ msgid "Video"
+#~ msgstr "فيديو"
+
+#~ msgid "Inline Video"
+#~ msgstr "فيديو مضمن"
+
+#~ msgid "HTML"
+#~ msgstr "HTML"
+
+#~ msgid ""
+#~ "The ID '{nodeID}' may cause problems with form parsing. It is recommended to"
+#~ " pick a different Question ID."
+#~ msgstr ""
+#~ "قد يتسبب المعرّف '{nodeID}' في مشاكل عند تحليل النموذج. يُنصح باختيار معرّف "
+#~ "سؤال مختلف."
+
+#~ msgid "'meta' is not a valid Question ID."
+#~ msgstr "'meta' ليس معرّف سؤال صالح."
+
+#~ msgid ""
+#~ "Making this change will create a new Question ID (and a new column in "
+#~ "exports)."
+#~ msgstr ""
+#~ "سيؤدي إجراء هذا التغيير إلى إنشاء معرّف سؤال جديد (وعمود جديد في التصدير)."
+
+#~ msgid ""
+#~ "{nodeID} is not a valid Question ID. It must start with a letter and contain"
+#~ " only letters, numbers, and '-' or '_' characters."
+#~ msgstr ""
+#~ "{nodeID} ليس معرّف سؤال صالح. يجب أن يبدأ بحرف ويحتوي فقط على أحرف أو أرقام "
+#~ "أو '-' أو '_'."
+
+#~ msgid ""
+#~ "This question has the same Question ID as another question in the same "
+#~ "group. Please choose a unique Question ID."
+#~ msgstr ""
+#~ "هذا السؤال له نفس معرّف السؤال لسؤال آخر في نفس المجموعة. يرجى اختيار معرّف "
+#~ "سؤال فريد."
+
+#~ msgid "Default Data Value"
+#~ msgstr "قيمة البيانات الافتراضية"
+
+#~ msgid "Special Hidden Value XMLNS attribute"
+#~ msgstr "سمة XMLNS المخفية الخاصة"
+
+#~ msgid "Extra Data Attributes"
+#~ msgstr "سمات بيانات إضافية"
+
+#~ msgid "Calculate Condition"
+#~ msgstr "شرط الحساب"
+
+#~ msgid "Validation Error Message"
+#~ msgstr "رسالة خطأ التحقق"
+
+#~ msgid "Required Condition"
+#~ msgstr "شرط الإلزام"
+
+#~ msgid "The condition will be ignored unless you mark the question required."
+#~ msgstr "سيتم تجاهل الشرط ما لم تحدد أن السؤال إلزامي."
+
+#~ msgid "Extra Bind Attributes"
+#~ msgstr "سمات ربط إضافية"
+
+#~ msgid ""
+#~ "You are referencing a node in this form. This can cause errors in the form"
+#~ msgstr "أنت تشير إلى عقدة في هذا النموذج. قد يسبب ذلك أخطاء في النموذج"
+
+#~ msgid "Appearance Attribute"
+#~ msgstr "سمة المظهر"
+
+#~ msgid "Default Display Text"
+#~ msgstr "نص العرض الافتراضي"
+
+#~ msgid "Default Display Text is required"
+#~ msgstr "نص العرض الافتراضي مطلوب"
+
+#~ msgid "Hint Display Text"
+#~ msgstr "نص تلميح العرض"
+
+#~ msgid "Extra Control Attributes"
+#~ msgstr "سمات تحكم إضافية"
+
+#~ msgid "Raw XML"
+#~ msgstr "XML خام"
+
+#~ msgid "Data Parent"
+#~ msgstr "الأصل البياني"
+
+#~ msgid ""
+#~ "Data parent of question in repeat group must be (in) the same repeat group"
+#~ msgstr ""
+#~ "يجب أن يكون أصل بيانات السؤال في مجموعة التكرار (ضمن) نفس مجموعة التكرار"
+
+#~ msgid "Must be valid path"
+#~ msgstr "يجب أن يكون مسارًا صالحًا"
+
+#~ msgid "Text"
+#~ msgstr "نص"
+
+#~ msgid "Phone Number or Numeric ID"
+#~ msgstr "رقم هاتف أو معرّف رقمي"
+
+#~ msgid "Integer"
+#~ msgstr "عدد صحيح"
+
+#~ msgid "Long"
+#~ msgstr "طويل"
+
+#~ msgid "Decimal"
+#~ msgstr "عشري"
+
+#~ msgid "Audio Capture"
+#~ msgstr "تسجيل صوتي"
+
+#~ msgid "Image Capture"
+#~ msgstr "التقاط صورة"
+
+#~ msgid "Image Size"
+#~ msgstr "حجم الصورة"
+
+#~ msgid "Small"
+#~ msgstr "صغير"
+
+#~ msgid "Medium"
+#~ msgstr "متوسط"
+
+#~ msgid "Large"
+#~ msgstr "كبير"
+
+#~ msgid "Original"
+#~ msgstr "الأصلي"
+
+#~ msgid ""
+#~ "This will resize the image before sending the form. Use this option to send "
+#~ "smaller images in areas of poor connectivity.<ul><li>Small - 0.1 "
+#~ "megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
+#~ "megapixels</li></ul>"
+#~ msgstr ""
+#~ "سيتم تغيير حجم الصورة قبل إرسال النموذج. استخدم هذا الخيار لإرسال صور أصغر "
+#~ "في المناطق ذات الاتصال الضعيف.<ul><li>صغير - 0.1 ميغابيكسل</li><li>متوسط - "
+#~ "0.2 ميغابيكسل</li><li>كبير - 0.5 ميغابيكسل</li></ul>"
+
+#~ msgid "Video Capture"
+#~ msgstr "تسجيل فيديو"
+
+#~ msgid "Signature Capture"
+#~ msgstr "التقاط توقيع"
+
+#~ msgid "Document Upload"
+#~ msgstr "رفع مستند"
+
+#~ msgid "Date and Time"
+#~ msgstr "التاريخ والوقت"
+
+#~ msgid "Choice"
+#~ msgstr "اختيار"
+
+#~ msgid "Choice Value"
+#~ msgstr "قيمة الاختيار"
+
+#~ msgid "Whitespace in values is not allowed."
+#~ msgstr "لا يُسمح بالمسافات البيضاء في القيم."
+
+#~ msgid "This choice value has been used in the same question"
+#~ msgstr "تم استخدام قيمة هذا الاختيار في نفس السؤال"
+
+#~ msgid ""
+#~ "Cannot change a Multiple/Single Choice question to a non-Choice question if "
+#~ "it has Choices. Please remove all Choices and try again."
+#~ msgstr ""
+#~ "لا يمكن تغيير سؤال اختيار متعدد/مفرد إلى سؤال غير اختياري إذا كان يحتوي على "
+#~ "اختيارات. يرجى إزالة جميع الاختيارات والمحاولة مرة أخرى."
+
+#~ msgid "Checkbox"
+#~ msgstr "مربع اختيار"
+
+#~ msgid "Group"
+#~ msgstr "مجموعة"
+
+#~ msgid "Question List"
+#~ msgstr "قائمة الأسئلة"
+
+#~ msgid "Repeat Group"
+#~ msgstr "تكرار المجموعة"
+
+#~ msgid "Repeat Count"
+#~ msgstr "عدد التكرارات"
+
+#~ msgid "Repeat Count is required."
+#~ msgstr "عدد التكرارات مطلوب."
+
+#~ msgid "Extra Repeat Attributes"
+#~ msgstr "سمات تكرار إضافية"
+
+#~ msgid "GPS"
+#~ msgstr "نظام تحديد المواقع (GPS)"
+
+#~ msgid "Barcode Scan"
+#~ msgstr "مسح الباركود"
+
+#~ msgid "{question} is not allowed."
+#~ msgstr "غير مسموح بـ {question}."
+
+#~ msgid "{question} validation failed"
+#~ msgstr "فشل التحقق من {question}"
+
+#~ msgid "{question} is required."
+#~ msgstr "{question} مطلوب."
+
+#~ msgid "Unknown (read-only) question type"
+#~ msgstr "نوع سؤال غير معروف (للقراءة فقط)"
+
+#~ msgid "No Translation Data"
+#~ msgstr "لا توجد بيانات ترجمة"
+
+#~ msgid "getCurrentMugInput"
+#~ msgstr "الحصول على إدخال الكوب الحالي"
+
+#~ msgid "jstree"
+#~ msgstr "شجرة JS"
+
+#~ msgid "getMugByPath"
+#~ msgstr "getMugByPath"
+
+#~ msgid "getData"
+#~ msgstr "الحصول على البيانات"
+
+#~ msgid "loadXML"
+#~ msgstr "تحميل XML"
+
+#~ msgid "createXML"
+#~ msgstr "إنشاءXML"
+
+#~ msgid "loadXFormOrError"
+#~ msgstr "تحميل XForm أو خطأ"
+
+#~ msgid "addQuestion"
+#~ msgstr "إضافة سؤال"
+
+#~ msgid "nodeIDFromLabel"
+#~ msgstr "معرّف العقدة من التسمية"
+
+#~ msgid "getSections"
+#~ msgstr "الحصول على الأقسام"
+
+#~ msgid "collapseSection"
+#~ msgstr "طي القسم"
+
+#~ msgid "Active"
+#~ msgstr "نشط"
+
+#~ msgid "Inactive"
+#~ msgstr "غير نشط"
+
+#~ msgid "Deactivate"
+#~ msgstr "إلغاء التفعيل"
+
+#~ msgid "Activate"
+#~ msgstr "تفعيل"
+
+#~ msgid ""
+#~ "\"{caseProperty}\" is assigned by another question. You can still save the "
+#~ "form, but will need to have only one question for any case property in order"
+#~ " to build the application"
+#~ msgstr ""
+#~ "\"{caseProperty}\" تم تعيينه بواسطة سؤال آخر. يمكنك حفظ النموذج، ولكن ستحتاج"
+#~ " إلى وجود سؤال واحد فقط لأي خاصية حالة من أجل بناء التطبيق"
+
+#~ msgid "Case Management"
+#~ msgstr "إدارة الحالات"
+
+#~ msgid ""
+#~ "Saving a question as a case property makes it accessible and reusable across"
+#~ " your application. To manage all your case properties from this form, click "
+#~ "on the Manage Case button. "
+#~ msgstr ""
+#~ "حفظ سؤال كخاصية حالة يجعله متاحًا وقابلًا لإعادة الاستخدام عبر تطبيقك. "
+#~ "لإدارة جميع خصائص الحالة من هذا النموذج، انقر على زر إدارة الحالة."
+
+#~ msgid "**{word}** is a reserved word"
+#~ msgstr "**{word}** هي كلمة محجوزة"
+
+#~ msgid ""
+#~ "This question is used to update multiple case properties. If you wish to "
+#~ "update these case properties, please visit the [Manage Case Page]({url})"
+#~ msgstr ""
+#~ "يتم استخدام هذا السؤال لتحديث عدة خصائص حالة. إذا كنت ترغب في تحديث هذه "
+#~ "الخصائص، يرجى زيارة [صفحة إدارة الحالة]({url})"
+
+#~ msgid "Disable Mobile Worker Attendees"
+#~ msgstr "تعطيل حضور العاملين عبر الجوال"
+
+#~ msgid "Enable Mobile Worker Attendees"
+#~ msgstr "تمكين حضور العاملين عبر الجوال"
+
+#~ msgid "Possible Attendees"
+#~ msgstr "الحضور المحتملون"
+
+#~ msgid "Expected Attendees"
+#~ msgstr "الحضور المتوقعون"
+
+#~ msgid "Search Attendees"
+#~ msgstr "البحث عن الحضور"
+
+#~ msgid "Possible Attendance Takers"
+#~ msgstr "مسجلو الحضور المحتملون"
+
+#~ msgid "Selected Attendance Takers"
+#~ msgstr "مسجلو الحضور المحددون"
+
+#~ msgid "Search Attendance Takers"
+#~ msgstr "البحث عن مسجلي الحضور"
+
+#~ msgid "Token successfully verified!"
+#~ msgstr "تم التحقق من الرمز بنجاح!"
+
+#~ msgid ""
+#~ "Invalid API token. Please verify that the token matches the one on your "
+#~ "Mapbox account and has the correct scope configured."
+#~ msgstr ""
+#~ "رمز API غير صالح. يرجى التأكد من أن الرمز يطابق الرمز الموجود في حساب Mapbox"
+#~ " الخاص بك وأن النطاق مضبوط بشكل صحيح."
+
+#~ msgid ""
+#~ "Could not load data. Please try again later or report an issue if this "
+#~ "problem persists."
+#~ msgstr ""
+#~ "تعذر تحميل البيانات. يرجى المحاولة لاحقًا أو الإبلاغ عن المشكلة إذا استمرت."
+
+#~ msgid "yes"
+#~ msgstr "نعم"
+
+#~ msgid "Phone number is required when users confirm their own accounts by sms."
+#~ msgstr ""
+#~ "رقم الهاتف مطلوب عندما يؤكد المستخدمون حساباتهم بأنفسهم عبر الرسائل القصيرة."
+
+#~ msgid "Phone number should contain only digits 0-9."
+#~ msgstr "يجب أن يحتوي رقم الهاتف على أرقام فقط من 0 إلى 9."
+
+#~ msgid ""
+#~ "<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
+#~ "events and users"
+#~ msgstr ""
+#~ "<strong>تتبع الحضور</strong> &mdash; تنسيق فعاليات تتبع الحضور والمستخدمين"
+
+#~ msgid "Edit Attendance Tracking Events"
+#~ msgstr "تعديل فعاليات تتبع الحضور"
+
+#~ msgid "No Access"
+#~ msgstr "لا يوجد وصول"
+
+#~ msgid "Access All"
+#~ msgstr "وصول كامل"
+
+#~ msgid "Limited Access"
+#~ msgstr "وصول محدود"
+
+#~ msgid "Select which items the role can access:"
+#~ msgstr "حدد العناصر التي يمكن للدور الوصول إليها:"
+
+#~ msgid "Select which web apps the role has access to:"
+#~ msgstr "حدد تطبيقات الويب التي يمكن للدور الوصول إليها:"
+
+#, javascript-format
+#~ msgid "Select at least one item from the list for \"%s\""
+#~ msgstr "يرجى اختيار عنصر واحد على الأقل من القائمة لـ \"%s\""
+
+#~ msgid "Edit Role: "
+#~ msgstr "تعديل الدور: "
+
+#~ msgid "View Role: "
+#~ msgstr "عرض الدور: "
+
+#~ msgid "New Role"
+#~ msgstr "دور جديد"
+
+#~ msgid "Your location"
+#~ msgstr "موقعك"
+
+#~ msgid "Could not enable user properties, please try again later."
+#~ msgstr "تعذر تفعيل خصائص المستخدم، يرجى المحاولة مرة أخرى لاحقًا."
+
+#~ msgid "Email address is required when users confirm their own accounts."
+#~ msgstr "عنوان البريد الإلكتروني مطلوب عندما يؤكد المستخدمون حساباتهم بأنفسهم."
+
+#~ msgid "Out of range of filter. Will not appear on page refresh."
+#~ msgstr "خارج نطاق عامل التصفية. لن يظهر عند تحديث الصفحة."
+
+#~ msgid "Case copied"
+#~ msgstr "تم نسخ الحالة"
+
+#~ msgid "Cases copied"
+#~ msgstr "تم نسخ الحالات"
+
+#~ msgid "Select None"
+#~ msgstr "عدم اختيار أي"
+
+#~ msgid "Select All"
+#~ msgstr "اختيار الكل"
+
+#~ msgid "long"
+#~ msgstr "طويل"
+
+#~ msgid "2-digit"
+#~ msgstr "رقمان"
+
+#~ msgid "Copy"
+#~ msgstr "نسخ"
+
+#~ msgid "Expand All"
+#~ msgstr "توسيع الكل"
+
+#~ msgid "Collapse All"
+#~ msgstr "طي الكل"
+
+#~ msgid "Bulk Update All Questions"
+#~ msgstr "تحديث جميع الأسئلة دفعة واحدة"
+
+#~ msgid "Click {btn} to start building your form."
+#~ msgstr "انقر على {btn} للبدء في بناء النموذج."
+
+#~ msgid "Question Details"
+#~ msgstr "تفاصيل السؤال"
+
+#~ msgid "Cannot Change Question Type"
+#~ msgstr "لا يمكن تغيير نوع السؤال"
+
+#~ msgid "Change Question Type To"
+#~ msgstr "تغيير نوع السؤال إلى"
+
+#~ msgid "Show"
+#~ msgstr "عرض"
+
+#~ msgid "Used By"
+#~ msgstr "يستخدم من قبل"
+
+#~ msgid "In Property"
+#~ msgstr "في الخاصية"
+
+#~ msgid "No match for {info} found!"
+#~ msgstr "لم يتم العثور على تطابق لـ {info}!"
+
+#~ msgid "Multiple matches for {info} found!"
+#~ msgstr "تم العثور على تطابقات متعددة لـ {info}!"
+
+#~ msgid "Add Key&rarr;Value Pair"
+#~ msgstr "إضافة زوج مفتاح&rarr;قيمة"
+
+#~ msgid "show in question list"
+#~ msgstr "إظهار في قائمة الأسئلة"
+
+#~ msgid "Date Format Options"
+#~ msgstr "خيارات تنسيق التاريخ"
+
+#~ msgid "no formatting"
+#~ msgstr "بدون تنسيق"
+
+#~ msgid "Micro-Image"
+#~ msgstr "صورة مصغرة"
+
+#~ msgid "You have deleted a question."
+#~ msgstr "لقد قمت بحذف سؤال."
+
+#~ msgid "Undo"
+#~ msgstr "تراجع"
+
+#~ msgid ""
+#~ "Bind Node [{path}] found but has no associated Data node. This bind node "
+#~ "will be discarded!"
+#~ msgstr ""
+#~ "تم العثور على عقدة ربط [{path}] ولكن لا يوجد لها عقدة بيانات مرتبطة. سيتم "
+#~ "تجاهل عقدة الربط هذه!"
+
+#~ msgid "Validation Failed"
+#~ msgstr "فشل التحقق"
+
+#~ msgid "Please fix the error before leaving this page:"
+#~ msgstr "يرجى تصحيح الخطأ قبل مغادرة هذه الصفحة:"
+
+#~ msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
+#~ msgstr "تعديل <span class='property-name'>التعبير</span> (متقدم)"
+
+#~ msgid "Show Simple Mode"
+#~ msgstr "إظهار الوضع البسيط"
+
+#~ msgid ""
+#~ "You are currently in Advanced Mode because your logic is too complicated for"
+#~ " Simple Mode."
+#~ msgstr "أنت الآن في الوضع المتقدم لأن المنطق الخاص بك معقد جدًا للوضع البسيط."
+
+#~ msgid "You can drag a question into the box."
+#~ msgstr "يمكنك سحب سؤال إلى المربع."
+
+#~ msgid "Guide to Common Logic and Calculations"
+#~ msgstr "دليل المنطق والحسابات الشائعة"
+
+#~ msgid "Edit <span class='property-name'>Expression</span>"
+#~ msgstr "تعديل <span class='property-name'>التعبير</span>"
+
+#~ msgid "Show Advanced Mode"
+#~ msgstr "إظهار الوضع المتقدم"
+
+#~ msgid "Result is"
+#~ msgstr "النتيجة هي"
+
+#~ msgid "Expression"
+#~ msgstr "التعبير"
+
+#~ msgid "Add Expression"
+#~ msgstr "إضافة تعبير"
+
+#~ msgid "Edit Data Source"
+#~ msgstr "تعديل مصدر البيانات"
+
+#~ msgid "Query Expression"
+#~ msgstr "تعبير الاستعلام"
+
+#~ msgid "Optional Instance Properties"
+#~ msgstr "خصائص المثيل الاختيارية"
+
+#~ msgid "Instance ID"
+#~ msgstr "معرف المثيل"
+
+#~ msgid "Instance URI"
+#~ msgstr "رابط المثيل"
+
+#~ msgid "Display"
+#~ msgstr "عرض"
+
+#~ msgid "auto?"
+#~ msgstr "تلقائي؟"
+
+#~ msgid ""
+#~ "Use text formatting to <strong>bold</strong> and <em>italicize</em> words, "
+#~ "use bulleted lists, and <a target='_blank' "
+#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
+#~ msgstr ""
+#~ "استخدم تنسيق النص لـ <strong>تغليظ</strong> و<em>إمالة</em> الكلمات، واستخدم"
+#~ " القوائم النقطية، و<a target='_blank' "
+#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>المزيد</a>"
+
+#~ msgid "Turn Off Text Formatting"
+#~ msgstr "إيقاف تنسيق النص"
+
+#~ msgid "Turn On Text Formatting"
+#~ msgstr "تشغيل تنسيق النص"
+
+#~ msgid ""
+#~ "You have languages in your form that are not specified in the \"Languages\" "
+#~ "page of the application builder. The following language will be deleted on "
+#~ "save unless you add it to the \"Languages\" page:"
+#~ msgstr ""
+#~ "لديك لغات في النموذج الخاص بك غير محددة في صفحة \"اللغات\" في منشئ التطبيق. "
+#~ "سيتم حذف اللغة التالية عند الحفظ ما لم تقم بإضافتها إلى صفحة \"اللغات\":"
+
+#~ msgid "App Properties"
+#~ msgstr "خصائص التطبيق"
+
+#~ msgid "Property Name"
+#~ msgstr "اسم الخاصية"
+
+#~ msgid "Relevant"
+#~ msgstr "ذو صلة"
+
+#~ msgid "Relationship Identifier (e.g. parent or host)"
+#~ msgstr "معرّف العلاقة (مثل الأصل أو المضيف)"
+
+#~ msgid "Referenced Case ID"
+#~ msgstr "معرّف الحالة المشار إليها"
+
+#~ msgid "Referenced Case Type"
+#~ msgstr "نوع الحالة المشار إليها"
+
+#~ msgid "Relationship (child or extension)"
+#~ msgstr "العلاقة (فرعية أو امتداد)"
+
+#~ msgid "Node Name"
+#~ msgstr "اسم العقدة"
+
+#~ msgid "Source"
+#~ msgstr "المصدر"
+
+#~ msgid "From"
+#~ msgstr "من"
+
+#~ msgid "Attachment Name"
+#~ msgstr "اسم المرفق"
+
+#~ msgid "Add Property"
+#~ msgstr "إضافة خاصية"
+
 #~ msgid "Use Attachments"
 #~ msgstr "استخدام المرفقات"
 
@@ -5530,12 +5484,6 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 
 #~ msgid "Inlined attachments must have an attachment name"
 #~ msgstr "يجب أن تحتوي المرفقات المضمنة على اسم مرفق"
-
-#~ msgid "Update"
-#~ msgstr "تحديث"
-
-#~ msgid "Index"
-#~ msgstr "فهرس"
 
 #~ msgid "Attachments"
 #~ msgstr "المرفقات"
@@ -5570,15 +5518,6 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ msgid "Hide Path"
 #~ msgstr "إخفاء المسار"
 
-#~ msgid "Video"
-#~ msgstr "فيديو"
-
-#~ msgid "Inline Video"
-#~ msgstr "فيديو مضمن"
-
-#~ msgid "HTML"
-#~ msgstr "HTML"
-
 #~ msgid "Copying and Pasting Questions"
 #~ msgstr "نسخ ولصق الأسئلة"
 
@@ -5611,24 +5550,6 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 
 #~ msgid "Questions can be copied between forms, and even to other apps."
 #~ msgstr "يمكن نسخ الأسئلة بين النماذج، وحتى إلى تطبيقات أخرى."
-
-#~ msgid "Cannot insert {type} into tree root"
-#~ msgstr "لا يمكن إدراج {type} في جذر الشجرة"
-
-#~ msgid "Cannot insert $1 into or after $2"
-#~ msgstr "لا يمكن إدراج $1 في أو بعد $2"
-
-#~ msgid "Cannot insert $1 into $2"
-#~ msgstr "لا يمكن إدراج $1 في $2"
-
-#~ msgid "Unsupported paste format"
-#~ msgstr "تنسيق لصق غير مدعوم"
-
-#~ msgid "Unsupported paste format:"
-#~ msgstr "تنسيق لصق غير مدعوم:"
-
-#~ msgid "Unknown question type:"
-#~ msgstr "نوع سؤال غير معروف:"
 
 #~ msgid "Enter command"
 #~ msgstr "أدخل الأمر"

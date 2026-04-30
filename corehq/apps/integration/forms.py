@@ -1,5 +1,4 @@
 from django import forms
-from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
 from crispy_forms import layout as crispy
@@ -7,93 +6,7 @@ from crispy_forms.layout import Submit
 from memoized import memoized
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.integration.models import (
-    DialerSettings,
-    GaenOtpServerSettings,
-    SimprintsIntegration,
-)
-
-
-class GaenOtpServerSettingsForm(forms.ModelForm):
-    is_enabled = forms.BooleanField(
-        label=gettext_lazy("Enable GAEN OTP server integration"),
-        required=False,
-    )
-
-    server_type = forms.CharField(
-        label=_('GAEN Server Type'),
-        widget=forms.Select(choices=[
-            ("", gettext_lazy("Select server type")),
-            ('NEARFORM', gettext_lazy('NearForm OTP Server')),
-            ('APHL', gettext_lazy('APHL Exposure Notifications')),
-        ]),
-    )
-
-    server_url = forms.CharField(
-        label=_('Server Endpoint')
-    )
-
-    auth_token = forms.CharField(
-        label=_('Server Auth Token'),
-        widget=forms.PasswordInput(render_value=True)
-    )
-
-    class Meta:
-        model = DialerSettings
-        fields = [
-            'is_enabled',
-            'server_url',
-            'auth_token'
-        ]
-
-    def __init__(self, data, *args, **kwargs):
-        self.domain = kwargs.pop('domain')
-        kwargs['initial'] = self.initial_data
-        super(GaenOtpServerSettingsForm, self).__init__(data, *args, **kwargs)
-
-        self.helper = hqcrispy.HQFormHelper()
-        self.helper.form_method = 'POST'
-        self.helper.layout = crispy.Layout(
-            crispy.Field('is_enabled'),
-            crispy.Div(
-                crispy.Field('server_type'),
-            ),
-            crispy.Div(
-                crispy.Field('server_url'),
-            ),
-            crispy.Div(
-                crispy.Field('auth_token'),
-            ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    Submit('submit', _("Update"))
-                )
-            )
-        )
-
-    @property
-    @memoized
-    def _existing_config(self):
-        existing, _created = GaenOtpServerSettings.objects.get_or_create(
-            domain=self.domain
-        )
-        return existing
-
-    @property
-    def initial_data(self):
-        return {
-            'is_enabled': self._existing_config.is_enabled,
-            'server_type': self._existing_config.server_type,
-            'server_url': self._existing_config.server_url,
-            'auth_token': self._existing_config.auth_token,
-        }
-
-    def save(self):
-        self._existing_config.is_enabled = self.cleaned_data['is_enabled']
-        self._existing_config.server_type = self.cleaned_data['server_type']
-        self._existing_config.server_url = self.cleaned_data['server_url']
-        self._existing_config.auth_token = self.cleaned_data['auth_token']
-        self._existing_config.save()
+from corehq.apps.integration.models import SimprintsIntegration
 
 
 class SimprintsIntegrationForm(forms.Form):

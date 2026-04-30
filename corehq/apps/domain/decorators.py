@@ -17,6 +17,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views import View
 
+from corehq.apps.sso.models import IdentityProvider
 from django_digest.decorators import httpdigest
 from django_otp import match_token
 from django_prbac.utils import has_privilege
@@ -58,6 +59,11 @@ from corehq.util.soft_assert import soft_assert
 auth_logger = logging.getLogger("commcare_auth")
 
 OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
+
+SSO_AUTH_FAIL_RESPONSE = {
+    "error": "Basic authentication is not supported for SSO users. "
+             "Use the ApiKey authorization header: 'Authorization: ApiKey <username>:<api_key>'"
+}
 
 
 def load_domain(req, domain):
@@ -240,6 +246,7 @@ def _oauth2_check(scopes):
         valid, r = oauthlib_core.verify_request(request, scopes=scopes)
         if valid:
             request.user = r.user
+            request._auth_method_restricts_superuser_access = True
             return True
 
     def real_decorator(view):
@@ -282,6 +289,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False,
                     @check_lockout
                     @challenge_fn
                     @two_factor_check(fn, api_key)
+                    @sso_check(fn, api_key)
                     def _inner(request, domain, *args, **kwargs):
                         couch_user = _ensure_request_couch_user(request)
                         if (
@@ -492,7 +500,7 @@ def two_factor_check(view_func, api_key):
             _ensure_request_couch_user(request)
             if (
                 not api_key
-                and not getattr(request, 'skip_two_factor_check', False)
+                and not getattr(request, 'bypass_two_factor', False)
                 and domain_obj
                 and _two_factor_required(view_func, domain_obj, request)
             ):
@@ -517,6 +525,34 @@ def two_factor_check(view_func, api_key):
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer
+
+
+def sso_check(view_func, api_key):
+    def _outer(fn):
+        @wraps(fn)
+        def _inner(request, domain, *args, **kwargs):
+            domain_obj = Domain.get_by_name(domain)
+            _ensure_request_couch_user(request)
+            if (
+                not api_key
+                and domain_obj
+                and not getattr(request, 'api_key_authenticated', False)
+                and _sso_required(request)
+            ):
+                return JsonResponse(SSO_AUTH_FAIL_RESPONSE, status=401)
+            return fn(request, domain, *args, **kwargs)
+        return _inner
+    return _outer
+
+
+def _sso_required(request):
+    couch_user = getattr(request, 'couch_user', None)
+    username = couch_user.username if couch_user else None
+    if username:
+        idp = IdentityProvider.get_required_identity_provider(username)
+        if idp and idp.require_api_key_for_api_access:
+            return True
+    return False
 
 
 def _two_factor_required(view_func, domain_obj, request):

@@ -62,7 +62,6 @@ from corehq.apps.linked_domain.local_accessors import (
     get_data_dictionary,
     get_enabled_toggles_and_previews,
     get_fixture,
-    get_otp_settings,
     get_tableau_server_and_visualizations,
     get_user_roles,
 )
@@ -227,12 +226,6 @@ def get_latest_released_app_source(request, domain, app_id):
 @require_access_to_linked_domains
 def data_dictionary(request, domain):
     return JsonResponse(get_data_dictionary(domain))
-
-
-@login_or_api_key
-@require_access_to_linked_domains
-def otp_settings(request, domain):
-    return JsonResponse(get_otp_settings(domain))
 
 
 @require_can_edit_apps

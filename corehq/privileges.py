@@ -27,7 +27,6 @@ REPORT_BUILDER_ADD_ON_PRIVS = {
     REPORT_BUILDER_30,
 }
 
-ATTENDANCE_TRACKING = 'attendance_tracking'
 ROLE_BASED_ACCESS = 'role_based_access'
 RESTRICT_ACCESS_BY_LOCATION = 'restrict_access_by_location'
 
@@ -136,6 +135,8 @@ CUSTOM_ICON_BADGES = 'custom_icon_badges'
 
 LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT = 'location_columns_in_user_last_activity_report'
 
+LOCKED_ADMIN_QUESTIONS = 'locked_admin_questions'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -187,7 +188,6 @@ MAX_PRIVILEGES = [
     PHONE_APK_HEARTBEAT,
     VIEW_APP_DIFF,
     DATA_FILE_DOWNLOAD,
-    ATTENDANCE_TRACKING,
     REGEX_FIELD_VALIDATION,
     LOCATION_SAFE_CASE_IMPORTS,
     FORM_CASE_IDS_CASE_IMPORTER,
@@ -207,6 +207,7 @@ MAX_PRIVILEGES = [
     GEOJSON_EXPORT,
     CUSTOM_ICON_BADGES,
     LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
+    LOCKED_ADMIN_QUESTIONS,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -274,7 +275,6 @@ class Titles(object):
             PHONE_APK_HEARTBEAT: _("Phone heartbeat"),
             VIEW_APP_DIFF: _("Improved app changes view"),
             DATA_FILE_DOWNLOAD: _('File Dropzone'),
-            ATTENDANCE_TRACKING: _("Attendance Tracking"),
             REGEX_FIELD_VALIDATION: _("Regular Expression Validation for Custom Data Fields"),
             LOCATION_SAFE_CASE_IMPORTS: _("Location Safe Case Imports"),
             FORM_CASE_IDS_CASE_IMPORTER: _("Download buttons for Form- and Case IDs on Case Importer"),
@@ -295,4 +295,5 @@ class Titles(object):
             LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT: _(
                 "Add primary location's hierarchy to excel export in User Last Activity Report"
             ),
+            LOCKED_ADMIN_QUESTIONS: _("Locked Admin Questions"),
         }.get(privilege, privilege)

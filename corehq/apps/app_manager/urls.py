@@ -72,7 +72,6 @@ from corehq.apps.app_manager.views import (
     revert_to_copy,
     save_copy,
     short_odk_url,
-    toggle_build_profile,
     undo_delete_app,
     undo_delete_form,
     undo_delete_module,
@@ -85,6 +84,11 @@ from corehq.apps.app_manager.views import (
     view_form_legacy,
     view_module,
     view_module_legacy,
+)
+from corehq.apps.app_manager.views.app_import_api import (
+    import_app_api,
+    multimedia_status_api,
+    upload_multimedia_api,
 )
 from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView, AllCaseTypesView
@@ -256,9 +260,11 @@ urlpatterns = [
 
     url(r'^api/list_apps/$', list_apps, name='list_apps'),
     url(r'^api/download_ccz/$', direct_ccz, name='direct_ccz'),
+    url(r'^api/import_app/$', import_app_api, name='import_app_api'),
+    url(r'^api/(?P<app_id>[\w-]+)/multimedia/$', upload_multimedia_api, name='upload_multimedia_api'),
+    url(r'^api/(?P<app_id>[\w-]+)/multimedia/status/(?P<processing_id>[\w-]+)/$',
+        multimedia_status_api, name='multimedia_status_api'),
     url(r'^download/(?P<app_id>[\w-]+)/$', download_index, name='download_index'),
-    url(r'^build_profile/(?P<build_id>[\w-]+)/toggle/(?P<build_profile_id>[\w-]+)$', toggle_build_profile,
-        name='toggle_build_profile'),
     # the order of these download urls is important
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
         name=DownloadCCZ.name),

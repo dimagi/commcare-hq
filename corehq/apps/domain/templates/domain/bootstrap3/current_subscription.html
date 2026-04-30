@@ -18,6 +18,13 @@
     <div class="col-sm-12">
       <article id="subscriptionSummary" class="form-horizontal">
         <legend>{% trans 'Current Subscription' %}</legend>
+        <p>
+          {% blocktrans with help_url="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing" %}
+            For more information on Subscription Management & Billing, please
+            see the
+            <a href="{{ help_url }}" target="_blank">Help Site</a>.
+          {% endblocktrans %}
+        </p>
         <div class="form-group">
           <label class="control-label col-sm-2">{% trans 'Plan' %}</label>
           <div class="col-sm-10">

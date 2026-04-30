@@ -1557,7 +1557,7 @@ def check_sso_login_status(request):
     :param request: HttpRequest
     :return: HttpResponse (as JSON)
     """
-    username = request.POST['username']
+    username = request.POST['username'].lower()
     is_sso_required = False
     sso_url = None
     continue_text = None

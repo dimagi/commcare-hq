@@ -8,7 +8,6 @@ from corehq.apps.linked_domain.const import (
     MODEL_CASE_SEARCH,
     MODEL_FLAGS,
     MODEL_KEYWORD,
-    MODEL_OTP_SETTINGS,
     MODEL_REPORT,
     MODEL_USER_DATA,
 )
@@ -93,17 +92,6 @@ class TestReleaseManager(BaseReleaseManagerTest):
         self._assert_release([
             self._linked_data_view_model(MODEL_CASE_SEARCH),
         ], error="Feature flag for Case Search Settings is not enabled")
-
-    @flag_enabled('GAEN_OTP_SERVER')
-    def test_otp_server_on(self):
-        self._assert_release([
-            self._linked_data_view_model(MODEL_OTP_SETTINGS),
-        ])
-
-    def test_otp_server_off(self):
-        self._assert_release([
-            self._linked_data_view_model(MODEL_OTP_SETTINGS),
-        ], error="Feature flag for OTP Pass-through Settings is not enabled")
 
     def test_bad_domain(self):
         self._assert_release([

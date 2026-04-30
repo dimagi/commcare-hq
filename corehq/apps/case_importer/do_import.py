@@ -29,7 +29,7 @@ from corehq.apps.users.util import format_username
 from corehq.form_processor.models import STANDARD_CHARFIELD_LENGTH
 from corehq.toggles import (
     DOMAIN_PERMISSIONS_MIRROR,
-    MTN_MOBILE_WORKER_VERIFICATION,
+    MOBILE_MONEY_INTEGRATION,
 )
 from corehq.util.metrics import metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
@@ -176,7 +176,7 @@ class _TimedAndThrottledImporter:
         search_id = self._parse_search_id(raw_row)
         fields_to_update = self._populate_updated_fields(raw_row)
         if (
-            self.mtn_mobile_worker_verification_ff_enabled
+            self.mobile_money_integration_ff_enabled
             and self.submission_handler.case_type == MOMO_PAYMENT_CASE_TYPE
         ):
             self._validate_payment_fields(fields_to_update)
@@ -263,8 +263,8 @@ class _TimedAndThrottledImporter:
         return CouchUser.get_by_user_id(self.config.couch_user_id)
 
     @cached_property
-    def mtn_mobile_worker_verification_ff_enabled(self):
-        return MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+    def mobile_money_integration_ff_enabled(self):
+        return MOBILE_MONEY_INTEGRATION.enabled(self.domain)
 
     def _parse_search_id(self, row):
         """ Find and convert the search id in an Excel row """

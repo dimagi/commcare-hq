@@ -198,9 +198,6 @@ class Command(BaseCommand):
              name='File Dropzone',
              description='Offer hosting and sharing data files for downloading '
                          'from a secure dropzone'),
-        Role(slug=privileges.ATTENDANCE_TRACKING,
-             name='Attendance Tracking',
-             description='Supports using CommCare HQ for attendance tracking'),
         Role(slug=privileges.REGEX_FIELD_VALIDATION,
              name='Regular Field Validation',
              description='Regular field validation for custom data fields'),
@@ -258,6 +255,9 @@ class Command(BaseCommand):
         Role(slug=privileges.LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
              name='Location columns in user last activity report',
              description="Add primary location's hierarchy to excel export in User Last Activity Report"),
+        Role(slug=privileges.LOCKED_ADMIN_QUESTIONS,
+             name='Locked Admin Questions',
+             description="Allow questions to be locked in the form builder to limit editing"),
     ]
 
     BOOTSTRAP_PLANS = [

@@ -1,3 +1,5 @@
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import PrependedText, StrictButton
 from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
@@ -5,14 +7,62 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import PrependedText, StrictButton
-
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.export.models.export_settings import ExportFileType
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
-from corehq.apps.export.models.export_settings import ExportFileType
+from corehq.apps.sso.models import IdentityProvider
 from corehq.privileges import DEFAULT_EXPORT_SETTINGS
+
+
+def _get_sso_email_domains(account):
+    """
+    Returns the set of lowercased email domains that are configured as
+    authenticated SSO email domains for any active identity provider
+    associated with the given BillingAccount. Empty set means no
+    SSO-based domain restriction applies.
+    """
+    idps = IdentityProvider.objects.filter(owner=account, is_active=True)
+    return {d.lower() for idp in idps for d in idp.get_email_domains()}
+
+
+class EnterpriseAdminForm(forms.Form):
+    email = forms.EmailField(label=gettext_lazy("Email"))
+
+    def __init__(self, *args, account, domain, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.account = account
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.form_action = reverse(
+            'add_enterprise_admin', args=[domain],
+        )
+        self.helper.layout = crispy.Layout(
+            'email',
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Add Administrator"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+            ),
+        )
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].lower()
+        if self.account.has_enterprise_admin(email):
+            raise ValidationError(
+                _("This user is already an enterprise administrator."),
+            )
+        sso_domains = _get_sso_email_domains(self.account)
+        if sso_domains and email.rsplit("@", 1)[-1] not in sso_domains:
+            raise ValidationError(
+                _(
+                    "This email domain is not permitted. Enterprise admins "
+                    "must use an email at one of: %(domains)s"
+                ),
+                params={"domains": ", ".join(sorted(sso_domains))},
+            )
+        return email
 
 
 class EnterpriseSettingsForm(forms.Form):

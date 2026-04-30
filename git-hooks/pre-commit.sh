@@ -53,7 +53,7 @@ if [ $? != 0 ]; then status=1; fi
 # --diff-filter=d ignores deleted files
 pyfiles=($(git diff --staged --name-only --diff-filter=d| grep "\.py$"))
 if [ -n "$pyfiles" ]; then
-    flake8 --show-source --config=.flake8 "${pyfiles[@]}"
+    ruff check "${pyfiles[@]}"
 	if [ $? != 0 ]; then status=1 && echo; fi
 fi
 

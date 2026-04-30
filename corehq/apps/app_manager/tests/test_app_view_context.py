@@ -11,6 +11,7 @@ class GetAppViewContextTests(TestCase):
 
     def setUp(self):
         self.domain = create_domain('test')
+        self.addCleanup(self.domain.delete)
         self.app = Application(domain=self.domain.name, langs=['en'])
 
     def test_bulk_translation_forms(self):

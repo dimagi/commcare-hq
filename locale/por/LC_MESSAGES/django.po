@@ -236,16 +236,14 @@ msgstr "Dado criado"
 
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/domain/forms.py corehq/apps/events/forms.py
-#: corehq/apps/reports/standard/deployments.py
+#: corehq/apps/domain/forms.py corehq/apps/reports/standard/deployments.py
 #: corehq/messaging/scheduling/forms.py
 msgid "Start Date"
 msgstr "Data de início"
 
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/domain/forms.py corehq/apps/events/forms.py
-#: corehq/apps/export/forms.py
+#: corehq/apps/domain/forms.py corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
@@ -359,9 +357,7 @@ msgstr "Conta de Faturamento"
 #: corehq/apps/builds/templates/builds/all.html
 #: corehq/apps/builds/templates/builds/edit_menu.html
 #: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
 #: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
@@ -548,7 +544,6 @@ msgid "Update"
 msgstr "Atualizar"
 
 #: corehq/apps/accounting/forms.py corehq/apps/case_search/models.py
-#: corehq/apps/events/templates/events/event_attendees.html
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
@@ -591,6 +586,7 @@ msgstr "A data de término deve ser posterior à data de início."
 
 #: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/invoice.html
+#: corehq/apps/hqadmin/templates/hqadmin/user_audit_report.html
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
@@ -679,9 +675,7 @@ msgstr "É necessário um nome para este novo papel."
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
-#: corehq/apps/enterprise/enterprise.py corehq/apps/events/forms.py
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/events/views.py
+#: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
@@ -859,7 +853,6 @@ msgstr "Enviaremos emails acerca da sua conta aos emails listados aquí"
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
-#: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
 msgid "Phone Number"
@@ -1281,8 +1274,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
-#: corehq/apps/events/templates/events/edit_attendee.html
-#: corehq/apps/events/templates/events/event_attendees.html
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
@@ -1294,6 +1285,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
@@ -1983,11 +1975,7 @@ msgstr "# de Extracto"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/enterprise/enterprise.py
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/events/views.py
 #: corehq/apps/hqadmin/templates/hqadmin/email_status.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/standard/cases/basic.py
@@ -4860,16 +4848,33 @@ msgstr "USD %s"
 #, python-brace-format
 msgid ""
 "Your Automatic Payment for CommCare Account {account_name} is scheduled in "
+"{num_days} day"
+msgid_plural ""
+"Your Automatic Payment for CommCare Account {account_name} is scheduled in "
 "{num_days} days"
-msgstr ""
+msgstr[0] ""
+"Seu Pagamento Automático para a Conta CommCare {account_name} está agendado "
+"para {num_days} dias"
+msgstr[1] ""
+"Seu Pagamento Automático para a Conta CommCare {account_name} está agendado "
+"para {num_days} dias"
+msgstr[2] ""
 "Seu Pagamento Automático para a Conta CommCare {account_name} está agendado "
 "para {num_days} dias"
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
 #, python-brace-format
 msgid ""
+"Your CommCare Billing Statement for {account_name} is due in {num_days} day"
+msgid_plural ""
 "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
-msgstr ""
+msgstr[0] ""
+"Seu Extrato de Cobrança do CommCare para {account_name} vence em {num_days} "
+"dias"
+msgstr[1] ""
+"Seu Extrato de Cobrança do CommCare para {account_name} vence em {num_days} "
+"dias"
+msgstr[2] ""
 "Seu Extrato de Cobrança do CommCare para {account_name} vence em {num_days} "
 "dias"
 
@@ -4936,9 +4941,7 @@ msgstr "Usuários adicionados:"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
@@ -4965,76 +4968,6 @@ msgstr "Usuários adicionados:"
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 msgid "Action"
 msgstr "Ação"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Reference"
-msgstr "Referência"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Constant"
-msgstr "Constante"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "SQL Statement"
-msgstr "Declaração SQL"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Sum"
-msgstr "Soma"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Min"
-msgstr "Mínimo"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Max"
-msgstr "Máximo"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Average"
-msgstr "Média"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Count"
-msgstr "Contagem"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Count Unique Values"
-msgstr "Contar Valores Únicos"
-
-#: corehq/apps/aggregate_ucrs/column_specs.py
-msgid "Has a nonzero sum (1 if sum is nonzero else 0)."
-msgstr ""
-"Possui soma diferente de zero (1 se a soma for diferente de zero, senão 0)."
-
-#: corehq/apps/aggregate_ucrs/models.py corehq/apps/reports/filters/select.py
-msgid "Month"
-msgstr "Mês"
-
-#: corehq/apps/aggregate_ucrs/models.py
-msgid "Week"
-msgstr "Semana"
-
-#: corehq/apps/aggregate_ucrs/models.py
-msgid "no table"
-msgstr "sem tabela"
-
-#: corehq/apps/aggregate_ucrs/templates/aggregate_ucrs/view_aggregate_ucr.html
-msgid "Rebuild Data"
-msgstr "Reconstruir Dados"
-
-#: corehq/apps/aggregate_ucrs/templates/aggregate_ucrs/view_aggregate_ucr.html
-msgid "Preview data"
-msgstr "Pré-visualizar dados"
-
-#: corehq/apps/aggregate_ucrs/views.py
-msgid "View Aggregate UCR"
-msgstr "Ver UCR Agregado"
-
-#: corehq/apps/aggregate_ucrs/views.py
-msgid "Preview Aggregate UCR"
-msgstr "Pré-visualizar UCR Agregado"
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
@@ -5602,8 +5535,6 @@ msgstr "Últimas 10 Execuções"
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
 #: corehq/apps/sms/templates/sms/global_gateway_list.html
-#: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
 #: corehq/apps/users/models.py
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
@@ -5667,7 +5598,6 @@ msgstr "Status:"
 #: corehq/apps/domain/templates/error.html
 #: corehq/apps/integration/kyc/models.py
 #: corehq/apps/integration/payments/const.py
-#: corehq/apps/integration/templates/integration/web_app_integration_err.html
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
@@ -5952,10 +5882,6 @@ msgid "Please log in to the app to check for an update."
 msgstr ""
 "Por favor, faça login no aplicativo para verificar se há uma atualização."
 
-#: corehq/apps/app_manager/exceptions.py
-msgid "Form Actions Diff failed to be applied successfully"
-msgstr "Falha ao aplicar a Diferença de Ações do Formulário"
-
 #: corehq/apps/app_manager/fields.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
 #: corehq/apps/sms/models.py corehq/apps/sms/views.py
@@ -5988,16 +5914,13 @@ msgstr "Fonte de Dados"
 #: corehq/apps/app_manager/fields.py
 #: corehq/apps/cloudcare/templates/cloudcare/config.html
 #: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
 #: corehq/apps/linked_domain/const.py corehq/apps/reports/filters/forms.py
 #: corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
-#: corehq/apps/translations/forms.py
 msgid "Application"
 msgstr "Aplicação"
 
@@ -6226,7 +6149,6 @@ msgstr "Versão do CommCare"
 
 #: corehq/apps/app_manager/forms.py
 #: corehq/apps/reports/standard/deployments.py
-#: corehq/apps/translations/forms.py
 msgid "Application Version"
 msgstr "Versão da Aplicação"
 
@@ -6601,21 +6523,6 @@ msgstr "Versão {} não lançada. Marque como lançada para adicionar restriçõ
 #: corehq/apps/app_manager/models.py
 msgid "Higher version {} already enabled for this application and location"
 msgstr "Versão superior {} já habilitada para este aplicativo e localização"
-
-#: corehq/apps/app_manager/models.py
-msgid ""
-"Version {} not released. Can not enable profiles for unreleased versions"
-msgstr ""
-"Versão {} não lançada. Não é possível habilitar perfis para versões não "
-"lançadas"
-
-#: corehq/apps/app_manager/models.py
-msgid ""
-"Latest version available for this profile is {}, which is higher than this "
-"version. Disable any higher versions first."
-msgstr ""
-"A versão mais recente disponível para este perfil é {}, que é superior a "
-"esta versão. Desabilite as versões superiores primeiro."
 
 #: corehq/apps/app_manager/models.py
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
@@ -8117,16 +8024,6 @@ msgstr "Introduza a descrição da aplicação aqui"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/download_index.html
-msgid "Revoke restriction"
-msgstr "Revogar restrição"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/download_index.html
-msgid "Restrict to this version"
-msgstr "Restringir a esta versão"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/download_index.html
 msgid "Bulk application translations"
 msgstr "Traduções em massa do aplicativo"
 
@@ -8509,9 +8406,6 @@ msgstr "Instalar CommCare"
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-#: corehq/apps/events/templates/events/edit_attendee.html
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/events/templates/events/events_list.html
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -8530,7 +8424,6 @@ msgstr "Instalar CommCare"
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/get_demo_modals.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/ko_feedback.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_feedback.html
-#: corehq/apps/integration/templates/integration/base_cloudcare_template.html
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
@@ -9775,6 +9668,34 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
+"              <strong>Save to Case question is missing a case type.</strong>\n"
+"              Please add the \"case_type\" property mapping for \"%(case_tag)s\"\n"
+"            "
+msgstr ""
+"\n"
+"              <strong>Pergunta Salvar no Caso está sem um tipo de caso.</strong>\n"
+"              Por favor, adicione o mapeamento da propriedade \"case_type\" para \"%(case_tag)s\"\n"
+"            "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              <strong>Save to Case question is missing a case name.</strong>\n"
+"              Please add the \"case_name\" property mapping for \"%(case_tag)s\"\n"
+"            "
+msgstr ""
+"\n"
+"              <strong>Pergunta Salvar no Caso está sem um nome de caso.</strong>\n"
+"              Por favor, adicione o mapeamento da propriedade \"case_name\" para \"%(case_tag)s\"\n"
+"            "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
+#, python-format
+msgid ""
+"\n"
 "              Multimedia case property \"%(path)s\" is not supported on apps on\n"
 "              or before v2.5.\n"
 "            "
@@ -9961,7 +9882,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_profiles_select.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_profiles_select.html
-#: corehq/apps/domain/forms.py
 msgid "Build Profile"
 msgstr "Manejo de Casos"
 
@@ -10333,18 +10253,20 @@ msgid ""
 "                but cases are not available for this form. Please either remove\n"
 "                the case reference or (1) make sure that the case list is set to\n"
 "                display the case list first and then form, and (2) make sure\n"
-"                that all forms in this case list update or btn-close a case (which  \n"
-"                means registration forms must go in a different case list).\n"
+"                that all forms in this case list update or btn-close a case\n"
+"                (which  means registration forms must go\n"
+"                in a different case list).\n"
 "              "
 msgstr ""
 "\n"
-"                Sua condição de exibição para o formulário\n"
+"                Sua condição de exibição do formulário para o formulário\n"
 "                <a href=\"%(form_url)s\">%(form_name)s</a> faz referência a um caso,\n"
 "                mas casos não estão disponíveis para este formulário. Por favor, remova\n"
-"                a referência ao caso ou (1) certifique-se de que a lista de casos está configurada para\n"
+"                a referência ao caso ou (1) certifique-se de que a lista de casos está definida para\n"
 "                exibir a lista de casos primeiro e depois o formulário, e (2) certifique-se\n"
-"                de que todos os formulários nesta lista de casos atualizam ou btn-close um caso (o que\n"
-"                significa que formulários de registro devem estar em uma lista de casos diferente).\n"
+"                de que todos os formulários nesta lista de casos atualizam ou btn-close um caso\n"
+"                (o que significa que formulários de registro devem ir\n"
+"                em uma lista de casos diferente).\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
@@ -10354,17 +10276,18 @@ msgid ""
 "                are not available. Please either remove the case reference or\n"
 "                (1) make sure that the case list is set to display the case list\n"
 "                first and then form, and (2) make sure that all forms in this\n"
-"                case list update or btn-close a case (which means registration forms  \n"
-"                must go in a different case list).\n"
+"                case list update or btn-close a case (which means registration\n"
+"                forms  must go in a different case\n"
+"                list).\n"
 "              "
 msgstr ""
 "\n"
 "                Você tem uma condição de exibição que faz referência a um caso, mas casos\n"
 "                não estão disponíveis. Por favor, remova a referência ao caso ou\n"
-"                (1) certifique-se de que a lista de casos está configurada para exibir a lista de casos\n"
+"                (1) certifique-se de que a lista de casos está definida para exibir a lista de casos\n"
 "                primeiro e depois o formulário, e (2) certifique-se de que todos os formulários nesta\n"
 "                lista de casos atualizam ou btn-close um caso (o que significa que formulários de registro\n"
-"                devem estar em uma lista de casos diferente).\n"
+"                devem ir em uma lista de casos diferente).\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/custom_icon.html
@@ -10420,10 +10343,6 @@ msgstr "Selecione um idioma."
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
 msgid "Select a format."
 msgstr "Selecione um formato."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
-msgid "Download only translations eligible for Transifex?"
-msgstr "Baixar apenas traduções elegíveis para o Transifex?"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
 #: corehq/apps/locations/templates/locations/manage/partials/bulk_upload.html
@@ -10660,11 +10579,6 @@ msgstr "Este Formulário abre um Caso Filho na Lista de Casos"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
 msgid "Case List Configuration"
 msgstr "Configuração da Lista de Casos"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-msgid "Override reference id: "
-msgstr "Substituir id de referência: "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
@@ -11074,6 +10988,16 @@ msgid ""
 msgstr ""
 "Salve a resposta apenas se o envio do formulário alterar a propriedade em "
 "relação ao valor anterior."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+msgid "This mapping was changed and deleted in separate sessions"
+msgstr "Este mapeamento foi alterado e excluído em sessões separadas"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+msgid "Dismiss this alert to keep the mapping."
+msgstr "Ignore este alerta para manter o mapeamento."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
@@ -12853,16 +12777,6 @@ msgstr "Nome da Instância do Campo de Pesquisa"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Label for Searching"
-msgstr "Rótulo para Pesquisa"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Label for Searching Again"
-msgstr "Rótulo para Pesquisar Novamente"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search Screen Title"
 msgstr "Título da Tela de Pesquisa"
 
@@ -13921,10 +13835,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
-msgid "Manage application profiles here."
-msgstr "Gerencie os perfis de aplicação aqui."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid ""
 "\n"
 "        Learn more about Application Profiles on our\n"
@@ -13954,10 +13864,6 @@ msgstr "Idioma Padrão"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Upgrade to CommCare 2.30!"
 msgstr "Atualize para o CommCare 2.30!"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
-msgid "Latest Enabled Version:"
-msgstr "Última Versão Habilitada:"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Add Profile"
@@ -15256,14 +15162,6 @@ msgid "App diff"
 msgstr "Diferença do aplicativo"
 
 #: corehq/apps/app_manager/views/releases.py
-msgid "Latest version for profile {} is now {}"
-msgstr "A versão mais recente para o perfil {} agora é {}"
-
-#: corehq/apps/app_manager/views/releases.py
-msgid "Latest release now available for profile {}"
-msgstr "Última versão disponível agora para o perfil {}"
-
-#: corehq/apps/app_manager/views/releases.py
 msgid "Reverted to version {log.info['version']}"
 msgstr "Revertido para a versão {log.info['version']}"
 
@@ -16391,6 +16289,16 @@ msgstr ""
 "escolha um arquivo que não esteja protegido por senha."
 
 #: corehq/apps/case_importer/util.py
+msgid ""
+"The file you uploaded contains links to another workbook, which cannot be "
+"processed. You must upload a file that does not contain links to another "
+"workbook."
+msgstr ""
+"O arquivo enviado contém links para outra planilha, que não pode ser "
+"processada. Você deve enviar um arquivo que não contenha links para outra "
+"planilha."
+
+#: corehq/apps/case_importer/util.py
 msgid "The file uploaded has the following error: {}"
 msgstr "O arquivo enviado contém o seguinte erro: {}"
 
@@ -16612,10 +16520,7 @@ msgstr "Adicionar XPath"
 #: corehq/apps/case_search/templates/case_search/profile_case_search.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_geo.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
-#: corehq/apps/reports/filters/simple.py
+#: corehq/apps/domain/forms.py corehq/apps/reports/filters/simple.py
 #: corehq/apps/reports/standard/cases/filters.py
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 #: corehq/apps/styleguide/examples/bootstrap5/select2_ajax_form.py
@@ -16624,8 +16529,6 @@ msgstr "Procurar"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/custom_data_fields/edit_entity.py
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 msgid "Profile"
 msgstr "Perfil"
 
@@ -17499,7 +17402,7 @@ msgstr "Configurações de Consumo"
 msgid "Phone Settings"
 msgstr "Configurações do Telefone"
 
-#: corehq/apps/commtrack/forms.py corehq/apps/translations/forms.py
+#: corehq/apps/commtrack/forms.py
 msgid "Submit"
 msgstr "Submeter"
 
@@ -20820,7 +20723,6 @@ msgstr "Propriedade de data do caso (avançado)"
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
-#: corehq/apps/events/forms.py corehq/apps/events/views.py
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
@@ -21670,20 +21572,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/forms.py
-msgid "Account confirmation link expiry"
-msgstr "Validade do link de confirmação de conta"
-
-#: corehq/apps/domain/forms.py
-msgid ""
-"\n"
-"            Default time (in days) for which account confirmation link will be valid.\n"
-"            "
-msgstr ""
-"\n"
-"            Tempo padrão (em dias) pelo qual o link de confirmação de conta será válido.\n"
-"            "
-
-#: corehq/apps/domain/forms.py
 msgid "Call limit"
 msgstr "Limite de chamadas"
 
@@ -21696,18 +21584,6 @@ msgstr ""
 "\n"
 "            Limite do número de chamadas permitidas a um operador para cada tipo de chamada.\n"
 "            "
-
-#: corehq/apps/domain/forms.py
-msgid "Confirmation SMS project name"
-msgstr "Nome do projeto para SMS de confirmação"
-
-#: corehq/apps/domain/forms.py
-msgid ""
-"Name of the project to be used in SMS sent for account confirmation to "
-"users."
-msgstr ""
-"Nome do projeto a ser usado em SMS enviados para confirmação de conta de "
-"usuários."
 
 #: corehq/apps/domain/forms.py
 msgid "Enable Release Mode"
@@ -22332,16 +22208,6 @@ msgid "Please select version"
 msgstr "Por favor, selecione a versão"
 
 #: corehq/apps/domain/forms.py
-#, python-brace-format
-msgid "Restriction for profile {profile} set successfully."
-msgstr "Restrição para o perfil {profile} definida com sucesso."
-
-#: corehq/apps/domain/forms.py
-#, python-brace-format
-msgid "Restriction for profile {profile} failed: {message}"
-msgstr "Falha ao definir restrição para o perfil {profile}: {message}"
-
-#: corehq/apps/domain/forms.py
 msgid "Using project's timezone: {}"
 msgstr "Usando o fuso horário do projeto: {}"
 
@@ -22828,12 +22694,14 @@ msgid "You can only have 3 alerts activated at any one time"
 msgstr "Você só pode ter 3 alertas ativados ao mesmo tempo"
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/reports/filters/simple.py
 #: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
 #: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
 msgid "Start Time"
 msgstr "Hora de Início"
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/reports/filters/simple.py
 msgid "End Time"
 msgstr "Hora de Término"
 
@@ -23434,6 +23302,21 @@ msgstr "Assinatura Atual"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#, python-format
+msgid ""
+"\n"
+"            For more information on Subscription Management & Billing, please\n"
+"            see the\n"
+"            <a href=\"%(help_url)s\" target=\"_blank\">Help Site</a>.\n"
+"          "
+msgstr ""
+"\n"
+"            Para mais informações sobre Gerenciamento de Assinaturas e Faturamento, consulte o\n"
+"            <a href=\"%(help_url)s\" target=\"_blank\">Site de Ajuda</a>.\n"
+"          "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/views/accounting.py
 #: corehq/apps/styleguide/examples/bootstrap5/select2_manual_form.py
 msgid "Plan"
@@ -23844,21 +23727,6 @@ msgstr ""
 "    </h3>\n"
 "  "
 
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-#: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
-#: corehq/apps/translations/forms.py
-msgid "Add"
-msgstr "Adicionar"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
-#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
-msgid "Could not update!"
-msgstr "Não foi possível atualizar!"
-
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 msgid "Last Activity"
@@ -23873,6 +23741,11 @@ msgstr "Ativado em : "
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 msgid "Deactivated On : "
 msgstr "Desativado em: "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
+#: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
+msgid "Could not update!"
+msgstr "Não foi possível atualizar!"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/renew_plan.html
@@ -25675,28 +25548,57 @@ msgstr "Entrar"
 msgid "Log In :: CommCare HQ"
 msgstr "Entrar :: CommCare HQ"
 
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/urls.py
+msgid "Password Change Complete"
+msgstr "Alteração de Senha Concluída"
+
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+msgid "Your password was successfully changed."
+msgstr "Sua senha foi alterada com sucesso."
+
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+msgid "Sign In"
+msgstr "Entrar"
+
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 msgid ""
 "\n"
-"                No account? Sign up today, it's free!\n"
+"                No account? Get started for free.\n"
 "              "
 msgstr ""
 "\n"
-"                Não tem uma conta? Cadastre-se hoje, é grátis!\n"
+"                Não tem conta? Comece gratuitamente.\n"
 "              "
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
-msgid "Learn more"
-msgstr "Saiba mais"
+msgid ""
+"\n"
+"                    Data collection is just the start. Equip your frontline\n"
+"                    team with powerful service delivery apps that work where\n"
+"                    you work, even offline. No coding required.\n"
+"                  "
+msgstr ""
+"\n"
+"                    A coleta de dados é só o começo. Equipe sua equipe de linha de frente\n"
+"                    com aplicativos poderosos de prestação de serviços que funcionam onde\n"
+"                    você trabalha, mesmo offline. Não é necessário programar.\n"
+"                  "
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
-msgid ""
-"about how CommCare can be your mobile solution for your frontline workforce."
-msgstr ""
-"sobre como o CommCare pode ser sua solução móvel para sua equipe de linha de"
-" frente."
+msgid "Learn more about CommCare."
+msgstr "Saiba mais sobre o CommCare."
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
@@ -25759,11 +25661,11 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
 msgid ""
 "\n"
-"                  No account? Sign up today, it's free!\n"
+"                  No account? Get started for free.\n"
 "                "
 msgstr ""
 "\n"
-"                  Não tem conta? Cadastre-se hoje, é grátis!\n"
+"                  Não tem conta? Comece gratuitamente.\n"
 "                "
 
 #: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
@@ -25784,25 +25686,6 @@ msgstr ""
 #: corehq/apps/users/forms.py
 msgid "Reset Password"
 msgstr "Alterar Palavra-passe"
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/urls.py
-msgid "Password Change Complete"
-msgstr "Alteração de Senha Concluída"
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-msgid "Your password was successfully changed."
-msgstr "Sua senha foi alterada com sucesso."
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
-msgid "Sign In"
-msgstr "Entrar"
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
 #: corehq/apps/domain/urls.py
@@ -26789,10 +26672,6 @@ msgstr "Flags de Funcionalidades e Privilégios"
 msgid "Manage Releases By Location"
 msgstr "Gerenciar Lançamentos por Localização"
 
-#: corehq/apps/domain/views/releases.py
-msgid "Manage Releases By App Profile"
-msgstr "Gerenciar Lançamentos por Perfil de Aplicativo"
-
 #: corehq/apps/domain/views/settings.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
@@ -27772,441 +27651,6 @@ msgstr "Por favor, selecione um projeto."
 #: corehq/apps/enterprise/views.py
 msgid "Controlling domain set to {}."
 msgstr "Domínio controlador definido como {}."
-
-#: corehq/apps/events/forms.py
-msgid "Per event day"
-msgstr "Por dia de evento"
-
-#: corehq/apps/events/forms.py
-msgid "Per entire event"
-msgstr "Por todo o evento"
-
-#: corehq/apps/events/forms.py
-msgid "Attendance target"
-msgstr "Meta de presença"
-
-#: corehq/apps/events/forms.py
-msgid "The expected amount of attendees."
-msgstr "A quantidade esperada de participantes."
-
-#: corehq/apps/events/forms.py
-msgid "Allow same day registration"
-msgstr "Permitir registro no mesmo dia"
-
-#: corehq/apps/events/forms.py
-msgid "Attendance recording options"
-msgstr "Opções de registro de presença"
-
-#: corehq/apps/events/forms.py corehq/apps/events/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Attendees"
-msgstr "Participantes"
-
-#: corehq/apps/events/forms.py
-msgid "Attendance Takers"
-msgstr "Registradores de Presença"
-
-#: corehq/apps/events/forms.py
-msgid "Please choose at least one Attendance Taker"
-msgstr "Por favor, escolha pelo menos um Registrador de Presença"
-
-#: corehq/apps/events/forms.py
-#, python-brace-format
-msgid "{self.title_prefix} Attendance Tracking Event"
-msgstr "{self.title_prefix} Evento de Acompanhamento de Presença"
-
-#: corehq/apps/events/forms.py
-msgid "Invalid Start Date"
-msgstr "Data de Início Inválida"
-
-#: corehq/apps/events/forms.py
-msgid "You cannot specify the start date in the past"
-msgstr "Você não pode especificar a data de início no passado"
-
-#: corehq/apps/events/forms.py
-msgid "End Date cannot be before Start Date"
-msgstr "A Data de Término não pode ser anterior à Data de Início"
-
-#: corehq/apps/events/forms.py
-msgid "You cannot specify the end date in the past"
-msgstr "Você não pode especificar a data de término no passado"
-
-#: corehq/apps/events/forms.py corehq/apps/locations/forms.py
-#: corehq/apps/users/forms.py
-msgid "All Locations"
-msgstr "Todas as Localizações"
-
-#: corehq/apps/events/forms.py corehq/apps/users/validation.py
-msgid "One or more of the locations was not found."
-msgstr "Uma ou mais das localizações não foram encontradas."
-
-#: corehq/apps/events/forms.py corehq/apps/users/validation.py
-msgid "Primary location must be one of the user's locations"
-msgstr "A localização principal deve ser uma das localizações do usuário"
-
-#: corehq/apps/events/forms.py corehq/apps/users/validation.py
-msgid "Primary location can't be empty if the user has any locations set"
-msgstr ""
-"A localização principal não pode estar vazia se o usuário tiver alguma "
-"localização definida"
-
-#: corehq/apps/events/models.py
-msgid "Attendee list under review"
-msgstr "Lista de participantes em revisão"
-
-#: corehq/apps/events/models.py
-msgid "Attendee list rejected"
-msgstr "Lista de participantes rejeitada"
-
-#: corehq/apps/events/models.py
-msgid "Attendee list accepted"
-msgstr "Lista de participantes aceita"
-
-#: corehq/apps/events/models.py
-msgid "Event not started"
-msgstr "Evento não iniciado"
-
-#: corehq/apps/events/models.py
-msgid "Event in progress"
-msgstr "Evento em andamento"
-
-#: corehq/apps/events/templates/events/edit_attendee.html
-msgid "Attendee"
-msgstr "Participante"
-
-#: corehq/apps/events/templates/events/edit_attendee.html
-#, python-format
-msgid ""
-"\n"
-"          This attendee cannot be deleted as\n"
-"          <strong>%(attendee_name)s</strong> has been tracked as having\n"
-"          attended one or more events.\n"
-"        "
-msgstr ""
-"\n"
-"          Este participante não pode ser excluído pois\n"
-"          <strong>%(attendee_name)s</strong> foi registrado como tendo\n"
-"          participado de um ou mais eventos.\n"
-"        "
-
-#: corehq/apps/events/templates/events/edit_attendee.html
-msgid "Update Attendee"
-msgstr "Atualizar Participante"
-
-#: corehq/apps/events/templates/events/edit_attendee.html
-msgid "Delete Attendee"
-msgstr "Excluir Participante"
-
-#: corehq/apps/events/templates/events/edit_attendee.html
-#, python-format
-msgid ""
-"\n"
-"                Are you sure you want to permanently delete\n"
-"                <strong>%(attendee_name)s</strong>?\n"
-"              "
-msgstr ""
-"\n"
-"                Tem certeza de que deseja excluir permanentemente\n"
-"                <strong>%(attendee_name)s</strong>?\n"
-"              "
-
-#: corehq/apps/events/templates/events/edit_attendee.html
-#, python-format
-msgid ""
-"\n"
-"                This action will delete %(attendee_name)s as a potential\n"
-"                attendee and will remove them from all future events that they\n"
-"                are currently enlisted in.\n"
-"              "
-msgstr ""
-"\n"
-"                Esta ação excluirá %(attendee_name)s como participante potencial\n"
-"                e o removerá de todos os eventos futuros nos quais está atualmente inscrito.\n"
-"              "
-
-#: corehq/apps/events/templates/events/edit_attendee.html
-msgid ""
-"\n"
-"                This action cannot be undone.\n"
-"              "
-msgstr ""
-"\n"
-"                Esta ação não pode ser desfeita.\n"
-"              "
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid ""
-"\n"
-"      Known potential attendees who can be invited to participate in Attendance\n"
-"      Tracking Events.\n"
-"    "
-msgstr ""
-"\n"
-"      Participantes potenciais conhecidos que podem ser convidados a participar de Eventos de\n"
-"      Controle de Presença.\n"
-"    "
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid "Create Potential Attendee"
-msgstr "Criar Participante Potencial"
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid "Enable Mobile Worker Attendees"
-msgstr "Ativar Participantes Trabalhadores Móveis"
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid "New Potential Attendees"
-msgstr "Novos Participantes Potenciais"
-
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "Pending..."
-msgstr "Pendente..."
-
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "NEW"
-msgstr "NOVO"
-
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "ERROR"
-msgstr "ERRO"
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid "Potential Attendees"
-msgstr "Participantes Potenciais"
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid "Loading potential attendees ..."
-msgstr "Carregando participantes potenciais ..."
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid ""
-"\n"
-"            <strong>There was an issue contacting the server.</strong>\n"
-"            Please check your internet connection. If this issue continues,\n"
-"            please\n"
-"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"\n"
-"              >report an issue</a\n"
-"            >.\n"
-"          "
-msgstr ""
-"\n"
-"            <strong>Houve um problema ao contatar o servidor.</strong>\n"
-"            Por favor, verifique sua conexão com a internet. Se o problema persistir,\n"
-"            por favor\n"
-"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"\n"
-"              >relate um problema</a\n"
-"            >.\n"
-"          "
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid ""
-"\n"
-"            You currently have no potential attendees.\n"
-"          "
-msgstr ""
-"\n"
-"            Você não possui participantes potenciais no momento.\n"
-"          "
-
-#: corehq/apps/events/templates/events/event_attendees.html
-msgid ""
-"\n"
-"            No matching potential attendees found.\n"
-"          "
-msgstr ""
-"\n"
-"            Nenhum participante potencial correspondente encontrado.\n"
-"          "
-
-#: corehq/apps/events/templates/events/events_list.html
-msgid ""
-"\n"
-"          Attendance tracking events can be used to track attendance of all the\n"
-"          selected attendees.\n"
-"        "
-msgstr ""
-"\n"
-"          Eventos de controle de presença podem ser usados para acompanhar a presença de todos os\n"
-"          participantes selecionados.\n"
-"        "
-
-#: corehq/apps/events/templates/events/events_list.html
-msgid "Add new event"
-msgstr "Adicionar novo evento"
-
-#: corehq/apps/events/templates/events/events_list.html
-msgid "View Attendees"
-msgstr "Ver Participantes"
-
-#: corehq/apps/events/templates/events/events_list.html
-msgid "No Attendees Yet"
-msgstr "Nenhum Participante Ainda"
-
-#: corehq/apps/events/templates/events/events_list.html
-msgid "Date Attended"
-msgstr "Data de Participação"
-
-#: corehq/apps/events/templates/events/events_list.html
-msgid "Attendee Name"
-msgstr "Nome do Participante"
-
-#: corehq/apps/events/templates/events/events_list.html
-msgid "Event has not yet started"
-msgstr "O evento ainda não começou"
-
-#: corehq/apps/events/templates/events/new_event.html
-msgid ""
-"\n"
-"      There was a problem fetching the list of attendees and attendance takers.\n"
-"      Please try again.\n"
-"    "
-msgstr ""
-"\n"
-"      Houve um problema ao buscar a lista de participantes e responsáveis pela presença.\n"
-"      Por favor, tente novamente.\n"
-"    "
-
-#: corehq/apps/events/views.py
-#: corehq/apps/users/templates/users/roles_and_permissions.html
-#: corehq/privileges.py corehq/tabs/tabclasses.py
-msgid "Attendance Tracking"
-msgstr "Rastreamento de Presença"
-
-#: corehq/apps/events/views.py
-msgid "Attendance Tracking Events"
-msgstr "Eventos de Rastreamento de Presença"
-
-#: corehq/apps/events/views.py
-msgid "events per page"
-msgstr "eventos por página"
-
-#: corehq/apps/events/views.py
-msgid "You have no events"
-msgstr "Você não possui eventos"
-
-#: corehq/apps/events/views.py
-msgid "Loading events"
-msgstr "Carregando eventos"
-
-#: corehq/apps/events/views.py corehq/tabs/tabclasses.py
-msgid "Events"
-msgstr "Eventos"
-
-#: corehq/apps/events/views.py
-msgid "Start date"
-msgstr "Data de início"
-
-#: corehq/apps/events/views.py
-msgid "End date"
-msgstr "Data de término"
-
-#: corehq/apps/events/views.py
-msgid "Attendance Target"
-msgstr "Meta de Presença"
-
-#: corehq/apps/events/views.py
-msgid "Total attendance"
-msgstr "Presença total"
-
-#: corehq/apps/events/views.py
-msgid "Total attendance takers"
-msgstr "Total de responsáveis pela presença"
-
-#: corehq/apps/events/views.py
-msgid "Add Attendance Tracking Event"
-msgstr "Adicionar Evento de Rastreamento de Presença"
-
-#: corehq/apps/events/views.py
-msgid "Add New Event"
-msgstr "Adicionar Novo Evento"
-
-#: corehq/apps/events/views.py
-msgid "Edit Attendance Tracking Event"
-msgstr "Editar Evento de Rastreamento de Presença"
-
-#: corehq/apps/events/views.py
-msgid "Edit Event"
-msgstr "Editar Evento"
-
-#: corehq/apps/events/views.py
-msgid "Attendees per page"
-msgstr "Participantes por página"
-
-#: corehq/apps/events/views.py
-msgid "You have no attendees"
-msgstr "Você não tem participantes"
-
-#: corehq/apps/events/views.py
-msgid "Loading attendees"
-msgstr "Carregando participantes"
-
-#: corehq/apps/events/views.py
-msgid "Form validation failed: {}"
-msgstr "Falha na validação do formulário: {}"
-
-#: corehq/apps/events/views.py
-msgid "Edit Attendee"
-msgstr "Editar Participante"
-
-#: corehq/apps/events/views.py
-msgid "Enabling mobile worker attendees status"
-msgstr "Ativando status de participantes trabalhadores móveis"
-
-#: corehq/apps/events/views.py
-msgid "Disabling mobile worker attendees status"
-msgstr "Desativando status de participantes trabalhadores móveis"
-
-#: corehq/apps/events/views.py
-msgid "Processing Mobile Workers. This may take some time..."
-msgstr "Processando Trabalhadores Móveis. Isso pode levar algum tempo..."
-
-#: corehq/apps/events/views.py
-msgid "User conversion failed for some reason and we have noted this failure."
-msgstr ""
-"A conversão do usuário falhou por algum motivo e registramos essa falha."
-
-#: corehq/apps/events/views.py
-msgid "Go back to view attendees"
-msgstr "Voltar para visualizar participantes"
-
-#: corehq/apps/events/views.py
-msgid "Mobile workers can now also be selected to attend events."
-msgstr ""
-"Agora trabalhadores móveis também podem ser selecionados para participar de "
-"eventos."
-
-#: corehq/apps/events/views.py
-msgid "Enabling mobile workers complete!"
-msgstr "Ativação de trabalhadores móveis concluída!"
-
-#: corehq/apps/events/views.py
-msgid "Enabling mobile worker attendees in progress. This may take a while..."
-msgstr ""
-"Ativando participantes trabalhadores móveis em andamento. Isso pode levar um"
-" tempo..."
-
-#: corehq/apps/events/views.py
-msgid "Mobile workers are now removed from the potential attendees list."
-msgstr ""
-"Trabalhadores móveis agora foram removidos da lista de possíveis "
-"participantes."
-
-#: corehq/apps/events/views.py
-msgid "Disabling mobile workers complete!"
-msgstr "Desativação de trabalhadores móveis concluída!"
-
-#: corehq/apps/events/views.py
-msgid ""
-"Disabling mobile worker attendees in progress. This may take a while..."
-msgstr ""
-"Desativando participantes trabalhadores móveis em andamento. Isso pode levar"
-" um tempo..."
 
 #: corehq/apps/export/det/schema_generator.py
 #, python-brace-format
@@ -29707,6 +29151,11 @@ msgstr "Mostrar Opções"
 msgid "Hide Options"
 msgstr "Ocultar Opções"
 
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+#: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
+msgid "Add"
+msgstr "Adicionar"
+
 #: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
 msgid ""
 "\n"
@@ -31080,11 +30529,6 @@ msgstr "O arquivo não contém uma planilha chamada types"
 
 #: corehq/apps/fixtures/upload/run_upload.py
 #, python-brace-format
-msgid "type {lookup_table_name} is not defined as global"
-msgstr "O tipo {lookup_table_name} não está definido como global"
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
 msgid ""
 "The table structure of '{tag}' cannot be changed while also modifying its "
 "data. If you need to do both, include all existing rows in the upload or "
@@ -31226,14 +30670,6 @@ msgstr "Campo personalizado do usuário"
 msgid "User's assigned location"
 msgstr "Localização atribuída ao usuário"
 
-#: corehq/apps/geospatial/forms.py corehq/apps/geospatial/models.py
-msgid "Radial Algorithm"
-msgstr "Algoritmo Radial"
-
-#: corehq/apps/geospatial/forms.py corehq/apps/geospatial/models.py
-msgid "Road Network Algorithm"
-msgstr "Algoritmo de Rede Viária"
-
 #: corehq/apps/geospatial/forms.py
 msgid "Fetch mobile worker location data from custom field"
 msgstr ""
@@ -31313,40 +30749,6 @@ msgstr ""
 " para ignorar."
 
 #: corehq/apps/geospatial/forms.py
-msgid "Select travel mode"
-msgstr "Selecione o modo de viagem"
-
-#: corehq/apps/geospatial/forms.py
-msgid ""
-"The travel mode of the users. Consider this when specifying the max travel "
-"time to each case."
-msgstr ""
-"O modo de viagem dos usuários. Considere isso ao especificar o tempo máximo "
-"de viagem para cada caso."
-
-#: corehq/apps/geospatial/forms.py
-msgid "Disbursement algorithm"
-msgstr "Algoritmo de distribuição"
-
-#: corehq/apps/geospatial/forms.py
-msgid ""
-"Uses the straight-line distance between users and cases to determine  "
-"allocation of cases. Ideal for when map road coverage is poor."
-msgstr ""
-"Usa a distância em linha reta entre usuários e casos para determinar a "
-"alocação dos casos. Ideal para quando a cobertura de estradas no mapa é "
-"ruim."
-
-#: corehq/apps/geospatial/forms.py
-msgid ""
-"Takes distance along roads between users and cases into account to determine"
-" allocation of cases. Ideal for when map road coverage is good."
-msgstr ""
-"Leva em conta a distância pelas estradas entre usuários e casos para "
-"determinar a alocação dos casos. Ideal para quando a cobertura de estradas "
-"no mapa é boa."
-
-#: corehq/apps/geospatial/forms.py
 msgid "Minimum cases assigned per user"
 msgstr "Mínimo de casos atribuídos por usuário"
 
@@ -31365,18 +30767,6 @@ msgid ""
 msgstr ""
 "O número máximo de casos que cada usuário pode receber. Deixe em branco caso"
 " não queira especificar um limite superior."
-
-#: corehq/apps/geospatial/forms.py
-msgid "Enter mapbox token"
-msgstr "Insira o token do Mapbox"
-
-#: corehq/apps/geospatial/forms.py
-msgid ""
-"Enter your Mapbox API token here. Make sure your token has the correct scope"
-" configured for use of the Mapbox Matrix API."
-msgstr ""
-"Insira seu token da API Mapbox aqui. Certifique-se de que seu token tenha o "
-"escopo correto configurado para uso da API Mapbox Matrix."
 
 #: corehq/apps/geospatial/forms.py
 msgid "Flag assigned cases"
@@ -31398,10 +30788,6 @@ msgstr "Parâmetros do Mapa de Agrupamento de Casos"
 #: corehq/apps/geospatial/forms.py
 msgid "Algorithms"
 msgstr "Algoritmos"
-
-#: corehq/apps/geospatial/forms.py
-msgid "Test API Key"
-msgstr "Testar chave da API"
 
 #: corehq/apps/geospatial/forms.py
 msgid "Location Data Properties"
@@ -31454,18 +30840,13 @@ msgid "Value for target group count required"
 msgstr "Valor para quantidade alvo de grupos obrigatório"
 
 #: corehq/apps/geospatial/forms.py
-msgid "Mapbox API token required"
-msgstr "Token da API Mapbox obrigatório"
-
-#: corehq/apps/geospatial/forms.py
 msgid "The maximum cases per user cannot be less than the minimum specified"
 msgstr ""
 "O máximo de casos por usuário não pode ser menor que o mínimo especificado"
 
 #: corehq/apps/geospatial/models.py
-#, python-format
-msgid "%(value)s is not a valid travel mode"
-msgstr "%(value)s não é um modo de viagem válido"
+msgid "Radial Algorithm"
+msgstr "Algoritmo Radial"
 
 #: corehq/apps/geospatial/models.py
 msgid "Min/Max Grouping"
@@ -31474,18 +30855,6 @@ msgstr "Agrupamento Mín/Máx"
 #: corehq/apps/geospatial/models.py
 msgid "Target Size Grouping"
 msgstr "Agrupamento por Tamanho Alvo"
-
-#: corehq/apps/geospatial/models.py
-msgid "Walking"
-msgstr "Caminhada"
-
-#: corehq/apps/geospatial/models.py
-msgid "Cycling"
-msgstr "Ciclismo"
-
-#: corehq/apps/geospatial/models.py
-msgid "Driving"
-msgstr "Dirigindo"
 
 #: corehq/apps/geospatial/reports.py
 msgid "Microplanning Map"
@@ -32708,7 +32077,8 @@ msgstr ""
 msgid "Confirm the username"
 msgstr "Confirme o nome de usuário"
 
-#: corehq/apps/hqadmin/forms.py corehq/apps/integration/payments/filters.py
+#: corehq/apps/hqadmin/forms.py corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/payments/filters.py
 msgid "Verified by"
 msgstr "Verificado por"
 
@@ -32765,13 +32135,21 @@ msgstr "Tipo de Documento"
 msgid "Domain"
 msgstr "Domínio"
 
-#: corehq/apps/hqadmin/reports.py
+#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/simple.py
 msgid "IP Address"
 msgstr "Endereço IP"
 
-#: corehq/apps/hqadmin/reports.py
-msgid "Resource"
-msgstr "Recurso"
+#: corehq/apps/hqadmin/reports.py corehq/apps/notifications/forms.py
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
+#: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
+#: corehq/motech/generic_inbound/views.py corehq/motech/views.py
+msgid "URL"
+msgstr "URL"
+
+#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/simple.py
+#: corehq/motech/views.py
+msgid "Status Code"
+msgstr "Código de Status"
 
 #: corehq/apps/hqadmin/reports.py
 msgid ""
@@ -32783,14 +32161,69 @@ msgstr ""
 " sistema."
 
 #: corehq/apps/hqadmin/reports.py
+msgid ""
+"The end time cannot be earlier than the start time when both dates are the "
+"same. Please adjust your time range."
+msgstr ""
+"O horário de término não pode ser anterior ao horário de início quando ambas"
+" as datas são iguais. Por favor, ajuste o intervalo de tempo."
+
+#: corehq/apps/hqadmin/reports.py
+msgid ""
+"Invalid IP address filter. Use single IPs, CIDR notation (/8, /16, /24, "
+"/32), or comma-separated combinations."
+msgstr ""
+"Filtro de endereço IP inválido. Use IPs únicos, notação CIDR (/8, /16, /24, "
+"/32) ou combinações separadas por vírgula."
+
+#: corehq/apps/hqadmin/reports.py
+msgid ""
+"Invalid status code filter. Use comma-separated integers (e.g. 200, 403, "
+"500)."
+msgstr ""
+"Filtro de código de status inválido. Use inteiros separados por vírgula "
+"(ex.: 200, 403, 500)."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid "Note: URL paths for this domain typically start with \"{domain_prefix}\"."
+msgstr ""
+"Observação: Caminhos de URL para este domínio normalmente começam com "
+"\"{domain_prefix}\"."
+
+#: corehq/apps/hqadmin/reports.py
 #, python-brace-format
 msgid ""
-"Your search returned more than {max_records} records. Please narrow down "
-"your search by selecting a specific user, domain, or a shorter date range."
+"Showing {max_records} results, but there are additional events within the "
+"same minute that are not shown. Try narrowing by username, domain, IP "
+"address, or other filters to see all results."
 msgstr ""
-"Sua pesquisa retornou mais de {max_records} registros. Por favor, refine sua"
-" pesquisa selecionando um usuário específico, domínio ou um intervalo de "
-"datas menor."
+"Mostrando {max_records} resultados, mas há eventos adicionais no mesmo "
+"minuto que não estão sendo exibidos. Tente filtrar por nome de usuário, "
+"domínio, endereço IP ou outros filtros para ver todos os resultados."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid ""
+"Showing {num_rows} events through {cutoff_time}. Your query returned more "
+"than {max_records} results; the end date/time has been adjusted. To see "
+"later events, set the start time to {cutoff_time}."
+msgstr ""
+"Mostrando {num_rows} eventos até {cutoff_time}. Sua consulta retornou mais "
+"de {max_records} resultados; a data/hora final foi ajustada. Para ver "
+"eventos posteriores, defina o horário inicial para {cutoff_time}."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid ""
+"Note: {dropped} additional results within the cutoff minute were excluded to"
+" align with a clean minute boundary. Adding filters (IP address, URL path, "
+"status code) may help narrow results."
+msgstr ""
+"Observação: {dropped} resultados adicionais dentro do minuto limite foram "
+"excluídos para alinhar com um limite limpo de minuto. Adicionar filtros "
+"(endereço IP, caminho da URL, código de status) pode ajudar a refinar os "
+"resultados."
 
 #: corehq/apps/hqadmin/reports.py corehq/tabs/tabclasses.py
 msgid "User List"
@@ -33036,8 +32469,12 @@ msgstr "Veja os projetos de um usuário inserindo o endereço de e-mail abaixo."
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-msgid "%(user_name)s's Information"
-msgstr "Informações de %(user_name)s"
+msgid ""
+"%(user_name)s's\n"
+"      Information"
+msgstr ""
+"Informações de %(user_name)s\n"
+"      "
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "This account is disabled."
@@ -33056,10 +32493,69 @@ msgid "Is Superuser"
 msgstr "É Superusuário"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+msgid "Offboard Staff User"
+msgstr "Desligar Usuário da Equipe"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 msgid "Domains"
 msgstr "Domínio"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+msgid ""
+"\n"
+"                The following will be removed from\n"
+"                <strong>%(user_name)s</strong>:\n"
+"              "
+msgstr ""
+"\n"
+"                O seguinte será removido de\n"
+"                <strong>%(user_name)s</strong>:\n"
+"              "
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+msgid ""
+"\n"
+"                    %(count)s domain membership\n"
+"                  "
+msgid_plural ""
+"\n"
+"                    %(count)s domain memberships\n"
+"                  "
+msgstr[0] ""
+"\n"
+"                        Ajuda de %(count)s\n"
+"                    "
+msgstr[1] ""
+"\n"
+"                        Ajuda de %(count)s\n"
+"                    "
+msgstr[2] ""
+"\n"
+"                        Ajuda de %(count)s\n"
+"                    "
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+msgid "Superuser access"
+msgstr "Acesso de superusuário"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+msgid "Accounting admin access"
+msgstr "Acesso de administrador de contabilidade"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+msgid ""
+"\n"
+"                  Type <strong>%(confirm_text)s</strong> to confirm\n"
+"                "
+msgstr ""
+"\n"
+"                  Digite <strong>%(confirm_text)s</strong> para confirmar\n"
+"                "
 
 #: corehq/apps/hqadmin/views/data.py
 msgid "Missing Form XML"
@@ -33129,6 +32625,37 @@ msgid ""
 msgstr ""
 "Resposta de restauração inesperada {}: {}. Se você acredita que isso é um "
 "erro, por favor, reporte um problema."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+msgid "User '{username}' not found."
+msgstr "Usuário '{username}' não encontrado."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+msgid "{count} domain membership"
+msgid_plural "{count} domain memberships"
+msgstr[0] "Atualizar Membros do Local"
+msgstr[1] "Atualizar Membros do Local"
+msgstr[2] "Atualizar Membros do Local"
+
+#: corehq/apps/hqadmin/views/users.py
+msgid "superuser access"
+msgstr "acesso de superusuário"
+
+#: corehq/apps/hqadmin/views/users.py
+msgid "accounting admin access"
+msgstr "acesso de administrador de contabilidade"
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+msgid "Removed {items} from user '{username}'."
+msgstr "Removido {items} do usuário '{username}'."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+msgid "User '{username}' has no access to remove."
+msgstr "Usuário '{username}' não possui acesso para remover."
 
 #: corehq/apps/hqadmin/views/users.py
 #, python-format
@@ -33344,11 +32871,6 @@ msgstr ""
 "      <a href=\"%(app_settings_url)s \" target=\"_blank\">Traduções em Massa do Aplicativo</a>.\n"
 "    </p>\n"
 "  "
-
-#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
-#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
-msgid "Transifex"
-msgstr "Transifex"
 
 #: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
 #: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
@@ -35830,11 +35352,13 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                      %(p)s per page\n"
+"                      %(p)s\n"
+"                      per page\n"
 "                    "
 msgstr ""
 "\n"
-"                      %(p)s por página\n"
+"                      %(p)s\n"
+"                      por página\n"
 "                    "
 
 #: corehq/apps/hqwebapp/templates/password_change.html
@@ -35997,96 +35521,6 @@ msgid " to "
 msgstr " até "
 
 #: corehq/apps/integration/forms.py
-msgid "Enable AWS Connect Dialer"
-msgstr "Ativar discador AWS Connect"
-
-#: corehq/apps/integration/forms.py
-msgid "AWS Instance ID"
-msgstr "ID da instância AWS"
-
-#: corehq/apps/integration/forms.py
-msgid ""
-"Enter \"yourinstance\" if your AWS Connect account is\n"
-"                        \"https://yourinstance.awsapps.com/connect/\" "
-msgstr ""
-"Digite \"yourinstance\" se sua conta AWS Connect for\n"
-"                        \"https://yourinstance.awsapps.com/connect/\" "
-
-#: corehq/apps/integration/forms.py
-msgid "Dialer Page Title"
-msgstr "Título da página do discador"
-
-#: corehq/apps/integration/forms.py
-msgid "A title for the Dialer Page header"
-msgstr "Um título para o cabeçalho da página do discador"
-
-#: corehq/apps/integration/forms.py
-msgid "Dialer Page Subtitle"
-msgstr "Subtítulo da página do discador"
-
-#: corehq/apps/integration/forms.py
-msgid "A subtitle for the Dialer Page header"
-msgstr "Um subtítulo para o cabeçalho da página do discador"
-
-#: corehq/apps/integration/forms.py
-msgid "Enable GAEN OTP server integration"
-msgstr "Ativar integração do servidor GAEN OTP"
-
-#: corehq/apps/integration/forms.py
-msgid "GAEN Server Type"
-msgstr "Tipo de Servidor GAEN"
-
-#: corehq/apps/integration/forms.py corehq/apps/reports/forms.py
-msgid "Select server type"
-msgstr "Selecione o tipo de servidor"
-
-#: corehq/apps/integration/forms.py corehq/apps/integration/models.py
-msgid "NearForm OTP Server"
-msgstr "Servidor OTP NearForm"
-
-#: corehq/apps/integration/forms.py corehq/apps/integration/models.py
-msgid "APHL Exposure Notifications"
-msgstr "Notificações de Exposição APHL"
-
-#: corehq/apps/integration/forms.py
-msgid "Server Endpoint"
-msgstr "Endpoint do Servidor"
-
-#: corehq/apps/integration/forms.py
-msgid "Server Auth Token"
-msgstr "Token de Autenticação do Servidor"
-
-#: corehq/apps/integration/forms.py
-msgid "Enable in Web Apps"
-msgstr "Ativar em Aplicativos Web"
-
-#: corehq/apps/integration/forms.py
-msgid "External Callout URL"
-msgstr "URL de Chamada Externa"
-
-#: corehq/apps/integration/forms.py
-msgid "Enter the base URL for callouts that should be signed"
-msgstr "Insira a URL base para chamadas que devem ser assinadas"
-
-#: corehq/apps/integration/forms.py corehq/apps/settings/views.py
-#: corehq/messaging/smsbackends/telerivet/forms.py
-#: corehq/messaging/smsbackends/trumpia/forms.py
-msgid "API Key"
-msgstr "Chave de API"
-
-#: corehq/apps/integration/forms.py
-msgid "API Key for CommCare in the external system"
-msgstr "Chave de API para o CommCare no sistema externo"
-
-#: corehq/apps/integration/forms.py
-msgid "API Secret"
-msgstr "Segredo da API"
-
-#: corehq/apps/integration/forms.py
-msgid "API secret for message signing"
-msgstr "Segredo da API para assinatura de mensagens"
-
-#: corehq/apps/integration/forms.py
 msgid "Enable Simprints Integration"
 msgstr "Ativar Integração Simprints"
 
@@ -36101,17 +35535,17 @@ msgid "Module ID"
 msgstr "ID do Módulo"
 
 #: corehq/apps/integration/kyc/filters.py
-#: corehq/apps/integration/kyc/tables.py
-#: corehq/apps/integration/payments/tables.py
-msgid "KYC Status"
-msgstr "Status do KYC"
-
-#: corehq/apps/integration/kyc/filters.py
 #: corehq/apps/integration/payments/filters.py
 #: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
 #: corehq/apps/userreports/reports/filters/factory.py
 msgid "Show all"
 msgstr "Mostrar tudo"
+
+#: corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/kyc/tables.py
+#: corehq/apps/integration/payments/tables.py
+msgid "KYC Status"
+msgstr "Status do KYC"
 
 #: corehq/apps/integration/kyc/filters.py
 #: corehq/apps/integration/payments/filters.py
@@ -36142,6 +35576,7 @@ msgstr ""
 "um único campo em vez de campos separados para nome e sobrenome."
 
 #: corehq/apps/integration/kyc/forms.py
+#: corehq/apps/integration/payments/forms.py
 msgid "Provider"
 msgstr "Provedor"
 
@@ -36500,6 +35935,14 @@ msgstr "Sandbox"
 msgid "Live"
 msgstr "Produção"
 
+#: corehq/apps/integration/payments/models.py
+msgid "MTN Money"
+msgstr "MTN Money"
+
+#: corehq/apps/integration/payments/models.py
+msgid "Orange Cameroon Money"
+msgstr "Orange Cameroon Money"
+
 #: corehq/apps/integration/payments/services.py
 msgid "Payment request failed"
 msgstr "Falha na solicitação de pagamento"
@@ -36521,6 +35964,10 @@ msgid "Only payments with '{}' set to 'true' are eligible for verification."
 msgstr ""
 "Apenas pagamentos com '{}' definido como 'true' são elegíveis para "
 "verificação."
+
+#: corehq/apps/integration/payments/services.py
+msgid "Unsupported payment provider"
+msgstr "Provedor de pagamento não suportado"
 
 #: corehq/apps/integration/payments/services.py
 msgid "Invalid payee details"
@@ -36637,118 +36084,6 @@ msgstr "Você só pode reverter a verificação para até {} casos por vez."
 msgid "Payments Configuration"
 msgstr "Configuração de pagamentos"
 
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Dialer"
-msgstr "Discador"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "NOT LOGGED IN"
-msgstr "NÃO CONECTADO"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Login"
-msgstr "Entrar"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Telephone"
-msgstr "Telefone"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Phone Number:"
-msgstr "Número de telefone:"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "NOT AVAILABLE"
-msgstr "NÃO DISPONÍVEL"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Call Status:"
-msgstr "Status da chamada:"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Not Dialed"
-msgstr "Não discado"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Contact ID:"
-msgstr "ID do contato:"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Queue Name:"
-msgstr "Nome da fila:"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Dial Now"
-msgstr "Discar agora"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Preferences"
-msgstr "Preferências"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Auto dial on load"
-msgstr "Discar automaticamente ao carregar"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Copy To Clipboard"
-msgstr "Copiar para a área de transferência"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Media Devices"
-msgstr "Dispositivos de mídia"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Speakers"
-msgstr "Alto-falantes"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Microphone"
-msgstr "Microfone"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Mic. Permission"
-msgstr "Permissão do microfone"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Web Cam"
-msgstr "Webcam"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "WebRTC"
-msgstr "WebRTC"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Check Media"
-msgstr "Verificar mídia"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Network"
-msgstr "Rede"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Check Network"
-msgstr "Verificar rede"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Agent Training Center"
-msgstr "Centro de treinamento de agentes"
-
-#: corehq/apps/integration/templates/integration/web_app_dialer.html
-msgid "Agent Support Center"
-msgstr "Centro de suporte ao agente"
-
-#: corehq/apps/integration/templates/integration/web_app_gaen_otp.html
-msgid "Exposure Notification OTP"
-msgstr "OTP de notificação de exposição"
-
-#: corehq/apps/integration/templates/integration/web_app_gaen_otp.html
-msgid "OTP Code for"
-msgstr "Código OTP para"
-
-#: corehq/apps/integration/templates/integration/web_app_gaen_otp.html
-msgid "Close OTP and Return"
-msgstr "Fechar OTP e retornar"
-
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
 msgid ""
 "\n"
@@ -36786,22 +36121,26 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"      Successfully verified %(success_count)s rows!\n"
+"      Successfully verified %(success_count)s rows! Updated status will\n"
+"      reflect shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      %(success_count)s linhas verificadas com sucesso!\n"
+"      %(success_count)s linhas verificadas com sucesso! O status atualizado será\n"
+"      refletido em breve.\n"
 "    "
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_alert.html
 #, python-format
 msgid ""
 "\n"
-"      Failed to verify %(failure_count)s rows!\n"
+"      Failed to verify %(failure_count)s rows! Updated status will reflect\n"
+"      shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      Falha ao verificar %(failure_count)s linhas!\n"
+"      Falha ao verificar %(failure_count)s linhas! O status atualizado será refletido\n"
+"      em breve.\n"
 "    "
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
@@ -36861,11 +36200,13 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"      Failed to verify %(failure_count)s records for payments!\n"
+"      Failed to verify %(failure_count)s records for payments! Updated status\n"
+"      will reflect shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      Falha ao verificar %(failure_count)s registros de pagamentos!\n"
+"      Falha ao verificar %(failure_count)s registros para pagamentos! O status atualizado\n"
+"      será refletido em breve.\n"
 "    "
 
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
@@ -36894,58 +36235,6 @@ msgstr "As configurações de Integração Biométrica foram atualizadas."
 #: corehq/apps/integration/views.py
 msgid "Could not update Biometric Integration settings."
 msgstr "Não foi possível atualizar as configurações de Integração Biométrica."
-
-#: corehq/apps/integration/views.py
-msgid "OTP Request missing a required argument 'case_id'"
-msgstr "Solicitação de OTP está faltando o argumento obrigatório 'case_id'"
-
-#: corehq/apps/integration/views.py
-msgid "No matching patient record found"
-msgstr "Nenhum registro de paciente correspondente encontrado"
-
-#: corehq/apps/integration/views.py
-msgid ""
-"We are having problems communicating with the Exposure Notification server\n"
-"                                 please try again later"
-msgstr ""
-"Estamos com problemas para nos comunicar com o servidor de Notificação de Exposição\n"
-"                                 por favor, tente novamente mais tarde"
-
-#: corehq/apps/integration/views.py corehq/apps/linked_domain/const.py
-msgid "Dialer Settings"
-msgstr "Configurações do Discador"
-
-#: corehq/apps/integration/views.py
-msgid "Dialer Settings Updated"
-msgstr "Configurações do Discador Atualizadas"
-
-#: corehq/apps/integration/views.py
-msgid "Could not update Dialer Settings"
-msgstr "Não foi possível atualizar as Configurações do Discador"
-
-#: corehq/apps/integration/views.py
-msgid "GAEN OTP Server Config"
-msgstr "Configuração do Servidor OTP GAEN"
-
-#: corehq/apps/integration/views.py
-msgid "GAEN OTP Server Settings Updated"
-msgstr "Configurações do Servidor OTP GAEN Atualizadas"
-
-#: corehq/apps/integration/views.py
-msgid "Could not update GAEN OTP Server Settings"
-msgstr "Não foi possível atualizar as Configurações do Servidor OTP GAEN"
-
-#: corehq/apps/integration/views.py
-msgid "Signed Callout Settings"
-msgstr "Configurações de Callout Assinado"
-
-#: corehq/apps/integration/views.py
-msgid "Callout Settings Updated"
-msgstr "Configurações de Callout Atualizadas"
-
-#: corehq/apps/integration/views.py
-msgid "Could not update Callout Settings"
-msgstr "Não foi possível atualizar as Configurações de Callout"
 
 #: corehq/apps/ip_access/middleware.py
 msgid "You cannot access this page from your current IP address"
@@ -36989,14 +36278,6 @@ msgstr "Sinalizadores de Recursos"
 #: corehq/apps/linked_domain/const.py
 msgid "Case Search Settings"
 msgstr "Configurações de Pesquisa de Casos"
-
-#: corehq/apps/linked_domain/const.py
-msgid "OTP Pass-through Settings"
-msgstr "Configurações de Passagem de OTP"
-
-#: corehq/apps/linked_domain/const.py
-msgid "Signed Callout"
-msgstr "Callout Assinado"
 
 #: corehq/apps/linked_domain/const.py
 msgid "Tableau Server and Visualizations"
@@ -37993,6 +37274,10 @@ msgstr "Apenas Arquivados"
 msgid "Only include selected location"
 msgstr "Incluir apenas o local selecionado"
 
+#: corehq/apps/locations/forms.py corehq/apps/users/forms.py
+msgid "All Locations"
+msgstr "Todas as Localizações"
+
 #: corehq/apps/locations/forms.py corehq/apps/locations/views.py
 msgid "Filter and Download Locations"
 msgstr "Filtrar e Baixar Locais"
@@ -38360,12 +37645,6 @@ msgstr "Localizações Filhas"
 
 #: corehq/apps/locations/templates/locations/manage/location.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            <strong>There was an issue creating this location.</strong><br />\n"
-#| "            Please make sure that at least one <a href=\"%(levels_url)s\">Organization Level</a>\n"
-#| "            has been created.\n"
-#| "          "
 msgid ""
 "\n"
 "            <strong>There was an issue creating this location.</strong><br />\n"
@@ -38386,12 +37665,6 @@ msgid "Default monthly consumption values"
 msgstr "Valores padrão de consumo mensal"
 
 #: corehq/apps/locations/templates/locations/manage/location.html
-#| msgid ""
-#| "\n"
-#| "                    Your permissions allow you to <strong>create, update, and delete locations</strong>\n"
-#| "                    and <strong>modify location settings</strong>. However, your project\n"
-#| "                    administrator has not granted you access to change workers at locations.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    Your permissions allow you to\n"
@@ -38719,13 +37992,6 @@ msgstr "apenas um arquivo pode ser enviado por vez"
 #: corehq/apps/mobile_auth/utils.py
 msgid "Here are your keys!"
 msgstr "Aqui estão suas chaves!"
-
-#: corehq/apps/notifications/forms.py
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
-#: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
-#: corehq/motech/generic_inbound/views.py corehq/motech/views.py
-msgid "URL"
-msgstr "URL"
 
 #: corehq/apps/notifications/forms.py
 msgid "Domain-specific"
@@ -39833,7 +39099,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid ""
 "\n"
@@ -39843,7 +39108,6 @@ msgstr ""
 "Você foi adicionado ao projeto \"%(domain)s\" em %(hq_name)s.\n"
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid ""
 "\n"
@@ -39866,12 +39130,10 @@ msgstr ""
 "Seu nome de usuário para login é %(username)s\n"
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 msgid "Thanks,"
 msgstr "Obrigado,"
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid "-The %(hq_name)s team"
 msgstr "-A equipe %(hq_name)s"
@@ -39939,43 +39201,6 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/email/password_reset_subject_hq.txt
 msgid "Reset Password on CommCare"
 msgstr "Redefinir Senha no CommCare"
-
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
-#, python-format
-msgid ""
-"\n"
-"Hello %(name)s,\n"
-"\n"
-"Your account with username %(username)s is confirmed successfully.\n"
-"You can now log in and submit data in the \"%(domain)s\" project on %(hq_name)s.\n"
-"\n"
-"Thanks,\n"
-"-The %(hq_name)s team\n"
-msgstr ""
-"\n"
-"Olá %(name)s,\n"
-"\n"
-"Sua conta com o nome de usuário %(username)s foi confirmada com sucesso.\n"
-"Agora você pode acessar e enviar dados no projeto \"%(domain)s\" em %(hq_name)s.\n"
-"\n"
-"Obrigado,\n"
-"-A equipe %(hq_name)s\n"
-
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
-#, python-format
-msgid "Hello %(name)s,"
-msgstr "Olá %(name)s,"
-
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
-#, python-format
-msgid ""
-"\n"
-"Once you confirm your account you will be able to access and submit data in the \"%(domain)s\" project on %(hq_name)s.\n"
-"Your username to login is %(username)s\n"
-msgstr ""
-"\n"
-"Assim que você confirmar sua conta, poderá acessar e enviar dados no projeto \"%(domain)s\" em %(hq_name)s.\n"
-"Seu nome de usuário para login é %(username)s\n"
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/choose_cloud_location.html
 msgid ""
@@ -41661,6 +40886,10 @@ msgid "Year"
 msgstr "Ano"
 
 #: corehq/apps/reports/filters/select.py
+msgid "Month"
+msgstr "Mês"
+
+#: corehq/apps/reports/filters/select.py
 msgid "Click to select a case type"
 msgstr "Clique para selecionar um tipo de caso"
 
@@ -41726,15 +40955,63 @@ msgstr "ID do Payload"
 
 #: corehq/apps/reports/filters/simple.py
 msgid ""
-"Leave this blank to include all users. In that case, domain is required to "
-"limit the scope."
+"One or more usernames, comma-separated. Leave blank to include all users "
+"(requires domain to limit the scope)."
 msgstr ""
-"Deixe em branco para incluir todos os usuários. Nesse caso, o domínio é "
-"obrigatório para limitar o escopo."
+"Um ou mais nomes de usuário, separados por vírgula. Deixe em branco para "
+"incluir todos os usuários (requer domínio para limitar o escopo)."
 
 #: corehq/apps/reports/filters/simple.py
 msgid "Optional"
 msgstr "Opcional"
+
+#: corehq/apps/reports/filters/simple.py
+msgid "Optional. Leave blank to use default (midnight)."
+msgstr "Opcional. Deixe em branco para usar o padrão (meia-noite)."
+
+#: corehq/apps/reports/filters/simple.py
+msgid "Optional. Leave blank to include the full day."
+msgstr "Opcional. Deixe em branco para incluir o dia inteiro."
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"Single IP, CIDR (/8, /16, /24, /32), or comma-separated. Example: "
+"10.0.0.0/8, 192.168.1.1"
+msgstr ""
+"IP único, CIDR (/8, /16, /24, /32) ou separados por vírgula. Exemplo: "
+"10.0.0.0/8, 192.168.1.1"
+
+#: corehq/apps/reports/filters/simple.py
+msgid "URL Path Include"
+msgstr "Incluir Caminho de URL"
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"One URL path pattern per line. Patterns are OR'd together. Leave blank to "
+"include all paths."
+msgstr ""
+"Um padrão de caminho de URL por linha. Os padrões são combinados com OU. "
+"Deixe em branco para incluir todos os caminhos."
+
+#: corehq/apps/reports/filters/simple.py
+msgid "URL Path Exclude"
+msgstr "Excluir Caminho de URL"
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"One URL path pattern per line. Matching rows are excluded. Patterns are OR'd"
+" (any match excludes the row)."
+msgstr ""
+"Um padrão de caminho de URL por linha. Linhas correspondentes são excluídas."
+" Os padrões são combinados com OU (qualquer correspondência exclui a linha)."
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"Comma-separated status codes. Example: 200, 403, 500. Leave blank to include"
+" all."
+msgstr ""
+"Códigos de status separados por vírgula. Exemplo: 200, 403, 500. Deixe em "
+"branco para incluir todos."
 
 #: corehq/apps/reports/filters/users.py
 msgid "View by Users or Groups"
@@ -41935,6 +41212,10 @@ msgstr "Enviando..."
 #: corehq/apps/reports/forms.py
 msgid "Server Type"
 msgstr "Tipo de Servidor"
+
+#: corehq/apps/reports/forms.py
+msgid "Select server type"
+msgstr "Selecione o tipo de servidor"
 
 #: corehq/apps/reports/forms.py corehq/apps/reports/models.py
 msgid "Tableau Server"
@@ -42685,6 +41966,10 @@ msgstr "Estatísticas sobre o tempo gasto em um determinado formulário."
 #: corehq/apps/reports/standard/monitoring.py
 msgid "No Form Selected"
 msgstr "Nenhum Formulário Selecionado"
+
+#: corehq/apps/reports/standard/monitoring.py
+msgid "Average"
+msgstr "Média"
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "Std. Dev."
@@ -45229,6 +44514,12 @@ msgid "Phone number removed."
 msgstr "Número de telefone removido."
 
 #: corehq/apps/settings/views.py
+#: corehq/messaging/smsbackends/telerivet/forms.py
+#: corehq/messaging/smsbackends/trumpia/forms.py
+msgid "API Key"
+msgstr "Chave de API"
+
+#: corehq/apps/settings/views.py
 msgid "IP Allowlist"
 msgstr "Lista de Permissão de IP"
 
@@ -45643,20 +44934,6 @@ msgstr ""
 "                    caso, ou tentar um dos vários backups.<br><br>O primeiro backup usa o idioma padrão da transmissão ou\n"
 "                    alerta. Se essa tradução também não estiver disponível, o segundo backup é o texto no idioma padrão de SMS do projeto. Se essa tradução também não estiver disponível, você pode optar\n"
 "                    por usar o texto não traduzido, se houver.\n"
-"                "
-
-#: corehq/apps/sms/forms.py
-msgid ""
-"\n"
-"                    Whatsapp-enabled phone number for use with Twilio.\n"
-"                    This should be formatted as a full-length, numeric-only\n"
-"                    phone number, e.g., 16173481000.\n"
-"                "
-msgstr ""
-"\n"
-"                    Número de telefone habilitado para Whatsapp para uso com Twilio.\n"
-"                    Deve estar formatado como um número completo, apenas números,\n"
-"                    por exemplo, 16173481000.\n"
 "                "
 
 #: corehq/apps/sms/forms.py
@@ -46397,6 +45674,18 @@ msgstr "Nenhum token FCM encontrado para o destinatário."
 #: corehq/apps/sms/models.py
 msgid "Recipient did not match filters:"
 msgstr "O destinatário não correspondeu aos filtros:"
+
+#: corehq/apps/sms/models.py
+msgid "Connect user not found for recipient."
+msgstr "Usuário Connect não encontrado para destinatário."
+
+#: corehq/apps/sms/models.py
+msgid ""
+"Only Mobile workers with Connect accounts are supported as recipients for "
+"Connect Message and Surveys."
+msgstr ""
+"Apenas Trabalhadores Móveis com contas Connect são suportados como "
+"destinatários para Mensagens e Pesquisas Connect."
 
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
@@ -49367,444 +48656,6 @@ msgstr ""
 "estão no download em massa de traduções do aplicativo. Nenhuma tradução foi "
 "atualizada para essa linha."
 
-#: corehq/apps/translations/forms.py
-msgid "Upload a xls/xlsx/po/zip file"
-msgstr "Envie um arquivo xls/xlsx/po/zip"
-
-#: corehq/apps/translations/forms.py
-msgid "Convert"
-msgstr "Converter"
-
-#: corehq/apps/translations/forms.py
-msgid "Please ensure columns 'source' and 'translation' in the sheet"
-msgstr ""
-"Por favor, certifique-se de que as colunas 'source' e 'translation' estejam "
-"na planilha"
-
-#: corehq/apps/translations/forms.py
-msgid "Unexpected file passed within zip. Please upload xls/xlsx/po files."
-msgstr ""
-"Arquivo inesperado dentro do zip. Por favor, envie arquivos xls/xlsx/po."
-
-#: corehq/apps/translations/forms.py
-msgid "Unexpected file passed. Please upload xls/xlsx/po/zip file."
-msgstr ""
-"Arquivo inesperado enviado. Por favor, envie um arquivo xls/xlsx/po/zip."
-
-#: corehq/apps/translations/forms.py
-msgid "Transifex project"
-msgstr "Projeto Transifex"
-
-#: corehq/apps/translations/forms.py
-msgid "Target Language"
-msgstr "Idioma de destino"
-
-#: corehq/apps/translations/forms.py
-msgid "Resource Slug"
-msgstr "Slug do Recurso"
-
-#: corehq/apps/translations/forms.py
-msgid "Leave blank to fetch full project"
-msgstr "Deixe em branco para buscar o projeto completo"
-
-#: corehq/apps/translations/forms.py
-msgid "Leave blank to use current saved state"
-msgstr "Deixe em branco para usar o estado salvo atual"
-
-#: corehq/apps/translations/forms.py
-msgid ""
-"Check this if you want to maintain different resources separately for "
-"different versions of the application. Leave it unchecked for continuous "
-"update to the same set of resources"
-msgstr ""
-"Marque isto se quiser manter recursos diferentes separadamente para "
-"diferentes versões do aplicativo. Deixe desmarcado para atualização contínua"
-" no mesmo conjunto de recursos"
-
-#: corehq/apps/translations/forms.py
-msgid "Translated Language"
-msgstr "Idioma Traduzido"
-
-#: corehq/apps/translations/forms.py
-msgid "Select Translated Language"
-msgstr "Selecione o Idioma Traduzido"
-
-#: corehq/apps/translations/forms.py
-msgid ""
-"Confirm that resources are completely translated before performing request"
-msgstr ""
-"Confirme que os recursos estão completamente traduzidos antes de realizar a "
-"solicitação"
-
-#: corehq/apps/translations/forms.py
-msgid "Please confirm that you want to proceed?"
-msgstr "Por favor, confirme que deseja continuar?"
-
-#: corehq/apps/translations/forms.py
-msgid "Version not available for app"
-msgstr "Versão não disponível para o aplicativo"
-
-#: corehq/apps/translations/forms.py
-msgid ""
-"Check this if you want to update an existing resource, instead of creating "
-"new ones. If you submit this form without this check, duplicate resources "
-"may be created."
-msgstr ""
-"Marque isto se quiser atualizar um recurso existente, em vez de criar novos."
-" Se você enviar este formulário sem marcar, recursos duplicados podem ser "
-"criados."
-
-#: corehq/apps/translations/forms.py
-msgid "Source Language on Transifex"
-msgstr "Idioma de Origem no Transifex"
-
-#: corehq/apps/translations/forms.py
-msgid "Lock translations for resources that are being pulled"
-msgstr "Bloquear traduções para recursos que estão sendo puxados"
-
-#: corehq/apps/translations/forms.py
-msgid "Please note that this will lock the resource for all languages"
-msgstr "Por favor, note que isso irá bloquear o recurso para todos os idiomas"
-
-#: corehq/apps/translations/forms.py
-msgid "Add translation to blacklist"
-msgstr "Adicionar tradução à lista negra"
-
-#: corehq/apps/translations/forms.py
-msgid "From Application"
-msgstr "Do Aplicativo"
-
-#: corehq/apps/translations/forms.py
-msgid "To Application"
-msgstr "Para o Aplicativo"
-
-#: corehq/apps/translations/forms.py
-msgid "Upload a xls file mapping old to new ids"
-msgstr "Envie um arquivo xls mapeando os ids antigos para os novos"
-
-#: corehq/apps/translations/forms.py
-msgid ""
-"We recommend taking a backup if you have not already.Please confirm that you"
-" want to proceed?"
-msgstr ""
-"Recomendamos fazer um backup se ainda não fez. Por favor, confirme que "
-"deseja continuar?"
-
-#: corehq/apps/translations/forms.py
-#, python-brace-format
-msgid ""
-"Could not load file. Please ensure columns {type_header}, {old_id_header} "
-"and {new_id_header} are present"
-msgstr ""
-"Não foi possível carregar o arquivo. Por favor, certifique-se de que as "
-"colunas {type_header}, {old_id_header} e {new_id_header} estão presentes"
-
-#: corehq/apps/translations/forms.py
-msgid "missing value(s) in sheet"
-msgstr "valor(es) ausente(s) na planilha"
-
-#: corehq/apps/translations/forms.py
-msgid "Could not load file. 'Type' column should be either 'Menu' or 'Form'"
-msgstr ""
-"Não foi possível carregar o arquivo. A coluna 'Type' deve ser 'Menu' ou "
-"'Form'"
-
-#: corehq/apps/translations/forms.py
-msgid "Source and target app can not be the same"
-msgstr "O aplicativo de origem e o de destino não podem ser o mesmo"
-
-#: corehq/apps/translations/integrations/transifex/project_migrator.py
-msgid ""
-"Target app default language and the source app default language don't match"
-msgstr ""
-"O idioma padrão do aplicativo de destino e o idioma padrão do aplicativo de "
-"origem não coincidem"
-
-#: corehq/apps/translations/integrations/transifex/project_migrator.py
-msgid ""
-"Transifex project source lang and the source app default language don't "
-"match"
-msgstr ""
-"O idioma de origem do projeto Transifex e o idioma padrão do aplicativo de "
-"origem não coincidem"
-
-#: corehq/apps/translations/integrations/transifex/project_migrator.py
-msgid ""
-"Transifex project source lang and the target app default language don't "
-"match"
-msgstr ""
-"O idioma de origem do projeto Transifex e o idioma padrão do aplicativo de "
-"destino não coincidem"
-
-#: corehq/apps/translations/integrations/transifex/transifex.py
-msgid "Successfully Uploaded"
-msgstr "Enviado com sucesso"
-
-#: corehq/apps/translations/integrations/transifex/transifex.py
-msgid "Successfully Removed"
-msgstr "Removido com sucesso"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Translations"
-msgstr "Traduções"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap3/download_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap3/migrate_project.html
-#: corehq/apps/translations/templates/translations/bootstrap3/pull_resource.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/download_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/migrate_project.html
-#: corehq/apps/translations/templates/translations/bootstrap5/pull_resource.html
-msgid "Transifex integration not set for this domain"
-msgstr "Integração com Transifex não configurada para este domínio"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/apps/translations/templates/translations/bootstrap3/convert_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/convert_translations.html
-msgid "Convert Translations"
-msgstr "Converter Traduções"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/apps/translations/templates/translations/bootstrap3/pull_resource.html
-#: corehq/apps/translations/templates/translations/bootstrap5/pull_resource.html
-#: corehq/tabs/tabclasses.py
-msgid "Pull Resource"
-msgstr "Puxar Recurso"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Blacklist Translations"
-msgstr "Lista Negra de Traduções"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "App Translations"
-msgstr "Traduções do Aplicativo"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Successfully enqueued request to submit files for translations"
-msgstr ""
-"Solicitação para enviar arquivos para tradução enfileirada com sucesso"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Resources yet to be completely translated, for ex: {}"
-msgstr "Recursos ainda não completamente traduzidos, por exemplo: {}"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Resources not found for this project and version."
-msgstr "Recursos não encontrados para este projeto e versão."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid ""
-"Resources yet to be completely translated for all languages. Hence, the "
-"request for locking resources can not be performed."
-msgstr ""
-"Recursos ainda não completamente traduzidos para todos os idiomas. Portanto,"
-" a solicitação para bloquear recursos não pode ser realizada."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid ""
-"Successfully enqueued request to pull for translations. You should receive "
-"an email shortly."
-msgstr ""
-"Solicitação para puxar traduções enfileirada com sucesso. Você deve receber "
-"um e-mail em breve."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Successfully enqueued request to take backup."
-msgstr "Solicitação para fazer backup enfileirada com sucesso."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid ""
-"Resources yet to be completely translated for all languages. Hence, the "
-"request for deleting resources can not be performed."
-msgstr ""
-"Recursos ainda não completamente traduzidos para todos os idiomas. Portanto,"
-" a solicitação para excluir recursos não pode ser realizada."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Successfully enqueued request to delete resources."
-msgstr "Solicitação para excluir recursos enfileirada com sucesso."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Source lang selected not available for the project"
-msgstr "Idioma de origem selecionado não disponível para o projeto"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Create or Update Translations"
-msgstr "Criar ou Atualizar Traduções"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Push Translations"
-msgstr "Enviar Traduções"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Pull Translations"
-msgstr "Puxar Traduções"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/tabs/tabclasses.py
-msgid "Backup Translations"
-msgstr "Backup de Traduções"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Delete Translations"
-msgstr "Excluir Traduções"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/apps/translations/templates/translations/bootstrap3/download_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/download_translations.html
-#: corehq/tabs/tabclasses.py
-msgid "Download Translations"
-msgstr "Baixar Traduções"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid ""
-"Missing current Application Version. This can happen if the latest version "
-"was deleted without creating a new one. Please create a new Application "
-"Version before trying again."
-msgstr ""
-"Versão atual do Aplicativo ausente. Isso pode acontecer se a versão mais "
-"recente foi excluída sem criar uma nova. Por favor, crie uma nova Versão do "
-"Aplicativo antes de tentar novamente."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid ""
-"Missing selected Application Version. Please create a new version before "
-"trying again."
-msgstr ""
-"Versão do Aplicativo selecionada ausente. Por favor, crie uma nova versão "
-"antes de tentar novamente."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid ""
-"Submitted request to download translations. You should receive an email "
-"shortly."
-msgstr ""
-"Solicitação para baixar traduções enviada. Você deverá receber um e-mail em "
-"breve."
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid "Migrate Project"
-msgstr "Migrar Projeto"
-
-#: corehq/apps/translations/integrations/transifex/views.py
-msgid ""
-"Submitted request to migrate project. You should receive an email shortly."
-msgstr ""
-"Solicitação para migrar projeto enviada. Você deverá receber um e-mail em "
-"breve."
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid "Set Up or Update Resource"
-msgstr "Configurar ou Atualizar Recurso"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid ""
-"\n"
-"              Create a new resource or update an existing one in Transifex.\n"
-"            "
-msgstr ""
-"\n"
-"              Crie um novo recurso ou atualize um existente no Transifex.\n"
-"            "
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid "Push Target Language"
-msgstr "Enviar Idioma de Destino"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid ""
-"\n"
-"              Push translations for a target language to Transifex.\n"
-"            "
-msgstr ""
-"\n"
-"              Envie traduções de um idioma de destino para o Transifex.\n"
-"            "
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid "Pull App Translations"
-msgstr "Baixar Traduções do App"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid ""
-"\n"
-"              Pull all translations for a selected language, which will be emailed to you as an Excel file.\n"
-"            "
-msgstr ""
-"\n"
-"              Baixe todas as traduções para um idioma selecionado, que serão enviadas para você por e-mail como um arquivo Excel.\n"
-"            "
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid "Backup App Translations"
-msgstr "Backup das Traduções do App"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid ""
-"\n"
-"              Pull all translations for all languages in the project, which will be emailed to you as a zip file.\n"
-"            "
-msgstr ""
-"\n"
-"              Baixe todas as traduções para todos os idiomas do projeto, que serão enviadas para você por e-mail como um arquivo zip.\n"
-"            "
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid "Delete Project Resources"
-msgstr "Excluir Recursos do Projeto"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/app_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/app_translations.html
-msgid ""
-"\n"
-"                Delete all resources for the selected project. Use caution!\n"
-"              "
-msgstr ""
-"\n"
-"                Exclua todos os recursos do projeto selecionado. Use com cautela!\n"
-"              "
-
-#: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
-msgid "App"
-msgstr "Casos IRA Tratados"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
-msgid "Module"
-msgstr "Módulo"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
-msgid "Detail/List/UI"
-msgstr "Detalhe/Lista/UI"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
-msgid "Field Name"
-msgstr "Nome do Campo"
-
-#: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
-#: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
-msgid "Default Display Text"
-msgstr "Texto Padrão de Exibição"
-
 #: corehq/apps/translations/validator.py
 msgid "Missing translations for {} in uploaded sheet"
 msgstr "Traduções ausentes para {} na planilha enviada"
@@ -50072,17 +48923,6 @@ msgstr ""
 #: corehq/apps/user_importer/validation.py
 msgid "Target domain {} does not use enterprise permissions of {}"
 msgstr "O domínio de destino {} não utiliza permissões empresariais de {}"
-
-#: corehq/apps/user_importer/validation.py
-msgid ""
-"When '{}' is True for a new user, {} must be either empty or set to False."
-msgstr ""
-"Quando '{}' é Verdadeiro para um novo usuário, {} deve estar vazio ou "
-"definido como Falso."
-
-#: corehq/apps/user_importer/validation.py
-msgid "When '{}' is True for an existing user, {}."
-msgstr "Quando '{}' é Verdadeiro para um usuário existente, {}."
 
 #: corehq/apps/user_importer/validation.py
 msgid ""
@@ -51185,11 +50025,6 @@ msgstr "Editar Fontes de Dados Personalizadas"
 msgid "Edit Data Sources"
 msgstr "Editar Fontes de Dados"
 
-#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
-msgid "Aggregate Data Sources"
-msgstr "Agregação de Fontes de Dados"
-
 #: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Please note that this datasource is being rebuilt."
 msgstr "Observe que esta fonte de dados está sendo reconstruída."
@@ -52241,46 +51076,6 @@ msgstr ""
 "Desativados' do Trabalhador Móvel."
 
 #: corehq/apps/users/forms.py
-msgid "Require Account Confirmation by SMS?"
-msgstr "Exigir confirmação de conta por SMS?"
-
-#: corehq/apps/users/forms.py
-msgid ""
-"If checked, the user will be sent a confirmation SMS and asked to set their "
-"password."
-msgstr ""
-"Se marcado, o usuário receberá um SMS de confirmação e será solicitado a "
-"definir sua senha."
-
-#: corehq/apps/users/forms.py
-msgid ""
-"\n"
-"            <div data-bind=\"visible: $root.phoneStatusMessage().length === 0\">\n"
-"                    Please enter number including country code, without (+) and in digits only.\n"
-"            </div>\n"
-"            <div id=\"phone-error\">\n"
-"                <span data-bind=\"visible: $root.phoneStatus() !== $root.STATUS.NONE\">\n"
-"                    <i class=\"fa-solid fa-triangle-exclamation\"\n"
-"                    data-bind=\"visible: $root.phoneStatus() === $root.STATUS.ERROR\"></i>\n"
-"                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->\n"
-"                </span>\n"
-"            </div>\n"
-"        "
-msgstr ""
-"\n"
-"            <div data-bind=\"visible: $root.phoneStatusMessage().length === 0\">\n"
-"                    Por favor, insira o número incluindo o código do país, sem (+) e apenas em dígitos.\n"
-"            </div>\n"
-"            <div id=\"phone-error\">\n"
-"                <span data-bind=\"visible: $root.phoneStatus() !== $root.STATUS.NONE\">\n"
-"                    <i class=\"fa-solid fa-triangle-exclamation\"\n"
-"                    data-bind=\"visible: $root.phoneStatus() === $root.STATUS.ERROR\"></i>\n"
-"                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->\n"
-"                </span>\n"
-"            </div>\n"
-"        "
-
-#: corehq/apps/users/forms.py
 msgid ""
 "This password is automatically generated. Please copy it or create your own."
 " It will not be shown again."
@@ -52648,51 +51443,6 @@ msgstr "Já possui uma conta?"
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
 msgid "Sign In Now"
 msgstr "Entrar Agora"
-
-#: corehq/apps/users/templates/users/bootstrap3/bulk_clear.html
-#: corehq/apps/users/templates/users/bootstrap5/bulk_clear.html
-msgid ""
-"\n"
-"    <h2>\n"
-"      Bulk Clear Mobile Worker Data\n"
-"    </h2>\n"
-"\n"
-"    <div class=\"alert alert-warning\">\n"
-"      <p>\n"
-"        <i class=\"fa fa-warning\"></i>\n"
-"        This action removes all data associated with a user and is a permanent action. Cleared users:\n"
-"      </p>\n"
-"      <ul>\n"
-"        <li>Will not be able to access their cleared data.</li>\n"
-"        <li>Will not be able to recover cleared data for any reason.</li>\n"
-"      </ul>\n"
-"    </div>\n"
-"\n"
-"    <p class=\"help-block\">\n"
-"      To clear user data in bulk, please upload an Excel file with a single <strong>username</strong> column.\n"
-"    </p>\n"
-"  "
-msgstr ""
-"\n"
-"    <h2>\n"
-"      Limpeza em Massa de Dados de Usuários Móveis\n"
-"    </h2>\n"
-"\n"
-"    <div class=\"alert alert-warning\">\n"
-"      <p>\n"
-"        <i class=\"fa fa-warning\"></i>\n"
-"        Esta ação remove todos os dados associados a um usuário e é permanente. Usuários limpos:\n"
-"      </p>\n"
-"      <ul>\n"
-"        <li>Não poderão acessar seus dados limpos.</li>\n"
-"        <li>Não poderão recuperar os dados limpos por nenhum motivo.</li>\n"
-"      </ul>\n"
-"    </div>\n"
-"\n"
-"    <p class=\"help-block\">\n"
-"      Para limpar dados de usuários em massa, faça o upload de um arquivo Excel com uma única coluna <strong>username</strong>.\n"
-"    </p>\n"
-"  "
 
 #: corehq/apps/users/templates/users/bootstrap3/bulk_delete.html
 #: corehq/apps/users/templates/users/bootstrap5/bulk_delete.html
@@ -53434,11 +52184,6 @@ msgstr "Descarregar os Trabalhadores Móveis"
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "Bulk Clear Data"
-msgstr "Limpar Dados em Massa"
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid "Bulk Delete Mobile Workers"
 msgstr "Excluir Trabalhadores Móveis em Massa"
 
@@ -53509,6 +52254,21 @@ msgstr ""
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid "New Mobile Workers"
 msgstr "Novos Trabalhadores Móveis"
+
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+msgid "Pending..."
+msgstr "Pendente..."
+
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+msgid "NEW"
+msgstr "NOVO"
+
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+msgid "ERROR"
+msgstr "ERRO"
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
@@ -53782,11 +52542,6 @@ msgstr "Pendente Desde"
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "Send Confirmation SMS"
-msgstr "Enviar SMS de Confirmação"
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid "Send Confirmation Email"
 msgstr "Enviar E-mail de Confirmação"
 
@@ -53794,60 +52549,27 @@ msgstr "Enviar E-mail de Confirmação"
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid ""
 "\n"
-"                              Would you like to send the account confirmation\n"
-"                              SMS to this account?\n"
-"                            "
+"                            Would you like to send the account confirmation\n"
+"                            email to this account?\n"
+"                          "
 msgstr ""
 "\n"
-"                              Deseja enviar o SMS de confirmação de conta para esta conta?\n"
-"                            "
+"                            Gostaria de enviar o e-mail de confirmação de conta\n"
+"                            para esta conta?\n"
+"                          "
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid ""
 "\n"
-"                              Would you like to send the account confirmation\n"
-"                              email to this account?\n"
-"                            "
+"                            The user will be sent an email with instructions to\n"
+"                            set a password and be able to login to this project.\n"
+"                          "
 msgstr ""
 "\n"
-"                              Deseja enviar o e-mail de confirmação de conta para esta conta?\n"
-"                            "
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid ""
-"\n"
-"                              The user will be sent a SMS with instructions to\n"
-"                              set a password and be able to login to this\n"
-"                              project.\n"
-"                            "
-msgstr ""
-"\n"
-"                              O usuário receberá um SMS com instruções para\n"
-"                              definir uma senha e poderá acessar este\n"
-"                              projeto.\n"
-"                            "
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid ""
-"\n"
-"                              The user will be sent an email with instructions\n"
-"                              to set a password and be able to login to this\n"
-"                              project.\n"
-"                            "
-msgstr ""
-"\n"
-"                              O usuário receberá um e-mail com instruções para\n"
-"                              definir uma senha e poderá acessar este\n"
-"                              projeto.\n"
-"                            "
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "Send Account Confirmaton SMS"
-msgstr "Enviar SMS de confirmação de conta"
+"                            O usuário receberá um e-mail com instruções para\n"
+"                            definir uma senha e poderá acessar este projeto.\n"
+"                          "
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
@@ -54097,14 +52819,18 @@ msgid ""
 "            <strong>There was an issue contacting the server.</strong>\n"
 "            Please check your internet connection. If this issue continues,\n"
 "            please\n"
-"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\">report an issue</a>.\n"
+"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"\n"
+"              >report an issue</a\n"
+"            >.\n"
 "          "
 msgstr ""
 "\n"
 "            <strong>Houve um problema ao contatar o servidor.</strong>\n"
-"            Verifique sua conexão com a internet. Se o problema persistir,\n"
+"            Por favor, verifique sua conexão com a internet. Se o problema persistir,\n"
 "            por favor\n"
-"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\">relate um problema</a>.\n"
+"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"\n"
+"              >relate um problema</a\n"
+"            >.\n"
 "          "
 
 #: corehq/apps/users/templates/users/edit_role.html
@@ -55114,6 +53840,20 @@ msgstr ""
 "Esses locais não podem ter usuários atribuídos devido às configurações de "
 "nível organizacional: {}."
 
+#: corehq/apps/users/validation.py
+msgid "One or more of the locations was not found."
+msgstr "Uma ou mais das localizações não foram encontradas."
+
+#: corehq/apps/users/validation.py
+msgid "Primary location must be one of the user's locations"
+msgstr "A localização principal deve ser uma das localizações do usuário"
+
+#: corehq/apps/users/validation.py
+msgid "Primary location can't be empty if the user has any locations set"
+msgstr ""
+"A localização principal não pode estar vazia se o usuário tiver alguma "
+"localização definida"
+
 #: corehq/apps/users/views/__init__.py
 msgid ""
 "There was an error getting data for this user's associated Tableau\n"
@@ -55484,20 +54224,6 @@ msgstr ""
 #: corehq/apps/users/views/mobile/users.py
 msgid "The following users were not found: {}."
 msgstr "Os seguintes usuários não foram encontrados: {}."
-
-#: corehq/apps/users/views/mobile/users.py
-msgid "Bulk Clear"
-msgstr "Limpeza em Massa"
-
-#: corehq/apps/users/views/mobile/users.py
-msgid ""
-"\n"
-"                No users cleared. Please address the above issue(s) and re-upload your updated file.\n"
-"            "
-msgstr ""
-"\n"
-"                Nenhum usuário foi limpo. Por favor, resolva o(s) problema(s) acima e envie novamente o seu arquivo atualizado.\n"
-"            "
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Mobile Workers Bulk Lookup"
@@ -56109,16 +54835,8 @@ msgid "Intervals"
 msgstr "Intervalos"
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Action on Notification"
-msgstr "Ação na Notificação"
-
-#: corehq/messaging/scheduling/forms.py
 msgid "Please fill out at least one translation"
 msgstr "Por favor, preencha pelo menos uma tradução"
-
-#: corehq/messaging/scheduling/forms.py
-msgid "This field must not exceed {} characters"
-msgstr "Este campo não deve exceder {} caracteres"
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Please specify the reminder intervals or disable them"
@@ -56139,10 +54857,6 @@ msgstr ""
 #: corehq/messaging/scheduling/forms.py
 msgid "Rich Text Message"
 msgstr "Mensagem em Texto Rico"
-
-#: corehq/messaging/scheduling/forms.py
-msgid "Message type"
-msgstr "Tipo de mensagem"
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Expire After"
@@ -56433,16 +55147,6 @@ msgstr "Data da última ocorrência:"
 #: corehq/messaging/scheduling/forms.py
 msgid ""
 "\n"
-"                            Connect Messages can only be sent to users who have a PersonalID account.\n"
-"                        "
-msgstr ""
-"\n"
-"                            Mensagens Connect só podem ser enviadas para usuários que possuem uma conta PersonalID.\n"
-"                        "
-
-#: corehq/messaging/scheduling/forms.py
-msgid ""
-"\n"
 "                            The \"Case's Parent Case\" Recipient setting only works for Parent / Child relationships,\n"
 "                            not Parent / Extension or Host / Extension relationships.\n"
 "                        "
@@ -56506,8 +55210,13 @@ msgstr ""
 " selecione o(s) usuário(s) novamente."
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Connect Messages can only be sent to users."
-msgstr "Mensagens Connect só podem ser enviadas para usuários."
+#, python-brace-format
+msgid ""
+"The following recipient type(s) are not supported for Connect Messages: "
+"{types}"
+msgstr ""
+"O(s) seguinte(s) tipo(s) de destinatário não são suportados para Mensagens "
+"Connect: {types}"
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Please specify the groups(s) or deselect user groups as recipients"
@@ -56702,10 +55411,6 @@ msgid "Custom SMS"
 msgstr "SMS Personalizado"
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Push Notification"
-msgstr "Notificação Push"
-
-#: corehq/messaging/scheduling/forms.py
 msgid "The time from case property"
 msgstr "O horário da propriedade do caso"
 
@@ -56855,26 +55560,6 @@ msgstr "Por favor, insira um número maior que 0"
 msgid "Email case property can only be used with Email content"
 msgstr ""
 "A propriedade de e-mail do caso só pode ser usada com conteúdo de e-mail"
-
-#: corehq/messaging/scheduling/forms.py
-msgid ""
-"Push Notifications is no longer available on this environment. Please "
-"contact Administrator."
-msgstr ""
-"Notificações Push não estão mais disponíveis neste ambiente. Por favor, "
-"entre em contato com o Administrador."
-
-#: corehq/messaging/scheduling/forms.py
-msgid ""
-"Push Notifications is not available for your project. Please contact "
-"Administrator."
-msgstr ""
-"Notificações Push não estão disponíveis para seu projeto. Por favor, entre "
-"em contato com o Administrador."
-
-#: corehq/messaging/scheduling/forms.py
-msgid "'{}' recipient types are not supported for Push Notifications"
-msgstr "Tipos de destinatário '{}' não são suportados para Notificações Push"
 
 #: corehq/messaging/scheduling/forms.py
 msgid ""
@@ -59854,10 +58539,6 @@ msgid "Request Body"
 msgstr "Corpo da Requisição"
 
 #: corehq/motech/views.py
-msgid "Status Code"
-msgstr "Código de Status"
-
-#: corehq/motech/views.py
 msgid "Response Headers"
 msgstr "Cabeçalhos da Resposta"
 
@@ -60140,6 +58821,11 @@ msgstr ""
 "Adicionar a hierarquia da localização principal à exportação em excel no "
 "Relatório de Última Atividade do Usuário"
 
+#: corehq/privileges.py
+#| msgid "Show Advanced Questions"
+msgid "Locked Admin Questions"
+msgstr "Perguntas de Administração Bloqueadas"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Relatórios do Construtor de Relatórios"
@@ -60215,10 +58901,6 @@ msgstr "Minhas Aplicações"
 #: corehq/tabs/tabclasses.py
 msgid "New Application"
 msgstr "Nova Aplicação"
-
-#: corehq/tabs/tabclasses.py
-msgid "Application Testing"
-msgstr "Testes de Aplicação"
 
 #: corehq/tabs/tabclasses.py
 msgid "Application Test Flows"
@@ -60325,6 +59007,10 @@ msgstr "Visualizar Localização"
 #: corehq/tabs/tabclasses.py
 msgid "View project spaces where users receive automatic access"
 msgstr "Visualizar espaços de projeto onde usuários recebem acesso automático"
+
+#: corehq/tabs/tabclasses.py
+msgid "Translations"
+msgstr "Traduções"
 
 #: corehq/tabs/tabclasses.py
 msgid "Project Administration"
@@ -60450,22 +59136,6 @@ msgstr "Operações Administrativas"
 msgid "CommCare Reports"
 msgstr "Relatórios do CommCare"
 
-#: corehq/tabs/tabclasses.py
-msgid "View All Attendees"
-msgstr "Visualizar Todos os Participantes"
-
-#: corehq/tabs/tabclasses.py
-msgid "Manage attendees for Attendance Tracking Events"
-msgstr "Gerenciar participantes para Eventos de Rastreamento de Presença"
-
-#: corehq/tabs/tabclasses.py
-msgid "View All Events"
-msgstr "Visualizar Todos os Eventos"
-
-#: corehq/tabs/tabclasses.py
-msgid "Manage Attendance Tracking Events"
-msgstr "Gerenciar Eventos de Rastreamento de Presença"
-
 #: corehq/util/auth.py
 msgid "algorithm"
 msgstr "algoritmo"
@@ -60555,14 +59225,6 @@ msgstr "Data do relatório ausente"
 #: custom/abt/reports/late_pmt_2020.py
 msgid "Incorrect or no PMT data submitted"
 msgstr "Dados de PMT incorretos ou não enviados"
-
-#: custom/cowin/repeaters.py
-msgid "Register beneficiaries on COWIN"
-msgstr "Registrar beneficiários no COWIN"
-
-#: custom/cowin/repeaters.py
-msgid "Update vaccination for beneficiaries on COWIN"
-msgstr "Atualizar vacinação para beneficiários no COWIN"
 
 #: custom/inddex/filters.py
 msgid "Age Range"
@@ -61163,6 +59825,1300 @@ msgstr "Colunas obrigatórias são {column_names}"
 msgid "Enter valid JSON"
 msgstr "Insira um JSON válido"
 
+#~ msgid "Property mapping concurrently changed and deleted"
+#~ msgstr "Mapeamento de propriedade alterado e excluído simultaneamente"
+
+#~ msgid "Label for Searching"
+#~ msgstr "Rótulo para Pesquisa"
+
+#~ msgid "Reference"
+#~ msgstr "Referência"
+
+#~ msgid "Constant"
+#~ msgstr "Constante"
+
+#~ msgid "SQL Statement"
+#~ msgstr "Declaração SQL"
+
+#~ msgid "Sum"
+#~ msgstr "Soma"
+
+#~ msgid "Min"
+#~ msgstr "Mínimo"
+
+#~ msgid "Max"
+#~ msgstr "Máximo"
+
+#~ msgid "Count"
+#~ msgstr "Contagem"
+
+#~ msgid "Count Unique Values"
+#~ msgstr "Contar Valores Únicos"
+
+#~ msgid "Has a nonzero sum (1 if sum is nonzero else 0)."
+#~ msgstr ""
+#~ "Possui soma diferente de zero (1 se a soma for diferente de zero, senão 0)."
+
+#~ msgid "Week"
+#~ msgstr "Semana"
+
+#~ msgid "Form Actions Diff failed to be applied successfully"
+#~ msgstr "Falha ao aplicar a Diferença de Ações do Formulário"
+
+#~ msgid "Label for Searching Again"
+#~ msgstr "Rótulo para Pesquisar Novamente"
+
+#~ msgid "Learn more"
+#~ msgstr "Saiba mais"
+
+#~ msgid ""
+#~ "about how CommCare can be your mobile solution for your frontline workforce."
+#~ msgstr ""
+#~ "sobre como o CommCare pode ser sua solução móvel para sua equipe de linha de"
+#~ " frente."
+
+#~ msgid "Resource"
+#~ msgstr "Recurso"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Your search returned more than {max_records} records. Please narrow down "
+#~ "your search by selecting a specific user, domain, or a shorter date range."
+#~ msgstr ""
+#~ "Sua pesquisa retornou mais de {max_records} registros. Por favor, refine sua"
+#~ " pesquisa selecionando um usuário específico, domínio ou um intervalo de "
+#~ "datas menor."
+
+#~ msgid "Push Notification"
+#~ msgstr "Notificação Push"
+
+#~ msgid ""
+#~ "Push Notifications is no longer available. Please contact Administrator."
+#~ msgstr ""
+#~ "Notificações Push não estão mais disponíveis. Por favor, entre em contato "
+#~ "com o Administrador."
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      Successfully verified %(success_count)s rows!\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      %(success_count)s linhas verificadas com sucesso!\n"
+#~ "    "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      Failed to verify %(failure_count)s records for payments!\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Falha ao verificar %(failure_count)s registros de pagamentos!\n"
+#~ "    "
+
+#~ msgid ""
+#~ "\n"
+#~ "                            Connect Messages can only be sent to users who have a PersonalID account.\n"
+#~ "                        "
+#~ msgstr ""
+#~ "\n"
+#~ "                            Mensagens Connect só podem ser enviadas para usuários que possuem uma conta PersonalID.\n"
+#~ "                        "
+
+#~ msgid "Connect Messages can only be sent to users."
+#~ msgstr "Mensagens Connect só podem ser enviadas para usuários."
+
+#~ msgid "no table"
+#~ msgstr "sem tabela"
+
+#~ msgid "Rebuild Data"
+#~ msgstr "Reconstruir Dados"
+
+#~ msgid "Preview data"
+#~ msgstr "Pré-visualizar dados"
+
+#~ msgid "View Aggregate UCR"
+#~ msgstr "Ver UCR Agregado"
+
+#~ msgid "Preview Aggregate UCR"
+#~ msgstr "Pré-visualizar UCR Agregado"
+
+#~ msgid ""
+#~ "Version {} not released. Can not enable profiles for unreleased versions"
+#~ msgstr ""
+#~ "Versão {} não lançada. Não é possível habilitar perfis para versões não "
+#~ "lançadas"
+
+#~ msgid ""
+#~ "Latest version available for this profile is {}, which is higher than this "
+#~ "version. Disable any higher versions first."
+#~ msgstr ""
+#~ "A versão mais recente disponível para este perfil é {}, que é superior a "
+#~ "esta versão. Desabilite as versões superiores primeiro."
+
+#~ msgid "Revoke restriction"
+#~ msgstr "Revogar restrição"
+
+#~ msgid "Restrict to this version"
+#~ msgstr "Restringir a esta versão"
+
+#~ msgid "Download only translations eligible for Transifex?"
+#~ msgstr "Baixar apenas traduções elegíveis para o Transifex?"
+
+#~ msgid "Override reference id: "
+#~ msgstr "Substituir id de referência: "
+
+#~ msgid "Manage application profiles here."
+#~ msgstr "Gerencie os perfis de aplicação aqui."
+
+#~ msgid "Latest Enabled Version:"
+#~ msgstr "Última Versão Habilitada:"
+
+#~ msgid "Latest version for profile {} is now {}"
+#~ msgstr "A versão mais recente para o perfil {} agora é {}"
+
+#~ msgid "Latest release now available for profile {}"
+#~ msgstr "Última versão disponível agora para o perfil {}"
+
+#~ msgid "Account confirmation link expiry"
+#~ msgstr "Validade do link de confirmação de conta"
+
+#~ msgid ""
+#~ "\n"
+#~ "            Default time (in days) for which account confirmation link will be valid.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "            Tempo padrão (em dias) pelo qual o link de confirmação de conta será válido.\n"
+#~ "            "
+
+#~ msgid "Confirmation SMS project name"
+#~ msgstr "Nome do projeto para SMS de confirmação"
+
+#~ msgid ""
+#~ "Name of the project to be used in SMS sent for account confirmation to "
+#~ "users."
+#~ msgstr ""
+#~ "Nome do projeto a ser usado em SMS enviados para confirmação de conta de "
+#~ "usuários."
+
+#, python-brace-format
+#~ msgid "Restriction for profile {profile} set successfully."
+#~ msgstr "Restrição para o perfil {profile} definida com sucesso."
+
+#, python-brace-format
+#~ msgid "Restriction for profile {profile} failed: {message}"
+#~ msgstr "Falha ao definir restrição para o perfil {profile}: {message}"
+
+#~ msgid "Manage Releases By App Profile"
+#~ msgstr "Gerenciar Lançamentos por Perfil de Aplicativo"
+
+#~ msgid "Per event day"
+#~ msgstr "Por dia de evento"
+
+#~ msgid "Per entire event"
+#~ msgstr "Por todo o evento"
+
+#~ msgid "Attendance target"
+#~ msgstr "Meta de presença"
+
+#~ msgid "The expected amount of attendees."
+#~ msgstr "A quantidade esperada de participantes."
+
+#~ msgid "Allow same day registration"
+#~ msgstr "Permitir registro no mesmo dia"
+
+#~ msgid "Attendance recording options"
+#~ msgstr "Opções de registro de presença"
+
+#~ msgid "Attendees"
+#~ msgstr "Participantes"
+
+#~ msgid "Attendance Takers"
+#~ msgstr "Registradores de Presença"
+
+#~ msgid "Please choose at least one Attendance Taker"
+#~ msgstr "Por favor, escolha pelo menos um Registrador de Presença"
+
+#, python-brace-format
+#~ msgid "{self.title_prefix} Attendance Tracking Event"
+#~ msgstr "{self.title_prefix} Evento de Acompanhamento de Presença"
+
+#~ msgid "Invalid Start Date"
+#~ msgstr "Data de Início Inválida"
+
+#~ msgid "You cannot specify the start date in the past"
+#~ msgstr "Você não pode especificar a data de início no passado"
+
+#~ msgid "End Date cannot be before Start Date"
+#~ msgstr "A Data de Término não pode ser anterior à Data de Início"
+
+#~ msgid "You cannot specify the end date in the past"
+#~ msgstr "Você não pode especificar a data de término no passado"
+
+#~ msgid "Attendee list under review"
+#~ msgstr "Lista de participantes em revisão"
+
+#~ msgid "Attendee list rejected"
+#~ msgstr "Lista de participantes rejeitada"
+
+#~ msgid "Attendee list accepted"
+#~ msgstr "Lista de participantes aceita"
+
+#~ msgid "Event not started"
+#~ msgstr "Evento não iniciado"
+
+#~ msgid "Event in progress"
+#~ msgstr "Evento em andamento"
+
+#~ msgid "Attendee"
+#~ msgstr "Participante"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          This attendee cannot be deleted as\n"
+#~ "          <strong>%(attendee_name)s</strong> has been tracked as having\n"
+#~ "          attended one or more events.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Este participante não pode ser excluído pois\n"
+#~ "          <strong>%(attendee_name)s</strong> foi registrado como tendo\n"
+#~ "          participado de um ou mais eventos.\n"
+#~ "        "
+
+#~ msgid "Update Attendee"
+#~ msgstr "Atualizar Participante"
+
+#~ msgid "Delete Attendee"
+#~ msgstr "Excluir Participante"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "                This action will delete %(attendee_name)s as a potential\n"
+#~ "                attendee and will remove them from all future events that they\n"
+#~ "                are currently enlisted in.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                Esta ação excluirá %(attendee_name)s como participante potencial\n"
+#~ "                e o removerá de todos os eventos futuros nos quais está atualmente inscrito.\n"
+#~ "              "
+
+#~ msgid ""
+#~ "\n"
+#~ "                This action cannot be undone.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                Esta ação não pode ser desfeita.\n"
+#~ "              "
+
+#~ msgid ""
+#~ "\n"
+#~ "      Known potential attendees who can be invited to participate in Attendance\n"
+#~ "      Tracking Events.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Participantes potenciais conhecidos que podem ser convidados a participar de Eventos de\n"
+#~ "      Controle de Presença.\n"
+#~ "    "
+
+#~ msgid "Create Potential Attendee"
+#~ msgstr "Criar Participante Potencial"
+
+#~ msgid "Enable Mobile Worker Attendees"
+#~ msgstr "Ativar Participantes Trabalhadores Móveis"
+
+#~ msgid "New Potential Attendees"
+#~ msgstr "Novos Participantes Potenciais"
+
+#~ msgid "Potential Attendees"
+#~ msgstr "Participantes Potenciais"
+
+#~ msgid "Loading potential attendees ..."
+#~ msgstr "Carregando participantes potenciais ..."
+
+#~ msgid ""
+#~ "\n"
+#~ "            You currently have no potential attendees.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Você não possui participantes potenciais no momento.\n"
+#~ "          "
+
+#~ msgid ""
+#~ "\n"
+#~ "            No matching potential attendees found.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Nenhum participante potencial correspondente encontrado.\n"
+#~ "          "
+
+#~ msgid ""
+#~ "\n"
+#~ "          Attendance tracking events can be used to track attendance of all the\n"
+#~ "          selected attendees.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Eventos de controle de presença podem ser usados para acompanhar a presença de todos os\n"
+#~ "          participantes selecionados.\n"
+#~ "        "
+
+#~ msgid "Add new event"
+#~ msgstr "Adicionar novo evento"
+
+#~ msgid "View Attendees"
+#~ msgstr "Ver Participantes"
+
+#~ msgid "No Attendees Yet"
+#~ msgstr "Nenhum Participante Ainda"
+
+#~ msgid "Date Attended"
+#~ msgstr "Data de Participação"
+
+#~ msgid "Attendee Name"
+#~ msgstr "Nome do Participante"
+
+#~ msgid "Event has not yet started"
+#~ msgstr "O evento ainda não começou"
+
+#~ msgid ""
+#~ "\n"
+#~ "      There was a problem fetching the list of attendees and attendance takers.\n"
+#~ "      Please try again.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Houve um problema ao buscar a lista de participantes e responsáveis pela presença.\n"
+#~ "      Por favor, tente novamente.\n"
+#~ "    "
+
+#~ msgid "Attendance Tracking"
+#~ msgstr "Rastreamento de Presença"
+
+#~ msgid "Attendance Tracking Events"
+#~ msgstr "Eventos de Rastreamento de Presença"
+
+#~ msgid "events per page"
+#~ msgstr "eventos por página"
+
+#~ msgid "You have no events"
+#~ msgstr "Você não possui eventos"
+
+#~ msgid "Loading events"
+#~ msgstr "Carregando eventos"
+
+#~ msgid "Events"
+#~ msgstr "Eventos"
+
+#~ msgid "Start date"
+#~ msgstr "Data de início"
+
+#~ msgid "End date"
+#~ msgstr "Data de término"
+
+#~ msgid "Attendance Target"
+#~ msgstr "Meta de Presença"
+
+#~ msgid "Total attendance"
+#~ msgstr "Presença total"
+
+#~ msgid "Total attendance takers"
+#~ msgstr "Total de responsáveis pela presença"
+
+#~ msgid "Add Attendance Tracking Event"
+#~ msgstr "Adicionar Evento de Rastreamento de Presença"
+
+#~ msgid "Add New Event"
+#~ msgstr "Adicionar Novo Evento"
+
+#~ msgid "Edit Attendance Tracking Event"
+#~ msgstr "Editar Evento de Rastreamento de Presença"
+
+#~ msgid "Edit Event"
+#~ msgstr "Editar Evento"
+
+#~ msgid "Attendees per page"
+#~ msgstr "Participantes por página"
+
+#~ msgid "You have no attendees"
+#~ msgstr "Você não tem participantes"
+
+#~ msgid "Loading attendees"
+#~ msgstr "Carregando participantes"
+
+#~ msgid "Form validation failed: {}"
+#~ msgstr "Falha na validação do formulário: {}"
+
+#~ msgid "Edit Attendee"
+#~ msgstr "Editar Participante"
+
+#~ msgid "Enabling mobile worker attendees status"
+#~ msgstr "Ativando status de participantes trabalhadores móveis"
+
+#~ msgid "Disabling mobile worker attendees status"
+#~ msgstr "Desativando status de participantes trabalhadores móveis"
+
+#~ msgid "Processing Mobile Workers. This may take some time..."
+#~ msgstr "Processando Trabalhadores Móveis. Isso pode levar algum tempo..."
+
+#~ msgid "User conversion failed for some reason and we have noted this failure."
+#~ msgstr ""
+#~ "A conversão do usuário falhou por algum motivo e registramos essa falha."
+
+#~ msgid "Go back to view attendees"
+#~ msgstr "Voltar para visualizar participantes"
+
+#~ msgid "Mobile workers can now also be selected to attend events."
+#~ msgstr ""
+#~ "Agora trabalhadores móveis também podem ser selecionados para participar de "
+#~ "eventos."
+
+#~ msgid "Enabling mobile workers complete!"
+#~ msgstr "Ativação de trabalhadores móveis concluída!"
+
+#~ msgid "Enabling mobile worker attendees in progress. This may take a while..."
+#~ msgstr ""
+#~ "Ativando participantes trabalhadores móveis em andamento. Isso pode levar um"
+#~ " tempo..."
+
+#~ msgid "Mobile workers are now removed from the potential attendees list."
+#~ msgstr ""
+#~ "Trabalhadores móveis agora foram removidos da lista de possíveis "
+#~ "participantes."
+
+#~ msgid "Disabling mobile workers complete!"
+#~ msgstr "Desativação de trabalhadores móveis concluída!"
+
+#~ msgid ""
+#~ "Disabling mobile worker attendees in progress. This may take a while..."
+#~ msgstr ""
+#~ "Desativando participantes trabalhadores móveis em andamento. Isso pode levar"
+#~ " um tempo..."
+
+#, python-brace-format
+#~ msgid "type {lookup_table_name} is not defined as global"
+#~ msgstr "O tipo {lookup_table_name} não está definido como global"
+
+#~ msgid "Road Network Algorithm"
+#~ msgstr "Algoritmo de Rede Viária"
+
+#~ msgid "Select travel mode"
+#~ msgstr "Selecione o modo de viagem"
+
+#~ msgid ""
+#~ "The travel mode of the users. Consider this when specifying the max travel "
+#~ "time to each case."
+#~ msgstr ""
+#~ "O modo de viagem dos usuários. Considere isso ao especificar o tempo máximo "
+#~ "de viagem para cada caso."
+
+#~ msgid "Disbursement algorithm"
+#~ msgstr "Algoritmo de distribuição"
+
+#~ msgid ""
+#~ "Uses the straight-line distance between users and cases to determine  "
+#~ "allocation of cases. Ideal for when map road coverage is poor."
+#~ msgstr ""
+#~ "Usa a distância em linha reta entre usuários e casos para determinar a "
+#~ "alocação dos casos. Ideal para quando a cobertura de estradas no mapa é "
+#~ "ruim."
+
+#~ msgid ""
+#~ "Takes distance along roads between users and cases into account to determine"
+#~ " allocation of cases. Ideal for when map road coverage is good."
+#~ msgstr ""
+#~ "Leva em conta a distância pelas estradas entre usuários e casos para "
+#~ "determinar a alocação dos casos. Ideal para quando a cobertura de estradas "
+#~ "no mapa é boa."
+
+#~ msgid "Enter mapbox token"
+#~ msgstr "Insira o token do Mapbox"
+
+#~ msgid ""
+#~ "Enter your Mapbox API token here. Make sure your token has the correct scope"
+#~ " configured for use of the Mapbox Matrix API."
+#~ msgstr ""
+#~ "Insira seu token da API Mapbox aqui. Certifique-se de que seu token tenha o "
+#~ "escopo correto configurado para uso da API Mapbox Matrix."
+
+#~ msgid "Test API Key"
+#~ msgstr "Testar chave da API"
+
+#~ msgid "Mapbox API token required"
+#~ msgstr "Token da API Mapbox obrigatório"
+
+#, python-format
+#~ msgid "%(value)s is not a valid travel mode"
+#~ msgstr "%(value)s não é um modo de viagem válido"
+
+#~ msgid "Walking"
+#~ msgstr "Caminhada"
+
+#~ msgid "Cycling"
+#~ msgstr "Ciclismo"
+
+#~ msgid "Driving"
+#~ msgstr "Dirigindo"
+
+#~ msgid "Transifex"
+#~ msgstr "Transifex"
+
+#~ msgid "Enable AWS Connect Dialer"
+#~ msgstr "Ativar discador AWS Connect"
+
+#~ msgid "AWS Instance ID"
+#~ msgstr "ID da instância AWS"
+
+#~ msgid ""
+#~ "Enter \"yourinstance\" if your AWS Connect account is\n"
+#~ "                        \"https://yourinstance.awsapps.com/connect/\" "
+#~ msgstr ""
+#~ "Digite \"yourinstance\" se sua conta AWS Connect for\n"
+#~ "                        \"https://yourinstance.awsapps.com/connect/\" "
+
+#~ msgid "Dialer Page Title"
+#~ msgstr "Título da página do discador"
+
+#~ msgid "A title for the Dialer Page header"
+#~ msgstr "Um título para o cabeçalho da página do discador"
+
+#~ msgid "Dialer Page Subtitle"
+#~ msgstr "Subtítulo da página do discador"
+
+#~ msgid "A subtitle for the Dialer Page header"
+#~ msgstr "Um subtítulo para o cabeçalho da página do discador"
+
+#~ msgid "Enable GAEN OTP server integration"
+#~ msgstr "Ativar integração do servidor GAEN OTP"
+
+#~ msgid "GAEN Server Type"
+#~ msgstr "Tipo de Servidor GAEN"
+
+#~ msgid "NearForm OTP Server"
+#~ msgstr "Servidor OTP NearForm"
+
+#~ msgid "APHL Exposure Notifications"
+#~ msgstr "Notificações de Exposição APHL"
+
+#~ msgid "Server Endpoint"
+#~ msgstr "Endpoint do Servidor"
+
+#~ msgid "Server Auth Token"
+#~ msgstr "Token de Autenticação do Servidor"
+
+#~ msgid "Enable in Web Apps"
+#~ msgstr "Ativar em Aplicativos Web"
+
+#~ msgid "External Callout URL"
+#~ msgstr "URL de Chamada Externa"
+
+#~ msgid "Enter the base URL for callouts that should be signed"
+#~ msgstr "Insira a URL base para chamadas que devem ser assinadas"
+
+#~ msgid "API Key for CommCare in the external system"
+#~ msgstr "Chave de API para o CommCare no sistema externo"
+
+#~ msgid "API Secret"
+#~ msgstr "Segredo da API"
+
+#~ msgid "API secret for message signing"
+#~ msgstr "Segredo da API para assinatura de mensagens"
+
+#~ msgid "Dialer"
+#~ msgstr "Discador"
+
+#~ msgid "NOT LOGGED IN"
+#~ msgstr "NÃO CONECTADO"
+
+#~ msgid "Login"
+#~ msgstr "Entrar"
+
+#~ msgid "Telephone"
+#~ msgstr "Telefone"
+
+#~ msgid "Phone Number:"
+#~ msgstr "Número de telefone:"
+
+#~ msgid "NOT AVAILABLE"
+#~ msgstr "NÃO DISPONÍVEL"
+
+#~ msgid "Call Status:"
+#~ msgstr "Status da chamada:"
+
+#~ msgid "Not Dialed"
+#~ msgstr "Não discado"
+
+#~ msgid "Contact ID:"
+#~ msgstr "ID do contato:"
+
+#~ msgid "Queue Name:"
+#~ msgstr "Nome da fila:"
+
+#~ msgid "Dial Now"
+#~ msgstr "Discar agora"
+
+#~ msgid "Preferences"
+#~ msgstr "Preferências"
+
+#~ msgid "Auto dial on load"
+#~ msgstr "Discar automaticamente ao carregar"
+
+#~ msgid "Copy To Clipboard"
+#~ msgstr "Copiar para a área de transferência"
+
+#~ msgid "Media Devices"
+#~ msgstr "Dispositivos de mídia"
+
+#~ msgid "Speakers"
+#~ msgstr "Alto-falantes"
+
+#~ msgid "Microphone"
+#~ msgstr "Microfone"
+
+#~ msgid "Mic. Permission"
+#~ msgstr "Permissão do microfone"
+
+#~ msgid "Web Cam"
+#~ msgstr "Webcam"
+
+#~ msgid "WebRTC"
+#~ msgstr "WebRTC"
+
+#~ msgid "Check Media"
+#~ msgstr "Verificar mídia"
+
+#~ msgid "Network"
+#~ msgstr "Rede"
+
+#~ msgid "Check Network"
+#~ msgstr "Verificar rede"
+
+#~ msgid "Agent Training Center"
+#~ msgstr "Centro de treinamento de agentes"
+
+#~ msgid "Agent Support Center"
+#~ msgstr "Centro de suporte ao agente"
+
+#~ msgid "Exposure Notification OTP"
+#~ msgstr "OTP de notificação de exposição"
+
+#~ msgid "OTP Code for"
+#~ msgstr "Código OTP para"
+
+#~ msgid "Close OTP and Return"
+#~ msgstr "Fechar OTP e retornar"
+
+#~ msgid "OTP Request missing a required argument 'case_id'"
+#~ msgstr "Solicitação de OTP está faltando o argumento obrigatório 'case_id'"
+
+#~ msgid "No matching patient record found"
+#~ msgstr "Nenhum registro de paciente correspondente encontrado"
+
+#~ msgid ""
+#~ "We are having problems communicating with the Exposure Notification server\n"
+#~ "                                 please try again later"
+#~ msgstr ""
+#~ "Estamos com problemas para nos comunicar com o servidor de Notificação de Exposição\n"
+#~ "                                 por favor, tente novamente mais tarde"
+
+#~ msgid "Dialer Settings"
+#~ msgstr "Configurações do Discador"
+
+#~ msgid "Dialer Settings Updated"
+#~ msgstr "Configurações do Discador Atualizadas"
+
+#~ msgid "Could not update Dialer Settings"
+#~ msgstr "Não foi possível atualizar as Configurações do Discador"
+
+#~ msgid "GAEN OTP Server Config"
+#~ msgstr "Configuração do Servidor OTP GAEN"
+
+#~ msgid "GAEN OTP Server Settings Updated"
+#~ msgstr "Configurações do Servidor OTP GAEN Atualizadas"
+
+#~ msgid "Could not update GAEN OTP Server Settings"
+#~ msgstr "Não foi possível atualizar as Configurações do Servidor OTP GAEN"
+
+#~ msgid "Signed Callout Settings"
+#~ msgstr "Configurações de Callout Assinado"
+
+#~ msgid "Callout Settings Updated"
+#~ msgstr "Configurações de Callout Atualizadas"
+
+#~ msgid "Could not update Callout Settings"
+#~ msgstr "Não foi possível atualizar as Configurações de Callout"
+
+#~ msgid "OTP Pass-through Settings"
+#~ msgstr "Configurações de Passagem de OTP"
+
+#~ msgid "Signed Callout"
+#~ msgstr "Callout Assinado"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "Hello %(name)s,\n"
+#~ "\n"
+#~ "Your account with username %(username)s is confirmed successfully.\n"
+#~ "You can now log in and submit data in the \"%(domain)s\" project on %(hq_name)s.\n"
+#~ "\n"
+#~ "Thanks,\n"
+#~ "-The %(hq_name)s team\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Olá %(name)s,\n"
+#~ "\n"
+#~ "Sua conta com o nome de usuário %(username)s foi confirmada com sucesso.\n"
+#~ "Agora você pode acessar e enviar dados no projeto \"%(domain)s\" em %(hq_name)s.\n"
+#~ "\n"
+#~ "Obrigado,\n"
+#~ "-A equipe %(hq_name)s\n"
+
+#, python-format
+#~ msgid "Hello %(name)s,"
+#~ msgstr "Olá %(name)s,"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "Once you confirm your account you will be able to access and submit data in the \"%(domain)s\" project on %(hq_name)s.\n"
+#~ "Your username to login is %(username)s\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Assim que você confirmar sua conta, poderá acessar e enviar dados no projeto \"%(domain)s\" em %(hq_name)s.\n"
+#~ "Seu nome de usuário para login é %(username)s\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "                    Whatsapp-enabled phone number for use with Twilio.\n"
+#~ "                    This should be formatted as a full-length, numeric-only\n"
+#~ "                    phone number, e.g., 16173481000.\n"
+#~ "                "
+#~ msgstr ""
+#~ "\n"
+#~ "                    Número de telefone habilitado para Whatsapp para uso com Twilio.\n"
+#~ "                    Deve estar formatado como um número completo, apenas números,\n"
+#~ "                    por exemplo, 16173481000.\n"
+#~ "                "
+
+#~ msgid "Upload a xls/xlsx/po/zip file"
+#~ msgstr "Envie um arquivo xls/xlsx/po/zip"
+
+#~ msgid "Convert"
+#~ msgstr "Converter"
+
+#~ msgid "Please ensure columns 'source' and 'translation' in the sheet"
+#~ msgstr ""
+#~ "Por favor, certifique-se de que as colunas 'source' e 'translation' estejam "
+#~ "na planilha"
+
+#~ msgid "Unexpected file passed within zip. Please upload xls/xlsx/po files."
+#~ msgstr ""
+#~ "Arquivo inesperado dentro do zip. Por favor, envie arquivos xls/xlsx/po."
+
+#~ msgid "Unexpected file passed. Please upload xls/xlsx/po/zip file."
+#~ msgstr ""
+#~ "Arquivo inesperado enviado. Por favor, envie um arquivo xls/xlsx/po/zip."
+
+#~ msgid "Transifex project"
+#~ msgstr "Projeto Transifex"
+
+#~ msgid "Target Language"
+#~ msgstr "Idioma de destino"
+
+#~ msgid "Resource Slug"
+#~ msgstr "Slug do Recurso"
+
+#~ msgid "Leave blank to use current saved state"
+#~ msgstr "Deixe em branco para usar o estado salvo atual"
+
+#~ msgid ""
+#~ "Check this if you want to maintain different resources separately for "
+#~ "different versions of the application. Leave it unchecked for continuous "
+#~ "update to the same set of resources"
+#~ msgstr ""
+#~ "Marque isto se quiser manter recursos diferentes separadamente para "
+#~ "diferentes versões do aplicativo. Deixe desmarcado para atualização contínua"
+#~ " no mesmo conjunto de recursos"
+
+#~ msgid "Translated Language"
+#~ msgstr "Idioma Traduzido"
+
+#~ msgid "Select Translated Language"
+#~ msgstr "Selecione o Idioma Traduzido"
+
+#~ msgid ""
+#~ "Confirm that resources are completely translated before performing request"
+#~ msgstr ""
+#~ "Confirme que os recursos estão completamente traduzidos antes de realizar a "
+#~ "solicitação"
+
+#~ msgid "Please confirm that you want to proceed?"
+#~ msgstr "Por favor, confirme que deseja continuar?"
+
+#~ msgid "Version not available for app"
+#~ msgstr "Versão não disponível para o aplicativo"
+
+#~ msgid ""
+#~ "Check this if you want to update an existing resource, instead of creating "
+#~ "new ones. If you submit this form without this check, duplicate resources "
+#~ "may be created."
+#~ msgstr ""
+#~ "Marque isto se quiser atualizar um recurso existente, em vez de criar novos."
+#~ " Se você enviar este formulário sem marcar, recursos duplicados podem ser "
+#~ "criados."
+
+#~ msgid "Source Language on Transifex"
+#~ msgstr "Idioma de Origem no Transifex"
+
+#~ msgid "Lock translations for resources that are being pulled"
+#~ msgstr "Bloquear traduções para recursos que estão sendo puxados"
+
+#~ msgid "Please note that this will lock the resource for all languages"
+#~ msgstr "Por favor, note que isso irá bloquear o recurso para todos os idiomas"
+
+#~ msgid "Add translation to blacklist"
+#~ msgstr "Adicionar tradução à lista negra"
+
+#~ msgid "From Application"
+#~ msgstr "Do Aplicativo"
+
+#~ msgid "To Application"
+#~ msgstr "Para o Aplicativo"
+
+#~ msgid "Upload a xls file mapping old to new ids"
+#~ msgstr "Envie um arquivo xls mapeando os ids antigos para os novos"
+
+#~ msgid ""
+#~ "We recommend taking a backup if you have not already.Please confirm that you"
+#~ " want to proceed?"
+#~ msgstr ""
+#~ "Recomendamos fazer um backup se ainda não fez. Por favor, confirme que "
+#~ "deseja continuar?"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Could not load file. Please ensure columns {type_header}, {old_id_header} "
+#~ "and {new_id_header} are present"
+#~ msgstr ""
+#~ "Não foi possível carregar o arquivo. Por favor, certifique-se de que as "
+#~ "colunas {type_header}, {old_id_header} e {new_id_header} estão presentes"
+
+#~ msgid "missing value(s) in sheet"
+#~ msgstr "valor(es) ausente(s) na planilha"
+
+#~ msgid "Could not load file. 'Type' column should be either 'Menu' or 'Form'"
+#~ msgstr ""
+#~ "Não foi possível carregar o arquivo. A coluna 'Type' deve ser 'Menu' ou "
+#~ "'Form'"
+
+#~ msgid "Source and target app can not be the same"
+#~ msgstr "O aplicativo de origem e o de destino não podem ser o mesmo"
+
+#~ msgid ""
+#~ "Target app default language and the source app default language don't match"
+#~ msgstr ""
+#~ "O idioma padrão do aplicativo de destino e o idioma padrão do aplicativo de "
+#~ "origem não coincidem"
+
+#~ msgid ""
+#~ "Transifex project source lang and the source app default language don't "
+#~ "match"
+#~ msgstr ""
+#~ "O idioma de origem do projeto Transifex e o idioma padrão do aplicativo de "
+#~ "origem não coincidem"
+
+#~ msgid ""
+#~ "Transifex project source lang and the target app default language don't "
+#~ "match"
+#~ msgstr ""
+#~ "O idioma de origem do projeto Transifex e o idioma padrão do aplicativo de "
+#~ "destino não coincidem"
+
+#~ msgid "Successfully Uploaded"
+#~ msgstr "Enviado com sucesso"
+
+#~ msgid "Successfully Removed"
+#~ msgstr "Removido com sucesso"
+
+#~ msgid "Transifex integration not set for this domain"
+#~ msgstr "Integração com Transifex não configurada para este domínio"
+
+#~ msgid "Convert Translations"
+#~ msgstr "Converter Traduções"
+
+#~ msgid "Pull Resource"
+#~ msgstr "Puxar Recurso"
+
+#~ msgid "Blacklist Translations"
+#~ msgstr "Lista Negra de Traduções"
+
+#~ msgid "App Translations"
+#~ msgstr "Traduções do Aplicativo"
+
+#~ msgid "Successfully enqueued request to submit files for translations"
+#~ msgstr ""
+#~ "Solicitação para enviar arquivos para tradução enfileirada com sucesso"
+
+#~ msgid "Resources yet to be completely translated, for ex: {}"
+#~ msgstr "Recursos ainda não completamente traduzidos, por exemplo: {}"
+
+#~ msgid "Resources not found for this project and version."
+#~ msgstr "Recursos não encontrados para este projeto e versão."
+
+#~ msgid ""
+#~ "Resources yet to be completely translated for all languages. Hence, the "
+#~ "request for locking resources can not be performed."
+#~ msgstr ""
+#~ "Recursos ainda não completamente traduzidos para todos os idiomas. Portanto,"
+#~ " a solicitação para bloquear recursos não pode ser realizada."
+
+#~ msgid ""
+#~ "Successfully enqueued request to pull for translations. You should receive "
+#~ "an email shortly."
+#~ msgstr ""
+#~ "Solicitação para puxar traduções enfileirada com sucesso. Você deve receber "
+#~ "um e-mail em breve."
+
+#~ msgid "Successfully enqueued request to take backup."
+#~ msgstr "Solicitação para fazer backup enfileirada com sucesso."
+
+#~ msgid ""
+#~ "Resources yet to be completely translated for all languages. Hence, the "
+#~ "request for deleting resources can not be performed."
+#~ msgstr ""
+#~ "Recursos ainda não completamente traduzidos para todos os idiomas. Portanto,"
+#~ " a solicitação para excluir recursos não pode ser realizada."
+
+#~ msgid "Successfully enqueued request to delete resources."
+#~ msgstr "Solicitação para excluir recursos enfileirada com sucesso."
+
+#~ msgid "Source lang selected not available for the project"
+#~ msgstr "Idioma de origem selecionado não disponível para o projeto"
+
+#~ msgid "Create or Update Translations"
+#~ msgstr "Criar ou Atualizar Traduções"
+
+#~ msgid "Push Translations"
+#~ msgstr "Enviar Traduções"
+
+#~ msgid "Pull Translations"
+#~ msgstr "Puxar Traduções"
+
+#~ msgid "Backup Translations"
+#~ msgstr "Backup de Traduções"
+
+#~ msgid "Delete Translations"
+#~ msgstr "Excluir Traduções"
+
+#~ msgid "Download Translations"
+#~ msgstr "Baixar Traduções"
+
+#~ msgid ""
+#~ "Missing current Application Version. This can happen if the latest version "
+#~ "was deleted without creating a new one. Please create a new Application "
+#~ "Version before trying again."
+#~ msgstr ""
+#~ "Versão atual do Aplicativo ausente. Isso pode acontecer se a versão mais "
+#~ "recente foi excluída sem criar uma nova. Por favor, crie uma nova Versão do "
+#~ "Aplicativo antes de tentar novamente."
+
+#~ msgid ""
+#~ "Missing selected Application Version. Please create a new version before "
+#~ "trying again."
+#~ msgstr ""
+#~ "Versão do Aplicativo selecionada ausente. Por favor, crie uma nova versão "
+#~ "antes de tentar novamente."
+
+#~ msgid ""
+#~ "Submitted request to download translations. You should receive an email "
+#~ "shortly."
+#~ msgstr ""
+#~ "Solicitação para baixar traduções enviada. Você deverá receber um e-mail em "
+#~ "breve."
+
+#~ msgid "Migrate Project"
+#~ msgstr "Migrar Projeto"
+
+#~ msgid ""
+#~ "Submitted request to migrate project. You should receive an email shortly."
+#~ msgstr ""
+#~ "Solicitação para migrar projeto enviada. Você deverá receber um e-mail em "
+#~ "breve."
+
+#~ msgid "Set Up or Update Resource"
+#~ msgstr "Configurar ou Atualizar Recurso"
+
+#~ msgid ""
+#~ "\n"
+#~ "              Create a new resource or update an existing one in Transifex.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Crie um novo recurso ou atualize um existente no Transifex.\n"
+#~ "            "
+
+#~ msgid "Push Target Language"
+#~ msgstr "Enviar Idioma de Destino"
+
+#~ msgid ""
+#~ "\n"
+#~ "              Push translations for a target language to Transifex.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Envie traduções de um idioma de destino para o Transifex.\n"
+#~ "            "
+
+#~ msgid "Pull App Translations"
+#~ msgstr "Baixar Traduções do App"
+
+#~ msgid ""
+#~ "\n"
+#~ "              Pull all translations for a selected language, which will be emailed to you as an Excel file.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Baixe todas as traduções para um idioma selecionado, que serão enviadas para você por e-mail como um arquivo Excel.\n"
+#~ "            "
+
+#~ msgid "Backup App Translations"
+#~ msgstr "Backup das Traduções do App"
+
+#~ msgid ""
+#~ "\n"
+#~ "              Pull all translations for all languages in the project, which will be emailed to you as a zip file.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Baixe todas as traduções para todos os idiomas do projeto, que serão enviadas para você por e-mail como um arquivo zip.\n"
+#~ "            "
+
+#~ msgid "Delete Project Resources"
+#~ msgstr "Excluir Recursos do Projeto"
+
+#~ msgid ""
+#~ "\n"
+#~ "                Delete all resources for the selected project. Use caution!\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                Exclua todos os recursos do projeto selecionado. Use com cautela!\n"
+#~ "              "
+
+#~ msgid "App"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Module"
+#~ msgstr "Módulo"
+
+#~ msgid "Detail/List/UI"
+#~ msgstr "Detalhe/Lista/UI"
+
+#~ msgid "Field Name"
+#~ msgstr "Nome do Campo"
+
+#~ msgid "Default Display Text"
+#~ msgstr "Texto Padrão de Exibição"
+
+#~ msgid ""
+#~ "When '{}' is True for a new user, {} must be either empty or set to False."
+#~ msgstr ""
+#~ "Quando '{}' é Verdadeiro para um novo usuário, {} deve estar vazio ou "
+#~ "definido como Falso."
+
+#~ msgid "When '{}' is True for an existing user, {}."
+#~ msgstr "Quando '{}' é Verdadeiro para um usuário existente, {}."
+
+#~ msgid "Aggregate Data Sources"
+#~ msgstr "Agregação de Fontes de Dados"
+
+#~ msgid "Require Account Confirmation by SMS?"
+#~ msgstr "Exigir confirmação de conta por SMS?"
+
+#~ msgid ""
+#~ "If checked, the user will be sent a confirmation SMS and asked to set their "
+#~ "password."
+#~ msgstr ""
+#~ "Se marcado, o usuário receberá um SMS de confirmação e será solicitado a "
+#~ "definir sua senha."
+
+#~ msgid ""
+#~ "\n"
+#~ "            <div data-bind=\"visible: $root.phoneStatusMessage().length === 0\">\n"
+#~ "                    Please enter number including country code, without (+) and in digits only.\n"
+#~ "            </div>\n"
+#~ "            <div id=\"phone-error\">\n"
+#~ "                <span data-bind=\"visible: $root.phoneStatus() !== $root.STATUS.NONE\">\n"
+#~ "                    <i class=\"fa-solid fa-triangle-exclamation\"\n"
+#~ "                    data-bind=\"visible: $root.phoneStatus() === $root.STATUS.ERROR\"></i>\n"
+#~ "                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->\n"
+#~ "                </span>\n"
+#~ "            </div>\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "            <div data-bind=\"visible: $root.phoneStatusMessage().length === 0\">\n"
+#~ "                    Por favor, insira o número incluindo o código do país, sem (+) e apenas em dígitos.\n"
+#~ "            </div>\n"
+#~ "            <div id=\"phone-error\">\n"
+#~ "                <span data-bind=\"visible: $root.phoneStatus() !== $root.STATUS.NONE\">\n"
+#~ "                    <i class=\"fa-solid fa-triangle-exclamation\"\n"
+#~ "                    data-bind=\"visible: $root.phoneStatus() === $root.STATUS.ERROR\"></i>\n"
+#~ "                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->\n"
+#~ "                </span>\n"
+#~ "            </div>\n"
+#~ "        "
+
+#~ msgid ""
+#~ "\n"
+#~ "    <h2>\n"
+#~ "      Bulk Clear Mobile Worker Data\n"
+#~ "    </h2>\n"
+#~ "\n"
+#~ "    <div class=\"alert alert-warning\">\n"
+#~ "      <p>\n"
+#~ "        <i class=\"fa fa-warning\"></i>\n"
+#~ "        This action removes all data associated with a user and is a permanent action. Cleared users:\n"
+#~ "      </p>\n"
+#~ "      <ul>\n"
+#~ "        <li>Will not be able to access their cleared data.</li>\n"
+#~ "        <li>Will not be able to recover cleared data for any reason.</li>\n"
+#~ "      </ul>\n"
+#~ "    </div>\n"
+#~ "\n"
+#~ "    <p class=\"help-block\">\n"
+#~ "      To clear user data in bulk, please upload an Excel file with a single <strong>username</strong> column.\n"
+#~ "    </p>\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    <h2>\n"
+#~ "      Limpeza em Massa de Dados de Usuários Móveis\n"
+#~ "    </h2>\n"
+#~ "\n"
+#~ "    <div class=\"alert alert-warning\">\n"
+#~ "      <p>\n"
+#~ "        <i class=\"fa fa-warning\"></i>\n"
+#~ "        Esta ação remove todos os dados associados a um usuário e é permanente. Usuários limpos:\n"
+#~ "      </p>\n"
+#~ "      <ul>\n"
+#~ "        <li>Não poderão acessar seus dados limpos.</li>\n"
+#~ "        <li>Não poderão recuperar os dados limpos por nenhum motivo.</li>\n"
+#~ "      </ul>\n"
+#~ "    </div>\n"
+#~ "\n"
+#~ "    <p class=\"help-block\">\n"
+#~ "      Para limpar dados de usuários em massa, faça o upload de um arquivo Excel com uma única coluna <strong>username</strong>.\n"
+#~ "    </p>\n"
+#~ "  "
+
+#~ msgid "Bulk Clear Data"
+#~ msgstr "Limpar Dados em Massa"
+
+#~ msgid "Send Confirmation SMS"
+#~ msgstr "Enviar SMS de Confirmação"
+
+#~ msgid ""
+#~ "\n"
+#~ "                              Would you like to send the account confirmation\n"
+#~ "                              SMS to this account?\n"
+#~ "                            "
+#~ msgstr ""
+#~ "\n"
+#~ "                              Deseja enviar o SMS de confirmação de conta para esta conta?\n"
+#~ "                            "
+
+#~ msgid ""
+#~ "\n"
+#~ "                              The user will be sent a SMS with instructions to\n"
+#~ "                              set a password and be able to login to this\n"
+#~ "                              project.\n"
+#~ "                            "
+#~ msgstr ""
+#~ "\n"
+#~ "                              O usuário receberá um SMS com instruções para\n"
+#~ "                              definir uma senha e poderá acessar este\n"
+#~ "                              projeto.\n"
+#~ "                            "
+
+#~ msgid "Send Account Confirmaton SMS"
+#~ msgstr "Enviar SMS de confirmação de conta"
+
+#~ msgid ""
+#~ "\n"
+#~ "            <strong>There was an issue contacting the server.</strong>\n"
+#~ "            Please check your internet connection. If this issue continues,\n"
+#~ "            please\n"
+#~ "            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\">report an issue</a>.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            <strong>Houve um problema ao contatar o servidor.</strong>\n"
+#~ "            Verifique sua conexão com a internet. Se o problema persistir,\n"
+#~ "            por favor\n"
+#~ "            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\">relate um problema</a>.\n"
+#~ "          "
+
+#~ msgid "Bulk Clear"
+#~ msgstr "Limpeza em Massa"
+
+#~ msgid ""
+#~ "\n"
+#~ "                No users cleared. Please address the above issue(s) and re-upload your updated file.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "                Nenhum usuário foi limpo. Por favor, resolva o(s) problema(s) acima e envie novamente o seu arquivo atualizado.\n"
+#~ "            "
+
+#~ msgid "Action on Notification"
+#~ msgstr "Ação na Notificação"
+
+#~ msgid "This field must not exceed {} characters"
+#~ msgstr "Este campo não deve exceder {} caracteres"
+
+#~ msgid "Message type"
+#~ msgstr "Tipo de mensagem"
+
+#~ msgid ""
+#~ "Push Notifications is not available for your project. Please contact "
+#~ "Administrator."
+#~ msgstr ""
+#~ "Notificações Push não estão disponíveis para seu projeto. Por favor, entre "
+#~ "em contato com o Administrador."
+
+#~ msgid "Application Testing"
+#~ msgstr "Testes de Aplicação"
+
+#~ msgid "View All Attendees"
+#~ msgstr "Visualizar Todos os Participantes"
+
+#~ msgid "Manage attendees for Attendance Tracking Events"
+#~ msgstr "Gerenciar participantes para Eventos de Rastreamento de Presença"
+
+#~ msgid "View All Events"
+#~ msgstr "Visualizar Todos os Eventos"
+
+#~ msgid "Manage Attendance Tracking Events"
+#~ msgstr "Gerenciar Eventos de Rastreamento de Presença"
+
+#~ msgid "Register beneficiaries on COWIN"
+#~ msgstr "Registrar beneficiários no COWIN"
+
+#~ msgid "Update vaccination for beneficiaries on COWIN"
+#~ msgstr "Atualizar vacinação para beneficiários no COWIN"
+
 #~ msgid "The user being transferred to does not exist"
 #~ msgstr "O usuário para o qual está sendo feita a transferência não existe"
 
@@ -61468,19 +61424,6 @@ msgstr "Insira um JSON válido"
 #~ "\n"
 #~ "                    Certifique-se de que qualquer usuário atribuído a esta função também tenha um local atribuído.\n"
 #~ "                    Usuários sem locais atribuídos não poderão fazer login.\n"
-#~ "                  "
-
-#~ msgid ""
-#~ "\n"
-#~ "                    Organization-based data access restrictions are only available\n"
-#~ "                    on the Pro plan and above. Saving this role will enable\n"
-#~ "                    full organization access for the assigned users.\n"
-#~ "                  "
-#~ msgstr ""
-#~ "\n"
-#~ "                    Restrições de acesso a dados baseadas em organização estão disponíveis\n"
-#~ "                    apenas no plano Pro e superiores. Salvar esta função permitirá\n"
-#~ "                    acesso total à organização para os usuários atribuídos.\n"
 #~ "                  "
 
 #~ msgid ""

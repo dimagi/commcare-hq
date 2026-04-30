@@ -3,7 +3,8 @@
 {% if success_count %}
   <div class="alert alert-success alert-dismissable fade show" role="alert">
     {% blocktrans %}
-      Successfully verified {{ success_count }} rows!
+      Successfully verified {{ success_count }} rows! Updated status will
+      reflect shortly.
     {% endblocktrans %}
     <button
       type="button"
@@ -16,7 +17,8 @@
 {% if failure_count %}
   <div class="alert alert-danger alert-dismissable fade show" role="alert">
     {% blocktrans %}
-      Failed to verify {{ failure_count }} rows!
+      Failed to verify {{ failure_count }} rows! Updated status will reflect
+      shortly.
     {% endblocktrans %}
     <button
       type="button"

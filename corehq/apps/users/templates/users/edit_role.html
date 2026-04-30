@@ -3,7 +3,8 @@
 {% load i18n %}
 {% js_entry 'users/js/edit_role' %}
 {% block page_content %}
-  {% registerurl "post_user_role" domain %}
+  {% registerurl "create_user_role" domain %}
+  {% registerurl "update_user_role" domain '---' %}
   {% registerurl "edit_role" domain '---' %}
   {% initial_page_data "non_admin_roles" non_admin_roles %}
   {% initial_page_data "can_edit_roles" can_edit_roles %}
@@ -13,7 +14,6 @@
   {% initial_page_data "can_restrict_access_by_location" can_restrict_access_by_location %}
   {% initial_page_data "landing_page_choices" landing_page_choices %}
   {% initial_page_data "web_apps_choices" web_apps_choices %}
-  {% initial_page_data "attendance_tracking_privilege" attendance_tracking_privilege %}
   {% initial_page_data "has_report_builder_access" has_report_builder_access %}
   {% initial_page_data "data_file_download_enabled" data_file_download_enabled %}
   {% initial_page_data "export_ownership_enabled" export_ownership_enabled %}
@@ -23,7 +23,7 @@
 
   <div class="container mx-0">
     <form
-      x-data='initRole({% html_attr data %})'
+      x-data="initRole({% html_attr data %})"
       @submit.prevent="saveRole($data.formData)"
       x-cloak
       @input="isDirty = true"
@@ -129,7 +129,7 @@
                       class="col-md-1 controls"
                       x-show="area.showEditCheckbox"
                     >
-                      <div class="form-check">
+                      <div>
                         <input
                           class="form-check-input"
                           type="checkbox"
@@ -159,7 +159,7 @@
                       x-show="area.showViewCheckbox"
                     >
                       {# PLACEHOLDER checkbox when editPermission() is true #}
-                      <div class="form-check" x-show="area.editPermission">
+                      <div x-show="area.editPermission">
                         <input
                           class="form-check-input"
                           type="checkbox"
@@ -180,7 +180,7 @@
                       </div>
                       {# end PLACEHOLDER #}
                       {# REAL checkbox that controls viewPermission when editPermission() is false #}
-                      <div class="form-check" x-show="!area.editPermission">
+                      <div x-show="!area.editPermission">
                         <input
                           class="form-check-input"
                           type="checkbox"

@@ -706,7 +706,12 @@ def cleanup_blocked_hubspot_contacts():
     )
 
 
-@periodic_task(run_every=crontab(day_of_month='1', hour=3, minute=0), queue='background_queue', acks_late=True)
+@periodic_task(
+    run_every=crontab(day_of_month='1', hour=3, minute=0),
+    queue='background_queue',
+    acks_late=True,
+    durable=True,
+)
 def generate_partner_reports():
     """
     Generates analytics reports for partners that have requested tracking on

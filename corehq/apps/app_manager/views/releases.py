@@ -4,7 +4,6 @@ import uuid
 from math import ceil
 
 from django.contrib import messages
-from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Count
 from django.http import HttpResponseRedirect
@@ -35,7 +34,6 @@ from corehq.apps.analytics.tasks import (
 from corehq.apps.app_manager.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_app_cached,
     get_build_ids,
     get_current_app_version,
     get_latest_build_id,
@@ -62,7 +60,6 @@ from corehq.apps.app_manager.models import (
     ApplicationReleaseLog,
     AppReleaseByLocation,
     BuildProfile,
-    LatestEnabledBuildProfiles,
     SavedAppBuild,
 )
 from corehq.apps.app_manager.tasks import (
@@ -265,8 +262,7 @@ def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     if not is_released:
         if (
-            LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id, active=True).exists()
-            or AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()
+            AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()
         ):
             return json_response({'error': _('Please disable any enabled profiles/location restriction '
                                              'to un-release this build.')})
@@ -714,28 +710,6 @@ class LanguageProfilesView(View):
 
     def get(self, request, *args, **kwargs):
         return HttpResponse()
-
-
-@require_can_edit_apps
-def toggle_build_profile(request, domain, build_id, build_profile_id):
-    build = get_app_cached(request.domain, build_id)
-    status = request.GET.get('action') == 'enable'
-    try:
-        LatestEnabledBuildProfiles.update_status(build, build_profile_id, status)
-    except ValidationError as e:
-        messages.error(request, e)
-    else:
-        latest_enabled_build_profile = LatestEnabledBuildProfiles.for_app_and_profile(
-            build.copy_of, build_profile_id)
-        if latest_enabled_build_profile:
-            messages.success(request, _("Latest version for profile {} is now {}").format(
-                build.build_profiles[build_profile_id].name, latest_enabled_build_profile.version
-            ))
-        else:
-            messages.success(request, _("Latest release now available for profile {}").format(
-                build.build_profiles[build_profile_id].name
-            ))
-    return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))
 
 
 @require_deploy_apps

@@ -28,66 +28,91 @@ export function getDiff(baseline, incoming) {
 function getUpdateMultiDiff(original, incoming) {
     const additions = {};
     const deletions = {};
-    const updates = {};
 
     const allKeys = new Set([...Object.keys(original), ...Object.keys(incoming)]);
-    const normalizedOriginal = {};
-    Object.entries(original).forEach(([key, updateList]) => {
-        normalizedOriginal[key] = updateList.map(update => normalizeUpdateObject(update));
-    });
-
+    const baseline = Object.fromEntries(
+        Object.entries(original).map(([key, items]) => [key, items.map(omitDocType)]),
+    );
 
     allKeys.forEach(key => {
-        // If the question is part of the incoming updates, then it is either an addition or an update
-        if (!(key in normalizedOriginal)) {
-            incoming[key].forEach(update => {
-                additions[key] = additions[key] || [];
-                additions[key].push(update);
-            });
-        } else if (key in incoming) {
-            incoming[key].forEach(update => {
-                const originalMatch = normalizedOriginal[key].find(
-                    original => update.question_path === original.question_path);
-                if (!originalMatch) {
-                    additions[key] = additions[key] || [];
-                    additions[key].push(update);
-                } else if (originalMatch.update_mode !== update.update_mode) {
-                    updates[key] = updates[key] || [];
-                    updates[key].push(update);
+        if (Object.hasOwn(baseline, key) && Object.hasOwn(incoming, key)) {
+            const cache = {};
+            incoming[key].forEach(item => {
+                const num = countExactMatches(item, baseline[key], incoming[key], cache);
+                if (num === null || num > 0) {
+                    push(key, item, additions);
+                } else if (num < 0) {
+                    push(key, item, deletions);
                 }
             });
-        }
-
-        // If the question is missing from the incoming updates, then it is a deletion
-        if (!(key in incoming)) {
-            normalizedOriginal[key].forEach(update => {
-                deletions[key] = deletions[key] || [];
-                deletions[key].push(update);
-            });
-        } else if (key in normalizedOriginal) {
-            normalizedOriginal[key].forEach(original => {
-                if (!incoming[key].find(update => update.question_path === original.question_path)) {
-                    deletions[key] = deletions[key] || [];
-                    deletions[key].push(original);
+            baseline[key].forEach(item => {
+                const num = countExactMatches(item, baseline[key], incoming[key], cache);
+                if (num === null || num < 0) {
+                    push(key, item, deletions);
                 }
+            });
+        } else if (Object.hasOwn(incoming, key)) {  // not in baseline
+            incoming[key].forEach(item => {
+                push(key, item, additions);
+            });
+        } else {  // key in baseline, not in incoming
+            baseline[key].forEach(item => {
+                push(key, item, deletions);
             });
         }
     });
 
-    let diff = {};
+    const diff = {};
     if (Object.keys(additions).length) {
-        diff['add'] = additions;
+        diff.add = additions;
     }
-
     if (Object.keys(deletions).length) {
-        diff['delete'] = deletions;
+        diff.delete = deletions;
     }
-
-    if (Object.keys(updates).length) {
-        diff['update'] = updates;
-    }
-
     return diff;
+}
+
+function push(key, item, mapping) {
+    mapping[key] = mapping[key] || [];
+    mapping[key].push(item);
+}
+
+/**
+ * Count exact matches of item in baseline and incoming
+ *
+ * Returns null if there are no other exact matches.
+ * Returns a positive number if incoming has more exact matches.
+ * Returns a negative number if baseline has more exact matches.
+ * If not null, the difference is moved toward zero and cached each
+ * time this function is called. Once cached, the cached difference
+ * (which remains zero once zero) is returned.
+ */
+function countExactMatches(item, baseline, incoming, cache) {
+    const key = Object.keys(item)
+        .sort()
+        .map(k => {
+            const v = item[k];
+            return `${k}:${typeof v}=${String(v)}`;
+        })
+        .join(' ');
+    let num = cache[key];
+    if (num === undefined) {
+        const nBaseline = baseline.filter(q => _.isEqual(q, item)).length;
+        const nIncoming = incoming.filter(q => _.isEqual(q, item)).length;
+        if (nIncoming + nBaseline === 1) {
+            cache[key] = null;
+            return null;
+        }
+        num = cache[key] = nIncoming - nBaseline;
+    } else if (num === null) {
+        return null;
+    }
+    if (num > 0) {
+        cache[key]--;
+    } else if (num < 0) {
+        cache[key]++;
+    }
+    return num;
 }
 
 function getNameDiff(original, updated) {
@@ -111,7 +136,7 @@ function getNameDiff(original, updated) {
     return result;
 }
 
-function normalizeUpdateObject(updateObject) {
+function omitDocType(updateObject) {
     // The server sends the raw data from couch that includes keys not used in our javascript representation.
     // Ideally, the server would strip would these values for us, but because that doesn't happen,
     // remove these extraneous keys here

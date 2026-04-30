@@ -35,6 +35,7 @@ from corehq.apps.registry.tests.utils import (
 )
 from corehq.apps.users.models import HqPermissions
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.util.test_utils import flag_enabled
 
 
 def case(name, type_, properties):
@@ -89,6 +90,7 @@ patch_get_app_cached = mock.patch('corehq.apps.case_search.utils.get_app_cached'
 
 @es_test(requires=[case_search_adapter], setup_class=True)
 @mock.patch.object(DataRegistryHelper, '_check_user_has_access', new=mock.Mock())
+@flag_enabled('CASE_SEARCH_RELATED_LOOKUPS')
 class TestCaseSearchRegistry(TestCase):
 
     @classmethod

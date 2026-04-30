@@ -468,10 +468,15 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-apps-checkbox",
                     screenReaderEditAndViewText: gettext("Edit & View Apps"),
                     screenReaderViewOnlyText: gettext("View-Only Applications"),
-                    showAllowCheckbox: false,
-                    allowCheckboxText: null,
-                    allowCheckboxId: null,
-                    allowCheckboxPermission: null,
+                    showAllowCheckbox: toggles.toggleEnabled("LOCKED_ADMIN_QUESTIONS") && privileges.hasPrivilege("locked_admin_questions"),
+                    allowCheckboxText: gettext("Allow locking and unlocking questions in forms."),
+                    allowCheckboxId: "edit-locked-questions-checkbox",
+                    get allowCheckboxPermission() {
+                        return self.role.permissions.edit_locked_questions_in_apps;
+                    },
+                    set allowCheckboxPermission(value) {
+                        self.role.permissions.edit_locked_questions_in_apps = value;
+                    },
                 },
                 {
                     get showOption() {
@@ -542,29 +547,6 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-shared-exports-checkbox",
                     screenReaderEditAndViewText: null,
                     screenReaderViewOnlyText: null,
-                    showAllowCheckbox: false,
-                    allowCheckboxText: null,
-                    allowCheckboxId: null,
-                    allowCheckboxPermission: null,
-                },
-                {
-                    get showOption() {
-                        return initialPageData.get("attendance_tracking_privilege");
-                    },
-                    get editPermission() {
-                        return self.role.permissions.manage_attendance_tracking;
-                    },
-                    set editPermission(value) {
-                        self.role.permissions.manage_attendance_tracking = value;
-                    },
-                    viewPermission: null,
-                    text: gettext("<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking events and users"),
-                    showEditCheckbox: true,
-                    editCheckboxLabel: "edit-attenance-tracking-checkbox",
-                    showViewCheckbox: false,
-                    viewCheckboxLabel: "view-attenance-tracking-checkbox",
-                    screenReaderEditAndViewText: gettext("Edit Attendance Tracking Events"),
-                    screenReaderViewOnlyText: gettext("Edit Attendance Tracking Events"),
                     showAllowCheckbox: false,
                     allowCheckboxText: null,
                     allowCheckboxId: null,
@@ -853,9 +835,12 @@ Alpine.data('initRole', (roleJson) => {
             self.saveRole = () => {
                 self.isSaving = true;
                 const isNewRole = !self.role._id;
+                const url = isNewRole
+                    ? initialPageData.reverse("create_user_role")
+                    : initialPageData.reverse("update_user_role", self.role._id);
                 $.ajax({
                     method: 'POST',
-                    url: initialPageData.reverse("post_user_role"),
+                    url: url,
                     data: JSON.stringify(self.role, null, 2),
                     dataType: 'json',
                     success: (response) => {

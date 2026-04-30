@@ -4,29 +4,33 @@ from typing import NamedTuple, Optional
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.utils.translation import gettext as _
+
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_boolean
-from django.utils.translation import gettext as _
 
 from corehq import toggles
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.enterprise.models import EnterprisePermissions
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import (
+    user_can_access_other_user,
+    user_can_change_locations,
+)
 from corehq.apps.reports.models import TableauUser
 from corehq.apps.reports.util import get_allowed_tableau_groups_for_domain
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import user_can_access_other_user, user_can_change_locations
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.apps.users.dbaccessors import get_existing_usernames
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import normalize_username, raw_username
-from corehq.apps.users.validation import validate_assigned_locations_allow_users
-from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-from corehq.apps.users.views.utils import (
-    user_can_access_invite
+from corehq.apps.users.validation import (
+    validate_assigned_locations_allow_users,
 )
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.apps.users.views.utils import user_can_access_invite
 from corehq.util.workbook_json.excel import (
     StringTypeRequiredError,
     enforce_string_type,
@@ -68,7 +72,6 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, all_us
             NewUserPasswordValidator(domain),
             PasswordValidator(domain) if validate_passwords else noop,
             GroupValidator(domain, allowed_groups),
-            ConfirmationSmsValidator(domain)
         ]
 
 
@@ -283,10 +286,14 @@ class CustomDataValidator(ImportValidator):
     def __init__(self, domain, all_user_profiles_by_name, is_web_user_import):
         super().__init__(domain)
         if is_web_user_import:
-            from corehq.apps.users.views.mobile.custom_data_fields import WebUserFieldsView
+            from corehq.apps.users.views.mobile.custom_data_fields import (
+                WebUserFieldsView,
+            )
             self.custom_data_validator = WebUserFieldsView.get_validator(domain)
         else:
-            from corehq.apps.users.views.mobile.custom_data_fields import CommcareUserFieldsView
+            from corehq.apps.users.views.mobile.custom_data_fields import (
+                CommcareUserFieldsView,
+            )
             self.custom_data_validator = CommcareUserFieldsView.get_validator(domain)
         self.all_user_profiles_by_name = all_user_profiles_by_name
 
@@ -468,38 +475,6 @@ class TargetDomainValidator(ImportValidator):
         if target_domain and target_domain != self.domain:
             if target_domain not in EnterprisePermissions.get_domains(self.domain):
                 return self.error_message.format(target_domain, self.domain)
-
-
-class ConfirmationSmsValidator(ImportValidator):
-    confirmation_sms_header = "send_confirmation_sms"
-    account_confirmed_header = "is_account_confirmed"
-    active_status_header = "is_active"
-    error_new_user = _("When '{}' is True for a new user, {} must be either empty or set to False.")
-    error_existing_user = _("When '{}' is True for an existing user, {}.")
-
-    def validate_spec(self, spec):
-        send_account_confirmation_sms = spec_value_to_boolean_or_none(spec, self.confirmation_sms_header)
-
-        if send_account_confirmation_sms:
-            is_active = spec_value_to_boolean_or_none(spec, self.active_status_header)
-            is_account_confirmed = spec_value_to_boolean_or_none(spec, self.account_confirmed_header)
-            user_id = spec.get('user_id')
-            error_values = []
-            if not user_id:
-                if is_active:
-                    error_values.append(self.active_status_header)
-                if is_account_confirmed:
-                    error_values.append(self.account_confirmed_header)
-                if error_values:
-                    return self.error_new_user.format(self.confirmation_sms_header, ' and '.join(error_values))
-            else:
-                if is_active:
-                    error_values.append(f"{self.active_status_header} must be empty or set to False")
-                if is_account_confirmed is not None:
-                    error_values.append(f"{self.account_confirmed_header} must be empty")
-                if error_values:
-                    errors_formatted = ' and '.join(error_values)
-                    return self.error_existing_user.format(self.confirmation_sms_header, errors_formatted)
 
 
 class UserAccessValidator(ImportValidator):

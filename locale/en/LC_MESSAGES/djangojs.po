@@ -294,26 +294,6 @@ msgid ""
 "please report an issue."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Active"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Inactive"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Deactivate"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Activate"
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
 #: corehq/apps/sms/static/sms/js/add_gateway.js
@@ -738,10 +718,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Translatable Text"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-msgid "Image"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
@@ -1212,8 +1188,6 @@ msgid "save"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Case Property"
 msgstr ""
 
@@ -1230,109 +1204,47 @@ msgstr ""
 msgid "[unknown]"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getCurrentMugInput"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/229.js
+msgid "\n"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "jstree"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getMugByPath"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getData"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "loadXML"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "createXML"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "loadXFormOrError"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "addQuestion"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "nodeIDFromLabel"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getSections"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "collapseSection"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "Drag question here"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is equal to"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is not equal to"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is less than"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is less than or equal to"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is greater than"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is greater than or equal to"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "has selected value"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "True when ALL of the expressions are true."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "True when ANY of the expressions are true."
 msgstr ""
 
@@ -1340,60 +1252,8 @@ msgstr ""
 msgid "{path} is not a valid data parent"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"\"{caseProperty}\" is assigned by another question. You can still save the "
-"form, but will need to have only one question for any case property in order "
-"to build the application"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Case Management"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"Saving a question as a case property makes it accessible and reusable across "
-"your application. To manage all your case properties from this form, click "
-"on the Manage Case button. "
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "**{word}** is a reserved word"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"This question is used to update multiple case properties. If you wish to "
-"update these case properties, please visit the [Manage Case Page]({url})"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Command Bar"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Basic"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Logic"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"Use logic to control when questions are asked and what answers are valid. "
-"You can add logic to display a question based on a previous answer, to make "
-"the question required or ensure the answer is in a valid range."
+msgid "New Form"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
@@ -1946,14 +1806,13 @@ msgstr ""
 msgid "Submit Invoice Request"
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/bootstrap3/case_search.js
-#: corehq/apps/domain/static/domain/js/bootstrap5/case_search.js
-msgid "You have unchanged settings"
-msgstr ""
-
 #: corehq/apps/domain/static/domain/js/bootstrap3/info_basic.js
 #: corehq/apps/domain/static/domain/js/bootstrap5/info_basic.js
 msgid "Select a Timezone..."
+msgstr ""
+
+#: corehq/apps/domain/static/domain/js/case_search.js
+msgid "You have unchanged settings"
 msgstr ""
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
@@ -2046,38 +1905,6 @@ msgstr ""
 #: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
 msgid ""
 "Error sending email, please try again or report an issue if this persists."
-msgstr ""
-
-#: corehq/apps/events/static/events/js/event_attendees.js
-msgid "Disable Mobile Worker Attendees"
-msgstr ""
-
-#: corehq/apps/events/static/events/js/event_attendees.js
-msgid "Enable Mobile Worker Attendees"
-msgstr ""
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Possible Attendees"
-msgstr ""
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Expected Attendees"
-msgstr ""
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Search Attendees"
-msgstr ""
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Possible Attendance Takers"
-msgstr ""
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Selected Attendance Takers"
-msgstr ""
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Search Attendance Takers"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/create_export.js
@@ -2318,18 +2145,6 @@ msgstr ""
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid ""
 "Oops! Something went wrong! Please report an issue if the problem persists."
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
-msgid "Token successfully verified!"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
-msgid ""
-"Invalid API token. Please verify that the token matches the one on your "
-"Mapbox account and has the correct scope configured."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/gps_capture.js
@@ -2903,18 +2718,6 @@ msgstr ""
 
 #: corehq/apps/locations/static/locations/js/widgets.js
 msgid "Choose a primary location"
-msgstr ""
-
-#: corehq/apps/prototype/static/prototype/js/example/knockout_pagination.js
-#: corehq/apps/prototype/static/prototype/js/webpack/knockout_pagination.js
-msgid ""
-"Could not load data. Please try again later or report an issue if this "
-"problem persists."
-msgstr ""
-
-#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap3_amd.js
-#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap5_amd.js
-msgid "yes"
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
@@ -3703,16 +3506,6 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
 #: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
-msgid "Phone number is required when users confirm their own accounts by sms."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
-#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
-msgid "Phone number should contain only digits 0-9."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
-#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Checking availability..."
 msgstr ""
 
@@ -3888,6 +3681,10 @@ msgid "View-Only Applications"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_role.js
+msgid "Allow locking and unlocking questions in forms."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
 "worker roles &amp; permissions (only Admins can edit roles)"
@@ -3915,16 +3712,6 @@ msgstr ""
 msgid ""
 "<strong>Manage Shared Exports</strong> &mdash; access and edit the content "
 "and structure of shared exports"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/edit_role.js
-msgid ""
-"<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
-"events and users"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/edit_role.js
-msgid "Edit Attendance Tracking Events"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_role.js

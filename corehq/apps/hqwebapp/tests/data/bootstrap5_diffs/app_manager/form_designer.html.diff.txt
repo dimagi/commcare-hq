@@ -15,7 +15,7 @@
  
  {% block title %}{# controlled by app_manager/js/form_designer.js #}{% endblock %}
  
-@@ -44,7 +44,7 @@
+@@ -43,7 +43,7 @@
    <div id="formdesigner" class="clearfix loading"></div>
  
    <script type="text/html" id="js-fd-form-actions">
@@ -24,7 +24,7 @@
        <!-- B5 TODO: Replace btn-form-action with bootstrap 5 utils after migration -->
        <a
          class="btn btn-form-action track-usage-link custom-button-style"
-@@ -69,7 +69,7 @@
+@@ -68,7 +68,7 @@
    </script>
  
    <script type="text/html" id="js-fd-view-submissions-only">
@@ -33,7 +33,7 @@
        {% include "app_manager/partials/view_submissions_button.html" with btn_style='btn-form-action custom-button-style' %}
      </div>
    </script>
-@@ -87,7 +87,7 @@
+@@ -86,7 +86,7 @@
    </script>
  
    <script type="text/html" id="fd-hq-helptext-close">
@@ -42,7 +42,7 @@
    </script>
  
    <script type="text/html" id="fd-hq-helptext-followup">
-@@ -115,7 +115,7 @@
+@@ -114,7 +114,7 @@
    </script>
  
    <script type="text/html" id="fd-hq-edit-formname-button">
@@ -51,7 +51,7 @@
        <i class="fa fa-pencil"></i>
      </a>
    </script>
-@@ -129,7 +129,7 @@
+@@ -128,7 +128,7 @@
      <div class="modal-dialog">
        <div class="modal-content">
          <div class="modal-header">
@@ -60,7 +60,7 @@
              <span aria-hidden="true">&times;</span>
            </button>
            <h4 class="modal-title">{% trans "Edit Form Details" %}</h4>
-@@ -140,13 +140,13 @@
+@@ -139,13 +139,13 @@
            data-bind="submit:update"
          >
            <div class="modal-body">
@@ -78,7 +78,7 @@
                  <input
                    type="text"
                    data-bind="value: name"
-@@ -154,13 +154,13 @@
+@@ -153,13 +153,13 @@
                  />
                </div>
              </div>
@@ -96,7 +96,7 @@
                  <textarea
                    rows="5"
                    data-bind="value: comment"
-@@ -170,7 +170,7 @@
+@@ -169,7 +169,7 @@
              </div>
            </div>
            <div class="modal-footer">

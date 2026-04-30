@@ -343,26 +343,6 @@ msgstr ""
 "Samahani, kuna tatizo limetokea wakati wa kupakua. Ikiwa utaona hili mara "
 "kwa mara tafadhali ripoti tatizo."
 
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Active"
-msgstr "Hai"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Inactive"
-msgstr "Haifanyi kazi"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Deactivate"
-msgstr "Zima"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
-msgid "Activate"
-msgstr "Washa"
-
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
 #: corehq/apps/sms/static/sms/js/add_gateway.js
@@ -795,10 +775,6 @@ msgstr "Ulinganifu wa Kitambulisho kwa Masharti"
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Translatable Text"
 msgstr "Maandishi Yanayoweza Kutafsiriwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-msgid "Image"
-msgstr "Picha"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "The \"%(format)s\" format requires columns with formats: %(dependencies)s."
@@ -1276,8 +1252,6 @@ msgid "save"
 msgstr "hifadhi"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Case Property"
 msgstr "Sifa ya Kesi"
 
@@ -1294,109 +1268,47 @@ msgstr "Iliyohifadhiwa hivi karibuni"
 msgid "[unknown]"
 msgstr "[haijulikani]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getCurrentMugInput"
-msgstr "pataMugInputWaSasa"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/229.js
+msgid "\n"
+msgstr "\n"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "jstree"
-msgstr "jstree"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getMugByPath"
-msgstr "getMugByPath"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getData"
-msgstr "pataData"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "loadXML"
-msgstr "pakiaXML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "createXML"
-msgstr "undaXML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "loadXFormOrError"
-msgstr "pakiaXFormAuHitilafu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "addQuestion"
-msgstr "ongezaSwali"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "nodeIDFromLabel"
-msgstr "kitambulishoChaNodeKutokaKwaLebo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "getSections"
-msgstr "pataSehemu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
-msgid "collapseSection"
-msgstr "kunjaSehemu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "Drag question here"
 msgstr "Buruta swali hapa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is equal to"
 msgstr "ni sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is not equal to"
 msgstr "si sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is less than"
 msgstr "ni chini ya"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is less than or equal to"
 msgstr "ni chini au sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is greater than"
 msgstr "ni zaidi ya"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is greater than or equal to"
 msgstr "ni zaidi au sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "has selected value"
 msgstr "ina thamani iliyochaguliwa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "True when ALL of the expressions are true."
 msgstr "Kweli ikiwa KAULI ZOTE ni kweli."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "True when ANY of the expressions are true."
 msgstr "Kweli ikiwa YOYOTE kati ya kauli ni kweli."
 
@@ -1404,73 +1316,9 @@ msgstr "Kweli ikiwa YOYOTE kati ya kauli ni kweli."
 msgid "{path} is not a valid data parent"
 msgstr "{path} si mzazi halali wa data"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"\"{caseProperty}\" is assigned by another question. You can still save the "
-"form, but will need to have only one question for any case property in order"
-" to build the application"
-msgstr ""
-"\"{caseProperty}\" imetolewa na swali lingine. Unaweza bado kuhifadhi fomu, "
-"lakini utahitaji kuwa na swali moja tu kwa kila sifa ya kesi ili kujenga "
-"programu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Case Management"
-msgstr "Usimamizi wa Kesi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"Saving a question as a case property makes it accessible and reusable across"
-" your application. To manage all your case properties from this form, click "
-"on the Manage Case button. "
-msgstr ""
-"Kuhifadhi swali kama sifa ya kesi kunafanya lipatikane na kutumika tena "
-"katika programu yako. Ili kudhibiti sifa zako zote za kesi kutoka kwenye "
-"fomu hii, bonyeza kitufe cha Dhibiti Kesi."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "**{word}** is a reserved word"
-msgstr "**{word}** ni neno lililohifadhiwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"This question is used to update multiple case properties. If you wish to "
-"update these case properties, please visit the [Manage Case Page]({url})"
-msgstr ""
-"Swali hili linatumika kusasisha sifa nyingi za kesi. Ikiwa ungependa "
-"kusasisha sifa hizi za kesi, tafadhali tembelea [Ukurasa wa Dhibiti "
-"Kesi]({url})"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Command Bar"
-msgstr "Upau wa Amri"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Basic"
-msgstr "Msingi"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Logic"
-msgstr "Mantiki"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid ""
-"Use logic to control when questions are asked and what answers are valid. "
-"You can add logic to display a question based on a previous answer, to make "
-"the question required or ensure the answer is in a valid range."
-msgstr ""
-"Tumia mantiki kudhibiti lini maswali yanaulizwa na majibu gani ni halali. "
-"Unaweza kuongeza mantiki ili kuonyesha swali kulingana na jibu la awali, "
-"kufanya swali liwe la lazima au kuhakikisha jibu liko kwenye kiwango halali."
+msgid "New Form"
+msgstr "Fomu Mpya"
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
@@ -2075,15 +1923,14 @@ msgstr "Wasilisha Malipo"
 msgid "Submit Invoice Request"
 msgstr "Wasilisha Ombi la Ankara"
 
-#: corehq/apps/domain/static/domain/js/bootstrap3/case_search.js
-#: corehq/apps/domain/static/domain/js/bootstrap5/case_search.js
-msgid "You have unchanged settings"
-msgstr "Una mipangilio ambayo haijabadilishwa"
-
 #: corehq/apps/domain/static/domain/js/bootstrap3/info_basic.js
 #: corehq/apps/domain/static/domain/js/bootstrap5/info_basic.js
 msgid "Select a Timezone..."
 msgstr "Chagua Eneo la Saa..."
+
+#: corehq/apps/domain/static/domain/js/case_search.js
+msgid "You have unchanged settings"
+msgstr "Una mipangilio ambayo haijabadilishwa"
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
@@ -2188,38 +2035,6 @@ msgid ""
 msgstr ""
 "Hitilafu imetokea wakati wa kutuma barua pepe, tafadhali jaribu tena au "
 "ripoti tatizo hili likiendelea."
-
-#: corehq/apps/events/static/events/js/event_attendees.js
-msgid "Disable Mobile Worker Attendees"
-msgstr "Zima Washiriki wa Simu ya Mkononi"
-
-#: corehq/apps/events/static/events/js/event_attendees.js
-msgid "Enable Mobile Worker Attendees"
-msgstr "Washa Washiriki wa Simu ya Mkononi"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Possible Attendees"
-msgstr "Washiriki Wanaowezekana"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Expected Attendees"
-msgstr "Washiriki Wanaotarajiwa"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Search Attendees"
-msgstr "Tafuta Washiriki"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Possible Attendance Takers"
-msgstr "Wachukua Mahudhurio Wanaowezekana"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Selected Attendance Takers"
-msgstr "Wachukua Mahudhurio Waliochaguliwa"
-
-#: corehq/apps/events/static/events/js/new_event.js
-msgid "Search Attendance Takers"
-msgstr "Tafuta Wachukua Mahudhurio"
 
 #: corehq/apps/export/static/export/js/create_export.js
 msgid "<%- count %> form submission available."
@@ -2476,20 +2291,6 @@ msgid ""
 "Oops! Something went wrong! Please report an issue if the problem persists."
 msgstr ""
 "Samahani! Kuna tatizo limetokea! Tafadhali ripoti tatizo kama litaendelea."
-
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
-msgid "Token successfully verified!"
-msgstr "Token imethibitishwa kwa mafanikio!"
-
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
-#: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
-msgid ""
-"Invalid API token. Please verify that the token matches the one on your "
-"Mapbox account and has the correct scope configured."
-msgstr ""
-"Token ya API si sahihi. Tafadhali hakikisha tokeni inalingana na ile kwenye "
-"akaunti yako ya Mapbox na ina kiwango sahihi kimewekwa."
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/gps_capture.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/gps_capture.js
@@ -3079,20 +2880,6 @@ msgstr "Chagua Eneo"
 #: corehq/apps/locations/static/locations/js/widgets.js
 msgid "Choose a primary location"
 msgstr "Chagua eneo kuu"
-
-#: corehq/apps/prototype/static/prototype/js/example/knockout_pagination.js
-#: corehq/apps/prototype/static/prototype/js/webpack/knockout_pagination.js
-msgid ""
-"Could not load data. Please try again later or report an issue if this "
-"problem persists."
-msgstr ""
-"Imeshindikana kupakia data. Tafadhali jaribu tena baadaye au ripoti tatizo "
-"kama hili litaendelea."
-
-#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap3_amd.js
-#: corehq/apps/prototype/static/prototype/js/webpack/bootstrap5_amd.js
-msgid "yes"
-msgstr "ndiyo"
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
@@ -3935,18 +3722,6 @@ msgstr "Tafadhali ingiza anwani halali ya barua pepe."
 
 #: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
 #: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
-msgid "Phone number is required when users confirm their own accounts by sms."
-msgstr ""
-"Nambari ya simu inahitajika wakati watumiaji wanathibitisha akaunti zao kwa "
-"sms."
-
-#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
-#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
-msgid "Phone number should contain only digits 0-9."
-msgstr "Nambari ya simu inapaswa kuwa na tarakimu 0-9 pekee."
-
-#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
-#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Checking availability..."
 msgstr "Inaangalia upatikanaji..."
 
@@ -4142,6 +3917,10 @@ msgid "View-Only Applications"
 msgstr "Maombi ya Kuangalia Pekee"
 
 #: corehq/apps/users/static/users/js/edit_role.js
+msgid "Allow locking and unlocking questions in forms."
+msgstr "Ruhusu kufunga na kufungua maswali kwenye fomu."
+
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
 "worker roles &amp; permissions (only Admins can edit roles)"
@@ -4177,18 +3956,6 @@ msgid ""
 msgstr ""
 "<strong>Simamia Uhamishaji wa Pamoja</strong> &mdash; pata na hariri maudhui"
 " na muundo wa uhamishaji wa pamoja"
-
-#: corehq/apps/users/static/users/js/edit_role.js
-msgid ""
-"<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
-"events and users"
-msgstr ""
-"<strong>Ufuatiliaji wa Mahudhurio</strong> &mdash; Ratibu matukio ya "
-"ufuatiliaji wa mahudhurio na watumiaji"
-
-#: corehq/apps/users/static/users/js/edit_role.js
-msgid "Edit Attendance Tracking Events"
-msgstr "Hariri Matukio ya Ufuatiliaji wa Mahudhurio"
 
 #: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
@@ -4540,448 +4307,26 @@ msgstr "Imeshindikana! Majibu ni: "
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ imeshindwa kutuma ombi: "
 
-#~ msgid "No Access"
-#~ msgstr "Hakuna Ufikiaji"
+#~ msgid "Command Bar"
+#~ msgstr "Upau wa Amri"
 
-#~ msgid "Access All"
-#~ msgstr "Fikia Yote"
+#~ msgid "Cannot insert $1 into $2"
+#~ msgstr "Haiwezi kuweka $1 ndani ya $2"
 
-#~ msgid "Limited Access"
-#~ msgstr "Ufikiaji Uliopunguzwa"
+#~ msgid "Cannot insert $1 into or after $2"
+#~ msgstr "Haiwezi kuweka $1 ndani au baada ya $2"
 
-#~ msgid "Select which items the role can access:"
-#~ msgstr "Chagua vitu ambavyo jukumu linaweza kufikia:"
+#~ msgid "Cannot insert {type} into tree root"
+#~ msgstr "Haiwezi kuweka {type} kwenye mzizi wa mti"
 
-#~ msgid "Select which web apps the role has access to:"
-#~ msgstr "Chagua ni programu gani za wavuti jukumu linaweza kufikia:"
+#~ msgid "Unsupported paste format"
+#~ msgstr "Muundo wa kubandika hauungwa mkono"
 
-#, javascript-format
-#~ msgid "Select at least one item from the list for \"%s\""
-#~ msgstr "Chagua angalau kipengee kimoja kutoka kwenye orodha kwa \"%s\""
+#~ msgid "Unsupported paste format:"
+#~ msgstr "Muundo wa kubandika hauungwa mkono:"
 
-#~ msgid "Edit Role: "
-#~ msgstr "Hariri Jukumu: "
-
-#~ msgid "View Role: "
-#~ msgstr "Angalia Jukumu: "
-
-#~ msgid "New Role"
-#~ msgstr "Jukumu Jipya"
-
-#~ msgid "\n"
-#~ msgstr "\n"
-
-#~ msgid "New Form"
-#~ msgstr "Fomu Mpya"
-
-#~ msgid "Your location"
-#~ msgstr "Eneo lako"
-
-#~ msgid "Could not enable user properties, please try again later."
-#~ msgstr ""
-#~ "Imeshindikana kuwezesha mali za mtumiaji, tafadhali jaribu tena baadaye."
-
-#~ msgid "Email address is required when users confirm their own accounts."
-#~ msgstr ""
-#~ "Anwani ya barua pepe inahitajika wakati watumiaji wanathibitisha akaunti zao"
-#~ " wenyewe."
-
-#~ msgid "Out of range of filter. Will not appear on page refresh."
-#~ msgstr "Nje ya wigo wa kichujio. Haitatokea ukurasa ukipakiwa upya."
-
-#~ msgid "Case copied"
-#~ msgstr "Kesi imenakiliwa"
-
-#~ msgid "Cases copied"
-#~ msgstr "Kesi zimenakiliwa"
-
-#~ msgid "Select None"
-#~ msgstr "Chagua Hakuna"
-
-#~ msgid "Select All"
-#~ msgstr "Chagua Zote"
-
-#~ msgid "long"
-#~ msgstr "ndefu"
-
-#~ msgid "2-digit"
-#~ msgstr "tarakimu 2"
-
-#~ msgid "Copy"
-#~ msgstr "Nakili"
-
-#~ msgid "Expand All"
-#~ msgstr "Panua Zote"
-
-#~ msgid "Collapse All"
-#~ msgstr "Fupisha Zote"
-
-#~ msgid "Bulk Update All Questions"
-#~ msgstr "Sasisha Maswali Yote kwa Wingi"
-
-#~ msgid "Click {btn} to start building your form."
-#~ msgstr "Bofya {btn} kuanza kujenga fomu yako."
-
-#~ msgid "Question Details"
-#~ msgstr "Maelezo ya Swali"
-
-#~ msgid "Expression Editor"
-#~ msgstr "Kihariri wa Usemi"
-
-#~ msgid "Cannot Change Question Type"
-#~ msgstr "Haiwezekani Kubadilisha Aina ya Swali"
-
-#~ msgid "Change Question Type To"
-#~ msgstr "Badilisha Aina ya Swali Kuwa"
-
-#~ msgid "Show"
-#~ msgstr "Onyesha"
-
-#~ msgid "Used By"
-#~ msgstr "Inatumiwa Na"
-
-#~ msgid "In Property"
-#~ msgstr "Katika Sifa"
-
-#~ msgid "No match for {info} found!"
-#~ msgstr "Hakuna inayolingana na {info} imepatikana!"
-
-#~ msgid "Multiple matches for {info} found!"
-#~ msgstr "Mecano nyingi zinazolingana na {info} zimepatikana!"
-
-#~ msgid "Add Key&rarr;Value Pair"
-#~ msgstr "Ongeza Jozi ya Ufunguo&rarr;Thamani"
-
-#~ msgid "show in question list"
-#~ msgstr "onyesha kwenye orodha ya maswali"
-
-#~ msgid "Date Format Options"
-#~ msgstr "Chaguo za Muundo wa Tarehe"
-
-#~ msgid "No Formatting"
-#~ msgstr "Hakuna Muundo"
-
-#~ msgid "Invalid XPath expression."
-#~ msgstr "Kielezi cha XPath si sahihi."
-
-#~ msgid ""
-#~ "The {property} for a question is not allowed to reference the question "
-#~ "itself. Please remove the . from the {property} or your form will have "
-#~ "errors."
-#~ msgstr ""
-#~ "{property} ya swali hairuhusiwi kurejelea swali lenyewe. Tafadhali ondoa . "
-#~ "kwenye {property} au fomu yako itakuwa na makosa."
-
-#~ msgid "Unknown question:"
-#~ msgstr "Swali lisilojulikana:"
-
-#~ msgid "Unknown questions:"
-#~ msgstr "Maswali yasiyojulikana:"
-
-#~ msgid "no formatting"
-#~ msgstr "hakuna muundo"
-
-#~ msgid "{question} is required."
-#~ msgstr "{question} inahitajika."
-
-#~ msgid "{question} is not allowed."
-#~ msgstr "{question} hairuhusiwi."
-
-#~ msgid "{question} validation failed"
-#~ msgstr "Uhakiki wa {question} umeshindwa"
-
-#~ msgid "Unknown (read-only) question type"
-#~ msgstr "Aina ya swali isiyojulikana (soma-tu)"
-
-#~ msgid "Lookup Table Data"
-#~ msgstr "Data ya Jedwali la Utafutaji"
-
-#~ msgid "No Translation Data"
-#~ msgstr "Hakuna Data ya Tafsiri"
-
-#~ msgid "Question ID"
-#~ msgstr "Kitambulisho cha Swali"
-
-#~ msgid ""
-#~ "The ID '{nodeID}' may cause problems with form parsing. It is recommended to"
-#~ " pick a different Question ID."
-#~ msgstr ""
-#~ "Kitambulisho '{nodeID}' kinaweza kusababisha matatizo wakati wa kuchanganua "
-#~ "fomu. Inashauriwa kuchagua Kitambulisho cha Swali tofauti."
-
-#~ msgid ""
-#~ "{nodeID} is not a valid Question ID. It must start with a letter and contain"
-#~ " only letters, numbers, and '-' or '_' characters."
-#~ msgstr ""
-#~ "{nodeID} si Kitambulisho halali cha Swali. Lazima kianze na herufi na kiwe "
-#~ "na herufi, nambari, na alama '-' au '_'."
-
-#~ msgid "'meta' is not a valid Question ID."
-#~ msgstr "'meta' si Kitambulisho halali cha Swali."
-
-#~ msgid ""
-#~ "Making this change will create a new Question ID (and a new column in "
-#~ "exports)."
-#~ msgstr ""
-#~ "Kubadilisha hii kutaongeza Kitambulisho kipya cha Swali (na safu mpya kwenye"
-#~ " mauzo ya nje)."
-
-#~ msgid ""
-#~ "This question has the same Question ID as another question in the same "
-#~ "group. Please choose a unique Question ID."
-#~ msgstr ""
-#~ "Swali hili lina Kitambulisho sawa cha Swali na swali lingine kwenye kundi "
-#~ "moja. Tafadhali chagua Kitambulisho cha Swali la kipekee."
-
-#~ msgid "Default Data Value"
-#~ msgstr "Thamani Chaguomsingi ya Data"
-
-#~ msgid "Special Hidden Value XMLNS attribute"
-#~ msgstr "Sifa Maalum ya XMLNS ya Thamani Iliyofichwa"
-
-#~ msgid "Extra Data Attributes"
-#~ msgstr "Sifa za Ziada za Data"
-
-#~ msgid "Calculate Condition"
-#~ msgstr "Hali ya Kukokotoa"
-
-#~ msgid ""
-#~ "You cannot have a Validation Error Message with no Validation Condition!"
-#~ msgstr "Huwezi kuwa na Ujumbe wa Hitilafu ya Uhakiki bila Hali ya Uhakiki!"
-
-#~ msgid "Validation Error Message"
-#~ msgstr "Ujumbe wa Hitilafu ya Uhakiki"
-
-#~ msgid "Required Condition"
-#~ msgstr "Hali Inayohitajika"
-
-#~ msgid "The condition will be ignored unless you mark the question required."
-#~ msgstr "Hali hii itapuuzwa isipokuwa uweke swali hili kuwa lazima."
-
-#~ msgid "Extra Bind Attributes"
-#~ msgstr "Sifa za Ziada za Bind"
-
-#~ msgid ""
-#~ "You are referencing a node in this form. This can cause errors in the form"
-#~ msgstr ""
-#~ "Unarejelea nodi kwenye fomu hii. Hii inaweza kusababisha makosa kwenye fomu"
-
-#~ msgid "Appearance Attribute"
-#~ msgstr "Sifa ya Mwonekano"
-
-#~ msgid "Default Display Text"
-#~ msgstr "Maandishi Chaguomsingi ya Kuonyesha"
-
-#~ msgid "Default Display Text is required"
-#~ msgstr "Maandishi Chaguomsingi ya Kuonyesha yanahitajika"
-
-#~ msgid "Hint Display Text"
-#~ msgstr "Maandishi ya Dokezo la Kuonyesha"
-
-#~ msgid "Extra Control Attributes"
-#~ msgstr "Sifa za Ziada za Udhibiti"
-
-#~ msgid "Raw XML"
-#~ msgstr "XML Halisi"
-
-#~ msgid "Data Parent"
-#~ msgstr "Mzazi wa Data"
-
-#~ msgid "Must be valid path"
-#~ msgstr "Lazima iwe njia halali"
-
-#~ msgid ""
-#~ "Data parent of question in repeat group must be (in) the same repeat group"
-#~ msgstr ""
-#~ "Mzazi wa data wa swali kwenye kundi la kurudia lazima uwe (ndani ya) kundi "
-#~ "lile lile la kurudia"
-
-#~ msgid "Hidden Value"
-#~ msgstr "Thamani Iliyofichwa"
-
-#~ msgid "Text"
-#~ msgstr "Maandishi"
-
-#~ msgid "Phone Number or Numeric ID"
-#~ msgstr "Nambari ya Simu au Kitambulisho cha Kihesabu"
-
-#~ msgid "Integer"
-#~ msgstr "Nambari Kamili"
-
-#~ msgid "Audio Capture"
-#~ msgstr "Kurekodi Sauti"
-
-#~ msgid "Image Capture"
-#~ msgstr "Kuchukua Picha"
-
-#~ msgid "Image Size"
-#~ msgstr "Ukubwa wa Picha"
-
-#~ msgid "Small"
-#~ msgstr "Ndogo"
-
-#~ msgid "Medium"
-#~ msgstr "Wastani"
-
-#~ msgid "Large"
-#~ msgstr "Kubwa"
-
-#~ msgid "Original"
-#~ msgstr "Asili"
-
-#~ msgid ""
-#~ "This will resize the image before sending the form. Use this option to send "
-#~ "smaller images in areas of poor connectivity.<ul><li>Small - 0.1 "
-#~ "megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
-#~ "megapixels</li></ul>"
-#~ msgstr ""
-#~ "Hii itabadilisha ukubwa wa picha kabla ya kutuma fomu. Tumia chaguo hili "
-#~ "kutuma picha ndogo katika maeneo yenye muunganisho hafifu.<ul><li>Ndogo - "
-#~ "megapikseli 0.1</li><li>Wastani - megapikseli 0.2</li><li>Kubwa - "
-#~ "megapikseli 0.5</li></ul>"
-
-#~ msgid "Micro-Image"
-#~ msgstr "Picha Ndogo"
-
-#~ msgid "Video Capture"
-#~ msgstr "Kurekodi Video"
-
-#~ msgid "Signature Capture"
-#~ msgstr "Kuchukua Sahihi"
-
-#~ msgid "Document Upload"
-#~ msgstr "Kupakia Hati"
-
-#~ msgid "GPS"
-#~ msgstr "GPS"
-
-#~ msgid "Barcode Scan"
-#~ msgstr "Kuskanisha Msimbopau"
-
-#~ msgid "Date and Time"
-#~ msgstr "Tarehe na Saa"
-
-#~ msgid "Long"
-#~ msgstr "Ndefu"
-
-#~ msgid "Decimal"
-#~ msgstr "Desimali"
-
-#~ msgid "Choice"
-#~ msgstr "Chaguo"
-
-#~ msgid "Choice Value"
-#~ msgstr "Thamani ya Chaguo"
-
-#~ msgid "Whitespace in values is not allowed."
-#~ msgstr "Nafasi tupu kwenye thamani haziruhusiwi."
-
-#~ msgid "This choice value has been used in the same question"
-#~ msgstr "Thamani hii ya chaguo imetumika kwenye swali hili hili"
-
-#~ msgid ""
-#~ "Cannot change a Multiple/Single Choice question to a non-Choice question if "
-#~ "it has Choices. Please remove all Choices and try again."
-#~ msgstr ""
-#~ "Haiwezi kubadilisha swali la Chaguo Nyingi/Moja kuwa swali lisilo la Chaguo "
-#~ "ikiwa lina Machaguo. Tafadhali ondoa Machaguo yote na ujaribu tena."
-
-#~ msgid "Checkbox"
-#~ msgstr "Kisanduku cha Kuhakiki"
-
-#~ msgid "Multiple Choice"
-#~ msgstr "Chaguo Nyingi"
-
-#~ msgid "Group"
-#~ msgstr "Kundi"
-
-#~ msgid "Question List"
-#~ msgstr "Orodha ya Maswali"
-
-#~ msgid "Repeat Group"
-#~ msgstr "Rudia Kundi"
-
-#~ msgid "Repeat Count"
-#~ msgstr "Idadi ya Marudio"
-
-#~ msgid "Repeat Count is required."
-#~ msgstr "Idadi ya Marudio inahitajika."
-
-#~ msgid "Extra Repeat Attributes"
-#~ msgstr "Sifa za Ziada za Marudio"
-
-#~ msgid "You have deleted a question."
-#~ msgstr "Umefuta swali."
-
-#~ msgid "Undo"
-#~ msgstr "Tengua"
-
-#~ msgid ""
-#~ "Bind Node [{path}] found but has no associated Data node. This bind node "
-#~ "will be discarded!"
-#~ msgstr ""
-#~ "Bind Node [{path}] imepatikana lakini haina Data node inayohusiana. Bind "
-#~ "node hii itatupiliwa mbali!"
-
-#~ msgid "Not Found"
-#~ msgstr "Haikupatikana"
-
-#~ msgid ""
-#~ "{type} nodes cannot be used in an output value. Please remove the output "
-#~ "value for '{path}' or your form will have errors."
-#~ msgstr ""
-#~ "Nodi za {type} haziwezi kutumika kwenye thamani ya matokeo. Tafadhali ondoa "
-#~ "thamani ya matokeo kwa '{path}' au fomu yako itakuwa na makosa."
-
-#~ msgid ""
-#~ "The {field} for a question is not allowed to reference the question itself. "
-#~ "Please remove the {ref} from the {field} or your form will have errors."
-#~ msgstr ""
-#~ "{field} ya swali hairuhusiwi kujirejelea yenyewe. Tafadhali ondoa {ref} "
-#~ "kutoka kwenye {field} au fomu yako itakuwa na makosa."
-
-#~ msgid "output value"
-#~ msgstr "thamani ya matokeo"
-
-#~ msgid "Validation Failed"
-#~ msgstr "Uhakiki Umekosa"
-
-#~ msgid "Please fix the error before leaving this page:"
-#~ msgstr "Tafadhali rekebisha kosa kabla ya kuondoka kwenye ukurasa huu:"
-
-#~ msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
-#~ msgstr "Hariri <span class='property-name'>Mlinganyo</span> (Kitaalamu)"
-
-#~ msgid "Show Simple Mode"
-#~ msgstr "Onyesha Njia Rahisi"
-
-#~ msgid ""
-#~ "You are currently in Advanced Mode because your logic is too complicated for"
-#~ " Simple Mode."
-#~ msgstr ""
-#~ "Kwa sasa uko kwenye Njia ya Kitaalamu kwa sababu mantiki yako ni ngumu sana "
-#~ "kwa Njia Rahisi."
-
-#~ msgid "You can drag a question into the box."
-#~ msgstr "Unaweza kuburuta swali kwenye kisanduku."
-
-#~ msgid "Guide to Common Logic and Calculations"
-#~ msgstr "Mwongozo wa Mantiki na Mahesabu ya Kawaida"
-
-#~ msgid "Edit <span class='property-name'>Expression</span>"
-#~ msgstr "Hariri <span class='property-name'>Mlinganyo</span>"
-
-#~ msgid "Show Advanced Mode"
-#~ msgstr "Onyesha Hali ya Juu"
-
-#~ msgid "Result is"
-#~ msgstr "Matokeo ni"
-
-#~ msgid "Expression"
-#~ msgstr "Kielezi"
-
-#~ msgid "Add Expression"
-#~ msgstr "Ongeza Kielezi"
+#~ msgid "Unknown question type:"
+#~ msgstr "Aina isiyojulikana ya swali:"
 
 #~ msgid "Error"
 #~ msgstr "Hitilafu"
@@ -5029,11 +4374,17 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ msgid "Multimedia Capture"
 #~ msgstr "Ukamataji wa Vyombo vya Habari"
 
+#~ msgid "Multiple Choice"
+#~ msgstr "Chaguo Nyingi"
+
 #~ msgid "Number"
 #~ msgstr "Nambari"
 
 #~ msgid "Groups"
 #~ msgstr "Makundi"
+
+#~ msgid "Hidden Value"
+#~ msgstr "Thamani Iliyofichwa"
 
 #~ msgid "Advanced"
 #~ msgstr "Juu"
@@ -5152,6 +4503,9 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ msgid "Parsing Error. Please check that your form is valid XML."
 #~ msgstr "Hitilafu ya Kuchambua. Tafadhali hakikisha fomu yako ni XML halali."
 
+#~ msgid "Expression Editor"
+#~ msgstr "Kihariri wa Usemi"
+
 #~ msgid "Sorry, {err}"
 #~ msgstr "Samahani, {err}"
 
@@ -5190,6 +4544,9 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ msgid "Save anyway"
 #~ msgstr "Hifadhi hata hivyo"
 
+#~ msgid "Basic"
+#~ msgstr "Msingi"
+
 #~ msgid ""
 #~ "The {displaytext} appears in the application. This text will not appear in "
 #~ "data exports."
@@ -5207,6 +4564,18 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ "Unaweza kusanidi chanzo cha data cha nje kama orodha ya kesi au jedwali la "
 #~ "kutafuta ili kutumia kama chaguo za swali la chaguo nyingi."
 
+#~ msgid "Logic"
+#~ msgstr "Mantiki"
+
+#~ msgid ""
+#~ "Use logic to control when questions are asked and what answers are valid. "
+#~ "You can add logic to display a question based on a previous answer, to make "
+#~ "the question required or ensure the answer is in a valid range."
+#~ msgstr ""
+#~ "Tumia mantiki kudhibiti lini maswali yanaulizwa na majibu gani ni halali. "
+#~ "Unaweza kuongeza mantiki ili kuonyesha swali kulingana na jibu la awali, "
+#~ "kufanya swali liwe la lazima au kuhakikisha jibu liko kwenye kiwango halali."
+
 #~ msgid "Media"
 #~ msgstr "Vyombo vya Habari"
 
@@ -5223,6 +4592,52 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ msgstr ""
 #~ "Haya ni mipangilio ya juu na haihitajiki kwa programu nyingi. Tafadhali "
 #~ "badilisha haya tu ikiwa una hitaji maalum!"
+
+#~ msgid "Could not load app properties."
+#~ msgstr "Haikuweza kupakia sifa za programu."
+
+#~ msgid "If this error persists, please report an issue."
+#~ msgstr "Ikiwa kosa hili litaendelea, tafadhali ripoti tatizo."
+
+#~ msgid "Not Found"
+#~ msgstr "Haikupatikana"
+
+#~ msgid "No Formatting"
+#~ msgstr "Hakuna Muundo"
+
+#~ msgid ""
+#~ "The {field} for a question is not allowed to reference the question itself. "
+#~ "Please remove the {ref} from the {field} or your form will have errors."
+#~ msgstr ""
+#~ "{field} ya swali hairuhusiwi kujirejelea yenyewe. Tafadhali ondoa {ref} "
+#~ "kutoka kwenye {field} au fomu yako itakuwa na makosa."
+
+#~ msgid "output value"
+#~ msgstr "thamani ya matokeo"
+
+#~ msgid ""
+#~ "{type} nodes cannot be used in an output value. Please remove the output "
+#~ "value for '{path}' or your form will have errors."
+#~ msgstr ""
+#~ "Nodi za {type} haziwezi kutumika kwenye thamani ya matokeo. Tafadhali ondoa "
+#~ "thamani ya matokeo kwa '{path}' au fomu yako itakuwa na makosa."
+
+#~ msgid "Invalid XPath expression."
+#~ msgstr "Kielezi cha XPath si sahihi."
+
+#~ msgid ""
+#~ "The {property} for a question is not allowed to reference the question "
+#~ "itself. Please remove the . from the {property} or your form will have "
+#~ "errors."
+#~ msgstr ""
+#~ "{property} ya swali hairuhusiwi kurejelea swali lenyewe. Tafadhali ondoa . "
+#~ "kwenye {property} au fomu yako itakuwa na makosa."
+
+#~ msgid "Unknown question:"
+#~ msgstr "Swali lisilojulikana:"
+
+#~ msgid "Unknown questions:"
+#~ msgstr "Maswali yasiyojulikana:"
 
 #~ msgid ""
 #~ "This question represents advanced content that is not supported by the form "
@@ -5285,23 +4700,11 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ msgid "Document Template"
 #~ msgstr "Kiolezo cha Hati"
 
-#~ msgid "Edit Data Source"
-#~ msgstr "Hariri Chanzo cha Data"
-
-#~ msgid "Query Expression"
-#~ msgstr "Maelezo ya Hoja"
-
-#~ msgid "Optional Instance Properties"
-#~ msgstr "Sifa za Hiari za Nakala"
-
-#~ msgid "Instance ID"
-#~ msgstr "Kitambulisho cha Nakala"
-
-#~ msgid "Instance URI"
-#~ msgstr "URI ya Nakala"
-
 #~ msgid "Lookup table was not found in the project"
 #~ msgstr "Jedwali la utafutaji halikupatikana kwenye mradi"
+
+#~ msgid "Lookup Table Data"
+#~ msgstr "Data ya Jedwali la Utafutaji"
 
 #~ msgid ""
 #~ "You no longer have access to Lookup Tables in your application. Lookup Tables are available on the Standard plan and higher.\n"
@@ -5329,6 +4732,9 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ "Hii ni usemi wa XPath ambao utachuja seti ya chaguo kutoka kwenye jedwali la"
 #~ " utafutaji"
 
+#~ msgid "{attr} was not found in the lookup table"
+#~ msgstr "{attr} haikupatikana kwenye jedwali la utafutaji"
+
 #~ msgid "Lookup Tables"
 #~ msgstr "Majedwali ya Utafutaji"
 
@@ -5352,30 +4758,6 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ msgstr ""
 #~ "Inaweza kubadilishwa tu kuwa Jedwali la Utafutaji la Kisanduku cha Kuhakiki"
 
-#~ msgid "{attr} was not found in the lookup table"
-#~ msgstr "{attr} haikupatikana kwenye jedwali la utafutaji"
-
-#~ msgid "Display"
-#~ msgstr "Onyesha"
-
-#~ msgid "auto?"
-#~ msgstr "moja kwa moja?"
-
-#~ msgid ""
-#~ "Use text formatting to <strong>bold</strong> and <em>italicize</em> words, "
-#~ "use bulleted lists, and <a target='_blank' "
-#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
-#~ msgstr ""
-#~ "Tumia uundaji wa maandishi kuweka maneno <strong>nene</strong> na <em>kuweka"
-#~ " italiki</em>, tumia orodha za risasi, na <a target='_blank' "
-#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>zaidi</a>"
-
-#~ msgid "Turn Off Text Formatting"
-#~ msgstr "Zima Uundaji wa Maandishi"
-
-#~ msgid "Turn On Text Formatting"
-#~ msgstr "Washa Uundaji wa Maandishi"
-
 #~ msgid "custom..."
 #~ msgstr "desturi..."
 
@@ -5385,14 +4767,8 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ msgid "Content Type"
 #~ msgstr "Aina ya Maudhui"
 
-#~ msgid ""
-#~ "You have languages in your form that are not specified in the \"Languages\" "
-#~ "page of the application builder. The following language will be deleted on "
-#~ "save unless you add it to the \"Languages\" page:"
-#~ msgstr ""
-#~ "Una lugha kwenye fomu yako ambazo hazijaainishwa kwenye ukurasa wa \"Lugha\""
-#~ " wa mtengenezaji wa programu. Lugha ifuatayo itafutwa unapohifadhi isipokuwa"
-#~ " uiongeze kwenye ukurasa wa \"Lugha\":"
+#~ msgid "Question ID"
+#~ msgstr "Kitambulisho cha Swali"
 
 #~ msgid "{name} (or multimedia) is required."
 #~ msgstr "{name} (au multimedia) inahitajika."
@@ -5411,6 +4787,10 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 
 #~ msgid "Discarded languages:"
 #~ msgstr "Lugha zilizotupiliwa mbali:"
+
+#~ msgid ""
+#~ "You cannot have a Validation Error Message with no Validation Condition!"
+#~ msgstr "Huwezi kuwa na Ujumbe wa Hitilafu ya Uhakiki bila Hali ya Uhakiki!"
 
 #~ msgid "Validation Message"
 #~ msgstr "Ujumbe wa Uthibitishaji"
@@ -5480,15 +4860,6 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ " zinazotumika kwenye fomu yako. Bonyeza 'Sasisha Tafsiri' kuhifadhi "
 #~ "mabadiliko, au 'Funga' kughairi."
 
-#~ msgid "App Properties"
-#~ msgstr "Sifa za Programu"
-
-#~ msgid "Could not load app properties."
-#~ msgstr "Haikuweza kupakia sifa za programu."
-
-#~ msgid "If this error persists, please report an issue."
-#~ msgstr "Ikiwa kosa hili litaendelea, tafadhali ripoti tatizo."
-
 #~ msgid ""
 #~ "The {questionid} is an internal identifier for a question. It does not "
 #~ "appear on the phone. It is the name of the question in data exports."
@@ -5555,39 +4926,6 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ msgid "Model Iteration ID Query"
 #~ msgstr "Hojaji ya Kitambulisho cha Iteration ya Mfano"
 
-#~ msgid "Property Name"
-#~ msgstr "Jina la Sifa"
-
-#~ msgid "Relevant"
-#~ msgstr "Husika"
-
-#~ msgid "Relationship Identifier (e.g. parent or host)"
-#~ msgstr "Kitambulisho cha Uhusiano (mfano mzazi au mwenyeji)"
-
-#~ msgid "Referenced Case ID"
-#~ msgstr "Kitambulisho cha Kesi Inayorejelewa"
-
-#~ msgid "Referenced Case Type"
-#~ msgstr "Aina ya Kesi Inayorejelewa"
-
-#~ msgid "Relationship (child or extension)"
-#~ msgstr "Uhusiano (mtoto au kiendelezi)"
-
-#~ msgid "Node Name"
-#~ msgstr "Jina la Node"
-
-#~ msgid "Source"
-#~ msgstr "Chanzo"
-
-#~ msgid "From"
-#~ msgstr "Kutoka"
-
-#~ msgid "Attachment Name"
-#~ msgstr "Jina la Kiambatisho"
-
-#~ msgid "Add Property"
-#~ msgstr "Ongeza Sifa"
-
 #~ msgid "Date Modified"
 #~ msgstr "Tarehe Iliyorekebishwa"
 
@@ -5633,6 +4971,622 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ msgid "Relationship must be child or extension"
 #~ msgstr "Uhusiano lazima uwe mtoto au kiendelezi"
 
+#~ msgid "Update"
+#~ msgstr "Sasisha"
+
+#~ msgid "Index"
+#~ msgstr "Orodha"
+
+#~ msgid "Image"
+#~ msgstr "Picha"
+
+#~ msgid "Video"
+#~ msgstr "Video"
+
+#~ msgid "Inline Video"
+#~ msgstr "Video Iliyounganishwa"
+
+#~ msgid "HTML"
+#~ msgstr "HTML"
+
+#~ msgid ""
+#~ "The ID '{nodeID}' may cause problems with form parsing. It is recommended to"
+#~ " pick a different Question ID."
+#~ msgstr ""
+#~ "Kitambulisho '{nodeID}' kinaweza kusababisha matatizo wakati wa kuchanganua "
+#~ "fomu. Inashauriwa kuchagua Kitambulisho cha Swali tofauti."
+
+#~ msgid "'meta' is not a valid Question ID."
+#~ msgstr "'meta' si Kitambulisho halali cha Swali."
+
+#~ msgid ""
+#~ "Making this change will create a new Question ID (and a new column in "
+#~ "exports)."
+#~ msgstr ""
+#~ "Kubadilisha hii kutaongeza Kitambulisho kipya cha Swali (na safu mpya kwenye"
+#~ " mauzo ya nje)."
+
+#~ msgid ""
+#~ "{nodeID} is not a valid Question ID. It must start with a letter and contain"
+#~ " only letters, numbers, and '-' or '_' characters."
+#~ msgstr ""
+#~ "{nodeID} si Kitambulisho halali cha Swali. Lazima kianze na herufi na kiwe "
+#~ "na herufi, nambari, na alama '-' au '_'."
+
+#~ msgid ""
+#~ "This question has the same Question ID as another question in the same "
+#~ "group. Please choose a unique Question ID."
+#~ msgstr ""
+#~ "Swali hili lina Kitambulisho sawa cha Swali na swali lingine kwenye kundi "
+#~ "moja. Tafadhali chagua Kitambulisho cha Swali la kipekee."
+
+#~ msgid "Default Data Value"
+#~ msgstr "Thamani Chaguomsingi ya Data"
+
+#~ msgid "Special Hidden Value XMLNS attribute"
+#~ msgstr "Sifa Maalum ya XMLNS ya Thamani Iliyofichwa"
+
+#~ msgid "Extra Data Attributes"
+#~ msgstr "Sifa za Ziada za Data"
+
+#~ msgid "Calculate Condition"
+#~ msgstr "Hali ya Kukokotoa"
+
+#~ msgid "Validation Error Message"
+#~ msgstr "Ujumbe wa Hitilafu ya Uhakiki"
+
+#~ msgid "Required Condition"
+#~ msgstr "Hali Inayohitajika"
+
+#~ msgid "The condition will be ignored unless you mark the question required."
+#~ msgstr "Hali hii itapuuzwa isipokuwa uweke swali hili kuwa lazima."
+
+#~ msgid "Extra Bind Attributes"
+#~ msgstr "Sifa za Ziada za Bind"
+
+#~ msgid ""
+#~ "You are referencing a node in this form. This can cause errors in the form"
+#~ msgstr ""
+#~ "Unarejelea nodi kwenye fomu hii. Hii inaweza kusababisha makosa kwenye fomu"
+
+#~ msgid "Appearance Attribute"
+#~ msgstr "Sifa ya Mwonekano"
+
+#~ msgid "Default Display Text"
+#~ msgstr "Maandishi Chaguomsingi ya Kuonyesha"
+
+#~ msgid "Default Display Text is required"
+#~ msgstr "Maandishi Chaguomsingi ya Kuonyesha yanahitajika"
+
+#~ msgid "Hint Display Text"
+#~ msgstr "Maandishi ya Dokezo la Kuonyesha"
+
+#~ msgid "Extra Control Attributes"
+#~ msgstr "Sifa za Ziada za Udhibiti"
+
+#~ msgid "Raw XML"
+#~ msgstr "XML Halisi"
+
+#~ msgid "Data Parent"
+#~ msgstr "Mzazi wa Data"
+
+#~ msgid ""
+#~ "Data parent of question in repeat group must be (in) the same repeat group"
+#~ msgstr ""
+#~ "Mzazi wa data wa swali kwenye kundi la kurudia lazima uwe (ndani ya) kundi "
+#~ "lile lile la kurudia"
+
+#~ msgid "Must be valid path"
+#~ msgstr "Lazima iwe njia halali"
+
+#~ msgid "Text"
+#~ msgstr "Maandishi"
+
+#~ msgid "Phone Number or Numeric ID"
+#~ msgstr "Nambari ya Simu au Kitambulisho cha Kihesabu"
+
+#~ msgid "Integer"
+#~ msgstr "Nambari Kamili"
+
+#~ msgid "Long"
+#~ msgstr "Ndefu"
+
+#~ msgid "Decimal"
+#~ msgstr "Desimali"
+
+#~ msgid "Audio Capture"
+#~ msgstr "Kurekodi Sauti"
+
+#~ msgid "Image Capture"
+#~ msgstr "Kuchukua Picha"
+
+#~ msgid "Image Size"
+#~ msgstr "Ukubwa wa Picha"
+
+#~ msgid "Small"
+#~ msgstr "Ndogo"
+
+#~ msgid "Medium"
+#~ msgstr "Wastani"
+
+#~ msgid "Large"
+#~ msgstr "Kubwa"
+
+#~ msgid "Original"
+#~ msgstr "Asili"
+
+#~ msgid ""
+#~ "This will resize the image before sending the form. Use this option to send "
+#~ "smaller images in areas of poor connectivity.<ul><li>Small - 0.1 "
+#~ "megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
+#~ "megapixels</li></ul>"
+#~ msgstr ""
+#~ "Hii itabadilisha ukubwa wa picha kabla ya kutuma fomu. Tumia chaguo hili "
+#~ "kutuma picha ndogo katika maeneo yenye muunganisho hafifu.<ul><li>Ndogo - "
+#~ "megapikseli 0.1</li><li>Wastani - megapikseli 0.2</li><li>Kubwa - "
+#~ "megapikseli 0.5</li></ul>"
+
+#~ msgid "Video Capture"
+#~ msgstr "Kurekodi Video"
+
+#~ msgid "Signature Capture"
+#~ msgstr "Kuchukua Sahihi"
+
+#~ msgid "Document Upload"
+#~ msgstr "Kupakia Hati"
+
+#~ msgid "Date and Time"
+#~ msgstr "Tarehe na Saa"
+
+#~ msgid "Choice"
+#~ msgstr "Chaguo"
+
+#~ msgid "Choice Value"
+#~ msgstr "Thamani ya Chaguo"
+
+#~ msgid "Whitespace in values is not allowed."
+#~ msgstr "Nafasi tupu kwenye thamani haziruhusiwi."
+
+#~ msgid "This choice value has been used in the same question"
+#~ msgstr "Thamani hii ya chaguo imetumika kwenye swali hili hili"
+
+#~ msgid ""
+#~ "Cannot change a Multiple/Single Choice question to a non-Choice question if "
+#~ "it has Choices. Please remove all Choices and try again."
+#~ msgstr ""
+#~ "Haiwezi kubadilisha swali la Chaguo Nyingi/Moja kuwa swali lisilo la Chaguo "
+#~ "ikiwa lina Machaguo. Tafadhali ondoa Machaguo yote na ujaribu tena."
+
+#~ msgid "Checkbox"
+#~ msgstr "Kisanduku cha Kuhakiki"
+
+#~ msgid "Group"
+#~ msgstr "Kundi"
+
+#~ msgid "Question List"
+#~ msgstr "Orodha ya Maswali"
+
+#~ msgid "Repeat Group"
+#~ msgstr "Rudia Kundi"
+
+#~ msgid "Repeat Count"
+#~ msgstr "Idadi ya Marudio"
+
+#~ msgid "Repeat Count is required."
+#~ msgstr "Idadi ya Marudio inahitajika."
+
+#~ msgid "Extra Repeat Attributes"
+#~ msgstr "Sifa za Ziada za Marudio"
+
+#~ msgid "GPS"
+#~ msgstr "GPS"
+
+#~ msgid "Barcode Scan"
+#~ msgstr "Kuskanisha Msimbopau"
+
+#~ msgid "{question} is not allowed."
+#~ msgstr "{question} hairuhusiwi."
+
+#~ msgid "{question} validation failed"
+#~ msgstr "Uhakiki wa {question} umeshindwa"
+
+#~ msgid "{question} is required."
+#~ msgstr "{question} inahitajika."
+
+#~ msgid "Unknown (read-only) question type"
+#~ msgstr "Aina ya swali isiyojulikana (soma-tu)"
+
+#~ msgid "No Translation Data"
+#~ msgstr "Hakuna Data ya Tafsiri"
+
+#~ msgid "getCurrentMugInput"
+#~ msgstr "pataMugInputWaSasa"
+
+#~ msgid "jstree"
+#~ msgstr "jstree"
+
+#~ msgid "getMugByPath"
+#~ msgstr "getMugByPath"
+
+#~ msgid "getData"
+#~ msgstr "pataData"
+
+#~ msgid "loadXML"
+#~ msgstr "pakiaXML"
+
+#~ msgid "createXML"
+#~ msgstr "undaXML"
+
+#~ msgid "loadXFormOrError"
+#~ msgstr "pakiaXFormAuHitilafu"
+
+#~ msgid "addQuestion"
+#~ msgstr "ongezaSwali"
+
+#~ msgid "nodeIDFromLabel"
+#~ msgstr "kitambulishoChaNodeKutokaKwaLebo"
+
+#~ msgid "getSections"
+#~ msgstr "pataSehemu"
+
+#~ msgid "collapseSection"
+#~ msgstr "kunjaSehemu"
+
+#~ msgid "Active"
+#~ msgstr "Hai"
+
+#~ msgid "Inactive"
+#~ msgstr "Haifanyi kazi"
+
+#~ msgid "Deactivate"
+#~ msgstr "Zima"
+
+#~ msgid "Activate"
+#~ msgstr "Washa"
+
+#~ msgid ""
+#~ "\"{caseProperty}\" is assigned by another question. You can still save the "
+#~ "form, but will need to have only one question for any case property in order"
+#~ " to build the application"
+#~ msgstr ""
+#~ "\"{caseProperty}\" imetolewa na swali lingine. Unaweza bado kuhifadhi fomu, "
+#~ "lakini utahitaji kuwa na swali moja tu kwa kila sifa ya kesi ili kujenga "
+#~ "programu"
+
+#~ msgid "Case Management"
+#~ msgstr "Usimamizi wa Kesi"
+
+#~ msgid ""
+#~ "Saving a question as a case property makes it accessible and reusable across"
+#~ " your application. To manage all your case properties from this form, click "
+#~ "on the Manage Case button. "
+#~ msgstr ""
+#~ "Kuhifadhi swali kama sifa ya kesi kunafanya lipatikane na kutumika tena "
+#~ "katika programu yako. Ili kudhibiti sifa zako zote za kesi kutoka kwenye "
+#~ "fomu hii, bonyeza kitufe cha Dhibiti Kesi."
+
+#~ msgid "**{word}** is a reserved word"
+#~ msgstr "**{word}** ni neno lililohifadhiwa"
+
+#~ msgid ""
+#~ "This question is used to update multiple case properties. If you wish to "
+#~ "update these case properties, please visit the [Manage Case Page]({url})"
+#~ msgstr ""
+#~ "Swali hili linatumika kusasisha sifa nyingi za kesi. Ikiwa ungependa "
+#~ "kusasisha sifa hizi za kesi, tafadhali tembelea [Ukurasa wa Dhibiti "
+#~ "Kesi]({url})"
+
+#~ msgid "Disable Mobile Worker Attendees"
+#~ msgstr "Zima Washiriki wa Simu ya Mkononi"
+
+#~ msgid "Enable Mobile Worker Attendees"
+#~ msgstr "Washa Washiriki wa Simu ya Mkononi"
+
+#~ msgid "Possible Attendees"
+#~ msgstr "Washiriki Wanaowezekana"
+
+#~ msgid "Expected Attendees"
+#~ msgstr "Washiriki Wanaotarajiwa"
+
+#~ msgid "Search Attendees"
+#~ msgstr "Tafuta Washiriki"
+
+#~ msgid "Possible Attendance Takers"
+#~ msgstr "Wachukua Mahudhurio Wanaowezekana"
+
+#~ msgid "Selected Attendance Takers"
+#~ msgstr "Wachukua Mahudhurio Waliochaguliwa"
+
+#~ msgid "Search Attendance Takers"
+#~ msgstr "Tafuta Wachukua Mahudhurio"
+
+#~ msgid "Token successfully verified!"
+#~ msgstr "Token imethibitishwa kwa mafanikio!"
+
+#~ msgid ""
+#~ "Invalid API token. Please verify that the token matches the one on your "
+#~ "Mapbox account and has the correct scope configured."
+#~ msgstr ""
+#~ "Token ya API si sahihi. Tafadhali hakikisha tokeni inalingana na ile kwenye "
+#~ "akaunti yako ya Mapbox na ina kiwango sahihi kimewekwa."
+
+#~ msgid ""
+#~ "Could not load data. Please try again later or report an issue if this "
+#~ "problem persists."
+#~ msgstr ""
+#~ "Imeshindikana kupakia data. Tafadhali jaribu tena baadaye au ripoti tatizo "
+#~ "kama hili litaendelea."
+
+#~ msgid "yes"
+#~ msgstr "ndiyo"
+
+#~ msgid "Phone number is required when users confirm their own accounts by sms."
+#~ msgstr ""
+#~ "Nambari ya simu inahitajika wakati watumiaji wanathibitisha akaunti zao kwa "
+#~ "sms."
+
+#~ msgid "Phone number should contain only digits 0-9."
+#~ msgstr "Nambari ya simu inapaswa kuwa na tarakimu 0-9 pekee."
+
+#~ msgid ""
+#~ "<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
+#~ "events and users"
+#~ msgstr ""
+#~ "<strong>Ufuatiliaji wa Mahudhurio</strong> &mdash; Ratibu matukio ya "
+#~ "ufuatiliaji wa mahudhurio na watumiaji"
+
+#~ msgid "Edit Attendance Tracking Events"
+#~ msgstr "Hariri Matukio ya Ufuatiliaji wa Mahudhurio"
+
+#~ msgid "No Access"
+#~ msgstr "Hakuna Ufikiaji"
+
+#~ msgid "Access All"
+#~ msgstr "Fikia Yote"
+
+#~ msgid "Limited Access"
+#~ msgstr "Ufikiaji Uliopunguzwa"
+
+#~ msgid "Select which items the role can access:"
+#~ msgstr "Chagua vitu ambavyo jukumu linaweza kufikia:"
+
+#~ msgid "Select which web apps the role has access to:"
+#~ msgstr "Chagua ni programu gani za wavuti jukumu linaweza kufikia:"
+
+#, javascript-format
+#~ msgid "Select at least one item from the list for \"%s\""
+#~ msgstr "Chagua angalau kipengee kimoja kutoka kwenye orodha kwa \"%s\""
+
+#~ msgid "Edit Role: "
+#~ msgstr "Hariri Jukumu: "
+
+#~ msgid "View Role: "
+#~ msgstr "Angalia Jukumu: "
+
+#~ msgid "New Role"
+#~ msgstr "Jukumu Jipya"
+
+#~ msgid "Your location"
+#~ msgstr "Eneo lako"
+
+#~ msgid "Could not enable user properties, please try again later."
+#~ msgstr ""
+#~ "Imeshindikana kuwezesha mali za mtumiaji, tafadhali jaribu tena baadaye."
+
+#~ msgid "Email address is required when users confirm their own accounts."
+#~ msgstr ""
+#~ "Anwani ya barua pepe inahitajika wakati watumiaji wanathibitisha akaunti zao"
+#~ " wenyewe."
+
+#~ msgid "Out of range of filter. Will not appear on page refresh."
+#~ msgstr "Nje ya wigo wa kichujio. Haitatokea ukurasa ukipakiwa upya."
+
+#~ msgid "Case copied"
+#~ msgstr "Kesi imenakiliwa"
+
+#~ msgid "Cases copied"
+#~ msgstr "Kesi zimenakiliwa"
+
+#~ msgid "Select None"
+#~ msgstr "Chagua Hakuna"
+
+#~ msgid "Select All"
+#~ msgstr "Chagua Zote"
+
+#~ msgid "long"
+#~ msgstr "ndefu"
+
+#~ msgid "2-digit"
+#~ msgstr "tarakimu 2"
+
+#~ msgid "Copy"
+#~ msgstr "Nakili"
+
+#~ msgid "Expand All"
+#~ msgstr "Panua Zote"
+
+#~ msgid "Collapse All"
+#~ msgstr "Fupisha Zote"
+
+#~ msgid "Bulk Update All Questions"
+#~ msgstr "Sasisha Maswali Yote kwa Wingi"
+
+#~ msgid "Click {btn} to start building your form."
+#~ msgstr "Bofya {btn} kuanza kujenga fomu yako."
+
+#~ msgid "Question Details"
+#~ msgstr "Maelezo ya Swali"
+
+#~ msgid "Cannot Change Question Type"
+#~ msgstr "Haiwezekani Kubadilisha Aina ya Swali"
+
+#~ msgid "Change Question Type To"
+#~ msgstr "Badilisha Aina ya Swali Kuwa"
+
+#~ msgid "Show"
+#~ msgstr "Onyesha"
+
+#~ msgid "Used By"
+#~ msgstr "Inatumiwa Na"
+
+#~ msgid "In Property"
+#~ msgstr "Katika Sifa"
+
+#~ msgid "No match for {info} found!"
+#~ msgstr "Hakuna inayolingana na {info} imepatikana!"
+
+#~ msgid "Multiple matches for {info} found!"
+#~ msgstr "Mecano nyingi zinazolingana na {info} zimepatikana!"
+
+#~ msgid "Add Key&rarr;Value Pair"
+#~ msgstr "Ongeza Jozi ya Ufunguo&rarr;Thamani"
+
+#~ msgid "show in question list"
+#~ msgstr "onyesha kwenye orodha ya maswali"
+
+#~ msgid "Date Format Options"
+#~ msgstr "Chaguo za Muundo wa Tarehe"
+
+#~ msgid "no formatting"
+#~ msgstr "hakuna muundo"
+
+#~ msgid "Micro-Image"
+#~ msgstr "Picha Ndogo"
+
+#~ msgid "You have deleted a question."
+#~ msgstr "Umefuta swali."
+
+#~ msgid "Undo"
+#~ msgstr "Tengua"
+
+#~ msgid ""
+#~ "Bind Node [{path}] found but has no associated Data node. This bind node "
+#~ "will be discarded!"
+#~ msgstr ""
+#~ "Bind Node [{path}] imepatikana lakini haina Data node inayohusiana. Bind "
+#~ "node hii itatupiliwa mbali!"
+
+#~ msgid "Validation Failed"
+#~ msgstr "Uhakiki Umekosa"
+
+#~ msgid "Please fix the error before leaving this page:"
+#~ msgstr "Tafadhali rekebisha kosa kabla ya kuondoka kwenye ukurasa huu:"
+
+#~ msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
+#~ msgstr "Hariri <span class='property-name'>Mlinganyo</span> (Kitaalamu)"
+
+#~ msgid "Show Simple Mode"
+#~ msgstr "Onyesha Njia Rahisi"
+
+#~ msgid ""
+#~ "You are currently in Advanced Mode because your logic is too complicated for"
+#~ " Simple Mode."
+#~ msgstr ""
+#~ "Kwa sasa uko kwenye Njia ya Kitaalamu kwa sababu mantiki yako ni ngumu sana "
+#~ "kwa Njia Rahisi."
+
+#~ msgid "You can drag a question into the box."
+#~ msgstr "Unaweza kuburuta swali kwenye kisanduku."
+
+#~ msgid "Guide to Common Logic and Calculations"
+#~ msgstr "Mwongozo wa Mantiki na Mahesabu ya Kawaida"
+
+#~ msgid "Edit <span class='property-name'>Expression</span>"
+#~ msgstr "Hariri <span class='property-name'>Mlinganyo</span>"
+
+#~ msgid "Show Advanced Mode"
+#~ msgstr "Onyesha Hali ya Juu"
+
+#~ msgid "Result is"
+#~ msgstr "Matokeo ni"
+
+#~ msgid "Expression"
+#~ msgstr "Kielezi"
+
+#~ msgid "Add Expression"
+#~ msgstr "Ongeza Kielezi"
+
+#~ msgid "Edit Data Source"
+#~ msgstr "Hariri Chanzo cha Data"
+
+#~ msgid "Query Expression"
+#~ msgstr "Maelezo ya Hoja"
+
+#~ msgid "Optional Instance Properties"
+#~ msgstr "Sifa za Hiari za Nakala"
+
+#~ msgid "Instance ID"
+#~ msgstr "Kitambulisho cha Nakala"
+
+#~ msgid "Instance URI"
+#~ msgstr "URI ya Nakala"
+
+#~ msgid "Display"
+#~ msgstr "Onyesha"
+
+#~ msgid "auto?"
+#~ msgstr "moja kwa moja?"
+
+#~ msgid ""
+#~ "Use text formatting to <strong>bold</strong> and <em>italicize</em> words, "
+#~ "use bulleted lists, and <a target='_blank' "
+#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
+#~ msgstr ""
+#~ "Tumia uundaji wa maandishi kuweka maneno <strong>nene</strong> na <em>kuweka"
+#~ " italiki</em>, tumia orodha za risasi, na <a target='_blank' "
+#~ "href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>zaidi</a>"
+
+#~ msgid "Turn Off Text Formatting"
+#~ msgstr "Zima Uundaji wa Maandishi"
+
+#~ msgid "Turn On Text Formatting"
+#~ msgstr "Washa Uundaji wa Maandishi"
+
+#~ msgid ""
+#~ "You have languages in your form that are not specified in the \"Languages\" "
+#~ "page of the application builder. The following language will be deleted on "
+#~ "save unless you add it to the \"Languages\" page:"
+#~ msgstr ""
+#~ "Una lugha kwenye fomu yako ambazo hazijaainishwa kwenye ukurasa wa \"Lugha\""
+#~ " wa mtengenezaji wa programu. Lugha ifuatayo itafutwa unapohifadhi isipokuwa"
+#~ " uiongeze kwenye ukurasa wa \"Lugha\":"
+
+#~ msgid "App Properties"
+#~ msgstr "Sifa za Programu"
+
+#~ msgid "Property Name"
+#~ msgstr "Jina la Sifa"
+
+#~ msgid "Relevant"
+#~ msgstr "Husika"
+
+#~ msgid "Relationship Identifier (e.g. parent or host)"
+#~ msgstr "Kitambulisho cha Uhusiano (mfano mzazi au mwenyeji)"
+
+#~ msgid "Referenced Case ID"
+#~ msgstr "Kitambulisho cha Kesi Inayorejelewa"
+
+#~ msgid "Referenced Case Type"
+#~ msgstr "Aina ya Kesi Inayorejelewa"
+
+#~ msgid "Relationship (child or extension)"
+#~ msgstr "Uhusiano (mtoto au kiendelezi)"
+
+#~ msgid "Node Name"
+#~ msgstr "Jina la Node"
+
+#~ msgid "Source"
+#~ msgstr "Chanzo"
+
+#~ msgid "From"
+#~ msgstr "Kutoka"
+
+#~ msgid "Attachment Name"
+#~ msgstr "Jina la Kiambatisho"
+
+#~ msgid "Add Property"
+#~ msgstr "Ongeza Sifa"
+
 #~ msgid "Use Attachments"
 #~ msgstr "Tumia Viambatisho"
 
@@ -5644,12 +5598,6 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 
 #~ msgid "Inlined attachments must have an attachment name"
 #~ msgstr "Viambatisho vilivyowekwa ndani lazima viwe na jina la kiambatisho"
-
-#~ msgid "Update"
-#~ msgstr "Sasisha"
-
-#~ msgid "Index"
-#~ msgstr "Orodha"
 
 #~ msgid "Attachments"
 #~ msgstr "Viambatisho"
@@ -5686,15 +5634,6 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ msgid "Hide Path"
 #~ msgstr "Ficha Njia"
 
-#~ msgid "Video"
-#~ msgstr "Video"
-
-#~ msgid "Inline Video"
-#~ msgstr "Video Iliyounganishwa"
-
-#~ msgid "HTML"
-#~ msgstr "HTML"
-
 #~ msgid "Copying and Pasting Questions"
 #~ msgstr "Kunakili na Kubandika Maswali"
 
@@ -5729,24 +5668,6 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ msgid "Questions can be copied between forms, and even to other apps."
 #~ msgstr ""
 #~ "Maswali yanaweza kunakiliwa kati ya fomu, na hata kwenye programu nyingine."
-
-#~ msgid "Cannot insert {type} into tree root"
-#~ msgstr "Haiwezi kuweka {type} kwenye mzizi wa mti"
-
-#~ msgid "Cannot insert $1 into or after $2"
-#~ msgstr "Haiwezi kuweka $1 ndani au baada ya $2"
-
-#~ msgid "Cannot insert $1 into $2"
-#~ msgstr "Haiwezi kuweka $1 ndani ya $2"
-
-#~ msgid "Unsupported paste format"
-#~ msgstr "Muundo wa kubandika hauungwa mkono"
-
-#~ msgid "Unsupported paste format:"
-#~ msgstr "Muundo wa kubandika hauungwa mkono:"
-
-#~ msgid "Unknown question type:"
-#~ msgstr "Aina isiyojulikana ya swali:"
 
 #~ msgid "Enter command"
 #~ msgstr "Weka amri"

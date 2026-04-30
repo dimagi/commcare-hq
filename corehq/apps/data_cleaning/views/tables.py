@@ -1,6 +1,7 @@
 import json
 
 from dimagi.utils.logging import notify_exception
+from django.http.request import QueryDict
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -53,6 +54,24 @@ class EditCasesTableView(
                 self.session_id,
             ),
         )
+
+    def get_first_page(self, request, *args, **kwargs):
+        """
+        Override the default `get_first_page` behavior to reset the GET parameters to only include `sort`
+        """
+        # sort is the only GET parameter we want to keep
+        # when redirecting to the first page
+        sort = request.GET.get('sort')
+        params = f"sort={sort}" if sort else ""
+        request.GET = QueryDict(params)
+
+        response = super().get(request, *args, **kwargs)
+
+        params = f"?{params}" if params else ""
+        host_url = self.get_host_url() + params
+        response['HX-Push-Url'] = request.build_absolute_uri(host_url)
+
+        return response
 
     def get_table_kwargs(self):
         extra_columns = [

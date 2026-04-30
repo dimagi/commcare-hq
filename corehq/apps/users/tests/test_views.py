@@ -1,26 +1,21 @@
 import json
-from contextlib import contextmanager
+import re
 from copy import deepcopy
 from io import BytesIO
-from openpyxl import Workbook
-from unittest.mock import patch, Mock
-import re
+from unittest.mock import Mock, patch
 
 from django.http import Http404, HttpResponseRedirect
-from django.test import TestCase, Client
+from django.test import Client, TestCase
 from django.test.client import RequestFactory
 from django.urls import reverse
+
+from openpyxl import Workbook
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.es.users import user_adapter
-from corehq.apps.events.models import (
-    AttendanceTrackingConfig,
-    AttendeeModel,
-)
-from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
 from corehq.apps.user_importer.exceptions import UserUploadError
@@ -30,20 +25,23 @@ from corehq.apps.users.exceptions import InvalidRequestException
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
+    HQApiKey,
     HqPermissions,
     UserHistory,
     UserRole,
-    WebUser, HQApiKey,
+    WebUser,
 )
 from corehq.apps.users.views import BaseUploadUser
-from corehq.apps.users.views.role import _delete_user_role, _update_role_from_view
-from corehq.apps.users.views.mobile.users import MobileWorkerListView, CommCareUserPasswordResetView
-from corehq.const import USER_CHANGE_VIA_WEB
-from corehq.util.test_utils import (
-    flag_enabled,
-    generate_cases,
-    privilege_enabled,
+from corehq.apps.users.views.mobile.users import (
+    CommCareUserPasswordResetView,
+    MobileWorkerListView,
 )
+from corehq.apps.users.views.role import (
+    _delete_user_role,
+    _update_role_from_view,
+)
+from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.util.test_utils import flag_enabled, generate_cases
 from corehq.util.workbook_json.excel import WorkbookJSONError
 
 
@@ -103,79 +101,6 @@ class TestMobileWorkerListView(TestCase):
         )
         self.assertIsNotNone(user)
         self.assertEqual(user.get_role(self.domain).id, self.role.id)
-
-    @flag_enabled('ATTENDANCE_TRACKING')
-    @privilege_enabled(privileges.ATTENDANCE_TRACKING)
-    def test_commcare_attendee_case_created(self):
-        """An attendance tracking case should be created for a mobile worker on creation"""
-        with self.enable_mobile_worker_attendees(), \
-                self.get_mobile_worker() as user:
-            self.assertAttendeeCreatedForUser(user)
-
-    @flag_enabled('ATTENDANCE_TRACKING')
-    def test_commcare_attendee_case_not_created_due_to_privilege(self):
-        """This tests the case where a domain was on a higher plan and used the attendance tracking, but have
-        downgraded ever since and now creates a new mobile worker"""
-        with self.enable_mobile_worker_attendees(), \
-                self.get_mobile_worker():
-            self.assertAttendeeNotCreated()
-
-    @flag_enabled('ATTENDANCE_TRACKING')
-    @privilege_enabled(privileges.ATTENDANCE_TRACKING)
-    def test_commcare_attendee_case_not_created_due_to_config(self):
-        # AttendanceTrackingConfig does not exist for this domain
-        self.assertNoAttendanceTrackingConfig()
-        with self.get_mobile_worker():
-            self.assertAttendeeNotCreated()
-
-    def assertAttendeeCreatedForUser(self, user):
-        models = AttendeeModel.objects.by_domain(self.domain)
-        self.assertEqual(len(models), 1)
-        self.assertEqual(models[0].user_id, user.user_id)
-
-    def assertAttendeeNotCreated(self):
-        self.assertEqual(AttendeeModel.objects.by_domain(self.domain), [])
-
-    def assertNoAttendanceTrackingConfig(self):
-        self.assertIsNone(
-            AttendanceTrackingConfig.objects.filter(domain=self.domain).first()
-        )
-
-    @contextmanager
-    def enable_mobile_worker_attendees(self):
-        config, __ = AttendanceTrackingConfig.objects.update_or_create(
-            domain=self.domain,
-            defaults={'mobile_worker_attendees': True},
-        )
-        try:
-            yield
-        finally:
-            config.delete()
-
-    @contextmanager
-    def get_mobile_worker(self):
-        username = 'test.test'
-        self._remote_invoke('create_mobile_worker', {
-            "user": {
-                "first_name": "Test",
-                "last_name": "Test",
-                "username": username,
-                "password": "123"
-            }
-        })
-        user = CouchUser.get_by_username(f'{username}@{self.domain}.commcarehq.org')
-        try:
-            yield user
-        finally:
-            close_user_attendee(self.domain, user.user_id)
-            user.delete(None, None)
-
-
-def close_user_attendee(domain, user_id):
-    for model in AttendeeModel.objects.by_domain(domain):
-        if model.user_id == user_id:
-            helper = CaseHelper(case_id=model.case_id, domain=domain)
-            helper.close()
 
 
 @generate_cases((
@@ -249,14 +174,13 @@ class TestUpdateRoleFromView(TestCase):
 
     def test_update_role(self):
         role_data = deepcopy(self.BASE_JSON)
-        role_data["_id"] = self.role.get_id
         role_data["name"] = "role1"  # duplicate name during update is OK for now
         role_data["default_landing_page"] = None
         role_data["is_non_admin_editable"] = True
         role_data["permissions"] = get_default_available_permissions(
             edit_reports=True, view_report_list=["report1"]
         )
-        updated_role = _update_role_from_view(self.domain, role_data)
+        updated_role = _update_role_from_view(self.domain, role_data, role_id=self.role.get_id)
         self.assertEqual(updated_role.name, "role1")
         self.assertIsNone(updated_role.default_landing_page)
         self.assertTrue(updated_role.is_non_admin_editable)
@@ -270,13 +194,12 @@ class TestUpdateRoleFromView(TestCase):
             return domain_has_privilege(_domain, privilege_slug)
 
         role_data = deepcopy(self.BASE_JSON)
-        role_data['_id'] = self.role.get_id
         role_data['permissions']['manage_domain_alerts'] = True
         self.assertFalse(self.role.permissions.to_json()['manage_domain_alerts'])
 
         role_data['permissions']['manage_domain_alerts'] = True
         with patch('corehq.apps.users.views.domain_has_privilege', side_effect=patch_privilege_check):
-            _update_role_from_view(self.domain, role_data)
+            _update_role_from_view(self.domain, role_data, role_id=self.role.get_id)
         self.role.refresh_from_db()
         self.assertTrue(self.role.permissions.to_json()['manage_domain_alerts'])
 
@@ -292,28 +215,28 @@ class TestDeleteRole(TestCase):
 
     def test_delete_role(self):
         role = UserRole.create(self.domain, 'test-role')
-        _delete_user_role(self.domain, {"_id": role.get_id})
+        _delete_user_role(self.domain, role.get_id)
         self.assertFalse(UserRole.objects.filter(pk=role.id).exists())
 
     def test_delete_role_not_exist(self):
         with self.assertRaises(Http404):
-            _delete_user_role(self.domain, {"_id": "mising"})
+            _delete_user_role(self.domain, "missing")
 
     def test_delete_role_with_users(self):
         self.user_count_mock.return_value = 1
         role = UserRole.create(self.domain, 'test-role')
         with self.assertRaisesRegex(InvalidRequestException, "It has one user"):
-            _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
+            _delete_user_role(self.domain, role.get_id)
 
     def test_delete_commcare_user_default_role(self):
         role = UserRole.create(self.domain, 'test-role', is_commcare_user_default=True)
         with self.assertRaisesRegex(InvalidRequestException, "default role for Mobile Users"):
-            _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
+            _delete_user_role(self.domain, role.get_id)
 
     def test_delete_role_wrong_domain(self):
         role = UserRole.create("other-domain", 'test-role')
         with self.assertRaises(Http404):
-            _delete_user_role(self.domain, {"_id": role.get_id})
+            _delete_user_role(self.domain, role.get_id)
 
     def setUp(self):
         user_count_patcher = patch('corehq.apps.users.views.role.get_role_user_count', return_value=0)

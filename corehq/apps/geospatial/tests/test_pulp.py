@@ -1,9 +1,6 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.geospatial.routing_solvers.pulp import (
-    RadialDistanceSolver,
-    RoadNetworkSolver
-)
+from corehq.apps.geospatial.routing_solvers.pulp import RadialDistanceSolver
 from corehq.apps.geospatial.models import GeoConfig
 
 
@@ -153,23 +150,3 @@ class TestRadialDistanceSolver(SimpleTestCase):
         ]
         with self.assertRaises(ValueError):
             RadialDistanceSolver(problem_data).calculate_distance_matrix(config)
-
-
-class TestRoadNetworkSolver(SimpleTestCase):
-
-    @property
-    def _problem_data(self):
-        return {
-            "users": [
-                {"id": "New York", "lon": -73.9750671, "lat": 40.7638143},
-            ],
-            "cases": [
-                {"id": "New Hampshire", "lon": -71.572395, "lat": 43.193851},
-                {"id": "Phoenix", "lon": 'incorrect-data', "lat": 33.870416},
-            ],
-        }
-
-    def test_incorrect_data(self):
-        config = GeoConfig()
-        with self.assertRaises(ValueError):
-            RoadNetworkSolver(self._problem_data).calculate_distance_matrix(config)

@@ -72,7 +72,7 @@ def update_facility_cases_from_dhis2_data_elements():
     _update_facility_cases_from_dhis2_data_elements.delay()
 
 
-@task(bind=True, max_retries=MAX_RETRY_ATTEMPTS)
+@task(bind=True, max_retries=MAX_RETRY_ATTEMPTS, durable=True)
 def _update_facility_cases_from_dhis2_data_elements(
     self,
     period=None,

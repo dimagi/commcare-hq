@@ -1,6 +1,5 @@
 import DOMPurify from "dompurify";
 import markdowner from "markdown-it/dist/markdown-it";
-import initialPageData from "hqwebapp/js/initial_page_data";
 import toggles from "hqwebapp/js/toggles";
 
 
@@ -14,81 +13,6 @@ function updateTarget(tokens, idx, target) {
     }
 }
 
-function chainedRenderer(matcher, transform, target) {
-    return function (tokens, idx) {
-        let hIndex = tokens[idx].attrIndex('href');
-        let matched = false;
-        if (hIndex >= 0) {
-            let href = tokens[idx].attrs[hIndex][1];
-            if (matcher(href)) {
-                transform(href, hIndex, tokens[idx]);
-                matched = true;
-            }
-        }
-        if (matched) {
-            updateTarget(tokens, idx, target);
-        }
-        return matched;
-    };
-}
-
-function addDelegatedClickDispatch(linkTarget, linkDestination) {
-    document.addEventListener('click', function (event) {
-        if (event.target.target === linkTarget) {
-            linkDestination(event.target);
-            event.preventDefault();
-        }
-    }, true);
-}
-
-function postFormFromLink(anchor, target, isInternal) {
-    const url = new URL(anchor.href);
-    const dest = url.origin + url.pathname;
-    const data = {};
-    if (isInternal) {
-        data['csrfmiddlewaretoken'] = $("#csrfTokenContainer").val();
-    }
-    url.searchParams.forEach(function (value, key) { data[key] = value; });
-
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = dest;
-    form.target = target;
-    for (const key in data) {
-        const element = document.createElement("input");
-        element.name = key;
-        element.value = data[key];
-        form.appendChild(element);
-    }
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
-}
-
-function getChainedRenderers() {
-    let renderers = [];
-
-    if (initialPageData.get('gaen_otp_enabled')) {
-        renderers.push(chainedRenderer(
-            function (href) {
-                return href.startsWith("cchq://passthrough/gaen_otp/");
-            },
-            function (href, hIndex, anchor) {
-                let params = href.substring("cchq://passthrough/gaen_otp/".length);
-                let url = initialPageData.reverse("gaen_otp_view");
-                anchor.attrs[hIndex][1] = url + params;
-            },
-            "gaen_otp",
-        ));
-        addDelegatedClickDispatch('gaen_otp',
-            function (element) {
-                postFormFromLink(element, 'otp_view', true);
-            });
-    }
-
-    return renderers;
-}
-
 function initMd() {
     let md = markdowner({breaks: true}),
         // https://github.com/markdown-it/markdown-it/blob/6db517357af5bb42398b474efd3755ad33245877/docs/architecture.md#renderer
@@ -99,11 +23,8 @@ function initMd() {
             return self.renderToken(tokens, idx, options);
         };
 
-    let renderers = getChainedRenderers();
     md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
         updateTarget(tokens, idx, '_blank');
-
-        renderers.forEach(renderer => renderer(tokens, idx, options, env, self));
 
         // pass token to default renderer.
         return defaultLinkOpen(tokens, idx, options, env, self);

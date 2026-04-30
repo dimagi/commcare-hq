@@ -333,8 +333,14 @@ def refresh_timed_schedule_instances(schedule_id, recipients, start_date_iso_str
         ).refresh()
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
-                default_retry_delay=60 * 60, max_retries=24, bind=True)
+@no_result_task(
+    queue=settings.CELERY_REMINDER_RULE_QUEUE,
+    acks_late=True,
+    default_retry_delay=60 * 60,
+    max_retries=24,
+    bind=True,
+    durable=True,
+)
 def delete_alert_schedule_instances(self, schedule_id):
     """
     :param schedule_id: type str that is hex representation of the AlertSchedule schedule_id (UUID)
@@ -347,8 +353,14 @@ def delete_alert_schedule_instances(self, schedule_id):
         self.retry(exc=e)
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
-                default_retry_delay=60 * 60, max_retries=24, bind=True)
+@no_result_task(
+    queue=settings.CELERY_REMINDER_RULE_QUEUE,
+    acks_late=True,
+    default_retry_delay=60 * 60,
+    max_retries=24,
+    bind=True,
+    durable=True,
+)
 def delete_timed_schedule_instances(self, schedule_id):
     """
     :param schedule_id: type str that is hex representation of the TimedSchedule schedule_id (UUID)
@@ -361,8 +373,14 @@ def delete_timed_schedule_instances(self, schedule_id):
         self.retry(exc=e)
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
-                default_retry_delay=60 * 60, max_retries=24, bind=True)
+@no_result_task(
+    queue=settings.CELERY_REMINDER_RULE_QUEUE,
+    acks_late=True,
+    default_retry_delay=60 * 60,
+    max_retries=24,
+    bind=True,
+    durable=True,
+)
 def delete_case_alert_schedule_instances(self, schedule_id):
     """
     :param schedule_id: type str that is hex representation of the AlertSchedule schedule_id (UUID)
@@ -374,8 +392,14 @@ def delete_case_alert_schedule_instances(self, schedule_id):
         self.retry(exc=e)
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
-                default_retry_delay=60 * 60, max_retries=24, bind=True)
+@no_result_task(
+    queue=settings.CELERY_REMINDER_RULE_QUEUE,
+    acks_late=True,
+    default_retry_delay=60 * 60,
+    max_retries=24,
+    bind=True,
+    durable=True,
+)
 def delete_case_timed_schedule_instances(self, schedule_id):
     """
     :param schedule_id: type str that is hex representation of the TimedSchedule schedule_id (UUID)
@@ -535,7 +559,7 @@ def handle_case_timed_schedule_instance(case_id, schedule_instance_id, domain):
         _handle_schedule_instance(instance, save_case_schedule_instance)
 
 
-@no_result_task(queue='background_queue', acks_late=True)
+@no_result_task(queue='background_queue', acks_late=True, durable=True)
 def delete_schedule_instances_for_cases(domain, case_ids):
     for case_id in case_ids:
         delete_schedule_instances_by_case_id(domain, case_id)

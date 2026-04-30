@@ -15,9 +15,10 @@ Case search and claim is typically an optional part of a workflow.
 In this use case, the remote request is accessed via an action, and the
 `rewind <https://github.com/dimagi/commcare-core/wiki/SessionStack#mark-and-rewind>`_ construct
 is used to go back to the main flow.
-However, the flag ``USH_INLINE_SEARCH`` supports remote requests being made in the main flow of a session. When
-using this flag, a ``<post>`` and query datums are added to a normal form ``<entry>``. This makes search inputs
-available after the search, rather than having them destroyed by rewinding.
+However, the flag ``CASE_SEARCH_ADVANCED`` supports remote requests being made in the main flow of a session. When
+using this flag and the setting ("Make search input available after search") is checked,
+a ``<post>`` and query datums are added to a normal form ``<entry>``.
+This makes search inputs available after the search, rather than having them destroyed by rewinding.
 
 This module includes ``SessionEndpointRemoteRequestFactory``, which generates remote requests for use by session
 endpoints. This functionality exists for the sake of smart links: whenever a user clicks a smart link,
@@ -217,9 +218,8 @@ class RemoteRequestFactory(object):
             "prompts": self.build_query_prompts(),
             "prompt_groups": self.build_query_prompt_groups(),
             "default_search": self.module.search_config.default_search,
-            "dynamic_search": self.app.split_screen_dynamic_search and not self.module.is_auto_select()
         }
-        if self.module.search_config.search_on_clear and toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(self.app.domain):
+        if self.module.search_config.search_on_clear and toggles.CASE_SEARCH_ADVANCED.enabled(self.app.domain):
             kwargs["search_on_clear"] = (self.module.search_config.search_on_clear
                 and not self.module.is_auto_select())
         return [
@@ -235,13 +235,11 @@ class RemoteRequestFactory(object):
             long_detail_id = 'search_long'
 
         nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=self.storage_instance)
-        if toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain):
+        if toggles.CASE_SEARCH_ADVANCED.enabled(self.app.domain):
             additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
             if additional_types:
                 nodeset = CaseTypeXpath(self.module.case_type).cases(
                     additional_types, instance_name=self.storage_instance)
-            if self.module.search_config.search_filter and toggles.USH_SEARCH_FILTER.enabled(self.app.domain):
-                nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
         nodeset += EXCLUDE_RELATED_CASES_FILTER
 
         datum_cls = InstanceDatum if self.module.is_multi_select() else SessionDatum

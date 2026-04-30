@@ -39,7 +39,8 @@ const component = {
     viewModel: function (params) {
         var self = {};
 
-        self.currentPage = ko.observable(self.currentPage || 1);
+        self.currentPage = ko.isObservable(params.currentPage) ?
+            params.currentPage : ko.observable(params.currentPage || 1);
 
         self.totalItems = params.totalItems;
         self.slug = params.slug;

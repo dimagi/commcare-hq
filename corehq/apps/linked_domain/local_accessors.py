@@ -9,7 +9,6 @@ from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-from corehq.apps.integration.models import GaenOtpServerSettings
 from corehq.apps.reports.models import TableauServer, TableauVisualization
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 
@@ -130,16 +129,6 @@ def get_data_dictionary(domain):
 
         data_dictionary[case_type_obj.name] = case_type
     return data_dictionary
-
-
-def get_otp_settings(domain):
-    settings, created = GaenOtpServerSettings.objects.get_or_create(domain=domain)
-    return {
-        'domain': domain,
-        'is_enabled': settings.is_enabled,
-        'server_url': settings.server_url,
-        'auth_token': settings.auth_token,
-    }
 
 
 def rule_to_dict(rule):

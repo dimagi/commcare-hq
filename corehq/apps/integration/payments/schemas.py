@@ -9,10 +9,20 @@ class PartyDetails:
 
 
 @dataclass
-class PaymentTransferDetails:
+class MTNPaymentTransferDetails:
     amount: str
     currency: str
     externalId: str
     payerMessage: str
     payeeNote: str
     payee: PartyDetails
+
+
+@dataclass
+class OrangeCameroonPaymentTransferDetails:
+    channelUserMsisdn: str
+    pin: str
+    amount: str
+    subscriberMsisdn: str
+    orderId: str
+    description: str

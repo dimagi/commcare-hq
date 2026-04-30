@@ -1,20 +1,23 @@
 import json
+
 from django.contrib import messages
-from django.http import (
-    Http404,
-    JsonResponse,
-)
+from django.http import Http404, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext_lazy, gettext as _, ngettext
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, ngettext
 from django.views.decorators.http import require_POST
+
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
+from corehq.apps.cloudcare.dbaccessors import (
+    get_application_access_for_domain,
+    get_cloudcare_apps,
+)
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -25,10 +28,16 @@ from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.analytics import get_role_user_count
 from corehq.apps.users.decorators import require_can_view_roles
 from corehq.apps.users.exceptions import InvalidRequestException
-from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
+from corehq.apps.users.landing_pages import (
+    get_allowed_landing_pages,
+    validate_landing_page,
+)
 from corehq.apps.users.models import HqPermissions
-from corehq.apps.users.models_role import UserRole, StaticRole
-from corehq.apps.users.views import BaseRoleAccessView, _commcare_analytics_roles_options
+from corehq.apps.users.models_role import StaticRole, UserRole
+from corehq.apps.users.views import (
+    BaseRoleAccessView,
+    _commcare_analytics_roles_options,
+)
 from corehq.util.view_utils import json_error
 
 
@@ -141,13 +150,25 @@ class ListRolesView(RoleContextMixin, BaseRoleAccessView):
 @domain_admin_required
 @require_POST
 @use_bootstrap5
-def post_user_role(request, domain):
+def create_user_role(request, domain):
+    return _save_user_role(request, domain)
+
+
+@json_error
+@domain_admin_required
+@require_POST
+@use_bootstrap5
+def update_user_role(request, domain, role_id):
+    return _save_user_role(request, domain, role_id=role_id)
+
+
+def _save_user_role(request, domain, role_id=None):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
 
     try:
-        role = _update_role_from_view(domain, role_data)
+        role = _update_role_from_view(domain, role_data, role_id=role_id)
     except ValueError as e:
         return JsonResponse({
             "message": str(e)
@@ -162,7 +183,7 @@ def post_user_role(request, domain):
     return JsonResponse(response_data)
 
 
-def _update_role_from_view(domain, role_data):
+def _update_role_from_view(domain, role_data, role_id=None):
     landing_page = role_data["default_landing_page"]
     if landing_page:
         validate_landing_page(domain, landing_page)
@@ -174,14 +195,11 @@ def _update_role_from_view(domain, role_data):
         # This shouldn't be possible through the UI, but as a safeguard...
         role_data['permissions']['access_all_locations'] = True
 
-    if "_id" in role_data:
+    if role_id is not None:
         try:
-            role = UserRole.objects.by_couch_id(role_data["_id"])
+            role = UserRole.objects.by_couch_id(role_id, domain=domain)
         except UserRole.DoesNotExist:
-            role = UserRole()
-        else:
-            if role.domain != domain:
-                raise Http404()
+            raise Http404()
     else:
         role = UserRole()
 
@@ -208,22 +226,21 @@ def _update_role_from_view(domain, role_data):
 @domain_admin_required
 @require_POST
 @use_bootstrap5
-def delete_user_role(request, domain):
+def delete_user_role(request, domain, role_id):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
-    role_data = json.loads(request.body.decode('utf-8'))
 
     try:
-        response_data = _delete_user_role(domain, role_data)
+        response_data = _delete_user_role(domain, role_id)
     except InvalidRequestException as e:
         return JsonResponse({"message": str(e)}, status=400)
 
     return JsonResponse(response_data)
 
 
-def _delete_user_role(domain, role_data):
+def _delete_user_role(domain, role_id):
     try:
-        role = UserRole.objects.by_couch_id(role_data["_id"], domain=domain)
+        role = UserRole.objects.by_couch_id(role_id, domain=domain)
     except UserRole.DoesNotExist:
         raise Http404
 
@@ -231,9 +248,9 @@ def _delete_user_role(domain, role_data):
         raise InvalidRequestException(_(
             "Unable to delete role '{role}'. "
             "This role is the default role for Mobile Users and can not be deleted.",
-        ).format(role=role_data["name"]))
+        ).format(role=role.name))
 
-    user_count = get_role_user_count(domain, role_data["_id"])
+    user_count = get_role_user_count(domain, role_id)
     if user_count:
         raise InvalidRequestException(ngettext(
             "Unable to delete role '{role}'. "
@@ -243,7 +260,7 @@ def _delete_user_role(domain, role_data):
             "It has {user_count} users and/or invitations still assigned to it. "
             "Remove all users assigned to the role before deleting it.",
             user_count,
-        ).format(role=role_data["name"], user_count=user_count))
+        ).format(role=role.name, user_count=user_count))
 
     copy_id = role.couch_id
     role.delete()
@@ -318,10 +335,6 @@ class EditRoleView(RoleContextMixin, BaseRoleAccessView):
                 toggles.OPENMRS_INTEGRATION.enabled(self.domain)
                 or toggles.DHIS2_INTEGRATION.enabled(self.domain)
                 or toggles.GENERIC_INBOUND_API.enabled(self.domain)
-            ),
-            'attendance_tracking_privilege': (
-                toggles.ATTENDANCE_TRACKING.enabled(self.domain)
-                and domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
             ),
             'has_report_builder_access': has_report_builder_access(self.request),
             'data_file_download_enabled':

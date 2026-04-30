@@ -38,18 +38,12 @@ Useful Tools
 ------------
 Here are some tools widely used by CommCare HQ developers
 
-flake8
-    Flake8 is run on all PRs automatically. You can run it locally to ensure your
-    code meets those standards before opening a PR.
-
-pylint
-    It requires some configuration, but this is the most comprehensive python linter
-    out there and can provide some useful feedback.
-
-isort
-    This will organize the imports in the file you're editing according to the
-    ``.isort.cfg`` in the root of the repository.  See how to run this from within
-    your editor `here <https://github.com/pycqa/isort/wiki/isort-Plugins>`_
+ruff
+    Ruff is used for linting, formatting, and sorting imports. It is run on all
+    PRs automatically. Run ``ruff check path/to/file.py`` to lint,
+    ``ruff format path/to/file.py`` to format, or
+    ``ruff check --select I --fix path/to/file.py`` to sort imports.
+    Commit formatting and import-sorting changes separately from logic changes.
 
 ./manage.py show_urls
     Provided by ``django-extensions``, this outputs a list of all URL paths used in the

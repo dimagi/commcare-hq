@@ -68,7 +68,9 @@ def serialize_es_case(case_doc):
 
 
 class UserError(Exception):
-    pass
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
 
 
 class SubmissionError(Exception):

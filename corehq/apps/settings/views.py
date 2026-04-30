@@ -725,7 +725,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 key = api_key.plaintext_key
             else:
                 copy_msg = _("Copy this in a secure place. It will not be shown again.")
-                key = f"{api_key.plaintext_key} ({copy_msg})",
+                key = f"{api_key.plaintext_key}({copy_msg})",
             full_key = api_key.plaintext_key
 
         if api_key.expiration_date and api_key.expiration_date < datetime.now():

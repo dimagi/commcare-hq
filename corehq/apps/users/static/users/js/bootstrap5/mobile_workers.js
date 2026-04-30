@@ -56,8 +56,6 @@ var userModel = function (options) {
         force_account_confirmation: false,
         email: '',
         send_account_confirmation_email: false,
-        force_account_confirmation_by_sms: false,
-        phone_number: '',
         is_active: true,
         is_account_confirmed: true,
         is_personalid_link_active: null,
@@ -108,10 +106,7 @@ var userModel = function (options) {
     self.emailRequired = ko.observable(self.force_account_confirmation());
     self.requireAccountConfirmation = ko.observable(self.force_account_confirmation());
 
-    // used by two-stage sms provisioning
-    self.phoneRequired = ko.observable(self.force_account_confirmation_by_sms());
-
-    self.passwordVisible = ko.observable(!(self.force_account_confirmation_by_sms() || self.force_account_confirmation()));
+    self.passwordVisible = ko.observable(!self.force_account_confirmation());
 
     self.action_error = ko.observable('');  // error when activating/deactivating a user
 
@@ -174,32 +169,6 @@ var userModel = function (options) {
             error: function () {
                 $modal.find(".btn").enableButton();
                 $modal.modal('hide');  /* todo B5: js-modal */
-                self.action_error(gettext("Issue communicating with server. Try again."));
-            },
-        });
-    };
-
-    self.sendConfirmationSMS = function () {
-        var urlName = 'send_confirmation_sms';
-        var $modal = $('#confirm_' + self.user_id());
-
-        $modal.find(".btn").addSpinnerToButton();
-        $.ajax({
-            method: 'POST',
-            url: initialPageData.reverse(urlName, self.user_id()),
-            success: function (data) {
-                $modal.modal('hide');  /* todo B5: js-modal */
-                if (data.success) {
-                    self.action_error('');
-                    self.confirmation_sent_at(new Date());
-                } else {
-                    self.action_error(data.error);
-                }
-
-            },
-            error: function () {
-                $modal.modal('hide');  /* todo B5: js-modal */
-                $modal.find(".btn").removeSpinnerFromButton();
                 self.action_error(gettext("Issue communicating with server. Try again."));
             },
         });
@@ -390,37 +359,6 @@ var newUserCreationModel = function (options) {
         return "";
     });
 
-    self.requiredPhoneMissing = ko.computed(function () {
-        return self.stagedUser() && self.stagedUser().phoneRequired() && !self.stagedUser().phone_number();
-    });
-
-    self.phoneIsInvalid = ko.computed(function () {
-        return self.stagedUser() && self.stagedUser().phone_number() && !self.stagedUser().phone_number().match(/^[0-9]+$/);
-    });
-
-    self.phoneStatus = ko.computed(function () {
-
-        if (!self.stagedUser()) {
-            return self.STATUS.NONE;
-        }
-
-        if (self.phoneStatusMessage()) {
-            return self.STATUS.ERROR;
-        }
-    });
-
-    self.phoneStatusMessage = ko.computed(function () {
-
-        if (self.requiredPhoneMissing()) {
-            return gettext('Phone number is required when users confirm their own accounts by sms.');
-        }
-
-        if (self.phoneIsInvalid()) {
-            return gettext('Phone number should contain only digits 0-9.');
-        }
-
-        return "";
-    });
 
     self.generateStrongPassword = function () {
         function pick(possible, min, max) {
@@ -528,23 +466,6 @@ var newUserCreationModel = function (options) {
                 user.send_account_confirmation_email(false);
             }
         });
-        user.force_account_confirmation_by_sms.subscribe(function (enabled) {
-            if (enabled) {
-                // make phone number required
-                user.phoneRequired(true);
-                // clear and disable password input
-                user.password('');
-                user.passwordVisible(false);
-                user.requireAccountConfirmation(true);
-            } else {
-                // make phone number optional
-                user.phoneRequired(false);
-                // enable password input
-                user.passwordVisible(true);
-                user.requireAccountConfirmation(false);
-                user.send_account_confirmation_email(false);
-            }
-        });
     });
 
     self.initializeUser = function () {
@@ -595,9 +516,6 @@ var newUserCreationModel = function (options) {
             }
         }
         if (self.requiredEmailMissing() || self.emailIsInvalid()) {
-            return false;
-        }
-        if (self.requiredPhoneMissing() || self.phoneIsInvalid()) {
             return false;
         }
         if (options.require_location_id && !self.stagedUser().location_id()) {

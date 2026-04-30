@@ -76,7 +76,6 @@ from corehq.apps.hqwebapp.decorators import (
     use_bootstrap5,
     waf_allow,
 )
-from corehq.apps.integration.util import integration_contexts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
@@ -218,7 +217,6 @@ class FormplayerMain(View):
             "formplayer_url": get_formplayer_url(for_js=True),
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
-            "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
             "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
             "lang_code_name_mapping": lang_code_name_mapping,
@@ -246,7 +244,6 @@ class PreviewAppView(TemplateView):
             'formplayer_url': get_formplayer_url(for_js=True),
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
-            "integrations": integration_contexts(request.domain),
             "has_geocoder_privs": has_geocoder_privs(request.domain),
             "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         })
@@ -254,7 +251,7 @@ class PreviewAppView(TemplateView):
 
 def has_geocoder_privs(domain):
     return (
-        toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)
+        toggles.CASE_SEARCH_ADVANCED.enabled(domain)
         and domain_has_privilege(domain, privileges.GEOCODER)
     )
 
@@ -472,7 +469,7 @@ def report_sentry_error(request, domain):
         if header.get("dsn") != settings.SENTRY_DSN:
             raise Exception(f"Invalid Sentry DSN: {header.get('dsn')}")
 
-        dsn = urllib.parse.urlparse(header.get("dsn"))
+        dsn = urllib.parse.urlparse(settings.SENTRY_DSN)
         project_id = dsn.path.strip("/")
         if project_id != settings.SENTRY_DSN.split('/')[-1]:
             raise Exception(f"Invalid Sentry Project ID: {project_id}")

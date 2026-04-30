@@ -4,8 +4,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse
 from django.utils.translation import gettext as _
 
-from corehq import toggles
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -150,7 +149,6 @@ require_can_edit_or_view_groups = require_permission(
 )
 require_can_view_roles = require_permission('view_roles')
 require_can_login_as = require_permission_raw(lambda user, domain: user.can_login_as(domain))
-require_can_coordinate_events = require_permission('manage_attendance_tracking')
 require_can_manage_domain_alerts = require_permission('manage_domain_alerts')
 
 

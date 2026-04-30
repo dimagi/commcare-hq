@@ -7,7 +7,7 @@ from typing import List
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -198,10 +198,13 @@ class StaticToggle(object):
 
         return set_toggle(self.slug, item, enabled, namespace)
 
-    def required_decorator(self):
+    def required_decorator(self, plain_message=None):
         """
         Returns a view function decorator that checks to see if the domain
         or user in the request has the appropriate toggle enabled.
+
+        If ``plain_message`` is Truthy, returns a plain-text HTTP 404
+        instead of raising ``Http404`` (useful for API views).
         """
 
         def decorator(view_func):
@@ -221,6 +224,8 @@ class StaticToggle(object):
                         ),
                         fail_silently=True,  # workaround for tests: https://code.djangoproject.com/ticket/17971
                     )
+                if plain_message:
+                    return HttpResponse(plain_message, status=404)
                 raise Http404()
 
             return wrapped_view
@@ -647,13 +652,6 @@ def _ensure_valid_randomness(randomness):
         raise Exception('randomness must be between 0 and 1!')
 
 
-APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
-    'custom-parent-ref',
-    'ICDS: Custom case parent reference',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-)
-
 LAZY_LOAD_MULTIMEDIA = StaticToggle(
     'optional-media',
     'ICDS: Lazy load multimedia files in Updates',
@@ -796,6 +794,17 @@ DHIS2_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+EXPORTS_APPS_USE_ELASTICSEARCH = StaticToggle(
+    'exports_apps_use_elasticsearch',
+    'Exports apps use Elasticsearch',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    When enabled, exports page will use Elasticsearch to fetch apps.
+    This toggle is meant to be *only* used by QA domains.
+    """
+)
+
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
@@ -860,17 +869,6 @@ REPORT_BUILDER = StaticToggle(
     'Activate Report Builder for a project without setting up a subscription.',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
-)
-
-UCR_SUM_WHEN_TEMPLATES = StaticToggle(
-    'ucr_sum_when_templates',
-    'Allow sum when template columns in dynamic UCRs',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description=(
-        "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
-    ),
-    help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
 )
 
 ASYNC_RESTORE = StaticToggle(
@@ -954,8 +952,9 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Simple Case Search',
     TAG_FROZEN,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    help_link='https://dimagi.atlassian.net/wiki/spaces/uss/pages/3675717639/Simple+Case+Search',
+    description="Basic case search functionality",
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 CASE_SEARCH_DEPRECATED = StaticToggle(
@@ -963,48 +962,48 @@ CASE_SEARCH_DEPRECATED = StaticToggle(
     'Case Search: Deprecated',
     TAG_DEPRECATED,
     help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
+)
+
+CASE_SEARCH_DEPRECATED_NORMAL_CASE_LIST = StaticToggle(
+    'case_search_deprecated_normal_case_list',
+    'Case Search: Normal case list option Deprecated',
+    TAG_DEPRECATED,
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
 CASE_SEARCH_ADVANCED = StaticToggle(
     'case_search_advanced',
     'Advanced Case Search',
     TAG_FROZEN,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    help_link='https://dimagi.atlassian.net/wiki/spaces/uss/pages/3676536837/Advanced+Case+Search',
+    description="Complex, fragile case search configuration for USS projects",
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
 CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
     'case_search_related_lookups',
     'Case Search: Related Lookups',
     TAG_FROZEN,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    help_link='https://dimagi.atlassian.net/wiki/spaces/uss/pages/3676635261/Case+Search+Related+Lookups',
+    description="Allows access to less-performant, complex related lookups in case search. USS only.",
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[CASE_SEARCH_ADVANCED],
 )
 
-USH_CASE_LIST_MULTI_SELECT = StaticToggle(
-    'ush_case_list_multi_select',
-    'USH: Allow selecting multiple cases from the case list',
-    TAG_FROZEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Allow+selecting+multiple+cases+from+the+case+list',  # noqa: E501
+CASE_SEARCH_CACHE_KEY = StaticToggle(
+    'case_search_cache_key',
+    'Case Search: Formplayer cache key',
+    TAG_GA_PATH,
     description="""
-    Allows user to select multiple cases and load them all into the form.
-    """
-)
-
-USH_CASE_CLAIM_UPDATES = StaticToggle(
-    'case_claim_autolaunch',
-    "USH Specific toggle to support several different case search/claim workflows in web apps",
-    TAG_FROZEN,
-    help_link='https://confluence.dimagi.com/display/USH/Case+Search+Configuration',
+        If set formplayer will use a more specific cache key. This is meant to fix a bug but the
+        perfomance implications are not clear. Hence the FF.""",
     namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    USH Specific toggle to support several different case search/claim workflows in web apps:
-    "search first", "see more", and "skip to default case search results", Geocoder
-    and other options in Webapps Case Search.
-    """,
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
@@ -1016,24 +1015,8 @@ GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     When enabled this will add a small button to the geocoder widget that, when pressed, and if
     the user grants permission, will perform a reverse geocoding query based on the user's reported location.
     The result will be used to populate the search field of the geocoder widget.
-
-    This is intended as a temporary toggle and will likely get rolled into the "USH_CASE_CLAIM_UPDATES" toggle.
     """,
-    parent_toggles=[USH_CASE_CLAIM_UPDATES],
 )
-
-# GEOCODER_AUTOLOAD_USER_LOCATION = StaticToggle(
-#     "geocoder_autoload_user_location",
-#     "USH: Auto-load the geocoder widget with the user's current location",
-#     TAG_DEPRECATED,
-#     namespaces=[NAMESPACE_DOMAIN],
-#     description="""
-#     When enabled, and if the user grants permissions, the geocoder widget will automatically do a reverse
-#     geocoding query using the user's reported location The result will be used to populate the search field
-#     of the geocoder widget.
-#     """,
-#     parent_toggles=[USH_CASE_CLAIM_UPDATES],
-# )
 
 GEOCODER_USER_PROXIMITY = StaticToggle(
     "geocoder_user_proximity",
@@ -1046,27 +1029,6 @@ GEOCODER_USER_PROXIMITY = StaticToggle(
        will be filtered out when used in the case search.
     2. Proximity to the users location will be taken into account for the results order.
     """,
-    parent_toggles=[USH_CASE_CLAIM_UPDATES],
-)
-
-USH_SEARCH_FILTER = StaticToggle(
-    'case_search_filter',
-    "USH Specific toggle to use Search Filter in case search options.",
-    TAG_FROZEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
-)
-
-USH_INLINE_SEARCH = StaticToggle(
-    'inline_case_search',
-    "USH Specific toggle to making case search user input available to other parts of the app.",
-    TAG_FROZEN,
-    help_link='https://docs.google.com/document/d/1Mmx1FrYZrcEmWidqSkNjC_gWSJ6xzRFKoP3Rn_xSaj4/edit#',
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Temporary toggle to manage the release of the 'inline search' / 'case search input' feature.
-    """,
-    parent_toggles=[USH_CASE_CLAIM_UPDATES]
 )
 
 USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
@@ -1074,34 +1036,6 @@ USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
     "USH: Allow customizing the text displayed when case list contains no cases in web apps",
     TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
-    'split_screen_case_search',
-    "Split screen case search: In case search, show the search filters in a sidebar on the left and the results"
-    " on the right.",
-    TAG_FROZEN,
-    help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
-)
-
-DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
-    'dynamically_update_search_results',
-    "In case search with split screen case search enabled, search results update when a search field is updated"
-    " without requiring the user to manually press a button to search.",
-    TAG_DEPRECATED,
-    help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
-)
-
-WEBAPPS_STICKY_SEARCH = StaticToggle(
-    "webapps_sticky_search",
-    "USH: Sticky search: In web apps, save user's most recent inputs on case search & claim screen.",
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/COVID%3A+Web+Apps+Sticky+Search',
 )
 
 HIDE_SYNC_BUTTON = StaticToggle(
@@ -1120,10 +1054,10 @@ PAUSE_DATA_FORWARDING = StaticToggle(
 
 
 def _ensure_search_index_is_enabled(domain, enabled):
+    from corehq.apps.case_search.models import DomainsNotInCaseSearchIndex
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
     from corehq.apps.es import CaseSearchES
     from corehq.pillows.case_search import domain_needs_search_index
-    from corehq.apps.case_search.models import DomainsNotInCaseSearchIndex
 
     if enabled and DomainsNotInCaseSearchIndex.objects.filter(domain=domain).exists():
         DomainsNotInCaseSearchIndex.objects.filter(domain=domain).delete()
@@ -1133,14 +1067,6 @@ def _ensure_search_index_is_enabled(domain, enabled):
     if enabled and not has_case_search_cases:
         reindex_case_search_for_domain.delay(domain)
 
-
-# SAAS_PROTOTYPE = StaticToggle(
-#     'saas_prototype',
-#     'Use allowed to view SaaS prototypes',
-#     TAG_DEPRECATED,
-#     namespaces=[NAMESPACE_USER],
-#     description='Use this for rapid prototypes developed by the SaaS product team.',
-# )
 
 FORMBUILDER_SAVE_TO_CASE = StaticToggle(
     'saas_formbuilder_save_to_case',
@@ -1181,27 +1107,12 @@ MOBILE_PRIVILEGES_FLAG = StaticToggle(
     [NAMESPACE_USER]
 )
 
-# PRODUCTS_PER_LOCATION = StaticToggle(
-#     'products_per_location',
-#     "Products Per Location: Specify products stocked at individual locations.",
-#     TAG_DEPRECATED,
-#     [NAMESPACE_DOMAIN],
-#     description="This doesn't actually do anything yet."
-# )
-
 ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     'allow_case_attachments_view',
     "Explicitly allow user to access case attachments, even if they can't view the case list report.",
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
-
-# TRANSFER_DOMAIN = StaticToggle(
-#     'transfer_domain',
-#     'Transfer domains to different users',
-#     TAG_DEPRECATED,
-#     [NAMESPACE_DOMAIN]
-# )
 
 SECURE_SESSION_TIMEOUT = StaticToggle(
     'secure_session_timeout',
@@ -1249,6 +1160,15 @@ VELLUM_ALLOW_BULK_FORM_ACTIONS = StaticToggle(
     description="This shows Bulk Form Actions (mark all questions required, "
                 "set default values to matching case properties) in "
                 "the Form Builder's main dropdown menu.",
+)
+
+LOCKED_ADMIN_QUESTIONS = FeatureRelease(
+    'locked_admin_questions',
+    "Locked Admin Questions",
+    TAG_RELEASE,
+    [NAMESPACE_DOMAIN],
+    owner="Evan Joseph-Pinero",
+    description="Enables Locked Admin Questions workflows in HQ and the form builder.",
 )
 
 CACHE_AND_INDEX = StaticToggle(
@@ -1342,17 +1262,6 @@ COMMTRACK = StaticToggle(
     save_fn=_commtrackify,
 )
 
-NON_COMMTRACK_LEDGERS = StaticToggle(
-    'non_commtrack_ledgers',
-    "Enable ledgers for projects not using Supply.",
-    TAG_DEPRECATED,
-    description=(
-        'Turns on the ledger fixture and ledger transaction question types in '
-        'the form builder. ONLY WORKS ON SQL DOMAINS!'
-    ),
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 CUSTOM_INSTANCES = StaticToggle(
     'custom_instances',
     'Inject custom instance declarations',
@@ -1436,14 +1345,6 @@ EXPORT_DATA_SOURCE_DATA = StaticToggle(
     description="Add the Export Data Source Data page to the Data tab",
 )
 
-
-# ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
-#     'enable_include_sms_gateway_charging',
-#     'Enable include SMS gateway charging',
-#     TAG_DEPRECATED,
-#     [NAMESPACE_DOMAIN]
-# )
-
 MESSAGE_LOG_METADATA = StaticToggle(
     'message_log_metadata',
     'Include message id in Message Log export.',
@@ -1473,14 +1374,6 @@ CASE_DEDUPE_UPDATES = StaticToggle(
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
 )
-
-# TODO remove this toggle definition once the other feature flag removal PRs have landed
-# LEGACY_SYNC_SUPPORT = StaticToggle(
-#     'legacy_sync_support',
-#     "Support mobile sync bugs in older projects (2.9 and below).",
-#     TAG_DEPRECATED,
-#     [NAMESPACE_DOMAIN]
-# )
 
 CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     'call_center_location_owners',
@@ -1512,13 +1405,6 @@ INBOUND_SMS_LENIENCY = StaticToggle(
     description="WARNING: This wil be rolled out slowly; do not enable on your own.",
 )
 
-# WHATSAPP_MESSAGING = StaticToggle(
-#     'whatsapp_messaging',
-#     "Default SMS to send messages via Whatsapp, where available",
-#     TAG_DEPRECATED,
-#     [NAMESPACE_DOMAIN]
-# )
-
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
@@ -1530,14 +1416,6 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-)
-
-
-EXPORTS_APPS_USE_ELASTICSEARCH = StaticToggle(
-    'export_apps_use_elasticsearch',
-    'Use elasticsearch when fetching apps for exports',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
@@ -1570,14 +1448,6 @@ CAUTIOUS_MULTIMEDIA = StaticToggle(
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
 )
-
-# LOCALE_ID_INTEGRITY = StaticToggle(
-#     'locale_id_integrity',
-#     'Verify all locale ids in suite are present in app strings before allowing CCZ download',
-#     TAG_DEPRECATED,
-#     [NAMESPACE_DOMAIN],
-#     notification_emails=['jschweers']
-# )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'bulk_update_multimedia_paths',
@@ -1629,13 +1499,6 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-CLEAR_MOBILE_WORKER_DATA = StaticToggle(
-    'clear_mobile_worker_data',
-    "Allows a web user to clear mobile workers' data",
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-)
-
 SKIP_REMOVE_INDICES = StaticToggle(
     'skip_remove_indices',
     'Make _remove_indices_from_deleted_cases_task into a no-op.',
@@ -1651,21 +1514,6 @@ MOBILE_RECOVERY_MEASURES = StaticToggle(
     description=("Used for widely deployed projects where recovery from "
                  "large-scale failures would otherwise be next to impossible."),
 )
-
-#PREVENT_MOBILE_UCR_SYNC = StaticToggle(
-#    'prevent_mobile_ucr_sync',
-#    'Prevent Mobile UCR sync (when a UCR sync is causing operational problems)',
-#    TAG_DEPRECATED,
-#    [NAMESPACE_DOMAIN],
-#    description='Prevents mobile UCRs from being generated or included in the sync payload',
-#)
-
-# TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
-#     'two_factor_superuser_rollout',
-#     'Users in this list will be forced to have Two-Factor Auth enabled',
-#     TAG_DEPRECATED,
-#     [NAMESPACE_USER]
-# )
 
 CUSTOM_ICON_BADGES = FrozenPrivilegeToggle(
     privilege_slug=privileges.CUSTOM_ICON_BADGES,
@@ -1727,26 +1575,11 @@ TRAINING_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-# APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
-#     'app_trans_with_transifex',
-#     'Translate Application Content With Transifex',
-#     TAG_DEPRECATED,
-#     namespaces=[NAMESPACE_USER]
-# )
-
 VALIDATE_APP_TRANSLATIONS = StaticToggle(
     'validate_app_translations',
     'Validate app translations before uploading them',
     TAG_FROZEN,
     namespaces=[NAMESPACE_USER]
-)
-
-AGGREGATE_UCRS = StaticToggle(
-    'aggregate_ucrs',
-    'Enable experimental aggregate UCR support',
-    TAG_DEPRECATED,  # this might change in the future
-    namespaces=[NAMESPACE_DOMAIN],
-    notification_emails=['czue'],
 )
 
 SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
@@ -1780,14 +1613,6 @@ SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-
-RELEASE_BUILDS_PER_PROFILE = StaticToggle(
-    'release_builds_per_profile',
-    'Do not release builds for all app profiles by default. Then manage via Source files view',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     'manage_releases_per_location',
     'Manage releases per location',
@@ -1801,35 +1626,6 @@ COPY_CASES = StaticToggle(
     'Enable users to copy cases between mobile workers',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-# DASHBOARD_REACH_REPORT = StaticToggle(
-#     'dashboard_reach_reports',
-#     'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
-#     TAG_DEPRECATED,
-#     [NAMESPACE_DOMAIN]
-# )
-
-# PARTIAL_UI_TRANSLATIONS = StaticToggle(
-#     'partial_ui_translations',
-#     'Enable uploading a subset of translations in the UI Translations Excel upload',
-#     TAG_DEPRECATED,
-#     [NAMESPACE_DOMAIN]
-# )
-
-# TODO remove commented-out toggle definition
-# SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
-#     'skip_orm_fixture_upload',
-#     'Exposes an option in fixture api upload to skip saving through couchdbkit',
-#     TAG_DEPRECATED,
-#     [NAMESPACE_DOMAIN]
-# )
-
-ENABLE_UCR_MIRRORS = StaticToggle(
-    'enable_ucr_mirrors',
-    'Enable the mirrored engines for UCRs in this domain',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
 )
 
 LOCATION_COLUMNS_APP_STATUS_REPORT = FrozenPrivilegeToggle(
@@ -1978,24 +1774,6 @@ IP_ACCESS_CONTROLS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-# SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
-#     'show_build_profile_in_app_status',
-#     'Show build profile installed on phone tracked via heartbeat request in App Status Report',
-#     TAG_DEPRECATED,
-#     [NAMESPACE_DOMAIN]
-# )
-
-#LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
-#    'livequery_read_from_standbys',
-#    'Allow livequery restore to read data from plproxy standbys if they are available',
-#    TAG_DEPRECATED,
-#    [NAMESPACE_USER],
-#    description="""
-#    To allow a gradual rollout and testing of using the standby
-#    databases to generate restore payloads.
-#    """
-#)
-
 ACCOUNTING_TESTING_TOOLS = StaticToggle(
     'accounting_testing_tools',
     'Enable Accounting Testing Tools',
@@ -2027,29 +1805,29 @@ REFER_CASE_REPEATER = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
 )
 
-WIDGET_DIALER = StaticToggle(
-    'widget_dialer',
-    'USH: Enable usage of AWS Connect Dialer',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+usage+of+AWS+Connect+Dialer",
-)
+# WIDGET_DIALER = StaticToggle(
+#     'widget_dialer',
+#     'USH: Enable usage of AWS Connect Dialer',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+usage+of+AWS+Connect+Dialer",
+# )
 
-HMAC_CALLOUT = StaticToggle(
-    'hmac_callout',
-    'USH: Enable signed messaging url callouts in cloudcare',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",  # noqa: E501
-)
+# HMAC_CALLOUT = StaticToggle(
+#     'hmac_callout',
+#     'USH: Enable signed messaging url callouts in cloudcare',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",  # noqa: E501
+# )
 
-GAEN_OTP_SERVER = StaticToggle(
-    'gaen_otp_server',
-    'USH: Enable retrieving OTPs from a GAEN Server',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+retrieving+OTPs+from+a+GAEN+Server",
-)
+# GAEN_OTP_SERVER = StaticToggle(
+#     'gaen_otp_server',
+#     'USH: Enable retrieving OTPs from a GAEN Server',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+retrieving+OTPs+from+a+GAEN+Server",
+# )
 
 PARALLEL_USER_IMPORTS = StaticToggle(
     'parallel_user_imports',
@@ -2113,14 +1891,6 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-# CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
-#     'clean_old_formplayer_syncs',
-#     'Delete old formplayer syncs during submission processing',
-#     TAG_DEPRECATED,
-#     namespaces=[NAMESPACE_OTHER],
-#     default_randomness=0.001
-# )
-
 PRIME_FORMPLAYER_DBS_BHA = StaticToggle(
     'prime_formplayer_dbs_bha',
     'USH-BHA: Control which domains will be included in the prime formplayer task runs',
@@ -2151,17 +1921,6 @@ SSO_OIDC_DEVELOPMENT = StaticToggle(
     TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
-
-# ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
-#     'fixtures_in_case_restore',
-#     'Allow limited fixtures to be available in case restore for SMS workflows.',
-#     TAG_DEPRECATED,
-#     namespaces=[NAMESPACE_DOMAIN],
-#     description="""
-#     WARNING: To be used only for small templates since the performance implication has not been evaluated.
-#     Do not enable on your own.
-#     """
-# )
 
 EMBEDDED_TABLEAU = StaticToggle(
     'embedded_tableau',
@@ -2198,13 +1957,6 @@ REPORT_TIMING_PROFILING = StaticToggle(
     'Report timing profiling is visible in reports that have a profiler enabled.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_USER],
-)
-
-COWIN_INTEGRATION = StaticToggle(
-    'cowin_integration',
-    'Integrate with COWIN APIs',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 EXPRESSION_REPEATER = StaticToggle(
@@ -2350,24 +2102,6 @@ SUPERSET_ANALYTICS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
-    'two_stage_user_provisioning_by_sms',
-    'Enable two-stage user provisioning (users confirm and set their own passwords via sms).',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
-# SMS_USE_LATEST_DEV_APP = FeatureRelease(
-#     'sms_use_latest_dev_app',
-#     'Use latest development version of the app for SMS processing',
-#     TAG_DEPRECATED,
-#     namespaces=[NAMESPACE_DOMAIN],
-#     owner='Simon Kelly',
-#     description='This will revert the SMS processing to previous functionality of using the '
-#                 'development version of the app instead of the latest release. It should only'
-#                 'be used temporarily if a domain needs unreleased app changes to be used for SMS.',
-# )
-
 VIEW_FORM_ATTACHMENT = StaticToggle(
     'view_form_attachments',
     'Allow users on the domain to view form attachments without having to have the report Submission History permission.',  # noqa: E501
@@ -2379,7 +2113,7 @@ VIEW_FORM_ATTACHMENT = StaticToggle(
 DISABLE_FORM_ATTACHMENT_DOWNLOAD_IN_BROWSER = StaticToggle(
     'disable_form_attachment_download_in_browser',
     'Restrict users from downloading audio/video form attachments in browser',
-    TAG_DEPRECATED,
+    TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -2390,6 +2124,19 @@ FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     owner='Simon Kelly'
+)
+
+ENTERPRISE_ADMIN_SELF_SERVICE = FeatureRelease(
+    'enterprise_admin_self_service',
+    'Allow Enterprise Admins to view/add/remove other Enterprise Admins '
+    'from the Enterprise Console',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    owner='Danny Roberts',
+    help_link=(
+        'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/'
+        '2143945885/Enterprise+Console#Enterprise-Admins'
+    ),
 )
 
 APPLICATION_RELEASE_LOGS = StaticToggle(
@@ -2414,37 +2161,37 @@ TABLEAU_USER_SYNCING = StaticToggle(
 )
 
 
-def _handle_attendance_tracking_role(domain, is_enabled):
-    from corehq.apps.accounting.utils import domain_has_privilege
-    from corehq.apps.users.role_utils import (
-        archive_attendance_coordinator_role_for_domain,
-        enable_attendance_coordinator_role_for_domain,
-    )
-
-    if not domain_has_privilege(domain, privileges.ATTENDANCE_TRACKING):
-        return
-
-    if is_enabled:
-        enable_attendance_coordinator_role_for_domain(domain)
-    else:
-        archive_attendance_coordinator_role_for_domain(domain)
-
-
-ATTENDANCE_TRACKING = StaticToggle(
-    'attendance_tracking',
-    'Allows access to the attendance tracking page',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Additional views will be added to simplify the process of '
-                'using CommCare HQ for attendance tracking.',
-    save_fn=_handle_attendance_tracking_role,
-)
+# def _handle_attendance_tracking_role(domain, is_enabled):
+#     from corehq.apps.accounting.utils import domain_has_privilege
+#     from corehq.apps.users.role_utils import (
+#         archive_attendance_coordinator_role_for_domain,
+#         enable_attendance_coordinator_role_for_domain,
+#     )
+#
+#     if not domain_has_privilege(domain, privileges.ATTENDANCE_TRACKING):
+#         return
+#
+#     if is_enabled:
+#         enable_attendance_coordinator_role_for_domain(domain)
+#     else:
+#         archive_attendance_coordinator_role_for_domain(domain)
+#
+#
+# ATTENDANCE_TRACKING = StaticToggle(
+#     'attendance_tracking',
+#     'Allows access to the attendance tracking page',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     description='Additional views will be added to simplify the process of '
+#                 'using CommCare HQ for attendance tracking.',
+#     save_fn=_handle_attendance_tracking_role,
+# )
 
 
 def _handle_geospatial_es_index(domain, is_enabled):
+    from corehq.apps.geospatial.const import ES_INDEX_TASK_HELPER_BASE_KEY
     from corehq.apps.geospatial.tasks import index_es_docs_with_location_props
     from corehq.apps.geospatial.utils import get_celery_task_tracker
-    from corehq.apps.geospatial.const import ES_INDEX_TASK_HELPER_BASE_KEY
 
     if is_enabled:
         celery_task_tracker = get_celery_task_tracker(domain, ES_INDEX_TASK_HELPER_BASE_KEY)
@@ -2478,15 +2225,6 @@ COMMCARE_CONNECT = StaticToggle(
     tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     description='More details to come',
-)
-
-FCM_NOTIFICATION = StaticToggle(
-    'fcm_notification',
-    'FCM Push Notifications - no longer functional',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Push Notification option will be available in content for '
-                'Conditional Alerts in Messaging.'
 )
 
 SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
@@ -2729,14 +2467,6 @@ USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
     description='The project logo replaces the CommCare logo.',
 )
 
-VELLUM_CASE_MICRO_IMAGE = StaticToggle(
-    slug='case_micro_image',
-    label='Add case micro images to case list',
-    tag=TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Add a micro image to cases in the case list.'
-)
-
 SUPPORT_GEO_JSON_EXPORT = FrozenPrivilegeToggle(
     privileges.GEOJSON_EXPORT,
     'support_geo_json_export',
@@ -2762,15 +2492,6 @@ INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
     description='Temporary increase of the max number of search results.',
 )
 
-
-SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
-    slug='support_road_network_disbursement_algorithm',
-    label='Add Road Network disbursement algorithm on geospatial settings page',
-    tag=TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
-)
-
 USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
     'ush_restore_file_location_case_sync_restriction',
     'USH: Limit the location-owned cases in a user\'s restore file, and allow marking whether a '
@@ -2793,14 +2514,6 @@ RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Force data sources to be marked for asynchronous processing from UI if it crosses a threshold '
                 'for the number of records to be populated during building or rebuilding'
-)
-
-APP_TESTING = StaticToggle(
-    slug='app_testing',
-    label='App Testing UI',
-    tag=TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description=''
 )
 
 CSQL_FIXTURE = StaticToggle(
@@ -2830,9 +2543,9 @@ KYC_VERIFICATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
-    slug='mtn_mobile_worker_verification',
-    label='Enable user verification using MTN Mobile Money',
+MOBILE_MONEY_INTEGRATION = StaticToggle(
+    slug='mobile_money_integration',
+    label='Enable mobile money integration',
     tag=TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -2844,13 +2557,6 @@ ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-DEMO_CASE_PILLOW = StaticToggle(
-    slug='demo_case_pillow',
-    label='Process case changes on separate queue',
-    tag=TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 # Removed 2026-02-17
 # CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
 #     slug='convert_xml_group_separator',
@@ -2858,3 +2564,10 @@ DEMO_CASE_PILLOW = StaticToggle(
 #     tag=TAG_DEPRECATED,
 #     namespaces=[NAMESPACE_DOMAIN]
 # )
+
+DEMO_CASE_PILLOW = StaticToggle(
+    slug='demo_case_pillow',
+    label='Process case changes on separate queue',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
