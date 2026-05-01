@@ -213,7 +213,7 @@
                   <span
                     class="hq-help-template"
                     data-title="{% trans "Web Apps Search Workflow" %}"
-                    data-content="{% trans_html_attr "<strong>Normal Case List</strong> is the &quot;classic&quot; case search workflow.  <br><br><strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is typically used for a &quot;Search Cases&quot; module.  <br><br><strong>See More</strong> is the same functionality as Normal Case List, except clicking the search button runs the default searches and returns the results. The user doesn't get to change the search criteria. This enables a workflow where the user sees what's in the local casedb then clicks &quot;See More&quot; to view all cases that fit the criteria.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search. The user never sees the results of the casedb." %}"
+                    data-content="{% trans_html_attr "<strong>Search First</strong> does not show any results until the user clicks &quot;Search&quot;. This is typically used for a &quot;Search Cases&quot; module.<br><br><strong>Skip to Default Case Search Results</strong> displays the results from the default case search on load and let's the user refine the search from there. The user never sees the results of the casedb.<br><br><strong>Legacy Case Search</strong> displays the results from the &quot;classic&quot; case list first. But lets the user expand the results using case search." %}"
                   >
                   </span>
                 </label>
@@ -226,7 +226,7 @@
                   <span
                     class="hq-help-template"
                     data-title="{% trans "Web Apps Search Workflow (Data Registry)" %}"
-                    data-content="{% trans_html_attr "<strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is the default for Data Registry search.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search." %}"
+                    data-content="{% trans_html_attr "<strong>Search First</strong> does not show any results until the user clicks &quot;Search&quot;. This is typically used for a &quot;Search Cases&quot; module.<br><br><strong>Skip to Default Case Search Results</strong> displays the results from the default case search on load and let's the user refine the search from there. The user never sees the results of the casedb." %}"
                   >
                   </span>
                 </label>
@@ -236,14 +236,6 @@
                     data-bind="value: workflow"
                     id="search-workflow"
                   >
-                    {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
-                      <option
-                        value="classic"
-                        data-bind="hidden: restrictWorkflowForDataRegistry"
-                      >
-                        {% trans "Normal Case List" %}
-                      </option>
-                    {% endif %}
                     <option value="auto_launch">
                       {% trans "Search First" %}
                     </option>
@@ -258,6 +250,14 @@
                     <option value="es_only">
                       {% trans "Skip to Default Case Search Results" %}
                     </option>
+                    {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED_NORMAL_CASE_LIST' %}
+                      <option
+                        value="classic"
+                        data-bind="hidden: restrictWorkflowForDataRegistry"
+                      >
+                        {% trans "Legacy Case Search" %}
+                      </option>
+                    {% endif %}
                   </select>
                 </div>
               </div>
