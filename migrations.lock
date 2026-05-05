@@ -137,6 +137,7 @@ accounting
  0115_loc_cols_in_user_last_activity_priv
  0116_creditadjustment_payment_type
  0117_locked_admin_questions_priv
+ 0118_vellum_save_to_case_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
