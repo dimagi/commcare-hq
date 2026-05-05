@@ -402,15 +402,11 @@ class XFormInstanceManager(RequireDBManager):
         deleted_count = 0
         deleted_ids = []
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
-            # cascade should delete the operations
             query = self.using(db_name).filter(domain=domain, form_id__in=split_form_ids)
-            with transaction.atomic():
-                if return_ids:
-                    found_forms = list(query.values_list('form_id', flat=True))
-                _, deleted_models = query.delete()
+            deleted_models, ids = self._hard_delete_queryset(query, return_ids=return_ids)
             deleted_count += deleted_models.get(self.model._meta.label, 0)
             if return_ids:
-                deleted_ids.extend(found_forms)
+                deleted_ids.extend(ids)
 
         if deleted_count:
             if deleted_count != len(form_ids):
@@ -429,6 +425,15 @@ class XFormInstanceManager(RequireDBManager):
             self.publish_deleted_forms(domain, form_ids)
 
         return deleted_ids if return_ids else deleted_count
+
+    def _hard_delete_queryset(self, queryset, return_ids=False):
+        deleted_ids = None
+        with transaction.atomic():
+            if return_ids:
+                deleted_ids = list(queryset.values_list('form_id', flat=True))
+            _, model_map = queryset.delete()
+
+        return (model_map, deleted_ids)
 
     @staticmethod
     def publish_deleted_forms(domain, form_ids):
