@@ -3201,15 +3201,15 @@ wheels = [
 
 [[package]]
 name = "stripe"
-version = "13.2.0"
+version = "15.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4f/c1/e687ba904a78eeb9ac8e0845630c625a03d380b7569647530c4bafd12677/stripe-13.2.0.tar.gz", hash = "sha256:ed6ad1c27725e1e32a336fa9d835cfa8f0bd6dafcc98b3ab7bc7e8791390453b", size = 1357785, upload-time = "2025-11-05T23:04:23.043Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/45/26/5d6f5f5beae6f1ff78213e2e6f4fbd431518dcd98733cdd39fb4ba0d01d3/stripe-15.1.0.tar.gz", hash = "sha256:24bd3b6bd0969a4841bd4d7681556a9e35e46c414a07c8590a225fbd5a878450", size = 1501673, upload-time = "2026-04-24T00:18:58.612Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a0/39/5a7a7ac27372e8bd1ec45f52b884d039f504900a1a41885745c5a7976519/stripe-13.2.0-py3-none-any.whl", hash = "sha256:e7d18bd44bab1812bc4e9e75da4ceacedd587f71737bb9193955edf420605f88", size = 1962001, upload-time = "2025-11-05T23:04:21.056Z" },
+    { url = "https://files.pythonhosted.org/packages/d8/4e/fd9cb74ddf1e61fb6241e2f6799a81ef99bf6cf2e94f8812ee1cd5458e5d/stripe-15.1.0-py3-none-any.whl", hash = "sha256:bdfb556be08662a41833e6403607ebf12e0062cae4f9b93e2b89b6ba926d7c82", size = 2143199, upload-time = "2026-04-24T00:18:56.027Z" },
 ]
 
 [[package]]
