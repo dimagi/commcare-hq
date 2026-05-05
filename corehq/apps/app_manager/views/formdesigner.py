@@ -257,7 +257,7 @@ def _get_base_vellum_options(request, domain, form, displayLang):
             'is_registration_form': form.is_registration_form(),
         }
 
-    if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
+    if domain_has_privilege(domain, privileges.VELLUM_SAVE_TO_CASE):
         options['saveToCase'] = {
             'existingCaseTypes': sorted(get_data_dict_case_types(domain, is_deprecated=False)),
         }
@@ -317,7 +317,7 @@ def _get_vellum_plugins(domain, form, module, options):
         vellum_plugins.append("commtrack")
     if "caseManagement" in options:
         vellum_plugins.append("caseManagement")
-    if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
+    if domain_has_privilege(domain, privileges.VELLUM_SAVE_TO_CASE):
         vellum_plugins.append("saveToCase")
     if toggles.COMMCARE_CONNECT.enabled(domain):
         vellum_plugins.append("commcareConnect")

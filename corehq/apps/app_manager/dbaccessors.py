@@ -16,7 +16,7 @@ from corehq.apps.es import AppES
 from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
 from corehq.util.quickcache import quickcache
 from quickcache.django_quickcache import tiered_django_cache
-from corehq.toggles import VELLUM_SAVE_TO_CASE
+from corehq import privileges
 from corehq.apps.es import apps as app_es
 
 
@@ -530,8 +530,9 @@ def get_case_types_from_apps(domain, include_save_to_case_updates=True):
     Also returns case types for SaveToCase properties in the domain, if the toggle is enabled.
     :returns: A set of case_types
     """
+    from corehq.apps.accounting.utils import domain_has_privilege
     save_to_case_updates = set()
-    if include_save_to_case_updates and VELLUM_SAVE_TO_CASE.enabled(domain):
+    if include_save_to_case_updates and domain_has_privilege(domain, privileges.VELLUM_SAVE_TO_CASE):
         save_to_case_updates = _get_save_to_case_updates(domain)
     q = _get_case_types_from_apps_query(domain)
     case_types = set(q.run().aggregations.modules.case_types.keys)
