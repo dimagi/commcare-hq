@@ -405,7 +405,7 @@ class XFormInstanceManager(RequireDBManager):
         deleted_ids = []
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
             query = self.using(db_name).filter(domain=domain, form_id__in=split_form_ids)
-            deleted_models, ids = self._hard_delete_queryset(query, return_ids=return_ids)
+            deleted_models, ids = self._hard_delete_queryset(query)
             deleted_count += deleted_models.get(self.model._meta.label, 0)
             if return_ids:
                 deleted_ids.extend(ids)
@@ -419,7 +419,7 @@ class XFormInstanceManager(RequireDBManager):
 
         return deleted_ids if return_ids else deleted_count
 
-    def _hard_delete_queryset(self, queryset, return_ids=False):
+    def _hard_delete_queryset(self, queryset):
         deleted_total = {}
         deleted_ids = []
         while forms := queryset[:BATCH_SIZE]:
@@ -442,8 +442,7 @@ class XFormInstanceManager(RequireDBManager):
                 )
                 _, model_map = queryset.filter(form_id__in=form_ids).delete()
 
-            if return_ids:
-                deleted_ids.extend(form_ids)
+            deleted_ids.extend(form_ids)
             deleted_total = Counter(deleted_total) + Counter(model_map)
 
         return (deleted_total, deleted_ids)
