@@ -405,9 +405,7 @@ class XFormInstanceManager(RequireDBManager):
         deleted_ids = []
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
             query = self.using(db_name).filter(domain=domain, form_id__in=split_form_ids)
-            deleted_models, ids = self._hard_delete_queryset(
-                query, return_ids=return_ids
-            )
+            deleted_models, ids = self._hard_delete_queryset(query)
             deleted_count += deleted_models.get(self.model._meta.label, 0)
             if return_ids:
                 deleted_ids.extend(ids)
@@ -421,7 +419,7 @@ class XFormInstanceManager(RequireDBManager):
 
         return deleted_ids if return_ids else deleted_count
 
-    def _hard_delete_queryset(self, queryset, return_ids=False):
+    def _hard_delete_queryset(self, queryset):
         queryset = self._include_only_soft_deleted(queryset)
         deleted_total = {}
         deleted_ids = []
@@ -443,8 +441,7 @@ class XFormInstanceManager(RequireDBManager):
                 Tombstone.objects.using(queryset.db).bulk_create(
                     tombstones, ignore_conflicts=True
                 )
-                if return_ids:
-                    deleted_ids.extend(form_ids)
+                deleted_ids.extend(form_ids)
                 _, model_map = queryset.filter(form_id__in=form_ids).delete()
 
             deleted_total = Counter(deleted_total) + Counter(model_map)
