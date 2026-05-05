@@ -409,17 +409,8 @@ class XFormInstanceManager(RequireDBManager):
                 deleted_ids.extend(ids)
 
         if deleted_count:
-            if deleted_count != len(form_ids):
-                # in the unlikely event that we didn't delete all forms (because they weren't all
-                # in the specified domain), only delete attachments for forms that were deleted.
-                deleted_forms = [
-                    form_id for form_id in form_ids
-                    if not self.form_exists(form_id)
-                ]
-            else:
-                deleted_forms = form_ids
-            metas = get_blob_db().metadb.get_for_parents(deleted_forms)
-            get_blob_db().bulk_delete(metas=metas)
+            count_mismatch = deleted_count != len(form_ids)
+            self._hard_delete_blobs(form_ids, verify_deleted=count_mismatch)
 
         if publish_changes:
             self.publish_deleted_forms(domain, form_ids)
@@ -434,6 +425,14 @@ class XFormInstanceManager(RequireDBManager):
             _, model_map = queryset.delete()
 
         return (model_map, deleted_ids)
+
+    def _hard_delete_blobs(self, form_ids, verify_deleted=False):
+        if verify_deleted:
+            deleted_forms = [f for f in form_ids if not self.form_exists(f)]
+        else:
+            deleted_forms = form_ids
+        metas = get_blob_db().metadb.get_for_parents(deleted_forms)
+        get_blob_db().bulk_delete(metas=metas)
 
     @staticmethod
     def publish_deleted_forms(domain, form_ids):
