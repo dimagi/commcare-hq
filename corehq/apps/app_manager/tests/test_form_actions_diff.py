@@ -6,6 +6,7 @@ from django.test import SimpleTestCase
 from ..form_action_diff import (
     CaseUpdateMapping,
     _convert_update_to_delete_plus_add,
+    collect_locked_advanced_mappings,
     collect_locked_mappings,
     from_combined_diff,
     get_case_mappings,
@@ -15,8 +16,11 @@ from ..form_action_diff import (
     _drop_multi_updates,
 )
 from ..models import (
+    AdvancedFormActions,
+    AdvancedOpenCaseAction,
     ConditionalCaseUpdate,
     FormActions,
+    LoadUpdateAction,
     OpenCaseAction,
     OpenSubCaseAction,
     PreloadAction,
@@ -937,6 +941,96 @@ class CollectLockedMappingsTests(SimpleTestCase):
         }))
         result, = collect_locked_mappings(actions, {'/data/locked'})
         assert result.update_mode == 'edit'
+
+
+def _load_update_action(case_tag, properties, *, case_type='patient'):
+    return LoadUpdateAction(
+        case_type=case_type,
+        case_tag=case_tag,
+        case_properties={
+            prop: ConditionalCaseUpdate(question_path=path)
+            for prop, path in properties.items()
+        },
+    )
+
+
+class CollectLockedAdvancedMappingsTests(SimpleTestCase):
+
+    def test_no_locked_paths_returns_empty(self):
+        actions = AdvancedFormActions(load_update_cases=[
+            _load_update_action('load_patient', {'p': '/data/question1'}),
+        ])
+        assert collect_locked_advanced_mappings(actions, set()) == set()
+
+    def test_load_update_mapping_against_locked_path_is_collected(self):
+        actions = AdvancedFormActions(load_update_cases=[
+            _load_update_action('load_patient', {
+                'safe_prop': '/data/question1',
+                'locked_prop': '/data/question2',
+            }),
+        ])
+        result = collect_locked_advanced_mappings(actions, {'/data/question2'})
+        assert result == {CaseUpdateMapping(
+            kind='case_property',
+            prop='locked_prop',
+            path='/data/question2',
+            update_mode='always',
+            case_tag='load_patient',
+        )}
+
+    def test_indexes_by_case_tag(self):
+        # Two actions with the same case_type but different case_tags should
+        # be tracked independently.
+        actions = AdvancedFormActions(load_update_cases=[
+            _load_update_action('tag_a', {'p': '/data/question2'}),
+            _load_update_action('tag_b', {'p': '/data/question2'}),
+        ])
+        result = collect_locked_advanced_mappings(actions, {'/data/question2'})
+        assert result == {
+            CaseUpdateMapping(
+                kind='case_property', prop='p', path='/data/question2',
+                update_mode='always', case_tag='tag_a',
+            ),
+            CaseUpdateMapping(
+                kind='case_property', prop='p', path='/data/question2',
+                update_mode='always', case_tag='tag_b',
+            ),
+        }
+
+    def test_load_update_preload_against_locked_path_is_collected(self):
+        actions = AdvancedFormActions(load_update_cases=[LoadUpdateAction(
+            case_type='patient',
+            case_tag='load_patient',
+            preload={'/data/locked': 'preloaded_prop'},
+        )])
+        result = collect_locked_advanced_mappings(actions, {'/data/locked'})
+        assert result == {CaseUpdateMapping(
+            kind='preload', prop='preloaded_prop', path='/data/locked',
+            update_mode=None, case_tag='load_patient',
+        )}
+
+    def test_open_case_mappings_against_locked_path_are_collected(self):
+        actions = AdvancedFormActions(open_cases=[AdvancedOpenCaseAction(
+            case_type='patient',
+            case_tag='open_patient',
+            name_update=ConditionalCaseUpdate(question_path='/data/locked_name'),
+            case_properties={
+                'p': ConditionalCaseUpdate(question_path='/data/locked_prop'),
+            },
+        )])
+        result = collect_locked_advanced_mappings(
+            actions, {'/data/locked_name', '/data/locked_prop'},
+        )
+        assert result == {
+            CaseUpdateMapping(
+                kind='name', prop='name', path='/data/locked_name',
+                update_mode='always', case_tag='open_patient',
+            ),
+            CaseUpdateMapping(
+                kind='case_property', prop='p', path='/data/locked_prop',
+                update_mode='always', case_tag='open_patient',
+            ),
+        }
 
 
 class TestMultiTools(SimpleTestCase):

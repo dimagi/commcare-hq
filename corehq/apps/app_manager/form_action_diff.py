@@ -332,6 +332,11 @@ def collect_locked_advanced_mappings(advanced_form_actions, locked_paths):
     """Set of entries from an :class:`AdvancedFormActions` whose ``path`` is in
     ``locked_paths``. See :func:`collect_locked_mappings`.
     """
+    if not locked_paths:
+        return set()
+    return {m for m in _iter_advanced_form_action_mappings(advanced_form_actions)
+            if m.path in locked_paths}
+
 
 CaseUpdateMapping = namedtuple(
     'CaseUpdateMapping',
@@ -363,6 +368,24 @@ def _iter_form_action_mappings(form_actions):
                                 sub.name_update.update_mode)
         for prop, ccu in sub.case_properties.items():
             yield CaseUpdateMapping(kind, prop, ccu.question_path, ccu.update_mode)
+
+
+def _iter_advanced_form_action_mappings(advanced_form_actions):
+    for action in advanced_form_actions.load_update_cases:
+        tag = action.case_tag or ''
+        for prop, ccu in action.case_properties.items():
+            yield CaseUpdateMapping('case_property', prop, ccu.question_path,
+                                    ccu.update_mode, tag)
+        for path, name in action.preload.items():
+            yield CaseUpdateMapping('preload', name, path, None, tag)
+
+    for action in advanced_form_actions.open_cases:
+        tag = action.case_tag or ''
+        yield CaseUpdateMapping('name', 'name', action.name_update.question_path,
+                                action.name_update.update_mode, tag)
+        for prop, ccu in action.case_properties.items():
+            yield CaseUpdateMapping('case_property', prop, ccu.question_path,
+                                    ccu.update_mode, tag)
 
 
 def _iter_update_action_mappings(kind, action):
