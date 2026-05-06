@@ -241,5 +241,16 @@
 
     {% block js-inline %}{% endblock js-inline %}
 
+    {% if request.couch_user %}
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          window.userflow.init('{# TODO: USERFLOW_TOKEN #}');
+          window.userflow.identify('{{ request.couch_user._id }}', {
+            signed_up_at: '{{ request.couch_user.date_joined }}'
+          });
+        });
+      </script>
+    {% endif %}
+
   </body>
 </html>
