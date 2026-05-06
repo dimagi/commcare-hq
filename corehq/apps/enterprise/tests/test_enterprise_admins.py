@@ -25,6 +25,13 @@ def _noop(*args, **kwargs):
     pass
 
 
+def _delete_domain(domain):
+    # Kafka is not available in the test environment; stub the publish
+    # call so domain teardown doesn't depend on a broker.
+    with patch('corehq.apps.accounting.models.publish_domain_saved', _noop):
+        domain.delete()
+
+
 def _make_idp(account, slug, is_active=True, domains=None):
     idp = IdentityProvider.objects.create(
         owner=account,
@@ -304,6 +311,46 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         assert response.status_code == 404
         account = self._reload_account()
         assert 'blocked@example.com' not in account.enterprise_admin_emails
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_rejects_unknown_email(self):
+        # An email with no backing WebUser cannot be added: the candidate
+        # admin would be unable to view the dashboard since membership of
+        # an account project space is required.
+        response = self.client.post(
+            self.add_url, {'email': 'no-such-user@example.com'},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        assert 'no-such-user@example.com' not in account.enterprise_admin_emails
+        msgs = [str(m) for m in get_messages(response.wsgi_request)]
+        assert any('member of at least one project space' in m for m in msgs)
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_rejects_user_not_in_account_domains(self):
+        # A WebUser exists, but is only a member of a domain unrelated to
+        # this enterprise account.
+        outside_domain = create_domain('ent-admin-outside')
+        self.addCleanup(_delete_domain, outside_domain)
+        self._create_member('out-of-account@example.com', domain_name='ent-admin-outside')
+        response = self.client.post(
+            self.add_url, {'email': 'out-of-account@example.com'},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        assert 'out-of-account@example.com' not in account.enterprise_admin_emails
+        msgs = [str(m) for m in get_messages(response.wsgi_request)]
+        assert any('member of at least one project space' in m for m in msgs)
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_accepts_user_who_is_member_of_account_domain(self):
+        self._create_member('member@example.com')
+        response = self.client.post(
+            self.add_url, {'email': 'member@example.com'},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        assert 'member@example.com' in account.enterprise_admin_emails
 
 
 class RemoveEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
