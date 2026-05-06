@@ -132,6 +132,14 @@ class _EnterpriseAdminViewTestBase(TestCase):
         self.account.refresh_from_db()
         return self.account
 
+    def _create_member(self, email, domain_name=None):
+        """Create a WebUser as a member of ``domain_name`` (defaults to the
+        shared account domain) and register cleanup."""
+        domain_name = domain_name or self.domain_name
+        user = WebUser.create(domain_name, email, 'pw', None, None)
+        self.addCleanup(user.delete, domain_name, deleted_by=None)
+        return user
+
 
 class EnterpriseAdminsGetViewTests(_EnterpriseAdminViewTestBase):
 
@@ -202,6 +210,7 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_add_valid_email_appends_lowercased(self):
+        self._create_member('newadmin@example.com')
         response = self.client.post(
             self.add_url, {'email': 'NewAdmin@Example.com'},
         )
@@ -243,6 +252,7 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_add_with_sso_allows_matching_domain(self):
         _make_idp(self.account, slug='idp-sso-ok', domains=['corp.com'])
+        self._create_member('newperson@corp.com')
         response = self.client.post(
             self.add_url, {'email': 'newperson@corp.com'},
         )
@@ -255,6 +265,7 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         # An active IdP with no AuthenticatedEmailDomain rows imposes no
         # domain restriction.
         _make_idp(self.account, slug='idp-no-domains')
+        self._create_member('someone@unrestricted.com')
         response = self.client.post(
             self.add_url, {'email': 'someone@unrestricted.com'},
         )
@@ -276,6 +287,7 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_add_logs_info(self):
+        self._create_member('logger@example.com')
         with self.assertLogs(
             'corehq.apps.enterprise.views', level='INFO'
         ) as cap:
