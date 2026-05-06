@@ -241,10 +241,10 @@
 
     {% block js-inline %}{% endblock js-inline %}
 
-    {% if request.couch_user %}
+    {% if request.couch_user and USERFLOW_TOKEN %}
       <script>
         document.addEventListener('DOMContentLoaded', function () {
-          window.userflow.init('{# TODO: USERFLOW_TOKEN #}');
+          window.userflow.init('{{ USERFLOW_TOKEN }}');
           window.userflow.identify('{{ request.couch_user._id }}', {
             signed_up_at: '{{ request.couch_user.date_joined }}'
           });
