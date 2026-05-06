@@ -13,11 +13,13 @@ from django.test import TestCase, override_settings
 from corehq.apps.tombstones.models import Tombstone
 from corehq.blobs import NotFound as BlobNotFound, get_blob_db
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, TemporaryS3BlobDB
+from corehq.form_processor.tests.utils import enforce_soft_deletion_patch
 from corehq.sql_db.util import (
     get_db_alias_for_partitioned_doc,
     get_db_aliases_for_partitioned_query,
     split_list_by_db_partition,
 )
+from corehq.tests.pytest_plugins.patches import suspend
 from corehq.util.test_utils import trap_extra_setup
 
 from ..backends.sql.processor import FormProcessorSQL
@@ -363,7 +365,6 @@ class XFormInstanceManagerTest(TestCase):
         deleted = XFormInstance.objects.hard_delete_forms(
             DOMAIN,
             form_ids[1:] + [other_form.form_id],
-            only_soft_deleted=False,
         )
         self.assertEqual(2, deleted)
         forms = XFormInstance.objects.get_forms(form_ids)
@@ -379,7 +380,6 @@ class XFormInstanceManagerTest(TestCase):
                 DOMAIN,
                 ['0', '1', '2'],
                 return_ids=True,
-                only_soft_deleted=False,
             )
         )
 
@@ -394,7 +394,6 @@ class XFormInstanceManagerTest(TestCase):
                 DOMAIN,
                 ['1', '2', '3'],
                 return_ids=True,
-                only_soft_deleted=False,
             )
         )
 
@@ -507,23 +506,16 @@ class HardDeleteQueryset(TestCase):
 
         assert total_counts == {'form_processor.XFormInstance': 5}
 
+    @suspend(enforce_soft_deletion_patch)
     def test_only_soft_deleted_forms_are_deleted(self):
         forms = [
             create_form_for_test(self.domain)
             for _ in range(10)
         ]
-        all_ids = []
         for db_name, form_ids in split_list_by_db_partition([f.form_id for f in forms]):
             qs = XFormInstance.objects.using(db_name).filter(form_id__in=form_ids)
             actual_counts, ids = XFormInstance.objects._hard_delete_queryset(qs)
             assert actual_counts == {}
-
-            actual_counts, ids = XFormInstance.objects._hard_delete_queryset(
-                qs, return_ids=True, only_soft_deleted=False
-            )
-            all_ids.extend(ids)
-
-        assert set(all_ids) == {f.form_id for f in forms}
 
     def test_tombstones_are_created(self):
         forms = [

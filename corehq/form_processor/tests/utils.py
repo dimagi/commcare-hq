@@ -375,3 +375,21 @@ def delete_all_xforms_and_cases(domain):
     assert settings.UNIT_TESTING
     FormProcessorTestUtils.delete_all_xforms(domain)
     FormProcessorTestUtils.delete_all_cases(domain)
+
+
+enforce_soft_deletion_patch = patch.object(
+    XFormInstance.objects, '_include_only_soft_deleted', lambda qs: qs
+)
+
+
+def patch_form_deletion():
+    """Setup form deletion for tests
+
+    - Do not require forms to be soft deleted before hard deleting
+
+    Without this, every test that deletes a form would need soft delete
+    forms before hard deleting
+    """
+    # Use __enter__ and __exit__ to start/stop so patch.stopall() does not stop it.
+    assert settings.UNIT_TESTING
+    enforce_soft_deletion_patch.__enter__()

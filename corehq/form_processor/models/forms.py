@@ -392,7 +392,7 @@ class XFormInstanceManager(RequireDBManager):
         return count
 
     def hard_delete_forms(
-        self, domain, form_ids, return_ids=False, *, publish_changes=True, only_soft_deleted=True,
+        self, domain, form_ids, return_ids=False, *, publish_changes=True
     ):
         """Delete forms permanently
 
@@ -406,9 +406,7 @@ class XFormInstanceManager(RequireDBManager):
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
             query = self.using(db_name).filter(domain=domain, form_id__in=split_form_ids)
             deleted_models, ids = self._hard_delete_queryset(
-                query,
-                return_ids=return_ids,
-                only_soft_deleted=only_soft_deleted
+                query, return_ids=return_ids
             )
             deleted_count += deleted_models.get(self.model._meta.label, 0)
             if return_ids:
@@ -423,9 +421,8 @@ class XFormInstanceManager(RequireDBManager):
 
         return deleted_ids if return_ids else deleted_count
 
-    def _hard_delete_queryset(self, queryset, return_ids=False, only_soft_deleted=True):
-        if only_soft_deleted:
-            queryset = queryset.exclude(deleted_on__isnull=True)
+    def _hard_delete_queryset(self, queryset, return_ids=False):
+        queryset = self._include_only_soft_deleted(queryset)
         deleted_total = {}
         deleted_ids = []
         while forms := queryset[:BATCH_SIZE]:
@@ -453,6 +450,13 @@ class XFormInstanceManager(RequireDBManager):
             deleted_total = Counter(deleted_total) + Counter(model_map)
 
         return (deleted_total, deleted_ids)
+
+    def _include_only_soft_deleted(self, queryset):
+        """
+        This method is patched in tests to skip this constraint
+        """
+        return queryset.exclude(deleted_on__isnull=True)
+
 
     def _hard_delete_blobs(self, form_ids, verify_deleted=False):
         if verify_deleted:
