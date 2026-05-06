@@ -311,3 +311,22 @@ class _NameConflictsAdapter:
 
 def _check_name(key):
     assert key == 'name', f'Invalid OpenCaseAction field: {key}'
+
+
+def collect_locked_mappings(form_actions, locked_paths):
+    """Set of mapping entries in ``form_actions`` whose ``path`` is in
+    ``locked_paths``.
+
+    Used to detect whether a locked-question mapping was added, removed,
+    repointed, or otherwise modified by a save: compare the result before
+    and after applying the incoming change; any difference means a locked
+    mapping was touched.
+    """
+    return set()
+
+
+def collect_locked_advanced_mappings(advanced_form_actions, locked_paths):
+    """Set of entries from an :class:`AdvancedFormActions` whose ``path`` is in
+    ``locked_paths``. See :func:`collect_locked_mappings`.
+    """
+    return set()

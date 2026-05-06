@@ -19,7 +19,7 @@ from django.http import (
     JsonResponse,
 )
 from django.urls import reverse
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
@@ -52,11 +52,14 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppInDifferentDomainException,
     AppMisconfigurationError,
+    FormActionsChangeError,
     FormNotFoundException,
     ModuleNotFoundException,
     XFormValidationFailed,
 )
 from corehq.apps.app_manager.form_action_diff import (
+    collect_locked_advanced_mappings,
+    collect_locked_mappings,
     from_combined_diff,
     get_case_mappings,
     make_multi,
@@ -130,6 +133,12 @@ from corehq.project_limits.const import (
 )
 from corehq.project_limits.models import SystemLimit
 from corehq.util.view_utils import set_file_download
+
+
+_LOCKED_QUESTION_MAPPING_ERROR = gettext_lazy(
+    "Case property mappings that reference locked questions cannot be "
+    "modified. Unlock the question in the form builder first."
+)
 
 
 @no_conflict_require_POST
@@ -213,10 +222,11 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
     form = app.get_form(form_unique_id)
     json_loads = json.loads(request.POST.get('actions'))
     actions = AdvancedFormActions.wrap(json_loads)
-    if form.form_type == "shadow_form":
-        form.extra_actions = actions
-    else:
-        form.actions = actions
+
+    try:
+        _apply_advanced_form_actions_change(request, domain, form, actions)
+    except FormActionsChangeError:
+        return HttpResponseForbidden(_LOCKED_QUESTION_MAPPING_ERROR)
 
     datums_json = json.loads(request.POST.get('arbitrary_datums'))
     datums = [ArbitraryDatum.wrap(item) for item in datums_json]
@@ -236,6 +246,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     old_load_from_form = form.actions.load_from_form
 
     actions_json = json.loads(request.POST['actions'])
+
     if 'case_mapping_diff' in request.POST:
         diff = json.loads(request.POST['case_mapping_diff'])
     elif 'update_diff' in request.POST:
@@ -244,7 +255,11 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
         diff = json.loads(request.POST['update_diff'])
     else:
         diff = {}
-    update_form_actions(form.actions, actions_json, diff)
+
+    try:
+        _apply_form_actions_change(request, domain, form, actions_json, diff)
+    except FormActionsChangeError:
+        return HttpResponseForbidden(_LOCKED_QUESTION_MAPPING_ERROR)
 
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
@@ -266,6 +281,52 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
     return json_response(response_json)
+
+
+def _apply_advanced_form_actions_change(request, domain, form, new_actions):
+    """Assign ``new_actions`` to ``form.actions`` (or ``form.extra_actions``
+    for shadow forms).
+
+    :raises FormActionsChangeError: if the change would add, remove, or
+        repoint a case-property mapping bound to a locked question.
+    """
+    locked_paths = _locked_paths_to_protect(request, domain, form)
+    current = form.extra_actions if form.form_type == 'shadow_form' else form.actions
+    if (
+        collect_locked_advanced_mappings(current, locked_paths)
+        != collect_locked_advanced_mappings(new_actions, locked_paths)
+    ):
+        raise FormActionsChangeError
+
+    if form.form_type == "shadow_form":
+        form.extra_actions = new_actions
+    else:
+        form.actions = new_actions
+
+
+def _apply_form_actions_change(request, domain, form, actions_json, diff):
+    """Apply ``actions_json`` and ``diff`` to ``form.actions``.
+
+    :raises FormActionsChangeError: if the change would add, remove, or
+        repoint a case-property mapping bound to a locked question.
+    """
+    locked_paths = _locked_paths_to_protect(request, domain, form)
+    before = collect_locked_mappings(form.actions, locked_paths)
+    update_form_actions(form.actions, actions_json, diff)
+    if collect_locked_mappings(form.actions, locked_paths) != before:
+        raise FormActionsChangeError
+
+
+def _locked_paths_to_protect(request, domain, form):
+    """Set of locked question paths whose case-property mappings must be
+    preserved on this request, or empty set if the feature is off.
+    """
+    if not (
+        domain_has_privilege(domain, "locked_admin_questions")
+        and toggles.LOCKED_ADMIN_QUESTIONS.enabled_for_request(request)
+    ):
+        return set()
+    return form.wrapped_xform().locked_question_paths
 
 
 @waf_allow('XSS_BODY')
