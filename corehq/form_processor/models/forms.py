@@ -21,6 +21,7 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.cleanup.utils import get_cutoff_date_for_data_deletion
+from corehq.apps.tombstones.models import Tombstone
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -50,6 +51,7 @@ from .util import attach_prefetch_models, fetchall_as_namedtuple, sort_with_id_l
 log = logging.getLogger(__name__)
 
 ARCHIVE_FORM = "archive_form"
+BATCH_SIZE = 2000
 
 
 class XFormInstanceManager(RequireDBManager):
@@ -413,10 +415,30 @@ class XFormInstanceManager(RequireDBManager):
         return deleted_count
 
     def _hard_delete_queryset(self, queryset):
-        with transaction.atomic():
-            _, model_map = queryset.delete()
+        deleted_total = {}
+        while forms := queryset[:BATCH_SIZE]:
+            form_ids = []
+            tombstones = []
+            for form in forms:
+                form_ids.append(form.form_id)
+                tombstones.append(
+                    Tombstone(
+                        doc_id=form.form_id,
+                        object_class_path=f'{XFormInstance.__module__}.{XFormInstance.__qualname__}',
+                        domain=form.domain,
+                        deleted_on=form.deleted_on or datetime.utcnow(),
+                    )
+                )
 
-        return model_map
+            with transaction.atomic(using=queryset.db):
+                Tombstone.objects.using(queryset.db).bulk_create(
+                    tombstones, ignore_conflicts=True
+                )
+                _, model_map = queryset.filter(form_id__in=form_ids).delete()
+
+            deleted_total = Counter(deleted_total) + Counter(model_map)
+
+        return deleted_total
 
     def _hard_delete_blobs(self, form_ids, verify_deleted=False):
         if verify_deleted:

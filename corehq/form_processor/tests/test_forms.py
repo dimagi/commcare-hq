@@ -1,16 +1,23 @@
 import pytest
 import uuid
+from collections import Counter
 from datetime import datetime
 from time_machine import travel
+from unittest import mock
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.test import TestCase, override_settings
 
+from corehq.apps.tombstones.models import Tombstone
 from corehq.blobs import NotFound as BlobNotFound, get_blob_db
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, TemporaryS3BlobDB
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+from corehq.sql_db.util import (
+    get_db_alias_for_partitioned_doc,
+    get_db_aliases_for_partitioned_query,
+    split_list_by_db_partition,
+)
 from corehq.util.test_utils import trap_extra_setup
 
 from ..backends.sql.processor import FormProcessorSQL
@@ -435,6 +442,50 @@ class TestHardDeleteExpiredForms(TestCase):
 
         assert dry_run_counts == {'form_processor.XFormInstance': 5}
         assert actual_counts == {'form_processor.XFormInstance': 5}
+
+
+@sharded
+class HardDeleteQueryset(TestCase):
+
+    def setUp(self):
+        self.domain = 'test_hard_delete_queryset'
+
+    def tearDown(self):
+        if settings.USE_PARTITIONED_DATABASE:
+            FormProcessorTestUtils.delete_all_sql_forms(self.domain)
+            FormProcessorTestUtils.delete_all_sql_cases(self.domain)
+        super().tearDown()
+
+    def test_returned_counts_across_chunks(self):
+        for _ in range(5):
+            create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1))
+
+        total_counts = {}
+        for db_name in get_db_aliases_for_partitioned_query():
+            qs = (
+                XFormInstance.objects.using(db_name)
+                .filter(deleted_on__lt=datetime(2020, 1, 5))
+                .order_by('form_id')
+            )
+            with mock.patch('corehq.form_processor.models.forms.BATCH_SIZE', 1):
+                actual_counts = XFormInstance.objects._hard_delete_queryset(qs)
+            total_counts = Counter(total_counts) + Counter(actual_counts)
+
+        assert total_counts == {'form_processor.XFormInstance': 5}
+
+    def test_tombstones_are_created(self):
+        forms = [
+            create_form_for_test(
+                self.domain, deleted_on=datetime(2020, 1, 1)
+            )
+            for _ in range(10)
+        ]
+        for db_name, form_ids in split_list_by_db_partition([f.form_id for f in forms]):
+            qs = XFormInstance.objects.using(db_name).filter(form_id__in=form_ids)
+            actual_counts = XFormInstance.objects._hard_delete_queryset(qs)
+            tombstones = Tombstone.objects.get_tombstones(form_ids)
+            assert len(tombstones) == actual_counts['form_processor.XFormInstance']
+            assert {t.doc_id for t in tombstones} == set(form_ids)
 
 
 class DeleteAttachmentsFSDBTests(TestCase):
