@@ -25,10 +25,14 @@ def _noop(*args, **kwargs):
     pass
 
 
+# Stub publish_domain_saved so these tests don't require a running
+# Kafka broker; otherwise the underlying producer call raises
+# NoBrokersAvailable in dev environments without Kafka up.
+_no_kafka_publish = patch('corehq.apps.accounting.models.publish_domain_saved', _noop)
+
+
 def _delete_domain(domain):
-    # Kafka is not available in the test environment; stub the publish
-    # call so domain teardown doesn't depend on a broker.
-    with patch('corehq.apps.accounting.models.publish_domain_saved', _noop):
+    with _no_kafka_publish:
         domain.delete()
 
 
@@ -99,9 +103,7 @@ class _EnterpriseAdminViewTestBase(TestCase):
             edition=SoftwarePlanEdition.ENTERPRISE,
         )
         start = date.today()
-        # Kafka is not available in the test environment; stub the publish
-        # call so fixture setup/teardown doesn't depend on a broker.
-        with patch('corehq.apps.accounting.models.publish_domain_saved', _noop):
+        with _no_kafka_publish:
             generate_domain_subscription(
                 cls.account, cls.domain,
                 date_start=start,
@@ -125,9 +127,7 @@ class _EnterpriseAdminViewTestBase(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.admin_user.delete(cls.domain_name, deleted_by=None)
-        # Kafka is not available in the test environment; stub the publish
-        # call so fixture setup/teardown doesn't depend on a broker.
-        with patch('corehq.apps.accounting.models.publish_domain_saved', _noop):
+        with _no_kafka_publish:
             cls.domain.delete()
         super().tearDownClass()
 
