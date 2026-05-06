@@ -1,7 +1,7 @@
 import logging
 from collections import Counter
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from io import BytesIO
 
 from django.db import InternalError, models, transaction
@@ -21,6 +21,7 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.cleanup.utils import get_cutoff_date_for_data_deletion
+from corehq.apps.tombstones.models import Tombstone
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -50,6 +51,7 @@ from .util import attach_prefetch_models, fetchall_as_namedtuple, sort_with_id_l
 log = logging.getLogger(__name__)
 
 ARCHIVE_FORM = "archive_form"
+BATCH_SIZE = 2000
 
 
 class XFormInstanceManager(RequireDBManager):
@@ -399,11 +401,31 @@ class XFormInstanceManager(RequireDBManager):
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
-            # cascade should delete the operations
-            query = self.using(db_name).filter(domain=domain, form_id__in=split_form_ids)
-            with transaction.atomic():
-                _, deleted_models = query.delete()
-            deleted_count += deleted_models.get(self.model._meta.label, 0)
+            queryset = self.using(db_name).filter(domain=domain, form_id__in=split_form_ids)
+            shard_count = 0
+            while forms := queryset[:BATCH_SIZE]:
+                form_ids_to_delete = []
+                tombstones = []
+                for form in forms:
+                    form_ids_to_delete.append(form.form_id)
+                    tombstones.append(
+                        Tombstone(
+                            doc_id=form.form_id,
+                            object_class_path=f'{XFormInstance.__module__}.{XFormInstance.__qualname__}',
+                            domain=form.domain,
+                            deleted_on=form.deleted_on or datetime.now(UTC),
+                        )
+                    )
+
+                with transaction.atomic(using=queryset.db):
+                    Tombstone.objects.using(queryset.db).bulk_create(
+                        tombstones, ignore_conflicts=True
+                    )
+                    batch_count, _ = queryset.filter(form_id__in=form_ids_to_delete).delete()
+
+                shard_count += batch_count
+
+            deleted_count += shard_count
 
         if deleted_count:
             count_mismatch = deleted_count != len(form_ids)
