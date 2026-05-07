@@ -237,7 +237,7 @@
         <div data-bind="foreach: subcases">
           <div class="card panel-appmanager panel-case-actions">  {# todo B5: css-panel #}
             <div class="card-header">
-              <h4 class="card-title card-title-nolink form-inline">  {# todo B5: css-form-inline #}
+              <h4 class="card-title card-title-nolink d-flex flex-wrap align-items-center gap-2">
                 <i class="fa fa-check"></i>
                 {% trans "This Form opens a Child Case in the Case List" %}:&nbsp;
                 <span
@@ -263,7 +263,7 @@
                     {% trans "Case List Configuration" %}
                   </h4>
                 </div>
-                <div class="card-body form-inline">  {# todo B5: css-form-inline #}
+                <div class="card-body d-flex flex-wrap align-items-center gap-2">
                   {% trans "This Form opens a Child Case in the Case List" %}&nbsp;
                   <span
                     class="form-group"  {# todo B5: css-form-group #}
