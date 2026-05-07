@@ -71,6 +71,9 @@ def validate_filter_spec(spec, parameters, case_type_name, capability):
     Returns a list of error messages (empty = valid).
     """
     errors = []
+    if not all(isinstance(p, dict) and 'name' in p for p in parameters):
+        errors.append("Each parameter must have a 'name' field.")
+        return errors
     param_names = {p['name'] for p in parameters}
     auto_value_refs = {
         auto_value['ref']

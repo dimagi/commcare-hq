@@ -229,6 +229,14 @@ def test_missing_required_input_slot():
 
 
 @use(sample_capability)
+def test_malformed_parameter_returns_error():
+    errors = endpoint_service.validate_filter_spec(
+        {'type': 'and', 'children': []}, [{}], 'patient', sample_capability()
+    )
+    assert any('name' in e for e in errors)
+
+
+@use(sample_capability)
 def test_parameter_ref_must_exist():
     spec = {
         'type': 'component',
