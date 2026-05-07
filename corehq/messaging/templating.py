@@ -147,6 +147,17 @@ class NestedDictTemplateParam(SimpleDictTemplateParam):
     def __init__(self, dict_of_values):
         self.__dict_of_values = dict_of_values
 
+    def dot_paths(self):
+        def _to_path(d):
+            for k, v in d.items():
+                if isinstance(v, dict):
+                    for k2, v2 in _to_path(v):
+                        yield (f"{k}.{k2}", v2)
+                else:
+                    yield (k, v)
+
+        return dict(_to_path(self.__dict_of_values))
+
     def __getattr__(self, item):
         """Works just like SimpleDictTemplateParam but it can contain nested dicts"""
         if val := self.__dict_of_values.get(item):
