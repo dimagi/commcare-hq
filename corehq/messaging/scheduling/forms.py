@@ -3188,7 +3188,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
             ]
 
-
     @property
     def current_visit_scheduler_form(self):
         value = self['visit_scheduler_app_and_form_unique_id'].value()
@@ -3780,7 +3779,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if recipient_types and CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL in recipient_types:
             if self.cleaned_data.get('content') != self.CONTENT_EMAIL:
                 raise ValidationError(_("Email case property can only be used with Email content"))
-
 
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
