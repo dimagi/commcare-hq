@@ -2,7 +2,8 @@
 {% load hq_shared_tags %}
 
 {% if add_ons.display_conditions %}
-  <div class="form-group">  {# todo B5: css-form-group #}
+  <div class="form-group">
+    {# todo B5: css-form-group #}
     <label class="form-label col-md-2">
       {% trans "Display Condition" %}
       <span
@@ -20,7 +21,8 @@
       ></span>
     </label>
     <div id="form-filter" class="col-md-4 row">
-      <div data-bind="css: {'has-error': !allowed()}">  {# todo B5: css-has-error #}
+      <div data-bind="css: {'has-error': !allowed()}">
+        {# todo B5: css-has-error #}
         <textarea
           name="form_filter"
           class="form-control"
@@ -35,10 +37,10 @@
               To use display conditions which reference a case, <br />
               (1) the <strong>Menu Mode</strong> setting must be set to
               <em>Display menu and then forms</em> <br />
-              (2) all the forms in the case list must update or btn-close a case,  {# todo B5: css-close #}
-              which means registration forms must go in a separate case list, or
-              if your project uses user properties, your display condition may
-              use user properties.
+              (2) all the forms in the case list must update or btn-close a
+              case, {# todo B5: css-close #} which means registration forms must
+              go in a separate case list, or if your project uses user
+              properties, your display condition may use user properties.
             {% endblocktrans %}
           </span>
         </div>
