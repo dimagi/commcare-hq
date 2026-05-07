@@ -7,7 +7,7 @@ from typing import List
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -198,10 +198,13 @@ class StaticToggle(object):
 
         return set_toggle(self.slug, item, enabled, namespace)
 
-    def required_decorator(self):
+    def required_decorator(self, plain_message=None):
         """
         Returns a view function decorator that checks to see if the domain
         or user in the request has the appropriate toggle enabled.
+
+        If ``plain_message`` is Truthy, returns a plain-text HTTP 404
+        instead of raising ``Http404`` (useful for API views).
         """
 
         def decorator(view_func):
@@ -221,6 +224,8 @@ class StaticToggle(object):
                         ),
                         fail_silently=True,  # workaround for tests: https://code.djangoproject.com/ticket/17971
                     )
+                if plain_message:
+                    return HttpResponse(plain_message, status=404)
                 raise Http404()
 
             return wrapped_view
@@ -789,6 +794,17 @@ DHIS2_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+EXPORTS_APPS_USE_ELASTICSEARCH = StaticToggle(
+    'exports_apps_use_elasticsearch',
+    'Exports apps use Elasticsearch',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    When enabled, exports page will use Elasticsearch to fetch apps.
+    This toggle is meant to be *only* used by QA domains.
+    """
+)
+
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
@@ -936,8 +952,9 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Simple Case Search',
     TAG_FROZEN,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    help_link='https://dimagi.atlassian.net/wiki/spaces/uss/pages/3675717639/Simple+Case+Search',
+    description="Basic case search functionality",
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 CASE_SEARCH_DEPRECATED = StaticToggle(
@@ -945,23 +962,37 @@ CASE_SEARCH_DEPRECATED = StaticToggle(
     'Case Search: Deprecated',
     TAG_DEPRECATED,
     help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
+)
+
+CASE_SEARCH_DEPRECATED_NORMAL_CASE_LIST = StaticToggle(
+    'case_search_deprecated_normal_case_list',
+    'Case Search: Normal case list option Deprecated',
+    TAG_DEPRECATED,
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
 CASE_SEARCH_ADVANCED = StaticToggle(
     'case_search_advanced',
     'Advanced Case Search',
     TAG_FROZEN,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    help_link='https://dimagi.atlassian.net/wiki/spaces/uss/pages/3676536837/Advanced+Case+Search',
+    description="Complex, fragile case search configuration for USS projects",
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
 CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
     'case_search_related_lookups',
     'Case Search: Related Lookups',
     TAG_FROZEN,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    help_link='https://dimagi.atlassian.net/wiki/spaces/uss/pages/3676635261/Case+Search+Related+Lookups',
+    description="Allows access to less-performant, complex related lookups in case search. USS only.",
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[CASE_SEARCH_ADVANCED],
 )
 
 CASE_SEARCH_ENDPOINTS = StaticToggle(
@@ -971,29 +1002,15 @@ CASE_SEARCH_ENDPOINTS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-USH_CASE_LIST_MULTI_SELECT = StaticToggle(
-    'ush_case_list_multi_select',
-    'USH: Allow selecting multiple cases from the case list',
-    TAG_FROZEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Allow+selecting+multiple+cases+from+the+case+list',  # noqa: E501
+CASE_SEARCH_CACHE_KEY = StaticToggle(
+    'case_search_cache_key',
+    'Case Search: Formplayer cache key',
+    TAG_GA_PATH,
     description="""
-    Allows user to select multiple cases and load them all into the form.
-    """
-)
-
-USH_CASE_CLAIM_UPDATES = StaticToggle(
-    'case_claim_autolaunch',
-    "USH Specific toggle to support several different case search/claim workflows in web apps",
-    TAG_FROZEN,
-    help_link='https://confluence.dimagi.com/display/USH/Case+Search+Configuration',
+        If set formplayer will use a more specific cache key. This is meant to fix a bug but the
+        perfomance implications are not clear. Hence the FF.""",
     namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    USH Specific toggle to support several different case search/claim workflows in web apps:
-    "search first", "see more", and "skip to default case search results", Geocoder
-    and other options in Webapps Case Search.
-    """,
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
@@ -1005,10 +1022,7 @@ GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     When enabled this will add a small button to the geocoder widget that, when pressed, and if
     the user grants permission, will perform a reverse geocoding query based on the user's reported location.
     The result will be used to populate the search field of the geocoder widget.
-
-    This is intended as a temporary toggle and will likely get rolled into the "USH_CASE_CLAIM_UPDATES" toggle.
     """,
-    parent_toggles=[USH_CASE_CLAIM_UPDATES],
 )
 
 GEOCODER_USER_PROXIMITY = StaticToggle(
@@ -1022,27 +1036,6 @@ GEOCODER_USER_PROXIMITY = StaticToggle(
        will be filtered out when used in the case search.
     2. Proximity to the users location will be taken into account for the results order.
     """,
-    parent_toggles=[USH_CASE_CLAIM_UPDATES],
-)
-
-USH_SEARCH_FILTER = StaticToggle(
-    'case_search_filter',
-    "USH Specific toggle to use Search Filter in case search options.",
-    TAG_FROZEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
-)
-
-USH_INLINE_SEARCH = StaticToggle(
-    'inline_case_search',
-    "USH Specific toggle to making case search user input available to other parts of the app.",
-    TAG_FROZEN,
-    help_link='https://docs.google.com/document/d/1Mmx1FrYZrcEmWidqSkNjC_gWSJ6xzRFKoP3Rn_xSaj4/edit#',
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Temporary toggle to manage the release of the 'inline search' / 'case search input' feature.
-    """,
-    parent_toggles=[USH_CASE_CLAIM_UPDATES]
 )
 
 USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
@@ -1050,34 +1043,6 @@ USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
     "USH: Allow customizing the text displayed when case list contains no cases in web apps",
     TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
-    'split_screen_case_search',
-    "Split screen case search: In case search, show the search filters in a sidebar on the left and the results"
-    " on the right.",
-    TAG_FROZEN,
-    help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
-)
-
-DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
-    'dynamically_update_search_results',
-    "In case search with split screen case search enabled, search results update when a search field is updated"
-    " without requiring the user to manually press a button to search.",
-    TAG_DEPRECATED,
-    help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
-)
-
-WEBAPPS_STICKY_SEARCH = StaticToggle(
-    "webapps_sticky_search",
-    "USH: Sticky search: In web apps, save user's most recent inputs on case search & claim screen.",
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/COVID%3A+Web+Apps+Sticky+Search',
 )
 
 HIDE_SYNC_BUTTON = StaticToggle(
@@ -1167,9 +1132,10 @@ SECURE_SESSION_TIMEOUT = StaticToggle(
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
 
-VELLUM_SAVE_TO_CASE = StaticToggle(
+VELLUM_SAVE_TO_CASE = FrozenPrivilegeToggle(
+    privileges.VELLUM_SAVE_TO_CASE,
     'save_to_case',
-    "Adds save to case as a question to the form builder",
+    "Adds Advanced Case Actions as a question to the form builder",
     TAG_GA_PATH,
     [NAMESPACE_DOMAIN],
     description='This flag allows case management inside repeat groups',
@@ -1202,6 +1168,15 @@ VELLUM_ALLOW_BULK_FORM_ACTIONS = StaticToggle(
     description="This shows Bulk Form Actions (mark all questions required, "
                 "set default values to matching case properties) in "
                 "the Form Builder's main dropdown menu.",
+)
+
+LOCKED_ADMIN_QUESTIONS = FeatureRelease(
+    'locked_admin_questions',
+    "Locked Admin Questions",
+    TAG_RELEASE,
+    [NAMESPACE_DOMAIN],
+    owner="Evan Joseph-Pinero",
+    description="Enables Locked Admin Questions workflows in HQ and the form builder.",
 )
 
 CACHE_AND_INDEX = StaticToggle(
@@ -1452,14 +1427,6 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
-
-
-# EXPORTS_APPS_USE_ELASTICSEARCH = StaticToggle(
-#     'export_apps_use_elasticsearch',
-#     'Use elasticsearch when fetching apps for exports',
-#     TAG_DEPRECATED,
-#     [NAMESPACE_DOMAIN],
-# )
 
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
@@ -2165,6 +2132,19 @@ FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     owner='Simon Kelly'
+)
+
+ENTERPRISE_ADMIN_SELF_SERVICE = FeatureRelease(
+    'enterprise_admin_self_service',
+    'Allow Enterprise Admins to view/add/remove other Enterprise Admins '
+    'from the Enterprise Console',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    owner='Danny Roberts',
+    help_link=(
+        'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/'
+        '2143945885/Enterprise+Console#Enterprise-Admins'
+    ),
 )
 
 APPLICATION_RELEASE_LOGS = StaticToggle(

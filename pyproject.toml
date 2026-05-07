@@ -133,7 +133,6 @@ default-groups = ["dev", "sso"]
 dev = [
     'dependency-metrics',
     'django-extensions',
-    'fixture',
     'git-build-branch',
     'gnureadline',
     'ipython', # for nicer django shell experience
@@ -148,7 +147,6 @@ docs = [
     "Sphinx",
     "sphinxcontrib-django",
     "sphinx-rtd-theme",
-    "pyOpenSSL", # CI builds fail without OpenSSL
     "urllib3<=2.6.3", # fix doc tests AssertionError: Current app already created
 ]
 prod = [

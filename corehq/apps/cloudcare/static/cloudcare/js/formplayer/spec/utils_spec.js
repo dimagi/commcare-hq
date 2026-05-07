@@ -37,10 +37,7 @@ describe('Utils', function () {
         let stubs = {};
 
         before(function () {
-            initialPageData.register("toggles_dict", {
-                SPLIT_SCREEN_CASE_SEARCH: false,
-                DYNAMICALLY_UPDATE_SEARCH_RESULTS: false,
-            });
+            initialPageData.register("toggles_dict", {});
         });
 
         after(function () {

@@ -880,3 +880,21 @@ class TestCaseAPI(TestCase):
         assert external_id in error_response['error']
         assert case1.case_id in error_response['error']
         assert case2.case_id in error_response['error']
+
+    def test_create_case_with_fields_filter(self):
+        url = reverse('case_api', args=(self.domain,))
+        res = self.client.post(
+            f'{url}?fields=case_id,case_type',
+            {
+                'case_type': 'player',
+                'case_name': 'Elizabeth Harmon',
+                'owner_id': 'methuen_home',
+                'properties': {'sport': 'chess'},
+            },
+            content_type="application/json;charset=utf-8",
+            HTTP_USER_AGENT="user agent string",
+        ).json()
+        assert set(res['case'].keys()) == {'case_id', 'case_type'}
+        assert res['case']['case_type'] == 'player'
+        # form_id is an envelope field, not part of the case — should be present
+        assert 'form_id' in res

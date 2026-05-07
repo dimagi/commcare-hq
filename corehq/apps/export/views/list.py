@@ -628,7 +628,7 @@ def update_emailed_export_data(request, domain):
 
     export_instance_id = request.POST.get('export_id')
     try:
-        rebuild_saved_export(export_instance_id, manual=True)
+        rebuild_saved_export(export_instance_id, manual=True, username=request.couch_user.username)
     except XlsLengthException:
         return json_response({
             'error': _('This file has more than 256 columns, which is not supported by xls. '
@@ -703,7 +703,7 @@ def commit_filters(request, domain):
             export.filters = filters
             export.save()
             if export.is_daily_saved_export:
-                rebuild_saved_export(export_id, manual=True)
+                rebuild_saved_export(export_id, manual=True, username=request.couch_user.username)
         return json_response({
             'success': True,
             'locationRestrictions': ExportListHelper.get_location_restriction_names(

@@ -48,9 +48,11 @@ class TestTableauAPIUtil(TestTableauAPISession):
             server_name='test_server',
             target_site='target site'
         )
-        TableauConnectedApp.objects.create(
+        app = TableauConnectedApp.objects.create(
             server=self.repeated_tableau_server
         )
+        app.plaintext_secret_value = 'a' * 32
+        app.save()
         self.repeated_tableau_user = TableauUser.objects.create(
             server=self.repeated_tableau_server,
             username='pbeasley',

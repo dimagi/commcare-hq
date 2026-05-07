@@ -16,8 +16,7 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaCheckpointEventHandler,
 )
 from corehq.apps.data_dictionary.util import get_gps_properties
-from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
-from corehq.apps.es.client import manager
+from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.util.doc_processor.sql import SqlDocumentProvider
@@ -249,12 +248,3 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
             adapter=case_search_adapter,
             **self.options
         )
-
-
-def delete_case_search_cases(domain):
-    if domain is None or isinstance(domain, dict):
-        raise TypeError("Domain attribute is required")
-
-    manager.index_refresh(case_search_adapter.index_name)
-    case_ids = CaseSearchES().domain(domain).values_list('_id', flat=True)
-    case_search_adapter.bulk_delete(case_ids)

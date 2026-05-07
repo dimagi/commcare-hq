@@ -2,7 +2,7 @@
 +++ 
 @@ -2,6 +2,13 @@
  import ko from "knockout";
- import constants from "hqwebapp/js/constants";
+ import { EMAIL_VALIDATION_REGEX } from "hqwebapp/js/constants";
  import "knockout-validation/dist/knockout.validation.min";  // needed for ko.validation
 +
 +ko.validation.init({

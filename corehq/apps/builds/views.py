@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
-from couchdbkit import BadValueError, ResourceNotFound
+from couchdbkit import BadValueError
 
 from dimagi.utils.web import json_request, json_response
 
@@ -34,19 +34,6 @@ def post(request):
 
     CommCareBuild.create_without_artifacts(version, build_number)
     return HttpResponse()
-
-
-@require_GET
-def get(request, version, build_number, path):
-    build = CommCareBuild.get_build(version, build_number)
-    try:
-        file = build.fetch_file(path)
-    except ResourceNotFound:
-        raise Http404()
-
-    response = HttpResponse(file)
-    response['Content-Disposition'] = 'attachment; filename="%s"' % path.split("/")[-1]
-    return response
 
 
 @require_GET

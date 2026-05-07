@@ -361,7 +361,6 @@ HQ_APPS = (
     'corehq.apps.reports_core',
     'corehq.apps.saved_reports',
     'corehq.apps.userreports.app_config.UserReports',
-    'corehq.apps.aggregate_ucrs',
     'corehq.apps.data_interfaces.app_config.DataInterfacesAppConfig',
     'corehq.apps.export',
     'corehq.apps.builds',
@@ -393,6 +392,7 @@ HQ_APPS = (
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
     'corehq.apps.app_execution',
+    'corehq.apps.tombstones',
 
     # custom reports
     'custom.reports.mc',
@@ -1168,8 +1168,8 @@ CONNECTID_ADD_USER_ANALYTICS_URL = 'http://localhost:8080/users/add_user_analyti
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
 
-# used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
-PERMANENT_DELETION_WINDOW = 30  # days
+# days to commit to keeping soft deleted data in databases
+DATA_RETENTION_WINDOW = 90  # days
 
 #### Chatbot configuration
 # Override in localsettings.py

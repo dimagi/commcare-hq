@@ -12,7 +12,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import cache
 from django.db import connections
-from django.db.utils import OperationalError
 
 import requests
 import urllib3
@@ -203,7 +202,8 @@ def check_postgres():
         try:
             db_conn.cursor()
             c_status = 'OK'
-        except OperationalError:
+        except Exception:
+            notify_exception(None, message=f"check_postgres failed for {settings.DATABASES[db]['NAME']}")
             c_status = 'FAIL'
             connected = False
         status_str += "%s:%s:%s " % (db, settings.DATABASES[db]['NAME'], c_status)

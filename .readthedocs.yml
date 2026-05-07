@@ -1,13 +1,18 @@
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+# Doc builds are generated automatically from the master branch
+# There is a hidden doc build also generated from the readthedocs branch
+# This can be used to test the readthedocs build itself before merging
 
 version: 2
 sphinx:
   configuration: docs/conf.py
 formats: all
 build:
-  os: ubuntu-20.04
+  os: ubuntu-24.04
+  apt_packages:
+    - libmagic1
   tools:
-    python: "3.9"
+    python: "3.13"
   jobs:
     create_environment:
       - pip install uv

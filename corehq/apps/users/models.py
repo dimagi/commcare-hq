@@ -200,8 +200,11 @@ class HqPermissions(DocumentSchema):
 
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
+
     edit_apps = BooleanProperty(default=False)
     view_apps = BooleanProperty(default=False)
+    edit_locked_questions_in_apps = BooleanProperty(default=False)
+
     edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
     access_api = BooleanProperty(default=False)

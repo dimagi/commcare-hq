@@ -1,13 +1,12 @@
 import csv
+import heapq
 from datetime import date, datetime, timedelta
 from itertools import chain
 
-from django.contrib.auth.models import User
-from django.db.models import ForeignKey, Min
-
 import attr
-
 from dimagi.utils.parsing import string_to_datetime
+from django.contrib.auth.models import User
+from django.db.models import ForeignKey, Min, Q
 
 from corehq.apps.users.models import Invitation, WebUser
 from corehq.util.models import ForeignValue
@@ -18,20 +17,31 @@ from ..models import ACCESS_CHOICES, AccessAudit, NavigationEventAudit
 def filters_for_audit_event_query(user, domain=None, start_date=None, end_date=None):
     where = get_date_range_where(start_date, end_date)
     if user:
-        where['user'] = user
+        if isinstance(user, list):
+            where['user__in'] = user
+        else:
+            where['user'] = user
     if domain:
         where['domain'] = domain
     return where
 
 
-def all_audit_events_by_user(user, domain=None, start_date=None, end_date=None, action=None):
-    return chain(
-        navigation_events_by_user(user, domain, start_date, end_date, action),
-        access_events_by_user(user, domain, start_date, end_date, action),
-    )
+def all_audit_events_by_user(user, domain=None, start_date=None, end_date=None, action=None,
+                              nav_extra_filters=None, access_extra_filters=None,
+                              skip_access=False, window_size=None):
+    nav = navigation_events_by_user(user, domain, start_date, end_date, action,
+                                     extra_filters=nav_extra_filters,
+                                     window_size=window_size)
+    if skip_access:
+        return nav
+    access = access_events_by_user(user, domain, start_date, end_date, action,
+                                    extra_filters=access_extra_filters,
+                                    window_size=window_size)
+    return heapq.merge(nav, access, key=lambda e: e.event_date)
 
 
-def navigation_events_by_user(user, domain=None, start_date=None, end_date=None, action=None):
+def navigation_events_by_user(user, domain=None, start_date=None, end_date=None, action=None,
+                               extra_filters=None, window_size=None):
     where = filters_for_audit_event_query(user, domain, start_date, end_date)
     query = NavigationEventAudit.objects.filter(**where)
     if action:
@@ -39,15 +49,22 @@ def navigation_events_by_user(user, domain=None, start_date=None, end_date=None,
             where=["headers::jsonb->>'REQUEST_METHOD' = %s"],
             params=[action]
         )
-    return AuditWindowQuery(query)
+    if extra_filters:
+        query = query.filter(extra_filters)
+    kwargs = {'window_size': window_size} if window_size else {}
+    return AuditWindowQuery(query, **kwargs)
 
 
-def access_events_by_user(user, domain=None, start_date=None, end_date=None, action=None):
+def access_events_by_user(user, domain=None, start_date=None, end_date=None, action=None,
+                           extra_filters=None, window_size=None):
     where = filters_for_audit_event_query(user, domain, start_date, end_date)
     if action:
         where['access_type'] = action
     query = AccessAudit.objects.filter(**where)
-    return AuditWindowQuery(query)
+    if extra_filters:
+        query = query.filter(extra_filters)
+    kwargs = {'window_size': window_size} if window_size else {}
+    return AuditWindowQuery(query, **kwargs)
 
 
 def write_log_events(writer, user, domain=None, override_user=None, start_date=None, end_date=None):
@@ -150,21 +167,26 @@ def get_action_and_resource(event):
 
 def get_generic_log_event_row(event):
     action, resource = get_action_and_resource(event)
+    status_code = event.status_code if event.doc_type == 'NavigationEventAudit' else ''
     return [
-        event.event_date,
+        event.event_date.strftime("%Y-%m-%d %H:%M:%S.%f UTC"),
         event.doc_type,
         event.user,
         event.domain or '',
         event.ip_address,
         action,
         resource,
+        status_code,
         event.description,
     ]
 
 
 def write_export_from_all_log_events(file_obj, start, end):
     writer = csv.writer(file_obj)
-    writer.writerow(['Date', 'Type', 'User', 'Domain', 'IP Address', 'Action', 'Resource', 'Description'])
+    writer.writerow([
+        'Date', 'Type', 'User', 'Domain', 'IP Address', 'Action', 'URL', 'Status Code',
+        'Description',
+    ])
     for event in get_all_log_events(start, end):
         write_generic_log_event(writer, event)
 
@@ -271,3 +293,68 @@ class NoForeignQuery:
 
 class ForeignKeyAccessError(AttributeError):
     pass
+
+
+def build_ip_filter(parsed_ips):
+    """Build a Q object for IP address filtering.
+
+    Args:
+        parsed_ips: list of (match_type, value) tuples from IPAddressFilter.parse_ip_input()
+
+    Returns:
+        Q object, or None if the list is empty.
+    """
+    if not parsed_ips:
+        return None
+    q = Q()
+    for match_type, value in parsed_ips:
+        if match_type == "exact":
+            q |= Q(ip_address=value)
+        elif match_type == "startswith":
+            q |= Q(ip_address__startswith=value)
+    return q
+
+
+def _q_for_path(pattern, mode):
+    if mode == "contains":
+        return Q(path__contains=pattern)
+    elif mode == "startswith":
+        return Q(path__startswith=pattern)
+    else:
+        raise ValueError(f"Invalid path filter mode: {mode!r}")
+
+
+def build_path_include_filter(patterns, mode):
+    """Build a Q object for path include filtering.
+
+    Args:
+        patterns: list of URL path pattern strings
+        mode: "contains" or "startswith"
+
+    Returns:
+        Q object, or None if the list is empty.
+    """
+    if not patterns:
+        return None
+    q = Q()
+    for pattern in patterns:
+        q |= _q_for_path(pattern, mode)
+    return q
+
+
+def build_path_exclude_filter(patterns, mode):
+    """Build a Q object for path exclude filtering.
+
+    Args:
+        patterns: list of URL path pattern strings
+        mode: "contains" or "startswith"
+
+    Returns:
+        Q object (negated), or None if the list is empty.
+    """
+    if not patterns:
+        return None
+    q = Q()
+    for pattern in patterns:
+        q &= ~_q_for_path(pattern, mode)
+    return q

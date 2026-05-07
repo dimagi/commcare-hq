@@ -38,6 +38,8 @@ module.exports = [
                 "L": "writable",
                 "it": "readonly",
                 "describe": "readonly",
+                "before": "readonly",
+                "after": "readonly",
                 "beforeEach": "readonly",
                 "afterEach": "readonly",
                 "nv": "readonly",

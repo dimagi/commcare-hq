@@ -95,7 +95,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.module = self.app.modules[0]
         self.form = self.module.forms[0]
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_search_data_registry(self, *args):
         suite = self.app.create_suite()
 
@@ -103,7 +102,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         <partial>
           <session>
             <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results"
-                template="case" default_search="false" dynamic_search="false">
+                template="case" default_search="false">
                 <title>
                     <text>
                         <locale id="case_search.m0.inputs"/>
@@ -148,19 +147,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         # assert that session instance is added to the entry
         self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
 
-        # needed for 'search again' workflow
-        self.assertXmlPartialEqual(
-            """<partial>
-                <locale id="case_search.m0.again"/>
-            </partial>""",
-            suite,
-            "./detail[@id='m0_case_short']/action/display/text/locale"
-        )
         self.assertXmlHasXpath(suite, "./remote-request")
         self.assertXmlHasXpath(suite, "./detail[@id='m0_search_short']")
         self.assertXmlHasXpath(suite, "./detail[@id='m0_search_long']")
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_search_data_registry_additional_registry_query(self, *args):
         base_xpath = "instance('registry')/results/case[@case_id=instance('commcaresession')/session/data/case_id]"
         self.module.search_config.additional_case_types = ["other_case"]
@@ -406,7 +396,6 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
         self.module = self.app.modules[0]
         self.shadow_module = self.app.modules[1]
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_suite(self, *args):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(
@@ -420,7 +409,6 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
             "./remote-request[2]"
         )
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_additional_types(self, *args):
         another_case_type = "another_case_type"
         self.module.search_config.additional_case_types = [another_case_type]
@@ -551,7 +539,7 @@ class InlineSearchDataRegistryModuleTest(SimpleTestCase, SuiteMixin):
             <instance id="results:inline" src="jr://instance/remote/results:inline"/>
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="{RESULTS_INSTANCE_INLINE}"
-                    template="case" default_search="false" dynamic_search="false">
+                    template="case" default_search="false">
                   <title>
                     <text>
                       <locale id="case_search.m0.inputs"/>

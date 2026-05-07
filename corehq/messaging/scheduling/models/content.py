@@ -1,4 +1,3 @@
-from copy import deepcopy
 from datetime import datetime, timezone
 
 from django.conf import settings
@@ -44,14 +43,6 @@ from corehq.util.view_utils import absolute_reverse
 class SMSContent(Content):
     message = old_jsonfield.JSONField(default=dict)
 
-    def create_copy(self):
-        """
-        See Content.create_copy() for docstring
-        """
-        return SMSContent(
-            message=deepcopy(self.message),
-        )
-
     def render_message(self, message, recipient, logged_subevent):
         if not message:
             logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
@@ -94,16 +85,6 @@ class EmailContent(Content):
     html_message = NullJsonField(default=dict)
 
     TRIAL_MAX_EMAILS = 50
-
-    def create_copy(self):
-        """
-        See Content.create_copy() for docstring
-        """
-        return EmailContent(
-            subject=deepcopy(self.subject),
-            message=deepcopy(self.message),
-            html_message=deepcopy(self.html_message),
-        )
 
     def render_subject_and_message(self, subject, message, html_message, recipient):
         renderer = self.get_template_renderer(recipient)
@@ -218,19 +199,6 @@ class EmailContent(Content):
 
 
 class SMSSurveyContent(SurveyContent):
-
-    def create_copy(self):
-        """
-        See Content.create_copy() for docstring
-        """
-        return SMSSurveyContent(
-            app_id=None,
-            form_unique_id=None,
-            expire_after=self.expire_after,
-            reminder_intervals=deepcopy(self.reminder_intervals),
-            submit_partially_completed_forms=self.submit_partially_completed_forms,
-            include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
-        )
 
     def phone_has_opted_out(self, phone_entry_or_number):
         if isinstance(phone_entry_or_number, PhoneNumber):
@@ -384,14 +352,6 @@ class CustomContent(Content):
     # messsages to send to the recipient.
     custom_content_id = models.CharField(max_length=126)
 
-    def create_copy(self):
-        """
-        See Content.create_copy() for docstring
-        """
-        return CustomContent(
-            custom_content_id=self.custom_content_id,
-        )
-
     def get_list_of_messages(self, recipient):
         if not self.schedule_instance:
             raise ValueError(
@@ -454,17 +414,6 @@ class FCMNotificationContent(Content):
     message = old_jsonfield.JSONField(default=dict)
     action = models.CharField(null=True, choices=ACTION_CHOICES, max_length=25)
     message_type = models.CharField(choices=MESSAGE_TYPES, max_length=25)
-
-    def create_copy(self):
-        """
-        See Content.create_copy() for docstring
-        """
-        return FCMNotificationContent(
-            subject=deepcopy(self.subject),
-            message=deepcopy(self.message),
-            action=self.action,
-            message_type=self.message_type
-        )
 
     def render_subject_and_message(self, subject, message, recipient):
         renderer = self.get_template_renderer(recipient)
@@ -608,11 +557,6 @@ class EmailImage(object):
 class ConnectMessageContent(Content):
     message = old_jsonfield.JSONField(default=dict)
 
-    def create_copy(self):
-        return ConnectMessageContent(
-            message=deepcopy(self.message),
-        )
-
     def send(self, recipient, logged_event, phone_entry=None):
         domain = logged_event.domain
         domain_obj = Domain.get_by_name(domain)
@@ -641,19 +585,6 @@ class ConnectMessageContent(Content):
 
 
 class ConnectMessageSurveyContent(SurveyContent):
-
-    def create_copy(self):
-        """
-        See Content.create_copy() for docstring
-        """
-        return ConnectMessageSurveyContent(
-            app_id=None,
-            form_unique_id=None,
-            expire_after=self.expire_after,
-            reminder_intervals=deepcopy(self.reminder_intervals),
-            submit_partially_completed_forms=self.submit_partially_completed_forms,
-            include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
-        )
 
     def send(self, recipient, logged_event, phone_entry=None):
         app, module, form, requires_input = self.get_memoized_app_module_form(logged_event.domain)

@@ -1,49 +1,20 @@
-from unittest.mock import call, patch
-
-from django.test import TestCase
-
 from testil import assert_raises, eq
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.apps.case_search.models import (
+    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    CASE_SEARCH_CASE_TYPE_KEY,
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
-    CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY,
-    CASE_SEARCH_SORT_KEY,
     CASE_SEARCH_MODULE_NAME_TAG_KEY,
+    CASE_SEARCH_REGISTRY_ID_KEY,
+    CASE_SEARCH_SORT_KEY,
     CaseSearchRequestConfig,
-    disable_case_search,
-    enable_case_search,
+    SearchCriteria,
     extract_search_request_config,
-    CASE_SEARCH_CASE_TYPE_KEY, SearchCriteria, CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
 )
 from corehq.util.test_utils import generate_cases
-
-
-class TestCaseSearch(TestCase):
-    domain = "meereen"
-
-    @patch('corehq.apps.case_search.tasks.CaseSearchReindexerFactory')
-    def test_enable_case_search_reindex(self, fake_factor):
-        """
-        When case search is enabled, reindex that domains cases
-        """
-        enable_case_search(self.domain)
-        self.assertEqual(fake_factor.call_args, call(domain=self.domain))
-        self.assertTrue(fake_factor().build.called)
-        self.assertTrue(fake_factor().build().reindex.called)
-
-    @patch('corehq.apps.case_search.tasks.delete_case_search_cases')
-    def test_disable_case_search_reindex(self, fake_deleter):
-        """
-        When case search is disabled, delete that domains cases
-        """
-        with patch('corehq.apps.case_search.tasks.CaseSearchReindexerFactory'):
-            enable_case_search(self.domain)
-
-        disable_case_search(self.domain)
-        self.assertEqual(fake_deleter.call_args, call(self.domain))
 
 
 @generate_cases([

@@ -32,7 +32,7 @@ class SessionDetailsViewTest(TestCase):
             'authToken': None,
             'domains': [cls.domain.name],
             'anonymous': False,
-            'enabled_toggles': [],
+            'enabled_toggles': ['SPLIT_SCREEN_CASE_SEARCH'],
             'enabled_previews': [],
         }
         cls.url = reverse('session_details')
@@ -213,7 +213,7 @@ class SessionDetailsViewTest(TestCase):
         response = _post_with_hmac(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         expected_response = self.expected_response.copy()
-        expected_response['enabled_toggles'] = ['SECURE_SESSION_TIMEOUT']
+        expected_response['enabled_toggles'] = ['SECURE_SESSION_TIMEOUT', 'SPLIT_SCREEN_CASE_SEARCH']
         expected_response['enabled_previews'] = ['CALC_XPATHS']
         self.assertJSONEqual(response.content, expected_response)
 

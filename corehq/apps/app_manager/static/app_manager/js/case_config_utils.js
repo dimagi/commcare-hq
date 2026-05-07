@@ -4,14 +4,18 @@ import toggles from "hqwebapp/js/toggles";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
 export default {
-    getQuestions: function (questions, filter, excludeHidden, includeRepeat, excludeTrigger) {
+    getQuestions: function (
+        questions,
+        filter,
+        excludeHidden = false,
+        includeRepeat = false,
+        excludeTrigger = false,
+        disableLocked = false,
+    ) {
         // filter can be "all", or any of "select1", "select", or "input" separated by spaces
         var i,
             options = [],
             q;
-        excludeHidden = excludeHidden || false;
-        excludeTrigger = excludeTrigger || false;
-        includeRepeat = includeRepeat || false;
         filter = filter.split(" ");
         if (!excludeHidden) {
             filter.push('hidden');
@@ -26,6 +30,9 @@ export default {
                 if (includeRepeat || !q.repeat) {
                     if (!excludeTrigger || q.tag !== "trigger") {
                         if (allowAttachments || q.tag !== "upload") {
+                            if (disableLocked) {
+                                q.disabled = q.locked;
+                            }
                             options.push(q);
                         }
                     }
@@ -94,6 +101,7 @@ export default {
                 key: caseName,
                 required: false,
                 save_only_if_edited: conditionalCaseUpdate.update_mode === 'edit',
+                conflictingDelete: conditionalCaseUpdate.conflicting_delete,
             }));
         });
 
@@ -124,12 +132,16 @@ export default {
             const path = caseProperty.path;
             const updateMode = caseProperty.save_only_if_edited ? 'edit' : 'always';
             if (key || path) {
+                const item = {question_path: path, update_mode: updateMode};
+                if (caseProperty.conflictingDelete) {
+                    item.conflicting_delete = true;
+                }
                 if (_(required).contains(key)) {
                     extraDict[key] = extraDict[key] || [];
-                    extraDict[key].push({question_path: path, update_mode: updateMode});
+                    extraDict[key].push(item);
                 } else {
                     propertyDict[key] = propertyDict[key] || [];
-                    propertyDict[key].push({question_path: path, update_mode: updateMode});
+                    propertyDict[key].push(item);
                 }
             }
         });

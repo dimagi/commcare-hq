@@ -88,7 +88,7 @@
 @@ -141,8 +145,11 @@
                  selectedAppId = urlParams.appId;
              }
-         } catch (error) {
+         } catch {
 +            // Parsing the app id out of URL hash will fail on the web apps home page, login as, etc.
 +            // where the hash isn't a JSON object but instead a string like "#apps".
 +            // In these cases, there's no app to check for a new version.
@@ -158,7 +158,7 @@
 @@ -224,12 +233,12 @@
                          iframeInputValue = iframe.getElementsByTagName('input')[0].value;
                          outerCSRFInput.val(iframeInputValue);
-                     } catch (err) {
+                     } catch {
 -                        $button.removeClass("btn-default").addClass("btn-danger");
 +                        $button.removeClass("btn-default").addClass("btn-outline-danger");
                          error = gettext("There was a problem, please refresh and try again");

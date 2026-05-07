@@ -1089,6 +1089,7 @@ class UserDomainsResource(ApiVersioningMixin, CorsResourceMixin, Resource):
         authentication = LoginAuthentication(allow_session_auth=True)
         object_class = UserDomain
         include_resource_uri = False
+        paginator_class = DoesNothingPaginator
 
     def dispatch_list(self, request, **kwargs):
         try:
@@ -1114,8 +1115,13 @@ class UserDomainsResource(ApiVersioningMixin, CorsResourceMixin, Resource):
         can_view_reports = request.GET.get("can_view_reports")
         couch_user = CouchUser.from_django_user(request.user)
         username = request.user.username
+
+        api_key = getattr(request, 'api_key', None)  # HQApiKey set by HQApiKeyAuthentication
+        api_key_domain = getattr(api_key, 'domain', '')
+
         results = []
-        for domain in couch_user.get_domains():
+        domains = [api_key_domain] if api_key_domain else couch_user.get_domains()
+        for domain in domains:
             domain_object = Domain.get_by_name(domain)
             if feature_flag and feature_flag not in toggles.toggles_dict(username=username, domain=domain):
                 continue
