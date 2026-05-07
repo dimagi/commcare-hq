@@ -73,18 +73,17 @@
       <h4 class="card-title card-title-nolink">{% trans "XForm" %}</h4>
     </div>
     <div class="card-body">
-      <ul class="nav nav-pills nav-stacked">
-        {# todo B5: css-nav #}
+      <ul class="nav nav-pills flex-column">
         {% if allow_xform_upload %}
-          <li>
-            <a href="#upload-xform" data-bs-toggle="modal">
+          <li class="nav-item">
+            <a class="nav-link" href="#upload-xform" data-bs-toggle="modal">
               <i class="fa fa-arrow-up"></i>
               {% trans "Upload" %}
             </a>
           </li>
         {% else %}
-          <li class="disabled pe-none">
-            <a>
+          <li class="nav-item">
+            <a class="nav-link disabled" aria-disabled="true">
               <i class="fa fa-arrow-up"></i>
               {% blocktrans %}
                 This form contains locked questions and can only be uploaded by
@@ -93,9 +92,10 @@
             </a>
           </li>
         {% endif %}
-        <li>
+        <li class="nav-item">
           <a
-            {% if not form.source %}class="disabled"{% endif %}
+            class="nav-link {% if not form.source %}disabled{% endif %}"
+            {% if not form.source %}aria-disabled="true"{% endif %}
             href="{% url "get_xform_source" domain app.id form.unique_id %}"
           >
             <i class="fa fa-arrow-down"></i>
