@@ -20,8 +20,7 @@
             <span id="app-module-selection">
               <select
                 name="to_app_id"
-                {# todo B5: css-select-form-control #}
-                class="form-control"
+                class="form-select w-auto"
                 style="min-width: 150px;"
                 {# todo B5: inline-style #}
                 data-bind="options: apps,
@@ -32,8 +31,7 @@
               <!-- ko with: selectedApp -->
               <select
                 name="to_module_id"
-                {# todo B5: css-select-form-control #}
-                class="form-control"
+                class="form-select w-auto"
                 style="min-width: 150px;"
                 {# todo B5: inline-style #}
                 data-bind="options: modules,
@@ -46,7 +44,7 @@
           {% else %}
             <select
               name="to_module_id"
-              class="form-select"
+              class="form-select w-auto"
               style="min-width: 150px;"
             >
               {% for mod in app.get_modules %}

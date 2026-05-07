@@ -125,8 +125,8 @@
           {% else %}
             {% trans "Followup: This form loads a case and may then update or close it" as updates_case %}
           {% endif %}
-          <select  {# todo B5: css-select-form-control #}
-            class="form-control"
+          <select
+            class="form-select"
             id="case-action-select"
             data-bind="optstr: [
                                {
@@ -269,8 +269,8 @@
                     class="form-group"  {# todo B5: css-form-group #}
                     data-bind="css: {'has-warning': !case_type()}"
                   >
-                    <select  {# todo B5: css-select-form-control #}
-                      class="form-control"
+                    <select
+                      class="form-select w-auto"
                       {% if not add_ons_privileges.subcases %}disabled="disabled"{% endif %}
                       data-bind="options: $parent.caseTypes,
                                        optionsText: $parent.getCaseTypeLabel,
