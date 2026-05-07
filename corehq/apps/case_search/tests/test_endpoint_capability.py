@@ -1,4 +1,3 @@
-import pytest
 from unmagic import fixture, use
 
 from corehq.apps.case_search.endpoint_capability import (
