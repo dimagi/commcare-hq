@@ -2301,35 +2301,47 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         Wipe all case delagate access.
         """
-        from casexml.apps.case.cleanup import safe_hard_delete
-        mapping = self.get_location_map_case()
-        if mapping:
-            safe_hard_delete(mapping)
+        self.create_location_delegates([])
 
     def create_location_delegates(self, locations):
         """
         Submit the case blocks creating the delgate case access
         for the location(s).
         """
-        self.clear_location_delegates()
+        from corehq.apps.commtrack.util import location_map_case_id
 
-        if not locations:
-            return
-
-        index = {}
+        desired_indices = {}
         for location in locations:
             if not location.location_type.administrative:
                 sp = SupplyInterface(self.domain).get_by_location(location)
-                index.update(self.supply_point_index_mapping(sp))
+                desired_indices.update(self.supply_point_index_mapping(sp))
 
-        from corehq.apps.commtrack.util import location_map_case_id
-        caseblock = CaseBlock(
-            create=True,
-            case_type=USER_LOCATION_OWNER_MAP_TYPE,
-            case_id=location_map_case_id(self),
-            owner_id=self._id,
-            index=index
-        )
+        mapping_case = self.get_location_map_case()
+        if mapping_case is None:
+            if not desired_indices:
+                return
+            caseblock = CaseBlock(
+                create=True,
+                case_type=USER_LOCATION_OWNER_MAP_TYPE,
+                case_id=location_map_case_id(self),
+                owner_id=self._id,
+                index=desired_indices,
+            )
+        else:
+            index_update = dict(desired_indices)
+            for existing_index in mapping_case.live_indices:
+                if existing_index.identifier not in desired_indices:
+                    index_update[existing_index.identifier] = (
+                        # supply_point_index_mapping returns {id: (type, id or ''), }
+                        existing_index.referenced_type, '',
+                    )
+            if not index_update:
+                return
+            caseblock = CaseBlock(
+                create=False,
+                case_id=mapping_case.case_id,
+                index=index_update,
+            )
 
         self.submit_location_block(caseblock, "create_location_delegates")
 
