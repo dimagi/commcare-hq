@@ -1,13 +1,17 @@
-`close` has been renamed to `btn-close` (which we've automatically handled)
+`close` has been renamed to `btn-close` (which we've automatically handled).
 
-However, `&times;` in the HTML is no longer needed, as an embedded SVG is now used instead.
-You can remove this.
+Manual changes:
 
-In modal headers, `close` now comes *after* the `modal-title` instead of before it.
+* Remove the inner content (`&times;`, `×`, and any wrapping `<span>`).
+  B5's `btn-close` uses an embedded SVG; inner text would render on top of it.
+* Reorder the button to come AFTER `modal-title` in the modal header.
+* Ensure the button has `aria-label="Close"`. Remove any `aria-hidden="true"`
+  on the button itself — it hides the control from screen readers.
+* Convert `<a class="btn-close">` to `<button type="button" class="btn-close">`.
 
-An EXAMPLE for how to apply this change is provided below.
+## Example
 
-Previously:
+Previously (canonical B3):
 ```
 <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -15,10 +19,20 @@ Previously:
 </div>
 ```
 
-Now:
+Now (B5):
 ```
 <div class="modal-header">
-    <h4 class="modal-title" id="exampleModalLabel">Modal title</h4>
+    <h4 class="modal-title">Modal title</h4>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 ```
+
+## Pitfall: false positives in `{% trans %}` strings
+
+The auto-rename replaces `close` with `btn-close` everywhere it matches,
+including inside `{% trans %}` / `{% blocktrans %}` bodies where "close"
+is the English verb. Find them with:
+
+    grep -rn "btn-close" corehq/apps/<app>/templates | grep -v 'class="btn-close"'
+
+Revert these in their own commit, separate from the structural changes.
