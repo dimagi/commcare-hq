@@ -245,7 +245,7 @@
       <script>
         document.addEventListener('DOMContentLoaded', function () {
           window.userflow.init('{{ USERFLOW_TOKEN }}');
-          window.userflow.identify('{{ request.couch_user._id }}', {
+          window.userflow.identify('{{ request.couch_user.user_id }}', {
             signed_up_at: '{{ request.couch_user.date_joined }}'
           });
         });
