@@ -106,7 +106,7 @@ TODOs
       ``validate_filter_spec`` — currently raises ``KeyError``.
 - [x] Add recursion depth limit to ``_validate_node`` to prevent
       ``RecursionError`` on deeply nested queries.
-- [ ] Guard against ``current_version = None`` in
+- [x] Guard against ``current_version = None`` in
       ``CaseSearchEndpointEditView.page_context`` — the field is nullable but the
       view assumes it is set.
 - [ ] Fix ``CaseSearchCapabilityView`` — missing ``page_title``, unnecessarily
