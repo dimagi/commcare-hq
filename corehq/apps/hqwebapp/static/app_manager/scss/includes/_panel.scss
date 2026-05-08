@@ -105,40 +105,6 @@
     }
   }
 }
-.panel-case-actions {
-  position: relative;
-}
-.panel-case-actions .panel-case-actions-actions {
-  position: absolute;
-  right: 10px;
-  top: 8px;
-  > .btn {
-    transition: background-color 1s;
-    border: none;
-  }
-}
-
-.panel-case-actions {
-  background-color: lighten($cc-dark-cool-accent-hi, 3);
-  > .panel-heading {
-    background-color: $cc-dark-cool-accent-mid;
-    color: white;
-    .text-muted {
-      color: $cc-dark-cool-accent-hi;
-    }
-  }
-  .panel-appmanager {
-    border-radius: 10px;
-    .well {
-      margin-top: 10px;
-      margin-bottom: 10px;
-      .hq-help {
-        margin-top: 4px;
-      }
-    }
-  }
-}
-
 .card-case-actions {
   background-color: lighten($cc-dark-cool-accent-hi, 3);
 
