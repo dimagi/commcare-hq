@@ -810,94 +810,166 @@ class CombinedDiffTests(SimpleTestCase):
 
 
 class CollectLockedMappingsTests(SimpleTestCase):
-
     def test_no_locked_paths_returns_empty(self):
-        actions = FormActions(update_case=UpdateCaseAction(update={
-            'name': ConditionalCaseUpdate(question_path='/data/question1'),
-        }))
+        actions = FormActions(
+            update_case=UpdateCaseAction(
+                update={
+                    'name': ConditionalCaseUpdate(
+                        question_path='/data/question1'
+                    ),
+                }
+            )
+        )
         assert collect_locked_mappings(actions, set()) == set()
 
     def test_update_case_mapping_against_locked_path_is_collected(self):
-        actions = FormActions(update_case=UpdateCaseAction(update={
-            'name': ConditionalCaseUpdate(question_path='/data/question1'),
-            'locked_prop': ConditionalCaseUpdate(question_path='/data/question2'),
-        }))
+        actions = FormActions(
+            update_case=UpdateCaseAction(
+                update={
+                    'name': ConditionalCaseUpdate(
+                        question_path='/data/question1'
+                    ),
+                    'locked_prop': ConditionalCaseUpdate(
+                        question_path='/data/question2'
+                    ),
+                }
+            )
+        )
         result = collect_locked_mappings(actions, {'/data/question2'})
-        assert result == {CaseUpdateMapping(
-            kind='update',
-            prop='locked_prop',
-            path='/data/question2',
-            update_mode='always',
-        )}
+        assert result == {
+            CaseUpdateMapping(
+                kind='update',
+                prop='locked_prop',
+                path='/data/question2',
+                update_mode='always',
+            )
+        }
 
     def test_update_case_conflict_against_locked_path_is_collected(self):
-        actions = FormActions(update_case=UpdateCaseAction(
-            update={'p': ConditionalCaseUpdate(question_path='/data/safe')},
-            conflicts={'p': [ConditionalCaseUpdate(question_path='/data/locked')]},
-        ))
+        actions = FormActions(
+            update_case=UpdateCaseAction(
+                update={
+                    'p': ConditionalCaseUpdate(question_path='/data/safe')
+                },
+                conflicts={
+                    'p': [ConditionalCaseUpdate(question_path='/data/locked')]
+                },
+            )
+        )
         result = collect_locked_mappings(actions, {'/data/locked'})
-        assert result == {CaseUpdateMapping(
-            kind='update', prop='p', path='/data/locked', update_mode='always',
-        )}
+        assert result == {
+            CaseUpdateMapping(
+                kind='update',
+                prop='p',
+                path='/data/locked',
+                update_mode='always',
+            )
+        }
 
     def test_open_case_name_update_against_locked_path_is_collected(self):
-        actions = FormActions(open_case=OpenCaseAction(
-            name_update=ConditionalCaseUpdate(question_path='/data/locked'),
-        ))
+        actions = FormActions(
+            open_case=OpenCaseAction(
+                name_update=ConditionalCaseUpdate(
+                    question_path='/data/locked'
+                ),
+            )
+        )
         result = collect_locked_mappings(actions, {'/data/locked'})
-        assert result == {CaseUpdateMapping(
-            kind='open.name', prop='name', path='/data/locked', update_mode='always',
-        )}
+        assert result == {
+            CaseUpdateMapping(
+                kind='open.name',
+                prop='name',
+                path='/data/locked',
+                update_mode='always',
+            )
+        }
 
     def test_usercase_update_against_locked_path_is_collected(self):
-        actions = FormActions(usercase_update=UpdateCaseAction(update={
-            'p': ConditionalCaseUpdate(question_path='/data/locked'),
-        }))
+        actions = FormActions(
+            usercase_update=UpdateCaseAction(
+                update={
+                    'p': ConditionalCaseUpdate(question_path='/data/locked'),
+                }
+            )
+        )
         result = collect_locked_mappings(actions, {'/data/locked'})
-        assert result == {CaseUpdateMapping(
-            kind='usercase_update', prop='p', path='/data/locked',
-            update_mode='always',
-        )}
+        assert result == {
+            CaseUpdateMapping(
+                kind='usercase_update',
+                prop='p',
+                path='/data/locked',
+                update_mode='always',
+            )
+        }
 
     def test_case_preload_against_locked_path_is_collected(self):
-        actions = FormActions(case_preload=PreloadAction(preload={
-            '/data/locked': 'preloaded_prop',
-            '/data/safe': 'other_prop',
-        }))
+        actions = FormActions(
+            case_preload=PreloadAction(
+                preload={
+                    '/data/locked': 'preloaded_prop',
+                    '/data/safe': 'other_prop',
+                }
+            )
+        )
         result = collect_locked_mappings(actions, {'/data/locked'})
-        assert result == {CaseUpdateMapping(
-            kind='case_preload', prop='preloaded_prop', path='/data/locked',
-            update_mode=None,
-        )}
+        assert result == {
+            CaseUpdateMapping(
+                kind='case_preload',
+                prop='preloaded_prop',
+                path='/data/locked',
+                update_mode=None,
+            )
+        }
 
     def test_usercase_preload_against_locked_path_is_collected(self):
-        actions = FormActions(usercase_preload=PreloadAction(preload={
-            '/data/locked': 'preloaded_prop',
-        }))
+        actions = FormActions(
+            usercase_preload=PreloadAction(
+                preload={
+                    '/data/locked': 'preloaded_prop',
+                }
+            )
+        )
         result = collect_locked_mappings(actions, {'/data/locked'})
-        assert result == {CaseUpdateMapping(
-            kind='usercase_preload', prop='preloaded_prop', path='/data/locked',
-            update_mode=None,
-        )}
+        assert result == {
+            CaseUpdateMapping(
+                kind='usercase_preload',
+                prop='preloaded_prop',
+                path='/data/locked',
+                update_mode=None,
+            )
+        }
 
     def test_subcase_mappings_against_locked_path_are_collected(self):
-        actions = FormActions(subcases=[OpenSubCaseAction(
-            case_type='child',
-            name_update=ConditionalCaseUpdate(question_path='/data/locked_name'),
-            case_properties={
-                'p': ConditionalCaseUpdate(question_path='/data/locked_prop'),
-            },
-        )])
+        actions = FormActions(
+            subcases=[
+                OpenSubCaseAction(
+                    case_type='child',
+                    name_update=ConditionalCaseUpdate(
+                        question_path='/data/locked_name'
+                    ),
+                    case_properties={
+                        'p': ConditionalCaseUpdate(
+                            question_path='/data/locked_prop'
+                        ),
+                    },
+                )
+            ]
+        )
         result = collect_locked_mappings(
-            actions, {'/data/locked_name', '/data/locked_prop'},
+            actions,
+            {'/data/locked_name', '/data/locked_prop'},
         )
         assert result == {
             CaseUpdateMapping(
-                kind='subcase[0]:child', prop='name', path='/data/locked_name',
+                kind='subcase[0]:child',
+                prop='name',
+                path='/data/locked_name',
                 update_mode='always',
             ),
             CaseUpdateMapping(
-                kind='subcase[0]:child', prop='p', path='/data/locked_prop',
+                kind='subcase[0]:child',
+                prop='p',
+                path='/data/locked_prop',
                 update_mode='always',
             ),
         }
@@ -905,28 +977,38 @@ class CollectLockedMappingsTests(SimpleTestCase):
     def test_subcases_with_same_case_type_are_tracked_independently(self):
         # OpenSubCaseAction permits multiple subcases of the same case_type.
         # Position is part of the kind so neither collapses into the other.
-        actions = FormActions(subcases=[
-            OpenSubCaseAction(
-                case_type='child',
-                case_properties={
-                    'p': ConditionalCaseUpdate(question_path='/data/locked'),
-                },
-            ),
-            OpenSubCaseAction(
-                case_type='child',
-                case_properties={
-                    'p': ConditionalCaseUpdate(question_path='/data/locked'),
-                },
-            ),
-        ])
+        actions = FormActions(
+            subcases=[
+                OpenSubCaseAction(
+                    case_type='child',
+                    case_properties={
+                        'p': ConditionalCaseUpdate(
+                            question_path='/data/locked'
+                        ),
+                    },
+                ),
+                OpenSubCaseAction(
+                    case_type='child',
+                    case_properties={
+                        'p': ConditionalCaseUpdate(
+                            question_path='/data/locked'
+                        ),
+                    },
+                ),
+            ]
+        )
         result = collect_locked_mappings(actions, {'/data/locked'})
         assert result == {
             CaseUpdateMapping(
-                kind='subcase[0]:child', prop='p', path='/data/locked',
+                kind='subcase[0]:child',
+                prop='p',
+                path='/data/locked',
                 update_mode='always',
             ),
             CaseUpdateMapping(
-                kind='subcase[1]:child', prop='p', path='/data/locked',
+                kind='subcase[1]:child',
+                prop='p',
+                path='/data/locked',
                 update_mode='always',
             ),
         }
@@ -934,12 +1016,17 @@ class CollectLockedMappingsTests(SimpleTestCase):
     def test_update_mode_is_part_of_mapping_identity(self):
         # update_mode is captured so that flipping "Save Only If Edited"
         # via a malicious POST shows up as a change.
-        actions = FormActions(update_case=UpdateCaseAction(update={
-            'p': ConditionalCaseUpdate(
-                question_path='/data/locked', update_mode='edit',
-            ),
-        }))
-        result, = collect_locked_mappings(actions, {'/data/locked'})
+        actions = FormActions(
+            update_case=UpdateCaseAction(
+                update={
+                    'p': ConditionalCaseUpdate(
+                        question_path='/data/locked',
+                        update_mode='edit',
+                    ),
+                }
+            )
+        )
+        (result,) = collect_locked_mappings(actions, {'/data/locked'})
         assert result.update_mode == 'edit'
 
 
@@ -955,80 +1042,120 @@ def _load_update_action(case_tag, properties, *, case_type='patient'):
 
 
 class CollectLockedAdvancedMappingsTests(SimpleTestCase):
-
     def test_no_locked_paths_returns_empty(self):
-        actions = AdvancedFormActions(load_update_cases=[
-            _load_update_action('load_patient', {'p': '/data/question1'}),
-        ])
+        actions = AdvancedFormActions(
+            load_update_cases=[
+                _load_update_action('load_patient', {'p': '/data/question1'}),
+            ]
+        )
         assert collect_locked_advanced_mappings(actions, set()) == set()
 
     def test_load_update_mapping_against_locked_path_is_collected(self):
-        actions = AdvancedFormActions(load_update_cases=[
-            _load_update_action('load_patient', {
-                'safe_prop': '/data/question1',
-                'locked_prop': '/data/question2',
-            }),
-        ])
+        actions = AdvancedFormActions(
+            load_update_cases=[
+                _load_update_action(
+                    'load_patient',
+                    {
+                        'safe_prop': '/data/question1',
+                        'locked_prop': '/data/question2',
+                    },
+                ),
+            ]
+        )
         result = collect_locked_advanced_mappings(actions, {'/data/question2'})
-        assert result == {CaseUpdateMapping(
-            kind='case_property',
-            prop='locked_prop',
-            path='/data/question2',
-            update_mode='always',
-            case_tag='load_patient',
-        )}
+        assert result == {
+            CaseUpdateMapping(
+                kind='case_property',
+                prop='locked_prop',
+                path='/data/question2',
+                update_mode='always',
+                case_tag='load_patient',
+            )
+        }
 
     def test_indexes_by_case_tag(self):
         # Two actions with the same case_type but different case_tags should
         # be tracked independently.
-        actions = AdvancedFormActions(load_update_cases=[
-            _load_update_action('tag_a', {'p': '/data/question2'}),
-            _load_update_action('tag_b', {'p': '/data/question2'}),
-        ])
+        actions = AdvancedFormActions(
+            load_update_cases=[
+                _load_update_action('tag_a', {'p': '/data/question2'}),
+                _load_update_action('tag_b', {'p': '/data/question2'}),
+            ]
+        )
         result = collect_locked_advanced_mappings(actions, {'/data/question2'})
         assert result == {
             CaseUpdateMapping(
-                kind='case_property', prop='p', path='/data/question2',
-                update_mode='always', case_tag='tag_a',
+                kind='case_property',
+                prop='p',
+                path='/data/question2',
+                update_mode='always',
+                case_tag='tag_a',
             ),
             CaseUpdateMapping(
-                kind='case_property', prop='p', path='/data/question2',
-                update_mode='always', case_tag='tag_b',
+                kind='case_property',
+                prop='p',
+                path='/data/question2',
+                update_mode='always',
+                case_tag='tag_b',
             ),
         }
 
     def test_load_update_preload_against_locked_path_is_collected(self):
-        actions = AdvancedFormActions(load_update_cases=[LoadUpdateAction(
-            case_type='patient',
-            case_tag='load_patient',
-            preload={'/data/locked': 'preloaded_prop'},
-        )])
+        actions = AdvancedFormActions(
+            load_update_cases=[
+                LoadUpdateAction(
+                    case_type='patient',
+                    case_tag='load_patient',
+                    preload={'/data/locked': 'preloaded_prop'},
+                )
+            ]
+        )
         result = collect_locked_advanced_mappings(actions, {'/data/locked'})
-        assert result == {CaseUpdateMapping(
-            kind='preload', prop='preloaded_prop', path='/data/locked',
-            update_mode=None, case_tag='load_patient',
-        )}
+        assert result == {
+            CaseUpdateMapping(
+                kind='preload',
+                prop='preloaded_prop',
+                path='/data/locked',
+                update_mode=None,
+                case_tag='load_patient',
+            )
+        }
 
     def test_open_case_mappings_against_locked_path_are_collected(self):
-        actions = AdvancedFormActions(open_cases=[AdvancedOpenCaseAction(
-            case_type='patient',
-            case_tag='open_patient',
-            name_update=ConditionalCaseUpdate(question_path='/data/locked_name'),
-            case_properties={
-                'p': ConditionalCaseUpdate(question_path='/data/locked_prop'),
-            },
-        )])
+        actions = AdvancedFormActions(
+            open_cases=[
+                AdvancedOpenCaseAction(
+                    case_type='patient',
+                    case_tag='open_patient',
+                    name_update=ConditionalCaseUpdate(
+                        question_path='/data/locked_name'
+                    ),
+                    case_properties={
+                        'p': ConditionalCaseUpdate(
+                            question_path='/data/locked_prop'
+                        ),
+                    },
+                )
+            ]
+        )
         result = collect_locked_advanced_mappings(
-            actions, {'/data/locked_name', '/data/locked_prop'},
+            actions,
+            {'/data/locked_name', '/data/locked_prop'},
         )
         assert result == {
             CaseUpdateMapping(
-                kind='name', prop='name', path='/data/locked_name',
-                update_mode='always', case_tag='open_patient',
+                kind='name',
+                prop='name',
+                path='/data/locked_name',
+                update_mode='always',
+                case_tag='open_patient',
             ),
             CaseUpdateMapping(
-                kind='case_property', prop='p', path='/data/locked_prop',
-                update_mode='always', case_tag='open_patient',
+                kind='case_property',
+                prop='p',
+                path='/data/locked_prop',
+                update_mode='always',
+                case_tag='open_patient',
             ),
         }
 
