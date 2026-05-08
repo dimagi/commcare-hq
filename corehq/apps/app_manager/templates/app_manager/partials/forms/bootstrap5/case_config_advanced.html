@@ -124,7 +124,7 @@
           <label class="form-label col-md-2">{% trans "Parent Indices" %}</label>
           <div class="col-md-6">
             <div data-bind="foreach: case_indices">
-              <div class="card">  {# todo B5: css-well #}
+              <div class="card card-body mb-3">
                 <label>{% trans "Parent Tag" %}</label>
                 <select class="form-select"
                         data-bind="optstr: $parents[1].getCaseTags('subcase', $parent), value: tag">
@@ -264,7 +264,7 @@
 
 <script type="text/html" id="auto-select:case-type">
   {% trans "Expected Case Type" %}
-  <input type="text" class="form-control" data-bind="value: $parent.case_type" />
+  <input type="text" class="form-control w-auto" data-bind="value: $parent.case_type" />
   <span class="hq-help-template"
         data-title="{% trans "Expected Case Type" %}"
         data-content="{% blocktrans %}This is used for case property suggestions and when creating case indexes but
@@ -276,43 +276,43 @@
 </script>
 
 <script type="text/html" id="auto-select:raw">
-  <div class="card well-sm">  {# todo B5: css-well #}
-    <strong>{% trans "Raw Config" %}:</strong>&nbsp;&nbsp;
+  <div class="card card-body p-2 d-flex flex-row flex-wrap align-items-center gap-2 mb-3">
+    <strong>{% trans "Raw Config" %}:</strong>
     {% trans "XPath function" %}
-    <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
+    <input type="text" class="form-control w-auto" data-bind="value: value_key" />
     <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
   </div>
 </script>
 
 <script type="text/html" id="auto-select:user">
-  <div class="card well-sm">  {# todo B5: css-well #}
-    <strong>{% trans "User Data Config" %}:</strong>&nbsp;&nbsp;
+  <div class="card card-body p-2 d-flex flex-row flex-wrap align-items-center gap-2 mb-3">
+    <strong>{% trans "User Data Config" %}:</strong>
     {% trans "User data key" %}
-    <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
+    <input type="text" class="form-control w-auto" data-bind="value: value_key" />
     <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
   </div>
 </script>
 
 <script type="text/html" id="auto-select:case">
-  <div class="card well-sm">  {# todo B5: css-well #}
-    <strong>{% trans "Case Index Config" %}:</strong>&nbsp;&nbsp;
+  <div class="card card-body p-2 d-flex flex-row flex-wrap align-items-center gap-2 mb-3">
+    <strong>{% trans "Case Index Config" %}:</strong>
     {% trans "Case containing index" %}
-    <select class="form-select" data-bind="optstr: $parent.caseConfig.caseConfigViewModel.getCaseTags('auto-select', $parent),
+    <select class="form-select w-auto" data-bind="optstr: $parent.caseConfig.caseConfigViewModel.getCaseTags('auto-select', $parent),
             value: value_source">
-    </select>&nbsp;&nbsp;
+    </select>
     {% trans "Index name" %}
-    <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
+    <input type="text" class="form-control w-auto" data-bind="value: value_key" />
     <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
   </div>
 </script>
 
 <script type="text/html" id="auto-select:fixture">
-  <div class="card well-sm">  {# todo B5: css-well #}
-    <strong>{% trans "Lookup Table Config" %}:</strong>&nbsp;&nbsp;
+  <div class="card card-body p-2 d-flex flex-row flex-wrap align-items-center gap-2 mb-3">
+    <strong>{% trans "Lookup Table Config" %}:</strong>
     {% trans "Lookup Table Tag" %}
-    <input type="text" class="form-control" data-bind="value: value_source" />&nbsp;&nbsp;
+    <input type="text" class="form-control w-auto" data-bind="value: value_source" />
     {% trans "Table Field" %}
-    <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
+    <input type="text" class="form-control w-auto" data-bind="value: value_key" />
     <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
   </div>
 </script>
@@ -457,7 +457,7 @@
           <div class="help-block" data-bind="visible: !case_type">
             {% trans "Please select a case type." %}
           </div>
-          <div class="card well-sm">  {# todo B5: css-well #}
+          <div class="card card-body p-2 mb-3">
             <div class="d-flex flex-wrap align-items-center gap-2">
               <div class="form-group">  {# todo B5: css-form-group #}
                 <label>{% trans "Case Property" %}&nbsp;</label>
@@ -472,7 +472,7 @@
               </div>
             </div>
           </div>
-          <div class="card well-sm">  {# todo B5: css-well #}
+          <div class="card card-body p-2 mb-3">
             <div class="d-flex flex-wrap align-items-center gap-2">
               <div class="form-group">  {# todo B5: css-form-group #}
                 <label>{% trans "Fixture Nodeset" %}&nbsp;</label>
@@ -497,7 +497,7 @@
               </div>
             </div>
           </div>
-          <div class="card well-sm">  {# todo B5: css-well #}
+          <div class="card card-body p-2 mb-3">
             <div class="d-flex flex-wrap align-items-center gap-2">
               <div class="form-group">  {# todo B5: css-form-group #}
                 <label>{% trans "Arbitrary Datum Function" %}&nbsp;</label>
