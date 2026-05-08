@@ -2565,13 +2565,6 @@ ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-DEMO_CASE_PILLOW = StaticToggle(
-    slug='demo_case_pillow',
-    label='Process case changes on separate queue',
-    tag=TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 # Removed 2026-02-17
 # CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
 #     slug='convert_xml_group_separator',
@@ -2579,3 +2572,10 @@ DEMO_CASE_PILLOW = StaticToggle(
 #     tag=TAG_DEPRECATED,
 #     namespaces=[NAMESPACE_DOMAIN]
 # )
+
+DEMO_CASE_PILLOW = StaticToggle(
+    slug='demo_case_pillow',
+    label='Process case changes on separate queue',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
