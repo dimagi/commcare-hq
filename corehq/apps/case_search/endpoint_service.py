@@ -1,4 +1,4 @@
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Max
 from django.http import Http404
 
@@ -25,12 +25,18 @@ def create_endpoint(domain, name, target_type, target_name, parameters, query):
     errors = validate_filter_spec(query, parameters, target_name, capability)
     if errors:
         raise FilterSpecValidationError(errors)
-    endpoint = CaseSearchEndpoint.objects.create(
-        domain=domain,
-        name=name,
-        target_type=target_type,
-        target_name=target_name,
-    )
+    try:
+        with transaction.atomic():
+            endpoint = CaseSearchEndpoint.objects.create(
+                domain=domain,
+                name=name,
+                target_type=target_type,
+                target_name=target_name,
+            )
+    except IntegrityError:
+        raise FilterSpecValidationError(
+            [f"An endpoint named '{name}' already exists in this project."]
+        )
     version = CaseSearchEndpointVersion.objects.create(
         endpoint=endpoint,
         version_number=1,
@@ -51,6 +57,7 @@ def save_new_version(endpoint, parameters, query):
     )
     if errors:
         raise FilterSpecValidationError(errors)
+    CaseSearchEndpoint.objects.select_for_update().get(pk=endpoint.pk)
     max_version = (
         endpoint.versions.aggregate(max_v=Max('version_number'))['max_v'] or 0
     )

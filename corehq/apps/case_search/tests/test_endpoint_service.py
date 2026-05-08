@@ -52,12 +52,12 @@ def test_raises_on_duplicate_name():
         domain=DOMAIN, name='Dup', target_type='project_db',
         target_name='patient', parameters=[], query=EMPTY_QUERY,
     )
-    from django.db import IntegrityError
-    with pytest.raises(IntegrityError):
+    with pytest.raises(endpoint_service.FilterSpecValidationError) as exc_info:
         endpoint_service.create_endpoint(
             domain=DOMAIN, name='Dup', target_type='project_db',
             target_name='patient', parameters=[], query=EMPTY_QUERY,
         )
+    assert any('already exists' in e for e in exc_info.value.errors)
 
 
 @use('db')

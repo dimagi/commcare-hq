@@ -91,11 +91,11 @@ TODOs
 - [ ] Add ``require_can_edit_data`` to ``_ENDPOINT_DECORATORS`` and the tab entry
       in ``tabclasses.py`` — currently any domain member with the toggle can
       create/edit/delete endpoints.
-- [ ] Fix race condition in ``save_new_version`` — concurrent saves read the same
+- [x] Fix race condition in ``save_new_version`` — concurrent saves read the same
       ``max_version`` and both try to insert ``max_version + 1``, causing an
       unhandled ``IntegrityError``. Use ``select_for_update()`` on the versions
       aggregate query.
-- [ ] Handle ``IntegrityError`` from duplicate ``(domain, name)`` in
+- [x] Handle ``IntegrityError`` from duplicate ``(domain, name)`` in
       ``create_endpoint`` — concurrent creates with the same name produce a 500;
       should return a 400 with a user-facing error.
 - [ ] Add server-side validation of ``name`` and ``target_name`` in
