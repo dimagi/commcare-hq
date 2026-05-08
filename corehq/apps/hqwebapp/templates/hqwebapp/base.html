@@ -164,6 +164,11 @@
     {% initial_page_data 'minimumPasswordLength' MINIMUM_PASSWORD_LENGTH %}
     {% initial_page_data 'privileges' privileges %}
 
+    {% if request.couch_user and USERFLOW_TOKEN %}
+      {% initial_page_data 'userflow_token' USERFLOW_TOKEN %}
+      {% initial_page_data 'userflow_user_id' request.couch_user.user_id %}
+      {% initial_page_data 'userflow_signed_up_at' request.couch_user.date_joined %}
+    {% endif %}
 
     {# for get demo and get trial forms #}
     {% initial_page_data 'ace_base_path' 'ace-builds/src-min-noconflict'|static %}
@@ -240,12 +245,6 @@
     {% block js %}{% endblock js %}
 
     {% block js-inline %}{% endblock js-inline %}
-
-    {% if request.couch_user and USERFLOW_TOKEN %}
-      {% initial_page_data 'userflow_token' USERFLOW_TOKEN %}
-      {% initial_page_data 'userflow_user_id' request.couch_user.user_id %}
-      {% initial_page_data 'userflow_signed_up_at' request.couch_user.date_joined %}
-    {% endif %}
 
   </body>
 </html>
