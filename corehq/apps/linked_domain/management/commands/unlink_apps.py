@@ -8,7 +8,7 @@ from corehq.apps.linked_domain.models import DomainLink, DomainLinkHistory
 
 
 class Command(BaseCommand):
-    help = "Unlinks downstream project spaces and converts the downstream app into a standalone app."
+    help = "Unlinks applications in a downstream project space"
 
     def add_arguments(self, parser):
         parser.add_argument(
