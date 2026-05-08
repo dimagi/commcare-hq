@@ -1,4 +1,5 @@
-from collections import defaultdict, namedtuple
+from collections import defaultdict
+from typing import NamedTuple
 
 from .models import ConditionalCaseUpdate
 
@@ -314,8 +315,8 @@ def _check_name(key):
 
 
 def collect_locked_mappings(form_actions, locked_paths):
-    """Set of mapping entries in ``form_actions`` whose ``path`` is in
-    ``locked_paths``.
+    """Set of mapping entries in ``form_actions`` whose ``question_path`` is
+    in ``locked_paths``.
 
     Used to detect whether a locked-question mapping was added, removed,
     repointed, or otherwise modified by a save: compare the result before
@@ -325,24 +326,37 @@ def collect_locked_mappings(form_actions, locked_paths):
     if not locked_paths:
         return set()
     return {m for m in _iter_form_action_mappings(form_actions)
-            if m.path in locked_paths}
+            if m.question_path in locked_paths}
 
 
 def collect_locked_advanced_mappings(advanced_form_actions, locked_paths):
-    """Set of entries from an :class:`AdvancedFormActions` whose ``path`` is in
-    ``locked_paths``. See :func:`collect_locked_mappings`.
+    """Set of entries from an :class:`AdvancedFormActions` whose
+    ``question_path`` is in ``locked_paths``.
+    See :func:`collect_locked_mappings`.
     """
     if not locked_paths:
         return set()
     return {m for m in _iter_advanced_form_action_mappings(advanced_form_actions)
-            if m.path in locked_paths}
+            if m.question_path in locked_paths}
 
 
-CaseUpdateMapping = namedtuple(
-    'CaseUpdateMapping',
-    ['kind', 'prop', 'path', 'update_mode', 'case_tag'],
-    defaults=[''],
-)
+class CaseUpdateMapping(NamedTuple):
+    """
+    Attributes:
+        action_path: Identifies which container in ``FormActions`` this mapping
+            was extracted from. e.g., ``'open.name'``, ``'update'``, etc.
+        prop: The case-property name being read or written.
+        question_path: The XForm question path the mapping reads or writes.
+        update_mode: ``'always'`` or ``'edit'`` for
+            :class:`ConditionalCaseUpdate`-backed mappings. ``None`` for
+            preload mappings.
+        case_tag: User-assigned tag for advanced form actions.
+    """
+    action_path: str
+    prop: str
+    question_path: str
+    update_mode: str | None
+    case_tag: str = ''
 
 
 def _iter_form_action_mappings(form_actions):
@@ -363,11 +377,11 @@ def _iter_form_action_mappings(form_actions):
         yield CaseUpdateMapping('usercase_preload', name, path, None)
 
     for i, sub in enumerate(form_actions.subcases):
-        kind = f'subcase[{i}]:{sub.case_type or ""}'
-        yield CaseUpdateMapping(kind, 'name', sub.name_update.question_path,
+        action_path = f'subcase[{i}]:{sub.case_type or ""}'
+        yield CaseUpdateMapping(action_path, 'name', sub.name_update.question_path,
                                 sub.name_update.update_mode)
         for prop, ccu in sub.case_properties.items():
-            yield CaseUpdateMapping(kind, prop, ccu.question_path, ccu.update_mode)
+            yield CaseUpdateMapping(action_path, prop, ccu.question_path, ccu.update_mode)
 
 
 def _iter_advanced_form_action_mappings(advanced_form_actions):
@@ -388,9 +402,9 @@ def _iter_advanced_form_action_mappings(advanced_form_actions):
                                     ccu.update_mode, tag)
 
 
-def _iter_update_action_mappings(kind, action):
+def _iter_update_action_mappings(action_path, action):
     for prop, ccu in action.update.items():
-        yield CaseUpdateMapping(kind, prop, ccu.question_path, ccu.update_mode)
+        yield CaseUpdateMapping(action_path, prop, ccu.question_path, ccu.update_mode)
     for prop, ccus in action.conflicts.items():
         for ccu in ccus:
-            yield CaseUpdateMapping(kind, prop, ccu.question_path, ccu.update_mode)
+            yield CaseUpdateMapping(action_path, prop, ccu.question_path, ccu.update_mode)

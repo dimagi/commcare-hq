@@ -838,9 +838,9 @@ class CollectLockedMappingsTests(SimpleTestCase):
         result = collect_locked_mappings(actions, {'/data/question2'})
         assert result == {
             CaseUpdateMapping(
-                kind='update',
+                action_path='update',
                 prop='locked_prop',
-                path='/data/question2',
+                question_path='/data/question2',
                 update_mode='always',
             )
         }
@@ -859,9 +859,9 @@ class CollectLockedMappingsTests(SimpleTestCase):
         result = collect_locked_mappings(actions, {'/data/locked'})
         assert result == {
             CaseUpdateMapping(
-                kind='update',
+                action_path='update',
                 prop='p',
-                path='/data/locked',
+                question_path='/data/locked',
                 update_mode='always',
             )
         }
@@ -877,9 +877,9 @@ class CollectLockedMappingsTests(SimpleTestCase):
         result = collect_locked_mappings(actions, {'/data/locked'})
         assert result == {
             CaseUpdateMapping(
-                kind='open.name',
+                action_path='open.name',
                 prop='name',
-                path='/data/locked',
+                question_path='/data/locked',
                 update_mode='always',
             )
         }
@@ -895,9 +895,9 @@ class CollectLockedMappingsTests(SimpleTestCase):
         result = collect_locked_mappings(actions, {'/data/locked'})
         assert result == {
             CaseUpdateMapping(
-                kind='usercase_update',
+                action_path='usercase_update',
                 prop='p',
-                path='/data/locked',
+                question_path='/data/locked',
                 update_mode='always',
             )
         }
@@ -914,9 +914,9 @@ class CollectLockedMappingsTests(SimpleTestCase):
         result = collect_locked_mappings(actions, {'/data/locked'})
         assert result == {
             CaseUpdateMapping(
-                kind='case_preload',
+                action_path='case_preload',
                 prop='preloaded_prop',
-                path='/data/locked',
+                question_path='/data/locked',
                 update_mode=None,
             )
         }
@@ -932,9 +932,9 @@ class CollectLockedMappingsTests(SimpleTestCase):
         result = collect_locked_mappings(actions, {'/data/locked'})
         assert result == {
             CaseUpdateMapping(
-                kind='usercase_preload',
+                action_path='usercase_preload',
                 prop='preloaded_prop',
-                path='/data/locked',
+                question_path='/data/locked',
                 update_mode=None,
             )
         }
@@ -961,15 +961,15 @@ class CollectLockedMappingsTests(SimpleTestCase):
         )
         assert result == {
             CaseUpdateMapping(
-                kind='subcase[0]:child',
+                action_path='subcase[0]:child',
                 prop='name',
-                path='/data/locked_name',
+                question_path='/data/locked_name',
                 update_mode='always',
             ),
             CaseUpdateMapping(
-                kind='subcase[0]:child',
+                action_path='subcase[0]:child',
                 prop='p',
-                path='/data/locked_prop',
+                question_path='/data/locked_prop',
                 update_mode='always',
             ),
         }
@@ -1000,15 +1000,15 @@ class CollectLockedMappingsTests(SimpleTestCase):
         result = collect_locked_mappings(actions, {'/data/locked'})
         assert result == {
             CaseUpdateMapping(
-                kind='subcase[0]:child',
+                action_path='subcase[0]:child',
                 prop='p',
-                path='/data/locked',
+                question_path='/data/locked',
                 update_mode='always',
             ),
             CaseUpdateMapping(
-                kind='subcase[1]:child',
+                action_path='subcase[1]:child',
                 prop='p',
-                path='/data/locked',
+                question_path='/data/locked',
                 update_mode='always',
             ),
         }
@@ -1065,9 +1065,9 @@ class CollectLockedAdvancedMappingsTests(SimpleTestCase):
         result = collect_locked_advanced_mappings(actions, {'/data/question2'})
         assert result == {
             CaseUpdateMapping(
-                kind='case_property',
+                action_path='case_property',
                 prop='locked_prop',
-                path='/data/question2',
+                question_path='/data/question2',
                 update_mode='always',
                 case_tag='load_patient',
             )
@@ -1085,16 +1085,16 @@ class CollectLockedAdvancedMappingsTests(SimpleTestCase):
         result = collect_locked_advanced_mappings(actions, {'/data/question2'})
         assert result == {
             CaseUpdateMapping(
-                kind='case_property',
+                action_path='case_property',
                 prop='p',
-                path='/data/question2',
+                question_path='/data/question2',
                 update_mode='always',
                 case_tag='tag_a',
             ),
             CaseUpdateMapping(
-                kind='case_property',
+                action_path='case_property',
                 prop='p',
-                path='/data/question2',
+                question_path='/data/question2',
                 update_mode='always',
                 case_tag='tag_b',
             ),
@@ -1113,9 +1113,9 @@ class CollectLockedAdvancedMappingsTests(SimpleTestCase):
         result = collect_locked_advanced_mappings(actions, {'/data/locked'})
         assert result == {
             CaseUpdateMapping(
-                kind='preload',
+                action_path='preload',
                 prop='preloaded_prop',
-                path='/data/locked',
+                question_path='/data/locked',
                 update_mode=None,
                 case_tag='load_patient',
             )
@@ -1144,16 +1144,16 @@ class CollectLockedAdvancedMappingsTests(SimpleTestCase):
         )
         assert result == {
             CaseUpdateMapping(
-                kind='name',
+                action_path='name',
                 prop='name',
-                path='/data/locked_name',
+                question_path='/data/locked_name',
                 update_mode='always',
                 case_tag='open_patient',
             ),
             CaseUpdateMapping(
-                kind='case_property',
+                action_path='case_property',
                 prop='p',
-                path='/data/locked_prop',
+                question_path='/data/locked_prop',
                 update_mode='always',
                 case_tag='open_patient',
             ),
