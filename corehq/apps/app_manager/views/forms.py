@@ -52,8 +52,8 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppInDifferentDomainException,
     AppMisconfigurationError,
-    FormActionsChangeError,
     FormNotFoundException,
+    LockedQuestionError,
     ModuleNotFoundException,
     XFormValidationFailed,
 )
@@ -225,7 +225,7 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
 
     try:
         _apply_advanced_form_actions_change(request, domain, form, actions)
-    except FormActionsChangeError:
+    except LockedQuestionError:
         return HttpResponseForbidden(_LOCKED_QUESTION_MAPPING_ERROR)
 
     datums_json = json.loads(request.POST.get('arbitrary_datums'))
@@ -258,7 +258,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
 
     try:
         _apply_form_actions_change(request, domain, form, actions_json, diff)
-    except FormActionsChangeError:
+    except LockedQuestionError:
         return HttpResponseForbidden(_LOCKED_QUESTION_MAPPING_ERROR)
 
     if old_load_from_form:
@@ -287,7 +287,7 @@ def _apply_advanced_form_actions_change(request, domain, form, new_actions):
     """Assign ``new_actions`` to ``form.actions`` (or ``form.extra_actions``
     for shadow forms).
 
-    :raises FormActionsChangeError: if the change would add, remove, or
+    :raises LockedQuestionError: if the change would add, remove, or
         repoint a case-property mapping bound to a locked question.
     """
     locked_paths = _locked_paths_to_protect(request, domain, form)
@@ -296,7 +296,7 @@ def _apply_advanced_form_actions_change(request, domain, form, new_actions):
         collect_locked_advanced_mappings(current, locked_paths)
         != collect_locked_advanced_mappings(new_actions, locked_paths)
     ):
-        raise FormActionsChangeError
+        raise LockedQuestionError
 
     if form.form_type == "shadow_form":
         form.extra_actions = new_actions
@@ -307,14 +307,14 @@ def _apply_advanced_form_actions_change(request, domain, form, new_actions):
 def _apply_form_actions_change(request, domain, form, actions_json, diff):
     """Apply ``actions_json`` and ``diff`` to ``form.actions``.
 
-    :raises FormActionsChangeError: if the change would add, remove, or
+    :raises LockedQuestionError: if the change would add, remove, or
         repoint a case-property mapping bound to a locked question.
     """
     locked_paths = _locked_paths_to_protect(request, domain, form)
     before = collect_locked_mappings(form.actions, locked_paths)
     update_form_actions(form.actions, actions_json, diff)
     if collect_locked_mappings(form.actions, locked_paths) != before:
-        raise FormActionsChangeError
+        raise LockedQuestionError
 
 
 def _locked_paths_to_protect(request, domain, form):
