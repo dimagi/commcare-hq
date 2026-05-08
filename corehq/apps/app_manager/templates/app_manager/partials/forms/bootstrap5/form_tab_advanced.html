@@ -3,15 +3,14 @@
 {% load hq_shared_tags %}
 <div class="tab-pane" id="advanced">
   {% if allow_form_copy %}
-    <div class="card panel-appmanager">
-      {# todo B5: css-panel #}
+    <div class="card card-modern-gray mb-3">
       <form
         method="POST"
         action="{% url "copy_form" domain app.id form.unique_id %}"
       >
         {% csrf_token %}
-        <div class="card-header">
-          <h4 class="card-title card-title-nolink">{% trans "Copy Form" %}</h4>
+        <div class="card-header h5">
+          {% trans "Copy Form" %}
         </div>
         <div class="card-body d-flex flex-wrap align-items-center gap-2">
           {% if request|toggle_enabled:"COPY_FORM_TO_APP" %}
@@ -66,10 +65,9 @@
     {% csrf_token %}
     <fieldset></fieldset>
   {% endif %}
-  <div class="card panel-appmanager">
-    {# todo B5: css-panel #}
-    <div class="card-header">
-      <h4 class="card-title card-title-nolink">{% trans "XForm" %}</h4>
+  <div class="card card-modern-gray mb-3">
+    <div class="card-header h5">
+      {% trans "XForm" %}
     </div>
     <div class="card-body">
       <ul class="nav nav-pills flex-column">

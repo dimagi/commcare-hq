@@ -2,19 +2,13 @@
   border: none;
   background-color: lighten($cc-bg, 3);
 
-  .card-header {
-    padding: 0;
-    a:hover, a:link, a:focus {
-      text-decoration: none;
-    }
-    a {
-      display: block;
-      padding: 15px 15px;
-      transition: background-color 1s;
-      &:hover {
-        background-color: $cc-bg;
-      }
-    }
+  > .card-header {
+    // Lock the header height so it doesn't grow when conditional
+    // content mounts.
+    display: flex;
+    align-items: center;
+    min-height: 3rem;
+
     .hq-help {
       a {
         padding: 0;
@@ -27,11 +21,6 @@
         margin-bottom: -3px;
       }
     }
-  }
-
-  .card-title-nolink {
-    padding: 15px 15px;
-    border-bottom: 1px solid $cc-bg;
   }
 
   .collapsing {

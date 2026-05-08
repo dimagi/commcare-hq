@@ -112,11 +112,9 @@
 
 <script type="text/html"
         id="case-config:case-transaction:case-preload">
-  <div class="card-header">
-    <h4 class="card-title card-title-nolink">
-      <i class="fa fa-arrow-right"></i><i class="fa-regular fa-file"></i>
-      {% trans "Load the following properties into the form questions" %}
-    </h4>
+  <div class="card-header h5">
+    <i class="fa fa-arrow-right"></i><i class="fa-regular fa-file"></i>
+    {% trans "Load the following properties into the form questions" %}
   </div>
   <div class="card-body">
     <table class="table table-savecaseprops"
@@ -189,19 +187,8 @@
 
 <script type="text/html"
         id="case-config:case-transaction:case-properties">
-  <div class="card-header">
-    <h4 class="card-title card-title-nolink">
-      <div data-bind="if: searchAndFilter">
-        <div class="float-end"
-             style="max-width: 25%; margin-top: -5px;"  {# todo B5: inline-style #}
-             data-bind="visible: case_properties().length">
-          <search-box data-apply-bindings="false"
-                      params="value: case_property_query,
-                              action: goToPage,
-                              immediate: true,
-                              placeholder: '{% trans_html_attr "Search properties..." %}'"></search-box>
-        </div>
-      </div>
+  <div class="card-header h5 gap-2">
+    <span class="flex-grow-1">
       <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
       <!-- ko if: !$data.type || $data.type() == "case-property" -->
       {% trans "Save Questions to Case Properties" %}
@@ -209,7 +196,16 @@
       <!-- ko if: $data.type && $data.type() == "user-property" -->
         {% trans "Save Questions to User Properties" %}
       <!-- /ko -->
-    </h4>
+    </span>
+    <div data-bind="if: searchAndFilter">
+      <div data-bind="visible: case_properties().length">
+        <search-box data-apply-bindings="false"
+                    params="value: case_property_query,
+                            action: goToPage,
+                            immediate: true,
+                            placeholder: '{% trans_html_attr "Search properties..." %}'"></search-box>
+      </div>
+    </div>
   </div>
   <div class="card-body">
     <div class="alert alert-warning" data-bind="visible: hasDeprecatedProperties" >
