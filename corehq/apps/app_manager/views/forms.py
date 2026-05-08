@@ -111,6 +111,7 @@ from corehq.apps.app_manager.views.utils import (
 )
 from corehq.apps.app_manager.xform import (
     CaseError,
+    XForm,
     XFormException,
     XFormValidationError,
 )
@@ -140,6 +141,11 @@ from corehq.util.view_utils import set_file_download
 _LOCKED_QUESTION_MAPPING_ERROR = gettext_lazy(
     "Case property mappings that reference locked questions cannot be "
     "modified. Unlock the question in the form builder first."
+)
+
+_LOCKED_QUESTION_CONTENT_ERROR = gettext_lazy(
+    "Locked questions cannot be modified. Unlock the question in the form "
+    "builder first."
 )
 
 
@@ -358,6 +364,30 @@ def _check_case_mapping_diff_does_not_touch_locked(request, domain, form, case_m
         raise LockedQuestionError
 
 
+def _check_locked_questions_unmodified(request, domain, form, new_xml):
+    """Reject a save that changes anything about a locked question.
+
+    For every path that was locked in the old form, the question's signature
+    in the new XForm must be identical.
+
+    Users with ``edit_locked_questions_in_apps`` permission bypass this
+    check entirely; the UI lock is a safeguard against accidents for them,
+    not an authorization boundary.
+
+    :raises LockedQuestionError: if a locked question changed.
+    """
+    if request.couch_user.can_edit_locked_questions_in_apps(domain):
+        return
+    old_locked = _locked_paths_to_protect(request, domain, form)
+    if not old_locked:
+        return
+    old_xform = form.wrapped_xform()
+    new_xform = XForm(new_xml, domain=domain)
+    for path in old_locked:
+        if old_xform.get_question_signature(path) != new_xform.get_question_signature(path):
+            raise LockedQuestionError
+
+
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @api_domain_view
@@ -450,6 +480,10 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
                 case_mapping_diff = _get_case_mapping_diff(request, form)
+                try:
+                    _check_locked_questions_unmodified(request, domain, form, xform)
+                except LockedQuestionError:
+                    raise Exception(_LOCKED_QUESTION_CONTENT_ERROR)
                 try:
                     _check_case_mapping_diff_does_not_touch_locked(
                         request, domain, form, case_mapping_diff,
@@ -661,6 +695,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
     case_mapping_diff = _get_case_mapping_diff(request, form)
 
     try:
+        _check_locked_questions_unmodified(request, domain, form, new_xml)
         _check_case_mapping_diff_does_not_touch_locked(
             request, domain, form, case_mapping_diff,
         )
