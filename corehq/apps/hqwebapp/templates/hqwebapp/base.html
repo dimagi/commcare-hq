@@ -242,14 +242,9 @@
     {% block js-inline %}{% endblock js-inline %}
 
     {% if request.couch_user and USERFLOW_TOKEN %}
-      <script>
-        document.addEventListener('DOMContentLoaded', function () {
-          window.userflow.init('{{ USERFLOW_TOKEN }}');
-          window.userflow.identify('{{ request.couch_user.user_id }}', {
-            signed_up_at: '{{ request.couch_user.date_joined }}'
-          });
-        });
-      </script>
+      {% initial_page_data 'userflow_token' USERFLOW_TOKEN %}
+      {% initial_page_data 'userflow_user_id' request.couch_user.user_id %}
+      {% initial_page_data 'userflow_signed_up_at' request.couch_user.date_joined %}
     {% endif %}
 
   </body>
