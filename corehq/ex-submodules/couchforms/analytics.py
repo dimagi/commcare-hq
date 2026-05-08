@@ -1,11 +1,19 @@
 import datetime
 
-from corehq.apps.es import FormES
+from corehq.apps.es import AppES, FormES
 from corehq.apps.es.aggregations import TermsAggregation
+from corehq.apps.experiments import ES_FOR_EXPORTS, Experiment
 from corehq.const import MISSING_APP_ID
 from corehq.util.couch import stale_ok
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
+
+experiment = Experiment(
+    campaign=ES_FOR_EXPORTS,
+    old_args={},
+    new_args={'use_es': True},
+    is_equal=lambda a, b: True,
+)
 
 
 @quickcache(['domain'], timeout=10 * 60)
@@ -130,8 +138,13 @@ def get_form_analytics_metadata(domain, app_id, xmlns):
         return None
 
 
-def get_exports_by_form(domain):
-    rows = _get_export_forms(domain)
+def get_exports_by_form(domain, use_es=False):
+    if use_es:
+        # if use_es is True here, the "export_apps_use_elasticsearch" ff is enabled for
+        # this domain so just return es results without the experiment
+        rows = _get_export_forms_by_app_es(domain)
+    else:
+        rows = _experiment_get_export_forms(domain)
     form_count_breakdown = get_form_count_breakdown_for_domain(domain)
 
     for row in rows:
@@ -146,15 +159,40 @@ def get_exports_by_form(domain):
     return rows
 
 
-def _get_export_forms(domain):
+@experiment
+def _experiment_get_export_forms(domain, use_es=False):
     from corehq.apps.app_manager.models import Application
-    return Application.get_db().view(
-        'exports_forms_by_app/view',
-        startkey=[domain],
-        endkey=[domain, {}],
-        group=True,
-        stale=stale_ok()
-    ).all()
+    if use_es:
+        rows = _get_export_forms_by_app_es(domain)
+    else:
+        rows = Application.get_db().view(
+            'exports_forms_by_app/view',
+            startkey=[domain],
+            endkey=[domain, {}],
+            group=True,
+            stale=stale_ok()
+        ).all()
+    return rows
+
+
+def _get_export_forms_by_app_es(domain):
+    rows = []
+    apps = AppES().domain(domain).is_build(False).run().hits
+    for app in apps:
+        for module_id, module in enumerate(app.get("modules", [])):
+            for form_id, form in enumerate(module.get("forms", [])):
+                rows.append({
+                    "key": [app['domain'], app['_id'], form["xmlns"]],
+                    "value": {
+                        "xmlns": form["xmlns"],
+                        "app": {"name": app["name"], "langs": app["langs"], "id": app["_id"]},
+                        "module": {"name": module["name"], "id": module_id},
+                        "form": {"name": form["name"], "id": form_id},
+                        "app_deleted": app["doc_type"] in ["Application-Deleted", "LinkedApplication-Deleted"],
+                    }
+                })
+
+    return rows
 
 
 def get_form_count_breakdown_for_domain(domain):

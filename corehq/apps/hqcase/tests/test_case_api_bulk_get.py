@@ -86,6 +86,24 @@ class TestCaseAPIBulkGet(TestCase):
         case_ids = self.case_ids[0:2]
         self._call_get_api_check_results(case_ids, matching=2, missing=0)
 
+    def test_bulk_get_restrict_fields(self):
+        url = reverse('case_api_detail', args=(self.domain, ','.join(self.case_ids[0:2])))
+        res = self.client.get(f'{url}?fields=case_id,case_name')
+        assert res.status_code == 200
+        for case in res.json()['cases']:
+            assert set(case.keys()) == {'case_id', 'case_name'}
+
+    def test_bulk_post_restrict_fields(self):
+        url = reverse('case_api_bulk_fetch', args=(self.domain,))
+        res = self.client.post(
+            f'{url}?fields=case_id,case_name',
+            data={'case_ids': self.case_ids[0:2]},
+            content_type="application/json",
+        )
+        assert res.status_code == 200
+        for case in res.json()['cases']:
+            assert set(case.keys()) == {'case_id', 'case_name'}
+
     def test_bulk_get_domain_filter(self):
         case_ids = self.case_ids[0:2] + [self.other_domain_case_id]
         result = self._call_get_api_check_results(case_ids, matching=2, missing=1)

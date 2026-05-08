@@ -251,7 +251,7 @@ class PreviewAppView(TemplateView):
 
 def has_geocoder_privs(domain):
     return (
-        toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)
+        toggles.CASE_SEARCH_ADVANCED.enabled(domain)
         and domain_has_privilege(domain, privileges.GEOCODER)
     )
 
@@ -469,7 +469,7 @@ def report_sentry_error(request, domain):
         if header.get("dsn") != settings.SENTRY_DSN:
             raise Exception(f"Invalid Sentry DSN: {header.get('dsn')}")
 
-        dsn = urllib.parse.urlparse(header.get("dsn"))
+        dsn = urllib.parse.urlparse(settings.SENTRY_DSN)
         project_id = dsn.path.strip("/")
         if project_id != settings.SENTRY_DSN.split('/')[-1]:
             raise Exception(f"Invalid Sentry Project ID: {project_id}")

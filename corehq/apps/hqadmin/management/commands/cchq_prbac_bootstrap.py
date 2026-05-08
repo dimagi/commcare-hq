@@ -255,6 +255,13 @@ class Command(BaseCommand):
         Role(slug=privileges.LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
              name='Location columns in user last activity report',
              description="Add primary location's hierarchy to excel export in User Last Activity Report"),
+        Role(slug=privileges.LOCKED_ADMIN_QUESTIONS,
+             name='Locked Admin Questions',
+             description="Allow questions to be locked in the form builder to limit editing"),
+        Role(slug=privileges.VELLUM_SAVE_TO_CASE,
+             name='Advanced Case Actions (old Save To Case questions)',
+             description="Allow adding Advanced Case Actions (old Save To Case questions) "
+                         "in the form builder."),
     ]
 
     BOOTSTRAP_PLANS = [

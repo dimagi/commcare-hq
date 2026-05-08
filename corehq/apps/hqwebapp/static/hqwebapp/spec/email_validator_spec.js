@@ -1,7 +1,7 @@
-import constants from "hqwebapp/js/constants";
+import { EMAIL_VALIDATION_REGEX } from "hqwebapp/js/constants";
 
 describe('email_validator', function () {
-    const re = constants.EMAIL_VALIDATION_REGEX;
+    const re = EMAIL_VALIDATION_REGEX;
     const testEmail = email => re.test(email);
 
     it('should allow simple email addresses', function () {

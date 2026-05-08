@@ -701,6 +701,17 @@ class XForm(WrappedNode):
         return self.model_node.findall('{f}bind')
 
     @property
+    def has_locked_questions(self):
+        """Whether any binds in this form's XML are locked (``vellum:lock="all"``)."""
+        if not self.exists():
+            return False
+        try:
+            binds = self.bind_nodes
+        except XFormException:
+            return False
+        return any(bind.attrib.get('{v}lock') == 'all' for bind in binds)
+
+    @property
     @raise_if_none("Can't find <itext>")
     def itext_node(self):
         # awful, awful hack. It will be many weeks before I can look people in the eye again.
@@ -1048,9 +1059,16 @@ class XForm(WrappedNode):
                 instance_dict[instance_id] = src
         return instance_dict
 
-    def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False,
-                      exclude_select_with_itemsets=False, include_fixtures=False):
+    def get_questions(
+            self,
+            langs,
+            include_triggers=False,
+            include_groups=False,
+            include_translations=False,
+            exclude_select_with_itemsets=False,
+            include_fixtures=False,
+            include_locked_status=False,
+        ):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -1140,6 +1158,10 @@ class XForm(WrappedNode):
                 "setvalue": self._get_setvalue(path),
                 "is_group": is_group,
             }
+
+            if include_locked_status:
+                question["locked"] = bool(cnode.bind_node) and cnode.bind_node.attrib.get('{v}lock') == 'all'
+
             if include_translations:
                 question["translations"] = self._get_label_translations(node, langs)
 

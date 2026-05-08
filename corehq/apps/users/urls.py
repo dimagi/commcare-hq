@@ -78,8 +78,9 @@ from .views.mobile.users import (
 from .views.role import (
     EditRoleView,
     ListRolesView,
+    create_user_role,
     delete_user_role,
-    post_user_role,
+    update_user_role,
 )
 from .views.web import (
     DomainRequestView,
@@ -152,10 +153,11 @@ urlpatterns = [
     url(r'^enterprise/json/$', paginate_enterprise_users, name='paginate_enterprise_users'),
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
-    url(r'^roles/save/$', post_user_role, name='post_user_role'),
+    url(r'^roles/create/$', create_user_role, name='create_user_role'),
+    url(r'^roles/update/(?P<role_id>[ \w-]+)/$', update_user_role, name='update_user_role'),
     url(r'^roles/new/$', EditRoleView.as_view(), name='create_role'),
-    url(r'^roles/edit/(?P<role_id>[ \w-]+)', EditRoleView.as_view(), name=EditRoleView.urlname),
-    url(r'^roles/delete/$', delete_user_role, name='delete_user_role'),
+    url(r'^roles/edit/(?P<role_id>[ \w-]+)/$', EditRoleView.as_view(), name=EditRoleView.urlname),
+    url(r'^roles/delete/(?P<role_id>[ \w-]+)/$', delete_user_role, name='delete_user_role'),
     url(
         r'^register_fcm_device_token/(?P<couch_user_id>[ \w-]+)/(?P<device_token>[ \w-]+)/$',
         register_fcm_device_token,

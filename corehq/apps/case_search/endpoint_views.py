@@ -145,6 +145,8 @@ class CaseSearchEndpointEditView(CaseSearchEndpointMixin, BaseProjectDataView):
     @property
     def page_context(self):
         endpoint = self.endpoint_obj
+        if not endpoint.current_version:
+            raise Http404
         current_version = endpoint.current_version
         all_versions = list(
             endpoint.versions.values_list('version_number', flat=True)
@@ -241,6 +243,8 @@ class CaseSearchEndpointVersionView(
     def page_context(self):
         endpoint = self.endpoint_obj
         version = get_version(endpoint, int(self.kwargs['version_number']))
+        if not endpoint.current_version:
+            raise Http404
         current_version = endpoint.current_version
         all_versions = list(
             endpoint.versions.values_list('version_number', flat=True)

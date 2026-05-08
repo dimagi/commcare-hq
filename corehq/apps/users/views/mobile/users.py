@@ -1526,7 +1526,7 @@ class CommCareUserConfirmAccountViewByEmailView(CommCareUserConfirmAccountView):
 
     @property
     def _expiration_time_in_hours(self):
-        return 24
+        return 72
 
 
 @location_safe

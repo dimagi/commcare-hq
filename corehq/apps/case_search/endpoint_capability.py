@@ -1,3 +1,5 @@
+from django.db.models import Prefetch
+
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CaseType,
@@ -165,14 +167,19 @@ def get_capability(domain):
         domain=domain,
         is_deprecated=False,
     ).prefetch_related(
-        'properties',
-        'properties__allowed_values',
+        Prefetch(
+            'properties',
+            queryset=CaseProperty.objects.filter(
+                deprecated=False,
+            ).prefetch_related('allowed_values'),
+            to_attr='active_properties',
+        ),
     )
 
     result_case_types = []
     for ct in case_types:
         fields = []
-        for prop in ct.properties.filter(deprecated=False):
+        for prop in ct.active_properties:
             field_type = get_field_type(prop.data_type)
             if field_type is None:
                 continue
@@ -182,9 +189,7 @@ def get_capability(domain):
                 'operations': get_operations_for_field_type(field_type),
             }
             if field_type == FIELD_TYPE_SELECT:
-                field['options'] = list(
-                    prop.allowed_values.values_list('allowed_value', flat=True)
-                )
+                field['options'] = [av.allowed_value for av in prop.allowed_values.all()]
             fields.append(field)
         result_case_types.append({
             'name': ct.name,

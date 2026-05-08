@@ -4,6 +4,7 @@ from unmagic import fixture, use
 from django.http import Http404
 
 from corehq.apps.case_search import endpoint_service
+from corehq.apps.case_search.endpoint_service import _MAX_QUERY_DEPTH
 from corehq.apps.case_search.models import CaseSearchEndpoint
 from corehq.apps.case_search.endpoint_capability import (
     _AUTO_VALUES,
@@ -51,12 +52,12 @@ def test_raises_on_duplicate_name():
         domain=DOMAIN, name='Dup', target_type='project_db',
         target_name='patient', parameters=[], query=EMPTY_QUERY,
     )
-    from django.db import IntegrityError
-    with pytest.raises(IntegrityError):
+    with pytest.raises(endpoint_service.FilterSpecValidationError) as exc_info:
         endpoint_service.create_endpoint(
             domain=DOMAIN, name='Dup', target_type='project_db',
             target_name='patient', parameters=[], query=EMPTY_QUERY,
         )
+    assert any('already exists' in e for e in exc_info.value.errors)
 
 
 @use('db')
@@ -229,6 +230,14 @@ def test_missing_required_input_slot():
 
 
 @use(sample_capability)
+def test_malformed_parameter_returns_error():
+    errors = endpoint_service.validate_filter_spec(
+        {'type': 'and', 'children': []}, [{}], 'patient', sample_capability()
+    )
+    assert any('name' in e for e in errors)
+
+
+@use(sample_capability)
 def test_parameter_ref_must_exist():
     spec = {
         'type': 'component',
@@ -310,3 +319,23 @@ def test_empty_children_allowed():
     spec = {'type': 'and', 'children': []}
     errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
     assert errors == []
+
+
+@use(sample_capability)
+def test_non_dict_child_node_returns_error():
+    spec = {'type': 'and', 'children': ['not_a_dict']}
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert errors
+    assert any('str' in e for e in errors)
+
+
+@use(sample_capability)
+def test_deeply_nested_query_returns_error():
+    node = {'type': 'and', 'children': []}
+    root = node
+    for _ in range(_MAX_QUERY_DEPTH + 2):
+        child = {'type': 'and', 'children': []}
+        node['children'] = [child]
+        node = child
+    errors = endpoint_service.validate_filter_spec(root, [], 'patient', sample_capability())
+    assert any('nested too deeply' in e for e in errors)

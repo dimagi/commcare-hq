@@ -196,7 +196,6 @@ const module = function (spec) {
             _.pick(spec, caseClaimModels.searchConfigKeys),
             spec.lang,
             self.shortScreen.saveButton,
-            self.filter.filterText,
         );
     }
     if (spec.state.long !== undefined) {

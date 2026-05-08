@@ -30,17 +30,28 @@ class DomainContext:
     @cached_property
     def apps(self):
         return [
-            app for app in self.domain_obj.applications()
+            app
+            for app in self.domain_obj.full_applications(include_builds=False)
             if not app.is_remote_app()
         ]
 
     @cached_property
     def form_exports(self):
-        return get_brief_exports(self.domain, 'form')
+        return [
+            exp for exp in get_brief_exports(self.domain, 'form')
+            if not exp['is_daily_saved_export'] and not exp['is_odata_config']
+        ]
 
     @cached_property
     def case_exports(self):
-        return get_brief_exports(self.domain, 'case')
+        return [
+            exp for exp in get_brief_exports(self.domain, 'case')
+            if not exp['is_daily_saved_export'] and not exp['is_odata_config']
+        ]
+
+    @cached_property
+    def all_exports(self):
+        return get_brief_exports(self.domain)
 
 
 def get_metrics_registry():

@@ -33,6 +33,7 @@ from corehq.apps.data_cleaning.views.tables import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import group_adapter
+from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
@@ -41,7 +42,7 @@ from corehq.privileges import BULK_DATA_EDITING
 from corehq.util.test_utils import privilege_enabled
 
 
-@es_test(requires=[case_search_adapter, user_adapter, group_adapter], setup_class=True)
+@es_test(requires=[case_adapter, case_search_adapter, user_adapter, group_adapter], setup_class=True)
 class CleanCasesViewAccessTest(TestCase):
     domain_name = 'clean-data-view-test'
     other_domain_name = 'no-access-view-test'

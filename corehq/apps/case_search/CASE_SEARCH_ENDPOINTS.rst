@@ -91,25 +91,32 @@ TODOs
 - [ ] Add ``require_can_edit_data`` to ``_ENDPOINT_DECORATORS`` and the tab entry
       in ``tabclasses.py`` — currently any domain member with the toggle can
       create/edit/delete endpoints.
-- [ ] Fix race condition in ``save_new_version`` — concurrent saves read the same
+- [x] Fix race condition in ``save_new_version`` — concurrent saves read the same
       ``max_version`` and both try to insert ``max_version + 1``, causing an
       unhandled ``IntegrityError``. Use ``select_for_update()`` on the versions
       aggregate query.
-- [ ] Handle ``IntegrityError`` from duplicate ``(domain, name)`` in
+- [x] Handle ``IntegrityError`` from duplicate ``(domain, name)`` in
       ``create_endpoint`` — concurrent creates with the same name produce a 500;
       should return a 400 with a user-facing error.
 - [ ] Add server-side validation of ``name`` and ``target_name`` in
       ``create_endpoint`` — empty strings pass through unvalidated.
-- [ ] Add type guard in ``_validate_node`` — non-dict nodes in the query JSON
+- [x] Add type guard in ``_validate_node`` — non-dict nodes in the query JSON
       (crafted POST) cause an ``AttributeError`` 500.
 - [ ] Guard against missing ``name`` key in parameter objects in
       ``validate_filter_spec`` — currently raises ``KeyError``.
-- [ ] Add recursion depth limit to ``_validate_node`` to prevent
+- [x] Add recursion depth limit to ``_validate_node`` to prevent
       ``RecursionError`` on deeply nested queries.
-- [ ] Guard against ``current_version = None`` in
+- [x] Guard against ``current_version = None`` in
       ``CaseSearchEndpointEditView.page_context`` — the field is nullable but the
       view assumes it is set.
 - [ ] Fix ``CaseSearchCapabilityView`` — missing ``page_title``, unnecessarily
       inherits ``CaseSearchEndpointMixin``.
 - [ ] Move inline ``onclick`` fetch in ``endpoint_list.html`` to a JS file.
 - [ ] Add tests for unauthorized access (non-admin, wrong domain, no toggle).
+- [ ] CSRF token exposed in ``data-csrf-token`` HTML attribute in
+      ``endpoint_list.html`` — read from ``csrfTokenContainer`` instead.
+- [ ] ``FilterSpecValidationError.__init__`` formats a string via
+      ``super().__init__()`` that no call site reads; simplify to ``str(errors)``.
+- [ ] Cache ``get_capability()`` with ``@quickcache`` — it runs two prefetched
+      ORM queries on every endpoint page load and the data dictionary changes
+      rarely.

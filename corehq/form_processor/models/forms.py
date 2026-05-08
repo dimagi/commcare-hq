@@ -1,4 +1,5 @@
 import logging
+from collections import Counter
 from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO
@@ -19,6 +20,7 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.cleanup.utils import get_cutoff_date_for_data_deletion
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -191,24 +193,24 @@ class XFormInstanceManager(RequireDBManager):
             )
         return result
 
-    def hard_delete_forms_before_cutoff(self, cutoff, dry_run=True):
+    def hard_delete_expired_forms(self, commit=False):
         """
-        Permanently deletes forms with deleted_on set to a datetime earlier than
-        the specified cutoff datetime
-        :param cutoff: datetime used to obtain the forms to be hard deleted
-        :param dry_run: if True, no changes will be committed to the database
-        and this method is effectively read-only
-        :return: dictionary of count of deleted objects per table
+        Permanently deletes forms that were soft deleted outside of
+        the DATA_RETENTION_WINDOW, meaning the ``deleted_on`` field is
+        older than the current time - the DATA_RETENTION_WINDOW.
+        :param commit: defaults to False. If True, will delete expired forms
+        :return: dictionary of count of deleted forms
         """
-        counts = {}
+        expiration_date = get_cutoff_date_for_data_deletion()
+        total_count = {}
         for db_name in get_db_aliases_for_partitioned_query():
-            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
-            if dry_run:
-                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
-            else:
+            queryset = self.using(db_name).filter(deleted_on__lt=expiration_date)
+            if commit:
                 deleted_counts = queryset.delete()[1]
-            counts.update(deleted_counts)
-        return counts
+            else:
+                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
+            total_count = Counter(total_count) + Counter(deleted_counts)
+        return total_count
 
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
