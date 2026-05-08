@@ -712,6 +712,21 @@ class XForm(WrappedNode):
         return any(bind.attrib.get('{v}lock') == 'all' for bind in binds)
 
     @property
+    def locked_question_paths(self):
+        """Set of ``nodeset`` paths for binds with ``vellum:lock="all"``."""
+        if not self.exists():
+            return set()
+        try:
+            binds = self.bind_nodes
+        except XFormException:
+            return set()
+        return {
+            bind.attrib['nodeset']
+            for bind in binds
+            if bind.attrib.get('{v}lock') == 'all' and bind.attrib.get('nodeset')
+        }
+
+    @property
     @raise_if_none("Can't find <itext>")
     def itext_node(self):
         # awful, awful hack. It will be many weeks before I can look people in the eye again.
