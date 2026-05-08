@@ -63,6 +63,7 @@ from corehq.apps.app_manager.form_action_diff import (
     from_combined_diff,
     get_case_mappings,
     make_multi,
+    merge_case_mappings,
     update_form_actions,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
@@ -77,6 +78,7 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActionCondition,
+    FormActions,
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
@@ -329,6 +331,33 @@ def _locked_paths_to_protect(request, domain, form):
     return form.wrapped_xform().locked_question_paths
 
 
+def _check_case_mapping_diff_does_not_touch_locked(request, domain, form, case_mapping_diff):
+    """Reject a save whose ``case_mapping_diff`` would change a case-property
+    mapping bound to a question that is locked.
+
+    Users with ``edit_locked_questions_in_apps`` bypass this check entirely:
+    the UI lock is a safeguard against accidents for them, not an authorization
+    boundary.
+
+    :raises LockedQuestionError: if the diff would change a locked mapping.
+    """
+    if (
+        not case_mapping_diff
+        or request.couch_user.can_edit_locked_questions_in_apps(domain)
+    ):
+        return
+
+    locked_paths = _locked_paths_to_protect(request, domain, form)
+    if not locked_paths:
+        return
+
+    before = collect_locked_mappings(form.actions, locked_paths)
+    actions_copy = FormActions.wrap(form.actions.to_json())
+    merge_case_mappings(case_mapping_diff, actions_copy)
+    if collect_locked_mappings(actions_copy, locked_paths) != before:
+        raise LockedQuestionError
+
+
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @api_domain_view
@@ -421,6 +450,12 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
                 case_mapping_diff = _get_case_mapping_diff(request, form)
+                try:
+                    _check_case_mapping_diff_does_not_touch_locked(
+                        request, domain, form, case_mapping_diff,
+                    )
+                except LockedQuestionError:
+                    raise Exception(_LOCKED_QUESTION_MAPPING_ERROR)
                 save_xform(app, form, xform, case_mapping_diff)
                 if _case_mapping_diff_has_changes(case_mapping_diff):
                     # form builder is the only client that submits
@@ -622,10 +657,18 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return conflict
 
     xml = apply_patch(patch, form.source)
+    new_xml = xml.encode('utf-8')
     case_mapping_diff = _get_case_mapping_diff(request, form)
 
     try:
-        xml = save_xform(app, form, xml.encode('utf-8'), case_mapping_diff)
+        _check_case_mapping_diff_does_not_touch_locked(
+            request, domain, form, case_mapping_diff,
+        )
+    except LockedQuestionError:
+        return HttpResponseForbidden()
+
+    try:
+        xml = save_xform(app, form, new_xml, case_mapping_diff)
     except XFormException:
         return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
 
