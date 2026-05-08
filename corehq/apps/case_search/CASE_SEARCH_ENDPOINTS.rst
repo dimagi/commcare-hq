@@ -113,3 +113,10 @@ TODOs
       inherits ``CaseSearchEndpointMixin``.
 - [ ] Move inline ``onclick`` fetch in ``endpoint_list.html`` to a JS file.
 - [ ] Add tests for unauthorized access (non-admin, wrong domain, no toggle).
+- [ ] CSRF token exposed in ``data-csrf-token`` HTML attribute in
+      ``endpoint_list.html`` — read from ``csrfTokenContainer`` instead.
+- [ ] ``FilterSpecValidationError.__init__`` formats a string via
+      ``super().__init__()`` that no call site reads; simplify to ``str(errors)``.
+- [ ] Cache ``get_capability()`` with ``@quickcache`` — it runs two prefetched
+      ORM queries on every endpoint page load and the data dictionary changes
+      rarely.
