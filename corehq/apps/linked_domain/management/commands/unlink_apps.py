@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.linked_domain.const import MODEL_APP
 from corehq.apps.linked_domain.models import DomainLink, DomainLinkHistory
 
@@ -29,6 +30,10 @@ class Command(BaseCommand):
             downstream_app = Application.get(downstream_app_id)
         except ResourceNotFound:
             print('No downstream app found for ID {} '.format(downstream_app_id))
+            return
+
+        if not is_linked_app(downstream_app):
+            print(f'App {downstream_app_id} is not a linked app. No changes necessary.')
             return
 
         if downstream_app.domain != downstream_domain:
