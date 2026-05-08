@@ -4,6 +4,7 @@ from unmagic import fixture, use
 from django.http import Http404
 
 from corehq.apps.case_search import endpoint_service
+from corehq.apps.case_search.endpoint_service import _MAX_QUERY_DEPTH
 from corehq.apps.case_search.models import CaseSearchEndpoint
 from corehq.apps.case_search.endpoint_capability import (
     _AUTO_VALUES,
@@ -318,3 +319,23 @@ def test_empty_children_allowed():
     spec = {'type': 'and', 'children': []}
     errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
     assert errors == []
+
+
+@use(sample_capability)
+def test_non_dict_child_node_returns_error():
+    spec = {'type': 'and', 'children': ['not_a_dict']}
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert errors
+    assert any('str' in e for e in errors)
+
+
+@use(sample_capability)
+def test_deeply_nested_query_returns_error():
+    node = {'type': 'and', 'children': []}
+    root = node
+    for _ in range(_MAX_QUERY_DEPTH + 2):
+        child = {'type': 'and', 'children': []}
+        node['children'] = [child]
+        node = child
+    errors = endpoint_service.validate_filter_spec(root, [], 'patient', sample_capability())
+    assert any('nested too deeply' in e for e in errors)

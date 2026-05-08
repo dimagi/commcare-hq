@@ -98,19 +98,28 @@ def validate_filter_spec(spec, parameters, case_type_name, capability):
     return errors
 
 
-def _validate_node(node, fields_by_name, param_names, auto_value_refs, errors):
+_MAX_QUERY_DEPTH = 5
+
+
+def _validate_node(node, fields_by_name, param_names, auto_value_refs, errors, depth=0):
+    if not isinstance(node, dict):
+        errors.append(f"Invalid node: expected object, got {type(node).__name__}")
+        return
+    if depth > _MAX_QUERY_DEPTH:
+        errors.append(f"Query is nested too deeply (max {_MAX_QUERY_DEPTH} levels)")
+        return
     node_type = node.get('type')
 
     if node_type in ('and', 'or'):
         for child in node.get('children', []):
             _validate_node(
-                child, fields_by_name, param_names, auto_value_refs, errors
+                child, fields_by_name, param_names, auto_value_refs, errors, depth + 1
             )
     elif node_type == 'not':
         child = node.get('child')
         if child:
             _validate_node(
-                child, fields_by_name, param_names, auto_value_refs, errors
+                child, fields_by_name, param_names, auto_value_refs, errors, depth + 1
             )
         else:
             errors.append("'not' node must have a 'child'")

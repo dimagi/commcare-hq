@@ -100,11 +100,11 @@ TODOs
       should return a 400 with a user-facing error.
 - [ ] Add server-side validation of ``name`` and ``target_name`` in
       ``create_endpoint`` — empty strings pass through unvalidated.
-- [ ] Add type guard in ``_validate_node`` — non-dict nodes in the query JSON
+- [x] Add type guard in ``_validate_node`` — non-dict nodes in the query JSON
       (crafted POST) cause an ``AttributeError`` 500.
 - [ ] Guard against missing ``name`` key in parameter objects in
       ``validate_filter_spec`` — currently raises ``KeyError``.
-- [ ] Add recursion depth limit to ``_validate_node`` to prevent
+- [x] Add recursion depth limit to ``_validate_node`` to prevent
       ``RecursionError`` on deeply nested queries.
 - [ ] Guard against ``current_version = None`` in
       ``CaseSearchEndpointEditView.page_context`` — the field is nullable but the
