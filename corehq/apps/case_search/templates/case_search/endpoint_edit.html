@@ -104,7 +104,7 @@
               <select
                 id="version-select"
                 class="form-select"
-                onchange="if(this.value) { window.location = this.value; }"
+                onchange="if(this.value.startsWith('/')) { window.location = this.value; }"
               >
                 {% for v in versions_with_urls %}
                   <option
