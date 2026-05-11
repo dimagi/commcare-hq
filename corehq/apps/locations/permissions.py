@@ -125,9 +125,10 @@ from .models import SQLLocation
 
 
 LOCATION_ACCESS_DENIED = format_html(gettext_lazy(
-    "This project has restricted data access rules. Please contact your "
-    "project administrator to be assigned access to data in this project. "
-    'More information is available <a href="{}">here</a>.'),
+    'This project limits access to users based on their location. If your '
+    'location or your access limits are incorrect, please contact your '
+    'project administrator. <a href="{}">More information is available '
+    'here</a>.'),
     "https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview")
 
 
