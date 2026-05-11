@@ -128,7 +128,7 @@ LOCATION_ACCESS_DENIED = format_html(gettext_lazy(
     "This project has restricted data access rules. Please contact your "
     "project administrator to be assigned access to data in this project. "
     'More information is available <a href="{}">here</a>.'),
-    "https://wiki.commcarehq.org/display/commcarepublic/Location-Based+Data+Access+and+User+Editing+Restrictions")
+    "https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview")
 
 
 LOCATION_SAFE_TASTYPIE_RESOURCES = set()
