@@ -328,6 +328,30 @@ def test_non_dict_child_node_returns_error():
 
 
 @use(sample_capability)
+def test_non_dict_inputs_returns_error():
+    spec = {
+        'type': 'component',
+        'component': 'exact_match',
+        'field': 'province',
+        'inputs': ['value'],
+    }
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert any('inputs' in e for e in errors)
+
+
+@use(sample_capability)
+def test_non_dict_input_value_returns_error():
+    spec = {
+        'type': 'component',
+        'component': 'exact_match',
+        'field': 'province',
+        'inputs': {'value': 'ON'},
+    }
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert any('value' in e for e in errors)
+
+
+@use(sample_capability)
 def test_deeply_nested_query_returns_error():
     node = {'type': 'and', 'children': []}
     root = node

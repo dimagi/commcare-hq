@@ -151,6 +151,10 @@ def _validate_component(
     component_name = node.get('component', '')
     inputs = node.get('inputs', {})
 
+    if not isinstance(inputs, dict):
+        errors.append(f"'inputs' must be an object in component '{component_name}'")
+        return
+
     field = fields_by_name.get(field_name)
     if not field:
         errors.append(f"Unknown field: '{field_name}'")
@@ -179,6 +183,9 @@ def _validate_component(
 def _validate_input_value(
     value, slot_name, param_names, auto_value_refs, errors
 ):
+    if not isinstance(value, dict):
+        errors.append(f"Input '{slot_name}' must be an object with a 'type' field")
+        return
     value_type = value.get('type')
     if value_type == 'constant':
         pass  # any value accepted
