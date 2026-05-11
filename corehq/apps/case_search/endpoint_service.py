@@ -52,9 +52,11 @@ def save_new_version(endpoint, parameters, query):
     errors = []
     if errors:
         raise FilterSpecValidationError(errors)
-    CaseSearchEndpoint.objects.select_for_update().get(pk=endpoint.pk)
+    # Acquire a row lock so concurrent save_new_version calls are serialized.
+    # The lock is held for the duration of the transaction.
+    locked_endpoint = CaseSearchEndpoint.objects.select_for_update().get(pk=endpoint.pk)
     max_version = (
-        endpoint.versions.aggregate(max_v=Max('version_number'))['max_v'] or 0
+        locked_endpoint.versions.aggregate(max_v=Max('version_number'))['max_v'] or 0
     )
     version = CaseSearchEndpointVersion.objects.create(
         endpoint=endpoint,
