@@ -58,12 +58,10 @@
     <div class="row">
       <div class="col-md-12">
         <!-- ko foreach: caseTypes -->
-        <div class="card panel-appmanager" data-bind="visible: isVisible">
-          <div class="card-header">
-            <h4 class="card-title card-title-nolink mt-2">
-              <i class="fcc fcc-fd-external-case"></i>
-              <!-- ko text: name --><!-- /ko -->
-            </h4>
+        <div class="card card-modern-gray mb-3" data-bind="visible: isVisible">
+          <div class="card-header h5">
+            <i class="fcc fcc-fd-external-case"></i>
+            <!-- ko text: name --><!-- /ko -->
           </div>
           <div class="card-body">
             <div class="card case-relationships pt-3 px-2">
