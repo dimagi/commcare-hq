@@ -12,6 +12,7 @@ from corehq.apps.export.models.export_settings import ExportFileType
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.users.models import WebUser
 from corehq.privileges import DEFAULT_EXPORT_SETTINGS
 
 
@@ -24,6 +25,17 @@ def _get_sso_email_domains(account):
     """
     idps = IdentityProvider.objects.filter(owner=account, is_active=True)
     return {d.lower() for idp in idps for d in idp.get_email_domains()}
+
+
+def _is_member_of_account(email, account):
+    """
+    Returns True if a WebUser exists for the given email and is a member
+    of at least one project space in the given BillingAccount.
+    """
+    web_user = WebUser.get_by_username(email)
+    if not isinstance(web_user, WebUser):
+        return False
+    return bool(set(account.get_domains()).intersection(web_user.get_domains()))
 
 
 class EnterpriseAdminForm(forms.Form):
@@ -61,6 +73,14 @@ class EnterpriseAdminForm(forms.Form):
                     "must use an email at one of: %(domains)s"
                 ),
                 params={"domains": ", ".join(sorted(sso_domains))},
+            )
+        if not _is_member_of_account(email, self.account):
+            raise ValidationError(
+                _(
+                    "This user must be a member of at least one project "
+                    "space in this enterprise account before being added "
+                    "as an enterprise administrator."
+                ),
             )
         return email
 
