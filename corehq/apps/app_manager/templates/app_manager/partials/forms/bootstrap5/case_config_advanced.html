@@ -213,13 +213,13 @@
         <div class="card-body">
           <div class="d-flex flex-wrap align-items-center gap-2" data-bind="css: {'has-warning': validate()}">
 
-            <div>
+            <div class="d-flex align-items-center gap-1">
               <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
-              <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
+              <input type="text" class="form-control w-auto" data-bind="value: case_tag, disable: disable_tag" />
             </div>
             &nbsp;
             <strong>(</strong>
-            <div>
+            <div class="d-flex align-items-center gap-1">
               <label>{% trans "Case Type" %}</label>
               <select class="form-select w-auto" data-bind="
                               options: caseConfig.caseTypes,
@@ -229,7 +229,7 @@
             </div>
             <!-- ko if: actionType == 'load'-->
             &nbsp;{% trans "from" %}
-            <div>
+            <div class="d-flex align-items-center gap-1">
               &nbsp;
               <label><i class="fa-solid fa-list-check"></i> {% trans "Case List" %}</label>
               <select class="form-select w-auto" data-bind="optstr: available_modules,
@@ -341,14 +341,14 @@
         </div>
         <div class="card-body">
           <div class="d-flex flex-wrap align-items-center gap-2" data-bind="css: {'has-warning': validate()}">
-            <div>
+            <div class="d-flex align-items-center gap-1">
               <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
-              <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
+              <input type="text" class="form-control w-auto" data-bind="value: case_tag, disable: disable_tag" />
             </div>
             <!-- ko with: auto_select -->
             &nbsp;
             <strong>(</strong>
-            <div>
+            <div class="d-flex align-items-center gap-1">
               <label>{% trans "Autoselect mode" %}</label>
               <select class="form-select w-auto" data-bind="
                                 optstr: $parent.auto_select_modes,
@@ -408,13 +408,13 @@
         </div>
         <div class="card-body">
           <div class="d-flex flex-wrap align-items-center gap-2" data-bind="css: {'has-warning': validate()}">
-            <div>
+            <div class="d-flex align-items-center gap-1">
               <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
-              <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
+              <input type="text" class="form-control w-auto" data-bind="value: case_tag, disable: disable_tag" />
             </div>
             &nbsp;
             <strong>(</strong>
-            <div>
+            <div class="d-flex align-items-center gap-1">
               <label>{% trans "Case Type" %}</label>
               <select class="form-select w-auto" data-bind="
                                 options: caseConfig.caseTypes,
@@ -425,7 +425,7 @@
 
             <!-- ko if: actionType == 'load'-->
             &nbsp;{% trans "from" %}
-            <div>
+            <div class="d-flex align-items-center gap-1">
               &nbsp;
               <label><i class="fa-solid fa-list-check"></i> {% trans "Case List" %}</label>
               <select class="form-select w-auto" data-bind="optstr: available_modules,
@@ -444,12 +444,12 @@
           </div>
           <div class="card card-body p-2 mb-3">
             <div class="d-flex flex-wrap align-items-center gap-2">
-              <div>
+              <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Case Property" %}&nbsp;</label>
-                <input type="text" class="form-control" data-bind="value: load_case_from_fixture.case_property" />
+                <input type="text" class="form-control w-auto" data-bind="value: load_case_from_fixture.case_property" />
               </div>
               &nbsp;&nbsp;
-              <div>
+              <div class="d-flex align-items-center gap-1">
                 <label>
                   <input type="checkbox" data-bind="checked: load_case_from_fixture.auto_select" />  {# todo B5: css-checkbox #}
                   {% trans "Autoselect If Only One Case" %}
@@ -459,22 +459,22 @@
           </div>
           <div class="card card-body p-2 mb-3">
             <div class="d-flex flex-wrap align-items-center gap-2">
-              <div>
+              <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Fixture Nodeset" %}&nbsp;</label>
-                <input type="text" class="form-control nodeset" data-bind="value: load_case_from_fixture.fixture_nodeset" />
+                <input type="text" class="form-control nodeset w-auto" data-bind="value: load_case_from_fixture.fixture_nodeset" />
               </div>
               &nbsp;&nbsp;
-              <div>
+              <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Fixture Tag" %}&nbsp;</label>
-                <input type="text" class="form-control" data-bind="value: load_case_from_fixture.fixture_tag" />
+                <input type="text" class="form-control w-auto" data-bind="value: load_case_from_fixture.fixture_tag" />
               </div>
               &nbsp;&nbsp;
-              <div>
+              <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Fixture Variable" %}&nbsp;</label>
-                <input type="text" class="form-control" data-bind="value: load_case_from_fixture.fixture_variable" />
+                <input type="text" class="form-control w-auto" data-bind="value: load_case_from_fixture.fixture_variable" />
               </div>
               &nbsp;&nbsp;
-              <div>
+              <div class="d-flex align-items-center gap-1">
                 <label>
                   <input type="checkbox" data-bind="checked: load_case_from_fixture.auto_select_fixture" />  {# todo B5: css-checkbox #}
                   {% trans "Autoselect If Only One Result Returned From Fixture" %}
@@ -484,14 +484,14 @@
           </div>
           <div class="card card-body p-2 mb-3">
             <div class="d-flex flex-wrap align-items-center gap-2">
-              <div>
+              <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Arbitrary Datum Function" %}&nbsp;</label>
-                <input type="text" class="form-control nodeset" data-bind="value: load_case_from_fixture.arbitrary_datum_function" />
+                <input type="text" class="form-control nodeset w-auto" data-bind="value: load_case_from_fixture.arbitrary_datum_function" />
               </div>
               &nbsp;&nbsp;
-              <div>
+              <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Arbitrary Datum id" %}&nbsp;</label>
-                <input type="text" class="form-control" data-bind="value: load_case_from_fixture.arbitrary_datum_id" />
+                <input type="text" class="form-control w-auto" data-bind="value: load_case_from_fixture.arbitrary_datum_id" />
               </div>
             </div>
           </div>
