@@ -54,14 +54,10 @@ def test_raises_on_duplicate_name():
 @use('db')
 @fixture
 def versioned_endpoint():
-    endpoint = endpoint_service.create_endpoint(
+    yield endpoint_service.create_endpoint(
         domain=DOMAIN, name='Versioned', target_type='project_db',
         target_name='patient', parameters=[], query=EMPTY_QUERY,
     )
-    try:
-        yield endpoint
-    finally:
-        endpoint.delete()
 
 
 @use(versioned_endpoint)
