@@ -22,7 +22,6 @@
                 name="to_app_id"
                 class="form-select w-auto"
                 style="min-width: 150px;"
-                {# todo B5: inline-style #}
                 data-bind="options: apps,
                                            optionsText: 'name',
                                            optionsValue: 'id',
@@ -33,7 +32,6 @@
                 name="to_module_id"
                 class="form-select w-auto"
                 style="min-width: 150px;"
-                {# todo B5: inline-style #}
                 data-bind="options: modules,
                                            optionsText: 'name',
                                            optionsValue: 'id',
@@ -48,7 +46,6 @@
               style="min-width: 150px;"
             >
               {% for mod in app.get_modules %}
-                {# todo B5: inline-style #}
                 <option value="{{ mod.id }}">
                   {{ mod.name|html_trans:langs }}
                 </option>
