@@ -8,7 +8,7 @@
           data-content="{% blocktrans %}The form which this form will shadow{% endblocktrans %}"
     ></span>
   </label>
-  <div id="shadow-parent" class="field-control">
+  <div id="shadow-parent" class="col-md-4">
     <select data-bind="value: shadow_parent" class="form-select">
       <option value=""></option>
       {% for key, display in form.get_shadow_parent_options %}

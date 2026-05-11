@@ -23,7 +23,7 @@
                   data-content="{% trans 'Forms that do not have a schedule are always shown' %}">
                         </span>
           </label>
-          <div class="field-control">
+          <div class="col-md-4">
             <input type="checkbox" class="form-check-input" data-bind="checked: scheduleEnabled" />
           </div>
         </div>
@@ -31,7 +31,7 @@
           <label class="field-label">
             {% trans "Form Abbreviation" %}
           </label>
-          <div class="field-control">
+          <div class="col-md-4">
             <input type="text" class="form-control" id="schedule_form_id"
                    required data-bind="value: schedule_form_id">
             <span class="help-block error-text d-none">
@@ -50,7 +50,7 @@
                   {% endblocktrans %}>
                         </span>
           </label>
-          <div class="field-control">
+          <div class="col-md-4">
             <select id="achor" class="form-select" required
                     data-bind="options: all_schedule_phase_anchors,
                                            optionsCaption: '{% trans "Please select a phase..." %}',
