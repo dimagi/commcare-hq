@@ -71,6 +71,9 @@ The wrapper drop above removes the rule. Its height-absorbing role is now carrie
 
 — where `min-height` locks the header height and flex centers the title regardless of how much extra space the min-height contributes. If you migrate another template with conditional header content and find the header still grows, increase the `min-height` rather than re-introducing the inner wrapper.
 
+**Heads-up**: making card-header a flex container also collapses whitespace between its direct children. If your migrated header has an icon next to text (or any multi-element content), you may need `gap-*` or a `<span>` wrapper to preserve visual spacing. See [`card-modern-gray-flex-header.md`](card-modern-gray-flex-header.md).
+
 ### Related
 
 - `card-title-nolink`: drops away as a side effect of the wrapper drop above. Was previously styled by `.card-modern-gray .card-title-nolink { padding, border-bottom }` (now removed) — B5's default card-header border-bottom serves the same visual-separation role.
+- [`card-modern-gray-flex-header.md`](card-modern-gray-flex-header.md): whitespace-collapse gotchas in the flex-converted card-header.

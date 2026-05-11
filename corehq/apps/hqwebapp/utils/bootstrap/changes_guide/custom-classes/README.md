@@ -25,3 +25,7 @@ Decisions in this folder are **conventions** — apply them consistently the nex
 - [`panel-case-actions`](panel-case-actions.md) → `card-case-actions`
 - [`panel-case-actions-actions`](panel-case-actions-actions.md) → drop entirely (use B5 utilities)
 - [`card-title`](card-title.md) (and `card-title-nolink`) → drop the inner heading wrapper (`<h3 class="card-title">`, `<h4 class="card-title">`, etc.); add a downsized heading-size utility class to the card-header element (`h4`→`h5`, `h3`→`h4`). `card-title-nolink` drops away as a side effect.
+
+### Gotchas
+
+- [`card-modern-gray-flex-header.md`](card-modern-gray-flex-header.md) — the `.card-modern-gray > .card-header` SCSS rule makes the header a flex container. Inter-element whitespace between flex children collapses; multi-element headers (icon + text, paired icons + text, title + buttons) need `gap-*` and/or a `<span>` wrapper to preserve visual spacing.
