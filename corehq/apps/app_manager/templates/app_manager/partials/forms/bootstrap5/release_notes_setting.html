@@ -4,7 +4,7 @@
 
 <div id="release-notes-setting">
   <div class="row mb-3">
-    <label class="field-label">
+    <label class="field-label pt-0">
       {% trans "Make this my app’s Post-Update form" %}
       <!-- ko if: is_allowed_to_be_release_notes_form -->
       <span class="hq-help-template"
@@ -31,7 +31,7 @@
     </div>
   </div>
   <div class="row mb-3" data-bind="visible: is_release_notes_form">
-    <label class="field-label">
+    <label class="field-label pt-0">
       {% trans "Enable the Post-Update form for this release" %}
       <span class="hq-help-template"
             data-title="{% trans "Enable this" %}"
