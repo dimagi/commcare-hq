@@ -986,6 +986,13 @@ CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
     parent_toggles=[CASE_SEARCH_ADVANCED],
 )
 
+CASE_SEARCH_ENDPOINTS = StaticToggle(
+    'case_search_endpoints',
+    'Case Search Endpoints: configurable query builder for case search',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 CASE_SEARCH_CACHE_KEY = StaticToggle(
     'case_search_cache_key',
     'Case Search: Formplayer cache key',
