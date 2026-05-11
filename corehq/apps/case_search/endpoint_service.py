@@ -17,6 +17,10 @@ class EndpointNotFound(Exception):
     pass
 
 
+class EndpointDeactivated(Exception):
+    pass
+
+
 @transaction.atomic
 def create_endpoint(domain, name, target_type, target_name, parameters, query):
     """Create a new endpoint with its first version."""
@@ -77,17 +81,17 @@ def list_endpoints(domain):
 
 
 def get_endpoint(domain, endpoint_id):
-    """Return a single endpoint, raising EndpointNotFound if not found or wrong domain."""
+    """Return a single endpoint, raising EndpointNotFound if not found or wrong domain,
+    or EndpointDeactivated if the endpoint has been deactivated."""
     try:
-        return CaseSearchEndpoint.objects.select_related(
+        endpoint = CaseSearchEndpoint.objects.select_related(
             'current_version'
-        ).get(
-            pk=endpoint_id,
-            domain=domain,
-            is_active=True,
-        )
+        ).get(pk=endpoint_id, domain=domain)
     except CaseSearchEndpoint.DoesNotExist:
         raise EndpointNotFound(endpoint_id)
+    if not endpoint.is_active:
+        raise EndpointDeactivated(endpoint_id)
+    return endpoint
 
 
 def get_version(endpoint, version_number):

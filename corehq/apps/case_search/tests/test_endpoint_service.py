@@ -115,6 +115,14 @@ def test_get_endpoint_raises_not_found_wrong_domain():
 
 
 @use('db')
+def test_get_endpoint_raises_deactivated():
+    ep = endpoint_service.create_endpoint('d1', 'X', 'project_db', 'p', [], EMPTY_QUERY)
+    endpoint_service.deactivate_endpoint(ep)
+    with pytest.raises(endpoint_service.EndpointDeactivated):
+        endpoint_service.get_endpoint('d1', ep.id)
+
+
+@use('db')
 def test_deactivate_sets_is_active_false():
     ep = endpoint_service.create_endpoint('d1', 'Del', 'project_db', 'p', [], EMPTY_QUERY)
     endpoint_service.deactivate_endpoint(ep)
