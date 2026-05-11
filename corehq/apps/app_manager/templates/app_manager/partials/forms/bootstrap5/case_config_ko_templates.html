@@ -135,8 +135,7 @@
       </thead>
 
       <tbody data-bind="foreach: case_preload">
-      <tr class="form-group"  {# todo B5: css-form-group #}
-          data-bind="css: {
+      <tr data-bind="css: {
                        'has-error': validateProperty || validateQuestion,  {# todo B5: css-has-error #}
                      }">
         <td class="col-md-1 text-center">
@@ -272,7 +271,7 @@
       </thead>
 
       <tbody data-bind="foreach: visible_case_properties">
-      <tr class="form-group case-property-mapping"  {# todo B5: css-form-group #}
+      <tr class="case-property-mapping"
           data-bind="css: {
                       'has-error': validate,  {# todo B5: css-has-error #}
                       warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key()),

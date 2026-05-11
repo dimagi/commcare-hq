@@ -2,9 +2,8 @@
 {% load hq_shared_tags %}
 
 {% if add_ons.display_conditions %}
-  <div class="form-group">
-    {# todo B5: css-form-group #}
-    <label class="form-label col-md-2">
+  <div class="row mb-3">
+    <label class="field-label">
       {% trans "Display Condition" %}
       <span
         class="hq-help-template"
@@ -20,7 +19,7 @@
         {% endblocktrans %}"
       ></span>
     </label>
-    <div id="form-filter" class="col-md-4 row">
+    <div id="form-filter" class="field-control row">
       <div data-bind="css: {'has-error': !allowed()}">
         {# todo B5: css-has-error #}
         <textarea
