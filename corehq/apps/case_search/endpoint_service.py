@@ -77,7 +77,7 @@ def list_endpoints(domain):
     return CaseSearchEndpoint.objects.filter(
         domain=domain,
         is_active=True,
-    ).select_related('current_version')
+    ).select_related('current_version').order_by('name')
 
 
 def get_endpoint(domain, endpoint_id):
