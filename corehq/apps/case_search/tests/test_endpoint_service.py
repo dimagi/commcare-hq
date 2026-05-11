@@ -2,7 +2,14 @@ import pytest
 from unmagic import fixture, use
 
 from corehq.apps.case_search import endpoint_service
+from corehq.apps.case_search.endpoint_service import _MAX_QUERY_DEPTH
 from corehq.apps.case_search.models import CaseSearchEndpoint
+from corehq.apps.case_search.endpoint_capability import (
+    _AUTO_VALUES,
+    FIELD_TYPE_DATE,
+    FIELD_TYPE_TEXT,
+    get_operations_for_field_type,
+)
 
 DOMAIN = 'test-domain'
 EMPTY_QUERY = {'type': 'and', 'children': []}
@@ -120,3 +127,213 @@ def test_deactivate_sets_is_active_false():
     endpoint_service.deactivate_endpoint(ep)
     ep.refresh_from_db()
     assert ep.is_active is False
+
+
+@fixture
+def sample_capability():
+    yield {
+        'case_types': [{
+            'name': 'patient',
+            'fields': [
+                {
+                    'name': 'province',
+                    'type': FIELD_TYPE_TEXT,
+                    'operations': get_operations_for_field_type(FIELD_TYPE_TEXT),
+                },
+                {
+                    'name': 'dob',
+                    'type': FIELD_TYPE_DATE,
+                    'operations': get_operations_for_field_type(FIELD_TYPE_DATE),
+                },
+            ],
+        }],
+        'auto_values': _AUTO_VALUES,
+    }
+
+
+@use(sample_capability)
+def test_valid_simple_spec():
+    spec = {
+        'type': 'and',
+        'children': [{
+            'type': 'component',
+            'component': 'exact_match',
+            'field': 'province',
+            'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
+        }],
+    }
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert errors == []
+
+
+@use(sample_capability)
+def test_valid_date_range_spec():
+    spec = {
+        'type': 'component',
+        'component': 'date_range',
+        'field': 'dob',
+        'inputs': {
+            'start': {'type': 'constant', 'value': '2000-01-01'},
+            'end': {'type': 'auto_value', 'ref': 'today()'},
+        },
+    }
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert errors == []
+
+
+@use(sample_capability)
+def test_invalid_root_type():
+    spec = {'type': 'invalid'}
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert any('type' in e.lower() for e in errors)
+
+
+@use(sample_capability)
+def test_unknown_field():
+    spec = {
+        'type': 'component',
+        'component': 'exact_match',
+        'field': 'nonexistent',
+        'inputs': {'value': {'type': 'constant', 'value': 'x'}},
+    }
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert any('nonexistent' in e for e in errors)
+
+
+@use(sample_capability)
+def test_incompatible_component_for_field():
+    spec = {
+        'type': 'component',
+        'component': 'date_range',
+        'field': 'province',
+        'inputs': {
+            'start': {'type': 'constant', 'value': '2000-01-01'},
+            'end': {'type': 'constant', 'value': '2020-01-01'},
+        },
+    }
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert any('date_range' in e for e in errors)
+
+
+@use(sample_capability)
+def test_missing_required_input_slot():
+    spec = {
+        'type': 'component',
+        'component': 'date_range',
+        'field': 'dob',
+        'inputs': {'start': {'type': 'constant', 'value': '2000-01-01'}},
+    }
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert any('end' in e for e in errors)
+
+
+@use(sample_capability)
+def test_malformed_parameter_returns_error():
+    errors = endpoint_service.validate_filter_spec(
+        {'type': 'and', 'children': []}, [{}], 'patient', sample_capability()
+    )
+    assert any('name' in e for e in errors)
+
+
+@use(sample_capability)
+def test_parameter_ref_must_exist():
+    spec = {
+        'type': 'component',
+        'component': 'exact_match',
+        'field': 'province',
+        'inputs': {'value': {'type': 'parameter', 'ref': 'missing_param'}},
+    }
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert any('missing_param' in e for e in errors)
+
+
+@use(sample_capability)
+def test_parameter_ref_valid():
+    spec = {
+        'type': 'component',
+        'component': 'exact_match',
+        'field': 'province',
+        'inputs': {'value': {'type': 'parameter', 'ref': 'search_province'}},
+    }
+    params = [{'name': 'search_province', 'type': 'text'}]
+    errors = endpoint_service.validate_filter_spec(spec, params, 'patient', sample_capability())
+    assert errors == []
+
+
+@use(sample_capability)
+def test_invalid_auto_value_ref():
+    spec = {
+        'type': 'component',
+        'component': 'exact_match',
+        'field': 'province',
+        'inputs': {'value': {'type': 'auto_value', 'ref': 'nonexistent()'}},
+    }
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert any('nonexistent' in e for e in errors)
+
+
+@use(sample_capability)
+def test_not_node_with_valid_child():
+    spec = {
+        'type': 'not',
+        'child': {
+            'type': 'component',
+            'component': 'exact_match',
+            'field': 'province',
+            'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
+        },
+    }
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert errors == []
+
+
+@use(sample_capability)
+def test_not_node_missing_child():
+    spec = {'type': 'not'}
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert any('child' in e for e in errors)
+
+
+@use(sample_capability)
+def test_nested_and_or():
+    spec = {
+        'type': 'and',
+        'children': [{
+            'type': 'or',
+            'children': [{
+                'type': 'component',
+                'component': 'exact_match',
+                'field': 'province',
+                'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
+            }],
+        }],
+    }
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert errors == []
+
+
+@use(sample_capability)
+def test_empty_children_allowed():
+    spec = {'type': 'and', 'children': []}
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert errors == []
+
+
+@use(sample_capability)
+def test_non_dict_child_node_returns_error():
+    spec = {'type': 'and', 'children': ['not_a_dict']}
+    errors = endpoint_service.validate_filter_spec(spec, [], 'patient', sample_capability())
+    assert errors
+    assert any('str' in e for e in errors)
+
+
+@use(sample_capability)
+def test_deeply_nested_query_returns_error():
+    node = {'type': 'and', 'children': []}
+    root = node
+    for _ in range(_MAX_QUERY_DEPTH + 2):
+        child = {'type': 'and', 'children': []}
+        node['children'] = [child]
+        node = child
+    errors = endpoint_service.validate_filter_spec(root, [], 'patient', sample_capability())
+    assert any('nested too deeply' in e for e in errors)
