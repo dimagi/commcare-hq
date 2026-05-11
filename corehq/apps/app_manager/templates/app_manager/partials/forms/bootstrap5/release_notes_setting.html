@@ -20,7 +20,7 @@
       <!-- /ko -->
     </label>
     <div class="field-control">
-      <input type="checkbox"  {# todo B5: css-checkbox #}
+      <input type="checkbox" class="form-check-input"
              data-bind="checked: is_release_notes_form, click:$root.toggle_enable,
                 value: is_release_notes_form,
                 enable: is_allowed_to_be_release_notes_form"
@@ -39,8 +39,7 @@
       ></span>
     </label>
     <div class="field-control">
-      <input type="checkbox"  {# todo B5: css-checkbox #}
-             class="col-md-8"
+      <input type="checkbox" class="form-check-input"
              data-bind="checked: enable_release_notes,
                 enable: is_allowed_to_be_release_notes_form,
                 value: enable_release_notes",

@@ -352,7 +352,7 @@
           <!-- /ko -->
         </td>
         <td data-bind="if: $parent.saveOnlyEditedFormFieldsEnabled" class="col-md-2 text-center">
-          <input type="checkbox"  {# todo B5: css-checkbox #}
+          <input type="checkbox" class="form-check-input"
                  data-bind="click: $parent.switchSaveOnlyIfEdited,
                             checked: $data.save_only_if_edited,
                             disable: !$parent.hasPrivilege || isLocked()"

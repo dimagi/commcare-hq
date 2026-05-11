@@ -63,7 +63,7 @@
               {% trans "Display the Product Stock for this Supply Point after it is selected" %}
             </label>
             <div class="field-control">
-              <input type="checkbox" data-bind="checked: show_product_stock_var"/>  {# todo B5: css-checkbox #}
+              <input type="checkbox" class="form-check-input" data-bind="checked: show_product_stock_var"/>
             </div>
           </div>
           <!-- ko if: show_product_stock_var -->
@@ -84,9 +84,9 @@
           <label class="field-label">
           </label>
           <div class="field-control">
-            <div class="checkbox">  {# todo B5: css-checkbox #}
-              <label>
-                <input type="checkbox" data-bind="checked: subcase"/>  {# todo B5: css-checkbox #}
+            <div class="form-check">
+              <label class="form-check-label">
+                <input class="form-check-input" type="checkbox" data-bind="checked: subcase"/>
                 {% trans "This case is a subcase of the previous case" %}
               </label>
             </div>
@@ -163,9 +163,9 @@
         <!-- /ko -->
 
         <!-- ko ifnot: caseConfig.isShadowForm -->
-        <div>
-          <label>
-            <input type="checkbox" data-bs-toggle="toggle" data-bind="checked: close_case"/>  {# todo B5: css-checkbox #}
+        <div class="form-check">
+          <label class="form-check-label">
+            <input class="form-check-input" type="checkbox" data-bs-toggle="toggle" data-bind="checked: close_case"/>
             {% trans "Close this case when the form is complete" %}
           </label>
         </div>
@@ -449,9 +449,9 @@
                 <input type="text" class="form-control w-auto" data-bind="value: load_case_from_fixture.case_property" />
               </div>
               &nbsp;&nbsp;
-              <div class="d-flex align-items-center gap-1">
-                <label>
-                  <input type="checkbox" data-bind="checked: load_case_from_fixture.auto_select" />  {# todo B5: css-checkbox #}
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input class="form-check-input" type="checkbox" data-bind="checked: load_case_from_fixture.auto_select" />
                   {% trans "Autoselect If Only One Case" %}
                 </label>
               </div>
@@ -474,9 +474,9 @@
                 <input type="text" class="form-control w-auto" data-bind="value: load_case_from_fixture.fixture_variable" />
               </div>
               &nbsp;&nbsp;
-              <div class="d-flex align-items-center gap-1">
-                <label>
-                  <input type="checkbox" data-bind="checked: load_case_from_fixture.auto_select_fixture" />  {# todo B5: css-checkbox #}
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input class="form-check-input" type="checkbox" data-bind="checked: load_case_from_fixture.auto_select_fixture" />
                   {% trans "Autoselect If Only One Result Returned From Fixture" %}
                 </label>
               </div>

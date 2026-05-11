@@ -9,7 +9,7 @@
 </label>
 <div id="auto-gps-capture" class="field-control commcare-feature" data-since-version="2.14">
   {% if app.auto_gps_capture %}
-    <input type="checkbox" value="true" disabled="disabled"  {# todo B5: css-checkbox #}
+    <input type="checkbox" class="form-check-input" value="true" disabled="disabled"
            data-bind="checked: true"/>
     <div class="help-block">
       {% blocktrans %}
@@ -20,7 +20,7 @@
       {% endblocktrans %}
     </div>
   {% else %}
-    <input type="checkbox" value="true"  {# todo B5: css-checkbox #}
+    <input type="checkbox" class="form-check-input" value="true"
            data-bind="checked: auto_gps_capture"/>
   {% endif %}
   <input type="hidden" name="auto_gps_capture" data-bind="value: auto_gps_capture"/>
