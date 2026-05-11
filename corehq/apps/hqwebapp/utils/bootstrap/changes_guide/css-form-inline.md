@@ -16,6 +16,39 @@ Companion changes inside the migrated container:
 
 The same rules apply transitively: if a `card`, `well` (now also migrated), or any other parent had B3 inline-block content, after the parent migration its children may now stack vertically because `form-control` defaults to `display: block` in B5. Add `d-flex flex-wrap align-items-center gap-2` to the parent and `w-auto` to the form controls.
 
+## Audit nested form-controls, not just direct children
+
+`w-auto` only fixes form-controls that are **direct children** of the new flex container. If a form-control is nested inside an inner wrapper (typically a leftover `<div class="form-group">` that pairs a `<label>` with an `<input>`), `w-auto` isn't enough on its own — the wrapping div is the flex item, and inside the wrapping div the form-control still has `display: block` which pushes the input to a new line below the label.
+
+After migrating the form-inline parent, grep for `class="form-control"` and `class="form-select"` **at every nesting level inside the migrated container**. For each one inside a wrapping div, either:
+
+- **Drop the wrapping div** so the label + input become direct flex children of the outer container (use this when the grouping has no other purpose), OR
+- **Make the wrapping div itself a flex container**: add `class="d-flex align-items-center gap-1"` so label + form-control flow inline inside the cell. Combine with `w-auto` on the form-control as usual.
+
+```
+<!-- After css-form-inline migration of the parent only — still wrong -->
+<div class="d-flex flex-wrap align-items-center gap-2">
+  <div>                              <!-- wrapping div (formerly .form-group) -->
+    <label>Case Tag</label>
+    <input class="form-control" />   <!-- still display: block; width: 100% -->
+  </div>                             <!-- → label and input stack vertically -->
+</div>
+
+<!-- Right: drop the wrapper -->
+<div class="d-flex flex-wrap align-items-center gap-2">
+  <label>Case Tag</label>
+  <input class="form-control w-auto" />
+</div>
+
+<!-- Right: make the wrapper flex too -->
+<div class="d-flex flex-wrap align-items-center gap-2">
+  <div class="d-flex align-items-center gap-1">
+    <label>Case Tag</label>
+    <input class="form-control w-auto" />
+  </div>
+</div>
+```
+
 ## Don't add `form-label` in inline contexts
 
 B5's `.form-label` only adds `margin-bottom: 0.5rem` — appropriate for **label-above-input** vertical layouts. In a `d-flex align-items-center` row, that bottom margin is included in the flex item's margin box and pushes the label's visible text upward off the row's vertical center, producing a noticeable misalignment.
