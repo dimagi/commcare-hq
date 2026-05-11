@@ -15,15 +15,37 @@ Pattern:
 Migration:
 * Replace `form-group` with `row mb-3`.
 * Replace the column classes and `form-label` on the label (first child) with just the HQ `field-label` utility class. `field-label` is defined as `@extend .col-form-label, .col-12, .col-sm-4, .col-md-3, .col-lg-2;` — it includes `.col-form-label`'s padding (needed for vertical baseline alignment with a sibling input) **and** the responsive label-column widths. Don't add `col-form-label` alongside `field-label`; it's redundant.
-* Replace the column classes on the control container (second child) with the HQ `field-control` utility class.
-* If the first child is a control container (no label, e.g. form actions), apply `field-control` to it directly — skip `field-label`.
+* Pick the right control-column class based on the B3 original (see table below) — `field-control` is **not** always correct.
+* If the first child is a control container (no label, e.g. form actions), apply the control-column class to it directly — skip `field-label`.
 * `form-control-text` can be dropped, replace it with `mt-2`.
 
-Result:
+### Choose the control-column class to match the B3 original
+
+`field-control` widens the control to `col-lg-10` (~83% of row). B3 templates often used **narrower** control widths intentionally — applying `field-control` blindly widens those rows 2-3×. Check the original B3 template:
+
+| B3 control width | B5 replacement |
+| --- | --- |
+| `col-sm-10` / `col-md-9` / `col-lg-10` (canonical full width) | `field-control` |
+| `col-sm-8` | `field-control` (close enough; ~67% → ~83%) or `col-md-8` for exact match |
+| `col-sm-6` (e.g. multi-input subgroups) | `col-md-6` |
+| `col-sm-4` (most common — single select / input rows) | `col-md-4` |
+| `col-sm-1` / `col-sm-2` wrapping a button or icon | `col-md-auto` (B3 let buttons overflow narrow columns visually; B5 wraps the text into the column) |
+
+Result for canonical full-width:
 ```
 <div class="row mb-3">
   <label class="field-label">Field</label>
   <div class="field-control">
+    <input class="form-control" ...>
+  </div>
+</div>
+```
+
+Result for narrow control:
+```
+<div class="row mb-3">
+  <label class="field-label">Field</label>
+  <div class="col-md-4">
     <input class="form-control" ...>
   </div>
 </div>
