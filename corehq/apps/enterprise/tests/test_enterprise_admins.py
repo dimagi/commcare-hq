@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from unittest.mock import patch
 
 from django.contrib.messages import get_messages
 from django.test import Client, TestCase
@@ -19,21 +18,6 @@ from corehq.apps.sso.models import (
 )
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_disabled, flag_enabled
-
-
-def _noop(*args, **kwargs):
-    pass
-
-
-# Stub publish_domain_saved so these tests don't require a running
-# Kafka broker; otherwise the underlying producer call raises
-# NoBrokersAvailable in dev environments without Kafka up.
-_no_kafka_publish = patch('corehq.apps.accounting.models.publish_domain_saved', _noop)
-
-
-def _delete_domain(domain):
-    with _no_kafka_publish:
-        domain.delete()
 
 
 def _make_idp(account, slug, is_active=True, domains=None):
@@ -103,14 +87,13 @@ class _EnterpriseAdminViewTestBase(TestCase):
             edition=SoftwarePlanEdition.ENTERPRISE,
         )
         start = date.today()
-        with _no_kafka_publish:
-            generate_domain_subscription(
-                cls.account, cls.domain,
-                date_start=start,
-                date_end=start + timedelta(days=365),
-                plan_version=plan_version,
-                is_active=True,
-            )
+        generate_domain_subscription(
+            cls.account, cls.domain,
+            date_start=start,
+            date_end=start + timedelta(days=365),
+            plan_version=plan_version,
+            is_active=True,
+        )
         cls.admin_user = WebUser.create(
             cls.domain_name, 'admin-user@example.com', 'pw',
             None, None, is_admin=True,
@@ -127,8 +110,7 @@ class _EnterpriseAdminViewTestBase(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.admin_user.delete(cls.domain_name, deleted_by=None)
-        with _no_kafka_publish:
-            cls.domain.delete()
+        cls.domain.delete()
         super().tearDownClass()
 
     @property
@@ -331,7 +313,7 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         # A WebUser exists, but is only a member of a domain unrelated to
         # this enterprise account.
         outside_domain = create_domain('ent-admin-outside')
-        self.addCleanup(_delete_domain, outside_domain)
+        self.addCleanup(outside_domain.delete)
         self._create_member('out-of-account@example.com', domain_name='ent-admin-outside')
         response = self.client.post(
             self.add_url, {'email': 'out-of-account@example.com'},
