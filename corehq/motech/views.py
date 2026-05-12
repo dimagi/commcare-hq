@@ -4,6 +4,7 @@ import re
 from datetime import datetime, timedelta
 
 from django.http import Http404, JsonResponse, StreamingHttpResponse
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
@@ -24,7 +25,6 @@ from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.motech.const import PASSWORD_PLACEHOLDER, OAUTH2_CLIENT, OAUTH2_PWD
 from corehq.motech.forms import ConnectionSettingsForm, UnrecognizedHost
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
@@ -307,23 +307,13 @@ def test_connection_settings(request, domain, pk=None):
     if not has_privilege(request, privileges.DATA_FORWARDING):
         raise Http404
 
-    # If auth_type is set to None, we ignore this check
-    auth_type = request.POST.get('auth_type')
-    client_secret = request.POST.get('plaintext_client_secret')
-    if auth_type in (OAUTH2_CLIENT, OAUTH2_PWD) and client_secret == PASSWORD_PLACEHOLDER:
-        return JsonResponse({
-            "success": False,
-            "response": _("Please enter client secret again."),
-        })
-    if auth_type and request.POST.get('plaintext_password') == PASSWORD_PLACEHOLDER:
-        # The user is editing an existing instance, and the form is
-        # showing the password placeholder. (We don't tell the user what
-        # the API password is.)
-        return JsonResponse({
-            "success": False,
-            "response": _("Please enter API password again."),
-        })
-    form = ConnectionSettingsForm(domain=domain, data=request.POST)
+    # Load the existing instance so the model setters can preserve saved
+    # secrets (the setters no-op on PASSWORD_PLACEHOLDER). This lets us
+    # test with the real credentials without ever sending them to the browser.
+    instance = None
+    if pk is not None:
+        instance = get_object_or_404(ConnectionSettings, pk=pk, domain=domain)
+    form = ConnectionSettingsForm(domain=domain, data=request.POST, instance=instance)
     if form.is_valid():
         if isinstance(form.cleaned_data['url'], UnrecognizedHost):
             return JsonResponse({"success": False, "response": "Unknown URL"})

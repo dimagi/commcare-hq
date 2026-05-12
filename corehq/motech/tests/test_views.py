@@ -149,7 +149,7 @@ class TestConnectionSettingsView(TestCase):
         requests_instance = mock_get.call_args.args[0]
         assert requests_instance.auth_manager.client_secret == 'form-secret'
 
-    def test_basic_auth_rejects_password_placeholder(self):
+    def test_basic_auth_uses_saved_password_when_placeholder_submitted(self):
         post_data = {
             'name': 'basic-conn',
             'url': 'http://example.com',
@@ -160,15 +160,13 @@ class TestConnectionSettingsView(TestCase):
         }
 
         with patch.object(Requests, 'get', autospec=True) as mock_get:
-            response = self._post(post_data)
+            mock_get.return_value = Mock(status_code=200, text='')
+            self._post(post_data, pk=self.basic_conn.pk)
 
-        assert response.json() == {
-            'success': False,
-            'response': 'Please enter API password again.',
-        }
-        mock_get.assert_not_called()
+        requests_instance = mock_get.call_args.args[0]
+        assert requests_instance.auth_manager.password == 'saved-password'
 
-    def test_oauth2_client_rejects_client_secret_placeholder(self):
+    def test_oauth2_client_uses_saved_secret_when_placeholder_submitted(self):
         post_data = {
             'name': 'oauth-conn',
             'url': 'http://example.com',
@@ -180,10 +178,8 @@ class TestConnectionSettingsView(TestCase):
         }
 
         with patch.object(Requests, 'get', autospec=True) as mock_get:
-            response = self._post(post_data)
+            mock_get.return_value = Mock(status_code=200, text='')
+            self._post(post_data, pk=self.oauth_conn.pk)
 
-        assert response.json() == {
-            'success': False,
-            'response': 'Please enter client secret again.',
-        }
-        mock_get.assert_not_called()
+        requests_instance = mock_get.call_args.args[0]
+        assert requests_instance.auth_manager.client_secret == 'saved-secret'
