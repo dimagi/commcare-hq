@@ -38,6 +38,11 @@ class RearrangeError(AppEditingError):
     pass
 
 
+class FormActionsChangeError(AppEditingError):
+    """A proposed change to a form's actions cannot be applied."""
+    pass
+
+
 class XFormException(AppManagerException):
     pass
 

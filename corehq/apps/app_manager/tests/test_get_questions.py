@@ -237,6 +237,14 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
         form = self.app.get_form(self.form_with_repeats_unique_id)
         assert not form.wrapped_xform().has_locked_questions
 
+    def test_locked_question_paths(self):
+        form = self.app.get_form(self.form_unique_id)
+        assert form.wrapped_xform().locked_question_paths == {'/data/question2'}
+
+    def test_locked_question_paths_empty_when_none_locked(self):
+        form = self.app.get_form(self.form_with_repeats_unique_id)
+        assert form.wrapped_xform().locked_question_paths == set()
+
     def test_get_questions_with_locked_status(self):
         form = self.app.get_form(self.form_unique_id)
         questions = form.wrapped_xform().get_questions(['en'], include_locked_status=True)

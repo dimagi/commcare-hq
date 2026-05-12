@@ -957,15 +957,6 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-CASE_SEARCH_DEPRECATED = StaticToggle(
-    'case_search_deprecated',
-    'Case Search: Deprecated',
-    TAG_DEPRECATED,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
-)
-
 CASE_SEARCH_DEPRECATED_NORMAL_CASE_LIST = StaticToggle(
     'case_search_deprecated_normal_case_list',
     'Case Search: Normal case list option Deprecated',
@@ -1000,17 +991,6 @@ CASE_SEARCH_ENDPOINTS = StaticToggle(
     'Case Search Endpoints: configurable query builder for case search',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
-)
-
-CASE_SEARCH_CACHE_KEY = StaticToggle(
-    'case_search_cache_key',
-    'Case Search: Formplayer cache key',
-    TAG_GA_PATH,
-    description="""
-        If set formplayer will use a more specific cache key. This is meant to fix a bug but the
-        perfomance implications are not clear. Hence the FF.""",
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
