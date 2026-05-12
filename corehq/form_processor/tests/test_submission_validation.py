@@ -136,11 +136,9 @@ class TestCheckImageAttachmentsCachingFootprint(TestCase):
     during submission, and how many additional calls
     ``check_image_attachments`` itself causes.
 
-    This test exists to surface the TODOs in
-    ``corehq/form_processor/submission_validation.py``: when
-    ``instance_json`` is attached to the xform during processing the
-    handler should no longer trigger an extra XML-to-JSON parse, and the
-    assertions below will need to be updated accordingly.
+    With ``instance_json`` cached on ``xform._form_json`` during
+    ``_create_new_xform``, the form XML is parsed exactly once per
+    submission and the handler does no I/O of its own.
     """
 
     domain = 'submission-validation-tests'
@@ -251,23 +249,17 @@ class TestCheckImageAttachmentsCachingFootprint(TestCase):
             )
 
         # Pre-handler state: What processing has already done:
-        # `convert_xform_to_json` is run twice before the signal fires:
-        #
-        # 1. `_create_new_xform` parses the submitted XML directly.
-        # 2. Submission processing accesses `instance.metadata` which
-        #    pulls TAG_META from `form_data`, populating its memoized
-        #    cache on the same xform instance.
-        #
-        # TODO: attaching `instance_json` to the xform during
-        #       `_create_new_xform` would let `form_data` skip the
-        #       second parse, dropping this count to 1.
-        assert len(pre_handler_state['convert']) == 2, (
-            'submission processing currently parses the form twice before '
-            'the signal fires'
+        # `_create_new_xform` parses the submitted XML once and caches
+        # the result on `xform._form_json`. Every subsequent access to
+        # `form_data` during processing (e.g. `instance.metadata` in
+        # `_invalidate_caches`) reuses that cached JSON instead of
+        # reparsing.
+        assert len(pre_handler_state['convert']) == 1, (
+            'submission processing should parse the form exactly once '
+            'before the signal fires'
         )
-
-        # The handler reads `xform.form_data`, which is memoized -- since
-        # processing already warmed it, the handler adds no extra parse.
+        # The handler reads `xform.form_data`, which returns the cached
+        # `_form_json`, so the handler adds no extra parse.
         handler_convert_calls = len(convert_calls) - len(
             pre_handler_state['convert']
         )
@@ -275,9 +267,10 @@ class TestCheckImageAttachmentsCachingFootprint(TestCase):
             'handler must not trigger an additional XML-to-JSON parse'
         )
 
-        # `get_xml` is memoized per-instance and was warmed by the
-        # `form_data` lookup during processing, so the handler does not
-        # re-fetch `form.xml` from blob storage.
+        # `_form_json` is populated up-front from the raw XML the
+        # submission was parsed from, so `form_data` never has to call
+        # `get_xml()`. The handler therefore does not trigger any
+        # `form.xml` blob fetch on its own.
         form_xml_fetches_total = [
             name for name in get_attachment_calls if name == 'form.xml'
         ]

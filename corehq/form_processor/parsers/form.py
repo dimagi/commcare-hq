@@ -9,6 +9,7 @@ from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment, XFormInstance
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
+from corehq.form_processor.utils.metadata import scrub_form_meta
 from corehq.util.soft_assert.api import soft_assert
 from couchforms import XMLSyntaxError
 from couchforms.exceptions import MissingXMLNSError
@@ -108,9 +109,10 @@ def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None,
     xform = interface.new_xform(instance_json)
     xform.domain = domain
     xform.auth_context = auth_context
-    # TODO: Cache `instance_json` on `xform` for when SubmissionPost.run()
-    #       calls `self._invalidate_caches()`, calls `instance.metadata`
-    # xform._form_json = instance_json
+    # Cache `instance_json` on `xform` for when SubmissionPost.run()
+    # calls `self._invalidate_caches()`, which calls `instance.metadata`
+    scrub_form_meta(xform.form_id, instance_json)  # Scrub to mimic `form_data`
+    xform._form_json = instance_json
 
     # Maps all attachments to uniform format and adds form.xml to list before storing
     attachments = [
