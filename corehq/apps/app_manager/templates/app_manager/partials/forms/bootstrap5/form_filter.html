@@ -20,17 +20,17 @@
       ></span>
     </label>
     <div id="form-filter" class="col-md-6 col-lg-4 row">
-      <div data-bind="css: {'has-error': !allowed()}">
-        {# todo B5: css-has-error #}
+      <div>
         <textarea
           name="form_filter"
           class="form-control"
           data-bind="
+                    css: {'is-invalid': !allowed()},
                     xpathValidator: {text: formFilter, allowCaseHashtags: true,
                                      errorHtml: document.getElementById('formFilterXpathErrorHtml').innerHTML}
             "
         ></textarea>
-        <div class="help-block" data-bind="visible: !allowed()">
+        <div class="invalid-feedback">
           <span data-bind="visible: caseReferenceNotAllowed">
             {% blocktrans %}
               To use display conditions which reference a case, <br />
