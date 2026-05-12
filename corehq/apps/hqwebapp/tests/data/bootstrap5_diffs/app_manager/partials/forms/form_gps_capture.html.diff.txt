@@ -4,7 +4,7 @@
  {% load i18n %}
  {% load hq_shared_tags %}
 -<label class="control-label col-sm-2">
-+<label class="form-label col-md-2">
++<label class="field-label pt-0">
    {% trans "Auto Capture Location" %}
    <span class="hq-help-template"
          data-title="{% trans "Auto Capture Location" %}"
@@ -12,10 +12,10 @@
    ></span>
  </label>
 -<div id="auto-gps-capture" class="col-sm-8 commcare-feature" data-since-version="2.14">
-+<div id="auto-gps-capture" class="col-md-8 commcare-feature" data-since-version="2.14">
++<div id="auto-gps-capture" class="field-control commcare-feature" data-since-version="2.14">
    {% if app.auto_gps_capture %}
 -    <input type="checkbox" value="true" disabled="disabled"
-+    <input type="checkbox" value="true" disabled="disabled"  {# todo B5: css-checkbox #}
++    <input type="checkbox" class="form-check-input" value="true" disabled="disabled"
             data-bind="checked: true"/>
      <div class="help-block">
        {% blocktrans %}
@@ -24,7 +24,7 @@
      </div>
    {% else %}
 -    <input type="checkbox" value="true"
-+    <input type="checkbox" value="true"  {# todo B5: css-checkbox #}
++    <input type="checkbox" class="form-check-input" value="true"
             data-bind="checked: auto_gps_capture"/>
    {% endif %}
    <input type="hidden" name="auto_gps_capture" data-bind="value: auto_gps_capture"/>

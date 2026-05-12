@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,13 +1,13 @@
+@@ -1,23 +1,21 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  
@@ -12,11 +12,12 @@
      <div class="modal-content">
        <div class="modal-header">
 -        <button type="button" class="close" data-dismiss="modal">
-+        <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
-           <span aria-hidden="true">&times;</span>
-         </button>
+-          <span aria-hidden="true">&times;</span>
+-        </button>
          <h4 class="modal-title">{% trans "Remove Form Action?" %}</h4>
-@@ -16,8 +16,8 @@
++        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+       </div>
+       <div class="modal-body">
          <p>{% trans "Are you sure you want to remove this action?" %}</p>
        </div>
        <div class="modal-footer">
@@ -27,54 +28,56 @@
        </div>
      </div>
    </div>
-@@ -26,13 +26,13 @@
+@@ -26,13 +24,11 @@
  <script type="text/html" id="case-config:case-action:body">
    <!--ko if: actionType == 'open'-->
    <div class="spacer"></div>
 -  <div class="panel panel-appmanager">
 -    <div class="panel-heading">
 -      <h4 class="panel-title panel-title-nolink">
-+  <div class="card panel-appmanager">  {# todo B5: css-panel #}
-+    <div class="card-header">
-+      <h4 class="card-title card-title-nolink">
-         {% trans "Open Condition" %}
-       </h4>
-     </div>
+-        {% trans "Open Condition" %}
+-      </h4>
+-    </div>
 -    <div class="panel-body">
++  <div class="card card-modern-gray mb-3">
++    <div class="card-header h5">
++      {% trans "Open Condition" %}
++    </div>
 +    <div class="card-body">
        <div data-bind="template: {
                name: 'case-config:condition',
                data: {condition: open_condition, config: $data},
-@@ -41,44 +41,44 @@
+@@ -41,44 +37,42 @@
    </div>
    <!-- /ko -->
    <hr />
 -  <div data-bind="if: actionType == 'load' && !caseConfig.isShadowForm" class="panel-group">
 -    <div class="panel panel-appmanager"
-+  <div data-bind="if: actionType == 'load' && !caseConfig.isShadowForm" class="card-group">
-+    <div class="card panel-appmanager"  {# todo B5: css-panel #}
++  <div data-bind="if: actionType == 'load' && !caseConfig.isShadowForm" class="d-flex flex-column gap-3">
++    <div class="card card-modern-gray mb-3"
           data-bind="template: 'case-config:case-transaction:case-preload'"></div>
 -    <div class="panel panel-appmanager"
-+    <div class="card panel-appmanager"  {# todo B5: css-panel #}
++    <div class="card card-modern-gray mb-3"
           data-bind="template: 'case-config:case-transaction:case-properties'"></div>
    </div>
 -  <div data-bind="if: actionType == 'open'" class="panel-group">
 -    <div class="panel panel-appmanager" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
-+  <div data-bind="if: actionType == 'open'" class="card-group">
-+    <div class="card panel-appmanager" data-bind="template: 'case-config:case-transaction:case-properties'"></div>  {# todo B5: css-panel #}
++  <div data-bind="if: actionType == 'open'" class="d-flex flex-column gap-3">
++    <div class="card card-modern-gray mb-3" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
    </div>
    <!-- ko if:  actionType !== 'load' || !auto_select || auto_select.mode() !== 'usercase' -->
    <hr />
 -  <div class="panel panel-appmanager">
 -    <div class="panel-heading">
 -      <h4 class="panel-title panel-title-nolink">
-+  <div class="card panel-appmanager">  {# todo B5: css-panel #}
-+    <div class="card-header">
-+      <h4 class="card-title card-title-nolink">
-         {% trans "Conditions" %}
-       </h4>
-     </div>
+-        {% trans "Conditions" %}
+-      </h4>
+-    </div>
 -    <div class="panel-body">
++  <div class="card card-modern-gray mb-3">
++    <div class="card-header h5">
++      {% trans "Conditions" %}
++    </div>
 +    <div class="card-body">
  
        <div class="form-horizontal">
@@ -83,21 +86,21 @@
            <!-- ko if:  allow_product_stock -->
 -          <div class="form-group">
 -            <label class="col-sm-2 control-label">
-+          <div class="form-group">  {# todo B5: css-form-group #}
-+            <label class="col-md-2 form-label">
++          <div class="row mb-3">
++            <label class="field-label pt-0">
                {% trans "Display the Product Stock for this Supply Point after it is selected" %}
              </label>
 -            <div class="col-sm-4">
 -              <input type="checkbox" data-bind="checked: show_product_stock_var"/>
 +            <div class="col-md-4">
-+              <input type="checkbox" data-bind="checked: show_product_stock_var"/>  {# todo B5: css-checkbox #}
++              <input type="checkbox" class="form-check-input" data-bind="checked: show_product_stock_var"/>
              </div>
            </div>
            <!-- ko if: show_product_stock_var -->
 -          <div class="form-group">
 -            <label class="col-sm-2 control-label">
-+          <div class="form-group">  {# todo B5: css-form-group #}
-+            <label class="col-md-2 form-label">
++          <div class="row mb-3">
++            <label class="field-label">
                {% trans "Only show products for program" %}
              </label>
 -            <div class="col-sm-4">
@@ -107,22 +110,23 @@
              </div>
            </div>
            <!-- /ko -->
-@@ -86,31 +86,31 @@
+@@ -86,31 +80,31 @@
          {% endif %}
  
          <!-- ko if:  !auto_select && $index() > 0 -->
 -        <div class="form-group" data-bind="css: {'has-warning': validate_subcase()}">
 -          <label class="col-sm-2">
-+        <div class="form-group" data-bind="css: {'has-warning': validate_subcase()}">  {# todo B5: css-form-group #}
-+          <label class="col-md-2">
++        <div class="row mb-3" data-bind="css: {'has-warning': validate_subcase()}">
++          <label class="field-label">
            </label>
 -          <div class="col-sm-4">
 -            <div class="checkbox">
-+          <div class="col-md-4">
-+            <div class="checkbox">  {# todo B5: css-checkbox #}
-               <label>
+-              <label>
 -                <input type="checkbox" data-bind="checked: subcase"/>
-+                <input type="checkbox" data-bind="checked: subcase"/>  {# todo B5: css-checkbox #}
++          <div class="col-md-4">
++            <div class="form-check">
++              <label class="form-check-label">
++                <input class="form-check-input" type="checkbox" data-bind="checked: subcase"/>
                  {% trans "This case is a subcase of the previous case" %}
                </label>
              </div>
@@ -131,8 +135,8 @@
          </div>
 -        <div class="form-group" data-bind="visible: subcase">
 -          <label class="control-label col-sm-2">
-+        <div class="form-group" data-bind="visible: subcase">  {# todo B5: css-form-group #}
-+          <label class="form-label col-md-2">
++        <div class="row mb-3" data-bind="visible: subcase">
++          <label class="field-label">
              {% trans "Parent reference ID" %}
            </label>
 -          <div class="col-sm-4">
@@ -144,14 +148,14 @@
 -          <label class="control-label col-sm-2">{% trans "Relationship" %}</label>
 -          <div class="col-sm-4">
 -            <select class="form-control"
-+        <div class="form-group">  {# todo B5: css-form-group #}
-+          <label class="form-label col-md-2">{% trans "Relationship" %}</label>
++        <div class="row mb-3">
++          <label class="field-label">{% trans "Relationship" %}</label>
 +          <div class="col-md-4">
 +            <select class="form-select"
                      data-bind="options: relationshipTypes,
                                                 optionsCaption: 'Child case or extension case?',
                                                 value: case_index.relationship"></select>
-@@ -121,14 +121,14 @@
+@@ -121,14 +115,14 @@
          <!-- /ko -->
  
          <!-- ko if:  actionType === 'open' -->
@@ -159,20 +163,20 @@
 -
 -          <label class="control-label col-sm-2">{% trans "Parent Indices" %}</label>
 -          <div class="col-sm-6">
-+        <div class="form-group" data-bind="visible: allow_subcase, css: {'has-warning': validate_subcase()}">  {# todo B5: css-form-group #}
++        <div class="row mb-3" data-bind="visible: allow_subcase, css: {'has-warning': validate_subcase()}">
 +
-+          <label class="form-label col-md-2">{% trans "Parent Indices" %}</label>
++          <label class="field-label">{% trans "Parent Indices" %}</label>
 +          <div class="col-md-6">
              <div data-bind="foreach: case_indices">
 -              <div class="well">
-+              <div class="card">  {# todo B5: css-well #}
++              <div class="card card-body mb-3">
                  <label>{% trans "Parent Tag" %}</label>
 -                <select class="form-control"
 +                <select class="form-select"
                          data-bind="optstr: $parents[1].getCaseTags('subcase', $parent), value: tag">
                  </select>
                  <br />
-@@ -138,27 +138,27 @@
+@@ -138,7 +132,7 @@
                  <br />
  
                  <label>{% trans "Relationship" %}</label>
@@ -181,13 +185,7 @@
                          data-bind="options: $parent.relationshipTypes,
                                                         optionsCaption: ' ',
                                                         value: relationship"></select>
-                 <br />
-                 <div data-bind="visible: relationship() === 'question'">
--                  <select data-bind="
-+                  <select data-bind="  {# todo B5: css-select-form-control #}
-                                             questionsSelect: $root.getQuestions('all', false, false),
-                                             value: relationship_question,
-                                             optionsCaption: ' ',
+@@ -151,14 +145,14 @@
                                          "></select>
                  </div>
                  <br />
@@ -204,28 +202,36 @@
                <i class="fa fa-plus"></i>
                {% trans "Add parent index" %}
              </button>
-@@ -171,7 +171,7 @@
+@@ -169,9 +163,9 @@
+         <!-- /ko -->
+ 
          <!-- ko ifnot: caseConfig.isShadowForm -->
-         <div>
-           <label>
+-        <div>
+-          <label>
 -            <input type="checkbox" data-toggle="toggle" data-bind="checked: close_case"/>
-+            <input type="checkbox" data-bs-toggle="toggle" data-bind="checked: close_case"/>  {# todo B5: css-checkbox #}
++        <div class="form-check">
++          <label class="form-check-label">
++            <input class="form-check-input" type="checkbox" data-bs-toggle="toggle" data-bind="checked: close_case"/>
              {% trans "Close this case when the form is complete" %}
            </label>
          </div>
-@@ -189,9 +189,9 @@
+@@ -189,11 +183,10 @@
  </script>
  
  <script type="text/html" id="case-config:case-action">
 -  <div class="panel-heading clickable panel-heading-case-action" data-toggle="collapse"
-+  <div class="card-header clickable panel-heading-case-action" data-bs-toggle="collapse"
-        data-bind="attr: {href: '#' + actionType + $index()}, css: {'not-droppable': moveable()}">
+-       data-bind="attr: {href: '#' + actionType + $index()}, css: {'not-droppable': moveable()}">
 -    <h4 class="panel-title panel-title-nolink" data-bind="html: header"></h4>
-+    <h4 class="card-title card-title-nolink" data-bind="html: header"></h4>
-   </div>
-   <div class="panel-case-actions-actions">
+-  </div>
+-  <div class="panel-case-actions-actions">
++  <div class="card-header h5 d-flex align-items-center"
++       data-bind="css: {'not-droppable': moveable()}">
++    <span class="flex-grow-1 clickable" data-bs-toggle="collapse"
++          data-bind="attr: {href: '#' + actionType + $index()}, html: header"></span>
      <a href="#" role="button" class="case-action-move btn btn-purple grip" data-bind="visible: moveable()">
-@@ -212,25 +212,25 @@
+       <i class="fa-solid fa-up-down"></i>
+     </a>
+@@ -212,25 +205,23 @@
      </button>
    </div>
    <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
@@ -233,100 +239,142 @@
 -      <div class="panel panel-appmanager">
 -        <div class="panel-heading">
 -          <h4 class="panel-title panel-title-nolink">
-+    <div class="card-body">
-+      <div class="card panel-appmanager">  {# todo B5: css-panel #}
-+        <div class="card-header">
-+          <h4 class="card-title card-title-nolink">
-             {% trans "Case Action Meta" %}
-           </h4>
-         </div>
+-            {% trans "Case Action Meta" %}
+-          </h4>
+-        </div>
 -        <div class="panel-body">
 -          <div class="form-inline" data-bind="css: {'has-warning': validate()}">
 -
 -            <div class="form-group">
++    <div class="card-body">
++      <div class="card card-modern-gray mb-3">
++        <div class="card-header h5">
++          {% trans "Case Action Meta" %}
++        </div>
 +        <div class="card-body">
-+          <div class="form-inline" data-bind="css: {'has-warning': validate()}">  {# todo B5: css-form-inline #}
++          <div class="d-flex flex-wrap align-items-center gap-2" data-bind="css: {'has-warning': validate()}">
 +
-+            <div class="form-group">  {# todo B5: css-form-group #}
++            <div class="d-flex align-items-center gap-1">
                <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
-               <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
+-              <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
++              <input type="text" class="form-control w-auto" data-bind="value: case_tag, disable: disable_tag" />
              </div>
              &nbsp;
              <strong>(</strong>
 -            <div class="form-group">
-+            <div class="form-group">  {# todo B5: css-form-group #}
++            <div class="d-flex align-items-center gap-1">
                <label>{% trans "Case Type" %}</label>
 -              <select class="form-control" data-bind="
-+              <select class="form-select" data-bind="
++              <select class="form-select w-auto" data-bind="
                                options: caseConfig.caseTypes,
                                value: case_type,
                                optionsCaption: 'Choose a Case Type...'
-@@ -238,10 +238,10 @@
+@@ -238,17 +229,18 @@
              </div>
              <!-- ko if: actionType == 'load'-->
              &nbsp;{% trans "from" %}
 -            <div class="form-group">
-+            <div class="form-group">  {# todo B5: css-form-group #}
++            <div class="d-flex align-items-center gap-1">
                &nbsp;
                <label><i class="fa-solid fa-list-check"></i> {% trans "Case List" %}</label>
 -              <select class="form-control" data-bind="optstr: available_modules,
-+              <select class="form-select" data-bind="optstr: available_modules,
++              <select class="form-select w-auto" data-bind="optstr: available_modules,
                                optstrValue: 'id',
                                optstrText: 'module_name',
                                value: details_module">
-@@ -277,7 +277,7 @@
+               </select>
+             </div>
+             <!-- /ko -->
+-            <strong>)</strong><br />
++            <strong>)</strong>
++            <div class="w-100"></div>
+             <span class="help-block" data-bind="text: validate"></span>
+           </div>
+           <div class="alert alert-warning" data-bind="visible: !case_type">
+@@ -265,7 +257,7 @@
+ 
+ <script type="text/html" id="auto-select:case-type">
+   {% trans "Expected Case Type" %}
+-  <input type="text" class="form-control" data-bind="value: $parent.case_type" />
++  <input type="text" class="form-control w-auto" data-bind="value: $parent.case_type" />
+   <span class="hq-help-template"
+         data-title="{% trans "Expected Case Type" %}"
+         data-content="{% blocktrans %}This is used for case property suggestions and when creating case indexes but
+@@ -277,43 +269,43 @@
  </script>
  
  <script type="text/html" id="auto-select:raw">
 -  <div class="well well-sm">
-+  <div class="card well-sm">  {# todo B5: css-well #}
-     <strong>{% trans "Raw Config" %}:</strong>&nbsp;&nbsp;
+-    <strong>{% trans "Raw Config" %}:</strong>&nbsp;&nbsp;
++  <div class="card card-body p-2 d-flex flex-row flex-wrap align-items-center gap-2 mb-3">
++    <strong>{% trans "Raw Config" %}:</strong>
      {% trans "XPath function" %}
-     <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
-@@ -286,7 +286,7 @@
+-    <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
++    <input type="text" class="form-control w-auto" data-bind="value: value_key" />
+     <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
+   </div>
  </script>
  
  <script type="text/html" id="auto-select:user">
 -  <div class="well well-sm">
-+  <div class="card well-sm">  {# todo B5: css-well #}
-     <strong>{% trans "User Data Config" %}:</strong>&nbsp;&nbsp;
+-    <strong>{% trans "User Data Config" %}:</strong>&nbsp;&nbsp;
++  <div class="card card-body p-2 d-flex flex-row flex-wrap align-items-center gap-2 mb-3">
++    <strong>{% trans "User Data Config" %}:</strong>
      {% trans "User data key" %}
-     <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
-@@ -295,10 +295,10 @@
+-    <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
++    <input type="text" class="form-control w-auto" data-bind="value: value_key" />
+     <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
+   </div>
  </script>
  
  <script type="text/html" id="auto-select:case">
 -  <div class="well well-sm">
-+  <div class="card well-sm">  {# todo B5: css-well #}
-     <strong>{% trans "Case Index Config" %}:</strong>&nbsp;&nbsp;
+-    <strong>{% trans "Case Index Config" %}:</strong>&nbsp;&nbsp;
++  <div class="card card-body p-2 d-flex flex-row flex-wrap align-items-center gap-2 mb-3">
++    <strong>{% trans "Case Index Config" %}:</strong>
      {% trans "Case containing index" %}
 -    <select class="form-control" data-bind="optstr: $parent.caseConfig.caseConfigViewModel.getCaseTags('auto-select', $parent),
-+    <select class="form-select" data-bind="optstr: $parent.caseConfig.caseConfigViewModel.getCaseTags('auto-select', $parent),
++    <select class="form-select w-auto" data-bind="optstr: $parent.caseConfig.caseConfigViewModel.getCaseTags('auto-select', $parent),
              value: value_source">
-     </select>&nbsp;&nbsp;
+-    </select>&nbsp;&nbsp;
++    </select>
      {% trans "Index name" %}
-@@ -308,7 +308,7 @@
+-    <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
++    <input type="text" class="form-control w-auto" data-bind="value: value_key" />
+     <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
+   </div>
  </script>
  
  <script type="text/html" id="auto-select:fixture">
 -  <div class="well well-sm">
-+  <div class="card well-sm">  {# todo B5: css-well #}
-     <strong>{% trans "Lookup Table Config" %}:</strong>&nbsp;&nbsp;
+-    <strong>{% trans "Lookup Table Config" %}:</strong>&nbsp;&nbsp;
++  <div class="card card-body p-2 d-flex flex-row flex-wrap align-items-center gap-2 mb-3">
++    <strong>{% trans "Lookup Table Config" %}:</strong>
      {% trans "Lookup Table Tag" %}
-     <input type="text" class="form-control" data-bind="value: value_source" />&nbsp;&nbsp;
-@@ -321,9 +321,9 @@
+-    <input type="text" class="form-control" data-bind="value: value_source" />&nbsp;&nbsp;
++    <input type="text" class="form-control w-auto" data-bind="value: value_source" />
+     {% trans "Table Field" %}
+-    <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
++    <input type="text" class="form-control w-auto" data-bind="value: value_key" />
+     <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
+   </div>
+ </script>
+@@ -321,11 +313,9 @@
  <script type="text/html" id="auto-select:usercase">
  </script>
  <script type="text/html" id="case-config:case-action-auto-select">
 -  <div class="panel-heading clickable" data-toggle="collapse"
-+  <div class="card-header clickable" data-bs-toggle="collapse"
-        data-bind="attr: {href: '#' + actionType + $index()}">
+-       data-bind="attr: {href: '#' + actionType + $index()}">
 -    <h4 class="panel-title panel-title-nolink" data-bind="html: header"></h4>
-+    <h4 class="card-title card-title-nolink" data-bind="html: header"></h4>
-   </div>
-   <div class="panel-case-actions-actions">
+-  </div>
+-  <div class="panel-case-actions-actions">
++  <div class="card-header h5 d-flex align-items-center">
++    <span class="flex-grow-1 clickable" data-bs-toggle="collapse"
++          data-bind="attr: {href: '#' + actionType + $index()}, html: header"></span>
      <a href="#" role="button" class="case-action-move btn btn-purple grip">
-@@ -344,25 +344,25 @@
+       <i class="fa-solid fa-up-down"></i>
+     </a>
+@@ -344,36 +334,35 @@
      </button>
    </div>
    <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
@@ -334,55 +382,65 @@
 -      <div class="panel panel-appmanager">
 -        <div class="panel-heading">
 -          <h4 class="panel-title panel-title-nolink">
-+    <div class="card-body">
-+      <div class="card panel-appmanager">  {# todo B5: css-panel #}
-+        <div class="card-header">
-+          <h4 class="card-title card-title-nolink">
-             {% trans "Case Action Meta" %}
-           </h4>
-         </div>
+-            {% trans "Case Action Meta" %}
+-          </h4>
+-        </div>
 -        <div class="panel-body">
 -          <div class="form-inline" data-bind="css: {'has-warning': validate()}">
 -            <div class="form-group">
++    <div class="card-body">
++      <div class="card card-modern-gray mb-3">
++        <div class="card-header h5">
++          {% trans "Case Action Meta" %}
++        </div>
 +        <div class="card-body">
-+          <div class="form-inline" data-bind="css: {'has-warning': validate()}">  {# todo B5: css-form-inline #}
-+            <div class="form-group">  {# todo B5: css-form-group #}
++          <div class="d-flex flex-wrap align-items-center gap-2" data-bind="css: {'has-warning': validate()}">
++            <div class="d-flex align-items-center gap-1">
                <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
-               <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
+-              <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
++              <input type="text" class="form-control w-auto" data-bind="value: case_tag, disable: disable_tag" />
              </div>
              <!-- ko with: auto_select -->
              &nbsp;
              <strong>(</strong>
 -            <div class="form-group">
-+            <div class="form-group">  {# todo B5: css-form-group #}
++            <div class="d-flex align-items-center gap-1">
                <label>{% trans "Autoselect mode" %}</label>
 -              <select class="form-control" data-bind="
-+              <select class="form-select" data-bind="
++              <select class="form-select w-auto" data-bind="
                                  optstr: $parent.auto_select_modes,
                                  value: mode,
                                  optionsCaption: 'Choose a mode...'
-@@ -370,7 +370,7 @@
+                             "></select>
              </div>
              <strong>)</strong>
-             <br />
+-            <br />
 -            <div class="form-group">
-+            <div class="form-group">  {# todo B5: css-form-group #}
++            <div class="w-100"></div>
++            <div>
                <!-- ko template: {name: 'auto-select:' + mode()} --><!-- /ko -->
              </div>
              <!-- /ko -->
-@@ -391,9 +391,9 @@
++            <div class="w-100"></div>
+             <span class="help-block" data-bind="text: validate"></span>
+           </div>
+           <div class="alert alert-warning" data-bind="visible: !auto_select.mode()">
+@@ -391,11 +380,9 @@
  </script>
  
  <script type="text/html" id="case-config:case-action-load-case-from-fixture">
 -  <div class="panel-heading clickable" data-toggle="collapse"
-+  <div class="card-header clickable" data-bs-toggle="collapse"
-        data-bind="attr: {href: '#' + actionType + $index()}">
+-       data-bind="attr: {href: '#' + actionType + $index()}">
 -    <h4 class="panel-title panel-title-nolink" data-bind="html: header"></h4>
-+    <h4 class="card-title card-title-nolink" data-bind="html: header"></h4>
-   </div>
-   <div class="panel-case-actions-actions">
+-  </div>
+-  <div class="panel-case-actions-actions">
++  <div class="card-header h5 d-flex align-items-center">
++    <span class="flex-grow-1 clickable" data-bs-toggle="collapse"
++          data-bind="attr: {href: '#' + actionType + $index()}, html: header"></span>
      <a href="#" role="button" class="case-action-move btn btn-purple grip" data-bind="visible: moveable()">
-@@ -414,24 +414,24 @@
+       <i class="fa-solid fa-up-down"></i>
+     </a>
+@@ -414,24 +401,22 @@
      </button>
    </div>
    <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
@@ -390,64 +448,75 @@
 -      <div class="panel panel-appmanager">
 -        <div class="panel-heading">
 -          <h4 class="panel-title panel-title-nolink">
-+    <div class="card-body">
-+      <div class="card panel-appmanager">  {# todo B5: css-panel #}
-+        <div class="card-header">
-+          <h4 class="card-title card-title-nolink">
-             {% trans "Case Action Meta" %}
-           </h4>
-         </div>
+-            {% trans "Case Action Meta" %}
+-          </h4>
+-        </div>
 -        <div class="panel-body">
 -          <div class="form-inline" data-bind="css: {'has-warning': validate()}">
 -            <div class="form-group">
++    <div class="card-body">
++      <div class="card card-modern-gray mb-3">
++        <div class="card-header h5">
++          {% trans "Case Action Meta" %}
++        </div>
 +        <div class="card-body">
-+          <div class="form-inline" data-bind="css: {'has-warning': validate()}">  {# todo B5: css-form-inline #}
-+            <div class="form-group">  {# todo B5: css-form-group #}
++          <div class="d-flex flex-wrap align-items-center gap-2" data-bind="css: {'has-warning': validate()}">
++            <div class="d-flex align-items-center gap-1">
                <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
-               <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
+-              <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
++              <input type="text" class="form-control w-auto" data-bind="value: case_tag, disable: disable_tag" />
              </div>
              &nbsp;
              <strong>(</strong>
 -            <div class="form-group">
-+            <div class="form-group">  {# todo B5: css-form-group #}
++            <div class="d-flex align-items-center gap-1">
                <label>{% trans "Case Type" %}</label>
 -              <select class="form-control" data-bind="
-+              <select class="form-select" data-bind="
++              <select class="form-select w-auto" data-bind="
                                  options: caseConfig.caseTypes,
                                  value: case_type,
                                  optionsCaption: 'Choose a Case Type...'
-@@ -440,10 +440,10 @@
+@@ -440,72 +425,73 @@
  
              <!-- ko if: actionType == 'load'-->
              &nbsp;{% trans "from" %}
 -            <div class="form-group">
-+            <div class="form-group">  {# todo B5: css-form-group #}
++            <div class="d-flex align-items-center gap-1">
                &nbsp;
                <label><i class="fa-solid fa-list-check"></i> {% trans "Case List" %}</label>
 -              <select class="form-control" data-bind="optstr: available_modules,
-+              <select class="form-select" data-bind="optstr: available_modules,
++              <select class="form-select w-auto" data-bind="optstr: available_modules,
                                  optstrValue: 'id',
                                  optstrText: 'module_name',
                                  value: details_module">
-@@ -456,54 +456,54 @@
+               </select>
+             </div>
+             <!-- /ko -->
+-            <strong>)</strong><br />
++            <strong>)</strong>
++            <div class="w-100"></div>
+             <p class="help-block" data-bind="text: validate"></p>
+           </div>
            <div class="help-block" data-bind="visible: !case_type">
              {% trans "Please select a case type." %}
            </div>
 -          <div class="well well-sm">
 -            <div class="form-inline">
 -              <div class="form-group">
-+          <div class="card well-sm">  {# todo B5: css-well #}
-+            <div class="form-inline">  {# todo B5: css-form-inline #}
-+              <div class="form-group">  {# todo B5: css-form-group #}
++          <div class="card card-body p-2 mb-3">
++            <div class="d-flex flex-wrap align-items-center gap-2">
++              <div class="d-flex align-items-center gap-1">
                  <label>{% trans "Case Property" %}&nbsp;</label>
-                 <input type="text" class="form-control" data-bind="value: load_case_from_fixture.case_property" />
+-                <input type="text" class="form-control" data-bind="value: load_case_from_fixture.case_property" />
++                <input type="text" class="form-control w-auto" data-bind="value: load_case_from_fixture.case_property" />
                </div>
                &nbsp;&nbsp;
 -              <div class="form-group">
-+              <div class="form-group">  {# todo B5: css-form-group #}
-                 <label>
+-                <label>
 -                  <input type="checkbox" data-bind="checked: load_case_from_fixture.auto_select" />
-+                  <input type="checkbox" data-bind="checked: load_case_from_fixture.auto_select" />  {# todo B5: css-checkbox #}
++              <div class="form-check">
++                <label class="form-check-label">
++                  <input class="form-check-input" type="checkbox" data-bind="checked: load_case_from_fixture.auto_select" />
                    {% trans "Autoselect If Only One Case" %}
                  </label>
                </div>
@@ -456,30 +525,34 @@
 -          <div class="well well-sm">
 -            <div class="form-inline">
 -              <div class="form-group">
-+          <div class="card well-sm">  {# todo B5: css-well #}
-+            <div class="form-inline">  {# todo B5: css-form-inline #}
-+              <div class="form-group">  {# todo B5: css-form-group #}
++          <div class="card card-body p-2 mb-3">
++            <div class="d-flex flex-wrap align-items-center gap-2">
++              <div class="d-flex align-items-center gap-1">
                  <label>{% trans "Fixture Nodeset" %}&nbsp;</label>
-                 <input type="text" class="form-control nodeset" data-bind="value: load_case_from_fixture.fixture_nodeset" />
+-                <input type="text" class="form-control nodeset" data-bind="value: load_case_from_fixture.fixture_nodeset" />
++                <input type="text" class="form-control nodeset w-auto" data-bind="value: load_case_from_fixture.fixture_nodeset" />
                </div>
                &nbsp;&nbsp;
 -              <div class="form-group">
-+              <div class="form-group">  {# todo B5: css-form-group #}
++              <div class="d-flex align-items-center gap-1">
                  <label>{% trans "Fixture Tag" %}&nbsp;</label>
-                 <input type="text" class="form-control" data-bind="value: load_case_from_fixture.fixture_tag" />
+-                <input type="text" class="form-control" data-bind="value: load_case_from_fixture.fixture_tag" />
++                <input type="text" class="form-control w-auto" data-bind="value: load_case_from_fixture.fixture_tag" />
                </div>
                &nbsp;&nbsp;
 -              <div class="form-group">
-+              <div class="form-group">  {# todo B5: css-form-group #}
++              <div class="d-flex align-items-center gap-1">
                  <label>{% trans "Fixture Variable" %}&nbsp;</label>
-                 <input type="text" class="form-control" data-bind="value: load_case_from_fixture.fixture_variable" />
+-                <input type="text" class="form-control" data-bind="value: load_case_from_fixture.fixture_variable" />
++                <input type="text" class="form-control w-auto" data-bind="value: load_case_from_fixture.fixture_variable" />
                </div>
                &nbsp;&nbsp;
 -              <div class="form-group">
-+              <div class="form-group">  {# todo B5: css-form-group #}
-                 <label>
+-                <label>
 -                  <input type="checkbox" data-bind="checked: load_case_from_fixture.auto_select_fixture" />
-+                  <input type="checkbox" data-bind="checked: load_case_from_fixture.auto_select_fixture" />  {# todo B5: css-checkbox #}
++              <div class="form-check">
++                <label class="form-check-label">
++                  <input class="form-check-input" type="checkbox" data-bind="checked: load_case_from_fixture.auto_select_fixture" />
                    {% trans "Autoselect If Only One Result Returned From Fixture" %}
                  </label>
                </div>
@@ -488,28 +561,42 @@
 -          <div class="well well-sm">
 -            <div class="form-inline">
 -              <div class="form-group">
-+          <div class="card well-sm">  {# todo B5: css-well #}
-+            <div class="form-inline">  {# todo B5: css-form-inline #}
-+              <div class="form-group">  {# todo B5: css-form-group #}
++          <div class="card card-body p-2 mb-3">
++            <div class="d-flex flex-wrap align-items-center gap-2">
++              <div class="d-flex align-items-center gap-1">
                  <label>{% trans "Arbitrary Datum Function" %}&nbsp;</label>
-                 <input type="text" class="form-control nodeset" data-bind="value: load_case_from_fixture.arbitrary_datum_function" />
+-                <input type="text" class="form-control nodeset" data-bind="value: load_case_from_fixture.arbitrary_datum_function" />
++                <input type="text" class="form-control nodeset w-auto" data-bind="value: load_case_from_fixture.arbitrary_datum_function" />
                </div>
                &nbsp;&nbsp;
 -              <div class="form-group">
-+              <div class="form-group">  {# todo B5: css-form-group #}
++              <div class="d-flex align-items-center gap-1">
                  <label>{% trans "Arbitrary Datum id" %}&nbsp;</label>
-                 <input type="text" class="form-control" data-bind="value: load_case_from_fixture.arbitrary_datum_id" />
+-                <input type="text" class="form-control" data-bind="value: load_case_from_fixture.arbitrary_datum_id" />
++                <input type="text" class="form-control w-auto" data-bind="value: load_case_from_fixture.arbitrary_datum_id" />
                </div>
-@@ -522,7 +522,7 @@
+             </div>
+           </div>
+@@ -522,91 +508,85 @@
    <div data-bind="saveButton: saveButton"></div>
    <div data-bind="with: caseConfigViewModel">
      <div class="btn-group" data-bind="visible: actionOptions().length">
 -      <button type="button" class="btn btn-purple dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-+      <button type="button" class="btn btn-purple dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">  {# todo B5: css-dropdown #}
++      <button type="button" class="btn btn-purple dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
          <i class="fa fa-plus"></i>
-         <span>{% trans "Add Action" %}</span> <span class="caret"></span>
+-        <span>{% trans "Add Action" %}</span> <span class="caret"></span>
++        <span>{% trans "Add Action" %}</span>
        </button>
-@@ -537,76 +537,76 @@
+       <ul class="dropdown-menu" role="menu" data-bind="foreach: actionOptions">
+         <!-- ko if: value === 'separator' -->
+-        <li class="divider"></li>
++        <li><hr class="dropdown-divider"></li>
+         <!-- /ko -->
+         <!-- ko ifnot: value === 'separator' -->
+-        <li><a href="#" data-bind="click: $parent.addFormAction, text: display"></a></li>
++        <li><a href="#" class="dropdown-item" data-bind="click: $parent.addFormAction, text: display"></a></li>
+         <!-- /ko -->
+       </ul>
      </div>
      <div data-bind="visible: !actionOptions().length">
        <i class="fa fa-plus icon-muted"></i>
@@ -520,27 +607,28 @@
 -    <div class="panel panel-appmanager" data-bind="visible: load_update_cases().length">
 -      <div class="panel-heading">
 -        <h4 class="panel-title panel-title-nolink">
-+    <div class="card panel-appmanager" data-bind="visible: load_update_cases().length">  {# todo B5: css-panel #}
-+      <div class="card-header">
-+        <h4 class="card-title card-title-nolink">
-           {% trans "Load / Update / Close Cases" %}
-         </h4>
-       </div>
+-          {% trans "Load / Update / Close Cases" %}
+-        </h4>
+-      </div>
 -      <div class="panel-body">
 -        <div id="case-load-accordion" class="panel-group" data-bind="foreach: load_update_cases, sortableList: load_update_cases, sortableListSelector: 'div:not(.not-droppable)'">
++    <div class="card card-modern-gray mb-3" data-bind="visible: load_update_cases().length">
++      <div class="card-header h5">
++        {% trans "Load / Update / Close Cases" %}
++      </div>
 +      <div class="card-body">
-+        <div id="case-load-accordion" class="card-group" data-bind="foreach: load_update_cases, sortableList: load_update_cases, sortableListSelector: 'div:not(.not-droppable)'">
++        <div id="case-load-accordion" class="d-flex flex-column gap-3" data-bind="foreach: load_update_cases, sortableList: load_update_cases, sortableListSelector: 'div:not(.not-droppable)'">
            <!-- ko if: auto_select -->
 -          <div class="panel panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
-+          <div class="card panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>  {# todo B5: css-panel #}
++          <div class="card card-modern-gray mb-3 card-case-actions" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
            <!-- /ko -->
            <!-- ko if: load_case_from_fixture -->
 -          <div class="panel panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action-load-case-from-fixture'}"></div>
-+          <div class="card panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action-load-case-from-fixture'}"></div>  {# todo B5: css-panel #}
++          <div class="card card-modern-gray mb-3 card-case-actions" data-bind="template: {name: 'case-config:case-action-load-case-from-fixture'}"></div>
            <!-- /ko -->
            <!-- ko ifnot: auto_select || load_case_from_fixture -->
 -          <div class="panel panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>
-+          <div class="card panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>  {# todo B5: css-panel #}
++          <div class="card card-modern-gray mb-3 card-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>
            <!-- /ko -->
          </div>
        </div>
@@ -550,18 +638,19 @@
 -    <div class="panel panel-appmanager" data-bind="visible: open_cases().length">
 -      <div class="panel-heading">
 -        <h4 class="panel-title panel-title-nolink" >
-+    <div class="card panel-appmanager" data-bind="visible: open_cases().length">  {# todo B5: css-panel #}
-+      <div class="card-header">
-+        <h4 class="card-title card-title-nolink" >
-           {% trans "Open New Cases" %}
-         </h4>
-       </div>
+-          {% trans "Open New Cases" %}
+-        </h4>
+-      </div>
 -      <div class="panel-body">
 -        <div id="case-open-accordion" class="panel-group" data-bind="foreach: open_cases">
 -          <div class="panel panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>
++    <div class="card card-modern-gray mb-3" data-bind="visible: open_cases().length">
++      <div class="card-header h5">
++        {% trans "Open New Cases" %}
++      </div>
 +      <div class="card-body">
-+        <div id="case-open-accordion" class="card-group" data-bind="foreach: open_cases">
-+          <div class="card panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>  {# todo B5: css-panel #}
++        <div id="case-open-accordion" class="d-flex flex-column gap-3" data-bind="foreach: open_cases">
++          <div class="card card-modern-gray mb-3 card-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>
          </div>
        </div>
      </div>
@@ -570,17 +659,18 @@
 -    <div class="panel panel-appmanager">
 -      <div class="panel-heading">
 -        <h4 class="panel-title panel-title-nolink" >
-+    <div class="card panel-appmanager">  {# todo B5: css-panel #}
-+      <div class="card-header">
-+        <h4 class="card-title card-title-nolink" >
-           {% trans "Arbitrary Datums" %}
-         </h4>
-       </div>
+-          {% trans "Arbitrary Datums" %}
+-        </h4>
+-      </div>
 -      <div class="panel-body">
 -        <div id="arbitrary-datums" class="panel-group">
 -          <table data-bind="visible: arbitrary_datums().length" class="col-sm-12 table table-savecaseprops">
++    <div class="card card-modern-gray mb-3">
++      <div class="card-header h5">
++        {% trans "Arbitrary Datums" %}
++      </div>
 +      <div class="card-body">
-+        <div id="arbitrary-datums" class="card-group">
++        <div id="arbitrary-datums" class="d-flex flex-column gap-3">
 +          <table data-bind="visible: arbitrary_datums().length" class="col-md-12 table table-savecaseprops">
              <thead>
                <tr>
@@ -614,7 +704,7 @@
                    <input type="text" class="form-control textbox" data-bind="textInput: datum_function" />
                  </td>
                </tr>
-@@ -614,7 +614,7 @@
+@@ -614,7 +594,7 @@
            </table>
            <br><br>
          </div>

@@ -14,71 +14,123 @@
  
  {% block stylesheets %}
    {{ block.super }}
-@@ -27,10 +27,10 @@
+@@ -26,29 +26,30 @@
+ {% endblock %}
  
  {% block pre_form_content %}
-   <div class="appmanager-page-actions">
+-  <div class="appmanager-page-actions">
 -    {% include 'app_manager/partials/bootstrap3/app_summary_button.html' %}
 -    {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-default' %}
-+    {% include 'app_manager/partials/bootstrap5/app_summary_button.html' %}
-+    {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-outline-primary' %}
-     <a
+-    <a
 -      class="btn btn-default"
-+      class="btn btn-outline-primary"
-       href="{% url "form_source" domain app.id form.unique_id %}"
-     >
-       <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
-@@ -113,14 +113,14 @@
+-      href="{% url "form_source" domain app.id form.unique_id %}"
+-    >
+-      <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
+-    </a>
+-  </div>
+-
+-  <div class="appmanager-edit-title">
+-    {% with disallow_edit=request.couch_user.can_edit_apps|yesno:"false,true" %}
+-      {% if form.get_action_type == 'open' %}
+-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' disallow_edit=disallow_edit %}
+-      {% elif form.requires_case %}
+-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' disallow_edit=disallow_edit %}
+-      {% elif form.form_type == 'shadow_form' %}
+-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa-regular fa-moon' disallow_edit=disallow_edit %}
+-      {% else %}
+-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa-regular fa-file' disallow_edit=disallow_edit %}
+-      {% endif %}
+-    {% endwith %}
++  <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
++    <div class="appmanager-edit-title flex-grow-1 me-0">
++      {% with disallow_edit=request.couch_user.can_edit_apps|yesno:"false,true" %}
++        {% if form.get_action_type == 'open' %}
++          {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' disallow_edit=disallow_edit %}
++        {% elif form.requires_case %}
++          {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' disallow_edit=disallow_edit %}
++        {% elif form.form_type == 'shadow_form' %}
++          {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa-regular fa-moon' disallow_edit=disallow_edit %}
++        {% else %}
++          {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa-regular fa-file' disallow_edit=disallow_edit %}
++        {% endif %}
++      {% endwith %}
++    </div>
++    <div class="d-flex gap-2 flex-shrink-0">
++      {% include 'app_manager/partials/bootstrap5/app_summary_button.html' %}
++      {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-outline-primary' %}
++      <a
++        class="btn btn-outline-primary"
++        href="{% url "form_source" domain app.id form.unique_id %}"
++      >
++        <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
++      </a>
++    </div>
+   </div>
+ 
+   <div class="appmanager-edit-description">
+@@ -113,30 +114,34 @@
    {% initial_page_data 'add_ons_privileges' add_ons_privileges %}
    {% registerurl "get_form_datums" domain app.id %}
  
 -  <div class="tabbable appmanager-tabs-container">
--    <ul class="nav nav-tabs sticky-tabs">
 +  <div class="tabbable mt-3">
-+    <ul class="nav nav-tabs sticky-tabs">  {# todo B5: css-nav #}
+     <ul class="nav nav-tabs sticky-tabs">
        {% if form.uses_cases %}
-         <li>
+-        <li>
++        <li class="nav-item">
            <a
              id="case-configuration-tab"
++            class="nav-link"
              href="#case-configuration"
 -            data-toggle="tab"
 +            data-bs-toggle="tab"
            >
              {% trans "Case Management" %}
            </a>
-@@ -128,7 +128,7 @@
+         </li>
        {% endif %}
  
-       <li>
+-      <li>
 -        <a href="#form-settings" data-toggle="tab">{% trans "Settings" %}</a>
-+        <a href="#form-settings" data-bs-toggle="tab">{% trans "Settings" %}</a>
++      <li class="nav-item">
++        <a class="nav-link" href="#form-settings" data-bs-toggle="tab"
++          >{% trans "Settings" %}</a
++        >
        </li>
  
        {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
-@@ -136,7 +136,7 @@
+-        <li>
++        <li class="nav-item">
            <a
              id="usercase-configuration-tab"
++            class="nav-link"
              href="#usercase-configuration"
 -            data-toggle="tab"
 +            data-bs-toggle="tab"
            >
              {% trans "User Properties" %}
            </a>
-@@ -146,7 +146,7 @@
+@@ -145,8 +150,8 @@
+ 
        {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
          {% if module.has_schedule %}
-           <li>
+-          <li>
 -            <a href="#visit-scheduler" data-toggle="tab">
-+            <a href="#visit-scheduler" data-bs-toggle="tab">
++          <li class="nav-item">
++            <a class="nav-link" href="#visit-scheduler" data-bs-toggle="tab">
                {% trans "Visit Scheduler" %}
              </a>
            </li>
-@@ -155,14 +155,14 @@
+@@ -154,15 +159,17 @@
+       {% endif %}
  
        {% if form.form_type != "shadow_form" %}
-         <li>
+-        <li>
 -          <a href="#advanced" data-toggle="tab">{% trans "Actions" %}</a>
-+          <a href="#advanced" data-bs-toggle="tab">{% trans "Actions" %}</a>
++        <li class="nav-item">
++          <a class="nav-link" href="#advanced" data-bs-toggle="tab"
++            >{% trans "Actions" %}</a
++          >
          </li>
        {% endif %}
      </ul>
@@ -92,7 +144,7 @@
        {% if form.uses_cases %}
          <div class="tab-pane" id="case-configuration">
            {% include "data_dictionary/partials/case_property_warning.html" %}
-@@ -204,9 +204,9 @@
+@@ -204,9 +211,9 @@
              <div class="casexml" id="casexml_home">
                {% if module.doc_type == 'AdvancedModule' %}
                  {% initial_page_data 'schedule_options' schedule_options %}
@@ -104,7 +156,7 @@
                {% endif %}
              </div>
            {% else %}
-@@ -218,7 +218,7 @@
+@@ -218,7 +225,7 @@
        {% endif %}
  
        {% if nav_form %}
@@ -113,7 +165,7 @@
        {% endif %}
  
        {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
-@@ -261,14 +261,14 @@
+@@ -261,14 +268,14 @@
                        </a>
                        <a
                          href="{% url 'drop_usercase' domain app.id %}"
@@ -130,7 +182,7 @@
                {% endblock %}
              </div>
            {% else %}
-@@ -281,11 +281,11 @@
+@@ -281,11 +288,11 @@
  
        {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
          {% if module.has_schedule %}
@@ -144,7 +196,7 @@
        {% endif %}
      </div>
    </div>
-@@ -294,7 +294,7 @@
+@@ -294,7 +301,7 @@
  
  {% block modals %}
    {{ block.super }}

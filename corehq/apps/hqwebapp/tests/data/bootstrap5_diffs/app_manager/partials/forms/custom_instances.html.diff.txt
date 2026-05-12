@@ -46,7 +46,7 @@
 -      <td class="col-sm-2">
 -        <i style="cursor: pointer;" class="fa fa-remove"
 +      <td class="col-md-2">
-+        <i style="cursor: pointer;" class="fa fa-remove"  {# todo B5: inline-style #}
++        <i class="fa fa-remove clickable"
             data-bind="click: $parent.removeInstance"></i>
        </td>
      </tr>

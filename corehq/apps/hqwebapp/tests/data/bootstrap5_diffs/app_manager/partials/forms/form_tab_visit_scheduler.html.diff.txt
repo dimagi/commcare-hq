@@ -6,8 +6,8 @@
          <div data-bind="saveButton: saveButton"></div>
 -        <div class="has-error pull-right">
 -                    <span class="help-block error-text" style="display:none; margin-right: 5px;" id="form-errors">
-+        <div class="has-error float-end">  {# todo B5: css-has-error #}
-+                    <span class="help-block error-text" style="display:none; margin-right: 5px;" id="form-errors">  {# todo B5: inline-style #}
++        <div class="float-end">
++                    <span class="text-danger error-text d-none me-2" id="form-errors">
                          {% trans 'There were errors saving. Please fix the errors below.'%}
                      </span>
          </div>
@@ -17,8 +17,8 @@
          <legend>{% trans "Form Settings" %}</legend>
 -        <div class="form-group">
 -          <label class="control-label col-sm-2">
-+        <div class="form-group">  {# todo B5: css-form-group #}
-+          <label class="form-label col-md-2">
++        <div class="row mb-3">
++          <label class="field-label pt-0">
              {% trans "This form has a schedule" %}
              <span class="hq-help-template"
                    data-title="{% trans 'Schedule Phase' %}"
@@ -32,11 +32,11 @@
 -        <div class="form-group" data-bind="visible: scheduleEnabled">
 -          <label class="col-sm-2 control-label">
 +          <div class="col-md-4">
-+            <input type="checkbox" data-bind="checked: scheduleEnabled" />  {# todo B5: css-checkbox #}
++            <input type="checkbox" class="form-check-input" data-bind="checked: scheduleEnabled" />
 +          </div>
 +        </div>
-+        <div class="form-group" data-bind="visible: scheduleEnabled">  {# todo B5: css-form-group #}
-+          <label class="col-md-2 form-label">
++        <div class="row mb-3" data-bind="visible: scheduleEnabled">
++          <label class="field-label">
              {% trans "Form Abbreviation" %}
            </label>
 -          <div class="col-sm-4">
@@ -44,15 +44,15 @@
              <input type="text" class="form-control" id="schedule_form_id"
                     required data-bind="value: schedule_form_id">
 -            <span class="help-block error-text" style="display:none">
-+            <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
++            <span class="help-block error-text d-none">
                              {% trans 'This field is required' %}
                          </span>
            </div>
          </div>
 -        <div class="form-group" data-bind="visible: scheduleEnabled">
 -          <label class="col-sm-2 control-label">
-+        <div class="form-group" data-bind="visible: scheduleEnabled">  {# todo B5: css-form-group #}
-+          <label class="col-md-2 form-label">
++        <div class="row mb-3" data-bind="visible: scheduleEnabled">
++          <label class="field-label">
              {% trans "Schedule Phase" %}
              {% url "view_module" domain app.id module.unique_id as module_url %}
              <span class="hq-help-template"
@@ -69,7 +69,7 @@
                                             value: phase.anchor">
              </select>
 -            <span class="help-block error-text" style="display:none">
-+            <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
++            <span class="help-block error-text d-none">
                              {% trans 'This field is required'%}
                          </span>
            </div>
@@ -78,43 +78,51 @@
            <legend>{% trans "Form Relevancy Window" %}</legend>
            <div class="container-fluid">
 -            <div class="form-inline">
-+            <div class="form-inline">  {# todo B5: css-form-inline #}
++            <div class="d-flex flex-wrap align-items-center gap-2">
                <label>{% trans "Show this form " %}</label>
-               <input type="number" min="0" required class="form-control" data-bind="numericValue: relevancy.starts"/>
+-              <input type="number" min="0" required class="form-control" data-bind="numericValue: relevancy.starts"/>
 -              <span class="help-block error-text" style="display:none">
-+              <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
++              <input type="number" min="0" required class="form-control w-auto" data-bind="numericValue: relevancy.starts"/>
++              <span class="help-block error-text d-none">
                                  {% trans 'This field is required'%}
                              </span>
                <label>{% trans "days" %}</label>
 -              <select data-bind="value: relevancy.starts_type" class="form-control">
-+              <select data-bind="value: relevancy.starts_type" class="form-select">
++              <select data-bind="value: relevancy.starts_type" class="form-select w-auto">
                  <option value="before">{% trans "before the anchor date" %}</option>
                  <option value="after">{% trans "after the anchor date" %}</option>
                </select>
-@@ -81,9 +81,9 @@
+@@ -81,27 +81,29 @@
            </div>
            <div class="spacer"></div>
            <div class="container-fluid">
 -            <div class="form-inline">
 -              <label>
 -                <input type="checkbox"
-+            <div class="form-inline">  {# todo B5: css-form-inline #}
-+              <label>
-+                <input type="checkbox"  {# todo B5: css-checkbox #}
-                        data-bind="checked: relevancy.enableFormExpiry,
-                                                   enable: allowExpiry">
-                 {% trans "Hide this form " %}
-@@ -91,17 +91,17 @@
-               <input type="number" required class="form-control"
+-                       data-bind="checked: relevancy.enableFormExpiry,
+-                                                  enable: allowExpiry">
+-                {% trans "Hide this form " %}
+-              </label>
+-              <input type="number" required class="form-control"
++            <div class="d-flex flex-wrap align-items-center gap-2">
++              <div class="form-check">
++                <label class="form-check-label">
++                  <input class="form-check-input" type="checkbox"
++                         data-bind="checked: relevancy.enableFormExpiry,
++                                                    enable: allowExpiry">
++                  {% trans "Hide this form " %}
++                </label>
++              </div>
++              <input type="number" required class="form-control w-auto"
                       data-bind="numericValue: relevancy.expires,
                                                enable: (relevancy.enableFormExpiry() && allowExpiry())"/>
 -              <span class="help-block error-text" style="display:none">
-+              <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
++              <span class="help-block error-text d-none">
                                  {% trans 'This field is required'%}
                              </span>
                <label>{% trans "days" %}</label>
 -              <select class="form-control"
-+              <select class="form-select"
++              <select class="form-select w-auto"
                        data-bind="value: relevancy.expires_type,
                                                 enable: (relevancy.enableFormExpiry() && allowExpiry())">
                  <option value="before">{% trans "before the anchor date" %}</option>
@@ -125,7 +133,7 @@
                                  {% trans "Forms can only be hidden if there are no transition or termination conditions" %}
                              </span>
              </div>
-@@ -109,10 +109,10 @@
+@@ -109,10 +111,10 @@
          </fieldset>
          <fieldset>
            <legend>{% trans "Transitions" %}</legend>
@@ -133,14 +141,14 @@
 -            <div class="checkbox">
 -              <label>
 -                <input type="checkbox" data-bind="checked: transition">
-+          <div class="form-group">  {# todo B5: css-form-group #}
-+            <div class="checkbox">  {# todo B5: css-checkbox #}
-+              <label>
-+                <input type="checkbox" data-bind="checked: transition">  {# todo B5: css-checkbox #}
++          <div class="mb-3">
++            <div class="form-check">
++              <label class="form-check-label">
++                <input class="form-check-input" type="checkbox" data-bind="checked: transition">
                  {% trans "Transition to the next phase" %}
                </label>
                <div data-bind="template: {
-@@ -121,10 +121,10 @@
+@@ -121,10 +123,10 @@
                                              }"></div>
              </div>
            </div>
@@ -148,14 +156,14 @@
 -            <div class="checkbox">
 -              <label>
 -                <input type="checkbox"  data-bind="checked: terminate">
-+          <div class="form-group">  {# todo B5: css-form-group #}
-+            <div class="checkbox">  {# todo B5: css-checkbox #}
-+              <label>
-+                <input type="checkbox"  data-bind="checked: terminate">  {# todo B5: css-checkbox #}
++          <div class="mb-3">
++            <div class="form-check">
++              <label class="form-check-label">
++                <input class="form-check-input" type="checkbox" data-bind="checked: terminate">
                  {% trans "Terminate the schedule" %}
                </label>
                <div data-bind="template: {
-@@ -137,10 +137,10 @@
+@@ -137,10 +139,10 @@
  
          <fieldset>
            <legend>{% trans "Visit Schedule" %}</legend>
@@ -163,57 +171,62 @@
 -            <div class="checkbox">
 -              <label>
 -                <input type="checkbox"  data-bind="checked: allow_unscheduled">
-+          <div class="form-group">  {# todo B5: css-form-group #}
-+            <div class="checkbox">  {# todo B5: css-checkbox #}
-+              <label>
-+                <input type="checkbox"  data-bind="checked: allow_unscheduled">  {# todo B5: css-checkbox #}
++          <div class="mb-3">
++            <div class="form-check">
++              <label class="form-check-label">
++                <input class="form-check-input" type="checkbox" data-bind="checked: allow_unscheduled">
                  {% trans "Allow unscheduled visits" %}
                </label>
              </div>
-@@ -155,15 +155,15 @@
+@@ -155,15 +157,15 @@
                  {% trans "Visit" %}
                  <span data-bind="text: $index() + 1, visible: type() !== 'repeats'""/>
                </legend>
 -              <div class="form-group">
 -                <div class="form-inline">
-+              <div class="form-group">  {# todo B5: css-form-group #}
-+                <div class="form-inline">  {# todo B5: css-form-inline #}
++              <div class="mb-3">
++                <div class="d-flex flex-wrap align-items-center gap-2">
                    {% trans "Due" %}
-                   <input type="number" required class="form-control" data-bind="numericValue: due"/>
+-                  <input type="number" required class="form-control" data-bind="numericValue: due"/>
 -                  <span class="help-block error-text" style="display:none">
-+                  <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
++                  <input type="number" required class="form-control w-auto" data-bind="numericValue: due"/>
++                  <span class="help-block error-text d-none">
                                          {% trans 'This field is required'%}
                                      </span>
                    {% trans "days" %}
 -                  <select data-bind="value: type" class="form-control">
-+                  <select data-bind="value: type" class="form-select">
++                  <select data-bind="value: type" class="form-select w-auto">
                      <option value="before">{% trans "before the anchor date" %}</option>
                      <option value="after">{% trans "after the anchor date" %}</option>
                      <option value="repeats"
-@@ -173,12 +173,12 @@
+@@ -173,26 +175,26 @@
                    </select>
                  </div>
                </div>
 -              <div class="form-group">
 -                <div class="form-inline">
-+              <div class="form-group">  {# todo B5: css-form-group #}
-+                <div class="form-inline">  {# todo B5: css-form-inline #}
++              <div class="mb-3">
++                <div class="d-flex flex-wrap align-items-center gap-2">
                    {% trans "Visit can be made up to" %}
-                   <input type="number" required class="form-control"
+-                  <input type="number" required class="form-control"
++                  <input type="number" required class="form-control w-auto"
                           data-bind="numericValue: starts"/>
 -                  <span class="help-block error-text" style="display:none">
-+                  <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
++                  <span class="help-block error-text d-none">
                                          {% trans 'This field is required'%}
                                      </span>
                    {% trans "days early and" %}
-@@ -188,11 +188,11 @@
+-                  <input type="number" class="form-control" data-bind="numericValue: expires"/>
++                  <input type="number" class="form-control w-auto" data-bind="numericValue: expires"/>
+                   {% trans "days late" %}
+                 </div>
                </div>
              </fieldset>
            </div>
 -          <div class="form-group container-fluid">
 -                        <span class="help-block error-text" style="display:none">
-+          <div class="form-group container-fluid">  {# todo B5: css-form-group #}
-+                        <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
++          <div class="mb-3 container-fluid">
++                        <span class="help-block error-text d-none">
                              {% trans 'Please add at least one visit' %}
                          </span>
 -            <button id="add-visit" class="btn btn-default"

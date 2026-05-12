@@ -39,8 +39,7 @@
 -    <div class="col-sm-4"
 +    <div class="col-md-4"
           data-bind="visible: operator() != 'boolean_true'">
--      <!-- Select question: answer is a dropdown -->
-+      <!-- Select question: answer is a dropdown -->  {# todo B5: css-dropdown #}
+       <!-- Select question: answer is a dropdown -->
        <span data-bind="if: $root.getAnswers({question: question()}).length">
 -        <select class="form-control"
 +        <select class="form-select"
@@ -75,28 +74,29 @@
          id="case-config:case-transaction:case-preload">
 -  <div class="panel-heading">
 -    <h4 class="panel-title panel-title-nolink">
-+  <div class="card-header">
-+    <h4 class="card-title card-title-nolink">
++  <div class="card-header h5">
++    <span>
        <i class="fa fa-arrow-right"></i><i class="fa-regular fa-file"></i>
        {% trans "Load the following properties into the form questions" %}
-     </h4>
-   </div>
+-    </h4>
+-  </div>
 -  <div class="panel-body">
++    </span>
++  </div>
 +  <div class="card-body">
      <table class="table table-savecaseprops"
             data-bind="visible: case_preload().length">
        <thead>
-@@ -135,19 +135,19 @@
+@@ -135,19 +135,16 @@
        </thead>
  
        <tbody data-bind="foreach: case_preload">
 -      <tr class="form-group"
-+      <tr class="form-group"  {# todo B5: css-form-group #}
-           data-bind="css: {
+-          data-bind="css: {
 -                       'has-error': validateProperty || validateQuestion,
-+                       'has-error': validateProperty || validateQuestion,  {# todo B5: css-has-error #}
-                      }">
+-                     }">
 -        <td class="col-sm-1 text-center">
++      <tr>
 +        <td class="col-md-1 text-center">
            <button
 -            class="btn btn-danger"
@@ -111,7 +111,12 @@
            <div class="full-width-select2"
                 data-bind="template: {
                              name: 'case-config:case-properties:property',
-@@ -161,10 +161,10 @@
+@@ -157,17 +154,17 @@
+                               'isDisabled': isLocked(),
+                             }
+                           }"></div>
+-          <p class="help-block"
++          <p class="text-danger small mt-2 mb-0"
               data-bind="html: validateProperty,
                          visible: validateProperty"></p>
          </td>
@@ -123,8 +128,12 @@
 +        <td class="col-md-5">
            <div class="full-width-select2"
                 data-bind="template: 'case-config:case-properties:question'"></div>
-           <p class="help-block"
-@@ -179,7 +179,7 @@
+-          <p class="help-block"
++          <p class="text-danger small mt-2 mb-0"
+              data-bind="html: validateQuestion,
+                         visible: validateQuestion"></p>
+         </td>
+@@ -179,7 +176,7 @@
        {% trans "No properties will be loaded" %}
      </div>
      <div class="add-property">
@@ -133,32 +142,51 @@
          <i class="fa fa-plus"></i>
          {% trans "Add Property" %}
        </button>
-@@ -189,11 +189,11 @@
+@@ -189,19 +186,8 @@
  
  <script type="text/html"
          id="case-config:case-transaction:case-properties">
 -  <div class="panel-heading">
 -    <h4 class="panel-title panel-title-nolink">
-+  <div class="card-header">
-+    <h4 class="card-title card-title-nolink">
-       <div data-bind="if: searchAndFilter">
+-      <div data-bind="if: searchAndFilter">
 -        <div class="pull-right"
 -             style="max-width: 25%; margin-top: -5px;"
-+        <div class="float-end"
-+             style="max-width: 25%; margin-top: -5px;"  {# todo B5: inline-style #}
-              data-bind="visible: case_properties().length">
-           <search-box data-apply-bindings="false"
-                       params="value: case_property_query,
-@@ -211,7 +211,7 @@
+-             data-bind="visible: case_properties().length">
+-          <search-box data-apply-bindings="false"
+-                      params="value: case_property_query,
+-                              action: goToPage,
+-                              immediate: true,
+-                              placeholder: '{% trans_html_attr "Search properties..." %}'"></search-box>
+-        </div>
+-      </div>
++  <div class="card-header h5 gap-2">
++    <span class="flex-grow-1">
+       <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
+       <!-- ko if: !$data.type || $data.type() == "case-property" -->
+       {% trans "Save Questions to Case Properties" %}
+@@ -209,9 +195,18 @@
+       <!-- ko if: $data.type && $data.type() == "user-property" -->
+         {% trans "Save Questions to User Properties" %}
        <!-- /ko -->
-     </h4>
-   </div>
+-    </h4>
+-  </div>
 -  <div class="panel-body">
++    </span>
++    <div data-bind="if: searchAndFilter">
++      <div data-bind="visible: case_properties().length">
++        <search-box data-apply-bindings="false"
++                    params="value: case_property_query,
++                            action: goToPage,
++                            immediate: true,
++                            placeholder: '{% trans_html_attr "Search properties..." %}'"></search-box>
++      </div>
++    </div>
++  </div>
 +  <div class="card-body">
      <div class="alert alert-warning" data-bind="visible: hasDeprecatedProperties" >
        <p>
          <i class="fa fa-warning"></i>
-@@ -228,16 +228,16 @@
+@@ -228,12 +223,12 @@
             data-bind="visible: case_properties().length">
        <thead>
        <tr>
@@ -175,44 +203,26 @@
            <!-- ko if: $data.type && $data.type() == "user-property" -->
              {% trans "User Case Property" %}
              <span
--                  style="position: absolute; margin-top: -2px"
-+                  style="position: absolute; margin-top: -2px"  {# todo B5: inline-style #}
-                   data-bind="makeHqHelp: {
-                     description: '{% blocktrans trimmed %}
-                         User Case Properties allow you to store data about a web or mobile user. Saving a user
-@@ -249,7 +249,7 @@
-           <!-- ko if: !$data.type || $data.type() == "case-property" -->
-             {% trans "Case Property" %}
-             <span
--                  style="position: absolute; margin-top: -2px"
-+                  style="position: absolute; margin-top: -2px"  {# todo B5: inline-style #}
-                   data-bind="makeHqHelp: {
-                     description: '{% blocktrans trimmed %}
-                         Saving a question as a case property makes it accessible and
-@@ -262,9 +262,9 @@
+@@ -262,7 +257,7 @@
          {% comment %} The odd style additions in this block were necessary to put the question mark
          in line with the text when the text is both wrapped and unwrapped. {% endcomment %}
          <!-- ko if: saveOnlyEditedFormFieldsEnabled -->
 -        <th class="col-sm-2 text-center" style="padding-right: 30px">
--            <span style="padding-right: 5px">{% trans "Save Only If Edited" %}</span>
--            <span style="position: absolute; margin-top: -2px;" data-bind="makeHqHelp: {
-+        <th class="col-md-2 text-center" style="padding-right: 30px">  {# todo B5: inline-style #}
-+            <span style="padding-right: 5px">{% trans "Save Only If Edited" %}</span>  {# todo B5: inline-style #}
-+            <span style="position: absolute; margin-top: -2px;" data-bind="makeHqHelp: {  {# todo B5: inline-style #}
++        <th class="col-md-2 text-center" style="padding-right: 30px">
+             <span style="padding-right: 5px">{% trans "Save Only If Edited" %}</span>
+             <span style="position: absolute; margin-top: -2px;" data-bind="makeHqHelp: {
                description: '{% trans "Only save the answer if form submission will change the property from its previous value." %}',
-               placement: 'left'
-             }"></span>
-@@ -274,16 +274,16 @@
+@@ -274,16 +269,14 @@
        </thead>
  
        <tbody data-bind="foreach: visible_case_properties">
 -      <tr class="form-group case-property-mapping"
-+      <tr class="form-group case-property-mapping"  {# todo B5: css-form-group #}
++      <tr class="case-property-mapping"
            data-bind="css: {
 -                      'has-error': validate,
-+                      'has-error': validate,  {# todo B5: css-has-error #}
-                       warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key()),
-                       'has-warning': !validate() && isDeprecated()
+-                      warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key()),
+-                      'has-warning': !validate() && isDeprecated()
++                      'table-warning': (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())
                      }">
 -        <td class="col-sm-1 text-center"
 +        <td class="col-md-1 text-center"
@@ -223,7 +233,7 @@
                <i class="fa fa-remove"></i>
              </button>
            <!-- /ko -->
-@@ -295,22 +295,23 @@
+@@ -295,22 +288,23 @@
              </i>
            <!-- /ko -->
          </td>
@@ -251,18 +261,33 @@
            <div class="full-width-select2"
                 data-bind="template: {
                              name: 'case-config:case-properties:property',
-@@ -353,8 +354,8 @@
+@@ -321,12 +315,12 @@
+                             },
+                             afterRender: $root.makePopover
+                           }"></div>
+-          <p class="help-block"
++          <p class="text-danger small mt-2 mb-0"
+              data-bind="html: validate,
+                         visible: validate"></p>
+           <!-- ko if: $parent.hasPrivilege && !isLocked() -->
+           {% if request|request_has_privilege:"DATA_DICTIONARY" %}
+-            <p class="help-block"  data-bind="visible: !validate() && isDeprecated()">
++            <p class="text-warning small mt-2 mb-0"  data-bind="visible: !validate() && isDeprecated()">
+               {% blocktrans %}
+                 Property has been deprecated.
+               {% endblocktrans %}
+@@ -353,8 +347,8 @@
              <p data-bind="text: $data.description"></p>
            <!-- /ko -->
          </td>
 -        <td data-bind="if: $parent.saveOnlyEditedFormFieldsEnabled" class="col-sm-2 text-center">
 -          <input type="checkbox"
 +        <td data-bind="if: $parent.saveOnlyEditedFormFieldsEnabled" class="col-md-2 text-center">
-+          <input type="checkbox"  {# todo B5: css-checkbox #}
++          <input type="checkbox" class="form-check-input"
                   data-bind="click: $parent.switchSaveOnlyIfEdited,
                              checked: $data.save_only_if_edited,
                              disable: !$parent.hasPrivilege || isLocked()"
-@@ -364,7 +365,7 @@
+@@ -364,7 +358,7 @@
        </tbody>
      </table>
      <div data-bind="if: searchAndFilter">

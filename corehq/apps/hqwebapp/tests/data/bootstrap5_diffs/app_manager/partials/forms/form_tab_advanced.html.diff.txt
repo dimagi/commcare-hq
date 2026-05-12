@@ -1,63 +1,58 @@
 --- 
 +++ 
-@@ -3,25 +3,27 @@
+@@ -3,24 +3,24 @@
  {% load hq_shared_tags %}
  <div class="tab-pane" id="advanced">
    {% if allow_form_copy %}
 -    <div class="panel panel-appmanager">
-+    <div class="card panel-appmanager">
-+      {# todo B5: css-panel #}
++    <div class="card card-modern-gray mb-3">
        <form
-         class="form-inline"
+-        class="form-inline"
          method="POST"
          action="{% url "copy_form" domain app.id form.unique_id %}"
        >
-+        {# todo B5: css-form-inline #}
          {% csrf_token %}
 -        <div class="panel-heading">
 -          <h4 class="panel-title panel-title-nolink">
 -            {% trans "Copy Form" %}
 -          </h4>
-+        <div class="card-header">
-+          <h4 class="card-title card-title-nolink">{% trans "Copy Form" %}</h4>
++        <div class="card-header h5">
++          {% trans "Copy Form" %}
          </div>
 -        <div class="panel-body">
-+        <div class="card-body">
++        <div class="card-body d-flex flex-wrap align-items-center gap-2">
            {% if request|toggle_enabled:"COPY_FORM_TO_APP" %}
-             <span id="app-module-selection">
+-            <span id="app-module-selection">
++            <span
++              id="app-module-selection"
++              class="d-inline-flex flex-wrap align-items-center gap-2"
++            >
                <select
                  name="to_app_id"
-+                {# todo B5: css-select-form-control #}
-                 class="form-control"
+-                class="form-control"
++                class="form-select w-auto"
                  style="min-width: 150px;"
-+                {# todo B5: inline-style #}
                  data-bind="options: apps,
                                             optionsText: 'name',
-                                            optionsValue: 'id',
-@@ -30,8 +32,10 @@
+@@ -30,7 +30,7 @@
                <!-- ko with: selectedApp -->
                <select
                  name="to_module_id"
-+                {# todo B5: css-select-form-control #}
-                 class="form-control"
+-                class="form-control"
++                class="form-select w-auto"
                  style="min-width: 150px;"
-+                {# todo B5: inline-style #}
                  data-bind="options: modules,
                                             optionsText: 'name',
-                                            optionsValue: 'id',
-@@ -42,17 +46,18 @@
+@@ -42,7 +42,7 @@
            {% else %}
              <select
                name="to_module_id"
 -              class="form-control"
-+              class="form-select"
++              class="form-select w-auto"
                style="min-width: 150px;"
              >
                {% for mod in app.get_modules %}
-+                {# todo B5: inline-style #}
-                 <option value="{{ mod.id }}">
-                   {{ mod.name|html_trans:langs }}
-                 </option>
+@@ -52,7 +52,7 @@
                {% endfor %}
              </select>
            {% endif %}
@@ -66,33 +61,48 @@
              <i class="fa fa-copy"></i>
              {% trans "Copy" %}
            </button>
-@@ -62,21 +67,23 @@
+@@ -62,22 +62,22 @@
      {% csrf_token %}
      <fieldset></fieldset>
    {% endif %}
 -  <div class="panel panel-appmanager">
 -    <div class="panel-heading">
 -      <h4 class="panel-title panel-title-nolink">{% trans "XForm" %}</h4>
-+  <div class="card panel-appmanager">
-+    {# todo B5: css-panel #}
-+    <div class="card-header">
-+      <h4 class="card-title card-title-nolink">{% trans "XForm" %}</h4>
++  <div class="card card-modern-gray mb-3">
++    <div class="card-header h5">
++      {% trans "XForm" %}
      </div>
 -    <div class="panel-body">
+-      <ul class="nav nav-pills nav-stacked">
 +    <div class="card-body">
-       <ul class="nav nav-pills nav-stacked">
-+        {# todo B5: css-nav #}
++      <ul class="nav nav-pills flex-column">
          {% if allow_xform_upload %}
-           <li>
+-          <li>
 -            <a href="#upload-xform" data-toggle="modal">
-+            <a href="#upload-xform" data-bs-toggle="modal">
++          <li class="nav-item">
++            <a class="nav-link" href="#upload-xform" data-bs-toggle="modal">
                <i class="fa fa-arrow-up"></i>
                {% trans "Upload" %}
              </a>
            </li>
          {% else %}
 -          <li class="disabled" style="pointer-events: none;">
-+          <li class="disabled pe-none">
-             <a>
+-            <a>
++          <li class="nav-item">
++            <a class="nav-link disabled" aria-disabled="true">
                <i class="fa fa-arrow-up"></i>
                {% blocktrans %}
+                 This form contains locked questions and can only be uploaded by
+@@ -86,9 +86,10 @@
+             </a>
+           </li>
+         {% endif %}
+-        <li>
++        <li class="nav-item">
+           <a
+-            {% if not form.source %}class="disabled"{% endif %}
++            class="nav-link {% if not form.source %}disabled{% endif %}"
++            {% if not form.source %}aria-disabled="true"{% endif %}
+             href="{% url "get_xform_source" domain app.id form.unique_id %}"
+           >
+             <i class="fa fa-arrow-down"></i>
