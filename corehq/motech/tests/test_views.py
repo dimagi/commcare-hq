@@ -11,6 +11,7 @@ from corehq.motech.const import (
     PASSWORD_PLACEHOLDER,
 )
 from corehq.motech.forms import ConnectionSettingsForm
+from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
 
 DOMAIN = 'test-motech-views'
@@ -38,17 +39,43 @@ class TestConnectionSettingsView(TestCase):
         cls.privilege_patch.start()
         cls.addClassCleanup(cls.privilege_patch.stop)
 
+        cls.basic_conn = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name='basic-conn',
+            url='http://example.com',
+            auth_type=BASIC_AUTH,
+            username='user',
+            notify_addresses_str='ops@example.com',
+        )
+        cls.basic_conn.plaintext_password = 'saved-password'
+        cls.basic_conn.save()
+
+        cls.oauth_conn = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name='oauth-conn',
+            url='http://example.com',
+            auth_type=OAUTH2_CLIENT,
+            client_id='client-id',
+            token_url='http://example.com/token',
+            notify_addresses_str='ops@example.com',
+        )
+        cls.oauth_conn.plaintext_client_secret = 'saved-secret'
+        cls.oauth_conn.save()
+
     def setUp(self):
         super().setUp()
         self.client.login(username=USERNAME, password=PASSWORD)
 
-    def _post(self, data):
+    def _post(self, data, pk=None):
+        kwargs = {'domain': DOMAIN}
+        if pk is not None:
+            kwargs['pk'] = pk
         return self.client.post(
-            reverse('test_connection_settings', kwargs={'domain': DOMAIN}),
+            reverse('test_connection_settings', kwargs=kwargs),
             data,
         )
 
-    def test_basic_auth_uses_password_from_form_data(self):
+    def test_basic_auth_uses_password_from_form_data_for_new_connection(self):
         post_data = {
             'name': 'basic-conn',
             'url': 'http://example.com',
@@ -66,7 +93,25 @@ class TestConnectionSettingsView(TestCase):
         requests_instance = mock_get.call_args.args[0]
         assert requests_instance.auth_manager.password == 'typed-password'
 
-    def test_oauth2_client_uses_client_secret_from_form_data(self):
+    def test_basic_auth_uses_password_from_form_data_for_existing_connection(self):
+        post_data = {
+            'name': 'basic-conn',
+            'url': 'http://example.com',
+            'auth_type': BASIC_AUTH,
+            'username': 'user',
+            'plaintext_password': 'typed-password',
+            'notify_addresses_str': 'ops@example.com',
+        }
+        assert ConnectionSettingsForm(domain=DOMAIN, data=post_data).is_valid()
+
+        with patch.object(Requests, 'get', autospec=True) as mock_get:
+            mock_get.return_value = Mock(status_code=200, text='')
+            self._post(post_data, pk=self.basic_conn.pk)
+
+        requests_instance = mock_get.call_args.args[0]
+        assert requests_instance.auth_manager.password == 'typed-password'
+
+    def test_oauth2_client_uses_client_secret_from_form_data_for_new_connection(self):
         post_data = {
             'name': 'oauth-conn',
             'url': 'http://example.com',
@@ -81,6 +126,25 @@ class TestConnectionSettingsView(TestCase):
         with patch.object(Requests, 'get', autospec=True) as mock_get:
             mock_get.return_value = Mock(status_code=200, text='')
             self._post(post_data)
+
+        requests_instance = mock_get.call_args.args[0]
+        assert requests_instance.auth_manager.client_secret == 'form-secret'
+
+    def test_oauth2_client_uses_client_secret_from_form_data_for_existing_connection(self):
+        post_data = {
+            'name': 'oauth-conn',
+            'url': 'http://example.com',
+            'auth_type': OAUTH2_CLIENT,
+            'client_id': 'client-id',
+            'plaintext_client_secret': 'form-secret',
+            'token_url': 'http://example.com/token',
+            'notify_addresses_str': 'ops@example.com',
+        }
+        assert ConnectionSettingsForm(domain=DOMAIN, data=post_data).is_valid()
+
+        with patch.object(Requests, 'get', autospec=True) as mock_get:
+            mock_get.return_value = Mock(status_code=200, text='')
+            self._post(post_data, pk=self.oauth_conn.pk)
 
         requests_instance = mock_get.call_args.args[0]
         assert requests_instance.auth_manager.client_secret == 'form-secret'

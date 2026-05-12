@@ -303,7 +303,7 @@ class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, Proc
 
 @require_POST
 @require_permission(HqPermissions.edit_motech)
-def test_connection_settings(request, domain):
+def test_connection_settings(request, domain, pk=None):
     if not has_privilege(request, privileges.DATA_FORWARDING):
         raise Http404
 
