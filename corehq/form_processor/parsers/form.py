@@ -108,6 +108,9 @@ def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None,
     xform = interface.new_xform(instance_json)
     xform.domain = domain
     xform.auth_context = auth_context
+    # TODO: Cache `instance_json` on `xform` for when SubmissionPost.run()
+    #       calls `self._invalidate_caches()`, calls `instance.metadata`
+    # xform._form_json = instance_json
 
     # Maps all attachments to uniform format and adds form.xml to list before storing
     attachments = [
