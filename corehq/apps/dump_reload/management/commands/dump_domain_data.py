@@ -61,7 +61,7 @@ class Command(BaseCommand):
                     raise
                 raise CommandError("Unable to serialize database: %s" % e)
             finally:
-                if stream:
+                if stream and not console:
                     stream.close()
 
             if not console:
