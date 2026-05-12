@@ -147,7 +147,7 @@ docs = [
     "Sphinx",
     "sphinxcontrib-django",
     "sphinx-rtd-theme",
-    "urllib3<=2.6.3", # fix doc tests AssertionError: Current app already created
+    "urllib3<=2.7.0", # fix doc tests AssertionError: Current app already created
 ]
 prod = [
     "flower",
