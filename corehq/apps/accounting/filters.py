@@ -86,7 +86,7 @@ class IdPServiceTypeFilter(BaseSingleOptionFilter):
 
 class CreditAdjustmentLinkFilter(BaseSingleOptionFilter):
     slug = 'credit_adjustment_link'
-    label = _("Credit Adjustment Reason")
+    label = _("Credit Adjustment Link")
     default_text = _("Linked to Any Transaction")
     options = (
         ('invoice', "Linked to Invoice"),
