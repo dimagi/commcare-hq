@@ -220,14 +220,7 @@ class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
     slug = "sub_adj_method"
     label = _("Created By")
     default_text = _("Anyone")
-    options = (
-        (SubscriptionAdjustmentMethod.INTERNAL, "Operations Created"),
-        (SubscriptionAdjustmentMethod.USER, "User Created"),
-        (SubscriptionAdjustmentMethod.INVOICING, "Created During Invoicing"),
-        (SubscriptionAdjustmentMethod.TASK, "[Deprecated] Created During Invoicing"),
-        (SubscriptionAdjustmentMethod.TRIAL, "30 Day Trial (default signup)"),
-        (SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY, "Defaulted to Community"),
-    )
+    options = SubscriptionAdjustmentMethod.CHOICES
 
 
 class DateRangeFilter(BaseReportFilter):
