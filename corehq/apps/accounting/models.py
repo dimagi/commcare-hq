@@ -1622,13 +1622,11 @@ class Subscription(models.Model):
             salesforce_contract_id=self.salesforce_contract_id,
             date_start=self.date_end,
             date_end=new_date_end,
+            service_type=service_type if service_type else self.service_type,
+            funding_source=funding_source if funding_source else self.funding_source,
         )
-        if service_type is not None:
-            renewed_subscription.service_type = service_type
         if pro_bono_status is not None:
             renewed_subscription.pro_bono_status = pro_bono_status
-        if funding_source is not None:
-            renewed_subscription.funding_source = funding_source
         if datetime.date.today() == self.date_end:
             renewed_subscription.is_active = True
         renewed_subscription.auto_renew = renewed_subscription.can_auto_renew
