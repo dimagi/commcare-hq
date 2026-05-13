@@ -214,7 +214,7 @@ class TestGroupResource(APIResourceTest):
         )
         self.assertEqual(response.status_code, 400, response.content)
         response_body = json.loads(response.content)
-        self.assertIn("may not be blank", response_body["error"])
+        self.assertIn("must not be blank", response_body["error"])
 
         modified_group = Group.get(backend_id)
         self.assertEqual(modified_group.name, "test group")

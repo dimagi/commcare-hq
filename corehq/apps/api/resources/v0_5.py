@@ -698,7 +698,7 @@ class GroupResource(v0_4.GroupResource):
             if key == 'name' and getattr(bundle.obj, key, None) != value:
                 if not Group.by_name(bundle.obj.domain, value):
                     if not value:
-                        raise BadRequest(_("Name may not be blank"))
+                        raise BadRequest(_("Name must not be blank"))
                     setattr(bundle.obj, key, value)
                     should_save = True
                 else:
