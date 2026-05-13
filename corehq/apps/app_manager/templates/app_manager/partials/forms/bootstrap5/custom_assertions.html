@@ -1,14 +1,14 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% initial_page_data 'custom_assertions' custom_assertions %}
-<label class="form-label col-md-2">
+<label class="field-label">
   {% trans "Custom Assertions" %}
   <span class="hq-help-template"
         data-title="{% trans "Custom Assertions" %}"
         data-content="{% blocktrans %}Add custom assertions that you will use elsewhere.{% endblocktrans %}"
   ></span>
 </label>
-<div class="col-md-10" id="custom-assertions">
+<div class="field-control" id="custom-assertions">
   <table class="table table-condensed">
     <thead>
     <tr>

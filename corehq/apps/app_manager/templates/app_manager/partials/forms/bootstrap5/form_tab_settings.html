@@ -71,10 +71,14 @@
           {% endif %}
 
           {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
-            {% include "app_manager/partials/forms/bootstrap5/custom_instances.html" %}
+            <div class="row mb-3">
+              {% include "app_manager/partials/forms/bootstrap5/custom_instances.html" %}
+            </div>
           {% endif %}
           {% if request|toggle_enabled:'CUSTOM_ASSERTIONS' %}
-            {% include "app_manager/partials/forms/bootstrap5/custom_assertions.html" %}
+            <div class="row mb-3">
+              {% include "app_manager/partials/forms/bootstrap5/custom_assertions.html" %}
+            </div>
           {% endif %}
 
           {% if session_endpoints_enabled %}

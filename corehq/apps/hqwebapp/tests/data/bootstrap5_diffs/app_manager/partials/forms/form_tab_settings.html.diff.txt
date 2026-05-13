@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -6,81 +6,80 @@
+@@ -6,81 +6,84 @@
      {% csrf_token %}
      <div class="save-button-holder clearfix"></div>
      <div class="section-changer btn-group" data-collapse-key="form-view-settings">
@@ -97,11 +97,15 @@
  
            {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
 -            {% include "app_manager/partials/forms/bootstrap3/custom_instances.html" %}
-+            {% include "app_manager/partials/forms/bootstrap5/custom_instances.html" %}
++            <div class="row mb-3">
++              {% include "app_manager/partials/forms/bootstrap5/custom_instances.html" %}
++            </div>
            {% endif %}
            {% if request|toggle_enabled:'CUSTOM_ASSERTIONS' %}
 -            {% include "app_manager/partials/forms/bootstrap3/custom_assertions.html" %}
-+            {% include "app_manager/partials/forms/bootstrap5/custom_assertions.html" %}
++            <div class="row mb-3">
++              {% include "app_manager/partials/forms/bootstrap5/custom_assertions.html" %}
++            </div>
            {% endif %}
  
            {% if session_endpoints_enabled %}
