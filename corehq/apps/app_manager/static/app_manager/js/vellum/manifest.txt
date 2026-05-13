@@ -339,7 +339,7 @@
 ├─ extsprintf@1.3.0
 ├─ fast-deep-equal@3.1.3
 ├─ fast-json-stable-stringify@2.1.0
-├─ fast-uri@3.0.6
+├─ fast-uri@3.1.2
 ├─ fastest-levenshtein@1.0.16
 ├─ fd-slicer@1.1.0
 │  └─ pend@~1.2.0
@@ -1085,4 +1085,4 @@
 │  ├─ buffer-crc32@~0.2.3
 │  └─ fd-slicer@~1.1.0
 └─ yocto-queue@0.1.0
-Done in 0.28s.
+Done in 0.13s.
