@@ -187,5 +187,12 @@
         "name": "case_messaging_sync_pillow",
         "advertised_name": "case_messaging_sync_pillow",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow"
+    },
+    "demo-case-pillow": {
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "demo-case-pillow-test_cases-2024-05-09-test_case-search-2024-05-09-messaging-sync",
+        "name": "demo-case-pillow",
+        "advertised_name": "demo-case-pillow",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow"
     }
 }
