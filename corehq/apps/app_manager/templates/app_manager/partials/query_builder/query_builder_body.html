@@ -1,0 +1,24 @@
+{% load i18n %}
+
+<!-- Bridge: KO search_properties -> Alpine variables-updated event -->
+<div
+  style="display: none;"
+  data-bind="syncQueryBuilderVariables: search_properties"
+></div>
+
+<!-- ko stopBinding: true -->
+<div x-cloak x-data="queryBuilder()">
+  <template x-if="root">
+    <div x-data="{ node: root }">
+      {% include "app_manager/partials/query_builder/query_group_children.html" with depth=0 %}
+    </div>
+  </template>
+
+  <h5>{% trans "Debug: Serialized Output" %}</h5>
+  <pre
+    x-text="serialized"
+    class="well well-sm"
+    style="max-height: 300px; overflow: auto;"
+  ></pre>
+</div>
+<!-- /ko -->
