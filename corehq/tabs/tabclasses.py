@@ -30,6 +30,7 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.case_search.views import CSQLFixtureExpressionView
+from corehq.apps.case_search.endpoint_views import CaseSearchEndpointsView
 from corehq.apps.data_cleaning.decorators import (
     bulk_data_cleaning_enabled_for_request,
 )
@@ -631,6 +632,12 @@ class ProjectDataTab(UITab):
             items.append([_('CSQL Fixtures'), [{
                 'title': _(CSQLFixtureExpressionView.page_title),
                 'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
+            }]])
+
+        if toggles.CASE_SEARCH_ENDPOINTS.enabled(self.domain):
+            items.append([_('Case Search Endpoints'), [{
+                'title': _(CaseSearchEndpointsView.page_title),
+                'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain]),
             }]])
 
         if self._can_view_data_dictionary:
