@@ -80,7 +80,7 @@
         {% endif %}
 
         <!-- ko if:  !auto_select && $index() > 0 -->
-        <div class="row mb-3" data-bind="css: {'has-warning': validate_subcase()}">
+        <div class="row mb-3">
           <label class="field-label">
           </label>
           <div class="col-md-4">
@@ -90,7 +90,7 @@
                 {% trans "This case is a subcase of the previous case" %}
               </label>
             </div>
-            <span class="help-block" data-bind="text: validate_subcase"></span>
+            <span class="text-warning small" data-bind="text: validate_subcase, visible: validate_subcase"></span>
           </div>
         </div>
         <div class="row mb-3" data-bind="visible: subcase">
@@ -115,7 +115,7 @@
         <!-- /ko -->
 
         <!-- ko if:  actionType === 'open' -->
-        <div class="row mb-3" data-bind="visible: allow_subcase, css: {'has-warning': validate_subcase()}">
+        <div class="row mb-3" data-bind="visible: allow_subcase">
 
           <label class="field-label">{% trans "Parent Indices" %}</label>
           <div class="col-md-6">
@@ -156,7 +156,7 @@
               <i class="fa fa-plus"></i>
               {% trans "Add parent index" %}
             </button>
-            <span class="help-block" data-bind="text: validate_subcase"></span>
+            <span class="text-warning small" data-bind="text: validate_subcase, visible: validate_subcase"></span>
           </div>
         </div>
         <hr />
@@ -211,7 +211,7 @@
           {% trans "Case Action Meta" %}
         </div>
         <div class="card-body">
-          <div class="d-flex flex-wrap align-items-center gap-2" data-bind="css: {'has-warning': validate()}">
+          <div class="d-flex flex-wrap align-items-center gap-2">
 
             <div class="d-flex align-items-center gap-1">
               <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
@@ -241,7 +241,7 @@
             <!-- /ko -->
             <strong>)</strong>
             <div class="w-100"></div>
-            <span class="help-block" data-bind="text: validate"></span>
+            <span class="text-warning small" data-bind="text: validate, visible: validate"></span>
           </div>
           <div class="alert alert-warning" data-bind="visible: !case_type">
             {% trans "Please select a case type." %}
@@ -340,7 +340,7 @@
           {% trans "Case Action Meta" %}
         </div>
         <div class="card-body">
-          <div class="d-flex flex-wrap align-items-center gap-2" data-bind="css: {'has-warning': validate()}">
+          <div class="d-flex flex-wrap align-items-center gap-2">
             <div class="d-flex align-items-center gap-1">
               <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
               <input type="text" class="form-control w-auto" data-bind="value: case_tag, disable: disable_tag" />
@@ -363,7 +363,7 @@
             </div>
             <!-- /ko -->
             <div class="w-100"></div>
-            <span class="help-block" data-bind="text: validate"></span>
+            <span class="text-warning small" data-bind="text: validate, visible: validate"></span>
           </div>
           <div class="alert alert-warning" data-bind="visible: !auto_select.mode()">
             {% trans "Please select an autoselection mode." %}
@@ -407,7 +407,7 @@
           {% trans "Case Action Meta" %}
         </div>
         <div class="card-body">
-          <div class="d-flex flex-wrap align-items-center gap-2" data-bind="css: {'has-warning': validate()}">
+          <div class="d-flex flex-wrap align-items-center gap-2">
             <div class="d-flex align-items-center gap-1">
               <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
               <input type="text" class="form-control w-auto" data-bind="value: case_tag, disable: disable_tag" />
@@ -437,7 +437,7 @@
             <!-- /ko -->
             <strong>)</strong>
             <div class="w-100"></div>
-            <p class="help-block" data-bind="text: validate"></p>
+            <p class="text-warning small mb-0" data-bind="text: validate, visible: validate"></p>
           </div>
           <div class="help-block" data-bind="visible: !case_type">
             {% trans "Please select a case type." %}

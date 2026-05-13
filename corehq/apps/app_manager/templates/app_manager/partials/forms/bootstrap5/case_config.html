@@ -258,9 +258,7 @@
                 </div>
                 <div class="card-body d-flex flex-wrap align-items-center gap-2">
                   {% trans "This Form opens a Child Case in the Case List" %}&nbsp;
-                  <span
-                    data-bind="css: {'has-warning': !case_type()}"
-                  >
+                  <span>
                     <select
                       class="form-select w-auto"
                       {% if not add_ons_privileges.subcases %}disabled="disabled"{% endif %}
@@ -269,7 +267,7 @@
                                        value: case_type,
                                        optionsCaption: 'Choose a Module...'"
                     ></select>
-                    <span class="help-block" data-bind="visible: !case_type()">
+                    <span class="text-warning small" data-bind="visible: !case_type()">
                       {% trans "Required" %}
                     </span>
                   </span>
