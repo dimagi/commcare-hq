@@ -698,11 +698,11 @@ class GroupResource(v0_4.GroupResource):
             if key == 'name' and getattr(bundle.obj, key, None) != value:
                 if not Group.by_name(bundle.obj.domain, value):
                     if not value:
-                        raise BadRequest("Name may not be blank")
+                        raise BadRequest(_("Name may not be blank"))
                     setattr(bundle.obj, key, value)
                     should_save = True
                 else:
-                    raise BadRequest("A group with name %s already exists" % value)
+                    raise BadRequest(_("A group with name %s already exists") % value)
             if key == 'users' and getattr(bundle.obj, key, None) != value:
                 users_to_add = set(value) - set(bundle.obj.users)
                 users_to_remove = set(bundle.obj.users) - set(value)
@@ -745,13 +745,13 @@ class GroupResource(v0_4.GroupResource):
         if not Group.by_name(kwargs['domain'], bundle.data.get("name")):
             bundle.obj = Group(bundle.data)
             if not bundle.obj.name:
-                raise AssertionError("Name is required")
+                raise AssertionError(_("Name is required"))
             bundle.obj.domain = kwargs['domain']
             bundle.obj.save()
             for user in bundle.obj.users:
                 CommCareUser.get(user).set_groups([bundle.obj._id])
         else:
-            raise AssertionError("A group with name %s already exists" % bundle.data.get("name"))
+            raise AssertionError(_("A group with name %s already exists") % bundle.data.get("name"))
         return bundle
 
     def obj_update(self, bundle, **kwargs):
