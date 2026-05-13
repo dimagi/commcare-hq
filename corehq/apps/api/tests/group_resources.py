@@ -162,6 +162,28 @@ class TestGroupResource(APIResourceTest):
         self.assertIn("already exists", response_body["error_message"])
         self.assertEqual(1, len(Group.by_domain(self.domain.name)))
 
+    def test_create_rejects_name_empty(self):
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps({"name": ""}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        response_body = json.loads(response.content)
+        self.assertIn("is required", response_body["error_message"])
+        self.assertEqual(0, len(Group.by_domain(self.domain.name)))
+
+    def test_create_rejects_name_missing(self):
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps({"case_sharing": True}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        response_body = json.loads(response.content)
+        self.assertIn("is required", response_body["error_message"])
+        self.assertEqual(0, len(Group.by_domain(self.domain.name)))
+
     def test_update_rejects_name_already_exists(self):
         group_a = self._add_group(Group({"name": "test a", "domain": self.domain.name}))
         self._add_group(Group({"name": "test b", "domain": self.domain.name}))

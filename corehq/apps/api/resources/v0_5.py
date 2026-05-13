@@ -742,7 +742,8 @@ class GroupResource(v0_4.GroupResource):
     def obj_create(self, bundle, request=None, **kwargs):
         if not Group.by_name(kwargs['domain'], bundle.data.get("name")):
             bundle.obj = Group(bundle.data)
-            bundle.obj.name = bundle.obj.name or ''
+            if not bundle.obj.name:
+                raise AssertionError("Name is required")
             bundle.obj.domain = kwargs['domain']
             bundle.obj.save()
             for user in bundle.obj.users:
