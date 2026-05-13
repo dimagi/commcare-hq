@@ -700,7 +700,7 @@ class GroupResource(v0_4.GroupResource):
                     setattr(bundle.obj, key, value or '')
                     should_save = True
                 else:
-                    raise Exception("A group with this name already exists")
+                    raise BadRequest("A group with name %s already exists" % value)
             if key == 'users' and getattr(bundle.obj, key, None) != value:
                 users_to_add = set(value) - set(bundle.obj.users)
                 users_to_remove = set(bundle.obj.users) - set(value)
