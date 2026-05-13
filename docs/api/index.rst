@@ -102,5 +102,3 @@ needs.
     :maxdepth: 1
 
     messaging-events
-    sms-user-registration
-    send-install-info-sms
