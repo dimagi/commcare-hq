@@ -145,7 +145,7 @@
              <p>
                <i class="fa fa-info-circle"></i>
                {% blocktrans %}
-@@ -235,42 +234,35 @@
+@@ -235,49 +234,40 @@
          {% endif %}
  
          <div data-bind="foreach: subcases">
@@ -192,17 +192,26 @@
 -                <div class="panel-body form-inline">
 +                <div class="card-body d-flex flex-wrap align-items-center gap-2">
                    {% trans "This Form opens a Child Case in the Case List" %}&nbsp;
-                   <span
+-                  <span
 -                    class="form-group"
-                     data-bind="css: {'has-warning': !case_type()}"
-                   >
+-                    data-bind="css: {'has-warning': !case_type()}"
+-                  >
++                  <span>
                      <select
 -                      class="form-control"
 +                      class="form-select w-auto"
                        {% if not add_ons_privileges.subcases %}disabled="disabled"{% endif %}
                        data-bind="options: $parent.caseTypes,
                                         optionsText: $parent.getCaseTypeLabel,
-@@ -288,7 +280,7 @@
+                                        value: case_type,
+                                        optionsCaption: 'Choose a Module...'"
+                     ></select>
+-                    <span class="help-block" data-bind="visible: !case_type()">
++                    <span class="text-warning small" data-bind="visible: !case_type()">
+                       {% trans "Required" %}
+                     </span>
+                   </span>
+@@ -288,7 +278,7 @@
            </div>
          </div>
          {% if add_ons_privileges.subcases %}

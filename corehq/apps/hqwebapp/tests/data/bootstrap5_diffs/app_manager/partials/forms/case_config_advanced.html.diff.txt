@@ -116,7 +116,7 @@
          <!-- ko if:  !auto_select && $index() > 0 -->
 -        <div class="form-group" data-bind="css: {'has-warning': validate_subcase()}">
 -          <label class="col-sm-2">
-+        <div class="row mb-3" data-bind="css: {'has-warning': validate_subcase()}">
++        <div class="row mb-3">
 +          <label class="field-label">
            </label>
 -          <div class="col-sm-4">
@@ -130,11 +130,14 @@
                  {% trans "This case is a subcase of the previous case" %}
                </label>
              </div>
-             <span class="help-block" data-bind="text: validate_subcase"></span>
-           </div>
-         </div>
+-            <span class="help-block" data-bind="text: validate_subcase"></span>
+-          </div>
+-        </div>
 -        <div class="form-group" data-bind="visible: subcase">
 -          <label class="control-label col-sm-2">
++            <span class="text-warning small" data-bind="text: validate_subcase, visible: validate_subcase"></span>
++          </div>
++        </div>
 +        <div class="row mb-3" data-bind="visible: subcase">
 +          <label class="field-label">
              {% trans "Parent reference ID" %}
@@ -163,7 +166,7 @@
 -
 -          <label class="control-label col-sm-2">{% trans "Parent Indices" %}</label>
 -          <div class="col-sm-6">
-+        <div class="row mb-3" data-bind="visible: allow_subcase, css: {'has-warning': validate_subcase()}">
++        <div class="row mb-3" data-bind="visible: allow_subcase">
 +
 +          <label class="field-label">{% trans "Parent Indices" %}</label>
 +          <div class="col-md-6">
@@ -185,7 +188,7 @@
                          data-bind="options: $parent.relationshipTypes,
                                                         optionsCaption: ' ',
                                                         value: relationship"></select>
-@@ -151,14 +145,14 @@
+@@ -151,27 +145,27 @@
                                          "></select>
                  </div>
                  <br />
@@ -202,7 +205,11 @@
                <i class="fa fa-plus"></i>
                {% trans "Add parent index" %}
              </button>
-@@ -169,9 +163,9 @@
+-            <span class="help-block" data-bind="text: validate_subcase"></span>
++            <span class="text-warning small" data-bind="text: validate_subcase, visible: validate_subcase"></span>
+           </div>
+         </div>
+         <hr />
          <!-- /ko -->
  
          <!-- ko ifnot: caseConfig.isShadowForm -->
@@ -252,7 +259,7 @@
 +          {% trans "Case Action Meta" %}
 +        </div>
 +        <div class="card-body">
-+          <div class="d-flex flex-wrap align-items-center gap-2" data-bind="css: {'has-warning': validate()}">
++          <div class="d-flex flex-wrap align-items-center gap-2">
 +
 +            <div class="d-flex align-items-center gap-1">
                <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
@@ -269,7 +276,7 @@
                                options: caseConfig.caseTypes,
                                value: case_type,
                                optionsCaption: 'Choose a Case Type...'
-@@ -238,17 +229,18 @@
+@@ -238,18 +229,19 @@
              </div>
              <!-- ko if: actionType == 'load'-->
              &nbsp;{% trans "from" %}
@@ -286,11 +293,13 @@
              </div>
              <!-- /ko -->
 -            <strong>)</strong><br />
+-            <span class="help-block" data-bind="text: validate"></span>
 +            <strong>)</strong>
 +            <div class="w-100"></div>
-             <span class="help-block" data-bind="text: validate"></span>
++            <span class="text-warning small" data-bind="text: validate, visible: validate"></span>
            </div>
            <div class="alert alert-warning" data-bind="visible: !case_type">
+             {% trans "Please select a case type." %}
 @@ -265,7 +257,7 @@
  
  <script type="text/html" id="auto-select:case-type">
@@ -374,7 +383,7 @@
      <a href="#" role="button" class="case-action-move btn btn-purple grip">
        <i class="fa-solid fa-up-down"></i>
      </a>
-@@ -344,36 +334,35 @@
+@@ -344,37 +334,36 @@
      </button>
    </div>
    <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
@@ -394,7 +403,7 @@
 +          {% trans "Case Action Meta" %}
 +        </div>
 +        <div class="card-body">
-+          <div class="d-flex flex-wrap align-items-center gap-2" data-bind="css: {'has-warning': validate()}">
++          <div class="d-flex flex-wrap align-items-center gap-2">
 +            <div class="d-flex align-items-center gap-1">
                <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
 -              <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
@@ -421,10 +430,12 @@
                <!-- ko template: {name: 'auto-select:' + mode()} --><!-- /ko -->
              </div>
              <!-- /ko -->
+-            <span class="help-block" data-bind="text: validate"></span>
 +            <div class="w-100"></div>
-             <span class="help-block" data-bind="text: validate"></span>
++            <span class="text-warning small" data-bind="text: validate, visible: validate"></span>
            </div>
            <div class="alert alert-warning" data-bind="visible: !auto_select.mode()">
+             {% trans "Please select an autoselection mode." %}
 @@ -391,11 +380,9 @@
  </script>
  
@@ -460,7 +471,7 @@
 +          {% trans "Case Action Meta" %}
 +        </div>
 +        <div class="card-body">
-+          <div class="d-flex flex-wrap align-items-center gap-2" data-bind="css: {'has-warning': validate()}">
++          <div class="d-flex flex-wrap align-items-center gap-2">
 +            <div class="d-flex align-items-center gap-1">
                <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
 -              <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
@@ -493,9 +504,10 @@
              </div>
              <!-- /ko -->
 -            <strong>)</strong><br />
+-            <p class="help-block" data-bind="text: validate"></p>
 +            <strong>)</strong>
 +            <div class="w-100"></div>
-             <p class="help-block" data-bind="text: validate"></p>
++            <p class="text-warning small mb-0" data-bind="text: validate, visible: validate"></p>
            </div>
            <div class="help-block" data-bind="visible: !case_type">
              {% trans "Please select a case type." %}
