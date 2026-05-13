@@ -113,6 +113,12 @@ msgid "Any Service"
 msgstr "Будь-яка послуга"
 
 #: corehq/apps/accounting/filters.py
+#, fuzzy
+#| msgid "Credit Adjustment Reason"
+msgid "Credit Adjustment Link"
+msgstr "Причина коригування кредиту"
+
+#: corehq/apps/accounting/filters.py
 msgid "Linked to Any Transaction"
 msgstr "Пов'язано з будь-якою транзакцією"
 
@@ -12675,6 +12681,28 @@ msgstr "Копіювати форму"
 msgid "XForm"
 msgstr "XForm"
 
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  You will not be able to enable case sharing again until "
+#| "you upgrade, but you\n"
+#| "                  can edit the group once again.\n"
+#| "                "
+msgid ""
+"\n"
+"                This form contains locked questions and can only be uploaded "
+"by\n"
+"                a user with the locked questions permission.\n"
+"              "
+msgstr ""
+"\n"
+"                  Ви не зможете знову увімкнути спільний доступ до справ, "
+"доки не оновите підписку, але\n"
+"                  зможете знову редагувати групу.\n"
+"                "
+
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
@@ -14302,13 +14330,6 @@ msgstr "Спочатку пошук"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
-msgid "See More"
-msgstr "Дивитися більше"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Skip to Default Case Search Results"
 msgstr "Перейти до результатів пошуку справ за замовчуванням"
 
@@ -14343,11 +14364,6 @@ msgstr "Переклад заголовка екрана пошуку"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search Screen Subtitle"
 msgstr "Підзаголовок екрана пошуку"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Claim Condition"
-msgstr "Умова підтвердження"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -16705,6 +16721,12 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
+"Case property mappings that reference locked questions cannot be modified. "
+"Unlock the question in the form builder first."
+msgstr ""
+
+#: corehq/apps/app_manager/views/forms.py
+msgid ""
 "This form could not be copied because it is not compatible with the selected "
 "module."
 msgstr ""
@@ -16713,6 +16735,14 @@ msgstr ""
 #: corehq/apps/app_manager/views/forms.py
 msgid "There was an error saving, please try again!"
 msgstr "Сталася помилка під час збереження, будь ласка, спробуйте ще раз!"
+
+#: corehq/apps/app_manager/views/forms.py
+#, fuzzy
+#| msgid "You do not have permissions to assign one of those locations."
+msgid ""
+"You do not have permission to upload an XForm for a form that contains "
+"locked questions."
+msgstr "У вас немає дозволу призначати одне з цих місцезнаходжень."
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
@@ -30378,6 +30408,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/enterprise/forms.py
+msgid ""
+"This user must be a member of at least one project space in this enterprise "
+"account before being added as an enterprise administrator."
+msgstr ""
+
+#: corehq/apps/enterprise/forms.py
 msgid "Restrict Project Space Creation"
 msgstr "Обмежити створення робочих просторів"
 
@@ -41169,10 +41205,15 @@ msgstr ""
 "адміністратора вашого проєкту, щоб вам призначили місце.\n"
 
 #: corehq/apps/locations/permissions.py
+#, fuzzy
+#| msgid ""
+#| "This project has restricted data access rules. Please contact your "
+#| "project administrator to be assigned access to data in this project. More "
+#| "information is available <a href=\"{}\">here</a>."
 msgid ""
-"This project has restricted data access rules. Please contact your project "
-"administrator to be assigned access to data in this project. More "
-"information is available <a href=\"{}\">here</a>."
+"This project limits access to users based on their location. If your "
+"location or your access limits are incorrect, please contact your project "
+"administrator. <a href=\"{}\">More information is available here</a>."
 msgstr ""
 "У цьому проєкті діють обмеження на доступ до даних. Будь ласка, зверніться "
 "до адміністратора вашого проєкту, щоб отримати доступ до даних у цьому "
@@ -42054,6 +42095,11 @@ msgstr "Наразі не вдалося отримати сповіщення."
 #: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
 msgid "Please see our blog for service updates."
 msgstr "Будь ласка, перегляньте наш блог для оновлень сервісу."
+
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
+msgid "See More"
+msgstr "Дивитися більше"
 
 #: corehq/apps/notifications/views.py
 msgid "Manage Notification"
@@ -65207,6 +65253,9 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "Claim Condition"
+#~ msgstr "Умова підтвердження"
 
 #~ msgid "Normal Case List"
 #~ msgstr "Звичайний список справ"

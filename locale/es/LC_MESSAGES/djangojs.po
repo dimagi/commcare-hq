@@ -1291,7 +1291,6 @@ msgid "loadXFormOrError"
 msgstr "cargarXFormOError"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
-#| msgid "Case Property"
 msgid "isPropertyLocked"
 msgstr "esPropiedadBloqueada"
 
@@ -1308,7 +1307,6 @@ msgid "isMugTypeChangeable"
 msgstr "esTipoMugCambiable"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
-#| msgid "User Properties"
 msgid "getMainProperties"
 msgstr "obtenerPropiedadesPrincipales"
 

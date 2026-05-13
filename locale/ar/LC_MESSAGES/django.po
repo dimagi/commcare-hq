@@ -109,6 +109,12 @@ msgid "Any Service"
 msgstr "أي خدمة"
 
 #: corehq/apps/accounting/filters.py
+#, fuzzy
+#| msgid "Credit Adjustment Reason"
+msgid "Credit Adjustment Link"
+msgstr "سبب تعديل الرصيد"
+
+#: corehq/apps/accounting/filters.py
 msgid "Linked to Any Transaction"
 msgstr "مرتبط بأي معاملة"
 
@@ -12468,6 +12474,27 @@ msgstr "نسخ النموذج"
 msgid "XForm"
 msgstr "XForm"
 
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  You will not be able to enable case sharing again until "
+#| "you upgrade, but you\n"
+#| "                  can edit the group once again.\n"
+#| "                "
+msgid ""
+"\n"
+"                This form contains locked questions and can only be uploaded "
+"by\n"
+"                a user with the locked questions permission.\n"
+"              "
+msgstr ""
+"\n"
+"                  لن تتمكن من تفعيل مشاركة الحالات مرة أخرى حتى تقوم "
+"بالترقية، ولكن يمكنك تعديل المجموعة مرة أخرى.\n"
+"                "
+
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
@@ -14063,13 +14090,6 @@ msgstr "البحث أولاً"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
-msgid "See More"
-msgstr "عرض المزيد"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Skip to Default Case Search Results"
 msgstr "تخطي إلى نتائج البحث الافتراضية للحالات"
 
@@ -14104,11 +14124,6 @@ msgstr "ترجمة عنوان شاشة البحث"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search Screen Subtitle"
 msgstr "العنوان الفرعي لشاشة البحث"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Claim Condition"
-msgstr "شرط المطالبة"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -16429,6 +16444,12 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
+"Case property mappings that reference locked questions cannot be modified. "
+"Unlock the question in the form builder first."
+msgstr ""
+
+#: corehq/apps/app_manager/views/forms.py
+msgid ""
 "This form could not be copied because it is not compatible with the selected "
 "module."
 msgstr "تعذر نسخ هذا النموذج لأنه غير متوافق مع الوحدة المحددة."
@@ -16436,6 +16457,14 @@ msgstr "تعذر نسخ هذا النموذج لأنه غير متوافق مع 
 #: corehq/apps/app_manager/views/forms.py
 msgid "There was an error saving, please try again!"
 msgstr "حدث خطأ أثناء الحفظ، يرجى المحاولة مرة أخرى!"
+
+#: corehq/apps/app_manager/views/forms.py
+#, fuzzy
+#| msgid "You do not have permissions to assign one of those locations."
+msgid ""
+"You do not have permission to upload an XForm for a form that contains "
+"locked questions."
+msgstr "ليس لديك صلاحيات لتعيين أحد هذه المواقع."
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
@@ -29873,6 +29902,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/enterprise/forms.py
+msgid ""
+"This user must be a member of at least one project space in this enterprise "
+"account before being added as an enterprise administrator."
+msgstr ""
+
+#: corehq/apps/enterprise/forms.py
 msgid "Restrict Project Space Creation"
 msgstr "تقييد إنشاء مساحة مشروع"
 
@@ -40493,10 +40528,15 @@ msgstr ""
 "مسؤول المشروع ليتم تعيينك إلى موقع.\n"
 
 #: corehq/apps/locations/permissions.py
+#, fuzzy
+#| msgid ""
+#| "This project has restricted data access rules. Please contact your "
+#| "project administrator to be assigned access to data in this project. More "
+#| "information is available <a href=\"{}\">here</a>."
 msgid ""
-"This project has restricted data access rules. Please contact your project "
-"administrator to be assigned access to data in this project. More "
-"information is available <a href=\"{}\">here</a>."
+"This project limits access to users based on their location. If your "
+"location or your access limits are incorrect, please contact your project "
+"administrator. <a href=\"{}\">More information is available here</a>."
 msgstr ""
 "يحتوي هذا المشروع على قواعد وصول بيانات مقيدة. يرجى التواصل مع مسؤول المشروع "
 "ليتم تعيينك للوصول إلى بيانات هذا المشروع. لمزيد من المعلومات، انقر <a "
@@ -41355,6 +41395,11 @@ msgstr "تعذر جلب الإشعارات في هذا الوقت."
 #: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
 msgid "Please see our blog for service updates."
 msgstr "يرجى مراجعة مدونتنا للحصول على تحديثات الخدمة."
+
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
+msgid "See More"
+msgstr "عرض المزيد"
 
 #: corehq/apps/notifications/views.py
 msgid "Manage Notification"
@@ -64083,6 +64128,9 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid "Claim Condition"
+#~ msgstr "شرط المطالبة"
 
 #~ msgid "Normal Case List"
 #~ msgstr "قائمة الحالات العادية"

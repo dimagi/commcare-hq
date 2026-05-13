@@ -116,6 +116,11 @@ msgid "Any Service"
 msgstr "कोई भी सेवा"
 
 #: corehq/apps/accounting/filters.py
+#| msgid "Credit Adjustment Reason"
+msgid "Credit Adjustment Link"
+msgstr "क्रेडिट समायोजन लिंक"
+
+#: corehq/apps/accounting/filters.py
 msgid "Linked to Any Transaction"
 msgstr "किसी भी लेन-देन से जुड़ा हुआ"
 
@@ -9430,11 +9435,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              <strong>Save to Case question is missing a case type.</strong>\n"
-#| "              Please add the \"case_type\" property mapping for \"%(case_tag)s\"\n"
-#| "            "
 msgid ""
 "\n"
 "              <strong>Advanced Case Actions question is missing a case type.</strong>\n"
@@ -9449,11 +9449,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              <strong>Save to Case question is missing a case name.</strong>\n"
-#| "              Please add the \"case_name\" property mapping for \"%(case_tag)s\"\n"
-#| "            "
 msgid ""
 "\n"
 "              <strong>Advanced Case Actions question is missing a case name.</strong>\n"
@@ -10941,6 +10936,24 @@ msgstr "फ़ॉर्म कॉपी करें"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
 msgid "XForm"
 msgstr "XForm"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#| msgid ""
+#| "\n"
+#| "                  You will not be able to enable case sharing again until you upgrade, but you\n"
+#| "                  can edit the group once again.\n"
+#| "                "
+msgid ""
+"\n"
+"                This form contains locked questions and can only be uploaded by\n"
+"                a user with the locked questions permission.\n"
+"              "
+msgstr ""
+"\n"
+"                इस फ़ॉर्म में लॉक किए गए प्रश्न हैं और इसे केवल\n"
+"                लॉक किए गए प्रश्नों की अनुमति वाले उपयोगकर्ता द्वारा ही अपलोड किया जा सकता है।\n"
+"              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
@@ -12463,19 +12476,11 @@ msgstr "पहले खोजें"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
-msgid "See More"
-msgstr "और देखें"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Skip to Default Case Search Results"
 msgstr "डिफ़ॉल्ट केस खोज परिणामों पर जाएँ"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#| msgid "Case Search"
 msgid "Legacy Case Search"
 msgstr "लीगेसी केस सर्च"
 
@@ -12503,11 +12508,6 @@ msgstr "खोज स्क्रीन शीर्षक अनुवाद"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search Screen Subtitle"
 msgstr "खोज स्क्रीन उपशीर्षक"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Claim Condition"
-msgstr "दावा शर्त"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -14530,6 +14530,14 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
+"Case property mappings that reference locked questions cannot be modified. "
+"Unlock the question in the form builder first."
+msgstr ""
+"लॉक किए गए प्रश्नों का संदर्भ देने वाले केस प्रॉपर्टी मैपिंग को संशोधित नहीं"
+" किया जा सकता। पहले फॉर्म बिल्डर में प्रश्न को अनलॉक करें।"
+
+#: corehq/apps/app_manager/views/forms.py
+msgid ""
 "This form could not be copied because it is not compatible with the selected"
 " module."
 msgstr ""
@@ -14539,6 +14547,15 @@ msgstr ""
 #: corehq/apps/app_manager/views/forms.py
 msgid "There was an error saving, please try again!"
 msgstr "सहेजने में त्रुटि हुई, कृपया पुनः प्रयास करें!"
+
+#: corehq/apps/app_manager/views/forms.py
+#| msgid "You do not have permissions to assign one of those locations."
+msgid ""
+"You do not have permission to upload an XForm for a form that contains "
+"locked questions."
+msgstr ""
+"आपको ऐसे फ़ॉर्म के लिए XForm अपलोड करने की अनुमति नहीं है जिसमें लॉक किए गए "
+"प्रश्न हैं।"
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
@@ -16043,7 +16060,6 @@ msgstr ""
 "हमें नहीं पता कि \"{}\" फंक्शन के साथ क्या करना है। स्वीकृत फंक्शन हैं: {}"
 
 #: corehq/apps/case_search/filter_dsl.py
-#| msgid "Include related cases"
 msgid "You cannot query related cases here"
 msgstr "आप यहां संबंधित केस क्वेरी नहीं कर सकते"
 
@@ -26703,12 +26719,10 @@ msgid "Last Used [UTC]"
 msgstr "अंतिम बार उपयोग किया गया [UTC]"
 
 #: corehq/apps/enterprise/forms.py
-#| msgid "Server Administrator"
 msgid "Add Administrator"
 msgstr "प्रशासक जोड़ें"
 
 #: corehq/apps/enterprise/forms.py
-#| msgid "Dear enterprise administrator,"
 msgid "This user is already an enterprise administrator."
 msgstr "यह उपयोगकर्ता पहले से ही एंटरप्राइज प्रशासक है।"
 
@@ -26720,6 +26734,14 @@ msgid ""
 msgstr ""
 "यह ईमेल डोमेन अनुमत नहीं है। एंटरप्राइज एडमिन को इनमें से किसी एक डोमेन की "
 "ईमेल का उपयोग करना चाहिए: %(domains)s"
+
+#: corehq/apps/enterprise/forms.py
+msgid ""
+"This user must be a member of at least one project space in this enterprise "
+"account before being added as an enterprise administrator."
+msgstr ""
+"इस एंटरप्राइज खाते में एंटरप्राइज व्यवस्थापक के रूप में जोड़े जाने से पहले "
+"इस उपयोगकर्ता को कम से कम एक प्रोजेक्ट स्पेस का सदस्य होना चाहिए।"
 
 #: corehq/apps/enterprise/forms.py
 msgid "Restrict Project Space Creation"
@@ -26964,7 +26986,6 @@ msgstr "एंटरप्राइज डैशबोर्ड: {}"
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
 #: corehq/apps/enterprise/views.py corehq/tabs/tabclasses.py
-#| msgid "Dear enterprise administrator,"
 msgid "Enterprise Administrators"
 msgstr "एंटरप्राइज प्रशासक"
 
@@ -26983,7 +27004,6 @@ msgstr ""
 "Admins\" target=\"_blank\" >एंटरप्राइज कंसोल | एंटरप्राइज एडमिन्स</a >।"
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
-#| msgid "Server Administrator"
 msgid "Add an Administrator"
 msgstr "प्रशासक जोड़ें"
 
@@ -27066,13 +27086,11 @@ msgid "Customize Mobile Form Submissions Date Range"
 msgstr "मोबाइल फॉर्म सबमिशन की तिथि सीमा अनुकूलित करें"
 
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
-#| msgid "Dear enterprise administrator,"
 msgid "Remove enterprise administrator?"
 msgstr "एंटरप्राइज प्रशासक हटाएं?"
 
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #, python-format
-#| msgid "Are you sure you want to remove the grant from %(domain)s to"
 msgid ""
 "Are you sure you want to remove <strong>%(email)s</strong> as an enterprise "
 "administrator?"
@@ -27167,18 +27185,15 @@ msgid "{} is now excluded from enterprise permissions."
 msgstr "{} अब एंटरप्राइज़ अनुमतियों से बाहर है।"
 
 #: corehq/apps/enterprise/views.py
-#| msgid "Invalid request"
 msgid "Invalid request."
 msgstr "अमान्य अनुरोध।"
 
 #: corehq/apps/enterprise/views.py
 #, python-format
-#| msgid "Dear enterprise administrator,"
 msgid "%(email)s has been added as an enterprise administrator."
 msgstr "%(email)s को एंटरप्राइज प्रशासक के रूप में जोड़ा गया है।"
 
 #: corehq/apps/enterprise/views.py
-#| msgid "You cannot remove yourself from a domain via bulk upload"
 msgid "You cannot remove yourself as an enterprise administrator."
 msgstr "आप स्वयं को एंटरप्राइज प्रशासक के रूप में नहीं हटा सकते।"
 
@@ -27188,13 +27203,11 @@ msgstr "एंटरप्राइज खाते में कम से क�
 
 #: corehq/apps/enterprise/views.py
 #, python-format
-#| msgid "Dear enterprise administrator,"
 msgid "%(email)s is not an enterprise administrator."
 msgstr "%(email)s एंटरप्राइज प्रशासक नहीं है।"
 
 #: corehq/apps/enterprise/views.py
 #, python-format
-#| msgid "Dear enterprise administrator,"
 msgid "%(email)s has been removed as an enterprise administrator."
 msgstr "%(email)s को एंटरप्राइज प्रशासक के रूप में हटा दिया गया है।"
 
@@ -36735,14 +36748,18 @@ msgstr ""
 "आपकी उपयोगकर्ता भूमिका आपको संगठन पदानुक्रम में आपके सौंपे गए स्थान के आधार पर डेटा तक पहुँचने की अनुमति देती है। वर्तमान में आपके पास कोई सौंपा गया स्थान नहीं है, और जब तक यह सही नहीं किया जाता, आप CommCareHQ तक पहुँचने में असमर्थ रहेंगे। कृपया अपने प्रोजेक्ट व्यवस्थापक से संपर्क करें ताकि आपको किसी स्थान पर सौंपा जा सके।\n"
 
 #: corehq/apps/locations/permissions.py
+#| msgid ""
+#| "This project has restricted data access rules. Please contact your project "
+#| "administrator to be assigned access to data in this project. More "
+#| "information is available <a href=\"{}\">here</a>."
 msgid ""
-"This project has restricted data access rules. Please contact your project "
-"administrator to be assigned access to data in this project. More "
-"information is available <a href=\"{}\">here</a>."
+"This project limits access to users based on their location. If your "
+"location or your access limits are incorrect, please contact your project "
+"administrator. <a href=\"{}\">More information is available here</a>."
 msgstr ""
-"इस प्रोजेक्ट में डेटा एक्सेस के लिए प्रतिबंधित नियम हैं। कृपया अपने "
-"प्रोजेक्ट व्यवस्थापक से संपर्क करें ताकि आपको इस प्रोजेक्ट में डेटा एक्सेस "
-"के लिए सौंपा जा सके। अधिक जानकारी <a href=\"{}\">यहाँ</a> उपलब्ध है।"
+"यह प्रोजेक्ट उपयोगकर्ताओं की पहुँच को उनकी लोकेशन के आधार पर सीमित करता है। "
+"यदि आपकी लोकेशन या आपकी पहुँच सीमाएँ गलत हैं, तो कृपया अपने प्रोजेक्ट "
+"व्यवस्थापक से संपर्क करें। <a href=\"{}\">अधिक जानकारी यहाँ उपलब्ध है</a>।"
 
 #: corehq/apps/locations/resources/v0_6.py
 #, python-brace-format
@@ -37432,6 +37449,11 @@ msgstr "इस समय सूचनाएँ प्राप्त नही�
 #: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
 msgid "Please see our blog for service updates."
 msgstr "कृपया सेवा अपडेट के लिए हमारे ब्लॉग देखें।"
+
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
+msgid "See More"
+msgstr "और देखें"
 
 #: corehq/apps/notifications/views.py
 msgid "Manage Notification"
@@ -58003,7 +58025,6 @@ msgid "Locked Admin Questions"
 msgstr "लॉक किए गए एडमिन प्रश्न"
 
 #: corehq/privileges.py
-#| msgid "Save Case"
 msgid "Save to Case"
 msgstr "केस में सहेजें"
 
@@ -58997,6 +59018,9 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid "Claim Condition"
+#~ msgstr "दावा शर्त"
 
 #~ msgid "Normal Case List"
 #~ msgstr "सामान्य केस सूची"

@@ -133,6 +133,11 @@ msgid "Any Service"
 msgstr "Tout service"
 
 #: corehq/apps/accounting/filters.py
+#| msgid "Credit Adjustment Reason"
+msgid "Credit Adjustment Link"
+msgstr "Lien d'ajustement de crédit"
+
+#: corehq/apps/accounting/filters.py
 msgid "Linked to Any Transaction"
 msgstr "Lié à toute transaction"
 
@@ -9749,11 +9754,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              <strong>Save to Case question is missing a case type.</strong>\n"
-#| "              Please add the \"case_type\" property mapping for \"%(case_tag)s\"\n"
-#| "            "
 msgid ""
 "\n"
 "              <strong>Advanced Case Actions question is missing a case type.</strong>\n"
@@ -9768,11 +9768,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              <strong>Save to Case question is missing a case name.</strong>\n"
-#| "              Please add the \"case_name\" property mapping for \"%(case_tag)s\"\n"
-#| "            "
 msgid ""
 "\n"
 "              <strong>Advanced Case Actions question is missing a case name.</strong>\n"
@@ -11286,6 +11281,24 @@ msgstr "Copier le formulaire"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
 msgid "XForm"
 msgstr "XFormulaire"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#| msgid ""
+#| "\n"
+#| "                  You will not be able to enable case sharing again until you upgrade, but you\n"
+#| "                  can edit the group once again.\n"
+#| "                "
+msgid ""
+"\n"
+"                This form contains locked questions and can only be uploaded by\n"
+"                a user with the locked questions permission.\n"
+"              "
+msgstr ""
+"\n"
+"                Ce formulaire contient des questions verrouillées et ne peut être téléchargé que par\n"
+"                un utilisateur disposant de la permission pour les questions verrouillées.\n"
+"              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
@@ -12826,19 +12839,11 @@ msgstr "Recherche d'abord"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
-msgid "See More"
-msgstr "Voir plus"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Skip to Default Case Search Results"
 msgstr "Passer aux résultats de recherche de cas par défaut"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#| msgid "Case Search"
 msgid "Legacy Case Search"
 msgstr "Recherche de dossier héritée"
 
@@ -12866,11 +12871,6 @@ msgstr "Traduction du titre de l'écran de recherche"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search Screen Subtitle"
 msgstr "Sous-titre de l'écran de recherche"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Claim Condition"
-msgstr "Condition de revendication"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -14943,6 +14943,15 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
+"Case property mappings that reference locked questions cannot be modified. "
+"Unlock the question in the form builder first."
+msgstr ""
+"Les correspondances de propriétés de dossier qui font référence à des "
+"questions verrouillées ne peuvent pas être modifiées. Déverrouillez d'abord "
+"la question dans le créateur de formulaires."
+
+#: corehq/apps/app_manager/views/forms.py
+msgid ""
 "This form could not be copied because it is not compatible with the selected"
 " module."
 msgstr ""
@@ -14952,6 +14961,15 @@ msgstr ""
 #: corehq/apps/app_manager/views/forms.py
 msgid "There was an error saving, please try again!"
 msgstr "Une erreur s'est produite, veuillez réessayer!"
+
+#: corehq/apps/app_manager/views/forms.py
+#| msgid "You do not have permissions to assign one of those locations."
+msgid ""
+"You do not have permission to upload an XForm for a form that contains "
+"locked questions."
+msgstr ""
+"Vous n'avez pas la permission de télécharger un XForm pour un formulaire "
+"contenant des questions verrouillées."
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
@@ -16495,7 +16513,6 @@ msgstr ""
 "acceptées sont : {}"
 
 #: corehq/apps/case_search/filter_dsl.py
-#| msgid "Include related cases"
 msgid "You cannot query related cases here"
 msgstr "Vous ne pouvez pas interroger les dossiers liés ici"
 
@@ -27420,12 +27437,10 @@ msgid "Last Used [UTC]"
 msgstr "Dernière utilisation [UTC]"
 
 #: corehq/apps/enterprise/forms.py
-#| msgid "Server Administrator"
 msgid "Add Administrator"
 msgstr "Ajouter un administrateur"
 
 #: corehq/apps/enterprise/forms.py
-#| msgid "Dear enterprise administrator,"
 msgid "This user is already an enterprise administrator."
 msgstr "Cet utilisateur est déjà administrateur d'entreprise."
 
@@ -27437,6 +27452,14 @@ msgid ""
 msgstr ""
 "Ce domaine de messagerie n'est pas autorisé. Les administrateurs "
 "d'entreprise doivent utiliser une adresse e-mail parmi : %(domains)s"
+
+#: corehq/apps/enterprise/forms.py
+msgid ""
+"This user must be a member of at least one project space in this enterprise "
+"account before being added as an enterprise administrator."
+msgstr ""
+"Cet utilisateur doit être membre d'au moins un espace projet dans ce compte "
+"entreprise avant d'être ajouté comme administrateur d'entreprise."
 
 #: corehq/apps/enterprise/forms.py
 msgid "Restrict Project Space Creation"
@@ -27684,7 +27707,6 @@ msgstr "Tableau de bord entreprise : {}"
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
 #: corehq/apps/enterprise/views.py corehq/tabs/tabclasses.py
-#| msgid "Dear enterprise administrator,"
 msgid "Enterprise Administrators"
 msgstr "Administrateurs d'entreprise"
 
@@ -27705,7 +27727,6 @@ msgstr ""
 "d'entreprise."
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
-#| msgid "Server Administrator"
 msgid "Add an Administrator"
 msgstr "Ajouter un administrateur"
 
@@ -27790,13 +27811,11 @@ msgstr ""
 "Personnaliser la plage de dates des soumissions de formulaires mobiles"
 
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
-#| msgid "Dear enterprise administrator,"
 msgid "Remove enterprise administrator?"
 msgstr "Retirer l'administrateur d'entreprise ?"
 
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #, python-format
-#| msgid "Are you sure you want to remove the grant from %(domain)s to"
 msgid ""
 "Are you sure you want to remove <strong>%(email)s</strong> as an enterprise "
 "administrator?"
@@ -27891,18 +27910,15 @@ msgid "{} is now excluded from enterprise permissions."
 msgstr "{} est désormais exclu des autorisations d'entreprise."
 
 #: corehq/apps/enterprise/views.py
-#| msgid "Invalid request"
 msgid "Invalid request."
 msgstr "Requête invalide."
 
 #: corehq/apps/enterprise/views.py
 #, python-format
-#| msgid "Dear enterprise administrator,"
 msgid "%(email)s has been added as an enterprise administrator."
 msgstr "%(email)s a été ajouté en tant qu'administrateur d'entreprise."
 
 #: corehq/apps/enterprise/views.py
-#| msgid "You cannot remove yourself from a domain via bulk upload"
 msgid "You cannot remove yourself as an enterprise administrator."
 msgstr ""
 "Vous ne pouvez pas vous retirer en tant qu'administrateur d'entreprise."
@@ -27913,13 +27929,11 @@ msgstr "Un compte d'entreprise doit avoir au moins un administrateur."
 
 #: corehq/apps/enterprise/views.py
 #, python-format
-#| msgid "Dear enterprise administrator,"
 msgid "%(email)s is not an enterprise administrator."
 msgstr "%(email)s n'est pas un administrateur d'entreprise."
 
 #: corehq/apps/enterprise/views.py
 #, python-format
-#| msgid "Dear enterprise administrator,"
 msgid "%(email)s has been removed as an enterprise administrator."
 msgstr "%(email)s a été retiré en tant qu'administrateur d'entreprise."
 
@@ -37685,14 +37699,19 @@ msgstr ""
 "Votre administrateur de projet pour qu'il vous affecte un site.\n"
 
 #: corehq/apps/locations/permissions.py
+#| msgid ""
+#| "This project has restricted data access rules. Please contact your project "
+#| "administrator to be assigned access to data in this project. More "
+#| "information is available <a href=\"{}\">here</a>."
 msgid ""
-"This project has restricted data access rules. Please contact your project "
-"administrator to be assigned access to data in this project. More "
-"information is available <a href=\"{}\">here</a>."
+"This project limits access to users based on their location. If your "
+"location or your access limits are incorrect, please contact your project "
+"administrator. <a href=\"{}\">More information is available here</a>."
 msgstr ""
-"Ce projet a des règles d'accès aux données restreintes. Veuillez contacter "
-"votre administrateur de projet pour obtenir l'accès aux données de ce "
-"projet. Plus d'informations sont disponibles <a href=\"{}\">ici</a>."
+"Ce projet limite l'accès aux utilisateurs en fonction de leur emplacement. "
+"Si votre emplacement ou vos limites d'accès sont incorrects, veuillez "
+"contacter l'administrateur de votre projet. <a href=\"{}\">Plus "
+"d'informations sont disponibles ici</a>."
 
 #: corehq/apps/locations/resources/v0_6.py
 #, python-brace-format
@@ -38411,6 +38430,11 @@ msgstr "Les notifications n'ont pas pu être récupérées pour le moment."
 #: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
 msgid "Please see our blog for service updates."
 msgstr "Veuillez voir notre blog pour les mises à jour de service."
+
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
+msgid "See More"
+msgstr "Voir plus"
 
 #: corehq/apps/notifications/views.py
 msgid "Manage Notification"
@@ -59360,7 +59384,6 @@ msgid "Locked Admin Questions"
 msgstr "Questions administrateur verrouillées"
 
 #: corehq/privileges.py
-#| msgid "Save Case"
 msgid "Save to Case"
 msgstr "Enregistrer dans le dossier"
 
@@ -60361,6 +60384,9 @@ msgstr "Les colonnes requises sont {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "Claim Condition"
+#~ msgstr "Condition de revendication"
 
 #~ msgid "Normal Case List"
 #~ msgstr "Liste de cas normale"

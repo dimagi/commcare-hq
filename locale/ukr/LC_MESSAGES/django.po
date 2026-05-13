@@ -103,6 +103,11 @@ msgid "Any Service"
 msgstr "Будь-яка послуга"
 
 #: corehq/apps/accounting/filters.py
+#| msgid "Credit Adjustment Reason"
+msgid "Credit Adjustment Link"
+msgstr "Посилання на коригування кредиту"
+
+#: corehq/apps/accounting/filters.py
 msgid "Linked to Any Transaction"
 msgstr "Пов'язано з будь-якою транзакцією"
 
@@ -9539,11 +9544,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              <strong>Save to Case question is missing a case type.</strong>\n"
-#| "              Please add the \"case_type\" property mapping for \"%(case_tag)s\"\n"
-#| "            "
 msgid ""
 "\n"
 "              <strong>Advanced Case Actions question is missing a case type.</strong>\n"
@@ -9558,11 +9558,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              <strong>Save to Case question is missing a case name.</strong>\n"
-#| "              Please add the \"case_name\" property mapping for \"%(case_tag)s\"\n"
-#| "            "
 msgid ""
 "\n"
 "              <strong>Advanced Case Actions question is missing a case name.</strong>\n"
@@ -11075,6 +11070,24 @@ msgstr "Копіювати форму"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
 msgid "XForm"
 msgstr "XForm"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#| msgid ""
+#| "\n"
+#| "                  You will not be able to enable case sharing again until you upgrade, but you\n"
+#| "                  can edit the group once again.\n"
+#| "                "
+msgid ""
+"\n"
+"                This form contains locked questions and can only be uploaded by\n"
+"                a user with the locked questions permission.\n"
+"              "
+msgstr ""
+"\n"
+"                Ця форма містить заблоковані питання і може бути завантажена лише\n"
+"                користувачем із дозволом на заблоковані питання.\n"
+"              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
@@ -12603,19 +12616,11 @@ msgstr "Спочатку пошук"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
-msgid "See More"
-msgstr "Дивитися більше"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Skip to Default Case Search Results"
 msgstr "Перейти до результатів пошуку справ за замовчуванням"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#| msgid "Case Search"
 msgid "Legacy Case Search"
 msgstr "Застарілий пошук кейсів"
 
@@ -12643,11 +12648,6 @@ msgstr "Переклад заголовка екрана пошуку"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search Screen Subtitle"
 msgstr "Підзаголовок екрана пошуку"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Claim Condition"
-msgstr "Умова підтвердження"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -14691,6 +14691,14 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
+"Case property mappings that reference locked questions cannot be modified. "
+"Unlock the question in the form builder first."
+msgstr ""
+"Відповідності властивостей кейсу, які посилаються на заблоковані питання, не"
+" можна змінювати. Спочатку розблокуйте питання у конструкторі форм."
+
+#: corehq/apps/app_manager/views/forms.py
+msgid ""
 "This form could not be copied because it is not compatible with the selected"
 " module."
 msgstr ""
@@ -14699,6 +14707,15 @@ msgstr ""
 #: corehq/apps/app_manager/views/forms.py
 msgid "There was an error saving, please try again!"
 msgstr "Сталася помилка під час збереження, будь ласка, спробуйте ще раз!"
+
+#: corehq/apps/app_manager/views/forms.py
+#| msgid "You do not have permissions to assign one of those locations."
+msgid ""
+"You do not have permission to upload an XForm for a form that contains "
+"locked questions."
+msgstr ""
+"У вас немає дозволу на завантаження XForm для форми, яка містить заблоковані"
+" питання."
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
@@ -16204,7 +16221,6 @@ msgid ""
 msgstr "Ми не знаємо, що робити з функцією \"{}\". Дозволені функції: {}"
 
 #: corehq/apps/case_search/filter_dsl.py
-#| msgid "Include related cases"
 msgid "You cannot query related cases here"
 msgstr "Тут не можна виконувати запити до пов'язаних кейсів"
 
@@ -27037,12 +27053,10 @@ msgid "Last Used [UTC]"
 msgstr "Останнє використання [UTC]"
 
 #: corehq/apps/enterprise/forms.py
-#| msgid "Server Administrator"
 msgid "Add Administrator"
 msgstr "Додати адміністратора"
 
 #: corehq/apps/enterprise/forms.py
-#| msgid "Dear enterprise administrator,"
 msgid "This user is already an enterprise administrator."
 msgstr "Цей користувач вже є адміністратором підприємства."
 
@@ -27054,6 +27068,15 @@ msgid ""
 msgstr ""
 "Цей домен електронної пошти не дозволений. Адміністратори підприємства "
 "повинні використовувати електронну пошту одного з: %(domains)s"
+
+#: corehq/apps/enterprise/forms.py
+msgid ""
+"This user must be a member of at least one project space in this enterprise "
+"account before being added as an enterprise administrator."
+msgstr ""
+"Цей користувач має бути учасником принаймні одного робочого простору в цьому"
+" корпоративному обліковому записі, перш ніж його можна буде додати як "
+"корпоративного адміністратора."
 
 #: corehq/apps/enterprise/forms.py
 msgid "Restrict Project Space Creation"
@@ -27299,7 +27322,6 @@ msgstr "Корпоративна панель: {}"
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
 #: corehq/apps/enterprise/views.py corehq/tabs/tabclasses.py
-#| msgid "Dear enterprise administrator,"
 msgid "Enterprise Administrators"
 msgstr "Адміністратори підприємства"
 
@@ -27319,7 +27341,6 @@ msgstr ""
 "отримання додаткової інформації про адміністраторів підприємства."
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
-#| msgid "Server Administrator"
 msgid "Add an Administrator"
 msgstr "Додати адміністратора"
 
@@ -27403,13 +27424,11 @@ msgid "Customize Mobile Form Submissions Date Range"
 msgstr "Налаштувати діапазон дат надсилання мобільних форм"
 
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
-#| msgid "Dear enterprise administrator,"
 msgid "Remove enterprise administrator?"
 msgstr "Видалити адміністратора підприємства?"
 
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #, python-format
-#| msgid "Are you sure you want to remove the grant from %(domain)s to"
 msgid ""
 "Are you sure you want to remove <strong>%(email)s</strong> as an enterprise "
 "administrator?"
@@ -27503,18 +27522,15 @@ msgid "{} is now excluded from enterprise permissions."
 msgstr "{} тепер виключено з корпоративних дозволів."
 
 #: corehq/apps/enterprise/views.py
-#| msgid "Invalid request"
 msgid "Invalid request."
 msgstr "Недійсний запит."
 
 #: corehq/apps/enterprise/views.py
 #, python-format
-#| msgid "Dear enterprise administrator,"
 msgid "%(email)s has been added as an enterprise administrator."
 msgstr "%(email)s додано як адміністратора підприємства."
 
 #: corehq/apps/enterprise/views.py
-#| msgid "You cannot remove yourself from a domain via bulk upload"
 msgid "You cannot remove yourself as an enterprise administrator."
 msgstr "Ви не можете видалити себе як адміністратора підприємства."
 
@@ -27525,13 +27541,11 @@ msgstr ""
 
 #: corehq/apps/enterprise/views.py
 #, python-format
-#| msgid "Dear enterprise administrator,"
 msgid "%(email)s is not an enterprise administrator."
 msgstr "%(email)s не є адміністратором підприємства."
 
 #: corehq/apps/enterprise/views.py
 #, python-format
-#| msgid "Dear enterprise administrator,"
 msgid "%(email)s has been removed as an enterprise administrator."
 msgstr "%(email)s видалено як адміністратора підприємства."
 
@@ -37167,14 +37181,19 @@ msgstr ""
 "адміністратора вашого проєкту, щоб вам призначили місце.\n"
 
 #: corehq/apps/locations/permissions.py
+#| msgid ""
+#| "This project has restricted data access rules. Please contact your project "
+#| "administrator to be assigned access to data in this project. More "
+#| "information is available <a href=\"{}\">here</a>."
 msgid ""
-"This project has restricted data access rules. Please contact your project "
-"administrator to be assigned access to data in this project. More "
-"information is available <a href=\"{}\">here</a>."
+"This project limits access to users based on their location. If your "
+"location or your access limits are incorrect, please contact your project "
+"administrator. <a href=\"{}\">More information is available here</a>."
 msgstr ""
-"У цьому проєкті діють обмеження на доступ до даних. Будь ласка, зверніться "
-"до адміністратора вашого проєкту, щоб отримати доступ до даних у цьому "
-"проєкті. Більше інформації доступно <a href=\"{}\">тут</a>."
+"Доступ до цього проєкту обмежено для користувачів за їх місцем розташування."
+" Якщо ваше місце розташування або обмеження доступу вказані неправильно, "
+"зверніться до адміністратора вашого проєкту. <a href=\"{}\">Детальніше "
+"тут</a>."
 
 #: corehq/apps/locations/resources/v0_6.py
 #, python-brace-format
@@ -37889,6 +37908,11 @@ msgstr "Наразі не вдалося отримати сповіщення."
 #: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
 msgid "Please see our blog for service updates."
 msgstr "Будь ласка, перегляньте наш блог для оновлень сервісу."
+
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
+msgid "See More"
+msgstr "Дивитися більше"
 
 #: corehq/apps/notifications/views.py
 msgid "Manage Notification"
@@ -58562,7 +58586,6 @@ msgid "Locked Admin Questions"
 msgstr "Заблоковані питання адміністратора"
 
 #: corehq/privileges.py
-#| msgid "Save Case"
 msgid "Save to Case"
 msgstr "Зберегти до справи"
 
@@ -59561,6 +59584,9 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "Claim Condition"
+#~ msgstr "Умова підтвердження"
 
 #~ msgid "Normal Case List"
 #~ msgstr "Звичайний список справ"
