@@ -281,8 +281,6 @@ class ContentForeignKeyMixin(models.Model):
     ivr_survey_content = models.ForeignKey('scheduling.IVRSurveyContent', null=True, on_delete=models.CASCADE)
     custom_content = models.ForeignKey('scheduling.CustomContent', null=True, on_delete=models.CASCADE)
     sms_callback_content = models.ForeignKey('scheduling.SMSCallbackContent', null=True, on_delete=models.CASCADE)
-    fcm_notification_content = models.ForeignKey('scheduling.FCMNotificationContent', null=True,
-                                                 on_delete=models.CASCADE)
     connect_message_content = models.ForeignKey('scheduling.ConnectMessageContent', null=True,
                                                 on_delete=models.CASCADE)
     connect_survey_content = models.ForeignKey('scheduling.ConnectMessageSurveyContent', null=True,
