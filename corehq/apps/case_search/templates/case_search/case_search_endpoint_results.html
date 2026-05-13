@@ -1,0 +1,48 @@
+{% load i18n %}
+<details class="mb-4 border rounded p-3 bg-light">
+  <summary>{% trans "Server-Side Filtering" %}</summary>
+  <h5 class="mt-2">{% trans "Rendered Filters" %}</h5>
+  <table class="table table-sm table-bordered w-auto">
+    <tbody>
+      {% for expr in debug_context.filters %}
+        <tr><td class="font-monospace">{{ expr }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h5>{% trans "Template Parameters" %}</h5>
+  <table class="table table-sm table-bordered w-auto">
+    <thead>
+      <tr>
+        <th>{% trans "Parameter" %}</th>
+        <th>{% trans "Value" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for key, value in debug_context.params.items %}
+        <tr>
+          <td class="font-monospace">{{ key }}</td>
+          <td>{{ value }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</details>
+<h2>{% trans "Results" %}</h2>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      {% for col in header %}
+        <th>{{ col }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+      <tr>
+        {% for cell in row %}
+          <td>{{ cell }}</td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
