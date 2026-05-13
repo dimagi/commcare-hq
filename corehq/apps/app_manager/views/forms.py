@@ -616,6 +616,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
 
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
+    lang = request.COOKIES.get('lang', app.langs[0])
 
     conflict = _get_xform_conflict_response(form, sha1_checksum)
     if conflict is not None:
@@ -636,6 +637,13 @@ def patch_xform(request, domain, app_id, form_unique_id):
         'status': 'ok',
         'sha1': hashlib.sha1(xml).hexdigest()
     }
+
+    if "name" in request.POST:
+        form.name[lang] = request.POST['name']
+        response_json['update'] = {'.variable-form_name': clean_trans(form.name, [lang])}
+    if "comment" in request.POST:
+        form.comment = request.POST['comment']
+
     app.save(response_json)
 
     if _case_mapping_diff_has_changes(case_mapping_diff):
