@@ -202,6 +202,38 @@ class TestGroupResource(APIResourceTest):
         group_a = Group.get(backend_id)
         self.assertEqual(group_a.name, "test a")
 
+    def test_update_rejects_name_empty(self):
+        original_group = self._add_group(Group({"name": "test group", "domain": self.domain.name}))
+
+        backend_id = original_group._id
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(backend_id),
+            json.dumps({"name": ""}),
+            content_type='application/json',
+            method='PUT',
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        response_body = json.loads(response.content)
+        self.assertIn("may not be blank", response_body["error"])
+
+        modified_group = Group.get(backend_id)
+        self.assertEqual(modified_group.name, "test group")
+
+    def test_update_allows_name_missing(self):
+        original_group = self._add_group(Group({"name": "test", "domain": self.domain.name}))
+
+        backend_id = original_group._id
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(backend_id),
+            json.dumps({"case_sharing": True}),
+            content_type='application/json',
+            method='PUT',
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        modified_group = Group.get(backend_id)
+        self.assertTrue(modified_group.case_sharing)
+
     def _add_group(self, group, send_to_es=False):
         group.save()
         self.addCleanup(group.delete)

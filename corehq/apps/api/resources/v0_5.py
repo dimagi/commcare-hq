@@ -697,7 +697,9 @@ class GroupResource(v0_4.GroupResource):
         for key, value in bundle.data.items():
             if key == 'name' and getattr(bundle.obj, key, None) != value:
                 if not Group.by_name(bundle.obj.domain, value):
-                    setattr(bundle.obj, key, value or '')
+                    if not value:
+                        raise BadRequest("Name may not be blank")
+                    setattr(bundle.obj, key, value)
                     should_save = True
                 else:
                     raise BadRequest("A group with name %s already exists" % value)
