@@ -360,6 +360,23 @@ class TestCommCareUserResource(APIResourceTest):
             '{"error": "A profile assignment is required for Mobile Workers."}',
         )
 
+    def test_bad_request_profile_not_found(self):
+        user_json = {
+            'username': 'jdoe',
+            'password': 'qwer1234',
+            'user_data': {'commcare_profile': 123456},
+        }
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps(user_json),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "User data profile not found."}'
+        )
+
     def test_update(self):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
                                    created_by=None, created_via=None, phone_number="50253311398")

@@ -49,6 +49,15 @@ def _validate_complete_username(username, domain):
             _("The username email domain '@{}' should be '@{}'.").format(email_domain, expected_domain))
 
 
+def validate_profile_id(profile_id, domain):
+    validate_profile_required(profile_id, domain)
+    profiles = CustomDataFieldsDefinition.get(domain, 'UserFields').get_profiles()
+    if profile_id and profile_id not in {profile.id for profile in profiles}:
+        raise ValidationError(
+            _("User data profile not found.")
+        )
+
+
 def validate_profile_required(profile_identifier, domain):
     profile_required_for_user_type_list = CustomDataFieldsDefinition.get_profile_required_for_user_type_list(
         domain,
