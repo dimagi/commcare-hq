@@ -402,9 +402,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         if conflict is not None:
             return conflict
 
-    update = _apply_form_name_and_comment_updates(request, form, lang, app, sync_xform_title=True)
-    if update:
-        resp['update'] = update
+    resp['update'] = _apply_form_name_and_comment_updates(
+        request, form, lang, app, sync_xform_title=True)
 
     if should_edit("xform") or "xform" in request.FILES:
         if "xform" in request.FILES and not _allow_xform_upload(
@@ -648,9 +647,8 @@ def patch_xform(request, domain, app_id, form_unique_id):
         'sha1': hashlib.sha1(xml).hexdigest()
     }
 
-    update = _apply_form_name_and_comment_updates(request, form, lang, app)
-    if update:
-        response_json['update'] = update
+    response_json['update'] = _apply_form_name_and_comment_updates(
+        request, form, lang, app)
 
     app.save(response_json)
 
