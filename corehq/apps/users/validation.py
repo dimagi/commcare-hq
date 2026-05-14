@@ -49,7 +49,7 @@ def _validate_complete_username(username, domain):
             _("The username email domain '@{}' should be '@{}'.").format(email_domain, expected_domain))
 
 
-def validate_profile_required(profile_name, domain):
+def validate_profile_required(profile_identifier, domain):
     profile_required_for_user_type_list = CustomDataFieldsDefinition.get_profile_required_for_user_type_list(
         domain,
         UserFieldsView.field_type
@@ -57,7 +57,7 @@ def validate_profile_required(profile_name, domain):
     if not profile_required_for_user_type_list:
         return
     profile_assignment_required = UserFieldsView.COMMCARE_USER in profile_required_for_user_type_list
-    if profile_assignment_required and not profile_name:
+    if profile_assignment_required and not profile_identifier:
         raise ValidationError(
             _("A profile assignment is required for Mobile Workers.")
         )
