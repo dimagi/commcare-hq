@@ -80,9 +80,8 @@ class DataLoader(metaclass=ABCMeta):
         # Warn if the file we loaded contains 0 objects.
         if sum(loaded_object_count.values()) == 0:
             warnings.warn(
-                "No data found for '%s'. (File format may be "
-                "invalid.)" % file_path,
-                RuntimeWarning
+                f"No data found for '{file_path}'. (File format may be invalid.)",
+                RuntimeWarning,
             )
 
         return {meta_slug: loaded_object_count}

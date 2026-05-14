@@ -80,9 +80,9 @@ class Command(BaseCommand):
         self.should_throttle = options.get('throttle')
 
         if not os.path.isfile(dump_file_path):
-            raise CommandError("Dump file not found: {}".format(dump_file_path))
+            raise CommandError(f"Dump file not found: {dump_file_path}")
 
-        self.stdout.write("Loading data from %s." % dump_file_path)
+        self.stdout.write(f"Loading data from {dump_file_path}.")
         extracted_dir = self.extract_dump_archive(dump_file_path)
 
         loaded_meta = {}
@@ -122,7 +122,7 @@ class Command(BaseCommand):
                 archive.extractall(target_dir)
         elif not self.use_extracted:
             raise CommandError(
-                "Extracted dump already exists at {}. Delete it or use --use-extracted".format(target_dir))
+                f"Extracted dump already exists at {target_dir}. Delete it or use --use-extracted")
         return target_dir
 
     def _load_data(self, loader_class, extracted_dump_path, object_filter, dump_meta):
@@ -130,10 +130,10 @@ class Command(BaseCommand):
             loader = loader_class(object_filter, self.stdout, self.stderr, self.chunksize, self.should_throttle)
             return loader.load_from_path(extracted_dump_path, dump_meta, force=self.force, dry_run=self.dry_run)
         except DataExistsException as e:
-            raise CommandError('Some data already exists. Use --force to load anyway: {}'.format(str(e)))
+            raise CommandError(f"Some data already exists. Use --force to load anyway: {e}")
         except Exception as e:
             if not isinstance(e, CommandError):
-                e.args = ("Problem loading data '%s': %s" % (extracted_dump_path, e),)
+                e.args = (f"Problem loading data '{extracted_dump_path}': {e}",)
             raise
 
 

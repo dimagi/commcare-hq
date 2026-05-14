@@ -43,7 +43,7 @@ class Command(BaseCommand):
         requested_dumpers = options.get('dumpers')
 
         self.utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
-        zipname = 'data-dump-{}-{}.zip'.format(domain_name, self.utcnow)
+        zipname = f'data-dump-{domain_name}-{self.utcnow}.zip'
 
         self.stdout.ending = None
         meta = {}  # {dumper_slug: {model_name: count}}
@@ -59,14 +59,14 @@ class Command(BaseCommand):
             except Exception as e:
                 if show_traceback:
                     raise
-                raise CommandError("Unable to serialize database: %s" % e)
+                raise CommandError(f"Unable to serialize database: {e}")
             finally:
                 if stream and not console:
                     stream.close()
 
             if not console:
                 with zipfile.ZipFile(zipname, mode='a', allowZip64=True) as z:
-                    z.write(filename, '{}.gz'.format(dumper.slug))
+                    z.write(filename, f'{dumper.slug}.gz')
 
                 os.remove(filename)
 
@@ -75,7 +75,7 @@ class Command(BaseCommand):
                 z.writestr('meta.json', json.dumps(meta, indent=4))
 
         self._print_stats(meta)
-        self.stdout.write('\nData dumped to file: {}'.format(zipname))
+        self.stdout.write(f'\nData dumped to file: {zipname}')
 
     def _print_stats(self, meta):
         self.stdout.ending = '\n'
