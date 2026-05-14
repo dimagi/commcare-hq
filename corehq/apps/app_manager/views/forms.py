@@ -342,6 +342,25 @@ def edit_form_attr(request, domain, app_id, form_unique_id, attr):
     return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
 
 
+def _apply_form_name_and_comment_updates(request, form, lang, app, sync_xform_title=False):
+    """
+    sync_xform_title=True is only needed when the name update is not from Vellum
+    """
+    update = {}
+    if "name" in request.POST:
+        name = request.POST['name']
+        form.name[lang] = name
+        if sync_xform_title and form.form_type != "shadow_form":
+            xform = form.wrapped_xform()
+            if xform.exists():
+                xform.set_name(name)
+                save_xform(app, form, xform.render())
+        update['.variable-form_name'] = clean_trans(form.name, [lang])
+    if "comment" in request.POST:
+        form.comment = request.POST['comment']
+    return update
+
+
 @no_conflict_require_POST
 @require_permission(HqPermissions.edit_apps, login_decorator=None)
 @capture_user_errors
@@ -383,18 +402,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         if conflict is not None:
             return conflict
 
-    if should_edit("name"):
-        name = request.POST['name']
-        form.name[lang] = name
-        if not form.form_type == "shadow_form":
-            xform = form.wrapped_xform()
-            if xform.exists():
-                xform.set_name(name)
-                save_xform(app, form, xform.render())
-        resp['update'] = {'.variable-form_name': clean_trans(form.name, [lang])}
-
-    if should_edit('comment'):
-        form.comment = request.POST['comment']
+    update = _apply_form_name_and_comment_updates(request, form, lang, app, sync_xform_title=True)
+    if update:
+        resp['update'] = update
 
     if should_edit("xform") or "xform" in request.FILES:
         if "xform" in request.FILES and not _allow_xform_upload(
@@ -638,11 +648,9 @@ def patch_xform(request, domain, app_id, form_unique_id):
         'sha1': hashlib.sha1(xml).hexdigest()
     }
 
-    if "name" in request.POST:
-        form.name[lang] = request.POST['name']
-        response_json['update'] = {'.variable-form_name': clean_trans(form.name, [lang])}
-    if "comment" in request.POST:
-        form.comment = request.POST['comment']
+    update = _apply_form_name_and_comment_updates(request, form, lang, app)
+    if update:
+        response_json['update'] = update
 
     app.save(response_json)
 
