@@ -75,7 +75,8 @@ class Command(BaseCommand):
                 z.writestr('meta.json', json.dumps(meta, indent=4))
 
         self._print_stats(meta)
-        self.stdout.write(f'\nData dumped to file: {zipname}')
+        if not console:
+            self.stdout.write(f'\nData dumped to file: {zipname}')
 
     def _print_stats(self, meta):
         self.stdout.ending = '\n'
