@@ -340,6 +340,26 @@ class TestCommCareUserResource(APIResourceTest):
                          f'{{"error": "Username \'jdoe@{self.domain.name}.commcarehq.org\' is already taken or '
                          f'reserved."}}')
 
+    def test_bad_request_profile_required_not_included(self):
+        definition = CustomDataFieldsDefinition.get_or_create(self.domain, UserFieldsView.field_type)
+        definition.profile_required_for_user_type = [UserFieldsView.COMMCARE_USER]
+        definition.save()
+
+        user_json = {
+            'username': 'jdoe',
+            'password': 'qwer1234',
+        }
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps(user_json),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "A profile assignment is required for Mobile Workers."}',
+        )
+
     def test_update(self):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
                                    created_by=None, created_via=None, phone_number="50253311398")

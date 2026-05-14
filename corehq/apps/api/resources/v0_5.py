@@ -280,7 +280,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         if connect_username and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
             raise BadRequest(_("You don't have permission to use connect_username field"))
         try:
-            validate_profile_required(bundle.data.get('user_profile'), kwargs['domain'])
+            validate_profile_required(
+                bundle.data.get('user_data', {}).get('commcare_profile'),
+                kwargs['domain'],
+            )
         except ValidationError as e:
             raise BadRequest(e.message)
         try:
