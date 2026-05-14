@@ -11,6 +11,9 @@ from corehq.apps.dump_reload.couch import CouchDataDumper
 from corehq.apps.dump_reload.couch.dump import DomainDumper, ToggleDumper
 from corehq.apps.dump_reload.sql import SqlDataDumper
 
+# Domain dumper should be first since it validates that the domain exists.
+DUMPERS = [DomainDumper, SqlDataDumper, CouchDataDumper, ToggleDumper]
+
 
 class Command(BaseCommand):
     # This doesn't include SyncLog data
@@ -47,11 +50,8 @@ class Command(BaseCommand):
 
         self.stdout.ending = None
         meta = {}  # {dumper_slug: {model_name: count}}
-        # domain dumper should be first since it validates domain exists
-        for dumper in [DomainDumper, SqlDataDumper, CouchDataDumper, ToggleDumper]:
-            if requested_dumpers and dumper.slug not in requested_dumpers:
-                continue
-
+        dumpers = [d for d in DUMPERS if not requested_dumpers or d.slug in requested_dumpers]
+        for dumper in dumpers:
             filename = _get_dump_stream_filename(dumper.slug, domain_name, self.utcnow)
             stream = self.stdout if console else gzip.open(filename, 'wt')
             try:
