@@ -37,7 +37,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('path', help='Path to a file with a list of blob meta JSON to export')
         parser.add_argument('--meta-file-filter', nargs='?',
-                            help='Only export blobs for metadata in files with filenames matching the filter regex.')
+                            help='Only export blobs for metadata in files with filenames'
+                                 ' matching the filter regex.')
         parser.add_argument('--already_exported', dest='already_exported',
                             help='Pass a file with a list of blob names already exported')
         parser.add_argument('--use-extracted', action='store_true', default=False, dest='use_extracted',
