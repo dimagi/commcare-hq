@@ -56,8 +56,8 @@ def validate_profile_required(profile_name, domain):
     )
     if not profile_required_for_user_type_list:
         return
-    profile_assginment_required = UserFieldsView.COMMCARE_USER in profile_required_for_user_type_list
-    if profile_assginment_required and not profile_name:
+    profile_assignment_required = UserFieldsView.COMMCARE_USER in profile_required_for_user_type_list
+    if profile_assignment_required and not profile_name:
         raise ValidationError(
             _("A profile assignment is required for Mobile Workers.")
         )
