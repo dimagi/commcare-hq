@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.dump_reload.archive import (
     SimpleSingleStreamWriter,
+    ZipWithZstdArchiveWriter,
     ZippedGzipArchiveWriter,
 )
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
@@ -32,8 +33,9 @@ class Command(BaseCommand):
                  '(use multiple --include to include multiple apps/models).'
         )
         parser.add_argument(
-            '--console', action='store_true', default=False, dest='console',
-            help='Write output to the console instead of to file.'
+            '--format', choices=['gzip', 'zstd', 'console'], default='gzip',
+            help='Archive format. "console" writes all streams to stdout '
+                 'instead of producing an archive file.'
         )
         parser.add_argument('--dumper', dest='dumpers', action='append', default=[],
                             help='Dumper slug to run (use multiple --dumper to run multiple dumpers).')
@@ -41,18 +43,19 @@ class Command(BaseCommand):
     def handle(self, domain_name, **options):
         excludes = options.get('exclude')
         includes = options.get('include')
-        console = options.get('console')
+        archive_format = options.get('format')
         show_traceback = options.get('traceback')
         requested_dumpers = options.get('dumpers')
 
-        utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
         self.stdout.ending = None
 
         dumpers = [d for d in DUMPERS if not requested_dumpers or d.slug in requested_dumpers]
-        if console:
+        if archive_format == 'console':
             archive = SimpleSingleStreamWriter(self.stdout)
-        else:
-            archive = ZippedGzipArchiveWriter(f"data-dump-{domain_name}-{utcnow}.zip")
+        elif archive_format == 'gzip':
+            archive = ZippedGzipArchiveWriter(_get_dump_file_name(domain_name))
+        elif archive_format == 'zstd':
+            archive = ZipWithZstdArchiveWriter(_get_dump_file_name(domain_name))
 
         with archive:
             for dumper in dumpers:
@@ -80,3 +83,8 @@ class Command(BaseCommand):
             count for model in meta.values() for count in model.values()
         )))
         self.stdout.write('{0}{0}'.format('-' * 38))
+
+
+def _get_dump_file_name(domain, suffix='zip'):
+    utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
+    return f'data-dump-{domain}-{utcnow}.{suffix}'

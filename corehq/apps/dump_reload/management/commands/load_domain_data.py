@@ -5,6 +5,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.dump_reload.archive import (
     ExtractedDumpExistsError,
+    ZipWithZstdArchiveReader,
     ZippedGzipArchiveReader,
 )
 from corehq.apps.dump_reload.couch.load import (
@@ -39,8 +40,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('dump_file_path')
+        parser.add_argument('--format', choices=['gzip', 'zstd'], default='gzip',
+                            help='Archive format of the input file.')
         parser.add_argument('--use-extracted', action='store_true', default=False, dest='use_extracted',
-                            help="Use already extracted dump if it exists.")
+                            help="Use already extracted dump if it exists "
+                                 "(gzip format only; ignored otherwise).")
         parser.add_argument('--force', action='store_true', default=False, dest='force',
                             help="Load data for domain that already exists.")
         parser.add_argument('--dry-run', action='store_true', default=False, dest='dry_run',
@@ -71,8 +75,12 @@ class Command(BaseCommand):
 
         self.stdout.write(f"Loading data from {dump_file_path}.")
 
+        archive_format = options.get('format')
         try:
-            archive = ZippedGzipArchiveReader(dump_file_path, use_extracted=self.use_extracted)
+            if archive_format == 'gzip':
+                archive = ZippedGzipArchiveReader(dump_file_path, use_extracted=self.use_extracted)
+            else:
+                archive = ZipWithZstdArchiveReader(dump_file_path)
         except ValueError as e:
             raise CommandError(str(e))
 
