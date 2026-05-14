@@ -5,6 +5,7 @@ import inspect
 
 from django.core.management.base import BaseCommand, CommandError
 
+from corehq.apps.dump_reload.archive.utils import get_tmp_extract_dir
 from corehq.apps.dump_reload.couch.load import (
     CouchDataLoader,
     DomainLoader,
@@ -143,7 +144,3 @@ def _get_dump_meta(extracted_dir):
     meta_path = os.path.join(extracted_dir, 'meta.json')
     with open(meta_path) as f:
         return json.loads(f.read())
-
-
-def get_tmp_extract_dir(dump_file_path, specifier=""):
-    return f'_tmp_load_{specifier}_{dump_file_path}'

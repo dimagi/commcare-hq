@@ -12,7 +12,7 @@ from pathlib import Path
 
 from django.core.management import BaseCommand, CommandError
 
-from corehq.apps.dump_reload.management.commands.load_domain_data import get_tmp_extract_dir
+from corehq.apps.dump_reload.archive.utils import get_tmp_extract_dir
 from corehq.blobs.export import BlobDbBackendExporter
 from corehq.blobs.management.commands.run_blob_export import get_lines_from_file
 from corehq.util.decorators import change_log_level
