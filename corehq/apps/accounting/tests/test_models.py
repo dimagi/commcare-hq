@@ -183,10 +183,9 @@ class TestSubscription(BaseAccountingTest):
     @clear_subscription_caches_on_commit()
     def test_clear_caches_on_commit(self):
         from corehq.apps.accounting.mixins import get_overdue_invoice
-
+        # prime caches and see that they have the values we expect
         subscription = Subscription.get_active_subscription_by_domain(self.domain.name)
         overdue_invoice = get_overdue_invoice(self.domain.name)
-
         assert (
             Subscription._get_active_subscription_by_domain.get_cached_value(
                 Subscription, self.domain.name
@@ -194,6 +193,16 @@ class TestSubscription(BaseAccountingTest):
         )
         assert get_overdue_invoice.get_cached_value(self.domain.name) == overdue_invoice
 
+        # clear caches without on_commit callbacks; cached values should not change
+        Subscription.clear_caches(self.domain.name)
+        assert (
+            Subscription._get_active_subscription_by_domain.get_cached_value(
+                Subscription, self.domain.name
+            ) == subscription
+        )
+        assert get_overdue_invoice.get_cached_value(self.domain.name) == overdue_invoice
+
+        # capture and run on_commit callbacks; caches are successfully cleared
         with self.captureOnCommitCallbacks(execute=True):
             Subscription.clear_caches(self.domain.name)
 
