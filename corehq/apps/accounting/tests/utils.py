@@ -24,7 +24,7 @@ _clear_caches_immediately_patch = mock.patch.object(
 
 
 def patch_subscription_clear_caches():
-    """Run Subscription cache clears immediately in tests.
+    """Clear Subscription caches immediately in tests.
 
     `Subscription.clear_caches` schedules `_clear_caches` via
     `transaction.on_commit`, but Django's `TestCase` wraps each test in
