@@ -47,7 +47,7 @@ $(function () {
     VELLUM_OPTIONS.core = _.extend(VELLUM_OPTIONS.core, {
         onFormSave: function (data) {
             appManager.updateDOM(data.update);
-            if (data.update && data.update['.variable-form_name']) {
+            if (data.update?.['.variable-form_name']) {
                 appManager.updatePageTitle(data.update['.variable-form_name']);
             }
             $('.js-preview-toggle').removeAttr('disabled');
