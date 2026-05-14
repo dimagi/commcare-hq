@@ -7,7 +7,7 @@ from toposort import toposort_flatten
 from casexml.apps.case.mock.case_block import IndexAttrs
 from casexml.apps.phone.utils import MockDevice
 from dimagi.utils.chunked import chunked
-from soil import DownloadBase
+from corehq.apps.soil import DownloadBase
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.celery import task

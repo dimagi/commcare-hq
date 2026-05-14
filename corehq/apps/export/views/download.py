@@ -25,9 +25,9 @@ from corehq.apps.export.det.schema_generator import (
 )
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import get_download_context, process_email_request
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.exceptions import TaskFailedError
+from corehq.apps.soil.util import get_download_context, process_email_request
 
 from corehq.apps.domain.decorators import (
     login_and_domain_required,

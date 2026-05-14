@@ -23,8 +23,8 @@ from memoized import memoized
 from no_exceptions.exceptions import Http403
 
 from dimagi.utils.logging import notify_exception
-from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
+from corehq.apps.soil.exceptions import TaskFailedError
+from corehq.apps.soil.util import expose_cached_download, get_download_context
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback

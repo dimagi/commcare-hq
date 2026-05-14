@@ -9,8 +9,8 @@ from django.utils.translation import gettext as _
 from couchexport.export import export_raw
 from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
-from soil import DownloadBase
-from soil.util import expose_cached_download
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.util import expose_cached_download
 
 from corehq.apps.fixtures.exceptions import FixtureDownloadError
 from corehq.apps.fixtures.models import (

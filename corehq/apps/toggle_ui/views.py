@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 from couchdbkit.exceptions import ResourceNotFound
 
 from couchforms.analytics import get_last_form_submission_received
-from soil import DownloadBase
+from corehq.apps.soil import DownloadBase
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor

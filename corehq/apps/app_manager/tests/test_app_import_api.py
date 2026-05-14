@@ -8,7 +8,7 @@ from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import RequestFactory
 
 from couchdbkit.exceptions import ResourceNotFound
-from soil.exceptions import TaskFailedError
+from corehq.apps.soil.exceptions import TaskFailedError
 
 from corehq.apps.app_manager.views.app_import_api import (
     _handle_import_app,

@@ -1,7 +1,7 @@
 import uuid
 from dataclasses import dataclass
 from django.utils.translation import gettext_lazy as _
-from soil.progress import set_task_progress
+from corehq.apps.soil.progress import set_task_progress
 
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.mock import CaseBlock, IndexAttrs

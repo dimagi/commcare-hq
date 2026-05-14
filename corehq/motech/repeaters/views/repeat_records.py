@@ -14,7 +14,7 @@ from django.views.generic import View
 
 from memoized import memoized
 
-from soil.util import expose_cached_download
+from corehq.apps.soil.util import expose_cached_download
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback

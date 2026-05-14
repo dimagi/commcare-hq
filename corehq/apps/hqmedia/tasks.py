@@ -12,8 +12,8 @@ from django.utils.translation import gettext as _
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.logging import notify_exception
-from soil import DownloadBase
-from soil.util import expose_cached_download, expose_file_download
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.util import expose_cached_download, expose_file_download
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app

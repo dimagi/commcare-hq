@@ -5,8 +5,8 @@ from django.utils.translation import gettext
 from memoized import memoized
 
 from couchexport.writers import Excel2007ExportWriter
-from soil import DownloadBase
-from soil.util import expose_download, get_download_file_path
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.util import expose_download, get_download_file_path
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege

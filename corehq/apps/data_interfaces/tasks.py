@@ -10,8 +10,8 @@ from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection
-from soil import DownloadBase
-from soil.progress import set_task_progress
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.progress import set_task_progress
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.celery import periodic_task, serial_task, task

@@ -11,8 +11,8 @@ from memoized import memoized
 
 from couchforms.analytics import domain_has_submission_in_last_30_days
 from dimagi.utils.django.email import send_HTML_email
-from soil import DownloadBase
-from soil.util import expose_blob_download
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.util import expose_blob_download
 
 from corehq.apps.accounting.models import BillingContactInfo, Subscription
 from corehq.apps.celery import task

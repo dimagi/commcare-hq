@@ -23,8 +23,8 @@ from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.web import json_response
-from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
+from corehq.apps.soil.exceptions import TaskFailedError
+from corehq.apps.soil.util import expose_cached_download, get_download_context
 
 from corehq.apps.commtrack.exceptions import DuplicateProductCodeException
 from corehq.apps.commtrack.util import (

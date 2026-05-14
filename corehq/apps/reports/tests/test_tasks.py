@@ -65,7 +65,7 @@ class GetQuestionIdTests(SimpleTestCase):
         self.assertIsNone(result)
 
 
-@patch("soil.DownloadBase.set_progress")
+@patch("corehq.apps.soil.DownloadBase.set_progress")
 class TestMultimediaZipFile(SimpleTestCase):
 
     def test_files_with_same_name_should_be_uniqued(self, ignore):

@@ -13,7 +13,7 @@ from django.urls import reverse
 
 from django_transfer import TransferHttpResponse
 
-from soil.progress import (
+from corehq.apps.soil.progress import (
     get_multiple_task_progress,
     get_task_progress,
     set_task_progress,
@@ -150,7 +150,7 @@ class DownloadBase(object):
 
     @property
     def task(self):
-        from soil.util import get_task
+        from corehq.apps.soil.util import get_task
         if not self.task_id:
             return None
         return get_task(self.task_id)

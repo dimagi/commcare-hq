@@ -11,8 +11,8 @@ from memoized import memoized
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.loosechange import map_reduce
-from soil import DownloadBase
-from soil.util import expose_blob_download
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.util import expose_blob_download
 
 from corehq.apps.commtrack.util import generate_code
 from corehq.apps.consumption.shortcuts import (

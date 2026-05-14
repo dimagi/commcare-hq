@@ -371,7 +371,7 @@ HQ_APPS = (
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
-    'soil',
+    'corehq.apps.soil',
     'phonelog',
     'pillowtop',
     'pillow_retry',

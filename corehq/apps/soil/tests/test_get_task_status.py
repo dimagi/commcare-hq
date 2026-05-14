@@ -2,7 +2,7 @@ import datetime
 
 from django.test import SimpleTestCase, override_settings
 
-from soil.progress import get_task_status, TaskStatus, TaskProgress, STATES
+from corehq.apps.soil.progress import get_task_status, TaskStatus, TaskProgress, STATES
 
 
 @override_settings(CELERY_TASK_ALWAYS_EAGER=False)

@@ -7,8 +7,8 @@ from celery.utils.log import get_task_logger
 from text_unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
-from soil import DownloadBase
-from soil.util import expose_blob_download
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.util import expose_blob_download
 
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.export.const import MAX_MULTIMEDIA_EXPORT_SIZE

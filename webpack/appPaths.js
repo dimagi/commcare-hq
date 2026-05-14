@@ -15,7 +15,6 @@ const CUSTOM_PATH = path.resolve(__BASE, 'custom');
 
 const nonStandardAppPaths = {
     "case": path.resolve(EX_SUBMODULES_PATH, 'casexml', 'apps', 'case'),
-    "soil": path.resolve(EX_SUBMODULES_PATH, 'soil'),
     "langcodes": path.resolve(SUBMODULES_PATH, 'langcodes'),
     "motech": MOTECH_PATH,
     "scheduling": path.resolve(MESSAGING_PATH, 'scheduling'),

@@ -7,7 +7,7 @@ from django.utils.translation import gettext as _
 from couchdbkit import ResourceNotFound
 
 from dimagi.utils.logging import notify_error, notify_exception
-from soil import DownloadBase
+from corehq.apps.soil import DownloadBase
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.models import Domain

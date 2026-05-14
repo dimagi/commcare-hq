@@ -35,9 +35,9 @@ from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import get_download_context
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.exceptions import TaskFailedError
+from corehq.apps.soil.util import get_download_context
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler

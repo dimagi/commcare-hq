@@ -20,7 +20,7 @@ from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.retry import retry_on
-from soil import DownloadBase
+from corehq.apps.soil import DownloadBase
 
 from corehq import toggles
 from corehq.apps.celery import periodic_task, task

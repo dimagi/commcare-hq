@@ -6,8 +6,8 @@ from celery.exceptions import TimeoutError
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
-from soil import DownloadBase
-from soil.progress import get_task_progress
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.progress import get_task_progress
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.celery import task

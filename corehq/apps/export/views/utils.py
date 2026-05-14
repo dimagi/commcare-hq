@@ -11,8 +11,8 @@ from django.views.generic import View
 from memoized import memoized
 
 from dimagi.utils.web import get_url_base, json_response
-from soil import DownloadBase
-from soil.progress import get_task_status
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.progress import get_task_status
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback

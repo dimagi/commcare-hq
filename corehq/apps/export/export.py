@@ -14,7 +14,7 @@ from corehq.util.metrics import metrics_counter, metrics_track_errors
 from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
 from dimagi.utils.logging import notify_exception
-from soil import DownloadBase
+from corehq.apps.soil import DownloadBase
 
 from corehq.apps.export.const import (
     CASE_EXPORT, FORM_EXPORT, MAX_NORMAL_EXPORT_SIZE, MAX_DAILY_EXPORT_SIZE,
@@ -30,7 +30,7 @@ from corehq.apps.export.models.new import (
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.metrics.load_counters import load_counter
 from corehq.util.files import TransientTempfile, safe_filename
-from soil.progress import TaskProgressManager
+from corehq.apps.soil.progress import TaskProgressManager
 
 export_audit_logger = logging.getLogger("commcare.exports.audit")
 

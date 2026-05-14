@@ -5,7 +5,7 @@ from django.utils.text import slugify
 from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
 from dimagi.ext.couchdbkit import Document
-from soil import FileDownload
+from corehq.apps.soil import FileDownload
 
 from corehq.apps.api.decorators import api_throttle
 from corehq.apps.app_manager.views.utils import get_langs, report_build_time

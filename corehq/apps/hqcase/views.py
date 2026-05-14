@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 from django.core.exceptions import PermissionDenied
 
-from soil import DownloadBase
+from corehq.apps.soil import DownloadBase
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback

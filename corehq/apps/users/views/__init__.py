@@ -34,8 +34,8 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _, gettext_lazy, gettext_noop
 
-from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
+from corehq.apps.soil.exceptions import TaskFailedError
+from corehq.apps.soil.util import expose_cached_download, get_download_context
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST

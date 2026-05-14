@@ -1,11 +1,11 @@
 from dimagi.ext import jsonobject
 from dimagi.utils.logging import notify_exception
-from soil.progress import STATES, get_task_status
-from soil.util import get_task
+from corehq.apps.soil.progress import STATES, get_task_status
+from corehq.apps.soil.util import get_task
 
 
 class TaskStatus(jsonobject.StrictJsonObject):
-    # takes on values of soil.progress.STATES
+    # takes on values of corehq.apps.soil.progress.STATES
     state = jsonobject.IntegerProperty()
     progress = jsonobject.ObjectProperty(lambda: TaskStatusProgress)
     result = jsonobject.ObjectProperty(lambda: TaskStatusResult)

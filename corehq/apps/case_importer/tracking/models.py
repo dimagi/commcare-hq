@@ -4,8 +4,8 @@ from jsonfield import JSONField
 from memoized import memoized
 
 from dimagi.utils.logging import notify_exception
-from soil.progress import STATES
-from soil.util import get_task
+from corehq.apps.soil.progress import STATES
+from corehq.apps.soil.util import get_task
 
 from corehq.apps.case_importer.tracking.task_status import (
     TaskStatus,

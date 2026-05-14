@@ -4,7 +4,7 @@ import zipfile
 from django.core.cache import cache
 from django.utils.translation import gettext as _
 
-from soil import DownloadBase
+from corehq.apps.soil import DownloadBase
 
 from corehq.apps.hqmedia.models import (
     CommCareAudio,

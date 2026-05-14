@@ -37,7 +37,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.couch.database import iter_docs
-from soil.progress import set_task_progress
+from corehq.apps.soil.progress import set_task_progress
 
 from corehq import feature_previews, privileges
 from corehq.apps.accounting.utils import domain_has_privilege

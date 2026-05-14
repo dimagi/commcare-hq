@@ -1,6 +1,6 @@
 from django.urls import re_path as url
 
-from soil.views import (
+from corehq.apps.soil.views import (
     ajax_job_poll,
     retrieve_download,
 )

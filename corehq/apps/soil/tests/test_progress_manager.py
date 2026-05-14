@@ -3,11 +3,11 @@ from unittest import mock
 from django.test import SimpleTestCase
 from time_machine import travel
 
-import soil.progress
-from soil.progress import TaskProgressManager
+from corehq.apps.soil import progress
+from corehq.apps.soil.progress import TaskProgressManager
 
 
-@mock.patch.object(soil.progress, 'set_task_progress')
+@mock.patch.object(progress, 'set_task_progress')
 class ProgressManagerTest(SimpleTestCase):
 
     def test_basic(self, set_task_progress):

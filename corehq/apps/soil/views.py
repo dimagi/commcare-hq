@@ -6,9 +6,9 @@ from django.shortcuts import render
 from django.template.context import RequestContext
 from django.utils.translation import gettext_lazy as _
 
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import get_download_context
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.exceptions import TaskFailedError
+from corehq.apps.soil.util import get_download_context
 
 
 @login_required

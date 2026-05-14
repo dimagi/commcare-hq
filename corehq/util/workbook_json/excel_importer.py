@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from soil import DownloadBase
+from corehq.apps.soil import DownloadBase
 
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 

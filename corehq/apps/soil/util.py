@@ -8,15 +8,15 @@ from django.utils.translation import gettext as _
 
 from couchexport.models import Format
 from dimagi.utils.django.email import send_HTML_email
-from soil import (
+from corehq.apps.soil import (
     BlobDownload,
     CachedDownload,
     DownloadBase,
     FileDownload,
     MultipleTaskDownload,
 )
-from soil.exceptions import TaskFailedError
-from soil.progress import get_task_status
+from corehq.apps.soil.exceptions import TaskFailedError
+from corehq.apps.soil.progress import get_task_status
 
 from corehq.celery_monitoring.heartbeat import (
     Heartbeat,

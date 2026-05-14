@@ -20,7 +20,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
 from pillowtop.dao.couch import ID_CHUNK_SIZE
-from soil.util import expose_download, get_download_file_path
+from corehq.apps.soil.util import expose_download, get_download_file_path
 
 from corehq.apps.celery import periodic_task, serial_task, task
 from corehq.apps.change_feed.data_sources import (

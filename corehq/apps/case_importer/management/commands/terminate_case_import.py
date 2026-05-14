@@ -1,7 +1,7 @@
 from django.core.management import BaseCommand
 
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
-from soil.progress import STATES
+from corehq.apps.soil.progress import STATES
 
 
 class Command(BaseCommand):

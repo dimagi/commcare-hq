@@ -2,7 +2,7 @@ import datetime
 
 from django.template.loader import render_to_string
 
-from soil import DownloadBase
+from corehq.apps.soil import DownloadBase
 
 from corehq.apps.celery import task
 from corehq.apps.fixtures.download import prepare_fixture_download

@@ -4,8 +4,8 @@ from tempfile import mkstemp
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from soil import BlobDownload
-from soil.util import (
+from corehq.apps.soil import BlobDownload
+from corehq.apps.soil.util import (
     expose_blob_download,
     expose_cached_download,
     expose_file_download,

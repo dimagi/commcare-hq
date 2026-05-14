@@ -58,8 +58,8 @@ from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.web import get_url_base
-from soil import DownloadBase
-from soil import views as soil_views
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil import views as soil_views
 
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.models import Subscription

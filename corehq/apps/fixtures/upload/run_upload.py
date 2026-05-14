@@ -13,7 +13,7 @@ from django.db.transaction import atomic
 from django.utils.translation import gettext as _
 
 from dimagi.utils.chunked import chunked
-from soil import DownloadBase
+from corehq.apps.soil import DownloadBase
 
 from corehq.apps.fixtures.models import (
     LookupTable,

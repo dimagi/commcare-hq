@@ -12,7 +12,7 @@ from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
-from soil.progress import TaskProgressManager
+from corehq.apps.soil.progress import TaskProgressManager
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege

@@ -3,8 +3,8 @@ import uuid
 
 from django.conf import settings
 
-from soil import DownloadBase
-from soil.util import expose_cached_download
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.util import expose_cached_download
 
 from corehq.apps.hqmedia.cache import (
     BulkMultimediaStatusCache,

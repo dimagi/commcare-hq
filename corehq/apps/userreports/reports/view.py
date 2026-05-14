@@ -24,9 +24,9 @@ from couchexport.models import Format
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_request
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import get_download_context
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.exceptions import TaskFailedError
+from corehq.apps.soil.util import get_download_context
 
 from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.domain.views.base import BaseDomainView

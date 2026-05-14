@@ -139,7 +139,7 @@ urlpatterns = [
     url(r'^connectid/', include('corehq.messaging.smsbackends.connectid.urls')),
     url(r'^langcodes/', include('langcodes.urls')),
     url(r'^builds/', include('corehq.apps.builds.urls')),
-    url(r'^downloads/temp/', include('soil.urls')),
+    url(r'^downloads/temp/', include('corehq.apps.soil.urls')),
     url(r'^styleguide/', include('corehq.apps.styleguide.urls')),
     url(r'^500/$', use_bootstrap5(TemplateView.as_view(template_name='500.html'))),
     url(r'^404/$', use_bootstrap5(TemplateView.as_view(template_name='404.html'))),

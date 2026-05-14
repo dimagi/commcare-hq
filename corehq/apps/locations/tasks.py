@@ -4,7 +4,7 @@ from django.conf import settings
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.logging import notify_exception
-from soil import DownloadBase
+from corehq.apps.soil import DownloadBase
 
 from corehq.apps.celery import serial_task, task
 from corehq.apps.commtrack.models import close_supply_point_case

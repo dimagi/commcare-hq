@@ -25,9 +25,9 @@ from memoized import memoized
 from dimagi.utils.couch import get_redis_lock, release_lock
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.exceptions import TaskFailedError
+from corehq.apps.soil.util import expose_cached_download, get_download_context
 
 from corehq import toggles
 from corehq.apps.commtrack.util import unicode_slug

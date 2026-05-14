@@ -7,8 +7,8 @@ from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit.exceptions import ResourceNotFound
 
-from soil.exceptions import TaskFailedError
-from soil.util import get_download_context
+from corehq.apps.soil.exceptions import TaskFailedError
+from corehq.apps.soil.util import get_download_context
 
 from corehq.apps.api.decorators import api_throttle
 from corehq.apps.app_manager.dbaccessors import get_app

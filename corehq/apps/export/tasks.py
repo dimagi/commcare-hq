@@ -6,9 +6,9 @@ from django.conf import settings
 from celery.schedules import crontab
 
 from couchexport.models import Format
-from soil import DownloadBase
-from soil.progress import get_task_status
-from soil.util import expose_blob_download, process_email_request
+from corehq.apps.soil import DownloadBase
+from corehq.apps.soil.progress import get_task_status
+from corehq.apps.soil.util import expose_blob_download, process_email_request
 
 from corehq.apps.celery import periodic_task, serial_task, task
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
