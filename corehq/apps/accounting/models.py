@@ -1280,10 +1280,7 @@ class Subscription(models.Model):
 
     @classmethod
     def clear_caches(cls, domain_name):
-        if settings.UNIT_TESTING:
-            cls._clear_caches(domain_name)
-        else:
-            transaction.on_commit(lambda: cls._clear_caches(domain_name))
+        transaction.on_commit(lambda: cls._clear_caches(domain_name))
 
     @classmethod
     def _clear_caches(cls, domain_name):

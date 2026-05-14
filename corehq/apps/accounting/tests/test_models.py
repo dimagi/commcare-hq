@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.core import mail
 from django.db import models
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase
 
 from unittest import mock
 
@@ -28,6 +28,7 @@ from corehq.apps.accounting.tests.generator import (
     FakeStripeCardManager,
     FakeStripeCustomerManager,
 )
+from corehq.apps.accounting.tests.utils import clear_subscription_caches_on_commit
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import (
     SmsBillable,
@@ -177,10 +178,9 @@ class TestSubscription(BaseAccountingTest):
         domains = Subscription.get_active_domains_for_account(self.account)
         self.assertEqual(list(domains), test_domains)
 
-    # Subscription.clear_caches branches on settings.UNIT_TESTING to avoid
-    # transaction.on_commit, which does not work as usual in tests. We want to
-    # test on_commit behavior here, so temporarily override it to read False.
-    @override_settings(UNIT_TESTING=False)
+    # Subscription.clear_caches is overridden to avoid transaction.on_commit in
+    # tests. We are testing on_commit behavior here, so temporarily set it back.
+    @clear_subscription_caches_on_commit()
     def test_clear_caches_on_commit(self):
         from corehq.apps.accounting.mixins import get_overdue_invoice
 
