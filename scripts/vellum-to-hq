@@ -51,6 +51,11 @@ def main():
     parser.add_argument("--vellum-dir", default=os.environ.get("VELLUM_DIR"),
         help="Path to Vellum git repo on your local machine. Defaults to the "
              "value of the VELLUM_DIR environment variable.")
+    parser.add_argument("--non-interactive", action="store_true",
+        help="Skip prompts and commit message editing. Intended for CI.")
+    parser.add_argument("--changelog-out", metavar="PATH",
+        help="Write the 'Vellum Changes Since Last HQ Deploy' log to PATH so a "
+             "caller can include it in a PR body. Intended for CI.")
 
     args = parser.parse_args()
 
@@ -78,7 +83,10 @@ def main():
         else:
             vellum_rev = build_vellum(vellum_dir, vellum_branch, not args.no_test, args.dev_mode)
 
-        update_hq(hq_dir, hq_branch, args.hq_base, vellum_dir, vellum_rev, args.push, args.target, args.dev_mode)
+        update_hq(hq_dir, hq_branch, args.hq_base, vellum_dir, vellum_rev,
+                  args.push, args.target, args.dev_mode,
+                  non_interactive=args.non_interactive,
+                  changelog_out=args.changelog_out)
     except sh.ErrorReturnCode as err:
         print("Aborted due to error: {}".format(err))
 
@@ -129,15 +137,23 @@ def get_old_vellum_rev(path):
         return fh.read().strip()
 
 
-def print_vellum_changes(old_vellum_rev, path):
+def get_vellum_changes(old_vellum_rev, path):
     git = get_git(path)
     log = git('log', '--oneline', '--grep', 'Merge', old_vellum_rev + "..HEAD")
-    log = re.sub(r'#(\d+)', r'dimagi/Vellum#\1', str(log))
+    return re.sub(r'#(\d+)', r'dimagi/Vellum#\1', str(log))
+
+
+def print_vellum_changes(old_vellum_rev, path, out_path=None):
+    log = get_vellum_changes(old_vellum_rev, path)
     print("Vellum Changes Since Last HQ Deploy")
     print(log)
+    if out_path:
+        with open(out_path, "w") as fh:
+            fh.write(log)
 
 
-def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, dev_mode):
+def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, dev_mode,
+              non_interactive=False, changelog_out=None):
     git = get_git(path)
 
     if not dev_mode:
@@ -184,9 +200,10 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, d
             scripts/vellum-to-hq fix-staging --push
         """)
 
-    code = subprocess.call([
-        "git", "commit", "--edit", "--no-verify", "--message={}".format(message)
-    ], cwd=path)
+    commit_args = ["git", "commit", "--no-verify", "--message={}".format(message)]
+    if not non_interactive:
+        commit_args.insert(2, "--edit")
+    code = subprocess.call(commit_args, cwd=path)
     if code != 0:
         sys.exit(code)
 
@@ -201,7 +218,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, d
         print(f"\nPush '{hq_branch}' to Github, then create a PR:\n")
         print(f"  git push origin {hq_branch}\n")
 
-    print_vellum_changes(old_vellum_rev, vellum_dir)
+    print_vellum_changes(old_vellum_rev, vellum_dir, out_path=changelog_out)
 
 
 def fix_staging(path, push):
