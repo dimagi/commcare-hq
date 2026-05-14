@@ -33,7 +33,7 @@ class Command(BaseCommand):
                  '(use multiple --include to include multiple apps/models).'
         )
         parser.add_argument(
-            '--format', choices=['gzip', 'zstd', 'console'], default='gzip',
+            '--format', choices=['gzip', 'zstd', 'console'], default='zstd',
             help='Archive format. "console" writes all streams to stdout '
                  'instead of producing an archive file.'
         )

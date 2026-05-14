@@ -40,7 +40,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('dump_file_path')
-        parser.add_argument('--format', choices=['gzip', 'zstd'], default='gzip',
+        parser.add_argument('--format', choices=['gzip', 'zstd'], default='zstd',
                             help='Archive format of the input file.')
         parser.add_argument('--use-extracted', action='store_true', default=False, dest='use_extracted',
                             help="Use already extracted dump if it exists "
