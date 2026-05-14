@@ -1,11 +1,11 @@
-import gzip
-import json
-import os
-import zipfile
 from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
 
+from corehq.apps.dump_reload.archive import (
+    SimpleSingleStreamWriter,
+    ZippedGzipArchiveWriter,
+)
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.apps.dump_reload.couch import CouchDataDumper
 from corehq.apps.dump_reload.couch.dump import DomainDumper, ToggleDumper
@@ -45,38 +45,28 @@ class Command(BaseCommand):
         show_traceback = options.get('traceback')
         requested_dumpers = options.get('dumpers')
 
-        self.utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
-        zipname = f'data-dump-{domain_name}-{self.utcnow}.zip'
-
+        utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
         self.stdout.ending = None
-        meta = {}  # {dumper_slug: {model_name: count}}
+
         dumpers = [d for d in DUMPERS if not requested_dumpers or d.slug in requested_dumpers]
-        for dumper in dumpers:
-            filename = _get_dump_stream_filename(dumper.slug, domain_name, self.utcnow)
-            stream = self.stdout if console else gzip.open(filename, 'wt')
-            try:
-                meta[dumper.slug] = dumper(domain_name, excludes, includes).dump(stream)
-            except Exception as e:
-                if show_traceback:
-                    raise
-                raise CommandError(f"Unable to serialize database: {e}")
-            finally:
-                if stream and not console:
-                    stream.close()
+        if console:
+            archive = SimpleSingleStreamWriter(self.stdout)
+        else:
+            archive = ZippedGzipArchiveWriter(f"data-dump-{domain_name}-{utcnow}.zip")
 
-            if not console:
-                with zipfile.ZipFile(zipname, mode='a', allowZip64=True) as z:
-                    z.write(filename, f'{dumper.slug}.gz')
+        with archive:
+            for dumper in dumpers:
+                try:
+                    with archive.open_stream(dumper.slug) as stream:
+                        stream.meta = dumper(domain_name, excludes, includes).dump(stream)
+                except Exception as e:
+                    if show_traceback:
+                        raise
+                    raise CommandError(f"Unable to serialize database: {e}")
 
-                os.remove(filename)
-
-        if not console:
-            with zipfile.ZipFile(zipname, mode='a', allowZip64=True) as z:
-                z.writestr('meta.json', json.dumps(meta, indent=4))
-
-        self._print_stats(meta)
-        if not console:
-            self.stdout.write(f'\nData dumped to file: {zipname}')
+        self._print_stats(archive.meta)
+        if archive.path:
+            self.stdout.write(f'\nData dumped to file: {archive.path}')
 
     def _print_stats(self, meta):
         self.stdout.ending = '\n'
@@ -90,7 +80,3 @@ class Command(BaseCommand):
             count for model in meta.values() for count in model.values()
         )))
         self.stdout.write('{0}{0}'.format('-' * 38))
-
-
-def _get_dump_stream_filename(slug, domain, utcnow):
-    return 'dump-{}-{}-{}.gz'.format(slug, domain, utcnow)
