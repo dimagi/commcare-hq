@@ -18,31 +18,16 @@ LOADERS = [DomainLoader, SqlDataLoader, CouchDataLoader, ToggleLoader]
 
 
 class Command(BaseCommand):
-    """This command expects a ZIP file containing one or more
-    gzip files and a 'meta.json' file containing doc counts for each
-    of the gzip files:
+    """Loads a dump produced by ``dump_domain_data``.
 
-    zip:
-       sql.gz
-       couch.gz
-       sql-other.gz
-       meta.json
+    The archive's ``meta.json`` summarises object counts per loader::
 
-    The filenames of the gzip files must be formatted as <slug><suffix>.gz where
-        -  <slug> is one of 'sql', 'couch', 'domain', 'toggle'
-        -  <suffix> can be anything
-
-    meta.json:
-        Must contain a single JSON object with properties for each of the filnames
-        in the zip file. The value of the properties must be a dict of
-        document counts in the corresponding gzip file:
-
-            {
-                "domain": {"Domain": 1},
-                "sql": {"blobs.BlobMeta": 11, "auth.User": 1},
-                "couch": {"users.CommCareUser": 5},
-                "toggles": {"Toggle": 5},
-            }
+        {
+            "domain": {"Domain": 1},
+            "sql": {"blobs.BlobMeta": 11, "auth.User": 1},
+            "couch": {"users.CommCareUser": 5},
+            "toggles": {"Toggle": 5},
+        }
     """
     help = (
         "Loads data from the given file into the database.\n\n"
