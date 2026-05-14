@@ -1,0 +1,109 @@
+name: Auto-bump Vellum
+
+on:
+  repository_dispatch:
+    types: [vellum-merged]
+  workflow_dispatch:
+
+concurrency:
+  group: vellum-bump
+
+jobs:
+  bump:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout commcare-hq
+        uses: actions/checkout@v5
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Checkout Vellum
+        uses: actions/checkout@v5
+        with:
+          repository: dimagi/Vellum
+          path: vellum
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Vellum build dependencies
+        working-directory: vellum
+        run: |
+          mv package.json package.json.save
+          npm install "yarn@^1"
+          rm package-lock.json
+          mv package.json.save package.json
+          yarn install
+
+      - name: Install script dependencies
+        run: pip install sh
+
+      - name: Configure git identity
+        run: |
+          git config user.name "dimagi-bot"
+          git config user.email "dimagi-bot@dimagi.com"
+
+      - name: Close stale auto-bump PRs
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          gh pr list --label vellum-bump --state open --json number --jq '.[].number' |
+            while read -r pr; do
+              gh pr close "$pr" --comment "Superseded by a newer Vellum merge." --delete-branch || true
+            done
+
+      - name: Bump Vellum in HQ
+        env:
+          VELLUM_DIR: ${{ github.workspace }}/vellum
+        run: |
+          python scripts/vellum-to-hq master --push --no-test --non-interactive \
+            --vellum-dir="$VELLUM_DIR" \
+            --changelog-out="$RUNNER_TEMP/vellum-changes.txt"
+
+      - name: Open PR
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+          SHORT_SHA="$(git -C vellum rev-parse --short HEAD)"
+          {
+            echo "## Product Description"
+            echo "Auto-bumps Vellum (form designer) to \`$SHORT_SHA\`. Opened by \`.github/workflows/vellum-bump.yml\` on Vellum master merge."
+            echo
+            echo "## Technical Summary"
+            echo "### Vellum Changes Since Last HQ Deploy"
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/vellum-changes.txt"
+            echo '```'
+            echo
+            echo "## Safety Assurance"
+            echo "### Safety story"
+            echo "Each Vellum PR included above has already passed Vellum's own CI. The bundled artifact is rebuilt from Vellum HEAD by this workflow."
+            echo
+            echo "### Rollback instructions"
+            echo "- [x] This PR can be reverted after deploy with no further considerations"
+          } > "$RUNNER_TEMP/pr-body.md"
+          gh pr create \
+            --draft \
+            --label vellum-bump \
+            --label "DON'T REVIEW YET" \
+            --base master \
+            --head "$BRANCH" \
+            --title "Bump Vellum to $SHORT_SHA" \
+            --body-file "$RUNNER_TEMP/pr-body.md"
