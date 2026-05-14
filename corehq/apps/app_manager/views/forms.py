@@ -342,6 +342,25 @@ def edit_form_attr(request, domain, app_id, form_unique_id, attr):
     return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
 
 
+def _apply_form_name_and_comment_updates(request, form, lang, app, sync_xform_title=False):
+    """
+    sync_xform_title=True is only needed when the name update is not from Vellum
+    """
+    update = {}
+    if "name" in request.POST:
+        name = request.POST['name']
+        form.name[lang] = name
+        if sync_xform_title and form.form_type != "shadow_form":
+            xform = form.wrapped_xform()
+            if xform.exists():
+                xform.set_name(name)
+                save_xform(app, form, xform.render())
+        update['.variable-form_name'] = clean_trans(form.name, [lang])
+    if "comment" in request.POST:
+        form.comment = request.POST['comment']
+    return update
+
+
 @no_conflict_require_POST
 @require_permission(HqPermissions.edit_apps, login_decorator=None)
 @capture_user_errors
@@ -383,20 +402,12 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         if conflict is not None:
             return conflict
 
-    if should_edit("name"):
-        name = request.POST['name']
-        form.name[lang] = name
-        if not form.form_type == "shadow_form":
-            xform = form.wrapped_xform()
-            if xform.exists():
-                xform.set_name(name)
-                save_xform(app, form, xform.render())
-        resp['update'] = {'.variable-form_name': clean_trans(form.name, [lang])}
+    has_xform = should_edit("xform") or "xform" in request.FILES
 
-    if should_edit('comment'):
-        form.comment = request.POST['comment']
+    resp['update'] = _apply_form_name_and_comment_updates(
+        request, form, lang, app, sync_xform_title=not has_xform)
 
-    if should_edit("xform") or "xform" in request.FILES:
+    if has_xform:
         if "xform" in request.FILES and not _allow_xform_upload(
             request, domain, form.wrapped_xform().has_locked_questions
         ):
@@ -616,6 +627,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
 
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
+    lang = request.COOKIES.get('lang', app.langs[0])
 
     conflict = _get_xform_conflict_response(form, sha1_checksum)
     if conflict is not None:
@@ -636,6 +648,10 @@ def patch_xform(request, domain, app_id, form_unique_id):
         'status': 'ok',
         'sha1': hashlib.sha1(xml).hexdigest()
     }
+
+    response_json['update'] = _apply_form_name_and_comment_updates(
+        request, form, lang, app)
+
     app.save(response_json)
 
     if _case_mapping_diff_has_changes(case_mapping_diff):
