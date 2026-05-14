@@ -1,10 +1,12 @@
 import json
 import os
-import zipfile
 
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.dump_reload.archive.utils import get_tmp_extract_dir
+from corehq.apps.dump_reload.archive import (
+    ExtractedDumpExistsError,
+    ZippedGzipArchiveReader,
+)
 from corehq.apps.dump_reload.couch.load import (
     CouchDataLoader,
     DomainLoader,
@@ -29,6 +31,7 @@ class Command(BaseCommand):
             "toggles": {"Toggle": 5},
         }
     """
+
     help = (
         "Loads data from the given file into the database.\n\n"
         "Use in conjunction with `dump_domain_data`."
@@ -67,31 +70,41 @@ class Command(BaseCommand):
             raise CommandError(f"Dump file not found: {dump_file_path}")
 
         self.stdout.write(f"Loading data from {dump_file_path}.")
-        extracted_dir = self.extract_dump_archive(dump_file_path)
+
+        try:
+            archive = ZippedGzipArchiveReader(dump_file_path, use_extracted=self.use_extracted)
+        except ValueError as e:
+            raise CommandError(str(e))
 
         loaded_meta = {}
         requested_loaders = options.get('loaders')
         object_filter = options.get('object_filter')
         loaders = [loader for loader in LOADERS if not requested_loaders or loader.slug in requested_loaders]
 
-        dump_meta = _get_dump_meta(extracted_dir)
-        for loader in loaders:
-            loaded_meta.update(self._load_data(loader, extracted_dir, object_filter, dump_meta))
+        try:
+            with archive:
+                for loader in loaders:
+                    loaded_meta.update(self._load_data(loader, archive, object_filter))
+        except ExtractedDumpExistsError as e:
+            raise CommandError(
+                f"Extracted dump already exists at {e.path}. Delete it or use --use-extracted"
+            )
 
         if options.get("json_output"):
             return json.dumps(loaded_meta)
         else:
-            self._print_stats(loaded_meta, dump_meta)
+            self._print_stats(loaded_meta, archive.meta)
 
-    def _load_data(self, loader_class, extracted_dump_path, object_filter, dump_meta):
+    def _load_data(self, loader_class, archive, object_filter):
         try:
             loader = loader_class(object_filter, self.stdout, self.stderr, self.chunksize, self.should_throttle)
-            return loader.load_from_path(extracted_dump_path, dump_meta, force=self.force, dry_run=self.dry_run)
+            with archive.open_stream(loader.slug) as stream:
+                return loader.load_from_stream(stream, stream.meta, force=self.force, dry_run=self.dry_run)
         except DataExistsException as e:
             raise CommandError(f"Some data already exists. Use --force to load anyway: {e}")
         except Exception as e:
             if not isinstance(e, CommandError):
-                e.args = (f"Problem loading data '{extracted_dump_path}': {e}",)
+                e.args = (f"Problem loading data '{archive.path}': {e}",)
             raise
 
     def _print_stats(self, loaded_meta, dump_meta):
@@ -106,21 +119,3 @@ class Command(BaseCommand):
         total_object_count = sum(count for model in dump_meta.values() for count in model.values())
         self.stdout.write(f'Loaded {loaded_object_count}/{total_object_count} objects')
         self.stdout.write('{0}{0}'.format('-' * 46))
-
-    def extract_dump_archive(self, dump_file_path):
-        target_dir = get_tmp_extract_dir(dump_file_path)
-        if not os.path.exists(target_dir):
-            with zipfile.ZipFile(dump_file_path, 'r') as archive:
-                archive.extractall(target_dir)
-        elif not self.use_extracted:
-            raise CommandError(
-                f"Extracted dump already exists at {target_dir}. Delete it or use --use-extracted")
-        return target_dir
-
-
-def _get_dump_meta(extracted_dir):
-    # The dump command should have a metadata json file of the form
-    # {dumper_slug: {model_name: count}}
-    meta_path = os.path.join(extracted_dir, 'meta.json')
-    with open(meta_path) as f:
-        return json.loads(f.read())
