@@ -402,10 +402,12 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         if conflict is not None:
             return conflict
 
-    resp['update'] = _apply_form_name_and_comment_updates(
-        request, form, lang, app, sync_xform_title=True)
+    has_xform = should_edit("xform") or "xform" in request.FILES
 
-    if should_edit("xform") or "xform" in request.FILES:
+    resp['update'] = _apply_form_name_and_comment_updates(
+        request, form, lang, app, sync_xform_title=not has_xform)
+
+    if has_xform:
         if "xform" in request.FILES and not _allow_xform_upload(
             request, domain, form.wrapped_xform().has_locked_questions
         ):
