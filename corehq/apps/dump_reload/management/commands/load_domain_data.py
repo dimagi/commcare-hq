@@ -83,6 +83,17 @@ class Command(BaseCommand):
         else:
             self._print_stats(loaded_meta, dump_meta)
 
+    def _load_data(self, loader_class, extracted_dump_path, object_filter, dump_meta):
+        try:
+            loader = loader_class(object_filter, self.stdout, self.stderr, self.chunksize, self.should_throttle)
+            return loader.load_from_path(extracted_dump_path, dump_meta, force=self.force, dry_run=self.dry_run)
+        except DataExistsException as e:
+            raise CommandError(f"Some data already exists. Use --force to load anyway: {e}")
+        except Exception as e:
+            if not isinstance(e, CommandError):
+                e.args = (f"Problem loading data '{extracted_dump_path}': {e}",)
+            raise
+
     def _print_stats(self, loaded_meta, dump_meta):
         self.stdout.write('{0} Load Stats {0}'.format('-' * 40))
         for loader, models in sorted(loaded_meta.items()):
@@ -105,17 +116,6 @@ class Command(BaseCommand):
             raise CommandError(
                 f"Extracted dump already exists at {target_dir}. Delete it or use --use-extracted")
         return target_dir
-
-    def _load_data(self, loader_class, extracted_dump_path, object_filter, dump_meta):
-        try:
-            loader = loader_class(object_filter, self.stdout, self.stderr, self.chunksize, self.should_throttle)
-            return loader.load_from_path(extracted_dump_path, dump_meta, force=self.force, dry_run=self.dry_run)
-        except DataExistsException as e:
-            raise CommandError(f"Some data already exists. Use --force to load anyway: {e}")
-        except Exception as e:
-            if not isinstance(e, CommandError):
-                e.args = (f"Problem loading data '{extracted_dump_path}': {e}",)
-            raise
 
 
 def _get_dump_meta(extracted_dir):
