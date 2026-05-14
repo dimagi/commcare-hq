@@ -87,12 +87,9 @@ class Command(BaseCommand):
         extracted_dir = self.extract_dump_archive(dump_file_path)
 
         loaded_meta = {}
-        loaders = options.get('loaders')
+        requested_loaders = options.get('loaders')
         object_filter = options.get('object_filter')
-        if loaders:
-            loaders = [loader for loader in LOADERS if loader.slug in loaders]
-        else:
-            loaders = LOADERS
+        loaders = [loader for loader in LOADERS if not requested_loaders or loader.slug in requested_loaders]
 
         dump_meta = _get_dump_meta(extracted_dir)
         for loader in loaders:
