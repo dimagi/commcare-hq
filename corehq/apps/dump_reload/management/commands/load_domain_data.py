@@ -1,7 +1,6 @@
 import json
 import os
 import zipfile
-import inspect
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -45,11 +44,10 @@ class Command(BaseCommand):
                 "toggles": {"Toggle": 5},
             }
     """
-    help = inspect.cleandoc("""
-        Loads data from the give file into the database.
-
-        Use in conjunction with `dump_domain_data`.
-    """)
+    help = (
+        "Loads data from the given file into the database.\n\n"
+        "Use in conjunction with `dump_domain_data`."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument('dump_file_path')
