@@ -1011,6 +1011,14 @@ GEOCODER_USER_PROXIMITY = StaticToggle(
     """,
 )
 
+FORMPLAYER_SKIP_FIELD_CACHING = StaticToggle(
+    'formplayer_skip_field_caching',
+    'Formplayer: Skip Field Caching',
+    TAG_INTERNAL,
+    description="Instruct formplayer to try out an alternative field caching workflow for performance testing.",
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
     'empty_case_list_text',
     "USH: Allow customizing the text displayed when case list contains no cases in web apps",
