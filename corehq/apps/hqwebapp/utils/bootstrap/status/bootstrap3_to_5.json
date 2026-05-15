@@ -20,6 +20,7 @@
       "partials/forms/case_config_advanced.html",
       "partials/forms/case_config_ko_templates.html",
       "partials/forms/form_tab_advanced.html",
+      "partials/forms/form_tab_settings.html",
       "partials/forms/usercase_config.html",
       "partials/releases/app_release_logs.html",
       "partials/releases/build_profiles.html",
