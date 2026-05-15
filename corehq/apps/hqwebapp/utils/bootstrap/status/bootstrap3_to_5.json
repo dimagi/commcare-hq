@@ -22,6 +22,7 @@
       "partials/forms/form_tab_advanced.html",
       "partials/forms/form_tab_settings.html",
       "partials/forms/form_tab_visit_scheduler.html",
+      "partials/forms/form_view_modals.html",
       "partials/forms/usercase_config.html",
       "partials/releases/app_release_logs.html",
       "partials/releases/build_profiles.html",
