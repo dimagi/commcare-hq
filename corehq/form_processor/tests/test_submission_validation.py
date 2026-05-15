@@ -222,11 +222,7 @@ class TestCheckImageAttachmentsCachingFootprint(TestCase):
                 patch.object(form_parser, 'convert_xform_to_json', spy_convert),
                 patch.object(XFormInstance, 'get_attachment', spy_get_attachment),
             ):
-                submit_form_locally(
-                    form_xml,
-                    self.domain,
-                    attachments=attachments,
-                )
+                submit_form_locally(form_xml, self.domain, attachments=attachments)
         finally:
             successful_form_received.disconnect(
                 dispatch_uid='check_image_attachments_test'
