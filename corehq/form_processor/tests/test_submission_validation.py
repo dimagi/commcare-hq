@@ -96,7 +96,7 @@ def test_no_alert_when_form_has_no_images():
 @capture_sentry
 def test_non_image_attachments_are_ignored():
     xform = _stub_xform(
-        attachments={'audio.mp3': object(), 'pic.jpg': object()},
+        attachments={'pic.jpg': object()},  # audio.mp3 missing
         form_data={'photo': 'pic.jpg', 'recording': 'audio.mp3'},
     )
     check_image_attachments(sender=None, xform=xform)
