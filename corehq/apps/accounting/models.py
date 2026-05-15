@@ -1264,11 +1264,9 @@ class Subscription(models.Model):
         """
         Overloaded to update domain pillow with subscription information
         """
-        from corehq.apps.accounting.mixins import get_overdue_invoice
 
         super(Subscription, self).save(*args, **kwargs)
         Subscription.clear_caches(self.subscriber.domain)
-        get_overdue_invoice.clear(self.subscriber.domain)
 
         domain = Domain.get_by_name(self.subscriber.domain)
         # If a subscriber doesn't have a valid domain associated with it
@@ -1282,7 +1280,13 @@ class Subscription(models.Model):
 
     @classmethod
     def clear_caches(cls, domain_name):
+        transaction.on_commit(lambda: cls._clear_caches(domain_name))
+
+    @classmethod
+    def _clear_caches(cls, domain_name):
+        from corehq.apps.accounting.mixins import get_overdue_invoice
         cls._get_active_subscription_by_domain.clear(cls, domain_name)
+        get_overdue_invoice.clear(domain_name)
 
     @property
     def is_free_edition(self):
