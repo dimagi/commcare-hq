@@ -21,6 +21,7 @@
       "partials/forms/case_config_ko_templates.html",
       "partials/forms/custom_instances.html",
       "partials/forms/form_filter.html",
+      "partials/forms/form_gps_capture.html",
       "partials/forms/form_tab_advanced.html",
       "partials/forms/form_tab_settings.html",
       "partials/forms/form_tab_visit_scheduler.html",
