@@ -75,9 +75,9 @@ To use soil:
 
 .. code-block:: python
 
-    from soil import DownloadBase
-    from soil.progress import update_task_state
-    from soil.util import expose_cached_download
+    from corehq.apps.soil import DownloadBase
+    from corehq.apps.soil.progress import update_task_state
+    from corehq.apps.soil.util import expose_cached_download
 
     @task
     def my_cool_task():
@@ -106,9 +106,9 @@ the exception will be caught by celery and ``task.result`` will return the excep
 .. code-block:: python
 
     from celery.exceptions import Ignore
-    from soil import DownloadBase
-    from soil.progress import update_task_state
-    from soil.util import expose_cached_download
+    from corehq.apps.soil import DownloadBase
+    from corehq.apps.soil.progress import update_task_state
+    from corehq.apps.soil.util import expose_cached_download
 
     @task
     def my_cool_task():
@@ -129,9 +129,9 @@ If calling with ``CELERY_TASKS_ALWAYS_EAGER = True`` (i.e. a dev environment), t
 
 .. code-block:: python
 
-    from soil import DownloadBase
-    from soil.progress import update_task_state
-    from soil.util import expose_cached_download
+    from corehq.apps.soil import DownloadBase
+    from corehq.apps.soil.progress import update_task_state
+    from corehq.apps.soil.util import expose_cached_download
 
     @task
     def my_cool_task():

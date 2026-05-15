@@ -74,7 +74,7 @@ Saving uploads to the NFS drive
 -------------------------------
 For files that are uploaded and require asynchronous processing e.g. imports, you can also use the NFS drive::
 
-    from soil.util import expose_file_download, expose_cached_download
+    from corehq.apps.soil.util import expose_file_download, expose_cached_download
 
     uploaded_file = request.FILES.get('Filedata')
     if hasattr(uploaded_file, 'temporary_file_path') and settings.SHARED_DRIVE_CONF.temp_dir:
