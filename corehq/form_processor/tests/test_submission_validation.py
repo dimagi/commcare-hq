@@ -218,21 +218,9 @@ class TestCheckImageAttachmentsCachingFootprint(TestCase):
         )
         try:
             with (
-                patch.object(
-                    form_utils,
-                    'convert_xform_to_json',
-                    spy_convert,
-                ),
-                patch.object(
-                    form_parser,
-                    'convert_xform_to_json',
-                    spy_convert,
-                ),
-                patch.object(
-                    XFormInstance,
-                    'get_attachment',
-                    spy_get_attachment,
-                ),
+                patch.object(form_utils, 'convert_xform_to_json', spy_convert),
+                patch.object(form_parser, 'convert_xform_to_json', spy_convert),
+                patch.object(XFormInstance, 'get_attachment', spy_get_attachment),
             ):
                 submit_form_locally(
                     form_xml,
