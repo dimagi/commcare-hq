@@ -17,6 +17,7 @@
       "languages.html",
       "partials/bulk_upload_app_translations.html",
       "partials/form_summary_header.html",
+      "partials/forms/case_config.html",
       "partials/forms/case_config_advanced.html",
       "partials/forms/case_config_ko_templates.html",
       "partials/forms/custom_instances.html",
