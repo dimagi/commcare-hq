@@ -1026,6 +1026,18 @@ USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+ENUM_CALC_VARIABLES = StaticToggle(
+    'enum_calc_variables',
+    'Switch Enum Fields to Variables',
+    TAG_INTERNAL,
+    description="""
+    Switch enum field types to reference the calculated_property variable
+    rather than repeat the expression for each mapping.  This is a performance
+    optimization for when the expression is expensive to compute.
+    """,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 HIDE_SYNC_BUTTON = StaticToggle(
     "hide_sync_button",
     "USH: Hide Sync Button in Web Apps",
