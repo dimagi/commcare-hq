@@ -53,17 +53,17 @@
    <hr />
 -  <div data-bind="if: actionType == 'load' && !caseConfig.isShadowForm" class="panel-group">
 -    <div class="panel panel-appmanager"
-+  <div data-bind="if: actionType == 'load' && !caseConfig.isShadowForm" class="d-flex flex-column gap-3">
-+    <div class="card card-modern-gray mb-3"
++  <div data-bind="if: actionType == 'load' && !caseConfig.isShadowForm" class="d-flex flex-column gap-2">
++    <div class="card card-modern-gray"
           data-bind="template: 'case-config:case-transaction:case-preload'"></div>
 -    <div class="panel panel-appmanager"
-+    <div class="card card-modern-gray mb-3"
++    <div class="card card-modern-gray"
           data-bind="template: 'case-config:case-transaction:case-properties'"></div>
    </div>
 -  <div data-bind="if: actionType == 'open'" class="panel-group">
 -    <div class="panel panel-appmanager" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
-+  <div data-bind="if: actionType == 'open'" class="d-flex flex-column gap-3">
-+    <div class="card card-modern-gray mb-3" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
++  <div data-bind="if: actionType == 'open'" class="d-flex flex-column gap-2">
++    <div class="card card-modern-gray" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
    </div>
    <!-- ko if:  actionType !== 'load' || !auto_select || auto_select.mode() !== 'usercase' -->
    <hr />
@@ -629,18 +629,18 @@
 +        {% trans "Load / Update / Close Cases" %}
 +      </div>
 +      <div class="card-body">
-+        <div id="case-load-accordion" class="d-flex flex-column gap-3" data-bind="foreach: load_update_cases, sortableList: load_update_cases, sortableListSelector: 'div:not(.not-droppable)'">
++        <div id="case-load-accordion" class="d-flex flex-column gap-2" data-bind="foreach: load_update_cases, sortableList: load_update_cases, sortableListSelector: 'div:not(.not-droppable)'">
            <!-- ko if: auto_select -->
 -          <div class="panel panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
-+          <div class="card card-modern-gray mb-3 card-case-actions" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
++          <div class="card card-modern-gray card-case-actions" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
            <!-- /ko -->
            <!-- ko if: load_case_from_fixture -->
 -          <div class="panel panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action-load-case-from-fixture'}"></div>
-+          <div class="card card-modern-gray mb-3 card-case-actions" data-bind="template: {name: 'case-config:case-action-load-case-from-fixture'}"></div>
++          <div class="card card-modern-gray card-case-actions" data-bind="template: {name: 'case-config:case-action-load-case-from-fixture'}"></div>
            <!-- /ko -->
            <!-- ko ifnot: auto_select || load_case_from_fixture -->
 -          <div class="panel panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>
-+          <div class="card card-modern-gray mb-3 card-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>
++          <div class="card card-modern-gray card-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>
            <!-- /ko -->
          </div>
        </div>
@@ -661,8 +661,8 @@
 +        {% trans "Open New Cases" %}
 +      </div>
 +      <div class="card-body">
-+        <div id="case-open-accordion" class="d-flex flex-column gap-3" data-bind="foreach: open_cases">
-+          <div class="card card-modern-gray mb-3 card-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>
++        <div id="case-open-accordion" class="d-flex flex-column gap-2" data-bind="foreach: open_cases">
++          <div class="card card-modern-gray card-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>
          </div>
        </div>
      </div>

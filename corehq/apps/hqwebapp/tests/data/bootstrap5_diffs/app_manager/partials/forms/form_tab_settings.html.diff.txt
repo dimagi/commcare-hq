@@ -34,12 +34,12 @@
        </ul>
      </div>
 -    <div class="panel-group" id="form-tab-settings-options">
-+    <div class="d-flex flex-column gap-3" id="form-tab-settings-options">
++    <div class="d-flex flex-column gap-2" id="form-tab-settings-options">
  
 -      <div class="panel panel-appmanager" data-slug="multimedia">
 -        <div class="panel-heading">
 -          <h4 class="panel-title panel-title-nolink">{%  trans "Multimedia" %}</h4>
-+      <div class="card card-modern-gray mb-3" data-slug="multimedia">
++      <div class="card card-modern-gray" data-slug="multimedia">
 +        <div class="card-header h5">
 +          {%  trans "Multimedia" %}
          </div>
@@ -53,7 +53,7 @@
 -      <div class="panel panel-appmanager" data-slug="logic">
 -        <div class="panel-heading">
 -          <h4 class="panel-title panel-title-nolink">{%  trans "Logic" %}</h4>
-+      <div class="card card-modern-gray mb-3" data-slug="logic">
++      <div class="card card-modern-gray" data-slug="logic">
 +        <div class="card-header h5">
 +          {%  trans "Logic" %}
          </div>
@@ -74,7 +74,7 @@
 -      <div class="panel panel-appmanager" data-slug="advanced">
 -        <div class="panel-heading">
 -          <h4 class="panel-title panel-title-nolink">{%  trans "Advanced" %}</h4>
-+      <div class="card card-modern-gray mb-3" data-slug="advanced">
++      <div class="card card-modern-gray" data-slug="advanced">
 +        <div class="card-header h5">
 +          {%  trans "Advanced" %}
          </div>
