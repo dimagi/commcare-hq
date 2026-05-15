@@ -1,10 +1,13 @@
 import json
 import os
-import zipfile
-import inspect
 
 from django.core.management.base import BaseCommand, CommandError
 
+from corehq.apps.dump_reload.archive import (
+    ExtractedDumpExistsError,
+    ZipWithZstdArchiveReader,
+    ZippedGzipArchiveReader,
+)
 from corehq.apps.dump_reload.couch.load import (
     CouchDataLoader,
     DomainLoader,
@@ -18,42 +21,30 @@ LOADERS = [DomainLoader, SqlDataLoader, CouchDataLoader, ToggleLoader]
 
 
 class Command(BaseCommand):
-    """This command expects a ZIP file containing one or more
-    gzip files and a 'meta.json' file containing doc counts for each
-    of the gzip files:
+    """Loads a dump produced by ``dump_domain_data``.
 
-    zip:
-       sql.gz
-       couch.gz
-       sql-other.gz
-       meta.json
+    The archive's ``meta.json`` summarises object counts per loader::
 
-    The filenames of the gzip files must be formatted as <slug><suffix>.gz where
-        -  <slug> is one of 'sql', 'couch', 'domain', 'toggle'
-        -  <suffix> can be anything
-
-    meta.json:
-        Must contain a single JSON object with properties for each of the filnames
-        in the zip file. The value of the properties must be a dict of
-        document counts in the corresponding gzip file:
-
-            {
-                "domain": {"Domain": 1},
-                "sql": {"blobs.BlobMeta": 11, "auth.User": 1},
-                "couch": {"users.CommCareUser": 5},
-                "toggles": {"Toggle": 5},
-            }
+        {
+            "domain": {"Domain": 1},
+            "sql": {"blobs.BlobMeta": 11, "auth.User": 1},
+            "couch": {"users.CommCareUser": 5},
+            "toggles": {"Toggle": 5},
+        }
     """
-    help = inspect.cleandoc("""
-        Loads data from the give file into the database.
 
-        Use in conjunction with `dump_domain_data`.
-    """)
+    help = (
+        "Loads data from the given file into the database.\n\n"
+        "Use in conjunction with `dump_domain_data`."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument('dump_file_path')
+        parser.add_argument('--format', choices=['gzip', 'zstd'], default='zstd',
+                            help='Archive format of the input file.')
         parser.add_argument('--use-extracted', action='store_true', default=False, dest='use_extracted',
-                            help="Use already extracted dump if it exists.")
+                            help="Use already extracted dump if it exists "
+                                 "(gzip format only; ignored otherwise).")
         parser.add_argument('--force', action='store_true', default=False, dest='force',
                             help="Load data for domain that already exists.")
         parser.add_argument('--dry-run', action='store_true', default=False, dest='dry_run',
@@ -80,27 +71,49 @@ class Command(BaseCommand):
         self.should_throttle = options.get('throttle')
 
         if not os.path.isfile(dump_file_path):
-            raise CommandError("Dump file not found: {}".format(dump_file_path))
+            raise CommandError(f"Dump file not found: {dump_file_path}")
 
-        self.stdout.write("Loading data from %s." % dump_file_path)
-        extracted_dir = self.extract_dump_archive(dump_file_path)
+        self.stdout.write(f"Loading data from {dump_file_path}.")
+
+        archive_format = options.get('format')
+        try:
+            if archive_format == 'gzip':
+                archive = ZippedGzipArchiveReader(dump_file_path, use_extracted=self.use_extracted)
+            else:
+                archive = ZipWithZstdArchiveReader(dump_file_path)
+        except ValueError as e:
+            raise CommandError(str(e))
 
         loaded_meta = {}
-        loaders = options.get('loaders')
+        requested_loaders = options.get('loaders')
         object_filter = options.get('object_filter')
-        if loaders:
-            loaders = [loader for loader in LOADERS if loader.slug in loaders]
-        else:
-            loaders = LOADERS
+        loaders = [loader for loader in LOADERS if not requested_loaders or loader.slug in requested_loaders]
 
-        dump_meta = _get_dump_meta(extracted_dir)
-        for loader in loaders:
-            loaded_meta.update(self._load_data(loader, extracted_dir, object_filter, dump_meta))
+        try:
+            with archive:
+                for loader in loaders:
+                    loaded_meta.update(self._load_data(loader, archive, object_filter))
+        except ExtractedDumpExistsError as e:
+            raise CommandError(
+                f"Extracted dump already exists at {e.path}. Delete it or use --use-extracted"
+            )
 
         if options.get("json_output"):
             return json.dumps(loaded_meta)
         else:
-            self._print_stats(loaded_meta, dump_meta)
+            self._print_stats(loaded_meta, archive.meta)
+
+    def _load_data(self, loader_class, archive, object_filter):
+        try:
+            loader = loader_class(object_filter, self.stdout, self.stderr, self.chunksize, self.should_throttle)
+            with archive.open_stream(loader.slug) as stream:
+                return loader.load_from_stream(stream, stream.meta, force=self.force, dry_run=self.dry_run)
+        except DataExistsException as e:
+            raise CommandError(f"Some data already exists. Use --force to load anyway: {e}")
+        except Exception as e:
+            if not isinstance(e, CommandError):
+                e.args = (f"Problem loading data '{archive.path}': {e}",)
+            raise
 
     def _print_stats(self, loaded_meta, dump_meta):
         self.stdout.write('{0} Load Stats {0}'.format('-' * 40))
@@ -114,36 +127,3 @@ class Command(BaseCommand):
         total_object_count = sum(count for model in dump_meta.values() for count in model.values())
         self.stdout.write(f'Loaded {loaded_object_count}/{total_object_count} objects')
         self.stdout.write('{0}{0}'.format('-' * 46))
-
-    def extract_dump_archive(self, dump_file_path):
-        target_dir = get_tmp_extract_dir(dump_file_path)
-        if not os.path.exists(target_dir):
-            with zipfile.ZipFile(dump_file_path, 'r') as archive:
-                archive.extractall(target_dir)
-        elif not self.use_extracted:
-            raise CommandError(
-                "Extracted dump already exists at {}. Delete it or use --use-extracted".format(target_dir))
-        return target_dir
-
-    def _load_data(self, loader_class, extracted_dump_path, object_filter, dump_meta):
-        try:
-            loader = loader_class(object_filter, self.stdout, self.stderr, self.chunksize, self.should_throttle)
-            return loader.load_from_path(extracted_dump_path, dump_meta, force=self.force, dry_run=self.dry_run)
-        except DataExistsException as e:
-            raise CommandError('Some data already exists. Use --force to load anyway: {}'.format(str(e)))
-        except Exception as e:
-            if not isinstance(e, CommandError):
-                e.args = ("Problem loading data '%s': %s" % (extracted_dump_path, e),)
-            raise
-
-
-def _get_dump_meta(extracted_dir):
-    # The dump command should have a metadata json file of the form
-    # {dumper_slug: {model_name: count}}
-    meta_path = os.path.join(extracted_dir, 'meta.json')
-    with open(meta_path) as f:
-        return json.loads(f.read())
-
-
-def get_tmp_extract_dir(dump_file_path, specifier=""):
-    return f'_tmp_load_{specifier}_{dump_file_path}'

@@ -1,5 +1,3 @@
-import gzip
-import os
 import re
 import sys
 import warnings
@@ -57,32 +55,18 @@ class DataLoader(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def load_from_path(self, extracted_dump_path, dump_meta, force=False, dry_run=False):
-        loaded_object_count = {}
-        for file in os.listdir(extracted_dump_path):
-            path = os.path.join(extracted_dump_path, file)
-            if file.startswith(self.slug) and file.endswith('.gz') and os.path.isfile(path):
-                counts = self.load_from_file(path, dump_meta, force, dry_run)
-                loaded_object_count.update(counts)
-        return loaded_object_count
+    def load_from_stream(self, stream, stream_meta, force=False, dry_run=False):
+        """``stream_meta`` is the per-stream ``{model_name: count}`` mapping
+        from the archive's metadata. Returns ``{self.slug: Counter}``.
+        """
+        self.stdout.write(f"\nLoading '{self.slug}' data loader.")
+        object_strings = with_progress_bar(stream, length=sum(stream_meta.values()))
+        loaded_object_count = self.load_objects(object_strings, force, dry_run)
 
-    def load_from_file(self, file_path, dump_meta, force=False, dry_run=False):
-        if not os.path.isfile(file_path):
-            raise Exception("Dump file not found: {}".format(file_path))
-
-        self.stdout.write(f"\nLoading {file_path} using '{self.slug}' data loader.")
-        meta_slug, _ = os.path.splitext(os.path.basename(file_path))
-        expected_count = sum(dump_meta[meta_slug].values())
-        with gzip.open(file_path) as dump_file:
-            object_strings = with_progress_bar(dump_file, length=expected_count)
-            loaded_object_count = self.load_objects(object_strings, force, dry_run)
-
-        # Warn if the file we loaded contains 0 objects.
         if sum(loaded_object_count.values()) == 0:
             warnings.warn(
-                "No data found for '%s'. (File format may be "
-                "invalid.)" % file_path,
-                RuntimeWarning
+                f"No data found for '{self.slug}'. (File format may be invalid.)",
+                RuntimeWarning,
             )
 
-        return {meta_slug: loaded_object_count}
+        return {self.slug: loaded_object_count}

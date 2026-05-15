@@ -12,7 +12,7 @@ from pathlib import Path
 
 from django.core.management import BaseCommand, CommandError
 
-from corehq.apps.dump_reload.management.commands.load_domain_data import get_tmp_extract_dir
+from corehq.apps.dump_reload.archive.utils import get_tmp_extract_dir
 from corehq.blobs.export import BlobDbBackendExporter
 from corehq.blobs.management.commands.run_blob_export import get_lines_from_file
 from corehq.util.decorators import change_log_level
@@ -37,7 +37,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('path', help='Path to a file with a list of blob meta JSON to export')
         parser.add_argument('--meta-file-filter', nargs='?',
-                            help='Only export blobs for metadata in files with filenames matching the filter regex.')
+                            help='Only export blobs for metadata in files with filenames'
+                                 ' matching the filter regex.')
         parser.add_argument('--already_exported', dest='already_exported',
                             help='Pass a file with a list of blob names already exported')
         parser.add_argument('--use-extracted', action='store_true', default=False, dest='use_extracted',

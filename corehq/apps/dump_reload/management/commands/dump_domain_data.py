@@ -1,15 +1,19 @@
-import gzip
-import json
-import os
-import zipfile
 from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
 
+from corehq.apps.dump_reload.archive import (
+    SimpleSingleStreamWriter,
+    ZipWithZstdArchiveWriter,
+    ZippedGzipArchiveWriter,
+)
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.apps.dump_reload.couch import CouchDataDumper
 from corehq.apps.dump_reload.couch.dump import DomainDumper, ToggleDumper
 from corehq.apps.dump_reload.sql import SqlDataDumper
+
+# Domain dumper should be first since it validates that the domain exists.
+DUMPERS = [DomainDumper, SqlDataDumper, CouchDataDumper, ToggleDumper]
 
 
 class Command(BaseCommand):
@@ -29,8 +33,9 @@ class Command(BaseCommand):
                  '(use multiple --include to include multiple apps/models).'
         )
         parser.add_argument(
-            '--console', action='store_true', default=False, dest='console',
-            help='Write output to the console instead of to file.'
+            '--format', choices=['gzip', 'zstd', 'console'], default='zstd',
+            help='Archive format. "console" writes all streams to stdout '
+                 'instead of producing an archive file.'
         )
         parser.add_argument('--dumper', dest='dumpers', action='append', default=[],
                             help='Dumper slug to run (use multiple --dumper to run multiple dumpers).')
@@ -38,44 +43,33 @@ class Command(BaseCommand):
     def handle(self, domain_name, **options):
         excludes = options.get('exclude')
         includes = options.get('include')
-        console = options.get('console')
+        archive_format = options.get('format')
         show_traceback = options.get('traceback')
         requested_dumpers = options.get('dumpers')
 
-        self.utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
-        zipname = 'data-dump-{}-{}.zip'.format(domain_name, self.utcnow)
-
         self.stdout.ending = None
-        meta = {}  # {dumper_slug: {model_name: count}}
-        # domain dumper should be first since it validates domain exists
-        for dumper in [DomainDumper, SqlDataDumper, CouchDataDumper, ToggleDumper]:
-            if requested_dumpers and dumper.slug not in requested_dumpers:
-                continue
 
-            filename = _get_dump_stream_filename(dumper.slug, domain_name, self.utcnow)
-            stream = self.stdout if console else gzip.open(filename, 'wt')
-            try:
-                meta[dumper.slug] = dumper(domain_name, excludes, includes).dump(stream)
-            except Exception as e:
-                if show_traceback:
-                    raise
-                raise CommandError("Unable to serialize database: %s" % e)
-            finally:
-                if stream and not console:
-                    stream.close()
+        dumpers = [d for d in DUMPERS if not requested_dumpers or d.slug in requested_dumpers]
+        if archive_format == 'console':
+            archive = SimpleSingleStreamWriter(self.stdout)
+        elif archive_format == 'gzip':
+            archive = ZippedGzipArchiveWriter(_get_dump_file_name(domain_name))
+        elif archive_format == 'zstd':
+            archive = ZipWithZstdArchiveWriter(_get_dump_file_name(domain_name))
 
-            if not console:
-                with zipfile.ZipFile(zipname, mode='a', allowZip64=True) as z:
-                    z.write(filename, '{}.gz'.format(dumper.slug))
+        with archive:
+            for dumper in dumpers:
+                try:
+                    with archive.open_stream(dumper.slug) as stream:
+                        stream.meta = dumper(domain_name, excludes, includes).dump(stream)
+                except Exception as e:
+                    if show_traceback:
+                        raise
+                    raise CommandError(f"Unable to serialize database: {e}")
 
-                os.remove(filename)
-
-        if not console:
-            with zipfile.ZipFile(zipname, mode='a', allowZip64=True) as z:
-                z.writestr('meta.json', json.dumps(meta, indent=4))
-
-        self._print_stats(meta)
-        self.stdout.write('\nData dumped to file: {}'.format(zipname))
+        self._print_stats(archive.meta)
+        if archive.path:
+            self.stdout.write(f'\nData dumped to file: {archive.path}')
 
     def _print_stats(self, meta):
         self.stdout.ending = '\n'
@@ -91,5 +85,6 @@ class Command(BaseCommand):
         self.stdout.write('{0}{0}'.format('-' * 38))
 
 
-def _get_dump_stream_filename(slug, domain, utcnow):
-    return 'dump-{}-{}-{}.gz'.format(slug, domain, utcnow)
+def _get_dump_file_name(domain, suffix='zip'):
+    utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
+    return f'data-dump-{domain}-{utcnow}.{suffix}'
