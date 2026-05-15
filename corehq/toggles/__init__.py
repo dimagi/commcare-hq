@@ -1011,11 +1011,31 @@ GEOCODER_USER_PROXIMITY = StaticToggle(
     """,
 )
 
+FORMPLAYER_SKIP_FIELD_CACHING = StaticToggle(
+    'formplayer_skip_field_caching',
+    'Formplayer: Skip Field Caching',
+    TAG_INTERNAL,
+    description="Instruct formplayer to try out an alternative field caching workflow for performance testing.",
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
     'empty_case_list_text',
     "USH: Allow customizing the text displayed when case list contains no cases in web apps",
     TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+ENUM_CALC_VARIABLES = StaticToggle(
+    'enum_calc_variables',
+    'Switch Enum Fields to Variables',
+    TAG_INTERNAL,
+    description="""
+    Switch enum field types to reference the calculated_property variable
+    rather than repeat the expression for each mapping.  This is a performance
+    optimization for when the expression is expensive to compute.
+    """,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 HIDE_SYNC_BUTTON = StaticToggle(
