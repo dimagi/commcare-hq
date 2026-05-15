@@ -165,7 +165,7 @@ def user_es_call(domain, q, fields, size, start_at):
              .size(size)
              .start(start_at))
     if q is not None:
-        query.set_query({"query_string": {"query": q}})
+        query = query.set_query({"query_string": {"query": q}})
     return query.run().hits
 
 

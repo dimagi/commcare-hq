@@ -1036,6 +1036,55 @@ class TestBulkUserAPI(APIResourceTest):
         self.assertEqual(response.status_code, 200)
 
 
+@es_test(requires=[user_adapter], setup_class=True)
+class TestBulkUserESCall(TestCase):
+    """Exercises the real user_es_call against ES (TestBulkUserAPI mocks it out)."""
+
+    domain = 'bulk-user-q-test'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(domain_obj.delete)
+
+        cls.target = CommCareUser.create(
+            domain=cls.domain, username='alice', password='*****',
+            created_by=None, created_via=None,
+        )
+        cls.addClassCleanup(cls.target.delete, cls.domain, deleted_by=None)
+        cls.other = CommCareUser.create(
+            domain=cls.domain, username='bob', password='*****',
+            created_by=None, created_via=None,
+        )
+        cls.addClassCleanup(cls.other.delete, cls.domain, deleted_by=None)
+
+        for user in [cls.target, cls.other]:
+            user_adapter.index(user, refresh=True)
+
+    def test_q_filters_to_matching_user(self):
+        hits = v0_5.user_es_call(
+            domain=self.domain,
+            q='alice',
+            fields=['_id', 'username'],
+            size=10,
+            start_at=0,
+        )
+        usernames = sorted(h['username'] for h in hits)
+        assert usernames == ['alice'], usernames
+
+    def test_q_none_returns_all_users(self):
+        hits = v0_5.user_es_call(
+            domain=self.domain,
+            q=None,
+            fields=['_id', 'username'],
+            size=10,
+            start_at=0,
+        )
+        usernames = sorted(h['username'] for h in hits)
+        assert usernames == ['alice', 'bob'], usernames
+
+
 @es_test(requires=[user_adapter])
 class TestIdentityResource(APIResourceTest):
     resource = v0_5.IdentityResource
