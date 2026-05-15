@@ -27,6 +27,7 @@
       "partials/forms/release_notes_setting.html",
       "partials/forms/shadow_parent_select.html",
       "partials/forms/usercase_config.html",
+      "partials/forms/usercase_config.html",
       "partials/releases/app_release_logs.html",
       "partials/releases/build_profiles.html",
       "partials/releases/releases.html",
