@@ -69,9 +69,16 @@
       assert results.failed == 0
   ```
 
+- **Structure code to be testable**: Extract complex logic into helper
+  functions that can be tested directly at a narrow scope.
+
 - **Tests should be simple**: Tests that require a lot of patching or
   mocking are often an indicator that the code they cover needs to be
   simplified.
+
+- **Prefer narrow, focused tests**: Cover the full range of inputs
+  against the helper that owns the logic. Tests of the calling code
+  can then stay minimal and avoid duplicating that coverage.
 
 - **Run tests before completing**: Run the tests that cover the changes
   before considering any changes complete.
