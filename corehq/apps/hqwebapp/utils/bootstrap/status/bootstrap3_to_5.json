@@ -25,6 +25,7 @@
       "partials/forms/form_view_modals.html",
       "partials/forms/form_workflow.html",
       "partials/forms/release_notes_setting.html",
+      "partials/forms/shadow_parent_select.html",
       "partials/forms/usercase_config.html",
       "partials/releases/app_release_logs.html",
       "partials/releases/build_profiles.html",
