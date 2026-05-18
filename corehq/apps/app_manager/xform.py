@@ -740,11 +740,12 @@ class XForm(WrappedNode):
         }
 
     def get_question_signature(self, path):
-        """Canonical, hashable representation of the question at ``path``.
+        """Representation of the question at ``path`` for equality comparison.
 
         Includes the bind element, the control element + descendants, the
         data instance node, and any itext entries referenced from the
-        control's labels/hints/help/items.
+        control's labels/hints/help/items. Callers should not rely on the
+        absence or presence of any particular item within this set.
 
         Returns an empty ``set`` if the path isn't present in the form.
         """
