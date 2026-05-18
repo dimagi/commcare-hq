@@ -32,7 +32,8 @@ class Command(BaseCommand):
         parser.add_argument(
             '--dir',
             dest='dir',
-            help="Optionally specify a directory to write the file to",
+            help="Optionally specify a directory to write the file to. "
+                 "The directory will be created if it does not exist.",
         )
         parser.add_argument('--chunk-size', type=int, default=100,
                             help='Maximum number of records to read from couch at once.')
@@ -58,6 +59,9 @@ class Command(BaseCommand):
 
         if not domain:
             raise CommandError(USAGE)
+
+        if dir:
+            os.makedirs(dir, exist_ok=True)
 
         self.stdout.write("\nRunning blob exporter\n{}".format('-' * 50))
         export_filename = _get_export_filename(
