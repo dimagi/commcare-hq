@@ -3,9 +3,13 @@ import tempfile
 import zipfile
 from contextlib import contextmanager
 
+import pytest
+
 from django.core.management import call_command
+from django.core.management.base import CommandError
 
 from corehq.apps.dump_reload.management.commands.dump_domain_data import (
+    Command,
     _get_dump_stream_filename,
 )
 
@@ -57,17 +61,13 @@ class TestDumpDomainDataDirFlag:
             with zipfile.ZipFile(os.path.join(target, zips[0])) as z:
                 assert z.namelist() == ['meta.json']
 
-    def test_dir_skipped_in_console_mode(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            unused = os.path.join(tmp, 'not-created')
-            call_command(
-                'dump_domain_data',
-                'mydomain',
-                dir=unused,
-                console=True,
-                dumpers=['__none__'],
-            )
-            assert not os.path.exists(unused)
+    def test_dir_rejected_in_console_mode(self):
+        # The CLI rejects --dir + --console via argparse's mutually
+        # exclusive group. Use the parser directly: call_command()
+        # bypasses argparse mutex validation for kwargs.
+        parser = Command().create_parser('manage.py', 'dump_domain_data')
+        with pytest.raises(CommandError, match='not allowed with argument --console'):
+            parser.parse_args(['mydomain', '--console', '--dir=/tmp/x'])
 
     def test_no_dir_writes_to_cwd(self):
         with tempfile.TemporaryDirectory() as tmp, chdir(tmp):

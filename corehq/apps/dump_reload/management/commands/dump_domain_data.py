@@ -28,11 +28,12 @@ class Command(BaseCommand):
             help='An app_label, app_label.ModelName or CouchDB doc_type to include '
                  '(use multiple --include to include multiple apps/models).'
         )
-        parser.add_argument(
+        output_group = parser.add_mutually_exclusive_group()
+        output_group.add_argument(
             '--console', action='store_true', default=False, dest='console',
             help='Write output to the console instead of to file.'
         )
-        parser.add_argument(
+        output_group.add_argument(
             '--dir', dest='dir',
             help='Optionally specify a directory to write the file to. '
                  'The directory will be created if it does not exist.',
@@ -48,7 +49,7 @@ class Command(BaseCommand):
         requested_dumpers = options.get('dumpers')
         output_dir = options.get('dir')
 
-        if output_dir and not console:
+        if output_dir:
             os.makedirs(output_dir, exist_ok=True)
 
         self.utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
