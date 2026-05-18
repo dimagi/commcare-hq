@@ -374,7 +374,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.content.decode('utf-8'),
-            '{"error": "User data profile not found."}'
+            '{"error": "Profile with id 123456 not found."}'
         )
 
     def test_update(self):

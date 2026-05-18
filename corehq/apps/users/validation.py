@@ -54,7 +54,7 @@ def validate_profile_id(profile_id, domain):
     profiles = CustomDataFieldsDefinition.get(domain, 'UserFields').get_profiles()
     if profile_id and profile_id not in {profile.id for profile in profiles}:
         raise ValidationError(
-            _("User data profile not found.")
+            _("Profile with id {id} not found.").format(id=profile_id)
         )
 
 
