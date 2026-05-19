@@ -375,3 +375,35 @@ def delete_all_xforms_and_cases(domain):
     assert settings.UNIT_TESTING
     FormProcessorTestUtils.delete_all_xforms(domain)
     FormProcessorTestUtils.delete_all_cases(domain)
+
+
+_original_hard_delete_forms = XFormInstance.objects.__class__.hard_delete_forms
+def _hard_delete_forms_no_tombstone(self, domain, form_ids, *, publish_changes=True, leave_tombstone=True):
+    return _original_hard_delete_forms(
+        self, domain, form_ids, publish_changes=publish_changes, leave_tombstone=False
+    )
+
+force_no_tombstone_patch = patch.object(
+    XFormInstance.objects.__class__, "hard_delete_forms", _hard_delete_forms_no_tombstone
+)
+
+_original_hard_delete_queryset = XFormInstance.objects.__class__._hard_delete_queryset
+def _hard_delete_queryset_no_tombstone(self, queryset, leave_tombstone=True):
+    return _original_hard_delete_queryset(
+        self, queryset, leave_tombstone=False
+    )
+
+force_queryset_no_tombstone_patch = patch.object(
+    XFormInstance.objects.__class__, "_hard_delete_queryset", _hard_delete_queryset_no_tombstone
+)
+
+def patch_form_deletion():
+    """Setup form deletion for tests
+
+    - Default to not leaving tombstones to ease cleanup
+
+    """
+    # Use __enter__ and __exit__ to start/stop so patch.stopall() does not stop it.
+    assert settings.UNIT_TESTING
+    force_no_tombstone_patch.__enter__()
+    force_queryset_no_tombstone_patch.__enter__()

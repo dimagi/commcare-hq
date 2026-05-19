@@ -18,6 +18,7 @@ from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     split_list_by_db_partition,
 )
+from corehq.tests.pytest_plugins.patches import suspend
 from corehq.util.test_utils import trap_extra_setup
 
 from ..backends.sql.processor import FormProcessorSQL
@@ -27,6 +28,7 @@ from ..models import CaseTransaction, XFormInstance, XFormOperation
 from ..tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
+    force_queryset_no_tombstone_patch,
     sharded,
 )
 from ..parsers.form import apply_deprecation
@@ -473,6 +475,7 @@ class HardDeleteQueryset(TestCase):
 
         assert total_counts == {'form_processor.XFormInstance': 5}
 
+    @suspend(force_queryset_no_tombstone_patch)
     def test_tombstones_are_created(self):
         forms = [
             create_form_for_test(
@@ -486,6 +489,24 @@ class HardDeleteQueryset(TestCase):
             tombstones = Tombstone.objects.get_tombstones(form_ids)
             assert len(tombstones) == actual_counts['form_processor.XFormInstance']
             assert {t.doc_id for t in tombstones} == set(form_ids)
+
+    @suspend(force_queryset_no_tombstone_patch)
+    def test_tombstones_are_not_created(self):
+        forms = [
+            create_form_for_test(
+                self.domain, deleted_on=datetime(2020, 1, 1)
+            )
+            for _ in range(10)
+        ]
+        total_counts = {}
+        for db_name, form_ids in split_list_by_db_partition([f.form_id for f in forms]):
+            qs = XFormInstance.objects.using(db_name).filter(form_id__in=form_ids)
+            actual_counts = XFormInstance.objects._hard_delete_queryset(qs, leave_tombstone=False)
+            tombstones = Tombstone.objects.get_tombstones(form_ids)
+            total_counts = Counter(total_counts) + Counter(actual_counts)
+            assert len(tombstones) == 0
+
+        assert total_counts == {'form_processor.XFormInstance': 10}
 
 
 class DeleteAttachmentsFSDBTests(TestCase):
