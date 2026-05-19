@@ -5,8 +5,7 @@ Manual changes:
 * Remove the inner content (`&times;`, `×`, and any wrapping `<span>`).
   B5's `btn-close` uses an embedded SVG; inner text would render on top of it.
 * Reorder the button to come AFTER `modal-title` in the modal header.
-* Ensure the button has `aria-label="Close"`. Remove any `aria-hidden="true"`
-  on the button itself — it hides the control from screen readers.
+* Ensure the button has `aria-label="{% trans_html_attr 'Close' %}"`. Remove any `aria-hidden="true"` on the button itself — it hides the control from screen readers.
 * Convert `<a class="btn-close">` to `<button type="button" class="btn-close">`.
 
 ## Example
@@ -23,7 +22,7 @@ Now (B5):
 ```
 <div class="modal-header">
     <h4 class="modal-title">Modal title</h4>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr 'Close' %}"></button>
 </div>
 ```
 
