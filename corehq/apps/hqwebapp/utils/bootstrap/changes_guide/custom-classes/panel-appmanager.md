@@ -19,10 +19,17 @@ The right migration is to consolidate to the existing `.card-modern-gray` rather
 ### Template
 
 ```
-<!-- B3 -->                           <!-- B5 -->
-<div class="panel panel-appmanager">  <div class="card card-modern-gray mb-3">
-  ...                                   ...
-</div>                                </div>
+<!-- B3 -->
+<div class="panel panel-appmanager">
+  ...
+</div>
+```
+
+```
+<!-- B5 -->
+<div class="card card-modern-gray mb-3>
+ ...
+</div>
 ```
 
 The `mb-3` utility recreates B3's default `.panel { margin-bottom: 20px }` so stacked cards don't sit edge-to-edge.

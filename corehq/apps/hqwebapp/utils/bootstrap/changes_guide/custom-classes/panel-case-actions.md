@@ -16,10 +16,17 @@ for the move/delete button overlay — but in B5 we drop that pattern entirely (
 ### Template
 
 ```
-<!-- B3 -->                                                 <!-- B5 -->
-<div class="panel panel-appmanager panel-case-actions">     <div class="card card-modern-gray mb-3 card-case-actions">
-  ...                                                         ...
-</div>                                                      </div>
+<!-- B3 -->
+<div class="panel panel-appmanager panel-case-actions">
+  ..
+</div>
+```
+
+```
+<!-- B5 -->
+<div class="card card-modern-gray mb-3 card-case-actions">
+ ...
+</div>
 ```
 
 Pair with `card-modern-gray` (not a new `card-appmanager` class —

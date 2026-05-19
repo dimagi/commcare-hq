@@ -11,11 +11,19 @@ edge-to-edge; `gap-2` (8px) is the closest natural utility — `gap-3`
 (16px) reads visibly looser than the B3 original:
 
 ```
-<!-- B3 -->                         <!-- B5 -->
-<div class="panel-group">           <div class="d-flex flex-column gap-2">
-  <div class="panel">...</div>        <div class="card">...</div>
-  <div class="panel">...</div>        <div class="card">...</div>
-</div>                              </div>
+<!-- B3 -->
+<div class="panel-group">
+  <div class="panel">...</div>
+  <div class="panel">...</div>
+</div>
+```
+
+```
+<!-- B5 -->
+<div class="d-flex flex-column gap-2">
+  <div class="card">...</div>
+  <div class="card">...</div>
+</div>
 ```
 
 If you need adjacent cards joined edge-to-edge with no gap at all,

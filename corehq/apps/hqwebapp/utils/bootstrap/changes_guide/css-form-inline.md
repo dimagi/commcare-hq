@@ -1,11 +1,19 @@
 `form-inline` has been dropped in B5 with no direct equivalent. Replace with flex utilities that recreate the horizontal-row-with-wrap layout:
 
 ```
-<!-- B3 -->                       <!-- B5 -->
-<div class="form-inline">         <div class="d-flex flex-wrap align-items-center gap-2">
-  <label>...</label>                <label>...</label>
-  <input class="form-control">      <input class="form-control w-auto">
-</div>                            </div>
+<!-- B3 -->
+<div class="form-inline">
+  <label>...</label>
+  <input class="form-control">
+</div>
+```
+
+```
+<!-- B5 -->
+<div class="d-flex flex-wrap align-items-center gap2">
+ <label>...</label>
+ <input class="form-control w-auto">
+</div>
 ```
 
 Companion changes inside the migrated container:

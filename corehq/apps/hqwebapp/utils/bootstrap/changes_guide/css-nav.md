@@ -7,21 +7,37 @@ Four rules apply:
 ## 1. Add `nav-item` to `<li>` and `nav-link` to `<a>`
 
 ```
-<!-- B3 -->            <!-- B5 -->
-<li>                   <li class="nav-item">
-  <a href="#">           <a class="nav-link" href="#">
-    Profile                Profile
-  </a>                   </a>
-</li>                  </li>
+<!-- B3 -->
+<li>
+  <a href="#">
+    Profile
+  </a>
+</li>
+```
+
+```
+<!-- B5 -->
+<li class="nav-item">
+  <a class="nav-link" href="#">
+    Profile
+  </a>
+</li>
 ```
 
 ## 2. Active state moves from `<li>` to `<a>` and gains `aria-current`
 
 ```
-<!-- B3 -->                 <!-- B5 -->
-<li class="active">         <li class="nav-item">
-  <a href="#">Home</a>        <a class="nav-link active" aria-current="page" href="#">Home</a>
-</li>                       </li>
+<!-- B3 -->
+<li class="active">
+  <a href="#">Home</a>
+</li>
+```
+
+```
+<!-- B5 -->
+<li class="nav-item">
+  <a class="nav-link active" aria-current"page" href="#">Home</a>
+</li>
 ```
 
 If the nav uses `data-bs-toggle="tab"` (or `pill`), Bootstrap manages the
@@ -33,10 +49,17 @@ active class itself — no static markup is needed.
 the state to screen readers.
 
 ```
-<!-- B3 -->                            <!-- B5 -->
-<li class="disabled">                  <li class="nav-item">
-  <a href="#">Coming soon</a>            <a class="nav-link disabled" aria-disabled="true">Coming soon</a>
-</li>                                  </li>
+<!-- B3 -->
+<li class="disabled">
+  <a href="#">Coming soon</a>
+</li>
+```
+
+```
+<!-- B5 -->
+<li class="nav-item">
+  <a class="nav-link disabled" aria-disabled="true">Coming soon</a>
+</li>
 ```
 
 ## 4. `nav-stacked` -> `flex-column`
@@ -45,8 +68,13 @@ the state to screen readers.
 parent `<ul>` to make the nav vertical.
 
 ```
-<!-- B3 -->                                       <!-- B5 -->
-<ul class="nav nav-pills nav-stacked">            <ul class="nav nav-pills flex-column">
+<!-- B3 -->
+<ul class="nav nav-pills nav-stacked">
+```
+
+```
+<!-- B5 -->
+<ul class="nav nav-pills flex-column">
 ```
 
 See: https://getbootstrap.com/docs/5.3/components/navs-tabs/#base-nav

@@ -3,13 +3,24 @@ equivalent. The closest pattern is a card with a card-body for
 padding.
 
 ```
-<!-- B3 -->                       <!-- B5 -->
-<div class="well-sm">             <div class="card card-body p-2 mb-3">
-  ...content...                     ...content...
-</div>                            </div>
+<!-- B3 -->
+<div class="well-sm">
+  ...content...
+</div>
 
-<div class="well">                <div class="card card-body mb-3">
-  ...content...                     ...content...
+<div class="well">
+  ...content...
+</div>
+```
+
+```
+<!-- B5 -->
+<div class="card card-body p-2 mb-3">
+  ...content...
+</div>
+
+<div class="card card-body mb-3">
+ ...
 </div>
 ```
 

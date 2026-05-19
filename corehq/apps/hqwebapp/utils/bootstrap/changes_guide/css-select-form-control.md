@@ -1,10 +1,14 @@
 Replace `form-control` with `form-select` on `<select>` elements.
 
 ```
-<!-- B3 -->                                  <!-- B5 -->
-<select class="form-control">...</select>    <select class="form-select">...</select>
+<!-- B3 -->
+<select class="form-control">...</select>
 ```
 
+```
+<!-- B5 -->
+<select class="form-select">...</select>
+```
 ## Width: check for inline siblings
 
 In B5, `form-select` defaults to `width: 100%`. So:
