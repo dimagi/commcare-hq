@@ -1,0 +1,212 @@
+Environment,Domain Name,Service Type,Plan Name,Case Search Enabled,Linked Domain Names
+staging,mattnyinvestigation,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,akj,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,
+staging,qa-erm-v1-downstream1,IMPLEMENTATION,QA-ERM-V1 Software Plan,True,
+staging,qa-load-30k,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,erm-v1-new,IMPLEMENTATION,QA-ERM-V1 Software Plan,True,
+staging,nitin-commcare,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,test-project-4,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,mapson
+staging,nhooper,PRODUCT,Dimagi Only CommCare Enterprise Edition,,"http://5ec0ca53.skybroadband.com:8000/a/demo/,ap-test-project"
+staging,surbhi-downstream,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,data-registry-scrap,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,commtrack-qa-1,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,vt-staging,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,bosco,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"http://localhost:8000/a/bosco-remote,http://staging.commcarehq.org/a/bosco-remote,beautiful-grotesque,in-the-silence,acoffeemachineinanoffice"
+staging,us-covid-upstream,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,downgrade9,NOT_SET,CommCare Community Edition (With ERM),,
+staging,dataregistry,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"dataregistry1,dataregistry2"
+staging,project-space-3d,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,pro-project,NOT_SET,CommCare Paused Edition,,
+staging,ben-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"report-copy,third-space,fourth-space"
+staging,first-project-1,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,polar-bears-downstream,,,,
+staging,qa-mrm-custom-downstream1,INTERNAL,Lite Release Management,,
+staging,erm-migration-d2,IMPLEMENTATION,Software_Plan_D,False,
+staging,webuserrestore,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,covidsms-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,qa-mrm-custom-upstream,INTERNAL,Lite Release Management,False,"qa-erm-v1-downstream2,qa-mrm-custom-downstream2"
+staging,test-staging-project,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,grogu-downstream,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,charlsmit-testy,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,co-carecoordination-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,bha-mini-test
+staging,us-covid-downstream,,,,
+staging,staging-test-hildebrand,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,qa-load-50k,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,ush-cjw-2,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,grogu,NOT_SET,CommCare Paused Edition,True,"grogu-downstrean2,grogu-downstream3,grogu-downstream"
+staging,project-space-b,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,florida-covid-jax,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,push-content,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,erm-migration-d1,IMPLEMENTATION,Software_Plan_D,False,"erm-migration-d2,erm-migration-d4,erm-migration-d3"
+staging,qa-load-10k,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,shubhamgoyaltest,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,staging-project,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,ccqa-mk,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,3157-3156-up,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,3157-3156-down
+staging,fourth-space,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,related-5k,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,ush-migration-staging,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"ush-cjw-1,ush-cjw-3,ush-cjw-4,ush-cjw-2"
+staging,benin,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,qa-transifex,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,develop,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,
+staging,samveg-quick,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,split-screen-case-search,NOT_SET,CommCare Paused Edition,True,
+staging,billingtest-1,INTERNAL,Dimagi Only CommCare Enterprise Edition,,billingtests
+staging,ccqa2-2,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"downgrade2,downgrade3,downgrade10,3157-3156-up"
+staging,erm-migration-a2,IMPLEMENTATION,Software_Plan_A,True,
+staging,QA-3012,,,,
+staging,frener,,,,
+staging,4030-upstream,IMPLEMENTATION,4030_Enterprise,True,"4030-downstream2,4030-downstream1"
+staging,kt-load-40k,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,qa-erm-v1-upstream,IMPLEMENTATION,QA-ERM-V1 Software Plan,True,"traveller,bugsbecrushed,qa-erm-v1-downstream1,qa-erm-v1-downstream3"
+staging,erm-migration-e1,IMPLEMENTATION,Software_Plan_E (With ERM),True,erm-migration-e2
+staging,linked-c-down,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,web-user-restore-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,ccc-qa-testing,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,downgrade8,NOT_SET,CommCare Paused Edition (With ERM),,
+staging,accounts-billing,NOT_SET,CommCare Paused Edition (With ERM),,
+staging,project-space-2d,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,qa-mrm-adv-upstream,INTERNAL,CommCare Advanced Edition - Pay Monthly,True,"qa-mrm-custom-downstream1,2984-upstream,qa-mrm-adv-downstream2,anything,qa-mrm-adv-downstream1"
+staging,rcostello,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,load-5k,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,data-cleaning-1,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,florida-covid-mdc,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,surbhi-upstream,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,surbhi-downstream
+staging,hungry-hippo-anthony-noel,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,shahid,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,
+staging,split_screen_case_search,,,,
+staging,1921-downstream-1,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,kt-load-30k,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,data-sharing-from,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,mapson,IMPLEMENTATION,Dimagi Only CommCare Enterprise Edition,False,
+staging,covid-ny-staging,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,florida-covid,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"florida-covid-jax,florida-covid-mdc"
+staging,qa-load-20k,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,bha-auto-tests,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,data-registry-scrap-1,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,skelly,NOT_SET,Dimagi Only CommCare Enterprise Edition,True,
+staging,project-space-1d,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,case-search-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,covid-co-staging,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,traveller,PRODUCT,CommCare Paused Edition,,
+staging,downgrade3,NOT_SET,CommCare Paused Edition (With ERM),,
+staging,third-space,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,qa-mrm-adv-downstream1,INTERNAL,CommCare Advanced Edition - Pay Monthly,True,
+staging,linked-rules-up,IMPLEMENTATION,linked_rules,True,"linked-rules-down2,linked-rule-down1"
+staging,qa,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,4030-downstream1,IMPLEMENTATION,4030_Enterprise,True,
+staging,another-upstream,PRODUCT,CommCare Paused Edition,True,bha-perf
+staging,bp-staging-domain,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,
+staging,qa-erm-v1-downstream3,IMPLEMENTATION,QA-ERM-V1 Software Plan,True,
+staging,smart-on-fhir-poc,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,upgrade-downgrade,NOT_SET,CommCare Paused Edition (With ERM),,
+staging,addison-test-st,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,addison-test-sub-dom
+staging,dataregistry3,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,2984-upstream,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,3156-down,IMPLEMENTATION,Enterprise: ERM Test,True,
+staging,case-search-and-claim,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,kt-load-5k,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,woody-test-staging,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,qa-mrm-adv-downstream2,PRODUCT,CommCare Advanced Edition - Pay Monthly,True,
+staging,dual-storage-postgres-qa,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,connectqa,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,
+staging,qa-7315,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,
+staging,kt-load-20k,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,linked-rule-down1,IMPLEMENTATION,linked_rules,True,
+staging,advanced-project,PRODUCT,CommCare Standard Edition - Pay Monthly,,another-downstream
+staging,smh-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,covid-nj-staging,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,dataregistry2,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,related-50k,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,test-63,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,downgrade6,PRODUCT,CommCare Community Edition (With ERM),,
+staging,kt-load-10k,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,qa-3012,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,ccc-chc-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,martins-smart-links,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,qa-uat,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,test-stale-data,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,downgrade7,NOT_SET,CommCare Paused Edition (With ERM),,
+staging,web-user-domain-2,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,test-65,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,project-space-1,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,project-space-1d
+staging,community-project,NOT_SET,CommCare Community Edition (With ERM),,
+staging,downgrade2,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,standard-project,PRODUCT,CommCare Standard Edition - Pay Monthly,,
+staging,casesearch,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"casesearch-2,https://eu.commcarehq.org/a/casesearch-eu/,casesearch-1,https://www.commcarehq.org/a/casesearch/,kartikaccc,casesearch-split-screen"
+staging,2984-downstream,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,enterprise-project,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,us-covid-performance,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,linked-b-up,INTERNAL,Dimagi Only CommCare Enterprise Edition,,"linked-b-down,yearly-billing,stripe,push-content,upgrade-downgrade,smoketest"
+staging,ss-staging,INTERNAL,Dimagi Only CommCare Enterprise Edition,,"pro-project,standard-project"
+staging,grogu-downstream3,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,bugsbecrushed,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"enterprise-project,billingtest-1"
+staging,linked-c-up,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,farid-remote-test,,,,
+staging,erm-migration-a1,IMPLEMENTATION,Software_Plan_A,True,"erm-migration-a2,erm-migration-a3"
+staging,linked-up,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,linked-down
+staging,kcho-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,project-space-3,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,project-space-3d
+staging,ccqa,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"ccqa2-2,data-cleaning,ccqa-mk,downstream-covid,add-ons,community,ccqa,ccqa-downstream,hrs-001,hrs-002,new-space-1"
+staging,wv-sahel-perf,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,
+staging,casesearch-2,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,3157-3156-down,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,linked-a-down,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,project-space-a,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,qa-mrm-custom-downstream2,INTERNAL,Lite Release Management,,
+staging,report-copy,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,1921-upstream,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,1921-downstream-1
+staging,beautiful-grotesque,NOT_SET,CommCare Paused Edition (With ERM),,
+staging,qateam,INTERNAL,4030_Enterprise,True,"https://eu.commcarehq.org/a/qateam-eu/,https://www.commcarehq.org/a/test-dev/,https://www.commcarehq.org/a/qateam,kd-advance-project,casesetup,qa-automation,casesearch,nitin-commcare,connect-apps"
+staging,linked-down,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,project-space-2,INTERNAL,Dimagi Only CommCare Enterprise Edition,,project-space-2d
+staging,api-tests,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,
+staging,polar-bears-are-cool,,,,http://104.163.217.31:8000/a/polar-bears-are-cool/
+staging,qa-automation,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,data-cleaning-1
+staging,qa-erm-v1-downstream2,IMPLEMENTATION,QA-ERM-V1 Software Plan,False,
+staging,test-phillip,PRODUCT,CommCare Free Edition,True,
+staging,onboarding-2,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,ccc-chc-3,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,dw-appcues,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,
+staging,qa-load-40k,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,3156-up,PRODUCT,Enterprise: ERM Test,True,3156-down
+staging,qa-load-5k,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,bha-mini-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,
+staging,linked-b-down,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,lgtest,INTERNAL,Dimagi Only CommCare Enterprise Edition,,hmhb-staging
+staging,billingtests,INTERNAL,CommCare Standard Edition (With ERM),,
+staging,casesearch-split-screen,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,charlsmit-testy2,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,kaleb-dimagi,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,
+staging,esoergel,NOT_SET,Dimagi Only CommCare Enterprise Edition,False,
+staging,dataregistry1,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,4030-retest,IMPLEMENTATION,CommCare Advanced Edition - Pay Monthly,,"abcdfhoufek,project-237401"
+staging,qa-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,
+staging,ush-cjw-3,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,bha-perf,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,grogu-downstrean2,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,jonathant-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,syria-support-10k,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,add-on-uat2,PRODUCT,CommCare Paused Edition (With ERM),,
+staging,co-bha-ae-performance,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,erm-downstream,,,,
+staging,mriese,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,smoketest,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,ap-test-project,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,ethan-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,ush-cjw-4,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,another-downstream,NOT_SET,CommCare Paused Edition (With ERM),True,
+staging,test-60,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,
+staging,erm-migration-e2,IMPLEMENTATION,Software_Plan_E (With ERM),True,
+staging,kt-load-50k,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,b-d-b-omain,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"accounts-billing,advanced-project"
+staging,qa-commtrack,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
+staging,sql-sravan-1,IMPLEMENTATION,CommCare Standard Edition - Report Builder (5 Reports),,
+staging,test-55,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,kartikaccc,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,
+staging,linked-a-up,INTERNAL,Dimagi Only CommCare Enterprise Edition,,linked-a-down
+staging,acoffeemachineinanoffice,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,linked-rules-down2,IMPLEMENTATION,linked_rules,True,
+staging,ush-cjw-1,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,
+staging,4030-downstream2,IMPLEMENTATION,4030_Enterprise,True,
+staging,test-61,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,

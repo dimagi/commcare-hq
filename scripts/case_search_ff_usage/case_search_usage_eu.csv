@@ -1,0 +1,3 @@
+Environment,Domain Name,Service Type,Plan Name,Case Search Enabled,Linked Domain Names
+eu,casesearch,INTERNAL,Dimagi Only CommCare Enterprise,True,
+eu,casesearch-eu,INTERNAL,Dimagi Only CommCare Enterprise,,

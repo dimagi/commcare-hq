@@ -1,0 +1,50 @@
+plan name	Keep
+1Test - Active	TRUE
+1Test - dont keep	FALSE
+1Test - keep	TRUE
+1Test - Paused	FALSE
+4030_Enterprise	FALSE
+Advanced Plan (10 reports limit)	FALSE
+CommCare Advanced Edition - Pay Annually	TRUE
+CommCare Advanced Edition - Pay Monthly	TRUE
+CommCare Community Edition (With ERM)	TRUE
+CommCare eCHIS Plan - MoH Benin	TRUE
+CommCare Enterprise Edition - IRC - Pay Monthly	TRUE
+CommCare Enterprise Plan for Gates Foundation: WHO AFRO Polio Campaign III	TRUE
+CommCare Free Edition	FALSE
+CommCare Paused Edition	FALSE
+CommCare Paused Edition (With ERM)	FALSE
+CommCare Paused Plan	FALSE
+CommCare Pro Edition - Pay Annually	TRUE
+CommCare Standard Edition - Pay Monthly	FALSE
+CommCare Standard Edition - Report Builder (5 Reports)	FALSE
+CommCare Standard Edition (With ERM)	FALSE
+Custom Advanced Plan with ERM (Release Management)	TRUE
+Custom Plan for CommCare Connect	FALSE
+Custom Sandbox Plan for Tufts	FALSE
+Dimagi Internal Test Account: kaleb-dimagi	FALSE
+Dimagi Only CommCare Enterprise	FALSE
+Dimagi Only CommCare Enterprise Edition	FALSE
+Dimagi Only CommConnect Enterprise Edition	FALSE
+Dimagi Only CommTrack Enterprise Edition	FALSE
+Discounted Advanced Plan for PivotWorks - Pay Annually	FALSE
+Discounted Advanced Plan for The University of Manchester - UoM ASD Namaste	FALSE
+Discounted Custom Advanced Plan for dms-colombia - Pay Annually	FALSE
+Discounted Custom Advanced Plan for Food for the Hungry - Pay Annually	FALSE
+Enterprise Plan for CommCare Connect	FALSE
+Enterprise Plan for Connect - test spaces	FALSE
+Enterprise Plan for State of Colorado: Capacity and Central Registries	TRUE
+Enterprise Premier Plan for City of Somerville	TRUE
+Enterprise: ERM Test	FALSE
+Grouped Advanced Plan for Abt Associates - Prevention of Malaria	TRUE
+Grouped Advanced Plan for Mothers to Mothers - Pay Monthly	TRUE
+linked_rules	FALSE
+Lite Release Management	FALSE
+QA Test Plan	FALSE
+qa_erm	FALSE
+QA-ERM-V1 Software Plan	FALSE
+Software_Plan_A	FALSE
+Software_Plan_D	FALSE
+Software_Plan_E (With ERM)	FALSE
+Trial Internal Enterprise Plan	FALSE
+US State: Enterprise Premier	TRUE
