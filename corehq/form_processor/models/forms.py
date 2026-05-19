@@ -392,11 +392,14 @@ class XFormInstanceManager(RequireDBManager):
 
         return count
 
-    def hard_delete_forms(self, domain, form_ids, *, publish_changes=True):
+    def hard_delete_forms(self, domain, form_ids, *, publish_changes=True, leave_tombstones=True):
         """Delete forms permanently
 
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
+        :param leave_tombstones: If adding a new usage, DO NOT SET THIS TO FALSE.
+            The user location mapping case and domain deletion are the only valid
+            use cases for not leaving tombstones.
         """
         assert isinstance(form_ids, list)
 
@@ -409,7 +412,8 @@ class XFormInstanceManager(RequireDBManager):
                 tombstones = []
                 for form in forms:
                     form_ids_to_delete.append(form.form_id)
-                    tombstones.append(create_tombstone_for_form(form))
+                    if leave_tombstones:
+                        tombstones.append(create_tombstone_for_form(form))
 
                 with transaction.atomic(using=queryset.db):
                     Tombstone.objects.using(queryset.db).bulk_create(

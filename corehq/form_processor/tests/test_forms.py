@@ -22,6 +22,7 @@ from ..models import CaseTransaction, XFormInstance, XFormOperation
 from ..tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
+    leave_tombstones_on_form_deletion,
     sharded,
 )
 from ..parsers.form import apply_deprecation
@@ -427,6 +428,7 @@ class TestHardDeleteExpiredForms(TestCase):
 
 
 @sharded
+@leave_tombstones_on_form_deletion
 class TestHardDeleteForms(TestCase):
 
     def tearDown(self):
@@ -447,9 +449,15 @@ class TestHardDeleteForms(TestCase):
 
     def test_tombstone_is_created(self):
         form = create_form_for_test(DOMAIN)
-        XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id])
+        XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id], leave_tombstones=True)
         tombstone = Tombstone.objects.partitioned_get(form.form_id)
         assert tombstone.doc_id == form.form_id
+
+    def test_tombstones_are_not_created(self):
+        form = create_form_for_test(DOMAIN)
+        XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id], leave_tombstones=False)
+        with pytest.raises(Tombstone.DoesNotExist):
+            Tombstone.objects.partitioned_get(form.form_id)
 
     def test_returned_count_is_accurate_across_chunks(self):
         forms = [create_form_for_test(DOMAIN) for _ in range(5)]
