@@ -1,13 +1,8 @@
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
-from corehq.apps.es.case_search import get_case_property_unique_values
 from corehq.apps.es.users import UserES
-from corehq.apps.integration.payments.const import (
-    PaymentProperties,
-    PaymentStatus,
-)
+from corehq.apps.integration.payments.const import PaymentStatus
 from corehq.apps.reports.filters.base import (
     BaseSimpleFilter,
     BaseSingleOptionFilter,
@@ -39,44 +34,24 @@ class PaymentCaseListFilter(CaseListFilter):
     default_selections = [("all_data", _("[All Data]"))]
 
 
-class BaseCasePropertyFilter(BaseSingleOptionFilter):
-    default_text = _("Show all")
-    case_property = None
-
-    @property
-    def options(self):
-        if not self.case_property:
-            raise NotImplementedError("Subclasses must define 'case_property'")
-        values = get_case_property_unique_values(
-            self.domain,
-            MOMO_PAYMENT_CASE_TYPE,
-            self.case_property,
-        )
-        return [(value, value) for value in sorted(values)]
+class BatchNumberFilter(BaseSimpleFilter):
+    slug = 'batch_number'
+    label = gettext_lazy('Batch number')
 
 
-class BatchNumberFilter(BaseCasePropertyFilter):
-    slug = "batch_number"
-    label = _("Batch number")
-    case_property = PaymentProperties.BATCH_NUMBER
-
-
-class CampaignFilter(BaseCasePropertyFilter):
+class CampaignFilter(BaseSimpleFilter):
     slug = 'campaign'
-    label = _('Campaign')
-    case_property = PaymentProperties.CAMPAIGN
+    label = gettext_lazy('Campaign')
 
 
-class ActivityFilter(BaseCasePropertyFilter):
+class ActivityFilter(BaseSimpleFilter):
     slug = 'activity'
-    label = _('Activity')
-    case_property = PaymentProperties.ACTIVITY
+    label = gettext_lazy('Activity')
 
 
-class FunderFilter(BaseCasePropertyFilter):
+class FunderFilter(BaseSimpleFilter):
     slug = 'funder'
-    label = _('Funder')
-    case_property = PaymentProperties.FUNDER
+    label = gettext_lazy('Funder')
 
 
 class PhoneNumberFilter(BaseSimpleFilter):

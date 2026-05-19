@@ -21,7 +21,6 @@ from corehq.apps.integration.payments.const import (
     PaymentStatus,
 )
 from corehq.apps.integration.payments.filters import (
-    BatchNumberFilter,
     CampaignFilter,
     PaymentVerifiedByFilter,
 )
@@ -126,7 +125,6 @@ class TestPaymentsVerificationReportView(BaseTestPaymentsView):
         assert response.status_code == 403
 
     @flag_enabled('MOBILE_MONEY_INTEGRATION')
-    @patch.object(BatchNumberFilter, 'options', [("b001", "b001")])
     @patch.object(PaymentVerifiedByFilter, 'options', [('test-user', 'test-user')])
     def test_user_with_access(self):
         self.client.login(username=self.user_with_access.username, password=self.password)
@@ -134,7 +132,6 @@ class TestPaymentsVerificationReportView(BaseTestPaymentsView):
         assert response.status_code == 200
 
     @flag_enabled('MOBILE_MONEY_INTEGRATION')
-    @patch.object(BatchNumberFilter, 'options', [("b001", "b001")])
     @patch.object(PaymentVerifiedByFilter, 'options', [('test-user', 'test-user')])
     def test_success(self):
         response = self._make_request()
