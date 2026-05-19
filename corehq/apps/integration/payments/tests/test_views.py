@@ -630,6 +630,18 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
         assert len(queryset) == 1
 
     @flag_enabled('MOBILE_MONEY_INTEGRATION')
+    def test_case_creation_date_range_filter_excludes_all(self):
+        response = self._make_request(querystring='startdate=2099-01-01&enddate=2099-12-31')
+        queryset = response.context['table'].data
+        assert len(queryset) == 0
+
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
+    def test_case_creation_date_range_filter_includes_all(self):
+        response = self._make_request(querystring='startdate=2000-01-01&enddate=2099-12-31')
+        queryset = response.context['table'].data
+        assert len(queryset) == 6
+
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_open_close_filter_open(self):
         response = self._make_request(querystring='is_open=open')
         queryset = response.context['table'].data

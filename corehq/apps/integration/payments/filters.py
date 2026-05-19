@@ -13,6 +13,7 @@ from corehq.apps.reports.filters.base import (
     BaseSingleOptionFilter,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter
+from corehq.apps.reports.filters.dates import DatespanFilter
 
 
 class PaymentVerifiedByFilter(BaseSingleOptionFilter):
@@ -82,3 +83,7 @@ class FunderFilter(BaseCasePropertyFilter):
 class PhoneNumberFilter(BaseSimpleFilter):
     slug = 'phone_number'
     label = gettext_lazy('Phone number')
+
+
+class CaseCreatedDateRangeFilter(DatespanFilter):
+    label = gettext_lazy('Case creation date range')
