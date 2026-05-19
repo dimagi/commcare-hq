@@ -986,6 +986,13 @@ CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
     parent_toggles=[CASE_SEARCH_ADVANCED],
 )
 
+CASE_SEARCH_ENDPOINTS = StaticToggle(
+    'case_search_endpoints',
+    'Case Search Endpoints: configurable query builder for case search',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
