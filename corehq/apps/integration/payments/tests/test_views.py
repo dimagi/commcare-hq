@@ -21,7 +21,6 @@ from corehq.apps.integration.payments.const import (
     PaymentStatus,
 )
 from corehq.apps.integration.payments.filters import (
-    BatchNumberFilter,
     CampaignFilter,
     PaymentVerifiedByFilter,
 )
@@ -126,7 +125,6 @@ class TestPaymentsVerificationReportView(BaseTestPaymentsView):
         assert response.status_code == 403
 
     @flag_enabled('MOBILE_MONEY_INTEGRATION')
-    @patch.object(BatchNumberFilter, 'options', [("b001", "b001")])
     @patch.object(PaymentVerifiedByFilter, 'options', [('test-user', 'test-user')])
     def test_user_with_access(self):
         self.client.login(username=self.user_with_access.username, password=self.password)
@@ -134,7 +132,6 @@ class TestPaymentsVerificationReportView(BaseTestPaymentsView):
         assert response.status_code == 200
 
     @flag_enabled('MOBILE_MONEY_INTEGRATION')
-    @patch.object(BatchNumberFilter, 'options', [("b001", "b001")])
     @patch.object(PaymentVerifiedByFilter, 'options', [('test-user', 'test-user')])
     def test_success(self):
         response = self._make_request()
@@ -549,6 +546,13 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                     PaymentProperties.FINAL_MOBILE_VALIDATION: 'true',
                 }),
         ]
+        open_case = _create_case(
+            cls.factory,
+            name='closed_case',
+            data={PaymentProperties.BATCH_NUMBER: 'B001'},
+        )
+        cls.closed_case = cls.factory.close_case(open_case.case_id)
+        cls.case_list.append(cls.closed_case)
         case_search_adapter.bulk_index(cls.case_list, refresh=True)
         user_adapter.bulk_index([cls.webuser, cls.user_without_access, cls.user_with_access], refresh=True)
 
@@ -572,13 +576,13 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
     def test_batch_number_filter(self):
         response = self._make_request(querystring='batch_number=B001')
         queryset = response.context['table'].data
-        assert len(queryset) == 4
+        assert len(queryset) == 5
 
     @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_batch_number_filter_no_value(self):
         response = self._make_request(querystring='batch_number=')
         queryset = response.context['table'].data
-        assert len(queryset) == 5
+        assert len(queryset) == 6
 
     @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_payment_status_filter_pending_payments_has_one(self):
@@ -619,6 +623,30 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
     @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_phone_number_filter(self):
         response = self._make_request(querystring='phone_number=987654321')
+        queryset = response.context['table'].data
+        assert len(queryset) == 1
+
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
+    def test_case_creation_date_range_filter_excludes_all(self):
+        response = self._make_request(querystring='startdate=2099-01-01&enddate=2099-12-31')
+        queryset = response.context['table'].data
+        assert len(queryset) == 0
+
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
+    def test_case_creation_date_range_filter_includes_all(self):
+        response = self._make_request(querystring='startdate=2000-01-01&enddate=2099-12-31')
+        queryset = response.context['table'].data
+        assert len(queryset) == 6
+
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
+    def test_open_close_filter_open(self):
+        response = self._make_request(querystring='is_open=open')
+        queryset = response.context['table'].data
+        assert len(queryset) == 5
+
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
+    def test_open_close_filter_closed(self):
+        response = self._make_request(querystring='is_open=closed')
         queryset = response.context['table'].data
         assert len(queryset) == 1
 
