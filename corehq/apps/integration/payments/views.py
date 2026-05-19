@@ -55,6 +55,9 @@ REVERT_VERIFICATION_REQUEST_SLUG = 'revert_verification'
 class PaymentsFiltersMixin:
     fields = [
         'corehq.apps.integration.payments.filters.PaymentCaseListFilter',
+        'corehq.apps.integration.payments.filters.PaymentStatusFilter',
+        'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
         'corehq.apps.integration.payments.filters.BatchNumberFilter',
         'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
         'corehq.apps.integration.payments.filters.PaymentStatusFilter',
@@ -151,6 +154,8 @@ class PaymentsVerificationTableView(
             mobile_user_and_group_slugs
         )
         query = self._apply_filters(query)
+        if case_status := self.request.GET.get('is_open'):
+            query = query.is_closed(case_status == 'closed')
         return query
 
     def get_context_data(self, **kwargs):
