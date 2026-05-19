@@ -34,24 +34,31 @@ class PaymentCaseListFilter(CaseListFilter):
     default_selections = [("all_data", _("[All Data]"))]
 
 
+_CASE_SENSITIVE_HELP = gettext_lazy('Case-sensitive exact match.')
+
+
 class BatchNumberFilter(BaseSimpleFilter):
     slug = 'batch_number'
     label = gettext_lazy('Batch number')
+    help_inline = _CASE_SENSITIVE_HELP
 
 
 class CampaignFilter(BaseSimpleFilter):
     slug = 'campaign'
     label = gettext_lazy('Campaign')
+    help_inline = _CASE_SENSITIVE_HELP
 
 
 class ActivityFilter(BaseSimpleFilter):
     slug = 'activity'
     label = gettext_lazy('Activity')
+    help_inline = _CASE_SENSITIVE_HELP
 
 
 class FunderFilter(BaseSimpleFilter):
     slug = 'funder'
     label = gettext_lazy('Funder')
+    help_inline = _CASE_SENSITIVE_HELP
 
 
 class PhoneNumberFilter(BaseSimpleFilter):
