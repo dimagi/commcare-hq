@@ -8,28 +8,6 @@ from corehq.util.django_migrations import skip_on_fresh_install
 NEW_TAG_SLUG = "connect_division"
 
 
-@skip_on_fresh_install
-def _grant_connect_division_permission_to_superusers(apps, schema_editor):
-    ToggleEditPermission = apps.get_model("toggles", "ToggleEditPermission")
-    User = apps.get_model("auth", "User")
-    permission, _ = ToggleEditPermission.objects.get_or_create(
-        tag_slug=NEW_TAG_SLUG,
-        defaults={"enabled_users": []},
-    )
-    superusers = list(
-        User.objects.filter(is_superuser=True).values_list("username", flat=True)
-    )
-    to_add = [u for u in superusers if u not in permission.enabled_users]
-    if to_add:
-        permission.enabled_users.extend(to_add)
-        permission.save()
-
-
-def _reverse(apps, schema_editor):
-    ToggleEditPermission = apps.get_model("toggles", "ToggleEditPermission")
-    ToggleEditPermission.objects.filter(tag_slug=NEW_TAG_SLUG).delete()
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -41,9 +19,5 @@ class Migration(migrations.Migration):
             model_name='toggleeditpermission',
             name='tag_slug',
             field=models.CharField(choices=[('release', 'release'), ('ga_path', 'ga_path'), ('frozen', 'frozen'), ('deprecated', 'deprecated'), ('solutions_internal', 'solutions_internal'), ('connect_division', 'connect_division')], max_length=255, unique=True),
-        ),
-        migrations.RunPython(
-            _grant_connect_division_permission_to_superusers,
-            reverse_code=_reverse,
         ),
     ]
