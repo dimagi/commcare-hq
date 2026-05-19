@@ -66,3 +66,32 @@ def patch_django_test_case():
 def patch_assertItemsEqual():
     import unittest
     unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
+
+
+def suspend(patch_obj):
+    """Contextmanager/decorator to suspend an active patch
+
+    Usage as decorator:
+
+        @suspend(delete_es_docs_patch)
+        def test_something():
+            ...  # do thing with ES docs deletion
+
+    Usage as context manager:
+
+        with suspend(delete_es_docs_patch):
+            ...  # do thing with ES docs deletion
+    """
+    from django.conf import settings
+    from corehq.tests.util.context import testcontextmanager
+
+    @testcontextmanager
+    def suspend_patch():
+        assert settings.UNIT_TESTING
+        patch_obj.__exit__(None, None, None)
+        try:
+            yield
+        finally:
+            patch_obj.__enter__()
+
+    return suspend_patch
