@@ -69,3 +69,4 @@ class PhoneNumberFilter(BaseSimpleFilter):
 
 class CaseCreatedDateRangeFilter(DatespanFilter):
     label = gettext_lazy('Case creation date range')
+    template = 'payments/filters/case_created_date_range.html'
