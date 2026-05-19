@@ -10,6 +10,7 @@ from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, filters
+from corehq.apps.es import cases as case_es
 from corehq.apps.es.case_search import case_property_query, case_property_missing
 from corehq.apps.geospatial.utils import get_celery_task_tracker
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
@@ -34,6 +35,7 @@ from corehq.apps.integration.payments.services import (
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
 from corehq.apps.integration.tasks import REQUEST_MOMO_PAYMENTS_TASK_SLUG
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.dispatcher import datespan_default
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.utils import (
@@ -58,6 +60,7 @@ class PaymentsFiltersMixin:
         'corehq.apps.integration.payments.filters.PaymentStatusFilter',
         'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
+        'corehq.apps.integration.payments.filters.CaseCreatedDateRangeFilter',
         'corehq.apps.integration.payments.filters.BatchNumberFilter',
         'corehq.apps.integration.payments.filters.CampaignFilter',
         'corehq.apps.integration.payments.filters.ActivityFilter',
@@ -96,6 +99,7 @@ require_payments_report_access = require_permission(
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.MOBILE_MONEY_INTEGRATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
+@method_decorator(datespan_default, name='dispatch')
 class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
     urlname = 'payments_verify'
     template_name = 'payments/payments_verify_report.html'
@@ -121,6 +125,7 @@ class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.MOBILE_MONEY_INTEGRATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
+@method_decorator(datespan_default, name='dispatch')
 class PaymentsVerificationTableView(
     HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, SelectablePaginatedTableView, TableExportMixin
 ):
@@ -154,7 +159,15 @@ class PaymentsVerificationTableView(
         query = self._apply_filters(query)
         if case_status := self.request.GET.get('is_open'):
             query = query.is_closed(case_status == 'closed')
+        query = self._apply_datespan_filter(query)
         return query
+
+    def _apply_datespan_filter(self, query):
+        startdate = self.request.GET.get('startdate')
+        enddate = self.request.GET.get('enddate')
+        if not (startdate or enddate):
+            return query
+        return query.filter(case_es.opened_range(gte=startdate, lte=enddate))
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
