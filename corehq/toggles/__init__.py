@@ -73,6 +73,12 @@ TAG_GA_PATH = Tag(
     css_class='release',
     description='This is a feature that we plan to move to General Availability in the future.',
 )
+TAG_CONNECT_DIVISION = Tag(
+    name='Connect Division',
+    slug='connect_division',
+    css_class='default',
+    description='Feature flags owned and maintained by the Connect Division.',
+)
 
 ALL_TAG_GROUPS = [
     TAG_RELEASE,
@@ -80,6 +86,7 @@ ALL_TAG_GROUPS = [
     TAG_FROZEN,
     TAG_DEPRECATED,
     TAG_INTERNAL,
+    TAG_CONNECT_DIVISION,
 ]
 ALL_TAGS = ALL_TAG_GROUPS
 
@@ -2223,7 +2230,7 @@ CAMPAIGN_DASHBOARD = StaticToggle(
 COMMCARE_CONNECT = StaticToggle(
     'commcare_connect',
     'Enable CommCare Connect features',
-    tag=TAG_INTERNAL,
+    tag=TAG_CONNECT_DIVISION,
     namespaces=[NAMESPACE_DOMAIN],
     description='More details to come',
 )
