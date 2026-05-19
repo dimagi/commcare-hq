@@ -311,6 +311,9 @@ Alpine.data('initRole', (roleJson) => {
                     set allowCheckboxPermission(value) { // Add this setter
                         self.role.permissions.edit_users_in_groups = value;
                     },
+                    get allowCheckboxAutoEnable() {
+                        return self.role.permissions.edit_commcare_users;
+                    },
                 },
                 {
                     showOption: true,
@@ -341,6 +344,9 @@ Alpine.data('initRole', (roleJson) => {
                     },
                     set allowCheckboxPermission(value) { // Add this setter
                         self.role.permissions.edit_users_in_locations = value;
+                    },
+                    get allowCheckboxAutoEnable() {
+                        return self.role.permissions.edit_commcare_users;
                     },
                 },
                 {
@@ -477,6 +483,7 @@ Alpine.data('initRole', (roleJson) => {
                     set allowCheckboxPermission(value) {
                         self.role.permissions.edit_locked_questions_in_apps = value;
                     },
+                    allowCheckboxAutoEnable: false,
                 },
                 {
                     get showOption() {
