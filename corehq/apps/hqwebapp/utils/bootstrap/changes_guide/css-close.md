@@ -5,7 +5,7 @@ Manual changes:
 * Remove the inner content (`&times;`, `×`, and any wrapping `<span>`).
   B5's `btn-close` uses an embedded SVG; inner text would render on top of it.
 * Reorder the button to come AFTER `modal-title` in the modal header.
-* Ensure the button has `aria-label="{% trans_html_attr 'Close' %}"`. Remove any `aria-hidden="true"` on the button itself — it hides the control from screen readers.
+* Ensure the button has `aria-label="{% trans_html_attr 'Close' %}"`. Remove any `aria-hidden="true"` on the button itself — it hides the control from screen readers. The template must `{% load hq_shared_tags %}` for `trans_html_attr` to resolve; the page will 500 with `TemplateSyntaxError: Invalid block tag 'trans_html_attr'` if it's missing.
 * Convert `<a class="btn-close">` to `<button type="button" class="btn-close">`.
 
 ## Example
