@@ -73,6 +73,12 @@ TAG_GA_PATH = Tag(
     css_class='release',
     description='This is a feature that we plan to move to General Availability in the future.',
 )
+TAG_CONNECT_DIVISION = Tag(
+    name='Connect Division',
+    slug='connect_division',
+    css_class='default',
+    description='Feature flags owned and maintained by the Connect Division.',
+)
 
 ALL_TAG_GROUPS = [
     TAG_RELEASE,
@@ -80,6 +86,7 @@ ALL_TAG_GROUPS = [
     TAG_FROZEN,
     TAG_DEPRECATED,
     TAG_INTERNAL,
+    TAG_CONNECT_DIVISION,
 ]
 ALL_TAGS = ALL_TAG_GROUPS
 
@@ -957,15 +964,6 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-CASE_SEARCH_DEPRECATED = StaticToggle(
-    'case_search_deprecated',
-    'Case Search: Deprecated',
-    TAG_DEPRECATED,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
-)
-
 CASE_SEARCH_DEPRECATED_NORMAL_CASE_LIST = StaticToggle(
     'case_search_deprecated_normal_case_list',
     'Case Search: Normal case list option Deprecated',
@@ -995,17 +993,6 @@ CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
     parent_toggles=[CASE_SEARCH_ADVANCED],
 )
 
-CASE_SEARCH_CACHE_KEY = StaticToggle(
-    'case_search_cache_key',
-    'Case Search: Formplayer cache key',
-    TAG_GA_PATH,
-    description="""
-        If set formplayer will use a more specific cache key. This is meant to fix a bug but the
-        perfomance implications are not clear. Hence the FF.""",
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
-)
-
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
@@ -1031,11 +1018,31 @@ GEOCODER_USER_PROXIMITY = StaticToggle(
     """,
 )
 
+FORMPLAYER_SKIP_FIELD_CACHING = StaticToggle(
+    'formplayer_skip_field_caching',
+    'Formplayer: Skip Field Caching',
+    TAG_INTERNAL,
+    description="Instruct formplayer to try out an alternative field caching workflow for performance testing.",
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
     'empty_case_list_text',
     "USH: Allow customizing the text displayed when case list contains no cases in web apps",
     TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+ENUM_CALC_VARIABLES = StaticToggle(
+    'enum_calc_variables',
+    'Switch Enum Fields to Variables',
+    TAG_INTERNAL,
+    description="""
+    Switch enum field types to reference the calculated_property variable
+    rather than repeat the expression for each mapping.  This is a performance
+    optimization for when the expression is expensive to compute.
+    """,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 HIDE_SYNC_BUTTON = StaticToggle(
@@ -1125,9 +1132,10 @@ SECURE_SESSION_TIMEOUT = StaticToggle(
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
 
-VELLUM_SAVE_TO_CASE = StaticToggle(
+VELLUM_SAVE_TO_CASE = FrozenPrivilegeToggle(
+    privileges.VELLUM_SAVE_TO_CASE,
     'save_to_case',
-    "Adds save to case as a question to the form builder",
+    "Adds Advanced Case Actions as a question to the form builder",
     TAG_GA_PATH,
     [NAMESPACE_DOMAIN],
     description='This flag allows case management inside repeat groups',
@@ -2126,6 +2134,19 @@ FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
     owner='Simon Kelly'
 )
 
+ENTERPRISE_ADMIN_SELF_SERVICE = FeatureRelease(
+    'enterprise_admin_self_service',
+    'Allow Enterprise Admins to view/add/remove other Enterprise Admins '
+    'from the Enterprise Console',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    owner='Danny Roberts',
+    help_link=(
+        'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/'
+        '2143945885/Enterprise+Console#Enterprise-Admins'
+    ),
+)
+
 APPLICATION_RELEASE_LOGS = StaticToggle(
     'application_release_logs',
     'Show Application release logs',
@@ -2209,7 +2230,7 @@ CAMPAIGN_DASHBOARD = StaticToggle(
 COMMCARE_CONNECT = StaticToggle(
     'commcare_connect',
     'Enable CommCare Connect features',
-    tag=TAG_INTERNAL,
+    tag=TAG_CONNECT_DIVISION,
     namespaces=[NAMESPACE_DOMAIN],
     description='More details to come',
 )

@@ -49,7 +49,7 @@ dependencies = [
     "django-transfer",
     "django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae", # waiting for next release after 1.16.0
     "django-user-agents",
-    "django~=5.2.0",
+    "django~=5.2.14",
     "djangorestframework",
     "dropbox",
     "elasticsearch6>=6.0.0,<7.0.0",
@@ -133,7 +133,6 @@ default-groups = ["dev", "sso"]
 dev = [
     'dependency-metrics',
     'django-extensions',
-    'fixture',
     'git-build-branch',
     'gnureadline',
     'ipython', # for nicer django shell experience
@@ -148,7 +147,7 @@ docs = [
     "Sphinx",
     "sphinxcontrib-django",
     "sphinx-rtd-theme",
-    "urllib3<=2.6.3", # fix doc tests AssertionError: Current app already created
+    "urllib3<=2.7.0", # fix doc tests AssertionError: Current app already created
 ]
 prod = [
     "flower",

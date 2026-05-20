@@ -166,6 +166,7 @@ advanced_v0 = pro_v1 + [
     privileges.CUSTOM_ICON_BADGES,
     privileges.LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
     privileges.LOCKED_ADMIN_QUESTIONS,
+    privileges.VELLUM_SAVE_TO_CASE,
 ]
 
 enterprise_v0 = advanced_v0 + [

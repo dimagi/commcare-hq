@@ -985,6 +985,14 @@ msgid "XPath Expression"
 msgstr "XPath अभिव्यक्ति"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Hidden)"
+msgstr " (छुपा हुआ)"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Locked)"
+msgstr " (लॉक किया गया)"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
 msgstr "अज्ञात प्रश्न"
 
@@ -1273,53 +1281,93 @@ msgstr "नवीनतम सहेजा गया"
 msgid "[unknown]"
 msgstr "[अज्ञात]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/2229.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "loadXFormOrError"
+msgstr "loadXFormOrError"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isPropertyLocked"
+msgstr "isPropertyLocked"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugPathMoveable"
+msgstr "isMugPathMoveable"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugRemoveable"
+msgstr "isMugRemoveable"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugTypeChangeable"
+msgstr "isMugTypeChangeable"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "getMainProperties"
+msgstr "getMainProperties"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "createXML"
+msgstr "createXML"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "getData"
+msgstr "getData"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "checkMove"
+msgstr "checkMove"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "jstree"
+msgstr "jstree"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/229.js
 msgid "\n"
 msgstr "\n"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/4730.js
-msgid "{path} is not a valid data parent"
-msgstr "{path} मान्य डेटा पैरेंट नहीं है"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "Drag question here"
 msgstr "प्रश्न को यहाँ खींचें"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is equal to"
 msgstr "के बराबर है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is not equal to"
 msgstr "के बराबर नहीं है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is less than"
 msgstr "से कम है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is less than or equal to"
 msgstr "से कम या बराबर है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is greater than"
 msgstr "से अधिक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is greater than or equal to"
 msgstr "से अधिक या बराबर है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "has selected value"
 msgstr "चयनित मान है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "True when ALL of the expressions are true."
 msgstr "सभी अभिव्यक्तियाँ सत्य होने पर ही सत्य।"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "True when ANY of the expressions are true."
 msgstr "कोई भी अभिव्यक्ति सत्य होने पर सत्य।"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
+msgid "{path} is not a valid data parent"
+msgstr "{path} मान्य डेटा पैरेंट नहीं है"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "New Form"
@@ -3906,6 +3954,10 @@ msgid "View-Only Applications"
 msgstr "केवल देखने योग्य एप्लिकेशन"
 
 #: corehq/apps/users/static/users/js/edit_role.js
+msgid "Allow locking and unlocking questions in forms."
+msgstr "फॉर्म में प्रश्नों को लॉक और अनलॉक करने की अनुमति दें।"
+
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
 "worker roles &amp; permissions (only Admins can edit roles)"
@@ -5178,23 +5230,11 @@ msgstr "CommCare HQ अनुरोध करने में असमर्थ
 #~ msgid "getCurrentMugInput"
 #~ msgstr "getCurrentMugInput"
 
-#~ msgid "jstree"
-#~ msgstr "jstree"
-
 #~ msgid "getMugByPath"
 #~ msgstr "getMugByPath"
 
-#~ msgid "getData"
-#~ msgstr "getData"
-
 #~ msgid "loadXML"
 #~ msgstr "loadXML"
-
-#~ msgid "createXML"
-#~ msgstr "createXML"
-
-#~ msgid "loadXFormOrError"
-#~ msgstr "loadXFormOrError"
 
 #~ msgid "addQuestion"
 #~ msgstr "प्रश्न जोड़ें"

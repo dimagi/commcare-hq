@@ -258,6 +258,10 @@ class Command(BaseCommand):
         Role(slug=privileges.LOCKED_ADMIN_QUESTIONS,
              name='Locked Admin Questions',
              description="Allow questions to be locked in the form builder to limit editing"),
+        Role(slug=privileges.VELLUM_SAVE_TO_CASE,
+             name='Advanced Case Actions (old Save To Case questions)',
+             description="Allow adding Advanced Case Actions (old Save To Case questions) "
+                         "in the form builder."),
     ]
 
     BOOTSTRAP_PLANS = [

@@ -1923,6 +1923,16 @@ class EnterpriseSettingsTab(UITab):
                 enterprise_user_management_views.append(manage_sso)
             else:
                 enterprise_views.append(manage_sso)
+        if toggles.ENTERPRISE_ADMIN_SELF_SERVICE.enabled_for_request(self._request):
+            enterprise_views.append({
+                'title': _("Enterprise Administrators"),
+                'url': reverse("enterprise_admins", args=[self.domain]),
+                'description': _(
+                    "View and manage the administrators for your enterprise account"
+                ),
+                'subpages': [],
+                'show_in_dropdown': False,
+            })
         if self.couch_user.is_superuser:
             from corehq.apps.enterprise.models import EnterprisePermissions
             if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \

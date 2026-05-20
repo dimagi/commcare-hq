@@ -165,7 +165,14 @@ $(function () {
         self.caseConfigViewModel = ko.observable(caseConfigViewModel(self));
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat, excludeTrigger) {
-            return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
+            return caseConfigUtils.getQuestions(
+                self.questions(),
+                filter,
+                excludeHidden,
+                includeRepeat,
+                excludeTrigger,
+                true,  //disableLocked
+            );
         };
 
         self.getAnswers = function (condition) {
@@ -605,6 +612,10 @@ $(function () {
                 write: function (value) {
                     self.updatedDescription(value);
                 },
+            });
+            self.isLocked = ko.pureComputed(function () {
+                const question = self.case_transaction.caseConfig.questionMap[self.path()];
+                return question && question.locked;
             });
             return self;
         },

@@ -168,7 +168,14 @@ $(function () {
         };
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat) {
-            return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat);
+            return caseConfigUtils.getQuestions(
+                self.questions(),
+                filter,
+                excludeHidden,
+                includeRepeat,
+                false, //excludeTrigger
+                true,  //disableLocked
+            );
         };
 
         self.getAnswers = function (condition) {

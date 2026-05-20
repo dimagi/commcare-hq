@@ -68,6 +68,7 @@ IGNORE_MODELS = {
     'repeaters.RepeatRecord',         # handled by cascading delete
     'repeaters.RepeatRecordAttempt',  # handled by cascading delete
     'sms.MigrationStatus',
+    'tombstones.Tombstone',
     'util.BouncedEmail',
     'util.ComplaintBounceMeta',
     'util.PermanentBounceMeta',

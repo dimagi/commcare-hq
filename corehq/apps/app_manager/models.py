@@ -1262,11 +1262,27 @@ class FormBase(DocumentSchema):
         return self.get_questions([], include_triggers=True, include_groups=True)
 
     @time_method()
-    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations',
-                 'include_fixtures'],
-                timeout=24 * 60 * 60)
-    def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False, include_fixtures=False):
+    @quickcache(
+        [
+            'self.source',
+            'langs',
+            'include_triggers',
+            'include_groups',
+            'include_translations',
+            'include_fixtures',
+            'include_locked_status',
+        ],
+        timeout=24 * 60 * 60,
+    )
+    def get_questions(
+        self,
+        langs,
+        include_triggers=False,
+        include_groups=False,
+        include_translations=False,
+        include_fixtures=False,
+        include_locked_status=False
+    ):
         try:
             return XForm(self.source, domain=self.get_app().domain).get_questions(
                 langs=langs,
@@ -1274,6 +1290,7 @@ class FormBase(DocumentSchema):
                 include_groups=include_groups,
                 include_translations=include_translations,
                 include_fixtures=include_fixtures,
+                include_locked_status=include_locked_status,
             )
         except XFormException as e:
             raise XFormException(_('Error in form "{}": {}').format(trans(self.name), e))
@@ -2238,6 +2255,7 @@ class CaseSearch(DocumentSchema):
     - dynamic_search: Removed deprecated functionality (Apr 2026)
     - command_label: Superseded by search_label (2021 migration)
     - search_label: Removed; search button always uses default label (Apr 2026)
+    - additional_relevant: Removing that feature (Apr 2026)
     - search_filter: Removed with USH_SEARCH_FILTER toggle (Apr 2026)
       These fields may still exist in CouchDB documents but are no longer used.
     """
@@ -2245,7 +2263,6 @@ class CaseSearch(DocumentSchema):
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
-    additional_relevant = StringProperty(exclude_if_none=True)  # in "addition" to the default relevancy condition
     search_button_display_condition = StringProperty(exclude_if_none=True)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     custom_sort_properties = SchemaListProperty(CaseSearchCustomSortProperty)
@@ -2278,8 +2295,6 @@ class CaseSearch(DocumentSchema):
     def get_relevant(self, case_session_var, multi_select=False):
         xpath = CaseClaimXpath(case_session_var)
         default_condition = xpath.multi_case_relevant() if multi_select else xpath.default_relevant()
-        if self.additional_relevant:
-            return f"({default_condition}) and ({self.additional_relevant})"
         return default_condition
 
     def get_search_title_label(self, app, lang, for_default=False):

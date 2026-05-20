@@ -10,9 +10,12 @@ from unittest.mock import patch
 from couchexport.export import export_raw
 from couchexport.models import Format
 
+from lxml import etree
+
 from corehq.apps.app_manager.models import Application, Module, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.xform import WrappedNode
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
     get_bulk_app_single_sheet_by_name,
@@ -159,6 +162,15 @@ EXCEL_DATA = (
 class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
     root = os.path.dirname(__file__)
 
+    def setUp(self):
+        super().setUp()
+        patcher = patch(
+            'corehq.apps.translations.app_translations.upload_form.domain_has_privilege',
+            return_value=False,
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def upload_raw_excel_translations(self, app, excel_headers, excel_data, expected_messages=None, lang=None):
         """
         Prepares bulk app translation excel file and uploads it
@@ -281,6 +293,7 @@ class BulkAppTranslationTestBaseWithApp(BulkAppTranslationTestBase):
         """
         super(BulkAppTranslationTestBaseWithApp, self).setUp()
         self.app = Application.wrap(self.get_json("app"))
+        self.app.domain = 'test-domain'
 
     def upload_raw_excel_translations(self, excel_headers, excel_data, lang=None, expected_messages=None):
         super(BulkAppTranslationTestBaseWithApp, self).upload_raw_excel_translations(self.app,
@@ -1379,7 +1392,14 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         return workbook.worksheets_by_title[title]
 
     def setUp(self):
-        self.app = Application.new_app('domain', "Untitled Application")
+        super().setUp()
+        patcher = patch(
+            'corehq.apps.translations.app_translations.upload_form.domain_has_privilege',
+            return_value=False,
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.app = Application.new_app('test-domain', "Untitled Application")
         self.app.langs = ['en', 'afr', 'fra']
         module1 = self.app.add_module(Module.new_module('module', None))
         form1 = self.app.new_form(module1.id, "Untitled Form", None)
@@ -1491,3 +1511,104 @@ class ReportModuleTest(BulkAppTranslationTestBase):
         self.upload_raw_excel_translations(self.app, self.headers, data, expected_messages=messages)
         module = self.app.get_module(0)
         self.assertEqual(module.report_configs[0].header, {"en": "My Report"})
+
+
+def _make_minimal_updater():
+    app = Application.new_app('test-domain', 'Test App')
+    app.langs = ['en']
+    module = app.add_module(Module.new_module('module', None))
+    form = app.new_form(module.id, 'Form', None)
+    return BulkAppTranslationFormUpdater(app, 'menu1_form1', unique_id=form.unique_id)
+
+
+class GetLockedLabelIdsTest(SimpleTestCase):
+    def setUp(self):
+        self.updater = _make_minimal_updater()
+
+    def _rows(self, *labels):
+        return [{'label': label} for label in labels]
+
+    def test_locks_label_constraint_and_option_refs(self):
+        questions = [
+            {'value': '/data/free_q', 'label_ref': 'free_q-label', 'locked': False},
+            {
+                'value': '/data/locked_q',
+                'label_ref': 'locked_q-label',
+                'constraintMsg_ref': 'locked_q-constraintMsg',
+                'locked': True,
+            },
+            {
+                'value': '/data/locked_choice',
+                'label_ref': 'locked_choice-label',
+                'locked': True,
+                'options': [
+                    {'label_ref': 'locked_choice-yes-label'},
+                    {'label_ref': 'locked_choice-no-label'},
+                ],
+            },
+            {
+                'value': '/data/free_choice',
+                'label_ref': 'free_choice-label',
+                'locked': False,
+                'options': [{'label_ref': 'free_choice-maybe-label'}],
+            },
+        ]
+        rows = self._rows(
+            'free_q-label',
+            'locked_q-label',
+            'locked_q-constraintMsg',
+            'locked_choice-label',
+            'locked_choice-yes-label',
+            'locked_choice-no-label',
+            'free_choice-label',
+            'free_choice-maybe-label',
+        )
+        with patch.object(self.updater, 'form') as mock_form:
+            mock_form.get_questions.return_value = questions
+            locked = self.updater._get_locked_label_ids(rows)
+        assert locked == {
+            'locked_q-label',
+            'locked_q-constraintMsg',
+            'locked_choice-label',
+            'locked_choice-yes-label',
+            'locked_choice-no-label',
+        }
+
+    def test_returns_only_refs_present_in_rows(self):
+        questions = [
+            {'value': '/data/free_q', 'label_ref': 'free_q-label', 'locked': False},
+            {'value': '/data/locked_q', 'label_ref': 'locked_q-label', 'locked': True},
+            {'value': '/data/missing_locked_q', 'label_ref': 'missing_locked_q-label', 'locked': True},
+        ]
+        rows = self._rows('locked_q-label', 'free_q-label')
+        with patch.object(self.updater, 'form') as mock_form:
+            mock_form.get_questions.return_value = questions
+            locked = self.updater._get_locked_label_ids(rows)
+        assert locked == {'locked_q-label'}
+
+
+class TranslationWouldChangeTest(SimpleTestCase):
+    def setUp(self):
+        self.updater = _make_minimal_updater()
+        self.translation_element = WrappedNode(etree.fromstring(
+            '<translation xmlns="http://www.w3.org/2002/xforms" lang="en">'
+            '<text id="q-label"><value>Current</value></text>'
+            '</translation>'
+        ))
+
+    def _row(self, default_en=''):
+        return {'label': 'q-label', 'default_en': default_en}
+
+    def _would_change(self, default_en):
+        return self.updater._translation_would_change(
+            self._row(default_en), 'q-label', self.translation_element, 'en'
+        )
+
+    def test_when_value_differs(self):
+        assert self._would_change('New value')
+
+    def test_when_value_matches(self):
+        assert not self._would_change('Current')
+
+    def test_when_empty_cell_clears_existing_value(self):
+        assert self._would_change('')

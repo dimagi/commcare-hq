@@ -4,6 +4,7 @@ import os
 from django.test import TestCase
 from unittest.mock import patch
 
+from corehq import privileges
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.app_manager.dbaccessors import get_app, get_build_ids
 from corehq.apps.app_manager.models import CaseReferences, ConditionalCaseUpdate, import_app
@@ -16,7 +17,7 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import get_simple_form, patch_validate_xform
 from corehq.apps.app_manager.views.releases import make_app_build
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import privilege_enabled
 
 
 @patch_validate_xform()
@@ -113,7 +114,7 @@ class AppManagerTasksTest(TestCase):
             make_app_build(factory.app, "comment", user_id="user_id")
             metric_counter_mock.assert_not_called()
 
-    @flag_enabled('VELLUM_SAVE_TO_CASE')
+    @privilege_enabled(privileges.VELLUM_SAVE_TO_CASE)
     def test_refresh_data_dictionary_from_app(self):
         factory = AppFactory(build_version='2.56.0')
         m0, f0 = factory.new_basic_module('update', 'case')

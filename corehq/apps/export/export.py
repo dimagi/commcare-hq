@@ -447,7 +447,7 @@ def _log_export_generated(export_instance, row_count, logging_context):
         "export_format": export_instance.export_format,
         "row_count": row_count,
         "columns": [
-            col.label
+            col.item.readable_path
             for table in export_instance.tables if table.selected
             for col in table.columns if col.selected
         ],

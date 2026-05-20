@@ -127,7 +127,7 @@ class TestUpdateUserMethods(TestCase):
     def test_profile_not_found(self):
         with self.assertRaises(UpdateUserException) as cm:
             self.commcare_user_updater.update('user_data', {PROFILE_SLUG: 123456})
-        self.assertEqual(cm.exception.message, "User data profile not found")
+        self.assertEqual(cm.exception.message, "Profile not found")
 
     def test_validation_error_when_profile_required(self):
         self.definition = CustomDataFieldsDefinition.get_or_create(self.domain, UserFieldsView.field_type)

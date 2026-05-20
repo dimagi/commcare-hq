@@ -76,7 +76,7 @@
   <select class="form-control"
           data-bind="questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
                      value: path,
-                     disable: !$parent.hasPrivilege,
+                     disable: !$parent.hasPrivilege || isLocked(),
                      event: {
                        change: function(view, e) {
                          if (e.target.closest('#case-config-ko')) {
@@ -140,7 +140,10 @@
                        'has-error': validateProperty || validateQuestion,
                      }">
         <td class="col-sm-1 text-center">
-          <button class="btn btn-danger" data-bind="click: $parent.removePreload">
+          <button
+            class="btn btn-danger"
+            data-bind="click: $parent.removePreload, visible: !isLocked()"
+          >
             <i class="fa fa-remove"></i>
           </button>
         </td>
@@ -151,7 +154,7 @@
                             data: {
                               'property': $data,
                               'suggestedProperties': case_transaction.suggestedPreloadProperties,
-                              'isDisabled': false,
+                              'isDisabled': isLocked(),
                             }
                           }"></div>
           <p class="help-block"
@@ -279,9 +282,18 @@
                     }">
         <td class="col-sm-1 text-center"
             data-bind="if: $parent.hasPrivilege">
-          <button class="btn btn-danger" data-bind="click: $parent.removeProperty, visible: !required()">
-            <i class="fa fa-remove"></i>
-          </button>
+          <!-- ko ifnot: isLocked() -->
+            <button class="btn btn-danger" data-bind="click: $parent.removeProperty, visible: !required()">
+              <i class="fa fa-remove"></i>
+            </button>
+          <!-- /ko -->
+          <!-- ko if: isLocked() -->
+            <i
+              class="fa fa-lock"
+              title="{% trans_html_attr 'This mapping cannot be edited because it references a locked question.' %}"
+            >
+            </i>
+          <!-- /ko -->
         </td>
         <td data-bind="class: $parent.saveOnlyEditedFormFieldsEnabled ? 'col-sm-5' : 'col-sm-6'">
           <div class="full-width-select2"
@@ -305,14 +317,14 @@
                             data: {
                               property: $data,
                               suggestedProperties: case_transaction.suggestedSaveProperties,
-                              'isDisabled': !$parent.hasPrivilege,
+                              'isDisabled': !$parent.hasPrivilege || isLocked(),
                             },
                             afterRender: $root.makePopover
                           }"></div>
           <p class="help-block"
              data-bind="html: validate,
                         visible: validate"></p>
-          <!-- ko if: $parent.hasPrivilege -->
+          <!-- ko if: $parent.hasPrivilege && !isLocked() -->
           {% if request|request_has_privilege:"DATA_DICTIONARY" %}
             <p class="help-block"  data-bind="visible: !validate() && isDeprecated()">
               {% blocktrans %}
@@ -337,7 +349,7 @@
                                 afterRenderFunc: $root.makePopover"></inline-edit>
           {% endif %}
           <!-- /ko -->
-          <!-- ko if: $data.description() && !$parent.hasPrivilege -->
+          <!-- ko if: $data.description() && (!$parent.hasPrivilege || isLocked()) -->
             <p data-bind="text: $data.description"></p>
           <!-- /ko -->
         </td>
@@ -345,7 +357,7 @@
           <input type="checkbox"
                  data-bind="click: $parent.switchSaveOnlyIfEdited,
                             checked: $data.save_only_if_edited,
-                            disabled: $parent.hasPrivilege"
+                            disable: !$parent.hasPrivilege || isLocked()"
                   />
         </td>
       </tr>
