@@ -12,6 +12,31 @@
     <div class="panel panel-appmanager">
       <div class="panel-heading">
         <h4 class="panel-title panel-title-nolink">
+          {% trans "Backend" %}
+        </h4>
+      </div>
+      <div class="panel-body">
+        <div class="row">
+          <div class="col-sm-6">
+            <label>
+              {% trans "Case Search Endpoint" %}
+            </label>
+            <select
+              class="form-control"
+              data-bind="value: searchConfig.case_search_endpoint_id"
+            >
+              <option value>{% trans "-- None --" %}</option>
+              {% for endpoint in case_search_endpoints %}
+                <option value="{{ endpoint.id }}">{{ endpoint.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel panel-appmanager">
+      <div class="panel-heading">
+        <h4 class="panel-title panel-title-nolink">
           {% trans "Search Properties" %}
         </h4>
       </div>
