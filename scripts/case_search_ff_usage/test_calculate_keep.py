@@ -1,3 +1,6 @@
+import pytest
+import re
+
 from calculate_keep import (
     _handle,
     _parse_linked_domains,
@@ -167,6 +170,64 @@ def test_enabled_service_type_plan_name_true():
         **ROW_KEEP_PRODUCTION
     }]
 
+def test_empty_service_type_false():
+    assert _handle(
+        usage_rows = [{
+            **ROW_DICT,
+            **SERVICE_PLAN_KEEP_ENABLED,
+            COL_SERVICE_TYPE: '',
+        }],
+        keep_domains = KEEP_DOMAINS,
+        plan_keep = KEEP_PLAN_NAMES,
+        service_keep = KEEP_SERVICE_TYPES
+    ) == [{
+        **RESULT_DICT_DO_NOT_KEEP,
+        **SERVICE_PLAN_KEEP_ENABLED,
+        COL_SERVICE_TYPE: '',
+    }]
+
+def test_empty_plan_name_false():
+    assert _handle(
+        usage_rows = [{
+            **ROW_DICT,
+            **SERVICE_PLAN_KEEP_ENABLED,
+            COL_PLAN_NAME: '',
+        }],
+        keep_domains = KEEP_DOMAINS,
+        plan_keep = KEEP_PLAN_NAMES,
+        service_keep = KEEP_SERVICE_TYPES
+    ) == [{
+        **RESULT_DICT_DO_NOT_KEEP,
+        **SERVICE_PLAN_KEEP_ENABLED,
+        COL_PLAN_NAME: '',
+    }]
+
+def test_unknown_service_type_error():
+    with pytest.raises(ValueError, match=re.escape('service type "???" is not mapped')):
+        _handle(
+            usage_rows = [{
+                **ROW_DICT,
+                **SERVICE_PLAN_KEEP_ENABLED,
+                COL_SERVICE_TYPE: '???',
+            }],
+            keep_domains = KEEP_DOMAINS,
+            plan_keep = KEEP_PLAN_NAMES,
+            service_keep = KEEP_SERVICE_TYPES
+        )
+
+def test_unknown_plan_name_error():
+    with pytest.raises(ValueError, match=re.escape('plan name "???" is not mapped')):
+        _handle(
+            usage_rows = [{
+                **ROW_DICT,
+                **SERVICE_PLAN_KEEP_ENABLED,
+                COL_PLAN_NAME: '???',
+            }],
+            keep_domains = KEEP_DOMAINS,
+            plan_keep = KEEP_PLAN_NAMES,
+            service_keep = KEEP_SERVICE_TYPES
+        )
+
 def test_not_keep_upstream_if_not_keep_down_stream():
     assert _handle(
         usage_rows = [{
@@ -270,7 +331,7 @@ def test_keep_downstream_if_keep_upstream_if_keep_downstream():
 
 def test_parse_linked_domains():
     assert _parse_linked_domains(
-        ['woody-sample-apps','wm-location-import-test','https://staging.commcarehq.org/a/co-carecoordination-test/','https://staging.commcarehq.org/a/bha-auto-tests/'],
+        'woody-sample-apps,wm-location-import-test,https://staging.commcarehq.org/a/co-carecoordination-test/,https://staging.commcarehq.org/a/bha-auto-tests/',
         'test'
     ) == [
         ('test', 'woody-sample-apps'),

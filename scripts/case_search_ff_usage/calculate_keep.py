@@ -4,11 +4,13 @@ Calculate which domains to keep based on keep lists and usage data.
 
 # Add staging file ✅
 # Read in all files ✅
-# move to scripts directory
+# move to scripts directory ✅
 # Integration test
-#   - read and write files
-#   - spot check domains
-# Add reason column
+#   - read and write files ✅
+#   - spot check domains ✅
+# Add reason column ✅
+# fail on missing service type, plan name ✅
+# handle service type, plan name being empty with not keep ✅
 
 
 import csv
@@ -79,8 +81,14 @@ def _handle(usage_rows, keep_domains, plan_keep, service_keep):
 
         case_search_enabled = row.get(COL_CASE_SEARCH_ENABLED, "FALSE").strip().upper() == "TRUE"
         service_type = row.get(COL_SERVICE_TYPE, None)
+        service_type_match = service_keep.get(service_type, None)
+        if service_type != '' and service_type_match is None:
+            raise ValueError(f'service type "{service_type}" is not mapped')
         plan_name = row.get(COL_PLAN_NAME, None)
-        if case_search_enabled and service_keep.get(service_type, False) and plan_keep.get(plan_name, False):
+        plan_name_match = plan_keep.get(plan_name, None)
+        if plan_name != '' and plan_name_match is None:
+            raise ValueError(f'plan name "{plan_name}" is not mapped')
+        if case_search_enabled and service_type_match and plan_name_match:
             result.append({
                 **row,
                 COL_KEEP: 'TRUE',
@@ -98,8 +106,7 @@ def _handle(usage_rows, keep_domains, plan_keep, service_keep):
     for row in result:
         if row[COL_KEEP] != 'TRUE':
             env = row[COL_ENVIRONMENT]
-            domain_name = row[COL_DOMAIN_NAME]
-            linked_domains = _parse_linked_domains(row.get(COL_LINKED_DOMAIN_NAMES, '').split(','), env)
+            linked_domains = _parse_linked_domains(row.get(COL_LINKED_DOMAIN_NAMES, ''), env)
             keep_linked_domains = [keep_outright.get(env_ld, False) for env_ld in linked_domains]
             if any(keep_linked_domains):
                 row[COL_KEEP] = 'TRUE'
@@ -110,7 +117,7 @@ def _handle(usage_rows, keep_domains, plan_keep, service_keep):
     for row in result:
         if row[COL_KEEP] == 'TRUE':
             env = row[COL_ENVIRONMENT]
-            for env_ld in _parse_linked_domains(row.get(COL_LINKED_DOMAIN_NAMES, '').split(','), env):
+            for env_ld in _parse_linked_domains(row.get(COL_LINKED_DOMAIN_NAMES, ''), env):
                 keep_downstream_domains.add(env_ld)
 
     for row in result:
@@ -125,7 +132,10 @@ def _handle(usage_rows, keep_domains, plan_keep, service_keep):
 
 def _parse_linked_domains(linked_domains, default_env):
     domains_with_env = []
-    for linked_domain in linked_domains:
+    if not linked_domains:
+        return domains_with_env
+
+    for linked_domain in linked_domains.split(','):
         result = urlparse(linked_domain)
         if result.netloc == '':
             domains_with_env.append((default_env, linked_domain))
