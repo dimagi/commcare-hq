@@ -13,12 +13,12 @@ from django.test import TestCase, override_settings
 from corehq.apps.tombstones.models import Tombstone
 from corehq.blobs import NotFound as BlobNotFound, get_blob_db
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, TemporaryS3BlobDB
+
 from corehq.sql_db.util import (
     get_db_alias_for_partitioned_doc,
     get_db_aliases_for_partitioned_query,
     split_list_by_db_partition,
 )
-from corehq.tests.pytest_plugins.patches import suspend
 from corehq.util.test_utils import trap_extra_setup
 
 from ..backends.sql.processor import FormProcessorSQL
@@ -28,7 +28,7 @@ from ..models import CaseTransaction, XFormInstance, XFormOperation
 from ..tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
-    force_queryset_no_tombstone_patch,
+    leave_tombstones_on_form_deletion,
     sharded,
 )
 from ..parsers.form import apply_deprecation
@@ -475,7 +475,7 @@ class HardDeleteQueryset(TestCase):
 
         assert total_counts == {'form_processor.XFormInstance': 5}
 
-    @suspend(force_queryset_no_tombstone_patch)
+    @leave_tombstones_on_form_deletion
     def test_tombstones_are_created(self):
         forms = [
             create_form_for_test(
@@ -490,7 +490,7 @@ class HardDeleteQueryset(TestCase):
             assert len(tombstones) == actual_counts['form_processor.XFormInstance']
             assert {t.doc_id for t in tombstones} == set(form_ids)
 
-    @suspend(force_queryset_no_tombstone_patch)
+    @leave_tombstones_on_form_deletion
     def test_tombstones_are_not_created(self):
         forms = [
             create_form_for_test(
