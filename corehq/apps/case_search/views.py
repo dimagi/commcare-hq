@@ -216,6 +216,7 @@ class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
 
 @method_decorator([
     use_bootstrap5,
+    toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
     require_can_edit_data,
 ], name='dispatch')
 class CaseSearchEndpoint(HqHtmxActionMixin, BaseProjectDataView):
