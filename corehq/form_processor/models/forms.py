@@ -204,14 +204,14 @@ class XFormInstanceManager(RequireDBManager):
         :return: dictionary of count of deleted forms
         """
         expiration_date = get_cutoff_date_for_data_deletion()
-        total_count = {}
+        total_count = Counter({})
         for db_name in get_db_aliases_for_partitioned_query():
             queryset = self.using(db_name).filter(deleted_on__lt=expiration_date)
             if commit:
                 deleted_counts = queryset.delete()[1]
             else:
                 deleted_counts = {'form_processor.XFormInstance': queryset.count()}
-            total_count = Counter(total_count) + Counter(deleted_counts)
+            total_count += Counter(deleted_counts)
         return total_count
 
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
@@ -423,7 +423,7 @@ class XFormInstanceManager(RequireDBManager):
                 _, model_map = queryset.delete()
             return model_map
 
-        deleted_total = {}
+        deleted_total = Counter({})
         while forms := queryset[:BATCH_SIZE]:
             form_ids = []
             tombstones = []
@@ -444,7 +444,7 @@ class XFormInstanceManager(RequireDBManager):
                 )
                 _, model_map = queryset.filter(form_id__in=form_ids).delete()
 
-            deleted_total = Counter(deleted_total) + Counter(model_map)
+            deleted_total += Counter(model_map)
 
         return deleted_total
 

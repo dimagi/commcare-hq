@@ -462,7 +462,7 @@ class HardDeleteQueryset(TestCase):
         for _ in range(5):
             create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1))
 
-        total_counts = {}
+        total_counts = Counter({})
         for db_name in get_db_aliases_for_partitioned_query():
             qs = (
                 XFormInstance.objects.using(db_name)
@@ -471,7 +471,7 @@ class HardDeleteQueryset(TestCase):
             )
             with mock.patch('corehq.form_processor.models.forms.BATCH_SIZE', 1):
                 actual_counts = XFormInstance.objects._hard_delete_queryset(qs)
-            total_counts = Counter(total_counts) + Counter(actual_counts)
+            total_counts += Counter(actual_counts)
 
         assert total_counts == {'form_processor.XFormInstance': 5}
 
@@ -498,12 +498,12 @@ class HardDeleteQueryset(TestCase):
             )
             for _ in range(10)
         ]
-        total_counts = {}
+        total_counts = Counter({})
         for db_name, form_ids in split_list_by_db_partition([f.form_id for f in forms]):
             qs = XFormInstance.objects.using(db_name).filter(form_id__in=form_ids)
             actual_counts = XFormInstance.objects._hard_delete_queryset(qs, leave_tombstone=False)
             tombstones = Tombstone.objects.get_tombstones(form_ids)
-            total_counts = Counter(total_counts) + Counter(actual_counts)
+            total_counts += Counter(actual_counts)
             assert len(tombstones) == 0
 
         assert total_counts == {'form_processor.XFormInstance': 10}
