@@ -1,7 +1,7 @@
 import logging
 from collections import Counter
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import datetime
 from io import BytesIO
 
 from django.db import InternalError, models, transaction
@@ -22,6 +22,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.cleanup.utils import get_cutoff_date_for_data_deletion
 from corehq.apps.tombstones.models import Tombstone
+from corehq.apps.tombstones.utils import create_tombstone_for_form
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -408,14 +409,7 @@ class XFormInstanceManager(RequireDBManager):
                 tombstones = []
                 for form in forms:
                     form_ids_to_delete.append(form.form_id)
-                    tombstones.append(
-                        Tombstone(
-                            doc_id=form.form_id,
-                            object_class_path=f'{XFormInstance.__module__}.{XFormInstance.__qualname__}',
-                            domain=form.domain,
-                            deleted_on=form.deleted_on or datetime.now(UTC),
-                        )
-                    )
+                    tombstones.append(create_tombstone_for_form(form))
 
                 with transaction.atomic(using=queryset.db):
                     Tombstone.objects.using(queryset.db).bulk_create(
