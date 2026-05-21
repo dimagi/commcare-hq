@@ -91,6 +91,19 @@ hashtag_replacements = [
 ]
 
 
+_ITEXT_REF_RE = re.compile(r"""jr:itext\(['"]([^'"]+)['"]\)""")
+
+
+def _itext_refs_in(elem):
+    """Itext IDs referenced from any descendant ``@ref`` of ``elem``."""
+    return {
+        m.group(1)
+        for ref in elem.xpath(".//@ref")
+        for m in [_ITEXT_REF_RE.match(str(ref))]
+        if m is not None
+    }
+
+
 def _make_elem(tag, attr=None):
     attr = attr or {}
     return ET.Element(
@@ -725,6 +738,67 @@ class XForm(WrappedNode):
             for bind in binds
             if bind.attrib.get('{v}lock') == 'all' and bind.attrib.get('nodeset')
         }
+
+    def get_question_signature(self, path):
+        """Representation of the question at ``path`` for equality comparison.
+
+        Includes the bind element, the control element + descendants, the
+        data instance node, and any itext entries referenced from the
+        control's labels/hints/help/items. Callers should not rely on the
+        absence or presence of any particular item within this set.
+
+        Returns an empty ``set`` if the path isn't present in the form.
+        """
+        if not self.exists():
+            return set()
+
+        parts = set()
+
+        for bind in self.bind_nodes:
+            if bind.attrib.get('nodeset') == path:
+                parts.add(ET.tostring(bind.xml))
+
+        for control in self._controls_for_path(path):
+            parts.add(ET.tostring(control))
+            for itext_id in _itext_refs_in(control):
+                for text_node in self._itext_text_nodes(itext_id):
+                    parts.add(ET.tostring(text_node))
+
+        for data_node in self._data_instance_nodes_for_path(path):
+            parts.add(ET.tostring(data_node))
+
+        return parts
+
+    def _controls_for_path(self, path):
+        """Body elements with ``ref`` or ``nodeset`` matching ``path``."""
+        if self.xml is None:
+            return []
+        return self.xml.xpath(
+            ".//*[@ref=$path or @nodeset=$path]", path=path,
+        )
+
+    def _itext_text_nodes(self, itext_id):
+        """All ``<text id="itext_id">`` elements across translations."""
+        return self.itext_node.xml.xpath(
+            ".//*[local-name()='text' and @id=$id]", id=itext_id,
+        )
+
+    def _data_instance_nodes_for_path(self, path):
+        """Data-instance descendants addressed by ``path`` (e.g. ``/data/q``).
+
+        The data instance lives in the form's own xmlns (registered as
+        ``x`` in :class:`XForm.__init__`); each path step is namespaced.
+        """
+        data = self.data_node
+        steps = [s for s in path.split('/') if s]
+        if not steps or steps[0] != data.tag_name:
+            return []
+        node = data
+        for step in steps[1:]:
+            node = node.find('{x}' + step)
+            if not node.exists():
+                return []
+        return [node.xml]
 
     @property
     @raise_if_none("Can't find <itext>")

@@ -38,8 +38,8 @@ class RearrangeError(AppEditingError):
     pass
 
 
-class FormActionsChangeError(AppEditingError):
-    """A proposed change to a form's actions cannot be applied."""
+class LockedQuestionError(AppEditingError):
+    """An attempt to modify a locked question in a disallowed way"""
     pass
 
 
