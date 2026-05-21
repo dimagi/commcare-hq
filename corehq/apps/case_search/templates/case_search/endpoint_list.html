@@ -1,0 +1,87 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load i18n %}
+
+{% block page_content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h4 mb-0">{% trans "Case Search Endpoints" %}</h2>
+    <a href="{% url 'case_search_endpoint_new' domain %}" class="btn btn-primary">
+      {% trans "New Endpoint" %}
+    </a>
+  </div>
+
+  {% if endpoints %}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>{% trans "Name" %}</th>
+          <th>{% trans "Target Type" %}</th>
+          <th>{% trans "Case Type" %}</th>
+          <th>{% trans "Version" %}</th>
+          <th>{% trans "Actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for endpoint in endpoints %}
+          <tr>
+            <td>{{ endpoint.name }}</td>
+            <td>{{ endpoint.get_target_type_display }}</td>
+            <td>{{ endpoint.target_name }}</td>
+            <td>
+              {% if endpoint.current_version %}
+                v{{ endpoint.current_version.version_number }}
+              {% else %}
+                &mdash;
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'case_search_endpoint_edit' domain endpoint.id %}"
+                 class="btn btn-sm btn-outline-primary">
+                {% trans "Edit" %}
+              </a>
+              <button type="button"
+                      class="btn btn-sm btn-outline-danger"
+                      data-bs-toggle="modal"
+                      data-bs-target="#deactivate-modal-{{ endpoint.id }}">
+                {% trans "Delete" %}
+              </button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% for endpoint in endpoints %}
+      <div class="modal fade" id="deactivate-modal-{{ endpoint.id }}" tabindex="-1"
+           aria-labelledby="deactivate-label-{{ endpoint.id }}" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="deactivate-label-{{ endpoint.id }}">
+                {% trans "Deactivate Endpoint" %}
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"
+                      aria-label="{% trans 'Close' %}"></button>
+            </div>
+            <div class="modal-body">
+              {% blocktrans with name=endpoint.name %}
+                Are you sure you want to deactivate "{{ name }}"? This cannot be undone.
+              {% endblocktrans %}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary"
+                      data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+              <form method="post"
+                    action="{% url 'case_search_endpoint_deactivate' domain endpoint.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">{% trans "Deactivate" %}</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+  {% else %}
+    <p class="text-muted">{% trans "No endpoints configured." %}</p>
+  {% endif %}
+{% endblock %}

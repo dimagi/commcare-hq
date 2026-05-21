@@ -1,0 +1,71 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load i18n %}
+
+{% block page_content %}
+  {% if errors %}
+    <div class="alert alert-danger">
+      <ul class="mb-0">
+        {% for error in errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <form method="post" action="{{ post_url }}">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      <label class="form-label" for="name">{% trans "Name" %}</label>
+      <input type="text" class="form-control" id="name" name="name"
+             value="{{ name }}" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="target_type">{% trans "Target Type" %}</label>
+      <select class="form-select" id="target_type" name="target_type">
+        {% for value, label in target_type_choices %}
+          <option value="{{ value }}"
+                  {% if target_type == value %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="case_type">{% trans "Case Type" %}</label>
+      <select class="form-select" id="case_type" name="case_type">
+        <option value="">{% trans "-- Select a case type --" %}</option>
+        {% for ct_name in case_type_names %}
+          <option value="{{ ct_name }}"
+                  {% if case_type == ct_name %}selected{% endif %}>
+            {{ ct_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="query">
+        {% trans "Query" %} <small class="text-muted">({% trans "JSON object" %})</small>
+      </label>
+      <textarea class="form-control font-monospace" id="query" name="query"
+                rows="10">{{ query_raw }}</textarea>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="parameters">
+        {% trans "Parameters" %} <small class="text-muted">({% trans "JSON array" %})</small>
+      </label>
+      <textarea class="form-control font-monospace" id="parameters" name="parameters"
+                rows="5">{{ parameters_raw }}</textarea>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+      <a href="{% url 'case_search_endpoints' domain %}"
+         class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+    </div>
+  </form>
+{% endblock %}
