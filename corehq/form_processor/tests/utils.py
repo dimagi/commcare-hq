@@ -379,9 +379,9 @@ def delete_all_xforms_and_cases(domain):
 
 
 _original_hard_delete_forms = XFormInstance.objects.__class__.hard_delete_forms
-def _hard_delete_forms_no_tombstone(self, domain, form_ids, *, publish_changes=True, leave_tombstone=True):
+def _hard_delete_forms_no_tombstone(self, form_ids, *, domain=None, publish_changes=True, leave_tombstone=True):
     return _original_hard_delete_forms(
-        self, domain, form_ids, publish_changes=publish_changes, leave_tombstone=False
+        self, form_ids, domain=domain, publish_changes=publish_changes, leave_tombstone=False
     )
 
 force_no_tombstone_patch = patch.object(
