@@ -207,7 +207,7 @@ def delete_all_forms(domain_name):
     form_ids = iter_ids(XFormInstance, 'form_id', domain_name)
     for chunk in chunked(form_ids, 1000, list):
         XFormInstance.objects.hard_delete_forms(
-            domain_name, chunk, publish_changes=False, leave_tombstones=False
+            chunk, domain=domain_name, publish_changes=False, leave_tombstones=False
         )
     _delete_es_docs(FormES, domain_name)
     logger.info('Deleting forms complete.')

@@ -391,9 +391,10 @@ class XFormInstanceManager(RequireDBManager):
             total_count += Counter(deleted_counts)
         return total_count
 
-    def hard_delete_forms(self, domain, form_ids, *, publish_changes=True, leave_tombstones=True):
+    def hard_delete_forms(self, form_ids, *, domain=None, publish_changes=True, leave_tombstones=True):
         """Delete forms permanently
 
+        :param domain: only delete forms in the specified domain.
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
         :param leave_tombstones: If adding a new usage, DO NOT SET THIS TO FALSE.
@@ -404,9 +405,12 @@ class XFormInstanceManager(RequireDBManager):
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
+            filters = Q(form_id__in=split_form_ids)
+            if domain is not None:
+                filters &= Q(domain=domain)
             queryset = (
                 self.using(db_name)
-                .filter(domain=domain, form_id__in=split_form_ids)
+                .filter(filters)
                 .values_list('form_id', 'deleted_on')
             )
             shard_count = 0
