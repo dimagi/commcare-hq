@@ -413,11 +413,6 @@ class XFormInstanceManager(RequireDBManager):
             if domain is not None:
                 filters &= Q(domain=domain)
             queryset = self.using(db_name).filter(filters)
-            if not leave_tombstone:
-                with transaction.atomic(using=queryset.db):
-                    count, _ = queryset.delete()
-                deleted_count += count
-                continue
 
             shard_count = 0
             while forms := queryset[:BATCH_SIZE]:
@@ -425,7 +420,8 @@ class XFormInstanceManager(RequireDBManager):
                 tombstones = []
                 for form in forms:
                     batch_form_ids.append(form.form_id)
-                    tombstones.append(create_tombstone_for_form(form))
+                    if leave_tombstone:
+                        tombstones.append(create_tombstone_for_form(form))
 
                 with transaction.atomic(using=queryset.db):
                     Tombstone.objects.using(queryset.db).bulk_create(

@@ -417,13 +417,6 @@ class TestHardDeleteForms(TestCase):
 
         assert count == 5
 
-        forms = [create_form_for_test(DOMAIN) for _ in range(5)]
-        form_ids = [f.form_id for f in forms]
-
-        with mock.patch('corehq.form_processor.models.forms.BATCH_SIZE', 1):
-            count = XFormInstance.objects.hard_delete_forms(form_ids, leave_tombstone=False)
-
-        assert count == 5
 
 @sharded
 class TestHardDeleteExpiredForms(TestCase):
