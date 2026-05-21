@@ -1,6 +1,5 @@
 import pytest
 import uuid
-from collections import Counter
 from datetime import datetime
 from time_machine import travel
 from unittest import mock
@@ -434,7 +433,7 @@ class TestHardDeleteExpiredForms(TestCase):
         with override_settings(DATA_RETENTION_WINDOW=7):
             count = XFormInstance.objects.hard_delete_expired_forms(commit=True)
 
-        assert count == {'form_processor.XFormInstance': 1}
+        assert count == 1
         assert XFormInstance.objects.partitioned_get(valid_form.form_id)
         assert XFormInstance.objects.partitioned_get(soft_deleted_form.form_id)
         with pytest.raises(XFormInstance.DoesNotExist):
@@ -449,7 +448,7 @@ class TestHardDeleteExpiredForms(TestCase):
         with override_settings(DATA_RETENTION_WINDOW=7):
             count = XFormInstance.objects.hard_delete_expired_forms()
 
-        assert count == {'form_processor.XFormInstance': 1}
+        assert count == 1
         assert XFormInstance.objects.partitioned_get(valid_form.form_id)
         assert XFormInstance.objects.partitioned_get(soft_deleted_form.form_id)
         assert XFormInstance.objects.partitioned_get(expired_form.form_id)
@@ -467,8 +466,8 @@ class TestHardDeleteExpiredForms(TestCase):
             dry_run_counts = XFormInstance.objects.hard_delete_expired_forms()
             actual_counts = XFormInstance.objects.hard_delete_expired_forms(commit=True)
 
-        assert dry_run_counts == {'form_processor.XFormInstance': 5}
-        assert actual_counts == {'form_processor.XFormInstance': 5}
+        assert dry_run_counts == 5
+        assert actual_counts == 5
 
 
 @sharded
@@ -487,7 +486,7 @@ class HardDeleteQueryset(TestCase):
         for _ in range(5):
             create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1))
 
-        total_counts = Counter({})
+        total_count = 0
         for db_name in get_db_aliases_for_partitioned_query():
             qs = (
                 XFormInstance.objects.using(db_name)
@@ -495,10 +494,10 @@ class HardDeleteQueryset(TestCase):
                 .order_by('form_id')
             )
             with mock.patch('corehq.form_processor.models.forms.BATCH_SIZE', 1):
-                actual_counts = XFormInstance.objects._hard_delete_queryset(qs)
-            total_counts += Counter(actual_counts)
+                count = XFormInstance.objects._hard_delete_queryset(qs)
+            total_count += count
 
-        assert total_counts == {'form_processor.XFormInstance': 5}
+        assert total_count == 5
 
     @leave_tombstones_on_form_deletion
     def test_tombstones_are_created(self):
@@ -510,9 +509,9 @@ class HardDeleteQueryset(TestCase):
         ]
         for db_name, form_ids in split_list_by_db_partition([f.form_id for f in forms]):
             qs = XFormInstance.objects.using(db_name).filter(form_id__in=form_ids)
-            actual_counts = XFormInstance.objects._hard_delete_queryset(qs)
+            count = XFormInstance.objects._hard_delete_queryset(qs)
             tombstones = Tombstone.objects.get_tombstones(form_ids)
-            assert len(tombstones) == actual_counts['form_processor.XFormInstance']
+            assert len(tombstones) == count
             assert {t.doc_id for t in tombstones} == set(form_ids)
 
     @leave_tombstones_on_form_deletion
@@ -523,15 +522,15 @@ class HardDeleteQueryset(TestCase):
             )
             for _ in range(10)
         ]
-        total_counts = Counter({})
+        total_count = 0
         for db_name, form_ids in split_list_by_db_partition([f.form_id for f in forms]):
             qs = XFormInstance.objects.using(db_name).filter(form_id__in=form_ids)
-            actual_counts = XFormInstance.objects._hard_delete_queryset(qs, leave_tombstone=False)
+            count = XFormInstance.objects._hard_delete_queryset(qs, leave_tombstone=False)
             tombstones = Tombstone.objects.get_tombstones(form_ids)
-            total_counts += Counter(actual_counts)
+            total_count += count
             assert len(tombstones) == 0
 
-        assert total_counts == {'form_processor.XFormInstance': 10}
+        assert total_count == 10
 
 
 class DeleteAttachmentsFSDBTests(TestCase):

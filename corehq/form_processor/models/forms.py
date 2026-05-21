@@ -1,5 +1,4 @@
 import logging
-from collections import Counter
 from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO
@@ -381,14 +380,14 @@ class XFormInstanceManager(RequireDBManager):
         :return: dictionary of count of deleted forms
         """
         expiration_date = get_cutoff_date_for_data_deletion()
-        total_count = Counter({})
+        total_count = 0
         for db_name in get_db_aliases_for_partitioned_query():
             queryset = self.using(db_name).filter(deleted_on__lt=expiration_date)
             if commit:
-                deleted_counts = queryset.delete()[1]
+                deleted_counts = queryset.delete()[0]
             else:
-                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
-            total_count += Counter(deleted_counts)
+                deleted_counts = queryset.count()
+            total_count += deleted_counts
         return total_count
 
     def hard_delete_forms(self, form_ids, *, domain=None, publish_changes=True, leave_tombstone=True):
@@ -409,8 +408,8 @@ class XFormInstanceManager(RequireDBManager):
             if domain is not None:
                 filters &= Q(domain=domain)
             query = self.using(db_name).filter(filters)
-            deleted_models = self._hard_delete_queryset(query, leave_tombstone=leave_tombstone)
-            deleted_count += deleted_models.get(self.model._meta.label, 0)
+            count = self._hard_delete_queryset(query, leave_tombstone=leave_tombstone)
+            deleted_count += count
 
         if deleted_count:
             count_mismatch = deleted_count != len(form_ids)
@@ -424,10 +423,10 @@ class XFormInstanceManager(RequireDBManager):
     def _hard_delete_queryset(self, queryset, leave_tombstone=True):
         if not leave_tombstone:
             with transaction.atomic(using=queryset.db):
-                _, model_map = queryset.delete()
-            return model_map
+                count, _ = queryset.delete()
+            return count
 
-        deleted_total = Counter({})
+        deleted_total = 0
         while forms := queryset[:BATCH_SIZE]:
             form_ids = []
             tombstones = []
@@ -446,9 +445,9 @@ class XFormInstanceManager(RequireDBManager):
                 Tombstone.objects.using(queryset.db).bulk_create(
                     tombstones, ignore_conflicts=True
                 )
-                _, model_map = queryset.filter(form_id__in=form_ids).delete()
+                count, _ = queryset.filter(form_id__in=form_ids).delete()
 
-            deleted_total += Counter(model_map)
+            deleted_total += count
 
         return deleted_total
 
