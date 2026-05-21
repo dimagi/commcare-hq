@@ -3,10 +3,9 @@
   background-color: lighten($cc-bg, 3);
 
   > .card-header {
-    // Lock the header height so it doesn't grow when conditional
-    // content mounts.
     display: flex;
     align-items: center;
+    // Set minimum header height to allow conditional content to sit on one line
     min-height: 3rem;
 
     .hq-help {
