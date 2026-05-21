@@ -101,7 +101,7 @@ class XFormPillowTest(TestCase):
 
         # soft delete the form
         with self.process_form_changes:
-            XFormInstance.objects.hard_delete_forms(self.domain, [form.form_id])
+            XFormInstance.objects.hard_delete_forms([form.form_id], domain=self.domain)
         manager.index_refresh(form_adapter.index_name)
 
         # ensure not there anymore

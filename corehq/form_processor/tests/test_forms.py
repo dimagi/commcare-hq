@@ -437,11 +437,17 @@ class TestHardDeleteForms(TestCase):
             FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
         super().tearDown()
 
+    def test_all_forms_deleted(self):
+        form = create_form_for_test(DOMAIN)
+        other_form = create_form_for_test('other_domain')
+        deleted = XFormInstance.objects.hard_delete_forms([form.form_id, other_form.form_id])
+        assert deleted == 2
+
     def test_only_specified_forms_in_domain_are_deleted(self):
         form = create_form_for_test(DOMAIN)
         form_to_keep = create_form_for_test(DOMAIN)
         other_form = create_form_for_test('other_domain')
-        deleted = XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id, other_form.form_id])
+        deleted = XFormInstance.objects.hard_delete_forms([form.form_id, other_form.form_id], domain=DOMAIN)
         assert deleted == 1
         forms = XFormInstance.objects.get_forms([form.form_id, form_to_keep.form_id, other_form.form_id])
         assert len(forms) == 2
@@ -449,13 +455,13 @@ class TestHardDeleteForms(TestCase):
 
     def test_tombstone_is_created(self):
         form = create_form_for_test(DOMAIN)
-        XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id], leave_tombstones=True)
+        XFormInstance.objects.hard_delete_forms([form.form_id], domain=DOMAIN, leave_tombstones=True)
         tombstone = Tombstone.objects.partitioned_get(form.form_id)
         assert tombstone.doc_id == form.form_id
 
     def test_tombstones_are_not_created(self):
         form = create_form_for_test(DOMAIN)
-        XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id], leave_tombstones=False)
+        XFormInstance.objects.hard_delete_forms([form.form_id], domain=DOMAIN, leave_tombstones=False)
         with pytest.raises(Tombstone.DoesNotExist):
             Tombstone.objects.partitioned_get(form.form_id)
 
@@ -464,7 +470,7 @@ class TestHardDeleteForms(TestCase):
         form_ids = [f.form_id for f in forms]
 
         with mock.patch('corehq.form_processor.models.forms.BATCH_SIZE', 1):
-            count = XFormInstance.objects.hard_delete_forms(DOMAIN, form_ids)
+            count = XFormInstance.objects.hard_delete_forms(form_ids, domain=DOMAIN)
 
         assert count == 5
 
@@ -502,7 +508,7 @@ class DeleteAttachmentsFSDBTests(TestCase):
         )
         self.assertEqual(3, len(attachments))
 
-        deleted = XFormInstance.objects.hard_delete_forms(DOMAIN, form_ids[1:] + [other_form.form_id])
+        deleted = XFormInstance.objects.hard_delete_forms(form_ids[1:] + [other_form.form_id], domain=DOMAIN)
         self.assertEqual(2, deleted)
 
         forms = XFormInstance.objects.get_forms(form_ids)
