@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass, field
 
 from django.db import IntegrityError, transaction
 from django.shortcuts import redirect
@@ -58,43 +59,49 @@ def _parse_json_array(raw):
     return data, None
 
 
+@dataclass
+class _EndpointFormData:
+    name: str = ''
+    target_type: str = CaseSearchEndpoint.TargetType.PROJECT_DB
+    case_type: str = ''
+    query_raw: str = '{}'
+    parameters_raw: str = '[]'
+    errors: list = field(default_factory=list)
+
+
 class _EndpointFormMixin:
-    """Shared form state, validation, and rendering for create/edit endpoint views."""
+    """Shared form state, validation, and rendering for create/edit endpoint views.
+
+    Subclasses must assign ``self._form = _EndpointFormData()`` in ``dispatch()``
+    before calling ``super().dispatch()``.
+    """
 
     template_name = 'case_search/endpoint_edit.html'
 
-    def _init_form_state(self):
-        self._errors = []
-        self._name = ''
-        self._target_type = CaseSearchEndpoint.TargetType.PROJECT_DB
-        self._case_type = ''
-        self._query_raw = '{}'
-        self._parameters_raw = '[]'
-
     def _parse_post(self, request):
-        self._name = request.POST.get('name', '').strip()
-        self._target_type = request.POST.get('target_type', self._target_type)
-        self._case_type = request.POST.get('case_type', '').strip()
-        self._query_raw = request.POST.get('query', '{}')
-        self._parameters_raw = request.POST.get('parameters', '[]')
+        self._form.name = request.POST.get('name', '').strip()
+        self._form.target_type = request.POST.get('target_type', self._form.target_type)
+        self._form.case_type = request.POST.get('case_type', '').strip()
+        self._form.query_raw = request.POST.get('query', '{}')
+        self._form.parameters_raw = request.POST.get('parameters', '[]')
 
     def _validate(self, exclude_pk=None):
         """Validate form state. Returns (errors, query, parameters)."""
         errors = []
-        if not self._name:
+        if not self._form.name:
             errors.append("Name is required.")
         else:
-            qs = CaseSearchEndpoint.objects.filter(domain=self.domain, name=self._name)
+            qs = CaseSearchEndpoint.objects.filter(domain=self.domain, name=self._form.name)
             if exclude_pk:
                 qs = qs.exclude(pk=exclude_pk)
             if qs.exists():
-                errors.append(f"An endpoint named '{self._name}' already exists in this project.")
+                errors.append(f"An endpoint named '{self._form.name}' already exists in this project.")
 
-        query, err = _parse_json_object(self._query_raw)
+        query, err = _parse_json_object(self._form.query_raw)
         if err:
             errors.append(err)
 
-        parameters, err = _parse_json_array(self._parameters_raw)
+        parameters, err = _parse_json_array(self._form.parameters_raw)
         if err:
             errors.append(err)
 
@@ -108,12 +115,12 @@ class _EndpointFormMixin:
     @property
     def _form_context(self):
         return {
-            'errors': self._errors,
-            'name': self._name,
-            'target_type': self._target_type,
-            'case_type': self._case_type,
-            'query_raw': self._query_raw,
-            'parameters_raw': self._parameters_raw,
+            'errors': self._form.errors,
+            'name': self._form.name,
+            'target_type': self._form.target_type,
+            'case_type': self._form.case_type,
+            'query_raw': self._form.query_raw,
+            'parameters_raw': self._form.parameters_raw,
             'target_type_choices': CaseSearchEndpoint.TargetType.choices,
             'case_type_names': _get_case_type_names(self.domain),
         }
@@ -147,7 +154,7 @@ class CaseSearchEndpointNewView(_EndpointFormMixin, BaseProjectDataView):
     page_title = gettext_lazy('New Case Search Endpoint')
 
     def dispatch(self, request, *args, **kwargs):
-        self._init_form_state()
+        self._form = _EndpointFormData()
         return super().dispatch(request, *args, **kwargs)
 
     @property
@@ -166,16 +173,16 @@ class CaseSearchEndpointNewView(_EndpointFormMixin, BaseProjectDataView):
         self._parse_post(request)
         errors, query, parameters = self._validate()
         if errors:
-            self._errors = errors
+            self._form.errors = errors
             return self.render_to_response(self.get_context_data())
 
         try:
             with transaction.atomic():
                 endpoint = CaseSearchEndpoint.objects.create(
                     domain=self.domain,
-                    name=self._name,
-                    target_type=self._target_type,
-                    target_name=self._case_type,
+                    name=self._form.name,
+                    target_type=self._form.target_type,
+                    target_name=self._form.case_type,
                 )
                 version = CaseSearchEndpointVersion.objects.create(
                     endpoint=endpoint,
@@ -186,7 +193,7 @@ class CaseSearchEndpointNewView(_EndpointFormMixin, BaseProjectDataView):
                 endpoint.current_version = version
                 endpoint.save(update_fields=['current_version'])
         except IntegrityError:
-            self._errors = [f"An endpoint named '{self._name}' already exists in this project."]
+            self._form.errors = [f"An endpoint named '{self._form.name}' already exists in this project."]
             return self.render_to_response(self.get_context_data())
         return redirect(reverse(CaseSearchEndpointEditView.urlname, args=[self.domain, endpoint.id]))
 
@@ -200,13 +207,14 @@ class CaseSearchEndpointEditView(_EndpointFormMixin, BaseProjectDataView):
         self._endpoint = _get_endpoint(self.domain, kwargs['endpoint_id'])
         if self._endpoint is None:
             return not_found(request)
-        self._init_form_state()
         current = self._endpoint.current_version
-        self._name = self._endpoint.name
-        self._target_type = self._endpoint.target_type
-        self._case_type = self._endpoint.target_name
-        self._query_raw = json.dumps(current.query, indent=2) if current else '{}'
-        self._parameters_raw = json.dumps(current.parameters, indent=2) if current else '[]'
+        self._form = _EndpointFormData(
+            name=self._endpoint.name,
+            target_type=self._endpoint.target_type,
+            case_type=self._endpoint.target_name,
+            query_raw=json.dumps(current.query, indent=2) if current else '{}',
+            parameters_raw=json.dumps(current.parameters, indent=2) if current else '[]',
+        )
         return super().dispatch(request, *args, **kwargs)
 
     @property
@@ -225,15 +233,15 @@ class CaseSearchEndpointEditView(_EndpointFormMixin, BaseProjectDataView):
         self._parse_post(request)
         errors, query, parameters = self._validate(exclude_pk=self._endpoint.pk)
         if errors:
-            self._errors = errors
+            self._form.errors = errors
             return self.render_to_response(self.get_context_data())
 
         endpoint = self._endpoint
         try:
             with transaction.atomic():
-                endpoint.name = self._name
-                endpoint.target_type = self._target_type
-                endpoint.target_name = self._case_type
+                endpoint.name = self._form.name
+                endpoint.target_type = self._form.target_type
+                endpoint.target_name = self._form.case_type
                 endpoint.save(update_fields=['name', 'target_type', 'target_name'])
 
                 current = endpoint.current_version
@@ -247,7 +255,7 @@ class CaseSearchEndpointEditView(_EndpointFormMixin, BaseProjectDataView):
                 endpoint.current_version = version
                 endpoint.save(update_fields=['current_version'])
         except IntegrityError:
-            self._errors = [f"An endpoint named '{self._name}' already exists in this project."]
+            self._form.errors = [f"An endpoint named '{self._form.name}' already exists in this project."]
             return self.render_to_response(self.get_context_data())
         return redirect(reverse(CaseSearchEndpointsView.urlname, args=[self.domain]))
 
