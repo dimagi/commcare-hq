@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 SENTINEL_DOMAIN = object()
 
 
-# @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def purge_expired_data(dry_run=True):
+@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def purge_expired_data(dry_run=False):
     """
     Permanently delete data with a ``deleted_on`` value older than
     ``settings.DATA_RETENTION_WINDOW`` days.
