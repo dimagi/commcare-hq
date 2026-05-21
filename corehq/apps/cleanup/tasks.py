@@ -22,7 +22,7 @@ UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME
 logger = logging.getLogger(__name__)
 
 
-# @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def purge_expired_data(dry_run=True):
     """
     Permanently delete data with a ``deleted_on`` value older than
