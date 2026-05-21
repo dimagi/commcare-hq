@@ -388,16 +388,6 @@ force_no_tombstone_patch = patch.object(
     XFormInstance.objects.__class__, "hard_delete_forms", _hard_delete_forms_no_tombstone
 )
 
-_original_hard_delete_queryset = XFormInstance.objects.__class__._hard_delete_queryset
-def _hard_delete_queryset_no_tombstone(self, queryset, leave_tombstone=True):
-    return _original_hard_delete_queryset(
-        self, queryset, leave_tombstone=False
-    )
-
-force_queryset_no_tombstone_patch = patch.object(
-    XFormInstance.objects.__class__, "_hard_delete_queryset", _hard_delete_queryset_no_tombstone
-)
-
 def patch_form_deletion():
     """Setup form deletion for tests
 
@@ -407,7 +397,6 @@ def patch_form_deletion():
     # Use __enter__ and __exit__ to start/stop so patch.stopall() does not stop it.
     assert settings.UNIT_TESTING
     force_no_tombstone_patch.__enter__()
-    force_queryset_no_tombstone_patch.__enter__()
 
 
 @testcontextmanager
@@ -417,11 +406,9 @@ def leave_tombstones_on_form_deletion():
 
     assert settings.UNIT_TESTING
     force_no_tombstone_patch.__exit__(None, None, None)
-    force_queryset_no_tombstone_patch.__exit__(None, None, None)
     try:
         yield
     finally:
         force_no_tombstone_patch.__enter__()
-        force_queryset_no_tombstone_patch.__enter__()
         for db in get_db_aliases_for_partitioned_query():
             Tombstone.objects.using(db).all().delete()

@@ -411,9 +411,37 @@ class XFormInstanceManager(RequireDBManager):
             filters = Q(form_id__in=split_form_ids)
             if domain is not None:
                 filters &= Q(domain=domain)
-            query = self.using(db_name).filter(filters)
-            count = self._hard_delete_queryset(query, leave_tombstone=leave_tombstone)
-            deleted_count += count
+            queryset = self.using(db_name).filter(filters)
+            if not leave_tombstone:
+                with transaction.atomic(using=queryset.db):
+                    count, _ = queryset.delete()
+                deleted_count += count
+                continue
+
+            shard_count = 0
+            while forms := queryset[:BATCH_SIZE]:
+                batch_form_ids = []
+                tombstones = []
+                for form in forms:
+                    batch_form_ids.append(form.form_id)
+                    tombstones.append(
+                        Tombstone(
+                            doc_id=form.form_id,
+                            object_class_path=f'{XFormInstance.__module__}.{XFormInstance.__qualname__}',
+                            domain=form.domain,
+                            deleted_on=form.deleted_on or datetime.utcnow(),
+                        )
+                    )
+
+                with transaction.atomic(using=queryset.db):
+                    Tombstone.objects.using(queryset.db).bulk_create(
+                        tombstones, ignore_conflicts=True
+                    )
+                    query_count, _ = queryset.filter(form_id__in=batch_form_ids).delete()
+
+                shard_count += query_count
+
+            deleted_count += shard_count
 
         if deleted_count:
             count_mismatch = deleted_count != len(form_ids)
@@ -423,37 +451,6 @@ class XFormInstanceManager(RequireDBManager):
             self.publish_deleted_forms(domain, form_ids)
 
         return deleted_count
-
-    def _hard_delete_queryset(self, queryset, leave_tombstone=True):
-        if not leave_tombstone:
-            with transaction.atomic(using=queryset.db):
-                count, _ = queryset.delete()
-            return count
-
-        deleted_total = 0
-        while forms := queryset[:BATCH_SIZE]:
-            form_ids = []
-            tombstones = []
-            for form in forms:
-                form_ids.append(form.form_id)
-                tombstones.append(
-                    Tombstone(
-                        doc_id=form.form_id,
-                        object_class_path=f'{XFormInstance.__module__}.{XFormInstance.__qualname__}',
-                        domain=form.domain,
-                        deleted_on=form.deleted_on or datetime.utcnow(),
-                    )
-                )
-
-            with transaction.atomic(using=queryset.db):
-                Tombstone.objects.using(queryset.db).bulk_create(
-                    tombstones, ignore_conflicts=True
-                )
-                count, _ = queryset.filter(form_id__in=form_ids).delete()
-
-            deleted_total += count
-
-        return deleted_total
 
     def _hard_delete_blobs(self, form_ids, verify_deleted=False):
         if verify_deleted:
