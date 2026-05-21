@@ -1,30 +1,18 @@
 {% extends 'reports/filters/bootstrap5/base.html' %}
-{% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
-  <input
-    type="text"
-    id="filter_range"
-    class="date-range-picker form-control report-filter-datespan"
-    value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}"
-    data-init="{% block init_filter %}{% if slug == 'datespan' %}1{% endif %}{% endblock %}"
-    data-separator="{% html_attr separator %}"
-    data-report-labels="{% html_attr report_labels %}"
-    data-start-date="{{ datespan.startdate|date:"Y-m-d" }}"
-    data-end-date="{{ datespan.enddate|date:"Y-m-d" }}"
-  />
-  <input
-    type="hidden"
-    id="{{ css_id }}_startdate"
-    name="{% if slug != 'datespan' %}{{ slug }}_{% endif %}startdate"
-    value="{{ datespan.startdate|date:"Y-m-d" }}"
-  />
-  <input
-    type="hidden"
-    id="{{ css_id }}_enddate"
-    name="{% if slug != 'datespan' %}{{ slug }}_{% endif %}enddate"
-    value="{{ datespan.enddate|date:"Y-m-d" }}"
-  />
+  <div
+    x-data="caseCreatedDateRangeFilter('{{ startdate|escapejs }}', '{{ enddate|escapejs }}')"
+  >
+    <input
+      type="text"
+      x-ref="picker"
+      class="form-control"
+      placeholder="{% trans 'Show All Dates' %}"
+    />
+    <input type="hidden" name="startdate" :value="startdate" />
+    <input type="hidden" name="enddate" :value="enddate" />
+  </div>
   {% if timezone %}
     <p class="help-block mt-1">
       {% blocktrans %}This report's timezone is {{ timezone }}.{% endblocktrans %}

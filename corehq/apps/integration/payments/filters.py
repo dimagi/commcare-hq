@@ -9,11 +9,11 @@ from corehq.apps.integration.payments.const import (
     PaymentStatus,
 )
 from corehq.apps.reports.filters.base import (
+    BaseReportFilter,
     BaseSimpleFilter,
     BaseSingleOptionFilter,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.dates import DatespanFilter
 
 
 class PaymentVerifiedByFilter(BaseSingleOptionFilter):
@@ -85,6 +85,15 @@ class PhoneNumberFilter(BaseSimpleFilter):
     label = gettext_lazy('Phone number')
 
 
-class CaseCreatedDateRangeFilter(DatespanFilter):
+class CaseCreatedDateRangeFilter(BaseReportFilter):
+    slug = 'date_range'
     label = gettext_lazy('Case creation date range')
     template = 'payments/filters/case_created_date_range.html'
+
+    @property
+    def filter_context(self):
+        return {
+            'startdate': self.request.GET.get('startdate', ''),
+            'enddate': self.request.GET.get('enddate', ''),
+            'timezone': self.timezone.zone,
+        }

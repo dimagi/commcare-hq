@@ -35,7 +35,6 @@ from corehq.apps.integration.payments.services import (
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
 from corehq.apps.integration.tasks import REQUEST_MOMO_PAYMENTS_TASK_SLUG
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.dispatcher import datespan_default
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.utils import (
@@ -101,7 +100,6 @@ require_payments_report_access = require_permission(
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.MOBILE_MONEY_INTEGRATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
-@method_decorator(datespan_default, name='dispatch')
 class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
     urlname = 'payments_verify'
     template_name = 'payments/payments_verify_report.html'
@@ -127,7 +125,6 @@ class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.MOBILE_MONEY_INTEGRATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
-@method_decorator(datespan_default, name='dispatch')
 class PaymentsVerificationTableView(
     HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, SelectablePaginatedTableView, TableExportMixin
 ):

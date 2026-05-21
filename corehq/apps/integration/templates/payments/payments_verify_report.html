@@ -5,10 +5,7 @@
 {% js_entry "integration/js/payments/payments_verify" %}
 
 {% block page_content %}
-  {% if request.datespan %}
-    {% initial_page_data 'startdate' request.datespan.startdate|date:"Y-m-d" %}
-    {% initial_page_data 'enddate' request.datespan.enddate|date:"Y-m-d" %}
-  {% endif %}
+  {% initial_page_data 'daterangepicker-show-clear' 'true' %}
   {% if not has_config %}
     <p class="alert alert-warning">
       {% blocktrans %}
