@@ -1,5 +1,4 @@
 import logging
-from collections import Counter
 from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO
@@ -381,14 +380,18 @@ class XFormInstanceManager(RequireDBManager):
         :return: dictionary of count of deleted forms
         """
         expiration_date = get_cutoff_date_for_data_deletion()
-        total_count = Counter({})
+        total_count = 0
         for db_name in get_db_aliases_for_partitioned_query():
-            queryset = self.using(db_name).filter(deleted_on__lt=expiration_date)
+            queryset = (
+                self.using(db_name)
+                .filter(deleted_on__lt=expiration_date)
+                .values_list('form_id', flat=True)
+            )
             if commit:
-                deleted_counts = queryset.delete()[1]
+                deleted_counts = self.hard_delete_forms(list(queryset))
             else:
-                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
-            total_count += Counter(deleted_counts)
+                deleted_counts = queryset.count()
+            total_count += deleted_counts
         return total_count
 
     def hard_delete_forms(self, form_ids, *, domain=None, publish_changes=True, leave_tombstones=True):
