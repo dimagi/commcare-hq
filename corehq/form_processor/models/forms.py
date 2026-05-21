@@ -10,6 +10,7 @@ from jsonfield.fields import JSONField
 from lxml import etree
 from memoized import memoized
 
+from corehq.apps.tombstones.utils import create_tombstone_for_form
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.signals import xform_archived, xform_unarchived
@@ -424,14 +425,7 @@ class XFormInstanceManager(RequireDBManager):
                 tombstones = []
                 for form in forms:
                     batch_form_ids.append(form.form_id)
-                    tombstones.append(
-                        Tombstone(
-                            doc_id=form.form_id,
-                            object_class_path=f'{XFormInstance.__module__}.{XFormInstance.__qualname__}',
-                            domain=form.domain,
-                            deleted_on=form.deleted_on or datetime.utcnow(),
-                        )
-                    )
+                    tombstones.append(create_tombstone_for_form(form))
 
                 with transaction.atomic(using=queryset.db):
                     Tombstone.objects.using(queryset.db).bulk_create(
