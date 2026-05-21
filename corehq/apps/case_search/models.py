@@ -511,9 +511,17 @@ def after_save(sender, instance, created, **kwargs):
 
 
 class CaseSearchEndpoint(models.Model):
+    class TargetType(models.TextChoices):
+        PROJECT_DB = 'project_db', _('Project Database')
+        ELASTICSEARCH = 'es', _('Elastic Search')
+
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255)
-    target_type = models.CharField(max_length=50, default='project_db')
+    target_type = models.CharField(
+        max_length=50,
+        choices=TargetType.choices,
+        default=TargetType.PROJECT_DB,
+    )
     target_name = models.CharField(max_length=255)
     current_version = models.ForeignKey(
         'CaseSearchEndpointVersion',
