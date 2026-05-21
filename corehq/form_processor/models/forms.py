@@ -1,5 +1,5 @@
 import logging
-from collections import Counter
+from collections import Counter, defaultdict
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from io import BytesIO
@@ -394,34 +394,40 @@ class XFormInstanceManager(RequireDBManager):
     def hard_delete_forms(self, domain, form_ids, *, publish_changes=True, leave_tombstones=True):
         """Delete forms permanently
 
+        :param domain: only delete forms in the specified domain.
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
         :param leave_tombstones: If adding a new usage, DO NOT SET THIS TO FALSE.
             The user location mapping case and domain deletion are the only valid
             use cases for not leaving tombstones.
         """
+        from corehq.apps.cleanup.tasks import SENTINEL_DOMAIN
         assert isinstance(form_ids, list)
+
+        domain_filter = Q() if domain == SENTINEL_DOMAIN else Q(domain=domain)
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
             queryset = (
                 self.using(db_name)
-                .filter(domain=domain, form_id__in=split_form_ids)
-                .values_list('form_id', 'deleted_on')
+                .filter(domain_filter, form_id__in=split_form_ids)
+                .values_list('form_id', 'deleted_on', 'domain')
             )
             shard_count = 0
             while results := queryset[:BATCH_SIZE]:
                 hard_deletion_date = datetime.now(tz=UTC)
                 form_ids_to_delete = []
+                form_ids_by_domain = defaultdict(list)
                 tombstones = []
-                for form_id, soft_deleted_on in results:
+                for form_id, soft_deleted_on, form_domain in results:
+                    form_ids_by_domain[form_domain].append(form_id)
                     form_ids_to_delete.append(form_id)
                     if leave_tombstones:
                         tombstones.append(
                             build_tombstone(
                                 XFormInstance,
                                 form_id,
-                                domain,
+                                form_domain,
                                 soft_deleted_on,
                                 hard_deletion_date,
                             )
@@ -433,16 +439,17 @@ class XFormInstanceManager(RequireDBManager):
                     )
                     _, batch_count = (
                         self.using(db_name)
-                        .filter(domain=domain, form_id__in=form_ids_to_delete)
+                        .filter(domain_filter, form_id__in=form_ids_to_delete)
                         .delete()
                     )
                 if batch_count:
                     metas = BlobMeta.objects.using(db_name).filter(
-                        domain=domain, parent_id__in=form_ids_to_delete
+                        domain_filter, parent_id__in=form_ids_to_delete
                     )
                     get_blob_db().bulk_delete(metas=metas)
                 if publish_changes:
-                    self.publish_deleted_forms(domain, form_ids_to_delete)
+                    for _domain, form_ids_in_domain in form_ids_by_domain.items():
+                        self.publish_deleted_forms(_domain, form_ids_in_domain)
 
                 shard_count += batch_count.get(self.model._meta.label, 0)
             deleted_count += shard_count
