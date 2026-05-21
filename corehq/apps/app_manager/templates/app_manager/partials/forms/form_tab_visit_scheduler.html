@@ -66,46 +66,52 @@
         <fieldset>
           <legend>{% trans "Form Relevancy Window" %}</legend>
           <div class="container-fluid">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-              <label>{% trans "Show this form " %}</label>
-              <input type="number" min="0" required class="form-control w-auto" data-bind="numericValue: relevancy.starts"/>
-              <span class="help-block error-text d-none">
-                                {% trans 'This field is required'%}
-                            </span>
-              <label>{% trans "days" %}</label>
-              <select data-bind="value: relevancy.starts_type" class="form-select w-auto">
-                <option value="before">{% trans "before the anchor date" %}</option>
-                <option value="after">{% trans "after the anchor date" %}</option>
-              </select>
+            <div class="row align-items-center g-2">
+              <div class="col-auto"><label class="col-form-label">{% trans "Show this form" %}</label></div>
+              <div class="col-auto"><input type="number" min="0" required class="form-control" data-bind="numericValue: relevancy.starts"/></div>
+              <div class="col-auto"><span class="help-block error-text d-none">{% trans 'This field is required'%}</span></div>
+              <div class="col-auto"><label class="col-form-label">{% trans "days" %}</label></div>
+              <div class="col-auto">
+                <select data-bind="value: relevancy.starts_type" class="form-select">
+                  <option value="before">{% trans "before the anchor date" %}</option>
+                  <option value="after">{% trans "after the anchor date" %}</option>
+                </select>
+              </div>
             </div>
           </div>
           <div class="spacer"></div>
           <div class="container-fluid">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-              <div class="form-check">
-                <label class="form-check-label">
-                  <input class="form-check-input" type="checkbox"
-                         data-bind="checked: relevancy.enableFormExpiry,
-                                                    enable: allowExpiry">
-                  {% trans "Hide this form " %}
-                </label>
+            <div class="row align-items-center g-2">
+              <div class="col-auto">
+                <div class="form-check">
+                  <label class="form-check-label">
+                    <input class="form-check-input" type="checkbox"
+                           data-bind="checked: relevancy.enableFormExpiry,
+                                                      enable: allowExpiry">
+                    {% trans "Hide this form" %}
+                  </label>
+                </div>
               </div>
-              <input type="number" required class="form-control w-auto"
-                     data-bind="numericValue: relevancy.expires,
-                                              enable: (relevancy.enableFormExpiry() && allowExpiry())"/>
-              <span class="help-block error-text d-none">
-                                {% trans 'This field is required'%}
-                            </span>
-              <label>{% trans "days" %}</label>
-              <select class="form-select w-auto"
-                      data-bind="value: relevancy.expires_type,
-                                               enable: (relevancy.enableFormExpiry() && allowExpiry())">
-                <option value="before">{% trans "before the anchor date" %}</option>
-                <option value="after">{% trans "after the anchor date" %}</option>
-              </select>
-              <span class="badge text-bg-info" data-bind="visible: !allowExpiry()">
-                                {% trans "Forms can only be hidden if there are no transition or termination conditions" %}
-                            </span>
+              <div class="col-auto">
+                <input type="number" required class="form-control"
+                       data-bind="numericValue: relevancy.expires,
+                                                enable: (relevancy.enableFormExpiry() && allowExpiry())"/>
+              </div>
+              <div class="col-auto"><span class="help-block error-text d-none">{% trans 'This field is required'%}</span></div>
+              <div class="col-auto"><label class="col-form-label">{% trans "days" %}</label></div>
+              <div class="col-auto">
+                <select class="form-select"
+                        data-bind="value: relevancy.expires_type,
+                                                 enable: (relevancy.enableFormExpiry() && allowExpiry())">
+                  <option value="before">{% trans "before the anchor date" %}</option>
+                  <option value="after">{% trans "after the anchor date" %}</option>
+                </select>
+              </div>
+              <div class="col-auto">
+                <span class="badge text-bg-info" data-bind="visible: !allowExpiry()">
+                  {% trans "Forms can only be hidden if there are no transition or termination conditions" %}
+                </span>
+              </div>
             </div>
           </div>
         </fieldset>
@@ -158,34 +164,34 @@
                 <span data-bind="text: $index() + 1, visible: type() !== 'repeats'""/>
               </legend>
               <div class="mb-3">
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                  {% trans "Due" %}
-                  <input type="number" required class="form-control w-auto" data-bind="numericValue: due"/>
-                  <span class="help-block error-text d-none">
-                                        {% trans 'This field is required'%}
-                                    </span>
-                  {% trans "days" %}
-                  <select data-bind="value: type" class="form-select w-auto">
-                    <option value="before">{% trans "before the anchor date" %}</option>
-                    <option value="after">{% trans "after the anchor date" %}</option>
-                    <option value="repeats"
-                            data-bind="disable: $index() !== ($parent.visits().length - 1)">
-                      {% trans "after the last visit" %}
-                    </option>
-                  </select>
+                <div class="row align-items-center g-2">
+                  <div class="col-auto">{% trans "Due" %}</div>
+                  <div class="col-auto"><input type="number" required class="form-control" data-bind="numericValue: due"/></div>
+                  <div class="col-auto"><span class="help-block error-text d-none">{% trans 'This field is required'%}</span></div>
+                  <div class="col-auto">{% trans "days" %}</div>
+                  <div class="col-auto">
+                    <select data-bind="value: type" class="form-select">
+                      <option value="before">{% trans "before the anchor date" %}</option>
+                      <option value="after">{% trans "after the anchor date" %}</option>
+                      <option value="repeats"
+                              data-bind="disable: $index() !== ($parent.visits().length - 1)">
+                        {% trans "after the last visit" %}
+                      </option>
+                    </select>
+                  </div>
                 </div>
               </div>
               <div class="mb-3">
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                  {% trans "Visit can be made up to" %}
-                  <input type="number" required class="form-control w-auto"
-                         data-bind="numericValue: starts"/>
-                  <span class="help-block error-text d-none">
-                                        {% trans 'This field is required'%}
-                                    </span>
-                  {% trans "days early and" %}
-                  <input type="number" class="form-control w-auto" data-bind="numericValue: expires"/>
-                  {% trans "days late" %}
+                <div class="row align-items-center g-2">
+                  <div class="col-auto">{% trans "Visit can be made up to" %}</div>
+                  <div class="col-auto">
+                    <input type="number" required class="form-control"
+                           data-bind="numericValue: starts"/>
+                  </div>
+                  <div class="col-auto"><span class="help-block error-text d-none">{% trans 'This field is required'%}</span></div>
+                  <div class="col-auto">{% trans "days early and" %}</div>
+                  <div class="col-auto"><input type="number" class="form-control" data-bind="numericValue: expires"/></div>
+                  <div class="col-auto">{% trans "days late" %}</div>
                 </div>
               </div>
             </fieldset>
