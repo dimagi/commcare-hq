@@ -1,5 +1,6 @@
 import json
 
+from django.db import IntegrityError, transaction
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -168,20 +169,25 @@ class CaseSearchEndpointNewView(_EndpointFormMixin, BaseProjectDataView):
             self._errors = errors
             return self.render_to_response(self.get_context_data())
 
-        endpoint = CaseSearchEndpoint.objects.create(
-            domain=self.domain,
-            name=self._name,
-            target_type=self._target_type,
-            target_name=self._case_type,
-        )
-        version = CaseSearchEndpointVersion.objects.create(
-            endpoint=endpoint,
-            version_number=1,
-            query=query,
-            parameters=parameters,
-        )
-        endpoint.current_version = version
-        endpoint.save(update_fields=['current_version'])
+        try:
+            with transaction.atomic():
+                endpoint = CaseSearchEndpoint.objects.create(
+                    domain=self.domain,
+                    name=self._name,
+                    target_type=self._target_type,
+                    target_name=self._case_type,
+                )
+                version = CaseSearchEndpointVersion.objects.create(
+                    endpoint=endpoint,
+                    version_number=1,
+                    query=query,
+                    parameters=parameters,
+                )
+                endpoint.current_version = version
+                endpoint.save(update_fields=['current_version'])
+        except IntegrityError:
+            self._errors = [f"An endpoint named '{self._name}' already exists in this project."]
+            return self.render_to_response(self.get_context_data())
         return redirect(reverse(CaseSearchEndpointEditView.urlname, args=[self.domain, endpoint.id]))
 
 
@@ -223,21 +229,26 @@ class CaseSearchEndpointEditView(_EndpointFormMixin, BaseProjectDataView):
             return self.render_to_response(self.get_context_data())
 
         endpoint = self._endpoint
-        endpoint.name = self._name
-        endpoint.target_type = self._target_type
-        endpoint.target_name = self._case_type
-        endpoint.save(update_fields=['name', 'target_type', 'target_name'])
+        try:
+            with transaction.atomic():
+                endpoint.name = self._name
+                endpoint.target_type = self._target_type
+                endpoint.target_name = self._case_type
+                endpoint.save(update_fields=['name', 'target_type', 'target_name'])
 
-        current = endpoint.current_version
-        next_num = (current.version_number + 1) if current else 1
-        version = CaseSearchEndpointVersion.objects.create(
-            endpoint=endpoint,
-            version_number=next_num,
-            query=query,
-            parameters=parameters,
-        )
-        endpoint.current_version = version
-        endpoint.save(update_fields=['current_version'])
+                current = endpoint.current_version
+                next_num = (current.version_number + 1) if current else 1
+                version = CaseSearchEndpointVersion.objects.create(
+                    endpoint=endpoint,
+                    version_number=next_num,
+                    query=query,
+                    parameters=parameters,
+                )
+                endpoint.current_version = version
+                endpoint.save(update_fields=['current_version'])
+        except IntegrityError:
+            self._errors = [f"An endpoint named '{self._name}' already exists in this project."]
+            return self.render_to_response(self.get_context_data())
         return redirect(reverse(CaseSearchEndpointsView.urlname, args=[self.domain]))
 
 
