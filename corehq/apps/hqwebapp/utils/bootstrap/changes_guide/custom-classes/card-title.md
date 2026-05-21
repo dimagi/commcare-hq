@@ -44,7 +44,7 @@ If the dropped heading element had a Knockout binding (e.g. `data-bind="html: he
 </div>
 ```
 
-If the card-header is a flex container with sibling buttons (see [`panel-case-actions-actions.md`](panel-case-actions-actions.md)), put the `data-bind="html: header"` on the flex-grow-1 title span rather than the card-header itself — otherwise the html binding would replace the buttons too.
+If the card-header is laid out as a grid row with sibling buttons (see [`panel-case-actions-actions.md`](panel-case-actions-actions.md)), put the `data-bind="html: header"` on the title `<div class="col">` rather than the card-header itself — otherwise the html binding would replace the buttons too.
 
 ### Old `card-title-nolink` padding was load-bearing — now `min-height` on the card-header
 

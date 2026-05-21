@@ -186,8 +186,8 @@
 
 <script type="text/html"
         id="case-config:case-transaction:case-properties">
-  <div class="card-header h5 gap-2">
-    <span class="flex-grow-1">
+  <div class="card-header h5 row align-items-center g-0">
+    <div class="col">
       <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
       <!-- ko if: !$data.type || $data.type() == "case-property" -->
       {% trans "Save Questions to Case Properties" %}
@@ -195,8 +195,8 @@
       <!-- ko if: $data.type && $data.type() == "user-property" -->
         {% trans "Save Questions to User Properties" %}
       <!-- /ko -->
-    </span>
-    <div data-bind="if: searchAndFilter">
+    </div>
+    <div class="col-auto" data-bind="if: searchAndFilter">
       <div data-bind="visible: case_properties().length">
         <search-box data-apply-bindings="false"
                     params="value: case_property_query,

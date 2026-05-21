@@ -235,20 +235,24 @@
 
         <div data-bind="foreach: subcases">
           <div class="card card-modern-gray mb-3 card-case-actions">
-            <div class="card-header h5 d-flex flex-wrap align-items-center gap-2">
-              <i class="fa fa-check"></i>
-              {% trans "This Form opens a Child Case in the Case List" %}:&nbsp;
-              <span
-                data-bind="text: $parent.getCaseTypeLabel(case_type())"
-              ></span>
+            <div class="card-header h5 row align-items-center g-0">
+              <div class="col">
+                <i class="fa fa-check"></i>
+                {% trans "This Form opens a Child Case in the Case List" %}:
+                <span
+                  data-bind="text: $parent.getCaseTypeLabel(case_type())"
+                ></span>
+              </div>
               {% if add_ons_privileges.subcases %}
-                <a
-                  href="#"
-                  class="ms-auto case-action-remove btn btn-purple"
-                  data-bind="openModal: 'remove-subcase-modal-template'"
-                >
-                  <i class="fa-regular fa-trash-can"></i>
-                </a>
+                <div class="col-auto">
+                  <a
+                    href="#"
+                    class="case-action-remove btn btn-purple"
+                    data-bind="openModal: 'remove-subcase-modal-template'"
+                  >
+                    <i class="fa-regular fa-trash-can"></i>
+                  </a>
+                </div>
               {% endif %}
             </div>
             <div class="card-body">

@@ -183,26 +183,30 @@
 </script>
 
 <script type="text/html" id="case-config:case-action">
-  <div class="card-header h5 d-flex align-items-center"
+  <div class="card-header h5 row align-items-center g-0"
        data-bind="css: {'not-droppable': moveable()}">
-    <span class="flex-grow-1 clickable" data-bs-toggle="collapse"
-          data-bind="attr: {href: '#' + actionType + $index()}, html: header"></span>
-    <a href="#" role="button" class="case-action-move btn btn-purple grip" data-bind="visible: moveable()">
-      <i class="fa-solid fa-up-down"></i>
-    </a>
-    <button
-      class="case-action-remove btn btn-purple"
-      data-bind="
-        openModal: 'remove-action-modal-template',
-        disable: hasLockedMappings(),
-        attr: {
-            title: hasLockedMappings() ?
-              '{% trans_html_attr "This action cannot be removed because it references a locked question." %}'
-              : ''
-        }"
-    >
-      <i class="fa-regular fa-trash-can"></i>
-    </button>
+    <div class="col clickable" data-bs-toggle="collapse"
+         data-bind="attr: {href: '#' + actionType + $index()}, html: header"></div>
+    <div class="col-auto">
+      <a href="#" role="button" class="case-action-move btn btn-purple grip" data-bind="visible: moveable()">
+        <i class="fa-solid fa-up-down"></i>
+      </a>
+    </div>
+    <div class="col-auto">
+      <button
+        class="case-action-remove btn btn-purple"
+        data-bind="
+          openModal: 'remove-action-modal-template',
+          disable: hasLockedMappings(),
+          attr: {
+              title: hasLockedMappings() ?
+                '{% trans_html_attr "This action cannot be removed because it references a locked question." %}'
+                : ''
+          }"
+      >
+        <i class="fa-regular fa-trash-can"></i>
+      </button>
+    </div>
   </div>
   <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
     <div class="card-body">
@@ -313,25 +317,29 @@
 <script type="text/html" id="auto-select:usercase">
 </script>
 <script type="text/html" id="case-config:case-action-auto-select">
-  <div class="card-header h5 d-flex align-items-center">
-    <span class="flex-grow-1 clickable" data-bs-toggle="collapse"
-          data-bind="attr: {href: '#' + actionType + $index()}, html: header"></span>
-    <a href="#" role="button" class="case-action-move btn btn-purple grip">
-      <i class="fa-solid fa-up-down"></i>
-    </a>
-    <button
-      class="case-action-remove btn btn-purple"
-      data-bind="
-        openModal: 'remove-action-modal-template',
-        disable: hasLockedMappings(),
-        attr: {
-            title: hasLockedMappings() ?
-              '{% trans_html_attr "This action cannot be removed because it references a locked question." %}'
-              : ''
-        }"
-    >
-      <i class="fa-regular fa-trash-can"></i>
-    </button>
+  <div class="card-header h5 row align-items-center g-0">
+    <div class="col clickable" data-bs-toggle="collapse"
+         data-bind="attr: {href: '#' + actionType + $index()}, html: header"></div>
+    <div class="col-auto">
+      <a href="#" role="button" class="case-action-move btn btn-purple grip">
+        <i class="fa-solid fa-up-down"></i>
+      </a>
+    </div>
+    <div class="col-auto">
+      <button
+        class="case-action-remove btn btn-purple"
+        data-bind="
+          openModal: 'remove-action-modal-template',
+          disable: hasLockedMappings(),
+          attr: {
+              title: hasLockedMappings() ?
+                '{% trans_html_attr "This action cannot be removed because it references a locked question." %}'
+                : ''
+          }"
+      >
+        <i class="fa-regular fa-trash-can"></i>
+      </button>
+    </div>
   </div>
   <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
     <div class="card-body">
@@ -380,25 +388,29 @@
 </script>
 
 <script type="text/html" id="case-config:case-action-load-case-from-fixture">
-  <div class="card-header h5 d-flex align-items-center">
-    <span class="flex-grow-1 clickable" data-bs-toggle="collapse"
-          data-bind="attr: {href: '#' + actionType + $index()}, html: header"></span>
-    <a href="#" role="button" class="case-action-move btn btn-purple grip" data-bind="visible: moveable()">
-      <i class="fa-solid fa-up-down"></i>
-    </a>
-    <button
-      class="case-action-remove btn btn-purple"
-      data-bind="
-        openModal: 'remove-action-modal-template',
-        disable: hasLockedMappings(),
-        attr: {
-            title: hasLockedMappings() ?
-              '{% trans_html_attr "This action cannot be removed because it references a locked question." %}'
-              : ''
-        }"
-    >
-      <i class="fa-regular fa-trash-can"></i>
-    </button>
+  <div class="card-header h5 row align-items-center g-0">
+    <div class="col clickable" data-bs-toggle="collapse"
+         data-bind="attr: {href: '#' + actionType + $index()}, html: header"></div>
+    <div class="col-auto">
+      <a href="#" role="button" class="case-action-move btn btn-purple grip" data-bind="visible: moveable()">
+        <i class="fa-solid fa-up-down"></i>
+      </a>
+    </div>
+    <div class="col-auto">
+      <button
+        class="case-action-remove btn btn-purple"
+        data-bind="
+          openModal: 'remove-action-modal-template',
+          disable: hasLockedMappings(),
+          attr: {
+              title: hasLockedMappings() ?
+                '{% trans_html_attr "This action cannot be removed because it references a locked question." %}'
+                : ''
+          }"
+      >
+        <i class="fa-regular fa-trash-can"></i>
+      </button>
+    </div>
   </div>
   <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
     <div class="card-body">

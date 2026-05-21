@@ -26,8 +26,8 @@
 {% endblock %}
 
 {% block pre_form_content %}
-  <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
-    <div class="appmanager-edit-title flex-grow-1 me-0">
+  <div class="row align-items-center mt-3 g-2">
+    <div class="appmanager-edit-title col">
       {% with disallow_edit=request.couch_user.can_edit_apps|yesno:"false,true" %}
         {% if form.get_action_type == 'open' %}
           {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' disallow_edit=disallow_edit %}
@@ -40,7 +40,7 @@
         {% endif %}
       {% endwith %}
     </div>
-    <div class="d-flex gap-2 flex-shrink-0">
+    <div class="col-auto d-flex gap-2">
       {% include 'app_manager/partials/bootstrap5/app_summary_button.html' %}
       {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-outline-primary' %}
       <a

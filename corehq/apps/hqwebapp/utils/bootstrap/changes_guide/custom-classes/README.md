@@ -25,7 +25,7 @@ Decisions in this folder are **conventions** — apply them consistently the nex
 - [`panel-case-actions`](panel-case-actions.md) → `card-case-actions`
 - [`panel-case-actions-actions`](panel-case-actions-actions.md) → drop entirely (use B5 utilities)
 - [`card-title`](card-title.md) (and `card-title-nolink`) → drop the inner heading wrapper (`<h3 class="card-title">`, `<h4 class="card-title">`, etc.); add a downsized heading-size utility class to the card-header element (`h4`→`h5`, `h3`→`h4`). `card-title-nolink` drops away as a side effect.
-- [`appmanager-page-actions`](appmanager-page-actions.md) → drop the class; wrap title + action buttons in a single flex row at the top of the page (`d-flex flex-wrap align-items-center gap-2`, with `flex-grow-1` on the title and `flex-shrink-0` on the buttons block).
+- [`appmanager-page-actions`](appmanager-page-actions.md) → drop the class; wrap title + action buttons in a Bootstrap row (`row align-items-center g-2`, with `col` on the title and `col-auto` on the buttons block).
 
 ### Gotchas
 
