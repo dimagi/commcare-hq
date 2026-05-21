@@ -52,3 +52,4 @@ TODOs
 - [ ] Query Builder UI
 - [ ] Query tester
 - [ ] Add cards to layout
+- [ ] Paginate endpoint list view (currently unbounded query)
