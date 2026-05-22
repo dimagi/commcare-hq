@@ -107,12 +107,12 @@ var actionBase = {
     header: function (action) {
         var nameSnip = "<i class=\"fa fa-tag\"></i> <%- action.case_tag() %> (<%- action.case_type() %>)";
         var closeSnip = "<% if (action.close_case()) { %> : close<% }%>";
-        var spanSnip = '<span class="text-muted" style="font-weight: normal;">';
+        var spanSnip = '<span class="action-header-secondary fw-normal">';
         if (action.actionType === 'open') {
             return _.template(
                 nameSnip + spanSnip +
                 '<% if (action.parent_tags()) { %> : ' +
-                gettext('subcase of') + '<span style="font-weight: bold;"><%- action.parent_tags() %></span>' +
+                gettext('subcase of') + '<span class="fw-bold"><%- action.parent_tags() %></span>' +
                 '<% } %>' + closeSnip + "</span>")({
                 action: action,
             });
