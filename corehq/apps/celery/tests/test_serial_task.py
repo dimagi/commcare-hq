@@ -3,7 +3,8 @@ from unmagic import fixture, use
 
 from dimagi.utils.couch import get_redis_lock, release_lock
 
-from corehq.apps.celery.serial import CouldNotAcquireLockError, serial_task
+from corehq.apps.celery.locking import CouldNotAcquireLockError
+from corehq.apps.celery.serial import serial_task
 from corehq.apps.celery.tests.utils import run_with_lock_patch
 from corehq.tests.pytest_plugins.patches import suspend
 
