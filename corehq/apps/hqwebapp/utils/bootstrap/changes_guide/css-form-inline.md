@@ -21,7 +21,6 @@ Notes:
 * `g-2` provides 0.5rem horizontal AND vertical gutter (handles wrap spacing).
 * `<label>` gets `col-form-label` — designed for "label in adjacent column" layouts, padding aligns the label baseline with the form-control content area.
 * `<select>` migrates `form-control` → `form-select` per [`css-select-form-control.md`](css-select-form-control.md).
-* **No `w-auto` needed** on form-controls — `.col-auto` sets `width: auto` which overrides `.form-control`'s `width: 100%`.
 * For a forced line break (formerly `<br />`), use `<div class="col-12"></div>` — full-width column wraps subsequent items to the next row.
 
 ## When form-inline is on a wrapper, not the inline-layout container
