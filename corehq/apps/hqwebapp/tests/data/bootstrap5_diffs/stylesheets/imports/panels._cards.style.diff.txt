@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,20 +1,14 @@
+@@ -1,20 +1,13 @@
 -.panel-modern-gray {
 +.card-modern-gray {
    border: none;
@@ -21,16 +21,15 @@
 -      }
 -    }
 +  > .card-header {
-+    // Lock the header height so it doesn't grow when conditional
-+    // content mounts.
 +    display: flex;
 +    align-items: center;
++    // Set minimum header height to allow conditional content to sit on one line
 +    min-height: 3rem;
 +
      .hq-help {
        a {
          padding: 0;
-@@ -29,21 +23,16 @@
+@@ -29,21 +22,16 @@
      }
    }
  
@@ -54,7 +53,7 @@
      margin-bottom: 20px;
    }
  
-@@ -57,7 +46,7 @@
+@@ -57,7 +45,7 @@
  }
  
  
@@ -63,7 +62,7 @@
    legend {
      padding-left: 10px;
      padding-right: 10px;
-@@ -74,13 +63,28 @@
+@@ -74,13 +62,28 @@
    }
  }
  
