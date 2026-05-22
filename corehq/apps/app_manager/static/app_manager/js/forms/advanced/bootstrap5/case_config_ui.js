@@ -31,14 +31,6 @@ $(function () {
             google.track.event(...arguments);
         };
 
-        self.makePopover = function () {
-            $('.property-description').closest('.read-only').popover({  /* todo B5: js-popover */
-                'trigger': 'hover',
-                'placement': 'bottom',
-                'sanitize': false,
-            });
-        };
-
         self.home = params.home;
         self.questions = ko.observable(params.questions);
         self.save_url = params.save_url;

@@ -145,10 +145,6 @@ $(function () {
         $('#custom-instances').koApplyBindings(customInstances);
     }
 
-    // Case Management > Data dictionary descriptions for case properties
-    $('.property-description').popover();  /* todo B5: js-popover */
-
-
     var $casePropertyWarning = $('#case-property-warning');
     if ($casePropertyWarning.length > 0) {
         const initialWarningData = initialPageData.get('case_property_warning');

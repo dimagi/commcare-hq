@@ -315,7 +315,6 @@
                               suggestedProperties: case_transaction.suggestedSaveProperties,
                               'isDisabled': !$parent.hasPrivilege || isLocked(),
                             },
-                            afterRender: $root.makePopover
                           }"></div>
           <p class="text-danger small mt-2 mb-0"
              data-bind="html: validate,
@@ -341,8 +340,7 @@
                                 readOnlyClass: 'property-description',
                                 readOnlyAttrs: {
                                   'data-content': $data.description
-                                },
-                                afterRenderFunc: $root.makePopover"></inline-edit>
+                                }></inline-edit>
           {% endif %}
           <!-- /ko -->
           <!-- ko if: $data.description() && (!$parent.hasPrivilege || isLocked()) -->

@@ -33,12 +33,6 @@ $(function () {
 
     var caseConfig = function (params) {
         var self = {};
-        self.makePopover = function () {
-            $('.property-description').closest('.read-only').popover({  /* todo B5: js-popover */
-                'trigger': 'hover',
-                'placement': 'auto right',
-            });
-        };
 
         self.home = params.home;
         self.actions = filterActions(params.actions);
