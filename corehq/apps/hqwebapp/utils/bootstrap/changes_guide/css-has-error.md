@@ -139,6 +139,8 @@ The same applies to any KO-controlled error where the validation observable can 
 | Error message not tied to a specific input (top-of-form, table cells, save errors) | `text-danger` (`small mt-2 mb-0` for sizing) |
 | Warning message | `text-warning` (no B5 equivalent for `has-warning`) |
 
-**Spacing**: when replacing a B3 `<p class="help-block">` with `<p class="text-danger small ...">`, add `mt-2 mb-0`. Reboot resets `<p>` margins to `margin-top: 0; margin-bottom: 1rem`, so `mb-0` cancels the bottom margin and `mt-2` restores the small breathing room B3's help-block had (which was 5px ≈ 0.3rem; `mt-2` = 0.5rem is the closest natural utility). Without `mt-2`, the message looks glued to the input. For `<div>` elements (no Reboot reset), `mt-2` alone is enough.
+**Spacing**: when replacing a B3 `<p class="help-block">` with `<p class="text-danger small ...">`, add `mt-2 mb-0`. 
+  - `<p>` defaults to margin-top: 0 → without `mt-2`, the message touches the input with no breathing room.
+  - `<p>` defaults to margin-bottom: 1rem (~16px) → without `mb-0`, there's wasted space below the message.
 
 The rule of thumb: `invalid-feedback` requires a *reliable* sibling chain with `.is-invalid`. The chain breaks when widgets like select2 hide the original input. For anything KO-controlled with widget wrapping, `text-danger` + `visible:` is safer.
