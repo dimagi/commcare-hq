@@ -39,14 +39,20 @@ Notes:
   because the visual gap was never in the HTML — it was in
   Bootstrap 3's stylesheet.
 - Combining `card` and `card-body` on the same `<div>` keeps the
-  markup flat (no extra wrapper). This works in B5 when you don't
-  need card-header / card-footer alongside the body. Use the
-  conventional nested form (`<div class="card"><div class="card-
-  body">...</div></div>`) when you do.
+  markup flat — fine when the card is just a body. If you later add
+  a `card-header` or `card-footer`, switch to the nested form so
+  they can sit as siblings of the body:
+  ```
+  <div class="card">
+    <div class="card-header">...</div>
+    <div class="card-body">...</div>
+  </div>
+  ```
 - If the original B3 well's *content* was a horizontal flow (e.g.
   `<strong>` + text + `<input class="form-control">` siblings rendered
-  inline thanks to B3's inline-block defaults), the B5 card needs
-  `d-flex flex-wrap align-items-center gap-2` and the form-controls
-  inside need `w-auto`. Otherwise B5's `display: block` form-controls
-  will stack vertically. Drop any `&nbsp;&nbsp;` separators between
-  siblings — flex `gap-2` handles spacing.
+  inline thanks to B3's inline-block defaults), lay out the B5 card's
+  children using Bootstrap's grid. Add `row align-items-center g-2`
+  to the card-body and wrap each child in `<div class="col-auto">`.
+  See [`css-form-inline.md`](css-form-inline.md) for the full pattern.
+  Drop any `&nbsp;&nbsp;` separators between siblings — the row's
+  `g-2` gutter handles spacing.
