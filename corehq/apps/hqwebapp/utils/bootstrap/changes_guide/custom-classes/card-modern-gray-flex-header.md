@@ -23,4 +23,4 @@ Paired icons + text (case-preload header):
 →📄 Load the following properties…  (icons touch each other, one space before text)
 ```
 
-**Mechanism:** the `<span>` wrap puts the content back into inline flow, where HTML's normal whitespace rules apply (the newline-and-indent between `</i>` and `{% trans %}` renders as one space) — flex flow had removed that whitespace entirely.
+**Mechanism:** the `<span>` wrap puts the content back into inline flow, where HTML's normal whitespace rules apply (the newline-and-indent between `</i>` and `{% trans %}` renders as one space).

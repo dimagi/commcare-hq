@@ -43,7 +43,7 @@ Three things change in the markup:
 2. **The `<h4 class="panel-title">` wrapper is replaced by `<h5 class="col">`** per [`card-title.md`](card-title.md) — a semantic heading element that doubles as the title's grid column. The card-header itself stays a `<div>` since it now contains non-heading content (the action buttons).
 3. **The click target moves**: in B3, `data-toggle="collapse"` lived on the `panel-heading` (the whole header was clickable). In B5, it moves to the `<h5 class="col clickable">` title so that clicking the action buttons doesn't also toggle the collapse. KO `data-bind="html: header"` rides along on the title column — if it stayed on the card-header, the `html` binding would replace the buttons too.
 
-`.col` (no number) takes `flex: 1 0 0%` — it eats all remaining horizontal space, pushing the `.col-auto` button columns to the right edge. No `ms-auto` or `flex-grow-1` needed. `g-0` zeros the row's default 1.5rem gutter, which would otherwise add unwanted padding inside the card-header.
+`.col` (no number) takes `flex: 1 0 0%` — it eats all remaining horizontal space, pushing the `.col-auto` button columns to the right edge. `g-0` zeros the row's default 1.5rem gutter, which would otherwise add unwanted padding inside the card-header.
 
 ### SCSS
 
