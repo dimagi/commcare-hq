@@ -134,7 +134,7 @@ Resolve small, visually obvious todo types first: `css-glyphicon`, `css-close`, 
 
 ### Commit by todo type, not by file
 
-For each todo type, make one commit covering **every template** in the view's rendering path. The reviewer holds one rule (`css-form-group` migration pattern) and verifies N applications. Per-file commits force a reviewer context-switch on every commit.
+For each todo type, make one commit covering **every file in the view's scope** — templates *and* JS — that the type applies to. The reviewer holds one rule (`css-form-group` migration pattern, or `js-popover` migration pattern) and verifies N applications. Per-file commits force a reviewer context-switch on every commit.
 
 After each per-type commit, **hand the user a verification checklist** for every site the commit touched (see *Browser verification* below). Don't proceed to the next todo type until the user confirms the current one looks right.
 
@@ -149,33 +149,39 @@ Some types can't be verified independently — do them back-to-back and batch th
 
 ---
 
-## Critical: scope = rendering path, NOT directory
+## Critical: a view's scope is a transitive graph, NOT a directory
 
-**A view's migration scope is every template `{% include %}`d transitively, not just files under `partials/<view-name>/bootstrap5/`.** The most common mistake (and source of "how did you miss it?" reviews) is grepping a single directory and declaring done.
+**A view's migration scope is every file reachable from the view's top-level template by following two kinds of edges:**
 
-**Audit procedure before declaring a view done:**
+1. **Template edges** — `{% include %}`, `{% extends %}`, and `{% block %}` overrides → other templates.
+2. **JavaScript edges** — `{% js_entry %}` in a template → a JS entry file. Then `import` statements inside that JS → more JS modules. Recurse.
 
-1. Start at the view's top-level template (e.g. `<app>/bootstrap5/<view>.html`)
-2. `grep -rn "{% include "` against it and recurse into each included partial
-3. Repeat until no new files
-4. `grep "todo B5"` across ALL of them — including shared partials under `partials/bootstrap5/`, `hqmedia/partials/`, etc.
+The scope is the closure of all files reachable from those edges — templates *and* JS. Anything in that graph carrying a `todo B5:` marker (template or JS) is part of the view's migration. Anything outside the graph isn't.
 
-**`grep "todo B5"` alone is not proof of completeness.** The auto-migration only flags certain patterns (e.g. `<div class="form-group">`). Partials whose horizontal-form wrapper lives in the *includer* — not the partial itself — get split with **zero** todo markers but still carry un-migrated B3 patterns like `form-label col-md-2` + sibling `col-md-10`.
+**Common failure mode**: grepping a single directory (e.g. `partials/<view-name>/bootstrap5/`) and declaring done. This misses shared partials in adjacent directories, JS files in the view's bundle, and JS modules transitively imported.
 
-**Compensate with secondary greps:**
+### Audit procedure
+
+Build the graph explicitly before declaring a view done.
+
+**Step 1 — Enumerate templates.** Start at the view's top-level template (e.g. `<app>/bootstrap5/<view>.html`). Recurse: `grep -rn '{% include\|{% extends' <template>` → follow each result into the included partial. Repeat until no new template files.
+
+**Step 2 — Enumerate JS roots.** In each template from Step 1, look for `{% js_entry %}` tags. Each names a JS module (e.g. `app_manager/js/forms/bootstrap5/form_view`) — those are the JS roots for the view.
+
+**Step 3 — Enumerate JS modules.** For each JS root, follow `import` statements transitively. Recurse until no new JS files. Constrain to files under the app's `bootstrap5/` paths (or canonical paths if already un-split).
+
+**Step 4 — Grep todos across the full graph.** Run `grep "todo B5"` over every template AND every JS file in the graph. JS todos look like `todo B5: js-*` (e.g. `js-popover`, `js-modal`, `js-tooltip`) — they live in `.js` files, not templates, so a template-only sweep will miss them.
+
+**Step 5 — Secondary greps for unflagged patterns.** Some B3 patterns slip through the auto-flagger and have no `todo B5` marker. Run these against the full template + JS set:
+
 ```
-grep -rn 'form-label col-md-\|control-label\|class="col-md-[0-9]"' <view-files>
-grep -rn 'has-warning\|has-success\|panel-group\|class="warning"\|class="danger"' <view-files>
-grep -rn 'btn-default\|text-muted ' <view-files>
+grep -rn 'form-label col-md-\|control-label\|class="col-md-[0-9]"' <graph>
+grep -rn 'has-warning\|has-success\|panel-group\|class="warning"\|class="danger"' <graph>
+grep -rn 'btn-default\|text-muted ' <graph>
+grep -rn 'style="\|\.css(' <graph>   # inline styles in templates AND in JS-emitted HTML
 ```
 
-These catch orphaned horizontal-form fragments, contextual states, and other patterns the auto-flagger misses.
-
-**Don't forget JS files that emit HTML.** The auto-flagger marks templates only, so JS that builds markup via string concatenation, template literals, or `.css(...)` calls slips through. When migrating a view, also grep the JS bundles feeding it:
-
-```
-grep -rn 'style="\|\.css(' corehq/apps/<app>/static/<app>/js/**/bootstrap5/
-```
+`grep "todo B5"` alone is not proof of completeness. A partial whose horizontal-form wrapper lives in the *includer* — not the partial itself — gets split with **zero** todo markers but still carries un-migrated B3 patterns like `form-label col-md-2` + sibling `col-md-10`. JS that builds markup via string concatenation, template literals, or `.css(...)` calls also slips past the flagger.
 
 Example: `app_manager/.../bootstrap5/forms/advanced/actions.js` emits `<span style="font-weight: bold;">` into the case-action header via `data-bind="html: header"`. No `todo B5` marker, no template diff — but it's still a B3-era inline style. Replace with the equivalent `fw-*` / `d-*` / `text-*` utility class. Use a purpose-named class + scoped SCSS rule only when the styling is contextual (e.g. color against a dark background).
 
@@ -212,9 +218,6 @@ Examples gathered from form_view migration (illustrative — every view has its 
 
 ---
 
-
----
-
 ## Build the diff registry — separate commit, always
 
 `./manage.py build_bootstrap5_diffs` rebuilds the expected B3↔B5 diff snapshots that the test gate compares against. **Run it before declaring a migration done** — forgetting is the most common reason CI is red after a clean grep.
@@ -236,15 +239,18 @@ Keep doc edits succinct: state the rule and one example. Skip rationale and edge
 
 ## Single-view completion (the un-split step)
 
-After the view is verified and all view-scope todos are done, finalize each template:
+After the view is verified and all view-scope todos are done — across BOTH templates AND JS — finalize each file:
 
 ```
-./manage.py complete_bootstrap5_migration <app> --template <file>
+./manage.py complete_bootstrap5_migration <app> --template <file>      # for templates
+./manage.py complete_bootstrap5_migration <app> --javascript <file>    # for JS modules
 ```
 
 For each file, this moves the B5 version out of `bootstrap5/` to the original path, deletes the B3 version, and updates references. **It refuses to un-split if any B3 reference still exists** outside the view's scope.
 
-Pattern: form-view-only partials un-split cleanly; **shared partials stay split** (other un-migrated views still reference them). Don't force.
+Pattern: view-only partials and view-only JS modules un-split cleanly; **shared partials and shared JS modules stay split** (other un-migrated views still reference them). Don't force.
+
+**Don't only un-split templates.** Every view-only JS module identified in the audit (scope Step 3) must also be un-split with `--javascript`. Skipping the JS un-split leaves the view in a partial state — `bootstrap5/<view>.js` continues to live next to `bootstrap3/<view>.js` despite the view being marked complete.
 
 Then:
 ```
