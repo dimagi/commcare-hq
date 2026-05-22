@@ -45,6 +45,7 @@
     "javascript": [
       "js/app_exchange.js",
       "js/app_view.js",
+      "js/forms/advanced/actions.js",
       "js/forms/advanced/case_config_ui.js",
       "js/forms/case_config_ui.js",
       "js/forms/form_view.js",
