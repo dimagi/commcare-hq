@@ -1,5 +1,4 @@
-from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.es.users import UserES
 from corehq.apps.fixtures.models import LookupTableRow
@@ -101,4 +100,4 @@ class FunderFilter(BaseLookupTableFilter):
 
 class PhoneNumberFilter(BaseSimpleFilter):
     slug = 'phone_number'
-    label = gettext_lazy('Phone number')
+    label = _('Phone number')
