@@ -468,6 +468,16 @@ class TestHardDeleteForms(TestCase):
 
         assert count == 5
 
+    def test_returned_count_is_accurate_with_cascaded_deletes(self):
+        form = create_form_for_test(DOMAIN)
+        XFormOperation.objects.using(form.db).create(
+            form=form, user_id='abc123', operation='test', date=datetime(2026, 6, 1)
+        )
+
+        count = XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id])
+
+        assert count == 1
+
 
 class DeleteAttachmentsFSDBTests(TestCase):
     def setUp(self):
