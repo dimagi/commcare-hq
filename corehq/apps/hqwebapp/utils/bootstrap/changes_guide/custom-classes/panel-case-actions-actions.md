@@ -25,9 +25,9 @@ No new SCSS rule. `.row` provides flex layout; `.col-auto` widths push the butto
 </div>
 
 <!-- B5 -->
-<div class="card-header h5 row align-items-center g-0">
-  <div class="col clickable" data-bs-toggle="collapse"
-       data-bind="attr: {href: ...}, html: header"></div>
+<div class="card-header row align-items-center g-0">
+  <h5 class="col clickable" data-bs-toggle="collapse"
+      data-bind="attr: {href: ...}, html: header"></h5>
   <div class="col-auto">
     <a class="case-action-move btn btn-purple">...</a>
   </div>
@@ -40,8 +40,8 @@ No new SCSS rule. `.row` provides flex layout; `.col-auto` widths push the butto
 Three things change in the markup:
 
 1. **The wrapper `<div class="panel-case-actions-actions">` is dropped.** Its two button children become `col-auto` siblings of the title column inside the card-header.
-2. **The `<h4 class="panel-title">` wrapper is also dropped** per [`card-title.md`](card-title.md), with the heading-size utility class moved to the card-header (`h5`).
-3. **The click target moves**: in B3, `data-toggle="collapse"` lived on the `panel-heading` (the whole header was clickable). In B5, it moves to the title `<div class="col clickable">` so that clicking the action buttons doesn't also toggle the collapse. KO `data-bind="html: header"` rides along on the title column — if it stayed on the card-header, the `html` binding would replace the buttons too.
+2. **The `<h4 class="panel-title">` wrapper is replaced by `<h5 class="col">`** per [`card-title.md`](card-title.md) — a semantic heading element that doubles as the title's grid column. The card-header itself stays a `<div>` since it now contains non-heading content (the action buttons).
+3. **The click target moves**: in B3, `data-toggle="collapse"` lived on the `panel-heading` (the whole header was clickable). In B5, it moves to the `<h5 class="col clickable">` title so that clicking the action buttons doesn't also toggle the collapse. KO `data-bind="html: header"` rides along on the title column — if it stayed on the card-header, the `html` binding would replace the buttons too.
 
 `.col` (no number) takes `flex: 1 0 0%` — it eats all remaining horizontal space, pushing the `.col-auto` button columns to the right edge. No `ms-auto` or `flex-grow-1` needed. `g-0` zeros the row's default 1.5rem gutter, which would otherwise add unwanted padding inside the card-header.
 

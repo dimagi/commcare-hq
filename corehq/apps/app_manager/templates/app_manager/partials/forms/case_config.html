@@ -31,9 +31,9 @@
 <script type="text/html" id="case-config:case-transaction">
   {% if add_ons.conditional_form_actions %}
   <div class="card card-modern-gray mb-3" data-bind="visible: allow.condition()">
-    <div class="card-header h5">
+    <h5 class="card-header">
       {% trans "Open Case Condition" %}
-    </div>
+    </h5>
     <div class="card-body">
       <div
         data-bind="template: {
@@ -51,9 +51,9 @@
   ></div>
 
   <div class="card card-modern-gray mb-3">
-    <div class="card-header h5">
+    <h5 class="card-header">
       {% trans "Close Condition" %}
-    </div>
+    </h5>
     <div class="card-body">
       <div class="form-check">
         <label class="form-check-label">
@@ -87,9 +87,9 @@
 
   <div data-bind="with: caseConfigViewModel">
     <div class="card card-modern-gray mb-3">
-      <div class="card-header h5">
+      <h5 class="card-header">
         {% trans "Cases" %}
-      </div>
+      </h5>
       <div class="card-body">
         <div class="container-fluid">
           <p class="lead">
@@ -235,14 +235,14 @@
 
         <div data-bind="foreach: subcases">
           <div class="card card-modern-gray mb-3 card-case-actions">
-            <div class="card-header h5 row align-items-center g-0">
-              <div class="col">
+            <div class="card-header row align-items-center g-0">
+              <h5 class="col mb-0">
                 <i class="fa fa-check"></i>
                 {% trans "This Form opens a Child Case in the Case List" %}:
                 <span
                   data-bind="text: $parent.getCaseTypeLabel(case_type())"
                 ></span>
-              </div>
+              </h5>
               {% if add_ons_privileges.subcases %}
                 <div class="col-auto">
                   <a
@@ -257,9 +257,9 @@
             </div>
             <div class="card-body">
               <div class="card card-modern-gray mb-3">
-                <div class="card-header h5">
+                <h5 class="card-header">
                   {% trans "Case List Configuration" %}
-                </div>
+                </h5>
                 <div class="card-body row align-items-center g-2">
                   <div class="col-auto">{% trans "This Form opens a Child Case in the Case List" %}</div>
                   <div class="col-auto">

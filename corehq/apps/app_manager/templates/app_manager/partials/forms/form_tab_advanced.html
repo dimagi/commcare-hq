@@ -9,9 +9,9 @@
         action="{% url "copy_form" domain app.id form.unique_id %}"
       >
         {% csrf_token %}
-        <div class="card-header h5">
+        <h5 class="card-header">
           {% trans "Copy Form" %}
-        </div>
+        </h5>
         <div class="card-body row align-items-center g-2">
           {% if request|toggle_enabled:"COPY_FORM_TO_APP" %}
             <div class="col-auto" id="app-module-selection">
@@ -70,9 +70,9 @@
     <fieldset></fieldset>
   {% endif %}
   <div class="card card-modern-gray mb-3">
-    <div class="card-header h5">
+    <h5 class="card-header">
       {% trans "XForm" %}
-    </div>
+    </h5>
     <div class="card-body">
       <ul class="nav nav-pills flex-column">
         {% if allow_xform_upload %}

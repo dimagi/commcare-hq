@@ -121,10 +121,10 @@
             <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
               <div>
                 <div class="card card-modern-gray mb-3">
-                  <div class="card-header h5">
+                  <h5 class="card-header">
                     <span data-bind="text: name"></span>
                     <span class="badge text-bg-primary" data-bind="text: caseType"></span>
-                  </div>
+                  </h5>
                   <div class="card-body">
                     <div class="controls">
                       <textarea name="_xpath"

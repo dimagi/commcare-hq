@@ -112,12 +112,12 @@
 
 <script type="text/html"
         id="case-config:case-transaction:case-preload">
-  <div class="card-header h5">
+  <h5 class="card-header">
     <span>
       <i class="fa fa-arrow-right"></i><i class="fa-regular fa-file"></i>
       {% trans "Load the following properties into the form questions" %}
     </span>
-  </div>
+  </h5>
   <div class="card-body">
     <table class="table table-savecaseprops"
            data-bind="visible: case_preload().length">
@@ -186,8 +186,8 @@
 
 <script type="text/html"
         id="case-config:case-transaction:case-properties">
-  <div class="card-header h5 row align-items-center g-0">
-    <div class="col">
+  <div class="card-header row align-items-center g-0">
+    <h5 class="col mb-0">
       <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
       <!-- ko if: !$data.type || $data.type() == "case-property" -->
       {% trans "Save Questions to Case Properties" %}
@@ -195,7 +195,7 @@
       <!-- ko if: $data.type && $data.type() == "user-property" -->
         {% trans "Save Questions to User Properties" %}
       <!-- /ko -->
-    </div>
+    </h5>
     <div class="col-auto" data-bind="if: searchAndFilter">
       <div data-bind="visible: case_properties().length">
         <search-box data-apply-bindings="false"
