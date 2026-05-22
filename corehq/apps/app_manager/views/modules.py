@@ -236,7 +236,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             .filter(domain=app.domain, is_active=True)
             .order_by('name')
             .values('id', 'name')
-        ),
+        ) if toggles.CASE_SEARCH_ENDPOINTS.enabled(app.domain) else [],
         'data_registry_workflow_choices': (
             (REGISTRY_WORKFLOW_LOAD_CASE, _("Load external case into form")),
             (REGISTRY_WORKFLOW_SMART_LINK, _("Smart link to external domain")),
@@ -1348,8 +1348,11 @@ def _gather_and_update_search_properties(params, app, module, lang):
                 "'{}' is an invalid instance name. It can contain only letters, numbers, and underscores."
             ).format(instance_name))
 
-        endpoint_id_raw = search_properties.get('case_search_endpoint_id')
-        case_search_endpoint_id = int(endpoint_id_raw) if endpoint_id_raw else None
+        if toggles.CASE_SEARCH_ENDPOINTS.enabled(app.domain):
+            endpoint_id_raw = search_properties.get('case_search_endpoint_id')
+            case_search_endpoint_id = int(endpoint_id_raw) if endpoint_id_raw else None
+        else:
+            case_search_endpoint_id = None
 
         module.search_config = CaseSearch(
             title_label=title_label,

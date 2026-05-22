@@ -213,7 +213,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
     def test_remote_request_endpoint_id(self):
         """
         case_search_endpoint_id is emitted as an x_commcare_endpoint_id data
-        element on the remote-request query, and is omitted when unset.
+        element on the remote-request query only when the CASE_SEARCH_ENDPOINTS
+        toggle is enabled and the field is set.
         """
         xpath = f"./remote-request/session/query/data[@key='{CASE_SEARCH_ENDPOINT_ID_KEY}']"
 
@@ -222,6 +223,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
 
         self.module.search_config.case_search_endpoint_id = 42
         suite = self.app.create_suite()
+        self.assertXmlDoesNotHaveXpath(suite, xpath)
+
+        with flag_enabled('CASE_SEARCH_ENDPOINTS'):
+            suite = self.app.create_suite()
         self.assertXmlHasXpath(suite, xpath)
         [element] = parse_normalize(suite, to_string=False).xpath(xpath)
         self.assertEqual(element.get('ref'), "'42'")

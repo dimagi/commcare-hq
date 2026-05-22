@@ -305,7 +305,10 @@ class RemoteRequestFactory(object):
                     ref=f"'{','.join(refs)}'",
                 )
             )
-        if self.module.search_config.case_search_endpoint_id:
+        if (
+            toggles.CASE_SEARCH_ENDPOINTS.enabled(self.app.domain)
+            and self.module.search_config.case_search_endpoint_id
+        ):
             datums.append(
                 QueryData(
                     key=CASE_SEARCH_ENDPOINT_ID_KEY,
