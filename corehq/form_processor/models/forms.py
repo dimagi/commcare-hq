@@ -419,9 +419,9 @@ class XFormInstanceManager(RequireDBManager):
                     Tombstone.objects.using(queryset.db).bulk_create(
                         tombstones, ignore_conflicts=True
                     )
-                    batch_count, _ = queryset.filter(form_id__in=form_ids_to_delete).delete()
+                    _, batch_count = queryset.filter(form_id__in=form_ids_to_delete).delete()
 
-                shard_count += batch_count
+                shard_count += batch_count.get(self.model._meta.label, 0)
 
             deleted_count += shard_count
 
