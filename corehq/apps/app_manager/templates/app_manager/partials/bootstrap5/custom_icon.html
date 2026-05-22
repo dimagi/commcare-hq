@@ -2,8 +2,8 @@
 {% load i18n %}
 
 <div>
-  <div class="form-group">  {# todo B5: css-form-group #}
-    <label class="form-label col-md-2"
+  <div class="row mb-3">
+    <label class="field-label"
       >{% trans "Custom Icon" %}
       <span
         class="hq-help-template"
@@ -21,9 +21,9 @@
       </span>
     </label>
     <div class="col-md-2">
-      <select  {# todo B5: css-select-form-control #}
+      <select
         id="custom-icon-type-select"
-        class="form-control"
+        class="form-select"
         name="custom_icon_type"
       >
         <option value="text" {% if custom_icon.is_text %}selected{% endif %}>

@@ -1,0 +1,53 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% if allow_xform_upload %}
+  <div class="modal fade" id="upload-xform">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">{% trans "Upload XForm" %}</h4>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="{% trans_html_attr 'Close' %}"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <form
+            method="POST"
+            enctype="multipart/form-data"
+            action="{% url "edit_form_attr" domain app.id form.get_unique_id 'xform' %}"
+          >
+            {% csrf_token %}
+            <input
+              type="file"
+              id="xform_file_input"
+              name="xform"
+              class="form-control"
+            />
+            <input type="hidden" name="ajax" value="false" />
+            <button
+              type="submit"
+              id="xform_file_submit"
+              class="btn btn-primary"
+            >
+              {% trans "Upload" %}
+            </button>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            data-bs-dismiss="modal"
+            aria-hidden="true"
+          >
+            {% trans "Close" %}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
