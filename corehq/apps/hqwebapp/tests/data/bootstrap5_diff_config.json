@@ -1123,15 +1123,6 @@
     },
     {
       "directories": [
-        "forms/advanced/bootstrap3",
-        "forms/advanced/bootstrap5"
-      ],
-      "file_type": "javascript",
-      "label": "javascript/app_manager/js/forms/advanced",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
         "modules/bootstrap3",
         "modules/bootstrap5"
       ],
