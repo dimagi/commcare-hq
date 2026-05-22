@@ -48,11 +48,15 @@ def test_concurrency_minimum():
 def test_runs_and_releases_lock():
     task_with_concurrency.apply(args=['test'])
     assert _task_calls == ['test']
-    lock = get_redis_lock(
-        'task_with_concurrency-test:0', timeout=5, name='task_with_concurrency'
-    )
-    assert lock.acquire(blocking=False)
-    release_lock(lock, True)
+    # check both slots since initial call could select either
+    for i in range(2):
+        lock = get_redis_lock(
+            f'task_with_concurrency-test:{i}',
+            timeout=5,
+            name='task_with_concurrency',
+        )
+        assert lock.acquire(blocking=False)
+        release_lock(lock, True)
 
 
 @suspend(run_with_lock_patch)
@@ -64,11 +68,13 @@ def test_fails_and_releases_lock():
     result = raising_task.apply()
     assert result.failed()
 
-    lock = get_redis_lock(
-        'raising_task-test:0', timeout=5, name='raising_task'
-    )
-    assert lock.acquire(blocking=False)
-    release_lock(lock, True)
+    # check both slots since initial call could select either
+    for i in range(2):
+        lock = get_redis_lock(
+            f'raising_task-test:{i}', timeout=5, name='raising_task'
+        )
+        assert lock.acquire(blocking=False)
+        release_lock(lock, True)
 
 
 @use(task_calls)

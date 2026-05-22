@@ -1,3 +1,4 @@
+import random
 from functools import wraps
 
 from corehq.apps.celery.locking import (
@@ -66,8 +67,11 @@ def concurrent_task(
         @wraps(fn)
         def _inner(self, *args, **kwargs):
             key = get_unique_key(unique_key, fn, *args, **kwargs)
+            # Randomize starting slot to avoid contention
+            start = random.randrange(concurrency)
             for i in range(concurrency):
-                slot_key = f'{key}:{i}'
+                slot_index = (start + i) % concurrency
+                slot_key = f'{key}:{slot_index}'
                 try:
                     return run_with_lock(
                         slot_key, fn, timeout, *args, **kwargs
