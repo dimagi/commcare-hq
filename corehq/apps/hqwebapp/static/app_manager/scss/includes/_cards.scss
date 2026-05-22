@@ -112,12 +112,8 @@
     background-color: $cc-dark-cool-accent-mid;
     color: white;
 
-    // !important needed to beat B5's `.text-muted` utility class
-    // (deprecated but still generated, with `color: ... !important`).
-    // Without it, the muted "close" / "update" labels in the header
-    // are nearly invisible (B5's secondary gray on the dark-purple bg).
-    .text-muted {
-      color: $cc-dark-cool-accent-hi !important;
+    .action-header-secondary {
+      color: $cc-dark-cool-accent-hi;
     }
   }
 }
