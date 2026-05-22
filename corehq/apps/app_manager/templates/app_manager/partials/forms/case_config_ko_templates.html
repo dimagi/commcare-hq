@@ -232,7 +232,8 @@
           <!-- ko if: $data.type && $data.type() == "user-property" -->
             {% trans "User Case Property" %}
             <span
-                  style="position: absolute; margin-top: -2px"
+                  class="position-absolute"
+                  style="margin-top: -2px"
                   data-bind="makeHqHelp: {
                     description: '{% blocktrans trimmed %}
                         User Case Properties allow you to store data about a web or mobile user. Saving a user
@@ -244,7 +245,8 @@
           <!-- ko if: !$data.type || $data.type() == "case-property" -->
             {% trans "Case Property" %}
             <span
-                  style="position: absolute; margin-top: -2px"
+                  class="position-absolute"
+                  style="margin-top: -2px"
                   data-bind="makeHqHelp: {
                     description: '{% blocktrans trimmed %}
                         Saving a question as a case property makes it accessible and
@@ -257,9 +259,9 @@
         {% comment %} The odd style additions in this block were necessary to put the question mark
         in line with the text when the text is both wrapped and unwrapped. {% endcomment %}
         <!-- ko if: saveOnlyEditedFormFieldsEnabled -->
-        <th class="col-md-2 text-center" style="padding-right: 30px">
-            <span style="padding-right: 5px">{% trans "Save Only If Edited" %}</span>
-            <span style="position: absolute; margin-top: -2px;" data-bind="makeHqHelp: {
+        <th class="col-md-2 text-center pe-4">
+            <span class="pe-1">{% trans "Save Only If Edited" %}</span>
+            <span class="position-absolute" style="margin-top: -2px;" data-bind="makeHqHelp: {
               description: '{% trans "Only save the answer if form submission will change the property from its previous value." %}',
               placement: 'left'
             }"></span>
