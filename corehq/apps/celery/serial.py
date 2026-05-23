@@ -85,8 +85,9 @@ def _get_unique_key(format_str, fn, *args, **kwargs):
     Lines args and kwargs up with those specified in the definition of fn and
     passes the result to `format_str.format()`.
     """
-    callargs = inspect.getcallargs(fn, *args, **kwargs)
-    return ("{}-" + format_str).format(fn.__name__, **callargs)
+    bound = inspect.signature(fn).bind(*args, **kwargs)
+    bound.apply_defaults()  # ensures bound.arguments includes default values
+    return ("{}-" + format_str).format(fn.__name__, **bound.arguments)
 
 
 class CouldNotAcquireLockError(Exception):
