@@ -1,10 +1,24 @@
 from unittest.mock import patch
+from unmagic import fixture, use
 
 from dimagi.utils.couch import get_redis_lock, release_lock
 
 from corehq.apps.celery.serial import CouldNotAcquireLockError, serial_task
 from corehq.apps.celery.tests.utils import run_with_lock_patch
 from corehq.tests.pytest_plugins.patches import suspend
+
+_task_calls = []
+
+
+@serial_task('{arg}')
+def task_with_arg(arg):
+    _task_calls.append(arg)
+
+
+@fixture
+def task_calls():
+    yield _task_calls
+    _task_calls.clear()
 
 
 def test_celery_specific_kwargs_bind_to_task():
@@ -17,17 +31,12 @@ def test_celery_specific_kwargs_bind_to_task():
     assert task_no_arg.queue == 'custom'
 
 
+@use(task_calls)
 @suspend(run_with_lock_patch)
 def test_runs_and_releases_lock():
-    task_calls = []
-
-    @serial_task('{arg}')
-    def task_with_arg(arg):
-        task_calls.append(arg)
-
     task_with_arg.apply(args=['test'])
 
-    assert task_calls == ['test']
+    assert _task_calls == ['test']
     lock = get_redis_lock(
         'task_with_arg-test', timeout=5, name='task_with_arg'
     )
@@ -49,14 +58,9 @@ def test_fails_and_releases_lock():
     release_lock(lock, True)
 
 
+@use(task_calls)
 @suspend(run_with_lock_patch)
 def test_fails_to_acquire_lock():
-    task_calls = []
-
-    @serial_task('{arg}')
-    def task_with_arg(arg):
-        task_calls.append(arg)
-
     lock = get_redis_lock(
         'task_with_arg-test', timeout=5, name='task_with_arg'
     )
@@ -68,6 +72,6 @@ def test_fails_to_acquire_lock():
         assert retry.called
         exc = retry.call_args.kwargs['exc']
         assert isinstance(exc, CouldNotAcquireLockError)
-        assert task_calls == []
+        assert _task_calls == []
     finally:
         release_lock(lock, True)
