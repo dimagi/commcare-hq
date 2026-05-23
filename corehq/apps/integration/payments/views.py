@@ -61,8 +61,6 @@ class PaymentsFiltersMixin:
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
         'corehq.apps.integration.payments.filters.CaseCreatedDateRangeFilter',
         'corehq.apps.integration.payments.filters.BatchNumberFilter',
-        'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
-        'corehq.apps.integration.payments.filters.PaymentStatusFilter',
         'corehq.apps.integration.payments.filters.CampaignFilter',
         'corehq.apps.integration.payments.filters.ActivityFilter',
         'corehq.apps.integration.payments.filters.FunderFilter',
