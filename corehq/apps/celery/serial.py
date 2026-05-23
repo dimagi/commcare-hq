@@ -87,7 +87,7 @@ def _get_unique_key(format_str, fn, *args, **kwargs):
     """
     bound = inspect.signature(fn).bind(*args, **kwargs)
     bound.apply_defaults()  # ensures bound.arguments includes default values
-    return ("{}-" + format_str).format(fn.__name__, **bound.arguments)
+    return f"{fn.__name__}-{format_str.format(**bound.arguments)}"
 
 
 class CouldNotAcquireLockError(Exception):
