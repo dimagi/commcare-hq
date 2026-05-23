@@ -1,8 +1,6 @@
 import inspect
 from functools import wraps
 
-from django.conf import settings
-
 from corehq.apps.celery.shared_task import task
 
 
@@ -55,9 +53,6 @@ def serial_task(
         )
         @wraps(fn)
         def _inner(self, *args, **kwargs):
-            if settings.UNIT_TESTING:  # Don't depend on redis
-                return fn(*args, **kwargs)
-
             key = _get_unique_key(unique_key, fn, *args, **kwargs)
             try:
                 return _run_with_lock(key, fn, timeout, *args, **kwargs)
