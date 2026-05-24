@@ -26,6 +26,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         'campaign',
         'activity',
         'funder',
+        'campaign_worker_role',
     ]
 
     record_class = CaseSearchElasticRecord
@@ -63,6 +64,9 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     )
     funder = columns.Column(
         verbose_name=_("Funder"),
+    )
+    campaign_worker_role = columns.Column(
+        verbose_name=_("Campaign Worker Role"),
     )
     user_or_case_id = columns.Column(
         verbose_name=_("User or Case ID"),
