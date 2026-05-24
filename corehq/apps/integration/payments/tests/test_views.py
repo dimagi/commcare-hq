@@ -503,6 +503,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                     PaymentProperties.CAMPAIGN: 'Campaign A',
                     PaymentProperties.ACTIVITY: 'Activity A',
                     PaymentProperties.FUNDER: 'Funder A',
+                    PaymentProperties.CAMPAIGN_WORKER_ROLE: 'Supervisor',
                     PaymentProperties.PHONE_NUMBER: '987654321',
                 }),
             _create_case(
@@ -515,6 +516,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                     PaymentProperties.CAMPAIGN: 'Campaign A',
                     PaymentProperties.ACTIVITY: 'Activity A',
                     PaymentProperties.FUNDER: 'Funder A',
+                    PaymentProperties.CAMPAIGN_WORKER_ROLE: 'Field Officer',
                     PaymentProperties.PHONE_NUMBER: '123456789'
                 }),
             _create_case(
@@ -615,6 +617,12 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
         response = self._make_request(querystring='funder=Funder A')
         queryset = response.context['table'].data
         assert len(queryset) == 2
+
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
+    def test_campaign_worker_role_filter(self):
+        response = self._make_request(querystring='campaign_worker_role=Supervisor')
+        queryset = response.context['table'].data
+        assert len(queryset) == 1
 
     @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_phone_number_filter(self):

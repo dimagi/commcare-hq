@@ -23,6 +23,7 @@ class PaymentProperties(str, Enum):
     CAMPAIGN = 'campaign'
     ACTIVITY = 'activity'
     FUNDER = 'funder'
+    CAMPAIGN_WORKER_ROLE = 'campaign_worker_role'
     PAYMENT_ERROR = 'payment_error'
     # Tracks how many times we attempted to fetch payment status (including first attempt).
     # Only stored for pending or request error
