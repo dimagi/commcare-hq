@@ -20,6 +20,7 @@ from corehq.apps.integration.kyc.views import (
     KycVerificationTableView,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
+from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.users.models import CommCareUser, HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.permissions import KYC_REPORT_PERMISSION
@@ -756,6 +757,65 @@ class TestKycFilters(BaseTestKycView):
         table_data = response.context['table'].data
         assert len(table_data) == 1
         assert table_data.data[0].serialized_data['id'] == self.case_verified.case_id
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_open_close_filter_other_case_type(self):
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.OTHER_CASE_TYPE,
+            other_case_type='other-case',
+            api_field_to_user_data_map=self.kyc_mapping.copy(),
+        )
+        self.addCleanup(kyc_config.delete)
+
+        factory = CaseFactory(self.domain)
+        open_case = _create_case(
+            factory,
+            name='extra_open_case',
+            case_type='other-case',
+            data={'first_name': 'Open', 'phone_number': '321'},
+        )
+        closed_case = factory.close_case(open_case.case_id)
+        case_search_adapter.bulk_index([closed_case], refresh=True)
+        self.addCleanup(case_search_adapter.delete, closed_case.case_id, True)
+
+        self.client.login(username=self.username, password=self.password)
+
+        response = self.client.get(self.endpoint, {SelectOpenCloseFilter.slug: 'closed'})
+        assert response.status_code == 200
+        table_data = response.context['table'].data
+        assert len(table_data) == 1
+        assert table_data.data[0].serialized_data['id'] == closed_case.case_id
+
+        response = self.client.get(self.endpoint, {SelectOpenCloseFilter.slug: 'open'})
+        assert response.status_code == 200
+        open_ids = {row.serialized_data['id'] for row in response.context['table'].data.data}
+        assert closed_case.case_id not in open_ids
+        assert self.case_verified.case_id in open_ids
+        assert self.case_pending.case_id in open_ids
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_open_close_filter_ignored_for_custom_user_data(self):
+        self._assert_open_close_filter_is_noop(UserDataStore.CUSTOM_USER_DATA)
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_open_close_filter_ignored_for_user_case(self):
+        self._assert_open_close_filter_is_noop(UserDataStore.USER_CASE)
+
+    def _assert_open_close_filter_is_noop(self, user_data_store):
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=user_data_store,
+            api_field_to_user_data_map=self.kyc_mapping.copy(),
+        )
+        self.addCleanup(kyc_config.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        baseline = self.client.get(self.endpoint)
+        filtered = self.client.get(self.endpoint, {SelectOpenCloseFilter.slug: 'closed'})
+
+        assert filtered.status_code == 200
+        assert len(filtered.context['table'].data) == len(baseline.context['table'].data)
 
 
 def _create_case(factory, name, data, case_type='other-case', owner_id=None):

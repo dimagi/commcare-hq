@@ -1,9 +1,40 @@
 import "commcarehq";
-import "hqwebapp/js/htmx_and_alpine";
+import "hqwebapp/js/htmx_base";
+import Alpine from 'alpinejs';
 import 'reports/js/bootstrap5/base';
 import $ from "jquery";
 import { multiCheckboxSelectionHandler } from "integration/js/checkbox_selection_handler";
 import htmx from 'htmx.org';
+
+Alpine.data('caseCreatedDateRangeFilter', (startdate, enddate) => ({
+    startdate,
+    enddate,
+    init() {
+        const $picker = $(this.$refs.picker);
+        $picker.createDateRangePicker(
+            {
+                last_7_days: gettext('Last 7 Days'),
+                last_month: gettext('Last Month'),
+                last_30_days: gettext('Last 30 Days'),
+            },
+            $picker.getDateRangeSeparator(),
+            this.startdate,
+            this.enddate,
+        );
+        $picker.on('apply.daterangepicker', (ev, picker) => {
+            this.startdate = picker.startDate.format('YYYY-MM-DD');
+            this.enddate = picker.endDate.format('YYYY-MM-DD');
+        });
+        // The library's built-in clear (in daterangepicker.config.js) is gated on the
+        // picker having a 'name' attribute, which we omit to keep its value out of the URL.
+        $picker.on('cancel.daterangepicker', () => {
+            this.startdate = '';
+            this.enddate = '';
+        });
+    },
+}));
+
+Alpine.start();
 
 
 function updateVerifyAndRevertButton(selectedIds) {
