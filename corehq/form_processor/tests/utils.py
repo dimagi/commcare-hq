@@ -27,6 +27,7 @@ from corehq.form_processor.models import (
     XFormInstance,
 )
 from corehq.sql_db.models import PartitionedModel
+from corehq.tests.util.context import testcontextmanager
 from corehq.util.test_utils import unit_testing_only
 
 from .json2xml import convert_form_to_xml
@@ -375,3 +376,38 @@ def delete_all_xforms_and_cases(domain):
     assert settings.UNIT_TESTING
     FormProcessorTestUtils.delete_all_xforms(domain)
     FormProcessorTestUtils.delete_all_cases(domain)
+
+
+_original_hard_delete_forms = XFormInstance.objects.__class__.hard_delete_forms
+def _hard_delete_forms_no_tombstone(self, domain, form_ids, *, publish_changes=True, leave_tombstones=True):
+    return _original_hard_delete_forms(
+        self, domain, form_ids, publish_changes=publish_changes, leave_tombstones=False
+    )
+
+force_no_tombstone_patch = patch.object(
+    XFormInstance.objects.__class__, "hard_delete_forms", _hard_delete_forms_no_tombstone
+)
+
+def patch_form_deletion():
+    """Setup form deletion for tests
+
+    - Default to not leaving tombstones to ease cleanup
+
+    """
+    # Use __enter__ and __exit__ to start/stop so patch.stopall() does not stop it.
+    assert settings.UNIT_TESTING
+    force_no_tombstone_patch.__enter__()
+
+@testcontextmanager
+def leave_tombstones_on_form_deletion():
+    from corehq.apps.tombstones.models import Tombstone
+    from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+
+    assert settings.UNIT_TESTING
+    force_no_tombstone_patch.__exit__(None, None, None)
+    try:
+        yield
+    finally:
+        force_no_tombstone_patch.__enter__()
+        for db in get_db_aliases_for_partitioned_query():
+            Tombstone.objects.using(db).all().delete()
