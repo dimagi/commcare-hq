@@ -95,6 +95,11 @@ class FunderFilter(BaseLookupTableFilter):
     label = _('Funder')
 
 
+class CampaignWorkerRoleFilter(BaseLookupTableFilter):
+    slug = PaymentProperties.CAMPAIGN_WORKER_ROLE.value
+    label = _('Campaign worker role')
+
+
 class PhoneNumberFilter(BaseSimpleFilter):
     slug = 'phone_number'
     label = _('Phone number')
