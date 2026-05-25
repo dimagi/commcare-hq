@@ -24,3 +24,12 @@ can be changed to
 ```
 
 See: https://getbootstrap.com/docs/5.3/components/card/
+
+## HQ-custom panel classes
+
+Many HQ templates pair `.panel` with HQ-custom classes
+(`.panel-appmanager`, `.panel-case-actions`, etc.) that the
+auto-rename does not handle. See
+[`custom-classes/`](custom-classes/README.md) for the per-class
+decisions and the principle ("minimize stylesheet, keep color")
+that governs them.
