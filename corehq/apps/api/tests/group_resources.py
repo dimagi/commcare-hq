@@ -149,6 +149,91 @@ class TestGroupResource(APIResourceTest):
         self.assertEqual(response.status_code, 204, response.content)
         self.assertEqual(0, len(Group.by_domain(self.domain.name)))
 
+    def test_create_rejects_name_already_exists(self):
+        self._add_group(Group({"name": "test group", "domain": self.domain.name}))
+
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps({"name": "test group"}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        response_body = json.loads(response.content)
+        self.assertIn("already exists", response_body["error_message"])
+        self.assertEqual(1, len(Group.by_domain(self.domain.name)))
+
+    def test_create_rejects_name_empty(self):
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps({"name": ""}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        response_body = json.loads(response.content)
+        self.assertIn("is required", response_body["error_message"])
+        self.assertEqual(0, len(Group.by_domain(self.domain.name)))
+
+    def test_create_rejects_name_missing(self):
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps({"case_sharing": True}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        response_body = json.loads(response.content)
+        self.assertIn("is required", response_body["error_message"])
+        self.assertEqual(0, len(Group.by_domain(self.domain.name)))
+
+    def test_update_rejects_name_already_exists(self):
+        group_a = self._add_group(Group({"name": "test a", "domain": self.domain.name}))
+        self._add_group(Group({"name": "test b", "domain": self.domain.name}))
+
+        backend_id = group_a._id
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(backend_id),
+            json.dumps({"name": "test b"}),
+            content_type='application/json',
+            method='PUT',
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        response_body = json.loads(response.content)
+        self.assertIn("already exists", response_body["error"])
+
+        group_a = Group.get(backend_id)
+        self.assertEqual(group_a.name, "test a")
+
+    def test_update_rejects_name_empty(self):
+        original_group = self._add_group(Group({"name": "test group", "domain": self.domain.name}))
+
+        backend_id = original_group._id
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(backend_id),
+            json.dumps({"name": ""}),
+            content_type='application/json',
+            method='PUT',
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        response_body = json.loads(response.content)
+        self.assertIn("must not be blank", response_body["error"])
+
+        modified_group = Group.get(backend_id)
+        self.assertEqual(modified_group.name, "test group")
+
+    def test_update_allows_name_missing(self):
+        original_group = self._add_group(Group({"name": "test", "domain": self.domain.name}))
+
+        backend_id = original_group._id
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(backend_id),
+            json.dumps({"case_sharing": True}),
+            content_type='application/json',
+            method='PUT',
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        modified_group = Group.get(backend_id)
+        self.assertTrue(modified_group.case_sharing)
+
     def _add_group(self, group, send_to_es=False):
         group.save()
         self.addCleanup(group.delete)

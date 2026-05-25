@@ -15,7 +15,7 @@
  
  {% block title %}{# controlled by app_manager/js/form_designer.js #}{% endblock %}
  
-@@ -43,7 +43,7 @@
+@@ -42,7 +42,7 @@
    <div id="formdesigner" class="clearfix loading"></div>
  
    <script type="text/html" id="js-fd-form-actions">
@@ -24,7 +24,7 @@
        <!-- B5 TODO: Replace btn-form-action with bootstrap 5 utils after migration -->
        <a
          class="btn btn-form-action track-usage-link custom-button-style"
-@@ -68,7 +68,7 @@
+@@ -67,7 +67,7 @@
    </script>
  
    <script type="text/html" id="js-fd-view-submissions-only">
@@ -33,7 +33,7 @@
        {% include "app_manager/partials/view_submissions_button.html" with btn_style='btn-form-action custom-button-style' %}
      </div>
    </script>
-@@ -86,7 +86,7 @@
+@@ -85,7 +85,7 @@
    </script>
  
    <script type="text/html" id="fd-hq-helptext-close">
@@ -42,66 +42,3 @@
    </script>
  
    <script type="text/html" id="fd-hq-helptext-followup">
-@@ -114,7 +114,7 @@
-   </script>
- 
-   <script type="text/html" id="fd-hq-edit-formname-button">
--    <a href="#edit-form-name-modal" class="link-edit-form" data-toggle="modal">
-+    <a href="#edit-form-name-modal" class="link-edit-form" data-bs-toggle="modal">
-       <i class="fa fa-pencil"></i>
-     </a>
-   </script>
-@@ -128,7 +128,7 @@
-     <div class="modal-dialog">
-       <div class="modal-content">
-         <div class="modal-header">
--          <button type="button" class="close" data-dismiss="modal">
-+          <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
-             <span aria-hidden="true">&times;</span>
-           </button>
-           <h4 class="modal-title">{% trans "Edit Form Details" %}</h4>
-@@ -139,13 +139,13 @@
-           data-bind="submit:update"
-         >
-           <div class="modal-body">
--            <div class="form-group">
--              <div class="col-sm-3">
--                <label for="update-form-name" class="control-label">
-+            <div class="form-group">  {# todo B5: css-form-group #}
-+              <div class="col-md-3">
-+                <label for="update-form-name" class="form-label">
-                   {% trans "Form Name" %}
-                 </label>
-               </div>
--              <div class="col-sm-9">
-+              <div class="col-md-9">
-                 <input
-                   type="text"
-                   data-bind="value: name"
-@@ -153,13 +153,13 @@
-                 />
-               </div>
-             </div>
--            <div class="form-group">
--              <div class="col-sm-3">
--                <label for="update-form-name" class="control-label">
-+            <div class="form-group">  {# todo B5: css-form-group #}
-+              <div class="col-md-3">
-+                <label for="update-form-name" class="form-label">
-                   {% trans "Comment" %}
-                 </label>
-               </div>
--              <div class="col-sm-9">
-+              <div class="col-md-9">
-                 <textarea
-                   rows="5"
-                   data-bind="value: comment"
-@@ -169,7 +169,7 @@
-             </div>
-           </div>
-           <div class="modal-footer">
--            <a href="#" data-dismiss="modal" class="btn btn-default"
-+            <a href="#" data-bs-dismiss="modal" class="btn btn-outline-primary"
-               >{% trans "Cancel" %}</a
-             >
-             <button type="submit" class="btn btn-primary disable-on-submit">

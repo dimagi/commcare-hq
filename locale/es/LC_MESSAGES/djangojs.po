@@ -990,6 +990,14 @@ msgid "XPath Expression"
 msgstr "Expresión XPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Hidden)"
+msgstr " (Oculto)"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Locked)"
+msgstr " (Bloqueado)"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
 msgstr "Pregunta no identificada"
 
@@ -1278,9 +1286,45 @@ msgstr "Último guardado"
 msgid "[unknown]"
 msgstr "[desconocido]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/229.js
-msgid "\n"
-msgstr "\n"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "loadXFormOrError"
+msgstr "cargarXFormOError"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isPropertyLocked"
+msgstr "esPropiedadBloqueada"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugPathMoveable"
+msgstr "esRutaMugMovible"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugRemoveable"
+msgstr "esMugRemovible"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugTypeChangeable"
+msgstr "esTipoMugCambiable"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "getMainProperties"
+msgstr "obtenerPropiedadesPrincipales"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "createXML"
+msgstr "crearXML"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "getData"
+msgstr "obtenerDatos"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "checkMove"
+msgstr "verificarMovimiento"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "jstree"
+msgstr "jstree"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "Drag question here"
@@ -1325,6 +1369,10 @@ msgstr "Es verdadero cuando CUALQUIERA de las expresiones es verdadera"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path}no es un padre de datos válido."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/96.js
+msgid "\n"
+msgstr "\n"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "New Form"
@@ -5266,23 +5314,11 @@ msgstr "CommCare HQ no pudo realizar la solicitud: "
 #~ msgid "getCurrentMugInput"
 #~ msgstr "obtenerEntradaActualMug"
 
-#~ msgid "jstree"
-#~ msgstr "jstree"
-
 #~ msgid "getMugByPath"
 #~ msgstr "getMugByPath"
 
-#~ msgid "getData"
-#~ msgstr "obtenerDatos"
-
 #~ msgid "loadXML"
 #~ msgstr "cargarXML"
-
-#~ msgid "createXML"
-#~ msgstr "crearXML"
-
-#~ msgid "loadXFormOrError"
-#~ msgstr "cargarXFormOError"
 
 #~ msgid "addQuestion"
 #~ msgstr "agregarPregunta"

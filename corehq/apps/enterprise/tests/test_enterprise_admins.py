@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from unittest.mock import patch
 
 from django.contrib.messages import get_messages
 from django.test import Client, TestCase
@@ -19,10 +18,6 @@ from corehq.apps.sso.models import (
 )
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_disabled, flag_enabled
-
-
-def _noop(*args, **kwargs):
-    pass
 
 
 def _make_idp(account, slug, is_active=True, domains=None):
@@ -92,16 +87,13 @@ class _EnterpriseAdminViewTestBase(TestCase):
             edition=SoftwarePlanEdition.ENTERPRISE,
         )
         start = date.today()
-        # Kafka is not available in the test environment; stub the publish
-        # call so fixture setup/teardown doesn't depend on a broker.
-        with patch('corehq.apps.accounting.models.publish_domain_saved', _noop):
-            generate_domain_subscription(
-                cls.account, cls.domain,
-                date_start=start,
-                date_end=start + timedelta(days=365),
-                plan_version=plan_version,
-                is_active=True,
-            )
+        generate_domain_subscription(
+            cls.account, cls.domain,
+            date_start=start,
+            date_end=start + timedelta(days=365),
+            plan_version=plan_version,
+            is_active=True,
+        )
         cls.admin_user = WebUser.create(
             cls.domain_name, 'admin-user@example.com', 'pw',
             None, None, is_admin=True,
@@ -118,10 +110,7 @@ class _EnterpriseAdminViewTestBase(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.admin_user.delete(cls.domain_name, deleted_by=None)
-        # Kafka is not available in the test environment; stub the publish
-        # call so fixture setup/teardown doesn't depend on a broker.
-        with patch('corehq.apps.accounting.models.publish_domain_saved', _noop):
-            cls.domain.delete()
+        cls.domain.delete()
         super().tearDownClass()
 
     @property
@@ -131,6 +120,14 @@ class _EnterpriseAdminViewTestBase(TestCase):
     def _reload_account(self):
         self.account.refresh_from_db()
         return self.account
+
+    def _create_member(self, email, domain_name=None):
+        """Create a WebUser as a member of ``domain_name`` (defaults to the
+        shared account domain) and register cleanup."""
+        domain_name = domain_name or self.domain_name
+        user = WebUser.create(domain_name, email, 'pw', None, None)
+        self.addCleanup(user.delete, domain_name, deleted_by=None)
+        return user
 
 
 class EnterpriseAdminsGetViewTests(_EnterpriseAdminViewTestBase):
@@ -202,6 +199,7 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_add_valid_email_appends_lowercased(self):
+        self._create_member('newadmin@example.com')
         response = self.client.post(
             self.add_url, {'email': 'NewAdmin@Example.com'},
         )
@@ -243,6 +241,7 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_add_with_sso_allows_matching_domain(self):
         _make_idp(self.account, slug='idp-sso-ok', domains=['corp.com'])
+        self._create_member('newperson@corp.com')
         response = self.client.post(
             self.add_url, {'email': 'newperson@corp.com'},
         )
@@ -255,6 +254,7 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         # An active IdP with no AuthenticatedEmailDomain rows imposes no
         # domain restriction.
         _make_idp(self.account, slug='idp-no-domains')
+        self._create_member('someone@unrestricted.com')
         response = self.client.post(
             self.add_url, {'email': 'someone@unrestricted.com'},
         )
@@ -276,6 +276,7 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
 
     @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
     def test_add_logs_info(self):
+        self._create_member('logger@example.com')
         with self.assertLogs(
             'corehq.apps.enterprise.views', level='INFO'
         ) as cap:
@@ -292,6 +293,46 @@ class AddEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):
         assert response.status_code == 404
         account = self._reload_account()
         assert 'blocked@example.com' not in account.enterprise_admin_emails
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_rejects_unknown_email(self):
+        # An email with no backing WebUser cannot be added: the candidate
+        # admin would be unable to view the dashboard since membership of
+        # an account project space is required.
+        response = self.client.post(
+            self.add_url, {'email': 'no-such-user@example.com'},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        assert 'no-such-user@example.com' not in account.enterprise_admin_emails
+        msgs = [str(m) for m in get_messages(response.wsgi_request)]
+        assert any('member of at least one project space' in m for m in msgs)
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_rejects_user_not_in_account_domains(self):
+        # A WebUser exists, but is only a member of a domain unrelated to
+        # this enterprise account.
+        outside_domain = create_domain('ent-admin-outside')
+        self.addCleanup(outside_domain.delete)
+        self._create_member('out-of-account@example.com', domain_name='ent-admin-outside')
+        response = self.client.post(
+            self.add_url, {'email': 'out-of-account@example.com'},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        assert 'out-of-account@example.com' not in account.enterprise_admin_emails
+        msgs = [str(m) for m in get_messages(response.wsgi_request)]
+        assert any('member of at least one project space' in m for m in msgs)
+
+    @flag_enabled('ENTERPRISE_ADMIN_SELF_SERVICE')
+    def test_add_accepts_user_who_is_member_of_account_domain(self):
+        self._create_member('member@example.com')
+        response = self.client.post(
+            self.add_url, {'email': 'member@example.com'},
+        )
+        self.assertRedirects(response, self.list_url)
+        account = self._reload_account()
+        assert 'member@example.com' in account.enterprise_admin_emails
 
 
 class RemoveEnterpriseAdminViewTests(_EnterpriseAdminViewTestBase):

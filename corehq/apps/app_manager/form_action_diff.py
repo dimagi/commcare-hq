@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import NamedTuple
 
 from .models import ConditionalCaseUpdate
 
@@ -311,3 +312,99 @@ class _NameConflictsAdapter:
 
 def _check_name(key):
     assert key == 'name', f'Invalid OpenCaseAction field: {key}'
+
+
+def collect_locked_mappings(form_actions, locked_paths):
+    """Set of mapping entries in ``form_actions`` whose ``question_path`` is
+    in ``locked_paths``.
+
+    Used to detect whether a locked-question mapping was added, removed,
+    repointed, or otherwise modified by a save: compare the result before
+    and after applying the incoming change; any difference means a locked
+    mapping was touched.
+    """
+    if not locked_paths:
+        return set()
+    return {m for m in _iter_form_action_mappings(form_actions)
+            if m.question_path in locked_paths}
+
+
+def collect_locked_advanced_mappings(advanced_form_actions, locked_paths):
+    """Set of entries from an :class:`AdvancedFormActions` whose
+    ``question_path`` is in ``locked_paths``.
+    See :func:`collect_locked_mappings`.
+    """
+    if not locked_paths:
+        return set()
+    return {m for m in _iter_advanced_form_action_mappings(advanced_form_actions)
+            if m.question_path in locked_paths}
+
+
+class CaseUpdateMapping(NamedTuple):
+    """
+    Attributes:
+        action_path: Identifies which container in ``FormActions`` this mapping
+            was extracted from. e.g., ``'open.name'``, ``'update'``, etc.
+        prop: The case-property name being read or written.
+        question_path: The XForm question path the mapping reads or writes.
+        update_mode: ``'always'`` or ``'edit'`` for
+            :class:`ConditionalCaseUpdate`-backed mappings. ``None`` for
+            preload mappings.
+        case_tag: User-assigned tag for advanced form actions.
+    """
+    action_path: str
+    prop: str
+    question_path: str
+    update_mode: str | None
+    case_tag: str = ''
+
+
+def _iter_form_action_mappings(form_actions):
+    open_case = form_actions.open_case
+    yield CaseUpdateMapping('open.name', 'name', open_case.name_update.question_path,
+                            open_case.name_update.update_mode)
+    for ccu in open_case.conflicts:
+        yield CaseUpdateMapping('open.name', 'name', ccu.question_path, ccu.update_mode)
+
+    yield from _iter_update_action_mappings('update', form_actions.update_case)
+    yield from _iter_update_action_mappings(
+        'usercase_update', form_actions.usercase_update,
+    )
+
+    for path, name in form_actions.case_preload.preload.items():
+        yield CaseUpdateMapping('case_preload', name, path, None)
+    for path, name in form_actions.usercase_preload.preload.items():
+        yield CaseUpdateMapping('usercase_preload', name, path, None)
+
+    for i, sub in enumerate(form_actions.subcases):
+        action_path = f'subcase[{i}]:{sub.case_type or ""}'
+        yield CaseUpdateMapping(action_path, 'name', sub.name_update.question_path,
+                                sub.name_update.update_mode)
+        for prop, ccu in sub.case_properties.items():
+            yield CaseUpdateMapping(action_path, prop, ccu.question_path, ccu.update_mode)
+
+
+def _iter_advanced_form_action_mappings(advanced_form_actions):
+    for action in advanced_form_actions.load_update_cases:
+        tag = action.case_tag or ''
+        for prop, ccu in action.case_properties.items():
+            yield CaseUpdateMapping('case_property', prop, ccu.question_path,
+                                    ccu.update_mode, tag)
+        for path, name in action.preload.items():
+            yield CaseUpdateMapping('preload', name, path, None, tag)
+
+    for action in advanced_form_actions.open_cases:
+        tag = action.case_tag or ''
+        yield CaseUpdateMapping('name', 'name', action.name_update.question_path,
+                                action.name_update.update_mode, tag)
+        for prop, ccu in action.case_properties.items():
+            yield CaseUpdateMapping('case_property', prop, ccu.question_path,
+                                    ccu.update_mode, tag)
+
+
+def _iter_update_action_mappings(action_path, action):
+    for prop, ccu in action.update.items():
+        yield CaseUpdateMapping(action_path, prop, ccu.question_path, ccu.update_mode)
+    for prop, ccus in action.conflicts.items():
+        for ccu in ccus:
+            yield CaseUpdateMapping(action_path, prop, ccu.question_path, ccu.update_mode)

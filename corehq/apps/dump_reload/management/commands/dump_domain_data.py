@@ -28,9 +28,15 @@ class Command(BaseCommand):
             help='An app_label, app_label.ModelName or CouchDB doc_type to include '
                  '(use multiple --include to include multiple apps/models).'
         )
-        parser.add_argument(
+        output_group = parser.add_mutually_exclusive_group()
+        output_group.add_argument(
             '--console', action='store_true', default=False, dest='console',
             help='Write output to the console instead of to file.'
+        )
+        output_group.add_argument(
+            '--dir', dest='dir',
+            help='Optionally specify a directory to write the file to. '
+                 'The directory will be created if it does not exist.',
         )
         parser.add_argument('--dumper', dest='dumpers', action='append', default=[],
                             help='Dumper slug to run (use multiple --dumper to run multiple dumpers).')
@@ -41,9 +47,15 @@ class Command(BaseCommand):
         console = options.get('console')
         show_traceback = options.get('traceback')
         requested_dumpers = options.get('dumpers')
+        output_dir = options.get('dir')
+
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
 
         self.utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
         zipname = 'data-dump-{}-{}.zip'.format(domain_name, self.utcnow)
+        if output_dir:
+            zipname = os.path.join(output_dir, zipname)
 
         self.stdout.ending = None
         meta = {}  # {dumper_slug: {model_name: count}}
@@ -52,7 +64,7 @@ class Command(BaseCommand):
             if requested_dumpers and dumper.slug not in requested_dumpers:
                 continue
 
-            filename = _get_dump_stream_filename(dumper.slug, domain_name, self.utcnow)
+            filename = _get_dump_stream_filename(dumper.slug, domain_name, self.utcnow, path=output_dir)
             stream = self.stdout if console else gzip.open(filename, 'wt')
             try:
                 meta[dumper.slug] = dumper(domain_name, excludes, includes).dump(stream)
@@ -61,7 +73,7 @@ class Command(BaseCommand):
                     raise
                 raise CommandError("Unable to serialize database: %s" % e)
             finally:
-                if stream:
+                if stream and not console:
                     stream.close()
 
             if not console:
@@ -91,5 +103,8 @@ class Command(BaseCommand):
         self.stdout.write('{0}{0}'.format('-' * 38))
 
 
-def _get_dump_stream_filename(slug, domain, utcnow):
-    return 'dump-{}-{}-{}.gz'.format(slug, domain, utcnow)
+def _get_dump_stream_filename(slug, domain, utcnow, path=None):
+    filename = 'dump-{}-{}-{}.gz'.format(slug, domain, utcnow)
+    if path:
+        return os.path.join(path, filename)
+    return filename

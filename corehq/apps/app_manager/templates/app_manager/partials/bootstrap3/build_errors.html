@@ -453,7 +453,7 @@
             {% endif %}
             {% case "save_to_case_missing_case_type" %}
             {% blocktrans with case_tag=error.case_tag %}
-              <strong>Save to Case question is missing a case type.</strong>
+              <strong>Advanced Case Actions question is missing a case type.</strong>
               Please add the "case_type" property mapping for "{{ case_tag }}"
             {% endblocktrans %}
             {% if not not_actual_build %}
@@ -461,7 +461,7 @@
             {% endif %}
             {% case "save_to_case_missing_case_name" %}
             {% blocktrans with case_tag=error.case_tag %}
-              <strong>Save to Case question is missing a case name.</strong>
+              <strong>Advanced Case Actions question is missing a case name.</strong>
               Please add the "case_name" property mapping for "{{ case_tag }}"
             {% endblocktrans %}
             {% if not not_actual_build %}

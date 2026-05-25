@@ -967,6 +967,14 @@ msgid "XPath Expression"
 msgstr "تعبير XPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Hidden)"
+msgstr " (مخفي)"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Locked)"
+msgstr " (مقفل)"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
 msgstr "سؤال غير محدد"
 
@@ -1252,9 +1260,45 @@ msgstr "آخر حفظ"
 msgid "[unknown]"
 msgstr "[غير معروف]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/229.js
-msgid "\n"
-msgstr "\n"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "loadXFormOrError"
+msgstr "تحميل XForm أو خطأ"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isPropertyLocked"
+msgstr "isPropertyLocked"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugPathMoveable"
+msgstr "isMugPathMoveable"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugRemoveable"
+msgstr "isMugRemoveable"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugTypeChangeable"
+msgstr "isMugTypeChangeable"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "getMainProperties"
+msgstr "getMainProperties"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "createXML"
+msgstr "إنشاءXML"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "getData"
+msgstr "الحصول على البيانات"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "checkMove"
+msgstr "checkMove"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "jstree"
+msgstr "شجرة JS"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "Drag question here"
@@ -1299,6 +1343,10 @@ msgstr "صحيح عندما يكون أي من التعابير صحيحًا."
 #: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} ليس أصل بيانات صالح"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/96.js
+msgid "\n"
+msgstr "\n"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "New Form"
@@ -5100,23 +5148,11 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ msgid "getCurrentMugInput"
 #~ msgstr "الحصول على إدخال الكوب الحالي"
 
-#~ msgid "jstree"
-#~ msgstr "شجرة JS"
-
 #~ msgid "getMugByPath"
 #~ msgstr "getMugByPath"
 
-#~ msgid "getData"
-#~ msgstr "الحصول على البيانات"
-
 #~ msgid "loadXML"
 #~ msgstr "تحميل XML"
-
-#~ msgid "createXML"
-#~ msgstr "إنشاءXML"
-
-#~ msgid "loadXFormOrError"
-#~ msgstr "تحميل XForm أو خطأ"
 
 #~ msgid "addQuestion"
 #~ msgstr "إضافة سؤال"

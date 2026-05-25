@@ -109,6 +109,12 @@ msgid "Any Service"
 msgstr "أي خدمة"
 
 #: corehq/apps/accounting/filters.py
+#, fuzzy
+#| msgid "Credit Adjustment Reason"
+msgid "Credit Adjustment Link"
+msgstr "سبب تعديل الرصيد"
+
+#: corehq/apps/accounting/filters.py
 msgid "Linked to Any Transaction"
 msgstr "مرتبط بأي معاملة"
 
@@ -1166,6 +1172,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/manage_downstream_domains.html
 #: corehq/apps/locations/templates/locations/location_types.html
@@ -1210,8 +1217,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/confirm_delete_app.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/toggle_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/confirm_delete_app.html
@@ -1252,6 +1257,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
@@ -5802,6 +5808,24 @@ msgstr ""
 "المرور."
 
 #: corehq/apps/api/resources/v0_5.py
+#, fuzzy
+#| msgid "'name' must not be blank"
+msgid "Name must not be blank"
+msgstr "'الاسم' يجب ألا يكون فارغًا"
+
+#: corehq/apps/api/resources/v0_5.py
+#, fuzzy, python-format
+#| msgid "A rule with name {name} already exists"
+msgid "A group with name %s already exists"
+msgstr "هناك قاعدة باسم {name} موجودة بالفعل"
+
+#: corehq/apps/api/resources/v0_5.py
+#, fuzzy
+#| msgid "Menu is required"
+msgid "Name is required"
+msgstr "القائمة مطلوبة"
+
+#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
 msgstr "ليس لديك إذن للوصول إلى هذه الواجهة البرمجية"
 
@@ -5920,8 +5944,6 @@ msgid "Populate workflow from HAR file"
 msgstr "تعبئة سير العمل من ملف HAR"
 
 #: corehq/apps/app_execution/forms.py
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
@@ -6050,6 +6072,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
@@ -8689,25 +8712,6 @@ msgstr ""
 " من المفيد طرح الأسئلة مرة واحدة، للحصول على معلومات\n"
 "      لن تحتاج إلى متابعتها لاحقًا. "
 
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-msgid "Edit Form Details"
-msgstr "تعديل تفاصيل النموذج"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-#: corehq/apps/enterprise/enterprise.py
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Form Name"
-msgstr "اسم النموذج"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
-msgid "Comment"
-msgstr "تعليق"
-
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
 msgid "Edit Form"
@@ -8996,6 +9000,7 @@ msgstr "تثبيت CommCare"
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -10730,8 +10735,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"              <strong>Save to Case question is missing a case type.</"
-"strong>\n"
+"              <strong>Advanced Case Actions question is missing a case type."
+"</strong>\n"
 "              Please add the \"case_type\" property mapping for "
 "\"%(case_tag)s\"\n"
 "            "
@@ -10742,8 +10747,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"              <strong>Save to Case question is missing a case name.</"
-"strong>\n"
+"              <strong>Advanced Case Actions question is missing a case name."
+"</strong>\n"
 "              Please add the \"case_name\" property mapping for "
 "\"%(case_tag)s\"\n"
 "            "
@@ -12464,6 +12469,27 @@ msgstr "نسخ النموذج"
 msgid "XForm"
 msgstr "XForm"
 
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  You will not be able to enable case sharing again until "
+#| "you upgrade, but you\n"
+#| "                  can edit the group once again.\n"
+#| "                "
+msgid ""
+"\n"
+"                This form contains locked questions and can only be uploaded "
+"by\n"
+"                a user with the locked questions permission.\n"
+"              "
+msgstr ""
+"\n"
+"                  لن تتمكن من تفعيل مشاركة الحالات مرة أخرى حتى تقوم "
+"بالترقية، ولكن يمكنك تعديل المجموعة مرة أخرى.\n"
+"                "
+
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
@@ -14054,25 +14080,20 @@ msgstr "سير عمل البحث في تطبيقات الويب (سجل البي
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Normal Case List"
-msgstr "قائمة الحالات العادية"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search First"
 msgstr "البحث أولاً"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
-msgid "See More"
-msgstr "عرض المزيد"
+msgid "Skip to Default Case Search Results"
+msgstr "تخطي إلى نتائج البحث الافتراضية للحالات"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Skip to Default Case Search Results"
-msgstr "تخطي إلى نتائج البحث الافتراضية للحالات"
+#, fuzzy
+#| msgid "Case Search"
+msgid "Legacy Case Search"
+msgstr "بحث القضايا"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -14098,26 +14119,6 @@ msgstr "ترجمة عنوان شاشة البحث"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search Screen Subtitle"
 msgstr "العنوان الفرعي لشاشة البحث"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Search Filter"
-msgstr "مرشح البحث"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Copy case list filter"
-msgstr "نسخ مرشح قائمة الحالات"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Example: age > 5"
-msgstr "مثال: العمر > 5"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Claim Condition"
-msgstr "شرط المطالبة"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -15860,8 +15861,8 @@ msgstr "الرجوع"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"        All add-ons have been enabled for this app using the\n"
-"        \"Enable All Application Add-Ons\" project setting.\n"
+"        All add-ons have been enabled for this app using the \"Enable All\n"
+"        Application Add-Ons\" project setting.\n"
 "      "
 msgstr ""
 
@@ -15894,10 +15895,10 @@ msgstr "اعرف المزيد."
 #| "                      "
 msgid ""
 "\n"
-"                    You have previously enabled this feature in your app, "
-"but have since lost access\n"
-"                    to it.\n"
-"                  "
+"                You have previously enabled this feature in your app, but "
+"have\n"
+"                since lost access to it.\n"
+"              "
 msgstr ""
 "\n"
 "                        لقد قمت سابقًا بتفعيل هذه الميزة في تطبيقك، لكنك فقدت "
@@ -15915,11 +15916,10 @@ msgstr ""
 #| "                      "
 msgid ""
 "\n"
-"                    Your application will continue to function in places "
-"that utilized this feature, but\n"
-"                    you will not be able to edit any related functionality "
-"until you upgrade.\n"
-"                  "
+"                Your application will continue to function in places that\n"
+"                utilized this feature, but you will not be able to edit any\n"
+"                related functionality until you upgrade.\n"
+"              "
 msgstr ""
 "\n"
 "                        سيستمر تطبيقك في العمل في الأماكن التي استخدمت فيها "
@@ -16438,6 +16438,12 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
+"Case property mappings that reference locked questions cannot be modified. "
+"Unlock the question in the form builder first."
+msgstr ""
+
+#: corehq/apps/app_manager/views/forms.py
+msgid ""
 "This form could not be copied because it is not compatible with the selected "
 "module."
 msgstr "تعذر نسخ هذا النموذج لأنه غير متوافق مع الوحدة المحددة."
@@ -16445,6 +16451,14 @@ msgstr "تعذر نسخ هذا النموذج لأنه غير متوافق مع 
 #: corehq/apps/app_manager/views/forms.py
 msgid "There was an error saving, please try again!"
 msgstr "حدث خطأ أثناء الحفظ، يرجى المحاولة مرة أخرى!"
+
+#: corehq/apps/app_manager/views/forms.py
+#, fuzzy
+#| msgid "You do not have permissions to assign one of those locations."
+msgid ""
+"You do not have permission to upload an XForm for a form that contains "
+"locked questions."
+msgstr "ليس لديك صلاحيات لتعيين أحد هذه المواقع."
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
@@ -17737,6 +17751,11 @@ msgid "Recent Uploads"
 msgstr "التحميلات الأخيرة"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
+msgid "Comment"
+msgstr "تعليق"
+
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/export/templates/export/download_data_files.html
 msgid "File"
 msgstr "الملف"
@@ -17965,6 +17984,12 @@ msgstr "نوع غير متوقع لتعبير القيمة"
 msgid ""
 "We don't know what to do with the function \"{}\". Accepted functions are: {}"
 msgstr "لا نعرف ماذا نفعل مع الدالة \"{}\". الدوال المقبولة هي: {}"
+
+#: corehq/apps/case_search/filter_dsl.py
+#, fuzzy
+#| msgid "Include related cases"
+msgid "You cannot query related cases here"
+msgstr "تضمين الحالات ذات الصلة"
 
 #: corehq/apps/case_search/filter_dsl.py
 #, python-brace-format
@@ -24003,6 +24028,8 @@ msgstr "يرجى تحديد حد لتغذيات OData."
 
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
+#: corehq/apps/enterprise/forms.py
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
 #: corehq/apps/registration/templates/registration/confirmation_resend.html
@@ -29665,6 +29692,11 @@ msgid "Form ID"
 msgstr "معرّف النموذج"
 
 #: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/reports/standard/monitoring.py
+msgid "Form Name"
+msgstr "اسم النموذج"
+
+#: corehq/apps/enterprise/enterprise.py
 msgid "Submitted [UTC]"
 msgstr "تم الإرسال [UTC]"
 
@@ -29853,6 +29885,31 @@ msgstr "أحدث إصدار متوفر عند آخر استخدام"
 #: corehq/apps/enterprise/enterprise.py
 msgid "Last Used [UTC]"
 msgstr "آخر استخدام [UTC]"
+
+#: corehq/apps/enterprise/forms.py
+#, fuzzy
+#| msgid "Server Administrator"
+msgid "Add Administrator"
+msgstr "مسؤول الخادم"
+
+#: corehq/apps/enterprise/forms.py
+#, fuzzy
+#| msgid "Dear enterprise administrator,"
+msgid "This user is already an enterprise administrator."
+msgstr "عزيزي مسؤول المؤسسة،"
+
+#: corehq/apps/enterprise/forms.py
+#, python-format
+msgid ""
+"This email domain is not permitted. Enterprise admins must use an email at "
+"one of: %(domains)s"
+msgstr ""
+
+#: corehq/apps/enterprise/forms.py
+msgid ""
+"This user must be a member of at least one project space in this enterprise "
+"account before being added as an enterprise administrator."
+msgstr ""
 
 #: corehq/apps/enterprise/forms.py
 msgid "Restrict Project Space Creation"
@@ -30091,6 +30148,35 @@ msgstr "خطأ لوحة معلومات المؤسسات: {}"
 msgid "Enterprise Dashboard: {}"
 msgstr "لوحة معلومات المؤسسات: {}"
 
+#: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
+#: corehq/apps/enterprise/views.py corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "Dear enterprise administrator,"
+msgid "Enterprise Administrators"
+msgstr "عزيزي مسؤول المؤسسة،"
+
+#: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
+msgid ""
+"Enterprise Administrators can manage subscriptions, billing, and account-"
+"level settings for all project spaces in this account. See <a href=\"https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/"
+"Enterprise+Console#Enterprise-Admins\" target=\"_blank\" >Enterprise Console "
+"| Enterprise Administrators</a > for more on Enterprise Admins."
+msgstr ""
+
+#: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
+#, fuzzy
+#| msgid "Server Administrator"
+msgid "Add an Administrator"
+msgstr "مسؤول الخادم"
+
+#: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
+#, python-format
+msgid ""
+"This account uses SSO. New administrators must use an email at one of: "
+"%(domains)s."
+msgstr ""
+
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
 #: corehq/apps/enterprise/views.py corehq/tabs/tabclasses.py
 msgid "Enterprise Permissions"
@@ -30157,6 +30243,24 @@ msgstr ""
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 msgid "Customize Mobile Form Submissions Date Range"
 msgstr "تخصيص نطاق تاريخ إرسال النماذج عبر الجوال"
+
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
+#, fuzzy
+#| msgid "Dear enterprise administrator,"
+msgid "Remove enterprise administrator?"
+msgstr "عزيزي مسؤول المؤسسة،"
+
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
+#, fuzzy, python-format
+#| msgid "Are you sure you want to remove the grant from %(domain)s to"
+msgid ""
+"Are you sure you want to remove <strong>%(email)s</strong> as an enterprise "
+"administrator?"
+msgstr "هل أنت متأكد أنك تريد إزالة المنحة من %(domain)s إلى"
+
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
+msgid "There are no enterprise administrators configured for this account."
+msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html
 msgid "No project spaces found."
@@ -30237,6 +30341,40 @@ msgstr "تعذر إزالة {}."
 #: corehq/apps/enterprise/views.py
 msgid "{} is now excluded from enterprise permissions."
 msgstr "تم استبعاد {} الآن من أذونات المؤسسات."
+
+#: corehq/apps/enterprise/views.py
+#, fuzzy
+#| msgid "Invalid request"
+msgid "Invalid request."
+msgstr "طلب غير صالح"
+
+#: corehq/apps/enterprise/views.py
+#, fuzzy, python-format
+#| msgid "Dear enterprise administrator,"
+msgid "%(email)s has been added as an enterprise administrator."
+msgstr "عزيزي مسؤول المؤسسة،"
+
+#: corehq/apps/enterprise/views.py
+#, fuzzy
+#| msgid "You cannot remove yourself from a domain via bulk upload"
+msgid "You cannot remove yourself as an enterprise administrator."
+msgstr "لا يمكنك إزالة نفسك من نطاق عبر الرفع الجماعي"
+
+#: corehq/apps/enterprise/views.py
+msgid "An enterprise account must have at least one administrator."
+msgstr ""
+
+#: corehq/apps/enterprise/views.py
+#, fuzzy, python-format
+#| msgid "Dear enterprise administrator,"
+msgid "%(email)s is not an enterprise administrator."
+msgstr "عزيزي مسؤول المؤسسة،"
+
+#: corehq/apps/enterprise/views.py
+#, fuzzy, python-format
+#| msgid "Dear enterprise administrator,"
+msgid "%(email)s has been removed as an enterprise administrator."
+msgstr "عزيزي مسؤول المؤسسة،"
 
 #: corehq/apps/enterprise/views.py
 msgid "Please select a project."
@@ -40394,10 +40532,15 @@ msgstr ""
 "مسؤول المشروع ليتم تعيينك إلى موقع.\n"
 
 #: corehq/apps/locations/permissions.py
+#, fuzzy
+#| msgid ""
+#| "This project has restricted data access rules. Please contact your "
+#| "project administrator to be assigned access to data in this project. More "
+#| "information is available <a href=\"{}\">here</a>."
 msgid ""
-"This project has restricted data access rules. Please contact your project "
-"administrator to be assigned access to data in this project. More "
-"information is available <a href=\"{}\">here</a>."
+"This project limits access to users based on their location. If your "
+"location or your access limits are incorrect, please contact your project "
+"administrator. <a href=\"{}\">More information is available here</a>."
 msgstr ""
 "يحتوي هذا المشروع على قواعد وصول بيانات مقيدة. يرجى التواصل مع مسؤول المشروع "
 "ليتم تعيينك للوصول إلى بيانات هذا المشروع. لمزيد من المعلومات، انقر <a "
@@ -41256,6 +41399,11 @@ msgstr "تعذر جلب الإشعارات في هذا الوقت."
 #: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
 msgid "Please see our blog for service updates."
 msgstr "يرجى مراجعة مدونتنا للحصول على تحديثات الخدمة."
+
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
+msgid "See More"
+msgstr "عرض المزيد"
 
 #: corehq/apps/notifications/views.py
 msgid "Manage Notification"
@@ -52163,6 +52311,10 @@ msgstr ""
 "تجاهل الأعمدة التالية: {columns}"
 
 #: corehq/apps/translations/app_translations/upload_form.py
+msgid "Translation for '{}' was not updated because the question is locked."
+msgstr ""
+
+#: corehq/apps/translations/app_translations/upload_form.py
 #, python-brace-format
 msgid "Error in {sheet}: {msg}"
 msgstr "خطأ في {sheet}: {msg}"
@@ -57890,8 +58042,10 @@ msgid "Profile conflicts with existing data"
 msgstr "تعارض الملف الشخصي مع بيانات موجودة"
 
 #: corehq/apps/users/user_data.py
-msgid "User data profile not found"
-msgstr "لم يتم العثور على ملف بيانات المستخدم"
+#, fuzzy
+#| msgid "Rule not found."
+msgid "Profile not found"
+msgstr "لم يتم العثور على القاعدة."
 
 #: corehq/apps/users/user_data.py
 msgid "'{}' cannot be set directly"
@@ -57920,6 +58074,12 @@ msgstr "مكون اسم المستخدم '{}' من '{}' لا يجوز أن يح�
 #: corehq/apps/users/validation.py
 msgid "The username email domain '@{}' should be '@{}'."
 msgstr "يجب أن يكون نطاق البريد الإلكتروني لاسم المستخدم '@{}' هو '@{}'."
+
+#: corehq/apps/users/validation.py
+#, fuzzy, python-brace-format
+#| msgid "User with ID '{user_id}' not found"
+msgid "Profile with id {id} not found."
+msgstr "المستخدم ذو المعرف '{user_id}' غير موجود"
 
 #: corehq/apps/users/validation.py
 msgid "A profile assignment is required for Mobile Workers."
@@ -62716,14 +62876,6 @@ msgstr "عناوين الإشعار"
 msgid "Used By"
 msgstr "يستخدم بواسطة"
 
-#: corehq/motech/views.py
-msgid "Please enter client secret again."
-msgstr "يرجى إدخال سر العميل مرة أخرى."
-
-#: corehq/motech/views.py
-msgid "Please enter API password again."
-msgstr "يرجى إدخال كلمة مرور واجهة برمجة التطبيقات مرة أخرى."
-
 #: corehq/privileges.py
 msgid "API Access"
 msgstr "الوصول إلى واجهة برمجة التطبيقات"
@@ -62985,6 +63137,12 @@ msgstr ""
 msgid "Locked Admin Questions"
 msgstr "عرض الأسئلة المتقدمة"
 
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Save Case"
+msgid "Save to Case"
+msgstr "حفظ الحالة"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "تقارير منشئ التقارير"
@@ -63162,6 +63320,10 @@ msgstr "لم يعد متوفرًا"
 #: corehq/tabs/tabclasses.py
 msgid "View Location"
 msgstr "عرض الموقع"
+
+#: corehq/tabs/tabclasses.py
+msgid "View and manage the administrators for your enterprise account"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "View project spaces where users receive automatic access"
@@ -63970,6 +64132,33 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid "Edit Form Details"
+#~ msgstr "تعديل تفاصيل النموذج"
+
+#~ msgid "User data profile not found"
+#~ msgstr "لم يتم العثور على ملف بيانات المستخدم"
+
+#~ msgid "Please enter client secret again."
+#~ msgstr "يرجى إدخال سر العميل مرة أخرى."
+
+#~ msgid "Please enter API password again."
+#~ msgstr "يرجى إدخال كلمة مرور واجهة برمجة التطبيقات مرة أخرى."
+
+#~ msgid "Claim Condition"
+#~ msgstr "شرط المطالبة"
+
+#~ msgid "Normal Case List"
+#~ msgstr "قائمة الحالات العادية"
+
+#~ msgid "Search Filter"
+#~ msgstr "مرشح البحث"
+
+#~ msgid "Copy case list filter"
+#~ msgstr "نسخ مرشح قائمة الحالات"
+
+#~ msgid "Example: age > 5"
+#~ msgstr "مثال: العمر > 5"
 
 #~ msgid "Label for Searching"
 #~ msgstr "تسمية للبحث"

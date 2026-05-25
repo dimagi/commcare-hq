@@ -16,9 +16,10 @@ from corehq.apps.app_manager.exceptions import (
     AppValidationError,
     SavedAppBuildException,
 )
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.users.dbaccessors import get_all_users_by_domain
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.toggles import VELLUM_SAVE_TO_CASE
 from corehq.util.metrics import metrics_counter
 
 logger = get_task_logger(__name__)
@@ -104,7 +105,7 @@ def _refresh_data_dictionary_from_app(domain, app_id):
     from corehq.apps.data_dictionary.util import create_properties_for_case_types
 
     case_type_to_prop = defaultdict(set)
-    if VELLUM_SAVE_TO_CASE.enabled(domain):
+    if domain_has_privilege(domain, privileges.VELLUM_SAVE_TO_CASE):
         for form in app.get_forms():
             case_type_to_prop.update(form.get_save_to_case_updates())
     for module in app.get_modules():

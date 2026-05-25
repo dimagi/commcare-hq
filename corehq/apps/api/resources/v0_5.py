@@ -133,7 +133,7 @@ from corehq.apps.users.util import (
     log_user_change,
     verify_modify_user_conditions,
 )
-from corehq.apps.users.validation import validate_profile_required
+from corehq.apps.users.validation import validate_profile_id
 from corehq.apps.domain.forms import send_password_reset_email
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
@@ -165,7 +165,7 @@ def user_es_call(domain, q, fields, size, start_at):
              .size(size)
              .start(start_at))
     if q is not None:
-        query.set_query({"query_string": {"query": q}})
+        query = query.set_query({"query_string": {"query": q}})
     return query.run().hits
 
 
@@ -280,7 +280,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         if connect_username and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
             raise BadRequest(_("You don't have permission to use connect_username field"))
         try:
-            validate_profile_required(bundle.data.get('user_profile'), kwargs['domain'])
+            validate_profile_id(
+                bundle.data.get('user_data', {}).get('commcare_profile'),
+                kwargs['domain'],
+            )
         except ValidationError as e:
             raise BadRequest(e.message)
         try:
@@ -697,10 +700,12 @@ class GroupResource(v0_4.GroupResource):
         for key, value in bundle.data.items():
             if key == 'name' and getattr(bundle.obj, key, None) != value:
                 if not Group.by_name(bundle.obj.domain, value):
-                    setattr(bundle.obj, key, value or '')
+                    if not value:
+                        raise BadRequest(_("Name must not be blank"))
+                    setattr(bundle.obj, key, value)
                     should_save = True
                 else:
-                    raise Exception("A group with this name already exists")
+                    raise BadRequest(_("A group with name %s already exists") % value)
             if key == 'users' and getattr(bundle.obj, key, None) != value:
                 users_to_add = set(value) - set(bundle.obj.users)
                 users_to_remove = set(bundle.obj.users) - set(value)
@@ -742,13 +747,14 @@ class GroupResource(v0_4.GroupResource):
     def obj_create(self, bundle, request=None, **kwargs):
         if not Group.by_name(kwargs['domain'], bundle.data.get("name")):
             bundle.obj = Group(bundle.data)
-            bundle.obj.name = bundle.obj.name or ''
+            if not bundle.obj.name:
+                raise AssertionError(_("Name is required"))
             bundle.obj.domain = kwargs['domain']
             bundle.obj.save()
             for user in bundle.obj.users:
                 CommCareUser.get(user).set_groups([bundle.obj._id])
         else:
-            raise AssertionError("A group with name %s already exists" % bundle.data.get("name"))
+            raise AssertionError(_("A group with name %s already exists") % bundle.data.get("name"))
         return bundle
 
     def obj_update(self, bundle, **kwargs):

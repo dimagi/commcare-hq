@@ -1571,13 +1571,7 @@ const printBehavior = Marionette.Behavior.extend({
         selectPrint: ".print-button",
     },
     events: {
-        "keydown @ui.selectPrint": "printKeyAction",
         "click @ui.selectPrint": "print",
-    },
-    printKeyAction: function (e) {
-        if (e.keyCode === 13) {
-            this.print();
-        }
     },
     print: function () {
         window.print();

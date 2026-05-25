@@ -340,6 +340,43 @@ class TestCommCareUserResource(APIResourceTest):
                          f'{{"error": "Username \'jdoe@{self.domain.name}.commcarehq.org\' is already taken or '
                          f'reserved."}}')
 
+    def test_bad_request_if_profile_required_but_not_included(self):
+        definition = CustomDataFieldsDefinition.get_or_create(self.domain, UserFieldsView.field_type)
+        definition.profile_required_for_user_type = [UserFieldsView.COMMCARE_USER]
+        definition.save()
+
+        user_json = {
+            'username': 'jdoe',
+            'password': 'qwer1234',
+        }
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps(user_json),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "A profile assignment is required for Mobile Workers."}',
+        )
+
+    def test_bad_request_if_profile_not_found(self):
+        user_json = {
+            'username': 'jdoe',
+            'password': 'qwer1234',
+            'user_data': {'commcare_profile': 123456},
+        }
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps(user_json),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "Profile with id 123456 not found."}'
+        )
+
     def test_update(self):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
                                    created_by=None, created_via=None, phone_number="50253311398")
@@ -1034,6 +1071,55 @@ class TestBulkUserAPI(APIResourceTest):
     def test_basic(self):
         response = self.query()
         self.assertEqual(response.status_code, 200)
+
+
+@es_test(requires=[user_adapter], setup_class=True)
+class TestBulkUserESCall(TestCase):
+    """Exercises the real user_es_call against ES (TestBulkUserAPI mocks it out)."""
+
+    domain = 'bulk-user-q-test'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(domain_obj.delete)
+
+        cls.target = CommCareUser.create(
+            domain=cls.domain, username='alice', password='*****',
+            created_by=None, created_via=None,
+        )
+        cls.addClassCleanup(cls.target.delete, cls.domain, deleted_by=None)
+        cls.other = CommCareUser.create(
+            domain=cls.domain, username='bob', password='*****',
+            created_by=None, created_via=None,
+        )
+        cls.addClassCleanup(cls.other.delete, cls.domain, deleted_by=None)
+
+        for user in [cls.target, cls.other]:
+            user_adapter.index(user, refresh=True)
+
+    def test_q_filters_to_matching_user(self):
+        hits = v0_5.user_es_call(
+            domain=self.domain,
+            q='alice',
+            fields=['_id', 'username'],
+            size=10,
+            start_at=0,
+        )
+        usernames = sorted(h['username'] for h in hits)
+        assert usernames == ['alice'], usernames
+
+    def test_q_none_returns_all_users(self):
+        hits = v0_5.user_es_call(
+            domain=self.domain,
+            q=None,
+            fields=['_id', 'username'],
+            size=10,
+            start_at=0,
+        )
+        usernames = sorted(h['username'] for h in hits)
+        assert usernames == ['alice', 'bob'], usernames
 
 
 @es_test(requires=[user_adapter])

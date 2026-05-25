@@ -1264,11 +1264,9 @@ class Subscription(models.Model):
         """
         Overloaded to update domain pillow with subscription information
         """
-        from corehq.apps.accounting.mixins import get_overdue_invoice
 
         super(Subscription, self).save(*args, **kwargs)
         Subscription.clear_caches(self.subscriber.domain)
-        get_overdue_invoice.clear(self.subscriber.domain)
 
         domain = Domain.get_by_name(self.subscriber.domain)
         # If a subscriber doesn't have a valid domain associated with it
@@ -1282,7 +1280,13 @@ class Subscription(models.Model):
 
     @classmethod
     def clear_caches(cls, domain_name):
+        transaction.on_commit(lambda: cls._clear_caches(domain_name))
+
+    @classmethod
+    def _clear_caches(cls, domain_name):
+        from corehq.apps.accounting.mixins import get_overdue_invoice
         cls._get_active_subscription_by_domain.clear(cls, domain_name)
+        get_overdue_invoice.clear(domain_name)
 
     @property
     def is_free_edition(self):
@@ -1622,13 +1626,11 @@ class Subscription(models.Model):
             salesforce_contract_id=self.salesforce_contract_id,
             date_start=self.date_end,
             date_end=new_date_end,
+            service_type=service_type if service_type else self.service_type,
+            funding_source=funding_source if funding_source else self.funding_source,
         )
-        if service_type is not None:
-            renewed_subscription.service_type = service_type
         if pro_bono_status is not None:
             renewed_subscription.pro_bono_status = pro_bono_status
-        if funding_source is not None:
-            renewed_subscription.funding_source = funding_source
         if datetime.date.today() == self.date_end:
             renewed_subscription.is_active = True
         renewed_subscription.auto_renew = renewed_subscription.can_auto_renew

@@ -64,6 +64,8 @@ urlpatterns = [
         name=ConnectionSettingsDetailView.urlname),
     url(r'^conn/test/$', test_connection_settings,
         name='test_connection_settings'),
+    url(r'^conn/(?P<pk>\d+)/test/$', test_connection_settings,
+        name='test_connection_settings'),
 
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
     url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(),

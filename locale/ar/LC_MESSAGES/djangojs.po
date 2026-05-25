@@ -975,6 +975,14 @@ msgid "XPath Expression"
 msgstr "تعبير XPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Hidden)"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Locked)"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
 msgstr "سؤال غير محدد"
 
@@ -1260,9 +1268,55 @@ msgstr "آخر حفظ"
 msgid "[unknown]"
 msgstr "[غير معروف]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/229.js
-msgid "\n"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "loadXFormOrError"
 msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#, fuzzy
+#| msgid "Case Property"
+msgid "isPropertyLocked"
+msgstr "خاصية الحالة"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugPathMoveable"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugRemoveable"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugTypeChangeable"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#, fuzzy
+#| msgid "User Properties"
+msgid "getMainProperties"
+msgstr "خصائص المستخدم"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#, fuzzy
+#| msgid "Create"
+msgid "createXML"
+msgstr "إنشاء"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#, fuzzy
+#| msgid "User Data"
+msgid "getData"
+msgstr "بيانات المستخدم"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "checkMove"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#, fuzzy
+#| msgid "Streets"
+msgid "jstree"
+msgstr "الشوارع"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "Drag question here"
@@ -1307,6 +1361,10 @@ msgstr "صحيح عندما يكون أي من التعابير صحيحًا."
 #: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} ليس أصل بيانات صالح"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/96.js
+msgid "\n"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "New Form"
@@ -5128,24 +5186,9 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ msgstr "لا توجد بيانات ترجمة"
 
 #, fuzzy
-#~| msgid "Streets"
-#~ msgid "jstree"
-#~ msgstr "الشوارع"
-
-#, fuzzy
-#~| msgid "User Data"
-#~ msgid "getData"
-#~ msgstr "بيانات المستخدم"
-
-#, fuzzy
 #~| msgid "load"
 #~ msgid "loadXML"
 #~ msgstr "تحميل"
-
-#, fuzzy
-#~| msgid "Create"
-#~ msgid "createXML"
-#~ msgstr "إنشاء"
 
 #, fuzzy
 #~| msgid "Add Question"

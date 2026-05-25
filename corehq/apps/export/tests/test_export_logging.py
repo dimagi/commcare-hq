@@ -39,9 +39,9 @@ def _make_case_export(case_type="patient"):
             path=MAIN_TABLE,
             selected=True,
             columns=[
-                ExportColumn(label="name", item=ExportItem(path=[PathNode(name="name")]), selected=True),
-                ExportColumn(label="dob", item=ExportItem(path=[PathNode(name="dob")]), selected=True),
-                ExportColumn(label="hidden", item=ExportItem(path=[PathNode(name="hidden")]), selected=False),
+                ExportColumn(label="Patient Name", item=ExportItem(path=[PathNode(name="name")]), selected=True),
+                ExportColumn(label="Date of Birth", item=ExportItem(path=[PathNode(name="dob")]), selected=True),
+                ExportColumn(label="Hidden", item=ExportItem(path=[PathNode(name="hidden")]), selected=False),
             ],
         )],
     )
@@ -143,17 +143,41 @@ class TestLogExportGenerated(SimpleTestCase):
         assert "bulk" not in data
 
     @patch('corehq.apps.export.export.export_audit_logger')
+    def test_columns_logged_use_question_path_not_label(self, mock_logger):
+        export = _make_form_export(columns=[
+            ExportColumn(
+                label="What is your name?",
+                item=ExportItem(path=[PathNode(name="form"), PathNode(name="name")]),
+                selected=True,
+            ),
+            ExportColumn(
+                label="Child age",
+                item=ExportItem(
+                    path=[PathNode(name="form"), PathNode(name="children"), PathNode(name="age")],
+                ),
+                selected=True,
+            ),
+        ])
+        _log_export_generated(export, row_count=0, logging_context=None)
+
+        assert _logged_data(mock_logger)["columns"] == ["form.name", "form.children.age"]
+
+    @patch('corehq.apps.export.export.export_audit_logger')
     def test_only_selected_columns_from_selected_tables(self, mock_logger):
         export = CaseExportInstance(
             domain="test-domain",
             case_type="patient",
             tables=[
                 TableConfiguration(label="Main", path=MAIN_TABLE, selected=True, columns=[
-                    ExportColumn(label="name", item=ExportItem(path=[PathNode(name="name")]), selected=True),
-                    ExportColumn(label="hidden", item=ExportItem(path=[PathNode(name="x")]), selected=False),
+                    ExportColumn(
+                        label="Patient Name",
+                        item=ExportItem(path=[PathNode(name="name")]),
+                        selected=True,
+                    ),
+                    ExportColumn(label="Hidden", item=ExportItem(path=[PathNode(name="x")]), selected=False),
                 ]),
                 TableConfiguration(label="Unselected", path=[PathNode(name="other")], selected=False, columns=[
-                    ExportColumn(label="ignored", item=ExportItem(path=[PathNode(name="y")]), selected=True),
+                    ExportColumn(label="Ignored", item=ExportItem(path=[PathNode(name="y")]), selected=True),
                 ]),
             ],
         )

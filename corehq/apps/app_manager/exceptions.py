@@ -38,6 +38,11 @@ class RearrangeError(AppEditingError):
     pass
 
 
+class LockedQuestionError(AppEditingError):
+    """An attempt to modify a locked question in a disallowed way"""
+    pass
+
+
 class XFormException(AppManagerException):
     pass
 

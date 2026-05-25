@@ -173,6 +173,7 @@ $(function () {
                 filter,
                 excludeHidden,
                 includeRepeat,
+                false, //excludeTrigger
                 true,  //disableLocked
             );
         };
