@@ -98,7 +98,6 @@
         "grunt": "1.5.3",
         "grunt-cli": "1.4.3",
         "grunt-contrib-watch": "1.1.0",
-        "grunt-mocha": "1.2.0",
         "lodash": "4.18.1",
         "mocha": "11.0.1",
         "mocha-headless-chrome": "4.0.0",
