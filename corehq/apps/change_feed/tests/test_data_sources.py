@@ -100,7 +100,7 @@ def case_form_data():
     try:
         yield form_ids, case_ids
     finally:
-        XFormInstance.objects.hard_delete_forms('domain', form_ids)
+        XFormInstance.objects.hard_delete_forms(form_ids, domain='domain')
         CommCareCase.objects.hard_delete_cases('domain', case_ids)
 
 
