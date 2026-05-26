@@ -531,11 +531,9 @@ def sso_check(view_func, api_key):
     def _outer(fn):
         @wraps(fn)
         def _inner(request, domain, *args, **kwargs):
-            domain_obj = Domain.get_by_name(domain)
             _ensure_request_couch_user(request)
             if (
                 not api_key
-                and domain_obj
                 and not getattr(request, 'api_key_authenticated', False)
                 and _sso_required(request)
             ):
@@ -550,7 +548,7 @@ def _sso_required(request):
     username = couch_user.username if couch_user else None
     if username:
         idp = IdentityProvider.get_required_identity_provider(username)
-        if idp and idp.require_api_key_for_api_access:
+        if idp:
             return True
     return False
 
