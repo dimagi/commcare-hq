@@ -110,10 +110,10 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False):
 
     pk_field = model_cls._meta.pk.name
     queryset = queryset.order_by(pk_field)
-    docs = queryset[:limit]
-    while docs:
-        for doc in docs:
+    chunk = queryset[:limit]
+    while chunk:
+        for doc in chunk:
             yield doc
 
         last_doc_pk = getattr(doc, pk_field)
-        docs = queryset.filter(**{pk_field + "__gt": last_doc_pk})[:limit]
+        chunk = queryset.filter(**{pk_field + "__gt": last_doc_pk})[:limit]
