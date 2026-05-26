@@ -21,8 +21,7 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.cleanup.utils import get_cutoff_date_for_data_deletion
-from corehq.apps.tombstones.models import Tombstone
-from corehq.apps.tombstones.utils import create_tombstone_for_form
+from corehq.apps.tombstones.models import Tombstone, create_tombstone_for_form
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
