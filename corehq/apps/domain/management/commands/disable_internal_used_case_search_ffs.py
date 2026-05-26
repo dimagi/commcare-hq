@@ -50,5 +50,4 @@ class Command(BaseCommand):
                     toggles.SYNC_SEARCH_CASE_CLAIM.set(domain_name, False, NAMESPACE_DOMAIN)
                     toggles.CASE_SEARCH_ADVANCED.set(domain_name, False, NAMESPACE_DOMAIN)
                     toggles.CASE_SEARCH_RELATED_LOOKUPS.set(domain_name, False, NAMESPACE_DOMAIN)
-                    toggles.CASE_SEARCH_DEPRECATED.set(domain_name, False, NAMESPACE_DOMAIN)
                     toggles.CASE_SEARCH_DEPRECATED_NORMAL_CASE_LIST.set(domain_name, False, NAMESPACE_DOMAIN)
