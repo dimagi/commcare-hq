@@ -444,7 +444,6 @@ class TestHardDeleteForms(TestCase):
         deleted = XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id, other_form.form_id])
         assert deleted == 1
         forms = XFormInstance.objects.get_forms([form.form_id, form_to_keep.form_id, other_form.form_id])
-        assert len(forms) == 2
         assert {f.form_id for f in forms} == {form_to_keep.form_id, other_form.form_id}
 
     def test_tombstone_is_created(self):
@@ -460,13 +459,13 @@ class TestHardDeleteForms(TestCase):
             Tombstone.objects.partitioned_get(form.form_id)
 
     def test_returned_count_is_accurate_across_chunks(self):
-        forms = [create_form_for_test(DOMAIN) for _ in range(5)]
+        forms = [create_form_for_test(DOMAIN) for _ in range(10)]
         form_ids = [f.form_id for f in forms]
 
         with mock.patch('corehq.form_processor.models.forms.BATCH_SIZE', 1):
             count = XFormInstance.objects.hard_delete_forms(DOMAIN, form_ids)
 
-        assert count == 5
+        assert count == 10
 
     def test_returned_count_is_accurate_with_cascaded_deletes(self):
         form = create_form_for_test(DOMAIN)
