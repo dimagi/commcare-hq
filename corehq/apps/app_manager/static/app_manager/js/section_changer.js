@@ -79,6 +79,7 @@ var init = function ($sectionChanger) {
             }
             $link.data("collapse-key", key);
             if (shouldCollapse($sectionChanger.data("collapse-key"), slug, $link.data("collapse"))) {
+                // todo B5: update this when all b3 pages using section_changer are migrated to b5 and use only card-modern-gray class
                 $form.find(".panel-appmanager[data-slug='" + slug + "'], .card-modern-gray[data-slug='" + slug + "']").addClass("hide d-none");
             } else {
                 $link.addClass("selected");
@@ -100,6 +101,7 @@ $(function () {
 $(document).on("click", ".section-changer ul a", function (e) {
     var slug = $(this).data("slug"),
         $link = $(this),
+        // todo B5: update this when all b3 pages using section_changer are migrated to b5 and use only card-modern-gray class
         $panel = $link.closest("form").find(".panel-appmanager[data-slug='" + slug + "'], .card-modern-gray[data-slug='" + slug + "']");
     if ($link.hasClass("selected")) {
         $panel.addClass("hide d-none");
