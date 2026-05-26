@@ -4,7 +4,7 @@ production,m2m,PRODUCT,Grouped Advanced Plan for Mothers to Mothers - Pay Monthl
 production,commcarehq-academy,PRODUCT,CommCare Paused Edition,,,FALSE,
 production,tcrhcc-sti,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,gpm-ccc-tech-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
-production,us-monkeypox-sandbox,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,us-monkeypox-sandbox,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,has upstream keep
 production,testpenda,,,,,FALSE,
 production,co-weld,,,,,FALSE,
 production,ny-uat-cdcms,IMPLEMENTATION,CommCare Paused Edition,True,,FALSE,
@@ -36,7 +36,7 @@ production,partnerships-sandbox,INTERNAL,Dimagi Only CommCare Enterprise Edition
 production,hungry-hippo-david,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,ush-repeat-group-training,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,em-sscs,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
-production,us-monkeypox-template,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"us-monkeypox-qa,us-monkeypox-sandbox,tc-monkeypox-staging,ak-monkeypox-staging,us-monkeypox-demo",FALSE,
+production,us-monkeypox-template,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"us-monkeypox-qa,us-monkeypox-sandbox,tc-monkeypox-staging,ak-monkeypox-staging,us-monkeypox-demo",TRUE,has downstream keep
 production,https,,,,,FALSE,
 production,tcb-2022-1,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,jason-test4,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
@@ -58,7 +58,7 @@ production,co-bent,,,,,FALSE,
 production,co-kiowa,,,,,FALSE,
 production,grougu-prod,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,ccc-chc-ruwoyd-2024-25,PRODUCT,CommCare Paused Edition,,,FALSE,
-production,us-monkeypox-qa,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,us-monkeypox-qa,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,has upstream keep
 production,freq-utilizers,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,uss-workflow-templates,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,inddex-multilingual,PRODUCT,CommCare Paused Plan,,"jfuller-inddex-push-test,inddex-upload-test-2,inddex-upload-test,test-push-caktus,inddex-multi-vn",FALSE,
@@ -190,7 +190,7 @@ production,bp-test-domain,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FAL
 production,co-chaffee,,,,,FALSE,
 production,analytics-test-bert,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,nj-covid-salem,,,,,FALSE,
-production,tc-monkeypox-staging,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,tc-monkeypox-staging,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,has upstream keep
 production,campagne-mali,IMPLEMENTATION,CommCare Enterprise Plan for Gates Foundation: WHO AFRO Polio Campaign III,,,FALSE,
 production,chc-solina,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,fh-ethiopia-2,PRODUCT,Discounted Custom Advanced Plan for Food for the Hungry - Pay Annually,,,FALSE,
@@ -290,7 +290,7 @@ production,co-montrose,,,,,FALSE,
 production,ny-rockland-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,solina-nigeria,PRODUCT,CommCare Paused Edition,,,FALSE,
 production,amit-learning-project,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
-production,us-monkeypox-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,us-monkeypox-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,co-ouray,,,,,FALSE,
 production,uss-matt-onboarding,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,campaign-guinea,IMPLEMENTATION,CommCare Enterprise Plan for Gates Foundation: WHO AFRO Polio Campaign III,,,FALSE,
@@ -384,7 +384,7 @@ production,mk-test-space,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,
 production,campaign-ghana,IMPLEMENTATION,CommCare Enterprise Plan for Gates Foundation: WHO AFRO Polio Campaign III,,,FALSE,
 production,commcare-fundamentals-14,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,ush-envelope-testing,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
-production,ak-monkeypox-staging,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,ak-monkeypox-staging,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,has upstream keep
 production,test-connectsetup,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,analytics-test-count,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,wv-sahel-mali-dev,INTERNAL,Dimagi Only CommCare Enterprise Edition,False,,FALSE,
