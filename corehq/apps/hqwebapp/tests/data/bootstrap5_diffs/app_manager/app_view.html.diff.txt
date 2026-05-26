@@ -6,12 +6,14 @@
  {% load compress %}
  {% load crispy_forms_tags %}
  {% load hq_shared_tags %}
-@@ -7,8 +7,8 @@
+@@ -6,9 +6,9 @@
+ {% load xforms_extras %}
  
  {% block pre_form_content %}
-   <div class="appmanager-page-actions">
+-  <div class="appmanager-page-actions">
 -    {% include 'app_manager/partials/bootstrap3/app_summary_button.html' %}
 -    {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-default' %}
++  <div class="appmanager-page-actions">  {# todo B5: appmanager-page-actions #}
 +    {% include 'app_manager/partials/bootstrap5/app_summary_button.html' %}
 +    {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-outline-primary' %}
    </div>
