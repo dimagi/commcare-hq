@@ -6,14 +6,12 @@ from corehq.sql_db.models import PartitionedModel, RequireDBManager
 from corehq.sql_db.util import split_list_by_db_partition
 
 
-def create_tombstone_for_form(form):
-    from corehq.form_processor.models.forms import XFormInstance
-
+def build_tombstone(doc_type, doc_id, domain, deleted_on=None):
     return Tombstone(
-        doc_id=form.form_id,
-        object_class_path=f'{XFormInstance.__module__}.{XFormInstance.__qualname__}',
-        domain=form.domain,
-        deleted_on=form.deleted_on or datetime.now(tz=UTC),
+        doc_id=doc_id,
+        object_class_path=f'{doc_type.__module__}.{doc_type.__qualname__}',
+        domain=domain,
+        deleted_on=deleted_on or datetime.now(tz=UTC),
     )
 
 

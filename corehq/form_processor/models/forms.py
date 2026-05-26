@@ -21,7 +21,7 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.cleanup.utils import get_cutoff_date_for_data_deletion
-from corehq.apps.tombstones.models import Tombstone, create_tombstone_for_form
+from corehq.apps.tombstones.models import Tombstone, build_tombstone
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -404,15 +404,23 @@ class XFormInstanceManager(RequireDBManager):
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
-            queryset = self.using(db_name).filter(domain=domain, form_id__in=split_form_ids)
+            queryset = (
+                self.using(db_name)
+                .filter(domain=domain, form_id__in=split_form_ids)
+                .values_list('form_id', 'deleted_on')
+            )
             shard_count = 0
-            while forms := queryset[:BATCH_SIZE]:
+            while results := queryset[:BATCH_SIZE]:
                 form_ids_to_delete = []
                 tombstones = []
-                for form in forms:
-                    form_ids_to_delete.append(form.form_id)
+                for form_id, deleted_on in results:
+                    form_ids_to_delete.append(form_id)
                     if leave_tombstones:
-                        tombstones.append(create_tombstone_for_form(form))
+                        tombstones.append(
+                            build_tombstone(
+                                XFormInstance, form_id, domain, deleted_on
+                            )
+                        )
 
                 with transaction.atomic(using=db_name):
                     Tombstone.objects.using(db_name).bulk_create(
