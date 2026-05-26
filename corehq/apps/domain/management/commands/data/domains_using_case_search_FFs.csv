@@ -2,7 +2,7 @@ Environment,Domain Name,Service Type,Plan Name,Case Search Enabled,Linked Domain
 production,co-test-lpha1,,,,,FALSE,
 production,m2m,PRODUCT,Grouped Advanced Plan for Mothers to Mothers - Pay Monthly,True,,TRUE,production domain
 production,commcarehq-academy,PRODUCT,CommCare Paused Edition,,,FALSE,
-production,tcrhcc-sti,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,tcrhcc-sti,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,gpm-ccc-tech-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,us-monkeypox-sandbox,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,testpenda,,,,,FALSE,
@@ -25,14 +25,14 @@ production,inddex-upload-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
 production,camnafaw,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,vectorlink-benin,PRODUCT,CommCare Paused Edition,,,FALSE,
 production,ccc-tech2,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
-production,nj-doas,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,trenton-health,FALSE,
+production,nj-doas,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,trenton-health,TRUE,qa domain
 production,philly-covid19-test,,,,,FALSE,
 production,commcare-superset,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,af-test,NOT_SET,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,analytics-test-kermit,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,alafiacomm-training,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
-production,ochsner-health-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
-production,partnerships-sandbox,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,ochsner-health-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,TRUE,qa domain
+production,partnerships-sandbox,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,hungry-hippo-david,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,ush-repeat-group-training,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,em-sscs,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
@@ -44,7 +44,7 @@ production,campaign-botswana,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,
 production,inddex-vietnam-lang-vie,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,has upstream keep
 production,nj-covid-hudson,,,,,FALSE,
 production,impact-network,PRODUCT,CommCare Pro Edition - Pay Annually,True,,TRUE,production domain
-production,sctpn,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
+production,sctpn,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,TRUE,has upstream keep
 production,demos-solutions,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,chadbrochill,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,tech-onboarding-day-1,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
@@ -83,7 +83,7 @@ production,ethan-test-stuff,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,F
 production,polio-template-app,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,tcb-it,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,ush-migration-c,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
-production,supporters-ok-sickle-cell,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
+production,supporters-ok-sickle-cell,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,TRUE,has upstream keep
 production,mada-linked-test,,,,ymtest,FALSE,
 production,senegal-arch-3-study,PRODUCT,CommCare Paused Edition,,,FALSE,
 production,co-lahd,,,,,FALSE,
@@ -115,7 +115,7 @@ production,ny-sullivan-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,nick-demo,,,,nick-test,FALSE,
 production,second-project-6,,,,,FALSE,
 production,ny-monroe-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
-production,indiana-mch-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,indiana-mch-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,ny-nassau-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,ny-transfers-cdcms,IMPLEMENTATION,CommCare Paused Edition,True,,FALSE,
 production,philly-covid19-dev,,,,"lil-phil-test,https://staging.commcarehq.org/a/covid-philly-staging/",FALSE,
@@ -139,12 +139,12 @@ production,care-coordination-demo,INTERNAL,Dimagi Only CommCare Enterprise Editi
 production,crusher,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,ny-albany-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,franks-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
-production,axis-advocacy,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
+production,axis-advocacy,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,TRUE,has upstream keep
 production,co-summit,,,,,FALSE,
 production,ush-migration-c2,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,ny-performance-cdcms,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,co-teller,,,,,FALSE,
-production,hackett-wood,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,hackett-wood,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,ny-cortland-cdcms,IMPLEMENTATION,CommCare Paused Edition,True,,FALSE,
 production,somerville-regional-phdms,IMPLEMENTATION,Enterprise Premier Plan for City of Somerville,True,,TRUE,production domain
 production,ops_summit-1,,,,,FALSE,
@@ -165,10 +165,10 @@ production,navajo-covid19-dev,PRODUCT,CommCare Paused Edition,True,"nana-data-mi
 production,ny-columbia-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,ny-hamilton-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,co-pitkin,,,,,FALSE,
-production,ush-new-project-template,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,ush-new-project-template,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,chc-nm-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,co-routt,,,,,FALSE,
-production,co-obh,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,co-obh,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,upstream-test-domain,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,downstream-test-domain,FALSE,
 production,wm-location-import-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,has upstream keep
 production,ny-broome-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
@@ -232,7 +232,7 @@ production,connect-2,INTERNAL,Enterprise Plan for Connect - test spaces,,"ccc-ni
 production,ny-allegany-cdcms,IMPLEMENTATION,CommCare Paused Edition,True,,FALSE,
 production,ny-livingston-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,irc-gavi-reach,PRODUCT,CommCare Enterprise Edition - IRC - Pay Monthly,,,FALSE,
-production,id-cict,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,id-cict,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,commcare-learning-3,INTERNAL,Dimagi Only CommCare Enterprise Edition,,bugs-1,FALSE,
 production,co-alamosa,,,,,FALSE,
 production,test-20190731,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,test-20190731-linked,FALSE,
@@ -241,7 +241,7 @@ production,ush-cjw-2,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,casesearch-1,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,test-20190731-linked,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,co-test-statewide,,,,,FALSE,
-production,trenton-health,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,trenton-health,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,has upstream keep
 production,case-search-and-claim,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,gh747-team-ihc,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,analytics-test-big-bird,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
@@ -269,7 +269,7 @@ production,campaign-madagascar,IMPLEMENTATION,CommCare Enterprise Plan for Gates
 production,coope,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,test-project-432,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,hungry-hippo-braxton,TRUE,has upstream keep
 production,vee-2,PRODUCT,CommCare Community Edition (With ERM),,,FALSE,
-production,ush-dedupe-template,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,ush-dedupe-template,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,ff-analysis-livhu,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,colorado-xpath-training,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,co-gunnison,,,,,FALSE,
@@ -282,7 +282,7 @@ production,inddex-multi-vn,PRODUCT,CommCare Paused Plan,,,FALSE,
 production,benin-template-dev,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,campaign-angola,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,cfs-performance-test-ucr,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
-production,edss-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
+production,edss-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,TRUE,qa domain
 production,ush-migration-a2,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,wv-sahel-cameroon-dev,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,nj-performance,,,,,FALSE,
@@ -300,7 +300,7 @@ production,ny-warren-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,nphcda-echis-dev,PRODUCT,CommCare Paused Edition,True,"nphcda-echis-training,tj-test2,nphcda-echis",FALSE,
 production,kate-pearce-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,ny-state-covid19,IMPLEMENTATION,CommCare Paused Edition,,ny-training-covid19,FALSE,
-production,pa-ddap-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,pa-ddap-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,nj-covid-integrations-2,,,,,FALSE,
 production,ny-tioga-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,mruga-sample-apps,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
@@ -329,7 +329,7 @@ production,hack-your-app,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,
 production,co-obh-analytics-sandbox,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,sahel-prep,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,mikesproject,NOT_SET,Dimagi Only CommTrack Enterprise Edition,,,FALSE,
-production,scdai,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
+production,scdai,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,TRUE,has upstream keep
 production,kk-test-2,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,campagne-cameroun,PRODUCT,CommCare Free Edition,False,,TRUE,has upstream keep
 production,prueba-dms-colombia-1,PRODUCT,CommCare Paused Edition,,,FALSE,
@@ -358,10 +358,10 @@ production,co-mesa,,,,,FALSE,
 production,jamaica-vax-dev,SANDBOX,Custom Advanced Plan with ERM (Release Management),True,"jamaica-vaccine,jamaica-vax-training",TRUE,has downstream keep
 production,bosco,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"enough,bosco-linked,fourth-story-window,acoffeemachineinanoffice",FALSE,
 production,learning-118,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
-production,hep-b-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,hep-b-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,qateam,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"test-dev,downstream-reports,let-sdoit,qa-automation-prod,qateam,anshutest",TRUE,qa domain
 production,dimagi-vaccine-solution,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
-production,sick-cells-cbo,INTERNAL,Dimagi Only CommCare Enterprise Edition,,"scdai,sctpn,supporters-ok-sickle-cell,scdaa-philly-del,axis-advocacy,sick-cells-cbo-training",FALSE,
+production,sick-cells-cbo,INTERNAL,Dimagi Only CommCare Enterprise Edition,,"scdai,sctpn,supporters-ok-sickle-cell,scdaa-philly-del,axis-advocacy,sick-cells-cbo-training",TRUE,qa domain
 production,ct-sravan,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,tcb-hiv-follow-up,,,,,FALSE,
 production,mirror2,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
@@ -408,14 +408,14 @@ production,ethan-testing-case-tiles,INTERNAL,Dimagi Only CommCare Enterprise Edi
 production,ccqa,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,"ccqa2,av-test,ccqa-downstream",TRUE,qa domain
 production,co-sanjuan,,,,,FALSE,
 production,bha-cs-playground,,,,,FALSE,
-production,ak-covid19-tracker-intqa,PRODUCT,CommCare Paused Edition,True,,FALSE,
+production,ak-covid19-tracker-intqa,PRODUCT,CommCare Paused Edition,True,,TRUE,has upstream keep
 production,ny-clinton-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,pmievolve-master,IMPLEMENTATION,CommCare Paused Edition,,"pmievolve-zambia,pmievolve-ethiopia-1,pmievolve-malawi,pmievolve-kenya,pmievolve-ghana,pmievolve-sierra-leone,pmievolve-madagascar,pmievolve-rwanda,pmievolve-uganda,pmievolve-mozambique",FALSE,
 production,bosco-linked,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,ny-statewide-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,co-southeast,IMPLEMENTATION,CommCare Paused Edition,,,FALSE,
 production,chantal-ush-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
-production,la-county-ati,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,la-county-ati,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,nj-covid-cape-may,,,,,FALSE,
 production,ny-madison-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,polio-mozambique,IMPLEMENTATION,CommCare Enterprise Plan for Gates Foundation: WHO AFRO Polio Campaign III,,,FALSE,
@@ -444,7 +444,7 @@ production,nj-covid-gloucester,,,,,FALSE,
 production,nj-covid-state,,,,,FALSE,
 production,nazier-heynes,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,l10k2020ethiopia-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,jennifertest,FALSE,
-production,ak-covid19-tracker-load,PRODUCT,CommCare Paused Edition,True,,FALSE,
+production,ak-covid19-tracker-load,PRODUCT,CommCare Paused Edition,True,,TRUE,has upstream keep
 production,ccc-chc-eha-c-2024-25,IMPLEMENTATION,Enterprise Plan for CommCare Connect,,,FALSE,
 production,wv-sahel-nigeria-dev,PRODUCT,CommCare Paused Edition,True,wv-sahel-nigeria,TRUE,has downstream keep
 production,jonathantangtest,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,has upstream keep
@@ -454,7 +454,7 @@ production,acted-drc-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FAL
 production,co-carecoordination-uat,SANDBOX,Enterprise Plan for State of Colorado: Capacity and Central Registries,True,,TRUE,has upstream keep
 production,co-support,IMPLEMENTATION,CommCare Paused Edition,True,,FALSE,
 production,id-testing-20150106,NOT_SET,Dimagi Only CommCare Enterprise Edition,,,FALSE,
-production,ak-tb-dev,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,ak-tb-dev,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,vee-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,,vee-2,FALSE,
 production,campagne-civ,IMPLEMENTATION,CommCare Enterprise Plan for Gates Foundation: WHO AFRO Polio Campaign III,,,FALSE,
 production,test-project-362,,,,,FALSE,
@@ -474,7 +474,7 @@ production,mriese,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,inddex-reports,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,woody-sample-apps,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,TRUE,has upstream keep
 production,ccqa-downstream,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,TRUE,qa domain
-production,ak-covid19-tracker-prod,PRODUCT,CommCare Paused Edition,True,,FALSE,
+production,ak-covid19-tracker-prod,PRODUCT,CommCare Paused Edition,True,,TRUE,has upstream keep
 production,co-saguache,,,,,FALSE,
 production,navajo-covid19-loadtestin,PRODUCT,CommCare Paused Edition,,,FALSE,
 production,az-pima-health-uat,PRODUCT,CommCare Paused Edition,True,,FALSE,
@@ -482,7 +482,7 @@ production,az-pima-health-prod,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,nj-covid-sussex,,,,,FALSE,
 production,ccc-chc-zegcawis-2024-25,PRODUCT,CommCare Paused Edition,,,FALSE,
 production,philly-covid19-sandbox,,,,,FALSE,
-production,re-entry-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,re-entry-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,co-adams,,,,,FALSE,
 production,co-jefferson,,,,,FALSE,
 production,connect-testing,INTERNAL,Enterprise Plan for Connect - test spaces,,,FALSE,
@@ -497,8 +497,8 @@ production,pmievolve-ethiopia-1,IMPLEMENTATION,CommCare Paused Edition,,,FALSE,
 production,casesearch-split-screen,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,nj-covid-atlantic,,,,,FALSE,
 production,av-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,has upstream keep
-production,alaska-covid-19-project,PRODUCT,CommCare Paused Edition,True,,FALSE,
-production,nysofa-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,alaska-covid-19-project,PRODUCT,CommCare Paused Edition,True,,TRUE,has upstream keep
+production,nysofa-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,woody-colorado-covid,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,ush-migration-b,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,fh-ethiopia-psnp,PRODUCT,Discounted Custom Advanced Plan for Food for the Hungry - Pay Annually,,,FALSE,
@@ -519,7 +519,7 @@ production,co-gilpin,,,,,FALSE,
 production,co-staging,IMPLEMENTATION,CommCare Paused Edition,True,,FALSE,
 production,sudcare-dev,PRODUCT,CommCare Paused Edition,True,sudcare,FALSE,
 production,shulu-dev,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
-production,ak-training-sandbox,PRODUCT,CommCare Paused Edition,True,,FALSE,
+production,ak-training-sandbox,PRODUCT,CommCare Paused Edition,True,,TRUE,has upstream keep
 production,co-denver,,,,,FALSE,
 production,nj-covid-middlesex,,,,,FALSE,
 production,ccc-chc-cwins-2024-25,PRODUCT,CommCare Paused Edition,,,FALSE,
@@ -527,7 +527,7 @@ production,hungry-hippo-ethan,INTERNAL,Dimagi Only CommCare Enterprise Edition,,
 production,fh-ethiopia-training,PRODUCT,CommCare Paused Edition,,,FALSE,
 production,nj-covid-burlington,,,,,FALSE,
 production,ccc-kmc,INTERNAL,Enterprise Plan for Connect - test spaces,,ccc-kmc-testing,FALSE,
-production,julia-fuller-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,demo-183,FALSE,
+production,julia-fuller-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,demo-183,TRUE,has upstream keep
 production,ceshhar-zim-dev,SANDBOX,Dimagi Only CommCare Enterprise Edition,True,ceshhar-zim,TRUE,has downstream keep
 production,ccc-tech1,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,inddex-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,TRUE,has upstream keep
@@ -537,7 +537,7 @@ production,nj-covid-essex,,,,,FALSE,
 production,rapid-assessment-1,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,kaleb-dimagi,INTERNAL,Dimagi Internal Test Account: kaleb-dimagi,True,,FALSE,
 production,user-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,cfs-performance-test-ucr,FALSE,
-production,sf-housing-street-teams,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,sf-housing-street-teams,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,c-wins-chc,INTERNAL,Dimagi Only CommCare Enterprise Edition,,c-wins-chc-live,FALSE,
 production,inddex-upload-test-3,PRODUCT,CommCare Community Edition (With ERM),,,FALSE,
 production,vt-perf,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
@@ -605,13 +605,13 @@ production,co-grand,,,,,FALSE,
 production,ccc-test-space,INTERNAL,Dimagi Only CommCare Enterprise Edition,,ccc-chc-kikapu,FALSE,
 production,testing-space-3,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,polio-cameroon,IMPLEMENTATION,CommCare Enterprise Plan for Gates Foundation: WHO AFRO Polio Campaign III,True,,TRUE,production domain
-production,bh-mat-registry,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,has upstream keep
+production,bh-mat-registry,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,co-douglas,,,,,FALSE,
 production,co-performance,IMPLEMENTATION,CommCare Paused Edition,True,,FALSE,
 production,experimentations-ma,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,teste-project-435,,,,,FALSE,
 production,first-project-44,,,,,FALSE,
-production,woody-meade-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,has upstream keep
+production,woody-meade-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,qa domain
 production,bh-demo,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,kcho-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,chw-covid-response-team,PRODUCT,CommCare Paused Edition,True,,FALSE,
@@ -625,7 +625,7 @@ production,mpdsr-prod,PRODUCT,CommCare Paused Edition,,,FALSE,
 production,kartika-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,sandbox-erick,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,sc-new-project-space,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
-production,scdaa-philly-del,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
+production,scdaa-philly-del,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,TRUE,has upstream keep
 production,alafiacomm,INTERNAL,CommCare eCHIS Plan - MoH Benin,True,"alafiacomm-test,mamyproject,alafiacomm-prod",TRUE,has downstream keep
 production,ny-chemung-cdcms,PRODUCT,CommCare Paused Edition,True,,FALSE,
 production,test-dimagi-4,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
@@ -638,17 +638,17 @@ production,ms-test-space,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,
 production,ny-viaduct-suf-cdcms,IMPLEMENTATION,CommCare Paused Edition,True,,FALSE,
 production,jfuller-inddex-push-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,ush-cjw-1,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
-production,sick-cells-cbo-training,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
+production,sick-cells-cbo-training,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,TRUE,has upstream keep
 production,1219-investigation,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
 production,hl-test,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
-production,ak-covid19-load-testing,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,FALSE,
+production,ak-covid19-load-testing,INTERNAL,Dimagi Only CommCare Enterprise Edition,True,,TRUE,has upstream keep
 production,demo-183,INTERNAL,Dimagi Only CommCare Enterprise Edition,,,FALSE,
 production,co-carecoordination-auto,IMPLEMENTATION,CommCare Paused Edition,True,,FALSE,
 production,co-garfield,,,,,FALSE,
 production,ccc-chc-jhf-2024-25,INTERNAL,Enterprise Plan for Connect - test spaces,,,FALSE,
 production,nj-covid-camden,,,,,FALSE,
 production,jamaica-vaccine,IMPLEMENTATION,Custom Advanced Plan with ERM (Release Management),True,,TRUE,production domain
-production,ak-covid19-tracker-test,PRODUCT,CommCare Paused Edition,True,"ak-tb-dev,https://staging.commcarehq.org/a/covid-ak-staging/,julia-fuller-test,ak-covid19-tracker-load,alaska-covid-19-project,ak-training-sandbox,ak-covid19-tracker-intqa,ak-covid19-load-testing,ak-covid19-tracker-prod",FALSE,
+production,ak-covid19-tracker-test,PRODUCT,CommCare Paused Edition,True,"ak-tb-dev,https://staging.commcarehq.org/a/covid-ak-staging/,julia-fuller-test,ak-covid19-tracker-load,alaska-covid-19-project,ak-training-sandbox,ak-covid19-tracker-intqa,ak-covid19-load-testing,ak-covid19-tracker-prod",TRUE,has downstream keep
 eu,casesearch-eu,INTERNAL,Dimagi Only CommCare Enterprise,,,TRUE,qa domain
 eu,casesearch,INTERNAL,Dimagi Only CommCare Enterprise,True,,TRUE,qa domain
 india,enikshay-uatbc-migration-test-1,,,,,FALSE,
