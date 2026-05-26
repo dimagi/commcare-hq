@@ -110,10 +110,21 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False):
 
     pk_field = model_cls._meta.pk.name
     queryset = queryset.order_by(pk_field)
-    chunk = queryset[:limit]
-    while chunk:
+    last_doc_pk = None
+    while True:
+        if last_doc_pk is None:
+            chunk_qs = queryset
+        else:
+            chunk_qs = queryset.filter(**{pk_field + "__gt": last_doc_pk})
+        chunk = _fetch_chunk(chunk_qs, limit)
+        if not chunk:
+            return
         for doc in chunk:
             yield doc
 
         last_doc_pk = getattr(doc, pk_field)
-        chunk = queryset.filter(**{pk_field + "__gt": last_doc_pk})[:limit]
+
+
+def _fetch_chunk(queryset, limit):
+    """Materialize one page of ``queryset``. Patch point for tests."""
+    return list(queryset[:limit])
