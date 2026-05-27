@@ -57,7 +57,7 @@
       <a
         class="btn btn-default {% if not has_two_factor %}disabled{% endif %}"
         href="{% url 'disable_two_factor' %}?q={{ web_user.username|urlencode }}"
-        >Temporarily Disable Two-Factor Authentication</a
+        >Reset Two-Factor Authentication</a
       >
       {% if web_user.is_staff %}
         <button

@@ -259,7 +259,7 @@ class DisableTwoFactorForm(forms.Form):
             hqcrispy.FormActions(
                 crispy.Submit(
                     "disable",
-                    _("Disable"),
+                    _("Reset Two-Factor Authentication"),
                     css_class="btn btn-danger",
                 ),
                 css_class='modal-footer',
