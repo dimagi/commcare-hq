@@ -1124,8 +1124,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/confirm_delete_app.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/toggle_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/confirm_delete_app.html
@@ -4251,6 +4249,19 @@ msgid "This user is inactive and cannot reset their password."
 msgstr ""
 
 #: corehq/apps/api/resources/v0_5.py
+msgid "Name must not be blank"
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
+#, python-format
+msgid "A group with name %s already exists"
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "Name is required"
+msgstr ""
+
+#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
 msgstr ""
 
@@ -4369,8 +4380,6 @@ msgid "Populate workflow from HAR file"
 msgstr ""
 
 #: corehq/apps/app_execution/forms.py
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
@@ -6888,25 +6897,6 @@ msgstr ""
 msgid ""
 " It's useful for asking questions once, for information\n"
 "      that you won't need to follow up on later. "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-msgid "Edit Form Details"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-#: corehq/apps/enterprise/enterprise.py
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Form Name"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
-msgid "Comment"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
@@ -12269,8 +12259,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"        All add-ons have been enabled for this app using the\n"
-"        \"Enable All Application Add-Ons\" project setting.\n"
+"        All add-ons have been enabled for this app using the \"Enable All\n"
+"        Application Add-Ons\" project setting.\n"
 "      "
 msgstr ""
 
@@ -12293,20 +12283,19 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"                    You have previously enabled this feature in your app, "
-"but have since lost access\n"
-"                    to it.\n"
-"                  "
+"                You have previously enabled this feature in your app, but "
+"have\n"
+"                since lost access to it.\n"
+"              "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"                    Your application will continue to function in places "
-"that utilized this feature, but\n"
-"                    you will not be able to edit any related functionality "
-"until you upgrade.\n"
-"                  "
+"                Your application will continue to function in places that\n"
+"                utilized this feature, but you will not be able to edit any\n"
+"                related functionality until you upgrade.\n"
+"              "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
@@ -13872,6 +13861,11 @@ msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 msgid "Recent Uploads"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
+msgid "Comment"
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
@@ -23265,6 +23259,11 @@ msgid "Form ID"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/reports/standard/monitoring.py
+msgid "Form Name"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
 msgid "Submitted [UTC]"
 msgstr ""
 
@@ -23703,7 +23702,7 @@ msgid ""
 "level settings for all project spaces in this account. See <a href=\"https://"
 "dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/"
 "Enterprise+Console#Enterprise-Admins\" target=\"_blank\" >Enterprise Console "
-"| Enterprise Admins</a > for more on Enterprise Admins."
+"| Enterprise Administrators</a > for more on Enterprise Admins."
 msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
@@ -46750,7 +46749,7 @@ msgid "Profile conflicts with existing data"
 msgstr ""
 
 #: corehq/apps/users/user_data.py
-msgid "User data profile not found"
+msgid "Profile not found"
 msgstr ""
 
 #: corehq/apps/users/user_data.py
@@ -46779,6 +46778,11 @@ msgstr ""
 
 #: corehq/apps/users/validation.py
 msgid "The username email domain '@{}' should be '@{}'."
+msgstr ""
+
+#: corehq/apps/users/validation.py
+#, python-brace-format
+msgid "Profile with id {id} not found."
 msgstr ""
 
 #: corehq/apps/users/validation.py
@@ -51004,14 +51008,6 @@ msgstr ""
 
 #: corehq/motech/views.py
 msgid "Used By"
-msgstr ""
-
-#: corehq/motech/views.py
-msgid "Please enter client secret again."
-msgstr ""
-
-#: corehq/motech/views.py
-msgid "Please enter API password again."
 msgstr ""
 
 #: corehq/privileges.py

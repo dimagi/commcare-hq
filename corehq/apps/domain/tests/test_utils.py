@@ -21,7 +21,6 @@ from corehq.apps.domain.utils import (
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.utils import b64_aes_cbc_decrypt
 from corehq.tests.tools import nottest
-from corehq.tests.util.context import testcontextmanager
 from corehq.util.test_utils import generate_cases, unit_testing_only
 
 
@@ -266,29 +265,3 @@ def patch_domain_deletion():
     assert settings.UNIT_TESTING
     delete_es_docs_patch.__enter__()
     domain_tombstone_patch.__enter__()
-
-
-def suspend(patch_obj):
-    """Contextmanager/decorator to suspend an active patch
-
-    Usage as decorator:
-
-        @suspend(delete_es_docs_patch)
-        def test_something():
-            ...  # do thing with ES docs deletion
-
-    Usage as context manager:
-
-        with suspend(delete_es_docs_patch):
-            ...  # do thing with ES docs deletion
-    """
-    @testcontextmanager
-    def suspend_patch():
-        assert settings.UNIT_TESTING
-        patch_obj.__exit__(None, None, None)
-        try:
-            yield
-        finally:
-            patch_obj.__enter__()
-
-    return suspend_patch

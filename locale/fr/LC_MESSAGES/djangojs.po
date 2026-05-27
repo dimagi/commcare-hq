@@ -1253,10 +1253,6 @@ msgstr ""
 msgid "jstree"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/229.js
-msgid "\n"
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "Drag question here"
 msgstr ""
@@ -1299,6 +1295,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/96.js
+msgid "\n"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js

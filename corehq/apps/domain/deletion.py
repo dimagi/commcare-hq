@@ -255,7 +255,7 @@ def _delete_sms_content_events_schedules(domain_name):
     models = [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
         'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent',
-        'FCMNotificationContent', 'ConnectMessageContent', 'ConnectMessageSurveyContent'
+        'ConnectMessageContent', 'ConnectMessageSurveyContent'
     ]
     filters = [
         'alertevent__schedule__domain',
@@ -409,7 +409,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('linked_domain', 'DomainLink', 'linked_domain', ['DomainLinkHistory']),
     CustomDeletion('scheduling', _delete_sms_content_events_schedules, [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
-        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent', 'FCMNotificationContent',
+        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent',
         'ConnectMessageContent', 'ConnectMessageSurveyContent'
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'broadcast__domain'),
@@ -489,6 +489,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('fixtures', 'LookupTable', 'domain'),
     ModelDeletion('case_search', 'CSQLFixtureExpression', 'domain'),
     ModelDeletion('case_search', 'CSQLFixtureExpressionLog', 'expression__domain'),
+    ModelDeletion('case_search', 'CaseSearchEndpoint', 'domain',
+                  extra_models=['CaseSearchEndpointVersion']),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
