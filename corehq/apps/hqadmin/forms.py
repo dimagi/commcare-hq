@@ -228,11 +228,12 @@ class DisableTwoFactorForm(forms.Form):
         help_text="If you verified the request via someone else please enter their email address."
     )
     disable_for_days = forms.IntegerField(
-        label=_("Days to allow access"),
+        label=_("Days of temporary access"),
         min_value=0,
         max_value=30,
         help_text=_(
-            "Number of days the user can access CommCare HQ before needing to re-enable two-factor auth."
+            "Number of days the user can access a Two-Factor Authentication enforced domain without "
+            "setting up two-factor authentication again. "
             "This is useful if someone has lost their phone and can't immediately re-setup two-factor auth.")
     )
 
