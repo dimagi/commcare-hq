@@ -13,7 +13,7 @@ from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
 from corehq.apps.domain.exceptions import ErrorInitializingDomain
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.domain.tests.test_utils import domain_tombstone_patch, suspend
+from corehq.apps.domain.tests.test_utils import domain_tombstone_patch
 from corehq.apps.hqmedia.models import (
     CommCareImage,
     LogoForSystemEmailsReference,
@@ -26,6 +26,7 @@ from corehq.apps.registration.utils import (
     request_new_domain,
 )
 from corehq.apps.users.models import WebUser
+from corehq.tests.pytest_plugins.patches import suspend
 from corehq.util.test_utils import flag_enabled
 from corehq.util.view_utils import absolute_reverse
 

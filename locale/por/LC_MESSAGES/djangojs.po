@@ -1322,10 +1322,6 @@ msgstr "checkMove"
 msgid "jstree"
 msgstr "jstree"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/229.js
-msgid "\n"
-msgstr "\n"
-
 #: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "Drag question here"
 msgstr "Arraste a pergunta aqui"
@@ -1369,6 +1365,10 @@ msgstr "Verdadeiro quando QUALQUER das expressões é verdadeira."
 #: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} não é um pai de dados válido"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/96.js
+msgid "\n"
+msgstr "\n"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "New Form"

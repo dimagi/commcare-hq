@@ -139,13 +139,14 @@ from corehq.motech.repeaters.models import (
     RepeatRecord,
     RepeatRecordAttempt,
 )
+from corehq.tests.pytest_plugins.patches import suspend
 from corehq.toggles import NAMESPACE_DOMAIN, set_toggle
 from corehq.toggles.shortcuts import toggle_enabled
 from corehq.util.test_utils import flag_enabled
 from settings import HQ_ACCOUNT_ROOT
 
 from .. import deletion as mod
-from .test_utils import delete_es_docs_patch, domain_tombstone_patch, suspend
+from .test_utils import delete_es_docs_patch, domain_tombstone_patch
 
 
 class TestDeleteDomain(TestCase):

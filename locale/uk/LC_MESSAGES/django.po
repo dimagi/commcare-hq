@@ -1237,8 +1237,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/confirm_delete_app.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/toggle_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/confirm_delete_app.html
@@ -5903,6 +5901,24 @@ msgstr ""
 "скинути пароль."
 
 #: corehq/apps/api/resources/v0_5.py
+#, fuzzy
+#| msgid "'name' must not be blank"
+msgid "Name must not be blank"
+msgstr "'name' не повинен бути порожнім"
+
+#: corehq/apps/api/resources/v0_5.py
+#, fuzzy, python-format
+#| msgid "A rule with name {name} already exists"
+msgid "A group with name %s already exists"
+msgstr "Правило з назвою {name} вже існує"
+
+#: corehq/apps/api/resources/v0_5.py
+#, fuzzy
+#| msgid "Menu is required"
+msgid "Name is required"
+msgstr "Меню є обов'язковим"
+
+#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
 msgstr "У вас немає дозволу на доступ до цього API"
 
@@ -6021,8 +6037,6 @@ msgid "Populate workflow from HAR file"
 msgstr "Заповнити робочий процес з HAR-файлу"
 
 #: corehq/apps/app_execution/forms.py
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
@@ -8843,25 +8857,6 @@ msgid ""
 msgstr ""
 " Це корисно для одноразового запиту інформації,\n"
 "      яку не потрібно буде уточнювати пізніше. "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-msgid "Edit Form Details"
-msgstr "Редагувати деталі форми"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-#: corehq/apps/enterprise/enterprise.py
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Form Name"
-msgstr "Назва форми"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
-msgid "Comment"
-msgstr "Коментар"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
@@ -16130,8 +16125,8 @@ msgstr "Повернутися"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"        All add-ons have been enabled for this app using the\n"
-"        \"Enable All Application Add-Ons\" project setting.\n"
+"        All add-ons have been enabled for this app using the \"Enable All\n"
+"        Application Add-Ons\" project setting.\n"
 "      "
 msgstr ""
 
@@ -16165,10 +16160,10 @@ msgstr "Дізнатися більше."
 #| "                      "
 msgid ""
 "\n"
-"                    You have previously enabled this feature in your app, "
-"but have since lost access\n"
-"                    to it.\n"
-"                  "
+"                You have previously enabled this feature in your app, but "
+"have\n"
+"                since lost access to it.\n"
+"              "
 msgstr ""
 "\n"
 "                        Ви раніше вже вмикали цю функцію у своєму "
@@ -16186,11 +16181,10 @@ msgstr ""
 #| "                      "
 msgid ""
 "\n"
-"                    Your application will continue to function in places "
-"that utilized this feature, but\n"
-"                    you will not be able to edit any related functionality "
-"until you upgrade.\n"
-"                  "
+"                Your application will continue to function in places that\n"
+"                utilized this feature, but you will not be able to edit any\n"
+"                related functionality until you upgrade.\n"
+"              "
 msgstr ""
 "\n"
 "                        Ваш застосунок і надалі працюватиме у місцях, де "
@@ -18067,6 +18061,11 @@ msgstr ""
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 msgid "Recent Uploads"
 msgstr "Останні завантаження"
+
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
+msgid "Comment"
+msgstr "Коментар"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/export/templates/export/download_data_files.html
@@ -30199,6 +30198,11 @@ msgid "Form ID"
 msgstr "ID форми"
 
 #: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/reports/standard/monitoring.py
+msgid "Form Name"
+msgstr "Назва форми"
+
+#: corehq/apps/enterprise/enterprise.py
 msgid "Submitted [UTC]"
 msgstr "Відправлено [UTC]"
 
@@ -30666,7 +30670,7 @@ msgid ""
 "level settings for all project spaces in this account. See <a href=\"https://"
 "dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/"
 "Enterprise+Console#Enterprise-Admins\" target=\"_blank\" >Enterprise Console "
-"| Enterprise Admins</a > for more on Enterprise Admins."
+"| Enterprise Administrators</a > for more on Enterprise Admins."
 msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
@@ -59056,8 +59060,10 @@ msgid "Profile conflicts with existing data"
 msgstr "Профіль конфліктує з наявними даними"
 
 #: corehq/apps/users/user_data.py
-msgid "User data profile not found"
-msgstr "Профіль даних користувача не знайдено"
+#, fuzzy
+#| msgid "Rule not found."
+msgid "Profile not found"
+msgstr "Правило не знайдено."
 
 #: corehq/apps/users/user_data.py
 msgid "'{}' cannot be set directly"
@@ -59087,6 +59093,12 @@ msgstr ""
 #: corehq/apps/users/validation.py
 msgid "The username email domain '@{}' should be '@{}'."
 msgstr "Домен електронної пошти імені користувача '@{}' має бути '@{}'."
+
+#: corehq/apps/users/validation.py
+#, fuzzy, python-brace-format
+#| msgid "User with ID '{user_id}' not found"
+msgid "Profile with id {id} not found."
+msgstr "Користувача з ID '{user_id}' не знайдено"
 
 #: corehq/apps/users/validation.py
 msgid "A profile assignment is required for Mobile Workers."
@@ -63982,14 +63994,6 @@ msgstr "Адреси для сповіщень"
 msgid "Used By"
 msgstr "Використовується"
 
-#: corehq/motech/views.py
-msgid "Please enter client secret again."
-msgstr "Будь ласка, введіть секрет клієнта ще раз."
-
-#: corehq/motech/views.py
-msgid "Please enter API password again."
-msgstr "Будь ласка, введіть пароль API ще раз."
-
 #: corehq/privileges.py
 msgid "API Access"
 msgstr "Доступ до API"
@@ -65253,6 +65257,18 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "Edit Form Details"
+#~ msgstr "Редагувати деталі форми"
+
+#~ msgid "User data profile not found"
+#~ msgstr "Профіль даних користувача не знайдено"
+
+#~ msgid "Please enter client secret again."
+#~ msgstr "Будь ласка, введіть секрет клієнта ще раз."
+
+#~ msgid "Please enter API password again."
+#~ msgstr "Будь ласка, введіть пароль API ще раз."
 
 #~ msgid "Claim Condition"
 #~ msgstr "Умова підтвердження"

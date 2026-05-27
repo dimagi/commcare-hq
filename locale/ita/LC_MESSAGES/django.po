@@ -103,7 +103,6 @@ msgid "Any Service"
 msgstr "Qualsiasi servizio"
 
 #: corehq/apps/accounting/filters.py
-#| msgid "Credit Adjustment Reason"
 msgid "Credit Adjustment Link"
 msgstr "Link di Rettifica Credito"
 
@@ -1195,8 +1194,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/confirm_delete_app.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/toggle_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/confirm_delete_app.html
@@ -5123,6 +5120,22 @@ msgid "This user is inactive and cannot reset their password."
 msgstr "Questo utente è inattivo e non può reimpostare la password."
 
 #: corehq/apps/api/resources/v0_5.py
+#| msgid "'name' must not be blank"
+msgid "Name must not be blank"
+msgstr "Il nome non deve essere vuoto"
+
+#: corehq/apps/api/resources/v0_5.py
+#, python-format
+#| msgid "A rule with name {name} already exists"
+msgid "A group with name %s already exists"
+msgstr "Un gruppo con nome %s esiste già"
+
+#: corehq/apps/api/resources/v0_5.py
+#| msgid "Menu is required"
+msgid "Name is required"
+msgstr "Il nome è obbligatorio"
+
+#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
 msgstr "Non hai il permesso di accedere a questa API"
 
@@ -5245,8 +5258,6 @@ msgid "Populate workflow from HAR file"
 msgstr "Popola workflow da file HAR"
 
 #: corehq/apps/app_execution/forms.py
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
@@ -8069,25 +8080,6 @@ msgid ""
 msgstr ""
 " È utile per porre domande una sola volta, per informazioni\n"
 "      di cui non avrai bisogno di un seguito in futuro. "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-msgid "Edit Form Details"
-msgstr "Modifica dettagli modulo"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-#: corehq/apps/enterprise/enterprise.py
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Form Name"
-msgstr "Nome modulo"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
-msgid "Comment"
-msgstr "Commento"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
@@ -11114,11 +11106,6 @@ msgstr "XForm"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
-#| msgid ""
-#| "\n"
-#| "                  You will not be able to enable case sharing again until you upgrade, but you\n"
-#| "                  can edit the group once again.\n"
-#| "                "
 msgid ""
 "\n"
 "                This form contains locked questions and can only be uploaded by\n"
@@ -14190,15 +14177,19 @@ msgid "Revert"
 msgstr "Ripristina"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
+#| msgid ""
+#| "\n"
+#| "        All add-ons have been enabled for this app using the\n"
+#| "        \"Enable All Application Add-Ons\" project setting.\n"
+#| "      "
 msgid ""
 "\n"
-"        All add-ons have been enabled for this app using the\n"
-"        \"Enable All Application Add-Ons\" project setting.\n"
+"        All add-ons have been enabled for this app using the \"Enable All\n"
+"        Application Add-Ons\" project setting.\n"
 "      "
 msgstr ""
 "\n"
-"        Tutti gli add-on sono stati abilitati per questa app utilizzando\n"
-"        l'impostazione di progetto \"Abilita tutti gli Add-On dell'applicazione\".\n"
+"        Tutti gli add-on sono stati abilitati per questa app tramite l'impostazione di progetto \"Abilita tutti gli add-on dell'applicazione\".\n"
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
@@ -14220,28 +14211,40 @@ msgid "Learn more."
 msgstr "Scopri di più."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
+#| msgid ""
+#| "\n"
+#| "                    You have previously enabled this feature in your app, but have since lost access\n"
+#| "                    to it.\n"
+#| "                  "
 msgid ""
 "\n"
-"                    You have previously enabled this feature in your app, but have since lost access\n"
-"                    to it.\n"
-"                  "
+"                You have previously enabled this feature in your app, but have\n"
+"                since lost access to it.\n"
+"              "
 msgstr ""
 "\n"
-"                    Hai precedentemente abilitato questa funzione nella tua app, ma successivamente hai perso l'accesso\n"
-"                    ad essa.\n"
-"                  "
+"                In precedenza hai abilitato questa funzionalità nella tua app, ma hai\n"
+"                perso l'accesso ad essa.\n"
+"              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
+#| msgid ""
+#| "\n"
+#| "                    Your application will continue to function in places that utilized this feature, but\n"
+#| "                    you will not be able to edit any related functionality until you upgrade.\n"
+#| "                  "
 msgid ""
 "\n"
-"                    Your application will continue to function in places that utilized this feature, but\n"
-"                    you will not be able to edit any related functionality until you upgrade.\n"
-"                  "
+"                Your application will continue to function in places that\n"
+"                utilized this feature, but you will not be able to edit any\n"
+"                related functionality until you upgrade.\n"
+"              "
 msgstr ""
 "\n"
-"                    La tua applicazione continuerà a funzionare nei luoghi che utilizzavano questa funzione, ma\n"
-"                    non potrai modificare alcuna funzionalità correlata finché non effettuerai l'upgrade.\n"
-"                  "
+"                La tua applicazione continuerà a funzionare nei punti in cui\n"
+"                utilizzava questa funzionalità, ma non potrai modificare alcuna\n"
+"                funzionalità correlata finché non effettuerai l'upgrade.\n"
+"              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid ""
@@ -14775,7 +14778,6 @@ msgid "There was an error saving, please try again!"
 msgstr "Si è verificato un errore durante il salvataggio, riprova!"
 
 #: corehq/apps/app_manager/views/forms.py
-#| msgid "You do not have permissions to assign one of those locations."
 msgid ""
 "You do not have permission to upload an XForm for a form that contains "
 "locked questions."
@@ -16067,6 +16069,11 @@ msgstr ""
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 msgid "Recent Uploads"
 msgstr "Caricamenti recenti"
+
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
+msgid "Comment"
+msgstr "Commento"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/export/templates/export/download_data_files.html
@@ -26989,6 +26996,11 @@ msgid "Form ID"
 msgstr "ID modulo"
 
 #: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/reports/standard/monitoring.py
+msgid "Form Name"
+msgstr "Nome modulo"
+
+#: corehq/apps/enterprise/enterprise.py
 msgid "Submitted [UTC]"
 msgstr "Inviato [UTC]"
 
@@ -27449,19 +27461,25 @@ msgid "Enterprise Administrators"
 msgstr "Amministratori Enterprise"
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
+#| msgid ""
+#| "Enterprise Administrators can manage subscriptions, billing, and account-"
+#| "level settings for all project spaces in this account. See <a "
+#| "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/Enterprise+Console#Enterprise-"
+#| "Admins\" target=\"_blank\" >Enterprise Console | Enterprise Admins</a > for "
+#| "more on Enterprise Admins."
 msgid ""
 "Enterprise Administrators can manage subscriptions, billing, and account-"
 "level settings for all project spaces in this account. See <a "
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/Enterprise+Console#Enterprise-"
-"Admins\" target=\"_blank\" >Enterprise Console | Enterprise Admins</a > for "
-"more on Enterprise Admins."
+"Admins\" target=\"_blank\" >Enterprise Console | Enterprise "
+"Administrators</a > for more on Enterprise Admins."
 msgstr ""
-"Gli Amministratori Enterprise possono gestire abbonamenti, fatturazione e "
+"Gli amministratori Enterprise possono gestire abbonamenti, fatturazione e "
 "impostazioni a livello di account per tutti gli spazi di progetto in questo "
-"account. Vedi <a "
+"account. Consulta <a "
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/Enterprise+Console#Enterprise-"
-"Admins\" target=\"_blank\" >Enterprise Console | Enterprise Admins</a > per "
-"ulteriori informazioni sugli Amministratori Enterprise."
+"Admins\" target=\"_blank\" >Enterprise Console | Amministratori "
+"Enterprise</a > per ulteriori informazioni sugli amministratori Enterprise."
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
 msgid "Add an Administrator"
@@ -37352,10 +37370,6 @@ msgstr ""
 "l'amministratore del progetto per essere assegnato a una posizione.\n"
 
 #: corehq/apps/locations/permissions.py
-#| msgid ""
-#| "This project has restricted data access rules. Please contact your project "
-#| "administrator to be assigned access to data in this project. More "
-#| "information is available <a href=\"{}\">here</a>."
 msgid ""
 "This project limits access to users based on their location. If your "
 "location or your access limits are incorrect, please contact your project "
@@ -53849,8 +53863,9 @@ msgid "Profile conflicts with existing data"
 msgstr "Il profilo è in conflitto con i dati esistenti"
 
 #: corehq/apps/users/user_data.py
-msgid "User data profile not found"
-msgstr "Profilo dati utente non trovato"
+#| msgid "Rule not found."
+msgid "Profile not found"
+msgstr "Profilo non trovato"
 
 #: corehq/apps/users/user_data.py
 msgid "'{}' cannot be set directly"
@@ -53882,6 +53897,12 @@ msgstr ""
 #: corehq/apps/users/validation.py
 msgid "The username email domain '@{}' should be '@{}'."
 msgstr "Il dominio email del nome utente '@{}' dovrebbe essere '@{}'."
+
+#: corehq/apps/users/validation.py
+#, python-brace-format
+#| msgid "User with ID '{user_id}' not found"
+msgid "Profile with id {id} not found."
+msgstr "Profilo con id {id} non trovato."
 
 #: corehq/apps/users/validation.py
 msgid "A profile assignment is required for Mobile Workers."
@@ -58613,14 +58634,6 @@ msgstr "Indirizzi di notifica"
 msgid "Used By"
 msgstr "Usato da"
 
-#: corehq/motech/views.py
-msgid "Please enter client secret again."
-msgstr "Inserisci nuovamente il client secret."
-
-#: corehq/motech/views.py
-msgid "Please enter API password again."
-msgstr "Inserisci nuovamente la password API."
-
 #: corehq/privileges.py
 msgid "API Access"
 msgstr "Accesso API"
@@ -59883,6 +59896,18 @@ msgstr "Le colonne obbligatorie sono {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Inserisci un JSON valido"
+
+#~ msgid "Edit Form Details"
+#~ msgstr "Modifica dettagli modulo"
+
+#~ msgid "User data profile not found"
+#~ msgstr "Profilo dati utente non trovato"
+
+#~ msgid "Please enter client secret again."
+#~ msgstr "Inserisci nuovamente il client secret."
+
+#~ msgid "Please enter API password again."
+#~ msgstr "Inserisci nuovamente la password API."
 
 #~ msgid "Claim Condition"
 #~ msgstr "Condizione di rivendicazione"
