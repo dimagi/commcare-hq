@@ -1,15 +1,12 @@
 --- 
 +++ 
-@@ -1,17 +1,17 @@
+@@ -1,4 +1,4 @@
 -{% extends 'reports/filters/bootstrap3/base.html' %}
 +{% extends 'reports/filters/bootstrap5/base.html' %}
  {% load hq_shared_tags %}
  {% load i18n %}
  {% block filter_content %}
--  <div class="panel-group report-filter-case-property-columns"
-+  <div class="panel-group report-filter-case-property-columns"  {# todo B5: css-panel-group #}
-        id="case-list-explorer-columns"
-        role="tablist"
+@@ -8,10 +8,10 @@
         data-initialvalue="{{ initial_value }}"
         data-columnsuggestions="{{ column_suggestions }}"
    >

@@ -5,7 +5,7 @@
  {% load hq_shared_tags %}
  {% initial_page_data 'custom_assertions' custom_assertions %}
 -<label class="control-label col-sm-2">
-+<label class="field-label">
++<label class="form-label col-md-2">
    {% trans "Custom Assertions" %}
    <span class="hq-help-template"
          data-title="{% trans "Custom Assertions" %}"
@@ -13,7 +13,7 @@
    ></span>
  </label>
 -<div class="col-sm-10" id="custom-assertions">
-+<div class="field-control" id="custom-assertions">
++<div class="col-md-10" id="custom-assertions">
    <table class="table table-condensed">
      <thead>
      <tr>
@@ -50,7 +50,7 @@
 -      <td class="col-sm-2">
 -        <i style="cursor: pointer;" class="fa fa-remove"
 +      <td class="col-md-2">
-+        <i class="fa fa-remove clickable"
++        <i style="cursor: pointer;" class="fa fa-remove"  {# todo B5: inline-style #}
             data-bind="click: $parent.removeAssertion"></i>
        </td>
      </tr>

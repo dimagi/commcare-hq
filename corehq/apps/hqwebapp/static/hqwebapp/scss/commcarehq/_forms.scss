@@ -54,9 +54,6 @@ legend {
   border-bottom: 1px solid $border-color;
   padding-bottom: $spacer * 0.25;
   margin-bottom: $spacer * 1.25;
-  // Override B5's default `calc(1.275rem + .3vw)` (~24–28px), which
-  // visually competes with page titles. Match B3's 21px-equivalent.
-  font-size: 1.25rem;
 }
 
 .form-actions {

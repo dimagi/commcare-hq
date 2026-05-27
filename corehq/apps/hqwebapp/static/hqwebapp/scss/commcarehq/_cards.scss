@@ -2,12 +2,19 @@
   border: none;
   background-color: lighten($cc-bg, 3);
 
-  > .card-header {
-    display: flex;
-    align-items: center;
-    // Set minimum header height to allow conditional content to sit on one line
-    min-height: 3rem;
-
+  .card-header {
+    padding: 0;
+    a:hover, a:link, a:focus {
+      text-decoration: none;
+    }
+    a {
+      display: block;
+      padding: 15px 15px;
+      transition: background-color 1s;
+      &:hover {
+        background-color: $cc-bg;
+      }
+    }
     .hq-help {
       a {
         padding: 0;
@@ -20,6 +27,11 @@
         margin-bottom: -3px;
       }
     }
+  }
+
+  .card-title-nolink {
+    padding: 15px 15px;
+    border-bottom: 1px solid $cc-bg;
   }
 
   .collapsing {
@@ -66,6 +78,10 @@
 .card-body .row {
   margin-right: 0;
   margin-left: 0;
+}
+
+.card-group .card-modern-gray {
+  border-radius: 0;
 }
 
 .card-with-form {

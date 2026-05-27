@@ -6,8 +6,8 @@
  <div>
 -  <div class="form-group">
 -    <label class="control-label col-sm-2"
-+  <div class="row mb-3">
-+    <label class="field-label"
++  <div class="form-group">  {# todo B5: css-form-group #}
++    <label class="form-label col-md-2"
        >{% trans "Custom Icon" %}
        <span
          class="hq-help-template"
@@ -18,19 +18,17 @@
            Learn more
            <a
              target='_blank'
-@@ -20,10 +20,10 @@
+@@ -20,8 +20,8 @@
        >
        </span>
      </label>
 -    <div class="col-sm-2">
+-      <select
 +    <div class="col-md-2">
-       <select
++      <select  {# todo B5: css-select-form-control #}
          id="custom-icon-type-select"
--        class="form-control"
-+        class="form-select"
+         class="form-control"
          name="custom_icon_type"
-       >
-         <option value="text" {% if custom_icon.is_text %}selected{% endif %}>
 @@ -34,16 +34,16 @@
          </option>
        </select>
