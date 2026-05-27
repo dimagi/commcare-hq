@@ -1,7 +1,7 @@
 import json
-from dataclasses import dataclass, field
 
-from django.db import IntegrityError, transaction
+from django import forms
+from django.db import transaction
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -35,98 +35,46 @@ def _get_case_type_names(domain):
     )
 
 
-def _parse_json_object(raw):
-    """Parse a JSON object from a string, returning (data, error_string)."""
-    raw = (raw or '').strip() or '{}'
-    try:
-        data = json.loads(raw)
-    except (json.JSONDecodeError, ValueError):
-        return None, "Query must be valid JSON."
-    if not isinstance(data, dict):
-        return None, "Query must be a JSON object."
-    return data, None
+class CaseSearchEndpointForm(forms.Form):
+    name = forms.CharField()
+    target_type = forms.ChoiceField(choices=CaseSearchEndpoint.TargetType.choices)
+    case_type = forms.CharField(required=False)
+    query = forms.CharField(required=False, widget=forms.Textarea)
+    parameters = forms.CharField(required=False, widget=forms.Textarea)
 
+    def __init__(self, *args, domain, exclude_pk=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.domain = domain
+        self.exclude_pk = exclude_pk
 
-def _parse_json_array(raw):
-    """Parse a JSON array from a string, returning (data, error_string)."""
-    raw = (raw or '').strip() or '[]'
-    try:
-        data = json.loads(raw)
-    except (json.JSONDecodeError, ValueError):
-        return None, "Parameters must be valid JSON."
-    if not isinstance(data, list):
-        return None, "Parameters must be a JSON array."
-    return data, None
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        qs = CaseSearchEndpoint.objects.filter(domain=self.domain, name=name)
+        if self.exclude_pk:
+            qs = qs.exclude(pk=self.exclude_pk)
+        if qs.exists():
+            raise forms.ValidationError(f"An endpoint named '{name}' already exists in this project.")
+        return name
 
+    def clean_query(self):
+        raw = (self.cleaned_data.get('query') or '').strip() or '{}'
+        try:
+            data = json.loads(raw)
+        except (json.JSONDecodeError, ValueError):
+            raise forms.ValidationError("Must be valid JSON.")
+        if not isinstance(data, dict):
+            raise forms.ValidationError("Must be a JSON object.")
+        return data
 
-@dataclass
-class _EndpointFormData:
-    name: str = ''
-    target_type: str = CaseSearchEndpoint.TargetType.PROJECT_DB
-    case_type: str = ''
-    query_raw: str = '{}'
-    parameters_raw: str = '[]'
-    errors: list = field(default_factory=list)
-
-
-class _EndpointFormMixin:
-    """Shared form state, validation, and rendering for create/edit endpoint views.
-
-    Subclasses must assign ``self._form = _EndpointFormData()`` in ``dispatch()``
-    before calling ``super().dispatch()``.
-    """
-
-    template_name = 'case_search/endpoint_edit.html'
-
-    def _parse_post(self, request):
-        self._form.name = request.POST.get('name', '').strip()
-        self._form.target_type = request.POST.get('target_type', self._form.target_type)
-        self._form.case_type = request.POST.get('case_type', '').strip()
-        self._form.query_raw = request.POST.get('query', '{}')
-        self._form.parameters_raw = request.POST.get('parameters', '[]')
-
-    def _validate(self, exclude_pk=None):
-        """Validate form state. Returns (errors, query, parameters)."""
-        errors = []
-        if not self._form.name:
-            errors.append("Name is required.")
-        else:
-            qs = CaseSearchEndpoint.objects.filter(domain=self.domain, name=self._form.name)
-            if exclude_pk:
-                qs = qs.exclude(pk=exclude_pk)
-            if qs.exists():
-                errors.append(f"An endpoint named '{self._form.name}' already exists in this project.")
-
-        query, err = _parse_json_object(self._form.query_raw)
-        if err:
-            errors.append(err)
-
-        parameters, err = _parse_json_array(self._form.parameters_raw)
-        if err:
-            errors.append(err)
-
-        return errors, query, parameters
-
-    @property
-    def parent_pages(self):
-        return [{'title': CaseSearchEndpointsView.page_title,
-                 'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain])}]
-
-    @property
-    def _form_context(self):
-        return {
-            'errors': self._form.errors,
-            'name': self._form.name,
-            'target_type': self._form.target_type,
-            'case_type': self._form.case_type,
-            'query_raw': self._form.query_raw,
-            'parameters_raw': self._form.parameters_raw,
-            'target_type_choices': CaseSearchEndpoint.TargetType.choices,
-            'case_type_names': _get_case_type_names(self.domain),
-        }
-
-    def get(self, request, *args, **kwargs):
-        return self.render_to_response(self.get_context_data())
+    def clean_parameters(self):
+        raw = (self.cleaned_data.get('parameters') or '').strip() or '[]'
+        try:
+            data = json.loads(raw)
+        except (json.JSONDecodeError, ValueError):
+            raise forms.ValidationError("Must be valid JSON.")
+        if not isinstance(data, list):
+            raise forms.ValidationError("Must be a JSON array.")
+        return data
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
@@ -149,114 +97,127 @@ class CaseSearchEndpointsView(BaseProjectDataView):
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointNewView(_EndpointFormMixin, BaseProjectDataView):
+class CaseSearchEndpointNewView(BaseProjectDataView):
     urlname = 'case_search_endpoint_new'
     page_title = gettext_lazy('New Case Search Endpoint')
+    template_name = 'case_search/endpoint_edit.html'
 
-    def dispatch(self, request, *args, **kwargs):
-        self._form = _EndpointFormData()
-        return super().dispatch(request, *args, **kwargs)
+    @property
+    def parent_pages(self):
+        return [{'title': CaseSearchEndpointsView.page_title,
+                 'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain])}]
 
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
+
+    def _make_form(self, data=None):
+        initial = {'query': '{}', 'parameters': '[]'}
+        return CaseSearchEndpointForm(data, domain=self.domain, initial=initial)
 
     @property
     def page_context(self):
         return {
             'post_url': reverse(self.urlname, args=[self.domain]),
             'endpoint': None,
-            **self._form_context,
+            'form': self._form,
+            'case_type_names': _get_case_type_names(self.domain),
         }
 
-    def post(self, request, *args, **kwargs):
-        self._parse_post(request)
-        errors, query, parameters = self._validate()
-        if errors:
-            self._form.errors = errors
-            return self.render_to_response(self.get_context_data())
+    def get(self, request, *args, **kwargs):
+        self._form = self._make_form()
+        return self.render_to_response(self.get_context_data())
 
-        try:
-            with transaction.atomic():
-                endpoint = CaseSearchEndpoint.objects.create(
-                    domain=self.domain,
-                    name=self._form.name,
-                    target_type=self._form.target_type,
-                    target_name=self._form.case_type,
-                )
-                version = CaseSearchEndpointVersion.objects.create(
-                    endpoint=endpoint,
-                    version_number=1,
-                    query=query,
-                    parameters=parameters,
-                )
-                endpoint.current_version = version
-                endpoint.save(update_fields=['current_version'])
-        except IntegrityError:
-            self._form.errors = [f"An endpoint named '{self._form.name}' already exists in this project."]
+    def post(self, request, *args, **kwargs):
+        self._form = self._make_form(request.POST)
+        if not self._form.is_valid():
             return self.render_to_response(self.get_context_data())
+        cd = self._form.cleaned_data
+        with transaction.atomic():
+            endpoint = CaseSearchEndpoint.objects.create(
+                domain=self.domain,
+                name=cd['name'],
+                target_type=cd['target_type'],
+                target_name=cd['case_type'],
+            )
+            version = CaseSearchEndpointVersion.objects.create(
+                endpoint=endpoint,
+                version_number=1,
+                query=cd['query'],
+                parameters=cd['parameters'],
+            )
+            endpoint.current_version = version
+            endpoint.save(update_fields=['current_version'])
         return redirect(reverse(CaseSearchEndpointEditView.urlname, args=[self.domain, endpoint.id]))
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointEditView(_EndpointFormMixin, BaseProjectDataView):
+class CaseSearchEndpointEditView(BaseProjectDataView):
     urlname = 'case_search_endpoint_edit'
     page_title = gettext_lazy('Edit Case Search Endpoint')
+    template_name = 'case_search/endpoint_edit.html'
 
     def dispatch(self, request, *args, **kwargs):
         self._endpoint = _get_endpoint(self.domain, kwargs['endpoint_id'])
         if self._endpoint is None:
             return not_found(request)
-        current = self._endpoint.current_version
-        self._form = _EndpointFormData(
-            name=self._endpoint.name,
-            target_type=self._endpoint.target_type,
-            case_type=self._endpoint.target_name,
-            query_raw=json.dumps(current.query, indent=2) if current else '{}',
-            parameters_raw=json.dumps(current.parameters, indent=2) if current else '[]',
-        )
         return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{'title': CaseSearchEndpointsView.page_title,
+                 'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain])}]
 
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self._endpoint.id])
+
+    def _make_form(self, data=None):
+        current = self._endpoint.current_version
+        initial = {
+            'name': self._endpoint.name,
+            'target_type': self._endpoint.target_type,
+            'case_type': self._endpoint.target_name,
+            'query': json.dumps(current.query, indent=2) if current else '{}',
+            'parameters': json.dumps(current.parameters, indent=2) if current else '[]',
+        }
+        return CaseSearchEndpointForm(data, domain=self.domain, exclude_pk=self._endpoint.pk, initial=initial)
 
     @property
     def page_context(self):
         return {
             'post_url': reverse(self.urlname, args=[self.domain, self._endpoint.id]),
             'endpoint': self._endpoint,
-            **self._form_context,
+            'form': self._form,
+            'case_type_names': _get_case_type_names(self.domain),
         }
 
+    def get(self, request, *args, **kwargs):
+        self._form = self._make_form()
+        return self.render_to_response(self.get_context_data())
+
     def post(self, request, *args, **kwargs):
-        self._parse_post(request)
-        errors, query, parameters = self._validate(exclude_pk=self._endpoint.pk)
-        if errors:
-            self._form.errors = errors
+        self._form = self._make_form(request.POST)
+        if not self._form.is_valid():
             return self.render_to_response(self.get_context_data())
-
+        cd = self._form.cleaned_data
         endpoint = self._endpoint
-        try:
-            with transaction.atomic():
-                endpoint.name = self._form.name
-                endpoint.target_type = self._form.target_type
-                endpoint.target_name = self._form.case_type
-                endpoint.save(update_fields=['name', 'target_type', 'target_name'])
+        with transaction.atomic():
+            endpoint.name = cd['name']
+            endpoint.target_type = cd['target_type']
+            endpoint.target_name = cd['case_type']
+            endpoint.save(update_fields=['name', 'target_type', 'target_name'])
 
-                current = endpoint.current_version
-                next_num = (current.version_number + 1) if current else 1
-                version = CaseSearchEndpointVersion.objects.create(
-                    endpoint=endpoint,
-                    version_number=next_num,
-                    query=query,
-                    parameters=parameters,
-                )
-                endpoint.current_version = version
-                endpoint.save(update_fields=['current_version'])
-        except IntegrityError:
-            self._form.errors = [f"An endpoint named '{self._form.name}' already exists in this project."]
-            return self.render_to_response(self.get_context_data())
+            current = endpoint.current_version
+            next_num = (current.version_number + 1) if current else 1
+            version = CaseSearchEndpointVersion.objects.create(
+                endpoint=endpoint,
+                version_number=next_num,
+                query=cd['query'],
+                parameters=cd['parameters'],
+            )
+            endpoint.current_version = version
+            endpoint.save(update_fields=['current_version'])
         return redirect(reverse(CaseSearchEndpointsView.urlname, args=[self.domain]))
 
 

@@ -124,7 +124,7 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
             'parameters': '[]',
         })
         assert response.status_code == 200
-        assert any('already exists' in e for e in response.context['errors'])
+        assert 'already exists' in response.context['form'].errors['name'][0]
 
     def test_invalid_query_json_error(self):
         response = self.client.post(self._new_url(), {
@@ -135,7 +135,7 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
             'parameters': '[]',
         })
         assert response.status_code == 200
-        assert any('Query' in e for e in response.context['errors'])
+        assert 'query' in response.context['form'].errors
 
     def test_query_must_be_object_not_array(self):
         response = self.client.post(self._new_url(), {
@@ -146,7 +146,7 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
             'parameters': '[]',
         })
         assert response.status_code == 200
-        assert any('JSON object' in e for e in response.context['errors'])
+        assert 'JSON object' in response.context['form'].errors['query'][0]
 
     def test_parameters_must_be_array(self):
         response = self.client.post(self._new_url(), {
@@ -157,7 +157,7 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
             'parameters': '{"not": "array"}',
         })
         assert response.status_code == 200
-        assert any('JSON array' in e for e in response.context['errors'])
+        assert 'JSON array' in response.context['form'].errors['parameters'][0]
 
 
 class TestCaseSearchEndpointEditView(EndpointViewTestCase):
@@ -166,7 +166,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
         response = self.client.get(self._edit_url(ep.id))
         assert response.status_code == 200
         assert response.context['endpoint'] == ep
-        assert response.context['name'] == ep.name
+        assert response.context['form']['name'].value() == ep.name
 
     def test_404_for_wrong_domain(self):
         ep = self._make_endpoint()
@@ -223,7 +223,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
             'parameters': '[]',
         })
         assert response.status_code == 200
-        assert any('already exists' in e for e in response.context['errors'])
+        assert 'already exists' in response.context['form'].errors['name'][0]
 
     def test_can_keep_same_name_on_edit(self):
         ep = self._make_endpoint(name='my-ep')
