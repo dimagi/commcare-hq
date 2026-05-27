@@ -1,5 +1,4 @@
 import logging
-from collections import Counter
 from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO
@@ -195,25 +194,6 @@ class XFormInstanceManager(RequireDBManager):
             )
         return result
 
-    def hard_delete_expired_forms(self, commit=False):
-        """
-        Permanently deletes forms that were soft deleted outside of
-        the DATA_RETENTION_WINDOW, meaning the ``deleted_on`` field is
-        older than the current time - the DATA_RETENTION_WINDOW.
-        :param commit: defaults to False. If True, will delete expired forms
-        :return: dictionary of count of deleted forms
-        """
-        expiration_date = get_cutoff_date_for_data_deletion()
-        total_count = {}
-        for db_name in get_db_aliases_for_partitioned_query():
-            queryset = self.using(db_name).filter(deleted_on__lt=expiration_date)
-            if commit:
-                deleted_counts = queryset.delete()[1]
-            else:
-                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
-            total_count = Counter(total_count) + Counter(deleted_counts)
-        return total_count
-
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
         if xmlns:
@@ -391,9 +371,33 @@ class XFormInstanceManager(RequireDBManager):
 
         return count
 
-    def hard_delete_forms(self, domain, form_ids, *, publish_changes=True, leave_tombstones=True):
+    def hard_delete_expired_forms(self, commit=False):
+        """
+        Permanently deletes forms that were soft deleted outside of
+        the DATA_RETENTION_WINDOW, meaning the ``deleted_on`` field is
+        older than the current time - the DATA_RETENTION_WINDOW.
+        :param commit: defaults to False. If True, will delete expired forms
+        :return: dictionary of count of deleted forms
+        """
+        expiration_date = get_cutoff_date_for_data_deletion()
+        total_count = 0
+        for db_name in get_db_aliases_for_partitioned_query():
+            queryset = (
+                self.using(db_name)
+                .filter(deleted_on__lt=expiration_date)
+                .values_list('form_id', flat=True)
+            )
+            if commit:
+                deleted_counts = self.hard_delete_forms(list(queryset))
+            else:
+                deleted_counts = queryset.count()
+            total_count += deleted_counts
+        return total_count
+
+    def hard_delete_forms(self, form_ids, *, domain=None, publish_changes=True, leave_tombstones=True):
         """Delete forms permanently
 
+        :param domain: only delete forms in the specified domain.
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
         :param leave_tombstones: If adding a new usage, DO NOT SET THIS TO FALSE.
@@ -404,9 +408,12 @@ class XFormInstanceManager(RequireDBManager):
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
+            filters = Q(form_id__in=split_form_ids)
+            if domain is not None:
+                filters &= Q(domain=domain)
             queryset = (
                 self.using(db_name)
-                .filter(domain=domain, form_id__in=split_form_ids)
+                .filter(filters)
                 .values_list('form_id', 'deleted_on')
             )
             shard_count = 0
