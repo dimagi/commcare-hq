@@ -70,8 +70,7 @@
 +                        <button class="btn btn-sm btn-outline-primary" type="button" id="collapse-all-accordion-btn">Collapse All</button>
                        </div>
                      {% endif %}
--                    <div class="panel-group" id="case-properties-accordion">
-+                    <div class="panel-group" id="case-properties-accordion">  {# todo B5: css-panel-group #}
+                     <div class="panel-group" id="case-properties-accordion">
                        {% for table in case_property_tables %}
 -                        <div class="panel panel-appmanager" id="property-table-{{ forloop.counter }}-parent">
 +                        <div class="card panel-appmanager" id="property-table-{{ forloop.counter }}-parent">  {# todo B5: css:panel #}

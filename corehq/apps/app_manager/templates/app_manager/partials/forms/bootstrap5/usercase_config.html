@@ -1,0 +1,24 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<script type="text/html" id="usercase-config:case-transaction">
+  <div class="row top-spacer">
+    <div class="card panel-appmanager" data-bind="template: 'case-config:case-transaction:case-properties'"></div>  {# todo B5: css-panel #}
+  </div>
+</script>
+
+<div id="usercase-config-ko">
+  <div class="clearfix">
+    {% if allow_usercase %}
+      <div data-bind="saveButton: saveUsercaseButton"></div>
+    {% endif %}
+  </div>
+  <p class="lead">
+    {% blocktrans %}
+      <strong>User Properties</strong> allow you to store data about the user and use that data in forms.
+    {% endblocktrans %}
+  </p>
+  <div data-bind="with: caseConfigViewModel" class="container-fluid">
+    <div data-bind="template: {name: 'usercase-config:case-transaction', data: usercase_transaction }"></div>
+  </div>
+</div>

@@ -1,8 +1,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-            <div class="row mb-3">
-                <label class="field-label">
+            <div class="form-group">  {# todo B5: css-form-group #}
+                <label class="form-label {% css_label_class %}">
                     {% trans 'Session Endpoint ID' %}
                     <span class="hq-help-template"
                         data-title="{% trans 'Session Endpoint ID' %}"
@@ -10,8 +10,9 @@
                                         CommCare at this position.{% endblocktrans %}"></span>
                 </label>
                 <div id="session-endpoint-id"
-                    class="field-control commcare-feature"
-                    data-since-version="2.51">
+                    class="{% css_field_class %} commcare-feature"
+                    data-since-version="2.51"
+                    class="{% css_field_class %}">
                     <input class="code form-control"
                         type="text"
                         id="session_endpoint_id"
@@ -19,8 +20,8 @@
                         value="{{ form.session_endpoint_id|default:'' }}" />
                 </div>
             </div>
-            <div class="row mb-3">
-                <label class="field-label pt-0">
+            <div class="form-group">  {# todo B5: css-form-group #}
+                <label class="form-label {% css_label_class %}">
                     {% trans 'Allow endpoint to access hidden forms' %}
                     <span class="hq-help-template"
                         data-title="{% trans 'Allow access to hidden forms' %}"
@@ -28,13 +29,14 @@
                                         hidden forms.{% endblocktrans %}"></span>
                 </label>
                 <div id="access-hidden-forms"
-                    class="field-control commcare-feature"
-                    data-since-version="2.51">
-                    <input type="checkbox"
-                        class="form-check-input"
+                    class="{% css_field_class %} commcare-feature"
+                    data-since-version="2.51"
+                    class="{% css_field_class %}">
+                    <input type="checkbox"  {# todo B5: css-checkbox #}
                         id="access_hidden_forms"
                         name="access_hidden_forms"
                         value="true"
+                        style="margin-top: 10px"  {# todo B5: inline-style #}
                         {% comment %} respect_relevancy is an inverse condition of allowing access to hidden forms
                         {% endcomment %}
                         {% if form.respect_relevancy is False %} checked {% endif %}
