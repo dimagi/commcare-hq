@@ -142,10 +142,9 @@ class TestLookupTableFilters(TestCase):
         ).save()
         assert self._build(CampaignFilter).options == []
 
-    def test_subclass_without_case_property_raises(self):
+    def test_subclass_without_slug_raises(self):
         class _MisconfiguredFilter(BaseLookupTableFilter):
-            slug = 'misconfigured'
             label = 'Misconfigured'
 
         with pytest.raises(NotImplementedError):
-            self._build(_MisconfiguredFilter).options
+            self._build(_MisconfiguredFilter)
