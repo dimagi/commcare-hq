@@ -5098,18 +5098,15 @@ msgid "This user is inactive and cannot reset their password."
 msgstr "Цей користувач неактивний і не може скинути пароль."
 
 #: corehq/apps/api/resources/v0_5.py
-#| msgid "'name' must not be blank"
 msgid "Name must not be blank"
 msgstr "Ім'я не повинно бути порожнім"
 
 #: corehq/apps/api/resources/v0_5.py
 #, python-format
-#| msgid "A rule with name {name} already exists"
 msgid "A group with name %s already exists"
 msgstr "Група з іменем %s вже існує"
 
 #: corehq/apps/api/resources/v0_5.py
-#| msgid "Menu is required"
 msgid "Name is required"
 msgstr "Ім'я є обов'язковим"
 
@@ -14122,11 +14119,6 @@ msgid "Revert"
 msgstr "Повернутися"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
-#| msgid ""
-#| "\n"
-#| "        All add-ons have been enabled for this app using the\n"
-#| "        \"Enable All Application Add-Ons\" project setting.\n"
-#| "      "
 msgid ""
 "\n"
 "        All add-ons have been enabled for this app using the \"Enable All\n"
@@ -14156,11 +14148,6 @@ msgid "Learn more."
 msgstr "Дізнатися більше."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
-#| msgid ""
-#| "\n"
-#| "                    You have previously enabled this feature in your app, but have since lost access\n"
-#| "                    to it.\n"
-#| "                  "
 msgid ""
 "\n"
 "                You have previously enabled this feature in your app, but have\n"
@@ -14172,11 +14159,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
-#| msgid ""
-#| "\n"
-#| "                    Your application will continue to function in places that utilized this feature, but\n"
-#| "                    you will not be able to edit any related functionality until you upgrade.\n"
-#| "                  "
 msgid ""
 "\n"
 "                Your application will continue to function in places that\n"
@@ -14697,6 +14679,17 @@ msgid ""
 msgstr ""
 "Відповідності властивостей кейсу, які посилаються на заблоковані питання, не"
 " можна змінювати. Спочатку розблокуйте питання у конструкторі форм."
+
+#: corehq/apps/app_manager/views/forms.py
+#| msgid ""
+#| "Case property mappings that reference locked questions cannot be modified. "
+#| "Unlock the question in the form builder first."
+msgid ""
+"Locked questions cannot be modified. Unlock the question in the form builder"
+" first."
+msgstr ""
+"Заблоковані питання не можна змінювати. Спочатку розблокуйте питання у "
+"конструкторі форм."
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
@@ -16291,6 +16284,16 @@ msgstr "{param} має бути рядком"
 #: corehq/apps/case_search/models.py
 msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
 msgstr "Недійсний оператор \"{criteria[\"operator\"]}\". Дозволені значення: "
+
+#: corehq/apps/case_search/models.py
+#| msgid "Project Data"
+msgid "Project Database"
+msgstr "База даних проєкту"
+
+#: corehq/apps/case_search/models.py
+#| msgid "Case Search"
+msgid "Elastic Search"
+msgstr "Elastic Search"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
@@ -27336,12 +27339,6 @@ msgid "Enterprise Administrators"
 msgstr "Адміністратори підприємства"
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
-#| msgid ""
-#| "Enterprise Administrators can manage subscriptions, billing, and account-"
-#| "level settings for all project spaces in this account. See <a "
-#| "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/Enterprise+Console#Enterprise-"
-#| "Admins\" target=\"_blank\" >Enterprise Console | Enterprise Admins</a > for "
-#| "more on Enterprise Admins."
 msgid ""
 "Enterprise Administrators can manage subscriptions, billing, and account-"
 "level settings for all project spaces in this account. See <a "
@@ -53595,7 +53592,6 @@ msgid "Profile conflicts with existing data"
 msgstr "Профіль конфліктує з наявними даними"
 
 #: corehq/apps/users/user_data.py
-#| msgid "Rule not found."
 msgid "Profile not found"
 msgstr "Профіль не знайдено"
 
@@ -53632,7 +53628,6 @@ msgstr "Домен електронної пошти імені користув
 
 #: corehq/apps/users/validation.py
 #, python-brace-format
-#| msgid "User with ID '{user_id}' not found"
 msgid "Profile with id {id} not found."
 msgstr "Профіль з id {id} не знайдено."
 
@@ -62293,9 +62288,6 @@ msgstr "Введіть коректний JSON"
 
 #~ msgid "Could not find the report filter '{}'"
 #~ msgstr "Не вдалося знайти фільтр звіту '{}'"
-
-#~ msgid "Project Data"
-#~ msgstr "Дані проєкту"
 
 #~ msgid ""
 #~ "Setting a password is disabled. The user will set their own password on "
