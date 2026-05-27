@@ -12738,6 +12738,12 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
+"Locked questions cannot be modified. Unlock the question in the form builder "
+"first."
+msgstr ""
+
+#: corehq/apps/app_manager/views/forms.py
+msgid ""
 "This form could not be copied because it is not compatible with the selected "
 "module."
 msgstr ""
@@ -14114,6 +14120,14 @@ msgstr ""
 
 #: corehq/apps/case_search/models.py
 msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+msgstr ""
+
+#: corehq/apps/case_search/models.py
+msgid "Project Database"
+msgstr ""
+
+#: corehq/apps/case_search/models.py
+msgid "Elastic Search"
 msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
