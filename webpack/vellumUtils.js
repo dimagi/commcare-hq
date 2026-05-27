@@ -69,6 +69,21 @@ const getDebugRule = function () {
         if (rule.loader && rule.loader.startsWith(hqDir)) {
             rule.loader = rule.loader.replace(hqDir, debugDir);
         }
+        if (rule.test && String(rule.test) === String(/\.less$/) && Array.isArray(rule.use)) {
+            rule.use = rule.use.map(function (loader) {
+                if (loader === "less-loader") {
+                    return {
+                        loader: "less-loader",
+                        options: {
+                            lessOptions: {
+                                math: "always",
+                            },
+                        },
+                    };
+                }
+                return loader;
+            });
+        }
         return rule;
     });
     return {
