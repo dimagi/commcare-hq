@@ -5179,18 +5179,15 @@ msgid "This user is inactive and cannot reset their password."
 msgstr "Este usuário está inativo e não pode redefinir a senha."
 
 #: corehq/apps/api/resources/v0_5.py
-#| msgid "'name' must not be blank"
 msgid "Name must not be blank"
 msgstr "O nome não pode ficar em branco"
 
 #: corehq/apps/api/resources/v0_5.py
 #, python-format
-#| msgid "A rule with name {name} already exists"
 msgid "A group with name %s already exists"
 msgstr "Um grupo com o nome %s já existe"
 
 #: corehq/apps/api/resources/v0_5.py
-#| msgid "Menu is required"
 msgid "Name is required"
 msgstr "Nome é obrigatório"
 
@@ -14287,11 +14284,6 @@ msgid "Revert"
 msgstr "Reverter"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
-#| msgid ""
-#| "\n"
-#| "        All add-ons have been enabled for this app using the\n"
-#| "        \"Enable All Application Add-Ons\" project setting.\n"
-#| "      "
 msgid ""
 "\n"
 "        All add-ons have been enabled for this app using the \"Enable All\n"
@@ -14321,11 +14313,6 @@ msgid "Learn more."
 msgstr "Saiba mais."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
-#| msgid ""
-#| "\n"
-#| "                    You have previously enabled this feature in your app, but have since lost access\n"
-#| "                    to it.\n"
-#| "                  "
 msgid ""
 "\n"
 "                You have previously enabled this feature in your app, but have\n"
@@ -14337,11 +14324,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
-#| msgid ""
-#| "\n"
-#| "                    Your application will continue to function in places that utilized this feature, but\n"
-#| "                    you will not be able to edit any related functionality until you upgrade.\n"
-#| "                  "
 msgid ""
 "\n"
 "                Your application will continue to function in places that\n"
@@ -14868,6 +14850,17 @@ msgstr ""
 "Mapeamentos de propriedades de caso que referenciam perguntas bloqueadas não"
 " podem ser modificados. Desbloqueie a pergunta no construtor de formulários "
 "primeiro."
+
+#: corehq/apps/app_manager/views/forms.py
+#| msgid ""
+#| "Case property mappings that reference locked questions cannot be modified. "
+#| "Unlock the question in the form builder first."
+msgid ""
+"Locked questions cannot be modified. Unlock the question in the form builder"
+" first."
+msgstr ""
+"Perguntas bloqueadas não podem ser modificadas. Desbloqueie a pergunta no "
+"construtor de formulários primeiro."
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
@@ -16479,6 +16472,16 @@ msgstr "{param} deve ser uma string"
 #: corehq/apps/case_search/models.py
 msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
 msgstr "Operador inválido \"{criteria[\"operator\"]}\". Os valores permitidos são "
+
+#: corehq/apps/case_search/models.py
+#| msgid "Project Data"
+msgid "Project Database"
+msgstr "Banco de Dados do Projeto"
+
+#: corehq/apps/case_search/models.py
+#| msgid "Case Search"
+msgid "Elastic Search"
+msgstr "Elastic Search"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
@@ -27556,12 +27559,6 @@ msgid "Enterprise Administrators"
 msgstr "Administradores Empresariais"
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
-#| msgid ""
-#| "Enterprise Administrators can manage subscriptions, billing, and account-"
-#| "level settings for all project spaces in this account. See <a "
-#| "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/Enterprise+Console#Enterprise-"
-#| "Admins\" target=\"_blank\" >Enterprise Console | Enterprise Admins</a > for "
-#| "more on Enterprise Admins."
 msgid ""
 "Enterprise Administrators can manage subscriptions, billing, and account-"
 "level settings for all project spaces in this account. See <a "
@@ -53945,7 +53942,6 @@ msgid "Profile conflicts with existing data"
 msgstr "O perfil entra em conflito com dados existentes"
 
 #: corehq/apps/users/user_data.py
-#| msgid "Rule not found."
 msgid "Profile not found"
 msgstr "Perfil não encontrado"
 
@@ -53982,7 +53978,6 @@ msgstr "O domínio de e-mail do nome de usuário '@{}' deve ser '@{}'."
 
 #: corehq/apps/users/validation.py
 #, python-brace-format
-#| msgid "User with ID '{user_id}' not found"
 msgid "Profile with id {id} not found."
 msgstr "Perfil com id {id} não encontrado."
 
@@ -62709,9 +62704,6 @@ msgstr "Insira um JSON válido"
 
 #~ msgid "Could not find the report filter '{}'"
 #~ msgstr "Não foi possível encontrar o filtro de relatório '{}'"
-
-#~ msgid "Project Data"
-#~ msgstr "Dados do Projeto"
 
 #~ msgid ""
 #~ "Setting a password is disabled. The user will set their own password on "

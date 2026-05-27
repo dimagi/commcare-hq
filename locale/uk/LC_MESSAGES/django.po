@@ -16721,6 +16721,12 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
+"Locked questions cannot be modified. Unlock the question in the form builder "
+"first."
+msgstr ""
+
+#: corehq/apps/app_manager/views/forms.py
+msgid ""
 "This form could not be copied because it is not compatible with the selected "
 "module."
 msgstr ""
@@ -18369,6 +18375,18 @@ msgstr "{param} має бути рядком"
 #: corehq/apps/case_search/models.py
 msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
 msgstr ""
+
+#: corehq/apps/case_search/models.py
+#, fuzzy
+#| msgid "Project Data"
+msgid "Project Database"
+msgstr "Дані проєкту"
+
+#: corehq/apps/case_search/models.py
+#, fuzzy
+#| msgid "Case Search"
+msgid "Elastic Search"
+msgstr "Пошук справ"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
@@ -68479,9 +68497,6 @@ msgstr "Введіть коректний JSON"
 
 #~ msgid "Could not find the report filter '{}'"
 #~ msgstr "Не вдалося знайти фільтр звіту '{}'"
-
-#~ msgid "Project Data"
-#~ msgstr "Дані проєкту"
 
 #~ msgid ""
 #~ "Setting a password is disabled. The user will set their own password on "
