@@ -1,7 +1,17 @@
+from datetime import UTC, datetime
+
 from django.db import models
 
-
 from corehq.sql_db.models import PartitionedModel
+
+
+def build_tombstone(doc_type, doc_id, domain, deleted_on=None):
+    return Tombstone(
+        doc_id=doc_id,
+        object_class_path=f'{doc_type.__module__}.{doc_type.__qualname__}',
+        domain=domain,
+        deleted_on=deleted_on or datetime.now(tz=UTC),
+    )
 
 
 class Tombstone(PartitionedModel):
