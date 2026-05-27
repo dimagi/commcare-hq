@@ -250,13 +250,10 @@ class DisableTwoFactorForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Basic Information"),
-                crispy.Field('username'),
-                crispy.Field('verification_mode'),
-                crispy.Field('via_who'),
-                crispy.Field('disable_for_days'),
-            ),
+            crispy.Field('username'),
+            crispy.Field('verification_mode'),
+            crispy.Field('via_who'),
+            crispy.Field('disable_for_days'),
             hqcrispy.FormActions(
                 crispy.Submit(
                     "disable",
