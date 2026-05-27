@@ -1,8 +1,17 @@
+import logging
 import re
+import time
 
 from django.core.paginator import Paginator
 from django.core.paginator import EmptyPage
-from django.db import DEFAULT_DB_ALIAS
+from django.db import DEFAULT_DB_ALIAS, connections
+from django.db.utils import InterfaceError, OperationalError
+
+logger = logging.getLogger(__name__)
+
+_CHUNK_RETRY_EXCEPTIONS = (OperationalError, InterfaceError)
+# Tuned for batch jobs: rides out a DB outage of up to ~31 minutes total.
+_CHUNK_RETRY_DELAYS = (1, 2, 4, 8, 15, 30, 60, 2 * 60, 4 * 60, 8 * 60, 15 * 60)
 
 
 def fast_distinct(model_cls, column, using=DEFAULT_DB_ALIAS):
@@ -103,6 +112,9 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False):
     """
     Pull from queryset in chunks. This is suitable for deep pagination, but
     cannot be used with ordered querysets (results will be sorted by pk).
+
+    Retries on transient database connection failures (bounded at ~31
+    minutes total) so long-running iterations survive brief outages.
     """
     if queryset.ordered and not ignore_ordering:
         raise AssertionError("queryset_to_iterator does not respect ordering.  "
@@ -110,10 +122,45 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False):
 
     pk_field = model_cls._meta.pk.name
     queryset = queryset.order_by(pk_field)
-    docs = queryset[:limit]
-    while docs:
-        for doc in docs:
+    last_doc_pk = None
+    while True:
+        if last_doc_pk is None:
+            chunk_qs = queryset
+        else:
+            chunk_qs = queryset.filter(**{pk_field + "__gt": last_doc_pk})
+        chunk = _fetch_chunk_with_retry(chunk_qs, limit, model_cls, last_doc_pk)
+        if not chunk:
+            return
+        for doc in chunk:
             yield doc
 
         last_doc_pk = getattr(doc, pk_field)
-        docs = queryset.filter(**{pk_field + "__gt": last_doc_pk})[:limit]
+
+
+def _fetch_chunk(queryset, limit):
+    """Materialize one page of ``queryset``. Patch point for tests."""
+    return list(queryset[:limit])
+
+
+def _fetch_chunk_with_retry(queryset, limit, model_cls, last_doc_pk):
+    max_attempts = len(_CHUNK_RETRY_DELAYS) + 1
+    for attempt in range(max_attempts):
+        try:
+            return _fetch_chunk(queryset, limit)
+        except _CHUNK_RETRY_EXCEPTIONS as exc:
+            if attempt == max_attempts - 1:
+                logger.error(
+                    f"queryset_to_iterator: giving up on {model_cls.__name__} "
+                    f"after {attempt + 1} attempts "
+                    f"(last_doc_pk={last_doc_pk!r}): {exc}"
+                )
+                raise
+            delay = _CHUNK_RETRY_DELAYS[attempt]
+            logger.warning(
+                f"queryset_to_iterator: {type(exc).__name__} fetching "
+                f"{model_cls.__name__} chunk (last_doc_pk={last_doc_pk!r}, "
+                f"attempt {attempt + 1}/{max_attempts}); closing connection "
+                f"and retrying in {delay}s: {exc}"
+            )
+            connections[queryset.db].close()
+            time.sleep(delay)
