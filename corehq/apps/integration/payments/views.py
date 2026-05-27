@@ -64,6 +64,7 @@ class PaymentsFiltersMixin:
         'corehq.apps.integration.payments.filters.CampaignFilter',
         'corehq.apps.integration.payments.filters.ActivityFilter',
         'corehq.apps.integration.payments.filters.FunderFilter',
+        'corehq.apps.integration.payments.filters.CampaignWorkerRoleFilter',
         'corehq.apps.integration.payments.filters.PhoneNumberFilter',
     ]
 
@@ -239,6 +240,11 @@ class PaymentsVerificationTableView(
 
         if funder := self.request.GET.get('funder'):
             query_filters.append(case_property_query(PaymentProperties.FUNDER, funder))
+
+        if campaign_worker_role := self.request.GET.get('campaign_worker_role'):
+            query_filters.append(
+                case_property_query(PaymentProperties.CAMPAIGN_WORKER_ROLE, campaign_worker_role)
+            )
 
         if phone_number := self.request.GET.get('phone_number'):
             query_filters.append(case_property_query(PaymentProperties.PHONE_NUMBER, phone_number))
