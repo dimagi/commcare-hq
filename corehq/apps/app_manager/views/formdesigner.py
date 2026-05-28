@@ -154,15 +154,11 @@ def _get_form_designer_view(request, domain, app, module, form):
     vellum_options['features'] = _get_vellum_features(request, domain, app)
     context['vellum_options'] = vellum_options
 
-    ckeditor_basepath = "formdesigner" if settings.VELLUM_DEBUG else "app_manager/js/vellum"
-    ckeditor_basepath += "/lib/ckeditor/"
-
     context.update({
         'vellum_debug': settings.VELLUM_DEBUG,
         'nav_form': form,
         'formdesigner': True,
 
-        'CKEDITOR_BASEPATH': ckeditor_basepath,
         'show_live_preview': should_show_preview_app(
             request,
             app,
@@ -263,7 +259,7 @@ def _get_base_vellum_options(request, domain, form, displayLang):
             'is_registration_form': form.is_registration_form(),
         }
 
-    if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
+    if domain_has_privilege(domain, privileges.VELLUM_SAVE_TO_CASE):
         options['saveToCase'] = {
             'existingCaseTypes': sorted(get_data_dict_case_types(domain, is_deprecated=False)),
         }
@@ -283,7 +279,8 @@ def _get_vellum_core_context(request, domain, app, module, form, lang):
                                                'form_unique_id': form.get_unique_id()}),
         'form': form.source,
         'formId': form.get_unique_id(),
-        'formName': translate(form.name, app.langs[0], app.langs),
+        'formName': translate(form.name, lang, app.langs),
+        'formComment': form.comment,
         'saveType': 'patch',
         'saveUrl': reverse('edit_form_attr',
                            args=[domain, app.id, form.get_unique_id(),
@@ -323,7 +320,7 @@ def _get_vellum_plugins(domain, form, module, options):
         vellum_plugins.append("commtrack")
     if "caseManagement" in options:
         vellum_plugins.append("caseManagement")
-    if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
+    if domain_has_privilege(domain, privileges.VELLUM_SAVE_TO_CASE):
         vellum_plugins.append("saveToCase")
     if toggles.COMMCARE_CONNECT.enabled(domain):
         vellum_plugins.append("commcareConnect")

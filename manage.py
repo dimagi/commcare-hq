@@ -131,8 +131,53 @@ def _set_source_root(source_root):
 
 
 def run_patches():
+    patch_pkg_resources()
     patch_jsonfield()
     unpatch_sys_modules()
+
+
+def patch_pkg_resources():
+    """Patch pkg_resources for unmaintained eulxml
+
+    The most recent commit to eulxml was 5 years ago as of May 2026,
+    and pkg_resources was removed from setuptools in early 2026.
+    """
+    from importlib.abc import Loader, MetaPathFinder
+    from importlib.resources import files
+    from importlib.util import spec_from_loader
+
+    class LegacyResources:
+        @staticmethod
+        def resource_filename(package, resource):
+            sys.modules.pop('pkg_resources', None)  # force re-import
+            path = files(package).joinpath(resource)
+            assert path.is_dir() or path.is_file(), f"unknown path: {path}"
+            return str(path)
+
+        @staticmethod
+        def resource_isdir(package, resource):
+            sys.modules.pop('pkg_resources', None)  # force re-import
+            return files(package).joinpath(resource).is_dir()
+
+    class LegacyResourcesLoader(Loader):
+        def create_module(self, spec):
+            return LegacyResources
+
+        def exec_module(self, module):
+            pass
+
+    class LegacyResourcesFinder(MetaPathFinder):
+        def find_spec(self, fullname, path, target=None):
+            if fullname == 'pkg_resources':
+                frame = sys._getframe(1)
+                while frame.f_globals.get("__name__", "").startswith('importlib'):
+                    frame = frame.f_back
+                caller = frame.f_globals.get("__name__", "")
+                if caller == 'eulxml':
+                    return spec_from_loader(fullname, LegacyResourcesLoader())
+            return None
+
+    sys.meta_path.append(LegacyResourcesFinder())
 
 
 def patch_jsonfield():

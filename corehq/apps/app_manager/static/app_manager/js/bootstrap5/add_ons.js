@@ -53,6 +53,16 @@ function EditAddOns(addOns, layout, saveUrl) {
             }
         });
     };
+
+    self.allEnabled = ko.pureComputed(function () {
+        for (const slug in self.addOns) {
+            const observable = self.addOns[slug];
+            if (observable() !== true) {
+                return false;
+            }
+        }
+        return true;
+    });
 }
 
 $(() => {

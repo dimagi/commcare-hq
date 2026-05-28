@@ -1,5 +1,7 @@
 from datetime import date
 
+from django.conf import settings
+
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
@@ -14,6 +16,34 @@ from corehq.apps.accounting.tests.generator import (
     FakeStripeCardManager,
     FakeStripeCustomerManager,
 )
+
+
+_clear_caches_immediately_patch = mock.patch.object(
+    Subscription, 'clear_caches', Subscription._clear_caches
+)
+
+
+def patch_subscription_clear_caches():
+    """Clear Subscription caches immediately in tests.
+
+    `Subscription.clear_caches` schedules `_clear_caches` via
+    `transaction.on_commit`, but Django's `TestCase` wraps each test in
+    an atomic block that's rolled back, so the callback would never fire.
+    """
+    assert settings.UNIT_TESTING
+    _clear_caches_immediately_patch.__enter__()
+
+
+@contextmanager
+def clear_subscription_caches_on_commit():
+    """Context manager and decorator to use transaction.on_commit behavior for
+    Subscription.clear_caches"""
+    assert settings.UNIT_TESTING
+    _clear_caches_immediately_patch.__exit__(None, None, None)
+    try:
+        yield
+    finally:
+        _clear_caches_immediately_patch.__enter__()
 
 
 class DomainSubscriptionMixin(object):

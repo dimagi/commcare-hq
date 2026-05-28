@@ -4,7 +4,6 @@ import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import noopMetrics from "analytix/js/noopMetrics";
 import appManager from "app_manager/js/bootstrap3/app_manager";
-import editDetails from "app_manager/js/forms/edit_form_details";
 import "jquery-ui/ui/widgets/sortable";
 import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
 
@@ -43,18 +42,14 @@ $(function () {
         },
         formLoadedCallback: function () {
             $('#formdesigner').removeClass('loading');
-            // This code takes control of the top-left box with the form name.
-            $('#formdesigner .fd-content-left .fd-head-text').before(
-                // We add an edit button that opens a modal:
-                $('#fd-hq-edit-formname-button').html(),
-            // and we replace the form name Vellum put there
-            // with one that's translated to the app builder's currently selected language:
-            ).text(initialPageData.get('form_name'));
         },
     });
     VELLUM_OPTIONS.core = _.extend(VELLUM_OPTIONS.core, {
         onFormSave: function (data) {
             appManager.updateDOM(data.update);
+            if (data.update?.['.variable-form_name']) {
+                appManager.updatePageTitle(data.update['.variable-form_name']);
+            }
             $('.js-preview-toggle').removeAttr('disabled');
             if (initialPageData.get("days_since_created") === 0) {
                 noopMetrics.track.event('Saved the Form Builder within first 24 hours');
@@ -74,8 +69,6 @@ $(function () {
             });
         },
     });
-
-    window.CKEDITOR_BASEPATH = initialPageData.get('CKEDITOR_BASEPATH');     // eslint-disable-line no-unused-vars, no-undef
 
     const initVellum = function ($) {
         $(function () {
@@ -129,23 +122,4 @@ $(function () {
     }
 
     appManager.updatePageTitle(initialPageData.get("form_name"));
-    editDetails.initName(
-        initialPageData.get("form_name"),
-        initialPageData.reverse("edit_form_attr", "name"),
-    );
-    editDetails.initComment(
-        initialPageData.get("form_comment").replace(/\\n/g, "\n"),
-        initialPageData.reverse("edit_form_attr", "comment"),
-    );
-    editDetails.setUpdateCallbackFn(function (name) {
-        $('#formdesigner .fd-content-left .fd-head-text').text(name);
-        $('.variable-form_name').text(name);
-        appManager.updatePageTitle(name);
-        $('#edit-form-name-modal').modal('hide');
-        $('#edit-form-name-modal').find('.disable-on-submit').enableButton();
-    });
-    $('#edit-form-name-modal').koApplyBindings(editDetails);
-    $("#edit-form-name-modal button[type='submit']").click(function () {
-        noopMetrics.track.event("Renamed form from form builder");
-    });
 });

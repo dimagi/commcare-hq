@@ -15,7 +15,6 @@
 
 /corehq/blobs/ @millerdev
 /corehq/ex-submodules/casexml/apps/phone/data_providers/case/livequery.py @millerdev
-/corehq/messaging/ @mkangia
 /corehq/motech/ @kaapstorm
 /corehq/pillows/ @calellowitz @amitphulera
 /corehq/sql_db/ @calellowitz
@@ -53,7 +52,6 @@
 /corehq/apps/reports/standard/cases/ @esoergel
 /corehq/apps/reports/standard/tableau.py @AddisonDunn
 /corehq/apps/settings/views.py @gherceg
-/corehq/apps/sms*/ @mkangia
 /corehq/apps/smsbillables/ @dannyroberts
 /corehq/apps/user_importer/ @stephherbers
 /corehq/apps/userreports/ @calellowitz

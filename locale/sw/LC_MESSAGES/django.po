@@ -106,6 +106,10 @@ msgid "Any Service"
 msgstr "Huduma Yoyote"
 
 #: corehq/apps/accounting/filters.py
+msgid "Credit Adjustment Link"
+msgstr "Kiungo cha Marekebisho ya Mikopo"
+
+#: corehq/apps/accounting/filters.py
 msgid "Linked to Any Transaction"
 msgstr "Imeunganishwa na Muamala Wowote"
 
@@ -1140,6 +1144,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/manage_downstream_domains.html
 #: corehq/apps/locations/templates/locations/location_types.html
@@ -1182,8 +1187,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/confirm_delete_app.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/toggle_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/confirm_delete_app.html
@@ -1224,6 +1227,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
@@ -5104,6 +5108,19 @@ msgid "This user is inactive and cannot reset their password."
 msgstr "Mtumiaji huyu hayuko hai na hawezi kuweka upya nenosiri lao."
 
 #: corehq/apps/api/resources/v0_5.py
+msgid "Name must not be blank"
+msgstr "Jina halipaswi kuwa tupu"
+
+#: corehq/apps/api/resources/v0_5.py
+#, python-format
+msgid "A group with name %s already exists"
+msgstr "Kundi lenye jina %s tayari lipo"
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "Name is required"
+msgstr "Jina linahitajika"
+
+#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
 msgstr "Huna ruhusa ya kufikia API hii"
 
@@ -5224,8 +5241,6 @@ msgid "Populate workflow from HAR file"
 msgstr "Jaza mtiririko wa kazi kutoka faili ya HAR"
 
 #: corehq/apps/app_execution/forms.py
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
@@ -5354,6 +5369,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
@@ -8012,25 +8028,6 @@ msgstr ""
 " Inafaa kwa kuuliza maswali mara moja, kwa taarifa\n"
 "      ambayo hautahitaji kufuatilia tena baadaye. "
 
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-msgid "Edit Form Details"
-msgstr "Hariri Maelezo ya Fomu"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-#: corehq/apps/enterprise/enterprise.py
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Form Name"
-msgstr "Jina la Fomu"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
-msgid "Comment"
-msgstr "Maoni"
-
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
 msgid "Edit Form"
@@ -8314,6 +8311,7 @@ msgstr "Sakinisha CommCare"
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -9542,12 +9540,12 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"              <strong>Save to Case question is missing a case type.</strong>\n"
+"              <strong>Advanced Case Actions question is missing a case type.</strong>\n"
 "              Please add the \"case_type\" property mapping for \"%(case_tag)s\"\n"
 "            "
 msgstr ""
 "\n"
-"              <strong>Swali la Hifadhi kwa Kesi halina aina ya kesi.</strong>\n"
+"              <strong>Swali la Vitendo vya Kesi Vilivyoendelea halina aina ya kesi.</strong>\n"
 "              Tafadhali ongeza ramani ya sifa ya \"case_type\" kwa \"%(case_tag)s\"\n"
 "            "
 
@@ -9556,12 +9554,12 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"              <strong>Save to Case question is missing a case name.</strong>\n"
+"              <strong>Advanced Case Actions question is missing a case name.</strong>\n"
 "              Please add the \"case_name\" property mapping for \"%(case_tag)s\"\n"
 "            "
 msgstr ""
 "\n"
-"              <strong>Swali la Hifadhi kwa Kesi halina jina la kesi.</strong>\n"
+"              <strong>Swali la Vitendo vya Kesi Vilivyoendelea halina jina la kesi.</strong>\n"
 "              Tafadhali ongeza ramani ya sifa ya \"case_name\" kwa \"%(case_tag)s\"\n"
 "            "
 
@@ -10852,8 +10850,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
-msgid "Property mapping concurrently changed and deleted"
-msgstr "Ulinganishaji wa mali ulibadilishwa na kufutwa kwa wakati mmoja"
+msgid "This mapping was changed and deleted in separate sessions"
+msgstr "Ulinganishaji huu ulibadilishwa na kufutwa katika vikao tofauti"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
@@ -11074,6 +11072,19 @@ msgstr "Nakili Fomu"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
 msgid "XForm"
 msgstr "XForm"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+msgid ""
+"\n"
+"                This form contains locked questions and can only be uploaded by\n"
+"                a user with the locked questions permission.\n"
+"              "
+msgstr ""
+"\n"
+"                Fomu hii ina maswali yaliyofungwa na inaweza kupakiwa tu na\n"
+"                mtumiaji mwenye ruhusa ya maswali yaliyofungwa.\n"
+"              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
@@ -12601,25 +12612,18 @@ msgstr "Mtiririko wa Utafutaji wa Programu za Wavuti (Rekodi ya Data)"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Normal Case List"
-msgstr "Orodha ya Kesi ya Kawaida"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search First"
 msgstr "Tafuta Kwanza"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
-msgid "See More"
-msgstr "Tazama Zaidi"
+msgid "Skip to Default Case Search Results"
+msgstr "Ruka hadi Matokeo Chaguo-msingi ya Utafutaji wa Kesi"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Skip to Default Case Search Results"
-msgstr "Ruka hadi Matokeo Chaguo-msingi ya Utafutaji wa Kesi"
+msgid "Legacy Case Search"
+msgstr "Utafutaji wa Kesi wa Zamani"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -12630,11 +12634,6 @@ msgstr "Fanya ingizo la utafutaji lipatikane baada ya utafutaji"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search Input Instance Name"
 msgstr "Jina la Mfano wa Ingizo la Utafutaji"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Label for Searching"
-msgstr "Lebo ya Kutafuta"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -12650,26 +12649,6 @@ msgstr "Tafsiri ya Kichwa cha Skrini ya Utafutaji"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search Screen Subtitle"
 msgstr "Kichwa Kidogo cha Skrini ya Utafutaji"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Search Filter"
-msgstr "Kichujio cha Utafutaji"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Copy case list filter"
-msgstr "Nakili kichujio cha orodha ya kesi"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Example: age > 5"
-msgstr "Mfano: umri > 5"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Claim Condition"
-msgstr "Sharti la Kudai"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -14160,13 +14139,12 @@ msgstr "Rudisha"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"        All add-ons have been enabled for this app using the\n"
-"        \"Enable All Application Add-Ons\" project setting.\n"
+"        All add-ons have been enabled for this app using the \"Enable All\n"
+"        Application Add-Ons\" project setting.\n"
 "      "
 msgstr ""
 "\n"
-"        Viongezi vyote vimewezeshwa kwa programu hii kwa kutumia\n"
-"        mpangilio wa mradi \"Wezesha Viongezi Vyote vya Programu\".\n"
+"        Viongezeo vyote vimewezeshwa kwa programu hii kwa kutumia mpangilio wa mradi wa \"Wezesha Viongezeo Vyote vya Programu\".\n"
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
@@ -14190,25 +14168,25 @@ msgstr "Jifunze zaidi."
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"                    You have previously enabled this feature in your app, but have since lost access\n"
-"                    to it.\n"
-"                  "
+"                You have previously enabled this feature in your app, but have\n"
+"                since lost access to it.\n"
+"              "
 msgstr ""
 "\n"
-"                    Uliwahi kuwezesha kipengele hiki kwenye programu yako, lakini sasa umepoteza ufikiaji wake.\n"
-"                  "
+"                Uliwahi kuwezesha kipengele hiki kwenye programu yako, lakini sasa umepoteza ufikiaji wake.\n"
+"              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"                    Your application will continue to function in places that utilized this feature, but\n"
-"                    you will not be able to edit any related functionality until you upgrade.\n"
-"                  "
+"                Your application will continue to function in places that\n"
+"                utilized this feature, but you will not be able to edit any\n"
+"                related functionality until you upgrade.\n"
+"              "
 msgstr ""
 "\n"
-"                    Programu yako itaendelea kufanya kazi katika maeneo yaliyotumia kipengele hiki, lakini\n"
-"                    hutaweza kuhariri utendakazi wowote unaohusiana hadi uboreshe.\n"
-"                  "
+"                Programu yako itaendelea kufanya kazi katika maeneo yaliyotumia kipengele hiki, lakini hutaweza kuhariri utendakazi wowote unaohusiana hadi uboreshe.\n"
+"              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid ""
@@ -14717,6 +14695,25 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
+"Case property mappings that reference locked questions cannot be modified. "
+"Unlock the question in the form builder first."
+msgstr ""
+"Ulinganishaji wa mali za kesi unaorejelea maswali yaliyofungwa hauwezi "
+"kubadilishwa. Fungua swali kwanza kwenye mjenzi wa fomu."
+
+#: corehq/apps/app_manager/views/forms.py
+#| msgid ""
+#| "Case property mappings that reference locked questions cannot be modified. "
+#| "Unlock the question in the form builder first."
+msgid ""
+"Locked questions cannot be modified. Unlock the question in the form builder"
+" first."
+msgstr ""
+"Maswali yaliyofungwa hayawezi kubadilishwa. Fungua swali kwanza kwenye "
+"mjenzi wa fomu."
+
+#: corehq/apps/app_manager/views/forms.py
+msgid ""
 "This form could not be copied because it is not compatible with the selected"
 " module."
 msgstr ""
@@ -14725,6 +14722,12 @@ msgstr ""
 #: corehq/apps/app_manager/views/forms.py
 msgid "There was an error saving, please try again!"
 msgstr "Kulikuwa na hitilafu wakati wa kuhifadhi, tafadhali jaribu tena!"
+
+#: corehq/apps/app_manager/views/forms.py
+msgid ""
+"You do not have permission to upload an XForm for a form that contains "
+"locked questions."
+msgstr "Huna ruhusa ya kupakia XForm kwa fomu iliyo na maswali yaliyofungwa."
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
@@ -16007,6 +16010,11 @@ msgid "Recent Uploads"
 msgstr "Upakiaji wa Hivi Karibuni"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
+msgid "Comment"
+msgstr "Maoni"
+
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/export/templates/export/download_data_files.html
 msgid "File"
 msgstr "Faili"
@@ -16236,6 +16244,10 @@ msgid ""
 msgstr "Hatujui cha kufanya na kazi \"{}\". Kazi zinazokubalika ni: {}"
 
 #: corehq/apps/case_search/filter_dsl.py
+msgid "You cannot query related cases here"
+msgstr "Huwezi kuuliza kesi zinazohusiana hapa"
+
+#: corehq/apps/case_search/filter_dsl.py
 #, python-brace-format
 msgid "'{name}' is not a valid standalone function"
 msgstr "'{name}' si kazi huru halali"
@@ -16298,6 +16310,16 @@ msgstr "{param} lazima iwe mfuatano wa herufi"
 #: corehq/apps/case_search/models.py
 msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
 msgstr "Operator batili \"{criteria[\"operator\"]}\". Thamani zinazokubalika ni "
+
+#: corehq/apps/case_search/models.py
+#| msgid "Project Data"
+msgid "Project Database"
+msgstr "Hifadhidata ya Mradi"
+
+#: corehq/apps/case_search/models.py
+#| msgid "Case Search"
+msgid "Elastic Search"
+msgstr "Elastic Search"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
@@ -21477,6 +21499,21 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/forms.py
+msgid "Use elasticsearch when fetching apps for exports"
+msgstr ""
+"Tumia elasticsearch wakati wa kuchukua programu kwa ajili ya usafirishaji"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            (Internal) Fetches apps using elasticsearch instead of couch in exports\n"
+"            "
+msgstr ""
+"\n"
+"            (Ya ndani) Inachukua programu kwa kutumia elasticsearch badala ya couch kwenye usafirishaji\n"
+"            "
+
+#: corehq/apps/domain/forms.py
 msgid "Connect Messaging Channel Name"
 msgstr "Jina la Kituo cha Ujumbe cha Connect"
 
@@ -21766,6 +21803,8 @@ msgstr "Tafadhali taja kikomo cha OData feeds."
 
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
+#: corehq/apps/enterprise/forms.py
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
 #: corehq/apps/registration/templates/registration/confirmation_resend.html
@@ -25353,10 +25392,6 @@ msgid "Sign In"
 msgstr "Ingia"
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
-#| msgid ""
-#| "\n"
-#| "                No account? Sign up today, it's free!\n"
-#| "              "
 msgid ""
 "\n"
 "                No account? Get started for free.\n"
@@ -25368,12 +25403,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
-#| msgid ""
-#| "\n"
-#| "                    Organization-based data access restrictions are only available\n"
-#| "                    on the Pro plan and above. Saving this role will enable\n"
-#| "                    full organization access for the assigned users.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    Data collection is just the start. Equip your frontline\n"
@@ -25389,7 +25418,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
-#| msgid "Learn more about CommCare"
 msgid "Learn more about CommCare."
 msgstr "Jifunze zaidi kuhusu CommCare."
 
@@ -25452,10 +25480,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
-#| msgid ""
-#| "\n"
-#| "                  No account? Sign up today, it's free!\n"
-#| "                "
 msgid ""
 "\n"
 "                  No account? Get started for free.\n"
@@ -26845,6 +26869,11 @@ msgid "Form ID"
 msgstr "Kitambulisho cha Fomu"
 
 #: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/reports/standard/monitoring.py
+msgid "Form Name"
+msgstr "Jina la Fomu"
+
+#: corehq/apps/enterprise/enterprise.py
 msgid "Submitted [UTC]"
 msgstr "Imewasilishwa [UTC]"
 
@@ -27035,6 +27064,31 @@ msgstr "Toleo Jipya Zaidi Lililopatikana Ulipotumika Mwisho"
 #: corehq/apps/enterprise/enterprise.py
 msgid "Last Used [UTC]"
 msgstr "Iliyotumika Mwisho [UTC]"
+
+#: corehq/apps/enterprise/forms.py
+msgid "Add Administrator"
+msgstr "Ongeza Msimamizi"
+
+#: corehq/apps/enterprise/forms.py
+msgid "This user is already an enterprise administrator."
+msgstr "Mtumiaji huyu tayari ni msimamizi wa biashara."
+
+#: corehq/apps/enterprise/forms.py
+#, python-format
+msgid ""
+"This email domain is not permitted. Enterprise admins must use an email at "
+"one of: %(domains)s"
+msgstr ""
+"Kikoa hiki cha barua pepe hakiruhusiwi. Wasimamizi wa biashara lazima "
+"watumie barua pepe kwenye moja ya: %(domains)s"
+
+#: corehq/apps/enterprise/forms.py
+msgid ""
+"This user must be a member of at least one project space in this enterprise "
+"account before being added as an enterprise administrator."
+msgstr ""
+"Mtumiaji huyu lazima awe mwanachama wa angalau nafasi moja ya mradi kwenye "
+"akaunti hii ya biashara kabla ya kuongezwa kama msimamizi wa biashara."
 
 #: corehq/apps/enterprise/forms.py
 msgid "Restrict Project Space Creation"
@@ -27273,6 +27327,38 @@ msgstr "Hitilafu ya Dashibodi ya Biashara: {}"
 msgid "Enterprise Dashboard: {}"
 msgstr "Dashibodi ya Biashara: {}"
 
+#: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
+#: corehq/apps/enterprise/views.py corehq/tabs/tabclasses.py
+msgid "Enterprise Administrators"
+msgstr "Wasimamizi wa Biashara"
+
+#: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
+msgid ""
+"Enterprise Administrators can manage subscriptions, billing, and account-"
+"level settings for all project spaces in this account. See <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/Enterprise+Console#Enterprise-"
+"Admins\" target=\"_blank\" >Enterprise Console | Enterprise "
+"Administrators</a > for more on Enterprise Admins."
+msgstr ""
+"Wasimamizi wa Biashara wanaweza kudhibiti usajili, malipo, na mipangilio ya "
+"akaunti kwa nafasi zote za mradi kwenye akaunti hii. Tazama <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/Enterprise+Console#Enterprise-"
+"Admins\" target=\"_blank\" >Enterprise Console | Wasimamizi wa Biashara</a >"
+" kwa maelezo zaidi kuhusu Wasimamizi wa Biashara."
+
+#: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
+msgid "Add an Administrator"
+msgstr "Ongeza Msimamizi"
+
+#: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
+#, python-format
+msgid ""
+"This account uses SSO. New administrators must use an email at one of: "
+"%(domains)s."
+msgstr ""
+"Akaunti hii inatumia SSO. Wasimamizi wapya lazima watumie barua pepe kwenye "
+"moja ya: %(domains)s."
+
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
 #: corehq/apps/enterprise/views.py corehq/tabs/tabclasses.py
 msgid "Enterprise Permissions"
@@ -27340,6 +27426,23 @@ msgstr ""
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 msgid "Customize Mobile Form Submissions Date Range"
 msgstr "Badilisha Kipindi cha Tarehe cha Uwasilishaji wa Fomu za Simu"
+
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
+msgid "Remove enterprise administrator?"
+msgstr "Ondoa msimamizi wa biashara?"
+
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
+#, python-format
+msgid ""
+"Are you sure you want to remove <strong>%(email)s</strong> as an enterprise "
+"administrator?"
+msgstr ""
+"Una uhakika unataka kumwondoa <strong>%(email)s</strong> kama msimamizi wa "
+"biashara?"
+
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
+msgid "There are no enterprise administrators configured for this account."
+msgstr "Hakuna wasimamizi wa biashara waliowekwa kwa akaunti hii."
 
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html
 msgid "No project spaces found."
@@ -27421,6 +27524,33 @@ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 #: corehq/apps/enterprise/views.py
 msgid "{} is now excluded from enterprise permissions."
 msgstr "{} sasa imeondolewa kwenye ruhusa za biashara."
+
+#: corehq/apps/enterprise/views.py
+msgid "Invalid request."
+msgstr "Ombi batili."
+
+#: corehq/apps/enterprise/views.py
+#, python-format
+msgid "%(email)s has been added as an enterprise administrator."
+msgstr "%(email)s ameongezwa kama msimamizi wa biashara."
+
+#: corehq/apps/enterprise/views.py
+msgid "You cannot remove yourself as an enterprise administrator."
+msgstr "Huwezi kujiondoa mwenyewe kama msimamizi wa biashara."
+
+#: corehq/apps/enterprise/views.py
+msgid "An enterprise account must have at least one administrator."
+msgstr "Akaunti ya biashara lazima iwe na angalau msimamizi mmoja."
+
+#: corehq/apps/enterprise/views.py
+#, python-format
+msgid "%(email)s is not an enterprise administrator."
+msgstr "%(email)s si msimamizi wa biashara."
+
+#: corehq/apps/enterprise/views.py
+#, python-format
+msgid "%(email)s has been removed as an enterprise administrator."
+msgstr "%(email)s ameondolewa kama msimamizi wa biashara."
 
 #: corehq/apps/enterprise/views.py
 msgid "Please select a project."
@@ -32238,7 +32368,6 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-#| msgid "%(user_name)s's Information"
 msgid ""
 "%(user_name)s's\n"
 "      Information"
@@ -32274,11 +32403,6 @@ msgstr "Nyanja"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                Are you sure you want to permanently delete\n"
-#| "                <strong>%(attendee_name)s</strong>?\n"
-#| "              "
 msgid ""
 "\n"
 "                The following will be removed from\n"
@@ -32292,10 +32416,6 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                        %(cc_name)s Help\n"
-#| "                    "
 msgid ""
 "\n"
 "                    %(count)s domain membership\n"
@@ -32314,21 +32434,15 @@ msgstr[1] ""
 "                    "
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
-#| msgid "Superuser"
 msgid "Superuser access"
 msgstr "Ufikiaji wa superuser"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
-#| msgid "Accounting Admins"
 msgid "Accounting admin access"
 msgstr "Ufikiaji wa msimamizi wa uhasibu"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Are you sure you want to <strong>delete</strong> this rule?\n"
-#| "                "
 msgid ""
 "\n"
 "                  Type <strong>%(confirm_text)s</strong> to confirm\n"
@@ -32409,25 +32523,21 @@ msgstr ""
 
 #: corehq/apps/hqadmin/views/users.py
 #, python-brace-format
-#| msgid "User with ID '{user_id}' not found"
 msgid "User '{username}' not found."
 msgstr "Mtumiaji '{username}' hakupatikana."
 
 #: corehq/apps/hqadmin/views/users.py
 #, python-brace-format
-#| msgid "Update Location Membership"
 msgid "{count} domain membership"
 msgid_plural "{count} domain memberships"
 msgstr[0] "Sasisha Uanachama wa Eneo"
 msgstr[1] "Sasisha Uanachama wa Eneo"
 
 #: corehq/apps/hqadmin/views/users.py
-#| msgid "Grant or revoke superuser access"
 msgid "superuser access"
 msgstr "ufikiaji wa superuser"
 
 #: corehq/apps/hqadmin/views/users.py
-#| msgid "Accounting Admins"
 msgid "accounting admin access"
 msgstr "ufikiaji wa msimamizi wa uhasibu"
 
@@ -37065,13 +37175,13 @@ msgstr ""
 
 #: corehq/apps/locations/permissions.py
 msgid ""
-"This project has restricted data access rules. Please contact your project "
-"administrator to be assigned access to data in this project. More "
-"information is available <a href=\"{}\">here</a>."
+"This project limits access to users based on their location. If your "
+"location or your access limits are incorrect, please contact your project "
+"administrator. <a href=\"{}\">More information is available here</a>."
 msgstr ""
-"Mradi huu una sheria za upatikanaji wa data zilizozuiliwa. Tafadhali "
-"wasiliana na msimamizi wa mradi wako ili upangiwe ruhusa ya kufikia data "
-"katika mradi huu. Maelezo zaidi yanapatikana <a href=\"{}\">hapa</a>."
+"Mradi huu unazuia ufikiaji wa watumiaji kulingana na eneo lao. Ikiwa eneo "
+"lako au mipaka yako ya ufikiaji si sahihi, tafadhali wasiliana na msimamizi "
+"wa mradi wako. <a href=\"{}\">Maelezo zaidi yanapatikana hapa</a>."
 
 #: corehq/apps/locations/resources/v0_6.py
 #, python-brace-format
@@ -37786,6 +37896,11 @@ msgstr "Arifa hazikuweza kupatikana kwa sasa."
 #: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
 msgid "Please see our blog for service updates."
 msgstr "Tafadhali angalia blogu yetu kwa masasisho ya huduma."
+
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
+#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
+msgid "See More"
+msgstr "Tazama Zaidi"
 
 #: corehq/apps/notifications/views.py
 msgid "Manage Notification"
@@ -40690,9 +40805,6 @@ msgid "Payload ID"
 msgstr "Kitambulisho cha Payload"
 
 #: corehq/apps/reports/filters/simple.py
-#| msgid ""
-#| "Leave this blank to include all users. In that case, domain is required to "
-#| "limit the scope."
 msgid ""
 "One or more usernames, comma-separated. Leave blank to include all users "
 "(requires domain to limit the scope)."
@@ -40733,7 +40845,6 @@ msgstr ""
 "Acha wazi kujumuisha njia zote."
 
 #: corehq/apps/reports/filters/simple.py
-#| msgid "Users to exclude"
 msgid "URL Path Exclude"
 msgstr "Njia ya URL Toa"
 
@@ -48216,6 +48327,10 @@ msgstr ""
 "itapuuza safu zifuatazo: {columns}"
 
 #: corehq/apps/translations/app_translations/upload_form.py
+msgid "Translation for '{}' was not updated because the question is locked."
+msgstr "Tafsiri ya '{}' haikusasishwa kwa sababu swali limefungwa."
+
+#: corehq/apps/translations/app_translations/upload_form.py
 #, python-brace-format
 msgid "Error in {sheet}: {msg}"
 msgstr "Hitilafu kwenye {sheet}: {msg}"
@@ -53475,8 +53590,8 @@ msgid "Profile conflicts with existing data"
 msgstr "Wasifu wa mtumiaji unakinzana na data iliyopo"
 
 #: corehq/apps/users/user_data.py
-msgid "User data profile not found"
-msgstr "Wasifu wa data ya mtumiaji haujapatikana"
+msgid "Profile not found"
+msgstr "Wasifu haujapatikana"
 
 #: corehq/apps/users/user_data.py
 msgid "'{}' cannot be set directly"
@@ -53508,6 +53623,11 @@ msgstr ""
 msgid "The username email domain '@{}' should be '@{}'."
 msgstr ""
 "Jina la mtumiaji lenye domain ya barua pepe '@{}' linapaswa kuwa '@{}'."
+
+#: corehq/apps/users/validation.py
+#, python-brace-format
+msgid "Profile with id {id} not found."
+msgstr "Wasifu wenye kitambulisho {id} haujapatikana."
 
 #: corehq/apps/users/validation.py
 msgid "A profile assignment is required for Mobile Workers."
@@ -58205,14 +58325,6 @@ msgstr "Anwani za Taarifa"
 msgid "Used By"
 msgstr "Inatumiwa Na"
 
-#: corehq/motech/views.py
-msgid "Please enter client secret again."
-msgstr "Tafadhali ingiza siri ya mteja tena."
-
-#: corehq/motech/views.py
-msgid "Please enter API password again."
-msgstr "Tafadhali ingiza nenosiri la API tena."
-
 #: corehq/privileges.py
 msgid "API Access"
 msgstr "Ufikiaji wa API"
@@ -58471,6 +58583,14 @@ msgstr ""
 "Ongeza uongozi wa eneo kuu kwenye usafirishaji wa excel katika Ripoti ya "
 "Shughuli ya Mwisho ya Mtumiaji"
 
+#: corehq/privileges.py
+msgid "Locked Admin Questions"
+msgstr "Maswali ya Msimamizi Yaliyofungwa"
+
+#: corehq/privileges.py
+msgid "Save to Case"
+msgstr "Hifadhi kwenye Kesi"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Ripoti za Mjenzi wa Ripoti"
@@ -58648,6 +58768,10 @@ msgstr "Haipatikani tena"
 #: corehq/tabs/tabclasses.py
 msgid "View Location"
 msgstr "Tazama Mahali"
+
+#: corehq/tabs/tabclasses.py
+msgid "View and manage the administrators for your enterprise account"
+msgstr "Tazama na simamia wasimamizi wa akaunti yako ya biashara"
 
 #: corehq/tabs/tabclasses.py
 msgid "View project spaces where users receive automatic access"
@@ -59461,6 +59585,39 @@ msgstr "Safu zinazohitajika ni {column_names}"
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
 
+#~ msgid "Edit Form Details"
+#~ msgstr "Hariri Maelezo ya Fomu"
+
+#~ msgid "User data profile not found"
+#~ msgstr "Wasifu wa data ya mtumiaji haujapatikana"
+
+#~ msgid "Please enter client secret again."
+#~ msgstr "Tafadhali ingiza siri ya mteja tena."
+
+#~ msgid "Please enter API password again."
+#~ msgstr "Tafadhali ingiza nenosiri la API tena."
+
+#~ msgid "Claim Condition"
+#~ msgstr "Sharti la Kudai"
+
+#~ msgid "Normal Case List"
+#~ msgstr "Orodha ya Kesi ya Kawaida"
+
+#~ msgid "Search Filter"
+#~ msgstr "Kichujio cha Utafutaji"
+
+#~ msgid "Copy case list filter"
+#~ msgstr "Nakili kichujio cha orodha ya kesi"
+
+#~ msgid "Example: age > 5"
+#~ msgstr "Mfano: umri > 5"
+
+#~ msgid "Property mapping concurrently changed and deleted"
+#~ msgstr "Ulinganishaji wa mali ulibadilishwa na kufutwa kwa wakati mmoja"
+
+#~ msgid "Label for Searching"
+#~ msgstr "Lebo ya Kutafuta"
+
 #~ msgid "Reference"
 #~ msgstr "Rejeleo"
 
@@ -59631,19 +59788,6 @@ msgstr "Weka JSON halali"
 #~ msgstr ""
 #~ "Jina la mradi litakalotumika kwenye SMS zinazotumwa kwa uthibitisho wa "
 #~ "akaunti kwa watumiaji."
-
-#~ msgid "Use elasticsearch when fetching apps for exports"
-#~ msgstr ""
-#~ "Tumia elasticsearch wakati wa kuchukua programu kwa ajili ya usafirishaji"
-
-#~ msgid ""
-#~ "\n"
-#~ "            (Internal) Fetches apps using elasticsearch instead of couch in exports\n"
-#~ "            "
-#~ msgstr ""
-#~ "\n"
-#~ "            (Ya ndani) Inachukua programu kwa kutumia elasticsearch badala ya couch kwenye usafirishaji\n"
-#~ "            "
 
 #, python-brace-format
 #~ msgid "Restriction for profile {profile} set successfully."
@@ -62149,9 +62293,6 @@ msgstr "Weka JSON halali"
 
 #~ msgid "Could not find the report filter '{}'"
 #~ msgstr "Haikuweza kupata kichujio cha ripoti '{}'"
-
-#~ msgid "Project Data"
-#~ msgstr "Taarifa za Mradi"
 
 #~ msgid ""
 #~ "Setting a password is disabled. The user will set their own password on "

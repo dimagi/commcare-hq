@@ -1567,7 +1567,6 @@
   "has_submissions": false,
   "mobile_ucr_restore_version": "2.0",
   "location_fixture_restore": "project_default",
-  "split_screen_dynamic_search": false,
   "persistent_menu": false,
   "show_breadcrumbs": true,
   "copy_history": [],

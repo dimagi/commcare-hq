@@ -213,7 +213,7 @@
                   <span
                     class="hq-help-template"
                     data-title="{% trans "Web Apps Search Workflow" %}"
-                    data-content="{% trans_html_attr "<strong>Normal Case List</strong> is the &quot;classic&quot; case search workflow.  <br><br><strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is typically used for a &quot;Search Cases&quot; module.  <br><br><strong>See More</strong> is the same functionality as Normal Case List, except clicking the search button runs the default searches and returns the results. The user doesn't get to change the search criteria. This enables a workflow where the user sees what's in the local casedb then clicks &quot;See More&quot; to view all cases that fit the criteria.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search. The user never sees the results of the casedb." %}"
+                    data-content="{% trans_html_attr "<strong>Search First</strong> does not show any results until the user clicks &quot;Search&quot;. This is typically used for a &quot;Search Cases&quot; module.<br><br><strong>Skip to Default Case Search Results</strong> displays the results from the default case search on load and let's the user refine the search from there. The user never sees the results of the casedb.<br><br><strong>Legacy Case Search</strong> displays the results from the &quot;classic&quot; case list first. But lets the user expand the results using case search." %}"
                   >
                   </span>
                 </label>
@@ -226,7 +226,7 @@
                   <span
                     class="hq-help-template"
                     data-title="{% trans "Web Apps Search Workflow (Data Registry)" %}"
-                    data-content="{% trans_html_attr "<strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is the default for Data Registry search.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search." %}"
+                    data-content="{% trans_html_attr "<strong>Search First</strong> does not show any results until the user clicks &quot;Search&quot;. This is typically used for a &quot;Search Cases&quot; module.<br><br><strong>Skip to Default Case Search Results</strong> displays the results from the default case search on load and let's the user refine the search from there. The user never sees the results of the casedb." %}"
                   >
                   </span>
                 </label>
@@ -236,28 +236,20 @@
                     data-bind="value: workflow"
                     id="search-workflow"
                   >
-                    {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
+                    <option value="auto_launch">
+                      {% trans "Search First" %}
+                    </option>
+                    <option value="es_only">
+                      {% trans "Skip to Default Case Search Results" %}
+                    </option>
+                    {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED_NORMAL_CASE_LIST' %}
                       <option
                         value="classic"
                         data-bind="hidden: restrictWorkflowForDataRegistry"
                       >
-                        {% trans "Normal Case List" %}
+                        {% trans "Legacy Case Search" %}
                       </option>
                     {% endif %}
-                    <option value="auto_launch">
-                      {% trans "Search First" %}
-                    </option>
-                    {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
-                      <option
-                        value="see_more"
-                        data-bind="hidden: restrictWorkflowForDataRegistry"
-                      >
-                        {% trans "See More" %}
-                      </option>
-                    {% endif %}
-                    <option value="es_only">
-                      {% trans "Skip to Default Case Search Results" %}
-                    </option>
                   </select>
                 </div>
               </div>
@@ -376,76 +368,6 @@
               ></textarea>
             </div>
           </div>
-          {% if request|toggle_enabled:'USH_SEARCH_FILTER' %}
-            <div class="form-group">
-              <label
-                for="search-filter"
-                class="control-label {% css_label_class %}"
-              >
-                {% trans "Search Filter" %}
-                <span
-                  class="hq-help-template"
-                  data-title="{% trans "Search Filter" %}"
-                  data-content="{% trans_html_attr "An XPath expression to filter the search results." %}"
-                >
-                </span>
-              </label>
-              <div class="{% css_field_class %}">
-                <textarea
-                  data-bind="
-                          value: search_filter,
-                          xpathValidator: {
-                            text: search_filter,
-                            allowCaseHashtags: true,
-                            errorHtml: document.getElementById('searchFilterXpathErrorHtml').innerHTML,
-                          }"
-                  class="form-control vertical-resize"
-                  id="search-filter"
-                  spellcheck="false"
-                ></textarea>
-                <p class="help-block">
-                  <button
-                    class="pull-right btn-xs btn btn-default"
-                    data-bind="visible: setSearchFilterVisible, enable: setSearchFilterEnabled, click: setSearchFilter"
-                  >
-                    <i class="fa-solid fa-reply"></i>
-                    {% trans "Copy case list filter" %}
-                  </button>
-                  {% trans "Example: age > 5" %}
-                </p>
-              </div>
-            </div>
-          {% endif %}
-          {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
-          <div class="form-group">
-            <label
-              for="claim-relevant-condition"
-              class="control-label {% css_label_class %}"
-            >
-              {% trans "Claim Condition" %}
-              <span
-                class="hq-help-template"
-                data-title="{% trans "Claim Condition" %}"
-                data-content="{% trans_html_attr "If this expression evaluates to false, no case will be claimed." %}"
-              >
-              </span>
-            </label>
-            <div class="{% css_field_class %}">
-              <textarea
-                data-bind="
-                          value: additional_relevant,
-                          xpathValidator: {
-                            text: additional_relevant,
-                            allowCaseHashtags: true,
-                            errorHtml: document.getElementById('searchFilterXpathErrorHtml').innerHTML,
-                          }"
-                class="form-control vertical-resize"
-                id="claim-relevant-condition"
-                spellcheck="false"
-              ></textarea>
-            </div>
-          </div>
-          {% endif %}
           <div class="form-group">
             <label
               for="blacklisted-user-ids"
@@ -648,7 +570,7 @@
               </div>
             </div>
           {% endif %}
-          {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' and not app.split_screen_dynamic_search %}
+          {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
             <div class="form-group">
               <label class="control-label {% css_label_class %}">
                 {% trans "Clearing search terms resets search results" %}

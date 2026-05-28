@@ -228,7 +228,7 @@
                      class="form-control"
                      data-bind="value: workflow"
                      id="search-workflow"
-@@ -265,10 +265,10 @@
+@@ -257,10 +257,10 @@
            </div>
            {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
              <div
@@ -241,7 +241,7 @@
                  {% trans "Make search input available after search" %}
                  <span
                    class="hq-help-template"
-@@ -277,9 +277,9 @@
+@@ -269,9 +269,9 @@
                  >
                  </span>
                </label>
@@ -253,7 +253,7 @@
                    <input
                      type="hidden"
                      name="search-input"
-@@ -291,8 +291,8 @@
+@@ -283,8 +283,8 @@
                  </p>
                </div>
              </div>
@@ -264,7 +264,7 @@
                  {% trans "Search Input Instance Name" %}
                  <span
                    class="hq-help-template"
-@@ -312,16 +312,16 @@
+@@ -304,16 +304,16 @@
              </div>
            {% endif %}
            {% if request|toggle_enabled:'SYNC_SEARCH_CASE_CLAIM' %}
@@ -284,7 +284,7 @@
                  >
                  </span>
                </label>
-@@ -329,10 +329,10 @@
+@@ -321,10 +321,10 @@
                  {% input_trans module.search_config.title_label langs input_name='title_label' input_id='title_label' data_bind="value: title_label" %}
                </div>
              </div>
@@ -297,7 +297,7 @@
                >
                  {% trans "Search Screen Subtitle" %}
                  <span
-@@ -347,10 +347,10 @@
+@@ -339,10 +339,10 @@
                </div>
              </div>
            {% endif %}
@@ -310,45 +310,10 @@
              >
                {% trans "Display Condition" %}
                <span
-@@ -377,10 +377,10 @@
+@@ -368,10 +368,10 @@
+               ></textarea>
              </div>
            </div>
-           {% if request|toggle_enabled:'USH_SEARCH_FILTER' %}
--            <div class="form-group">
-+            <div class="form-group">  {# todo B5: css-form-group #}
-               <label
-                 for="search-filter"
--                class="control-label {% css_label_class %}"
-+                class="form-label {% css_label_class %}"
-               >
-                 {% trans "Search Filter" %}
-                 <span
-@@ -405,7 +405,7 @@
-                 ></textarea>
-                 <p class="help-block">
-                   <button
--                    class="pull-right btn-xs btn btn-default"
-+                    class="float-end btn-sm btn btn-outline-primary"
-                     data-bind="visible: setSearchFilterVisible, enable: setSearchFilterEnabled, click: setSearchFilter"
-                   >
-                     <i class="fa-solid fa-reply"></i>
-@@ -417,10 +417,10 @@
-             </div>
-           {% endif %}
-           {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
--          <div class="form-group">
-+          <div class="form-group">  {# todo B5: css-form-group #}
-             <label
-               for="claim-relevant-condition"
--              class="control-label {% css_label_class %}"
-+              class="form-label {% css_label_class %}"
-             >
-               {% trans "Claim Condition" %}
-               <span
-@@ -446,10 +446,10 @@
-             </div>
-           </div>
-           {% endif %}
 -          <div class="form-group">
 +          <div class="form-group">  {# todo B5: css-form-group #}
              <label
@@ -358,7 +323,7 @@
              >
                {% trans "Don't search cases owned by the following ids" %}
                <span
-@@ -482,10 +482,10 @@
+@@ -404,10 +404,10 @@
              </div>
            </div>
            {% if data_registry_enabled %}
@@ -371,7 +336,7 @@
                >
                  {% trans "Data Registry" %}
                  <span
-@@ -496,7 +496,7 @@
+@@ -418,7 +418,7 @@
                  </span>
                </label>
                <div class="{% css_field_class %}">
@@ -380,7 +345,7 @@
                    class="form-control"
                    id="data-registry"
                    data-bind="value: data_registry"
-@@ -510,15 +510,15 @@
+@@ -432,15 +432,15 @@
                  </select>
                </div>
              </div>
@@ -399,7 +364,7 @@
                    class="form-control"
                    data-bind="value: data_registry_workflow"
                  >
-@@ -529,12 +529,12 @@
+@@ -451,12 +451,12 @@
                </div>
              </div>
              <div
@@ -414,7 +379,7 @@
                >
                  {% trans "Load Additional Data Registry Cases" %}
                  <span
-@@ -556,8 +556,8 @@
+@@ -478,8 +478,8 @@
                      data-bind="visible: additional_registry_cases().length > 0"
                    >
                      <tr>
@@ -425,7 +390,7 @@
                      </tr>
                    </thead>
                    <tbody
-@@ -579,7 +579,7 @@
+@@ -501,7 +501,7 @@
                        </td>
                        <td>
                          <i
@@ -434,7 +399,7 @@
                            class="fa fa-remove"
                            data-bind="click: $parent.removeRegistryQuery"
                          ></i>
-@@ -589,7 +589,7 @@
+@@ -511,7 +511,7 @@
                  </table>
                  <button
                    type="button"
@@ -443,7 +408,7 @@
                    data-bind="click: addRegistryQuery"
                  >
                    <i class="fa fa-plus"></i>
-@@ -599,10 +599,10 @@
+@@ -521,10 +521,10 @@
              </div>
            {% endif %}
            {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
@@ -456,7 +421,7 @@
                >
                  {% trans "Case property with additional case id to add to results" %}
                  <span
-@@ -632,15 +632,15 @@
+@@ -554,15 +554,15 @@
              </div>
            {% endif %}
            {% if request|toggle_enabled:'CASE_SEARCH_RELATED_LOOKUPS' %}
@@ -476,10 +441,10 @@
                        data-bind="checked: include_all_related_cases"
                      />
                    </label>
-@@ -649,18 +649,18 @@
+@@ -571,18 +571,18 @@
              </div>
            {% endif %}
-           {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' and not app.split_screen_dynamic_search %}
+           {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
 -            <div class="form-group">
 -              <label class="control-label {% css_label_class %}">
 +            <div class="form-group">  {# todo B5: css-form-group #}

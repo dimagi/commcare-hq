@@ -14,12 +14,3 @@
    }
  }
  
-@@ -57,7 +57,7 @@
-   position: absolute;
-   right: 12px;
-   line-height: 37px;
--  .transition(500ms color ease-in-out);
-+  transition: 500ms color ease-in-out;
- 
-   &:hover,
-   &:focus {

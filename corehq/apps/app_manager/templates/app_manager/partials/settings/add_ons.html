@@ -2,30 +2,26 @@
 {% load hq_shared_tags %}
 
 {% if all_add_ons_enabled %}
-
   <div class="alert alert-info">
     <p>
       {% blocktrans %}
-        All add-ons have been enabled for this app using the
-        "Enable All Application Add-Ons" project setting.
+        All add-ons have been enabled for this app using the "Enable All
+        Application Add-Ons" project setting.
       {% endblocktrans %}
     </p>
   </div>
-
 {% else %}
-
   <form>
-
     <div data-bind="saveButton: saveButton"></div>
 
     {% if request|request_has_privilege:"SHOW_ENABLE_ALL_ADD_ONS" %}
-    <button
-      type="button"
-      class="btn btn-outline-primary float-end"
-      data-bind="click: enableAll"
-    >
-      {% trans "Enable All Add-Ons" %}
-    </button>
+      <button
+        type="button"
+        class="btn btn-outline-primary float-end"
+        data-bind="click: enableAll, disable: allEnabled"
+      >
+        {% trans "Enable All Add-Ons" %}
+      </button>
     {% endif %}
 
     <p class="lead">
@@ -35,10 +31,7 @@
     </p>
 
     <div class="accordion" data-bind="foreach: sections">
-      <div
-        class="accordion-item"
-        data-bind="attr: {'data-slug': slug}"
-      >
+      <div class="accordion-item" data-bind="attr: {'data-slug': slug}">
         <button
           class="accordion-button collapsed"
           type="button"
@@ -67,38 +60,44 @@
                 },
                 disable: show_upgrade,
                 checked: $root.addOns[slug]"
-              />
-            <label data-bind="attr: { 'for': 'check-' + slug }" class="form-check-label">
+            />
+            <label
+              data-bind="attr: { 'for': 'check-' + slug }"
+              class="form-check-label"
+            >
               <span data-bind="text: name" class="clickable"></span>
               <div class="help-block">
                 <span data-bind="text: description"></span>
-                <a target="_blank" data-bind="if: help_link, attr:{href: help_link}">{% trans "Learn more." %}</a>
+                <a
+                  target="_blank"
+                  data-bind="if: help_link, attr:{href: help_link}"
+                  >{% trans "Learn more." %}</a
+                >
               </div>
             </label>
             <!-- ko if: show_upgrade -->
-              <div class="alert alert-info">
-                <i class="fa fa-info-circle"></i>
-                <span data-bind="text: upgrade_text"></span>
-                {% include 'hqwebapp/partials/generic_feature_upgrade.html' %}
+            <div class="alert alert-info">
+              <i class="fa fa-info-circle"></i>
+              <span data-bind="text: upgrade_text"></span>
+              {% include 'hqwebapp/partials/generic_feature_upgrade.html' %}
 
-                <!-- ko if: $root.addOns[slug] -->
-                  {% blocktrans %}
-                    You have previously enabled this feature in your app, but have since lost access
-                    to it.
-                  {% endblocktrans %}
-                  <br />
-                  {% blocktrans %}
-                    Your application will continue to function in places that utilized this feature, but
-                    you will not be able to edit any related functionality until you upgrade.
-                  {% endblocktrans %}
-                <!-- /ko -->
-              </div>
+              <!-- ko if: $root.addOns[slug] -->
+              {% blocktrans %}
+                You have previously enabled this feature in your app, but have
+                since lost access to it.
+              {% endblocktrans %}
+              <br />
+              {% blocktrans %}
+                Your application will continue to function in places that
+                utilized this feature, but you will not be able to edit any
+                related functionality until you upgrade.
+              {% endblocktrans %}
+              <!-- /ko -->
+            </div>
             <!-- /ko -->
           </div>
         </div>
       </div>
     </div>
-
   </form>
-
 {% endif %}

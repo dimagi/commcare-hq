@@ -91,6 +91,19 @@ hashtag_replacements = [
 ]
 
 
+_ITEXT_REF_RE = re.compile(r"""jr:itext\(['"]([^'"]+)['"]\)""")
+
+
+def _itext_refs_in(elem):
+    """Itext IDs referenced from any descendant ``@ref`` of ``elem``."""
+    return {
+        m.group(1)
+        for ref in elem.xpath(".//@ref")
+        for m in [_ITEXT_REF_RE.match(str(ref))]
+        if m is not None
+    }
+
+
 def _make_elem(tag, attr=None):
     attr = attr or {}
     return ET.Element(
@@ -701,6 +714,93 @@ class XForm(WrappedNode):
         return self.model_node.findall('{f}bind')
 
     @property
+    def has_locked_questions(self):
+        """Whether any binds in this form's XML are locked (``vellum:lock="all"``)."""
+        if not self.exists():
+            return False
+        try:
+            binds = self.bind_nodes
+        except XFormException:
+            return False
+        return any(bind.attrib.get('{v}lock') == 'all' for bind in binds)
+
+    @property
+    def locked_question_paths(self):
+        """Set of ``nodeset`` paths for binds with ``vellum:lock="all"``."""
+        if not self.exists():
+            return set()
+        try:
+            binds = self.bind_nodes
+        except XFormException:
+            return set()
+        return {
+            bind.attrib['nodeset']
+            for bind in binds
+            if bind.attrib.get('{v}lock') == 'all' and bind.attrib.get('nodeset')
+        }
+
+    def get_question_signature(self, path):
+        """Representation of the question at ``path`` for equality comparison.
+
+        Includes the bind element, the control element + descendants, the
+        data instance node, and any itext entries referenced from the
+        control's labels/hints/help/items. Callers should not rely on the
+        absence or presence of any particular item within this set.
+
+        Returns an empty ``set`` if the path isn't present in the form.
+        """
+        if not self.exists():
+            return set()
+
+        parts = set()
+
+        for bind in self.bind_nodes:
+            if bind.attrib.get('nodeset') == path:
+                parts.add(ET.tostring(bind.xml))
+
+        for control in self._controls_for_path(path):
+            parts.add(ET.tostring(control))
+            for itext_id in _itext_refs_in(control):
+                for text_node in self._itext_text_nodes(itext_id):
+                    parts.add(ET.tostring(text_node))
+
+        for data_node in self._data_instance_nodes_for_path(path):
+            parts.add(ET.tostring(data_node))
+
+        return parts
+
+    def _controls_for_path(self, path):
+        """Body elements with ``ref`` or ``nodeset`` matching ``path``."""
+        if self.xml is None:
+            return []
+        return self.xml.xpath(
+            ".//*[@ref=$path or @nodeset=$path]", path=path,
+        )
+
+    def _itext_text_nodes(self, itext_id):
+        """All ``<text id="itext_id">`` elements across translations."""
+        return self.itext_node.xml.xpath(
+            ".//*[local-name()='text' and @id=$id]", id=itext_id,
+        )
+
+    def _data_instance_nodes_for_path(self, path):
+        """Data-instance descendants addressed by ``path`` (e.g. ``/data/q``).
+
+        The data instance lives in the form's own xmlns (registered as
+        ``x`` in :class:`XForm.__init__`); each path step is namespaced.
+        """
+        data = self.data_node
+        steps = [s for s in path.split('/') if s]
+        if not steps or steps[0] != data.tag_name:
+            return []
+        node = data
+        for step in steps[1:]:
+            node = node.find('{x}' + step)
+            if not node.exists():
+                return []
+        return [node.xml]
+
+    @property
     @raise_if_none("Can't find <itext>")
     def itext_node(self):
         # awful, awful hack. It will be many weeks before I can look people in the eye again.
@@ -1048,9 +1148,16 @@ class XForm(WrappedNode):
                 instance_dict[instance_id] = src
         return instance_dict
 
-    def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False,
-                      exclude_select_with_itemsets=False, include_fixtures=False):
+    def get_questions(
+            self,
+            langs,
+            include_triggers=False,
+            include_groups=False,
+            include_translations=False,
+            exclude_select_with_itemsets=False,
+            include_fixtures=False,
+            include_locked_status=False,
+        ):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -1140,6 +1247,10 @@ class XForm(WrappedNode):
                 "setvalue": self._get_setvalue(path),
                 "is_group": is_group,
             }
+
+            if include_locked_status:
+                question["locked"] = bool(cnode.bind_node) and cnode.bind_node.attrib.get('{v}lock') == 'all'
+
             if include_translations:
                 question["translations"] = self._get_label_translations(node, langs)
 

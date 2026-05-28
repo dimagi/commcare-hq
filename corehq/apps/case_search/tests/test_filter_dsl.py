@@ -1,7 +1,9 @@
+from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
 
+import pytest
 import pytz
 from eulxml.xpath import parse as parse_xpath
 from time_machine import travel
@@ -9,7 +11,7 @@ from time_machine import travel
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from couchforms.geopoint import GeoPoint
 
-from corehq.apps.case_search.exceptions import CaseFilterError
+from corehq.apps.case_search.exceptions import CaseFilterError, XPathFunctionException
 from corehq.apps.case_search.filter_dsl import (
     SearchFilterContext,
     build_filter_from_ast,
@@ -508,21 +510,42 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
 
-@patch('corehq.apps.case_search.xpath_functions.subcase_functions'
-       '._get_parent_case_ids_matching_subcase_query',
-       new=MagicMock(return_value=[]))
-def test_subcase_query_logging():
+def _search_context(is_case_search):
+    helper = QueryHelper("mydomain")
+    helper.is_case_search = is_case_search
+    return SearchFilterContext("mydomain", helper=helper)
+
+
+@contextmanager
+def assert_calls_subcase_fn():
+    mock = MagicMock()
+    path = 'corehq.apps.case_search.xpath_functions.XPATH_QUERY_FUNCTIONS'
+    with patch.dict(path, {'subcase-count': mock}):
+        yield mock
+    mock.assert_called()
+
+
+def test_subcase_query_skipped_in_reporting_context():
     parsed = parse_xpath("subcase-count('grandmother', house='Tyrell') >= 1")
-    with patch('corehq.apps.case_search.filter_dsl.notify_exception') as notify:
-        build_filter_from_ast(parsed, SearchFilterContext("mydomain"))
-        notify.assert_called()
+    with assert_calls_subcase_fn():
+        build_filter_from_ast(parsed, _search_context(is_case_search=False))
 
-    with patch('corehq.apps.case_search.filter_dsl.notify_exception') as notify:
-        with flag_enabled('CASE_SEARCH_RELATED_LOOKUPS'):
-            build_filter_from_ast(parsed, SearchFilterContext("mydomain"))
-        notify.assert_not_called()
 
+def test_subcase_query_raises_without_flag():
+    parsed = parse_xpath("subcase-count('grandmother', house='Tyrell') >= 1")
+    with pytest.raises(XPathFunctionException):
+        build_filter_from_ast(parsed, _search_context(is_case_search=True))
+
+
+@flag_enabled('CASE_SEARCH_RELATED_LOOKUPS')
+def test_subcase_query_allowed_with_flag():
+    parsed = parse_xpath("subcase-count('grandmother', house='Tyrell') >= 1")
+    with assert_calls_subcase_fn():
+        build_filter_from_ast(parsed, _search_context(is_case_search=True))
+
+
+def test_parent_case_id_bypasses_flag_check():
     parsed = parse_xpath("parent/@case_id = '123abc'")
-    with patch('corehq.apps.case_search.filter_dsl.notify_exception') as notify:
-        build_filter_from_ast(parsed, SearchFilterContext("mydomain"))
-        notify.assert_not_called()
+    with patch('corehq.apps.case_search.filter_dsl.ancestor_comparison_query') as mock:
+        build_filter_from_ast(parsed, _search_context(is_case_search=True))
+    mock.assert_called()

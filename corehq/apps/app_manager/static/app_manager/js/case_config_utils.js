@@ -4,14 +4,18 @@ import toggles from "hqwebapp/js/toggles";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
 export default {
-    getQuestions: function (questions, filter, excludeHidden, includeRepeat, excludeTrigger) {
+    getQuestions: function (
+        questions,
+        filter,
+        excludeHidden = false,
+        includeRepeat = false,
+        excludeTrigger = false,
+        disableLocked = false,
+    ) {
         // filter can be "all", or any of "select1", "select", or "input" separated by spaces
         var i,
             options = [],
             q;
-        excludeHidden = excludeHidden || false;
-        excludeTrigger = excludeTrigger || false;
-        includeRepeat = includeRepeat || false;
         filter = filter.split(" ");
         if (!excludeHidden) {
             filter.push('hidden');
@@ -26,6 +30,9 @@ export default {
                 if (includeRepeat || !q.repeat) {
                     if (!excludeTrigger || q.tag !== "trigger") {
                         if (allowAttachments || q.tag !== "upload") {
+                            if (disableLocked) {
+                                q.disabled = q.locked;
+                            }
                             options.push(q);
                         }
                     }

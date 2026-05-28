@@ -118,7 +118,7 @@ class UserData:
                 definition__field_type=CUSTOM_USER_DATA_FIELD_TYPE,
             )
         except CustomDataFieldsProfile.DoesNotExist as e:
-            raise UserDataError(_("User data profile not found")) from e
+            raise UserDataError(_("Profile not found")) from e
 
     def remove_unrecognized(self):
         return _remove_unrecognized(self._local_to_user, self._schema_fields)

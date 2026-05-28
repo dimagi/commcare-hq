@@ -1,5 +1,6 @@
 import re
 
+from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml import const
 from corehq.apps.app_manager.suite_xml import xml_models as sx
@@ -411,6 +412,19 @@ class Enum(FormattedDetailColumn):
             get_value=lambda key: self.id_strings.detail_column_enum_variable(self.module, self.detail_type,
                                                                               self.column, key))
 
+    @property
+    def _template_xpath(self):
+        """The xpath expression to substitute into per-mapping enum templates."""
+        # For calculated-property columns, the ``$calculated_property`` variable is
+        # already defined on the template's xpath text (see ``template``/``sort_node``),
+        # so references to it avoid repeating the (potentially expensive) source
+        # expression once per enum mapping.
+        if (self.column.useXpathExpression  # This is a calculated property
+                # Temporary feature flag for testing purposes:
+                and toggles.ENUM_CALC_VARIABLES.enabled(self.app.domain)):
+            return '$calculated_property'
+        return self.xpath
+
     def _xpath_template(self, type):
         if type == 'sort':
             return "if(selected({xpath}, '{key}'), {i}, "
@@ -457,7 +471,7 @@ class ConditionalEnum(Enum):
 
     def _xpath_template_context(self, type):
         return lambda item, i: {
-            'key_as_condition': item.key_as_condition(self.xpath),
+            'key_as_condition': item.key_as_condition(self._template_xpath),
             'key_as_var_name': item.ref_to_key_variable(i, 'display')
         }
 
@@ -520,7 +534,7 @@ class EnumImage(Enum):
 
     def _xpath_template_context(self, type):
         return lambda item, i: {
-            'key_as_condition': item.key_as_condition(self.xpath),
+            'key_as_condition': item.key_as_condition(self._template_xpath),
             'key_as_var_name': item.ref_to_key_variable(i, type)
         }
 

@@ -981,6 +981,14 @@ msgid "XPath Expression"
 msgstr "Usemi wa XPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Hidden)"
+msgstr " (Imefichwa)"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Locked)"
+msgstr " (Imefungwa)"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
 msgstr "Swali Lisilotambulika"
 
@@ -1268,53 +1276,93 @@ msgstr "Iliyohifadhiwa hivi karibuni"
 msgid "[unknown]"
 msgstr "[haijulikani]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/2229.js
-msgid "\n"
-msgstr "\n"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "loadXFormOrError"
+msgstr "pakiaXFormAuHitilafu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/4730.js
-msgid "{path} is not a valid data parent"
-msgstr "{path} si mzazi halali wa data"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isPropertyLocked"
+msgstr "imefungwaMali"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugPathMoveable"
+msgstr "njiaYaMugInawezaKusogezwa"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugRemoveable"
+msgstr "mugInawezaKuondolewa"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugTypeChangeable"
+msgstr "ainaYaMugInawezaKubadilishwa"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "getMainProperties"
+msgstr "pataSifaKuu"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "createXML"
+msgstr "undaXML"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "getData"
+msgstr "pataData"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "checkMove"
+msgstr "kaguaUhamisho"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "jstree"
+msgstr "jstree"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "Drag question here"
 msgstr "Buruta swali hapa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is equal to"
 msgstr "ni sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is not equal to"
 msgstr "si sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is less than"
 msgstr "ni chini ya"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is less than or equal to"
 msgstr "ni chini au sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is greater than"
 msgstr "ni zaidi ya"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is greater than or equal to"
 msgstr "ni zaidi au sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "has selected value"
 msgstr "ina thamani iliyochaguliwa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "True when ALL of the expressions are true."
 msgstr "Kweli ikiwa KAULI ZOTE ni kweli."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "True when ANY of the expressions are true."
 msgstr "Kweli ikiwa YOYOTE kati ya kauli ni kweli."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
+msgid "{path} is not a valid data parent"
+msgstr "{path} si mzazi halali wa data"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/96.js
+msgid "\n"
+msgstr "\n"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "New Form"
@@ -3917,6 +3965,10 @@ msgid "View-Only Applications"
 msgstr "Maombi ya Kuangalia Pekee"
 
 #: corehq/apps/users/static/users/js/edit_role.js
+msgid "Allow locking and unlocking questions in forms."
+msgstr "Ruhusu kufunga na kufungua maswali kwenye fomu."
+
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
 "worker roles &amp; permissions (only Admins can edit roles)"
@@ -5198,23 +5250,11 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ msgid "getCurrentMugInput"
 #~ msgstr "pataMugInputWaSasa"
 
-#~ msgid "jstree"
-#~ msgstr "jstree"
-
 #~ msgid "getMugByPath"
 #~ msgstr "getMugByPath"
 
-#~ msgid "getData"
-#~ msgstr "pataData"
-
 #~ msgid "loadXML"
 #~ msgstr "pakiaXML"
-
-#~ msgid "createXML"
-#~ msgstr "undaXML"
-
-#~ msgid "loadXFormOrError"
-#~ msgstr "pakiaXFormAuHitilafu"
 
 #~ msgid "addQuestion"
 #~ msgstr "ongezaSwali"

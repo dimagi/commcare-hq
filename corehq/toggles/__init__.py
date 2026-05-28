@@ -73,6 +73,12 @@ TAG_GA_PATH = Tag(
     css_class='release',
     description='This is a feature that we plan to move to General Availability in the future.',
 )
+TAG_CONNECT_DIVISION = Tag(
+    name='Connect Division',
+    slug='connect_division',
+    css_class='default',
+    description='Feature flags owned and maintained by the Connect Division.',
+)
 
 ALL_TAG_GROUPS = [
     TAG_RELEASE,
@@ -80,6 +86,7 @@ ALL_TAG_GROUPS = [
     TAG_FROZEN,
     TAG_DEPRECATED,
     TAG_INTERNAL,
+    TAG_CONNECT_DIVISION,
 ]
 ALL_TAGS = ALL_TAG_GROUPS
 
@@ -957,15 +964,6 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-CASE_SEARCH_DEPRECATED = StaticToggle(
-    'case_search_deprecated',
-    'Case Search: Deprecated',
-    TAG_DEPRECATED,
-    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
-)
-
 CASE_SEARCH_DEPRECATED_NORMAL_CASE_LIST = StaticToggle(
     'case_search_deprecated_normal_case_list',
     'Case Search: Normal case list option Deprecated',
@@ -995,40 +993,11 @@ CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
     parent_toggles=[CASE_SEARCH_ADVANCED],
 )
 
-CASE_SEARCH_CACHE_KEY = StaticToggle(
-    'case_search_cache_key',
-    'Case Search: Formplayer cache key',
-    TAG_GA_PATH,
-    description="""
-        If set formplayer will use a more specific cache key. This is meant to fix a bug but the
-        perfomance implications are not clear. Hence the FF.""",
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
-)
-
-USH_CASE_LIST_MULTI_SELECT = StaticToggle(
-    'ush_case_list_multi_select',
-    'USH: Allow selecting multiple cases from the case list',
-    TAG_FROZEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Allow+selecting+multiple+cases+from+the+case+list',  # noqa: E501
-    description="""
-    Allows user to select multiple cases and load them all into the form.
-    """
-)
-
-USH_CASE_CLAIM_UPDATES = StaticToggle(
-    'case_claim_autolaunch',
-    "USH Specific toggle to support several different case search/claim workflows in web apps",
-    TAG_FROZEN,
-    help_link='https://confluence.dimagi.com/display/USH/Case+Search+Configuration',
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    USH Specific toggle to support several different case search/claim workflows in web apps:
-    "search first", "see more", and "skip to default case search results", Geocoder
-    and other options in Webapps Case Search.
-    """,
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
+CASE_SEARCH_ENDPOINTS = StaticToggle(
+    'case_search_endpoints',
+    'Case Search Endpoints: configurable query builder for case search',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
 )
 
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
@@ -1056,23 +1025,12 @@ GEOCODER_USER_PROXIMITY = StaticToggle(
     """,
 )
 
-USH_SEARCH_FILTER = StaticToggle(
-    'case_search_filter',
-    "USH Specific toggle to use Search Filter in case search options.",
-    TAG_DEPRECATED,
+FORMPLAYER_SKIP_FIELD_CACHING = StaticToggle(
+    'formplayer_skip_field_caching',
+    'Formplayer: Skip Field Caching',
+    TAG_INTERNAL,
+    description="Instruct formplayer to try out an alternative field caching workflow for performance testing.",
     namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
-)
-
-USH_INLINE_SEARCH = StaticToggle(
-    'inline_case_search',
-    "USH Specific toggle to making case search user input available to other parts of the app.",
-    TAG_FROZEN,
-    help_link='https://docs.google.com/document/d/1Mmx1FrYZrcEmWidqSkNjC_gWSJ6xzRFKoP3Rn_xSaj4/edit#',
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Temporary toggle to manage the release of the 'inline search' / 'case search input' feature.
-    """,
 )
 
 USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
@@ -1082,32 +1040,16 @@ USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
-    'split_screen_case_search',
-    "Split screen case search: In case search, show the search filters in a sidebar on the left and the results"
-    " on the right.",
-    TAG_FROZEN,
-    help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
+ENUM_CALC_VARIABLES = StaticToggle(
+    'enum_calc_variables',
+    'Switch Enum Fields to Variables',
+    TAG_INTERNAL,
+    description="""
+    Switch enum field types to reference the calculated_property variable
+    rather than repeat the expression for each mapping.  This is a performance
+    optimization for when the expression is expensive to compute.
+    """,
     namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
-)
-
-DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
-    'dynamically_update_search_results',
-    "In case search with split screen case search enabled, search results update when a search field is updated"
-    " without requiring the user to manually press a button to search.",
-    TAG_DEPRECATED,
-    help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
-    namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
-)
-
-WEBAPPS_STICKY_SEARCH = StaticToggle(
-    "webapps_sticky_search",
-    "USH: Sticky search: In web apps, save user's most recent inputs on case search & claim screen.",
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/COVID%3A+Web+Apps+Sticky+Search',
 )
 
 HIDE_SYNC_BUTTON = StaticToggle(
@@ -1197,9 +1139,10 @@ SECURE_SESSION_TIMEOUT = StaticToggle(
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
 
-VELLUM_SAVE_TO_CASE = StaticToggle(
+VELLUM_SAVE_TO_CASE = FrozenPrivilegeToggle(
+    privileges.VELLUM_SAVE_TO_CASE,
     'save_to_case',
-    "Adds save to case as a question to the form builder",
+    "Adds Advanced Case Actions as a question to the form builder",
     TAG_GA_PATH,
     [NAMESPACE_DOMAIN],
     description='This flag allows case management inside repeat groups',
@@ -2198,6 +2141,19 @@ FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
     owner='Simon Kelly'
 )
 
+ENTERPRISE_ADMIN_SELF_SERVICE = FeatureRelease(
+    'enterprise_admin_self_service',
+    'Allow Enterprise Admins to view/add/remove other Enterprise Admins '
+    'from the Enterprise Console',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    owner='Danny Roberts',
+    help_link=(
+        'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/'
+        '2143945885/Enterprise+Console#Enterprise-Admins'
+    ),
+)
+
 APPLICATION_RELEASE_LOGS = StaticToggle(
     'application_release_logs',
     'Show Application release logs',
@@ -2281,7 +2237,7 @@ CAMPAIGN_DASHBOARD = StaticToggle(
 COMMCARE_CONNECT = StaticToggle(
     'commcare_connect',
     'Enable CommCare Connect features',
-    tag=TAG_INTERNAL,
+    tag=TAG_CONNECT_DIVISION,
     namespaces=[NAMESPACE_DOMAIN],
     description='More details to come',
 )

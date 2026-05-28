@@ -86,7 +86,8 @@ jobs:
         gh workflow run remove-branch.yml \
           --repo dimagi/staging-branches \
           -f file=commcare-hq-staging.yml \
-          -f branch="$BRANCH"
+          -f branch="$BRANCH" \
+          -f reason=merge
 
   rebuild-staging:
     needs: check-branch

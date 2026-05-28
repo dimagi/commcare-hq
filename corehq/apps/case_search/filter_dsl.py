@@ -2,13 +2,10 @@ import re
 from dataclasses import dataclass
 from typing import Union
 
-from django.conf import settings
 from django.utils.translation import gettext as _
 
 from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import BinaryExpression, FunctionCall, serialize
-
-from dimagi.utils.logging import notify_exception
 
 import corehq
 from corehq import toggles
@@ -29,7 +26,6 @@ from corehq.apps.case_search.xpath_functions.ancestor_functions import (
 from corehq.apps.case_search.xpath_functions.comparison import (
     property_comparison_query,
 )
-from corehq.util.quickcache import quickcache
 
 
 @dataclass
@@ -71,14 +67,9 @@ def print_ast(node):
     visit(node, 0)
 
 
-# log once per domain per day for case search and non case search
-# The intent is to later raise XPathFunctionException
-@quickcache(['context.domain', 'context.helper.is_case_search'],
-            timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
-def _require_related_lookups_flag(context):
-    if not toggles.CASE_SEARCH_RELATED_LOOKUPS.enabled(context.domain):
-        location = 'case search' if context.helper.is_case_search else 'reporting'
-        notify_exception(None, f"CSQL related case expression without FF enabled: {location}")
+def _require_related_lookups_flag(context, node):
+    if context.helper.is_case_search and not toggles.CASE_SEARCH_RELATED_LOOKUPS.enabled(context.domain):
+        raise XPathFunctionException(_("You cannot query related cases here"), node)
 
 
 def build_filter_from_ast(node, context):
@@ -103,7 +94,7 @@ def build_filter_from_ast(node, context):
         if isinstance(node, FunctionCall):
             if node.name in XPATH_QUERY_FUNCTIONS:
                 if node.name in ['subcase-exists', 'subcase-count', 'ancestor-exists']:
-                    _require_related_lookups_flag(context)
+                    _require_related_lookups_flag(context, node)
                 return XPATH_QUERY_FUNCTIONS[node.name](node, context)
             else:
                 raise XPathFunctionException(
@@ -122,11 +113,11 @@ def build_filter_from_ast(node, context):
         if is_ancestor_comparison(node):
             # this node represents a filter on a property for a related case
             if serialize(node.left.right) != '@case_id':
-                _require_related_lookups_flag(context)
+                _require_related_lookups_flag(context, node)
             return ancestor_comparison_query(context, node)
 
         if _is_subcase_count(node):
-            _require_related_lookups_flag(context)
+            _require_related_lookups_flag(context, node)
             return XPATH_QUERY_FUNCTIONS['subcase-count'](node, context)
 
         if node.op in COMPARISON_OPERATORS:

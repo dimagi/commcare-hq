@@ -988,6 +988,14 @@ msgid "XPath Expression"
 msgstr "XPath-вираз"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Hidden)"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Locked)"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
 msgstr "Невизначене питання"
 
@@ -1276,53 +1284,103 @@ msgstr "Останнє збережене"
 msgid "[unknown]"
 msgstr "[невідомо]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/2229.js
-msgid "\n"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "loadXFormOrError"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/4730.js
-msgid "{path} is not a valid data parent"
-msgstr "{path} не є дійсним батьківським елементом даних"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#, fuzzy
+#| msgid "Case Property"
+msgid "isPropertyLocked"
+msgstr "Властивість кейсу"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugPathMoveable"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugRemoveable"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugTypeChangeable"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#, fuzzy
+#| msgid "User Properties"
+msgid "getMainProperties"
+msgstr "Властивості користувача"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#, fuzzy
+#| msgid "Create"
+msgid "createXML"
+msgstr "Створити"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#, fuzzy
+#| msgid "User Data"
+msgid "getData"
+msgstr "Дані користувача"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "checkMove"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#, fuzzy
+#| msgid "Streets"
+msgid "jstree"
+msgstr "Вулиці"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "Drag question here"
 msgstr "Перетягніть питання сюди"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is equal to"
 msgstr "дорівнює"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is not equal to"
 msgstr "не дорівнює"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is less than"
 msgstr "менше ніж"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is less than or equal to"
 msgstr "менше або дорівнює"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is greater than"
 msgstr "більше ніж"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "is greater than or equal to"
 msgstr "більше або дорівнює"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "has selected value"
 msgstr "має вибране значення"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "True when ALL of the expressions are true."
 msgstr "Правда, якщо ВСІ вирази істинні."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
 msgid "True when ANY of the expressions are true."
 msgstr "Правда, якщо БУДЬ-ЯКИЙ з виразів істинний."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
+msgid "{path} is not a valid data parent"
+msgstr "{path} не є дійсним батьківським елементом даних"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/96.js
+msgid "\n"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "New Form"
@@ -3927,6 +3985,10 @@ msgid "View-Only Applications"
 msgstr "Додатки лише для перегляду"
 
 #: corehq/apps/users/static/users/js/edit_role.js
+msgid "Allow locking and unlocking questions in forms."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
 "worker roles &amp; permissions (only Admins can edit roles)"
@@ -5219,24 +5281,9 @@ msgstr "CommCare HQ не вдалося виконати запит: "
 #~ msgstr "Немає даних для перекладу"
 
 #, fuzzy
-#~| msgid "Streets"
-#~ msgid "jstree"
-#~ msgstr "Вулиці"
-
-#, fuzzy
-#~| msgid "User Data"
-#~ msgid "getData"
-#~ msgstr "Дані користувача"
-
-#, fuzzy
 #~| msgid "load"
 #~ msgid "loadXML"
 #~ msgstr "завантажити"
-
-#, fuzzy
-#~| msgid "Create"
-#~ msgid "createXML"
-#~ msgstr "Створити"
 
 #, fuzzy
 #~| msgid "Add Question"
