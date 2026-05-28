@@ -10,6 +10,7 @@ from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, filters
+from corehq.apps.es import cases as case_es
 from corehq.apps.es.case_search import case_property_query, case_property_missing
 from corehq.apps.geospatial.utils import get_celery_task_tracker
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
@@ -55,9 +56,11 @@ REVERT_VERIFICATION_REQUEST_SLUG = 'revert_verification'
 class PaymentsFiltersMixin:
     fields = [
         'corehq.apps.integration.payments.filters.PaymentCaseListFilter',
-        'corehq.apps.integration.payments.filters.BatchNumberFilter',
-        'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
         'corehq.apps.integration.payments.filters.PaymentStatusFilter',
+        'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
+        'corehq.apps.integration.payments.filters.CaseCreatedDateRangeFilter',
+        'corehq.apps.integration.payments.filters.BatchNumberFilter',
         'corehq.apps.integration.payments.filters.CampaignFilter',
         'corehq.apps.integration.payments.filters.ActivityFilter',
         'corehq.apps.integration.payments.filters.FunderFilter',
@@ -151,7 +154,17 @@ class PaymentsVerificationTableView(
             mobile_user_and_group_slugs
         )
         query = self._apply_filters(query)
+        if case_status := self.request.GET.get('is_open'):
+            query = query.is_closed(case_status == 'closed')
+        query = self._apply_datespan_filter(query)
         return query
+
+    def _apply_datespan_filter(self, query):
+        startdate = self.request.GET.get('startdate')
+        enddate = self.request.GET.get('enddate')
+        if not (startdate or enddate):
+            return query
+        return query.filter(case_es.opened_range(gte=startdate, lte=enddate))
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
