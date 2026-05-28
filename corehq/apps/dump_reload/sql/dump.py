@@ -8,7 +8,9 @@ from django.db import router
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
+    CaseIDFilter,
     FilteredModelIteratorBuilder,
+    FormIDFilter,
     ManyFilters,
     MultimediaBlobMetaFilter,
     SimpleFilter,
@@ -29,14 +31,14 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('blobs.BlobMeta', MultimediaBlobMetaFilter()),
 
     FilteredModelIteratorBuilder('form_processor.XFormInstance', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.XFormOperation', SimpleFilter('form__domain')),
+    FilteredModelIteratorBuilder('form_processor.XFormOperation', FormIDFilter('form_id')),
 
     FilteredModelIteratorBuilder('form_processor.CommCareCase', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseIndex', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.CaseAttachment', SimpleFilter('case__domain')),
-    FilteredModelIteratorBuilder('form_processor.CaseTransaction', SimpleFilter('case__domain')),
+    FilteredModelIteratorBuilder('form_processor.CaseAttachment', CaseIDFilter('case_id')),
+    FilteredModelIteratorBuilder('form_processor.CaseTransaction', CaseIDFilter('case_id')),
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.LedgerTransaction', SimpleFilter('case__domain')),
+    FilteredModelIteratorBuilder('form_processor.LedgerTransaction', CaseIDFilter('case_id')),
 
     FilteredModelIteratorBuilder('case_search.DomainsNotInCaseSearchIndex', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),
