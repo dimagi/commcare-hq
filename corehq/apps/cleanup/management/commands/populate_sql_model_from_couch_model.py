@@ -254,7 +254,7 @@ of CommCare HQ. This migration is run using the management command {command_name
                 print(f"""
 Run the following commands to run the migration and get up to date:
 
-    commcare-cloud <env> fab setup_limited_release --set code_branch={cls.commit_adding_migration()}
+    commcare-cloud <env> deploy --private --commcare_rev={cls.commit_adding_migration()}
 
     commcare-cloud <env> django-manage --release <release created by previous command> {command_name}
 
