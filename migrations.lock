@@ -1239,6 +1239,7 @@ sso
  0008_alter_identityprovider_idp_type
  0009_identityprovider_require_api_key_for_api_access
  0010_remove_identityprovider_require_api_key_for_api_access
+ 0011_drop_identityprovider_require_api_key_for_api_access
 start_enterprise
  0001_initial
 stock
