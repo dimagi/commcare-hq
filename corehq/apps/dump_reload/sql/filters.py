@@ -118,6 +118,24 @@ class CaseIDFilter(IDFilter):
         )
 
 
+class FormIDFilter(IDFilter):
+    """Filter dependents of XFormInstance (e.g., XFormOperation) by the form_ids
+    that belong to the given domain on the given shard. Avoids the JOIN that
+    SimpleFilter('form__domain') forces."""
+
+    def __init__(self, form_id_field, chunksize=1000):
+        super().__init__(form_id_field, None, chunksize=chunksize)
+
+    def get_ids(self, domain_name, db_alias=None):
+        from corehq.form_processor.models import XFormInstance
+        return list(
+            XFormInstance.objects.using(db_alias)
+            .filter(domain=domain_name)
+            .order_by('form_id')
+            .values_list('form_id', flat=True)
+        )
+
+
 class MultimediaBlobMetaFilter(IDFilter):
     """
     BlobMeta for multimedia references the "<shared>" domain which is not the domain being dumped.

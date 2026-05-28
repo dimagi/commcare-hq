@@ -4,12 +4,13 @@ from django.test import TestCase
 from corehq.apps.dump_reload.sql.filters import (
     CaseIDFilter,
     FilteredModelIteratorBuilder,
+    FormIDFilter,
     MultimediaBlobMetaFilter,
 )
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
-from corehq.form_processor.tests.utils import create_case
+from corehq.form_processor.tests.utils import create_case, create_form_for_test
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc, get_db_aliases_for_partitioned_query
 from corehq.motech.repeaters.models import Repeater
 from corehq.motech.models import ConnectionSettings
@@ -149,3 +150,44 @@ class TestCaseIDFilter(TestCase):
         assert filters[0].children == [('case_id__in', ('a', 'b'))]
         assert filters[1].children == [('case_id__in', ('c', 'd'))]
         assert filters[2].children == [('case_id__in', ('e',))]
+
+
+class TestFormIDFilter(TestCase):
+
+    domain = 'test-form-id-filter'
+
+    def test_returns_form_ids_in_the_domain_on_the_given_shard(self):
+        form = create_form_for_test(self.domain)
+        self.addCleanup(form.delete)
+        db_alias = get_db_alias_for_partitioned_doc(form.form_id)
+
+        filter = FormIDFilter('form_id')
+        ids = filter.get_ids(self.domain, db_alias=db_alias)
+
+        assert form.form_id in ids
+
+    def test_does_not_return_form_ids_in_other_domains(self):
+        form = create_form_for_test('other-domain')
+        self.addCleanup(form.delete)
+        db_alias = get_db_alias_for_partitioned_doc(form.form_id)
+
+        filter = FormIDFilter('form_id')
+        ids = filter.get_ids(self.domain, db_alias=db_alias)
+
+        assert form.form_id not in ids
+
+    def test_get_filters_yields_chunked_in_clauses(self):
+        # Force chunksize=2 so we don't have to create thousands of forms.
+        filter = FormIDFilter('form_id', chunksize=2)
+        filter._test_ids = ['a', 'b', 'c', 'd', 'e']
+        # Patch get_ids to return our test fixture without hitting the DB.
+        filter.get_ids = lambda domain_name, db_alias=None: filter._test_ids
+
+        filters = list(filter.get_filters('any-domain'))
+
+        assert len(filters) == 3  # ceil(5 / 2)
+        # Each yielded Q should be `form_id__in=<chunk>`.
+        # Q internals: children is [('form_id__in', (...))]; chunked() yields tuples.
+        assert filters[0].children == [('form_id__in', ('a', 'b'))]
+        assert filters[1].children == [('form_id__in', ('c', 'd'))]
+        assert filters[2].children == [('form_id__in', ('e',))]
