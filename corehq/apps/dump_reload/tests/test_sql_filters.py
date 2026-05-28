@@ -1,11 +1,16 @@
 from django.db import router
 from django.test import TestCase
 
-from corehq.apps.dump_reload.sql.filters import MultimediaBlobMetaFilter, FilteredModelIteratorBuilder
+from corehq.apps.dump_reload.sql.filters import (
+    CaseIDFilter,
+    FilteredModelIteratorBuilder,
+    MultimediaBlobMetaFilter,
+)
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.form_processor.tests.utils import create_case
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc, get_db_aliases_for_partitioned_query
 from corehq.motech.repeaters.models import Repeater
 from corehq.motech.models import ConnectionSettings
 from corehq.apps.dump_reload.sql.filters import SimpleFilter
@@ -103,3 +108,44 @@ class TestMultimediaBlobMetaFilter(TestCase):
         cls.addClassCleanup(cls.db.close)
         cls.domain = 'test-multimedia'
         cls.db_alias = get_db_aliases_for_partitioned_query()[0]
+
+
+class TestCaseIDFilter(TestCase):
+
+    domain = 'test-case-id-filter'
+
+    def test_returns_case_ids_in_the_domain_on_the_given_shard(self):
+        case = create_case(self.domain, save=True)
+        self.addCleanup(case.delete)
+        db_alias = get_db_alias_for_partitioned_doc(case.case_id)
+
+        filter = CaseIDFilter('case_id')
+        ids = filter.get_ids(self.domain, db_alias=db_alias)
+
+        assert case.case_id in ids
+
+    def test_does_not_return_case_ids_in_other_domains(self):
+        case = create_case('other-domain', save=True)
+        self.addCleanup(case.delete)
+        db_alias = get_db_alias_for_partitioned_doc(case.case_id)
+
+        filter = CaseIDFilter('case_id')
+        ids = filter.get_ids(self.domain, db_alias=db_alias)
+
+        assert case.case_id not in ids
+
+    def test_get_filters_yields_chunked_in_clauses(self):
+        # Force chunksize=2 so we don't have to create thousands of cases.
+        filter = CaseIDFilter('case_id', chunksize=2)
+        filter._test_ids = ['a', 'b', 'c', 'd', 'e']
+        # Patch get_ids to return our test fixture without hitting the DB.
+        filter.get_ids = lambda domain_name, db_alias=None: filter._test_ids
+
+        filters = list(filter.get_filters('any-domain'))
+
+        assert len(filters) == 3  # ceil(5 / 2)
+        # Each yielded Q should be `case_id__in=<chunk>`.
+        # Q internals: children is [('case_id__in', (...))]; chunked() yields tuples.
+        assert filters[0].children == [('case_id__in', ('a', 'b'))]
+        assert filters[1].children == [('case_id__in', ('c', 'd'))]
+        assert filters[2].children == [('case_id__in', ('e',))]

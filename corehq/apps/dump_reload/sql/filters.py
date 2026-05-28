@@ -100,6 +100,24 @@ class UserIDFilter(IDFilter):
         return get_all_user_ids_by_domain(domain_name, include_web_users=self.include_web_users)
 
 
+class CaseIDFilter(IDFilter):
+    """Filter dependents of CommCareCase (e.g., CaseTransaction, CaseAttachment,
+    LedgerTransaction) by the case_ids that belong to the given domain on the
+    given shard. Avoids the JOIN that SimpleFilter('case__domain') forces."""
+
+    def __init__(self, case_id_field, chunksize=1000):
+        super().__init__(case_id_field, None, chunksize=chunksize)
+
+    def get_ids(self, domain_name, db_alias=None):
+        from corehq.form_processor.models import CommCareCase
+        return list(
+            CommCareCase.objects.using(db_alias)
+            .filter(domain=domain_name)
+            .order_by('case_id')
+            .values_list('case_id', flat=True)
+        )
+
+
 class MultimediaBlobMetaFilter(IDFilter):
     """
     BlobMeta for multimedia references the "<shared>" domain which is not the domain being dumped.
