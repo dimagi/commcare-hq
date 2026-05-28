@@ -1,11 +1,12 @@
-from dimagi.utils.dates import force_to_datetime
-from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
+from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import (
+    PopulateSQLCommand,
+)
 
 
 class Command(PopulateSQLCommand):
     @classmethod
     def couch_db_slug(cls):
-        return "None"
+        return None
 
     @classmethod
     def couch_doc_type(self):
@@ -14,21 +15,22 @@ class Command(PopulateSQLCommand):
     @classmethod
     def sql_class(self):
         from corehq.apps.builds.models import CommCareMobileBuild
+
         return CommCareMobileBuild
 
     @classmethod
     def commit_adding_migration(cls):
-        return "TODO: add once the PR adding this file is merged"
+        return 'TODO: add once the PR adding this file is merged'
 
     @classmethod
     def diff_couch_and_sql(cls, couch, sql):
-        """
-        This should compare each attribute of the given couch document and sql object.
-        Return a list of human-reaedable strings describing their differences, or None if the
-        two are equivalent. The list may contain `None` or empty strings which will be filtered
-        out before display.
-
-        Note: `diff_value`, `diff_attr` and `diff_lists` methods of `PopulateSQLCommand` are useful
-        helpers.
-        """
-        return None
+        diffs = []
+        for attr in [
+            'build_number',
+            'version',
+            'time',
+        ]:
+            diff = cls.diff_attr(attr, couch, sql)
+            if diff:
+                diffs.append(diff)
+        return '\n'.join(diffs) if diffs else None
