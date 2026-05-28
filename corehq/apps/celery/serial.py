@@ -79,14 +79,18 @@ def serial_task(
     return decorator
 
 
-# Sorry this is so magic
 def _get_unique_key(format_str, fn, *args, **kwargs):
     """
-    Lines args and kwargs up with those specified in the definition of fn and
-    passes the result to `format_str.format()`.
+    Builds a unique key from the function name and ``format_str``.
+
+    Binds args and kwargs to the function's signature which enables
+    referencing any arg or kwarg by name in ``format_str``
+
+    See corehq.apps.celery.tests.test_get_unique_key for more details.
     """
-    callargs = inspect.getcallargs(fn, *args, **kwargs)
-    return ("{}-" + format_str).format(fn.__name__, **callargs)
+    bound = inspect.signature(fn).bind(*args, **kwargs)
+    bound.apply_defaults()  # ensures bound.arguments includes default values
+    return f"{fn.__name__}-{format_str.format(**bound.arguments)}"
 
 
 class CouldNotAcquireLockError(Exception):

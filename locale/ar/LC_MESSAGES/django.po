@@ -16444,6 +16444,12 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
+"Locked questions cannot be modified. Unlock the question in the form builder "
+"first."
+msgstr ""
+
+#: corehq/apps/app_manager/views/forms.py
+msgid ""
 "This form could not be copied because it is not compatible with the selected "
 "module."
 msgstr "تعذر نسخ هذا النموذج لأنه غير متوافق مع الوحدة المحددة."
@@ -18048,6 +18054,18 @@ msgstr "يجب أن يكون {param} نصًا"
 #: corehq/apps/case_search/models.py
 msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
 msgstr ""
+
+#: corehq/apps/case_search/models.py
+#, fuzzy
+#| msgid "Project Data"
+msgid "Project Database"
+msgstr "بيانات المشروع"
+
+#: corehq/apps/case_search/models.py
+#, fuzzy
+#| msgid "Case Search"
+msgid "Elastic Search"
+msgstr "بحث القضايا"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
@@ -67263,9 +67281,6 @@ msgstr "أدخل JSON صالحًا"
 
 #~ msgid "Could not find the report filter '{}'"
 #~ msgstr "تعذر العثور على عامل تصفية التقرير '{}'"
-
-#~ msgid "Project Data"
-#~ msgstr "بيانات المشروع"
 
 #~ msgid ""
 #~ "Setting a password is disabled. The user will set their own password on "

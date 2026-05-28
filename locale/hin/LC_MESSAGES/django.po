@@ -5039,18 +5039,15 @@ msgid "This user is inactive and cannot reset their password."
 msgstr "यह उपयोगकर्ता निष्क्रिय है और अपना पासवर्ड रीसेट नहीं कर सकता।"
 
 #: corehq/apps/api/resources/v0_5.py
-#| msgid "'name' must not be blank"
 msgid "Name must not be blank"
 msgstr "नाम खाली नहीं होना चाहिए"
 
 #: corehq/apps/api/resources/v0_5.py
 #, python-format
-#| msgid "A rule with name {name} already exists"
 msgid "A group with name %s already exists"
 msgstr "नाम %s वाला एक समूह पहले से मौजूद है"
 
 #: corehq/apps/api/resources/v0_5.py
-#| msgid "Menu is required"
 msgid "Name is required"
 msgstr "नाम आवश्यक है"
 
@@ -13962,11 +13959,6 @@ msgid "Revert"
 msgstr "वापस जाएं"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
-#| msgid ""
-#| "\n"
-#| "        All add-ons have been enabled for this app using the\n"
-#| "        \"Enable All Application Add-Ons\" project setting.\n"
-#| "      "
 msgid ""
 "\n"
 "        All add-ons have been enabled for this app using the \"Enable All\n"
@@ -13997,11 +13989,6 @@ msgid "Learn more."
 msgstr "और जानें।"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
-#| msgid ""
-#| "\n"
-#| "                    You have previously enabled this feature in your app, but have since lost access\n"
-#| "                    to it.\n"
-#| "                  "
 msgid ""
 "\n"
 "                You have previously enabled this feature in your app, but have\n"
@@ -14014,11 +14001,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
-#| msgid ""
-#| "\n"
-#| "                    Your application will continue to function in places that utilized this feature, but\n"
-#| "                    you will not be able to edit any related functionality until you upgrade.\n"
-#| "                  "
 msgid ""
 "\n"
 "                Your application will continue to function in places that\n"
@@ -14541,6 +14523,17 @@ msgid ""
 msgstr ""
 "लॉक किए गए प्रश्नों का संदर्भ देने वाले केस प्रॉपर्टी मैपिंग को संशोधित नहीं"
 " किया जा सकता। पहले फॉर्म बिल्डर में प्रश्न को अनलॉक करें।"
+
+#: corehq/apps/app_manager/views/forms.py
+#| msgid ""
+#| "Case property mappings that reference locked questions cannot be modified. "
+#| "Unlock the question in the form builder first."
+msgid ""
+"Locked questions cannot be modified. Unlock the question in the form builder"
+" first."
+msgstr ""
+"लॉक किए गए प्रश्नों को संशोधित नहीं किया जा सकता। पहले फॉर्म बिल्डर में "
+"प्रश्न को अनलॉक करें।"
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
@@ -16132,6 +16125,16 @@ msgstr "{param} एक स्ट्रिंग होना चाहिए"
 #: corehq/apps/case_search/models.py
 msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
 msgstr "अमान्य ऑपरेटर \"{criteria[\"operator\"]}\"। अनुमत मान हैं "
+
+#: corehq/apps/case_search/models.py
+#| msgid "Project Data"
+msgid "Project Database"
+msgstr "प्रोजेक्ट डेटाबेस"
+
+#: corehq/apps/case_search/models.py
+#| msgid "Case Search"
+msgid "Elastic Search"
+msgstr "इलास्टिक सर्च"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
@@ -27005,12 +27008,6 @@ msgid "Enterprise Administrators"
 msgstr "एंटरप्राइज प्रशासक"
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
-#| msgid ""
-#| "Enterprise Administrators can manage subscriptions, billing, and account-"
-#| "level settings for all project spaces in this account. See <a "
-#| "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/Enterprise+Console#Enterprise-"
-#| "Admins\" target=\"_blank\" >Enterprise Console | Enterprise Admins</a > for "
-#| "more on Enterprise Admins."
 msgid ""
 "Enterprise Administrators can manage subscriptions, billing, and account-"
 "level settings for all project spaces in this account. See <a "
@@ -53082,7 +53079,6 @@ msgid "Profile conflicts with existing data"
 msgstr "प्रोफ़ाइल मौजूदा डेटा के साथ टकरा रही है"
 
 #: corehq/apps/users/user_data.py
-#| msgid "Rule not found."
 msgid "Profile not found"
 msgstr "प्रोफ़ाइल नहीं मिली"
 
@@ -53117,7 +53113,6 @@ msgstr "उपयोगकर्ता नाम ईमेल डोमेन '@
 
 #: corehq/apps/users/validation.py
 #, python-brace-format
-#| msgid "User with ID '{user_id}' not found"
 msgid "Profile with id {id} not found."
 msgstr "id {id} के साथ प्रोफ़ाइल नहीं मिली।"
 
@@ -61692,9 +61687,6 @@ msgstr "मान्य JSON दर्ज करें"
 
 #~ msgid "Could not find the report filter '{}'"
 #~ msgstr "'{}' रिपोर्ट फ़िल्टर नहीं मिल सका"
-
-#~ msgid "Project Data"
-#~ msgstr "प्रोजेक्ट डेटा"
 
 #~ msgid ""
 #~ "Setting a password is disabled. The user will set their own password on "
