@@ -76,6 +76,13 @@ jobs:
             If this PR is a security-related upgrade, focus only on breaking changes, migration
             notes, and codebase impact — omit any security details.
 
+            **IMPORTANT**: When summarizing changelogs from upstream repos, never copy bare
+            `#<number>` PR/issue references into the comment. GitHub will auto-link them to
+            commcare-hq and surface unrelated PRs. Either drop the reference entirely or
+            rewrite it as a fully-qualified `owner/repo#<number>` (e.g., `ljharb/qs#555`) so
+            GitHub resolves it to the upstream repo. The same applies to bare `GH-<number>`
+            shorthands and to autolinked commit SHAs — qualify them or omit them.
+
             ## Analysis Process
 
             1. **Identify Changed Dependencies**:
