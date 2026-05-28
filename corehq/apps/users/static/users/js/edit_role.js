@@ -474,7 +474,7 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-apps-checkbox",
                     screenReaderEditAndViewText: gettext("Edit & View Apps"),
                     screenReaderViewOnlyText: gettext("View-Only Applications"),
-                    showAllowCheckbox: toggles.toggleEnabled("LOCKED_ADMIN_QUESTIONS") && privileges.hasPrivilege("locked_admin_questions"),
+                    showAllowCheckbox: privileges.hasPrivilege("locked_admin_questions"),
                     allowCheckboxText: gettext("Allow locking and unlocking questions in forms."),
                     allowCheckboxId: "edit-locked-questions-checkbox",
                     get allowCheckboxPermission() {
