@@ -204,7 +204,7 @@ class EntriesHelper(object):
         return f"instance('{instance_name}')/{root_element}/case[{case_type_filter}][@status='open']{filter_xpath}"
 
     @staticmethod
-    def get_parent_filter(relationship, parent_id):
+    def get_parent_filter_by_ref_id(relationship, parent_id):
         if relationship is None:
             return ""
         else:
@@ -573,7 +573,7 @@ class EntriesHelper(object):
             # get the session var for the previous datum if there is one
             parent_id = datums_meta[i - 1]['session_var'] if i >= 1 else ''
             if parent_id:
-                parent_filter = EntriesHelper.get_parent_filter(
+                parent_filter = EntriesHelper.get_parent_filter_by_ref_id(
                     datum['module'].parent_select.relationship, parent_id
                 )
             else:
@@ -816,7 +816,7 @@ class EntriesHelper(object):
         if action.case_tag:
             if action.case_index.tag:
                 parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']
-                parent_filter = EntriesHelper.get_parent_filter(
+                parent_filter = EntriesHelper.get_parent_filter_by_ref_id(
                     action.case_index.reference_id,
                     parent_action.case_session_var
                 )
@@ -951,7 +951,7 @@ class EntriesHelper(object):
             else:
                 if action.case_index.tag:
                     parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']
-                    parent_filter = EntriesHelper.get_parent_filter(
+                    parent_filter = EntriesHelper.get_parent_filter_by_ref_id(
                         action.case_index.reference_id,
                         parent_action.case_session_var
                     )
