@@ -204,6 +204,10 @@ class EntriesHelper(object):
         return f"instance('{instance_name}')/{root_element}/case[{case_type_filter}][@status='open']{filter_xpath}"
 
     @staticmethod
+    def get_parent_filter(parent_id):
+        return f"[index/*[not(@relationship='extension')]={session_var(parent_id)}]"
+
+    @staticmethod
     def get_parent_filter_by_ref_id(reference_id, parent_id):
         if reference_id is None:
             return ""
@@ -568,10 +572,8 @@ class EntriesHelper(object):
         for i, datum in enumerate(datums_meta):
             # get the session var for the previous datum if there is one
             parent_id = datums_meta[i - 1]['session_var'] if i >= 1 else ''
-            if parent_id:
-                parent_filter = EntriesHelper.get_parent_filter_by_ref_id(
-                    datum['module'].parent_select.relationship, parent_id
-                )
+            if parent_id and datum['module'].parent_select.relationship == 'parent':
+                parent_filter = EntriesHelper.get_parent_filter(parent_id)
             else:
                 parent_filter = ''
 
