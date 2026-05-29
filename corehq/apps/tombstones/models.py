@@ -10,7 +10,7 @@ class Tombstone(PartitionedModel):
     doc_id = models.CharField(max_length=126)
     object_class_path = models.CharField(max_length=255)
     domain = models.CharField(max_length=255)
-    deleted_on = models.DateTimeField(db_index=True)
+    soft_deleted_on = models.DateTimeField(db_index=True)
 
     class Meta:
         constraints = [
