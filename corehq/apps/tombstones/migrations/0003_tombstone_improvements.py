@@ -3,6 +3,13 @@
 import datetime
 from django.db import migrations, models
 
+from corehq.apps.tombstones.models import ModelClassField
+
+SLUG_BY_DJANGO_PATH = {
+    'form_processor.CommCareCase': 'case',
+    'form_processor.XFormInstance': 'xform',
+}
+
 
 class Migration(migrations.Migration):
     dependencies = [
@@ -40,5 +47,49 @@ class Migration(migrations.Migration):
                     field=models.DateTimeField(null=False),
                 ),
             ],
+        ),
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name='tombstone',
+                    name='model',
+                    field=ModelClassField(max_length=128),
+                ),
+            ],
+            database_operations=[
+                migrations.AddField(
+                    model_name='tombstone',
+                    name='model',
+                    field=ModelClassField(max_length=128, null=True),
+                ),
+                # Before dropping the object_class_path column, update the new
+                # model column with the correct values
+                migrations.RunSQL(
+                    "UPDATE tombstones_tombstone SET model = 'case' WHERE object_class_path = 'form_processor.CommCareCase'"
+                ),
+                migrations.RunSQL(
+                    "UPDATE tombstones_tombstone SET model = 'xform' WHERE object_class_path = 'form_processor.XFormInstance'"
+                ),
+                migrations.AlterField(
+                    model_name='tombstone',
+                    name='model',
+                    field=ModelClassField(max_length=128),
+                ),
+            ],
+        ),
+        migrations.RemoveConstraint(
+            model_name='tombstone',
+            name='tombstone_unique_id_and_type',
+        ),
+        migrations.RemoveField(
+            model_name='tombstone',
+            name='object_class_path',
+        ),
+        migrations.AddConstraint(
+            model_name='tombstone',
+            constraint=models.UniqueConstraint(
+                fields=('doc_id', 'model'),
+                name='tombstone_unique_id_and_model',
+            ),
         ),
     ]
