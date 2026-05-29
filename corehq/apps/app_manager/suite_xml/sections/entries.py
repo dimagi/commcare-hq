@@ -204,12 +204,12 @@ class EntriesHelper(object):
         return f"instance('{instance_name}')/{root_element}/case[{case_type_filter}][@status='open']{filter_xpath}"
 
     @staticmethod
-    def get_parent_filter_by_ref_id(relationship, parent_id):
-        if relationship is None:
+    def get_parent_filter_by_ref_id(reference_id, parent_id):
+        if reference_id is None:
             return ""
         else:
-            return "[index/{relationship}=instance('commcaresession')/session/data/{parent_id}]".format(
-                relationship=relationship,
+            return "[index/{reference_id}=instance('commcaresession')/session/data/{parent_id}]".format(
+                reference_id=reference_id,
                 parent_id=parent_id,
             )
 
