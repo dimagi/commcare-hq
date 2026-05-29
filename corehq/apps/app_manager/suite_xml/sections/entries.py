@@ -207,11 +207,7 @@ class EntriesHelper(object):
     def get_parent_filter_by_ref_id(reference_id, parent_id):
         if reference_id is None:
             return ""
-        else:
-            return "[index/{reference_id}=instance('commcaresession')/session/data/{parent_id}]".format(
-                reference_id=reference_id,
-                parent_id=parent_id,
-            )
+        return f"[index/{reference_id}={session_var(parent_id)}]"
 
     @staticmethod
     def get_userdata_autoselect(key, session_id, mode):
