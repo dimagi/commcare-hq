@@ -231,13 +231,11 @@ class GrapevineResource(Resource):
 
         root = ElementTree.fromstring(xml)
         if root.tag == 'gviSms':
-            date_string = root.find('smsDateTime').text
             phone_number = root.find('cellNumber').text
             content_text = root.find('content').text
             bundle.obj = SmsMessage(phone_number, content_text)
 
         elif root.tag == 'gviSmsResponse':
-            date_string = root.find('responseDateTime').text
             phone_number = root.find('recipient/msisdn').text
             resp_type = root.find('responseType').text  # receipt, reply or error
 

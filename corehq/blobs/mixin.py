@@ -71,7 +71,7 @@ class BlobMixin(Document):
     @classmethod
     def wrap(cls, data):
         if data.get("external_blobs"):
-            doc_id = safe_id(data["_id"])
+            safe_id(data["_id"])
             dbname = _get_couchdb_name(cls)
             normalize = BlobMetaRef._normalize_json
             blobs = {}
