@@ -12,7 +12,7 @@ def urlencode(parser, token):
     try:
         path_var = tokens.pop()
         params_var = tokens.pop()
-    except:
+    except Exception:
         raise template.TemplateSyntaxError("%r requires at least 2 parameters" % tag_name)
     params = {}
     delete = set()
@@ -23,13 +23,13 @@ def urlencode(parser, token):
                 key = tokens.pop()
                 assert(tokens.pop() == "as")
                 value = tokens.pop()
-            except:
+            except Exception:
                 raise template.TemplateSyntaxError("%r tag has incomplete 'with...as'" % tag_name)
             params[key] = value
         elif cmd == "without":
             try:
                 delete.add(tokens.pop())
-            except:
+            except Exception:
                 raise template.TemplateSyntaxError("%r tag has incomplete 'without'" % tag_name)
         else:
             raise template.TemplateSyntaxError(

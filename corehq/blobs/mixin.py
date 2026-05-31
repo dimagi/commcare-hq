@@ -254,7 +254,8 @@ class BlobMixin(Document):
                 yield
                 (self.save if save is None else save)()
                 success = True
-            except:
+            except BaseException:
+                # BaseException cleans up on any exit including GeneratorExit/KeyboardInterrupt
                 typ, exc, tb = sys.exc_info()
                 # delete new blobs that were not saved
                 for name, meta in self.external_blobs.items():
@@ -380,7 +381,8 @@ class BlobHelper(object):
                 try:
                     with BlobMixin.atomic_blobs(self, save):
                         yield
-                except:
+                except BaseException:
+                    # BaseException cleans up on any exit including GeneratorExit/KeyboardInterrupt
                     self.doc["_attachments"] = self._attachments
                     self.doc["external_blobs"] = {name: meta.to_json()
                         for name, meta in self.external_blobs.items()}
