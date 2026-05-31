@@ -3,7 +3,6 @@ from datetime import timedelta, datetime
 import pytest
 from celery.schedules import crontab
 from time_machine import travel
-from nose.tools import assert_raises
 
 from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic_task_again
 
@@ -30,7 +29,7 @@ def test_deserialize_run_every_setting():
         ({'crontab': {'foo': 'bar'}}, TypeError),
     ]
     for input_value, exception_type in negative_examples:
-        with assert_raises(exception_type):
+        with pytest.raises(exception_type):
             deserialize_run_every_setting(input_value)
 
 

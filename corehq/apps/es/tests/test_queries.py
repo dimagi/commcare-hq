@@ -1,7 +1,7 @@
 import json
 from unittest import TestCase
 
-from nose.tools import assert_raises
+import pytest
 
 from couchforms.geopoint import GeoPoint
 
@@ -82,5 +82,5 @@ def test_valid_geo_distance():
 
 
 def test_invalid_geo_distance():
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         geo_distance('gps_location', GeoPoint(-33.1, 151.8), smoots=100)

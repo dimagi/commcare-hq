@@ -3,7 +3,7 @@ import json
 from contextlib import contextmanager
 from decimal import Decimal
 
-from nose.tools import assert_raises
+import pytest
 
 from corehq.apps.es import case_search_adapter, user_adapter
 from corehq.apps.es.tests.utils import es_test
@@ -44,7 +44,7 @@ def test_validate_geometry_type():
         "type": "Point",
         "coordinates": [125.6, 10.1]
     }
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         validate_geometry(geojson_geometry)
 
 
@@ -53,7 +53,7 @@ def test_validate_geometry_schema():
         "type": "Polygon",
         "coordinates": [125.6, 10.1]
     }
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         validate_geometry(geojson_geometry)
 
 
