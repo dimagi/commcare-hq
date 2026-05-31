@@ -2,7 +2,6 @@ import hashlib
 import binascii
 from copy import copy
 import six
-from six.moves import zip
 from functools import reduce
 
 
