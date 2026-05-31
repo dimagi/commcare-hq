@@ -1,7 +1,8 @@
 __author__ = 'dmyung'
 
 #taken from the django debug toolbar sql panel
-import six.moves.socketserver
+import socketserver
+import six
 import os
 import traceback
 import django
@@ -11,7 +12,7 @@ from django.conf import settings
 
 # Figure out some paths
 django_path = os.path.realpath(os.path.dirname(django.__file__))
-socketserver_path = os.path.realpath(os.path.dirname(six.moves.socketserver.__file__))
+socketserver_path = os.path.realpath(os.path.dirname(socketserver.__file__))
 
 
 SQL_WARNING_THRESHOLD = getattr(settings, 'DEBUG_TOOLBAR_CONFIG', {}) \
