@@ -3,7 +3,7 @@ import json
 from contextlib import contextmanager
 from decimal import Decimal
 
-from nose.tools import assert_equal, assert_raises
+from nose.tools import assert_raises
 
 from corehq.apps.es import case_search_adapter, user_adapter
 from corehq.apps.es.tests.utils import es_test
@@ -33,10 +33,10 @@ def test_geojson_to_es_geoshape():
         }
     }
     es_geoshape = geojson_to_es_geoshape(geojson)
-    assert_equal(es_geoshape, {
+    assert es_geoshape == {
         "type": "point",  # NOTE: lowercase Elasticsearch type
         "coordinates": [125.6, 10.1]
-    })
+    }
 
 
 def test_validate_geometry_type():
@@ -420,7 +420,7 @@ def test_filter_for_two_polygons():
         }
     }
     actual_filter = CaseGroupingReport._get_filter_for_features(two_polygons)
-    assert_equal(actual_filter, expected_filter)
+    assert actual_filter == expected_filter
 
 
 def test_one_polygon_with_hole():
@@ -529,7 +529,7 @@ def test_one_polygon_with_hole():
         }
     }
     actual_filter = CaseGroupingReport._get_filter_for_features(polygon_with_hole)
-    assert_equal(actual_filter, expected_filter)
+    assert actual_filter == expected_filter
 
 
 polygon_with_hole = {

@@ -2,7 +2,6 @@ from unittest.mock import Mock
 
 import attr
 import pytest
-from nose.tools import assert_equal
 
 from corehq.motech.auth import BasicAuthManager
 from corehq.motech.requests import Requests
@@ -171,7 +170,7 @@ def check_param_helper(search_param, resource, expected_valueset):
     value = search_param.param.get_value(resource)
     if isinstance(value, list):
         value = set(value)
-    assert_equal(value, expected_valueset)
+    assert value == expected_valueset
 
 
 def test_get_request_params_multiplies():
@@ -187,7 +186,7 @@ def test_get_request_params_multiplies():
     }
     search = Search(None, resource, search_params)
     request_params = search._get_request_params()
-    assert_equal(len(request_params), 4)
+    assert len(request_params) == 4
     assert {'given': 'Jane', 'family': 'Fonda'} in request_params
     assert {'given': 'Seymour', 'family': 'Fonda'} in request_params
     assert {'given': 'Jane', 'family': 'Plemiannikov'} in request_params
@@ -214,14 +213,14 @@ def test_get_request_params_incomplete_data():
     }
     search = Search(None, resource, search_params)
     request_params = search._get_request_params()
-    assert_equal(len(request_params), 1)
-    assert_equal(request_params[0], {
+    assert len(request_params) == 1
+    assert request_params[0] == {
         'given': 'Jane Seymour',
         'family': 'Fonda',
         'gender': 'female',
         'birthdate': '1937-12-21',
         'address-country': 'United States of America',
-    })
+    }
 
 
 def test_paginated_bundle():
@@ -282,9 +281,9 @@ def test_paginated_bundle():
     search = Search(requests, resource, search_params)
     candidates = search.iter_candidates()
 
-    assert_equal(next(candidates), fane_jonda)
-    assert_equal(next(candidates), jone_fanda)
-    assert_equal(next(candidates), jane_fonda)
+    assert next(candidates) == fane_jonda
+    assert next(candidates) == jone_fanda
+    assert next(candidates) == jane_fonda
 
     # The first request searched the Patient endpoint
     requests.get.assert_called_with('Patient/', params={

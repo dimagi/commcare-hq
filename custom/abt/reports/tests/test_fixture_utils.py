@@ -1,6 +1,5 @@
 import doctest
 
-from nose.tools import assert_equal
 
 from corehq.apps.fixtures.models import Field, LookupTableRow
 from custom.abt.reports import fixture_utils
@@ -55,10 +54,10 @@ def test_fixture_data_item_to_dict():
         }
     )
     dict_ = fixture_data_item_to_dict(data_item)
-    assert_equal(dict_, {
+    assert dict_ == {
         'id': '789abc',
         'name': 'John'
-    })
+    }
 
 
 def test_empty_fixture_data_item_to_dict():
@@ -67,10 +66,10 @@ def test_empty_fixture_data_item_to_dict():
         fields={'id': [], 'name': []}
     )
     dict_ = fixture_data_item_to_dict(data_item)
-    assert_equal(dict_, {
+    assert dict_ == {
         'id': None,
         'name': None,
-    })
+    }
 
 
 def test_doctests():

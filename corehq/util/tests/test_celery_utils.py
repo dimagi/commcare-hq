@@ -3,7 +3,7 @@ from datetime import timedelta, datetime
 import pytest
 from celery.schedules import crontab
 from time_machine import travel
-from nose.tools import assert_equal, assert_raises
+from nose.tools import assert_raises
 
 from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic_task_again
 
@@ -15,7 +15,7 @@ def test_deserialize_run_every_setting():
         (30, 30),
     ]
     for input_value, expected_output_value in examples:
-        assert_equal(deserialize_run_every_setting(input_value), expected_output_value)
+        assert deserialize_run_every_setting(input_value) == expected_output_value
 
     negative_examples = [
         # unacceptable function

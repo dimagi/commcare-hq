@@ -8,7 +8,6 @@ from unittest.mock import Mock, patch
 from django.test import SimpleTestCase, TestCase
 
 from looseversion import LooseVersion
-from nose.tools import assert_equal
 
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
@@ -108,7 +107,7 @@ class Dhis2ApiTests(SimpleTestCase):
 
         _assert_status_2xx(response)
         result = response.json()
-        assert_equal(result["response"]["imported"], 1)
+        assert result["response"]["imported"] == 1
         tei_id = result["response"]["importSummaries"][0]["reference"]
         assert re.match(dhis2_id_pattern, tei_id), f'Instance ID "{tei_id}" does not look like a DHIS2 ID'
         tei_url = result["response"]["importSummaries"][0]["href"]

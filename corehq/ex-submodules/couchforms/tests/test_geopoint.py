@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 from jsonobject.exceptions import BadValueError
-from nose.tools import assert_equal, assert_raises
+from nose.tools import assert_raises
 
 from ..geopoint import GeoPoint
 
@@ -20,7 +20,7 @@ def test_valid_geopoint_properties(input_string, output):
     expected = GeoPoint(*(Decimal(x) for x in output))
 
     for field in ['latitude', 'longitude', 'altitude', 'accuracy']:
-        assert_equal(str(getattr(actual, field)), str(getattr(expected, field)))
+        assert str(getattr(actual, field)) == str(getattr(expected, field))
 
 
 def test_inflexible_is_strict():
