@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy, gettext_noop
 
 from django_prbac.utils import has_privilege
 from memoized import memoized
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (

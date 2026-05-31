@@ -1,4 +1,4 @@
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 from urllib.request import urlopen
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.models import SQLSMSBackend

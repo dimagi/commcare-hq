@@ -1,4 +1,4 @@
-from six.moves.urllib.parse import urlencode, quote
+from urllib.parse import urlencode, quote
 from urllib.request import urlopen
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.sms.models import SQLSMSBackend

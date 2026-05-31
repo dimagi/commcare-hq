@@ -11,12 +11,11 @@ from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
-import six.moves.urllib.parse
 import urllib.request
 from celery.schedules import crontab
 from couchdbkit import ResourceConflict
 from dateutil.relativedelta import relativedelta
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 from couchexport.export import export_from_tables
 from couchexport.models import Format

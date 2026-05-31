@@ -14,7 +14,7 @@ from django.conf import settings
 from corehq.apps.sms.api import incoming as incoming_sms
 import logging
 import requests
-import six
+import urllib.parse
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +144,7 @@ class UrlencodedDeserializer(Serializer):
     def from_urlencode(self, data, options=None):
         """ handles basic form encoded url posts """
         qs = dict((k, v if len(v) > 1 else v[0])
-            for k, v in six.moves.urllib.parse.parse_qs(data).items())
+            for k, v in urllib.parse.parse_qs(data).items())
 
         return qs
 

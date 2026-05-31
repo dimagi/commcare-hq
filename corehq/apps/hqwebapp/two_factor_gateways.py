@@ -8,7 +8,7 @@ from django.utils.translation import pgettext
 from django.utils.translation import gettext as _
 
 from requests.compat import getproxies
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 from tastypie.http import HttpTooManyRequests
 from twilio.base.exceptions import TwilioRestException
 from twilio.http.http_client import TwilioHttpClient

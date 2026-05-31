@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.validators import ValidationError, validate_email
 
 import requests
-import six.moves.urllib.parse
+import urllib.parse
 from celery.schedules import crontab
 from memoized import memoized
 
@@ -90,7 +90,7 @@ def _track_on_hubspot(webuser, properties):
         data = {'properties': [{'property': k, 'value': v} for k, v in properties.items()]}
         _hubspot_post(
             url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-                six.moves.urllib.parse.quote(webuser.get_email())
+                urllib.parse.quote(webuser.get_email())
             ),
             data=json.dumps(data),
         )
@@ -100,7 +100,7 @@ def _track_on_hubspot_by_email(email, properties):
     # Note: Hubspot recommends OAuth instead of api key
     _hubspot_post(
         url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-            six.moves.urllib.parse.quote(email)
+            urllib.parse.quote(email)
         ),
         data=json.dumps(
             {'properties': [
@@ -118,7 +118,7 @@ def set_analytics_opt_out(webuser, analytics_enabled):
     """
     _hubspot_post(
         url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-            six.moves.urllib.parse.quote(webuser.get_email())
+            urllib.parse.quote(webuser.get_email())
         ),
         data=json.dumps(
             {'properties': [
@@ -189,7 +189,7 @@ def _get_user_hubspot_id(web_user, retry_num=0):
         try:
             req = requests.get(
                 "https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
-                    six.moves.urllib.parse.quote(web_user.username)
+                    urllib.parse.quote(web_user.username)
                 ),
                 headers={'authorization': 'Bearer %s' % access_token},
             )
