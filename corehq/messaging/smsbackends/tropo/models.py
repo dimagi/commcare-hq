@@ -1,5 +1,5 @@
 from six.moves.urllib.parse import urlencode
-from six.moves.urllib.request import urlopen
+from urllib.request import urlopen
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.tropo.forms import TropoBackendForm

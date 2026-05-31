@@ -5,7 +5,6 @@ from django.conf import settings
 
 import langcodes
 import six.moves.urllib.parse
-import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
