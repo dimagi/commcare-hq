@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from django.test import TestCase
 
-from nose.tools import assert_false, assert_true
+from nose.tools import assert_true
 
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.mixin import apply_leniency
@@ -90,4 +90,4 @@ def test_superuser():
 
 def test_normal_user():
     user = CouchUser(username="michael")
-    assert_false(is_superuser_or_contractor(user))
+    assert not is_superuser_or_contractor(user)
