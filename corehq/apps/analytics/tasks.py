@@ -8,7 +8,6 @@ from django.conf import settings
 from django.core.validators import ValidationError, validate_email
 
 import requests
-import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from celery.schedules import crontab

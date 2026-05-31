@@ -1,6 +1,5 @@
 from django.urls import reverse
 
-import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from lxml import etree

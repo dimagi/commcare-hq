@@ -4,7 +4,6 @@ from datetime import datetime
 from django.conf import settings
 
 import langcodes
-import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
