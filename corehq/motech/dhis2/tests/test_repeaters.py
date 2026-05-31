@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 from django.test import SimpleTestCase, TestCase
 
 from looseversion import LooseVersion
-from nose.tools import assert_equal, assert_true
+from nose.tools import assert_equal
 
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
@@ -57,7 +57,7 @@ class Dhis2ApiTests(SimpleTestCase):
 
         _assert_status_2xx(response)
         instances = response.json()["trackedEntityInstances"]
-        assert_true(instances)
+        assert instances
 
     @patch('corehq.motech.requests.RequestLog', Mock())
     def test_query(self):
@@ -71,11 +71,10 @@ class Dhis2ApiTests(SimpleTestCase):
 
         _assert_status_2xx(response)
         instances = response.json()["trackedEntityInstances"]
-        assert_true(instances)
-        assert_true(
-            all(_is_attr_equal(te, last_name_attr_id, last_name) for te in instances),
-            "Query results do not match query filter."
-        )
+        assert instances
+        assert all(
+            _is_attr_equal(te, last_name_attr_id, last_name) for te in instances
+        ), "Query results do not match query filter."
 
     @patch('corehq.motech.requests.RequestLog', Mock())
     def test_grid_query(self):
@@ -111,12 +110,9 @@ class Dhis2ApiTests(SimpleTestCase):
         result = response.json()
         assert_equal(result["response"]["imported"], 1)
         tei_id = result["response"]["importSummaries"][0]["reference"]
-        assert_true(
-            re.match(dhis2_id_pattern, tei_id),
-            f'Instance ID "{tei_id}" does not look like a DHIS2 ID',
-        )
+        assert re.match(dhis2_id_pattern, tei_id), f'Instance ID "{tei_id}" does not look like a DHIS2 ID'
         tei_url = result["response"]["importSummaries"][0]["href"]
-        assert_true(tei_url.startswith(base_url))
+        assert tei_url.startswith(base_url)
 
     @patch('corehq.motech.requests.RequestLog', Mock())
     def test_update(self):
@@ -146,10 +142,7 @@ def _update_attr(entity, attr_id, value):
 
 
 def _assert_status_2xx(response):
-    assert_true(
-        200 <= response.status_code < 300,
-        f"Service responded with status code {response.status_code}"
-    )
+    assert 200 <= response.status_code < 300, f"Service responded with status code {response.status_code}"
 
 
 @contextmanager
