@@ -4,7 +4,6 @@ from copy import copy
 import six
 from six.moves import zip
 from functools import reduce
-from six.moves import map
 
 
 EMPTY_HASH = ""
