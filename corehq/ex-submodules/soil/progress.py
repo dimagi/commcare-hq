@@ -7,7 +7,6 @@ from django.db import IntegrityError
 from celery.result import GroupResult
 
 from corehq.util.metrics import metrics_counter
-from soil.exceptions import TaskFailedError
 
 TaskProgress = namedtuple('TaskProgress',
                           ['current', 'total', 'percent', 'error', 'error_message'])

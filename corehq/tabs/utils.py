@@ -1,5 +1,4 @@
 import urllib.parse
-from collections import namedtuple
 
 from django.urls import reverse
 from django.utils.translation import gettext as _

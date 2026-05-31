@@ -3,7 +3,6 @@ __author__ = 'dmyung'
 #taken from the django debug toolbar sql panel
 import socketserver
 import os
-import traceback
 import django
 from django.conf import settings
 

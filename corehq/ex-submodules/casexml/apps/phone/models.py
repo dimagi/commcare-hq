@@ -35,7 +35,7 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.logging import notify_exception
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.util.soft_assert import soft_assert
