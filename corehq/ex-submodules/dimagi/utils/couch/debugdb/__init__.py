@@ -2,7 +2,6 @@ __author__ = 'dmyung'
 
 #taken from the django debug toolbar sql panel
 import socketserver
-import six
 import os
 import traceback
 import django
@@ -28,7 +27,7 @@ couch_view_queries = []
 def process_key(key_obj):
 
     if isinstance(key_obj, list):
-        key_obj = [six.text_type(x).encode('utf-8') for x in key_obj]
+        key_obj = [str(x).encode('utf-8') for x in key_obj]
     else:
         key_obj = key_obj.encode('utf-8')
     return key_obj
