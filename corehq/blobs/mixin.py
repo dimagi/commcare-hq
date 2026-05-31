@@ -26,7 +26,6 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from memoized import memoized
-import six
 
 
 class BlobMetaRef(DocumentSchema):
@@ -265,7 +264,7 @@ class BlobMixin(Document):
                 self.external_blobs = old_external_blobs
                 if self._migrating_blobs_from_couch:
                     self._attachments = old_attachments
-                six.reraise(typ, exc, tb)
+                raise exc.with_traceback(tb)
             finally:
                 self._atomic_blobs = atomicity
             if success:
