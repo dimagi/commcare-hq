@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import attr
 import pytest
-from nose.tools import assert_equal, assert_in
+from nose.tools import assert_equal
 
 from corehq.motech.auth import BasicAuthManager
 from corehq.motech.requests import Requests
@@ -188,10 +188,10 @@ def test_get_request_params_multiplies():
     search = Search(None, resource, search_params)
     request_params = search._get_request_params()
     assert_equal(len(request_params), 4)
-    assert_in({'given': 'Jane', 'family': 'Fonda'}, request_params)
-    assert_in({'given': 'Seymour', 'family': 'Fonda'}, request_params)
-    assert_in({'given': 'Jane', 'family': 'Plemiannikov'}, request_params)
-    assert_in({'given': 'Seymour', 'family': 'Plemiannikov'}, request_params)
+    assert {'given': 'Jane', 'family': 'Fonda'} in request_params
+    assert {'given': 'Seymour', 'family': 'Fonda'} in request_params
+    assert {'given': 'Jane', 'family': 'Plemiannikov'} in request_params
+    assert {'given': 'Seymour', 'family': 'Plemiannikov'} in request_params
 
 
 def test_get_request_params_incomplete_data():
