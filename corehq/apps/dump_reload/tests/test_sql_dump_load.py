@@ -11,7 +11,7 @@ from django.contrib.admin.utils import NestedObjects
 from django.db import transaction, IntegrityError
 from django.db.models.signals import post_delete, post_save
 from django.test import SimpleTestCase, TestCase
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 

@@ -9,7 +9,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core.management import call_command
 
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from dimagi.utils.data import generator as data_gen
 
