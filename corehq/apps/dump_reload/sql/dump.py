@@ -18,6 +18,7 @@ from corehq.apps.dump_reload.sql.filters import (
     UsernameFilter,
 )
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
+from corehq.apps.dump_reload.timing import DumpTimingLogger
 from corehq.apps.dump_reload.util import get_model_class, get_model_label
 from corehq.sql_db.config import plproxy_config
 
@@ -279,12 +280,14 @@ class SqlDataDumper(DataDumper):
         foreign key field when referencing a model with natural_key defined.
         """
         stats = Counter()
+        timer = DumpTimingLogger() if self.timing else None
         objects = get_objects_to_dump(
             self.domain,
             self.excludes,
             self.includes,
             stats_counter=stats,
             stdout=self.stdout,
+            timer=timer,
         )
 
         JsonLinesSerializer().serialize(
@@ -293,21 +296,26 @@ class SqlDataDumper(DataDumper):
             use_natural_primary_keys=True,
             stream=output_stream
         )
+        if timer:
+            # The generator is fully consumed once serialize() returns, so the
+            # last model's summary is emitted here rather than mid-stream.
+            timer.finish()
         return stats
 
 
-def get_objects_to_dump(domain, excludes, includes, stats_counter=None, stdout=None):
+def get_objects_to_dump(domain, excludes, includes, stats_counter=None, stdout=None, timer=None):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model_class) tuples to dump
     :param excluded_models: List of model_class classes to exclude
+    :param timer: optional :class:`DumpTimingLogger` to record per-model timing
     :return: generator yielding models objects
     """
     builders = get_model_iterator_builders_to_dump(domain, excludes, includes)
-    yield from get_objects_to_dump_from_builders(builders, stats_counter, stdout)
+    yield from get_objects_to_dump_from_builders(builders, stats_counter, stdout, timer)
 
 
-def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None):
+def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None, timer=None):
     if stats_counter is None:
         stats_counter = Counter()
     for model_class, builder in builders:
@@ -315,6 +323,8 @@ def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None)
         for iterator in builder.iterators():
             for obj in iterator:
                 stats_counter.update([model_label])
+                if timer:
+                    timer.tick(model_label)
                 yield obj
         if stdout:
             stdout.write('Dumped {} {}\n'.format(stats_counter[model_label], model_label))

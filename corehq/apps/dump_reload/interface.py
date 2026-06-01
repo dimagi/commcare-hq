@@ -19,12 +19,13 @@ class DataDumper(metaclass=ABCMeta):
     def slug(self):
         raise NotImplementedError
 
-    def __init__(self, domain, excludes, includes, stdout=None, stderr=None):
+    def __init__(self, domain, excludes, includes, stdout=None, stderr=None, timing=False):
         self.domain = domain
         self.excludes = excludes
         self.includes = includes
         self.stdout = stdout or sys.stdout
         self.stderr = stderr or sys.stderr
+        self.timing = timing
 
     @abstractmethod
     def dump(self, output_stream):
