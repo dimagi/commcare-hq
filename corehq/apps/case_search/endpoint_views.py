@@ -120,6 +120,7 @@ class CaseSearchEndpointNewView(BaseProjectDataView):
         return {
             'post_url': reverse(self.urlname, args=[self.domain]),
             'endpoint': None,
+            'version_display': '',
             'form': self._form,
             'case_type_names': _get_case_type_names(self.domain),
         }
@@ -185,9 +186,11 @@ class CaseSearchEndpointEditView(BaseProjectDataView):
 
     @property
     def page_context(self):
+        current = self._endpoint.current_version
         return {
             'post_url': reverse(self.urlname, args=[self.domain, self._endpoint.id]),
             'endpoint': self._endpoint,
+            'version_display': f'v{current.version_number}' if current else 'v1',
             'form': self._form,
             'case_type_names': _get_case_type_names(self.domain),
         }
