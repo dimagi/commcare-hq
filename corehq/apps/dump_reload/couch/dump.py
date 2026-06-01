@@ -11,6 +11,7 @@ from corehq.apps.dump_reload.couch.id_providers import (
 )
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
+from corehq.apps.dump_reload.timing import DumpTimingLogger
 from corehq.apps.users.dbaccessors import get_all_usernames_by_domain
 from corehq.feature_previews import all_previews
 from dimagi.utils.couch.database import iter_docs
@@ -48,16 +49,21 @@ class CouchDataDumper(DataDumper):
 
     def dump(self, output_stream):
         stats = Counter()
+        timer = DumpTimingLogger() if self.timing else None
         for doc_class, doc_ids in get_doc_ids_to_dump(self.domain, self.excludes, self.includes):
-            stats += self._dump_docs(doc_class, doc_ids, output_stream)
+            stats += self._dump_docs(doc_class, doc_ids, output_stream, timer)
+        if timer:
+            timer.finish()
         return stats
 
-    def _dump_docs(self, doc_class, doc_ids, output_stream):
+    def _dump_docs(self, doc_class, doc_ids, output_stream, timer=None):
         model_label = '{}.{}'.format(doc_class._meta.app_label, doc_class.__name__)
         count = 0
         couch_db = doc_class.get_db()
         for doc in iter_docs(couch_db, doc_ids, chunksize=500):
             count += 1
+            if timer:
+                timer.tick(model_label)
             output_stream.write(json.dumps(doc))
             output_stream.write('\n')
         self.stdout.write('Dumped {} {}\n'.format(count, model_label))

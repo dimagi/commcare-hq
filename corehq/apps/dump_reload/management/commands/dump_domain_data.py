@@ -1,6 +1,8 @@
 import gzip
 import json
+import logging
 import os
+import time
 import zipfile
 from datetime import datetime
 
@@ -10,6 +12,8 @@ from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.apps.dump_reload.couch import CouchDataDumper
 from corehq.apps.dump_reload.couch.dump import DomainDumper, ToggleDumper
 from corehq.apps.dump_reload.sql import SqlDataDumper
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -40,6 +44,12 @@ class Command(BaseCommand):
         )
         parser.add_argument('--dumper', dest='dumpers', action='append', default=[],
                             help='Dumper slug to run (use multiple --dumper to run multiple dumpers).')
+        parser.add_argument(
+            '--timing', action='store_true', default=False, dest='timing',
+            help='Log (via logging.info) how long each model takes to dump: a line for '
+                 'every 10,000 objects of each model, plus a per-model total and average '
+                 'time per 10,000 objects, and a total for each dumper.'
+        )
 
     def handle(self, domain_name, **options):
         excludes = options.get('exclude')
@@ -48,6 +58,7 @@ class Command(BaseCommand):
         show_traceback = options.get('traceback')
         requested_dumpers = options.get('dumpers')
         output_dir = options.get('dir')
+        timing = options.get('timing')
 
         if output_dir:
             os.makedirs(output_dir, exist_ok=True)
@@ -66,8 +77,9 @@ class Command(BaseCommand):
 
             filename = _get_dump_stream_filename(dumper.slug, domain_name, self.utcnow, path=output_dir)
             stream = self.stdout if console else gzip.open(filename, 'wt')
+            dumper_start = time.monotonic()
             try:
-                meta[dumper.slug] = dumper(domain_name, excludes, includes).dump(stream)
+                meta[dumper.slug] = dumper(domain_name, excludes, includes, timing=timing).dump(stream)
             except Exception as e:
                 if show_traceback:
                     raise
@@ -75,6 +87,12 @@ class Command(BaseCommand):
             finally:
                 if stream and not console:
                     stream.close()
+
+            if timing:
+                logger.info(
+                    "[timing] dumper '%s' finished in %.2fs",
+                    dumper.slug, time.monotonic() - dumper_start,
+                )
 
             if not console:
                 with zipfile.ZipFile(zipname, mode='a', allowZip64=True) as z:

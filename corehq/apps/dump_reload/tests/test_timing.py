@@ -1,6 +1,9 @@
 import doctest
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 from corehq.apps.dump_reload import timing
+from corehq.apps.dump_reload.sql.dump import get_objects_to_dump_from_builders
 from corehq.apps.dump_reload.timing import DumpTimingLogger
 
 
@@ -100,6 +103,39 @@ def test_batch_lines_and_summary_combine_for_a_full_run():
         '[timing] app.Model: 2 objects dumped in 10.00s',
         '[timing] app.Model: finished 3 objects in 30.00s (avg 20.00s per 2 objects)',
     ]
+
+
+def _model(app_label, name):
+    return type(name, (), {'_meta': SimpleNamespace(app_label=app_label)})
+
+
+class _Builder:
+    def __init__(self, *iterators):
+        self._iterators = iterators
+
+    def iterators(self):
+        return self._iterators
+
+
+def test_sql_generator_ticks_timer_once_per_object_with_model_label():
+    builders = [
+        (_model('app', 'First'), _Builder(['a', 'b'], ['c'])),
+        (_model('app', 'Second'), _Builder(['d'])),
+    ]
+    timer = Mock()
+
+    dumped = list(get_objects_to_dump_from_builders(builders, timer=timer))
+
+    assert dumped == ['a', 'b', 'c', 'd']
+    assert [c.args for c in timer.tick.call_args_list] == [
+        ('app.First',), ('app.First',), ('app.First',), ('app.Second',),
+    ]
+
+
+def test_sql_generator_works_without_a_timer():
+    builders = [(_model('app', 'First'), _Builder(['a', 'b']))]
+
+    assert list(get_objects_to_dump_from_builders(builders)) == ['a', 'b']
 
 
 def test_doctests():
