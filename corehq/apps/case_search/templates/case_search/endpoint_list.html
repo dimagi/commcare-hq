@@ -22,6 +22,8 @@
           <th>{% trans "Target Type" %}</th>
           <th>{% trans "Case Type" %}</th>
           <th>{% trans "Version" %}</th>
+          <th>{% trans "Updated On" %}</th>
+          <th>{% trans "Updated By" %}</th>
           <th>{% trans "Actions" %}</th>
         </tr>
       </thead>
@@ -34,6 +36,20 @@
             <td>
               {% if endpoint.current_version %}
                 v{{ endpoint.current_version.version_number }}
+              {% else %}
+                &mdash;
+              {% endif %}
+            </td>
+            <td>
+              {% if endpoint.current_version %}
+                {{ endpoint.current_version.created_at|date:"N j, Y" }}
+              {% else %}
+                &mdash;
+              {% endif %}
+            </td>
+            <td>
+              {% if endpoint.current_version %}
+                {{ endpoint.current_version.created_by|default:"&mdash;" }}
               {% else %}
                 &mdash;
               {% endif %}
