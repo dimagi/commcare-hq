@@ -505,6 +505,9 @@ def get_version_build_id(domain, app_id, version):
 def _get_save_to_case_updates(domain):
     save_to_case_updates = set()
     for app in get_apps_in_domain(domain):
+        # RemoteApp does not implement get_forms() (would raise AttributeError).
+        if app.is_remote_app():
+            continue
         for form in app.get_forms():
             for update in form.get_save_to_case_updates():
                 save_to_case_updates.add(update)
