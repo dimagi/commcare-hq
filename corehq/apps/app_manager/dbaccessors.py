@@ -527,7 +527,7 @@ def _get_case_types_from_apps_query(domain, is_build=False):
     )
 
 
-def get_case_types_from_apps(domain, include_save_to_case_updates=True):
+def get_case_types_from_apps(domain):
     """
     Get the case types of modules in applications in the domain.
     Also returns case types for SaveToCase properties in the domain, if the toggle is enabled.
@@ -535,7 +535,7 @@ def get_case_types_from_apps(domain, include_save_to_case_updates=True):
     """
     from corehq.apps.accounting.utils import domain_has_privilege
     save_to_case_updates = set()
-    if include_save_to_case_updates and domain_has_privilege(domain, privileges.VELLUM_SAVE_TO_CASE):
+    if domain_has_privilege(domain, privileges.VELLUM_SAVE_TO_CASE):
         save_to_case_updates = _get_save_to_case_updates(domain)
     q = _get_case_types_from_apps_query(domain)
     case_types = set(q.run().aggregations.modules.case_types.keys)
