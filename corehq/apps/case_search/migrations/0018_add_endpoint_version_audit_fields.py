@@ -6,6 +6,7 @@ from django.db import migrations, models
 def backfill_action(apps, schema_editor):
     CaseSearchEndpointVersion = apps.get_model('case_search', 'CaseSearchEndpointVersion')
     CaseSearchEndpointVersion.objects.filter(version_number=1).update(action='create')
+    CaseSearchEndpointVersion.objects.filter(version_number__gt=1).update(action='update')
 
 
 class Migration(migrations.Migration):
