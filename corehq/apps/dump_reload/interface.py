@@ -70,7 +70,7 @@ class DataLoader(metaclass=ABCMeta):
 
     def load_from_file(self, file_path, dump_meta, force=False, dry_run=False):
         if not os.path.isfile(file_path):
-            raise Exception("Dump file not found: {}".format(file_path))
+            raise Exception(f"Dump file not found: {file_path}")
 
         self.stdout.write(f"\nLoading {file_path} using '{self.slug}' data loader.")
         meta_slug, _ = os.path.splitext(os.path.basename(file_path))
@@ -82,8 +82,8 @@ class DataLoader(metaclass=ABCMeta):
         # Warn if the file we loaded contains 0 objects.
         if sum(loaded_object_count.values()) == 0:
             warnings.warn(
-                "No data found for '%s'. (File format may be "
-                "invalid.)" % file_path,
+                f"No data found for '{file_path}'. (File format may be "
+                "invalid.)",
                 RuntimeWarning
             )
 

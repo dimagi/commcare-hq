@@ -80,9 +80,9 @@ class Command(BaseCommand):
         self.should_throttle = options.get('throttle')
 
         if not os.path.isfile(dump_file_path):
-            raise CommandError("Dump file not found: {}".format(dump_file_path))
+            raise CommandError(f"Dump file not found: {dump_file_path}")
 
-        self.stdout.write("Loading data from %s." % dump_file_path)
+        self.stdout.write(f"Loading data from {dump_file_path}.")
         extracted_dir = self.extract_dump_archive(dump_file_path)
 
         loaded_meta = {}
@@ -103,17 +103,17 @@ class Command(BaseCommand):
             self._print_stats(loaded_meta, dump_meta)
 
     def _print_stats(self, loaded_meta, dump_meta):
-        self.stdout.write('{0} Load Stats {0}'.format('-' * 40))
+        self.stdout.write(f'{"-" * 40} Load Stats {"-" * 40}')
         for loader, models in sorted(loaded_meta.items()):
             self.stdout.write(loader)
             for model, count in sorted(models.items()):
                 expected = dump_meta[loader].get(model, 0)
                 self.stdout.write(f"  {model:<50}: {count} / {expected}")
-        self.stdout.write('{0}{0}'.format('-' * 46))
+        self.stdout.write(f'{"-" * 46}{"-" * 46}')
         loaded_object_count = sum(count for model in loaded_meta.values() for count in model.values())
         total_object_count = sum(count for model in dump_meta.values() for count in model.values())
         self.stdout.write(f'Loaded {loaded_object_count}/{total_object_count} objects')
-        self.stdout.write('{0}{0}'.format('-' * 46))
+        self.stdout.write(f'{"-" * 46}{"-" * 46}')
 
     def extract_dump_archive(self, dump_file_path):
         target_dir = get_tmp_extract_dir(dump_file_path)
@@ -122,7 +122,7 @@ class Command(BaseCommand):
                 archive.extractall(target_dir)
         elif not self.use_extracted:
             raise CommandError(
-                "Extracted dump already exists at {}. Delete it or use --use-extracted".format(target_dir))
+                f"Extracted dump already exists at {target_dir}. Delete it or use --use-extracted")
         return target_dir
 
     def _load_data(self, loader_class, extracted_dump_path, object_filter, dump_meta):
@@ -130,10 +130,10 @@ class Command(BaseCommand):
             loader = loader_class(object_filter, self.stdout, self.stderr, self.chunksize, self.should_throttle)
             return loader.load_from_path(extracted_dump_path, dump_meta, force=self.force, dry_run=self.dry_run)
         except DataExistsException as e:
-            raise CommandError('Some data already exists. Use --force to load anyway: {}'.format(str(e)))
+            raise CommandError(f'Some data already exists. Use --force to load anyway: {str(e)}')
         except Exception as e:
             if not isinstance(e, CommandError):
-                e.args = ("Problem loading data '%s': %s" % (extracted_dump_path, e),)
+                e.args = (f"Problem loading data '{extracted_dump_path}': {e}",)
             raise
 
 

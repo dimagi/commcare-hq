@@ -59,7 +59,7 @@ class CouchDumpLoadTest(TestCase):
 
         # make sure that there's no data left in the DB
         objects_remaining = _get_doc_counts_from_db(self.domain_name)
-        self.assertEqual({}, objects_remaining, 'Not all data deleted: {}'.format(objects_remaining))
+        self.assertEqual({}, objects_remaining, f'Not all data deleted: {objects_remaining}')
 
         dump_output = output_stream.getvalue().split('\n')
         dump_lines = [line.strip() for line in dump_output if line.strip()]

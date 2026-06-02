@@ -41,7 +41,7 @@ class Command(BaseCommand):
             s3_key = settings.S3_ACCESS_KEY
             s3_secret = settings.S3_SECRET_KEY
 
-        self.bucket = options['bucket'] or 'raw-data-{}'.format(domain)
+        self.bucket = options['bucket'] or f'raw-data-{domain}'
         self.client = boto3.client(
             's3',
             region_name=options['region'],
@@ -74,7 +74,7 @@ class Command(BaseCommand):
 
     def _upload(self, type_, path):
         filename = _filename(self.domain, type_, self.timestamp)
-        print("Uploading {} to s3://{}/{}".format(type_, self.bucket, filename))
+        print(f"Uploading {type_} to s3://{self.bucket}/{filename}")
         S3Transfer(self.client).upload_file(
             path, self.bucket, filename,
             extra_args={'ServerSideEncryption': 'AES256'}
@@ -82,26 +82,22 @@ class Command(BaseCommand):
 
 
 def _dump_docs(query, type_):
-    print("Dumping {}".format(type_))
+    print(f"Dumping {type_}")
 
     total_docs = query.count()
     path, file = _get_file(type_)
     with file:
         for doc in with_progress_bar(query.size(500).scroll(), length=total_docs):
-            file.write('{}\n'.format(json.dumps(doc)))
+            file.write(f'{json.dumps(doc)}\n')
     return path
 
 
 def _filename(domain, type_, date):
-    return 'raw_{}_dump_{}_{}.jsonl.gz'.format(
-        type_,
-        domain,
-        date.strftime('%Y%m%d_%H%M%S')
-    )
+    return f"raw_{type_}_dump_{domain}_{date.strftime('%Y%m%d_%H%M%S')}.jsonl.gz"
 
 
 def _get_file(doc_type):
-    with tempfile.NamedTemporaryFile(prefix='domain_dump_raw_{}_'.format(doc_type),
+    with tempfile.NamedTemporaryFile(prefix=f'domain_dump_raw_{doc_type}_',
             mode='wb', delete=False) as fileobj:
         zipped_obj = gzip.GzipFile(filename=fileobj.name, mode='wb')
     return zipped_obj.name, zipped_obj

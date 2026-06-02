@@ -86,7 +86,7 @@ class IDFilter(DomainFilter):
 
     def get_filters(self, domain_name, db_alias=None):
         for chunk in chunked(self.get_ids(domain_name, db_alias=db_alias), self.chunksize):
-            query_kwarg = '{}__in'.format(self.field)
+            query_kwarg = f'{self.field}__in'
             yield Q(**{query_kwarg: chunk})
 
 
