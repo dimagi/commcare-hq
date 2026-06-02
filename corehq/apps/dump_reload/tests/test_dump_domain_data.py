@@ -11,7 +11,25 @@ from django.core.management.base import CommandError
 from corehq.apps.dump_reload.management.commands.dump_domain_data import (
     Command,
     _get_dump_stream_filename,
+    format_dump_stats,
 )
+
+
+class TestFormatDumpStats:
+    def test_lists_counts_per_model(self):
+        meta = {'sql': {'app.B': 2, 'app.A': 1}, 'couch': {'x.Y': 3}}
+
+        assert format_dump_stats(meta) == [
+            f'{"-" * 32} Dump Stats {"-" * 32}',
+            'couch',
+            f'  {"x.Y":<50}: 3',
+            'sql',
+            f'  {"app.A":<50}: 1',
+            f'  {"app.B":<50}: 2',
+            '-' * 76,
+            'Dumped 6 objects',
+            '-' * 76,
+        ]
 
 
 @contextmanager

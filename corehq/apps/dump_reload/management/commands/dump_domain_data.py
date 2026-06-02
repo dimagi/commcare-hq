@@ -98,15 +98,22 @@ class Command(BaseCommand):
 
     def _print_stats(self, meta):
         self.stdout.ending = '\n'
-        self.stdout.write(f'{"-" * 32} Dump Stats {"-" * 32}')
-        for dumper, models in sorted(meta.items()):
-            self.stdout.write(dumper)
-            for model, count in sorted(models.items()):
-                self.stdout.write(f'  {model:<50}: {count}')
-        self.stdout.write('-' * 76)
-        total = sum(count for models in meta.values() for count in models.values())
-        self.stdout.write(f'Dumped {total} objects')
-        self.stdout.write('-' * 76)
+        for line in format_dump_stats(meta):
+            self.stdout.write(line)
+
+
+def format_dump_stats(meta):
+    """Lines of the final dump-stats report."""
+    lines = [f'{"-" * 32} Dump Stats {"-" * 32}']
+    for dumper, models in sorted(meta.items()):
+        lines.append(dumper)
+        for model, count in sorted(models.items()):
+            lines.append(f'  {model:<50}: {count}')
+    lines.append('-' * 76)
+    total = sum(count for models in meta.values() for count in models.values())
+    lines.append(f'Dumped {total} objects')
+    lines.append('-' * 76)
+    return lines
 
 
 def _get_dump_stream_filename(slug, domain, utcnow, path=None):
