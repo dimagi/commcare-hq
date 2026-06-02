@@ -169,7 +169,7 @@ class UnfilteredModelIteratorBuilder(object):
 
     def iterators(self):
         for queryset in self.querysets():
-            yield queryset_to_iterator(queryset, self.model_class, ignore_ordering=True)
+            yield queryset_to_iterator(queryset, self.model_class, limit=5000, ignore_ordering=True)
 
     def build(self, domain, model_class, db_alias):
         return self.__class__(self.model_label, self.use_all_objects).prepare(domain, model_class, db_alias)
