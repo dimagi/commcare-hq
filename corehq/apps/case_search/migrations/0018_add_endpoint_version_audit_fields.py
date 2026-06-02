@@ -27,4 +27,14 @@ class Migration(migrations.Migration):
             field=models.CharField(blank=True, default='', max_length=255),
         ),
         migrations.RunPython(backfill_action, migrations.RunPython.noop),
+        migrations.AlterField(
+            model_name='casesearchendpointversion',
+            name='parameters',
+            field=models.JSONField(blank=True, default=list, null=True),
+        ),
+        migrations.AlterField(
+            model_name='casesearchendpointversion',
+            name='query',
+            field=models.JSONField(blank=True, default=dict, null=True),
+        ),
     ]
