@@ -1,0 +1,88 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load i18n %}
+
+{% block page_content %}
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">
+      <ul class="mb-0">
+        {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <form method="post" action="{{ post_url }}">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      <label class="form-label" for="name">{% trans "Name" %}</label>
+      <input type="text" class="form-control{% if form.name.errors %} is-invalid{% endif %}"
+             id="name" name="name" value="{{ form.name.value }}" required>
+      {% for error in form.name.errors %}
+        <div class="invalid-feedback">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="target_type">{% trans "Target Type" %}</label>
+      <select class="form-select{% if form.target_type.errors %} is-invalid{% endif %}"
+              id="target_type" name="target_type">
+        {% for value, label in form.target_type.field.choices %}
+          <option value="{{ value }}"
+                  {% if form.target_type.value == value %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+      {% for error in form.target_type.errors %}
+        <div class="invalid-feedback">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="case_type">{% trans "Case Type" %}</label>
+      <select class="form-select{% if form.case_type.errors %} is-invalid{% endif %}"
+              id="case_type" name="case_type">
+        <option value="">{% trans "-- Select a case type --" %}</option>
+        {% for ct_name in case_type_names %}
+          <option value="{{ ct_name }}"
+                  {% if form.case_type.value == ct_name %}selected{% endif %}>
+            {{ ct_name }}
+          </option>
+        {% endfor %}
+      </select>
+      {% for error in form.case_type.errors %}
+        <div class="invalid-feedback">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="query">
+        {% trans "Query" %} <small class="text-muted">({% trans "JSON object" %})</small>
+      </label>
+      <textarea class="form-control font-monospace{% if form.query.errors %} is-invalid{% endif %}"
+                id="query" name="query" rows="10">{{ form.query.value }}</textarea>
+      {% for error in form.query.errors %}
+        <div class="invalid-feedback">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="parameters">
+        {% trans "Parameters" %} <small class="text-muted">({% trans "JSON array" %})</small>
+      </label>
+      <textarea class="form-control font-monospace{% if form.parameters.errors %} is-invalid{% endif %}"
+                id="parameters" name="parameters" rows="5">{{ form.parameters.value }}</textarea>
+      {% for error in form.parameters.errors %}
+        <div class="invalid-feedback">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+      <a href="{% url 'case_search_endpoints' domain %}"
+         class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+    </div>
+  </form>
+{% endblock %}
