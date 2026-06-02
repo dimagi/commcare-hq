@@ -3,7 +3,6 @@ from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
 from unittest.mock import patch
-from nose.tools import assert_equal
 
 from corehq.sql_db.routers import (
     SYNCLOGS_APP,
@@ -73,7 +72,7 @@ def test_load_balanced_read_apps(_, __):
             DEFAULT_DB_ALIAS: _get_db_config('default'),
             'users_db1': _get_db_config('users_db1')}):
 
-        assert_equal(get_load_balanced_app_db('users', default="default_option"), 'users_db1')
+        assert get_load_balanced_app_db('users', default="default_option") == 'users_db1'
 
     # If `LOAD_BALANCED_APPS` is not set for an app, it should point to default kwarg
-    assert_equal(get_load_balanced_app_db('users', default='default_option'), 'default_option')
+    assert get_load_balanced_app_db('users', default='default_option') == 'default_option'

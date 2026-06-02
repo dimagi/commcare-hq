@@ -8,7 +8,7 @@ from django.test import SimpleTestCase, TestCase
 
 from couchdbkit.exceptions import ResourceNotFound
 from unittest.mock import patch
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs

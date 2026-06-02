@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from django.test import TestCase
 
-from nose.tools import assert_false, assert_true
 
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.mixin import apply_leniency
@@ -80,14 +79,14 @@ class UtilTestCase(TestCase):
 def test_contractor():
     user = CouchUser(username="eric")
     with flag_enabled('IS_CONTRACTOR'):
-        assert_true(is_superuser_or_contractor(user))
+        assert is_superuser_or_contractor(user)
 
 
 def test_superuser():
     user = CouchUser(username="john", is_superuser=True)
-    assert_true(is_superuser_or_contractor(user))
+    assert is_superuser_or_contractor(user)
 
 
 def test_normal_user():
     user = CouchUser(username="michael")
-    assert_false(is_superuser_or_contractor(user))
+    assert not is_superuser_or_contractor(user)
