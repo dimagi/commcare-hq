@@ -8,8 +8,14 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
 
 from corehq import toggles
-from corehq.apps.case_search.models import CaseSearchEndpoint, CaseSearchEndpointVersion
-from corehq.apps.data_dictionary.models import CaseType
+from corehq.apps.case_search.endpoint_capability import (
+    get_capability,
+    validate_filter_spec,
+)
+from corehq.apps.case_search.models import (
+    CaseSearchEndpoint,
+    CaseSearchEndpointVersion,
+)
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import not_found
@@ -20,24 +26,22 @@ _ENDPOINT_DECORATORS = [
     toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
 ]
 
+EMPTY_QUERY = {'type': 'and', 'children': []}
+
 
 def _get_endpoint(domain, endpoint_id):
-    return CaseSearchEndpoint.objects.select_related('current_version').filter(
-        pk=endpoint_id, domain=domain, is_active=True
-    ).first()
-
-
-def _get_case_type_names(domain):
-    return list(
-        CaseType.objects.filter(domain=domain, is_deprecated=False)
-        .values_list('name', flat=True)
-        .order_by('name')
+    return (
+        CaseSearchEndpoint.objects.select_related('current_version')
+        .filter(pk=endpoint_id, domain=domain, is_active=True)
+        .first()
     )
 
 
 class CaseSearchEndpointForm(forms.Form):
     name = forms.CharField()
-    target_type = forms.ChoiceField(choices=CaseSearchEndpoint.TargetType.choices)
+    target_type = forms.ChoiceField(
+        choices=CaseSearchEndpoint.TargetType.choices
+    )
     case_type = forms.CharField(required=False)
     query = forms.CharField(required=False, widget=forms.Textarea)
     parameters = forms.CharField(required=False, widget=forms.Textarea)
@@ -53,17 +57,21 @@ class CaseSearchEndpointForm(forms.Form):
         if self.exclude_pk:
             qs = qs.exclude(pk=self.exclude_pk)
         if qs.exists():
-            raise forms.ValidationError(f"An endpoint named '{name}' already exists in this project.")
+            raise forms.ValidationError(
+                f"An endpoint named '{name}' already exists in this project."
+            )
         return name
 
     def clean_query(self):
-        raw = (self.cleaned_data.get('query') or '').strip() or '{}'
+        raw = (self.cleaned_data.get('query') or '').strip() or json.dumps(
+            EMPTY_QUERY
+        )
         try:
             data = json.loads(raw)
         except (json.JSONDecodeError, ValueError):
-            raise forms.ValidationError("Must be valid JSON.")
+            raise forms.ValidationError('Must be valid JSON.')
         if not isinstance(data, dict):
-            raise forms.ValidationError("Must be a JSON object.")
+            raise forms.ValidationError('Must be a JSON object.')
         return data
 
     def clean_parameters(self):
@@ -71,10 +79,23 @@ class CaseSearchEndpointForm(forms.Form):
         try:
             data = json.loads(raw)
         except (json.JSONDecodeError, ValueError):
-            raise forms.ValidationError("Must be valid JSON.")
+            raise forms.ValidationError('Must be valid JSON.')
         if not isinstance(data, list):
-            raise forms.ValidationError("Must be a JSON array.")
+            raise forms.ValidationError('Must be a JSON array.')
         return data
+
+    def clean(self):
+        cleaned = super().clean()
+        query = cleaned.get('query')
+        parameters = cleaned.get('parameters')
+        # Only run semantic validation when both fields parsed cleanly.
+        if query is not None and parameters is not None:
+            capability = get_capability(self.domain)
+            for error in validate_filter_spec(
+                query, cleaned.get('case_type') or '', capability
+            ):
+                self.add_error(None, error)
+        return cleaned
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
@@ -91,43 +112,102 @@ class CaseSearchEndpointsView(BaseProjectDataView):
     def page_context(self):
         return {
             'endpoints': CaseSearchEndpoint.objects.filter(
-                domain=self.domain, is_active=True,
-            ).select_related('current_version').order_by('name'),
+                domain=self.domain,
+                is_active=True,
+            )
+            .select_related('current_version')
+            .order_by('name'),
         }
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointNewView(BaseProjectDataView):
-    urlname = 'case_search_endpoint_new'
-    page_title = gettext_lazy('New Case Search Endpoint')
+class _CaseSearchEndpointEditBaseView(BaseProjectDataView):
+    """Shared logic for the new and edit endpoint query builder views."""
+
     template_name = 'case_search/endpoint_edit.html'
+    mode = None
 
     @property
     def parent_pages(self):
-        return [{'title': CaseSearchEndpointsView.page_title,
-                 'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain])}]
+        return [
+            {
+                'title': CaseSearchEndpointsView.page_title,
+                'url': reverse(
+                    CaseSearchEndpointsView.urlname, args=[self.domain]
+                ),
+            }
+        ]
+
+    def _make_form(self, data=None):
+        raise NotImplementedError
+
+    def _default_initial(self):
+        """Initial query builder state for an unbound (GET) form."""
+        raise NotImplementedError
+
+    def _posted_json(self, field, default):
+        if field in self._form.cleaned_data:
+            return self._form.cleaned_data[field]
+        raw = self._form.data.get(field)
+        if raw:
+            try:
+                return json.loads(raw)
+            except (json.JSONDecodeError, ValueError):
+                pass
+        return default
+
+    def _initial_values(self):
+        """Seed the query builder: defaults on GET, submitted values on a
+        failed POST so the user's work survives re-render."""
+        if self.request.method == 'POST':
+            data = self._form.data
+            return {
+                'initial_name': data.get('name', ''),
+                'initial_target_type': data.get(
+                    'target_type', CaseSearchEndpoint.TargetType.PROJECT_DB
+                ),
+                'initial_target_name': data.get('case_type', ''),
+                'initial_parameters': self._posted_json('parameters', []),
+                'initial_query': self._posted_json('query', dict(EMPTY_QUERY)),
+            }
+        return self._default_initial()
+
+    @property
+    def page_context(self):
+        context = {
+            'capability': get_capability(self.domain),
+            'endpoint_mode': self.mode,
+            'post_url': self.page_url,
+            'form': self._form,
+        }
+        context.update(self._initial_values())
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self._form = self._make_form()
+        return self.render_to_response(self.get_context_data())
+
+
+@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+class CaseSearchEndpointNewView(_CaseSearchEndpointEditBaseView):
+    urlname = 'case_search_endpoint_new'
+    page_title = gettext_lazy('New Case Search Endpoint')
+    mode = 'new'
 
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
 
     def _make_form(self, data=None):
-        initial = {'query': '{}', 'parameters': '[]'}
-        return CaseSearchEndpointForm(data, domain=self.domain, initial=initial)
+        return CaseSearchEndpointForm(data, domain=self.domain)
 
-    @property
-    def page_context(self):
+    def _default_initial(self):
         return {
-            'post_url': reverse(self.urlname, args=[self.domain]),
-            'endpoint': None,
-            'version_display': '',
-            'form': self._form,
-            'case_type_names': _get_case_type_names(self.domain),
+            'initial_name': '',
+            'initial_target_type': CaseSearchEndpoint.TargetType.PROJECT_DB,
+            'initial_target_name': '',
+            'initial_parameters': [],
+            'initial_query': dict(EMPTY_QUERY),
         }
-
-    def get(self, request, *args, **kwargs):
-        self._form = self._make_form()
-        return self.render_to_response(self.get_context_data())
 
     def post(self, request, *args, **kwargs):
         self._form = self._make_form(request.POST)
@@ -151,14 +231,19 @@ class CaseSearchEndpointNewView(BaseProjectDataView):
             )
             endpoint.current_version = version
             endpoint.save(update_fields=['current_version'])
-        return redirect(reverse(CaseSearchEndpointEditView.urlname, args=[self.domain, endpoint.id]))
+        return redirect(
+            reverse(
+                CaseSearchEndpointEditView.urlname,
+                args=[self.domain, endpoint.id],
+            )
+        )
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointEditView(BaseProjectDataView):
+class CaseSearchEndpointEditView(_CaseSearchEndpointEditBaseView):
     urlname = 'case_search_endpoint_edit'
     page_title = gettext_lazy('Edit Case Search Endpoint')
-    template_name = 'case_search/endpoint_edit.html'
+    mode = 'edit'
 
     def dispatch(self, request, *args, **kwargs):
         self._endpoint = _get_endpoint(self.domain, kwargs['endpoint_id'])
@@ -167,39 +252,29 @@ class CaseSearchEndpointEditView(BaseProjectDataView):
         return super().dispatch(request, *args, **kwargs)
 
     @property
-    def parent_pages(self):
-        return [{'title': CaseSearchEndpointsView.page_title,
-                 'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain])}]
-
-    @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self._endpoint.id])
 
     def _make_form(self, data=None):
+        return CaseSearchEndpointForm(
+            data, domain=self.domain, exclude_pk=self._endpoint.pk
+        )
+
+    def _default_initial(self):
         current = self._endpoint.current_version
-        initial = {
-            'name': self._endpoint.name,
-            'target_type': self._endpoint.target_type,
-            'case_type': self._endpoint.target_name,
-            'query': json.dumps(current.query, indent=2) if current else '{}',
-            'parameters': json.dumps(current.parameters, indent=2) if current else '[]',
+        return {
+            'initial_name': self._endpoint.name,
+            'initial_target_type': self._endpoint.target_type,
+            'initial_target_name': self._endpoint.target_name,
+            'initial_parameters': current.parameters if current else [],
+            'initial_query': current.query if current else dict(EMPTY_QUERY),
         }
-        return CaseSearchEndpointForm(data, domain=self.domain, exclude_pk=self._endpoint.pk, initial=initial)
 
     @property
     def page_context(self):
-        current = self._endpoint.current_version
-        return {
-            'post_url': reverse(self.urlname, args=[self.domain, self._endpoint.id]),
-            'endpoint': self._endpoint,
-            'version_display': f'v{current.version_number}' if current else 'v1',
-            'form': self._form,
-            'case_type_names': _get_case_type_names(self.domain),
-        }
-
-    def get(self, request, *args, **kwargs):
-        self._form = self._make_form()
-        return self.render_to_response(self.get_context_data())
+        context = super().page_context
+        context['endpoint'] = self._endpoint
+        return context
 
     def post(self, request, *args, **kwargs):
         self._form = self._make_form(request.POST)
@@ -225,7 +300,9 @@ class CaseSearchEndpointEditView(BaseProjectDataView):
             )
             endpoint.current_version = version
             endpoint.save(update_fields=['current_version'])
-        return redirect(reverse(CaseSearchEndpointsView.urlname, args=[self.domain]))
+        return redirect(
+            reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
+        )
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
@@ -235,7 +312,9 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.kwargs['endpoint_id']])
+        return reverse(
+            self.urlname, args=[self.domain, self.kwargs['endpoint_id']]
+        )
 
     def post(self, request, *args, **kwargs):
         endpoint = _get_endpoint(self.domain, kwargs['endpoint_id'])
@@ -255,4 +334,6 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
             endpoint.is_active = False
             endpoint.current_version = version
             endpoint.save(update_fields=['is_active', 'current_version'])
-        return redirect(reverse(CaseSearchEndpointsView.urlname, args=[self.domain]))
+        return redirect(
+            reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
+        )
