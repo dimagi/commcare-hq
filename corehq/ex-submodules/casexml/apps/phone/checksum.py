@@ -1,10 +1,7 @@
 import hashlib
 import binascii
 from copy import copy
-import six
-from six.moves import zip
 from functools import reduce
-from six.moves import map
 
 
 EMPTY_HASH = ""
@@ -57,7 +54,7 @@ class Checksum(object):
 
     @classmethod
     def hash(cls, line):
-        if isinstance(line, six.text_type):
+        if isinstance(line, str):
             line = line.encode('utf-8')
         return bytearray(hashlib.md5(line).digest())
 

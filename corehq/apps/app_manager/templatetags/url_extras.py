@@ -1,8 +1,6 @@
 from django import template
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
+import urllib.parse
 
 register = template.Library()
 
@@ -14,7 +12,7 @@ def urlencode(parser, token):
     try:
         path_var = tokens.pop()
         params_var = tokens.pop()
-    except:
+    except Exception:
         raise template.TemplateSyntaxError("%r requires at least 2 parameters" % tag_name)
     params = {}
     delete = set()
@@ -25,13 +23,13 @@ def urlencode(parser, token):
                 key = tokens.pop()
                 assert(tokens.pop() == "as")
                 value = tokens.pop()
-            except:
+            except Exception:
                 raise template.TemplateSyntaxError("%r tag has incomplete 'with...as'" % tag_name)
             params[key] = value
         elif cmd == "without":
             try:
                 delete.add(tokens.pop())
-            except:
+            except Exception:
                 raise template.TemplateSyntaxError("%r tag has incomplete 'without'" % tag_name)
         else:
             raise template.TemplateSyntaxError(
@@ -68,4 +66,4 @@ class URLEncodeNode(template.Node):
         for key in params:
             if isinstance(params[key], str):
                 params[key] = params[key].encode('utf-8')
-        return "%s?%s" % (path, six.moves.urllib.parse.urlencode(params, True)) if params else path
+        return "%s?%s" % (path, urllib.parse.urlencode(params, True)) if params else path

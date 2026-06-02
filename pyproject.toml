@@ -106,7 +106,6 @@ dependencies = [
     "sh",
     "simpleeval",
     "simplejson",
-    "six",
     "sqlagg",
     "SQLAlchemy",
     "stripe",

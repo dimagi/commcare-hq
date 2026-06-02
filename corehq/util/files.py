@@ -1,7 +1,7 @@
 import os
 import tempfile
 import re
-from six.moves.urllib.parse import quote
+from urllib.parse import quote
 from text_unidecode import unidecode
 
 
