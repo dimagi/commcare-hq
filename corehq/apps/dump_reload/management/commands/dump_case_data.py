@@ -68,7 +68,8 @@ class Command(BaseCommand):
                 else:
                     case_types = available_case_types
                 for case_type in case_types:
-                    file_name = f"{case_type}_{db}_{datetime.utcnow().strftime(DATETIME_FORMAT)}.csv"
+                    timestamp = datetime.utcnow().strftime(DATETIME_FORMAT)
+                    file_name = f"{case_type}_{db}_{timestamp}.csv"
                     with open(file_name, "w", encoding='utf-8') as output:
                         c = db_conn.cursor()
                         _where_clause = where_clause + f"type='{case_type}' "

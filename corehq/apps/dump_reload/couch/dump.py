@@ -133,5 +133,5 @@ class DomainDumper(DataDumper):
         json.dump(domain_obj.to_json(), output_stream)
         output_stream.write('\n')
 
-        self.stdout.write(f'Dumping {1} Domain\n')
+        self.stdout.write('Dumping 1 Domain\n')
         return Counter({'Domain': 1})

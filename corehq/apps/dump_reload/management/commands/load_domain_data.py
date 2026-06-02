@@ -109,11 +109,11 @@ class Command(BaseCommand):
             for model, count in sorted(models.items()):
                 expected = dump_meta[loader].get(model, 0)
                 self.stdout.write(f"  {model:<50}: {count} / {expected}")
-        self.stdout.write(f'{"-" * 46}{"-" * 46}')
+        self.stdout.write('-' * 92)
         loaded_object_count = sum(count for model in loaded_meta.values() for count in model.values())
         total_object_count = sum(count for model in dump_meta.values() for count in model.values())
         self.stdout.write(f'Loaded {loaded_object_count}/{total_object_count} objects')
-        self.stdout.write(f'{"-" * 46}{"-" * 46}')
+        self.stdout.write('-' * 92)
 
     def extract_dump_archive(self, dump_file_path):
         target_dir = get_tmp_extract_dir(dump_file_path)
@@ -130,7 +130,7 @@ class Command(BaseCommand):
             loader = loader_class(object_filter, self.stdout, self.stderr, self.chunksize, self.should_throttle)
             return loader.load_from_path(extracted_dump_path, dump_meta, force=self.force, dry_run=self.dry_run)
         except DataExistsException as e:
-            raise CommandError(f'Some data already exists. Use --force to load anyway: {str(e)}')
+            raise CommandError(f'Some data already exists. Use --force to load anyway: {e}')
         except Exception as e:
             if not isinstance(e, CommandError):
                 e.args = (f"Problem loading data '{extracted_dump_path}': {e}",)
