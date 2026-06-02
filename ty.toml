@@ -1,0 +1,46 @@
+[environment]
+extra-paths = [
+    "corehq/ex-submodules",
+]
+
+[src]
+exclude = ["settings.py", "testsettings.py"]
+
+[rules]
+# Rules with existing violations are set to "ignore" until they are fixed
+call-non-callable = "ignore"  # default: error
+call-top-callable = "ignore"  # default: error
+deprecated = "ignore"  # default: warn
+division-by-zero = "ignore"  # default: ignore
+empty-body = "ignore"  # default: error
+invalid-argument-type = "ignore"  # default: error
+invalid-assignment = "ignore"  # default: error
+invalid-base = "ignore"  # default: error
+invalid-method-override = "ignore"  # default: error
+invalid-parameter-default = "ignore"  # default: error
+invalid-raise = "ignore"  # default: error
+invalid-return-type = "ignore"  # default: error
+invalid-super-argument = "ignore"  # default: error
+invalid-type-arguments = "ignore"  # default: error
+invalid-type-form = "ignore"  # default: error
+invalid-type-variable-default = "error"
+invalid-yield = "ignore"  # default: error
+mismatched-type-name = "ignore"  # default: warn
+missing-argument = "ignore"  # default: error
+no-matching-overload = "ignore"  # default: error
+not-iterable = "ignore"  # default: error
+not-subscriptable = "ignore"  # default: error
+parameter-already-assigned = "ignore"  # default: error
+possibly-missing-attribute = "ignore" # default: ignore
+possibly-missing-import = "ignore"  # default: ignore
+possibly-missing-submodule = "ignore" # default: warn
+possibly-unresolved-reference = "ignore" # default: ignore
+too-many-positional-arguments = "ignore" # default: error
+unknown-argument = "ignore"  # default: error
+unresolved-attribute = "ignore"  # default: error
+unresolved-global = "ignore"  # default: warn
+unresolved-import = "ignore"  # default: error
+unresolved-reference = "ignore"  # default: error
+unsupported-base = "ignore"  # default: warn
+unsupported-dynamic-base = "ignore"  # default: ignore
+unsupported-operator = "ignore"  # default: error
