@@ -1,0 +1,47 @@
+{% load i18n %}
+{# Expects Alpine scope: node, _removeParent (null = no remove button), _removeIdx #}
+<div class="d-flex align-items-center gap-2 mb-2">
+  <span
+    class="ep-type-badge d-inline-flex align-items-center justify-content-center flex-shrink-0 rounded-1 bg-secondary text-white"
+  >
+    <i class="fa-solid fa-code-branch"></i>
+  </span>
+  <div class="btn-group btn-group-sm" role="group">
+    <button
+      type="button"
+      class="btn"
+      :class="node.type === 'and' ? 'btn-primary' : 'btn-outline-secondary'"
+      @click="if (mode !== 'readonly') node.type = 'and'"
+      :disabled="mode === 'readonly'"
+    >
+      AND
+    </button>
+    <button
+      type="button"
+      class="btn"
+      :class="node.type === 'or' ? 'btn-primary' : 'btn-outline-secondary'"
+      @click="if (mode !== 'readonly') node.type = 'or'"
+      :disabled="mode === 'readonly'"
+    >
+      OR
+    </button>
+  </div>
+  <span class="text-muted small fst-italic">
+    <span x-show="node.type === 'and'"
+      >{% trans "match all of the following" %}</span
+    >
+    <span x-show="node.type === 'or'"
+      >{% trans "match any of the following" %}</span
+    >
+  </span>
+  <template x-if="mode !== 'readonly' && _removeParent !== null">
+    <button
+      type="button"
+      class="btn btn-sm text-secondary border-0 p-1 ms-auto"
+      @click="removeNode(_removeParent, _removeIdx)"
+      aria-label="{% trans "Remove group" %}"
+    >
+      <i class="fa-regular fa-trash-can"></i>
+    </button>
+  </template>
+</div>

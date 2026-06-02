@@ -1,0 +1,273 @@
+{% load i18n %}
+{# Query builder partial — rendered inside an Alpine.js x-data="endpointForm()" context. #}
+
+<div class="filter-tree">
+  {# ── Root group header ── #}
+  <div x-data="{ node: query, _removeParent: null, _removeIdx: null }">
+    {% include 'case_search/partials/_group_header.html' %}
+  </div>
+
+  {# ── Root group children ── #}
+  <div class="ps-4 border-start border-2">
+    <template x-for="(child, childIdx) in query.children" :key="child._id">
+      <div class="mb-2">
+        {# Component condition #}
+        <template x-if="child.type === 'component'">
+          <div
+            x-data="{ node: child, _removeParent: query, _removeIdx: childIdx }"
+          >
+            {% include 'case_search/partials/_condition_row.html' %}
+          </div>
+        </template>
+
+        {# Nested AND/OR group #}
+        <template x-if="child.type === 'and' || child.type === 'or'">
+          <div>
+            {# Nested group header #}
+            <div
+              x-data="{ node: child, _removeParent: query, _removeIdx: childIdx }"
+            >
+              {% include 'case_search/partials/_group_header.html' %}
+            </div>
+
+            {# Nested group children #}
+            <div class="ps-4 border-start border-2">
+              <template
+                x-for="(grandchild, grandIdx) in child.children"
+                :key="grandchild._id"
+              >
+                <div class="mb-2">
+                  {# Component condition #}
+                  <template x-if="grandchild.type === 'component'">
+                    <div
+                      x-data="{ node: grandchild, _removeParent: child, _removeIdx: grandIdx }"
+                    >
+                      {% include 'case_search/partials/_condition_row.html' %}
+                    </div>
+                  </template>
+
+                  {# NOT wrapper inside nested group #}
+                  <template x-if="grandchild.type === 'not'">
+                    <div>
+                      <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-warning text-dark"
+                          >{% trans "NOT" %}</span
+                        >
+                        <template x-if="mode !== 'readonly'">
+                          <button
+                            type="button"
+                            class="btn btn-sm text-secondary border-0 p-1 ms-auto"
+                            @click="removeNode(child, grandIdx)"
+                            aria-label="{% trans "Remove NOT group" %}"
+                          >
+                            <i class="fa-regular fa-trash-can"></i>
+                          </button>
+                        </template>
+                      </div>
+                      <template
+                        x-if="grandchild.child && (grandchild.child.type === 'and' || grandchild.child.type === 'or')"
+                      >
+                        <div class="ps-4 border-start border-2">
+                          <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="btn-group btn-group-sm" role="group">
+                              <button
+                                type="button"
+                                class="btn"
+                                :class="grandchild.child.type === 'and' ? 'btn-primary' : 'btn-outline-secondary'"
+                                @click="if (mode !== 'readonly') grandchild.child.type = 'and'"
+                                :disabled="mode === 'readonly'"
+                              >
+                                AND
+                              </button>
+                              <button
+                                type="button"
+                                class="btn"
+                                :class="grandchild.child.type === 'or' ? 'btn-primary' : 'btn-outline-secondary'"
+                                @click="if (mode !== 'readonly') grandchild.child.type = 'or'"
+                                :disabled="mode === 'readonly'"
+                              >
+                                OR
+                              </button>
+                            </div>
+                          </div>
+                          <template
+                            x-for="(notChild, notIdx) in grandchild.child.children"
+                            :key="notChild._id"
+                          >
+                            <template x-if="notChild.type === 'component'">
+                              <div
+                                class="mb-2"
+                                x-data="{ node: notChild, _removeParent: grandchild.child, _removeIdx: notIdx }"
+                              >
+                                {% include 'case_search/partials/_condition_row.html' %}
+                              </div>
+                            </template>
+                          </template>
+                          <template x-if="mode !== 'readonly'">
+                            <button
+                              type="button"
+                              class="btn btn-primary btn-sm mt-1"
+                              @click="addCondition(grandchild.child)"
+                            >
+                              <i class="fa-solid fa-plus me-1"></i
+                              >{% trans "Add Condition" %}
+                            </button>
+                          </template>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                </div>
+              </template>
+
+              {# Add buttons for nested group #}
+              <template x-if="mode !== 'readonly'">
+                <div class="d-flex gap-2 mt-2">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    @click="addCondition(child)"
+                  >
+                    <i class="fa-solid fa-plus me-1"></i
+                    >{% trans "Add Condition" %}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    @click="addGroup(child, 'and')"
+                  >
+                    <i class="fa-solid fa-code-branch me-1"></i
+                    >{% trans "Add Group" %}
+                  </button>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        {# NOT wrapper at root level #}
+        <template x-if="child.type === 'not'">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-warning text-dark">{% trans "NOT" %}</span>
+              <template x-if="mode !== 'readonly'">
+                <button
+                  type="button"
+                  class="btn btn-sm text-secondary border-0 p-1 ms-auto"
+                  @click="removeNode(query, childIdx)"
+                  aria-label="{% trans "Remove NOT group" %}"
+                >
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </template>
+            </div>
+            <template
+              x-if="child.child && (child.child.type === 'and' || child.child.type === 'or')"
+            >
+              <div class="ps-4 border-start border-2">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <div class="btn-group btn-group-sm" role="group">
+                    <button
+                      type="button"
+                      class="btn"
+                      :class="child.child.type === 'and' ? 'btn-primary' : 'btn-outline-secondary'"
+                      @click="if (mode !== 'readonly') child.child.type = 'and'"
+                      :disabled="mode === 'readonly'"
+                    >
+                      AND
+                    </button>
+                    <button
+                      type="button"
+                      class="btn"
+                      :class="child.child.type === 'or' ? 'btn-primary' : 'btn-outline-secondary'"
+                      @click="if (mode !== 'readonly') child.child.type = 'or'"
+                      :disabled="mode === 'readonly'"
+                    >
+                      OR
+                    </button>
+                  </div>
+                </div>
+                <template
+                  x-for="(notChild, notIdx) in child.child.children"
+                  :key="notChild._id"
+                >
+                  <template x-if="notChild.type === 'component'">
+                    <div
+                      class="mb-2"
+                      x-data="{ node: notChild, _removeParent: child.child, _removeIdx: notIdx }"
+                    >
+                      {% include 'case_search/partials/_condition_row.html' %}
+                    </div>
+                  </template>
+                </template>
+                <template x-if="mode !== 'readonly'">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm mt-1"
+                    @click="addCondition(child.child)"
+                  >
+                    <i class="fa-solid fa-plus me-1"></i
+                    >{% trans "Add Condition" %}
+                  </button>
+                </template>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    {# Empty state #}
+    <template x-if="query.children.length === 0">
+      <p class="text-muted fst-italic small">
+        {% trans "No conditions yet. Add a condition or group below." %}
+      </p>
+    </template>
+
+    {# Root add buttons #}
+    <template x-if="mode !== 'readonly'">
+      <div class="d-flex gap-2 mt-2 flex-wrap">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          @click="addCondition(query)"
+        >
+          <i class="fa-solid fa-plus me-1"></i>{% trans "Add Condition" %}
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm"
+          @click="addGroup(query, 'and')"
+        >
+          <i class="fa-solid fa-code-branch me-1"></i>{% trans "Add Group" %}
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm"
+          @click="addNotGroup(query)"
+        >
+          {% trans "Add NOT group" %}
+        </button>
+      </div>
+    </template>
+  </div>
+
+  <div class="form-check mt-3" x-data="{ showJson: false }">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      id="show-query-json"
+      x-model="showJson"
+    />
+    <label class="form-check-label" for="show-query-json"
+      >{% trans "Show query JSON" %}</label
+    >
+    <textarea
+      x-show="showJson"
+      class="form-control font-monospace mt-2"
+      rows="20"
+      readonly
+      x-text="JSON.stringify(query, null, 2)"
+    ></textarea>
+  </div>
+</div>
