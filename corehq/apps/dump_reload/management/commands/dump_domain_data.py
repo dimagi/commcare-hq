@@ -1,5 +1,6 @@
 import gzip
 import json
+import logging
 import os
 import zipfile
 from datetime import datetime
@@ -10,6 +11,9 @@ from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.apps.dump_reload.couch import CouchDataDumper
 from corehq.apps.dump_reload.couch.dump import DomainDumper, ToggleDumper
 from corehq.apps.dump_reload.sql import SqlDataDumper
+from corehq.util.timer import TimingContext
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -66,15 +70,18 @@ class Command(BaseCommand):
 
             filename = _get_dump_stream_filename(dumper.slug, domain_name, self.utcnow, path=output_dir)
             stream = self.stdout if console else gzip.open(filename, 'wt')
-            try:
-                meta[dumper.slug] = dumper(domain_name, excludes, includes).dump(stream)
-            except Exception as e:
-                if show_traceback:
-                    raise
-                raise CommandError("Unable to serialize database: %s" % e)
-            finally:
-                if stream and not console:
-                    stream.close()
+            with TimingContext(dumper.slug) as dumper_timer:
+                try:
+                    meta[dumper.slug] = dumper(domain_name, excludes, includes).dump(stream)
+                except Exception as e:
+                    if show_traceback:
+                        raise
+                    raise CommandError("Unable to serialize database: %s" % e)
+                finally:
+                    if stream and not console:
+                        stream.close()
+
+            logger.info(f"[timing] dumper '{dumper.slug}' finished in {dumper_timer.duration:.2f}s")
 
             if not console:
                 with zipfile.ZipFile(zipname, mode='a', allowZip64=True) as z:

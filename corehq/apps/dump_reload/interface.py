@@ -5,6 +5,7 @@ import sys
 import warnings
 from abc import ABCMeta, abstractmethod, abstractproperty
 
+from corehq.apps.dump_reload.timing import DumpTimingLogger
 from corehq.util.log import with_progress_bar
 
 
@@ -25,6 +26,7 @@ class DataDumper(metaclass=ABCMeta):
         self.includes = includes
         self.stdout = stdout or sys.stdout
         self.stderr = stderr or sys.stderr
+        self.timer = DumpTimingLogger()  # read back for the stats report
 
     @abstractmethod
     def dump(self, output_stream):

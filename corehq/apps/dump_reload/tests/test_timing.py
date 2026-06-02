@@ -1,5 +1,9 @@
+from contextlib import contextmanager
+from types import SimpleNamespace
+
 import pytest
 
+from corehq.apps.dump_reload.sql.dump import get_objects_to_dump_from_builders
 from corehq.apps.dump_reload.timing import DumpTimingLogger, format_rate
 
 
@@ -67,6 +71,26 @@ def test_a_model_with_no_rows_is_silent():
     assert timer.totals == {}
 
 
+def test_sql_generator_brackets_each_model_with_measure():
+    # Sharded model (two builders) groups under one measure; a zero-row model is still bracketed.
+    builders = [
+        (_model('app', 'A'), _Builder(['a1'])),
+        (_model('app', 'A'), _Builder(['a2'])),
+        (_model('app', 'Empty'), _Builder([])),
+        (_model('app', 'C'), _Builder(['c1'])),
+    ]
+    timer = _RecordingTimer()
+
+    dumped = list(get_objects_to_dump_from_builders(builders, timer=timer))
+
+    assert dumped == ['a1', 'a2', 'c1']
+    assert timer.calls == [
+        ('enter', 'app.A'), ('tick',), ('tick',), ('exit', 'app.A'),
+        ('enter', 'app.Empty'), ('exit', 'app.Empty'),
+        ('enter', 'app.C'), ('tick',), ('exit', 'app.C'),
+    ]
+
+
 @pytest.mark.parametrize("total_seconds, row_count, expected", [
     (3600, 1_000_000, '1.000h /1M rows'),       # 1 hour to dump 1M rows
     (3651.84, 1_000_000, '1.014h /1M rows'),    # rounds to 3 decimals
@@ -89,3 +113,31 @@ class RecordingLogger:
 def fake_clock(times):
     it = iter(times)
     return lambda: next(it)
+
+
+def _model(app_label, name):
+    return type(name, (), {'_meta': SimpleNamespace(app_label=app_label)})
+
+
+class _Builder:
+    def __init__(self, *iterators):
+        self._iterators = iterators
+
+    def iterators(self):
+        return self._iterators
+
+
+class _RecordingTimer:
+    def __init__(self):
+        self.calls = []
+
+    @contextmanager
+    def measure(self, model_label):
+        self.calls.append(('enter', model_label))
+        try:
+            yield
+        finally:
+            self.calls.append(('exit', model_label))
+
+    def tick(self):
+        self.calls.append(('tick',))
