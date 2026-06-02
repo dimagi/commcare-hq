@@ -28,11 +28,11 @@ from eulxml.xmlmap import (
 )
 
 
-def CustomDateTimeField(*args, **kwargs):
+def CustomDateTimeField(xpath, normalize=False, *args, **kwargs):
     # As of at least CommCare 2.20, the phone does not parse microseconds
     # in this particular handler (though it does everywhere else).
     # For now, we're going to continue sending down without microseconds
-    return DateTimeField(format='%Y-%m-%dT%H:%M:%SZ', *args, **kwargs)
+    return DateTimeField(xpath, '%Y-%m-%dT%H:%M:%SZ', normalize, *args, **kwargs)
 
 
 class KeyRecord(XmlObject):
