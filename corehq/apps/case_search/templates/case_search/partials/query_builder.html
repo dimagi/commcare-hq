@@ -1,0 +1,114 @@
+{% load i18n %}
+{# Query builder partial — rendered inside an Alpine.js x-data="endpointForm()" context. #}
+{# Builder state uses a `negated` flag on and/or groups; it is serialized  #}
+{# to/from wrapping `not` nodes by normalizeNode()/toSpecNode() in the JS. #}
+
+<div class="filter-tree">
+  {# ── Root group header ── #}
+  <div x-data="{ node: query, _removeParent: null, _removeIdx: null }">
+    {% include 'case_search/partials/_group_header.html' %}
+  </div>
+
+  {# ── Root group children ── #}
+  <div class="ps-4 border-start border-2">
+    <template x-for="(child, childIdx) in query.children" :key="child._id">
+      <div class="mb-2">
+        {# Component condition #}
+        <template x-if="child.type === 'component'">
+          <div
+            x-data="{ node: child, _removeParent: query, _removeIdx: childIdx }"
+          >
+            {% include 'case_search/partials/_condition_row.html' %}
+          </div>
+        </template>
+
+        {# Nested AND/OR group #}
+        <template x-if="child.type === 'and' || child.type === 'or'">
+          <div>
+            {# Nested group header #}
+            <div
+              x-data="{ node: child, _removeParent: query, _removeIdx: childIdx }"
+            >
+              {% include 'case_search/partials/_group_header.html' %}
+            </div>
+
+            {# Nested group children #}
+            <div class="ps-4 border-start border-2">
+              <template
+                x-for="(grandchild, grandIdx) in child.children"
+                :key="grandchild._id"
+              >
+                <div class="mb-2">
+                  <template x-if="grandchild.type === 'component'">
+                    <div
+                      x-data="{ node: grandchild, _removeParent: child, _removeIdx: grandIdx }"
+                    >
+                      {% include 'case_search/partials/_condition_row.html' %}
+                    </div>
+                  </template>
+                </div>
+              </template>
+
+              <template x-if="mode !== 'readonly'">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm mt-1"
+                  @click="addCondition(child)"
+                >
+                  <i class="fa-solid fa-plus me-1"></i
+                  >{% trans "Add Condition" %}
+                </button>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    {# Empty state #}
+    <template x-if="query.children.length === 0">
+      <p class="text-muted fst-italic small">
+        {% trans "No conditions yet. Add a condition or group below." %}
+      </p>
+    </template>
+
+    {# Root add buttons #}
+    <template x-if="mode !== 'readonly'">
+      <div class="d-flex gap-2 mt-2 flex-wrap">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          @click="addCondition(query)"
+        >
+          <i class="fa-solid fa-plus me-1"></i>{% trans "Add Condition" %}
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm"
+          @click="addGroup(query, 'and')"
+        >
+          <i class="fa-solid fa-code-branch me-1"></i>{% trans "Add Group" %}
+        </button>
+      </div>
+    </template>
+  </div>
+
+  <div class="form-check mt-3" x-data="{ showJson: false }">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      id="show-query-json"
+      x-model="showJson"
+    />
+    <label class="form-check-label" for="show-query-json"
+      >{% trans "Show query JSON" %}</label
+    >
+    <textarea
+      x-show="showJson"
+      class="form-control font-monospace mt-2"
+      rows="20"
+      readonly
+      x-text="JSON.stringify(strippedQuery(), null, 2)"
+    ></textarea>
+  </div>
+</div>
