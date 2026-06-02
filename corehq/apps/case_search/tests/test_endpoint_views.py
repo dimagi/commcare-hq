@@ -252,6 +252,8 @@ class TestCaseSearchEndpointDeactivateView(EndpointViewTestCase):
         assert ep.current_version is not None
         assert ep.current_version.action == CaseSearchEndpointVersion.Action.DEACTIVATE
         assert ep.current_version.created_by == self.username
+        assert ep.current_version.query is None
+        assert ep.current_version.parameters is None
         assert ep.versions.count() == 2
 
     def test_404_for_wrong_domain(self):

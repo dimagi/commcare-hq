@@ -249,6 +249,8 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
                 version_number=next_num,
                 created_by=request.couch_user.username,
                 action=CaseSearchEndpointVersion.Action.DEACTIVATE,
+                query=None,
+                parameters=None,
             )
             endpoint.is_active = False
             endpoint.current_version = version
