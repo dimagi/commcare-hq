@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import zipfile
+from argparse import ArgumentTypeError
 from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
@@ -11,6 +12,7 @@ from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.apps.dump_reload.couch import CouchDataDumper
 from corehq.apps.dump_reload.couch.dump import DomainDumper, ToggleDumper
 from corehq.apps.dump_reload.sql import SqlDataDumper
+from corehq.apps.dump_reload.sql.filters import DEFAULT_CHUNK_SIZE
 from corehq.apps.dump_reload.timing import format_rate
 from corehq.util.timer import TimingContext
 
@@ -45,6 +47,10 @@ class Command(BaseCommand):
         )
         parser.add_argument('--dumper', dest='dumpers', action='append', default=[],
                             help='Dumper slug to run (use multiple --dumper to run multiple dumpers).')
+        parser.add_argument(
+            '--sql-chunk-size', dest='sql_chunk_size', type=positive_int, default=DEFAULT_CHUNK_SIZE,
+            help=f'Number of rows to fetch per query when dumping SQL data (default: {DEFAULT_CHUNK_SIZE}).'
+        )
 
     def handle(self, domain_name, **options):
         excludes = options.get('exclude')
@@ -53,6 +59,7 @@ class Command(BaseCommand):
         show_traceback = options.get('traceback')
         requested_dumpers = options.get('dumpers')
         output_dir = options.get('dir')
+        sql_chunk_size = options.get('sql_chunk_size', DEFAULT_CHUNK_SIZE)
 
         if output_dir:
             os.makedirs(output_dir, exist_ok=True)
@@ -72,7 +79,10 @@ class Command(BaseCommand):
 
             filename = _get_dump_stream_filename(dumper.slug, domain_name, self.utcnow, path=output_dir)
             stream = self.stdout if console else gzip.open(filename, 'wt')
-            dumper_instance = dumper(domain_name, excludes, includes)
+            if dumper is SqlDataDumper:
+                dumper_instance = dumper(domain_name, excludes, includes, chunk_size=sql_chunk_size)
+            else:
+                dumper_instance = dumper(domain_name, excludes, includes)
             with TimingContext(dumper.slug) as dumper_timer:
                 try:
                     meta[dumper.slug] = dumper_instance.dump(stream)
@@ -107,6 +117,13 @@ class Command(BaseCommand):
         self.stdout.ending = '\n'
         for line in format_dump_stats(meta, timing_data):
             self.stdout.write(line)
+
+
+def positive_int(value):
+    number = int(value)
+    if number <= 0:
+        raise ArgumentTypeError(f'{value!r} is not a positive integer')
+    return number
 
 
 def format_dump_stats(meta, timing_data):
