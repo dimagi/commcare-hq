@@ -170,6 +170,8 @@ test = [
     'pytest-django',
     'pytest-unmagic',
     'coverage',
+    'ty',
+    'django-types',
 ]
 
 [tool.pytest.ini_options]
@@ -249,3 +251,49 @@ typeCheckingMode = "off"
 extraPaths = [
     "corehq/ex-submodules",
 ]
+
+[tool.ty.environment]
+python = ".venv"
+extra-paths = [
+    "corehq/ex-submodules",
+]
+
+[tool.ty.rules]
+# Type hints
+empty-body = "error"
+invalid-parameter-default = "error"
+invalid-return-type = "error"
+invalid-type-arguments = "error"
+invalid-type-form = "error"
+
+# Other checks
+mismatched-type-name = "error"
+parameter-already-assigned = "error"
+
+# Ignored
+call-non-callable = "ignore"
+call-top-callable = "ignore"
+deprecated = "ignore"   # datetime.utcnow()
+invalid-argument-type = "ignore"
+invalid-assignment = "ignore"
+invalid-base = "ignore"
+invalid-method-override = "ignore"
+invalid-raise = "ignore"
+invalid-super-argument = "ignore"
+invalid-yield = "ignore"
+missing-argument = "ignore"
+no-matching-overload = "ignore"
+not-iterable = "ignore"
+not-subscriptable = "ignore"
+possibly-missing-submodule = "ignore"
+too-many-positional-arguments = "ignore"
+unknown-argument = "ignore"
+unresolved-attribute = "ignore"
+unresolved-global = "ignore"
+unresolved-import = "ignore"
+unresolved-reference = "ignore"
+unsupported-base = "ignore"
+unsupported-operator = "ignore"
+
+[tool.ty.src]
+exclude = ["settings.py", "testsettings.py"]
