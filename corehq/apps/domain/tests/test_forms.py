@@ -715,7 +715,7 @@ def test_multiple_args_values():
 
     def bad_calling_func(*args, **kwargs):
         # Both 'bar' and args[0] assigned to param `foo`
-        return called_func(foo='bar', *args, **kwargs)
+        return called_func(foo='bar', *args, **kwargs)  # ty: ignore[parameter-already-assigned]
 
     # No problem when `*args` is empty
     assert good_calling_func()
