@@ -562,7 +562,6 @@ class CaseSearchEndpointVersion(models.Model):
     action = models.CharField(
         max_length=10,
         choices=Action.choices,
-        default=Action.UPDATE,
     )
 
     class Meta:

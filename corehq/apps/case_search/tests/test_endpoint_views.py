@@ -44,6 +44,7 @@ class EndpointViewTestCase(TestCase):
             version_number=1,
             query={'type': 'and', 'children': []},
             parameters=[],
+            action=CaseSearchEndpointVersion.Action.CREATE,
         )
         endpoint.current_version = version
         endpoint.save(update_fields=['current_version'])

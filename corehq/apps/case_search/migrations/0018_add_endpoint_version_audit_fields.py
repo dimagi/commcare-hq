@@ -3,6 +3,11 @@
 from django.db import migrations, models
 
 
+def backfill_action(apps, schema_editor):
+    CaseSearchEndpointVersion = apps.get_model('case_search', 'CaseSearchEndpointVersion')
+    CaseSearchEndpointVersion.objects.filter(version_number=1).update(action='create')
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -14,10 +19,12 @@ class Migration(migrations.Migration):
             model_name='casesearchendpointversion',
             name='action',
             field=models.CharField(choices=[('create', 'Create'), ('update', 'Update'), ('deactivate', 'Deactivate')], default='update', max_length=10),
+            preserve_default=False,
         ),
         migrations.AddField(
             model_name='casesearchendpointversion',
             name='created_by',
             field=models.CharField(blank=True, default='', max_length=255),
         ),
+        migrations.RunPython(backfill_action, migrations.RunPython.noop),
     ]
