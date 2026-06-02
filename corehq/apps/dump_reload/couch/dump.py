@@ -55,11 +55,13 @@ class CouchDataDumper(DataDumper):
     def _dump_docs(self, doc_class, doc_ids, output_stream):
         model_label = '{}.{}'.format(doc_class._meta.app_label, doc_class.__name__)
         count = 0
-        couch_db = doc_class.get_db()
-        for doc in iter_docs(couch_db, doc_ids, chunksize=500):
-            count += 1
-            output_stream.write(json.dumps(doc))
-            output_stream.write('\n')
+        with self.timer.measure(model_label):
+            couch_db = doc_class.get_db()
+            for doc in iter_docs(couch_db, doc_ids, chunksize=500):
+                count += 1
+                self.timer.tick()
+                output_stream.write(json.dumps(doc))
+                output_stream.write('\n')
         self.stdout.write('Dumped {} {}\n'.format(count, model_label))
         return Counter({model_label: count})
 

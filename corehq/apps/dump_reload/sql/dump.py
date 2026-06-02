@@ -1,4 +1,5 @@
 from collections import Counter, OrderedDict, defaultdict
+from itertools import groupby
 
 from django.apps import apps
 from django.conf import settings
@@ -18,6 +19,7 @@ from corehq.apps.dump_reload.sql.filters import (
     UsernameFilter,
 )
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
+from corehq.apps.dump_reload.timing import DumpTimingLogger
 from corehq.apps.dump_reload.util import get_model_class, get_model_label
 from corehq.sql_db.config import plproxy_config
 
@@ -285,6 +287,7 @@ class SqlDataDumper(DataDumper):
             self.includes,
             stats_counter=stats,
             stdout=self.stdout,
+            timer=self.timer,
         )
 
         JsonLinesSerializer().serialize(
@@ -296,28 +299,33 @@ class SqlDataDumper(DataDumper):
         return stats
 
 
-def get_objects_to_dump(domain, excludes, includes, stats_counter=None, stdout=None):
+def get_objects_to_dump(domain, excludes, includes, stats_counter=None, stdout=None, timer=None):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model_class) tuples to dump
     :param excluded_models: List of model_class classes to exclude
+    :param timer: :class:`DumpTimingLogger` to record per-model timing
     :return: generator yielding models objects
     """
     builders = get_model_iterator_builders_to_dump(domain, excludes, includes)
-    yield from get_objects_to_dump_from_builders(builders, stats_counter, stdout)
+    yield from get_objects_to_dump_from_builders(builders, stats_counter, stdout, timer)
 
 
-def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None):
+def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None, timer=None):
     if stats_counter is None:
         stats_counter = Counter()
-    for model_class, builder in builders:
-        model_label = get_model_label(model_class)
-        for iterator in builder.iterators():
-            for obj in iterator:
-                stats_counter.update([model_label])
-                yield obj
-        if stdout:
-            stdout.write('Dumped {} {}\n'.format(stats_counter[model_label], model_label))
+    timer = timer or DumpTimingLogger()
+    # A model can span several builders (one per shard); group them so the timer brackets it once.
+    for model_label, model_builders in groupby(builders, key=lambda mb: get_model_label(mb[0])):
+        with timer.measure(model_label):
+            for model_class, builder in model_builders:
+                for iterator in builder.iterators():
+                    for obj in iterator:
+                        stats_counter.update([model_label])
+                        timer.tick()
+                        yield obj
+                if stdout:
+                    stdout.write('Dumped {} {}\n'.format(stats_counter[model_label], model_label))
 
 
 def get_model_iterator_builders_to_dump(domain, excludes, includes, limit_to_db=None):

@@ -11,7 +11,45 @@ from django.core.management.base import CommandError
 from corehq.apps.dump_reload.management.commands.dump_domain_data import (
     Command,
     _get_dump_stream_filename,
+    format_dump_stats,
 )
+
+
+class TestFormatDumpStats:
+    def test_with_timing_data_shows_per_model_rate_and_elapsed_totals(self):
+        meta = {'sql': {'app.A': 5}}
+        timing_data = {'sql': {'total': 0.018, 'models': {'app.A': 0.018}}}
+
+        # 0.018s / 5 rows -> 1.000 h/1M; header and grand total stay elapsed
+        assert format_dump_stats(meta, timing_data) == [
+            f'{"-" * 32} Dump Stats {"-" * 32}',
+            'sql: 0.02s',
+            f'  {"app.A":<50}: {5:>10}  1.000h /1M rows',
+            '-' * 76,
+            'Dumped 5 rows',
+            'Total dump time: 0.02s',
+            '-' * 76,
+        ]
+
+    def test_zero_count_with_a_recorded_time_does_not_divide_by_zero(self):
+        meta = {'sql': {'app.Empty': 0}}
+        timing_data = {'sql': {'total': 0.1, 'models': {'app.Empty': 0.1}}}
+
+        assert f'  {"app.Empty":<50}: {0:>10}' in format_dump_stats(meta, timing_data)
+
+    def test_model_without_recorded_time_omits_the_time_column(self):
+        meta = {'domain': {'Domain': 1}}
+        timing_data = {'domain': {'total': 0.5, 'models': {}}}
+
+        assert format_dump_stats(meta, timing_data) == [
+            f'{"-" * 32} Dump Stats {"-" * 32}',
+            'domain: 0.50s',
+            f'  {"Domain":<50}: {1:>10}',
+            '-' * 76,
+            'Dumped 1 rows',
+            'Total dump time: 0.50s',
+            '-' * 76,
+        ]
 
 
 @contextmanager
