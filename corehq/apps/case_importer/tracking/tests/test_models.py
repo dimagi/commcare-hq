@@ -11,4 +11,4 @@ class CaseUploadRecordFormTest(SimpleTestCase):
         # Django admin
         form_class = modelform_factory(CaseUploadRecord, fields=['comment'])
         form = form_class(data={'comment': ''})
-        self.assertTrue(form.is_valid(), form.errors)
+        assert form.is_valid(), form.errors

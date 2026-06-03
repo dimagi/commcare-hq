@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+import pytest
 from django.test import TestCase
 
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
@@ -35,12 +36,10 @@ class GetCaseUploadRecordTest(TestCase):
 
     def test_returns_visible_record(self):
         visible = self._make_upload(is_hidden=False)
-        self.assertEqual(
-            _get_case_upload_record(self.domain, visible.upload_id, self.user).pk,
-            visible.pk,
-        )
+        record = _get_case_upload_record(self.domain, visible.upload_id, self.user)
+        assert record.pk == visible.pk
 
     def test_hidden_record_is_not_found(self):
         hidden = self._make_upload(is_hidden=True)
-        with self.assertRaises(CaseUploadRecord.DoesNotExist):
+        with pytest.raises(CaseUploadRecord.DoesNotExist):
             _get_case_upload_record(self.domain, hidden.upload_id, self.user)

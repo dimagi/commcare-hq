@@ -112,9 +112,9 @@ class DbaccessorsTest(TestCase):
             [])
 
     def test_hidden_uploads_excluded_from_count(self):
-        self.assertEqual(get_case_upload_record_count(self.domain, self.user), 2)
+        assert get_case_upload_record_count(self.domain, self.user) == 2
         self._make_hidden_upload()
-        self.assertEqual(get_case_upload_record_count(self.domain, self.user), 2)
+        assert get_case_upload_record_count(self.domain, self.user) == 2
 
     def _make_hidden_upload(self):
         hidden_upload = CaseUploadRecord(
