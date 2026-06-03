@@ -26,6 +26,7 @@ from corehq.apps.es.tests.utils import (
     es_test,
 )
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.util.test_utils import flag_enabled
 
 from ..utils import get_case_search_results
 
@@ -110,12 +111,14 @@ class TestCaseSearchEndpoint(TestCase):
             ("Villanueva", "true"),
         ])
 
+    @flag_enabled('CASE_SEARCH_ENDPOINTS')
     def test_endpoint_id_runs_query(self):
         endpoint = CaseSearchEndpoint.objects.create(
             domain=self.domain, name='people', target_name='elasticsearch')
         res = self._run_query(['person'], [SearchCriteria('family', 'Ramos')], endpoint_id=endpoint.id)
         self.assertItemsEqual(["Jane"], [case.name for case in res])
 
+    @flag_enabled('CASE_SEARCH_ENDPOINTS')
     def test_unknown_endpoint_id_raises(self):
         with self.assertRaises(CaseSearchUserError):
             self._run_query(['person'], [], endpoint_id=404)
