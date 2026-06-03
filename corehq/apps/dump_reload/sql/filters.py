@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 
+from django.apps import apps
 from django.db.models import Q
 
 from dimagi.utils.chunked import chunked
@@ -144,11 +145,62 @@ class MultimediaBlobMetaFilter(IDFilter):
         return self.ids_by_db[db_alias]
 
 
+class _ParentIDFilter(DomainFilter):
+    """Dump child rows by the ids of their parent rows in a domain.
+
+    Subclasses set ``parent_model_label`` (the model carrying ``domain``) and
+    ``id_field`` (the natural id shared by parent and child, e.g. ``case_id``).
+    Resolving the domain's parent ids and filtering children with
+    ``<id_field>__in`` avoids joining child to parent on every page: the child
+    query uses its own ``id_field`` index and the keyset cursor can prune,
+    neither of which a join on the parent's ``domain`` allows.
+
+    Parent and child must be sharded by ``id_field`` so the ids resolved on a
+    given ``db_alias`` cover exactly the children stored on that shard.
+    """
+    parent_model_label = None
+    id_field = None
+
+    def __init__(self, chunksize=1000):
+        self.chunksize = chunksize
+
+    def get_filters(self, domain_name, db_alias=None):
+        parent_model = apps.get_model(self.parent_model_label)
+        # only(id_field) so the parent query selects just the id (plus pk), not whole rows
+        queryset = parent_model.objects.using(db_alias).filter(domain=domain_name).only(self.id_field)
+        parents = queryset_to_iterator(
+            queryset,
+            parent_model,
+            limit=DEFAULT_CHUNK_SIZE,
+            ignore_ordering=True,
+            pagination_key=(self.id_field,),
+        )
+        ids = (getattr(parent, self.id_field) for parent in parents)
+        # Fetch ids in large batches, but keep the downstream ``__in`` lists
+        # small enough to keep the child query plan tight.
+        for id_chunk in chunked(ids, self.chunksize, list):
+            yield Q(**{f'{self.id_field}__in': id_chunk})
+
+
+class CaseIDFilter(_ParentIDFilter):
+    """Dump rows whose ``case_id`` belongs to a case in the domain."""
+    parent_model_label = 'form_processor.CommCareCase'
+    id_field = 'case_id'
+
+
+class FormIDFilter(_ParentIDFilter):
+    """Dump rows whose ``form_id`` belongs to a form in the domain."""
+    parent_model_label = 'form_processor.XFormInstance'
+    id_field = 'form_id'
+
+
 class UnfilteredModelIteratorBuilder(object):
     def __init__(self, model_label, use_all_objects=False):
         self.model_label = model_label
         self.domain = self.model_class = self.db_alias = None
         self.use_all_objects = use_all_objects
+        # exists to make iterators() compatible with subclasses that set pagination_key
+        self.pagination_key = ('pk',)
 
     def prepare(self, domain, model_class, db_alias):
         self.domain = domain
@@ -171,21 +223,25 @@ class UnfilteredModelIteratorBuilder(object):
 
     def iterators(self, chunk_size=DEFAULT_CHUNK_SIZE):
         for queryset in self.querysets():
-            yield queryset_to_iterator(queryset, self.model_class, limit=chunk_size, ignore_ordering=True)
+            yield queryset_to_iterator(
+                queryset, self.model_class, limit=chunk_size,
+                ignore_ordering=True, pagination_key=self.pagination_key,
+            )
 
     def build(self, domain, model_class, db_alias):
         return self.__class__(self.model_label, self.use_all_objects).prepare(domain, model_class, db_alias)
 
 
 class FilteredModelIteratorBuilder(UnfilteredModelIteratorBuilder):
-    def __init__(self, model_label, filter, use_all_objects=False):
+    def __init__(self, model_label, filter, use_all_objects=False, pagination_key=('pk',)):
         super(FilteredModelIteratorBuilder, self).__init__(model_label, use_all_objects)
         self.filter = filter
+        self.pagination_key = pagination_key
 
     def build(self, domain, model_class, db_alias):
-        return self.__class__(self.model_label, self.filter, self.use_all_objects).prepare(
-            domain, model_class, db_alias
-        )
+        return self.__class__(
+            self.model_label, self.filter, self.use_all_objects, self.pagination_key
+        ).prepare(domain, model_class, db_alias)
 
     def count(self):
         count = self.filter.count(self.domain)
