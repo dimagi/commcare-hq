@@ -12,7 +12,11 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.case_search.const import IS_RELATED_CASE
-from corehq.apps.case_search.models import CaseSearchConfig, SearchCriteria
+from corehq.apps.case_search.models import (
+    CaseSearchConfig,
+    CaseSearchRequestConfig,
+    SearchCriteria,
+)
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import (
@@ -71,23 +75,27 @@ class TestCaseSearchEndpoint(TestCase):
         FormProcessorTestUtils.delete_all_cases()
         super().tearDownClass()
 
+    def _run_query(self, case_types, criteria, app_id=None):
+        config = CaseSearchRequestConfig(criteria=criteria, case_types=case_types)
+        return get_case_search_results(self.domain, config, app_id=app_id)
+
     def test_basic(self):
-        res = get_case_search_results(self.domain, ['person'], [])
+        res = self._run_query(['person'], [])
         self.assertItemsEqual(["Jane", "Xiomara", "Alba", "Rogelio", "Jane"], [
             case.name for case in res
         ])
 
     def test_case_id_criteia(self):
-        res = get_case_search_results(self.domain, ['household'], [SearchCriteria('case_id', self.household_1)])
+        res = self._run_query(['household'], [SearchCriteria('case_id', self.household_1)])
         self.assertItemsEqual(["Villanueva"], [case.name for case in res])
 
     def test_dynamic_property(self):
-        res = get_case_search_results(self.domain, ['person'], [SearchCriteria('family', 'Ramos')])
+        res = self._run_query(['person'], [SearchCriteria('family', 'Ramos')])
         self.assertItemsEqual(["Jane"], [case.name for case in res])
 
     def test_app_aware_related_cases(self):
         with mock.patch('corehq.apps.case_search.utils.get_app_cached', new=lambda _, __: self.factory.app):
-            res = get_case_search_results(self.domain, ['person'], [], app_id='fake_app_id')
+            res = self._run_query(['person'], [], app_id='fake_app_id')
         self.assertItemsEqual([
             (case.name, case.get_case_property(IS_RELATED_CASE)) for case in res
         ], [
