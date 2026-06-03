@@ -207,6 +207,5 @@ class UniqueFilteredModelIteratorBuilder(FilteredModelIteratorBuilder):
                     seen.add(model.pk)
                     yield model
 
-        querysets = self.querysets()
-        for querysets in querysets:
-            yield _unique(querysets)
+        for queryset in self.querysets():
+            yield _unique(queryset)
