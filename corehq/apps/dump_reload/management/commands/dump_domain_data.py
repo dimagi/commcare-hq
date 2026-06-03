@@ -58,7 +58,7 @@ class Command(BaseCommand):
             os.makedirs(output_dir, exist_ok=True)
 
         self.utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
-        zipname = 'data-dump-{}-{}.zip'.format(domain_name, self.utcnow)
+        zipname = f'data-dump-{domain_name}-{self.utcnow}.zip'
         if output_dir:
             zipname = os.path.join(output_dir, zipname)
 
@@ -79,7 +79,7 @@ class Command(BaseCommand):
                 except Exception as e:
                     if show_traceback:
                         raise
-                    raise CommandError("Unable to serialize database: %s" % e)
+                    raise CommandError(f"Unable to serialize database: {e}")
                 finally:
                     if stream and not console:
                         stream.close()
@@ -92,7 +92,7 @@ class Command(BaseCommand):
 
             if not console:
                 with zipfile.ZipFile(zipname, mode='a', allowZip64=True) as z:
-                    z.write(filename, '{}.gz'.format(dumper.slug))
+                    z.write(filename, f'{dumper.slug}.gz')
 
                 os.remove(filename)
 
@@ -101,7 +101,7 @@ class Command(BaseCommand):
                 z.writestr('meta.json', json.dumps(meta, indent=4))
 
         self._print_stats(meta, timing_data)
-        self.stdout.write('\nData dumped to file: {}'.format(zipname))
+        self.stdout.write(f'\nData dumped to file: {zipname}')
 
     def _print_stats(self, meta, timing_data):
         self.stdout.ending = '\n'
@@ -132,7 +132,7 @@ def format_dump_stats(meta, timing_data):
 
 
 def _get_dump_stream_filename(slug, domain, utcnow, path=None):
-    filename = 'dump-{}-{}-{}.gz'.format(slug, domain, utcnow)
+    filename = f'dump-{slug}-{domain}-{utcnow}.gz'
     if path:
         return os.path.join(path, filename)
     return filename

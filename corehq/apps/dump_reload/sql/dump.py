@@ -325,7 +325,7 @@ def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None,
                         timer.tick()
                         yield obj
                 if stdout:
-                    stdout.write('Dumped {} {}\n'.format(stats_counter[model_label], model_label))
+                    stdout.write(f'Dumped {stats_counter[model_label]} {model_label}\n')
 
 
 def get_model_iterator_builders_to_dump(domain, excludes, includes, limit_to_db=None):
@@ -362,7 +362,7 @@ def get_all_model_iterators_builders_for_domain(model_class, domain, builders, l
     if limit_to_db:
         if limit_to_db not in using:
             raise DomainDumpError('DB specified is not valide for '
-                                  'model class: {} not in {}'.format(limit_to_db, using))
+                                  f'model class: {limit_to_db} not in {using}')
         using = [limit_to_db]
 
     for db_alias in using:
@@ -389,7 +389,7 @@ def get_apps_and_models(app_or_model_label):
             try:
                 model = apps.get_model(label)
             except LookupError:
-                raise DomainDumpError('Unknown model: %s' % label)
+                raise DomainDumpError(f'Unknown model: {label}')
             specified_models.add(model)
         else:
             try:
@@ -402,7 +402,7 @@ def get_apps_and_models(app_or_model_label):
                 try:
                     get_document_class_by_doc_type(label)
                 except DocumentClassNotFound:
-                    raise DomainDumpError('Unknown app in excludes: %s' % label)
+                    raise DomainDumpError(f'Unknown app in excludes: {label}')
             specified_apps.add(app_config)
     return specified_apps, specified_models
 

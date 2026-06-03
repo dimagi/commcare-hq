@@ -107,7 +107,7 @@ class BaseDumpLoadTest(TestCase):
         objects_remaining = list(get_objects_to_dump(self.domain_name, [], []))
         object_classes = [obj.__class__.__name__ for obj in objects_remaining]
         counts = Counter(object_classes)
-        self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
+        self.assertEqual([], objects_remaining, f'Not all data deleted: {counts}')
 
         actual_model_counts, dump_lines = self._parse_dump_output(output_stream)
         expected_model_counts = _normalize_object_counter(expected_dump_counts)
@@ -148,9 +148,7 @@ class BaseDumpLoadTest(TestCase):
                 if receiver_path in whitelist_receivers:
                     continue
                 args = inspect.signature(receiver).parameters
-                message = 'Signal handler "{}" for model "{}" missing raw arg'.format(
-                    receiver, model
-                )
+                message = f'Signal handler "{receiver}" for model "{model}" missing raw arg'
                 self.assertIn('raw', args, message)
                 found_models.add(model)
         expected_models = getattr(self, 'raw_post_save_models', set())
@@ -885,7 +883,7 @@ class DefaultDictWithKeyTests(SimpleTestCase):
 def _normalize_object_counter(counter, for_loaded=False):
     """Converts a <Model Class> keyed counter to an model label keyed counter"""
     def _model_class_to_label(model_class):
-        label = '{}.{}'.format(model_class._meta.app_label, model_class.__name__)
+        label = f'{model_class._meta.app_label}.{model_class.__name__}'
         return label if for_loaded else label.lower()
     return Counter({
         _model_class_to_label(model_class): count
