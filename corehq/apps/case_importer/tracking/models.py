@@ -29,6 +29,10 @@ class CaseUploadRecord(models.Model):
     couch_user_id = models.CharField(max_length=256)
     case_type = models.CharField(max_length=256)
     comment = models.TextField(null=True)
+    is_hidden = models.BooleanField(
+        default=False,
+        help_text="When set, this upload is hidden from the Recent Uploads list.",
+    )
 
     upload_file_meta = models.ForeignKey('CaseUploadFileMeta', null=True, on_delete=models.CASCADE)
 
