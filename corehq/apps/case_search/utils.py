@@ -102,7 +102,7 @@ def get_case_search_results(domain, config, app_id=None, couch_user=None, profil
     if profiler:
         helper.profiler = profiler
 
-    if config.endpoint_id:
+    if config.endpoint_id and toggles.CASE_SEARCH_ENDPOINTS.enabled(domain):
         return get_endpoint_results(helper, config)
     else:
         return get_unconfigured_endpoint_results(helper, config, app_id)
