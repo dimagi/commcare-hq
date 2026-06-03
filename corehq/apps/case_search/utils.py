@@ -36,6 +36,7 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_XPATH_QUERY_KEY,
     UNSEARCHABLE_KEYS,
     CaseSearchConfig,
+    CaseSearchEndpoint,
     extract_search_request_config,
 )
 from corehq.apps.es import HQESQuery, case_search
@@ -101,14 +102,29 @@ def get_case_search_results(domain, config, app_id=None, couch_user=None, profil
     if profiler:
         helper.profiler = profiler
 
+    if config.endpoint_id:
+        return get_endpoint_results(helper, config)
+    else:
+        return get_unconfigured_endpoint_results(helper, config, app_id)
+
+
+def get_endpoint_results(helper, config):
+    try:
+        CaseSearchEndpoint.objects.get(domain=helper.domain, id=config.endpoint_id)
+    except (CaseSearchEndpoint.DoesNotExist, ValueError):
+        raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
+    # TODO use the endpoint to process the CaseSearchRequestConfig object
+    return get_primary_case_search_results(helper, config.case_types, config.criteria, config.commcare_sort)
+
+
+def get_unconfigured_endpoint_results(helper, config, app_id):
     cases = get_primary_case_search_results(helper, config.case_types, config.criteria, config.commcare_sort)
-    helper.profiler.primary_count = len(cases)
     if app_id:
-        related_cases = get_and_tag_related_cases(helper, app_id, config.case_types, cases,
-                                                  config.custom_related_case_property,
-                                                  config.include_all_related_cases)
-        helper.profiler.related_count = len(related_cases)
-        cases.extend(related_cases)
+        cases.extend(get_and_tag_related_cases(
+            helper, app_id, config.case_types, cases,
+            config.custom_related_case_property,
+            config.include_all_related_cases,
+        ))
     return cases
 
 
@@ -128,6 +144,7 @@ def get_primary_case_search_results(helper, case_types, criteria, commcare_sort=
     results = search_es.run()
     with helper.profiler.timing_context('wrap_cases'):
         cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
+    helper.profiler.primary_count = len(cases)
     return cases
 
 
@@ -362,6 +379,7 @@ def get_and_tag_related_cases(helper, app_id, case_types, cases,
     with helper.profiler.timing_context('_tag_is_related_case'):
         for case in results:
             _tag_is_related_case(case)
+    helper.profiler.related_count = len(results)
     return results
 
 

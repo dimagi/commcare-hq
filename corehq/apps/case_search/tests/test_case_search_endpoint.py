@@ -12,8 +12,10 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.case_search.const import IS_RELATED_CASE
+from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
+    CaseSearchEndpoint,
     CaseSearchRequestConfig,
     SearchCriteria,
 )
@@ -75,8 +77,9 @@ class TestCaseSearchEndpoint(TestCase):
         FormProcessorTestUtils.delete_all_cases()
         super().tearDownClass()
 
-    def _run_query(self, case_types, criteria, app_id=None):
-        config = CaseSearchRequestConfig(criteria=criteria, case_types=case_types)
+    def _run_query(self, case_types, criteria, app_id=None, endpoint_id=None):
+        config = CaseSearchRequestConfig(
+            criteria=criteria, case_types=case_types, endpoint_id=endpoint_id)
         return get_case_search_results(self.domain, config, app_id=app_id)
 
     def test_basic(self):
@@ -106,3 +109,13 @@ class TestCaseSearchEndpoint(TestCase):
             ("Jane", None),
             ("Villanueva", "true"),
         ])
+
+    def test_endpoint_id_runs_query(self):
+        endpoint = CaseSearchEndpoint.objects.create(
+            domain=self.domain, name='people', target_name='elasticsearch')
+        res = self._run_query(['person'], [SearchCriteria('family', 'Ramos')], endpoint_id=endpoint.id)
+        self.assertItemsEqual(["Jane"], [case.name for case in res])
+
+    def test_unknown_endpoint_id_raises(self):
+        with self.assertRaises(CaseSearchUserError):
+            self._run_query(['person'], [], endpoint_id=404)
