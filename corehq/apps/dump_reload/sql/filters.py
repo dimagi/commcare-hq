@@ -202,7 +202,7 @@ class FilteredModelIteratorBuilder(UnfilteredModelIteratorBuilder):
 
 class UniqueFilteredModelIteratorBuilder(FilteredModelIteratorBuilder):
     def iterators(self, chunk_size=DEFAULT_CHUNK_SIZE):
-        # chunk_size is unused: deduplication iterates each queryset directly
+        # chunk_size is unused, but needed to preserve the base class signature
         def _unique(iterator):
             seen = set()
             for model in iterator:
