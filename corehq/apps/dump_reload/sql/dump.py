@@ -9,6 +9,7 @@ from django.db import router
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
+    DEFAULT_CHUNK_SIZE,
     FilteredModelIteratorBuilder,
     ManyFilters,
     MultimediaBlobMetaFilter,
@@ -265,6 +266,10 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
 class SqlDataDumper(DataDumper):
     slug = 'sql'
 
+    def __init__(self, *args, chunk_size=DEFAULT_CHUNK_SIZE, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.chunk_size = chunk_size
+
     def dump(self, output_stream):
         """
         When serializing data using JsonLinesSerializer().serialize(...), the additional parameters are set for
@@ -288,6 +293,7 @@ class SqlDataDumper(DataDumper):
             stats_counter=stats,
             stdout=self.stdout,
             timer=self.timer,
+            chunk_size=self.chunk_size,
         )
 
         JsonLinesSerializer().serialize(
@@ -299,19 +305,22 @@ class SqlDataDumper(DataDumper):
         return stats
 
 
-def get_objects_to_dump(domain, excludes, includes, stats_counter=None, stdout=None, timer=None):
+def get_objects_to_dump(domain, excludes, includes, stats_counter=None, stdout=None, timer=None,
+                        chunk_size=DEFAULT_CHUNK_SIZE):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model_class) tuples to dump
     :param excluded_models: List of model_class classes to exclude
     :param timer: :class:`DumpTimingLogger` to record per-model timing
+    :param chunk_size: Number of rows to fetch per query
     :return: generator yielding models objects
     """
     builders = get_model_iterator_builders_to_dump(domain, excludes, includes)
-    yield from get_objects_to_dump_from_builders(builders, stats_counter, stdout, timer)
+    yield from get_objects_to_dump_from_builders(builders, stats_counter, stdout, timer, chunk_size)
 
 
-def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None, timer=None):
+def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None, timer=None,
+                                      chunk_size=DEFAULT_CHUNK_SIZE):
     if stats_counter is None:
         stats_counter = Counter()
     timer = timer or DumpTimingLogger()
@@ -319,7 +328,7 @@ def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None,
     for model_label, model_builders in groupby(builders, key=lambda mb: get_model_label(mb[0])):
         with timer.measure(model_label):
             for model_class, builder in model_builders:
-                for iterator in builder.iterators():
+                for iterator in builder.iterators(chunk_size):
                     for obj in iterator:
                         stats_counter.update([model_label])
                         timer.tick()

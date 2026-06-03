@@ -2,6 +2,8 @@ import os
 import tempfile
 import zipfile
 from contextlib import contextmanager
+from io import StringIO
+from unittest import mock
 
 import pytest
 
@@ -50,6 +52,34 @@ class TestFormatDumpStats:
             'Total dump time: 0.50s',
             '-' * 76,
         ]
+
+
+class TestSqlChunkSizeFlag:
+    @pytest.mark.parametrize('size', ['0', '-500'])
+    def test_rejects_a_non_positive_size(self, size):
+        parser = Command().create_parser('manage.py', 'dump_domain_data')
+        with pytest.raises(CommandError, match='--sql-chunk-size'):
+            parser.parse_args(['mydomain', '--sql-chunk-size', size])
+
+    def test_chunk_size_flows_from_the_command_line_to_queryset_iteration(self):
+        limits = []
+
+        def capture_limit(queryset, model_class, limit, ignore_ordering=False):
+            limits.append(limit)
+            return iter([])
+
+        with mock.patch('corehq.apps.dump_reload.sql.filters.queryset_to_iterator', capture_limit):
+            call_command(
+                'dump_domain_data',
+                'mydomain',
+                '--sql-chunk-size=1234',
+                '--console',
+                dumpers=['sql'],
+                include=['products.SQLProduct'],
+                stdout=StringIO(),
+            )
+
+        assert limits and set(limits) == {1234}
 
 
 @contextmanager

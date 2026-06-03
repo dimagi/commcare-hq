@@ -123,7 +123,7 @@ class _Builder:
     def __init__(self, *iterators):
         self._iterators = iterators
 
-    def iterators(self):
+    def iterators(self, chunk_size=None):
         return self._iterators
 
 
