@@ -662,8 +662,7 @@ msgid "Lookup Table Options"
 msgstr "Opções da Tabela de Consulta"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Lookup Table"
 msgstr "Tabela de Consulta"
 
@@ -783,130 +782,105 @@ msgid "The \"%(format)s\" format requires columns with formats: %(dependencies)s
 msgstr ""
 "O formato \"%(format)s\" requer colunas com os formatos: %(dependencies)s."
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Type required"
 msgstr "Tipo de caso obrigatório"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Tag required"
 msgstr "Etiqueta de caso obrigatória"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr "Etiqueta de caso: apenas letras, números, '-', e '_' são permitidos"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Tag already in use"
 msgstr "Etiqueta de caso já em uso"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "subcase of"
 msgstr "subcaso de"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "autoselect mode: "
 msgstr "modo de seleção automática: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid " (from fixture)"
 msgstr " (da tabela de dados)"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Autoselect mode required"
 msgstr "Modo de seleção automática obrigatório"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Property required"
 msgstr "Propriedade obrigatória"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case required"
 msgstr "Caso obrigatório"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Lookup table tag required"
 msgstr "Etiqueta da tabela de pesquisa obrigatória"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Expected case type required"
 msgstr "Tipo de caso esperado obrigatório"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Subcase parent reference is missing"
 msgstr "Referência do responsável do subcaso ausente"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Parent reference ID required for subcases: "
 msgstr "ID de referência do responsável obrigatório para subcasos: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Subcase must be in same repeat context as parent \""
 msgstr ""
 "O subcaso deve estar no mesmo contexto de repetição que o responsável \""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Select parent"
 msgstr "Selecionar responsável"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
 msgstr "Bruto"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "User Data"
 msgstr "Dados do usuário"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "User Properties"
 msgstr "Propriedades do usuário"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Case Index"
 msgstr "Índice do caso"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Load / Update / Close a case"
 msgstr "Carregar / Atualizar / Fechar um caso"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Automatic Case Selection"
 msgstr "Seleção automática de caso"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Load Case From Fixture"
 msgstr "Carregar caso da tabela de dados"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Open a Case"
 msgstr "Abrir um caso"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Property updated by two questions"
 msgstr "Propriedade atualizada por duas perguntas"
 
@@ -915,8 +889,7 @@ msgid "Reserved word: "
 msgstr "Palavra reservada: "
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Inside the wrong repeat!"
 msgstr "Dentro da repetição errada!"
 
@@ -929,30 +902,10 @@ msgstr ""
 msgid "Two properties load to the same question"
 msgstr "Duas propriedades carregam para a mesma pergunta"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
-msgid "You have unchanged case settings"
-msgstr "Você tem configurações de caso não alteradas"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
-msgid "You have unchanged user properties settings"
-msgstr "Você tem configurações de propriedades de usuário não alteradas"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
-msgid "Property uses unrecognized prefix <strong>"
-msgstr "Propriedade usa prefixo não reconhecido <strong>"
-
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_designer.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_designer.js
 msgid "Edit Form"
 msgstr "Editar formulário"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_view.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_view.js
-msgid "Form Settings"
-msgstr "Configurações do Formulário"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
@@ -986,6 +939,18 @@ msgstr "ID do Datum"
 msgid "XPath Expression"
 msgstr "Expressão XPath"
 
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "You have unchanged case settings"
+msgstr "Você tem configurações de caso não alteradas"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "You have unchanged user properties settings"
+msgstr "Você tem configurações de propriedades de usuário não alteradas"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Property uses unrecognized prefix <strong>"
+msgstr "Propriedade usa prefixo não reconhecido <strong>"
+
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid " (Hidden)"
 msgstr " (Oculto)"
@@ -1011,6 +976,10 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Select a Question"
 msgstr "Selecione uma pergunta"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
+msgid "Form Settings"
+msgstr "Configurações do Formulário"
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
 #: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
@@ -2063,6 +2032,7 @@ msgstr ""
 "%></a> para alterar a lista de domínios."
 
 #: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+#: corehq/apps/integration/static/integration/js/payments/payments_verify.js
 msgid "Last 30 Days"
 msgstr "Últimos 30 Dias"
 
@@ -2867,6 +2837,16 @@ msgstr "Você não fez login."
 #: corehq/apps/integration/static/integration/js/dialer/domain_dialer_main.js
 msgid "You already have an active call."
 msgstr "Você já tem uma chamada ativa."
+
+#: corehq/apps/integration/static/integration/js/payments/payments_verify.js
+#| msgid "Last 30 Days"
+msgid "Last 7 Days"
+msgstr "Últimos 7 dias"
+
+#: corehq/apps/integration/static/integration/js/payments/payments_verify.js
+#| msgid "Next Month"
+msgid "Last Month"
+msgstr "Último mês"
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
 msgid "Error updating."
