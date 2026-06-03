@@ -1,0 +1,61 @@
+{% load i18n %}
+{# Recursive and/or group renderer.                                          #}
+{# Expects Alpine scope: node, _removeParent (null = no remove), _removeIdx. #}
+{# Expects template context: depth = remaining nesting levels below this     #}
+{# group; the template includes itself until depth runs out.                  #}
+
+{% include 'case_search/partials/_group_header.html' %}
+<div class="ps-4 border-start border-2">
+  <template x-for="(child, childIdx) in node.children" :key="child._id">
+    <div class="mb-2">
+      {# Component condition #}
+      <template x-if="child.type === 'component'">
+        <div
+          x-data="{ node: child, _removeParent: node, _removeIdx: childIdx }"
+        >
+          {% include 'case_search/partials/_condition_row.html' %}
+        </div>
+      </template>
+
+      {# Nested AND/OR group #}
+      {% if depth > 0 %}
+        <template x-if="child.type === 'and' || child.type === 'or'">
+          <div
+            x-data="{ node: child, _removeParent: node, _removeIdx: childIdx }"
+          >
+            {% include 'case_search/partials/_group_node.html' with depth=depth|add:"-1" %}
+          </div>
+        </template>
+      {% endif %}
+    </div>
+  </template>
+
+  {# Empty state #}
+  <template x-if="node.children.length === 0">
+    <p class="text-muted fst-italic small">
+      {% trans "No conditions yet. Add a condition or group below." %}
+    </p>
+  </template>
+
+  {# Add buttons #}
+  <template x-if="mode !== 'readonly'">
+    <div class="d-flex gap-2 mt-2 flex-wrap">
+      <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        @click="addCondition(node)"
+      >
+        <i class="fa-solid fa-plus me-1"></i>{% trans "Add Condition" %}
+      </button>
+      {% if depth > 0 %}
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm"
+          @click="addGroup(node, 'and')"
+        >
+          <i class="fa-solid fa-code-branch me-1"></i>{% trans "Add Group" %}
+        </button>
+      {% endif %}
+    </div>
+  </template>
+</div>
