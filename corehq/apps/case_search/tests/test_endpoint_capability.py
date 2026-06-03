@@ -293,6 +293,16 @@ def test_not_node_missing_child():
 
 
 @use(sample_capability)
+def test_directly_nested_not_rejected():
+    spec = {
+        'type': 'not',
+        'child': {'type': 'not', 'child': {'type': 'and', 'children': []}},
+    }
+    errors = validate_filter_spec(spec, 'patient', sample_capability())
+    assert any("another 'not'" in e for e in errors)
+
+
+@use(sample_capability)
 def test_nested_and_or():
     spec = {
         'type': 'and',
@@ -338,3 +348,15 @@ def test_deeply_nested_query_returns_error():
         node = child
     errors = validate_filter_spec(root, 'patient', sample_capability())
     assert any('nested too deeply' in e for e in errors)
+
+
+@use(sample_capability)
+def test_not_nodes_do_not_count_towards_depth():
+    # Max-depth and/or nesting stays valid even when every group is negated.
+    node = {'type': 'and', 'children': []}
+    root = {'type': 'not', 'child': node}
+    for _ in range(_MAX_QUERY_DEPTH):
+        child = {'type': 'and', 'children': []}
+        node['children'] = [{'type': 'not', 'child': child}]
+        node = child
+    assert validate_filter_spec(root, 'patient', sample_capability()) == []

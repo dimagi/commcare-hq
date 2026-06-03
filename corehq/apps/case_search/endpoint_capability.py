@@ -151,6 +151,7 @@ def get_capability(domain):
     }
 
 
+# Maximum nesting depth of and/or groups; `not` wrappers do not count.
 _MAX_QUERY_DEPTH = 5
 
 
@@ -203,15 +204,18 @@ def _validate_node(
             )
     elif node_type == 'not':
         child = node.get('child')
-        if child:
+        if not child:
+            errors.append("'not' node must have a 'child'")
+        elif isinstance(child, dict) and child.get('type') == 'not':
+            # Redundant, and bounds recursion since `not` does not add depth.
+            errors.append("'not' node cannot directly contain another 'not'")
+        else:
             _validate_node(
                 child,
                 fields_by_name,
                 errors,
-                depth + 1,
+                depth,
             )
-        else:
-            errors.append("'not' node must have a 'child'")
     elif node_type == 'component':
         _validate_component(
             node, fields_by_name, errors
