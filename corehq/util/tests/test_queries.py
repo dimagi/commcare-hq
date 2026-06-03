@@ -2,11 +2,24 @@ from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.db import connections
+from django.db.models import Q
 from django.db.utils import InterfaceError, OperationalError
 from django.test.testcases import TestCase
 
 from corehq.util import queries
-from corehq.util.queries import queryset_to_iterator
+from corehq.util.queries import _lexicographic_greater_than, queryset_to_iterator
+
+
+def test_lexicographic_greater_than_single_field():
+    assert _lexicographic_greater_than(('id',), (5,)) == Q(id__gt=5)
+
+
+def test_lexicographic_greater_than_multiple_fields():
+    assert _lexicographic_greater_than(('a', 'b'), (1, 2)) == Q(a__gt=1) | Q(a=1, b__gt=2)
+    assert (
+        _lexicographic_greater_than(('a', 'b', 'c'), (1, 2, 3))
+        == Q(a__gt=1) | Q(a=1, b__gt=2) | Q(a=1, b=2, c__gt=3)
+    )
 
 
 class TestQuerysetToIterator(TestCase):
@@ -34,6 +47,33 @@ class TestQuerysetToIterator(TestCase):
             # query 3: Users 9, 10
             # query 4: Check that there are no users past #10
             all_users = list(queryset_to_iterator(query, User, limit=4))
+
+        self.assertEqual(
+            [u.username for u in all_users],
+            [u.username for u in self.users],
+        )
+
+    def test_pagination_key_multiple_fields(self):
+        query = User.objects.filter(last_name="Tenenbaum")
+
+        # All users share a last_name, so paging hinges on the pk tie-breaker
+        with self.assertNumQueries(4):
+            all_users = list(
+                queryset_to_iterator(query, User, limit=4, pagination_key=('last_name', 'pk'))
+            )
+
+        self.assertEqual(
+            [u.username for u in all_users],
+            [u.username for u in self.users],
+        )
+
+    def test_pagination_key_pk_first(self):
+        query = User.objects.filter(last_name="Tenenbaum")
+
+        with self.assertNumQueries(4):
+            all_users = list(
+                queryset_to_iterator(query, User, limit=4, pagination_key=('pk', 'username'))
+            )
 
         self.assertEqual(
             [u.username for u in all_users],
