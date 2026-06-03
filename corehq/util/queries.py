@@ -5,6 +5,7 @@ import time
 from django.core.paginator import Paginator
 from django.core.paginator import EmptyPage
 from django.db import DEFAULT_DB_ALIAS, connections
+from django.db.models import Q
 from django.db.utils import InterfaceError, OperationalError
 
 logger = logging.getLogger(__name__)
@@ -108,10 +109,11 @@ def paginated_queryset(queryset, chunk_size):
             return
 
 
-def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False):
+def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False, pagination_key=('pk',)):
     """
     Pull from queryset in chunks. This is suitable for deep pagination, but
-    cannot be used with ordered querysets (results will be sorted by pk).
+    cannot be used with ordered querysets (results will be sorted by the
+    ``pagination_key`` fields, by default the pk).
 
     Retries on transient database connection failures (bounded at ~31
     minutes total) so long-running iterations survive brief outages.
@@ -120,21 +122,31 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False):
         raise AssertionError("queryset_to_iterator does not respect ordering.  "
                              "Pass ignore_ordering=True to continue.")
 
-    pk_field = 'pk'
-    queryset = queryset.order_by(pk_field)
-    last_doc_pk = None
+    queryset = queryset.order_by(*pagination_key)
+    last_doc_values = None
     while True:
-        if last_doc_pk is None:
+        if last_doc_values is None:
             chunk_qs = queryset
         else:
-            chunk_qs = queryset.filter(**{pk_field + "__gt": last_doc_pk})
-        chunk = _fetch_chunk_with_retry(chunk_qs, limit, model_cls, last_doc_pk)
+            chunk_qs = queryset.filter(_lexicographic_greater_than(pagination_key, last_doc_values))
+        chunk = _fetch_chunk_with_retry(chunk_qs, limit, model_cls, last_doc_values)
         if not chunk:
             return
         for doc in chunk:
             yield doc
 
-        last_doc_pk = getattr(doc, pk_field)
+        last_doc_values = tuple(getattr(doc, field) for field in pagination_key)
+
+
+def _lexicographic_greater_than(fields, values):
+    """Build the tuple comparison ``(a, b, ...) > (va, vb, ...)`` as a Q
+    expression, expanding it to ``a > va OR (a = va AND b > vb) OR ...``.
+    """
+    condition = Q()
+    for index, (field, value) in enumerate(zip(fields, values)):
+        ties = dict(zip(fields[:index], values[:index]))
+        condition |= Q(**ties, **{f"{field}__gt": value})
+    return condition
 
 
 def _fetch_chunk(queryset, limit):
@@ -142,7 +154,7 @@ def _fetch_chunk(queryset, limit):
     return list(queryset[:limit])
 
 
-def _fetch_chunk_with_retry(queryset, limit, model_cls, last_doc_pk):
+def _fetch_chunk_with_retry(queryset, limit, model_cls, last_doc_values):
     max_attempts = len(_CHUNK_RETRY_DELAYS) + 1
     for attempt in range(max_attempts):
         try:
@@ -152,13 +164,13 @@ def _fetch_chunk_with_retry(queryset, limit, model_cls, last_doc_pk):
                 logger.error(
                     f"queryset_to_iterator: giving up on {model_cls.__name__} "
                     f"after {attempt + 1} attempts "
-                    f"(last_doc_pk={last_doc_pk!r}): {exc}"
+                    f"(last_doc_values={last_doc_values!r}): {exc}"
                 )
                 raise
             delay = _CHUNK_RETRY_DELAYS[attempt]
             logger.warning(
                 f"queryset_to_iterator: {type(exc).__name__} fetching "
-                f"{model_cls.__name__} chunk (last_doc_pk={last_doc_pk!r}, "
+                f"{model_cls.__name__} chunk (last_doc_values={last_doc_values!r}, "
                 f"attempt {attempt + 1}/{max_attempts}); closing connection "
                 f"and retrying in {delay}s: {exc}"
             )
