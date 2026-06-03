@@ -120,7 +120,7 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False):
         raise AssertionError("queryset_to_iterator does not respect ordering.  "
                              "Pass ignore_ordering=True to continue.")
 
-    pk_field = model_cls._meta.pk.name
+    pk_field = 'pk'
     queryset = queryset.order_by(pk_field)
     last_doc_pk = None
     while True:
