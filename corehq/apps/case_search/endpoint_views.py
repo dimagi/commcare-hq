@@ -146,6 +146,8 @@ class CaseSearchEndpointNewView(BaseProjectDataView):
                 version_number=1,
                 query=cd['query'],
                 parameters=cd['parameters'],
+                created_by=request.couch_user.username,
+                action=CaseSearchEndpointVersion.Action.CREATE,
             )
             endpoint.current_version = version
             endpoint.save(update_fields=['current_version'])
@@ -218,6 +220,8 @@ class CaseSearchEndpointEditView(BaseProjectDataView):
                 version_number=next_num,
                 query=cd['query'],
                 parameters=cd['parameters'],
+                created_by=request.couch_user.username,
+                action=CaseSearchEndpointVersion.Action.UPDATE,
             )
             endpoint.current_version = version
             endpoint.save(update_fields=['current_version'])
@@ -237,6 +241,18 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
         endpoint = _get_endpoint(self.domain, kwargs['endpoint_id'])
         if endpoint is None:
             return not_found(request)
-        endpoint.is_active = False
-        endpoint.save(update_fields=['is_active'])
+        current = endpoint.current_version
+        next_num = (current.version_number + 1) if current else 1
+        with transaction.atomic():
+            version = CaseSearchEndpointVersion.objects.create(
+                endpoint=endpoint,
+                version_number=next_num,
+                created_by=request.couch_user.username,
+                action=CaseSearchEndpointVersion.Action.DEACTIVATE,
+                query=None,
+                parameters=None,
+            )
+            endpoint.is_active = False
+            endpoint.current_version = version
+            endpoint.save(update_fields=['is_active', 'current_version'])
         return redirect(reverse(CaseSearchEndpointsView.urlname, args=[self.domain]))
