@@ -2060,6 +2060,7 @@ def create_channels(request, domain, *args, **kwargs):
     user_links = ConnectIDUserLink.objects.filter(domain=domain, channel_id__isnull=True)
     backend = ConnectBackend()
     channel_users = []
+    success = False
     for link in user_links:
         success = backend.create_channel(link)
         if success:
