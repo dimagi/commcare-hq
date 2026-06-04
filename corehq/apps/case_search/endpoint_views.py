@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy
 
 from corehq import toggles
 from corehq.apps.case_search.endpoint_capability import (
+    MAX_QUERY_DEPTH,
     get_capability,
     validate_filter_spec,
 )
@@ -182,6 +183,7 @@ class _CaseSearchEndpointEditBaseView(BaseProjectDataView):
         context = {
             'capability': self.capability,
             'endpoint_mode': self.mode,
+            'max_group_depth': MAX_QUERY_DEPTH - 1,
             'post_url': self.page_url,
             'form': self._form,
         }

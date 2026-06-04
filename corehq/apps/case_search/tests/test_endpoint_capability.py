@@ -1,8 +1,8 @@
 from unmagic import fixture, use
 
 from corehq.apps.case_search.endpoint_capability import (
-    _MAX_GROUP_WIDTH,
-    _MAX_QUERY_DEPTH,
+    MAX_GROUP_WIDTH,
+    MAX_QUERY_DEPTH,
     COMPONENT_INPUT_SCHEMAS,
     FIELD_TYPE_DATE,
     FIELD_TYPE_GEOPOINT,
@@ -343,7 +343,7 @@ def test_non_dict_child_node_returns_error():
 def test_deeply_nested_query_returns_error():
     node = {'type': 'and', 'children': []}
     root = node
-    for _ in range(_MAX_QUERY_DEPTH + 2):
+    for _ in range(MAX_QUERY_DEPTH + 2):
         child = {'type': 'and', 'children': []}
         node['children'] = [child]
         node = child
@@ -356,7 +356,7 @@ def test_not_nodes_do_not_count_towards_depth():
     # Max-depth and/or nesting stays valid even when every group is negated.
     node = {'type': 'and', 'children': []}
     root = {'type': 'not', 'child': node}
-    for _ in range(_MAX_QUERY_DEPTH):
+    for _ in range(MAX_QUERY_DEPTH):
         child = {'type': 'and', 'children': []}
         node['children'] = [{'type': 'not', 'child': child}]
         node = child
@@ -367,7 +367,7 @@ def test_not_nodes_do_not_count_towards_depth():
 def test_group_exceeding_max_width_returns_error():
     spec = {
         'type': 'and',
-        'children': [{'type': 'and', 'children': []}] * (_MAX_GROUP_WIDTH + 1),
+        'children': [{'type': 'and', 'children': []}] * (MAX_GROUP_WIDTH + 1),
     }
     errors = validate_filter_spec(spec, 'patient', sample_capability())
     assert any('too many conditions' in e for e in errors)
@@ -377,7 +377,7 @@ def test_group_exceeding_max_width_returns_error():
 def test_group_at_max_width_is_valid():
     spec = {
         'type': 'and',
-        'children': [{'type': 'and', 'children': []}] * _MAX_GROUP_WIDTH,
+        'children': [{'type': 'and', 'children': []}] * MAX_GROUP_WIDTH,
     }
     errors = validate_filter_spec(spec, 'patient', sample_capability())
     assert not any('too many conditions' in e for e in errors)
@@ -385,9 +385,9 @@ def test_group_at_max_width_is_valid():
 
 @use(sample_capability)
 def test_total_node_limit_returns_error():
-    # Build a wide-but-shallow tree: root has _MAX_GROUP_WIDTH children,
+    # Build a wide-but-shallow tree: root has MAX_GROUP_WIDTH children,
     # each with 4 children.  No group exceeds the width limit, but total
-    # nodes = 1 + 50 + 50*4 = 251 > _MAX_TOTAL_NODES (200).
+    # nodes = 1 + 50 + 50*4 = 251 > MAX_TOTAL_NODES (200).
     spec = {
         'type': 'and',
         'children': [
@@ -397,7 +397,7 @@ def test_total_node_limit_returns_error():
                     {'type': 'and', 'children': []} for _ in range(4)
                 ],
             }
-            for _ in range(_MAX_GROUP_WIDTH)
+            for _ in range(MAX_GROUP_WIDTH)
         ],
     }
     errors = validate_filter_spec(spec, 'patient', sample_capability())
