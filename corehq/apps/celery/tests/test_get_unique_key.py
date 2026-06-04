@@ -1,6 +1,6 @@
 import pytest
 
-from corehq.apps.celery.serial import get_unique_key
+from corehq.apps.celery.locking import get_unique_key
 
 
 def my_func(domain, count=100):
