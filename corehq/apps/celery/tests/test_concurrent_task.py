@@ -86,8 +86,14 @@ def test_acquires_lock_if_slot_available():
     assert lock.acquire(blocking=False)
 
     try:
-        task_with_concurrency.apply(args=['test'])
-        assert _task_calls == ['test']
+        with patch(
+            'dimagi.utils.couch.get_redis_lock', wraps=get_redis_lock
+        ) as mock_get_lock:
+            task_with_concurrency.apply(args=['test'])
+            keys_requested = [
+                call.args[0] for call in mock_get_lock.call_args_list
+            ]
+            assert 'task_with_concurrency-test:1' in keys_requested
     finally:
         release_lock(lock, True)
 
