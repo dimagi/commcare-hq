@@ -6,13 +6,14 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.dump_reload.sql.filters import (
     CaseIDFilter,
     FilteredModelIteratorBuilder,
+    IdCache,
     MultimediaBlobMetaFilter,
     SimpleFilter,
 )
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
-from corehq.form_processor.models import CaseTransaction
+from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.motech.repeaters.models import Repeater
@@ -137,7 +138,20 @@ class TestCaseIDFilter(TestCase):
         assert sorted(txn.id for txn in one_per_chunk) == sorted(txn.id for txn in whole)
         assert len({txn.id for txn in one_per_chunk}) == len(one_per_chunk)
 
-    def _dump_case_transactions(self, domain, chunksize=1000):
+    def test_reading_ids_from_cache_matches_querying_the_database(self):
+        with IdCache.open() as id_cache:
+            # populate the cache as the CommCareCase dump would
+            for db_alias in get_db_aliases_for_partitioned_query():
+                for case in CommCareCase.objects.using(db_alias).filter(domain=self.domain):
+                    id_cache.record('case_id', db_alias, case.case_id)
+            id_cache.finalize('case_id')
+
+            from_cache = self._dump_case_transactions(self.domain, id_cache=id_cache)
+
+        from_db = self._dump_case_transactions(self.domain)
+        assert sorted(txn.id for txn in from_cache) == sorted(txn.id for txn in from_db)
+
+    def _dump_case_transactions(self, domain, chunksize=1000, id_cache=None):
         builder = FilteredModelIteratorBuilder(
             'form_processor.CaseTransaction',
             CaseIDFilter(chunksize=chunksize),
@@ -146,6 +160,6 @@ class TestCaseIDFilter(TestCase):
         return [
             txn
             for db_alias in get_db_aliases_for_partitioned_query()
-            for iterator in builder.build(domain, CaseTransaction, db_alias).iterators()
+            for iterator in builder.build(domain, CaseTransaction, db_alias).iterators(id_cache=id_cache)
             for txn in iterator
         ]
