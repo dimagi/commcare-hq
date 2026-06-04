@@ -152,11 +152,11 @@ def get_capability(domain):
 
 
 # Maximum nesting depth of and/or groups; `not` wrappers do not count.
-_MAX_QUERY_DEPTH = 5
+MAX_QUERY_DEPTH = 5
 # Maximum children per and/or group.
-_MAX_GROUP_WIDTH = 50
+MAX_GROUP_WIDTH = 50
 # Maximum total nodes across the entire query tree.
-_MAX_TOTAL_NODES = 200
+MAX_TOTAL_NODES = 200
 
 
 def validate_filter_spec(spec, case_type_name, capability):
@@ -185,26 +185,26 @@ def validate_filter_spec(spec, case_type_name, capability):
 
 def _validate_node(node, fields_by_name, errors, depth=0, counter=None):
     counter[0] += 1
-    if counter[0] > _MAX_TOTAL_NODES:
-        errors.append(f'Query has too many nodes (max {_MAX_TOTAL_NODES})')
+    if counter[0] > MAX_TOTAL_NODES:
+        errors.append(f'Query has too many nodes (max {MAX_TOTAL_NODES})')
         return
     if not isinstance(node, dict):
         errors.append(
             f'Invalid node: expected object, got {type(node).__name__}'
         )
         return
-    if depth > _MAX_QUERY_DEPTH:
+    if depth > MAX_QUERY_DEPTH:
         errors.append(
-            f'Query is nested too deeply (max {_MAX_QUERY_DEPTH} levels)'
+            f'Query is nested too deeply (max {MAX_QUERY_DEPTH} levels)'
         )
         return
     node_type = node.get('type')
 
     if node_type in ('and', 'or'):
         children = node.get('children', [])
-        if len(children) > _MAX_GROUP_WIDTH:
+        if len(children) > MAX_GROUP_WIDTH:
             errors.append(
-                f'Group has too many conditions (max {_MAX_GROUP_WIDTH})'
+                f'Group has too many conditions (max {MAX_GROUP_WIDTH})'
             )
             return
         for child in children:

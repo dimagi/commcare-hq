@@ -2,12 +2,10 @@
 {# Query builder partial — rendered inside an Alpine.js x-data="endpointForm()" context. #}
 {# Builder state uses a `negated` flag on and/or groups; it is serialized  #}
 {# to/from wrapping `not` nodes by normalizeNode()/toSpecNode() in the JS. #}
-{# depth=4 below allows 5 levels of and/or groups (root included), keeping #}
-{# conditions within the server-side _MAX_QUERY_DEPTH of 5.                #}
 
 <div class="filter-tree">
   <div x-data="{ node: query, _removeParent: null, _removeIdx: null }">
-    {% include 'case_search/partials/_group_node.html' with depth=4 %}
+    {% include 'case_search/partials/_group_node.html' with depth=max_group_depth %}
   </div>
 
   <div class="form-check mt-3" x-data="{ showJson: false }">
