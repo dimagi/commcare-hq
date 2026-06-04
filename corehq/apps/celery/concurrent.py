@@ -77,11 +77,11 @@ def concurrent_task(
                         slot_key, fn, timeout, *args, **kwargs
                     )
                 except CouldNotAcquireLockError:
-                    if i == concurrency - 1:
-                        msg = (
-                            "Could not acquire any of {} slots for key '{}' (task '{}')."
-                        ).format(concurrency, key, fn.__name__)
-                        self.retry(exc=CouldNotAcquireLockError(msg))
+                    pass
+            msg = (
+                "Could not acquire any of {} slots for key '{}' (task '{}')."
+            ).format(concurrency, key, fn.__name__)
+            self.retry(exc=CouldNotAcquireLockError(msg))
 
         return _inner
 
