@@ -10,7 +10,10 @@ from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
     DEFAULT_CHUNK_SIZE,
+    CaseIDFilter,
     FilteredModelIteratorBuilder,
+    FormIDFilter,
+    IdCache,
     ManyFilters,
     MultimediaBlobMetaFilter,
     SimpleFilter,
@@ -32,14 +35,18 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('blobs.BlobMeta', MultimediaBlobMetaFilter()),
 
     FilteredModelIteratorBuilder('form_processor.XFormInstance', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.XFormOperation', SimpleFilter('form__domain')),
+    FilteredModelIteratorBuilder('form_processor.XFormOperation',
+                                 FormIDFilter(), pagination_key=('form_id', 'pk')),
 
     FilteredModelIteratorBuilder('form_processor.CommCareCase', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseIndex', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.CaseAttachment', SimpleFilter('case__domain')),
-    FilteredModelIteratorBuilder('form_processor.CaseTransaction', SimpleFilter('case__domain')),
+    FilteredModelIteratorBuilder('form_processor.CaseAttachment',
+                                 CaseIDFilter(), pagination_key=('case_id', 'pk')),
+    FilteredModelIteratorBuilder('form_processor.CaseTransaction',
+                                 CaseIDFilter(), pagination_key=('case_id', 'pk')),
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.LedgerTransaction', SimpleFilter('case__domain')),
+    FilteredModelIteratorBuilder('form_processor.LedgerTransaction',
+                                 CaseIDFilter(), pagination_key=('case_id', 'pk')),
 
     FilteredModelIteratorBuilder('case_search.DomainsNotInCaseSearchIndex', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),
@@ -286,55 +293,76 @@ class SqlDataDumper(DataDumper):
         foreign key field when referencing a model with natural_key defined.
         """
         stats = Counter()
-        objects = get_objects_to_dump(
-            self.domain,
-            self.excludes,
-            self.includes,
-            stats_counter=stats,
-            stdout=self.stdout,
-            timer=self.timer,
-            chunk_size=self.chunk_size,
-        )
+        # The id cache lets child models (e.g. CaseTransaction) reuse the parent
+        # ids resolved while their parent (CommCareCase) is dumped, rather than
+        # re-querying the parent once per child model.
+        with IdCache.open() as id_cache:
+            objects = get_objects_to_dump(
+                self.domain,
+                self.excludes,
+                self.includes,
+                stats_counter=stats,
+                stdout=self.stdout,
+                timer=self.timer,
+                chunk_size=self.chunk_size,
+                id_cache=id_cache,
+            )
 
-        JsonLinesSerializer().serialize(
-            objects,
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True,
-            stream=output_stream
-        )
+            JsonLinesSerializer().serialize(
+                objects,
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True,
+                stream=output_stream
+            )
         return stats
 
 
+#: Parent models whose natural ids are cached as they are dumped, so child
+#: models filtered by those ids (see CaseIDFilter / FormIDFilter) can reuse
+#: them instead of re-querying the parent. Maps model label -> id field.
+PARENT_ID_CACHE_FIELDS = {
+    'form_processor.CommCareCase': 'case_id',
+    'form_processor.XFormInstance': 'form_id',
+}
+
+
 def get_objects_to_dump(domain, excludes, includes, stats_counter=None, stdout=None, timer=None,
-                        chunk_size=DEFAULT_CHUNK_SIZE):
+                        chunk_size=DEFAULT_CHUNK_SIZE, id_cache=None):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model_class) tuples to dump
     :param excluded_models: List of model_class classes to exclude
     :param timer: :class:`DumpTimingLogger` to record per-model timing
     :param chunk_size: Number of rows to fetch per query
+    :param id_cache: optional :class:`IdCache` shared across models in the dump
     :return: generator yielding models objects
     """
     builders = get_model_iterator_builders_to_dump(domain, excludes, includes)
-    yield from get_objects_to_dump_from_builders(builders, stats_counter, stdout, timer, chunk_size)
+    yield from get_objects_to_dump_from_builders(builders, stats_counter, stdout, timer, chunk_size, id_cache)
 
 
 def get_objects_to_dump_from_builders(builders, stats_counter=None, stdout=None, timer=None,
-                                      chunk_size=DEFAULT_CHUNK_SIZE):
+                                      chunk_size=DEFAULT_CHUNK_SIZE, id_cache=None):
     if stats_counter is None:
         stats_counter = Counter()
     timer = timer or DumpTimingLogger()
     # A model can span several builders (one per shard); group them so the timer brackets it once.
     for model_label, model_builders in groupby(builders, key=lambda mb: get_model_label(mb[0])):
+        cache_field = PARENT_ID_CACHE_FIELDS.get(model_label) if id_cache is not None else None
         with timer.measure(model_label):
             for model_class, builder in model_builders:
-                for iterator in builder.iterators(chunk_size):
+                for iterator in builder.iterators(chunk_size, id_cache=id_cache):
                     for obj in iterator:
+                        if cache_field:
+                            id_cache.record(cache_field, builder.db_alias, getattr(obj, cache_field))
                         stats_counter.update([model_label])
                         timer.tick()
                         yield obj
                 if stdout:
                     stdout.write(f'Dumped {stats_counter[model_label]} {model_label}\n')
+        if cache_field:
+            # parent fully dumped: sort its id files so children can read them
+            id_cache.finalize(cache_field)
 
 
 def get_model_iterator_builders_to_dump(domain, excludes, includes, limit_to_db=None):
