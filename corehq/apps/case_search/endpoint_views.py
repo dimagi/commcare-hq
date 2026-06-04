@@ -5,6 +5,7 @@ from django.db import transaction
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
 from corehq import toggles
@@ -68,10 +69,11 @@ class CaseSearchEndpointForm(forms.Form):
     query = forms.CharField(required=False, widget=forms.Textarea)
     parameters = forms.CharField(required=False, widget=forms.Textarea)
 
-    def __init__(self, *args, domain, exclude_pk=None, **kwargs):
+    def __init__(self, *args, domain, exclude_pk=None, capability=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.domain = domain
         self.exclude_pk = exclude_pk
+        self.capability = capability
 
     def clean_name(self):
         name = self.cleaned_data['name']
@@ -112,7 +114,7 @@ class CaseSearchEndpointForm(forms.Form):
         parameters = cleaned.get('parameters')
         # Only run semantic validation when both fields parsed cleanly.
         if query is not None and parameters is not None:
-            capability = get_capability(self.domain)
+            capability = self.capability or get_capability(self.domain)
             for error in validate_filter_spec(
                 query, cleaned.get('case_type') or '', capability
             ):
@@ -159,6 +161,10 @@ class _CaseSearchEndpointEditBaseView(BaseProjectDataView):
             }
         ]
 
+    @cached_property
+    def capability(self):
+        return get_capability(self.domain)
+
     def _make_form(self, data=None):
         raise NotImplementedError
 
@@ -196,7 +202,7 @@ class _CaseSearchEndpointEditBaseView(BaseProjectDataView):
     @property
     def page_context(self):
         context = {
-            'capability': get_capability(self.domain),
+            'capability': self.capability,
             'endpoint_mode': self.mode,
             'post_url': self.page_url,
             'form': self._form,
@@ -220,7 +226,7 @@ class CaseSearchEndpointNewView(_CaseSearchEndpointEditBaseView):
         return reverse(self.urlname, args=[self.domain])
 
     def _make_form(self, data=None):
-        return CaseSearchEndpointForm(data, domain=self.domain)
+        return CaseSearchEndpointForm(data, domain=self.domain, capability=self.capability)
 
     def _default_initial(self):
         return {
@@ -276,7 +282,8 @@ class CaseSearchEndpointEditView(_CaseSearchEndpointEditBaseView):
 
     def _make_form(self, data=None):
         return CaseSearchEndpointForm(
-            data, domain=self.domain, exclude_pk=self._endpoint.pk
+            data, domain=self.domain, exclude_pk=self._endpoint.pk,
+            capability=self.capability,
         )
 
     def _default_initial(self):
