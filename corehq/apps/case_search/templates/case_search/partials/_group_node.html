@@ -3,7 +3,6 @@
 {# Expects Alpine scope: node, _removeParent (null = no remove), _removeIdx. #}
 {# Expects template context: depth = remaining nesting levels below this     #}
 {# group; the template includes itself until depth runs out.                  #}
-
 {% include 'case_search/partials/_group_header.html' %}
 <div class="ps-4 border-start border-2">
   <template x-for="(child, childIdx) in node.children" :key="child._id">

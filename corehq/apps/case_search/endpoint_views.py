@@ -2,7 +2,7 @@ import json
 
 from django import forms
 from django.db import transaction
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -353,3 +353,51 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
         return redirect(
             reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
         )
+
+
+@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+class CaseSearchEndpointTestView(BaseDomainView):
+    """Runs a query builder spec against the project's cases and returns an
+    HTMX partial with the matching results (or validation errors).
+
+    Domain-scoped rather than endpoint-scoped so it works for unsaved
+    queries on the new-endpoint page too.
+    """
+
+    urlname = 'case_search_endpoint_test'
+    http_method_names = ['post']
+    _results_template = 'case_search/partials/_test_results.html'
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    def post(self, request, *args, **kwargs):
+        case_type = request.POST.get('case_type', '')
+        try:
+            query = json.loads(request.POST.get('query') or '{}')
+        except (json.JSONDecodeError, ValueError):
+            return self._render_results(request, errors=['Invalid query JSON.'])
+        errors = validate_filter_spec(query, case_type, get_capability(self.domain))
+        if errors:
+            return self._render_results(request, errors=errors)
+        columns, rows = self._run_query(case_type, query)
+        return self._render_results(request, columns=columns, rows=rows)
+
+    def _run_query(self, case_type, query):
+        # TODO: translate the filter spec into a case search ES query, run it,
+        # and shape the hits into columns/rows. Dummy data for now.
+        columns = ['Case Name', 'Case Type', 'Owner', 'Date Opened']
+        rows = [
+            ['Example case 1', case_type, 'worker@example.com', '2026-01-15'],
+            ['Example case 2', case_type, 'worker@example.com', '2026-02-03'],
+        ]
+        return columns, rows
+
+    def _render_results(self, request, *, errors=None, columns=None, rows=None):
+        # Always 200 so HTMX swaps the partial in (it ignores error statuses).
+        return render(request, self._results_template, {
+            'errors': errors or [],
+            'columns': columns or [],
+            'rows': rows or [],
+        })
