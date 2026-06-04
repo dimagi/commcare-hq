@@ -106,7 +106,10 @@ from corehq.apps.app_manager.views.utils import (
 )
 from corehq.apps.app_manager.xform import CaseError
 from corehq.apps.app_manager.xpath_validator import validate_xpath
-from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.case_search.models import (
+    CaseSearchEndpoint,
+    case_search_enabled_for_domain,
+)
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
     track_domain_request,
@@ -228,6 +231,12 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
         'data_registry_enabled': app.supports_data_registry,
         'data_registries': get_data_registry_dropdown_options(app.domain, required_case_types=case_types),
+        'case_search_endpoints': list(
+            CaseSearchEndpoint.objects
+            .filter(domain=app.domain, is_active=True)
+            .order_by('name')
+            .values('id', 'name')
+        ) if toggles.CASE_SEARCH_ENDPOINTS.enabled(app.domain) else [],
         'data_registry_workflow_choices': (
             (REGISTRY_WORKFLOW_LOAD_CASE, _("Load external case into form")),
             (REGISTRY_WORKFLOW_SMART_LINK, _("Smart link to external domain")),
@@ -274,6 +283,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 'instance_name': module.search_config.instance_name or "",
                 'include_all_related_cases': module.search_config.include_all_related_cases,
                 'search_on_clear': module.search_config.search_on_clear,
+                'case_search_endpoint_id': module.search_config.case_search_endpoint_id or "",
             },
         },
     }
@@ -1338,6 +1348,12 @@ def _gather_and_update_search_properties(params, app, module, lang):
                 "'{}' is an invalid instance name. It can contain only letters, numbers, and underscores."
             ).format(instance_name))
 
+        if toggles.CASE_SEARCH_ENDPOINTS.enabled(app.domain):
+            endpoint_id_raw = search_properties.get('case_search_endpoint_id')
+            case_search_endpoint_id = int(endpoint_id_raw) if endpoint_id_raw else None
+        else:
+            case_search_endpoint_id = None
+
         module.search_config = CaseSearch(
             title_label=title_label,
             description=description,
@@ -1363,6 +1379,7 @@ def _gather_and_update_search_properties(params, app, module, lang):
             instance_name=instance_name,
             include_all_related_cases=search_properties.get('include_all_related_cases', False),
             search_on_clear=search_properties.get('search_on_clear', False),
+            case_search_endpoint_id=case_search_endpoint_id,
         )
 
 
