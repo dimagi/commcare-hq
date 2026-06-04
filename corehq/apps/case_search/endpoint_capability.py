@@ -153,6 +153,10 @@ def get_capability(domain):
 
 # Maximum nesting depth of and/or groups; `not` wrappers do not count.
 _MAX_QUERY_DEPTH = 5
+# Maximum children per and/or group.
+_MAX_GROUP_WIDTH = 50
+# Maximum total nodes across the entire query tree.
+_MAX_TOTAL_NODES = 200
 
 
 def validate_filter_spec(spec, case_type_name, capability):
@@ -175,13 +179,15 @@ def validate_filter_spec(spec, case_type_name, capability):
         else {}
     )
 
-    _validate_node(spec, fields_by_name, errors)
+    _validate_node(spec, fields_by_name, errors, counter=[0])
     return errors
 
 
-def _validate_node(
-    node, fields_by_name, errors, depth=0
-):
+def _validate_node(node, fields_by_name, errors, depth=0, counter=None):
+    counter[0] += 1
+    if counter[0] > _MAX_TOTAL_NODES:
+        errors.append(f'Query has too many nodes (max {_MAX_TOTAL_NODES})')
+        return
     if not isinstance(node, dict):
         errors.append(
             f'Invalid node: expected object, got {type(node).__name__}'
@@ -195,12 +201,19 @@ def _validate_node(
     node_type = node.get('type')
 
     if node_type in ('and', 'or'):
-        for child in node.get('children', []):
+        children = node.get('children', [])
+        if len(children) > _MAX_GROUP_WIDTH:
+            errors.append(
+                f'Group has too many conditions (max {_MAX_GROUP_WIDTH})'
+            )
+            return
+        for child in children:
             _validate_node(
                 child,
                 fields_by_name,
                 errors,
                 depth + 1,
+                counter,
             )
     elif node_type == 'not':
         child = node.get('child')
@@ -215,20 +228,17 @@ def _validate_node(
                 fields_by_name,
                 errors,
                 depth,
+                counter,
             )
     elif node_type == 'component':
-        _validate_component(
-            node, fields_by_name, errors
-        )
+        _validate_component(node, fields_by_name, errors)
     else:
         errors.append(
             f"Invalid node type: '{node_type}'. Expected 'and', 'or', 'not', or 'component'."
         )
 
 
-def _validate_component(
-    node, fields_by_name, errors
-):
+def _validate_component(node, fields_by_name, errors):
     field_name = node.get('field', '')
     component_name = node.get('component', '')
     inputs = node.get('inputs', {})
@@ -253,14 +263,10 @@ def _validate_component(
                 f"Missing required input '{slot_name}' for component '{component_name}'"
             )
             continue
-        _validate_input_value(
-            inputs[slot_name], slot_name, errors
-        )
+        _validate_input_value(inputs[slot_name], slot_name, errors)
 
 
-def _validate_input_value(
-    value, slot_name, errors
-):
+def _validate_input_value(value, slot_name, errors):
     value_type = value.get('type')
     if value_type == 'constant':
         pass  # any value accepted
