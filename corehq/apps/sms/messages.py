@@ -73,9 +73,9 @@ _MESSAGES = {
         " messages from CommCareHQ. To opt-in, reply to this number with {0}"),
     MSG_DUPLICATE_USERNAME: gettext_noop("CommCare user {0} already exists"),
     MSG_USERNAME_TOO_LONG: gettext_noop("Username {0} is too long.  Must be under {1} characters."),
-    MSG_VERIFICATION_START_WITH_REPLY: gettext_noop("Welcome to CommCareHQ! Is this phone used by {0}? "
+    MSG_VERIFICATION_START_WITH_REPLY: gettext_noop("Welcome to CommCare HQ! Is this phone used by {0}? "
         "If yes, reply '123' to {1} to start using SMS with CommCareHQ."),
-    MSG_VERIFICATION_START_WITHOUT_REPLY: gettext_noop("Welcome to CommCareHQ! Is this phone used by {0}? "
+    MSG_VERIFICATION_START_WITHOUT_REPLY: gettext_noop("Welcome to CommCare HQ! Is this phone used by {0}? "
         "If yes, reply '123' to start using SMS with CommCareHQ."),
     MSG_VERIFICATION_SUCCESSFUL: gettext_noop("Thank you. This phone has been verified for "
         "using SMS with CommCareHQ"),
