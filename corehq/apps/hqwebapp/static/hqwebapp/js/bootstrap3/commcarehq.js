@@ -8,3 +8,4 @@ import 'bootstrap';
 import 'hqwebapp/js/bootstrap3/common';
 import 'hqwebapp/js/bootstrap3/base_main';
 import 'open-chat-studio-widget';
+import 'hqwebapp/js/ocs_widget_global_context';
