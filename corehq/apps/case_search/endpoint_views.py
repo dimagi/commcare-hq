@@ -35,6 +35,28 @@ def _get_case_type_names(domain):
     )
 
 
+def _add_endpoint_version(endpoint, *, action, created_by, query=None, parameters=None,
+                          extra_update_fields=()):
+    """Create the next version for ``endpoint`` and make it the current version.
+
+    Must be called within a transaction. ``extra_update_fields`` are saved on the
+    endpoint alongside ``current_version`` (e.g. fields the caller also changed).
+    """
+    current = endpoint.current_version
+    next_num = (current.version_number + 1) if current else 1
+    version = CaseSearchEndpointVersion.objects.create(
+        endpoint=endpoint,
+        version_number=next_num,
+        query=query,
+        parameters=parameters,
+        created_by=created_by,
+        action=action,
+    )
+    endpoint.current_version = version
+    endpoint.save(update_fields=['current_version', *extra_update_fields])
+    return version
+
+
 class CaseSearchEndpointForm(forms.Form):
     name = forms.CharField()
     target_type = forms.ChoiceField(choices=CaseSearchEndpoint.TargetType.choices)
@@ -141,16 +163,13 @@ class CaseSearchEndpointNewView(BaseProjectDataView):
                 target_type=cd['target_type'],
                 target_name=cd['case_type'],
             )
-            version = CaseSearchEndpointVersion.objects.create(
-                endpoint=endpoint,
-                version_number=1,
+            _add_endpoint_version(
+                endpoint,
+                action=CaseSearchEndpointVersion.Action.CREATE,
+                created_by=request.couch_user.username,
                 query=cd['query'],
                 parameters=cd['parameters'],
-                created_by=request.couch_user.username,
-                action=CaseSearchEndpointVersion.Action.CREATE,
             )
-            endpoint.current_version = version
-            endpoint.save(update_fields=['current_version'])
         return redirect(reverse(CaseSearchEndpointEditView.urlname, args=[self.domain, endpoint.id]))
 
 
@@ -211,20 +230,14 @@ class CaseSearchEndpointEditView(BaseProjectDataView):
             endpoint.name = cd['name']
             endpoint.target_type = cd['target_type']
             endpoint.target_name = cd['case_type']
-            endpoint.save(update_fields=['name', 'target_type', 'target_name'])
-
-            current = endpoint.current_version
-            next_num = (current.version_number + 1) if current else 1
-            version = CaseSearchEndpointVersion.objects.create(
-                endpoint=endpoint,
-                version_number=next_num,
+            _add_endpoint_version(
+                endpoint,
+                action=CaseSearchEndpointVersion.Action.UPDATE,
+                created_by=request.couch_user.username,
                 query=cd['query'],
                 parameters=cd['parameters'],
-                created_by=request.couch_user.username,
-                action=CaseSearchEndpointVersion.Action.UPDATE,
+                extra_update_fields=['name', 'target_type', 'target_name'],
             )
-            endpoint.current_version = version
-            endpoint.save(update_fields=['current_version'])
         return redirect(reverse(CaseSearchEndpointsView.urlname, args=[self.domain]))
 
 
@@ -241,18 +254,12 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
         endpoint = _get_endpoint(self.domain, kwargs['endpoint_id'])
         if endpoint is None:
             return not_found(request)
-        current = endpoint.current_version
-        next_num = (current.version_number + 1) if current else 1
         with transaction.atomic():
-            version = CaseSearchEndpointVersion.objects.create(
-                endpoint=endpoint,
-                version_number=next_num,
-                created_by=request.couch_user.username,
-                action=CaseSearchEndpointVersion.Action.DEACTIVATE,
-                query=None,
-                parameters=None,
-            )
             endpoint.is_active = False
-            endpoint.current_version = version
-            endpoint.save(update_fields=['is_active', 'current_version'])
+            _add_endpoint_version(
+                endpoint,
+                action=CaseSearchEndpointVersion.Action.DEACTIVATE,
+                created_by=request.couch_user.username,
+                extra_update_fields=['is_active'],
+            )
         return redirect(reverse(CaseSearchEndpointsView.urlname, args=[self.domain]))
