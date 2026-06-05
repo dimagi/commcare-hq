@@ -35,7 +35,14 @@ def test_celery_specific_kwargs_bind_to_task():
 @use(task_calls)
 @suspend(run_with_lock_patch)
 def test_runs_and_releases_lock():
-    task_with_arg.apply(args=['test'])
+    with patch(
+        'dimagi.utils.couch.get_redis_lock', wraps=get_redis_lock
+    ) as mock_get_lock:
+        task_with_arg.apply(args=['test'])
+        keys_requested = [
+            call.args[0] for call in mock_get_lock.call_args_list
+        ]
+        assert keys_requested == ['task_with_arg-test']
 
     assert _task_calls == ['test']
     lock = get_redis_lock(
@@ -51,8 +58,15 @@ def test_fails_and_releases_lock():
     def raising_task():
         raise ValueError('error')
 
-    result = raising_task.apply()
-    assert result.failed()
+    with patch(
+        'dimagi.utils.couch.get_redis_lock', wraps=get_redis_lock
+    ) as mock_get_lock:
+        result = raising_task.apply()
+        assert result.failed()
+        keys_requested = [
+            call.args[0] for call in mock_get_lock.call_args_list
+        ]
+        assert keys_requested == ['raising_task-test']
 
     lock = get_redis_lock('raising_task-test', timeout=5, name='raising_task')
     assert lock.acquire(blocking=False)
