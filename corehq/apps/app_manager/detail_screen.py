@@ -136,6 +136,17 @@ class FormattedDetailColumn(object):
             variables['lang'] = self.id_strings.current_language()
         return variables
 
+    def _calculated_property(self):
+        xpath = sx.CalculatedPropertyXPath(function=self.xpath)
+        if re.search(r'\$lang', self.xpath):
+            xpath.variables.node.append(
+                sx.CalculatedPropertyXPathVariable(
+                    name='lang',
+                    locale_id=self.id_strings.current_language()
+                ).node
+            )
+        return sx.XPathVariable(name='calculated_property', xpath=xpath).node
+
     @property
     def template(self):
         template = sx.Template(
@@ -144,16 +155,7 @@ class FormattedDetailColumn(object):
             width=self.template_width,
         )
         if self.column.useXpathExpression and self.column.format != 'translatable-enum':
-            xpath = sx.CalculatedPropertyXPath(function=self.xpath)
-            if re.search(r'\$lang', self.xpath):
-                xpath.variables.node.append(
-                    sx.CalculatedPropertyXPathVariable(
-                        name='lang',
-                        locale_id=self.id_strings.current_language()
-                    ).node
-                )
-            xpath_variable = sx.XPathVariable(name='calculated_property', xpath=xpath)
-            template.text.xpath.variables.node.append(xpath_variable.node)
+            template.text.xpath.variables.node.append(self._calculated_property())
 
         if self.variables:
             for key, value in sorted(self.variables.items()):
@@ -183,18 +185,8 @@ class FormattedDetailColumn(object):
                 type=sort_type,
             )
 
-            if self.column.useXpathExpression:
-                xpath = sx.CalculatedPropertyXPath(function=self.xpath)
-                if re.search(r'\$lang', self.xpath):
-                    xpath.variables.node.append(
-                        sx.CalculatedPropertyXPathVariable(
-                            name='lang',
-                            locale_id=self.id_strings.current_language()
-                        ).node
-                    )
-                if self.column.format != 'translatable-enum':
-                    xpath_variable = sx.XPathVariable(name='calculated_property', xpath=xpath)
-                    sort.text.xpath.variables.node.append(xpath_variable.node)
+            if self.column.useXpathExpression and self.column.format != 'translatable-enum':
+                sort.text.xpath.variables.node.append(self._calculated_property())
 
         if self.sort_element:
             if not sort:
@@ -215,15 +207,7 @@ class FormattedDetailColumn(object):
                     type=sort_type,
                 )
                 if not sort_calculation and self.column.useXpathExpression:
-                    xpath = sx.CalculatedPropertyXPath(function=self.xpath)
-                    if re.search(r'\$lang', self.xpath):
-                        xpath.variables.node.append(
-                            sx.CalculatedPropertyXPathVariable(
-                                name='lang', locale_id=self.id_strings.current_language()
-                            ).node
-                        )
-                    xpath_variable = sx.XPathVariable(name='calculated_property', xpath=xpath)
-                    sort.text.xpath.variables.node.append(xpath_variable.node)
+                    sort.text.xpath.variables.node.append(self._calculated_property())
 
             if self.sort_element.type == 'distance':
                 sort.text.xpath_function = self.evaluate_template(Distance.SORT_XPATH_FUNCTION)
