@@ -5,7 +5,10 @@ from dimagi.utils.couch import get_redis_lock, release_lock
 
 from corehq.apps.celery.locking import CouldNotAcquireLockError
 from corehq.apps.celery.serial import serial_task
-from corehq.apps.celery.tests.utils import run_with_lock_patch
+from corehq.apps.celery.tests.utils import (
+    legacy_lock_check_patch,
+    run_with_lock_patch,
+)
 from corehq.tests.pytest_plugins.patches import suspend
 
 _task_calls = []
@@ -68,7 +71,9 @@ def test_fails_and_releases_lock():
         ]
         assert keys_requested == ['raising_task-test:0']
 
-    lock = get_redis_lock('raising_task-test:0', timeout=5, name='raising_task')
+    lock = get_redis_lock(
+        'raising_task-test:0', timeout=5, name='raising_task'
+    )
     assert lock.acquire(blocking=False)
     release_lock(lock, True)
 
@@ -78,6 +83,28 @@ def test_fails_and_releases_lock():
 def test_fails_to_acquire_lock():
     lock = get_redis_lock(
         'task_with_arg-test:0', timeout=5, name='task_with_arg'
+    )
+    assert lock.acquire(blocking=False)
+
+    try:
+        with patch.object(task_with_arg, 'retry') as retry:
+            task_with_arg.apply(args=['test'])
+        assert retry.called
+        exc = retry.call_args.kwargs['exc']
+        assert isinstance(exc, CouldNotAcquireLockError)
+        assert _task_calls == []
+    finally:
+        release_lock(lock, True)
+
+
+# ---- Remove this test once old format is no longer supported ----
+@use(task_calls)
+@suspend(run_with_lock_patch)
+@suspend(legacy_lock_check_patch)
+def test_lock_with_old_format_is_respected():
+    # legacy format does not append ":0" to the key
+    lock = get_redis_lock(
+        'task_with_arg-test', timeout=5, name='task_with_arg'
     )
     assert lock.acquire(blocking=False)
 
