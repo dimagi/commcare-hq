@@ -544,15 +544,25 @@ class CaseSearchEndpoint(models.Model):
 
 
 class CaseSearchEndpointVersion(models.Model):
+    class Action(models.TextChoices):
+        CREATE = 'create', _('Create')
+        UPDATE = 'update', _('Update')
+        DEACTIVATE = 'deactivate', _('Deactivate')
+
     endpoint = models.ForeignKey(
         CaseSearchEndpoint,
         on_delete=models.CASCADE,
         related_name='versions',
     )
     version_number = models.IntegerField()
-    parameters = models.JSONField(default=list)
-    query = models.JSONField(default=dict)
+    parameters = models.JSONField(default=list, null=True, blank=True)
+    query = models.JSONField(default=dict, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.CharField(max_length=255, blank=True, default='')
+    action = models.CharField(
+        max_length=10,
+        choices=Action.choices,
+    )
 
     class Meta:
         unique_together = [('endpoint', 'version_number')]
