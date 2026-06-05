@@ -9,6 +9,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
 from corehq import toggles
+from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.case_search.endpoint_capability import (
     MAX_QUERY_DEPTH,
     get_capability,
@@ -18,6 +19,7 @@ from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     CaseSearchEndpointVersion,
 )
+from corehq.apps.case_search.utils import get_primary_case_search_results, QueryHelper
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import not_found
@@ -385,12 +387,19 @@ class CaseSearchEndpointTestView(BaseDomainView):
         return self._render_results(request, columns=columns, rows=rows)
 
     def _run_query(self, case_type, query):
+        helper = QueryHelper(self.domain)
+        results = get_primary_case_search_results(helper, [case_type], [], None, query)
         # TODO: translate the filter spec into a case search ES query, run it,
         # and shape the hits into columns/rows. Dummy data for now.
-        columns = ['Case Name', 'Case Type', 'Owner', 'Date Opened']
+        if results:
+            columns = (['Case Name'] +
+                       [name for name in results[0].dynamic_case_properties().keys() if name != RELEVANCE_SCORE])
+        else:
+            columns = []
         rows = [
-            ['Example case 1', case_type, 'worker@example.com', '2026-01-15'],
-            ['Example case 2', case_type, 'worker@example.com', '2026-02-03'],
+            [case.name] +
+            [value for (name, value) in case.dynamic_case_properties().items() if name != RELEVANCE_SCORE]
+            for case in results
         ]
         return columns, rows
 

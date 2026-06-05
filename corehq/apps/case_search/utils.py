@@ -112,11 +112,19 @@ def get_case_search_results(domain, config, app_id=None, couch_user=None, profil
 
 def get_endpoint_results(helper, config):
     try:
-        CaseSearchEndpoint.objects.get(domain=helper.domain, id=config.endpoint_id)
+        # TODO: cache? Prefetch endpoint version?
+        endpoint = CaseSearchEndpoint.objects.get(domain=helper.domain, id=config.endpoint_id)
     except (CaseSearchEndpoint.DoesNotExist, ValueError):
         raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
-    # TODO use the endpoint to process the CaseSearchRequestConfig object
-    return get_primary_case_search_results(helper, config.case_types, config.criteria, config.commcare_sort)
+    if not endpoint.is_active:
+        raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
+    # TODO pass in sort
+    return get_primary_case_search_results(
+        helper,
+        [endpoint.target_name],
+        config.criteria,
+        None,
+        endpoint.current_version.query)
 
 
 def get_unconfigured_endpoint_results(helper, config, app_id):
@@ -131,8 +139,8 @@ def get_unconfigured_endpoint_results(helper, config, app_id):
 
 
 @time_function()
-def get_primary_case_search_results(helper, case_types, criteria, commcare_sort=None):
-    builder = CaseSearchQueryBuilder(helper, case_types)
+def get_primary_case_search_results(helper, case_types, criteria, commcare_sort=None, endpoint_query=None):
+    builder = CaseSearchQueryBuilder(helper, case_types, endpoint_query)
     try:
         with helper.profiler.timing_context('build_query'):
             search_es = builder.build_query(criteria, commcare_sort)
@@ -217,24 +225,27 @@ class RegistryQueryHelper(QueryHelper):
 
 class CaseSearchQueryBuilder:
     """Compiles the case search object for the view"""
-
-    def __init__(self, helper, case_types):
+    def __init__(self, helper, case_types, endpoint_query=None):
         self.request_domain = helper.domain
         self.case_types = case_types
+        self.endpoint_query = endpoint_query
         self.helper = helper
         self.config = helper.config
 
     def build_query(self, search_criteria, commcare_sort=None):
         search_es = self._get_initial_search_es()
         search_es = self._apply_sort(search_es, commcare_sort)
-        for criteria in search_criteria:
-            search_es = self._apply_filter(search_es, criteria)
+        if not self.endpoint_query: # Will be part of initial search
+            for criteria in search_criteria:
+                search_es = self._apply_filter(search_es, criteria)
         return search_es
 
     def _get_initial_search_es(self):
         max_results = CASE_SEARCH_MAX_RESULTS
         if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
             max_results = 1500
+
+        # TODO: if self.endpoint_query parse query
         return (self.helper.get_base_queryset('main')
                 .case_type(self.case_types)
                 .is_closed(False)
