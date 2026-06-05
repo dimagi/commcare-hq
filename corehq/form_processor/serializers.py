@@ -89,7 +89,7 @@ class XFormInstanceRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSeri
     external_blobs = serializers.JSONField(source='serialized_attachments')
 
     def __init__(self, instance=None, *args, **kwargs):
-        super(XFormInstanceRawDocSerializer, self).__init__(instance=instance, *args, **kwargs)
+        super(XFormInstanceRawDocSerializer, self).__init__(instance, *args, **kwargs)
         if instance is not None:
             try:
                 instance.get_xml()
