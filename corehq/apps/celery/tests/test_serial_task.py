@@ -42,11 +42,11 @@ def test_runs_and_releases_lock():
         keys_requested = [
             call.args[0] for call in mock_get_lock.call_args_list
         ]
-        assert keys_requested == ['task_with_arg-test']
+        assert keys_requested == ['task_with_arg-test:0']
 
     assert _task_calls == ['test']
     lock = get_redis_lock(
-        'task_with_arg-test', timeout=5, name='task_with_arg'
+        'task_with_arg-test:0', timeout=5, name='task_with_arg'
     )
     assert lock.acquire(blocking=False)
     release_lock(lock, True)
@@ -66,9 +66,9 @@ def test_fails_and_releases_lock():
         keys_requested = [
             call.args[0] for call in mock_get_lock.call_args_list
         ]
-        assert keys_requested == ['raising_task-test']
+        assert keys_requested == ['raising_task-test:0']
 
-    lock = get_redis_lock('raising_task-test', timeout=5, name='raising_task')
+    lock = get_redis_lock('raising_task-test:0', timeout=5, name='raising_task')
     assert lock.acquire(blocking=False)
     release_lock(lock, True)
 
@@ -77,7 +77,7 @@ def test_fails_and_releases_lock():
 @suspend(run_with_lock_patch)
 def test_fails_to_acquire_lock():
     lock = get_redis_lock(
-        'task_with_arg-test', timeout=5, name='task_with_arg'
+        'task_with_arg-test:0', timeout=5, name='task_with_arg'
     )
     assert lock.acquire(blocking=False)
 
