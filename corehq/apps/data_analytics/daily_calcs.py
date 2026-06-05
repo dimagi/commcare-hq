@@ -73,12 +73,7 @@ def _calc_active_cases(ctx):
 def _calc_users_with_submission(ctx):
     """Get total number of users who've ever submitted a form in a domain."""
     query = FormES().domain(ctx.domain).user_aggregation()
-    terms = {
-        user_id for user_id in query.run().aggregations.user.keys
-        if user_id not in WEIRD_USER_IDS
-    }
-    user_ids = terms.intersection(set(CouchUser.ids_by_domain(ctx.domain)))
-    return len(user_ids)
+    return len(_exclude_weird_user_ids(query, ctx))
 
 def _calc_users_with_web_apps_submission_30d(ctx):
     """Get total number of users who've submitted a form from web apps in a domain in the last 30 days."""
@@ -90,12 +85,15 @@ def _calc_users_with_web_apps_submission_30d(ctx):
         .filter(filters.term('form.meta.deviceID', cloudcare_const.DEVICE_ID))
         .user_aggregation()
     )
+    return len(_exclude_weird_user_ids(query, ctx))
+
+
+def _exclude_weird_user_ids(es_query, ctx):
     terms = {
-        user_id for user_id in query.run().aggregations.user.keys
+        user_id for user_id in es_query.run().aggregations.user.keys
         if user_id not in WEIRD_USER_IDS
     }
-    user_ids = terms.intersection(set(CouchUser.ids_by_domain(ctx.domain)))
-    return len(user_ids)
+    return terms.intersection(set(CouchUser.ids_by_domain(ctx.domain)))
 
 
 def _calc_web_users_accessed_30d(ctx):
