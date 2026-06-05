@@ -492,19 +492,16 @@ class EnumImage(Enum):
         if self.column.endpoint_action_id and self.app.supports_detail_field_action:
             return sx.EndpointAction(endpoint_id=self.column.endpoint_action_id, background="true")
 
-    def _make_alt_text(self, type):
+    @property
+    def alt_text_xpath(self):
         return sx.XPathEnum.build(
             enum=self.column.enum,
             format=self.column.format,
-            type=type,
-            template=self._xpath_template(type),
-            get_template_context=self._xpath_template_context(type),
+            type='display',
+            template=self._xpath_template('display'),
+            get_template_context=self._xpath_template_context('display'),
             get_value=lambda key: self.id_strings.detail_column_alt_text_variable(self.module, self.detail_type,
                                                                                   self.column, key))
-
-    @property
-    def alt_text_xpath(self):
-        return self._make_alt_text('display')
 
     @property
     def alt_text(self):
