@@ -112,7 +112,7 @@ def get_message(msg_id, verified_number=None, context=None, domain=None, languag
     else:
         try:
             user_lang = verified_number.owner.get_language_code()
-        except:
+        except Exception:
             user_lang = None
 
     def get_translation(lang):
