@@ -506,9 +506,13 @@ class EnumImage(Enum):
     @property
     def alt_text(self):
         if self.app.supports_alt_text:
-            return sx.AltText(
+            alt_text = sx.AltText(
                 text=sx.Text(xpath=self.alt_text_xpath)
             )
+            if (self.column.useXpathExpression
+                    and toggles.ENUM_CALC_VARIABLES.enabled(self.app.domain)):
+                alt_text.text.xpath.variables.node.append(self._calculated_property())
+            return alt_text
 
     def _xpath_template(self, type):
         return "if({key_as_condition}, {key_as_var_name}"
