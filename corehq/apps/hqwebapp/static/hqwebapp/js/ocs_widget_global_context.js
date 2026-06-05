@@ -1,4 +1,4 @@
-import ocs_context from "hqwebapp/js/ocs_widget_context_setter";
+import ocsContext from "hqwebapp/js/ocs_widget_context_setter";
 
 function _domainFromUrl() {
     var match = window.location.pathname.match(/^\/a\/([^/]+)\//);
@@ -6,9 +6,9 @@ function _domainFromUrl() {
 }
 
 function _setInitialContext() {
-    ocs_context.setUrl(window.location.href);
-    ocs_context.setPageTitle(document.title);
-    ocs_context.setDomain(_domainFromUrl());
+    ocsContext.setUrl(window.location.href);
+    ocsContext.setPageTitle(document.title);
+    ocsContext.setDomain(_domainFromUrl());
 }
 
 function _observePageTitleChanges() {
@@ -17,7 +17,7 @@ function _observePageTitleChanges() {
         return;
     }
     var observer = new MutationObserver(function () {
-        ocs_context.setPageTitle(document.title);
+        ocsContext.setPageTitle(document.title);
     });
     observer.observe(titleEl, {
         childList: true,
@@ -27,8 +27,8 @@ function _observePageTitleChanges() {
 }
 
 function _observeUrlChanges() {
-    window.addEventListener('hashchange', ocs_context.setUrl(window.location.href));
-    window.addEventListener('popstate', ocs_context.setUrl(window.location.href));
+    window.addEventListener('hashchange', ocsContext.setUrl(window.location.href));
+    window.addEventListener('popstate', ocsContext.setUrl(window.location.href));
 }
 
 // Only listen to top window to ignore App Preview iframe
