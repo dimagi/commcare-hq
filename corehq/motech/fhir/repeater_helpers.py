@@ -1,13 +1,10 @@
-from typing import List, Tuple
-
-from requests import HTTPError, Response
+from requests import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.motech.repeater_helpers import RepeaterResponse
-from corehq.motech.requests import Requests, json_or_http_error
-from corehq.motech.value_source import CaseTriggerInfo
+from corehq.motech.requests import json_or_http_error
 
 from .const import FHIR_BUNDLE_TYPES, FHIR_VERSIONS, XMLNS_FHIR
 from .matchers import PatientMatcher
@@ -17,13 +14,12 @@ from .utils import resource_url
 
 
 def register_patients(
-    requests: Requests,
-    info_resource_list: List[tuple],
-    registration_enabled: bool,
-    search_enabled: bool,
-    repeater_id: str,
-) -> List[tuple]:
-
+    requests,
+    info_resource_list,
+    registration_enabled,
+    search_enabled,
+    repeater_id,
+):
     info_resource_list_to_send = []
     for info, resource in info_resource_list:
         if resource['resourceType'] != 'Patient':
@@ -76,10 +72,7 @@ def _check_id(patient):
         )
 
 
-def get_info_resource_list(
-    case_trigger_infos: List[CaseTriggerInfo],
-    resource_types_by_case_type: dict,
-) -> List[Tuple[CaseTriggerInfo, dict]]:
+def get_info_resource_list(case_trigger_infos, resource_types_by_case_type):
     """
     Returns pairs of CaseTriggerInfo + the FHIR resource they map to.
     """
@@ -94,12 +87,7 @@ def get_info_resource_list(
     return results
 
 
-def send_resources(
-    requests: Requests,
-    info_resources_list: List[tuple],
-    fhir_version: str,
-    repeater_id: str,
-) -> Response:
+def send_resources(requests, info_resources_list, fhir_version, repeater_id):
     if not info_resources_list:
         # Either the payload had no data to be forwarded, or resources
         # were all patients to be registered: Nothing left to send.
@@ -113,13 +101,13 @@ def send_resources(
 
 
 def send_resource(
-    requests: Requests,
-    info: CaseTriggerInfo,
-    resource: dict,
-    repeater_id: str,
+    requests,
+    info,
+    resource,
+    repeater_id,
     *,
-    raise_on_ext_id: bool = False,
-) -> Response:
+    raise_on_ext_id=False,
+):
     external_id = info.extra_fields['external_id']
     if external_id:
         endpoint = f"{resource['resourceType']}/{external_id}"
@@ -139,21 +127,14 @@ def send_resource(
     return response
 
 
-def send_bundle(
-    requests: Requests,
-    info_resources_list: List[tuple],
-    fhir_version: str,
-) -> Response:
+def send_bundle(requests, info_resources_list, fhir_version):
     entries = get_bundle_entries(info_resources_list, fhir_version)
     bundle = create_bundle(entries, bundle_type='transaction')
     response = requests.post('/', json=bundle)
     return response
 
 
-def get_bundle_entries(
-    info_resources_list: List[tuple],
-    fhir_version: str,
-) -> List[dict]:
+def get_bundle_entries(info_resources_list, fhir_version):
     fhir_version_name = dict(FHIR_VERSIONS)[fhir_version]
     entries = []
     for info, resource in info_resources_list:
@@ -182,10 +163,7 @@ def get_bundle_entries(
     return entries
 
 
-def create_bundle(
-    entries: List[dict],
-    bundle_type: str,
-) -> dict:
+def create_bundle(entries, bundle_type):
     if bundle_type not in FHIR_BUNDLE_TYPES:
         valid_values = ', '.join([repr(b) for b in FHIR_BUNDLE_TYPES])
         raise ValueError(f'Unknown FHIR Bundle type {bundle_type!r}. '

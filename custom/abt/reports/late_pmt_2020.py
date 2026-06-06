@@ -1,6 +1,5 @@
 from collections import defaultdict
 from datetime import date, datetime, timedelta
-from typing import Dict, Iterator
 
 from django.db.models import Q
 from django.utils.functional import cached_property
@@ -77,7 +76,7 @@ class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin
         )
 
     @cached_property
-    def pmts_submitted_by_date(self) -> Dict[datetime.date, set]:
+    def pmts_submitted_by_date(self):
         pmts_submitted = defaultdict(set)
         forms = iter_forms_by_xmlns_received_on(
             self.domain, INDICATORS_FORM_XMLNS,
@@ -120,11 +119,11 @@ class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin
 
 
 def iter_forms_by_xmlns_received_on(
-    domain: str,
-    xmlns: str,
-    start_datetime: datetime,
-    end_datetime: datetime,
-) -> Iterator[XFormInstance]:
+    domain,
+    xmlns,
+    start_datetime,
+    end_datetime,
+):
     """
     Iterates form submissions of a given ``xmlns`` from
     ``start_datetime`` (incl) to ``end_datetime`` (excl).
@@ -146,9 +145,7 @@ def iter_forms_by_xmlns_received_on(
     )
 
 
-def midnight_starting(
-    date_: date
-) -> datetime:
+def midnight_starting(date_):
     """
     Returns the start of the day
 
@@ -161,9 +158,7 @@ def midnight_starting(
     return datetime(date_.year, date_.month, date_.day)
 
 
-def midnight_ending(
-    date_: date
-) -> datetime:
+def midnight_ending(date_):
     """
     Returns the end of the day
 

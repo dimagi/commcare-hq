@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import List, Optional
 
 from django.conf import settings
 from django.utils.translation import gettext as _
@@ -125,11 +124,11 @@ def property_references_parent(case_property):
 
 
 def operate_on_payloads(
-    repeat_record_ids: List,
-    domain: str,
-    action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
-    task: Optional = None,
-    from_excel: bool = False,
+    repeat_record_ids,
+    domain,
+    action,  # 'resend', 'cancel' or 'requeue'
+    task=None,
+    from_excel=False,
 ):
     if not repeat_record_ids:
         return {'messages': {'errors': [_('No payloads specified')]}}

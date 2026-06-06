@@ -1,7 +1,7 @@
 import copy
+from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 from itertools import chain
-from typing import Dict, List, Optional, Union
 
 from django.db import models
 from django.forms import model_to_dict
@@ -18,7 +18,6 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.dates import DateSpan
 
-from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
@@ -124,7 +123,7 @@ class SQLDataSetMap(models.Model):
         return self.description
 
     @memoized_property
-    def ucr(self) -> Optional[ReportConfiguration]:
+    def ucr(self):
         try:
             return get_report_config_or_not_found(self.domain, self.ucr_id)
         except DocumentNotFound:
@@ -146,9 +145,7 @@ class SQLDataValueMap(models.Model):
 
 
 @quickcache(['dataset_map.domain', 'dataset_map.pk'])
-def get_info_for_columns(
-    dataset_map: Union[DataSetMap, SQLDataSetMap],
-) -> Dict[str, dict]:
+def get_info_for_columns(dataset_map):
 
     info_for_columns = {
         dvm.column: {
@@ -195,10 +192,7 @@ def _iter_datavalue_maps(dataset_map):
         return dataset_map.datavalue_maps
 
 
-def get_datavalues(
-    dataset_map: Union[DataSetMap, SQLDataSetMap],
-    ucr_row: dict,
-) -> List[dict]:
+def get_datavalues(dataset_map, ucr_row):
     """
     Given a ``ucr_row`` that looks like ... ::
 
@@ -269,10 +263,7 @@ def get_datavalues(
     return datavalues
 
 
-def parse_dataset_for_request(
-    dataset_map: Union[DataSetMap, SQLDataSetMap],
-    send_date: date
-) -> list:
+def parse_dataset_for_request(dataset_map, send_date):
     if not dataset_map.ucr:
         raise ValueError(f'UCR not found for {dataset_map!r}')
     date_filter = get_date_filter(dataset_map.ucr)
@@ -305,11 +296,7 @@ def parse_dataset_for_request(
         return [dataset]
 
 
-def evaluate_complete_date(
-    dataset_map: SQLDataSetMap,
-    dataset: dict,
-    send_date: date,
-):
+def evaluate_complete_date(dataset_map, dataset, send_date):
     if dataset_map.complete_date_option == COMPLETE_DATE_EMPTY:
         return dataset, False
 
@@ -322,10 +309,7 @@ def evaluate_complete_date(
     return dataset, True
 
 
-def group_dataset_datavalues(
-    dataset,
-    datavalues_list
-) -> list:
+def group_dataset_datavalues(dataset, datavalues_list):
     """
      The 'period' and 'orgUnit' must be specified when the 'completeDate' is specified (and on
      the same level) such that the payload obeys the following format:
@@ -363,8 +347,7 @@ def group_dataset_datavalues(
         )
 
 
-def _group_data_by_keys(data: List[dict], keys: list):
-    from collections import defaultdict
+def _group_data_by_keys(data, keys):
     datasets_dict = defaultdict(lambda: [])
 
     for row in data:
@@ -379,12 +362,7 @@ def _group_data_by_keys(data: List[dict], keys: list):
     return dict(datasets_dict)
 
 
-def get_grouped_datavalues_sets(
-    data_list: List[dict],
-    group_by_keys: list,
-    template_dataset: dict,
-) -> List[dict]:
-
+def get_grouped_datavalues_sets(data_list, group_by_keys, template_dataset):
     datasets = []
     for grouped_key, grouped_value in _group_data_by_keys(data_list, group_by_keys).items():
         dataset = copy.deepcopy(template_dataset)
@@ -398,7 +376,7 @@ def get_grouped_datavalues_sets(
     return datasets
 
 
-def get_date_range(frequency: str, send_date: date) -> DateSpan:
+def get_date_range(frequency, send_date):
     if frequency == SEND_FREQUENCY_WEEKLY:
         return get_previous_week(send_date)
     elif frequency == SEND_FREQUENCY_MONTHLY:
@@ -409,7 +387,7 @@ def get_date_range(frequency: str, send_date: date) -> DateSpan:
         raise ValueError(f'Unknown frequency {frequency!r}')
 
 
-def get_period(frequency: str, startdate: date) -> str:
+def get_period(frequency, startdate):
     if frequency == SEND_FREQUENCY_WEEKLY:
         return as_iso_week(startdate)
     elif frequency == SEND_FREQUENCY_MONTHLY:
@@ -420,20 +398,17 @@ def get_period(frequency: str, startdate: date) -> str:
         raise ValueError(f'Unknown frequency {frequency!r}')
 
 
-def as_iso_week(startdate: date) -> str:
+def as_iso_week(startdate):
     week_num = int(startdate.strftime('%W')) + 1
     return f'{startdate.year}W{week_num}'
 
 
-def as_iso_quarter(startdate: date) -> str:
+def as_iso_quarter(startdate):
     quarter = (startdate.month // 3) + 1
     return f'{startdate.year}Q{quarter}'
 
 
-def should_send_on_date(
-    dataset_map: Union[DataSetMap, SQLDataSetMap],
-    send_date: date,
-) -> bool:
+def should_send_on_date(dataset_map, send_date):
     if dataset_map.frequency == SEND_FREQUENCY_WEEKLY:
         return dataset_map.day_to_send == send_date.isoweekday()
     if dataset_map.frequency == SEND_FREQUENCY_MONTHLY:
@@ -459,7 +434,7 @@ def get_date_filter(report_config):
     return next((f for f in report_config.filters if f['type'] == 'date'), None)
 
 
-def get_previous_week(send_date: date) -> DateSpan:
+def get_previous_week(send_date):
     """
     Returns a DateSpan from last week Monday to last week Sunday
 

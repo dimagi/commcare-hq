@@ -1,5 +1,3 @@
-from typing import Optional
-
 from twilio.base import values
 from twilio.base.exceptions import TwilioRestException
 from twilio.rest import Client
@@ -100,7 +98,7 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
         msg.backend_message_id = message.sid
         msg.save()
 
-    def from_or_messaging_service_sid(self, phone_number: str) -> (Optional[str], Optional[str]):
+    def from_or_messaging_service_sid(self, phone_number):
         if self.phone_number_is_messaging_service_sid(phone_number):
             return None, phone_number
         else:

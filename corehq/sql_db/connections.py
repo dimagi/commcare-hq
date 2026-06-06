@@ -26,7 +26,7 @@ def get_db_alias_or_none(enigne_id):
         return None
 
 
-def create_engine(connection_url: str, connect_args: dict = None):
+def create_engine(connection_url, connect_args=None):
     # paramstyle='format' allows you to use column names that include the ')' character
     # otherwise queries will sometimes be misformated/error when formatting
     # https://github.com/zzzeek/sqlalchemy/blob/ff20903/lib/sqlalchemy/dialects/postgresql/psycopg2.py#L173
@@ -45,7 +45,7 @@ class SessionHelper(object):
     Shim class helper for a single connection/session factory
     """
 
-    def __init__(self, connection_url: str, connect_args: dict = None):
+    def __init__(self, connection_url, connect_args=None):
         self.url = connection_url
         self.engine = create_engine(connection_url, connect_args)
         self._session_factory = sessionmaker(bind=self.engine)

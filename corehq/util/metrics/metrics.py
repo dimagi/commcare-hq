@@ -3,7 +3,6 @@ import logging
 import re
 from abc import abstractmethod
 from collections import namedtuple
-from typing import List, Dict
 
 from corehq.util.metrics.const import ALERT_INFO
 from corehq.util.metrics.utils import bucket_value
@@ -49,20 +48,27 @@ class HqMetrics(metaclass=abc.ABCMeta):
     def initialize(self):
         pass
 
-    def counter(self, name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
+    def counter(self, name, value=1, tags=None, documentation=''):
         _enforce_prefix(name, 'commcare')
         _validate_tag_names(tags)
         self._counter(name, value, tags, documentation)
 
-    def gauge(self, name: str, value: float, tags: Dict[str, str] = None, documentation: str = '', **kwargs):
+    def gauge(self, name, value, tags=None, documentation='', **kwargs):
         _enforce_prefix(name, 'commcare')
         _validate_tag_names(tags)
         kwargs = {k: v for (k, v) in kwargs.items() if k in self.accepted_gauge_params}
         self._gauge(name, value, tags, documentation, **kwargs)
 
-    def histogram(self, name: str, value: float,
-                  bucket_tag: str, buckets: List[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
-                  tags: Dict[str, str] = None, documentation: str = ''):
+    def histogram(
+        self,
+        name,
+        value,
+        bucket_tag,
+        buckets=DEFAULT_BUCKETS,
+        bucket_unit='',
+        tags=None,
+        documentation='',
+    ):
         """Create a histogram metric. Histogram implementations differ between provider. See provider
         implementations for details.
         """
@@ -70,8 +76,14 @@ class HqMetrics(metaclass=abc.ABCMeta):
         _validate_tag_names(tags)
         self._histogram(name, value, bucket_tag, buckets, bucket_unit, tags, documentation)
 
-    def create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
-                     tags: Dict[str, str] = None, aggregation_key: str = None):
+    def create_event(
+        self,
+        title,
+        text,
+        alert_type=ALERT_INFO,
+        tags=None,
+        aggregation_key=None,
+    ):
         _validate_tag_names(tags)
         self._create_event(title, text, alert_type, tags, aggregation_key)
 
@@ -90,8 +102,14 @@ class HqMetrics(metaclass=abc.ABCMeta):
     def _histogram(self, name, value, bucket_tag, buckets, bucket_unit, tags, documentation):
         raise NotImplementedError
 
-    def _create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
-                     tags: Dict[str, str] = None, aggregation_key: str = None):
+    def _create_event(
+        self,
+        title,
+        text,
+        alert_type=ALERT_INFO,
+        tags=None,
+        aggregation_key=None,
+    ):
         """Optional API to implement"""
         pass
 
@@ -129,8 +147,14 @@ class DebugMetrics:
     def push_metrics(self):
         pass
 
-    def create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
-                     tags: Dict[str, str] = None, aggregation_key: str = None):
+    def create_event(
+        self,
+        title,
+        text,
+        alert_type=ALERT_INFO,
+        tags=None,
+        aggregation_key=None,
+    ):
         _validate_tag_names(tags)
         metrics_logger.debug('Metrics event: (%s) %s\n%s\n%s', alert_type, title, text, tags)
 
