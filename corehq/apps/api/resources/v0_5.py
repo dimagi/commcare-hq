@@ -1373,16 +1373,16 @@ class ODataFormResource(BaseODataResource):
 
 @dataclass
 class NavigationEventAuditResourceParams:
-    domain: InitVar
-    default_limit: InitVar
-    max_limit: InitVar
-    raw_params: InitVar = None
+    domain: InitVar[str]
+    default_limit: InitVar[int]
+    max_limit: InitVar[int]
+    raw_params: InitVar[QueryDict | None] = None
 
     users: list[str] = dataclasses.field(default_factory=list)
     limit: int = None
     local_timezone: str = None
     cursor: str = None
-    local_date: dict[str:str] = dataclasses.field(default_factory=dict)
+    local_date: dict[str, str] = dataclasses.field(default_factory=dict)
     cursor_local_date: str = None
     cursor_user: str = None
     UTC_start_time_start: datetime = None
