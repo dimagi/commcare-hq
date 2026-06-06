@@ -20,8 +20,8 @@ legacy_lock_check_patch = patch(
 )
 
 
-def patch_serial_task():
-    """Setup @serial_task for tests
+def patch_task_locks():
+    """Setup @concurrent_task and @serial_task for tests
 
     - Do not acquire and release locks in tests
     - Skip the legacy-key check unless a test opts in
