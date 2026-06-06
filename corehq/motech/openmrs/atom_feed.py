@@ -1,3 +1,4 @@
+# ruff: noqa: F501  # Ignore line-too-long in multi-line string
 import re
 import uuid
 from collections import defaultdict, namedtuple

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta  # noqa: F401  # Used in doctest
 
 from django.db.models import Q
 from django.utils.functional import cached_property

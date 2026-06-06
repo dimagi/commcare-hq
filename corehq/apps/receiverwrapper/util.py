@@ -174,7 +174,7 @@ def get_commcare_version_from_appversion_text(appversion_text):
     >>> get_commcare_version_from_appversion_text(u'संस्करण "2.27.8" (414593)')
     '2.27.8'
     >>> get_commcare_version_from_appversion_text(
-            ...     u'CommCare Android, आवृत्ती" 2.44.5"(452680). ॲप वि.29635 कॉमर्स आवृत्ती2.44. बिल्ड452680, रोजी तयार केले:2019-01-17'  # noqa: E501
+    ...     u'CommCare Android, आवृत्ती" 2.44.5"(452680). ॲप वि.29635 कॉमर्स आवृत्ती2.44. बिल्ड452680, रोजी तयार केले:2019-01-17'  # noqa: E501
     ... )
     '2.44.3'
     """
