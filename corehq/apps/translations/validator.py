@@ -22,7 +22,7 @@ from corehq.apps.translations.const import (
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
 from corehq.apps.translations.generators import (
     AppTranslationsGenerator,
-    Unique_ID,
+    UniqueID,
 )
 from corehq.util import ghdiff
 
@@ -108,7 +108,7 @@ class UploadedTranslationsValidator(object):
         unique_id_column_index = self._get_current_header_index(MODULES_AND_FORMS_SHEET_NAME, 'unique_id')
         type_column_index = self._get_current_header_index(MODULES_AND_FORMS_SHEET_NAME, 'Type')
         for row in all_module_and_form_details:
-            self.current_sheet_name_to_module_or_form_type_and_id[row[sheet_name_column_index]] = Unique_ID(
+            self.current_sheet_name_to_module_or_form_type_and_id[row[sheet_name_column_index]] = UniqueID(
                 row[type_column_index],
                 row[unique_id_column_index]
             )
@@ -268,7 +268,7 @@ class UploadedTranslationsValidator(object):
 
     def _set_uploaded_sheet_name_to_module_or_form_mapping(self, all_module_and_form_details):
         for row in all_module_and_form_details:
-            self.uploaded_sheet_name_to_module_or_form_type_and_id[row['menu_or_form']] = Unique_ID(
+            self.uploaded_sheet_name_to_module_or_form_type_and_id[row['menu_or_form']] = UniqueID(
                 row['Type'],
                 row['unique_id']
             )

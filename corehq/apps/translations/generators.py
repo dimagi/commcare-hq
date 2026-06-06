@@ -16,7 +16,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
-Unique_ID = namedtuple('UniqueID', 'type id')
+UniqueID = namedtuple('UniqueID', 'type id')
 HQ_MODULE_SHEET_NAME = re.compile(r'^menu(\d+)$')
 HQ_FORM_SHEET_NAME = re.compile(r'^menu(\d+)_form(\d+)$')
 POFileInfo = namedtuple("POFileInfo", "name path")
@@ -146,7 +146,7 @@ class AppTranslationsGenerator(object):
         unique_id_column_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'unique_id')
         type_column_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'Type')
         for row in all_module_and_form_details:
-            self.sheet_name_to_module_or_form_type_and_id[row[sheet_name_column_index]] = Unique_ID(
+            self.sheet_name_to_module_or_form_type_and_id[row[sheet_name_column_index]] = UniqueID(
                 row[type_column_index],
                 row[unique_id_column_index]
             )

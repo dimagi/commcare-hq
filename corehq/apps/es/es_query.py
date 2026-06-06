@@ -597,8 +597,13 @@ class ESQuerySet(object):
     def aggregations(self):
         aggregations = self.query._aggregations
         raw = self.raw.get('aggregations', {})
-        results = namedtuple('aggregation_results', [a.name for a in aggregations])
-        return results(**{a.name: a.parse_result(raw) for a in aggregations})
+        AggregationResults = namedtuple('AggregationResults', [
+            a.name for a in aggregations
+        ])
+        return AggregationResults(**{
+            a.name: a.parse_result(raw)
+            for a in aggregations
+        })
 
     def __repr__(self):
         return '{}({!r}, {!r})'.format(self.__class__.__name__, self.raw, self.query)
