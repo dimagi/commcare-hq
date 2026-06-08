@@ -273,6 +273,7 @@ class DomainMetrics(models.Model):
     mobile_workers = models.IntegerField()
     web_users = models.IntegerField()
 
+    web_users_logged_in_last_30_days = models.IntegerField()
     users_with_submission = models.IntegerField()
     users_with_web_apps_submission_in_last_30_days = models.IntegerField()
     active_mobile_workers = models.IntegerField()
