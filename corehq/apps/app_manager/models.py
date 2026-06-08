@@ -364,31 +364,6 @@ class UpdateCaseAction(FormAction):
     update = SchemaDictProperty(ConditionalCaseUpdate)
     conflicts = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
 
-    @classmethod
-    def wrap(cls, data):
-        # Can be removed after all test projects that used
-        # FORMBUILDER_SAVE_TO_CASE toggle no longer need to track
-        # legacy conflicts in update_multi
-
-        def _exclude(ccu, ccus):
-            exclude_path = ccu.get('question_path')
-            return [c for c in ccus if c['question_path'] != exclude_path]
-
-        multi = data.pop('update_multi', None)
-        if multi:
-            assert not data.get('conflicts')
-            update = data.get('update') or {}
-            if update:
-                # should never happen, indicates a bug in legacy multi logic
-                data['conflicts'] = {
-                    key: _exclude(update.get(key) or {}, items)
-                    for key, items in multi.items()
-                }
-            else:
-                data['update'] = {key: items[0] for key, items in multi.items() if items}
-                data['conflicts'] = {key: items[1:] for key, items in multi.items() if len(items) > 1}
-        return super().wrap(data)
-
 
 class PreloadAction(FormAction):
 
@@ -420,24 +395,6 @@ class OpenCaseAction(FormAction):
     name_update = SchemaProperty(ConditionalCaseUpdate)
     conflicts = SchemaListProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
-
-    @classmethod
-    def wrap(cls, data):
-        # Can be removed after all test projects that used
-        # FORMBUILDER_SAVE_TO_CASE toggle no longer need to track
-        # legacy conflicts in name_update_multi
-        multi = data.pop('name_update_multi', None)
-        if multi:
-            assert not data.get('conflicts')
-            update = data.get('name_update') or {}
-            if update and update.get('question_path'):
-                # should never happen, indicates a bug in legacy multi logic
-                exclude_path = update.get('question_path')
-                data['conflicts'] = [x for x in multi if x['question_path'] != exclude_path]
-            else:
-                data['name_update'] = multi[0]
-                data['conflicts'] = multi[1:]
-        return super().wrap(data)
 
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
