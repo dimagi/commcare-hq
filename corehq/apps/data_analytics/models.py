@@ -215,6 +215,7 @@ DOMAIN_METRICS_TO_PROPERTIES_MAP = {
     'ucrs': 'cp_n_ucr_reports',
     'usercases_modified_in_last_30_days': 'cp_n_30_day_user_cases',
     'users_with_submission': 'cp_n_users_submitted_form',
+    'users_with_web_apps_submission_in_last_30_days': 'cp_n_users_submitted_web_apps_30_days',
     'web_users': 'cp_n_web_users',
     # Feature Usage Metrics
     'has_multimedia': 'cp_has_multimedia',
@@ -272,7 +273,9 @@ class DomainMetrics(models.Model):
     mobile_workers = models.IntegerField()
     web_users = models.IntegerField()
 
+    web_users_logged_in_last_30_days = models.IntegerField()
     users_with_submission = models.IntegerField()
+    users_with_web_apps_submission_in_last_30_days = models.IntegerField()
     active_mobile_workers = models.IntegerField()
     active_mobile_workers_in_last_365_days = models.IntegerField()
     case_sharing_groups = models.IntegerField()
