@@ -67,6 +67,24 @@ class TestQuerysetToIterator(TestCase):
             [u.username for u in self.users],
         )
 
+    def test_seek_key_builds_the_cursor_not_the_sort_key(self):
+        # pk and id are the same column on User, so this divergent
+        # (sort_key, seek_key) still pages correctly -- and lets us confirm the
+        # cursor is built from the seek key ('id'), not the sort key ('pk')
+        query = User.objects.filter(last_name="Tenenbaum")
+        with patch.object(queries, '_lexicographic_greater_than',
+                          wraps=queries._lexicographic_greater_than) as build_cursor:
+            all_users = list(
+                queryset_to_iterator(query, User, limit=4, pagination_key=(('pk', 'id'),))
+            )
+
+        self.assertEqual(
+            [u.username for u in all_users],
+            [u.username for u in self.users],
+        )
+        assert build_cursor.call_args_list  # paged past the first chunk
+        assert all(call.args[0] == ('id',) for call in build_cursor.call_args_list)
+
     def test_pagination_key_pk_first(self):
         query = User.objects.filter(last_name="Tenenbaum")
 

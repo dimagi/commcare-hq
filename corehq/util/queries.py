@@ -115,6 +115,14 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False, 
     cannot be used with ordered querysets (results will be sorted by the
     ``pagination_key`` fields, by default the pk).
 
+    ``pagination_key`` is the keys to paginate by (the pk by default). Each key
+    is a field name, or a ``(sort_key, seek_key)`` pair: ``sort_key`` is used in
+    ORDER BY and read off each row to resume from; ``seek_key`` is the field
+    compared in the WHERE clause. They differ only to aim the seek at a joined
+    table's column so Postgres seeks that table's index (it won't carry an
+    inequality across a join) -- the two must hold the same value per row, e.g.
+    ``('case_id', 'case__case_id')``.
+
     Retries on transient database connection failures (bounded at ~31
     minutes total) so long-running iterations survive brief outages.
     """
@@ -122,20 +130,22 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False, 
         raise AssertionError("queryset_to_iterator does not respect ordering.  "
                              "Pass ignore_ordering=True to continue.")
 
-    queryset = queryset.order_by(*pagination_key)
+    # normalize bare keys to (sort_key, seek_key) pairs, then split into columns
+    sort_keys, seek_keys = zip(*[key if isinstance(key, tuple) else (key, key) for key in pagination_key])
+    queryset = queryset.order_by(*sort_keys)
     last_doc_values = None
     while True:
         if last_doc_values is None:
             chunk_qs = queryset
         else:
-            chunk_qs = queryset.filter(_lexicographic_greater_than(pagination_key, last_doc_values))
+            chunk_qs = queryset.filter(_lexicographic_greater_than(seek_keys, last_doc_values))
         chunk = _fetch_chunk_with_retry(chunk_qs, limit, model_cls, last_doc_values)
         if not chunk:
             return
         for doc in chunk:
             yield doc
 
-        last_doc_values = tuple(getattr(doc, field) for field in pagination_key)
+        last_doc_values = tuple(getattr(doc, key) for key in sort_keys)
 
 
 def _lexicographic_greater_than(fields, values):
