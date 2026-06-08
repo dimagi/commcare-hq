@@ -1,19 +1,39 @@
-{% extends 'hqwebapp/bootstrap5/base_section.html' %}
-{% load i18n %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n hq_shared_tags compress %}
+{% js_entry "case_search/js/endpoint_edit" %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  {% compress css %}
+    <link
+      type="text/scss"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'case_search/scss/endpoint_edit.scss' %}"
+    />
+  {% endcompress %}
+{% endblock stylesheets %}
 
 {% block page_content %}
-  {% if form.non_field_errors %}
-    <div class="alert alert-danger">
-      <ul class="mb-0">
-        {% for error in form.non_field_errors %}
-          <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-  {% endif %}
+  {% initial_page_data "endpoint_mode" endpoint_mode %}
+  {% initial_page_data "initial_name" initial_name %}
+  {% initial_page_data "initial_target_type" initial_target_type %}
+  {% initial_page_data "initial_target_name" initial_target_name %}
+  {% initial_page_data "initial_query" initial_query %}
+  {% initial_page_data "capability" capability %}
 
-  <form method="post" action="{{ post_url }}">
+  <form method="post" action="{{ post_url }}" x-data="endpointForm()" x-cloak>
     {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger" role="alert">
+        <ul class="mb-0">
+          {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
 
     {# ── Endpoint Details card ── #}
     <div class="card mb-3">
@@ -23,14 +43,18 @@
       </div>
       <div class="card-body">
         <div class="row g-3">
+          {# Name #}
           <div class="col-md-3">
-            <label class="form-label" for="name">{% trans "Name" %}</label>
+            <label for="endpoint-name" class="form-label fw-semibold"
+              >{% trans "Name" %}</label
+            >
             <input
               type="text"
-              class="form-control{% if form.name.errors %}is-invalid{% endif %}"
-              id="name"
+              id="endpoint-name"
               name="name"
-              value="{{ form.name.value }}"
+              class="form-control{% if form.name.errors %}is-invalid{% endif %}"
+              x-model="name"
+              placeholder="{% trans "Enter endpoint name" %}"
               required
             />
             {% for error in form.name.errors %}
@@ -38,22 +62,19 @@
             {% endfor %}
           </div>
 
+          {# Target Type #}
           <div class="col-md-3">
-            <label class="form-label" for="target_type"
+            <label for="target-type" class="form-label fw-semibold"
               >{% trans "Target Type" %}</label
             >
             <select
-              class="form-select{% if form.target_type.errors %}is-invalid{% endif %}"
-              id="target_type"
+              id="target-type"
               name="target_type"
+              class="form-select{% if form.target_type.errors %}is-invalid{% endif %}"
+              x-model="targetType"
             >
               {% for value, label in form.target_type.field.choices %}
-                <option
-                  value="{{ value }}"
-                  {% if form.target_type.value == value %}selected{% endif %}
-                >
-                  {{ label }}
-                </option>
+                <option value="{{ value }}">{{ label }}</option>
               {% endfor %}
             </select>
             {% for error in form.target_type.errors %}
@@ -61,39 +82,37 @@
             {% endfor %}
           </div>
 
+          {# Case Type #}
           <div class="col-md-3">
-            <label class="form-label" for="case_type"
+            <label for="case-type" class="form-label fw-semibold"
               >{% trans "Case Type" %}</label
             >
             <select
-              class="form-select{% if form.case_type.errors %}is-invalid{% endif %}"
-              id="case_type"
+              id="case-type"
               name="case_type"
+              class="form-select{% if form.case_type.errors %}is-invalid{% endif %}"
+              x-model="targetCasetype"
+              @change="onCasetypeChange()"
             >
               <option value="">{% trans "-- Select a case type --" %}</option>
-              {% for ct_name in case_type_names %}
-                <option
-                  value="{{ ct_name }}"
-                  {% if form.case_type.value == ct_name %}selected{% endif %}
-                >
-                  {{ ct_name }}
-                </option>
+              {% for ct in capability.case_types %}
+                <option value="{{ ct.name }}">{{ ct.name }}</option>
               {% endfor %}
             </select>
             {% for error in form.case_type.errors %}
               <div class="invalid-feedback">{{ error }}</div>
             {% endfor %}
           </div>
-          {% if version_display %}
+
+          {% if endpoint and endpoint.current_version %}
             <div class="col-md-3">
-              <label class="form-label" for="version"
+              <label class="form-label fw-semibold"
                 >{% trans "Version" %}</label
               >
               <input
                 type="text"
                 class="form-control-plaintext"
-                id="version"
-                value="{{ version_display }}"
+                value="v{{ endpoint.current_version.version_number }}"
                 readonly
               />
             </div>
@@ -101,8 +120,11 @@
         </div>
       </div>
     </div>
+
     {# ── Parameters card ── #}
-    <div class="card mb-3">
+    {# Hidden until query conditions can reference parameters; the textarea #}
+    {# still round-trips the stored parameters through the form POST.       #}
+    <div class="card mb-3 d-none">
       <div class="card-header">
         <i class="fa-solid fa-sliders me-1"></i>{% trans "Parameters" %}
       </div>
@@ -119,7 +141,7 @@
               name="parameters"
               rows="5"
             >
-{{ form.parameters.value }}</textarea
+{{ initial_parameters|JSON }}</textarea
             >
             {% for error in form.parameters.errors %}
               <div class="invalid-feedback">{{ error }}</div>
@@ -135,35 +157,27 @@
         <i class="fa-solid fa-filter me-1"></i>{% trans "Query" %}
       </div>
       <div class="card-body">
-        <div class="row g-3">
-          <div class="col">
-            <label class="form-label" for="query">
-              {% trans "Query" %}
-              <small class="text-muted">({% trans "JSON object" %})</small>
-            </label>
-            <textarea
-              class="form-control font-monospace{% if form.query.errors %}is-invalid{% endif %}"
-              id="query"
-              name="query"
-              rows="10"
-            >
-{{ form.query.value }}</textarea
-            >
-            {% for error in form.query.errors %}
-              <div class="invalid-feedback">{{ error }}</div>
-            {% endfor %}
-          </div>
-        </div>
+        {% include "case_search/partials/query_builder.html" %}
       </div>
     </div>
 
-    <div class="d-flex gap-2">
-      <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+    {# Hidden field populated from the query builder state on submit #}
+    <input
+      type="hidden"
+      name="query"
+      :value="JSON.stringify(strippedQuery())"
+    />
+
+    {# Actions #}
+    <div class="mt-3 d-flex gap-2">
+      <button type="submit" class="btn btn-primary btn-sm">
+        {% if endpoint_mode == 'new' %}{% trans "Create Endpoint" %}{% else %}{% trans "Save" %}{% endif %}
+      </button>
       <a
         href="{% url 'case_search_endpoints' domain %}"
-        class="btn btn-outline-secondary"
+        class="btn btn-outline-primary btn-sm"
         >{% trans "Cancel" %}</a
       >
     </div>
   </form>
-{% endblock %}
+{% endblock page_content %}
