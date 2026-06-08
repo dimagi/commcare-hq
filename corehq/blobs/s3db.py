@@ -1,3 +1,4 @@
+import logging
 from contextlib import contextmanager
 from gzip import GzipFile
 
@@ -22,6 +23,8 @@ from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 
 DEFAULT_S3_BUCKET = "blobdb"
 DEFAULT_BULK_DELETE_CHUNKSIZE = 1000
+
+log = logging.getLogger(__name__)
 
 
 class S3BlobDB(AbstractBlobDB):
@@ -131,6 +134,14 @@ class S3BlobDB(AbstractBlobDB):
             deleted_bytes = obj.content_length
             obj.delete()
             success = True
+        if not success:
+            # Blob was absent from S3. This is benign but emits
+            # commcare.blobs.requests.timing.error; log the key and call
+            # stack to identify the originating code path.
+            log.warning(
+                "S3BlobDB delete: blob not found in bucket %s, key=%s",
+                self.s3_bucket_name, key, stack_info=True,
+            )
         self.metadb.delete(key, deleted_bytes)
         return success
 
