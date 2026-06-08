@@ -9,9 +9,11 @@ from compressor.filters.css_default import CssAbsoluteFilter
 class LessFilter(CompilerFilter):
 
     def __init__(self, content, attrs, **kwargs):
-        super(LessFilter, self).__init__(content,
-                                         command='{lessc} {infile} {outfile}',
-                                         **kwargs)
+        super(LessFilter, self).__init__(
+            content,
+            command='{lessc} --math=always {infile} {outfile}',
+            **kwargs,
+        )
 
     def input(self, **kwargs):
         if "{lessc}" in self.command:
