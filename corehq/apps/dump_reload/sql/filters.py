@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 
+from django.apps import apps
 from django.db.models import Q
 
 from dimagi.utils.chunked import chunked
@@ -142,6 +143,55 @@ class MultimediaBlobMetaFilter(IDFilter):
                     )
                     self.ids_by_db[db_for_meta].append(meta.pk)
         return self.ids_by_db[db_alias]
+
+
+class _ParentIDFilter(DomainFilter):
+    """Dump child rows by the ids of their parent rows in a domain.
+
+    Subclasses set ``parent_model_label`` (the model carrying ``domain``) and
+    ``id_field`` (the natural id shared by parent and child, e.g. ``case_id``).
+    Resolving the domain's parent ids and filtering children with
+    ``<id_field>__in`` avoids joining child to parent on every page: the child
+    query uses its own ``id_field`` index and the keyset cursor can prune,
+    neither of which a join on the parent's ``domain`` allows.
+
+    Parent and child must be sharded by ``id_field`` so the ids resolved on a
+    given ``db_alias`` cover exactly the children stored on that shard.
+    """
+    parent_model_label = None
+    id_field = None
+
+    def __init__(self, chunksize=1000):
+        self.chunksize = chunksize
+
+    def get_filters(self, domain_name, db_alias=None):
+        parent_model = apps.get_model(self.parent_model_label)
+        # only(id_field) so the parent query selects just the id (plus pk), not whole rows
+        queryset = parent_model.objects.using(db_alias).filter(domain=domain_name).only(self.id_field)
+        parents = queryset_to_iterator(
+            queryset,
+            parent_model,
+            limit=DEFAULT_CHUNK_SIZE,
+            ignore_ordering=True,
+            pagination_key=(self.id_field,),
+        )
+        ids = (getattr(parent, self.id_field) for parent in parents)
+        # Fetch ids in large batches, but keep the downstream ``__in`` lists
+        # small enough to keep the child query plan tight.
+        for id_chunk in chunked(ids, self.chunksize, list):
+            yield Q(**{f'{self.id_field}__in': id_chunk})
+
+
+class CaseIDFilter(_ParentIDFilter):
+    """Dump rows whose ``case_id`` belongs to a case in the domain."""
+    parent_model_label = 'form_processor.CommCareCase'
+    id_field = 'case_id'
+
+
+class FormIDFilter(_ParentIDFilter):
+    """Dump rows whose ``form_id`` belongs to a form in the domain."""
+    parent_model_label = 'form_processor.XFormInstance'
+    id_field = 'form_id'
 
 
 class UnfilteredModelIteratorBuilder(object):
