@@ -15,10 +15,22 @@ def test_lexicographic_greater_than_single_field():
 
 
 def test_lexicographic_greater_than_multiple_fields():
-    assert _lexicographic_greater_than(('a', 'b'), (1, 2)) == Q(a__gt=1) | Q(a=1, b__gt=2)
+    # the leading a >= va is redundant but lets Postgres seek a's index
+    assert (
+        _lexicographic_greater_than(('a', 'b'), (1, 2))
+        == Q(a__gte=1) & (Q(a__gt=1) | Q(a=1, b__gt=2))
+    )
     assert (
         _lexicographic_greater_than(('a', 'b', 'c'), (1, 2, 3))
-        == Q(a__gt=1) | Q(a=1, b__gt=2) | Q(a=1, b=2, c__gt=3)
+        == Q(a__gte=1) & (Q(a__gt=1) | Q(a=1, b__gt=2) | Q(a=1, b=2, c__gt=3))
+    )
+
+
+def test_lexicographic_greater_than_relation_path():
+    # the seek key can point at a joined table's column (e.g. case__case_id)
+    assert (
+        _lexicographic_greater_than(('case__case_id', 'id'), ('abc', 5))
+        == Q(case__case_id__gte='abc') & (Q(case__case_id__gt='abc') | Q(case__case_id='abc', id__gt=5))
     )
 
 
