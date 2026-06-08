@@ -7,6 +7,7 @@ from django.test import SimpleTestCase
 from corehq import privileges
 from corehq.apps.app_manager.models import (
     Application,
+    BuildSpec,
     DetailColumn,
     MappingItem,
     Module,
@@ -319,6 +320,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
 
     def _build_calculated_enum_image_app(self):
         app = Application.new_app('domain', 'Untitled Application')
+        app.build_spec = BuildSpec(version='2.54.0', build_number=1)
         module = app.add_module(Module.new_module('Untitled Module', None))
         module.case_type = 'patient'
 
@@ -400,6 +402,35 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             expected,
             app.create_suite(),
             './detail/field/template[@form="image"]',
+        )
+
+    @flag_enabled('ENUM_CALC_VARIABLES')
+    def test_enum_calc_alt_text_defines_variable(self, *args):
+        app = self._build_calculated_enum_image_app()
+
+        expected = """
+        <partial>
+          <alt_text>
+            <text>
+              <xpath function="if($calculated_property = 'high', $khigh, if($calculated_property = 'low', $klow, ''))">
+                <variable name="khigh">
+                  <locale id="m0.case_short.case_if(stars &gt; 4, 'high', 'low')_1.alt_text.khigh"/>
+                </variable>
+                <variable name="klow">
+                  <locale id="m0.case_short.case_if(stars &gt; 4, 'high', 'low')_1.alt_text.klow"/>
+                </variable>
+                <variable name="calculated_property">
+                  <xpath function="if(stars &gt; 4, 'high', 'low')"/>
+                </variable>
+              </xpath>
+            </text>
+          </alt_text>
+        </partial>
+        """  # noqa: #501
+        self.assertXmlPartialEqual(
+            expected,
+            app.create_suite(),
+            './detail/field/alt_text',
         )
 
     def test_case_detail_alt_text_mapping(self, *args):
