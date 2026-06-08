@@ -46,7 +46,9 @@ from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_date_range,
     case_property_missing,
+    case_property_numeric_range,
     case_property_query,
+    case_property_starts_with,
     reverse_index_case_query,
     wrap_case_search_hit,
 )
@@ -118,13 +120,23 @@ def get_endpoint_results(helper, config):
         raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
     if not endpoint.is_active:
         raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
-    # TODO pass in sort
-    return get_primary_case_search_results(
+    return get_primary_case_search_endpoint_results(
         helper,
         [endpoint.target_name],
         config.criteria,
-        None,
         endpoint.current_version.query)
+
+@time_function()
+def get_primary_case_search_endpoint_results(helper, case_types, criteria, endpoint_query):
+    builder = CaseSearchEndpointQueryBuilder(helper, case_types, endpoint_query)
+    with helper.profiler.timing_context('build_query'):
+        search_es = builder.build_query(criteria)
+
+    results = search_es.run()
+    with helper.profiler.timing_context('wrap_cases'):
+        cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
+    helper.profiler.primary_count = len(cases)
+    return cases
 
 
 def get_unconfigured_endpoint_results(helper, config, app_id):
@@ -225,19 +237,17 @@ class RegistryQueryHelper(QueryHelper):
 
 class CaseSearchQueryBuilder:
     """Compiles the case search object for the view"""
-    def __init__(self, helper, case_types, endpoint_query=None):
+    def __init__(self, helper, case_types):
         self.request_domain = helper.domain
         self.case_types = case_types
-        self.endpoint_query = endpoint_query
         self.helper = helper
         self.config = helper.config
 
     def build_query(self, search_criteria, commcare_sort=None):
         search_es = self._get_initial_search_es()
         search_es = self._apply_sort(search_es, commcare_sort)
-        if not self.endpoint_query: # Will be part of initial search
-            for criteria in search_criteria:
-                search_es = self._apply_filter(search_es, criteria)
+        for criteria in search_criteria:
+            search_es = self._apply_filter(search_es, criteria)
         return search_es
 
     def _get_initial_search_es(self):
@@ -245,7 +255,6 @@ class CaseSearchQueryBuilder:
         if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
             max_results = 1500
 
-        # TODO: if self.endpoint_query parse query
         return (self.helper.get_base_queryset('main')
                 .case_type(self.case_types)
                 .is_closed(False)
@@ -362,6 +371,68 @@ class CaseSearchQueryBuilder:
             for prop in properties_config.properties
         ]
 
+class CaseSearchEndpointQueryBuilder:
+    """Compiles the case search object for the view"""
+    def __init__(
+        self,
+        helper,
+        case_types,
+        endpoint_query):
+        self.request_domain = helper.domain
+        self.case_types = case_types
+        self.endpoint_query = endpoint_query
+        self.helper = helper
+        self.config = helper.config
+
+    def build_query(self, search_criteria):
+        search_es = self._get_initial_search_es()
+        return search_es.add_query(self._parse_query(self.endpoint_query), queries.MUST)
+
+    def _get_initial_search_es(self):
+        max_results = CASE_SEARCH_MAX_RESULTS
+        if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
+            max_results = 1500
+
+        return (self.helper.get_base_queryset('main')
+                .case_type(self.case_types)
+                .is_closed(False)
+                .size(max_results))
+
+    def _parse_query(self, query):
+        if query['type'] == 'and':
+            return filters.AND(
+                *[self._parse_query(child) for child in query['children']]
+            )
+        elif query['type'] == 'or':
+            return filters.OR(
+                *[self._parse_query(child) for child in query['children']]
+            )
+        elif query['type'] == 'not':
+            return filters.NOT(
+                self._parse_query(query['child'])
+            )
+        elif query['type'] == 'component':
+            return self._parse_component(query)
+        else:
+            return None
+
+    def _parse_component(self, component):
+        field = component['field']
+        value = component['inputs']['value']['value']
+
+        component_ = component['component']
+        if component_ == 'equals':
+            return case_property_query(field, value)
+        elif component_ == 'not_equals':
+            return filters.NOT(case_property_query(field, value))
+        elif component_ == 'starts_with':
+            return case_property_starts_with(field, value)
+        elif component_ == 'before':
+            return case_property_date_range(field, lt=value)
+        elif component_ == 'after':
+            return case_property_date_range(field, gt=value)
+        elif component_ in ['gte', 'lte', 'gt', 'lt']:
+            return case_property_numeric_range(field, **{component_: value})
 
 @time_function()
 def get_and_tag_related_cases(helper, app_id, case_types, cases,

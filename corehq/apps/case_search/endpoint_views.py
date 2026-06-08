@@ -19,7 +19,7 @@ from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     CaseSearchEndpointVersion,
 )
-from corehq.apps.case_search.utils import get_primary_case_search_results, QueryHelper
+from corehq.apps.case_search.utils import QueryHelper, get_primary_case_search_endpoint_results
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import not_found
@@ -388,7 +388,7 @@ class CaseSearchEndpointTestView(BaseDomainView):
 
     def _run_query(self, case_type, query):
         helper = QueryHelper(self.domain)
-        results = get_primary_case_search_results(helper, [case_type], [], None, query)
+        results = get_primary_case_search_endpoint_results(helper, [case_type], [], query)
         # TODO: translate the filter spec into a case search ES query, run it,
         # and shape the hits into columns/rows. Dummy data for now.
         if results:
