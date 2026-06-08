@@ -1,7 +1,7 @@
 """
 Daily metric calculation functions.
 """
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 from dimagi.utils.parsing import json_format_datetime
 
@@ -27,6 +27,7 @@ from corehq.apps.domain.calculations import (
     sms_out_in_last,
 )
 from corehq.apps.es.forms import FormES
+from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import get_export_count_by_domain
 from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.groups.models import Group
@@ -76,6 +77,28 @@ def _calc_users_with_submission(ctx):
     }
     user_ids = terms.intersection(set(CouchUser.ids_by_domain(ctx.domain)))
     return len(user_ids)
+
+
+def _calc_web_users_accessed_30d(ctx):
+    """Count web users who accessed this domain in the last 30 days."""
+    target_date = date.today() - timedelta(days=30)
+    count = 0
+    es_web_users = (
+        UserES().domain(ctx.domain)
+            .web_users()
+            .source(include='user_domain_memberships')
+            .run()
+            .hits
+    )
+    for user in es_web_users:
+        if any(
+            membership['domain'] == ctx.domain
+            and membership.get('last_accessed')
+            and date.fromisoformat(membership['last_accessed']) >= target_date
+            for membership in user['user_domain_memberships']
+        ):
+            count += 1
+    return count
 
 
 def _calc_inactive_cases(ctx):
@@ -295,6 +318,8 @@ DAILY_METRICS = [
     # User Metrics
     MetricDef('web_users', 'cp_n_web_users',
               _calc_web_users, is_boolean=False, schedule='daily'),
+    MetricDef('web_users_accessed_in_last_30_days', 'cp_n_web_users_accessed_in_30_days',
+              _calc_web_users_accessed_30d, is_boolean=False, schedule='daily'),
     MetricDef('active_mobile_workers', 'cp_n_active_cc_users',
               _calc_active_mobile_workers, is_boolean=False, schedule='daily'),
     MetricDef('active_mobile_workers_in_last_365_days',

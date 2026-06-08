@@ -216,6 +216,7 @@ DOMAIN_METRICS_TO_PROPERTIES_MAP = {
     'usercases_modified_in_last_30_days': 'cp_n_30_day_user_cases',
     'users_with_submission': 'cp_n_users_submitted_form',
     'web_users': 'cp_n_web_users',
+    'web_users_accessed_in_last_30_days': 'cp_n_web_users_accessed_in_30_days',
     # Feature Usage Metrics
     'has_multimedia': 'cp_has_multimedia',
     'has_case_management': 'cp_has_case_management',
@@ -272,6 +273,7 @@ class DomainMetrics(models.Model):
     mobile_workers = models.IntegerField()
     web_users = models.IntegerField()
 
+    web_users_accessed_in_last_30_days = models.IntegerField()
     users_with_submission = models.IntegerField()
     active_mobile_workers = models.IntegerField()
     active_mobile_workers_in_last_365_days = models.IntegerField()
