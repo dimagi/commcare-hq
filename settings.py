@@ -808,6 +808,8 @@ GREENHOUSE_API_KEY = ''
 
 MAPBOX_ACCESS_TOKEN = ''
 
+USERFLOW_TOKEN = ''
+
 OPEN_EXCHANGE_RATES_API_ID = ''
 
 # import local settings if we find them
