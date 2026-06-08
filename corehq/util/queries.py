@@ -151,11 +151,19 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False, 
 def _lexicographic_greater_than(fields, values):
     """Build the tuple comparison ``(a, b, ...) > (va, vb, ...)`` as a Q
     expression, expanding it to ``a > va OR (a = va AND b > vb) OR ...``.
+
+    For a compound key it also ANDs a redundant ``a >= va`` on the leading
+    field. It's implied by the comparison, but Postgres won't derive a bound
+    from inside the OR, so the explicit ``>=`` is what lets it seek ``a``'s
+    index instead of scanning from the start -- a big win when ``a`` is a
+    joined table's indexed column, e.g. ``case__case_id``.
     """
     condition = Q()
     for index, (field, value) in enumerate(zip(fields, values)):
         ties = dict(zip(fields[:index], values[:index]))
         condition |= Q(**ties, **{f"{field}__gt": value})
+    if len(fields) > 1:
+        condition = Q(**{f"{fields[0]}__gte": values[0]}) & condition
     return condition
 
 
