@@ -9,7 +9,7 @@ from django.test import TestCase, TransactionTestCase
 from django.utils.functional import classproperty
 
 import pytest
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 from unittest import skipIf, skipUnless
 
 from casexml.apps.phone.models import SyncLogSQL

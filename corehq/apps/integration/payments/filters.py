@@ -7,6 +7,7 @@ from corehq.apps.integration.payments.const import (
     PaymentStatus,
 )
 from corehq.apps.reports.filters.base import (
+    BaseReportFilter,
     BaseSimpleFilter,
     BaseSingleOptionFilter,
 )
@@ -94,6 +95,25 @@ class FunderFilter(BaseLookupTableFilter):
     label = _('Funder')
 
 
+class CampaignWorkerRoleFilter(BaseLookupTableFilter):
+    slug = PaymentProperties.CAMPAIGN_WORKER_ROLE.value
+    label = _('Campaign worker role')
+
+
 class PhoneNumberFilter(BaseSimpleFilter):
     slug = 'phone_number'
     label = _('Phone number')
+
+
+class CaseCreatedDateRangeFilter(BaseReportFilter):
+    slug = 'date_range'
+    label = _('Case creation date range')
+    template = 'payments/filters/case_created_date_range.html'
+
+    @property
+    def filter_context(self):
+        return {
+            'startdate': self.request.GET.get('startdate', ''),
+            'enddate': self.request.GET.get('enddate', ''),
+            'timezone': self.timezone.zone,
+        }

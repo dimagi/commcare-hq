@@ -1,9 +1,36 @@
 --- 
 +++ 
-@@ -9,44 +9,44 @@
-     {% trans "Add at least one search property to activate case search for this case list" %}
+@@ -10,20 +10,20 @@
    </div>
    <form>
+     {% if request|toggle_enabled:'CASE_SEARCH_ENDPOINTS' %}
+-      <div class="panel panel-appmanager">
+-        <div class="panel-heading">
+-          <h4 class="panel-title panel-title-nolink">
++      <div class="card panel-appmanager">  {# todo B5: css-panel #}
++        <div class="card-header">
++          <h4 class="card-title card-title-nolink">
+             {% trans "Backend" %}
+           </h4>
+         </div>
+-        <div class="panel-body">
++        <div class="card-body">
+           <div class="row">
+-            <div class="col-sm-6">
++            <div class="col-md-6">
+               <label>
+                 {% trans "Case Search Endpoint" %}
+               </label>
+               <select
+-                class="form-control"
++                class="form-select"
+                 data-bind="value: searchConfig.case_search_endpoint_id"
+               >
+                 <option value>{% trans "-- None --" %}</option>
+@@ -36,44 +36,44 @@
+         </div>
+       </div>
+     {% endif %}
 -    <div class="panel panel-appmanager">
 -      <div class="panel-heading">
 -        <h4 class="panel-title panel-title-nolink">
@@ -58,7 +85,7 @@
              >
                <span class="caret"></span>
              </button>
-@@ -59,29 +59,29 @@
+@@ -86,29 +86,29 @@
          </div>
        </div>
      </div>
@@ -97,7 +124,7 @@
                >
                  <input
                    class="form-control"
-@@ -95,7 +95,7 @@
+@@ -122,7 +122,7 @@
                    {% trans "A property is not allowed both here and Search Properties. Please remove from one of the lists" %}
                  </div>
                </td>
@@ -106,7 +133,7 @@
                  <textarea
                    class="form-control vertical-resize"
                    rows="1"
-@@ -103,9 +103,9 @@
+@@ -130,9 +130,9 @@
                    spellcheck="false"
                  ></textarea>
                </td>
@@ -118,7 +145,7 @@
                    class="fa fa-remove"
                    data-bind="click: $parent.removeDefaultProperty"
                  ></i>
-@@ -116,7 +116,7 @@
+@@ -143,7 +143,7 @@
          <p>
            <button
              type="button"
@@ -127,7 +154,7 @@
              data-bind="click: addDefaultProperty"
            >
              <i class="fa fa-plus"></i> {% trans "Add default search property" %}
-@@ -125,13 +125,13 @@
+@@ -152,13 +152,13 @@
        </div>
      </div>
      {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
@@ -145,7 +172,7 @@
            <p>
              {% trans "Sort search results by case property before filtering. These will affect the priority in which results are returned and are hidden from the user." %}
            </p>
-@@ -153,7 +153,7 @@
+@@ -180,7 +180,7 @@
                  <td>
                    <i class="grip fa-solid fa-up-down icon-blue"></i>
                  </td>
@@ -154,7 +181,7 @@
                    <input
                      class="form-control"
                      type="text"
-@@ -161,14 +161,14 @@
+@@ -188,14 +188,14 @@
                    />
                  </td>
                  <td>
@@ -171,7 +198,7 @@
                      <option value="ascending">{% trans "Ascending" %}</option>
                      <option value="descending">{% trans "Descending" %}</option>
                    </select>
-@@ -181,9 +181,9 @@
+@@ -208,9 +208,9 @@
                </tr>
              </tbody>
            </table>
@@ -183,7 +210,7 @@
                data-bind="click: addCustomSortProperty"
              >
                <i class="fa fa-plus"></i>
-@@ -193,19 +193,19 @@
+@@ -220,19 +220,19 @@
          </div>
        </div>
      {% endif %}
@@ -210,7 +237,7 @@
                    for="search-workflow"
                    data-bind="hidden: restrictWorkflowForDataRegistry"
                  >
-@@ -218,7 +218,7 @@
+@@ -245,7 +245,7 @@
                    </span>
                  </label>
                  <label
@@ -219,7 +246,7 @@
                    for="search-workflow"
                    data-bind="visible: restrictWorkflowForDataRegistry"
                  >
-@@ -231,7 +231,7 @@
+@@ -258,7 +258,7 @@
                    </span>
                  </label>
                  <div class="{% css_field_class %}">
@@ -228,7 +255,7 @@
                      class="form-control"
                      data-bind="value: workflow"
                      id="search-workflow"
-@@ -257,10 +257,10 @@
+@@ -284,10 +284,10 @@
            </div>
            {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
              <div
@@ -241,7 +268,7 @@
                  {% trans "Make search input available after search" %}
                  <span
                    class="hq-help-template"
-@@ -269,9 +269,9 @@
+@@ -296,9 +296,9 @@
                  >
                  </span>
                </label>
@@ -253,7 +280,7 @@
                    <input
                      type="hidden"
                      name="search-input"
-@@ -283,8 +283,8 @@
+@@ -310,8 +310,8 @@
                  </p>
                </div>
              </div>
@@ -264,7 +291,7 @@
                  {% trans "Search Input Instance Name" %}
                  <span
                    class="hq-help-template"
-@@ -304,16 +304,16 @@
+@@ -331,16 +331,16 @@
              </div>
            {% endif %}
            {% if request|toggle_enabled:'SYNC_SEARCH_CASE_CLAIM' %}
@@ -284,7 +311,7 @@
                  >
                  </span>
                </label>
-@@ -321,10 +321,10 @@
+@@ -348,10 +348,10 @@
                  {% input_trans module.search_config.title_label langs input_name='title_label' input_id='title_label' data_bind="value: title_label" %}
                </div>
              </div>
@@ -297,7 +324,7 @@
                >
                  {% trans "Search Screen Subtitle" %}
                  <span
-@@ -339,10 +339,10 @@
+@@ -366,10 +366,10 @@
                </div>
              </div>
            {% endif %}
@@ -310,7 +337,7 @@
              >
                {% trans "Display Condition" %}
                <span
-@@ -368,10 +368,10 @@
+@@ -395,10 +395,10 @@
                ></textarea>
              </div>
            </div>
@@ -323,7 +350,7 @@
              >
                {% trans "Don't search cases owned by the following ids" %}
                <span
-@@ -404,10 +404,10 @@
+@@ -431,10 +431,10 @@
              </div>
            </div>
            {% if data_registry_enabled %}
@@ -336,7 +363,7 @@
                >
                  {% trans "Data Registry" %}
                  <span
-@@ -418,7 +418,7 @@
+@@ -445,7 +445,7 @@
                  </span>
                </label>
                <div class="{% css_field_class %}">
@@ -345,7 +372,7 @@
                    class="form-control"
                    id="data-registry"
                    data-bind="value: data_registry"
-@@ -432,15 +432,15 @@
+@@ -459,15 +459,15 @@
                  </select>
                </div>
              </div>
@@ -364,7 +391,7 @@
                    class="form-control"
                    data-bind="value: data_registry_workflow"
                  >
-@@ -451,12 +451,12 @@
+@@ -478,12 +478,12 @@
                </div>
              </div>
              <div
@@ -379,7 +406,7 @@
                >
                  {% trans "Load Additional Data Registry Cases" %}
                  <span
-@@ -478,8 +478,8 @@
+@@ -505,8 +505,8 @@
                      data-bind="visible: additional_registry_cases().length > 0"
                    >
                      <tr>
@@ -390,7 +417,7 @@
                      </tr>
                    </thead>
                    <tbody
-@@ -501,7 +501,7 @@
+@@ -528,7 +528,7 @@
                        </td>
                        <td>
                          <i
@@ -399,7 +426,7 @@
                            class="fa fa-remove"
                            data-bind="click: $parent.removeRegistryQuery"
                          ></i>
-@@ -511,7 +511,7 @@
+@@ -538,7 +538,7 @@
                  </table>
                  <button
                    type="button"
@@ -408,7 +435,7 @@
                    data-bind="click: addRegistryQuery"
                  >
                    <i class="fa fa-plus"></i>
-@@ -521,10 +521,10 @@
+@@ -548,10 +548,10 @@
              </div>
            {% endif %}
            {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
@@ -421,7 +448,7 @@
                >
                  {% trans "Case property with additional case id to add to results" %}
                  <span
-@@ -554,15 +554,15 @@
+@@ -581,15 +581,15 @@
              </div>
            {% endif %}
            {% if request|toggle_enabled:'CASE_SEARCH_RELATED_LOOKUPS' %}
@@ -441,7 +468,7 @@
                        data-bind="checked: include_all_related_cases"
                      />
                    </label>
-@@ -571,18 +571,18 @@
+@@ -598,18 +598,18 @@
              </div>
            {% endif %}
            {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}

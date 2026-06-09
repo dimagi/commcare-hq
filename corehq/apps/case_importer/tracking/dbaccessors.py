@@ -10,7 +10,7 @@ MAX_RECENT_UPLOADS = 10000
 
 
 def get_case_upload_records(domain, user, limit, skip=0, query=''):
-    query_set = CaseUploadRecord.objects.filter(domain=domain)
+    query_set = CaseUploadRecord.objects.filter(domain=domain, is_hidden=False)
     if query:
         query_set = query_set.filter(
             Q(upload_file_meta__filename__icontains=query)
@@ -22,7 +22,7 @@ def get_case_upload_records(domain, user, limit, skip=0, query=''):
 
 
 def get_case_upload_record_count(domain, user):
-    query_set = CaseUploadRecord.objects.filter(domain=domain)
+    query_set = CaseUploadRecord.objects.filter(domain=domain, is_hidden=False)
     if not user.has_permission(domain, 'access_all_locations'):
         query_set = query_set.filter(couch_user_id=user._id)
     return min(MAX_RECENT_UPLOADS, query_set.count())

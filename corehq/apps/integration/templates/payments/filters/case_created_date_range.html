@@ -1,0 +1,21 @@
+{% extends 'reports/filters/bootstrap5/base.html' %}
+{% load i18n %}
+{% block filter_content %}
+  <div
+    x-data="caseCreatedDateRangeFilter('{{ startdate|escapejs }}', '{{ enddate|escapejs }}')"
+  >
+    <input
+      type="text"
+      x-ref="picker"
+      class="form-control"
+      placeholder="{% trans 'Show All Dates' %}"
+    />
+    <input type="hidden" name="startdate" :value="startdate" />
+    <input type="hidden" name="enddate" :value="enddate" />
+  </div>
+  {% if timezone %}
+    <p class="help-block mt-1">
+      {% blocktrans %}This report's timezone is {{ timezone }}.{% endblocktrans %}
+    </p>
+  {% endif %}
+{% endblock %}

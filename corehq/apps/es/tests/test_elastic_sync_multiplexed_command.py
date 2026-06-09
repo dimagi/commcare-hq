@@ -361,8 +361,7 @@ class TestCopyCheckpointsBeforeIndexSwap(TestCase):
 
             # Save a case and propogate the changes to the pillow
             with process_pillow_changes(case_pillow):
-                with process_pillow_changes('DefaultChangeFeedPillow'):
-                    create_and_save_a_case(domain, case_id=uuid.uuid4().hex, case_name='test case')
+                create_and_save_a_case(domain, case_id=uuid.uuid4().hex, case_name='test case')
 
             # Save the checkpoints after case is processed
             updated_checkpoints = case_pillow.checkpoint.get_current_sequence_as_dict()

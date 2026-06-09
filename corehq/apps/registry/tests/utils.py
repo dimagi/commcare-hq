@@ -1,7 +1,7 @@
 import uuid
 
 from attr import attrs, attrib
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from corehq.apps.registry.models import DataRegistry
 

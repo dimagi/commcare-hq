@@ -53,14 +53,16 @@ class CouchDataDumper(DataDumper):
         return stats
 
     def _dump_docs(self, doc_class, doc_ids, output_stream):
-        model_label = '{}.{}'.format(doc_class._meta.app_label, doc_class.__name__)
+        model_label = f'{doc_class._meta.app_label}.{doc_class.__name__}'
         count = 0
-        couch_db = doc_class.get_db()
-        for doc in iter_docs(couch_db, doc_ids, chunksize=500):
-            count += 1
-            output_stream.write(json.dumps(doc))
-            output_stream.write('\n')
-        self.stdout.write('Dumped {} {}\n'.format(count, model_label))
+        with self.timer.measure(model_label):
+            couch_db = doc_class.get_db()
+            for doc in iter_docs(couch_db, doc_ids, chunksize=500):
+                count += 1
+                self.timer.tick()
+                output_stream.write(json.dumps(doc))
+                output_stream.write('\n')
+        self.stdout.write(f'Dumped {count} {model_label}\n')
         return Counter({model_label: count})
 
 
@@ -88,7 +90,7 @@ class ToggleDumper(DataDumper):
             output_stream.write(json.dumps(toggle))
             output_stream.write('\n')
 
-        self.stdout.write('Dumped {} Toggles\n'.format(count))
+        self.stdout.write(f'Dumped {count} Toggles\n')
         return Counter({'Toggle': count})
 
 
@@ -126,10 +128,10 @@ class DomainDumper(DataDumper):
         from corehq.apps.domain.models import Domain
         domain_obj = Domain.get_by_name(self.domain, strict=True)
         if not domain_obj:
-            raise DomainDumpError("Domain not found: {}".format(self.domain))
+            raise DomainDumpError(f"Domain not found: {self.domain}")
 
         json.dump(domain_obj.to_json(), output_stream)
         output_stream.write('\n')
 
-        self.stdout.write('Dumping {} Domain\n'.format(1))
+        self.stdout.write('Dumping 1 Domain\n')
         return Counter({'Domain': 1})

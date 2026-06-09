@@ -82,6 +82,7 @@ from corehq.apps.case_search.const import COMMCARE_PROJECT, EXCLUDE_RELATED_CASE
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
+    CASE_SEARCH_ENDPOINT_ID_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY,
     CASE_SEARCH_SORT_KEY,
@@ -302,6 +303,16 @@ class RemoteRequestFactory(object):
                 QueryData(
                     key=CASE_SEARCH_SORT_KEY,
                     ref=f"'{','.join(refs)}'",
+                )
+            )
+        if (
+            toggles.CASE_SEARCH_ENDPOINTS.enabled(self.app.domain)
+            and self.module.search_config.case_search_endpoint_id
+        ):
+            datums.append(
+                QueryData(
+                    key=CASE_SEARCH_ENDPOINT_ID_KEY,
+                    ref=f"'{self.module.search_config.case_search_endpoint_id}'",
                 )
             )
         if module_uses_inline_search_with_parent_relationship_parent_select(self.module):

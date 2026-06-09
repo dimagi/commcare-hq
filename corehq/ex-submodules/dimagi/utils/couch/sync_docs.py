@@ -2,7 +2,6 @@ import logging
 import os
 from collections import namedtuple
 
-import six
 from requests.exceptions import HTTPError
 
 from django.conf import settings
@@ -47,7 +46,7 @@ def index_design_docs(db, docid, design_name, wait=True, expect_views=True):
                 else:
                     list(db.view(view, limit=0, stale=settings.COUCH_STALE_QUERY))
             except HTTPError as e:
-                if 'timeout' not in six.text_type(e) and e.response.status_code != 504:
+                if 'timeout' not in str(e) and e.response.status_code != 504:
                     raise
             else:
                 break

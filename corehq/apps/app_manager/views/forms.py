@@ -329,10 +329,7 @@ def _locked_paths_to_protect(request, domain, form):
     """Set of locked question paths whose case-property mappings must be
     preserved on this request, or empty set if the feature is off.
     """
-    if not (
-        domain_has_privilege(domain, "locked_admin_questions")
-        and toggles.LOCKED_ADMIN_QUESTIONS.enabled_for_request(request)
-    ):
+    if not domain_has_privilege(domain, "locked_admin_questions"):
         return set()
     return form.wrapped_xform().locked_question_paths
 
@@ -836,10 +833,7 @@ def get_form_questions(request, domain, app_id):
         lang, langs = get_langs(request, app)
     except FormNotFoundException:
         raise Http404()
-    include_locked_status = (
-        domain_has_privilege(domain, "locked_admin_questions")
-        and toggles.LOCKED_ADMIN_QUESTIONS.enabled_for_request(request)
-    )
+    include_locked_status = domain_has_privilege(domain, "locked_admin_questions")
     xform_questions = form.get_questions(langs, include_triggers=True, include_locked_status=include_locked_status)
     return json_response(xform_questions)
 
@@ -921,10 +915,7 @@ def get_form_view_context(
             )
 
         try:
-            include_locked_status = (
-                domain_has_privilege(domain, "locked_admin_questions")
-                and toggles.LOCKED_ADMIN_QUESTIONS.enabled_for_request(request)
-            )
+            include_locked_status = domain_has_privilege(domain, "locked_admin_questions")
             xform_questions = xform.get_questions(
                 langs, include_triggers=True, include_locked_status=include_locked_status
             )
@@ -1138,10 +1129,7 @@ def get_form_view_context(
 
 
 def _allow_xform_upload(request, domain, has_locked_questions):
-    if not (
-        domain_has_privilege(domain, "locked_admin_questions")
-        and toggles.LOCKED_ADMIN_QUESTIONS.enabled_for_request(request)
-    ):
+    if not domain_has_privilege(domain, "locked_admin_questions"):
         return True
     if request.couch_user.can_edit_locked_questions_in_apps(domain):
         return True

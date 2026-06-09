@@ -1,6 +1,5 @@
 import pytest
 from django.test import override_settings
-from nose.tools import assert_equal, assert_in
 
 from corehq.sql_db import check_standby_configs
 
@@ -60,7 +59,7 @@ def test_check_standby_configs(config, is_error):
     with override_settings(**settings):
         errors = check_standby_configs(None)
         if is_error:
-            assert_equal(1, len(errors))
-            assert_in('settings.REPORTING_DATABASES.db_A', errors[0].msg)
+            assert 1 == len(errors)
+            assert 'settings.REPORTING_DATABASES.db_A' in errors[0].msg
         else:
-            assert_equal(0, len(errors))
+            assert 0 == len(errors)

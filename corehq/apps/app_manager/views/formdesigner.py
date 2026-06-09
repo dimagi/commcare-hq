@@ -324,10 +324,7 @@ def _get_vellum_plugins(domain, form, module, options):
         vellum_plugins.append("saveToCase")
     if toggles.COMMCARE_CONNECT.enabled(domain):
         vellum_plugins.append("commcareConnect")
-    if (
-        toggles.LOCKED_ADMIN_QUESTIONS.enabled(domain, namespace=toggles.NAMESPACE_DOMAIN)
-        and domain_has_privilege(domain, privileges.LOCKED_ADMIN_QUESTIONS)
-    ):
+    if domain_has_privilege(domain, privileges.LOCKED_ADMIN_QUESTIONS):
         vellum_plugins.append("lock")
 
     form_uses_case = (

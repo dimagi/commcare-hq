@@ -346,6 +346,8 @@ msgstr "बिलिंग खाता"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/builds/templates/builds/all.html
 #: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
@@ -468,6 +470,7 @@ msgstr "%s सदस्यता"
 #: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
@@ -649,6 +652,8 @@ msgstr "इस नई भूमिका के लिए एक नाम आ�
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/forms.py corehq/apps/app_manager/models.py
 #: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/users/user_data.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
 #: corehq/apps/data_cleaning/utils/cases.py
@@ -1203,10 +1208,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/toggle_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/confirm_delete_app.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/toggle_diff_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap3/form_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap3/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap5/form_link.html
@@ -1216,6 +1219,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -4632,8 +4637,7 @@ msgstr ""
 
 #: corehq/apps/accounting/user_text.py
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
@@ -5175,6 +5179,7 @@ msgstr "HAR फ़ाइल से वर्कफ़्लो भरें"
 #: corehq/apps/app_execution/forms.py
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
@@ -5290,11 +5295,11 @@ msgstr ""
 
 #: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
@@ -5679,8 +5684,7 @@ msgid ""
 msgstr "नई केस सूची जोड़ते समय, पंजीकरण और फॉलोअप फॉर्म शामिल न करें।"
 
 #: corehq/apps/app_manager/add_ons.py
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
 #: corehq/apps/enterprise/enterprise.py
 msgid "Case Management"
 msgstr "केस प्रबंधन"
@@ -5957,8 +5961,7 @@ msgstr "एप्लिकेशन कॉपी करें"
 #: corehq/apps/app_manager/forms.py
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/toggle_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/toggle_diff_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Copy"
 msgstr "कॉपी करें"
@@ -7183,10 +7186,8 @@ msgid "Purge Frequency"
 msgstr "पर्ज आवृत्ति"
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_property.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_property.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
@@ -7795,10 +7796,9 @@ msgid "Release Mode"
 msgstr "रिलीज़ मोड"
 
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
@@ -7937,156 +7937,6 @@ msgstr ""
 " यह उन जानकारियों के लिए उपयोगी है जिनके लिए आपको बाद में फॉलोअप करने की "
 "आवश्यकता नहीं है। "
 
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "Edit Form"
-msgstr "फॉर्म संपादित करें"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "Enter form description here"
-msgstr "यहाँ फॉर्म का विवरण दर्ज करें"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "User Properties"
-msgstr "यूज़र प्रॉपर्टीज़"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/enable_schedule.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/enable_schedule.html
-msgid "Visit Scheduler"
-msgstr "विज़िट शेड्यूलर"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid ""
-"We were unable to validate your form due an error on the server. Proceed "
-"with caution."
-msgstr ""
-"सर्वर पर त्रुटि के कारण हम आपके फॉर्म को सत्यापित करने में असमर्थ हैं। "
-"सावधानीपूर्वक आगे बढ़ें।"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "You are viewing a shadow form, therefore:"
-msgstr "आप एक शैडो फॉर्म देख रहे हैं, इसलिए:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "You will be unable to add \"Open case\" action"
-msgstr "आप \"ओपन केस\" एक्शन नहीं जोड़ पाएंगे"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "Load/Update actions will be \"merged\" with the source form actions"
-msgstr "लोड/अपडेट एक्शन स्रोत फॉर्म एक्शन के साथ \"मर्ज\" किए जाएंगे"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid ""
-"Every case tag in the source form load/update action configuration must "
-"appear in this configuration"
-msgstr ""
-"स्रोत फॉर्म लोड/अपडेट एक्शन कॉन्फ़िगरेशन में हर केस टैग इस कॉन्फ़िगरेशन में "
-"भी होना चाहिए"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "You are not allowed to specify load or save case properties"
-msgstr "आप यहाँ लोड या सेव केस प्रॉपर्टीज़ निर्दिष्ट करने की अनुमति नहीं है"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid ""
-"The load and save case property behaviors specified in the shadow source "
-"form actions will be used for the actions with matching case tags specified "
-"here."
-msgstr ""
-"शैडो स्रोत फॉर्म एक्शन में निर्दिष्ट लोड और सेव केस प्रॉपर्टी व्यवहार यहाँ "
-"निर्दिष्ट मिलते-जुलते केस टैग वाले एक्शन के लिए उपयोग किए जाएंगे।"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "You are not allowed to specify case closures here"
-msgstr "आप यहाँ केस क्लोजर निर्दिष्ट करने की अनुमति नहीं है"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid ""
-"There are errors in your form. Fix your form in order to view and edit Case "
-"Management."
-msgstr ""
-"आपके फॉर्म में त्रुटियाँ हैं। केस प्रबंधन देखने और संपादित करने के लिए अपने "
-"फॉर्म को ठीक करें।"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "Add questions to your form to make use of case management."
-msgstr "केस प्रबंधन का उपयोग करने के लिए अपने फॉर्म में प्रश्न जोड़ें।"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid ""
-"\n"
-"                        The User Properties feature is no longer available\n"
-"                        because of the change in your CommCare subscription.\n"
-"                        Although currently-deployed applications will still\n"
-"                        function properly, it will not be possible to update or\n"
-"                        redeploy them unless the User Properties functionality\n"
-"                        is removed, or you upgrade your CommCare subscription.\n"
-"                      "
-msgstr ""
-"\n"
-"                        यूज़र प्रॉपर्टीज़ सुविधा अब उपलब्ध नहीं है\n"
-"                        क्योंकि आपकी CommCare सदस्यता में बदलाव हुआ है।\n"
-"                        हालाँकि वर्तमान में डिप्लॉय किए गए ऐप्लिकेशन सही\n"
-"                        तरीके से काम करेंगे, लेकिन जब तक यूज़र प्रॉपर्टीज़\n"
-"                        फ़ंक्शनलिटी हटाई नहीं जाती या आप अपनी CommCare सदस्यता\n"
-"                        अपग्रेड नहीं करते, तब तक उन्हें अपडेट या फिर से डिप्लॉय\n"
-"                        करना संभव नहीं होगा।\n"
-"                      "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid ""
-"\n"
-"                        WARNING: By clicking \"Remove User Properties\" you will\n"
-"                        lose User Properties functionality if you redeploy your\n"
-"                        application. However, you will still be able to see all\n"
-"                        previously collected data.\n"
-"                      "
-msgstr ""
-"\n"
-"                        चेतावनी: \"यूज़र प्रॉपर्टीज़ हटाएँ\" पर क्लिक करने से\n"
-"                        यदि आप अपना ऐप्लिकेशन फिर से डिप्लॉय करते हैं तो यूज़र\n"
-"                        प्रॉपर्टीज़ फ़ंक्शनलिटी खो जाएगी। हालाँकि, आप अब भी\n"
-"                        पहले से एकत्रित सभी डेटा देख सकेंगे।\n"
-"                      "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-#: corehq/apps/locations/templates/locations/downgrade_locations.html
-msgid "Change your subscription"
-msgstr "अपनी सदस्यता बदलें"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "Remove User Properties"
-msgstr "यूज़र प्रॉपर्टीज़ हटाएँ"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid ""
-"You have not created a form yet. Create a form in order to view and edit "
-"User Properties."
-msgstr ""
-"आपने अभी तक कोई फॉर्म नहीं बनाया है। यूज़र प्रॉपर्टीज़ देखने और संपादित करने"
-" के लिए एक फॉर्म बनाएं।"
-
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
 msgid "Menu Settings"
@@ -8108,6 +7958,14 @@ msgstr "फ़िल्टर जोड़ें"
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
 msgid "This data will not be shown for case search results."
 msgstr "यह डेटा केस खोज परिणामों के लिए नहीं दिखाया जाएगा।"
+
+#: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/enable_schedule.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/enable_schedule.html
+msgid "Visit Scheduler"
+msgstr "विज़िट शेड्यूलर"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/no_longer_supported.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/no_longer_supported.html
@@ -8144,8 +8002,7 @@ msgstr "अपने फ़ोन पर नीचे दी गई छवि �
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/odk_install.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
@@ -8195,8 +8052,7 @@ msgstr "CommCare इंस्टॉल करें"
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/define_case_type_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/define_case_type_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_view_modals.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_view_modals.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_view_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_module_overwrite.html
@@ -8204,6 +8060,7 @@ msgstr "CommCare इंस्टॉल करें"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -8343,10 +8200,8 @@ msgid "Problems:"
 msgstr "समस्याएँ:"
 
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 #: corehq/apps/case_importer/templates/case_importer/excel_fields.html
@@ -8453,6 +8308,129 @@ msgstr ""
 "\n"
 "    परिवर्तन - संस्करण %(first_version)s बनाम संस्करण %(second_version)s\n"
 "  "
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "Edit Form"
+msgstr "फॉर्म संपादित करें"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "Enter form description here"
+msgstr "यहाँ फॉर्म का विवरण दर्ज करें"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "User Properties"
+msgstr "यूज़र प्रॉपर्टीज़"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid ""
+"We were unable to validate your form due an error on the server. Proceed "
+"with caution."
+msgstr ""
+"सर्वर पर त्रुटि के कारण हम आपके फॉर्म को सत्यापित करने में असमर्थ हैं। "
+"सावधानीपूर्वक आगे बढ़ें।"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "You are viewing a shadow form, therefore:"
+msgstr "आप एक शैडो फॉर्म देख रहे हैं, इसलिए:"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "You will be unable to add \"Open case\" action"
+msgstr "आप \"ओपन केस\" एक्शन नहीं जोड़ पाएंगे"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "Load/Update actions will be \"merged\" with the source form actions"
+msgstr "लोड/अपडेट एक्शन स्रोत फॉर्म एक्शन के साथ \"मर्ज\" किए जाएंगे"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid ""
+"Every case tag in the source form load/update action configuration must "
+"appear in this configuration"
+msgstr ""
+"स्रोत फॉर्म लोड/अपडेट एक्शन कॉन्फ़िगरेशन में हर केस टैग इस कॉन्फ़िगरेशन में "
+"भी होना चाहिए"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "You are not allowed to specify load or save case properties"
+msgstr "आप यहाँ लोड या सेव केस प्रॉपर्टीज़ निर्दिष्ट करने की अनुमति नहीं है"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid ""
+"The load and save case property behaviors specified in the shadow source "
+"form actions will be used for the actions with matching case tags specified "
+"here."
+msgstr ""
+"शैडो स्रोत फॉर्म एक्शन में निर्दिष्ट लोड और सेव केस प्रॉपर्टी व्यवहार यहाँ "
+"निर्दिष्ट मिलते-जुलते केस टैग वाले एक्शन के लिए उपयोग किए जाएंगे।"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "You are not allowed to specify case closures here"
+msgstr "आप यहाँ केस क्लोजर निर्दिष्ट करने की अनुमति नहीं है"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid ""
+"There are errors in your form. Fix your form in order to view and edit Case "
+"Management."
+msgstr ""
+"आपके फॉर्म में त्रुटियाँ हैं। केस प्रबंधन देखने और संपादित करने के लिए अपने "
+"फॉर्म को ठीक करें।"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "Add questions to your form to make use of case management."
+msgstr "केस प्रबंधन का उपयोग करने के लिए अपने फॉर्म में प्रश्न जोड़ें।"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid ""
+"\n"
+"                        The User Properties feature is no longer available\n"
+"                        because of the change in your CommCare subscription.\n"
+"                        Although currently-deployed applications will still\n"
+"                        function properly, it will not be possible to update or\n"
+"                        redeploy them unless the User Properties functionality\n"
+"                        is removed, or you upgrade your CommCare subscription.\n"
+"                      "
+msgstr ""
+"\n"
+"                        यूज़र प्रॉपर्टीज़ सुविधा अब उपलब्ध नहीं है\n"
+"                        क्योंकि आपकी CommCare सदस्यता में बदलाव हुआ है।\n"
+"                        हालाँकि वर्तमान में डिप्लॉय किए गए ऐप्लिकेशन सही\n"
+"                        तरीके से काम करेंगे, लेकिन जब तक यूज़र प्रॉपर्टीज़\n"
+"                        फ़ंक्शनलिटी हटाई नहीं जाती या आप अपनी CommCare सदस्यता\n"
+"                        अपग्रेड नहीं करते, तब तक उन्हें अपडेट या फिर से डिप्लॉय\n"
+"                        करना संभव नहीं होगा।\n"
+"                      "
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid ""
+"\n"
+"                        WARNING: By clicking \"Remove User Properties\" you will\n"
+"                        lose User Properties functionality if you redeploy your\n"
+"                        application. However, you will still be able to see all\n"
+"                        previously collected data.\n"
+"                      "
+msgstr ""
+"\n"
+"                        चेतावनी: \"यूज़र प्रॉपर्टीज़ हटाएँ\" पर क्लिक करने से\n"
+"                        यदि आप अपना ऐप्लिकेशन फिर से डिप्लॉय करते हैं तो यूज़र\n"
+"                        प्रॉपर्टीज़ फ़ंक्शनलिटी खो जाएगी। हालाँकि, आप अब भी\n"
+"                        पहले से एकत्रित सभी डेटा देख सकेंगे।\n"
+"                      "
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+#: corehq/apps/locations/templates/locations/downgrade_locations.html
+msgid "Change your subscription"
+msgstr "अपनी सदस्यता बदलें"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "Remove User Properties"
+msgstr "यूज़र प्रॉपर्टीज़ हटाएँ"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid ""
+"You have not created a form yet. Create a form in order to view and edit "
+"User Properties."
+msgstr ""
+"आपने अभी तक कोई फॉर्म नहीं बनाया है। यूज़र प्रॉपर्टीज़ देखने और संपादित करने"
+" के लिए एक फॉर्म बनाएं।"
 
 #: corehq/apps/app_manager/templates/app_manager/languages.html
 #: corehq/apps/sms/templates/sms/languages.html
@@ -9698,8 +9676,7 @@ msgstr "XPath फ़ंक्शन"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/define_case_type_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/define_case_type_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap3/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap5/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/module_options/bootstrap3/module_option_case.html
@@ -9716,14 +9693,15 @@ msgstr "कृपया अपनी केस सूची के लिए ए
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/define_case_type_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/define_case_type_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_case_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_case_type.html
 #: corehq/apps/campaign/forms.py
 #: corehq/apps/campaign/templates/campaign/partials/dashboard_gauge.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/data_cleaning/forms/start_session.py
 #: corehq/apps/data_cleaning/tables.py
 #: corehq/apps/data_cleaning/utils/cases.py
@@ -9885,10 +9863,8 @@ msgstr "बदलें"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_view_modals.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_view_modals.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_view_modals.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
@@ -9904,6 +9880,7 @@ msgid "Set Path"
 msgstr "पथ सेट करें"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/nav_menu_media_single_type.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #, python-format
 msgid ""
 "\n"
@@ -9915,6 +9892,7 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/nav_menu_media_single_type.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #, python-format
 msgid ""
 "\n"
@@ -10039,29 +10017,6 @@ msgstr ""
 "          >.\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
-#, python-format
-msgid ""
-"\n"
-"              Use this %(badge)s for all languages\n"
-"            "
-msgstr ""
-"\n"
-"              सभी भाषाओं के लिए इस %(badge)s का उपयोग करें\n"
-"            "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
-#, python-format
-msgid ""
-"\n"
-"            This %(badge)s is linked to the default language, and can only be\n"
-"            modified there.\n"
-"          "
-msgstr ""
-"\n"
-"            यह %(badge)s डिफ़ॉल्ट भाषा से जुड़ा है, और केवल वहीं संशोधित किया जा सकता है।\n"
-"          "
-
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
 msgid "Select a language."
 msgstr "एक भाषा चुनें।"
@@ -10117,8 +10072,7 @@ msgid "Default Values"
 msgstr "डिफ़ॉल्ट मान"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 #: corehq/apps/campaign/models.py
 #: corehq/apps/campaign/templates/campaign/dashboard.html
 #: corehq/apps/export/models/new.py
@@ -10128,40 +10082,58 @@ msgstr "डिफ़ॉल्ट मान"
 msgid "Cases"
 msgstr "केस"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+msgid "Custom Assertions"
+msgstr "कस्टम असर्शन"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
+msgid "Add custom assertions that you will use elsewhere."
+msgstr "कस्टम असर्शन जोड़ें जिन्हें आप अन्यत्र उपयोग करेंगे।"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
+msgid "Test"
+msgstr "परीक्षण"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
+msgid "Message Text"
+msgstr "संदेश पाठ"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
+msgid "Add custom assertion"
+msgstr "कस्टम असर्शन जोड़ें"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Remove Child Case?"
 msgstr "चाइल्ड केस हटाएँ?"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Are you sure you want to remove this Child Case?"
 msgstr "क्या आप वाकई इस चाइल्ड केस को हटाना चाहते हैं?"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Remove Child Case"
 msgstr "चाइल्ड केस हटाएँ"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Open Case Condition"
 msgstr "ओपन केस शर्त"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Close Condition"
 msgstr "बंद करने की शर्त"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Close this case when the form is complete"
 msgstr "फॉर्म पूरा होने पर इस केस को बंद करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid ""
 "\n"
 "              <span data-bind=\"visible: showLeadRegistration\">\n"
@@ -10207,28 +10179,24 @@ msgstr ""
 "              >\n"
 "            "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Registration: This form opens a new case"
 msgstr "पंजीकरण: यह फॉर्म एक नया केस खोलता है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Followup: This form loads a case from a data registry"
 msgstr "फॉलोअप: यह फॉर्म डेटा रजिस्ट्री से एक केस लोड करता है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Followup: This form loads a set of cases"
 msgstr "फॉलोअप: यह फॉर्म केस का एक सेट लोड करता है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Followup: This form loads a case and may then update or close it"
 msgstr ""
 "फॉलोअप: यह फॉर्म एक केस लोड करता है और फिर उसे अपडेट या बंद कर सकता है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid ""
 "Updating cases directly is not supported when using data registry search. "
 "Refer to the <a "
@@ -10241,13 +10209,11 @@ msgstr ""
 "href=\"https://confluence.dimagi.com/display/USH/Data+Registry#DataRegistry-"
 "Updatingcases\" target=\"_blank\" >डॉक्युमेंटेशन</a > देखें।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Updating cases directly is not supported for multi-select menus."
 msgstr "मल्टी-सेलेक्ट मेनू के लिए केस को सीधे अपडेट करना समर्थित नहीं है।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid ""
 "\n"
 "            <strong>Child Cases</strong> let you open other types of Cases for\n"
@@ -10259,8 +10225,7 @@ msgstr ""
 "            जिन्हें अन्य केस सूचियों में उपयोग किया जा सकता है।\n"
 "          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid ""
 "\n"
 "            When possible, they'll be linked to the current Case so you'll\n"
@@ -10272,8 +10237,7 @@ msgstr ""
 "            जब संभव हो, तो इन्हें वर्तमान केस से लिंक किया जाएगा ताकि आपको हमेशा पता रहे कि वे कहाँ से आए हैं। चाइल्ड केस का एक बेहतरीन उपयोग नवजात को उसकी माँ से अलग ट्रैक करना है।\n"
 "          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid ""
 "\n"
 "                <strong>Child Cases</strong> are not available in your\n"
@@ -10288,124 +10252,100 @@ msgstr ""
 "                <strong>प्रो</strong> प्लान या उससे ऊपर पर उपलब्ध है। यह कॉन्फ़िगरेशन तब तक संपादन योग्य नहीं रहेगा जब तक आप अपग्रेड नहीं करते।\n"
 "              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "This Form opens a Child Case in the Case List"
 msgstr "यह फॉर्म केस सूची में एक चाइल्ड केस खोलता है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Case List Configuration"
 msgstr "केस सूची कॉन्फ़िगरेशन"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Add a Child Case to open a case for a different Case List..."
 msgstr ""
 "एक चाइल्ड केस जोड़ें ताकि किसी अन्य केस सूची के लिए केस खोला जा सके..."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Remove Form Action?"
 msgstr "फॉर्म क्रिया हटाएँ?"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Are you sure you want to remove this action?"
 msgstr "क्या आप वाकई इस क्रिया को हटाना चाहते हैं?"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Remove Action"
 msgstr "क्रिया हटाएँ"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Open Condition"
 msgstr "ओपन शर्त"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Conditions"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Display the Product Stock for this Supply Point after it is selected"
 msgstr "चयन के बाद इस सप्लाई पॉइंट के लिए उत्पाद स्टॉक दिखाएँ"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Only show products for program"
 msgstr "केवल प्रोग्राम के लिए उत्पाद दिखाएँ"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "This case is a subcase of the previous case"
 msgstr "यह केस पिछले केस का सबकेस है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Parent reference ID"
 msgstr "पैरेंट रेफरेंस आईडी"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Relationship"
 msgstr "संबंध"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Parent Indices"
 msgstr "पैरेंट इंडेक्स"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Parent Tag"
 msgstr "पैरेंट टैग"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Reference ID"
 msgstr "रेफरेंस आईडी"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Remove parent index"
 msgstr "पैरेंट इंडेक्स हटाएँ"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Add parent index"
 msgstr "पैरेंट इंडेक्स जोड़ें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Case Action Meta"
 msgstr "केस क्रिया मेटा"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Case Tag"
 msgstr "केस टैग"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "from"
 msgstr "से"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Please select a case type."
 msgstr "कृपया एक केस प्रकार चुनें।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Expected Case Type"
 msgstr "अपेक्षित केस प्रकार"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid ""
 "This is used for case property suggestions and when creating case indexes but\n"
 "              it does not get validated against the loaded case."
@@ -10413,103 +10353,83 @@ msgstr ""
 "यह केस प्रॉपर्टी सुझावों और केस इंडेक्स बनाते समय उपयोग किया जाता है,\n"
 "              लेकिन इसे लोड किए गए केस के विरुद्ध सत्यापित नहीं किया जाता है।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Raw Config"
 msgstr "रॉ कॉन्फ़िग"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "XPath function"
 msgstr "XPath फ़ंक्शन"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "User Data Config"
 msgstr "यूज़र डेटा कॉन्फ़िग"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "User data key"
 msgstr "यूज़र डेटा कुंजी"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Case Index Config"
 msgstr "केस इंडेक्स कॉन्फ़िग"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Case containing index"
 msgstr "इंडेक्स युक्त केस"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Index name"
 msgstr "इंडेक्स नाम"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Lookup Table Config"
 msgstr "लुकअप टेबल कॉन्फ़िग"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Lookup Table Tag"
 msgstr "लुकअप टेबल टैग"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Table Field"
 msgstr "टेबल फ़ील्ड"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Autoselect mode"
 msgstr "ऑटोसेलेक्ट मोड"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Please select an autoselection mode."
 msgstr "कृपया एक ऑटोसेलेक्शन मोड चुनें।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Autoselect If Only One Case"
 msgstr "केवल एक केस होने पर ऑटोसेलेक्ट करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Fixture Nodeset"
 msgstr "फिक्स्चर नोडसेट"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Fixture Tag"
 msgstr "फिक्स्चर टैग"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Fixture Variable"
 msgstr "फिक्स्चर वेरिएबल"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Autoselect If Only One Result Returned From Fixture"
 msgstr "केवल एक परिणाम फिक्स्चर से लौटने पर ऑटोसेलेक्ट करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Arbitrary Datum Function"
 msgstr "मनमाना डैटम फ़ंक्शन"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Arbitrary Datum id"
 msgstr "मनमाना डैटम आईडी"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
@@ -10517,43 +10437,35 @@ msgstr "मनमाना डैटम आईडी"
 msgid "Add Action"
 msgstr "एक्शन जोड़ें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Load / Update / Close Cases"
 msgstr "केस लोड / अपडेट / बंद करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Open New Cases"
 msgstr "नए केस खोलें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Arbitrary Datums"
 msgstr "मनमाने डैटम्स"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Datum ID"
 msgstr "डैटम आईडी"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Datum Function"
 msgstr "डैटम फ़ंक्शन"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Add Datum"
 msgstr "डैटम जोड़ें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Only if the answer to..."
 msgstr "केवल यदि उत्तर..."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "\n"
 "      Configuration no longer allowed.\n"
@@ -10563,38 +10475,31 @@ msgstr ""
 "      कॉन्फ़िगरेशन अब अनुमति नहीं है।\n"
 "    "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Only if the answer to"
 msgstr "केवल यदि उत्तर"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "is"
 msgstr "है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "has selected"
 msgstr "चयनित किया है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "is true"
 msgstr "सत्य है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Not assigned"
 msgstr "असाइन नहीं किया गया"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Load the following properties into the form questions"
 msgstr "निम्नलिखित प्रॉपर्टीज़ को फॉर्म प्रश्नों में लोड करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/add_property_button.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/add_property_button.html
@@ -10609,21 +10514,18 @@ msgstr "निम्नलिखित प्रॉपर्टीज़ को 
 msgid "Property"
 msgstr "प्रॉपर्टी"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/readable_form.html
 msgid "Question"
 msgstr "प्रश्न"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "No properties will be loaded"
 msgstr "कोई प्रॉपर्टी लोड नहीं की जाएगी"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/add_property_button.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/add_property_button.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
@@ -10633,18 +10535,15 @@ msgstr "कोई प्रॉपर्टी लोड नहीं की ज�
 msgid "Add Property"
 msgstr "प्रॉपर्टी जोड़ें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Save Questions to Case Properties"
 msgstr "प्रश्नों को केस प्रॉपर्टीज़ में सहेजें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Save Questions to User Properties"
 msgstr "प्रश्नों को यूज़र प्रॉपर्टीज़ में सहेजें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "\n"
 "          There are one or more form questions that are being saved to deprecated case properties.\n"
@@ -10662,13 +10561,11 @@ msgstr ""
 "          को देखें।\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "User Case Property"
 msgstr "यूज़र केस प्रॉपर्टी"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "User Case Properties allow you to store data about a web or mobile user. "
 "Saving a user case property ensures the data is available across forms and "
@@ -10678,8 +10575,7 @@ msgstr ""
 "की अनुमति देती हैं। यूज़र केस प्रॉपर्टी को सहेजने से यह डेटा सभी फॉर्म्स में"
 " उपलब्ध रहता है और समय के साथ अपडेट किया जा सकता है।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "Saving a question as a case property makes it accessible and reusable across"
 " your application. Case properties can be tracked and updated over time."
@@ -10688,13 +10584,11 @@ msgstr ""
 " और पुन: उपयोग योग्य हो जाता है। केस प्रॉपर्टीज़ को समय के साथ ट्रैक और "
 "अपडेट किया जा सकता है।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Save Only If Edited"
 msgstr "केवल संपादित होने पर सहेजें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "Only save the answer if form submission will change the property from its "
 "previous value."
@@ -10702,18 +10596,15 @@ msgstr ""
 "केवल तभी उत्तर सहेजें जब फॉर्म सबमिशन से प्रॉपर्टी का मान उसके पिछले मान से "
 "बदल जाएगा।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "This mapping was changed and deleted in separate sessions"
 msgstr "यह मैपिंग अलग-अलग सत्रों में बदली और हटाई गई थी"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Dismiss this alert to keep the mapping."
 msgstr "मैपिंग बनाए रखने के लिए इस अलर्ट को खारिज करें।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "\n"
 "                Property has been deprecated.\n"
@@ -10723,37 +10614,31 @@ msgstr ""
 "                संपत्ति को अप्रचलित कर दिया गया है।\n"
 "              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Click here to add a description"
 msgstr "विवरण जोड़ने के लिए यहाँ क्लिक करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Error updating description. Please try again."
 msgstr "विवरण अपडेट करने में त्रुटि। कृपया पुनः प्रयास करें।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "No properties will be saved"
 msgstr "कोई भी संपत्तियाँ सहेजी नहीं जाएँगी"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 msgid "Add Case Property"
 msgstr "मामले की संपत्ति जोड़ें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Add User Property"
 msgstr "उपयोगकर्ता संपत्ति जोड़ें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "\n"
 "          You no longer have permission to save this section.\n"
@@ -10763,60 +10648,28 @@ msgstr ""
 "          अब आपको इस अनुभाग को सहेजने की अनुमति नहीं है।\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
-msgid "Custom Assertions"
-msgstr "कस्टम असर्शन"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
-msgid "Add custom assertions that you will use elsewhere."
-msgstr "कस्टम असर्शन जोड़ें जिन्हें आप अन्यत्र उपयोग करेंगे।"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
-msgid "Test"
-msgstr "परीक्षण"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
-msgid "Message Text"
-msgstr "संदेश पाठ"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
-msgid "Add custom assertion"
-msgstr "कस्टम असर्शन जोड़ें"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_instances.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_instances.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_instances.html
 msgid "Custom Instances"
 msgstr "कस्टम इंस्टेंस"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_instances.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_instances.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_instances.html
 msgid "Add custom instances that you will use elsewhere."
 msgstr "कस्टम इंस्टेंस जोड़ें जिन्हें आप अन्यत्र उपयोग करेंगे।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_instances.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_instances.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_instances.html
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "ID"
 msgstr "आईडी"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_instances.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_instances.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_instances.html
 msgid "Instance path"
 msgstr "इंस्टेंस पथ"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_instances.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_instances.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_instances.html
 msgid "Add custom instance"
 msgstr "कस्टम इंस्टेंस जोड़ें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_filter.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_filter.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_form_setting.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_filter.html
@@ -10826,8 +10679,7 @@ msgstr "कस्टम इंस्टेंस जोड़ें"
 msgid "Display Condition"
 msgstr "प्रदर्शन शर्त"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_filter.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_filter.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
 msgid ""
 "\n"
 "          The form will not appear in the menu unless this condition is met.\n"
@@ -10849,30 +10701,38 @@ msgstr ""
 "          >।\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_filter.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
+#| msgid ""
+#| "\n"
+#| "              To use display conditions which reference a case, <br />\n"
+#| "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
+#| "              <em>Display menu and then forms</em> <br />\n"
+#| "              (2) all the forms in the case list must update or close a case,\n"
+#| "              which means registration forms must go in a separate case list, or\n"
+#| "              if your project uses user properties, your display condition may\n"
+#| "              use user properties.\n"
+#| "            "
 msgid ""
 "\n"
 "              To use display conditions which reference a case, <br />\n"
 "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
 "              <em>Display menu and then forms</em> <br />\n"
-"              (2) all the forms in the case list must update or close a case,\n"
-"              which means registration forms must go in a separate case list, or\n"
-"              if your project uses user properties, your display condition may\n"
-"              use user properties.\n"
+"              (2) all the forms in the case list must update or close a\n"
+"              case, which means registration forms must\n"
+"              go in a separate case list, or if your project uses user\n"
+"              properties, your display condition may use user properties.\n"
 "            "
 msgstr ""
 "\n"
-"              केस को संदर्भित करने वाली डिस्प्ले कंडीशन का उपयोग करने के लिए, <br />\n"
+"              केस का संदर्भ देने वाली डिस्प्ले कंडीशन का उपयोग करने के लिए, <br />\n"
 "              (1) <strong>मेनू मोड</strong> सेटिंग को\n"
-"              <em>मेनू और फिर फॉर्म दिखाएं</em> पर सेट होना चाहिए <br />\n"
-"              (2) केस सूची में सभी फॉर्म को केस अपडेट या बंद करना चाहिए,\n"
-"              जिसका अर्थ है कि पंजीकरण फॉर्म को अलग केस सूची में जाना चाहिए, या\n"
-"              यदि आपका प्रोजेक्ट यूज़र प्रॉपर्टीज़ का उपयोग करता है, तो आपकी डिस्प्ले कंडीशन में\n"
-"              यूज़र प्रॉपर्टीज़ का उपयोग किया जा सकता है।\n"
+"              <em>मेनू दिखाएं और फिर फॉर्म्स</em> पर सेट होना चाहिए <br />\n"
+"              (2) केस सूची के सभी फॉर्म्स को केस अपडेट या बंद करना चाहिए,\n"
+"              जिसका अर्थ है कि रजिस्ट्रेशन फॉर्म्स को अलग केस सूची में जाना चाहिए, या यदि आपका प्रोजेक्ट यूज़र प्रॉपर्टीज़ का उपयोग करता है,\n"
+"              तो आपकी डिस्प्ले कंडीशन यूज़र प्रॉपर्टीज़ का उपयोग कर सकती है।\n"
 "            "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_filter.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_filter.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
 msgid ""
 "\n"
 "          There is something wrong with the logic in the Form Display Condition.\n"
@@ -10885,13 +10745,11 @@ msgstr ""
 "          जांचें कि आपके कोष्ठक मेल खाते हैं और आप केस प्रॉपर्टीज़ को सही तरीके से संदर्भित कर रहे हैं।\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_gps_capture.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_gps_capture.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_gps_capture.html
 msgid "Auto Capture Location"
 msgstr "स्वचालित स्थान कैप्चर करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_gps_capture.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_gps_capture.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_gps_capture.html
 msgid ""
 "On CommCare Android, have this form automatically capture the user's current"
 " geo-location."
@@ -10899,8 +10757,7 @@ msgstr ""
 "CommCare Android पर, इस फ़ॉर्म को उपयोगकर्ता के वर्तमान भू-स्थान को स्वचालित"
 " रूप से कैप्चर करने दें।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_gps_capture.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_gps_capture.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_gps_capture.html
 msgid ""
 "\n"
 "        This application is configured to auto capture location for all forms.\n"
@@ -10916,18 +10773,15 @@ msgstr ""
 "        <strong>Android सेटिंग्स</strong> अनुभाग में बदला जा सकता है।\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 msgid "Copy Form"
 msgstr "फ़ॉर्म कॉपी करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 msgid "XForm"
 msgstr "XForm"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 msgid ""
 "\n"
 "                This form contains locked questions and can only be uploaded by\n"
@@ -10939,8 +10793,7 @@ msgstr ""
 "                लॉक किए गए प्रश्नों की अनुमति वाले उपयोगकर्ता द्वारा ही अपलोड किया जा सकता है।\n"
 "              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
@@ -10950,8 +10803,7 @@ msgstr ""
 msgid "Show"
 msgstr "दिखाएँ"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
@@ -10959,55 +10811,45 @@ msgstr "दिखाएँ"
 msgid "Multimedia"
 msgstr "मल्टीमीडिया"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 msgid "Logic"
 msgstr "लॉजिक"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 msgid "Form filtering is disabled for this form"
 msgstr "इस फ़ॉर्म के लिए फ़ॉर्म फ़िल्टरिंग अक्षम है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "There were errors saving. Please fix the errors below."
 msgstr "सहेजने में त्रुटियाँ आईं। कृपया नीचे दी गई त्रुटियों को ठीक करें।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Form Settings"
 msgstr "फ़ॉर्म सेटिंग्स"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "This form has a schedule"
 msgstr "इस फ़ॉर्म में एक शेड्यूल है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Schedule Phase"
 msgstr "शेड्यूल चरण"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Forms that do not have a schedule are always shown"
 msgstr "जिन फ़ॉर्म्स में शेड्यूल नहीं है वे हमेशा दिखाए जाते हैं"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Form Abbreviation"
 msgstr "फ़ॉर्म संक्षिप्त नाम"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 #: corehq/apps/domain/forms.py corehq/apps/sms/forms.py
 #: corehq/messaging/scheduling/forms.py
 msgid "This field is required"
 msgstr "यह फ़ील्ड आवश्यक है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 #, python-format
 msgid ""
 "\n"
@@ -11018,46 +10860,40 @@ msgstr ""
 "                    \"यह फ़ॉर्म जिस चरण का हिस्सा है। <a href='%(module_url)s'>केस सूची सेटिंग्स पृष्ठ</a> पर चरण बनाएं\"\n"
 "                  "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Please select a phase..."
 msgstr "कृपया एक चरण चुनें..."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Form Relevancy Window"
 msgstr "फ़ॉर्म प्रासंगिकता विंडो"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
-msgid "Show this form "
-msgstr "इस फ़ॉर्म को दिखाएँ "
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
+#| msgid "Show this form "
+msgid "Show this form"
+msgstr "यह फॉर्म दिखाएं"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 #: corehq/messaging/scheduling/forms.py
 msgid "days"
 msgstr "दिन"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "before the anchor date"
 msgstr "एंकर तिथि से पहले"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "after the anchor date"
 msgstr "एंकर तिथि के बाद"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
-msgid "Hide this form "
-msgstr "इस फ़ॉर्म को छुपाएँ "
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
+#| msgid "Hide this form "
+msgid "Hide this form"
+msgstr "यह फॉर्म छुपाएं"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid ""
 "Forms can only be hidden if there are no transition or termination "
 "conditions"
@@ -11065,81 +10901,66 @@ msgstr ""
 "फ़ॉर्म्स को केवल तभी छुपाया जा सकता है जब कोई ट्रांजिशन या टर्मिनेशन शर्तें "
 "न हों"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Transitions"
 msgstr "संक्रमण"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Transition to the next phase"
 msgstr "अगले चरण में संक्रमण करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Terminate the schedule"
 msgstr "अनुसूची समाप्त करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/enable_schedule.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/enable_schedule.html
 msgid "Visit Schedule"
 msgstr "भ्रमण अनुसूची"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Allow unscheduled visits"
 msgstr "अनियोजित भ्रमण की अनुमति दें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 #: corehq/apps/export/models/new.py corehq/messaging/scheduling/forms.py
 msgid "Repeat"
 msgstr "दोहराएँ"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Visit"
 msgstr "भ्रमण"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Due"
 msgstr "बॉकी"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "after the last visit"
 msgstr "अंतिम भ्रमण के बाद"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Visit can be made up to"
 msgstr "भ्रमण अधिकतम"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "days early and"
 msgstr "दिन पहले और"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "days late"
 msgstr "दिन बाद में किया जा सकता है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Please add at least one visit"
 msgstr "कृपया कम से कम एक भ्रमण जोड़ें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Add Visit"
 msgstr "भ्रमण जोड़ें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid ""
 "You have not created a form yet. Create a form in order to view and edit "
 "schedules."
@@ -11147,18 +10968,15 @@ msgstr ""
 "आपने अभी तक कोई फ़ॉर्म नहीं बनाया है। अनुसूचियों को देखने और संपादित करने के"
 " लिए एक फ़ॉर्म बनाएं।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_view_modals.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_view_modals.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_view_modals.html
 msgid "Upload XForm"
 msgstr "XForm अपलोड करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "End of Form Navigation"
 msgstr "फ़ॉर्म नेविगेशन का अंत"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid ""
 "After the user completes a form, your application automatically returns to the home screen.\n"
 "              Here you can set the application to navigate automatically to a different location in the app."
@@ -11166,15 +10984,13 @@ msgstr ""
 "जब उपयोगकर्ता एक फ़ॉर्म पूरा करता है, तो आपका एप्लिकेशन स्वचालित रूप से होम स्क्रीन पर लौट आता है।\n"
 "              यहाँ आप एप्लिकेशन को ऐप में किसी अन्य स्थान पर स्वचालित रूप से नेविगेट करने के लिए सेट कर सकते हैं।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid ""
 "This is an unknown value, possibly a deleted form. Please change this value."
 msgstr ""
 "यह एक अज्ञात मान है, संभवतः एक हटाया गया फ़ॉर्म। कृपया इस मान को बदलें।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid ""
 "\n"
 "          The end of form navigation specified here will override the end of registration\n"
@@ -11188,44 +11004,36 @@ msgstr ""
 "          इससे बचने के लिए, यहाँ डिफ़ॉल्ट विकल्प चुनें ('होम स्क्रीन')।\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Navigation Fallback"
 msgstr "नेविगेशन फॉलबैक"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Add link"
 msgstr "लिंक जोड़ें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "XPath Expression"
 msgstr "XPath अभिव्यक्ति"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "This form requires manual linking."
 msgstr "इस फ़ॉर्म के लिए मैन्युअल लिंकिंग आवश्यक है।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Enable manual linking"
 msgstr "मैन्युअल लिंकिंग सक्षम करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Disable manual linking"
 msgstr "मैन्युअल लिंकिंग अक्षम करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 msgid "Refresh"
 msgstr "रिफ्रेश करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/multi_select_continue_button.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -11240,33 +11048,27 @@ msgstr "रिफ्रेश करें"
 msgid "Continue"
 msgstr "जारी रखें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "No additional linking required."
 msgstr "कोई अतिरिक्त लिंकिंग आवश्यक नहीं है।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Error fetching link data."
 msgstr "लिंक डेटा प्राप्त करने में त्रुटि।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Remove this link"
 msgstr "इस लिंक को हटाएँ"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/release_notes_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/release_notes_setting.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/release_notes_setting.html
 msgid "Make this my app’s Post-Update form"
 msgstr "इसे मेरे ऐप का पोस्ट-अपडेट फ़ॉर्म बनाएं"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/release_notes_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/release_notes_setting.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/release_notes_setting.html
 msgid "Post-Update form"
 msgstr "पोस्ट-अपडेट फ़ॉर्म"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/release_notes_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/release_notes_setting.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/release_notes_setting.html
 msgid ""
 "Users will be entered directly into this form when logging back into "
 "CommCare immediately after updating their CommCare app. You can use this to "
@@ -11277,25 +11079,21 @@ msgstr ""
 " उपयोग उपयोगकर्ताओं को नए ऐप संस्करण में क्या बदला है, यह बताने के लिए कर "
 "सकते हैं"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/release_notes_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/release_notes_setting.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/release_notes_setting.html
 msgid "You have already set another form as this app’s Post-Update form"
 msgstr ""
 "आपने पहले ही किसी अन्य फ़ॉर्म को इस ऐप के पोस्ट-अपडेट फ़ॉर्म के रूप में सेट "
 "किया है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/release_notes_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/release_notes_setting.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/release_notes_setting.html
 msgid "Enable the Post-Update form for this release"
 msgstr "इस रिलीज़ के लिए पोस्ट-अपडेट फ़ॉर्म सक्षम करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/release_notes_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/release_notes_setting.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/release_notes_setting.html
 msgid "Enable this"
 msgstr "इसे सक्षम करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/release_notes_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/release_notes_setting.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/release_notes_setting.html
 msgid ""
 "You can disable the Post-Update form if it is not necessary for the current "
 "app release, but you don’t want to delete it"
@@ -11303,52 +11101,28 @@ msgstr ""
 "यदि वर्तमान ऐप रिलीज़ के लिए पोस्ट-अपडेट फ़ॉर्म आवश्यक नहीं है, तो आप इसे "
 "अक्षम कर सकते हैं, लेकिन आप इसे हटाना नहीं चाहते"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/shadow_parent_select.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/shadow_parent_select.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/shadow_parent_select.html
 msgid "Shadow source"
 msgstr "शैडो स्रोत"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/shadow_parent_select.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/shadow_parent_select.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/shadow_parent_select.html
 msgid "The form which this form will shadow"
 msgstr "वह फ़ॉर्म जिसे यह फ़ॉर्म शैडो करेगा"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/usercase_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/usercase_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/usercase_config.html
+#| msgid ""
+#| "\n"
+#| "      <strong>User Properties</strong> allow you to store data about the user and use that data in forms.\n"
+#| "    "
 msgid ""
 "\n"
-"      <strong>User Properties</strong> allow you to store data about the user and use that data in forms.\n"
+"      <strong>User Properties</strong> allow you to store data about the user\n"
+"      and use that data in forms.\n"
 "    "
 msgstr ""
 "\n"
-"      <strong>उपयोगकर्ता गुण</strong> आपको उपयोगकर्ता के बारे में डेटा संग्रहीत करने और उस डेटा का फ़ॉर्म में उपयोग करने की अनुमति देते हैं।\n"
+"      <strong>यूज़र प्रॉपर्टीज़</strong> आपको उपयोगकर्ता के बारे में डेटा स्टोर करने और उस डेटा का फॉर्म्स में उपयोग करने की अनुमति देती हैं।\n"
 "    "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-msgid "Followup: This form loads a case and may then update or btn-close it"
-msgstr ""
-"फॉलोअप: यह फॉर्म एक केस लोड करता है और फिर उसे अपडेट या btn-close कर सकता है"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_filter.html
-msgid ""
-"\n"
-"              To use display conditions which reference a case, <br />\n"
-"              (1) the <strong>Menu Mode</strong> setting must be set to\n"
-"              <em>Display menu and then forms</em> <br />\n"
-"              (2) all the forms in the case list must update or btn-close a case,  \n"
-"              which means registration forms must go in a separate case list, or\n"
-"              if your project uses user properties, your display condition may\n"
-"              use user properties.\n"
-"            "
-msgstr ""
-"\n"
-"              केस का संदर्भ देने वाली डिस्प्ले कंडीशन का उपयोग करने के लिए, <br />\n"
-"              (1) <strong>मेनू मोड</strong> सेटिंग को\n"
-"              <em>मेनू दिखाएँ और फिर फॉर्म</em> पर सेट होना चाहिए <br />\n"
-"              (2) केस लिस्ट के सभी फॉर्म्स को किसी केस को अपडेट या btn-close करना चाहिए,  \n"
-"              जिसका अर्थ है कि रजिस्ट्रेशन फॉर्म्स को अलग केस लिस्ट में जाना चाहिए, या\n"
-"              यदि आपका प्रोजेक्ट यूज़र प्रॉपर्टीज़ का उपयोग करता है, तो आपकी डिस्प्ले कंडीशन यूज़र प्रॉपर्टीज़ का उपयोग कर सकती है।\n"
-"            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap3/appnav_menu.html
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap5/appnav_menu.html
@@ -14525,9 +14299,6 @@ msgstr ""
 " किया जा सकता। पहले फॉर्म बिल्डर में प्रश्न को अनलॉक करें।"
 
 #: corehq/apps/app_manager/views/forms.py
-#| msgid ""
-#| "Case property mappings that reference locked questions cannot be modified. "
-#| "Unlock the question in the form builder first."
 msgid ""
 "Locked questions cannot be modified. Unlock the question in the form builder"
 " first."
@@ -16062,6 +15833,23 @@ msgid ""
 msgstr ""
 "हमें नहीं पता कि \"{}\" फंक्शन के साथ क्या करना है। स्वीकृत फंक्शन हैं: {}"
 
+#: corehq/apps/case_search/endpoint_views.py
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/tabs/tabclasses.py
+#| msgid "Case Search Settings"
+msgid "Case Search Endpoints"
+msgstr "केस सर्च एंडपॉइंट्स"
+
+#: corehq/apps/case_search/endpoint_views.py
+#| msgid "Case Search and Claim"
+msgid "New Case Search Endpoint"
+msgstr "नया केस सर्च एंडपॉइंट"
+
+#: corehq/apps/case_search/endpoint_views.py
+#| msgid "Edit Case Data Export"
+msgid "Edit Case Search Endpoint"
+msgstr "केस सर्च एंडपॉइंट संपादित करें"
+
 #: corehq/apps/case_search/filter_dsl.py
 msgid "You cannot query related cases here"
 msgstr "आप यहां संबंधित केस क्वेरी नहीं कर सकते"
@@ -16127,12 +15915,10 @@ msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
 msgstr "अमान्य ऑपरेटर \"{criteria[\"operator\"]}\"। अनुमत मान हैं "
 
 #: corehq/apps/case_search/models.py
-#| msgid "Project Data"
 msgid "Project Database"
 msgstr "प्रोजेक्ट डेटाबेस"
 
 #: corehq/apps/case_search/models.py
-#| msgid "Case Search"
 msgid "Elastic Search"
 msgstr "इलास्टिक सर्च"
 
@@ -16221,6 +16007,7 @@ msgid "Results"
 msgstr "परिणाम"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 msgid "Query"
 msgstr "क्वेरी"
 
@@ -16272,6 +16059,75 @@ msgstr "फिक्स्चर समावेशन पुनर्स्थ�
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 msgid "Add Criteria"
 msgstr "मापदंड जोड़ें"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#| msgid "Edit Form Details"
+msgid "Endpoint Details"
+msgstr "एंडपॉइंट विवरण"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#| msgid "Parent Type"
+msgid "Target Type"
+msgstr "लक्ष्य प्रकार"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#| msgid "Select a Case Type"
+msgid "-- Select a case type --"
+msgstr "-- एक केस प्रकार चुनें --"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#| msgid "Add Parameter"
+msgid "Parameters"
+msgstr "पैरामीटर्स"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "JSON array"
+msgstr "JSON ऐरे"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#| msgid "Subject"
+msgid "JSON object"
+msgstr "JSON ऑब्जेक्ट"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#| msgid "Server Endpoint"
+msgid "New Endpoint"
+msgstr "नया एंडपॉइंट"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap3/web_users.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/web_users.html
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Deactivate"
+msgstr "निष्क्रिय करें"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#| msgid "Deactivated"
+msgid "Deactivate Endpoint"
+msgstr "एंडपॉइंट निष्क्रिय करें"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#| msgid "Are you sure you want to delete this invitation?"
+msgid ""
+"Are you sure you want to deactivate this endpoint? This cannot be undone."
+msgstr ""
+"क्या आप वाकई इस एंडपॉइंट को निष्क्रिय करना चाहते हैं? इसे वापस नहीं किया जा "
+"सकता।"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#| msgid "SNS Endpoint Secret"
+msgid "No endpoints configured."
+msgstr "कोई एंडपॉइंट कॉन्फ़िगर नहीं किया गया है।"
 
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
@@ -19594,8 +19450,8 @@ msgstr "प्रारंभिक मान फ़ॉर्म द्वार
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
-#: corehq/apps/domain/forms.py corehq/apps/hqadmin/forms.py
-#: corehq/apps/reminders/forms.py corehq/apps/styleguide/example_forms.py
+#: corehq/apps/domain/forms.py corehq/apps/reminders/forms.py
+#: corehq/apps/styleguide/example_forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
 #: corehq/apps/styleguide/examples/bootstrap5/switch_form.py
@@ -20049,21 +19905,6 @@ msgstr "डुप्लिकेट्स देखें"
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 msgid "Activate"
 msgstr "सक्रिय करें"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/web_users.html
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Deactivate"
-msgstr "निष्क्रिय करें"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
@@ -25719,6 +25560,8 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
+#: corehq/apps/hqadmin/forms.py
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "Reset Two-Factor Authentication"
 msgstr "दो-कारक प्रमाणीकरण रीसेट करें"
 
@@ -31626,18 +31469,24 @@ msgid "Verified by"
 msgstr "द्वारा सत्यापित"
 
 #: corehq/apps/hqadmin/forms.py
-msgid "Days to allow access"
-msgstr "पहुंच की अनुमति देने के दिन"
+#| msgid "Days to allow access"
+msgid "Days of temporary access"
+msgstr "अस्थायी एक्सेस के दिन"
 
 #: corehq/apps/hqadmin/forms.py
+#| msgid ""
+#| "Number of days the user can access CommCare HQ before needing to re-enable "
+#| "two-factor auth.This is useful if someone has lost their phone and can't "
+#| "immediately re-setup two-factor auth."
 msgid ""
-"Number of days the user can access CommCare HQ before needing to re-enable "
-"two-factor auth.This is useful if someone has lost their phone and can't "
-"immediately re-setup two-factor auth."
+"Number of days the user can access a Two-Factor Authentication enforced "
+"domain without setting up two-factor authentication again. This is useful if"
+" someone has lost their phone and can't immediately re-setup two-factor "
+"auth."
 msgstr ""
-"उपयोगकर्ता CommCare HQ तक कितने दिनों तक पहुँच सकता है, इससे पहले कि उसे "
-"दो-कारक प्रमाणीकरण फिर से सक्षम करना पड़े। यह तब उपयोगी है जब किसी का फोन खो"
-" गया हो और तुरंत दो-कारक प्रमाणीकरण फिर से सेटअप न कर सके।"
+"उपयोगकर्ता कितने दिनों तक टू-फैक्टर ऑथेंटिकेशन लागू डोमेन तक बिना दोबारा "
+"टू-फैक्टर ऑथेंटिकेशन सेट किए एक्सेस कर सकता है। यह तब उपयोगी है जब किसी ने "
+"अपना फोन खो दिया हो और तुरंत दोबारा टू-फैक्टर ऑथेंटिकेशन सेट न कर सके।"
 
 #: corehq/apps/hqadmin/forms.py
 msgid "Please give a reason for this action."
@@ -31871,12 +31720,16 @@ msgstr "केस क्रियाएँ"
 
 #: corehq/apps/hqadmin/templates/hqadmin/disable_two_factor.html
 #, python-format
+#| msgid ""
+#| "You are about to temporarily disable two-factor authentication for %(username)s. This\n"
+#| "    compromises their account security, are you sure?"
 msgid ""
-"You are about to temporarily disable two-factor authentication for %(username)s. This\n"
-"    compromises their account security, are you sure?"
+"You are about to reset two-factor authentication for <strong>%(username)s</strong>. This\n"
+"    permanently deletes the user's existing two-factor authentication and cannot be undone, so it compromises\n"
+"    their account security. Are you sure?"
 msgstr ""
-"आप %(username)s के लिए दो-चरणीय प्रमाणीकरण को अस्थायी रूप से अक्षम करने जा रहे हैं।\n"
-"    इससे उनके खाते की सुरक्षा प्रभावित हो सकती है, क्या आप सुनिश्चित हैं?"
+"आप <strong>%(username)s</strong> के लिए टू-फैक्टर ऑथेंटिकेशन रीसेट करने वाले हैं।\n"
+"    यह उपयोगकर्ता के मौजूदा टू-फैक्टर ऑथेंटिकेशन को स्थायी रूप से हटा देगा और इसे वापस नहीं किया जा सकता, जिससे उनके खाते की सुरक्षा प्रभावित होगी। क्या आप सुनिश्चित हैं?"
 
 #: corehq/apps/hqadmin/templates/hqadmin/disable_user.html
 #, python-format
@@ -32033,6 +31886,16 @@ msgstr "एलास्टिकसर्च लुकअप"
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "Is Superuser"
 msgstr "क्या सुपरयूज़र है"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#| msgid "User Audit Events"
+msgid "View User Audit Report"
+msgstr "यूज़र ऑडिट रिपोर्ट देखें"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#| msgid "Disable Mobile Worker Lockout"
+msgid "Disable/Enable User Account"
+msgstr "यूज़र खाता अक्षम/सक्षम करें"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "Offboard Staff User"
@@ -35403,6 +35266,16 @@ msgstr "गतिविधि"
 msgid "Funder"
 msgstr "फंडर"
 
+#: corehq/apps/integration/payments/filters.py
+#| msgid "Campaign Name"
+msgid "Campaign worker role"
+msgstr "कैम्पेन वर्कर भूमिका"
+
+#: corehq/apps/integration/payments/filters.py
+#| msgid "Number of cases created in the date range."
+msgid "Case creation date range"
+msgstr "केस निर्माण तिथि सीमा"
+
 #: corehq/apps/integration/payments/forms.py
 msgid "Environment"
 msgstr "पर्यावरण"
@@ -35492,6 +35365,11 @@ msgstr "बैच नंबर"
 #: corehq/apps/integration/payments/tables.py
 msgid "Currency"
 msgstr "मुद्रा"
+
+#: corehq/apps/integration/payments/tables.py
+#| msgid "Campaign Name"
+msgid "Campaign Worker Role"
+msgstr "अभियान कार्यकर्ता भूमिका"
 
 #: corehq/apps/integration/payments/tables.py
 msgid "User or Case ID"
@@ -35641,6 +35519,19 @@ msgstr ""
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 msgid "Not Checked"
 msgstr "जाँचा नहीं गया"
+
+#: corehq/apps/integration/templates/payments/filters/case_created_date_range.html
+#| msgid "Show All Statements"
+msgid "Show All Dates"
+msgstr "सभी तिथियाँ दिखाएँ"
+
+#: corehq/apps/integration/templates/payments/filters/case_created_date_range.html
+#: corehq/apps/reports/templates/reports/filters/bootstrap3/datespan.html
+#: corehq/apps/reports/templates/reports/filters/bootstrap5/datespan.html
+#: corehq/messaging/scheduling/templates/scheduling/schedule_instance_filter.html
+#, python-format
+msgid "This report's timezone is %(timezone)s."
+msgstr "इस रिपोर्ट का समय क्षेत्र %(timezone)s है।"
 
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
 msgid "Confirm Payments"
@@ -42184,13 +42075,6 @@ msgstr "तक"
 #, python-format
 msgid "Showing %(datespan)s."
 msgstr "%(datespan)s दिखा रहे हैं।"
-
-#: corehq/apps/reports/templates/reports/filters/bootstrap3/datespan.html
-#: corehq/apps/reports/templates/reports/filters/bootstrap5/datespan.html
-#: corehq/messaging/scheduling/templates/scheduling/schedule_instance_filter.html
-#, python-format
-msgid "This report's timezone is %(timezone)s."
-msgstr "इस रिपोर्ट का समय क्षेत्र %(timezone)s है।"
 
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/form_app_module_drilldown.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/form_app_module_drilldown.html
@@ -54074,14 +53958,6 @@ msgstr "अपने [फ़ॉर्म डेटा]({}) को निर्�
 msgid "Click to export your [case data]({})."
 msgstr "अपने [केस डेटा]({}) को निर्यात करने के लिए क्लिक करें।"
 
-#: corehq/messaging/fcm/exceptions.py
-msgid "One of the fields from 'title, body, data' is required!"
-msgstr "'शीर्षक, मुख्य भाग, डेटा' में से किसी एक फ़ील्ड की आवश्यकता है!"
-
-#: corehq/messaging/fcm/exceptions.py
-msgid "FCM is not setup on this environment!"
-msgstr "इस वातावरण में FCM सेटअप नहीं है!"
-
 #: corehq/messaging/scheduling/forms.py
 msgid "Please enter a valid 24-hour time in the format HH:MM"
 msgstr "कृपया HH:MM प्रारूप में मान्य 24-घंटे का समय दर्ज करें"
@@ -54825,18 +54701,6 @@ msgid ""
 msgstr ""
 "नीचे दिए गए सभी फ़िल्टर मानदंडों से मेल खाने वाले प्रत्येक खुले केस के लिए "
 "शेड्यूल का एक उदाहरण बनाया जाएगा।"
-
-#: corehq/messaging/scheduling/models/content.py
-msgid "Background Sync"
-msgstr "पृष्ठभूमि सिंक"
-
-#: corehq/messaging/scheduling/models/content.py
-msgid "Display Messages"
-msgstr "संदेश दिखाएँ"
-
-#: corehq/messaging/scheduling/models/content.py
-msgid "Data Messages"
-msgstr "डेटा संदेश"
 
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 msgid "Add Broadcast"
@@ -59031,8 +58895,65 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
 
-#~ msgid "Edit Form Details"
-#~ msgstr "फॉर्म विवरण संपादित करें"
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "              Use this %(badge)s for all languages\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              सभी भाषाओं के लिए इस %(badge)s का उपयोग करें\n"
+#~ "            "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "            This %(badge)s is linked to the default language, and can only be\n"
+#~ "            modified there.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            यह %(badge)s डिफ़ॉल्ट भाषा से जुड़ा है, और केवल वहीं संशोधित किया जा सकता है।\n"
+#~ "          "
+
+#~ msgid "Followup: This form loads a case and may then update or btn-close it"
+#~ msgstr ""
+#~ "फॉलोअप: यह फॉर्म एक केस लोड करता है और फिर उसे अपडेट या btn-close कर सकता है"
+
+#~ msgid ""
+#~ "\n"
+#~ "              To use display conditions which reference a case, <br />\n"
+#~ "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
+#~ "              <em>Display menu and then forms</em> <br />\n"
+#~ "              (2) all the forms in the case list must update or btn-close a case,  \n"
+#~ "              which means registration forms must go in a separate case list, or\n"
+#~ "              if your project uses user properties, your display condition may\n"
+#~ "              use user properties.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              केस का संदर्भ देने वाली डिस्प्ले कंडीशन का उपयोग करने के लिए, <br />\n"
+#~ "              (1) <strong>मेनू मोड</strong> सेटिंग को\n"
+#~ "              <em>मेनू दिखाएँ और फिर फॉर्म</em> पर सेट होना चाहिए <br />\n"
+#~ "              (2) केस लिस्ट के सभी फॉर्म्स को किसी केस को अपडेट या btn-close करना चाहिए,  \n"
+#~ "              जिसका अर्थ है कि रजिस्ट्रेशन फॉर्म्स को अलग केस लिस्ट में जाना चाहिए, या\n"
+#~ "              यदि आपका प्रोजेक्ट यूज़र प्रॉपर्टीज़ का उपयोग करता है, तो आपकी डिस्प्ले कंडीशन यूज़र प्रॉपर्टीज़ का उपयोग कर सकती है।\n"
+#~ "            "
+
+#~ msgid "One of the fields from 'title, body, data' is required!"
+#~ msgstr "'शीर्षक, मुख्य भाग, डेटा' में से किसी एक फ़ील्ड की आवश्यकता है!"
+
+#~ msgid "FCM is not setup on this environment!"
+#~ msgstr "इस वातावरण में FCM सेटअप नहीं है!"
+
+#~ msgid "Background Sync"
+#~ msgstr "पृष्ठभूमि सिंक"
+
+#~ msgid "Display Messages"
+#~ msgstr "संदेश दिखाएँ"
+
+#~ msgid "Data Messages"
+#~ msgstr "डेटा संदेश"
 
 #~ msgid "User data profile not found"
 #~ msgstr "उपयोगकर्ता डेटा प्रोफ़ाइल नहीं मिली"
@@ -59627,9 +59548,6 @@ msgstr "मान्य JSON दर्ज करें"
 
 #~ msgid "APHL Exposure Notifications"
 #~ msgstr "APHL एक्सपोजर नोटिफिकेशन"
-
-#~ msgid "Server Endpoint"
-#~ msgstr "सर्वर एंडपॉइंट"
 
 #~ msgid "Server Auth Token"
 #~ msgstr "सर्वर ऑथ टोकन"
