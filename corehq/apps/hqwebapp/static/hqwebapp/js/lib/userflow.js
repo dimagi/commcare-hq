@@ -7,6 +7,9 @@ if (token && userId) {
     userflow.init(token);
     userflow.identify(userId, {
         signed_up_at: initialPageData.get("userflow_signed_up_at"),
+        server_env: initialPageData.get("userflow_server_env"),
+        domain: initialPageData.get("userflow_domain"),
+        subs_plan: initialPageData.get("userflow_subs_plan"),
     });
 }
 
