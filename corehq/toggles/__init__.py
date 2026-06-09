@@ -2145,6 +2145,14 @@ ENTERPRISE_ADMIN_SELF_SERVICE = FeatureRelease(
     ),
 )
 
+FACE_CAPTURE = FeatureRelease(
+    'face_capture',
+    'Form Builder includes a "Face Capture" question type',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    owner='Norman Hooper',
+)
+
 APPLICATION_RELEASE_LOGS = StaticToggle(
     'application_release_logs',
     'Show Application release logs',
