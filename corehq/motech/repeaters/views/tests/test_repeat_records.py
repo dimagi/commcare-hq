@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from django.test import SimpleTestCase, TestCase
-from nose.tools import assert_equal
 from unittest.mock import Mock
 
 from corehq.motech.models import ConnectionSettings
@@ -41,7 +40,7 @@ class TestUtilities(SimpleTestCase):
         for value, expected_result in zip(state_values, expected_results):
             mock_request.POST.get.return_value = value
             result = repeat_records._get_state(mock_request)
-            assert_equal(result, expected_result)
+            assert result == expected_result
 
     def test__get_state_raises_key_error(self):
         mock_request = Mock()

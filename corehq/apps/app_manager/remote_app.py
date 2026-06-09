@@ -1,8 +1,7 @@
 from django.urls import reverse
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
+import urllib.parse
+import urllib.request
 from lxml import etree
 
 from corehq.apps.app_manager.exceptions import AppEditingError
@@ -42,7 +41,7 @@ def reset_suite_remote_url(suite_node, url_base, profile_url, download_index_url
     suite_local_text = suite_node.findtext('resource/location[@authority="local"]')
     suite_remote = suite_node.find('resource/location[@authority="remote"]')
     suite_name = strip_location(profile_url, suite_local_text)
-    suite_remote.xml.text = url_base + six.moves.urllib.parse.urljoin(download_index_url,
+    suite_remote.xml.text = url_base + urllib.parse.urljoin(download_index_url,
                                                         suite_name)
 
 
@@ -59,7 +58,7 @@ def strip_location(profile_url, location):
 
 def make_remote_profile(app, langs=None):
     try:
-        profile = six.moves.urllib.request.urlopen(app.profile_url).read()
+        profile = urllib.request.urlopen(app.profile_url).read()
     except Exception:
         raise AppEditingError('Unable to access profile url: "%s"' % app.profile_url)
 

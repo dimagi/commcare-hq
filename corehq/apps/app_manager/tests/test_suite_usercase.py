@@ -10,7 +10,6 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
     patch_get_xform_resource_overrides,
 )
 
@@ -75,7 +74,7 @@ class SuiteUsercaseTest(SimpleTestCase, SuiteMixin):
               <datum id="usercase_id"
                 function="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid]/@case_id"/>
               <datum id="case_id_child"
-                nodeset="instance('casedb')/casedb/case[@case_type='child'][@status='open'][index/parent=instance('commcaresession')/session/data/case_id]"
+                nodeset="instance('casedb')/casedb/case[@case_type='child'][@status='open'][index/*[not(@relationship='extension')]=instance('commcaresession')/session/data/case_id]"
                 value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
             </session>
             <assertions>

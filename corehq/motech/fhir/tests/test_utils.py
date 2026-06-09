@@ -1,7 +1,6 @@
 from django.http import HttpResponse
 from django.test import RequestFactory, SimpleTestCase, TestCase
 
-from nose.tools import assert_equal
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.motech.fhir.models import FHIRResourceProperty, FHIRResourceType
@@ -155,7 +154,7 @@ class TestLoadFHIRResourceType(SimpleTestCase):
 def test_resource_url():
     url = resource_url(DOMAIN, 'R4', 'Patient', 'abc123')
     drop_hostname = url.split('/', maxsplit=3)[3]
-    assert_equal(drop_hostname, f'a/{DOMAIN}/fhir/R4/Patient/abc123/')
+    assert drop_hostname == f'a/{DOMAIN}/fhir/R4/Patient/abc123/'
 
 
 class TestHeaderDecorators(TestCase):

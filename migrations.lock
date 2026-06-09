@@ -248,6 +248,8 @@ case_importer
  0012_auto_20190405_1747
  0013_make_duplicates_errors
  0014_rename_caseuploadrecord_domain_created_case_import_domain_21a470_idx
+ 0015_caseuploadrecord_is_hidden
+ 0016_alter_caseuploadrecord_comment
 case_search
  0001_initial
  0002_auto_20161114_1901
@@ -266,6 +268,7 @@ case_search
  0015_csqlfixtureexpression_csqlfixtureexpressionlog
  0016_csqlfixtureexpression_user_data_criteria
  0017_add_case_search_endpoint_models
+ 0018_add_endpoint_version_audit_fields
 celery
  0001_taskrecord
  0002_taskrecord_kombu_serialization
@@ -992,6 +995,7 @@ scheduling
  0027_emailcontent_html_message
  0028_alertschedule_use_user_case_for_filter_and_more
  0029_connectmessagecontent_connectmessagesurveycontent_and_more
+ 0030_remove_casepropertytimedevent_fcm_notification_content_and_more
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -1237,6 +1241,7 @@ sso
  0007_add_multi_view_api_fields
  0008_alter_identityprovider_idp_type
  0009_identityprovider_require_api_key_for_api_access
+ 0010_remove_identityprovider_require_api_key_for_api_access
 start_enterprise
  0001_initial
 stock
@@ -1264,6 +1269,7 @@ toggles
 tombstones
  0001_create_tombstone_model
  0002_migrate_deleted_sql_docs
+ 0003_tombstone_improvements
 translations
  0001_initial
  0002_transifexblacklist
@@ -1395,6 +1401,7 @@ users
  0085_usercredential
  0086_backfill_usercases
  0087_alter_sqluserdata_managers
+ 0088_remove_userreportingmetadatastaging_fcm_token
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

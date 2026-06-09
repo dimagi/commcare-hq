@@ -1,8 +1,10 @@
-import inspect
 from functools import wraps
 
-from django.conf import settings
-
+from corehq.apps.celery.locking import (
+    CouldNotAcquireLockError,
+    get_unique_key,
+    run_with_lock,
+)
 from corehq.apps.celery.shared_task import task
 
 
@@ -44,9 +46,6 @@ def serial_task(
         task_kwargs['serializer'] = serializer
 
     def decorator(fn):
-        # register task with celery.  Note that this still happens on import
-        from dimagi.utils.couch import get_redis_lock, release_lock
-
         @task(
             bind=True,
             queue=queue,
@@ -58,36 +57,12 @@ def serial_task(
         )
         @wraps(fn)
         def _inner(self, *args, **kwargs):
-            if settings.UNIT_TESTING:  # Don't depend on redis
-                return fn(*args, **kwargs)
-
-            key = _get_unique_key(unique_key, fn, *args, **kwargs)
-            lock = get_redis_lock(key, timeout=timeout, name=fn.__name__)
-            if lock.acquire(blocking=False):
-                try:
-                    return fn(*args, **kwargs)
-                finally:
-                    release_lock(lock, True)
-            else:
-                msg = "Could not acquire lock '{}' for task '{}'.".format(
-                    key, fn.__name__
-                )
-                self.retry(exc=CouldNotAcquireLockError(msg))
+            key = get_unique_key(unique_key, fn, *args, **kwargs)
+            try:
+                return run_with_lock(key, fn, timeout, *args, **kwargs)
+            except CouldNotAcquireLockError as e:
+                self.retry(exc=e)
 
         return _inner
 
     return decorator
-
-
-# Sorry this is so magic
-def _get_unique_key(format_str, fn, *args, **kwargs):
-    """
-    Lines args and kwargs up with those specified in the definition of fn and
-    passes the result to `format_str.format()`.
-    """
-    callargs = inspect.getcallargs(fn, *args, **kwargs)
-    return ("{}-" + format_str).format(fn.__name__, **callargs)
-
-
-class CouldNotAcquireLockError(Exception):
-    """Used when a serial_task is unable to obtain lock to run"""

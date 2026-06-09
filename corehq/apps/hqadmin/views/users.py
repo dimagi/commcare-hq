@@ -739,7 +739,7 @@ class DisableTwoFactorView(FormView):
 
     def render_to_response(self, context, **response_kwargs):
         context.update({
-            **get_breadcrumbs('Temporarily Disable Two-factor Authentication', self.urlname),
+            **get_breadcrumbs('Reset Two-Factor Authentication', self.urlname),
             'username': self.request.GET.get("q"),
         })
         return super().render_to_response(context, **response_kwargs)

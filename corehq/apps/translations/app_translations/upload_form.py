@@ -19,7 +19,6 @@ from corehq.apps.translations.app_translations.utils import (
     get_unicode_dicts,
 )
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
-from corehq.toggles import LOCKED_ADMIN_QUESTIONS, NAMESPACE_DOMAIN
 
 
 class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
@@ -88,10 +87,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
 
         locked_label_ids = set()
         warned_locked_labels = set()
-        if (
-            domain_has_privilege(self.app.domain, 'locked_admin_questions')
-            and LOCKED_ADMIN_QUESTIONS.enabled(self.app.domain, namespace=NAMESPACE_DOMAIN)
-        ):
+        if domain_has_privilege(self.app.domain, 'locked_admin_questions'):
             locked_label_ids = self._get_locked_label_ids(rows)
 
         # Update the translations

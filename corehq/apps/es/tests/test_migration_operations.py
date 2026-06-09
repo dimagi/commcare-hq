@@ -8,7 +8,7 @@ from django.db.migrations import Migration
 from django.db.migrations.exceptions import IrreversibleError
 from django.db.migrations.state import ProjectState
 from django.test import SimpleTestCase, TestCase
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from corehq.apps.es.client import manager
 from corehq.apps.es.index.settings import render_index_tuning_settings

@@ -6,13 +6,12 @@
  <div id="{{ qualifier|default_if_none:"" }}media_{{ type }}">
 -  <div class="form-group">
 -    <label class="control-label col-sm-2" for="menu_{{ type }}_path"
--      >{% trans label %}</label
-+  <div class="form-group">  {# todo B5: css-form-group #}
-+    <label class="form-label col-md-2" for="menu_{{ type }}_path"
-+      >{% trans badge %}</label
++  <div class="row mb-3">
++    <label class="field-label" for="menu_{{ type }}_path"
+       >{% trans label %}</label
      >
 -    <div class="col-sm-10 commcare-feature" data-since-version="1.3">
-+    <div class="col-md-10 commcare-feature" data-since-version="1.3">
++    <div class="field-control commcare-feature" data-since-version="1.3">
        {% if type == "image" %}
          {# must use "if" here instead of "visible" #}
          {# otherwise src will be "#" which makes an unneccessary request for the current page #}
@@ -56,45 +55,53 @@
          data-bind="
                          visible: showDefaultPath,
                          enable: enabled,
-@@ -69,26 +69,26 @@
-         <div data-bind="visible: isDefaultLanguage">
-           <label>
+@@ -66,15 +66,20 @@
+         {% trans 'Set Path' %}
+       </button>
+       {% if app.langs|length > 1 %}
+-        <div data-bind="visible: isDefaultLanguage">
+-          <label>
++        <div class="form-check" data-bind="visible: isDefaultLanguage">
++          <input
++            class="form-check-input"
++            type="checkbox"
++            id="media_{{ qualifier|default_if_none:"" }}{{ type }}_all_languages"
++            data-bind="enable: enabled, checked: languagesLinked"
++          />
++          <label
++            class="form-check-label"
++            for="media_{{ qualifier|default_if_none:"" }}{{ type }}_all_languages"
++          >
              {% blocktrans %}
--              Use this {{ label }} for all languages
-+              Use this {{ badge }} for all languages
-             {% endblocktrans %}:
-             <input
+               Use this {{ label }} for all languages
+-            {% endblocktrans %}:
+-            <input
 -              type="checkbox"
-+              type="checkbox"  {# todo B5: css-checkbox #}
-               data-bind="enable: enabled, checked: languagesLinked"
-             />
+-              data-bind="enable: enabled, checked: languagesLinked"
+-            />
++            {% endblocktrans %}
            </label>
          </div>
          <div data-bind="visible: languagesLinked() && !isDefaultLanguage">
-           {% blocktrans %}
--            This {{ label }} is linked to the default language, and can only be
-+            This {{ badge }} is linked to the default language, and can only be
-             modified there.
-           {% endblocktrans %}
-         </div>
+@@ -86,9 +91,9 @@
        {% endif %}
      </div>
    </div>
 -  <div class="form-group" data-bind="visible: showCustomPath">
 -    <label class="control-label col-sm-2">{% trans "Path" %}</label>
 -    <div class="col-sm-4">
-+  <div class="form-group" data-bind="visible: showCustomPath">  {# todo B5: css-form-group #}
-+    <label class="form-label col-md-2">{% trans "Path" %}</label>
++  <div class="row mb-3" data-bind="visible: showCustomPath">
++    <label class="field-label">{% trans "Path" %}</label>
 +    <div class="col-md-4">
        <input
          type="text"
          class="form-control"
-@@ -108,10 +108,10 @@
+@@ -108,10 +113,10 @@
          data-bind="value: languagesLinked"
        />
      </div>
 -    <div class="col-sm-1">
-+    <div class="col-md-1">
++    <div class="col-md-auto">
        <button
          type="button"
 -        class="btn btn-default"

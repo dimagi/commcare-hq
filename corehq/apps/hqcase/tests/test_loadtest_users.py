@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from django.test import SimpleTestCase, TestCase
 
-from nose.tools import assert_equal
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import (
@@ -146,16 +145,16 @@ class TestGetSafeLoadtestFactor(SimpleTestCase):
 
     def test_get_safe_loadtest_factor_safe(self):
         safe = self.restore_state.get_safe_loadtest_factor(total_cases=10)
-        assert_equal(safe, 1000)
+        assert safe == 1000
 
     def test_get_safe_loadtest_factor_unsafe(self):
         safe = self.restore_state.get_safe_loadtest_factor(total_cases=1000)
-        assert_equal(safe, 500)
+        assert safe == 500
 
     def test_get_safe_loadtest_factor_above_limit(self):
         too_many = LOADTEST_HARD_LIMIT + 1
         safe = self.restore_state.get_safe_loadtest_factor(total_cases=too_many)
-        assert_equal(safe, 1)
+        assert safe == 1
 
 
 @dataclass

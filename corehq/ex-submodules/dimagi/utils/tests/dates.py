@@ -1,6 +1,6 @@
 import pickle
 from datetime import datetime, timedelta, date
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 import pytz
 from dimagi.utils.dates import (
     DateSpan,

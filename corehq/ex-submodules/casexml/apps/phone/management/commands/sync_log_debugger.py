@@ -2,7 +2,6 @@ import json
 import os
 from django.core.management import BaseCommand
 from casexml.apps.phone.checksum import Checksum
-from six.moves import range
 
 
 class Command(BaseCommand):
@@ -104,8 +103,14 @@ class Command(BaseCommand):
                         ))
 
         if options['debugger']:
-            union_of_ids = set().union(*[set(log.get_footprint_of_cases_on_phone()) for log in logs])
-            intersection_of_ids = set().intersection(*[set(log.get_footprint_of_cases_on_phone()) for log in logs])
+            union_of_ids = set().union(*[  # noqa
+               set(log.get_footprint_of_cases_on_phone())
+               for log in logs
+            ])
+            intersection_of_ids = set().intersection(*[  # noqa
+              set(log.get_footprint_of_cases_on_phone())
+              for log in logs
+            ])
             import pdb
             pdb.set_trace()
 

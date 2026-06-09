@@ -462,7 +462,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                 </prompt>
               </query>
               <datum id="case_id"
-                nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())][index/parent=instance('commcaresession')/session/data/parent_id]"
+                nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())][index/*[not(@relationship='extension')]=instance('commcaresession')/session/data/parent_id]"
                 value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             </session>
           </entry>
@@ -655,7 +655,7 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
                 </prompt>
               </query>
               <datum id="case_id_child_case"
-                nodeset="instance('{self.m1.search_config.get_instance_name()}')/results/case[@case_type='child_case'][@status='open'][not(commcare_is_related_case=true())][index/parent=instance('commcaresession')/session/data/case_id]"
+                nodeset="instance('{self.m1.search_config.get_instance_name()}')/results/case[@case_type='child_case'][@status='open'][not(commcare_is_related_case=true())][index/*[not(@relationship='extension')]=instance('commcaresession')/session/data/case_id]"
                 value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
             </session>
           </entry>

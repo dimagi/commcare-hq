@@ -41,6 +41,7 @@ from corehq.apps.integration.kyc.tables import (
     KycVerifyTable,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
+from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.utils import add_case_owners_and_location_access
 from corehq.apps.users.decorators import require_permission
@@ -163,6 +164,9 @@ class KycVerificationTableView(
             self._apply_phone_number_filter(phone_number, query_filters)
         if query_filters:
             query = query.filter(filters.AND(*query_filters))
+        if self.kyc_config.user_data_store == UserDataStore.OTHER_CASE_TYPE:
+            if case_status := self.request.GET.get(SelectOpenCloseFilter.slug):
+                query = query.is_closed(case_status == 'closed')
         return query
 
     def _apply_case_list_filter(self, query):
@@ -273,11 +277,13 @@ class KYCFiltersMixin:
             'corehq.apps.integration.kyc.filters.KycVerificationStatusFilter',
             'corehq.apps.integration.kyc.filters.KycVerifiedByFilter',
         ]
-        if (hasattr(self, 'kyc_config') and self.kyc_config
-                and self.kyc_config.user_data_store == UserDataStore.OTHER_CASE_TYPE):
-            fields.insert(0, 'corehq.apps.reports.filters.case_list.CaseListFilter')
-        if hasattr(self, 'kyc_config') and self.kyc_config and self.kyc_config.phone_number_field:
-            fields.append('corehq.apps.integration.kyc.filters.PhoneNumberFilter')
+        kyc_config = getattr(self, 'kyc_config', None)
+        if kyc_config:
+            if kyc_config.user_data_store == UserDataStore.OTHER_CASE_TYPE:
+                fields.insert(0, 'corehq.apps.reports.filters.case_list.CaseListFilter')
+                fields.append('corehq.apps.reports.filters.select.SelectOpenCloseFilter')
+            if kyc_config.phone_number_field:
+                fields.append('corehq.apps.integration.kyc.filters.PhoneNumberFilter')
         return fields
 
     def filters_context(self):
