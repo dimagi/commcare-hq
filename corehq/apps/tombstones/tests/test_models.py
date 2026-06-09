@@ -1,6 +1,6 @@
-from corehq.apps.tombstones.models import SLUG_BY_MODEL
+from corehq.apps.tombstones.models import ModelClassField
 
 
 def test_slugs_are_unique():
-    slugs = list(SLUG_BY_MODEL.values())
-    assert len(slugs) == len(set(slugs)), f"Duplicate slugs in SLUG_BY_MODEL: {slugs}"
+    slugs = list(ModelClassField()._slug_by_model().values())
+    assert len(slugs) == len(set(slugs)), f"Duplicate slugs: {slugs}"
