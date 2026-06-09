@@ -43,7 +43,6 @@ from corehq.apps.userreports.util import (
 )
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.role_utils import get_custom_roles_for_domain
-from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.motech.repeaters.models import Repeater
 
@@ -73,7 +72,8 @@ def _calc_active_cases(ctx):
 def _calc_users_with_submission(ctx):
     """Get total number of users who've ever submitted a form in a domain."""
     query = FormES().domain(ctx.domain).user_aggregation()
-    return len(_exclude_weird_user_ids(query, ctx))
+    return len(_exclude_non_domain_user_ids(query, ctx.domain))
+
 
 def _calc_users_with_web_apps_submission_30d(ctx):
     """Get total number of users who've submitted a form from web apps in a domain in the last 30 days."""
@@ -85,15 +85,14 @@ def _calc_users_with_web_apps_submission_30d(ctx):
         .filter(filters.term('form.meta.deviceID', cloudcare_const.DEVICE_ID))
         .user_aggregation()
     )
-    return len(_exclude_weird_user_ids(query, ctx))
+    return len(_exclude_non_domain_user_ids(query, ctx.domain))
 
 
-def _exclude_weird_user_ids(es_query, ctx):
-    terms = {
-        user_id for user_id in es_query.run().aggregations.user.keys
-        if user_id not in WEIRD_USER_IDS
-    }
-    return terms.intersection(set(CouchUser.ids_by_domain(ctx.domain)))
+def _exclude_non_domain_user_ids(es_query, domain):
+    return (
+        set(es_query.run().aggregations.user.keys)
+        & set(CouchUser.ids_by_domain(domain))
+    )
 
 
 def _calc_web_users_accessed_30d(ctx):
