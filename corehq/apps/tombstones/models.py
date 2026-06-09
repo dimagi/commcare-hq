@@ -40,12 +40,15 @@ class ModelClassField(models.CharField):
         return self._slug_by_model()[value]
 
 
-def build_tombstone(doc_type, doc_id, domain, deleted_on=None):
+def build_tombstone(
+    model, doc_id, domain, soft_deleted_on=None, hard_deleted_on=None
+):
     return Tombstone(
         doc_id=doc_id,
-        object_class_path=f'{doc_type.__module__}.{doc_type.__qualname__}',
+        model=model,
         domain=domain,
-        deleted_on=deleted_on or datetime.now(tz=UTC),
+        soft_deleted_on=soft_deleted_on or datetime.now(tz=UTC),
+        hard_deleted_on=hard_deleted_on or datetime.now(tz=UTC),
     )
 
 

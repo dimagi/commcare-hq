@@ -1,7 +1,7 @@
 import logging
 from collections import Counter
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from io import BytesIO
 
 from django.db import InternalError, models, transaction
@@ -411,14 +411,19 @@ class XFormInstanceManager(RequireDBManager):
             )
             shard_count = 0
             while results := queryset[:BATCH_SIZE]:
+                hard_deletion_date = datetime.now(tz=UTC)
                 form_ids_to_delete = []
                 tombstones = []
-                for form_id, deleted_on in results:
+                for form_id, soft_deleted_on in results:
                     form_ids_to_delete.append(form_id)
                     if leave_tombstones:
                         tombstones.append(
                             build_tombstone(
-                                XFormInstance, form_id, domain, deleted_on
+                                XFormInstance,
+                                form_id,
+                                domain,
+                                soft_deleted_on,
+                                hard_deletion_date,
                             )
                         )
 
