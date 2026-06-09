@@ -42,8 +42,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
             prefix='1',
             backend=cls.custom_backend,
         )
-        cls.process_pillow_changes = process_pillow_changes('DefaultChangeFeedPillow')
-        cls.process_pillow_changes.add_pillow(get_case_messaging_sync_pillow())
+        cls.process_pillow_changes = process_pillow_changes(get_case_messaging_sync_pillow())
 
     @classmethod
     def tearDownClass(cls):
