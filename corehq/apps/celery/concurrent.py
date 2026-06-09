@@ -4,6 +4,7 @@ from functools import wraps
 from corehq.apps.celery.locking import (
     CouldNotAcquireLockError,
     get_unique_key,
+    legacy_lock_still_held,
     run_with_lock,
 )
 from corehq.apps.celery.shared_task import task
@@ -67,6 +68,14 @@ def concurrent_task(
         @wraps(fn)
         def _inner(self, *args, **kwargs):
             key = get_unique_key(unique_key, fn, *args, **kwargs)
+
+            if legacy_lock_still_held(concurrency, key):
+                msg = (
+                    f"Legacy lock '{key}' still held for task '{fn.__name__}'."
+                )
+                self.retry(exc=CouldNotAcquireLockError(msg))
+                return
+
             # Randomize starting slot to avoid contention
             start = random.randrange(concurrency)
             for i in range(concurrency):
