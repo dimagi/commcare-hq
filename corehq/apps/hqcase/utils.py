@@ -58,7 +58,7 @@ def submit_case_blocks(
     xmlns: str | None = None,
     attachments: dict[str, UploadedFile] | None = None,
     form_id: str | None = None,
-    submission_extras=None,
+    submission_extras: dict[str, Any] | None = None,
     case_db: AbstractCaseDbCache | None = None,
     device_id: str | None = None,
     form_name: str | None = None,
