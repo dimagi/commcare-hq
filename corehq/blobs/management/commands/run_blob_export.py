@@ -55,7 +55,7 @@ class Command(BaseCommand):
         **options,
     ):
         already_exported = get_lines_from_file(options['already_exported'])
-        print("Found {} existing blobs, these will be skipped".format(len(already_exported)))
+        print(f"Found {len(already_exported)} existing blobs, these will be skipped")
 
         if not domain:
             raise CommandError(USAGE)
@@ -63,7 +63,7 @@ class Command(BaseCommand):
         if dir:
             os.makedirs(dir, exist_ok=True)
 
-        self.stdout.write("\nRunning blob exporter\n{}".format('-' * 50))
+        self.stdout.write(f"\nRunning blob exporter\n{'-' * 50}")
         export_filename = _get_export_filename(
             domain, already_exported, path=dir, limited_to_db=limit_to_db
         )
