@@ -75,7 +75,7 @@ class CODES:
     domain = 4          # Domain
     application = 5     # Application, Application-Deleted, LinkedApplication
     multimedia = 6      # CommCareMultimedia
-    commcarebuild = 7   # CommCareBuild
+    commcarebuild = 7   # CommCareBuild - No longer in use
     data_import = 8     # case_importer
 
     data_export = 9     # FormExportInstance, CaseExportInstance

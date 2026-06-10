@@ -49,7 +49,7 @@ dependencies = [
     "django-transfer",
     "django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae", # waiting for next release after 1.16.0
     "django-user-agents",
-    "django~=5.2.0",
+    "django~=5.2.14",
     "djangorestframework",
     "dropbox",
     "elasticsearch6>=6.0.0,<7.0.0",
@@ -106,7 +106,6 @@ dependencies = [
     "sh",
     "simpleeval",
     "simplejson",
-    "six",
     "sqlagg",
     "SQLAlchemy",
     "stripe",
@@ -133,14 +132,12 @@ default-groups = ["dev", "sso"]
 dev = [
     'dependency-metrics',
     'django-extensions',
-    'fixture',
     'git-build-branch',
     'gnureadline',
     'ipython', # for nicer django shell experience
     'psutil>5.1.3', # for memory profiling
     'wheel',
-    'flake8>=6.0', # linting
-    'ruff', # formatting and import sorting
+    'ruff', # linting, formatting, and import sorting
     {include-group = "test"},
 ]
 docs = [
@@ -149,8 +146,7 @@ docs = [
     "Sphinx",
     "sphinxcontrib-django",
     "sphinx-rtd-theme",
-    "pyOpenSSL", # CI builds fail without OpenSSL
-    "urllib3<=2.6.3", # fix doc tests AssertionError: Current app already created
+    "urllib3<=2.7.0", # fix doc tests AssertionError: Current app already created
 ]
 prod = [
     "flower",
@@ -169,7 +165,7 @@ test = [
     'requests-mock',
     'Faker',
     'flaky>=3.8', # required for pytest 8.2 (and possibly earlier versions)
-    'radon>=5.0', # v5 no longer depends on flake8-polyfill
+    'radon>=5.0',
     'time-machine',
     'pytest-django',
     'pytest-unmagic',
@@ -234,3 +230,22 @@ line-length = 79
 
 [tool.ruff.format]
 quote-style = "single"
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 115
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["F403"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/migrations/*.py" = ["E501", "E303"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/**" = ["E", "F", "W"]
+
+[tool.pyright]
+typeCheckingMode = "off"
+extraPaths = [
+    "corehq/ex-submodules",
+]

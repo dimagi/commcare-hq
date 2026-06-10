@@ -169,3 +169,6 @@ if settingshelper.is_testing():
 # LOG FILES
 DJANGO_LOG_FILE = "/tmp/commcare-hq.django.log"
 LOG_FILE = "/tmp/commcare-hq.log"
+
+# Disable datadog trace
+os.environ.setdefault('DD_TRACE_ENABLED', 'false')

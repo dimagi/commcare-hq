@@ -411,9 +411,11 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                 <instance id="casedb" src="jr://instance/casedb"/>
                 <instance id="commcaresession" src="jr://instance/session"/>
                 <session>
-                  <datum id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='parrot'][@status='open']"
+                  <datum id="parent_id"
+                         nodeset="instance('casedb')/casedb/case[@case_type='parrot'][@status='open']"
                          value="./@case_id" detail-select="m0_case_short"/>
-                  <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='baby_parrot'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id]"
+                  <datum id="case_id"
+                         nodeset="instance('casedb')/casedb/case[@case_type='baby_parrot'][@status='open'][index/*[not(@relationship='extension')]=instance('commcaresession')/session/data/parent_id]"
                          value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
                 </session>
               </entry>
@@ -444,9 +446,11 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                 <instance id="casedb" src="jr://instance/casedb"/>
                 <instance id="commcaresession" src="jr://instance/session"/>
                 <session>
-                  <datum id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='parrot'][@status='open']"
+                  <datum id="parent_id"
+                         nodeset="instance('casedb')/casedb/case[@case_type='parrot'][@status='open']"
                          value="./@case_id" detail-select="m4_case_short"/>
-                  <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='baby_parrot'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id]"
+                  <datum id="case_id"
+                         nodeset="instance('casedb')/casedb/case[@case_type='baby_parrot'][@status='open'][index/*[not(@relationship='extension')]=instance('commcaresession')/session/data/parent_id]"
                          value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
                 </session>
               </entry>

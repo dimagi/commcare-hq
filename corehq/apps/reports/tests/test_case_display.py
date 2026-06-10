@@ -2,7 +2,6 @@ import uuid
 
 from django.test import TestCase
 
-from nose.tools import assert_equal
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.views import CaseDisplayWrapper
@@ -18,8 +17,8 @@ def test_happy_case_display():
         'modified_on': '2022-04-06T12:13:14Z',
     }
     case_display = CaseDisplayES(case_dict)
-    assert_equal(case_display.modified_on, 'Apr 06, 2022 12:13:14 UTC')
-    assert_equal(case_display.last_modified, 'Apr 06, 2022 12:13:14 UTC')
+    assert case_display.modified_on == 'Apr 06, 2022 12:13:14 UTC'
+    assert case_display.last_modified == 'Apr 06, 2022 12:13:14 UTC'
 
 
 def test_bad_case_display():
@@ -28,21 +27,21 @@ def test_bad_case_display():
         'modified_on': 'broken',
     }
     case_display = CaseDisplayES(case_dict)
-    assert_equal(case_display.modified_on, '')
+    assert case_display.modified_on == ''
 
 
 def test_blank_owner_id():
     # previously this would error
     owner_type, meta = CaseDisplayES({}).owner
-    assert_equal(owner_type, 'user')
-    assert_equal(meta, {'id': '', 'name': ''})
+    assert owner_type == 'user'
+    assert meta == {'id': '', 'name': ''}
 
 
 def test_null_owner_id():
     # previously this would error
     owner_type, meta = CaseDisplayES({'owner_id': None}).owner
-    assert_equal(owner_type, 'user')
-    assert_equal(meta, {'id': None, 'name': None})
+    assert owner_type == 'user'
+    assert meta == {'id': None, 'name': None}
 
 
 class TestCaseDisplayWrapper(TestCase):

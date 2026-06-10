@@ -1,5 +1,11 @@
 --- 
 +++ 
+@@ -1,4 +1,4 @@
+-{% extends login_template_b3 %}
++{% extends login_template %}
+ {% load i18n %}
+ 
+ {% block title %}{% trans "Single Sign-On Error" %}{% endblock title %}
 @@ -6,7 +6,7 @@
  {% block login-content %}
    <div class="container-fluid">

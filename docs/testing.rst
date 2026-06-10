@@ -26,6 +26,17 @@ most tests it is disabled by default, but it can be temporarily enabled using
 Testing best practices
 ======================
 
+Class-based vs function-based tests
+===================================
+
+Both styles are fine — pick whichever is more readable and maintainable for
+the situation. There is no project-wide preference. Class-based tests
+(``TestCase``, ``SimpleTestCase``) work well when several tests share
+expensive setup or naturally group together. Function-based tests work well
+for standalone cases and pair nicely with ``pytest.mark.parametrize`` and
+explicit `pytest-unmagic <https://github.com/dimagi/pytest-unmagic>`_
+fixtures.
+
 Test set up
 ===========
 

@@ -48,7 +48,7 @@
             {% if not module.is_surveys and module.module_type != 'shadow' %}
               {% include "app_manager/partials/modules/bootstrap3/module_view_case_type.html" %}
 
-              {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+              {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
               <div class="form-group">
                 <label class="{% css_label_class %} control-label">
                   {% trans "Additional Case List and Case Search Types" %}

@@ -4,7 +4,7 @@ import uuid
 from unittest import mock
 
 from lxml import etree
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from dimagi.utils.couch.database import iter_bulk_delete
 

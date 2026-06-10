@@ -136,13 +136,12 @@ accounting
  0114_custom_icon_badges_priv
  0115_loc_cols_in_user_last_activity_priv
  0116_creditadjustment_payment_type
+ 0117_locked_admin_questions_priv
+ 0118_vellum_save_to_case_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
  0003_logentry_add_action_flag_choices
-aggregate_ucrs
- 0001_initial_squashed_0008_auto_20180625_1105 (8 squashed migrations)
- 0002_auto_20180827_1148
 analytics
  0001_initial
  0002_data_point_unique_constraint
@@ -191,6 +190,7 @@ app_manager
  0028_case_list_custom_variable_xml_to_dict
  0029_delete_case_list_custom_variable_xml
  0030_credentialapplication
+ 0031_delete_latestenabledbuildprofiles
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -248,6 +248,8 @@ case_importer
  0012_auto_20190405_1747
  0013_make_duplicates_errors
  0014_rename_caseuploadrecord_domain_created_case_import_domain_21a470_idx
+ 0015_caseuploadrecord_is_hidden
+ 0016_alter_caseuploadrecord_comment
 case_search
  0001_initial
  0002_auto_20161114_1901
@@ -265,6 +267,8 @@ case_search
  0014_casesearchconfig_index_name
  0015_csqlfixtureexpression_csqlfixtureexpressionlog
  0016_csqlfixtureexpression_user_data_criteria
+ 0017_add_case_search_endpoint_models
+ 0018_add_endpoint_version_audit_fields
 celery
  0001_taskrecord
  0002_taskrecord_kombu_serialization
@@ -287,6 +291,7 @@ cleanup
  0016_add_deletedsqldoc
  0017_delete_oauth_integrations_models
  0018_delete_ewsghana_models
+ 0019_alter_deletedsqldoc_table
 cloudcare
  0001_initial
  0002_sqlapplicationaccess
@@ -458,6 +463,7 @@ domain
  0018_enable_all_add_ons
  0019_remove_usercase_enabled_field
  0020_delete_transferdomainrequest
+ 0021_delete_smsaccountconfirmationsettings
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -884,6 +890,7 @@ preindex
  0004_initial
  0005_initial
  0006_initial
+ 0007_initial
 products
  0001_initial
 project_limits
@@ -988,6 +995,7 @@ scheduling
  0027_emailcontent_html_message
  0028_alertschedule_use_user_case_for_filter_and_more
  0029_connectmessagecontent_connectmessagesurveycontent_and_more
+ 0030_remove_casepropertytimedevent_fcm_notification_content_and_more
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -1233,6 +1241,7 @@ sso
  0007_add_multi_view_api_fields
  0008_alter_identityprovider_idp_type
  0009_identityprovider_require_api_key_for_api_access
+ 0010_remove_identityprovider_require_api_key_for_api_access
 start_enterprise
  0001_initial
 stock
@@ -1256,6 +1265,11 @@ toggles
  0004_alter_toggleeditpermission_tag_slug
  0005_alter_toggleeditpermission_tag_slug
  0006_alter_toggleeditpermission_tag_slug
+ 0007_alter_toggleeditpermission_tag_slug
+tombstones
+ 0001_create_tombstone_model
+ 0002_migrate_deleted_sql_docs
+ 0003_tombstone_improvements
 translations
  0001_initial
  0002_transifexblacklist
@@ -1267,6 +1281,7 @@ translations
  0008_remove_couch_id
  0009_auto_20200924_1753
  0010_transifex_organization_api_token_encryption
+ 0011_delete_transifexblacklist_and_more
 two_factor
  (no migrations)
 user_importer
@@ -1292,6 +1307,7 @@ userreports
  0018_ucrexpression
  0019_ucrexpression_upstream_id
  0020_delete_ucr_comparison_models
+ 0021_drop_aggregate_ucrs_tables
 users
  0001_add_location_permission
  0002_domainrequest
@@ -1385,6 +1401,7 @@ users
  0085_usercredential
  0086_backfill_usercases
  0087_alter_sqluserdata_managers
+ 0088_remove_userreportingmetadatastaging_fcm_token
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

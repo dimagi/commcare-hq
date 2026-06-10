@@ -98,7 +98,7 @@ class Command(BaseCommand):
         print(f"\n################# add {command_file} #################")
         print(command_content)
 
-        test_file_name = f'test_{self.class_name.lower()}_attr_comparision.py'
+        test_file_name = f'test_{self.class_name.lower()}_attr_comparison.py'
         test_file = os.path.join("corehq", "apps", self.django_app, "tests", test_file_name)
         test_content = self.generate_test_file()
         print(f"\n################# add {test_file} #################\n")

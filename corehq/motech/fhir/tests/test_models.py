@@ -6,7 +6,6 @@ from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError
 from django.test import TestCase
 
-from nose.tools import assert_in
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.users.models import CommCareUser
@@ -638,7 +637,7 @@ class TestResourceValidation(TestCase):
 
 def test_names():
     names = FHIRResourceType.get_names()
-    assert_in('Patient', names)
+    assert 'Patient' in names
 
 
 def test_doctests():

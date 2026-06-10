@@ -4,9 +4,7 @@ from datetime import datetime
 from django.conf import settings
 
 import langcodes
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
+import urllib.parse
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
@@ -1390,7 +1388,7 @@ def verify_phone_number(request, domain, couch_user_id):
     """
     if 'phone_number' not in request.GET:
         raise Http404('Must include phone number in request.')
-    phone_number = six.moves.urllib.parse.unquote(request.GET['phone_number'])
+    phone_number = urllib.parse.unquote(request.GET['phone_number'])
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
     try:

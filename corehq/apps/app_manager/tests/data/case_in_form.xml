@@ -28,7 +28,7 @@
                 constraint="1 + instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1"
                 jr:constraintMsg="jr:itext('question1-constraintMsg')"
                 relevant="instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/index/parent]/parent_property_1 + 1 + instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/index/parent]/parent_property_1" />
-            <bind nodeset="/data/question2" type="xsd:string" />
+            <bind nodeset="/data/question2" type="xsd:string" vellum:lock="all" />
             <bind nodeset="/data/question3" type="xsd:string" />
 
             <!-- repeat context test -->

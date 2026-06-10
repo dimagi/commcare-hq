@@ -1,4 +1,5 @@
 import logging
+from collections import Counter
 from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO
@@ -19,6 +20,7 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.cleanup.utils import get_cutoff_date_for_data_deletion
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -191,24 +193,24 @@ class XFormInstanceManager(RequireDBManager):
             )
         return result
 
-    def hard_delete_forms_before_cutoff(self, cutoff, dry_run=True):
+    def hard_delete_expired_forms(self, commit=False):
         """
-        Permanently deletes forms with deleted_on set to a datetime earlier than
-        the specified cutoff datetime
-        :param cutoff: datetime used to obtain the forms to be hard deleted
-        :param dry_run: if True, no changes will be committed to the database
-        and this method is effectively read-only
-        :return: dictionary of count of deleted objects per table
+        Permanently deletes forms that were soft deleted outside of
+        the DATA_RETENTION_WINDOW, meaning the ``deleted_on`` field is
+        older than the current time - the DATA_RETENTION_WINDOW.
+        :param commit: defaults to False. If True, will delete expired forms
+        :return: dictionary of count of deleted forms
         """
-        counts = {}
+        expiration_date = get_cutoff_date_for_data_deletion()
+        total_count = {}
         for db_name in get_db_aliases_for_partitioned_query():
-            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
-            if dry_run:
-                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
-            else:
+            queryset = self.using(db_name).filter(deleted_on__lt=expiration_date)
+            if commit:
                 deleted_counts = queryset.delete()[1]
-            counts.update(deleted_counts)
-        return counts
+            else:
+                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
+            total_count = Counter(total_count) + Counter(deleted_counts)
+        return total_count
 
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
@@ -387,8 +389,7 @@ class XFormInstanceManager(RequireDBManager):
 
         return count
 
-    def hard_delete_forms(
-            self, domain, form_ids, return_ids=False, delete_attachments=True, *, publish_changes=True):
+    def hard_delete_forms(self, domain, form_ids, *, publish_changes=True):
         """Delete forms permanently
 
         :param publish_changes: Flag for change feed publication.
@@ -397,19 +398,14 @@ class XFormInstanceManager(RequireDBManager):
         assert isinstance(form_ids, list)
 
         deleted_count = 0
-        deleted_ids = []
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
             # cascade should delete the operations
             query = self.using(db_name).filter(domain=domain, form_id__in=split_form_ids)
             with transaction.atomic():
-                if return_ids:
-                    found_forms = list(query.values_list('form_id', flat=True))
                 _, deleted_models = query.delete()
             deleted_count += deleted_models.get(self.model._meta.label, 0)
-            if return_ids:
-                deleted_ids.extend(found_forms)
 
-        if delete_attachments and deleted_count:
+        if deleted_count:
             if deleted_count != len(form_ids):
                 # in the unlikely event that we didn't delete all forms (because they weren't all
                 # in the specified domain), only delete attachments for forms that were deleted.
@@ -425,7 +421,7 @@ class XFormInstanceManager(RequireDBManager):
         if publish_changes:
             self.publish_deleted_forms(domain, form_ids)
 
-        return deleted_ids if return_ids else deleted_count
+        return deleted_count
 
     @staticmethod
     def publish_deleted_forms(domain, form_ids):

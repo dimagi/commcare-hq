@@ -255,7 +255,7 @@ def _delete_sms_content_events_schedules(domain_name):
     models = [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
         'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent',
-        'FCMNotificationContent', 'ConnectMessageContent', 'ConnectMessageSurveyContent'
+        'ConnectMessageContent', 'ConnectMessageSurveyContent'
     ]
     filters = [
         'alertevent__schedule__domain',
@@ -345,11 +345,7 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('accounting', _terminate_subscriptions, ['Subscription']),
     CustomDeletion('form_processor', delete_all_cases, ['CommCareCase']),
     CustomDeletion('form_processor', delete_all_forms, ['XFormInstance']),
-    ModelDeletion('aggregate_ucrs', 'AggregateTableDefinition', 'domain', [
-        'PrimaryColumn', 'SecondaryColumn', 'SecondaryTableDefinition', 'TimeAggregationDefinition',
-    ]),
     ModelDeletion('app_manager', 'AppReleaseByLocation', 'domain'),
-    ModelDeletion('app_manager', 'LatestEnabledBuildProfiles', 'domain'),
     ModelDeletion('app_manager', 'ResourceOverride', 'domain'),
     ModelDeletion('app_manager', 'GlobalAppConfig', 'domain'),
     ModelDeletion('app_manager', 'ApplicationReleaseLog', 'domain'),
@@ -413,7 +409,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('linked_domain', 'DomainLink', 'linked_domain', ['DomainLinkHistory']),
     CustomDeletion('scheduling', _delete_sms_content_events_schedules, [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
-        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent', 'FCMNotificationContent',
+        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent',
         'ConnectMessageContent', 'ConnectMessageSurveyContent'
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'broadcast__domain'),
@@ -456,10 +452,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('reports', 'QueryStringHash', 'domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     CustomDeletion('toggles', _disable_toggles, []),
-    ModelDeletion('translations', 'TransifexOrganization', 'transifexproject__domain'),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),
-    ModelDeletion('translations', 'TransifexBlacklist', 'domain'),
-    ModelDeletion('translations', 'TransifexProject', 'domain'),
     ModelDeletion(
         'generic_inbound', 'ConfigurableAPI', 'domain',
         extra_models=["ConfigurableApiValidation", "RequestLog", "ProcessingAttempt"],
@@ -496,9 +489,10 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('fixtures', 'LookupTable', 'domain'),
     ModelDeletion('case_search', 'CSQLFixtureExpression', 'domain'),
     ModelDeletion('case_search', 'CSQLFixtureExpressionLog', 'expression__domain'),
+    ModelDeletion('case_search', 'CaseSearchEndpoint', 'domain',
+                  extra_models=['CaseSearchEndpointVersion']),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
-    ModelDeletion('domain', 'SMSAccountConfirmationSettings', 'domain'),
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
     ModelDeletion('domain', 'AppManagerDomainSettings', 'domain'),
     ModelDeletion('geospatial', 'GeoConfig', 'domain'),

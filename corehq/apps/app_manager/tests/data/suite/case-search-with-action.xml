@@ -4,7 +4,6 @@
       <text>
         <locale id="case_search.m0"/>
       </text>
-      <media audio="jr://file/commcare/image/2.mp3" image="jr://file/commcare/image/1.png"/>
     </display>
     <stack>
       <push>

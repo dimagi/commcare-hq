@@ -38,17 +38,10 @@ Useful Tools
 ------------
 Here are some tools widely used by CommCare HQ developers
 
-flake8
-    Flake8 is run on all PRs automatically. You can run it locally to ensure your
-    code meets those standards before opening a PR.
-
-pylint
-    It requires some configuration, but this is the most comprehensive python linter
-    out there and can provide some useful feedback.
-
 ruff
-    Ruff is used for formatting Python code and sorting imports. Run
-    ``ruff format path/to/file.py`` to format a file, or
+    Ruff is used for linting, formatting, and sorting imports. It is run on all
+    PRs automatically. Run ``ruff check path/to/file.py`` to lint,
+    ``ruff format path/to/file.py`` to format, or
     ``ruff check --select I --fix path/to/file.py`` to sort imports.
     Commit formatting and import-sorting changes separately from logic changes.
 

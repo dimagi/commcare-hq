@@ -8,7 +8,7 @@ from django.contrib.sites.models import Site
 from django.test import LiveServerTestCase
 
 from dateutil.parser import parse
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from casexml.apps.case.mock import CaseBlock
 

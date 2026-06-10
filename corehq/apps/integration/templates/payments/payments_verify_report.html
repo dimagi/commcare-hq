@@ -5,6 +5,7 @@
 {% js_entry "integration/js/payments/payments_verify" %}
 
 {% block page_content %}
+  {% initial_page_data 'daterangepicker-show-clear' 'true' %}
   {% if not has_config %}
     <p class="alert alert-warning">
       {% blocktrans %}

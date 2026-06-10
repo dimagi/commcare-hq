@@ -11,7 +11,7 @@ from django.contrib.admin.utils import NestedObjects
 from django.db import transaction, IntegrityError
 from django.db.models.signals import post_delete, post_save
 from django.test import SimpleTestCase, TestCase
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
@@ -107,7 +107,7 @@ class BaseDumpLoadTest(TestCase):
         objects_remaining = list(get_objects_to_dump(self.domain_name, [], []))
         object_classes = [obj.__class__.__name__ for obj in objects_remaining]
         counts = Counter(object_classes)
-        self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
+        self.assertEqual([], objects_remaining, f'Not all data deleted: {counts}')
 
         actual_model_counts, dump_lines = self._parse_dump_output(output_stream)
         expected_model_counts = _normalize_object_counter(expected_dump_counts)
@@ -148,9 +148,7 @@ class BaseDumpLoadTest(TestCase):
                 if receiver_path in whitelist_receivers:
                     continue
                 args = inspect.signature(receiver).parameters
-                message = 'Signal handler "{}" for model "{}" missing raw arg'.format(
-                    receiver, model
-                )
+                message = f'Signal handler "{receiver}" for model "{model}" missing raw arg'
                 self.assertIn('raw', args, message)
                 found_models.add(model)
         expected_models = getattr(self, 'raw_post_save_models', set())
@@ -722,17 +720,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             CaseUploadFormRecord: 1,
         }))
 
-    def test_transifex(self):
-        from corehq.apps.translations.models import TransifexProject, TransifexOrganization
-        org = TransifexOrganization.objects.create(slug='test', name='demo', api_token='123')
-        TransifexProject.objects.create(
-            organization=org, slug='testp', name='demop', domain=self.domain_name
-        )
-        TransifexProject.objects.create(
-            organization=org, slug='testp1', name='demop1', domain=self.domain_name
-        )
-        self._dump_and_load(Counter({TransifexOrganization: 1, TransifexProject: 2}))
-
     def test_filtered_dump_load(self):
         from corehq.apps.locations.tests.test_location_types import make_loc_type
         from corehq.apps.products.models import SQLProduct
@@ -896,7 +883,7 @@ class DefaultDictWithKeyTests(SimpleTestCase):
 def _normalize_object_counter(counter, for_loaded=False):
     """Converts a <Model Class> keyed counter to an model label keyed counter"""
     def _model_class_to_label(model_class):
-        label = '{}.{}'.format(model_class._meta.app_label, model_class.__name__)
+        label = f'{model_class._meta.app_label}.{model_class.__name__}'
         return label if for_loaded else label.lower()
     return Counter({
         _model_class_to_label(model_class): count

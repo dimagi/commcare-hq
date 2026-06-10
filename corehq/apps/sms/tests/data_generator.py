@@ -3,7 +3,7 @@ import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
 
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent

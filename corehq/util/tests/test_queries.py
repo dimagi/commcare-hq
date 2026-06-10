@@ -1,6 +1,11 @@
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
+from django.db import connections
+from django.db.utils import InterfaceError, OperationalError
 from django.test.testcases import TestCase
 
+from corehq.util import queries
 from corehq.util.queries import queryset_to_iterator
 
 
@@ -47,3 +52,80 @@ class TestQuerysetToIterator(TestCase):
             [u.username for u in all_users],
             [u.username for u in self.users],
         )
+
+    def test_retries_chunk_fetch_on_operational_error(self):
+        query = User.objects.filter(last_name="Tenenbaum")
+        real_fetch = queries._fetch_chunk
+        calls = []
+
+        def flaky_fetch(queryset, limit):
+            calls.append(1)
+            if len(calls) == 1:
+                raise OperationalError("simulated pgbouncer disconnect")
+            return real_fetch(queryset, limit)
+
+        with patch.object(queries, '_fetch_chunk', side_effect=flaky_fetch), \
+                patch.object(queries.time, 'sleep') as mock_sleep, \
+                patch.object(connections['default'], 'close') as mock_close:
+            result = list(queryset_to_iterator(query, User, limit=4))
+
+        assert len(result) == 10
+        assert len(calls) >= 2  # at least one retry happened
+        mock_close.assert_called()
+        mock_sleep.assert_called_with(1)  # first backoff
+
+    def test_retries_resume_from_last_doc_pk_without_duplicates(self):
+        query = User.objects.filter(last_name="Tenenbaum")
+        real_fetch = queries._fetch_chunk
+        calls = []
+
+        def flaky_fetch(queryset, limit):
+            calls.append(1)
+            # Fail on the 2nd chunk fetch, succeed on retry
+            if len(calls) == 2:
+                raise OperationalError("disconnect mid-iteration")
+            return real_fetch(queryset, limit)
+
+        with patch.object(queries, '_fetch_chunk', side_effect=flaky_fetch), \
+                patch.object(queries.time, 'sleep'), \
+                patch.object(connections['default'], 'close'):
+            result = list(queryset_to_iterator(query, User, limit=4))
+
+        assert [u.username for u in result] == [u.username for u in self.users]
+
+    def test_gives_up_after_max_attempts(self):
+        query = User.objects.filter(last_name="Tenenbaum")
+
+        def always_fail(queryset, limit):
+            raise OperationalError("permanent failure")
+
+        with patch.object(queries, '_fetch_chunk', side_effect=always_fail), \
+                patch.object(queries.time, 'sleep') as mock_sleep, \
+                patch.object(connections['default'], 'close') as mock_close, \
+                self.assertRaises(OperationalError):
+            list(queryset_to_iterator(query, User, limit=4))
+
+        # One sleep + one close between each pair of attempts, none after the last.
+        assert mock_sleep.call_count == len(queries._CHUNK_RETRY_DELAYS)
+        assert mock_close.call_count == len(queries._CHUNK_RETRY_DELAYS)
+        # And the full backoff schedule was walked in order.
+        actual_delays = [call.args[0] for call in mock_sleep.call_args_list]
+        assert actual_delays == list(queries._CHUNK_RETRY_DELAYS)
+
+    def test_retries_on_interface_error(self):
+        query = User.objects.filter(last_name="Tenenbaum")
+        real_fetch = queries._fetch_chunk
+        calls = []
+
+        def flaky_fetch(queryset, limit):
+            calls.append(1)
+            if len(calls) == 1:
+                raise InterfaceError("connection already closed")
+            return real_fetch(queryset, limit)
+
+        with patch.object(queries, '_fetch_chunk', side_effect=flaky_fetch), \
+                patch.object(queries.time, 'sleep'), \
+                patch.object(connections['default'], 'close'):
+            result = list(queryset_to_iterator(query, User, limit=4))
+
+        assert len(result) == 10

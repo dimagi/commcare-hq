@@ -1,16 +1,12 @@
-from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import models
-from django.utils.translation import gettext as _
 
 import jsonfield as old_jsonfield
 
-from corehq.apps.users.models import ConnectIDUserLink, CommCareUser
-from dimagi.utils.logging import notify_error
 from dimagi.utils.modules import to_function
 
 from corehq import toggles
@@ -27,12 +23,12 @@ from corehq.apps.sms.models import (
     PhoneNumber,
 )
 from corehq.apps.smsforms.tasks import send_first_message
+from corehq.apps.users.models import CommCareUser, ConnectIDUserLink
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import random_url_id
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.fcm.exceptions import FCMTokenValidationException
 from corehq.messaging.scheduling.exceptions import EmailValidationException
 from corehq.messaging.scheduling.models.abstract import Content, SurveyContent
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
@@ -43,14 +39,6 @@ from corehq.util.view_utils import absolute_reverse
 
 class SMSContent(Content):
     message = old_jsonfield.JSONField(default=dict)
-
-    def create_copy(self):
-        """
-        See Content.create_copy() for docstring
-        """
-        return SMSContent(
-            message=deepcopy(self.message),
-        )
 
     def render_message(self, message, recipient, logged_subevent):
         if not message:
@@ -94,16 +82,6 @@ class EmailContent(Content):
     html_message = NullJsonField(default=dict)
 
     TRIAL_MAX_EMAILS = 50
-
-    def create_copy(self):
-        """
-        See Content.create_copy() for docstring
-        """
-        return EmailContent(
-            subject=deepcopy(self.subject),
-            message=deepcopy(self.message),
-            html_message=deepcopy(self.html_message),
-        )
 
     def render_subject_and_message(self, subject, message, html_message, recipient):
         renderer = self.get_template_renderer(recipient)
@@ -218,19 +196,6 @@ class EmailContent(Content):
 
 
 class SMSSurveyContent(SurveyContent):
-
-    def create_copy(self):
-        """
-        See Content.create_copy() for docstring
-        """
-        return SMSSurveyContent(
-            app_id=None,
-            form_unique_id=None,
-            expire_after=self.expire_after,
-            reminder_intervals=deepcopy(self.reminder_intervals),
-            submit_partially_completed_forms=self.submit_partially_completed_forms,
-            include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
-        )
 
     def phone_has_opted_out(self, phone_entry_or_number):
         if isinstance(phone_entry_or_number, PhoneNumber):
@@ -384,14 +349,6 @@ class CustomContent(Content):
     # messsages to send to the recipient.
     custom_content_id = models.CharField(max_length=126)
 
-    def create_copy(self):
-        """
-        See Content.create_copy() for docstring
-        """
-        return CustomContent(
-            custom_content_id=self.custom_content_id,
-        )
-
     def get_list_of_messages(self, recipient):
         if not self.schedule_instance:
             raise ValueError(
@@ -435,66 +392,6 @@ class CustomContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE, additional_error_text=str(error))
             raise
         logged_subevent.completed()
-
-
-class FCMNotificationContent(Content):
-    ACTION_CHOICES = [
-        ('SYNC', _('Background Sync'))
-    ]
-
-    MESSAGE_TYPE_NOTIFICATION = 'NOTIFICATION'
-    MESSAGE_TYPE_DATA = 'DATA'
-
-    MESSAGE_TYPES = [
-        (MESSAGE_TYPE_NOTIFICATION, _('Display Messages')),
-        (MESSAGE_TYPE_DATA, _('Data Messages'))
-    ]
-    # subject and message corresponds to 'title' and 'body' respectively in FCM terms.
-    subject = old_jsonfield.JSONField(default=dict)
-    message = old_jsonfield.JSONField(default=dict)
-    action = models.CharField(null=True, choices=ACTION_CHOICES, max_length=25)
-    message_type = models.CharField(choices=MESSAGE_TYPES, max_length=25)
-
-    def create_copy(self):
-        """
-        See Content.create_copy() for docstring
-        """
-        return FCMNotificationContent(
-            subject=deepcopy(self.subject),
-            message=deepcopy(self.message),
-            action=self.action,
-            message_type=self.message_type
-        )
-
-    def render_subject_and_message(self, subject, message, recipient):
-        renderer = self.get_template_renderer(recipient)
-        return renderer.render(subject), renderer.render(message)
-
-    def build_fcm_data_field(self, recipient):
-        data = {}
-        if self.action:
-            data = {
-                'action': self.action,
-                'username': recipient.raw_username,
-                'domain': recipient.domain,
-                'created_at': datetime.now(timezone.utc).isoformat()
-            }
-        return data
-
-    def send(self, recipient, logged_event, phone_entry=None):
-        logged_subevent = logged_event.create_subevent_from_contact_and_content(
-            recipient,
-            self,
-            case_id=self.case.case_id if self.case else None,
-        )
-        logged_subevent.error("FCM pre-release feature has been removed. Please contact support.")
-        notify_error("FCM pre-release feature has been removed and is not expected to be in use.")
-
-    def get_recipient_devices_fcm_tokens(self, recipient):
-        devices_fcm_tokens = recipient.get_devices_fcm_tokens()
-        if not devices_fcm_tokens:
-            raise FCMTokenValidationException(MessagingEvent.ERROR_NO_FCM_TOKENS)
-        return devices_fcm_tokens
 
 
 def _meta_property(name):
@@ -608,11 +505,6 @@ class EmailImage(object):
 class ConnectMessageContent(Content):
     message = old_jsonfield.JSONField(default=dict)
 
-    def create_copy(self):
-        return ConnectMessageContent(
-            message=deepcopy(self.message),
-        )
-
     def send(self, recipient, logged_event, phone_entry=None):
         domain = logged_event.domain
         domain_obj = Domain.get_by_name(domain)
@@ -641,19 +533,6 @@ class ConnectMessageContent(Content):
 
 
 class ConnectMessageSurveyContent(SurveyContent):
-
-    def create_copy(self):
-        """
-        See Content.create_copy() for docstring
-        """
-        return ConnectMessageSurveyContent(
-            app_id=None,
-            form_unique_id=None,
-            expire_after=self.expire_after,
-            reminder_intervals=deepcopy(self.reminder_intervals),
-            submit_partially_completed_forms=self.submit_partially_completed_forms,
-            include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
-        )
 
     def send(self, recipient, logged_event, phone_entry=None):
         app, module, form, requires_input = self.get_memoized_app_module_form(logged_event.domain)

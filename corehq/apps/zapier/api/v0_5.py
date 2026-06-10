@@ -4,12 +4,13 @@ from tastypie.exceptions import NotFound
 from tastypie.resources import Resource
 from corehq import privileges
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.v0_4 import (
     BaseApplicationResource,
     XFormInstanceResource,
 )
-from corehq.apps.api.resources.v0_5 import DoesNothingPaginator
+from corehq.apps.api.resources.v0_5 import DoesNothingPaginator, UserDomainsResource
 from corehq.apps.app_manager.app_schemas.case_properties import (
     get_all_case_properties_for_case_type,
 )
@@ -241,3 +242,15 @@ class ZapierCustomActionFieldCaseResource(BaseZapierCustomFieldResource):
 
     class Meta(BaseZapierCustomFieldResource.Meta):
         resource_name = 'custom_action_fields_case'
+
+
+class ZapierUserDomains(UserDomainsResource):
+    """
+    UserDomainsResource filtered to only domains with the ZAPIER_INTEGRATION privilege.
+    """
+
+    def get_object_list(self, request):
+        return [
+            user_domain for user_domain in super().get_object_list(request)
+            if domain_has_privilege(user_domain.domain_name, privileges.ZAPIER_INTEGRATION)
+        ]

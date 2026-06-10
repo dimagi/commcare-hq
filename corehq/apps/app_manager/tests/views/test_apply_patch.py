@@ -60,42 +60,44 @@ openrosa.org/formdesigner/03D5F750-13D0-4F08-A1CF-E5D9E6239E7F\" uiVersion=\"1\
 
 PATCHED_FORM = FORM_XML.replace("test", "text")
 
-PATCH = """@@ -558,17 +558,17 @@
- %09%09%09%09%09%3Cte
+# Patch is double-encoded: Vellum encodeURIs before diffing, then
+# patch_toText encodes again. See Vellum core.js for details.
+PATCH = """@@ -724,17 +724,17 @@
+ %2509%253Cte
 -s
 +x
- t /%3E%0A%09%09%09
-@@ -624,17 +624,17 @@
+ t%2520/%253E
+@@ -830,25 +830,25 @@
+ =%2522#form/te
+-s
++x
+ t%2522%2520nodes
+@@ -857,25 +857,25 @@
+ =%2522/data/te
+-s
++x
+ t%2522%2520type=
+@@ -1021,17 +1021,17 @@
+ id=%2522te
+-s
++x
+ t-label%25
+@@ -1069,17 +1069,17 @@
+ lue%253Ete
+-s
++x
+ t%253C/val
+@@ -1269,17 +1269,17 @@
  #form/te
 -s
 +x
- t%22 nodes
-@@ -645,17 +645,17 @@
+ t%2522%2520r
+@@ -1292,17 +1292,17 @@
  /data/te
 -s
 +x
- t%22 type=
-@@ -737,17 +737,17 @@
- t id=%22te
--s
-+x
- t-label%22
-@@ -763,17 +763,17 @@
- value%3Ete
--s
-+x
- t%3C/value
-@@ -879,17 +879,17 @@
- #form/te
--s
-+x
- t%22 ref=%22
-@@ -896,17 +896,17 @@
- /data/te
--s
-+x
- t%22%3E%0A%09%09%09%3C
-@@ -928,17 +928,17 @@
+ t%2522%253E%25
+@@ -1342,17 +1342,17 @@
  text('te
 -s
 +x

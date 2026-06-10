@@ -1,0 +1,33 @@
+{% extends 'reports/filters/bootstrap3/base.html' %}
+{% block filter_content %}
+  <select
+    id="{{ css_id }}_mode"
+    name="{{ slug }}_mode"
+    class="form-control"
+    style="margin-bottom: 5px;"
+  >
+    {% for val, text in mode_options %}
+      <option
+        value="{{ val }}"
+        {% if val == selected_mode %}selected{% endif %}
+      >
+        {{ text }}
+      </option>
+    {% endfor %}
+  </select>
+  <textarea
+    id="{{ css_id }}"
+    name="{{ slug }}"
+    class="form-control"
+    rows="3"
+    placeholder="{{ placeholder }}"
+  >
+{{ default }}</textarea
+  >
+  {% if help_inline %}
+    <p class="help-block">
+      <i class="fa fa-info-circle"></i>
+      {{ help_inline }}
+    </p>
+  {% endif %}
+{% endblock %}

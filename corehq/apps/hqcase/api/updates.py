@@ -252,7 +252,7 @@ def _get_bulk_updates(all_data, user_id):
             else:
                 updates.append(_get_individual_update(data, user_id, create_flag))
         except UserError as e:
-            errors.append(f'Error in row {i}: {e}')
+            errors.append(f'Error in row {i}: {e.message}')
 
     if errors:
         raise UserError("; ".join(errors))

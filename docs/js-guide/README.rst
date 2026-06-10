@@ -26,12 +26,6 @@ Table of contents
     external-packages
 
 .. toctree::
-    :caption: Migrations
-    :maxdepth: 1
-
-    amd-to-esm
-
-.. toctree::
     :caption: Best practices
     :maxdepth: 1
 

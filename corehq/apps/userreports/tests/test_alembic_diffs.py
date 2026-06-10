@@ -3,7 +3,6 @@ import uuid
 import sqlalchemy
 from alembic.autogenerate import compare_metadata
 from django.test.testcases import TestCase, SimpleTestCase
-from nose.tools import assert_list_equal
 
 from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
 
@@ -23,11 +22,11 @@ def test_flatten_raw_diffs():
         ('diff3', None),
     ]
     flattened = reformat_alembic_diffs(raw_diffs)
-    assert_list_equal(flattened, [
+    assert flattened == [
         SimpleDiff('diff1', None, None, ('diff1', None)),
         SimpleDiff('diff2', None, None, ('diff1', None)),
         SimpleDiff('diff3', None, None, ('diff1', None)),
-    ])
+    ]
 
 
 class TestAlembicDiffs(TestCase):

@@ -32,6 +32,16 @@
 
         1. [Install sdkman](https://sdkman.io/install)
 
+           On macOS, the default shell (Zsh) and the outdated system Bash can cause the standard installer to fail. Use this command to ensure a compatible installation:
+
+           ```sh
+           # Run the installer with Zsh-compatible pattern matching
+           curl -s "https://get.sdkman.io" | zsh -o NO_NOMATCH
+
+           # Initialize SDKMAN! in your current session
+           source "$HOME/.sdkman/bin/sdkman-init.sh"
+           ```
+
         2. List available java versions to file one that matches Java (JDK 17)
            ```sh
            sdk list java | grep 17
@@ -74,7 +84,7 @@
 
 ## Issues With `uv sync`
 
-- `psycopg2` will complain
+- `psycopg2` may complain
 
   As of Mac OS 11.x Big Sur, the solution for this is:
   ```sh
@@ -91,7 +101,7 @@
 
 - `uv pip install xmlsec` gives `ImportError`
 
-  Due to issues with recent versions of `libxmlsec1` (v1.3 and after) `uv pip install xmlsec` is currently broken.
+  Due to issues with recent versions of `libxmlsec1` (v1.3 and after) `uv pip install xmlsec` may be broken.
   This is a workaround. This solution also assumes your `homebrew` version is greater than `4.0.13`*:
 
 1. run `brew unlink libxmlsec1`
@@ -108,8 +118,6 @@ and [thread](https://github.com/xmlsec/python-xmlsec/issues/254) are good starti
 
 ### M1 Issues
 
-- `gevent` may present errors when installing with Python <3.9. For this reason, you should avoid using an older version of Python unless it is required.
-
 - `pynacl` will likely install but may throw an error `symbol not found in flat namespace '_ffi_prep_closure'` when attempting to run, particularly when setting up CommCare-Cloud.
 
   This can be fixed by installing a version of `pynacl` specific to the system architecture:
@@ -124,7 +132,7 @@ Docker images that will not run on Mac OS (Intel or M1):
 
 - `formplayer` (See section on Running Formplayer Outside of Docker in the [Main Developer Setup Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md))
 
-Docker images that will not run on Mac OS (as of 11.x Big Sur and above):
+Docker images that may not run on Mac OS (as of 11.x Big Sur and above):
 
 - `elasticsearch6` (Image is not optimized for arm but can run on apple silicon)
 
@@ -152,7 +160,7 @@ curl https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.8.23.t
 
 Un-tar and put the folder somewhere you can find it. Take note of that path (`pwd`) and add the following to your `~/.zshrc`:
 
-```
+```sh
 tar -xvzf elasticsearch-6.8.23.tar.gz
 ```
 
@@ -166,20 +174,20 @@ You would need to update couple of setting in order to make elasticsearch run on
 
 Change into elasticsearch directory
 
-```
+```sh
 cd /path/to/elasticsearch-6.8.23
 ```
 
 - In `config/jvm.options`, comment out `10-:-XX:UseAVX=2`
 
-```
+```sh
 sed -i '' '/10-:-XX:UseAVX=2/ s/^/# /' config/jvm.options
 ```
 
 - In `config/elasticsearch.yml`, add xpack.ml.enabled: false
 
-```
-echo "xpack.ml.enabled: false" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+```sh
+echo "xpack.ml.enabled: false" | sudo tee -a config/elasticsearch.yml
 ```
 
 After this you can open a new terminal window and run elasticsearch with `elasticsearch`.
@@ -191,8 +199,8 @@ Now that you have Elasticsearch running you will need to install the necessary p
 
 1. Install the plugin
 
-    ```shell
-    $ elasticsearch-plugin install analysis-phonetic
+    ```sh
+    elasticsearch-plugin install analysis-phonetic
     ```
 
     (If the `plugin` command is not found you will need to use the full path `<es home>/bin/plugin`).
@@ -201,9 +209,9 @@ Now that you have Elasticsearch running you will need to install the necessary p
 
 3. Verify the plugin was correctly installed
 
-    ```shell
-    $ curl "localhost:9200/_cat/plugins?s=component&h=component,version"
-    > analysis-phonetic 5.6.16
+    ```sh
+    curl "localhost:9200/_cat/plugins?s=component&h=component,version"
+    > analysis-phonetic 6.8.23
     ```
 
 

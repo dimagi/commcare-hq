@@ -23,6 +23,7 @@ def base_template(request):
     return {
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
+        'login_template_b3': settings.LOGIN_TEMPLATE_B3,
         'env': get_environment_friendly_name(),
         'secure_cookies': settings.SECURE_COOKIES,
         'MINIMUM_ZXCVBN_SCORE': settings.MINIMUM_ZXCVBN_SCORE,

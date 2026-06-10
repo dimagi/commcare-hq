@@ -2,7 +2,6 @@ import re
 
 import pytest
 from eulxml.xpath import parse as parse_xpath
-from nose.tools import assert_raises
 
 from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.case_search.filter_dsl import (
@@ -40,6 +39,6 @@ INVALID_TEST_CASES = [(
 @pytest.mark.parametrize("xpath, error_msg", INVALID_TEST_CASES)
 def test_invalid(xpath, error_msg):
     regex = re.compile(re.escape(error_msg))
-    with assert_raises(XPathFunctionException, msg=regex):
+    with pytest.raises(XPathFunctionException, match=regex):
         parsed = parse_xpath(xpath)
         build_filter_from_ast(parsed, SearchFilterContext("mydomain"))

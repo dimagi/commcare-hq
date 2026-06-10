@@ -1,4 +1,6 @@
 from unittest.mock import patch
+
+from django.http import QueryDict
 from django.test import SimpleTestCase, TestCase
 from time_machine import travel
 import datetime
@@ -55,3 +57,16 @@ class QueueScheduledReportsTests(SimpleTestCase):
         ARG_INDEX = 0
         calls = set(call[ARG_INDEX][0] for call in mock_send.call_args_list)
         self.assertSetEqual(calls, {'a', 'b', 'c'})
+
+
+def test_query_dict_list():
+    query_dict = QueryDict('&'.join((
+        'foo=first_value',
+        'foo=second_value',
+        'bar=single_value',
+    )))
+    result = dict(query_dict.lists())
+    assert result == {
+        'foo': ['first_value', 'second_value'],
+        'bar': ['single_value'],
+    }

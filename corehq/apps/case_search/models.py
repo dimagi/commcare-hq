@@ -35,6 +35,7 @@ CASE_SEARCH_REGISTRY_ID_KEY = 'x_commcare_data_registry'
 CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY = 'x_commcare_custom_related_case_property'
 CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY = 'x_commcare_include_all_related_cases'
 CASE_SEARCH_MODULE_NAME_TAG_KEY = "x_commcare_tag_module_name"
+CASE_SEARCH_ENDPOINT_ID_KEY = 'x_commcare_endpoint_id'
 
 CONFIG_KEYS_MAPPING = {
     CASE_SEARCH_CASE_TYPE_KEY: "case_types",
@@ -42,6 +43,7 @@ CONFIG_KEYS_MAPPING = {
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: "custom_related_case_property",
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY: "include_all_related_cases",
     CASE_SEARCH_SORT_KEY: "commcare_sort",
+    CASE_SEARCH_ENDPOINT_ID_KEY: "endpoint_id",
 }
 
 CASE_SEARCH_TAGS_MAPPING = {
@@ -191,6 +193,7 @@ class CaseSearchRequestConfig:
     custom_related_case_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
     include_all_related_cases = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
     commcare_sort = attr.ib(kw_only=True, default=None, converter=_parse_commcare_sort_properties)
+    endpoint_id = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
 
     @case_types.validator
     def _require_case_type(self, attribute, value):
@@ -374,23 +377,16 @@ def case_search_sync_cases_on_form_entry_enabled_for_domain(domain):
 
 
 def enable_case_search(domain):
-    from corehq.apps.case_search.tasks import reindex_case_search_for_domain
-
     config, created = CaseSearchConfig.objects.get_or_create(pk=domain)
     if not config.enabled:
         config.enabled = True
         config.save()
         case_search_enabled_for_domain.clear(domain)
-        reindex_case_search_for_domain.delay(domain)
         case_search_sync_cases_on_form_entry_enabled_for_domain.clear(domain)
     return config
 
 
 def disable_case_search(domain):
-    from corehq.apps.case_search.tasks import (
-        delete_case_search_cases_for_domain,
-    )
-
     try:
         config = CaseSearchConfig.objects.get(pk=domain)
     except CaseSearchConfig.DoesNotExist:
@@ -400,15 +396,8 @@ def disable_case_search(domain):
         config.enabled = False
         config.save()
         case_search_enabled_for_domain.clear(domain)
-        delete_case_search_cases_for_domain.delay(domain)
         case_search_sync_cases_on_form_entry_enabled_for_domain.clear(domain)
     return config
-
-
-def case_search_enabled_domains():
-    """Returns a list of all domains that have case search enabled
-    """
-    return CaseSearchConfig.objects.filter(enabled=True).values_list('domain', flat=True)
 
 
 class DomainsNotInCaseSearchIndex(models.Model):
@@ -522,3 +511,61 @@ def after_save(sender, instance, created, **kwargs):
             name=instance.name,
             csql=instance.csql
         )
+
+
+class CaseSearchEndpoint(models.Model):
+    class TargetType(models.TextChoices):
+        PROJECT_DB = 'project_db', _('Project Database')
+        ELASTICSEARCH = 'es', _('Elastic Search')
+
+    domain = models.CharField(max_length=255, db_index=True)
+    name = models.CharField(max_length=255)
+    target_type = models.CharField(
+        max_length=50,
+        choices=TargetType.choices,
+        default=TargetType.PROJECT_DB,
+    )
+    target_name = models.CharField(max_length=255)
+    current_version = models.ForeignKey(
+        'CaseSearchEndpointVersion',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = [('domain', 'name')]
+
+    def __str__(self):
+        return f'{self.domain}/{self.name}'
+
+
+class CaseSearchEndpointVersion(models.Model):
+    class Action(models.TextChoices):
+        CREATE = 'create', _('Create')
+        UPDATE = 'update', _('Update')
+        DEACTIVATE = 'deactivate', _('Deactivate')
+
+    endpoint = models.ForeignKey(
+        CaseSearchEndpoint,
+        on_delete=models.CASCADE,
+        related_name='versions',
+    )
+    version_number = models.IntegerField()
+    parameters = models.JSONField(default=list, null=True, blank=True)
+    query = models.JSONField(default=dict, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.CharField(max_length=255, blank=True, default='')
+    action = models.CharField(
+        max_length=10,
+        choices=Action.choices,
+    )
+
+    class Meta:
+        unique_together = [('endpoint', 'version_number')]
+
+    def __str__(self):
+        return f'{self.endpoint}@v{self.version_number}'

@@ -4,6 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from functools import wraps
 
+from django.conf import settings
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
@@ -35,6 +36,7 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_XPATH_QUERY_KEY,
     UNSEARCHABLE_KEYS,
     CaseSearchConfig,
+    CaseSearchEndpoint,
     extract_search_request_config,
 )
 from corehq.apps.es import HQESQuery, case_search
@@ -85,14 +87,9 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
         config = extract_search_request_config(request_dict)
         cases = get_case_search_results(
             domain,
-            config.case_types,
-            config.criteria,
+            config,
             app_id=app_id,
             couch_user=couch_user,
-            registry_slug=config.data_registry,
-            custom_related_case_property=config.custom_related_case_property,
-            include_all_related_cases=config.include_all_related_cases,
-            commcare_sort=config.commcare_sort,
             profiler=profiler,
         )
         with profiler.timing_context('CaseDBFixture.fixture'):
@@ -100,20 +97,36 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
     return fixtures, profiler
 
 
-def get_case_search_results(domain, case_types, criteria,
-                            app_id=None, couch_user=None, registry_slug=None, custom_related_case_property=None,
-                            include_all_related_cases=None, commcare_sort=None, profiler=None):
-    helper = _get_helper(couch_user, domain, case_types, registry_slug)
+def get_case_search_results(domain, config, app_id=None, couch_user=None, profiler=None):
+    helper = _get_helper(couch_user, domain, config.case_types, config.data_registry)
     if profiler:
         helper.profiler = profiler
 
-    cases = get_primary_case_search_results(helper, case_types, criteria, commcare_sort)
-    helper.profiler.primary_count = len(cases)
+    if config.endpoint_id:
+        if not toggles.CASE_SEARCH_ENDPOINTS.enabled(domain):
+            raise CaseSearchUserError(_("Configurable Endpoints are not available"))
+        return get_endpoint_results(helper, config)
+    else:
+        return get_unconfigured_endpoint_results(helper, config, app_id)
+
+
+def get_endpoint_results(helper, config):
+    try:
+        CaseSearchEndpoint.objects.get(domain=helper.domain, id=config.endpoint_id)
+    except (CaseSearchEndpoint.DoesNotExist, ValueError):
+        raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
+    # TODO use the endpoint to process the CaseSearchRequestConfig object
+    return get_primary_case_search_results(helper, config.case_types, config.criteria, config.commcare_sort)
+
+
+def get_unconfigured_endpoint_results(helper, config, app_id):
+    cases = get_primary_case_search_results(helper, config.case_types, config.criteria, config.commcare_sort)
     if app_id:
-        related_cases = get_and_tag_related_cases(helper, app_id, case_types, cases,
-                                                  custom_related_case_property, include_all_related_cases)
-        helper.profiler.related_count = len(related_cases)
-        cases.extend(related_cases)
+        cases.extend(get_and_tag_related_cases(
+            helper, app_id, config.case_types, cases,
+            config.custom_related_case_property,
+            config.include_all_related_cases,
+        ))
     return cases
 
 
@@ -133,6 +146,7 @@ def get_primary_case_search_results(helper, case_types, criteria, commcare_sort=
     results = search_es.run()
     with helper.profiler.timing_context('wrap_cases'):
         cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
+    helper.profiler.primary_count = len(cases)
     return cases
 
 
@@ -146,6 +160,7 @@ def _get_helper(couch_user, domain, case_types, registry_slug):
             pass
         else:
             helper = RegistryQueryHelper(domain, couch_user, registry_helper)
+    helper.is_case_search = True
     return helper
 
 
@@ -153,6 +168,7 @@ class QueryHelper:
     def __init__(self, domain):
         self.domain = domain
         self.profiler = CaseSearchProfiler()
+        self.is_case_search = False
 
     def get_base_queryset(self, slug=None):
         # slug is only informational, used for profiling
@@ -240,6 +256,7 @@ class CaseSearchQueryBuilder:
 
     def _apply_filter(self, search_es, criteria):
         if criteria.key == CASE_SEARCH_XPATH_QUERY_KEY:
+            _require_case_search_advanced(self.request_domain)
             if not criteria.is_empty:
                 xpaths = criteria.value if criteria.has_multiple_terms else [criteria.value]
                 for xpath in xpaths:
@@ -364,6 +381,7 @@ def get_and_tag_related_cases(helper, app_id, case_types, cases,
     with helper.profiler.timing_context('_tag_is_related_case'):
         for case in results:
             _tag_is_related_case(case)
+    helper.profiler.related_count = len(results)
     return results
 
 
@@ -510,3 +528,10 @@ def _get_case_search_cases(helper, case_ids):
 # Warning: '_tag_is_related_case' may cause the relevant user-defined properties to be overwritten.
 def _tag_is_related_case(case):
     case.case_json[IS_RELATED_CASE] = "true"
+
+
+# log once per domain per day
+@quickcache(['domain'], timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
+def _require_case_search_advanced(domain):
+    if not toggles.CASE_SEARCH_ADVANCED.enabled(domain):
+        notify_exception(None, "Advanced case search feature attempted")

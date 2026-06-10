@@ -28,6 +28,7 @@ from .dbaccessors import (
     get_properly_wrapped_export_instance,
 )
 from .export import get_export_file, rebuild_export
+from .logging import ExportLoggingContext
 from .models.new import (
     EmailExportWhenDoneRequest,
     CaseExportInstance,
@@ -42,7 +43,8 @@ logger = logging.getLogger('export_migration')
 @task(queue=EXPORT_DOWNLOAD_QUEUE)
 def populate_export_download_task(domain, export_ids, exports_type, username,
                                   es_filters, download_id, owner_id,
-                                  filename=None, expiry=10 * 60):
+                                  filename=None, expiry=10 * 60,
+                                  filter_summary=None):
     """
     :param expiry:  Time period for the export to be available for download in minutes
     """
@@ -60,6 +62,13 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
 
     export_instances = [get_export(exports_type, domain, export_id, username)
                         for export_id in export_ids]
+    logging_context = ExportLoggingContext(
+        download_id=download_id,
+        username=username,
+        trigger="user_download",
+        filters=filter_summary or {},
+        bulk=None,
+    )
     with TransientTempfile() as temp_path, metrics_track_errors('populate_export_download_task'):
         export_file = get_export_file(
             export_instances,
@@ -67,7 +76,8 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
             temp_path,
             # We don't have a great way to calculate progress if it's a bulk download,
             # so only track the progress for single instance exports.
-            progress_tracker=populate_export_download_task if len(export_instances) == 1 else None
+            progress_tracker=populate_export_download_task if len(export_instances) == 1 else None,
+            logging_context=logging_context,
         )
 
         file_format = Format.from_format(export_file.format)
@@ -105,9 +115,10 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
 
 
 @task(queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
-def _start_export_task(export_instance_id):
+def _start_export_task(export_instance_id, manual=False, username=None):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
-    rebuild_export(export_instance, progress_tracker=_start_export_task)
+    rebuild_export(export_instance, progress_tracker=_start_export_task,
+                   manual=manual, username=username)
 
 
 def _get_saved_export_download_data(export_instance_id):
@@ -119,7 +130,7 @@ def _get_saved_export_download_data(export_instance_id):
     return download_data
 
 
-def rebuild_saved_export(export_instance_id, manual=False):
+def rebuild_saved_export(export_instance_id, manual=False, username=None):
     """Kicks off a celery task to rebuild the export.
 
     If this is called while another one is already running for the same export
@@ -136,6 +147,7 @@ def rebuild_saved_export(export_instance_id, manual=False):
     download_data.set_task(
         _start_export_task.apply_async(
             args=[export_instance_id],
+            kwargs={"manual": manual, "username": username},
             queue=EXPORT_DOWNLOAD_QUEUE if manual else SAVED_EXPORTS_QUEUE,
         )
     )

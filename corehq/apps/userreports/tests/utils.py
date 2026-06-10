@@ -5,7 +5,6 @@ import uuid
 from datetime import date, datetime, time
 from decimal import Decimal
 
-import six
 import sqlalchemy
 from django.db import DEFAULT_DB_ALIAS
 from unittest.mock import patch
@@ -187,7 +186,7 @@ def load_data_from_db(table_name):
                     row[idx] = value.strftime('%Y-%m-%d')
                 elif isinstance(value, time):
                     row[idx] = value.strftime("%H:%M:%S.%f").rstrip('0').rstrip('.')
-                elif isinstance(value, six.integer_types):
+                elif isinstance(value, int):
                     row[idx] = str(value)
                 elif isinstance(value, (float, Decimal)):
                     row[idx] = _convert_decimal_to_string(row[idx])

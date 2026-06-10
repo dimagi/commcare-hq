@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 from corehq.apps.app_manager.exceptions import XFormValidationError
@@ -1042,6 +1042,12 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+
+class TestGetSpecificMedia(SimpleTestCase):
+    domain = 'test-specific-media'
+
+    def _qualifiers(self, result):
+        return [entry.get('qualifier') for entry in result]
 
 def test_doctests():
     import corehq.apps.app_manager.views.view_generic as module

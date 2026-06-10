@@ -63,7 +63,6 @@ class Command(BaseCommand):
         self.logger = DatadogLogger(self.stdout)
         self.show_couch_model_count()
         self.show_custom_modules()
-        self.show_js_dependencies()
         self.show_toggles()
         self.show_complexity()
         self.logger.send_all()
@@ -82,18 +81,6 @@ class Command(BaseCommand):
         custom_domain_count = len(settings.DOMAIN_MODULE_MAP)
         self.logger.log("commcare.static_analysis.custom_module_count", custom_module_count)
         self.logger.log("commcare.static_analysis.custom_domain_count", custom_domain_count)
-
-    def show_js_dependencies(self):
-        proc = subprocess.Popen(["./scripts/codechecks/amd.sh", "static-analysis"], stdout=subprocess.PIPE)
-        output = proc.communicate()[0].strip().decode("utf-8")
-        (step1, step2) = output.split(" ")
-
-        self.logger.log("commcare.static_analysis.hqdefine_file_count", int(step1), tags=[
-            'status:esm',
-        ])
-        self.logger.log("commcare.static_analysis.hqdefine_file_count", int(step2), tags=[
-            'status:hqdefine',
-        ])
 
     def show_toggles(self):
         counts = Counter(t.tag.name for t in all_toggles() + all_previews())

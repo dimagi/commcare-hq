@@ -41,9 +41,6 @@ def pytest_load_initial_conftests():
     from corehq.warnings import configure_warnings
     configure_warnings(is_testing=True)
 
-    from .nosecompat import create_nose_virtual_package
-    create_nose_virtual_package()
-
 
 def pytest_pycollect_makeitem(collector, name, obj):
     """Fail on common mistake that results in masked tests"""

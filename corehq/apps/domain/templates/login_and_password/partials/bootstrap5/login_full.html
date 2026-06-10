@@ -11,13 +11,17 @@
             <div class="card-body mt-3">
               <h2>
                 {% blocktrans %}
-                  No account? Sign up today, it's free!
+                  No account? Get started for free.
                 {% endblocktrans %}
               </h2>
               {% if not allow_domain_requests %}
                 <p class="lead">
-                  <strong><a href="http://www.dimagi.com/commcare/">{% trans "Learn more" %}</a></strong>
-                  {% blocktrans %}about how CommCare can be your mobile solution for your frontline workforce.{% endblocktrans %}
+                  {% blocktrans %}
+                    Data collection is just the start. Equip your frontline
+                    team with powerful service delivery apps that work where
+                    you work, even offline. No coding required.
+                  {% endblocktrans %}
+                  <a class="text-decoration-underline" target="_blank" href="https://www.dimagi.com/commcare/">{% trans "Learn more about CommCare." %}</a>
                 </p>
               {% endif %}
               <p class="text-center">

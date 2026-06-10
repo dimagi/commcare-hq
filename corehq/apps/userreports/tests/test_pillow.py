@@ -512,13 +512,11 @@ class IndicatorPillowTest(BaseRepeaterTest):
         since = self.pillow.get_change_feed().get_latest_offsets()
 
         # save case to DB - should also publish to kafka
-        case = _save_sql_case(sample_doc)
+        _save_sql_case(sample_doc)
 
         # run pillow and check changes
         self.pillow.process_changes(since=since, forever=False)
         self._check_sample_doc_state(expected_indicators)
-
-        CommCareCase.objects.hard_delete_cases(case.domain, [case.case_id])
 
     @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.apps.userreports.specs.datetime')
@@ -573,7 +571,6 @@ class IndicatorPillowTest(BaseRepeaterTest):
         self.pillow.process_changes(since=since, forever=False)
         self.assertEqual(0, self.adapter.get_query_object().count())
 
-        CommCareCase.objects.hard_delete_cases(case.domain, [case.case_id])
         return sample_doc
 
     @mock.patch('corehq.apps.userreports.specs.datetime')

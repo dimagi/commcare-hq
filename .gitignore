@@ -94,3 +94,4 @@ corehq/apps/hqwebapp/static/hqwebapp/js/lib/modernizr.js
 
 # ruff
 ruff.toml
+CLAUDE.local.md

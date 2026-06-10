@@ -8,7 +8,6 @@ from unittest.mock import patch
 from django.core.management import call_command
 from django.test import TestCase
 
-from nose.tools import assert_equal
 from testil import tempdir
 
 from corehq.motech.models import ConnectionSettings
@@ -80,7 +79,7 @@ def test_should_send_on_date():
     for kwargs, day, expected_result in kwargs_day_result:
         dataset_map = DataSetMap(**kwargs)
         result = should_send_on_date(dataset_map, day)
-        assert_equal(result, expected_result)
+        assert result == expected_result
 
 
 def test_get_previous_week():
@@ -92,8 +91,8 @@ def test_get_previous_week():
     ]
     for day, expected_start, expected_end in day_start_end:
         date_span = get_previous_week(day)
-        assert_equal(date_span.startdate, expected_start)
-        assert_equal(date_span.enddate, expected_end)
+        assert date_span.startdate == expected_start
+        assert date_span.enddate == expected_end
 
 
 def test_get_previous_month():
@@ -104,8 +103,8 @@ def test_get_previous_month():
     ]
     for day, expected_start, expected_end in day_start_end:
         date_span = get_previous_month(day)
-        assert_equal(date_span.startdate, expected_start)
-        assert_equal(date_span.enddate, expected_end)
+        assert date_span.startdate == expected_start
+        assert date_span.enddate == expected_end
 
 
 def test_get_previous_quarter():
@@ -118,8 +117,8 @@ def test_get_previous_quarter():
     ]
     for day, expected_start, expected_end in day_start_end:
         date_span = get_previous_quarter(day)
-        assert_equal(date_span.startdate, expected_start)
-        assert_equal(date_span.enddate, expected_end)
+        assert date_span.startdate == expected_start
+        assert date_span.enddate == expected_end
 
 
 def test_get_quarter_start_month():
@@ -127,7 +126,7 @@ def test_get_quarter_start_month():
     start_months = (1, 1, 1, 4, 4, 4, 7, 7, 7, 10, 10, 10)
     for month, expected_month in zip(months, start_months):
         start_month = get_quarter_start_month(month)
-        assert_equal(start_month, expected_month)
+        assert start_month == expected_month
 
 
 def test_get_period():
@@ -140,7 +139,7 @@ def test_get_period():
     ]
     for frequency, startdate, expected_period in freq_date_period:
         period = get_period(frequency, startdate)
-        assert_equal(period, expected_period)
+        assert period == expected_period
 
 
 def test_get_date_range():
@@ -153,7 +152,7 @@ def test_get_date_range():
     ]
     for frequency, send_date, expected_startdate in freq_date_startdate:
         date_range = get_date_range(frequency, send_date)
-        assert_equal(date_range.startdate, expected_startdate)
+        assert date_range.startdate == expected_startdate
 
 
 def _remove_doc_types(dict_):

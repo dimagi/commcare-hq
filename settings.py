@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# flake8: noqa: E266, F405
+# ruff: noqa
 
 import inspect
 from collections import defaultdict
@@ -361,7 +361,6 @@ HQ_APPS = (
     'corehq.apps.reports_core',
     'corehq.apps.saved_reports',
     'corehq.apps.userreports.app_config.UserReports',
-    'corehq.apps.aggregate_ucrs',
     'corehq.apps.data_interfaces.app_config.DataInterfacesAppConfig',
     'corehq.apps.export',
     'corehq.apps.builds',
@@ -393,6 +392,7 @@ HQ_APPS = (
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
     'corehq.apps.app_execution',
+    'corehq.apps.tombstones',
 
     # custom reports
     'custom.reports.mc',
@@ -459,7 +459,8 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 # restyle some templates
 BASE_TEMPLATE = "hqwebapp/bootstrap3/base_navigation.html"
 BASE_ASYNC_TEMPLATE = "reports/async/bootstrap3/basic.html"
-LOGIN_TEMPLATE = "login_and_password/bootstrap3/login.html"
+LOGIN_TEMPLATE = "login_and_password/bootstrap5/login.html"
+LOGIN_TEMPLATE_B3 = "login_and_password/bootstrap3/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
 CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
@@ -1161,14 +1162,14 @@ CONNECTID_CHANNEL_URL = 'http://localhost:8080/messaging/create_channel/'
 CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
 CONNECTID_CREDENTIALS_URL = 'http://localhost:8080/users/add_credential/'
 CONNECTID_CREDENTIALS_CLIENT_ID = ''
-CONNECTID_CREDENTIALS_CLIENT_SECRET = ''
+CONNECTID_CREDENTIALS_SECRET_KEY = ''
 CONNECTID_ADD_USER_ANALYTICS_URL = 'http://localhost:8080/users/add_user_analytics/'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
 
-# used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
-PERMANENT_DELETION_WINDOW = 30  # days
+# days to commit to keeping soft deleted data in databases
+DATA_RETENTION_WINDOW = 90  # days
 
 #### Chatbot configuration
 # Override in localsettings.py
@@ -1884,11 +1885,6 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
         },
         {
-            'name': 'DefaultChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
-        },
-        {
             'name': 'DomainDbKafkaPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
@@ -2067,6 +2063,7 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
 COMPRESS_OFFLINE_CONTEXT = {
     'base_template': BASE_TEMPLATE,
     'login_template': LOGIN_TEMPLATE,
+    'login_template_b3': LOGIN_TEMPLATE_B3,
     'original_template': BASE_ASYNC_TEMPLATE,
 }
 

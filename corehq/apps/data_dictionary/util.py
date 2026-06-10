@@ -5,6 +5,7 @@ from operator import attrgetter
 from urllib.parse import parse_qsl, urlencode, urlparse
 
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
@@ -407,15 +408,20 @@ def is_case_property_unused(domain, case_type, case_property):
 
 def get_case_properties(domain, case_type_name):
     return CaseProperty.objects.filter(
+        Q(group__isnull=True) | Q(group__deprecated=False),
         case_type__name=case_type_name,
         case_type__domain=domain,
         deprecated=False,
-        group__deprecated=False,
     )
 
 
 def get_case_property_group_name_for_properties(domain, case_type_name):
-    return dict(get_case_properties(domain, case_type_name).values_list('name', 'group__name'))
+    return dict(CaseProperty.objects.filter(
+        case_type__name=case_type_name,
+        case_type__domain=domain,
+        deprecated=False,
+        group__deprecated=False
+    ).values_list('name', 'group__name'))
 
 
 def update_url_query_params(url, params):

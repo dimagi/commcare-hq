@@ -1,6 +1,5 @@
 from couchdbkit.exceptions import ResourceConflict
 from django.utils.functional import wraps
-from six.moves import range
 
 
 class RetryResourceError(Exception):
