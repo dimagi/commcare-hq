@@ -18,8 +18,6 @@ jobs:
           python-version: '3.9'
       - name: Install uv
         uses: astral-sh/setup-uv@v7
-        with:
-          version: '0.7.2'
       - name: install dev-requirements
         run: uv sync --all-groups --locked --compile-bytecode --no-progress
       - name: run metrics for pip
