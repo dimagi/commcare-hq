@@ -25,11 +25,15 @@ def _build_my_role(couch_user, domain):
     for name in HqPermissions.permission_names():
         granted = couch_user.has_permission(domain, name)
         if name in PARAMETERIZED_PERMISSIONS:
-            items = list(getattr(role_permissions, PARAMETERIZED_PERMISSIONS[name]))
+            list_field = PARAMETERIZED_PERMISSIONS[name]
+            raw_items = list(getattr(role_permissions, list_field))
             if granted:
                 permissions[name] = True
-            elif items:
-                permissions[name] = {'scope': 'limited', 'items': items}
+            elif raw_items:
+                permissions[name] = {
+                    'scope': 'limited',
+                    'items': _resolve_item_names(domain, list_field, raw_items),
+                }
             else:
                 permissions[name] = False
         else:
@@ -43,3 +47,49 @@ def _build_my_role(couch_user, domain):
         ),
         'permissions': permissions,
     }
+
+
+def _resolve_item_names(domain, list_field, raw_items):
+    """Map raw IDs to user-facing names; unknown IDs fall through unchanged."""
+    name_map = _name_map_for(domain, list_field)
+    if name_map is None:
+        return raw_items
+    return [name_map.get(item, item) for item in raw_items]
+
+
+def _name_map_for(domain, list_field):
+    """Build the {raw_id: friendly_name} map for one parameterized list, or None."""
+    if list_field == 'view_report_list':
+        from corehq.apps.reports.util import get_possible_reports
+        return {r['path']: r['name'] for r in get_possible_reports(domain)}
+
+    if list_field == 'view_tableau_list':
+        from corehq.apps.reports.models import TableauVisualization
+        return {
+            str(viz.id): viz.name
+            for viz in TableauVisualization.objects.filter(domain=domain)
+        }
+
+    if list_field == 'web_apps_list':
+        from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+        return {app._id: app.name for app in get_cloudcare_apps(domain)}
+
+    if list_field in ('manage_data_registry_list', 'view_data_registry_contents_list'):
+        from corehq.apps.registry.utils import get_data_registry_dropdown_options
+        return {r['slug']: r['name'] for r in get_data_registry_dropdown_options(domain)}
+
+    if list_field == 'commcare_analytics_roles_list':
+        from corehq.apps.users.views import _commcare_analytics_roles_options
+        return {r['slug']: r['name'] for r in _commcare_analytics_roles_options()}
+
+    if list_field == 'edit_user_profile_list':
+        from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            CUSTOM_USER_DATA_FIELD_TYPE,
+        )
+        definition = CustomDataFieldsDefinition.get(domain, CUSTOM_USER_DATA_FIELD_TYPE)
+        if definition is None:
+            return {}
+        return {str(profile.id): profile.name for profile in definition.get_profiles()}
+
+    return None
