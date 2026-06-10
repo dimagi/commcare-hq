@@ -68,7 +68,8 @@ def submit_case_blocks(
     Submits casexml in a manner similar to how they would be submitted
     from a phone.
 
-    :param case_blocks: Case blocks as a string or list of strings
+    :param case_blocks: Case block XML as returned by ``CaseBlock.as_text()``
+        or ``ElementTree.tostring(CaseBlock.as_xml()).decode()``
     :param domain: The domain to submit the form to
     :param username: Username to use as the submitter, defaults to
         "system"
