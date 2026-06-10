@@ -11,11 +11,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.9'
-
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
@@ -25,7 +20,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 
-      - name: Install Python Dependencies
+      - name: Install Python and Dependencies
         run: |
           uv sync --locked --compile-bytecode --no-progress
 
