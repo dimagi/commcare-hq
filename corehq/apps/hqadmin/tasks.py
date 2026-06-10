@@ -19,7 +19,13 @@ from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_static_url_prefix
 from pillowtop.utils import get_couch_pillow_instances
 
-from corehq.apps.celery import periodic_task, periodic_task_when_true, task
+from corehq.apps.celery import (
+    concurrent_task,
+    periodic_task,
+    periodic_task_when_true,
+    serial_task,
+    task,
+)
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -33,6 +39,18 @@ from .utils import check_for_rewind
 
 _soft_assert_superusers = soft_assert(notify_admins=True)
 
+
+@serial_task('test', timeout=60 * 5, max_retries=5)
+def there_can_only_be_one():
+    from time import sleep
+    sleep(10)
+    print("Successfully ran there-can-only-be-one serial task")
+
+@concurrent_task('test', 3, timeout=60 * 5, max_retries=5)
+def there_can_be_a_few():
+    from time import sleep
+    sleep(10)
+    print("Successfully ran there-can-be-a-few concurrent task")
 
 @periodic_task(run_every=crontab(hour=0, minute=0), queue='background_queue')
 def check_pillows_for_rewind():
