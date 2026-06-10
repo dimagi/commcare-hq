@@ -397,6 +397,82 @@ class QuestionSignatureTest(AppFormTestCase):
     def setUp(self):
         super().setUp()
         self.form_unique_id = self.add_form('case_in_form', "Form").unique_id
+        self.locked_form_unique_id = self.add_form('locked_questions').unique_id
+
+    def test_binds_for_path_save_to_case_includes_case_subtree(self):
+        xform = self.app.get_form(self.locked_form_unique_id).wrapped_xform()
+        nodesets = {
+            bind.attrib['nodeset']
+            for bind in xform._binds_for_path('/data/visit/register_child', include_descendants=True)
+        }
+        assert nodesets == {
+            '/data/visit/register_child/case',
+            '/data/visit/register_child/case/create/case_type',
+            '/data/visit/register_child/case/create/case_name',
+            '/data/visit/register_child/case/@date_modified',
+            '/data/visit/register_child/case/@user_id',
+        }
+
+    def test_binds_for_path_prefix_boundary(self):
+        # The trailing ``/`` must keep a prefix-sharing sibling out: a path of
+        # ``/data/visit/register_chi`` must not sweep in ``register_child``.
+        xform = self.app.get_form(self.locked_form_unique_id).wrapped_xform()
+        assert xform._binds_for_path('/data/visit/register_chi', include_descendants=True) == []
+
+    def test_save_to_case_signature_changes_when_descendant_bind_changes(self):
+        # The case-name calculate lives on a descendant bind, not the data
+        # node; changing it must change the locked question's signature.
+        form = self.app.get_form(self.locked_form_unique_id)
+        path = '/data/visit/register_child'
+        original = form.wrapped_xform().get_question_signature(path)
+        modified_source = form.source.replace(
+            'calculate="/data/child_name"', 'calculate="\'static name\'"')
+        assert modified_source != form.source
+        assert XForm(modified_source).get_question_signature(path) != original
+
+    def test_save_to_case_signature_changes_when_case_subtree_changes(self):
+        # The <case> subtree (which properties are written) is part of the
+        # question and lives in the data instance.
+        form = self.app.get_form(self.locked_form_unique_id)
+        path = '/data/visit/register_child'
+        original = form.wrapped_xform().get_question_signature(path)
+        modified_source = form.source.replace(
+            '<case_name />', '<case_name />\n<external_id />')
+        assert modified_source != form.source
+        assert XForm(modified_source).get_question_signature(path) != original
+
+    def test_locked_group_signature_ignores_child_question_edits(self):
+        # A locked group must leave its children independently editable: edits
+        # to the child's bind, label, or data node must not change the group's
+        # signature.
+        form = self.app.get_form(self.locked_form_unique_id)
+        path = '/data/household'
+        original = form.wrapped_xform().get_question_signature(path)
+        edits = [
+            ('<bind nodeset="/data/household/household_size" type="xsd:int" />',
+             '<bind nodeset="/data/household/household_size" type="xsd:string" />'),
+            ('<value>Household size</value>', '<value>Number of people</value>'),
+            ('<household_size />', '<household_size vellum:comment="added" />'),
+        ]
+        for old, new in edits:
+            modified_source = form.source.replace(old, new)
+            assert modified_source != form.source, old
+            assert XForm(modified_source).get_question_signature(path) == original, old
+
+    def test_locked_group_signature_detects_group_own_edits(self):
+        # Changes to the group's own bind or label must still be caught.
+        form = self.app.get_form(self.locked_form_unique_id)
+        path = '/data/household'
+        original = form.wrapped_xform().get_question_signature(path)
+        edits = [
+            ('<bind nodeset="/data/household" />',
+             '<bind nodeset="/data/household" relevant="false()" />'),
+            ('<value>Household</value>', '<value>Family</value>'),
+        ]
+        for old, new in edits:
+            modified_source = form.source.replace(old, new)
+            assert modified_source != form.source, old
+            assert XForm(modified_source).get_question_signature(path) != original, old
 
     def test_question_signature_stable_for_unchanged_form(self):
         form_a = self.app.get_form(self.form_unique_id)
