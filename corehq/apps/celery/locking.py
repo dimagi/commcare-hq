@@ -31,3 +31,16 @@ def run_with_lock(key, fn, timeout, *args, **kwargs):
     else:
         msg = f"Could not acquire lock '{key}' for task '{fn.__name__}'"
         raise CouldNotAcquireLockError(msg)
+
+
+def legacy_lock_still_held(concurrency, key):
+    """Detect locks written before the slot-suffix format.
+
+    Can be removed 36 hours after the new format is deployed
+    """
+    if concurrency != 1:
+        return False
+
+    from dimagi.utils.couch import get_redis_client
+
+    return bool(get_redis_client().client.get_client().exists(key))
