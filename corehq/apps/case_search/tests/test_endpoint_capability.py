@@ -83,7 +83,34 @@ def test_field_has_operations():
     cap = get_capability('test-domain')
     ct = cap['case_types'][0]
     name_field = next(f for f in ct['fields'] if f['name'] == 'first_name')
-    assert 'equals' in name_field['operations']
+    op_names = [op['name'] for op in name_field['operations']]
+    assert 'equals' in op_names
+
+
+def test_operations_have_name_and_label():
+    ops = get_operations_for_field_type(FIELD_TYPE_TEXT)
+    assert ops
+    for op in ops:
+        assert isinstance(op['name'], str)
+        # label is a lazy gettext proxy; force to str for the type check.
+        assert isinstance(str(op['label']), str)
+
+
+def test_date_operations_use_lt_gt_not_before_after():
+    op_names = {op['name'] for op in get_operations_for_field_type(FIELD_TYPE_DATE)}
+    assert op_names == {'equals', 'lt', 'gt'}
+    assert 'before' not in op_names
+    assert 'after' not in op_names
+
+
+def test_date_lt_gt_labels_match_data_cleaning_phrasing():
+    labels = {
+        op['name']: str(op['label'])
+        for op in get_operations_for_field_type(FIELD_TYPE_DATE)
+    }
+    assert labels['lt'] == 'before'
+    assert labels['gt'] == 'after'
+    assert labels['equals'] == 'on'
 
 
 @use(patient_case_type)
@@ -220,6 +247,17 @@ def test_invalid_root_type():
         {'type': 'invalid'}, 'patient', sample_capability()
     )
     assert any('type' in e.lower() for e in errors)
+
+
+@use(sample_capability)
+def test_date_field_accepts_lt():
+    spec = {
+        'type': 'component',
+        'component': 'lt',
+        'field': 'dob',
+        'inputs': {'value': {'type': 'constant', 'value': '2020-01-01'}},
+    }
+    assert validate_filter_spec(spec, 'patient', sample_capability()) == []
 
 
 @use(sample_capability)

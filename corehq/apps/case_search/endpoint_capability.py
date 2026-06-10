@@ -6,6 +6,7 @@ filter spec against that metadata.
 """
 
 from django.db.models import Prefetch
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
@@ -32,39 +33,44 @@ _DATA_TYPE_MAP = {
     # PASSWORD intentionally omitted — returns None
 }
 
-# Field type -> available operations
+# Field type -> available operations as (name, label) pairs.
+# `name` is the stable operator identity used by the API and validation;
+# `label` is the translatable, type-specific UI string. Labels reuse the
+# phrasing from the data cleaning tool (corehq.apps.data_cleaning) so the
+# already-translated strings carry over.
+# Labels intentionally match the ones in corehq/apps/data_cleaning/models/types.py
 _OPERATIONS_BY_TYPE = {
     FIELD_TYPE_TEXT: [
-        'equals',
-        'not_equals',
-        'starts_with',
+        ('equals', _('is exactly')),
+        ('not_equals', _('is not')),
+        ('starts_with', _('starts with')),
     ],
     FIELD_TYPE_NUMBER: [
-        'equals',
-        'not_equals',
-        'gt',
-        'gte',
-        'lt',
-        'lte',
+        ('equals', _('equals')),
+        ('not_equals', _('does not equal')),
+        ('gt', _('greater than')),
+        ('gte', _('greater than or equal to')),
+        ('lt', _('less than')),
+        ('lte', _('less than or equal to')),
     ],
     FIELD_TYPE_DATE: [
-        'equals',
-        'before',
-        'after',
+        ('equals', _('on')),
+        ('lt', _('before')),
+        ('gt', _('after')),
     ],
     FIELD_TYPE_DATETIME: [
-        'equals',
-        'before',
-        'after',
+        ('equals', _('on')),
+        ('lt', _('before')),
+        ('gt', _('after')),
     ],
     FIELD_TYPE_SELECT: [
-        'selected_any',
-        'selected_all',
-        'exact_match',
-        'is_empty',
+        ('selected_any', _('is any')),
+        ('selected_all', _('is all')),
+        ('exact_match', _('is exactly')),
+        ('is_empty', _('is empty')),
     ],
     FIELD_TYPE_GEOPOINT: [
-        'within_distance',
+        ('within_distance', _('within distance')),
     ],
 }
 
@@ -76,12 +82,12 @@ COMPONENT_INPUT_SCHEMAS = {
     'selected_all': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'is_empty': [],
     'equals': [{'name': 'value', 'type': 'match_field'}],
-    'gt': [{'name': 'value', 'type': FIELD_TYPE_NUMBER}],
-    'gte': [{'name': 'value', 'type': FIELD_TYPE_NUMBER}],
-    'lt': [{'name': 'value', 'type': FIELD_TYPE_NUMBER}],
-    'lte': [{'name': 'value', 'type': FIELD_TYPE_NUMBER}],
-    'before': [{'name': 'value', 'type': 'match_field'}],
-    'after': [{'name': 'value', 'type': 'match_field'}],
+    # lt/gt(/lte/gte) are shared by number and date fields, so the input
+    # follows the field's own type rather than being pinned to number.
+    'gt': [{'name': 'value', 'type': 'match_field'}],
+    'gte': [{'name': 'value', 'type': 'match_field'}],
+    'lt': [{'name': 'value', 'type': 'match_field'}],
+    'lte': [{'name': 'value', 'type': 'match_field'}],
     'date_range': [
         {'name': 'start', 'type': 'match_field'},
         {'name': 'end', 'type': 'match_field'},
@@ -102,8 +108,11 @@ def get_field_type(data_type):
 
 
 def get_operations_for_field_type(field_type):
-    """Return the list of operation names available for a field type."""
-    return list(_OPERATIONS_BY_TYPE.get(field_type, []))
+    """Return the operations available for a field type as {name, label} dicts."""
+    return [
+        {'name': name, 'label': label}
+        for name, label in _OPERATIONS_BY_TYPE.get(field_type, [])
+    ]
 
 
 def get_capability(domain):
@@ -248,7 +257,8 @@ def _validate_component(node, fields_by_name, errors):
         errors.append(f"Unknown field: '{field_name}'")
         return
 
-    if component_name not in field.get('operations', []):
+    operation_names = [op['name'] for op in field.get('operations', [])]
+    if component_name not in operation_names:
         errors.append(
             f"'{component_name}' is not a valid operation for field '{field_name}' "
             f'(type: {field["type"]})'

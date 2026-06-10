@@ -34,11 +34,11 @@
       <option value="" :selected="!node.component">
         {% trans "-- Operation --" %}
       </option>
-      <template x-for="op in getOperationsForField(node.field)" :key="op">
+      <template x-for="op in getOperationsForField(node.field)" :key="op.name">
         <option
-          :value="op"
-          x-text="op"
-          :selected="node.component === op"
+          :value="op.name"
+          x-text="op.label"
+          :selected="node.component === op.name"
         ></option>
       </template>
     </select>
