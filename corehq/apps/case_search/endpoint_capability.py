@@ -74,6 +74,14 @@ _OPERATIONS_BY_TYPE = {
     ],
 }
 
+# Sentinel input-slot type: the slot has no fixed type of its own and instead
+# takes the type of the field the condition is applied to. Used by operators
+# shared across field types (e.g. lt/gt work on both numbers and dates), where
+# pinning the input to a single concrete type would be wrong. The UI is meant
+# to resolve this to the field's type and render the matching input widget
+# (e.g. a date picker for a date field); that resolution is not implemented yet.
+INPUT_TYPE_MATCH_FIELD = 'match_field'
+
 COMPONENT_INPUT_SCHEMAS = {
     'exact_match': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'not_equals': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
@@ -81,16 +89,16 @@ COMPONENT_INPUT_SCHEMAS = {
     'selected_any': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'selected_all': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'is_empty': [],
-    'equals': [{'name': 'value', 'type': 'match_field'}],
+    'equals': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     # lt/gt(/lte/gte) are shared by number and date fields, so the input
     # follows the field's own type rather than being pinned to number.
-    'gt': [{'name': 'value', 'type': 'match_field'}],
-    'gte': [{'name': 'value', 'type': 'match_field'}],
-    'lt': [{'name': 'value', 'type': 'match_field'}],
-    'lte': [{'name': 'value', 'type': 'match_field'}],
+    'gt': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
+    'gte': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
+    'lt': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
+    'lte': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'date_range': [
-        {'name': 'start', 'type': 'match_field'},
-        {'name': 'end', 'type': 'match_field'},
+        {'name': 'start', 'type': INPUT_TYPE_MATCH_FIELD},
+        {'name': 'end', 'type': INPUT_TYPE_MATCH_FIELD},
     ],
     'within_distance': [
         {'name': 'point', 'type': FIELD_TYPE_GEOPOINT},
