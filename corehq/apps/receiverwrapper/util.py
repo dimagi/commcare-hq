@@ -27,7 +27,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 
 
-class AuthContextProto(Protocol):
+class AuthContextProtocol(Protocol):
     def is_valid(self) -> bool: ...
 
 
@@ -45,7 +45,7 @@ def submit_form_locally(
     app_id: str | None = None,
     build_id: str | None = None,
     *,
-    auth_context: AuthContextProto | None = None,
+    auth_context: AuthContextProtocol | None = None,
     **kwargs,
 ) -> FormProcessingResult:
     """
