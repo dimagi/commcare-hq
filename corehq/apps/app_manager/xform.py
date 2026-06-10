@@ -715,20 +715,25 @@ class XForm(WrappedNode):
 
     @property
     def has_locked_questions(self):
-        """Whether any binds in this form's XML are locked (``vellum:lock="all"``)."""
-        if not self.exists():
-            return False
-        try:
-            binds = self.bind_nodes
-        except XFormException:
-            return False
-        return any(bind.attrib.get('{v}lock') == 'all' for bind in binds)
+        """Whether any questions in this form are locked (``vellum:lock="all"``).
+
+        A lock may be declared on a ``<bind>`` or directly on a data node.
+        """
+        return bool(self.locked_question_paths)
 
     @property
     def locked_question_paths(self):
-        """Set of ``nodeset`` paths for binds with ``vellum:lock="all"``."""
+        """Set of paths for questions locked with ``vellum:lock="all"``.
+
+        Locks may be declared on a ``<bind>`` (via its ``nodeset``) or directly
+        on a data-instance node.
+        """
         if not self.exists():
             return set()
+        return self._locked_bind_paths() | self._locked_data_node_paths()
+
+    def _locked_bind_paths(self):
+        """``nodeset`` paths for binds with ``vellum:lock="all"``."""
         try:
             binds = self.bind_nodes
         except XFormException:
@@ -737,6 +742,14 @@ class XForm(WrappedNode):
             bind.attrib['nodeset']
             for bind in binds
             if bind.attrib.get('{v}lock') == 'all' and bind.attrib.get('nodeset')
+        }
+
+    def _locked_data_node_paths(self):
+        """Paths for data-instance nodes with ``vellum:lock="all"``."""
+        return {
+            path
+            for path, node in self._get_flattened_data_nodes().items()
+            if node.attrib.get('{v}lock') == 'all'
         }
 
     def get_question_signature(self, path):

@@ -360,6 +360,37 @@ class LockedQuestionsTest(AppFormTestCase):
         form = self.app.get_form(self.form_with_repeats_unique_id)
         assert form.wrapped_xform().locked_question_paths == set()
 
+    def test_locked_question_paths_includes_locked_data_node(self):
+        # A lock declared directly on a data-instance node is found alongside
+        # binds locked via ``nodeset``.
+        form = self.app.get_form(self.form_unique_id)
+        modified_source = form.source.replace(
+            '<question3 />', '<question3 vellum:lock="all" />')
+        assert modified_source != form.source
+        paths = XForm(modified_source).locked_question_paths
+        assert paths == {'/data/question2', '/data/question3'}
+
+    def test_locked_question_paths_includes_nested_locked_data_node(self):
+        # A locked data node can be nested inside a group; the lock is found at
+        # any depth, with a full path.
+        form = self.app.get_form(self.form_unique_id)
+        modified_source = form.source.replace(
+            '<question16 />', '<question16 vellum:lock="all" />')
+        assert modified_source != form.source
+        paths = XForm(modified_source).locked_question_paths
+        assert '/data/question15/question16' in paths
+
+    def test_has_locked_questions_true_for_data_node_lock_only(self):
+        # The lock lives on a data node, not on any bind.
+        form = self.app.get_form(self.form_unique_id)
+        modified_source = form.source.replace(
+            '<bind nodeset="/data/question2" type="xsd:string" vellum:lock="all" />',
+            '<bind nodeset="/data/question2" type="xsd:string" />',
+        ).replace('<question3 />', '<question3 vellum:lock="all" />')
+        xform = XForm(modified_source)
+        assert xform.has_locked_questions
+        assert xform.locked_question_paths == {'/data/question3'}
+
 
 class QuestionSignatureTest(AppFormTestCase):
 
