@@ -113,6 +113,29 @@ class TestForeignKeyFieldSerialization(SimpleTestCase):
         fk_field = deserialized_model['fields']['form']
         self.assertEqual(fk_field, 'abc123')
 
+    def test_natural_foreign_key_for_CommCareCase_does_not_load_the_parent(self):
+        # Only the FK value is set (no related object). Loading the parent here
+        # would hit the DB -- forbidden in SimpleTestCase -- so this fails if the
+        # serializer doesn't take the natural-key-from-fk-value shortcut.
+        transaction = CaseTransaction(case_id='abc123')
+
+        output_stream = StringIO()
+        with patch('corehq.apps.dump_reload.sql.dump.get_objects_to_dump', return_value=[transaction]):
+            SqlDataDumper('test', [], []).dump(output_stream)
+
+        deserialized_model = json.loads(output_stream.getvalue())
+        self.assertEqual(deserialized_model['fields']['case'], 'abc123')
+
+    def test_natural_foreign_key_for_XFormInstance_does_not_load_the_parent(self):
+        operation = XFormOperation(form_id='abc123')
+
+        output_stream = StringIO()
+        with patch('corehq.apps.dump_reload.sql.dump.get_objects_to_dump', return_value=[operation]):
+            SqlDataDumper('test', [], []).dump(output_stream)
+
+        deserialized_model = json.loads(output_stream.getvalue())
+        self.assertEqual(deserialized_model['fields']['form'], 'abc123')
+
 
 class TestEncryptedFieldSerialization(SimpleTestCase):
 

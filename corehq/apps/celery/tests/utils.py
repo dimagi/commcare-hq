@@ -8,7 +8,7 @@ def _bypass_run_with_lock(key, fn, timeout, *args, **kwargs):
 
 
 run_with_lock_patch = patch(
-    'corehq.apps.celery.serial._run_with_lock', _bypass_run_with_lock
+    'corehq.apps.celery.locking.run_with_lock', _bypass_run_with_lock
 )
 
 
