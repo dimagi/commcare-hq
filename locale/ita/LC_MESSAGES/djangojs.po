@@ -1249,6 +1249,46 @@ msgstr "Ultimo salvato"
 msgid "[unknown]"
 msgstr "[sconosciuto]"
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "Drag question here"
+msgstr "Trascina qui la domanda"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is equal to"
+msgstr "è uguale a"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is not equal to"
+msgstr "non è uguale a"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is less than"
+msgstr "è minore di"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is less than or equal to"
+msgstr "è minore o uguale a"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is greater than"
+msgstr "è maggiore di"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is greater than or equal to"
+msgstr "è maggiore o uguale a"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "has selected value"
+msgstr "ha il valore selezionato"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "True when ALL of the expressions are true."
+msgstr "Vero quando TUTTE le espressioni sono vere."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "True when ANY of the expressions are true."
+msgstr "Vero quando QUALSIASI delle espressioni è vera."
+
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
 msgid "loadXFormOrError"
 msgstr "loadXFormOrError"
@@ -1288,46 +1328,6 @@ msgstr "checkMove"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
 msgid "jstree"
 msgstr "jstree"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "Drag question here"
-msgstr "Trascina qui la domanda"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is equal to"
-msgstr "è uguale a"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is not equal to"
-msgstr "non è uguale a"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is less than"
-msgstr "è minore di"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is less than or equal to"
-msgstr "è minore o uguale a"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is greater than"
-msgstr "è maggiore di"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is greater than or equal to"
-msgstr "è maggiore o uguale a"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "has selected value"
-msgstr "ha il valore selezionato"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "True when ALL of the expressions are true."
-msgstr "Vero quando TUTTE le espressioni sono vere."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "True when ANY of the expressions are true."
-msgstr "Vero quando QUALSIASI delle espressioni è vera."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
@@ -2828,12 +2828,10 @@ msgid "You already have an active call."
 msgstr "Hai già una chiamata attiva."
 
 #: corehq/apps/integration/static/integration/js/payments/payments_verify.js
-#| msgid "Last 30 Days"
 msgid "Last 7 Days"
 msgstr "Ultimi 7 giorni"
 
 #: corehq/apps/integration/static/integration/js/payments/payments_verify.js
-#| msgid "Next Month"
 msgid "Last Month"
 msgstr "Ultimo mese"
 
