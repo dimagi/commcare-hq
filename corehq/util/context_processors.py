@@ -107,6 +107,7 @@ def js_api_keys(request):
         'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG.copy(),
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
         'IS_ANALYTICS_ENVIRONMENT': settings.SERVER_ENVIRONMENT in ('production', 'staging', 'india', 'eu'),
+        'USERFLOW_TOKEN': settings.USERFLOW_TOKEN,
     }
     if (
         getattr(request, 'project', None)
@@ -165,6 +166,7 @@ def enterprise_mode(request):
         'enterprise_mode': settings.ENTERPRISE_MODE,
         'is_saas_environment': settings.IS_SAAS_ENVIRONMENT,
         'is_dimagi_environment': settings.IS_DIMAGI_ENVIRONMENT,
+        'server_environment': settings.SERVER_ENVIRONMENT,
     }
 
 
