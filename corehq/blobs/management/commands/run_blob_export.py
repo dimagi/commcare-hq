@@ -79,6 +79,7 @@ class Command(BaseCommand):
             limit_to_db=limit_to_db,
             already_exported=already_exported,
         )
+        self.stdout.write(f'\nData dumped to file: {export_filename}')
         if skips:
             sys.exit(skips)
 
