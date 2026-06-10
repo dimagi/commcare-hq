@@ -1,9 +1,8 @@
 {% load i18n %}
-{# Recursive and/or group renderer.                                          #}
+{# Recursive all/any/none group renderer.                                    #}
 {# Expects Alpine scope: node, _removeParent (null = no remove), _removeIdx. #}
 {# Expects template context: depth = remaining nesting levels below this     #}
-{# group; the template includes itself until depth runs out.                  #}
-
+{# group; the template includes itself until depth runs out.                 #}
 {% include 'case_search/partials/_group_header.html' %}
 <div class="ps-4 border-start border-2">
   <template x-for="(child, childIdx) in node.children" :key="child._id">
@@ -17,9 +16,9 @@
         </div>
       </template>
 
-      {# Nested AND/OR group #}
+      {# Nested all/any/none group #}
       {% if depth > 0 %}
-        <template x-if="child.type === 'and' || child.type === 'or'">
+        <template x-if="['all', 'any', 'none'].includes(child.type)">
           <div
             x-data="{ node: child, _removeParent: node, _removeIdx: childIdx }"
           >
@@ -42,7 +41,7 @@
     <div class="d-flex gap-2 mt-2 flex-wrap">
       <button
         type="button"
-        class="btn btn-primary btn-sm"
+        class="btn btn-outline-primary btn-sm"
         @click="addCondition(node)"
       >
         <i class="fa-solid fa-plus me-1"></i>{% trans "Add Condition" %}
@@ -51,7 +50,7 @@
         <button
           type="button"
           class="btn btn-outline-primary btn-sm"
-          @click="addGroup(node, 'and')"
+          @click="addGroup(node, 'all')"
         >
           <i class="fa-solid fa-code-branch me-1"></i>{% trans "Add Group" %}
         </button>

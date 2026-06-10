@@ -1,7 +1,8 @@
 {% load i18n %}
 {# Query builder partial — rendered inside an Alpine.js x-data="endpointForm()" context. #}
-{# Builder state uses a `negated` flag on and/or groups; it is serialized  #}
-{# to/from wrapping `not` nodes by normalizeNode()/toSpecNode() in the JS. #}
+{# Groups use a `type` of all/any/none and share their shape with the       #}
+{# stored spec, so builder state serializes to the spec by just dropping    #}
+{# the Alpine-only `_id` keys (see strippedQuery() in the JS).              #}
 
 <div class="filter-tree">
   <div x-data="{ node: query, _removeParent: null, _removeIdx: null }">

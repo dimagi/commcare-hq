@@ -10,44 +10,40 @@
     <button
       type="button"
       class="btn"
-      :class="node.type === 'and' ? 'btn-primary' : 'btn-outline-secondary'"
-      @click="if (mode !== 'readonly') node.type = 'and'"
+      :class="node.type === 'all' ? 'btn-primary' : 'btn-outline-secondary'"
+      @click="if (mode !== 'readonly') node.type = 'all'"
       :disabled="mode === 'readonly'"
     >
-      AND
+      {% trans "ALL" %}
     </button>
     <button
       type="button"
       class="btn"
-      :class="node.type === 'or' ? 'btn-primary' : 'btn-outline-secondary'"
-      @click="if (mode !== 'readonly') node.type = 'or'"
+      :class="node.type === 'any' ? 'btn-primary' : 'btn-outline-secondary'"
+      @click="if (mode !== 'readonly') node.type = 'any'"
       :disabled="mode === 'readonly'"
     >
-      OR
+      {% trans "ANY" %}
+    </button>
+    <button
+      type="button"
+      class="btn"
+      :class="node.type === 'none' ? 'btn-primary' : 'btn-outline-secondary'"
+      @click="if (mode !== 'readonly') node.type = 'none'"
+      :disabled="mode === 'readonly'"
+    >
+      {% trans "NONE" %}
     </button>
   </div>
-  <button
-    type="button"
-    class="btn btn-sm"
-    :class="node.negated ? 'btn-warning' : 'btn-outline-secondary'"
-    :aria-pressed="node.negated"
-    @click="if (mode !== 'readonly') node.negated = !node.negated"
-    :disabled="mode === 'readonly'"
-  >
-    {% trans "NOT" %}
-  </button>
   <span class="text-muted small fst-italic">
-    <span x-show="node.type === 'and' && !node.negated"
+    <span x-show="node.type === 'all'"
       >{% trans "match all of the following" %}</span
     >
-    <span x-show="node.type === 'or' && !node.negated"
+    <span x-show="node.type === 'any'"
       >{% trans "match any of the following" %}</span
     >
-    <span x-show="node.type === 'and' && node.negated"
-      >{% trans "must not match all of the following" %}</span
-    >
-    <span x-show="node.type === 'or' && node.negated"
-      >{% trans "must not match any of the following" %}</span
+    <span x-show="node.type === 'none'"
+      >{% trans "match none of the following" %}</span
     >
   </span>
   <template x-if="mode !== 'readonly' && _removeParent !== null">

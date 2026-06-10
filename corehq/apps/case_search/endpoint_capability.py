@@ -96,10 +96,6 @@ COMPONENT_INPUT_SCHEMAS = {
     'gte': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'lt': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'lte': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
-    'date_range': [
-        {'name': 'start', 'type': INPUT_TYPE_MATCH_FIELD},
-        {'name': 'end', 'type': INPUT_TYPE_MATCH_FIELD},
-    ],
     'within_distance': [
         {'name': 'point', 'type': FIELD_TYPE_GEOPOINT},
         {'name': 'distance', 'type': FIELD_TYPE_NUMBER},
@@ -168,9 +164,9 @@ def get_capability(domain):
     }
 
 
-# Maximum nesting depth of and/or groups; `not` wrappers do not count.
+# Maximum nesting depth of all/any/none groups.
 MAX_QUERY_DEPTH = 5
-# Maximum children per and/or group.
+# Maximum children per group.
 MAX_GROUP_WIDTH = 50
 # Maximum total nodes across the entire query tree.
 MAX_TOTAL_NODES = 200
@@ -217,7 +213,7 @@ def _validate_node(node, fields_by_name, errors, depth=0, counter=None):
         return
     node_type = node.get('type')
 
-    if node_type in ('and', 'or'):
+    if node_type in ('all', 'any', 'none'):
         children = node.get('children', [])
         if len(children) > MAX_GROUP_WIDTH:
             errors.append(
@@ -232,26 +228,11 @@ def _validate_node(node, fields_by_name, errors, depth=0, counter=None):
                 depth + 1,
                 counter,
             )
-    elif node_type == 'not':
-        child = node.get('child')
-        if not child:
-            errors.append("'not' node must have a 'child'")
-        elif isinstance(child, dict) and child.get('type') == 'not':
-            # Redundant, and bounds recursion since `not` does not add depth.
-            errors.append("'not' node cannot directly contain another 'not'")
-        else:
-            _validate_node(
-                child,
-                fields_by_name,
-                errors,
-                depth,
-                counter,
-            )
     elif node_type == 'component':
         _validate_component(node, fields_by_name, errors)
     else:
         errors.append(
-            f"Invalid node type: '{node_type}'. Expected 'and', 'or', 'not', or 'component'."
+            f"Invalid node type: '{node_type}'. Expected 'all', 'any', 'none', or 'component'."
         )
 
 

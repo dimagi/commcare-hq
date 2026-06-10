@@ -213,7 +213,7 @@ def sample_capability():
 @use(sample_capability)
 def test_valid_simple_spec():
     spec = {
-        'type': 'and',
+        'type': 'all',
         'children': [
             {
                 'type': 'component',
@@ -310,44 +310,28 @@ def test_non_constant_input_type_rejected():
 
 
 @use(sample_capability)
-def test_not_node_with_valid_child():
+def test_none_group_accepted():
     spec = {
-        'type': 'not',
-        'child': {
-            'type': 'component',
-            'component': 'equals',
-            'field': 'province',
-            'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
-        },
+        'type': 'none',
+        'children': [
+            {
+                'type': 'component',
+                'component': 'equals',
+                'field': 'province',
+                'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
+            }
+        ],
     }
     assert validate_filter_spec(spec, 'patient', sample_capability()) == []
 
 
 @use(sample_capability)
-def test_not_node_missing_child():
-    errors = validate_filter_spec(
-        {'type': 'not'}, 'patient', sample_capability()
-    )
-    assert any('child' in e for e in errors)
-
-
-@use(sample_capability)
-def test_directly_nested_not_rejected():
+def test_nested_all_any():
     spec = {
-        'type': 'not',
-        'child': {'type': 'not', 'child': {'type': 'and', 'children': []}},
-    }
-    errors = validate_filter_spec(spec, 'patient', sample_capability())
-    assert any("another 'not'" in e for e in errors)
-
-
-@use(sample_capability)
-def test_nested_and_or():
-    spec = {
-        'type': 'and',
+        'type': 'all',
         'children': [
             {
-                'type': 'or',
+                'type': 'any',
                 'children': [
                     {
                         'type': 'component',
@@ -366,23 +350,23 @@ def test_nested_and_or():
 
 @use(sample_capability)
 def test_empty_children_allowed():
-    spec = {'type': 'and', 'children': []}
+    spec = {'type': 'all', 'children': []}
     assert validate_filter_spec(spec, 'patient', sample_capability()) == []
 
 
 @use(sample_capability)
 def test_non_dict_child_node_returns_error():
-    spec = {'type': 'and', 'children': ['not_a_dict']}
+    spec = {'type': 'all', 'children': ['not_a_dict']}
     errors = validate_filter_spec(spec, 'patient', sample_capability())
     assert any('str' in e for e in errors)
 
 
 @use(sample_capability)
 def test_deeply_nested_query_returns_error():
-    node = {'type': 'and', 'children': []}
+    node = {'type': 'all', 'children': []}
     root = node
     for _ in range(MAX_QUERY_DEPTH + 2):
-        child = {'type': 'and', 'children': []}
+        child = {'type': 'all', 'children': []}
         node['children'] = [child]
         node = child
     errors = validate_filter_spec(root, 'patient', sample_capability())
@@ -390,22 +374,24 @@ def test_deeply_nested_query_returns_error():
 
 
 @use(sample_capability)
-def test_not_nodes_do_not_count_towards_depth():
-    # Max-depth and/or nesting stays valid even when every group is negated.
-    node = {'type': 'and', 'children': []}
-    root = {'type': 'not', 'child': node}
-    for _ in range(MAX_QUERY_DEPTH):
-        child = {'type': 'and', 'children': []}
-        node['children'] = [{'type': 'not', 'child': child}]
+def test_none_group_counts_toward_depth():
+    # Unlike the old `not` wrapper, `none` is a regular group and counts
+    # toward the nesting limit like `all`/`any`.
+    node = {'type': 'none', 'children': []}
+    root = node
+    for _ in range(MAX_QUERY_DEPTH + 2):
+        child = {'type': 'none', 'children': []}
+        node['children'] = [child]
         node = child
-    assert validate_filter_spec(root, 'patient', sample_capability()) == []
+    errors = validate_filter_spec(root, 'patient', sample_capability())
+    assert any('nested too deeply' in e for e in errors)
 
 
 @use(sample_capability)
 def test_group_exceeding_max_width_returns_error():
     spec = {
-        'type': 'and',
-        'children': [{'type': 'and', 'children': []}] * (MAX_GROUP_WIDTH + 1),
+        'type': 'all',
+        'children': [{'type': 'all', 'children': []}] * (MAX_GROUP_WIDTH + 1),
     }
     errors = validate_filter_spec(spec, 'patient', sample_capability())
     assert any('too many conditions' in e for e in errors)
@@ -414,8 +400,8 @@ def test_group_exceeding_max_width_returns_error():
 @use(sample_capability)
 def test_group_at_max_width_is_valid():
     spec = {
-        'type': 'and',
-        'children': [{'type': 'and', 'children': []}] * MAX_GROUP_WIDTH,
+        'type': 'all',
+        'children': [{'type': 'all', 'children': []}] * MAX_GROUP_WIDTH,
     }
     errors = validate_filter_spec(spec, 'patient', sample_capability())
     assert not any('too many conditions' in e for e in errors)
@@ -427,12 +413,12 @@ def test_total_node_limit_returns_error():
     # each with 4 children.  No group exceeds the width limit, but total
     # nodes = 1 + 50 + 50*4 = 251 > MAX_TOTAL_NODES (200).
     spec = {
-        'type': 'and',
+        'type': 'all',
         'children': [
             {
-                'type': 'and',
+                'type': 'all',
                 'children': [
-                    {'type': 'and', 'children': []} for _ in range(4)
+                    {'type': 'all', 'children': []} for _ in range(4)
                 ],
             }
             for _ in range(MAX_GROUP_WIDTH)

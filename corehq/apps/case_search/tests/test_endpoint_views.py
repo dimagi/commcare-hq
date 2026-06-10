@@ -15,7 +15,7 @@ from ..endpoint_views import (
 )
 from ..models import CaseSearchEndpoint, CaseSearchEndpointVersion
 
-EMPTY_QUERY = {'type': 'and', 'children': []}
+EMPTY_QUERY = {'type': 'all', 'children': []}
 
 
 class EndpointViewTestCase(TestCase):
@@ -193,7 +193,7 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
 
     def test_failed_post_preserves_submitted_query(self):
         # Re-render seeds the query builder from the submitted (not DB) values.
-        submitted = {'type': 'or', 'children': []}
+        submitted = {'type': 'any', 'children': []}
         response = self.client.post(
             self._new_url(),
             self._post_data(
@@ -232,7 +232,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
 
     def test_edit_creates_new_version(self):
         ep = self._make_endpoint()
-        new_query = {'type': 'or', 'children': []}
+        new_query = {'type': 'any', 'children': []}
         response = self.client.post(
             self._edit_url(ep.id),
             self._post_data(

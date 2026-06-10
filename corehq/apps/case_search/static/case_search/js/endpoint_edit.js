@@ -62,45 +62,27 @@ Alpine.data("endpointForm", () => {
             }
         },
 
-        // Convert a stored spec node into builder state: `not` wrappers
-        // become a `negated` flag on the group they wrap, and anything that
-        // isn't a group (legacy `{}` roots, bare components) is wrapped in
-        // an AND group.
-        normalizeNode(node) {
-            if (!node || !node.type) {
-                return {
-                    type: "and",
-                    negated: false,
-                    children: (node && node.children) || [],
-                };
+        // The stored spec and builder state share the same shape, so the only
+        // adjustment needed is at the root: the builder always renders a
+        // group, so wrap a bare-component or empty/legacy root in an `all`
+        // group.
+        normalizeRoot(node) {
+            if (node && ["all", "any", "none"].includes(node.type)) {
+                return node;
             }
-            if (node.type === "not") {
-                const inner = this.normalizeNode(node.child);
-                inner.negated = !inner.negated;
-                return inner;
+            if (node && node.type === "component") {
+                return { type: "all", children: [node] };
             }
-            if (node.type === "and" || node.type === "or") {
-                return {
-                    type: node.type,
-                    negated: !!node.negated,
-                    children: (node.children || []).map((child) =>
-                        child && child.type === "component"
-                            ? child
-                            : this.normalizeNode(child),
-                    ),
-                };
-            }
-            // bare component at the root
-            return { type: "and", negated: false, children: [node] };
+            return { type: "all", children: (node && node.children) || [] };
         },
 
         init() {
-            this.query = this.normalizeNode(this.query);
+            this.query = this.normalizeRoot(this.query);
             this.initializeIds(this.query);
         },
 
         onCasetypeChange() {
-            this.query = { type: "and", negated: false, children: [] };
+            this.query = { type: "all", children: [] };
         },
 
         _newCondition() {
@@ -127,7 +109,6 @@ Alpine.data("endpointForm", () => {
             parentGroup.children.push({
                 _id: this._nextId++,
                 type: type,
-                negated: false,
                 children: [this._newCondition()],
             });
         },
@@ -187,24 +168,10 @@ Alpine.data("endpointForm", () => {
             return node;
         },
 
-        // Convert builder state back into the stored spec format: drop the
-        // Alpine-only keys (`_id`, `negated`) and wrap negated groups in a
-        // `not` node.
-        toSpecNode(node) {
-            if (node.type === "and" || node.type === "or") {
-                const group = {
-                    type: node.type,
-                    children: (node.children || []).map((child) =>
-                        this.toSpecNode(child),
-                    ),
-                };
-                return node.negated ? { type: "not", child: group } : group;
-            }
-            return this.stripIds(node);
-        },
-
+        // Builder state and the stored spec share the same shape, so emitting
+        // the spec is just dropping the Alpine-only `_id` keys.
         strippedQuery() {
-            return this.toSpecNode(this.query);
+            return this.stripIds(this.query);
         },
     };
 });

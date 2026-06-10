@@ -28,7 +28,7 @@ _ENDPOINT_DECORATORS = [
     toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
 ]
 
-EMPTY_QUERY = {'type': 'and', 'children': []}
+EMPTY_QUERY = {'type': 'all', 'children': []}
 
 
 def _get_endpoint(domain, endpoint_id):
