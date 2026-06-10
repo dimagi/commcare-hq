@@ -5,6 +5,7 @@ import time
 from django.core.paginator import Paginator
 from django.core.paginator import EmptyPage
 from django.db import DEFAULT_DB_ALIAS, connections
+from django.db.models import Q
 from django.db.utils import InterfaceError, OperationalError
 
 logger = logging.getLogger(__name__)
@@ -108,10 +109,19 @@ def paginated_queryset(queryset, chunk_size):
             return
 
 
-def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False):
+def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False, pagination_key=('pk',)):
     """
     Pull from queryset in chunks. This is suitable for deep pagination, but
-    cannot be used with ordered querysets (results will be sorted by pk).
+    cannot be used with ordered querysets (results will be sorted by the
+    ``pagination_key`` fields, by default the pk).
+
+    ``pagination_key`` is the keys to paginate by (the pk by default). Each key
+    is a field name, or a ``(sort_key, seek_key)`` pair: ``sort_key`` is used in
+    ORDER BY and read off each row to resume from; ``seek_key`` is the field
+    compared in the WHERE clause. They differ only to aim the seek at a joined
+    table's column so Postgres seeks that table's index (it won't carry an
+    inequality across a join) -- the two must hold the same value per row, e.g.
+    ``('case_id', 'case__case_id')``.
 
     Retries on transient database connection failures (bounded at ~31
     minutes total) so long-running iterations survive brief outages.
@@ -120,21 +130,41 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False):
         raise AssertionError("queryset_to_iterator does not respect ordering.  "
                              "Pass ignore_ordering=True to continue.")
 
-    pk_field = model_cls._meta.pk.name
-    queryset = queryset.order_by(pk_field)
-    last_doc_pk = None
+    # normalize bare keys to (sort_key, seek_key) pairs, then split into columns
+    sort_keys, seek_keys = zip(*[key if isinstance(key, tuple) else (key, key) for key in pagination_key])
+    queryset = queryset.order_by(*sort_keys)
+    last_doc_values = None
     while True:
-        if last_doc_pk is None:
+        if last_doc_values is None:
             chunk_qs = queryset
         else:
-            chunk_qs = queryset.filter(**{pk_field + "__gt": last_doc_pk})
-        chunk = _fetch_chunk_with_retry(chunk_qs, limit, model_cls, last_doc_pk)
+            chunk_qs = queryset.filter(_lexicographic_greater_than(seek_keys, last_doc_values))
+        chunk = _fetch_chunk_with_retry(chunk_qs, limit, model_cls, last_doc_values)
         if not chunk:
             return
         for doc in chunk:
             yield doc
 
-        last_doc_pk = getattr(doc, pk_field)
+        last_doc_values = tuple(getattr(doc, key) for key in sort_keys)
+
+
+def _lexicographic_greater_than(fields, values):
+    """Build the tuple comparison ``(a, b, ...) > (va, vb, ...)`` as a Q
+    expression, expanding it to ``a > va OR (a = va AND b > vb) OR ...``.
+
+    For a compound key it also ANDs a redundant ``a >= va`` on the leading
+    field. It's implied by the comparison, but Postgres won't derive a bound
+    from inside the OR, so the explicit ``>=`` is what lets it seek ``a``'s
+    index instead of scanning from the start -- a big win when ``a`` is a
+    joined table's indexed column, e.g. ``case__case_id``.
+    """
+    condition = Q()
+    for index, (field, value) in enumerate(zip(fields, values)):
+        ties = dict(zip(fields[:index], values[:index]))
+        condition |= Q(**ties, **{f"{field}__gt": value})
+    if len(fields) > 1:
+        condition = Q(**{f"{fields[0]}__gte": values[0]}) & condition
+    return condition
 
 
 def _fetch_chunk(queryset, limit):
@@ -142,7 +172,7 @@ def _fetch_chunk(queryset, limit):
     return list(queryset[:limit])
 
 
-def _fetch_chunk_with_retry(queryset, limit, model_cls, last_doc_pk):
+def _fetch_chunk_with_retry(queryset, limit, model_cls, last_doc_values):
     max_attempts = len(_CHUNK_RETRY_DELAYS) + 1
     for attempt in range(max_attempts):
         try:
@@ -152,13 +182,13 @@ def _fetch_chunk_with_retry(queryset, limit, model_cls, last_doc_pk):
                 logger.error(
                     f"queryset_to_iterator: giving up on {model_cls.__name__} "
                     f"after {attempt + 1} attempts "
-                    f"(last_doc_pk={last_doc_pk!r}): {exc}"
+                    f"(last_doc_values={last_doc_values!r}): {exc}"
                 )
                 raise
             delay = _CHUNK_RETRY_DELAYS[attempt]
             logger.warning(
                 f"queryset_to_iterator: {type(exc).__name__} fetching "
-                f"{model_cls.__name__} chunk (last_doc_pk={last_doc_pk!r}, "
+                f"{model_cls.__name__} chunk (last_doc_values={last_doc_values!r}, "
                 f"attempt {attempt + 1}/{max_attempts}); closing connection "
                 f"and retrying in {delay}s: {exc}"
             )
