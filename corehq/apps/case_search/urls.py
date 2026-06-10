@@ -5,6 +5,7 @@ from corehq.apps.case_search.endpoint_views import (
     CaseSearchEndpointEditView,
     CaseSearchEndpointNewView,
     CaseSearchEndpointsView,
+    CaseSearchEndpointTestView,
 )
 from corehq.apps.case_search.views import (
     CaseSearchView, CSQLFixtureExpressionView, ProfileCaseSearchView
@@ -17,6 +18,7 @@ urlpatterns = [
         name=CSQLFixtureExpressionView.urlname),
     path('endpoints/', CaseSearchEndpointsView.as_view(), name=CaseSearchEndpointsView.urlname),
     path('endpoints/new/', CaseSearchEndpointNewView.as_view(), name=CaseSearchEndpointNewView.urlname),
+    path('endpoints/test/', CaseSearchEndpointTestView.as_view(), name=CaseSearchEndpointTestView.urlname),
     path('endpoints/<int:endpoint_id>/edit/', CaseSearchEndpointEditView.as_view(),
          name=CaseSearchEndpointEditView.urlname),
     path('endpoints/<int:endpoint_id>/deactivate/', CaseSearchEndpointDeactivateView.as_view(),
