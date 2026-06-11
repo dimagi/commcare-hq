@@ -1,4 +1,5 @@
 import collections
+import copy
 import itertools
 import logging
 import re
@@ -715,20 +716,25 @@ class XForm(WrappedNode):
 
     @property
     def has_locked_questions(self):
-        """Whether any binds in this form's XML are locked (``vellum:lock="all"``)."""
-        if not self.exists():
-            return False
-        try:
-            binds = self.bind_nodes
-        except XFormException:
-            return False
-        return any(bind.attrib.get('{v}lock') == 'all' for bind in binds)
+        """Whether any questions in this form are locked (``vellum:lock="all"``).
+
+        A lock may be declared on a ``<bind>`` or directly on a data node.
+        """
+        return bool(self.locked_question_paths)
 
     @property
     def locked_question_paths(self):
-        """Set of ``nodeset`` paths for binds with ``vellum:lock="all"``."""
+        """Set of paths for questions locked with ``vellum:lock="all"``.
+
+        Locks may be declared on a ``<bind>`` (via its ``nodeset``) or directly
+        on a data-instance node.
+        """
         if not self.exists():
             return set()
+        return self._locked_bind_paths() | self._locked_data_node_paths()
+
+    def _locked_bind_paths(self):
+        """``nodeset`` paths for binds with ``vellum:lock="all"``."""
         try:
             binds = self.bind_nodes
         except XFormException:
@@ -739,35 +745,99 @@ class XForm(WrappedNode):
             if bind.attrib.get('{v}lock') == 'all' and bind.attrib.get('nodeset')
         }
 
+    def _locked_data_node_paths(self):
+        """Paths for data-instance nodes with ``vellum:lock="all"``."""
+        return {
+            path
+            for path, node in self._get_flattened_data_nodes().items()
+            if node.attrib.get('{v}lock') == 'all'
+        }
+
     def get_question_signature(self, path):
         """Representation of the question at ``path`` for equality comparison.
 
-        Includes the bind element, the control element + descendants, the
-        data instance node, and any itext entries referenced from the
-        control's labels/hints/help/items. Callers should not rely on the
-        absence or presence of any particular item within this set.
+        Includes the bind element(s), the control element, the data instance
+        node, and any itext entries referenced from the control's
+        labels/hints/help/items. Callers should not rely on the absence or
+        presence of any particular item within this set.
+
+        SaveToCase question are handled specially: all path descendants are
+        included. For any other node with children, notably a group or repeat,
+        the descendants under ``path`` are separate, independently editable
+        questions, so they are excluded.
 
         Returns an empty ``set`` if the path isn't present in the form.
         """
         if not self.exists():
             return set()
 
+        include_descendants = self._is_save_to_case(path)
         parts = set()
 
-        for bind in self.bind_nodes:
-            if bind.attrib.get('nodeset') == path:
-                parts.add(ET.tostring(bind.xml))
+        for bind in self._binds_for_path(path, include_descendants):
+            parts.add(ET.tostring(bind.xml))
 
         for control in self._controls_for_path(path):
+            if not include_descendants:
+                control = self._without_descendant_questions(control, path)
             parts.add(ET.tostring(control))
             for itext_id in _itext_refs_in(control):
                 for text_node in self._itext_text_nodes(itext_id):
                     parts.add(ET.tostring(text_node))
 
         for data_node in self._data_instance_nodes_for_path(path):
+            if not include_descendants:
+                data_node = self._without_child_elements(data_node)
             parts.add(ET.tostring(data_node))
 
         return parts
+
+    def _is_save_to_case(self, path):
+        role_attr = '{v}role'.format(**self.namespaces)
+        return any(
+            node.attrib.get(role_attr) == 'SaveToCase'
+            for node in self._data_instance_nodes_for_path(path)
+        )
+
+    def _binds_for_path(self, path, include_descendants):
+        """Binds that define the question at ``path``.
+
+        The exact ``nodeset == path`` bind is always included. When
+        ``include_descendants`` is true, binds on the subtree are also included.
+        The trailing ``/`` in the prefix avoids matching siblings that merely
+        share a prefix (e.g. ``/data/q1`` must not match ``/data/q123``).
+        """
+        prefix = path + '/'
+        return [
+            bind for bind in self.bind_nodes
+            if (nodeset := bind.attrib.get('nodeset'))
+            and (nodeset == path or (include_descendants and nodeset.startswith(prefix)))
+        ]
+
+    def _without_descendant_questions(self, control, path):
+        """Copy of a control with the controls of child questions removed.
+
+        A group/repeat control nests the controls of its child questions,
+        whose ``ref``/``nodeset`` is a descendant of ``path``. Those belong to
+        other questions, so they are dropped, leaving the node's own
+        label/hint/etc.
+        """
+        pruned = copy.deepcopy(control)
+        prefix = path + '/'
+        for node in pruned.xpath('.//*[@ref or @nodeset]'):
+            ref = node.get('ref') or node.get('nodeset') or ''
+            if ref.startswith(prefix):
+                parent = node.getparent()
+                if parent is not None:
+                    parent.remove(node)
+        return pruned
+
+    def _without_child_elements(self, node):
+        """Copy of a data node with element children removed (attributes kept)."""
+        shallow = copy.deepcopy(node)
+        for child in list(shallow):
+            shallow.remove(child)
+        return shallow
 
     def _controls_for_path(self, path):
         """Body elements with ``ref`` or ``nodeset`` matching ``path``."""
