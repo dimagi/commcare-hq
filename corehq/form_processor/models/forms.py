@@ -436,18 +436,14 @@ class XFormInstanceManager(RequireDBManager):
                         .filter(domain=domain, form_id__in=form_ids_to_delete)
                         .delete()
                     )
+                    if batch_count:
+                        count_mismatch = batch_count != len(form_ids_to_delete)
+                        self.hard_delete_blobs(form_ids_to_delete, verify_deleted=count_mismatch)
+                    if publish_changes:
+                        self.publish_deleted_forms(domain, form_ids_to_delete)
 
                 shard_count += batch_count.get(self.model._meta.label, 0)
-
             deleted_count += shard_count
-
-        if deleted_count:
-            count_mismatch = deleted_count != len(form_ids)
-            self.hard_delete_blobs(form_ids, verify_deleted=count_mismatch)
-
-        if publish_changes:
-            self.publish_deleted_forms(domain, form_ids)
-
         return deleted_count
 
     def hard_delete_blobs(self, form_ids, verify_deleted=False):
