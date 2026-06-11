@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>Locked Questions</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/LOCKED-QUESTIONS" uiVersion="1" version="1" name="Locked Questions">
+					<child_name />
+					<visit>
+						<register_child vellum:case_type="child" vellum:lock="all" vellum:role="SaveToCase">
+							<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
+								<create>
+									<case_type />
+									<case_name />
+								</create>
+							</case>
+						</register_child>
+					</visit>
+					<household vellum:lock="all">
+						<household_size />
+					</household>
+				</data>
+			</instance>
+			<instance src="jr://instance/session" id="commcaresession" />
+			<bind nodeset="/data/child_name" type="xsd:string" />
+			<bind nodeset="/data/visit" />
+			<bind nodeset="/data/visit/register_child/case" relevant="true()" />
+			<bind nodeset="/data/visit/register_child/case/create/case_type" calculate="'child'" />
+			<bind nodeset="/data/visit/register_child/case/create/case_name" calculate="/data/child_name" />
+			<bind nodeset="/data/visit/register_child/case/@date_modified" calculate="/data/meta/timeEnd" type="xsd:dateTime" />
+			<bind nodeset="/data/visit/register_child/case/@user_id" calculate="instance('commcaresession')/session/context/userid" />
+			<bind nodeset="/data/household" />
+			<bind nodeset="/data/household/household_size" type="xsd:int" />
+			<itext>
+				<translation lang="en" default="">
+					<text id="child_name-label">
+						<value>Child name</value>
+					</text>
+					<text id="visit-label">
+						<value>Visit</value>
+					</text>
+					<text id="household-label">
+						<value>Household</value>
+					</text>
+					<text id="household_size-label">
+						<value>Household size</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<input ref="/data/child_name">
+			<label ref="jr:itext('child_name-label')" />
+		</input>
+		<group ref="/data/visit">
+			<label ref="jr:itext('visit-label')" />
+		</group>
+		<group ref="/data/household">
+			<label ref="jr:itext('household-label')" />
+			<input ref="/data/household/household_size">
+				<label ref="jr:itext('household_size-label')" />
+			</input>
+		</group>
+	</h:body>
+</h:html>

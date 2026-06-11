@@ -183,7 +183,10 @@ QUESTIONS = [
 ]
 
 
-class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
+class AppFormTestCase(SimpleTestCase, TestFileMixin):
+    """Base for tests that build an app with one module and add forms to it
+    from XML data files."""
+
     domain = 'test-domain'
 
     file_path = ('data',)
@@ -194,25 +197,25 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
     def setUp(self):
         self.app = Application.new_app(self.domain, "Test")
         self.app.add_module(Module.new_module("Module", 'en'))
-        module = self.app.get_module(0)
-        module.case_type = 'test'
+        self.module = self.app.get_module(0)
+        self.module.case_type = 'test'
 
-        form = self.app.new_form(
-            module.id,
-            name="Form",
+    def add_form(self, data_file, name=None):
+        return self.app.new_form(
+            self.module.id,
+            name=name or data_file,
             lang='en',
-            attachment=self.get_xml('case_in_form').decode('utf-8')
+            attachment=self.get_xml(data_file).decode('utf-8'),
         )
 
-        form_with_repeats = self.app.new_form(
-            module.id,
-            name="Form with repeats",
-            lang='en',
-            attachment=self.get_xml('form_with_repeats').decode('utf-8')
-        )
 
-        self.form_unique_id = form.unique_id
-        self.form_with_repeats_unique_id = form_with_repeats.unique_id
+class GetFormQuestionsTest(AppFormTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.form_unique_id = self.add_form('case_in_form', "Form").unique_id
+        self.form_with_repeats_unique_id = self.add_form(
+            'form_with_repeats', "Form with repeats").unique_id
 
     def test_get_questions(self):
         form = self.app.get_form(self.form_unique_id)
@@ -229,106 +232,6 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             ['en', 'es'], include_triggers=True, include_translations=True)
 
         self.assertEqual(questions, QUESTIONS)
-
-    def test_has_locked_questions_true(self):
-        form = self.app.get_form(self.form_unique_id)
-        assert form.wrapped_xform().has_locked_questions
-
-    def test_has_locked_questions_false(self):
-        form = self.app.get_form(self.form_with_repeats_unique_id)
-        assert not form.wrapped_xform().has_locked_questions
-
-    def test_locked_question_paths(self):
-        form = self.app.get_form(self.form_unique_id)
-        assert form.wrapped_xform().locked_question_paths == {'/data/question2'}
-
-    def test_locked_question_paths_empty_when_none_locked(self):
-        form = self.app.get_form(self.form_with_repeats_unique_id)
-        assert form.wrapped_xform().locked_question_paths == set()
-
-    def test_question_signature_stable_for_unchanged_form(self):
-        form_a = self.app.get_form(self.form_unique_id)
-        form_b = self.app.get_form(self.form_unique_id)
-        sig_a = form_a.wrapped_xform().get_question_signature('/data/question2')
-        sig_b = form_b.wrapped_xform().get_question_signature('/data/question2')
-        assert sig_a == sig_b
-        assert sig_a  # non-empty for an existing question
-
-    def test_question_signature_empty_for_unknown_path(self):
-        form = self.app.get_form(self.form_unique_id)
-        assert form.wrapped_xform().get_question_signature('/data/does_not_exist') == frozenset()
-
-    def test_question_signature_changes_when_bind_changes(self):
-        # Mutate the bind type for /data/question2 and confirm signature differs.
-        form = self.app.get_form(self.form_unique_id)
-        original = form.wrapped_xform().get_question_signature('/data/question2')
-        modified_source = form.source.replace(
-            '<bind nodeset="/data/question2" type="xsd:string" vellum:lock="all" />',
-            '<bind nodeset="/data/question2" type="xsd:int" vellum:lock="all" />',
-        )
-        assert modified_source != form.source  # sanity: replacement happened
-        modified = XForm(modified_source).get_question_signature('/data/question2')
-        assert original != modified
-
-    def test_question_signature_changes_when_label_changes(self):
-        # Modifying the itext entry for /data/question2 should change the signature.
-        form = self.app.get_form(self.form_unique_id)
-        original = form.wrapped_xform().get_question_signature('/data/question2')
-        modified_source = form.source.replace(
-            '<text id="question2-label">',
-            '<text id="question2-label" data-changed="true">',
-        )
-        assert modified_source != form.source
-        modified = XForm(modified_source).get_question_signature('/data/question2')
-        assert original != modified
-
-    def test_question_signature_changes_when_constraint_added(self):
-        # Adding a constraint attribute to the bind should change the signature.
-        form = self.app.get_form(self.form_unique_id)
-        original = form.wrapped_xform().get_question_signature('/data/question2')
-        modified_source = form.source.replace(
-            '<bind nodeset="/data/question2" type="xsd:string" vellum:lock="all" />',
-            '<bind nodeset="/data/question2" type="xsd:string" '
-            'constraint=". &gt; 0" vellum:lock="all" />',
-        )
-        assert modified_source != form.source
-        modified = XForm(modified_source).get_question_signature('/data/question2')
-        assert original != modified
-
-    def test_question_signature_changes_when_hint_text_changes(self):
-        # Hint label refs are pulled in via itext; changing the hint text
-        # should flow through the signature.
-        form = self.app.get_form(self.form_unique_id)
-        original = form.wrapped_xform().get_question_signature('/data/question1')
-        modified_source = form.source.replace(
-            '<text id="question1-hint">',
-            '<text id="question1-hint" data-changed="true">',
-        )
-        assert modified_source != form.source
-        modified = XForm(modified_source).get_question_signature('/data/question1')
-        assert original != modified
-
-    def test_question_signature_changes_when_select_option_value_changes(self):
-        # Item value changes inside a select1 are part of the control subtree.
-        form = self.app.get_form(self.form_unique_id)
-        original = form.wrapped_xform().get_question_signature('/data/question15/question21')
-        modified_source = form.source.replace('<value>item22</value>', '<value>item99</value>')
-        assert modified_source != form.source
-        modified = XForm(modified_source).get_question_signature('/data/question15/question21')
-        assert original != modified
-
-    def test_question_signature_changes_when_data_instance_attr_changes(self):
-        # The data-instance node is part of the signature; the vellum:comment
-        # on /data/question2 lives there.
-        form = self.app.get_form(self.form_unique_id)
-        original = form.wrapped_xform().get_question_signature('/data/question2')
-        modified_source = form.source.replace(
-            '<question2 vellum:comment="This is a comment" />',
-            '<question2 vellum:comment="Edited comment" />',
-        )
-        assert modified_source != form.source
-        modified = XForm(modified_source).get_question_signature('/data/question2')
-        assert original != modified
 
     def test_get_questions_with_locked_status(self):
         form = self.app.get_form(self.form_unique_id)
@@ -431,3 +334,226 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             "type": "Select",
             "value": "/data/lookup-table"
         })
+
+
+class LockedQuestionsTest(AppFormTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.form_unique_id = self.add_form('case_in_form', "Form").unique_id
+        self.form_with_repeats_unique_id = self.add_form(
+            'form_with_repeats', "Form with repeats").unique_id
+
+    def test_has_locked_questions_true(self):
+        form = self.app.get_form(self.form_unique_id)
+        assert form.wrapped_xform().has_locked_questions
+
+    def test_has_locked_questions_false(self):
+        form = self.app.get_form(self.form_with_repeats_unique_id)
+        assert not form.wrapped_xform().has_locked_questions
+
+    def test_locked_question_paths(self):
+        form = self.app.get_form(self.form_unique_id)
+        assert form.wrapped_xform().locked_question_paths == {'/data/question2'}
+
+    def test_locked_question_paths_empty_when_none_locked(self):
+        form = self.app.get_form(self.form_with_repeats_unique_id)
+        assert form.wrapped_xform().locked_question_paths == set()
+
+    def test_locked_question_paths_includes_locked_data_node(self):
+        # A lock declared directly on a data-instance node is found alongside
+        # binds locked via ``nodeset``.
+        form = self.app.get_form(self.form_unique_id)
+        modified_source = form.source.replace(
+            '<question3 />', '<question3 vellum:lock="all" />')
+        assert modified_source != form.source
+        paths = XForm(modified_source).locked_question_paths
+        assert paths == {'/data/question2', '/data/question3'}
+
+    def test_locked_question_paths_includes_nested_locked_data_node(self):
+        # A locked data node can be nested inside a group; the lock is found at
+        # any depth, with a full path.
+        form = self.app.get_form(self.form_unique_id)
+        modified_source = form.source.replace(
+            '<question16 />', '<question16 vellum:lock="all" />')
+        assert modified_source != form.source
+        paths = XForm(modified_source).locked_question_paths
+        assert '/data/question15/question16' in paths
+
+    def test_has_locked_questions_true_for_data_node_lock_only(self):
+        # The lock lives on a data node, not on any bind.
+        form = self.app.get_form(self.form_unique_id)
+        modified_source = form.source.replace(
+            '<bind nodeset="/data/question2" type="xsd:string" vellum:lock="all" />',
+            '<bind nodeset="/data/question2" type="xsd:string" />',
+        ).replace('<question3 />', '<question3 vellum:lock="all" />')
+        xform = XForm(modified_source)
+        assert xform.has_locked_questions
+        assert xform.locked_question_paths == {'/data/question3'}
+
+
+class QuestionSignatureTest(AppFormTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.form_unique_id = self.add_form('case_in_form', "Form").unique_id
+        self.locked_form_unique_id = self.add_form('locked_questions').unique_id
+
+    def test_binds_for_path_save_to_case_includes_case_subtree(self):
+        xform = self.app.get_form(self.locked_form_unique_id).wrapped_xform()
+        nodesets = {
+            bind.attrib['nodeset']
+            for bind in xform._binds_for_path('/data/visit/register_child', include_descendants=True)
+        }
+        assert nodesets == {
+            '/data/visit/register_child/case',
+            '/data/visit/register_child/case/create/case_type',
+            '/data/visit/register_child/case/create/case_name',
+            '/data/visit/register_child/case/@date_modified',
+            '/data/visit/register_child/case/@user_id',
+        }
+
+    def test_binds_for_path_prefix_boundary(self):
+        # The trailing ``/`` must keep a prefix-sharing sibling out: a path of
+        # ``/data/visit/register_chi`` must not sweep in ``register_child``.
+        xform = self.app.get_form(self.locked_form_unique_id).wrapped_xform()
+        assert xform._binds_for_path('/data/visit/register_chi', include_descendants=True) == []
+
+    def test_save_to_case_signature_changes_when_descendant_bind_changes(self):
+        # The case-name calculate lives on a descendant bind, not the data
+        # node; changing it must change the locked question's signature.
+        form = self.app.get_form(self.locked_form_unique_id)
+        path = '/data/visit/register_child'
+        original = form.wrapped_xform().get_question_signature(path)
+        modified_source = form.source.replace(
+            'calculate="/data/child_name"', 'calculate="\'static name\'"')
+        assert modified_source != form.source
+        assert XForm(modified_source).get_question_signature(path) != original
+
+    def test_save_to_case_signature_changes_when_case_subtree_changes(self):
+        # The <case> subtree (which properties are written) is part of the
+        # question and lives in the data instance.
+        form = self.app.get_form(self.locked_form_unique_id)
+        path = '/data/visit/register_child'
+        original = form.wrapped_xform().get_question_signature(path)
+        modified_source = form.source.replace(
+            '<case_name />', '<case_name />\n<external_id />')
+        assert modified_source != form.source
+        assert XForm(modified_source).get_question_signature(path) != original
+
+    def test_locked_group_signature_ignores_child_question_edits(self):
+        # A locked group must leave its children independently editable: edits
+        # to the child's bind, label, or data node must not change the group's
+        # signature.
+        form = self.app.get_form(self.locked_form_unique_id)
+        path = '/data/household'
+        original = form.wrapped_xform().get_question_signature(path)
+        edits = [
+            ('<bind nodeset="/data/household/household_size" type="xsd:int" />',
+             '<bind nodeset="/data/household/household_size" type="xsd:string" />'),
+            ('<value>Household size</value>', '<value>Number of people</value>'),
+            ('<household_size />', '<household_size vellum:comment="added" />'),
+        ]
+        for old, new in edits:
+            modified_source = form.source.replace(old, new)
+            assert modified_source != form.source, old
+            assert XForm(modified_source).get_question_signature(path) == original, old
+
+    def test_locked_group_signature_detects_group_own_edits(self):
+        # Changes to the group's own bind or label must still be caught.
+        form = self.app.get_form(self.locked_form_unique_id)
+        path = '/data/household'
+        original = form.wrapped_xform().get_question_signature(path)
+        edits = [
+            ('<bind nodeset="/data/household" />',
+             '<bind nodeset="/data/household" relevant="false()" />'),
+            ('<value>Household</value>', '<value>Family</value>'),
+        ]
+        for old, new in edits:
+            modified_source = form.source.replace(old, new)
+            assert modified_source != form.source, old
+            assert XForm(modified_source).get_question_signature(path) != original, old
+
+    def test_question_signature_stable_for_unchanged_form(self):
+        form_a = self.app.get_form(self.form_unique_id)
+        form_b = self.app.get_form(self.form_unique_id)
+        sig_a = form_a.wrapped_xform().get_question_signature('/data/question2')
+        sig_b = form_b.wrapped_xform().get_question_signature('/data/question2')
+        assert sig_a == sig_b
+        assert sig_a  # non-empty for an existing question
+
+    def test_question_signature_empty_for_unknown_path(self):
+        form = self.app.get_form(self.form_unique_id)
+        assert form.wrapped_xform().get_question_signature('/data/does_not_exist') == frozenset()
+
+    def test_question_signature_changes_when_bind_changes(self):
+        # Mutate the bind type for /data/question2 and confirm signature differs.
+        form = self.app.get_form(self.form_unique_id)
+        original = form.wrapped_xform().get_question_signature('/data/question2')
+        modified_source = form.source.replace(
+            '<bind nodeset="/data/question2" type="xsd:string" vellum:lock="all" />',
+            '<bind nodeset="/data/question2" type="xsd:int" vellum:lock="all" />',
+        )
+        assert modified_source != form.source  # sanity: replacement happened
+        modified = XForm(modified_source).get_question_signature('/data/question2')
+        assert original != modified
+
+    def test_question_signature_changes_when_label_changes(self):
+        # Modifying the itext entry for /data/question2 should change the signature.
+        form = self.app.get_form(self.form_unique_id)
+        original = form.wrapped_xform().get_question_signature('/data/question2')
+        modified_source = form.source.replace(
+            '<text id="question2-label">',
+            '<text id="question2-label" data-changed="true">',
+        )
+        assert modified_source != form.source
+        modified = XForm(modified_source).get_question_signature('/data/question2')
+        assert original != modified
+
+    def test_question_signature_changes_when_constraint_added(self):
+        # Adding a constraint attribute to the bind should change the signature.
+        form = self.app.get_form(self.form_unique_id)
+        original = form.wrapped_xform().get_question_signature('/data/question2')
+        modified_source = form.source.replace(
+            '<bind nodeset="/data/question2" type="xsd:string" vellum:lock="all" />',
+            '<bind nodeset="/data/question2" type="xsd:string" '
+            'constraint=". &gt; 0" vellum:lock="all" />',
+        )
+        assert modified_source != form.source
+        modified = XForm(modified_source).get_question_signature('/data/question2')
+        assert original != modified
+
+    def test_question_signature_changes_when_hint_text_changes(self):
+        # Hint label refs are pulled in via itext; changing the hint text
+        # should flow through the signature.
+        form = self.app.get_form(self.form_unique_id)
+        original = form.wrapped_xform().get_question_signature('/data/question1')
+        modified_source = form.source.replace(
+            '<text id="question1-hint">',
+            '<text id="question1-hint" data-changed="true">',
+        )
+        assert modified_source != form.source
+        modified = XForm(modified_source).get_question_signature('/data/question1')
+        assert original != modified
+
+    def test_question_signature_changes_when_select_option_value_changes(self):
+        # Item value changes inside a select1 are part of the control subtree.
+        form = self.app.get_form(self.form_unique_id)
+        original = form.wrapped_xform().get_question_signature('/data/question15/question21')
+        modified_source = form.source.replace('<value>item22</value>', '<value>item99</value>')
+        assert modified_source != form.source
+        modified = XForm(modified_source).get_question_signature('/data/question15/question21')
+        assert original != modified
+
+    def test_question_signature_changes_when_data_instance_attr_changes(self):
+        # The data-instance node is part of the signature; the vellum:comment
+        # on /data/question2 lives there.
+        form = self.app.get_form(self.form_unique_id)
+        original = form.wrapped_xform().get_question_signature('/data/question2')
+        modified_source = form.source.replace(
+            '<question2 vellum:comment="This is a comment" />',
+            '<question2 vellum:comment="Edited comment" />',
+        )
+        assert modified_source != form.source
+        modified = XForm(modified_source).get_question_signature('/data/question2')
+        assert original != modified
