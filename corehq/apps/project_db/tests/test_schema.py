@@ -1,6 +1,8 @@
 import pytest
+import sqlalchemy
+from unmagic import use
 
-from corehq.apps.project_db.schema import DomainSchema
+from corehq.apps.project_db.schema import DomainSchema, get_project_db_engine
 
 
 def test_schema_name():
@@ -14,3 +16,19 @@ def test_schema_name():
 ])
 def test_quoted_name(domain, expected):
     assert DomainSchema(domain)._quoted_name == expected
+
+
+@use('db')
+def test_schema_lifecycle():
+    engine = get_project_db_engine()
+    schema = DomainSchema('testprojectdb')
+    with engine.begin() as conn:
+        schema.create(conn)
+        assert schema.name in sqlalchemy.inspect(conn).get_schema_names()
+
+        schema.set_local_search_path(conn)
+        search_path = conn.execute(sqlalchemy.text('SHOW search_path')).scalar()
+        assert search_path == schema.name
+
+        schema.drop(conn)
+        assert schema.name not in sqlalchemy.inspect(conn).get_schema_names()
