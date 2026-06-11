@@ -64,7 +64,7 @@ class TestSqlChunkSizeFlag:
     def test_chunk_size_flows_from_the_command_line_to_queryset_iteration(self):
         limits = []
 
-        def capture_limit(queryset, model_class, limit, ignore_ordering=False):
+        def capture_limit(queryset, model_class, limit, ignore_ordering=False, pagination_key=('pk',)):
             limits.append(limit)
             return iter([])
 
