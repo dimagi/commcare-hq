@@ -4,7 +4,7 @@ import pytest
 @pytest.hookimpl
 def pytest_sessionstart():
     from corehq.apps.accounting.tests.utils import patch_subscription_clear_caches
-    from corehq.apps.celery.tests.utils import patch_serial_task
+    from corehq.apps.celery.tests.utils import patch_task_locks
     from corehq.apps.domain.tests.test_utils import patch_domain_deletion
     from corehq.form_processor.tests.utils import patch_form_deletion, patch_testcase_databases
     from corehq.util.es.testing import patch_es_user_signals
@@ -21,7 +21,7 @@ def pytest_sessionstart():
     patch_domain_deletion()
     patch_subscription_clear_caches()
     patch_form_deletion()
-    patch_serial_task()
+    patch_task_locks()
 
 
 def patch_unittest_TestCase_doClassCleanup():

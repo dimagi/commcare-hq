@@ -824,6 +824,12 @@ class DjangoUserMixin(DocumentSchema):
         """ Currently just for debugging"""
         return check_password(password, self.password)
 
+    @property
+    def date_joined_iso_utc(self):
+        if self.date_joined.tzinfo is None:
+            return self.date_joined.replace(tzinfo=tz.utc).isoformat()
+        return self.date_joined.astimezone(tz.utc).isoformat()
+
 
 class EulaMixin(DocumentSchema):
     CURRENT_VERSION = EULA_CURRENT_VERSION
