@@ -199,9 +199,11 @@ def _lexicographic_greater_than(fields, values):
 
     For a compound key it also ANDs a redundant ``a >= va`` on the leading
     field. It's implied by the comparison, but Postgres won't derive a bound
-    from inside the OR, so the explicit ``>=`` is what lets it seek ``a``'s
-    index instead of scanning from the start -- a big win when ``a`` is a
-    joined table's indexed column, e.g. ``case__case_id``.
+    from inside the OR [1], so the explicit ``>=`` is what lets it seek ``a``'s
+    index instead of scanning from the start. This acts as a query planner hint:
+    it makes a seek on ``a``'s index one of the options the planner can choose.
+
+    [1] https://use-the-index-luke.com/sql/partial-results/fetch-next-page#sb-equivalent-logic
     """
     condition = Q()
     for index, (field, value) in enumerate(zip(fields, values)):
