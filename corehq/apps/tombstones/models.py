@@ -1,13 +1,8 @@
+from datetime import UTC, datetime
+
 from django.db import models
 
-from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.sql_db.models import PartitionedModel
-
-SLUG_BY_MODEL = {
-    CommCareCase: 'case',
-    XFormInstance: 'xform',
-}
-MODEL_BY_SLUG = {token: model for model, token in SLUG_BY_MODEL.items()}
 
 
 class ModelClassField(models.CharField):
@@ -21,20 +16,42 @@ class ModelClassField(models.CharField):
         kwargs.setdefault('max_length', 128)
         super().__init__(*args, **kwargs)
 
+    @property
+    def _slug_by_model(self):
+        from corehq.form_processor.models import CommCareCase, XFormInstance
+
+        return {CommCareCase: 'case', XFormInstance: 'xform'}
+
+    @property
+    def _model_by_slug(self):
+        return {v: k for k, v in self._slug_by_model.items()}
+
     def from_db_value(self, value, expression, connection):
         if value is None:
             return value
-        return MODEL_BY_SLUG[value]
+        return self._model_by_slug[value]
 
     def to_python(self, value):
-        if value is None or value in SLUG_BY_MODEL:
+        if value is None or value in self._slug_by_model:
             return value
-        return MODEL_BY_SLUG[value]
+        return self._model_by_slug[value]
 
     def get_prep_value(self, value):
         if value is None or isinstance(value, str):
             return value
-        return SLUG_BY_MODEL[value]
+        return self._slug_by_model[value]
+
+
+def build_tombstone(
+    model, doc_id, domain, soft_deleted_on=None, hard_deleted_on=None
+):
+    return Tombstone(
+        doc_id=doc_id,
+        model=model,
+        domain=domain,
+        soft_deleted_on=soft_deleted_on or datetime.now(tz=UTC),
+        hard_deleted_on=hard_deleted_on or datetime.now(tz=UTC),
+    )
 
 
 class Tombstone(PartitionedModel):
