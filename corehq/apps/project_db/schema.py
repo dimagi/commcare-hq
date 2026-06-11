@@ -1,4 +1,10 @@
 from sqlalchemy.dialects import postgresql
+from corehq.sql_db.connections import PROJECT_DB_ENGINE_ID, connection_manager
+
+
+def get_project_db_engine():
+    """Return a SQLAlchemy engine for project DB tables"""
+    return connection_manager.get_engine(PROJECT_DB_ENGINE_ID)
 
 
 class DomainSchema:

@@ -17,6 +17,7 @@ from .util import select_db_for_read
 
 DEFAULT_ENGINE_ID = DEFAULT_DB_ALIAS
 UCR_ENGINE_ID = 'ucr'
+PROJECT_DB_ENGINE_ID = 'project_db'
 
 
 def get_db_alias_or_none(enigne_id):
