@@ -142,6 +142,7 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False,
     if pagination_index is None:
         seek_keys = pagination_key
     else:
+        _validate_pagination_index(model_cls, pagination_key, pagination_index)
         seek_keys = (pagination_index, *pagination_key[1:])
     queryset = queryset.order_by(*pagination_key)
     last_doc_values = None
@@ -157,6 +158,39 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False,
             yield doc
 
         last_doc_values = tuple(getattr(doc, key) for key in pagination_key)
+
+
+def _validate_pagination_index(model_cls, pagination_key, pagination_index):
+    """Confirm ``pagination_index`` is value-equivalent to the leading
+    pagination key (see ``queryset_to_iterator``).
+
+    The next-page start value is read from ``pagination_key[0]`` but the seek
+    compares ``pagination_index``, so they must hold the same value in every
+    row. A foreign key with ``to_field`` guarantees this: the child's stored
+    ``<fk>_id`` column *is* the parent's ``to_field``.
+
+    So currently exactly one ``pagination_index`` is allowable for a given
+    ``pagination_key[0]``, and only when it is a foreign key column. For example,
+    for ``pagination_key[0] = 'case_id'``, only ``pagination_index='case__case_id'``
+    is allowed.
+    """
+    leading_key = pagination_key[0]
+    foreign_key = next(
+        (f for f in model_cls._meta.fields if f.many_to_one and f.get_attname() == leading_key),
+        None,
+    )
+    if foreign_key is None:
+        raise ValueError(
+            f"pagination_index can't be used: pagination_key[0]={leading_key!r} is not a "
+            f"foreign key's column on {model_cls.__name__}, so there's no parent index to seek"
+        )
+    allowable = f"{foreign_key.name}__{foreign_key.target_field.name}"
+    if pagination_index != allowable:
+        raise ValueError(
+            f"if set, pagination_index must be {allowable!r} -- the foreign key backing "
+            f"pagination_key[0]={leading_key!r}, traversed to its target column -- "
+            f"not {pagination_index!r}"
+        )
 
 
 def _lexicographic_greater_than(fields, values):

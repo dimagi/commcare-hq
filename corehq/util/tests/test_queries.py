@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
 from django.contrib.auth.models import User
 from django.db import connections
 from django.db.models import Q
@@ -8,7 +9,11 @@ from django.db.utils import InterfaceError, OperationalError
 from django.test.testcases import TestCase
 
 from corehq.util import queries
-from corehq.util.queries import _lexicographic_greater_than, queryset_to_iterator
+from corehq.util.queries import (
+    _lexicographic_greater_than,
+    _validate_pagination_index,
+    queryset_to_iterator,
+)
 
 
 def test_lexicographic_greater_than_single_field():
@@ -33,6 +38,23 @@ def test_lexicographic_greater_than_relation_path():
         _lexicographic_greater_than(('case__case_id', 'id'), ('abc', 5))
         == Q(case__case_id__gte='abc') & (Q(case__case_id__gt='abc') | Q(case__case_id='abc', id__gt=5))
     )
+
+
+def test_validate_pagination_index_accepts_a_real_fk_traversal():
+    from corehq.form_processor.models import CaseTransaction
+    # case_id is the stored column of CaseTransaction.case; case__case_id is its target
+    _validate_pagination_index(CaseTransaction, ('case_id', 'pk'), 'case__case_id')  # no raise
+
+
+@pytest.mark.parametrize("pagination_key, pagination_index", [
+    (('pk', 'case_id'), 'case__case_id'),  # leading key isn't backed by a foreign key
+    (('case_id', 'pk'), 'case_id'),        # missing the foreign key traversal
+    (('case_id', 'pk'), 'case__domain'),   # right foreign key, wrong target column
+])
+def test_validate_pagination_index_rejects_value_inequivalent_paths(pagination_key, pagination_index):
+    from corehq.form_processor.models import CaseTransaction
+    with pytest.raises(ValueError):
+        _validate_pagination_index(CaseTransaction, pagination_key, pagination_index)
 
 
 def test_pagination_index_seeks_on_the_index_not_the_cursor_key():

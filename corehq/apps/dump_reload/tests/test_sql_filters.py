@@ -140,3 +140,24 @@ class TestPagingChildModelByParentId(TestCase):
         assert {txn.case_id for txn in transactions} == {case.case_id for case in self.cases}
         # no dupes; (case_id, id) is the unique key -- id (pk) repeats across shards
         assert len({(txn.case_id, txn.id) for txn in transactions}) == len(transactions)
+
+
+def test_dump_builders_have_valid_pagination_index():
+    """Guard the dump config: every builder that sets pagination_index must name a
+    foreign key traversal value-equivalent to its leading pagination key. A typo
+    would otherwise pass review and silently return no rows at dump time."""
+    from corehq.apps.dump_reload.sql.dump import APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP
+    from corehq.apps.dump_reload.util import get_model_class
+    from corehq.util.queries import _validate_pagination_index
+
+    builders = [
+        builder
+        for builders in APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP.values()
+        for builder in builders
+        if builder.pagination_index
+    ]
+    assert builders, "expected some dump builders to set pagination_index"
+    for builder in builders:
+        _, model_cls = get_model_class(builder.model_label)
+        # raises ValueError unless pagination_index is a valid FK traversal of the leading key
+        _validate_pagination_index(model_cls, builder.pagination_key, builder.pagination_index)
