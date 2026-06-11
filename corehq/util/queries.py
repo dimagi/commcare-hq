@@ -109,30 +109,41 @@ def paginated_queryset(queryset, chunk_size):
             return
 
 
-def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False, pagination_key=('pk',)):
+def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False,
+                         pagination_key=('pk',), pagination_index=None):
     """
     Pull from queryset in chunks. This is suitable for deep pagination, but
     cannot be used with ordered querysets (results will be sorted by the
     ``pagination_key`` fields, by default the pk).
 
-    ``pagination_key`` is the keys to paginate by (the pk by default). Each key
-    is a field name, or a ``(sort_key, seek_key)`` pair: ``sort_key`` is used in
-    ORDER BY and read off each row to resume from; ``seek_key`` is the field
-    compared in the WHERE clause. They differ only to aim the seek at a joined
-    table's column so Postgres seeks that table's index (it won't carry an
-    inequality across a join) -- the two must hold the same value per row, e.g.
-    ``('case_id', 'case__case_id')``.
+    ``pagination_key`` is the tuple of field names to paginate by (the pk by
+    default), and the order in which results will be yielded. Its fields must be
+    jointly unique to guarantee that every matching result is returned -- e.g.
+    ``('pk',)`` or ``('owner_id', 'pk')`` is okay, but just ``('owner_id',)`` is not.
+
+    ``pagination_index`` is an optional query planner hint that coaxes the
+    planner into using the index on the specified related-table field, which
+    must be value-equivalent to the leading field of pagination_key, working
+    around the fact that Postgres won't carry an inequality in the WHERE clause
+    across a join [1][2]. Example:
+    ``pagination_key=('case_id', 'pk'), pagination_index='case__case_id'``.
 
     Retries on transient database connection failures (bounded at ~31
     minutes total) so long-running iterations survive brief outages.
+
+    [1] https://postgrespro.com/list/thread-id/2550799
+    [2] https://github.com/postgres/postgres/blob/REL_18_4/src/backend/optimizer/README
+        (the EquivalenceClasses section, on how the planner propagates equalities across joins)
     """
     if queryset.ordered and not ignore_ordering:
         raise AssertionError("queryset_to_iterator does not respect ordering.  "
                              "Pass ignore_ordering=True to continue.")
 
-    # normalize bare keys to (sort_key, seek_key) pairs, then split into columns
-    sort_keys, seek_keys = zip(*[key if isinstance(key, tuple) else (key, key) for key in pagination_key])
-    queryset = queryset.order_by(*sort_keys)
+    if pagination_index is None:
+        seek_keys = pagination_key
+    else:
+        seek_keys = (pagination_index, *pagination_key[1:])
+    queryset = queryset.order_by(*pagination_key)
     last_doc_values = None
     while True:
         if last_doc_values is None:
@@ -145,7 +156,7 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False, 
         for doc in chunk:
             yield doc
 
-        last_doc_values = tuple(getattr(doc, key) for key in sort_keys)
+        last_doc_values = tuple(getattr(doc, key) for key in pagination_key)
 
 
 def _lexicographic_greater_than(fields, values):

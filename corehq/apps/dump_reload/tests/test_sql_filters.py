@@ -111,9 +111,9 @@ class TestMultimediaBlobMetaFilter(TestCase):
 
 @sharded
 class TestPagingChildModelByParentId(TestCase):
-    """Page a case child model over the case__domain join with the seek key on
-    the parent's case_id (case__case_id), and check the keyset returns every
-    transaction exactly once across pages and shards."""
+    """Page a case child model over the case__domain join with the seek aimed at
+    the parent's case_id (pagination_index='case__case_id'), and check the keyset
+    returns every transaction exactly once across pages and shards."""
     domain = 'test-paging-child-by-parent-id'
 
     @classmethod
@@ -126,7 +126,8 @@ class TestPagingChildModelByParentId(TestCase):
         builder = FilteredModelIteratorBuilder(
             'form_processor.CaseTransaction',
             SimpleFilter('case__domain'),
-            pagination_key=(('case_id', 'case__case_id'), 'pk'),
+            pagination_key=('case_id', 'pk'),
+            pagination_index='case__case_id',
         )
         # chunk_size=2 with 3 cases forces paging across the seek boundary
         transactions = [

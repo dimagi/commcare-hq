@@ -149,8 +149,9 @@ class UnfilteredModelIteratorBuilder(object):
         self.model_label = model_label
         self.domain = self.model_class = self.db_alias = None
         self.use_all_objects = use_all_objects
-        # exists to make iterators() compatible with subclasses that set pagination_key
+        # defaults so iterators() works for subclasses that set these
         self.pagination_key = ('pk',)
+        self.pagination_index = None
 
     def prepare(self, domain, model_class, db_alias):
         self.domain = domain
@@ -176,6 +177,7 @@ class UnfilteredModelIteratorBuilder(object):
             yield queryset_to_iterator(
                 queryset, self.model_class, limit=chunk_size,
                 ignore_ordering=True, pagination_key=self.pagination_key,
+                pagination_index=self.pagination_index,
             )
 
     def build(self, domain, model_class, db_alias):
@@ -183,14 +185,17 @@ class UnfilteredModelIteratorBuilder(object):
 
 
 class FilteredModelIteratorBuilder(UnfilteredModelIteratorBuilder):
-    def __init__(self, model_label, filter, use_all_objects=False, pagination_key=('pk',)):
+    def __init__(self, model_label, filter, use_all_objects=False, pagination_key=('pk',),
+                 pagination_index=None):
         super(FilteredModelIteratorBuilder, self).__init__(model_label, use_all_objects)
         self.filter = filter
         self.pagination_key = pagination_key
+        self.pagination_index = pagination_index
 
     def build(self, domain, model_class, db_alias):
         return self.__class__(
-            self.model_label, self.filter, self.use_all_objects, self.pagination_key
+            self.model_label, self.filter, self.use_all_objects, self.pagination_key,
+            self.pagination_index,
         ).prepare(domain, model_class, db_alias)
 
     def count(self):

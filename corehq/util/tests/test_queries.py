@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
@@ -32,6 +33,26 @@ def test_lexicographic_greater_than_relation_path():
         _lexicographic_greater_than(('case__case_id', 'id'), ('abc', 5))
         == Q(case__case_id__gte='abc') & (Q(case__case_id__gt='abc') | Q(case__case_id='abc', id__gt=5))
     )
+
+
+def test_pagination_index_seeks_on_the_index_not_the_cursor_key():
+    # The cursor is read from pagination_key ('case_id'/'pk'), but the WHERE seek
+    # is built from pagination_index ('case__case_id') -- the parent's column.
+    from corehq.form_processor.models import CaseTransaction
+    # _fetch_chunk is patched, so the queryset is never executed against the db
+    queryset = CaseTransaction.objects.using('default')
+    chunks = [[SimpleNamespace(case_id='abc', pk=5)], []]
+    with patch.object(queries, '_fetch_chunk', side_effect=chunks), \
+            patch.object(queries, '_lexicographic_greater_than',
+                         wraps=queries._lexicographic_greater_than) as build_seek:
+        list(queryset_to_iterator(
+            queryset, CaseTransaction, limit=1, ignore_ordering=True,
+            pagination_key=('case_id', 'pk'), pagination_index='case__case_id',
+        ))
+
+    assert build_seek.call_args_list  # paged past the first chunk
+    assert all(call.args[0] == ('case__case_id', 'pk') for call in build_seek.call_args_list)
+    assert all(call.args[1] == ('abc', 5) for call in build_seek.call_args_list)
 
 
 class TestQuerysetToIterator(TestCase):
@@ -78,24 +99,6 @@ class TestQuerysetToIterator(TestCase):
             [u.username for u in all_users],
             [u.username for u in self.users],
         )
-
-    def test_seek_key_builds_the_cursor_not_the_sort_key(self):
-        # pk and id are the same column on User, so this divergent
-        # (sort_key, seek_key) still pages correctly -- and lets us confirm the
-        # cursor is built from the seek key ('id'), not the sort key ('pk')
-        query = User.objects.filter(last_name="Tenenbaum")
-        with patch.object(queries, '_lexicographic_greater_than',
-                          wraps=queries._lexicographic_greater_than) as build_cursor:
-            all_users = list(
-                queryset_to_iterator(query, User, limit=4, pagination_key=(('pk', 'id'),))
-            )
-
-        self.assertEqual(
-            [u.username for u in all_users],
-            [u.username for u in self.users],
-        )
-        assert build_cursor.call_args_list  # paged past the first chunk
-        assert all(call.args[0] == ('id',) for call in build_cursor.call_args_list)
 
     def test_pagination_key_pk_first(self):
         query = User.objects.filter(last_name="Tenenbaum")

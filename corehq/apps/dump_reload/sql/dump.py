@@ -33,17 +33,17 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
 
     FilteredModelIteratorBuilder('form_processor.XFormInstance', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.XFormOperation', SimpleFilter('form__domain'),
-                                 pagination_key=(('form_id', 'form__form_id'), 'pk')),
+                                 pagination_key=('form_id', 'pk'), pagination_index='form__form_id'),
 
     FilteredModelIteratorBuilder('form_processor.CommCareCase', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseIndex', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CaseAttachment', SimpleFilter('case__domain'),
-                                 pagination_key=(('case_id', 'case__case_id'), 'pk')),
+                                 pagination_key=('case_id', 'pk'), pagination_index='case__case_id'),
     FilteredModelIteratorBuilder('form_processor.CaseTransaction', SimpleFilter('case__domain'),
-                                 pagination_key=(('case_id', 'case__case_id'), 'pk')),
+                                 pagination_key=('case_id', 'pk'), pagination_index='case__case_id'),
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.LedgerTransaction', SimpleFilter('case__domain'),
-                                 pagination_key=(('case_id', 'case__case_id'), 'pk')),
+                                 pagination_key=('case_id', 'pk'), pagination_index='case__case_id'),
 
     FilteredModelIteratorBuilder('case_search.DomainsNotInCaseSearchIndex', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),
