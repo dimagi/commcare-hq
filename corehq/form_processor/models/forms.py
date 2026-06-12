@@ -437,22 +437,16 @@ class XFormInstanceManager(RequireDBManager):
                         .delete()
                     )
                 if batch_count:
-                    count_mismatch = batch_count != len(form_ids_to_delete)
-                    self.hard_delete_blobs(form_ids_to_delete, verify_deleted=count_mismatch)
+                    metas = BlobMeta.objects.using(db_name).filter(
+                        domain=domain, parent_id__in=form_ids_to_delete
+                    )
+                    get_blob_db().bulk_delete(metas=metas)
                 if publish_changes:
                     self.publish_deleted_forms(domain, form_ids_to_delete)
 
                 shard_count += batch_count.get(self.model._meta.label, 0)
             deleted_count += shard_count
         return deleted_count
-
-    def hard_delete_blobs(self, form_ids, verify_deleted=False):
-        if verify_deleted:
-            deleted_forms = [f for f in form_ids if not self.form_exists(f)]
-        else:
-            deleted_forms = form_ids
-        metas = get_blob_db().metadb.get_for_parents(deleted_forms)
-        get_blob_db().bulk_delete(metas=metas)
 
     @staticmethod
     def publish_deleted_forms(domain, form_ids):
