@@ -27,7 +27,10 @@
         {% trans "Upload an Excel File From Your Computer to Import From" %}
       </legend>
       <p class="text-muted">
-        {% trans "Imports are processed one at a time. If an import is already in progress, yours will begin once it completes." %}
+        {% blocktrans %}
+          Imports are processed one at a time per project space. If an import
+          is already in progress, yours will begin once it completes.
+        {% endblocktrans %}
       </p>
 
       <div class="row mb-3">
