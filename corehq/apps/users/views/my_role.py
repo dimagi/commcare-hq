@@ -4,6 +4,7 @@ from django.views.decorators.http import require_GET
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.users.models import PARAMETERIZED_PERMISSIONS, HqPermissions
+from corehq.util.quickcache import quickcache
 
 
 @require_GET
@@ -13,6 +14,7 @@ def my_role(request, domain):
     return JsonResponse(_build_my_role(request.couch_user, domain))
 
 
+@quickcache(['couch_user.user_id', 'domain'], timeout=30 * 60)
 def _build_my_role(couch_user, domain):
     if couch_user.is_global_admin():
         return {'is_dimagi_admin': True}
