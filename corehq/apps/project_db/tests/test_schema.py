@@ -1,3 +1,4 @@
+from unittest.mock import patch
 import pytest
 import sqlalchemy
 from unmagic import use
@@ -34,8 +35,15 @@ def test_schema_lifecycle():
         assert schema.name not in sqlalchemy.inspect(conn).get_schema_names()
 
 
-def test_case_table():
-    table = CaseTable('test-domain', 'person').build_definition(sqlalchemy.MetaData())
+def test_case_table_basics():
+    with patch.object(CaseTable, '_get_dd_properties', return_value=[
+        ('nickname', 'plain'),
+        ('favorite_color', 'select'),
+        ('dob', 'date'),
+        ('children_count', 'number'),
+    ]):
+        table = (CaseTable('test-domain', 'person')
+                 .build_definition(sqlalchemy.MetaData()))
 
     assert table.name == 'person'
     assert table.schema == 'projectdb_test-domain'
@@ -43,6 +51,13 @@ def test_case_table():
     for name, col_type, col_kwargs in CaseTable.STATIC_COLUMNS:
         column = table.c[name]
         assert isinstance(column.type, col_type)
+
+    assert isinstance(table.c['prop__nickname'].type, sqlalchemy.Text)
+    assert isinstance(table.c['prop__favorite_color'].type, sqlalchemy.Text)
+    assert isinstance(table.c['prop__dob'].type, sqlalchemy.Text)
+    assert isinstance(table.c['prop__dob__date'].type, sqlalchemy.Date)
+    assert isinstance(table.c['prop__children_count'].type, sqlalchemy.Text)
+    assert isinstance(table.c['prop__children_count__number'].type, sqlalchemy.Numeric)
 
     expected_indices = {f'ix_person_{column}' for column in [
         'owner_id', 'modified_on', 'parent_id', 'host_id'

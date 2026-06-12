@@ -1,7 +1,17 @@
 import sqlalchemy
-from sqlalchemy import Boolean, Column, DateTime, Index, Table, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Index,
+    Numeric,
+    Table,
+    Text,
+)
 from sqlalchemy.dialects import postgresql
 
+from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.sql_db.connections import PROJECT_DB_ENGINE_ID, connection_manager
 
 
@@ -56,6 +66,12 @@ class CaseTable:
         ('host_id', Text, {}),
     )
 
+    COERCED_PROPERTY_TYPES = {
+        # CaseProperty data_type to SQLAlchemy column type
+        CaseProperty.DataType.DATE: Date,
+        CaseProperty.DataType.NUMBER: Numeric,
+    }
+
     def __init__(self, domain, case_type):
         self.domain = domain
         self.case_type = case_type  # TODO truncate and append hash if needed
@@ -64,10 +80,11 @@ class CaseTable:
     def build_definition(self, metadata):
         """Build a SQLAlchemy Table object defining the case type table"""
         static_columns = [Column(name, col_type, **kwargs)
-                         for name, col_type, kwargs in self.STATIC_COLUMNS]
+                          for name, col_type, kwargs in self.STATIC_COLUMNS]
         table = Table(
             self.case_type,
             metadata,  # The table is also attached to the provided metadata
+            *self._build_property_columns(),
             *static_columns,
             schema=self.domain_schema.name,
         )
@@ -76,3 +93,25 @@ class CaseTable:
         Index(f'ix_{self.case_type}_parent_id', table.c['parent_id'])
         Index(f'ix_{self.case_type}_host_id', table.c['host_id'])
         return table
+
+    def _build_property_columns(self):
+        """Build Column objects for dynamic case properties.
+
+        Every property gets a raw Text column named
+        ``prop__<name>``. Some typed properties get an additional
+        typed column.
+        """
+        for name, data_type in self._get_dd_properties():
+            col_name = f'prop__{name}'
+            yield Column(col_name, Text)
+
+            if col_type := self.COERCED_PROPERTY_TYPES.get(data_type):
+                yield Column(f'{col_name}__{data_type}', col_type)
+
+    def _get_dd_properties(self):
+        return CaseProperty.objects.filter(
+            case_type__domain=self.domain,
+            case_type__name=self.case_type,
+            case_type__is_deprecated=False,
+            deprecated=False,
+        ).values_list('name', 'data_type')
