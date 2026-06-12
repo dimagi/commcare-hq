@@ -11,7 +11,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects import postgresql
 
-from corehq.apps.data_dictionary.models import CaseProperty
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.sql_db.connections import PROJECT_DB_ENGINE_ID, connection_manager
 
 
@@ -115,3 +115,25 @@ class CaseTable:
             case_type__is_deprecated=False,
             deprecated=False,
         ).values_list('name', 'data_type')
+
+
+def create_project_db(domain):
+    metadata = sqlalchemy.MetaData()
+
+    case_types = _get_case_types(domain)
+    if not case_types:
+        return
+    for case_type in case_types:
+        case_table = CaseTable(domain, case_type)
+        case_table.build_definition(metadata)
+
+    engine = get_project_db_engine()
+    with engine.begin() as conn:
+        DomainSchema(domain).create(conn)
+        metadata.create_all(bind=conn, checkfirst=True)
+
+
+def _get_case_types(domain):
+    return list(CaseType.objects.filter(
+        domain=domain, is_deprecated=False,
+    ).values_list('name', flat=True))
