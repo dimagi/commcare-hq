@@ -459,6 +459,21 @@ class QuestionSignatureTest(AppFormTestCase):
             assert modified_source != form.source, old
             assert XForm(modified_source).get_question_signature(path) == original, old
 
+    def test_locked_group_signature_stable_when_emptied(self):
+        # Deleting the last child of a locked group leaves the group present
+        # but empty. Its signature must not change just because the leftover
+        # layout whitespace shifted.
+        form = self.app.get_form(self.locked_form_unique_id)
+        path = '/data/household'
+        original = form.wrapped_xform().get_question_signature(path)
+        modified_source = (
+            form.source
+            .replace('<household_size />', '')
+            .replace('<bind nodeset="/data/household/household_size" type="xsd:int" />', '')
+        )
+        assert modified_source != form.source
+        assert XForm(modified_source).get_question_signature(path) == original
+
     def test_locked_group_signature_detects_group_own_edits(self):
         # Changes to the group's own bind or label must still be caught.
         form = self.app.get_form(self.locked_form_unique_id)

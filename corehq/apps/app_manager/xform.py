@@ -774,21 +774,26 @@ class XForm(WrappedNode):
         include_descendants = self._is_save_to_case(path)
         parts = set()
 
+        # Remove leading and trailing whitespace in XML elements; it's not relevant here
+        parser = ET.XMLParser(remove_blank_text=True)
+        def reparse_to_string(xml):
+            return ET.tostring(ET.XML(ET.tostring(xml), parser))
+
         for bind in self._binds_for_path(path, include_descendants):
-            parts.add(ET.tostring(bind.xml))
+            parts.add(reparse_to_string(bind.xml))
 
         for control in self._controls_for_path(path):
             if not include_descendants:
                 control = self._without_descendant_questions(control, path)
-            parts.add(ET.tostring(control))
+            parts.add(reparse_to_string(control))
             for itext_id in _itext_refs_in(control):
                 for text_node in self._itext_text_nodes(itext_id):
-                    parts.add(ET.tostring(text_node))
+                    parts.add(reparse_to_string(text_node))
 
         for data_node in self._data_instance_nodes_for_path(path):
             if not include_descendants:
                 data_node = self._without_child_elements(data_node)
-            parts.add(ET.tostring(data_node))
+            parts.add(reparse_to_string(data_node))
 
         return parts
 
@@ -837,6 +842,10 @@ class XForm(WrappedNode):
         shallow = copy.deepcopy(node)
         for child in list(shallow):
             shallow.remove(child)
+        # Drop the indentation left where the children were: an emptied node
+        # would otherwise carry whitespace-only text.
+        if shallow.text is not None and not shallow.text.strip():
+            shallow.text = None
         return shallow
 
     def _controls_for_path(self, path):
