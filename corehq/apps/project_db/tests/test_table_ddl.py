@@ -4,7 +4,7 @@ import pytest
 import sqlalchemy
 from unmagic import use
 
-from corehq.apps.project_db.schema import (
+from corehq.apps.project_db.table_ddl import (
     CaseTable,
     DomainSchema,
     create_or_update_project_db,
@@ -66,7 +66,7 @@ def test_case_table_basics():
 
 
 @use('db')
-@patch('corehq.apps.project_db.schema._get_case_types')
+@patch('corehq.apps.project_db.table_ddl._get_case_types')
 @patch.object(CaseTable, '_get_dd_properties')
 def test_create_project_db(get_dd_properties, get_case_types):
     # Actually commit the project_db definition to postgres and spot check results
