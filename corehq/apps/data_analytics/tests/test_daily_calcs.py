@@ -30,7 +30,7 @@ class TestCalcWebUsersAccessed30d(TestCase):
         self.addCleanup(self.domain_obj.delete)
 
     def tearDown(self):
-        delete_all_users
+        delete_all_users()
         super().tearDown()
 
     def _make_web_user(self, name, domain, last_accessed):
