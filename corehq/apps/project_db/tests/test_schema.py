@@ -7,7 +7,7 @@ from unmagic import use
 from corehq.apps.project_db.schema import (
     CaseTable,
     DomainSchema,
-    create_project_db,
+    create_or_update_project_db,
     get_project_db_engine,
 )
 
@@ -66,23 +66,29 @@ def test_case_table_basics():
 
 
 @use('db')
-def test_create_project_db():
-    # Actually commit the project_db definition to postgres and verify results by inspection
-
+@patch('corehq.apps.project_db.schema._get_case_types')
+@patch.object(CaseTable, '_get_dd_properties')
+def test_create_project_db(get_dd_properties, get_case_types):
+    # Actually commit the project_db definition to postgres and spot check results
     domain = 'test_create_project_db'
     domain_schema = DomainSchema(domain)
-    with (
-        patch('corehq.apps.project_db.schema._get_case_types', return_value=['patient']),
-        patch.object(CaseTable, '_get_dd_properties', return_value=[
-            ('nickname', 'plain'),
-            ('dob', 'date'),
-        ]),
-    ):
-        create_project_db(domain)
+
+    get_case_types.return_value = ['patient']
+    get_dd_properties.return_value = [('nickname', 'plain'), ('dob', 'date')]
+    create_or_update_project_db(domain)
+    _assert_db_created_as_expected(domain_schema.name)
+
+    get_dd_properties.return_value = [('favorite_color', 'plain'), ('dob', 'date')]
+    create_or_update_project_db(domain)
+    _assert_db_updated_as_expected(domain_schema.name)
 
     with get_project_db_engine().begin() as conn:
+        domain_schema.drop(conn)
+
+
+def _assert_db_created_as_expected(schema):
+    with get_project_db_engine().begin() as conn:
         inspector = sqlalchemy.inspect(conn)
-        schema = domain_schema.name
         assert schema in inspector.get_schema_names()
         assert ['patient'] == inspector.get_table_names(schema=schema)
 
@@ -99,4 +105,18 @@ def test_create_project_db():
         assert any(ix['column_names'] == ['owner_id'] for ix in indexes)
         assert any(ix['column_names'] == ['parent_id'] for ix in indexes)
 
-        domain_schema.drop(conn)
+
+def _assert_db_updated_as_expected(schema):
+    with get_project_db_engine().begin() as conn:
+        inspector = sqlalchemy.inspect(conn)
+        # still only the one table
+        assert ['patient'] == inspector.get_table_names(schema=schema)
+
+        columns = {
+            col['name']: col['type']
+            for col in inspector.get_columns('patient', schema=schema)
+        }
+        # New column added
+        assert isinstance(columns['prop__favorite_color'], sqlalchemy.Text)
+        # Column for deleted case property is still present
+        assert isinstance(columns['prop__nickname'], sqlalchemy.Text)

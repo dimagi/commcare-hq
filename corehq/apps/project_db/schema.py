@@ -1,13 +1,7 @@
 import sqlalchemy
-from sqlalchemy import (
-    Boolean,
-    Column,
-    Date,
-    DateTime,
-    Numeric,
-    Table,
-    Text,
-)
+from alembic.migration import MigrationContext
+from alembic.operations import Operations
+from sqlalchemy import Boolean, Column, Date, DateTime, Numeric, Table, Text
 from sqlalchemy.dialects import postgresql
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -110,23 +104,57 @@ class CaseTable:
         ]
 
 
-def create_project_db(domain):
+def create_or_update_project_db(domain):
     metadata = sqlalchemy.MetaData()
 
     case_types = _get_case_types(domain)
     if not case_types:
         return
-    for case_type in case_types:
-        case_table = CaseTable(domain, case_type)
-        case_table.build_definition(metadata)
+    case_tables = [
+        CaseTable(domain, case_type).build_definition(metadata)
+        for case_type in case_types
+    ]
 
     engine = get_project_db_engine()
     with engine.begin() as conn:
         DomainSchema(domain).create(conn)
         metadata.create_all(bind=conn, checkfirst=True)
+        for table in case_tables:
+            update_table(conn, table)
 
 
 def _get_case_types(domain):
     return list(CaseType.objects.filter(
         domain=domain, is_deprecated=False,
     ).values_list('name', flat=True))
+
+
+def update_table(conn, table):
+    """Add columns and indexes present in ``table`` but missing from the database.
+
+    This is append-only: columns and indexes that exist in the database
+    but not in ``table`` are left in place (never dropped).
+    """
+    inspector = sqlalchemy.inspect(conn)
+    schema = table.schema
+    existing_columns = {
+        col['name'] for col in inspector.get_columns(table.name, schema=schema)
+    }
+    new_columns = [col for col in table.columns if col.name not in existing_columns]
+
+    existing_indexes = {
+        idx['name'] for idx in inspector.get_indexes(table.name, schema=schema)
+    }
+    new_indexes = [idx for idx in table.indexes if idx.name not in existing_indexes]
+
+    if not new_columns and not new_indexes:
+        return
+
+    op = Operations(MigrationContext.configure(conn))
+    for column in new_columns:
+        # Detach column from its table so Alembic can re-parent it
+        detached_col = column.copy()
+        detached_col.table = None
+        op.add_column(table.name, detached_col, schema=schema)
+    for index in new_indexes:
+        index.create(bind=conn)
