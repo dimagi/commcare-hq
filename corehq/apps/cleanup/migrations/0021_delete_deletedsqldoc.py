@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cleanup', '0019_alter_deletedsqldoc_table'),
+        ('cleanup', '0020_delete_app_execution_models'),
     ]
 
     operations = [
