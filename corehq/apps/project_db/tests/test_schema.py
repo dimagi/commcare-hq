@@ -2,7 +2,7 @@ import pytest
 import sqlalchemy
 from unmagic import use
 
-from corehq.apps.project_db.schema import DomainSchema, get_project_db_engine
+from corehq.apps.project_db.schema import DomainSchema, get_project_db_engine, CaseTable
 
 
 def test_schema_name():
@@ -32,3 +32,19 @@ def test_schema_lifecycle():
 
         schema.drop(conn)
         assert schema.name not in sqlalchemy.inspect(conn).get_schema_names()
+
+
+def test_case_table():
+    table = CaseTable('test-domain', 'person').build_definition(sqlalchemy.MetaData())
+
+    assert table.name == 'person'
+    assert table.schema == 'projectdb_test-domain'
+
+    for name, col_type, col_kwargs in CaseTable.STATIC_COLUMNS:
+        column = table.c[name]
+        assert isinstance(column.type, col_type)
+
+    expected_indices = {f'ix_person_{column}' for column in [
+        'owner_id', 'modified_on', 'parent_id', 'host_id'
+    ]}
+    assert expected_indices == {idx.name for idx in table.indexes}
