@@ -23,17 +23,14 @@ class Command(BaseCommand):
             available_case_types = (CommCareCase.objects.using(for_db_conn).
                                     values_list('type', flat=True).distinct())
             if for_case_type not in available_case_types:
-                raise CommandError("Unexpected case type {for_case_type} passed. "
-                                   "Should be from the following: {case_types}"
-                                   .format(for_case_type=for_case_type, case_types=available_case_types))
+                raise CommandError(f"Unexpected case type {for_case_type} passed. "
+                                   f"Should be from the following: {available_case_types}")
 
         if for_domain:
             available_domains = (CommCareCase.objects.using(for_db_conn).
                                  values_list('domain', flat=True).distinct())
             if for_domain not in available_domains:
-                raise CommandError("Domain name {for_domain} not found for any case in db {for_db_conn}".format(
-                    for_domain=for_domain, for_db_conn=for_db_conn
-                ))
+                raise CommandError(f"Domain name {for_domain} not found for any case in db {for_db_conn}")
 
     def handle(self, *args, **options):
         for_domain = options.get('domain')
@@ -55,40 +52,35 @@ class Command(BaseCommand):
                     available_domains = (CommCareCase.objects.using(db).
                                          values_list('domain', flat=True).distinct())
                     if for_domain not in available_domains:
-                        print("Domain name {for_domain} not found for any case in db {for_db_conn}".format(
-                            for_domain=for_domain,
-                            for_db_conn=db
-                        ))
+                        print(f"Domain name {for_domain} not found for any case in db {db}")
                         continue
-                    where_clause += "domain='{domain}' and ".format(domain=for_domain)
+                    where_clause += f"domain='{for_domain}' and "
 
                 # ensure case type passed present for this db, if not just ignore it with a warning message
                 available_case_types = (CommCareCase.objects.using(db).
                                         values_list('type', flat=True).distinct())
                 if for_case_type and for_case_type not in available_case_types:
-                    print("Ignoring Unexpected case type {for_case_type} passed."
-                          "Should be from the following: {case_types}"
-                          .format(for_case_type=for_case_type, case_types=available_case_types))
+                    print(f"Ignoring Unexpected case type {for_case_type} passed."
+                          f"Should be from the following: {available_case_types}")
                     continue
                 if for_case_type:
                     case_types = [for_case_type]
                 else:
                     case_types = available_case_types
                 for case_type in case_types:
-                    file_name = "{case_type}_{db_name}_{timestamp}.csv".format(
-                        case_type=case_type, db_name=db,
-                        timestamp=datetime.utcnow().strftime(DATETIME_FORMAT))
+                    timestamp = datetime.utcnow().strftime(DATETIME_FORMAT)
+                    file_name = f"{case_type}_{db}_{timestamp}.csv"
                     with open(file_name, "w", encoding='utf-8') as output:
                         c = db_conn.cursor()
-                        _where_clause = where_clause + "type='{case_type}' ".format(case_type=case_type)
-                        copy_query = "copy (SELECT * FROM form_processor_commcarecasesql " \
-                                     "{where_clause})".format(where_clause=_where_clause)
+                        _where_clause = where_clause + f"type='{case_type}' "
+                        copy_query = ("copy (SELECT * FROM form_processor_commcarecasesql "
+                                      f"{_where_clause})")
                         print("Query Being Run:")
                         print(copy_query)
                         c.copy_expert(
-                            "{query} TO STDOUT DELIMITER ',' CSV HEADER;".format(query=copy_query), output)
+                            f"{copy_query} TO STDOUT DELIMITER ',' CSV HEADER;", output)
                     with ZipFile(file_name + '.zip', 'w') as zip_file:
                         zip_file.write(file_name, file_name)
                         os.remove(file_name)
             else:
-                print("Ignoring {db}. It does not have the table form_processor_commcarecasesql".format(db=db))
+                print(f"Ignoring {db}. It does not have the table form_processor_commcarecasesql")

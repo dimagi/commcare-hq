@@ -4,7 +4,6 @@ from uuid import uuid4
 
 from django.test import TestCase
 
-from nose.tools import assert_equal
 
 from casexml.apps.case.mock import CaseBlock
 
@@ -32,7 +31,7 @@ def test_find_precision():
         fake_get_max_doc_count,
     ):
         precision = find_precision(query=object(), case_property='foo')
-        assert_equal(precision, 4)
+        assert precision == 4
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)

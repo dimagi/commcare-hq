@@ -3,7 +3,7 @@ import os.path
 import re
 import uuid
 from itertools import count
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from casexml.apps.case.mock import CaseIndex, CaseStructure
 from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest

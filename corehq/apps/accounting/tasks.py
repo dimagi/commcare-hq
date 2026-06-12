@@ -11,13 +11,11 @@ from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
+import urllib.request
 from celery.schedules import crontab
 from couchdbkit import ResourceConflict
 from dateutil.relativedelta import relativedelta
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 from couchexport.export import export_from_tables
 from couchexport.models import Format
@@ -753,7 +751,7 @@ def update_exchange_rates():
     if app_id:
         try:
             log_accounting_info("Updating exchange rates...")
-            rates = json.load(six.moves.urllib.request.urlopen(
+            rates = json.load(urllib.request.urlopen(
                 'https://openexchangerates.org/api/latest.json?app_id=%s' % app_id))['rates']
             default_rate = float(rates[Currency.get_default().code])
             for code, rate in rates.items():

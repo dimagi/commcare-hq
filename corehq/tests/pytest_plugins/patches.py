@@ -4,8 +4,9 @@ import pytest
 @pytest.hookimpl
 def pytest_sessionstart():
     from corehq.apps.accounting.tests.utils import patch_subscription_clear_caches
+    from corehq.apps.celery.tests.utils import patch_task_locks
     from corehq.apps.domain.tests.test_utils import patch_domain_deletion
-    from corehq.form_processor.tests.utils import patch_testcase_databases
+    from corehq.form_processor.tests.utils import patch_form_deletion, patch_testcase_databases
     from corehq.util.es.testing import patch_es_user_signals
     from corehq.util.test_utils import patch_foreign_value_caches
     from pillowtop.tests.utils import pillow_connection_cleanup_patch
@@ -19,6 +20,8 @@ def pytest_sessionstart():
     patch_foreign_value_caches()
     patch_domain_deletion()
     patch_subscription_clear_caches()
+    patch_form_deletion()
+    patch_task_locks()
 
 
 def patch_unittest_TestCase_doClassCleanup():
@@ -66,3 +69,32 @@ def patch_django_test_case():
 def patch_assertItemsEqual():
     import unittest
     unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
+
+
+def suspend(patch_obj):
+    """Contextmanager/decorator to suspend an active patch
+
+    Usage as decorator:
+
+        @suspend(delete_es_docs_patch)
+        def test_something():
+            ...  # do thing with ES docs deletion
+
+    Usage as context manager:
+
+        with suspend(delete_es_docs_patch):
+            ...  # do thing with ES docs deletion
+    """
+    from django.conf import settings
+    from corehq.tests.util.context import testcontextmanager
+
+    @testcontextmanager
+    def suspend_patch():
+        assert settings.UNIT_TESTING
+        patch_obj.__exit__(None, None, None)
+        try:
+            yield
+        finally:
+            patch_obj.__enter__()
+
+    return suspend_patch

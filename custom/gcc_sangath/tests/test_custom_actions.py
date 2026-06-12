@@ -2,7 +2,6 @@ import doctest
 from datetime import date
 from unittest.mock import patch
 
-from nose.tools import assert_equal
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
@@ -186,19 +185,19 @@ peer_rating_cases = [
 
 def test_get_sum():
     total = _get_sum(SESSION_RATING_CASE_PROP, peer_rating_cases)
-    assert_equal(total, 6.633333333333334)
+    assert total == 6.633333333333334
 
 
 def test_get_count():
     count = _get_count(SESSION_RATING_CASE_PROP, peer_rating_cases)
-    assert_equal(count, 3)
+    assert count == 3
 
 
 def test_get_aggregate():
     aggregate = _get_aggregate(SESSION_RATING_CASE_PROP, peer_rating_cases)
-    assert_equal(aggregate, 2.2)
+    assert aggregate == 2.2
 
 
 def test_division_by_zero():
     aggregate = _get_aggregate(SESSION_RATING_CASE_PROP, [])
-    assert_equal(aggregate, 0.0)
+    assert aggregate == 0.0

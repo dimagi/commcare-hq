@@ -136,6 +136,17 @@ class FormattedDetailColumn(object):
             variables['lang'] = self.id_strings.current_language()
         return variables
 
+    def _calculated_property(self):
+        xpath = sx.CalculatedPropertyXPath(function=self.xpath)
+        if re.search(r'\$lang', self.xpath):
+            xpath.variables.node.append(
+                sx.CalculatedPropertyXPathVariable(
+                    name='lang',
+                    locale_id=self.id_strings.current_language()
+                ).node
+            )
+        return sx.XPathVariable(name='calculated_property', xpath=xpath).node
+
     @property
     def template(self):
         template = sx.Template(
@@ -144,16 +155,7 @@ class FormattedDetailColumn(object):
             width=self.template_width,
         )
         if self.column.useXpathExpression and self.column.format != 'translatable-enum':
-            xpath = sx.CalculatedPropertyXPath(function=self.xpath)
-            if re.search(r'\$lang', self.xpath):
-                xpath.variables.node.append(
-                    sx.CalculatedPropertyXPathVariable(
-                        name='lang',
-                        locale_id=self.id_strings.current_language()
-                    ).node
-                )
-            xpath_variable = sx.XPathVariable(name='calculated_property', xpath=xpath)
-            template.text.xpath.variables.node.append(xpath_variable.node)
+            template.text.xpath.variables.node.append(self._calculated_property())
 
         if self.variables:
             for key, value in sorted(self.variables.items()):
@@ -183,18 +185,8 @@ class FormattedDetailColumn(object):
                 type=sort_type,
             )
 
-            if self.column.useXpathExpression:
-                xpath = sx.CalculatedPropertyXPath(function=self.xpath)
-                if re.search(r'\$lang', self.xpath):
-                    xpath.variables.node.append(
-                        sx.CalculatedPropertyXPathVariable(
-                            name='lang',
-                            locale_id=self.id_strings.current_language()
-                        ).node
-                    )
-                if self.column.format != 'translatable-enum':
-                    xpath_variable = sx.XPathVariable(name='calculated_property', xpath=xpath)
-                    sort.text.xpath.variables.node.append(xpath_variable.node)
+            if self.column.useXpathExpression and self.column.format != 'translatable-enum':
+                sort.text.xpath.variables.node.append(self._calculated_property())
 
         if self.sort_element:
             if not sort:
@@ -215,15 +207,7 @@ class FormattedDetailColumn(object):
                     type=sort_type,
                 )
                 if not sort_calculation and self.column.useXpathExpression:
-                    xpath = sx.CalculatedPropertyXPath(function=self.xpath)
-                    if re.search(r'\$lang', self.xpath):
-                        xpath.variables.node.append(
-                            sx.CalculatedPropertyXPathVariable(
-                                name='lang', locale_id=self.id_strings.current_language()
-                            ).node
-                        )
-                    xpath_variable = sx.XPathVariable(name='calculated_property', xpath=xpath)
-                    sort.text.xpath.variables.node.append(xpath_variable.node)
+                    sort.text.xpath.variables.node.append(self._calculated_property())
 
             if self.sort_element.type == 'distance':
                 sort.text.xpath_function = self.evaluate_template(Distance.SORT_XPATH_FUNCTION)
@@ -508,26 +492,27 @@ class EnumImage(Enum):
         if self.column.endpoint_action_id and self.app.supports_detail_field_action:
             return sx.EndpointAction(endpoint_id=self.column.endpoint_action_id, background="true")
 
-    def _make_alt_text(self, type):
+    @property
+    def alt_text_xpath(self):
         return sx.XPathEnum.build(
             enum=self.column.enum,
             format=self.column.format,
-            type=type,
-            template=self._xpath_template(type),
-            get_template_context=self._xpath_template_context(type),
+            type='display',
+            template=self._xpath_template('display'),
+            get_template_context=self._xpath_template_context('display'),
             get_value=lambda key: self.id_strings.detail_column_alt_text_variable(self.module, self.detail_type,
                                                                                   self.column, key))
 
     @property
-    def alt_text_xpath(self):
-        return self._make_alt_text('display')
-
-    @property
     def alt_text(self):
         if self.app.supports_alt_text:
-            return sx.AltText(
+            alt_text = sx.AltText(
                 text=sx.Text(xpath=self.alt_text_xpath)
             )
+            if (self.column.useXpathExpression
+                    and toggles.ENUM_CALC_VARIABLES.enabled(self.app.domain)):
+                alt_text.text.xpath.variables.node.append(self._calculated_property())
+            return alt_text
 
     def _xpath_template(self, type):
         return "if({key_as_condition}, {key_as_var_name}"

@@ -3,7 +3,7 @@ import uuid
 from django.test.testcases import SimpleTestCase
 
 from unittest.mock import MagicMock, patch
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.models import (

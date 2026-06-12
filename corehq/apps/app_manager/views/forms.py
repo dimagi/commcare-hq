@@ -52,8 +52,8 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppInDifferentDomainException,
     AppMisconfigurationError,
-    FormActionsChangeError,
     FormNotFoundException,
+    LockedQuestionError,
     ModuleNotFoundException,
     XFormValidationFailed,
 )
@@ -63,6 +63,7 @@ from corehq.apps.app_manager.form_action_diff import (
     from_combined_diff,
     get_case_mappings,
     make_multi,
+    merge_case_mappings,
     update_form_actions,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
@@ -77,6 +78,7 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActionCondition,
+    FormActions,
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
@@ -109,6 +111,7 @@ from corehq.apps.app_manager.views.utils import (
 )
 from corehq.apps.app_manager.xform import (
     CaseError,
+    XForm,
     XFormException,
     XFormValidationError,
 )
@@ -138,6 +141,11 @@ from corehq.util.view_utils import set_file_download
 _LOCKED_QUESTION_MAPPING_ERROR = gettext_lazy(
     "Case property mappings that reference locked questions cannot be "
     "modified. Unlock the question in the form builder first."
+)
+
+_LOCKED_QUESTION_CONTENT_ERROR = gettext_lazy(
+    "Locked questions cannot be modified. Unlock the question in the form "
+    "builder first."
 )
 
 
@@ -225,7 +233,7 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
 
     try:
         _apply_advanced_form_actions_change(request, domain, form, actions)
-    except FormActionsChangeError:
+    except LockedQuestionError:
         return HttpResponseForbidden(_LOCKED_QUESTION_MAPPING_ERROR)
 
     datums_json = json.loads(request.POST.get('arbitrary_datums'))
@@ -258,7 +266,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
 
     try:
         _apply_form_actions_change(request, domain, form, actions_json, diff)
-    except FormActionsChangeError:
+    except LockedQuestionError:
         return HttpResponseForbidden(_LOCKED_QUESTION_MAPPING_ERROR)
 
     if old_load_from_form:
@@ -287,7 +295,7 @@ def _apply_advanced_form_actions_change(request, domain, form, new_actions):
     """Assign ``new_actions`` to ``form.actions`` (or ``form.extra_actions``
     for shadow forms).
 
-    :raises FormActionsChangeError: if the change would add, remove, or
+    :raises LockedQuestionError: if the change would add, remove, or
         repoint a case-property mapping bound to a locked question.
     """
     locked_paths = _locked_paths_to_protect(request, domain, form)
@@ -296,7 +304,7 @@ def _apply_advanced_form_actions_change(request, domain, form, new_actions):
         collect_locked_advanced_mappings(current, locked_paths)
         != collect_locked_advanced_mappings(new_actions, locked_paths)
     ):
-        raise FormActionsChangeError
+        raise LockedQuestionError
 
     if form.form_type == "shadow_form":
         form.extra_actions = new_actions
@@ -307,26 +315,74 @@ def _apply_advanced_form_actions_change(request, domain, form, new_actions):
 def _apply_form_actions_change(request, domain, form, actions_json, diff):
     """Apply ``actions_json`` and ``diff`` to ``form.actions``.
 
-    :raises FormActionsChangeError: if the change would add, remove, or
+    :raises LockedQuestionError: if the change would add, remove, or
         repoint a case-property mapping bound to a locked question.
     """
     locked_paths = _locked_paths_to_protect(request, domain, form)
     before = collect_locked_mappings(form.actions, locked_paths)
     update_form_actions(form.actions, actions_json, diff)
     if collect_locked_mappings(form.actions, locked_paths) != before:
-        raise FormActionsChangeError
+        raise LockedQuestionError
 
 
 def _locked_paths_to_protect(request, domain, form):
     """Set of locked question paths whose case-property mappings must be
     preserved on this request, or empty set if the feature is off.
     """
-    if not (
-        domain_has_privilege(domain, "locked_admin_questions")
-        and toggles.LOCKED_ADMIN_QUESTIONS.enabled_for_request(request)
-    ):
+    if not domain_has_privilege(domain, "locked_admin_questions"):
         return set()
     return form.wrapped_xform().locked_question_paths
+
+
+def _check_case_mapping_diff_does_not_touch_locked(request, domain, form, case_mapping_diff):
+    """Reject a save whose ``case_mapping_diff`` would change a case-property
+    mapping bound to a question that is locked.
+
+    Users with ``edit_locked_questions_in_apps`` bypass this check entirely:
+    the UI lock is a safeguard against accidents for them, not an authorization
+    boundary.
+
+    :raises LockedQuestionError: if the diff would change a locked mapping.
+    """
+    if (
+        not case_mapping_diff
+        or request.couch_user.can_edit_locked_questions_in_apps(domain)
+    ):
+        return
+
+    locked_paths = _locked_paths_to_protect(request, domain, form)
+    if not locked_paths:
+        return
+
+    before = collect_locked_mappings(form.actions, locked_paths)
+    actions_copy = FormActions.wrap(form.actions.to_json())
+    merge_case_mappings(case_mapping_diff, actions_copy)
+    if collect_locked_mappings(actions_copy, locked_paths) != before:
+        raise LockedQuestionError
+
+
+def _check_locked_questions_unmodified(request, domain, form, new_xml):
+    """Reject a save that changes anything about a locked question.
+
+    For every path that was locked in the old form, the question's signature
+    in the new XForm must be identical.
+
+    Users with ``edit_locked_questions_in_apps`` permission bypass this
+    check entirely; the UI lock is a safeguard against accidents for them,
+    not an authorization boundary.
+
+    :raises LockedQuestionError: if a locked question changed.
+    """
+    if request.couch_user.can_edit_locked_questions_in_apps(domain):
+        return
+    old_locked = _locked_paths_to_protect(request, domain, form)
+    if not old_locked:
+        return
+    old_xform = form.wrapped_xform()
+    new_xform = XForm(new_xml, domain=domain)
+    for path in old_locked:
+        if old_xform.get_question_signature(path) != new_xform.get_question_signature(path):
+            raise LockedQuestionError
 
 
 @waf_allow('XSS_BODY')
@@ -432,6 +488,16 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
                 case_mapping_diff = _get_case_mapping_diff(request, form)
+                try:
+                    _check_locked_questions_unmodified(request, domain, form, xform)
+                except LockedQuestionError:
+                    raise Exception(_LOCKED_QUESTION_CONTENT_ERROR)
+                try:
+                    _check_case_mapping_diff_does_not_touch_locked(
+                        request, domain, form, case_mapping_diff,
+                    )
+                except LockedQuestionError:
+                    raise Exception(_LOCKED_QUESTION_MAPPING_ERROR)
                 save_xform(app, form, xform, case_mapping_diff)
                 if _case_mapping_diff_has_changes(case_mapping_diff):
                     # form builder is the only client that submits
@@ -634,10 +700,19 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return conflict
 
     xml = apply_patch(patch, form.source)
+    new_xml = xml.encode('utf-8')
     case_mapping_diff = _get_case_mapping_diff(request, form)
 
     try:
-        xml = save_xform(app, form, xml.encode('utf-8'), case_mapping_diff)
+        _check_locked_questions_unmodified(request, domain, form, new_xml)
+        _check_case_mapping_diff_does_not_touch_locked(
+            request, domain, form, case_mapping_diff,
+        )
+    except LockedQuestionError:
+        return HttpResponseForbidden()
+
+    try:
+        xml = save_xform(app, form, new_xml, case_mapping_diff)
     except XFormException:
         return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
 
@@ -758,10 +833,7 @@ def get_form_questions(request, domain, app_id):
         lang, langs = get_langs(request, app)
     except FormNotFoundException:
         raise Http404()
-    include_locked_status = (
-        domain_has_privilege(domain, "locked_admin_questions")
-        and toggles.LOCKED_ADMIN_QUESTIONS.enabled_for_request(request)
-    )
+    include_locked_status = domain_has_privilege(domain, "locked_admin_questions")
     xform_questions = form.get_questions(langs, include_triggers=True, include_locked_status=include_locked_status)
     return json_response(xform_questions)
 
@@ -843,10 +915,7 @@ def get_form_view_context(
             )
 
         try:
-            include_locked_status = (
-                domain_has_privilege(domain, "locked_admin_questions")
-                and toggles.LOCKED_ADMIN_QUESTIONS.enabled_for_request(request)
-            )
+            include_locked_status = domain_has_privilege(domain, "locked_admin_questions")
             xform_questions = xform.get_questions(
                 langs, include_triggers=True, include_locked_status=include_locked_status
             )
@@ -1060,10 +1129,7 @@ def get_form_view_context(
 
 
 def _allow_xform_upload(request, domain, has_locked_questions):
-    if not (
-        domain_has_privilege(domain, "locked_admin_questions")
-        and toggles.LOCKED_ADMIN_QUESTIONS.enabled_for_request(request)
-    ):
+    if not domain_has_privilege(domain, "locked_admin_questions"):
         return True
     if request.couch_user.can_edit_locked_questions_in_apps(domain):
         return True

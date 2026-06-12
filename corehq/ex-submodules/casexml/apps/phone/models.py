@@ -9,7 +9,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 import architect
-import six
 from memoized import memoized
 
 from casexml.apps.case import const
@@ -36,7 +35,7 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.logging import notify_exception
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.util.soft_assert import soft_assert
@@ -534,14 +533,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
     lists from the SyncLog class.
     """
     log_format = StringProperty(default=LOG_FORMAT_SIMPLIFIED)
-    case_ids_on_phone = SetProperty(six.text_type)
+    case_ids_on_phone = SetProperty(str)
     # this is a subset of case_ids_on_phone used to flag that a case is only around because it has dependencies
     # this allows us to purge it if possible from other actions
-    dependent_case_ids_on_phone = SetProperty(six.text_type)
-    owner_ids_on_phone = SetProperty(six.text_type)
+    dependent_case_ids_on_phone = SetProperty(str)
+    owner_ids_on_phone = SetProperty(str)
     index_tree = SchemaProperty(IndexTree)  # index tree of subcases / children
     extension_index_tree = SchemaProperty(IndexTree)  # index tree of extensions
-    closed_cases = SetProperty(six.text_type)
+    closed_cases = SetProperty(str)
     extensions_checked = BooleanProperty(default=False)
     device_id = StringProperty()
     auth_type = StringProperty()

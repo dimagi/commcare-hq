@@ -18,7 +18,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-from six.moves.urllib.parse import quote_plus
+from urllib.parse import quote_plus
 
 from couchexport.export import export_raw
 from couchexport.models import Format

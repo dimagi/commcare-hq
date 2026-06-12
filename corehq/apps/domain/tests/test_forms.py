@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from unittest.mock import MagicMock, Mock, patch
 
+import pytest
 from django.test import SimpleTestCase, TestCase, override_settings
 
 from dateutil.relativedelta import relativedelta
@@ -698,3 +699,33 @@ class TestExtractAppInfoForm(SimpleTestCase):
         form = forms.ExtractAppInfoForm(data={'app_url': url})
         self.assertFalse(form.is_valid())
         self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))
+
+
+def test_multiple_args_values():
+    """
+    Demonstrates ``TypeError`` when `*args` is not empty and a positional
+    argument is passed as a keyword argument.
+    """
+    def called_func(foo, *args, **kwargs):
+        return True
+
+    def good_calling_func(*args, **kwargs):
+        # 'bar' passed as the first positional arg
+        return called_func('bar', *args, **kwargs)
+
+    def bad_calling_func(*args, **kwargs):
+        # Both 'bar' and args[0] assigned to param `foo`
+        return called_func(foo='bar', *args, **kwargs)
+
+    # No problem when `*args` is empty
+    assert good_calling_func()
+    assert bad_calling_func()
+    assert good_calling_func(world='world')
+    assert bad_calling_func(world='world')
+
+    assert good_calling_func('hello', world='world')
+
+    # Python raises TypeError when `*args` value conflicts
+    with pytest.raises(TypeError) as exc:
+        bad_calling_func('hello', world='world')
+    assert "called_func() got multiple values for argument 'foo'" in str(exc)

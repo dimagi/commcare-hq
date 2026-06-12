@@ -207,7 +207,7 @@ var searchConfigKeys = [
     'title_label', 'description', 'search_button_display_condition',
     'data_registry', 'data_registry_workflow', 'additional_registry_cases',
     'custom_related_case_property', 'inline_search', 'instance_name', 'include_all_related_cases',
-    'search_on_clear',
+    'search_on_clear', 'case_search_endpoint_id',
 ];
 var searchConfigModel = function (options, lang, saveButton) {
     assertProperties.assertRequired(options, searchConfigKeys);

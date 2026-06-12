@@ -311,6 +311,9 @@ Alpine.data('initRole', (roleJson) => {
                     set allowCheckboxPermission(value) { // Add this setter
                         self.role.permissions.edit_users_in_groups = value;
                     },
+                    get allowCheckboxImpliedEnabled() {
+                        return self.role.permissions.edit_commcare_users;
+                    },
                 },
                 {
                     showOption: true,
@@ -341,6 +344,9 @@ Alpine.data('initRole', (roleJson) => {
                     },
                     set allowCheckboxPermission(value) { // Add this setter
                         self.role.permissions.edit_users_in_locations = value;
+                    },
+                    get allowCheckboxImpliedEnabled() {
+                        return self.role.permissions.edit_commcare_users;
                     },
                 },
                 {
@@ -468,7 +474,7 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-apps-checkbox",
                     screenReaderEditAndViewText: gettext("Edit & View Apps"),
                     screenReaderViewOnlyText: gettext("View-Only Applications"),
-                    showAllowCheckbox: toggles.toggleEnabled("LOCKED_ADMIN_QUESTIONS") && privileges.hasPrivilege("locked_admin_questions"),
+                    showAllowCheckbox: privileges.hasPrivilege("locked_admin_questions"),
                     allowCheckboxText: gettext("Allow locking and unlocking questions in forms."),
                     allowCheckboxId: "edit-locked-questions-checkbox",
                     get allowCheckboxPermission() {
@@ -477,6 +483,7 @@ Alpine.data('initRole', (roleJson) => {
                     set allowCheckboxPermission(value) {
                         self.role.permissions.edit_locked_questions_in_apps = value;
                     },
+                    allowCheckboxImpliedEnabled: false,
                 },
                 {
                     get showOption() {
