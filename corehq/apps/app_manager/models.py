@@ -2262,6 +2262,7 @@ class CaseSearch(DocumentSchema):
     - search_filter: Removed with USH_SEARCH_FILTER toggle (Apr 2026)
       These fields may still exist in CouchDB documents but are no longer used.
     """
+    case_search_endpoint_id = IntegerProperty(exclude_if_none=True)
     search_button_label = LabelProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list

@@ -253,8 +253,7 @@ class SchedulingRecipientTest(TestCase):
         cls.case_group = CommCareCaseGroup(domain=cls.domain)
         cls.case_group.save()
 
-        cls.process_pillow_changes = process_pillow_changes('DefaultChangeFeedPillow')
-        cls.process_pillow_changes.add_pillow(get_case_messaging_sync_pillow())
+        cls.process_pillow_changes = process_pillow_changes(get_case_messaging_sync_pillow())
 
     @classmethod
     def tearDownClass(cls):

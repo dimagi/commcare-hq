@@ -103,7 +103,6 @@ msgid "Any Service"
 msgstr "أي خدمة"
 
 #: corehq/apps/accounting/filters.py
-#| msgid "Credit Adjustment Reason"
 msgid "Credit Adjustment Link"
 msgstr "رابط تعديل الرصيد"
 
@@ -329,6 +328,8 @@ msgstr "حساب الفوترة"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/builds/templates/builds/all.html
 #: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
@@ -450,6 +451,7 @@ msgstr "اشتراك %s"
 #: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
@@ -629,6 +631,8 @@ msgstr "مطلوب اسم لهذا الدور الجديد."
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/forms.py corehq/apps/app_manager/models.py
 #: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/users/user_data.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
 #: corehq/apps/data_cleaning/utils/cases.py
@@ -1170,16 +1174,12 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/confirm_delete_app.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/toggle_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/confirm_delete_app.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/toggle_diff_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap3/form_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap3/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap5/form_link.html
@@ -1189,6 +1189,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -4615,8 +4617,7 @@ msgstr ""
 
 #: corehq/apps/accounting/user_text.py
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
@@ -5040,6 +5041,19 @@ msgid "This user is inactive and cannot reset their password."
 msgstr "هذا المستخدم غير نشط ولا يمكنه إعادة تعيين كلمة المرور."
 
 #: corehq/apps/api/resources/v0_5.py
+msgid "Name must not be blank"
+msgstr "يجب ألا يكون الاسم فارغًا"
+
+#: corehq/apps/api/resources/v0_5.py
+#, python-format
+msgid "A group with name %s already exists"
+msgstr "مجموعة بالاسم %s موجودة بالفعل"
+
+#: corehq/apps/api/resources/v0_5.py
+msgid "Name is required"
+msgstr "الاسم مطلوب"
+
+#: corehq/apps/api/resources/v0_5.py
 msgid "You don't have permission to access this API"
 msgstr "ليس لديك إذن للوصول إلى هذه الواجهة البرمجية"
 
@@ -5158,10 +5172,9 @@ msgid "Populate workflow from HAR file"
 msgstr "تعبئة سير العمل من ملف HAR"
 
 #: corehq/apps/app_execution/forms.py
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
@@ -5278,11 +5291,11 @@ msgstr ""
 
 #: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
@@ -5667,8 +5680,7 @@ msgid ""
 msgstr "عند إضافة قائمة حالات جديدة، لا تقم بتضمين نموذج تسجيل أو متابعة."
 
 #: corehq/apps/app_manager/add_ons.py
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
 #: corehq/apps/enterprise/enterprise.py
 msgid "Case Management"
 msgstr "إدارة الحالات"
@@ -5945,8 +5957,7 @@ msgstr "نسخ التطبيق"
 #: corehq/apps/app_manager/forms.py
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/toggle_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/toggle_diff_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Copy"
 msgstr "نسخ"
@@ -7155,10 +7166,8 @@ msgid "Purge Frequency"
 msgstr "تكرار التطهير"
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_property.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_property.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
@@ -7749,10 +7758,9 @@ msgid "Release Mode"
 msgstr "وضع الإصدار"
 
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
@@ -7892,169 +7900,6 @@ msgstr ""
 " من المفيد طرح الأسئلة مرة واحدة، للحصول على معلومات\n"
 "      لن تحتاج إلى متابعتها لاحقًا. "
 
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-msgid "Edit Form Details"
-msgstr "تعديل تفاصيل النموذج"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-#: corehq/apps/enterprise/enterprise.py
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Form Name"
-msgstr "اسم النموذج"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_designer.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_designer.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
-msgid "Comment"
-msgstr "تعليق"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "Edit Form"
-msgstr "تعديل النموذج"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "Enter form description here"
-msgstr "أدخل وصف النموذج هنا"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "User Properties"
-msgstr "خصائص المستخدم"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/enable_schedule.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/enable_schedule.html
-msgid "Visit Scheduler"
-msgstr "جدولة الزيارات"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid ""
-"We were unable to validate your form due an error on the server. Proceed "
-"with caution."
-msgstr ""
-"تعذر علينا التحقق من صحة النموذج الخاص بك بسبب خطأ في الخادم. يرجى المتابعة "
-"بحذر."
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "You are viewing a shadow form, therefore:"
-msgstr "أنت تعرض نموذج ظل، لذلك:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "You will be unable to add \"Open case\" action"
-msgstr "لن تتمكن من إضافة إجراء \"فتح حالة\""
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "Load/Update actions will be \"merged\" with the source form actions"
-msgstr "سيتم \"دمج\" إجراءات التحميل/التحديث مع إجراءات نموذج المصدر"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid ""
-"Every case tag in the source form load/update action configuration must "
-"appear in this configuration"
-msgstr ""
-"يجب أن يظهر كل وسم حالة في إعدادات تحميل/تحديث نموذج المصدر في هذا الإعداد"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "You are not allowed to specify load or save case properties"
-msgstr "غير مسموح لك بتحديد خصائص تحميل أو حفظ الحالة"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid ""
-"The load and save case property behaviors specified in the shadow source "
-"form actions will be used for the actions with matching case tags specified "
-"here."
-msgstr ""
-"سيتم استخدام سلوكيات تحميل وحفظ خصائص الحالة المحددة في إجراءات نموذج المصدر"
-" الظلي للإجراءات ذات وسوم الحالة المطابقة المحددة هنا."
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "You are not allowed to specify case closures here"
-msgstr "غير مسموح لك بتحديد إغلاق الحالات هنا"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid ""
-"There are errors in your form. Fix your form in order to view and edit Case "
-"Management."
-msgstr ""
-"هناك أخطاء في النموذج الخاص بك. أصلح النموذج لعرض وإدارة إدارة الحالات."
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "Add questions to your form to make use of case management."
-msgstr "أضف أسئلة إلى النموذج الخاص بك للاستفادة من إدارة الحالات."
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid ""
-"\n"
-"                        The User Properties feature is no longer available\n"
-"                        because of the change in your CommCare subscription.\n"
-"                        Although currently-deployed applications will still\n"
-"                        function properly, it will not be possible to update or\n"
-"                        redeploy them unless the User Properties functionality\n"
-"                        is removed, or you upgrade your CommCare subscription.\n"
-"                      "
-msgstr ""
-"\n"
-"                        لم تعد ميزة خصائص المستخدم متاحة\n"
-"                        بسبب تغيير في اشتراكك في CommCare.\n"
-"                        على الرغم من أن التطبيقات المنشورة حاليًا ستظل\n"
-"                        تعمل بشكل صحيح، إلا أنه لن يكون من الممكن تحديثها أو\n"
-"                        إعادة نشرها ما لم تتم إزالة وظيفة خصائص المستخدم، أو تقوم بترقية اشتراكك في CommCare.\n"
-"                      "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid ""
-"\n"
-"                        WARNING: By clicking \"Remove User Properties\" you will\n"
-"                        lose User Properties functionality if you redeploy your\n"
-"                        application. However, you will still be able to see all\n"
-"                        previously collected data.\n"
-"                      "
-msgstr ""
-"\n"
-"                        تحذير: بالنقر على \"إزالة خصائص المستخدم\" ستفقد\n"
-"                        وظيفة خصائص المستخدم إذا قمت بإعادة نشر\n"
-"                        التطبيق الخاص بك. ومع ذلك، ستظل قادرًا على رؤية جميع\n"
-"                        البيانات التي تم جمعها مسبقًا.\n"
-"                      "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-#: corehq/apps/locations/templates/locations/downgrade_locations.html
-msgid "Change your subscription"
-msgstr "غيّر اشتراكك"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid "Remove User Properties"
-msgstr "إزالة خصائص المستخدم"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-msgid ""
-"You have not created a form yet. Create a form in order to view and edit "
-"User Properties."
-msgstr "لم تقم بإنشاء نموذج بعد. أنشئ نموذجًا لعرض وتعديل خصائص المستخدم."
-
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
 msgid "Menu Settings"
@@ -8076,6 +7921,14 @@ msgstr "إضافة عامل تصفية"
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
 msgid "This data will not be shown for case search results."
 msgstr "لن يتم عرض هذه البيانات في نتائج بحث الحالات."
+
+#: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/enable_schedule.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/enable_schedule.html
+msgid "Visit Scheduler"
+msgstr "جدولة الزيارات"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/no_longer_supported.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/no_longer_supported.html
@@ -8114,8 +7967,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/odk_install.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
@@ -8165,8 +8017,7 @@ msgstr "تثبيت CommCare"
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/define_case_type_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/define_case_type_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_view_modals.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_view_modals.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_view_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_module_overwrite.html
@@ -8174,6 +8025,7 @@ msgstr "تثبيت CommCare"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -8313,10 +8165,8 @@ msgid "Problems:"
 msgstr "المشكلات:"
 
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 #: corehq/apps/case_importer/templates/case_importer/excel_fields.html
@@ -8423,6 +8273,123 @@ msgstr ""
 "\n"
 "    التغييرات - الإصدار %(first_version)s مقابل الإصدار %(second_version)s\n"
 "  "
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "Edit Form"
+msgstr "تعديل النموذج"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "Enter form description here"
+msgstr "أدخل وصف النموذج هنا"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "User Properties"
+msgstr "خصائص المستخدم"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid ""
+"We were unable to validate your form due an error on the server. Proceed "
+"with caution."
+msgstr ""
+"تعذر علينا التحقق من صحة النموذج الخاص بك بسبب خطأ في الخادم. يرجى المتابعة "
+"بحذر."
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "You are viewing a shadow form, therefore:"
+msgstr "أنت تعرض نموذج ظل، لذلك:"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "You will be unable to add \"Open case\" action"
+msgstr "لن تتمكن من إضافة إجراء \"فتح حالة\""
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "Load/Update actions will be \"merged\" with the source form actions"
+msgstr "سيتم \"دمج\" إجراءات التحميل/التحديث مع إجراءات نموذج المصدر"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid ""
+"Every case tag in the source form load/update action configuration must "
+"appear in this configuration"
+msgstr ""
+"يجب أن يظهر كل وسم حالة في إعدادات تحميل/تحديث نموذج المصدر في هذا الإعداد"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "You are not allowed to specify load or save case properties"
+msgstr "غير مسموح لك بتحديد خصائص تحميل أو حفظ الحالة"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid ""
+"The load and save case property behaviors specified in the shadow source "
+"form actions will be used for the actions with matching case tags specified "
+"here."
+msgstr ""
+"سيتم استخدام سلوكيات تحميل وحفظ خصائص الحالة المحددة في إجراءات نموذج المصدر"
+" الظلي للإجراءات ذات وسوم الحالة المطابقة المحددة هنا."
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "You are not allowed to specify case closures here"
+msgstr "غير مسموح لك بتحديد إغلاق الحالات هنا"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid ""
+"There are errors in your form. Fix your form in order to view and edit Case "
+"Management."
+msgstr ""
+"هناك أخطاء في النموذج الخاص بك. أصلح النموذج لعرض وإدارة إدارة الحالات."
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "Add questions to your form to make use of case management."
+msgstr "أضف أسئلة إلى النموذج الخاص بك للاستفادة من إدارة الحالات."
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid ""
+"\n"
+"                        The User Properties feature is no longer available\n"
+"                        because of the change in your CommCare subscription.\n"
+"                        Although currently-deployed applications will still\n"
+"                        function properly, it will not be possible to update or\n"
+"                        redeploy them unless the User Properties functionality\n"
+"                        is removed, or you upgrade your CommCare subscription.\n"
+"                      "
+msgstr ""
+"\n"
+"                        لم تعد ميزة خصائص المستخدم متاحة\n"
+"                        بسبب تغيير في اشتراكك في CommCare.\n"
+"                        على الرغم من أن التطبيقات المنشورة حاليًا ستظل\n"
+"                        تعمل بشكل صحيح، إلا أنه لن يكون من الممكن تحديثها أو\n"
+"                        إعادة نشرها ما لم تتم إزالة وظيفة خصائص المستخدم، أو تقوم بترقية اشتراكك في CommCare.\n"
+"                      "
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid ""
+"\n"
+"                        WARNING: By clicking \"Remove User Properties\" you will\n"
+"                        lose User Properties functionality if you redeploy your\n"
+"                        application. However, you will still be able to see all\n"
+"                        previously collected data.\n"
+"                      "
+msgstr ""
+"\n"
+"                        تحذير: بالنقر على \"إزالة خصائص المستخدم\" ستفقد\n"
+"                        وظيفة خصائص المستخدم إذا قمت بإعادة نشر\n"
+"                        التطبيق الخاص بك. ومع ذلك، ستظل قادرًا على رؤية جميع\n"
+"                        البيانات التي تم جمعها مسبقًا.\n"
+"                      "
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+#: corehq/apps/locations/templates/locations/downgrade_locations.html
+msgid "Change your subscription"
+msgstr "غيّر اشتراكك"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid "Remove User Properties"
+msgstr "إزالة خصائص المستخدم"
+
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+msgid ""
+"You have not created a form yet. Create a form in order to view and edit "
+"User Properties."
+msgstr "لم تقم بإنشاء نموذج بعد. أنشئ نموذجًا لعرض وتعديل خصائص المستخدم."
 
 #: corehq/apps/app_manager/templates/app_manager/languages.html
 #: corehq/apps/sms/templates/sms/languages.html
@@ -9699,8 +9666,7 @@ msgstr "دالة XPath"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/define_case_type_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/define_case_type_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap3/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap5/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/module_options/bootstrap3/module_option_case.html
@@ -9717,14 +9683,15 @@ msgstr "يرجى تحديد نوع الحالة لقائمة الحالات ال
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/define_case_type_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/define_case_type_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_case_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_case_type.html
 #: corehq/apps/campaign/forms.py
 #: corehq/apps/campaign/templates/campaign/partials/dashboard_gauge.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/data_cleaning/forms/start_session.py
 #: corehq/apps/data_cleaning/tables.py
 #: corehq/apps/data_cleaning/utils/cases.py
@@ -9886,10 +9853,8 @@ msgstr "استبدال"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_view_modals.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_view_modals.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_view_modals.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
@@ -9905,6 +9870,7 @@ msgid "Set Path"
 msgstr "تعيين المسار"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/nav_menu_media_single_type.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #, python-format
 msgid ""
 "\n"
@@ -9916,6 +9882,7 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/nav_menu_media_single_type.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #, python-format
 msgid ""
 "\n"
@@ -10048,29 +10015,6 @@ msgstr ""
 "          >.\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
-#, python-format
-msgid ""
-"\n"
-"              Use this %(badge)s for all languages\n"
-"            "
-msgstr ""
-"\n"
-"              استخدم هذه %(badge)s لجميع اللغات\n"
-"            "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
-#, python-format
-msgid ""
-"\n"
-"            This %(badge)s is linked to the default language, and can only be\n"
-"            modified there.\n"
-"          "
-msgstr ""
-"\n"
-"            هذه %(badge)s مرتبطة باللغة الافتراضية، ولا يمكن تعديلها إلا هناك.\n"
-"          "
-
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
 msgid "Select a language."
 msgstr "اختر لغة."
@@ -10126,8 +10070,7 @@ msgid "Default Values"
 msgstr "القيم الافتراضية"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 #: corehq/apps/campaign/models.py
 #: corehq/apps/campaign/templates/campaign/dashboard.html
 #: corehq/apps/export/models/new.py
@@ -10137,40 +10080,58 @@ msgstr "القيم الافتراضية"
 msgid "Cases"
 msgstr "الحالات"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+msgid "Custom Assertions"
+msgstr "التحقق المخصص"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
+msgid "Add custom assertions that you will use elsewhere."
+msgstr "أضف عمليات تحقق مخصصة ستستخدمها في أماكن أخرى."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
+msgid "Test"
+msgstr "اختبار"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
+msgid "Message Text"
+msgstr "نص الرسالة"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
+msgid "Add custom assertion"
+msgstr "إضافة تحقق مخصص"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Remove Child Case?"
 msgstr "إزالة حالة فرعية؟"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Are you sure you want to remove this Child Case?"
 msgstr "هل أنت متأكد أنك تريد إزالة هذه الحالة الفرعية؟"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Remove Child Case"
 msgstr "إزالة الحالة الفرعية"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Open Case Condition"
 msgstr "شرط فتح الحالة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Close Condition"
 msgstr "شرط الإغلاق"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Close this case when the form is complete"
 msgstr "إغلاق هذه الحالة عند اكتمال النموذج"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid ""
 "\n"
 "              <span data-bind=\"visible: showLeadRegistration\">\n"
@@ -10216,27 +10177,23 @@ msgstr ""
 "              >\n"
 "            "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Registration: This form opens a new case"
 msgstr "تسجيل: هذا النموذج يفتح حالة جديدة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Followup: This form loads a case from a data registry"
 msgstr "متابعة: هذا النموذج يحمل حالة من سجل بيانات"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Followup: This form loads a set of cases"
 msgstr "متابعة: هذا النموذج يحمل مجموعة من الحالات"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Followup: This form loads a case and may then update or close it"
 msgstr "متابعة: هذا النموذج يحمل حالة وقد يقوم بعد ذلك بتحديثها أو إغلاقها"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid ""
 "Updating cases directly is not supported when using data registry search. "
 "Refer to the <a "
@@ -10249,13 +10206,11 @@ msgstr ""
 "Updatingcases\" target=\"_blank\" >التوثيق</a > لمزيد من المعلومات حول كيفية"
 " تحديث الحالات من سجل البيانات."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Updating cases directly is not supported for multi-select menus."
 msgstr "تحديث الحالات مباشرة غير مدعوم لقوائم الاختيار المتعدد."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid ""
 "\n"
 "            <strong>Child Cases</strong> let you open other types of Cases for\n"
@@ -10266,8 +10221,7 @@ msgstr ""
 "            <strong>الحالات الفرعية</strong> تتيح لك فتح أنواع أخرى من الحالات لاستخدامها في قوائم حالات أخرى.\n"
 "          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid ""
 "\n"
 "            When possible, they'll be linked to the current Case so you'll\n"
@@ -10279,8 +10233,7 @@ msgstr ""
 "            عندما يكون ذلك ممكنًا، سيتم ربطها بالحالة الحالية حتى تعرف دائمًا مصدرها. من الاستخدامات الرائعة للحالات الفرعية تتبع المولود الجديد بشكل منفصل عن والدته.\n"
 "          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid ""
 "\n"
 "                <strong>Child Cases</strong> are not available in your\n"
@@ -10293,123 +10246,99 @@ msgstr ""
 "                <strong>الحالات الفرعية</strong> غير متوفرة في اشتراكك الحالي. هذه الميزة متاحة فقط في خطة <strong>Pro</strong> أو أعلى. سيظل هذا الإعداد غير قابل للتعديل حتى تقوم بالترقية.\n"
 "              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "This Form opens a Child Case in the Case List"
 msgstr "يفتح هذا النموذج حالة فرعية في قائمة الحالات"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Case List Configuration"
 msgstr "إعدادات قائمة الحالات"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config.html
 msgid "Add a Child Case to open a case for a different Case List..."
 msgstr "أضف حالة فرعية لفتح حالة لقائمة حالات مختلفة..."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Remove Form Action?"
 msgstr "إزالة إجراء النموذج؟"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Are you sure you want to remove this action?"
 msgstr "هل أنت متأكد أنك تريد إزالة هذا الإجراء؟"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Remove Action"
 msgstr "إزالة الإجراء"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Open Condition"
 msgstr "شرط الفتح"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Conditions"
 msgstr "الشروط"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Display the Product Stock for this Supply Point after it is selected"
 msgstr "عرض مخزون المنتج لنقطة التوريد هذه بعد تحديدها"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Only show products for program"
 msgstr "عرض المنتجات الخاصة بالبرنامج فقط"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "This case is a subcase of the previous case"
 msgstr "هذه الحالة هي حالة فرعية للحالة السابقة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Parent reference ID"
 msgstr "معرّف المرجع الرئيسي"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Relationship"
 msgstr "العلاقة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Parent Indices"
 msgstr "مؤشرات الأصل"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Parent Tag"
 msgstr "وسم الأصل"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Reference ID"
 msgstr "معرّف المرجع"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Remove parent index"
 msgstr "إزالة مؤشر الأصل"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Add parent index"
 msgstr "إضافة مؤشر الأصل"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Case Action Meta"
 msgstr "بيانات تعريف إجراء الحالة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Case Tag"
 msgstr "وسم الحالة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "from"
 msgstr "من"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Please select a case type."
 msgstr "يرجى اختيار نوع الحالة."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Expected Case Type"
 msgstr "نوع الحالة المتوقع"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid ""
 "This is used for case property suggestions and when creating case indexes but\n"
 "              it does not get validated against the loaded case."
@@ -10417,103 +10346,83 @@ msgstr ""
 "يُستخدم هذا لاقتراح خصائص الحالة وعند إنشاء مؤشرات الحالة ولكنه\n"
 "              لا يتم التحقق منه مقابل الحالة المحمّلة."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Raw Config"
 msgstr "الإعدادات الخام"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "XPath function"
 msgstr "دالة XPath"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "User Data Config"
 msgstr "إعدادات بيانات المستخدم"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "User data key"
 msgstr "مفتاح بيانات المستخدم"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Case Index Config"
 msgstr "إعدادات مؤشر الحالة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Case containing index"
 msgstr "الحالة التي تحتوي على المؤشر"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Index name"
 msgstr "اسم المؤشر"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Lookup Table Config"
 msgstr "إعدادات جدول البحث"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Lookup Table Tag"
 msgstr "وسم جدول البحث"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Table Field"
 msgstr "حقل الجدول"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Autoselect mode"
 msgstr "وضع التحديد التلقائي"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Please select an autoselection mode."
 msgstr "يرجى اختيار وضع التحديد التلقائي."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Autoselect If Only One Case"
 msgstr "تحديد تلقائي إذا كان هناك حالة واحدة فقط"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Fixture Nodeset"
 msgstr "مجموعة عناصر التثبيت"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Fixture Tag"
 msgstr "وسم التثبيت"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Fixture Variable"
 msgstr "متغير التثبيت"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Autoselect If Only One Result Returned From Fixture"
 msgstr "تحديد تلقائي إذا تم إرجاع نتيجة واحدة فقط من التثبيت"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Arbitrary Datum Function"
 msgstr "دالة بيانات عشوائية"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Arbitrary Datum id"
 msgstr "معرّف البيانات العشوائية"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
@@ -10521,43 +10430,35 @@ msgstr "معرّف البيانات العشوائية"
 msgid "Add Action"
 msgstr "إضافة إجراء"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Load / Update / Close Cases"
 msgstr "تحميل / تحديث / إغلاق الحالات"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Open New Cases"
 msgstr "فتح حالات جديدة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Arbitrary Datums"
 msgstr "بيانات عشوائية"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Datum ID"
 msgstr "معرّف البيانات"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Datum Function"
 msgstr "دالة البيانات"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Add Datum"
 msgstr "إضافة بيانات"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Only if the answer to..."
 msgstr "فقط إذا كانت الإجابة على..."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "\n"
 "      Configuration no longer allowed.\n"
@@ -10567,38 +10468,31 @@ msgstr ""
 "      لم يعد الإعداد مسموحًا.\n"
 "    "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Only if the answer to"
 msgstr "فقط إذا كانت الإجابة على"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "is"
 msgstr "هي"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "has selected"
 msgstr "تم اختيارها"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "is true"
 msgstr "صحيح"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Not assigned"
 msgstr "غير معيّن"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Load the following properties into the form questions"
 msgstr "تحميل الخصائص التالية إلى أسئلة النموذج"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/add_property_button.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/add_property_button.html
@@ -10613,21 +10507,18 @@ msgstr "تحميل الخصائص التالية إلى أسئلة النموذ�
 msgid "Property"
 msgstr "الخاصية"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/readable_form.html
 msgid "Question"
 msgstr "السؤال"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "No properties will be loaded"
 msgstr "لن يتم تحميل أي خصائص"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/add_property_button.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/add_property_button.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
@@ -10637,18 +10528,15 @@ msgstr "لن يتم تحميل أي خصائص"
 msgid "Add Property"
 msgstr "إضافة خاصية"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Save Questions to Case Properties"
 msgstr "حفظ الأسئلة إلى خصائص الحالة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Save Questions to User Properties"
 msgstr "حفظ الأسئلة إلى خصائص المستخدم"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "\n"
 "          There are one or more form questions that are being saved to deprecated case properties.\n"
@@ -10665,13 +10553,11 @@ msgstr ""
 "          .\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "User Case Property"
 msgstr "خاصية حالة المستخدم"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "User Case Properties allow you to store data about a web or mobile user. "
 "Saving a user case property ensures the data is available across forms and "
@@ -10681,8 +10567,7 @@ msgstr ""
 " حفظ خاصية حالة المستخدم يضمن توفر البيانات عبر النماذج ويمكن تحديثها مع "
 "مرور الوقت."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "Saving a question as a case property makes it accessible and reusable across"
 " your application. Case properties can be tracked and updated over time."
@@ -10690,31 +10575,26 @@ msgstr ""
 "حفظ سؤال كخاصية حالة يجعله متاحًا وقابلًا لإعادة الاستخدام عبر تطبيقك. يمكن "
 "تتبع خصائص الحالة وتحديثها مع مرور الوقت."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Save Only If Edited"
 msgstr "الحفظ فقط إذا تم التعديل"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "Only save the answer if form submission will change the property from its "
 "previous value."
 msgstr ""
 "يتم حفظ الإجابة فقط إذا كان إرسال النموذج سيغير الخاصية عن قيمتها السابقة."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "This mapping was changed and deleted in separate sessions"
 msgstr "تم تغيير هذا الربط وحذفه في جلسات منفصلة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Dismiss this alert to keep the mapping."
 msgstr "قم بإغلاق هذا التنبيه للاحتفاظ بالتعيين."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "\n"
 "                Property has been deprecated.\n"
@@ -10724,37 +10604,31 @@ msgstr ""
 "                تم إهمال الخاصية.\n"
 "              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Click here to add a description"
 msgstr "انقر هنا لإضافة وصف"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Error updating description. Please try again."
 msgstr "حدث خطأ أثناء تحديث الوصف. يرجى المحاولة مرة أخرى."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "No properties will be saved"
 msgstr "لن يتم حفظ أي خصائص"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 msgid "Add Case Property"
 msgstr "إضافة خاصية حالة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Add User Property"
 msgstr "إضافة خاصية مستخدم"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "\n"
 "          You no longer have permission to save this section.\n"
@@ -10764,60 +10638,28 @@ msgstr ""
 "          لم يعد لديك إذن لحفظ هذا القسم.\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
-msgid "Custom Assertions"
-msgstr "التحقق المخصص"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
-msgid "Add custom assertions that you will use elsewhere."
-msgstr "أضف عمليات تحقق مخصصة ستستخدمها في أماكن أخرى."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
-msgid "Test"
-msgstr "اختبار"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
-msgid "Message Text"
-msgstr "نص الرسالة"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
-msgid "Add custom assertion"
-msgstr "إضافة تحقق مخصص"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_instances.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_instances.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_instances.html
 msgid "Custom Instances"
 msgstr "مثيلات مخصصة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_instances.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_instances.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_instances.html
 msgid "Add custom instances that you will use elsewhere."
 msgstr "أضف مثيلات مخصصة ستستخدمها في أماكن أخرى."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_instances.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_instances.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_instances.html
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "ID"
 msgstr "المعرف"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_instances.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_instances.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_instances.html
 msgid "Instance path"
 msgstr "مسار المثيل"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_instances.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_instances.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_instances.html
 msgid "Add custom instance"
 msgstr "إضافة مثيل مخصص"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_filter.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_filter.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_form_setting.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_filter.html
@@ -10827,8 +10669,7 @@ msgstr "إضافة مثيل مخصص"
 msgid "Display Condition"
 msgstr "شرط العرض"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_filter.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_filter.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
 msgid ""
 "\n"
 "          The form will not appear in the menu unless this condition is met.\n"
@@ -10850,29 +10691,26 @@ msgstr ""
 "          >.\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_filter.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
 msgid ""
 "\n"
 "              To use display conditions which reference a case, <br />\n"
 "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
 "              <em>Display menu and then forms</em> <br />\n"
-"              (2) all the forms in the case list must update or close a case,\n"
-"              which means registration forms must go in a separate case list, or\n"
-"              if your project uses user properties, your display condition may\n"
-"              use user properties.\n"
+"              (2) all the forms in the case list must update or close a\n"
+"              case, which means registration forms must\n"
+"              go in a separate case list, or if your project uses user\n"
+"              properties, your display condition may use user properties.\n"
 "            "
 msgstr ""
 "\n"
 "              لاستخدام شروط العرض التي تشير إلى حالة، <br />\n"
 "              (1) يجب ضبط إعداد <strong>وضع القائمة</strong> على\n"
 "              <em>عرض القائمة ثم النماذج</em> <br />\n"
-"              (2) يجب أن تقوم جميع النماذج في قائمة الحالات بتحديث أو إغلاق حالة،\n"
-"              مما يعني أن نماذج التسجيل يجب أن تكون في قائمة حالات منفصلة، أو\n"
-"              إذا كان مشروعك يستخدم خصائص المستخدم، يمكن لشرط العرض استخدام خصائص المستخدم.\n"
+"              (2) يجب أن تقوم جميع النماذج في قائمة الحالات بتحديث أو إغلاق حالة، مما يعني أن نماذج التسجيل يجب أن تكون في قائمة حالات منفصلة، أو إذا كان مشروعك يستخدم خصائص المستخدم، يمكن لشرط العرض استخدام خصائص المستخدم.\n"
 "            "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_filter.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_filter.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
 msgid ""
 "\n"
 "          There is something wrong with the logic in the Form Display Condition.\n"
@@ -10885,13 +10723,11 @@ msgstr ""
 "          تحقق من تطابق الأقواس وتأكد من الإشارة إلى خصائص الحالة بشكل صحيح.\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_gps_capture.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_gps_capture.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_gps_capture.html
 msgid "Auto Capture Location"
 msgstr "التقاط الموقع تلقائيًا"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_gps_capture.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_gps_capture.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_gps_capture.html
 msgid ""
 "On CommCare Android, have this form automatically capture the user's current"
 " geo-location."
@@ -10899,8 +10735,7 @@ msgstr ""
 "على CommCare Android، سيقوم هذا النموذج تلقائيًا بالتقاط الموقع الجغرافي "
 "الحالي للمستخدم."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_gps_capture.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_gps_capture.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_gps_capture.html
 msgid ""
 "\n"
 "        This application is configured to auto capture location for all forms.\n"
@@ -10916,23 +10751,15 @@ msgstr ""
 "        قسم <strong>إعدادات أندرويد</strong>.\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 msgid "Copy Form"
 msgstr "نسخ النموذج"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 msgid "XForm"
 msgstr "XForm"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
-#| msgid ""
-#| "\n"
-#| "                  You will not be able to enable case sharing again until you upgrade, but you\n"
-#| "                  can edit the group once again.\n"
-#| "                "
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 msgid ""
 "\n"
 "                This form contains locked questions and can only be uploaded by\n"
@@ -10944,8 +10771,7 @@ msgstr ""
 "                مستخدم لديه إذن الأسئلة المقفلة.\n"
 "              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
@@ -10955,8 +10781,7 @@ msgstr ""
 msgid "Show"
 msgstr "عرض"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
@@ -10964,55 +10789,45 @@ msgstr "عرض"
 msgid "Multimedia"
 msgstr "وسائط متعددة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 msgid "Logic"
 msgstr "المنطق"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 msgid "Form filtering is disabled for this form"
 msgstr "تم تعطيل تصفية النماذج لهذا النموذج"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "There were errors saving. Please fix the errors below."
 msgstr "حدثت أخطاء أثناء الحفظ. يرجى تصحيح الأخطاء أدناه."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Form Settings"
 msgstr "إعدادات النموذج"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "This form has a schedule"
 msgstr "يحتوي هذا النموذج على جدول زمني"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Schedule Phase"
 msgstr "مرحلة الجدول الزمني"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Forms that do not have a schedule are always shown"
 msgstr "النماذج التي ليس لديها جدول زمني تظهر دائمًا"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Form Abbreviation"
 msgstr "اختصار النموذج"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 #: corehq/apps/domain/forms.py corehq/apps/sms/forms.py
 #: corehq/messaging/scheduling/forms.py
 msgid "This field is required"
 msgstr "هذا الحقل مطلوب"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 #, python-format
 msgid ""
 "\n"
@@ -11023,143 +10838,117 @@ msgstr ""
 "                    \"المرحلة التي ينتمي إليها هذا النموذج. يمكنك إنشاء المراحل في <a href='%(module_url)s'>صفحة إعدادات قائمة الحالات</a>\"\n"
 "                  "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Please select a phase..."
 msgstr "يرجى اختيار مرحلة..."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Form Relevancy Window"
 msgstr "نافذة ملاءمة النموذج"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
-msgid "Show this form "
-msgstr "عرض هذا النموذج "
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
+msgid "Show this form"
+msgstr "عرض هذا النموذج"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 #: corehq/messaging/scheduling/forms.py
 msgid "days"
 msgstr "أيام"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "before the anchor date"
 msgstr "قبل تاريخ الارتكاز"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "after the anchor date"
 msgstr "بعد تاريخ الارتكاز"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
-msgid "Hide this form "
-msgstr "إخفاء هذا النموذج "
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
+msgid "Hide this form"
+msgstr "إخفاء هذا النموذج"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid ""
 "Forms can only be hidden if there are no transition or termination "
 "conditions"
 msgstr "يمكن إخفاء النماذج فقط إذا لم تكن هناك شروط انتقال أو إنهاء"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Transitions"
 msgstr "الانتقالات"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Transition to the next phase"
 msgstr "الانتقال إلى المرحلة التالية"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Terminate the schedule"
 msgstr "إنهاء الجدول الزمني"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/enable_schedule.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/enable_schedule.html
 msgid "Visit Schedule"
 msgstr "جدول الزيارات"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Allow unscheduled visits"
 msgstr "السماح بزيارات غير مجدولة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 #: corehq/apps/export/models/new.py corehq/messaging/scheduling/forms.py
 msgid "Repeat"
 msgstr "تكرار"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Visit"
 msgstr "زيارة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Due"
 msgstr "مستحقة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "after the last visit"
 msgstr "بعد آخر زيارة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Visit can be made up to"
 msgstr "يمكن إجراء الزيارة حتى"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "days early and"
 msgstr "أيام مبكرًا و"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "days late"
 msgstr "أيام متأخرًا"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Please add at least one visit"
 msgstr "يرجى إضافة زيارة واحدة على الأقل"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Add Visit"
 msgstr "إضافة زيارة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid ""
 "You have not created a form yet. Create a form in order to view and edit "
 "schedules."
 msgstr "لم تقم بإنشاء نموذج بعد. أنشئ نموذجًا لعرض وتحرير الجداول."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_view_modals.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_view_modals.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_view_modals.html
 msgid "Upload XForm"
 msgstr "رفع XForm"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "End of Form Navigation"
 msgstr "تنقل نهاية النموذج"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid ""
 "After the user completes a form, your application automatically returns to the home screen.\n"
 "              Here you can set the application to navigate automatically to a different location in the app."
@@ -11167,14 +10956,12 @@ msgstr ""
 "بعد أن يكمل المستخدم نموذجًا، يعود التطبيق تلقائيًا إلى الشاشة الرئيسية.\n"
 "              يمكنك هنا ضبط التطبيق للتنقل تلقائيًا إلى موقع مختلف داخل التطبيق."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid ""
 "This is an unknown value, possibly a deleted form. Please change this value."
 msgstr "هذه قيمة غير معروفة، ربما نموذج تم حذفه. يرجى تغيير هذه القيمة."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid ""
 "\n"
 "          The end of form navigation specified here will override the end of registration\n"
@@ -11188,44 +10975,36 @@ msgstr ""
 "          لتجنب ذلك، اختر الخيار الافتراضي هنا ('الشاشة الرئيسية').\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Navigation Fallback"
 msgstr "الانتقال الاحتياطي"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Add link"
 msgstr "إضافة رابط"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "XPath Expression"
 msgstr "تعبير XPath"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "This form requires manual linking."
 msgstr "يتطلب هذا النموذج الربط اليدوي."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Enable manual linking"
 msgstr "تفعيل الربط اليدوي"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Disable manual linking"
 msgstr "تعطيل الربط اليدوي"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 msgid "Refresh"
 msgstr "تحديث"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/multi_select_continue_button.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -11240,33 +11019,27 @@ msgstr "تحديث"
 msgid "Continue"
 msgstr "متابعة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "No additional linking required."
 msgstr "لا حاجة لربط إضافي."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Error fetching link data."
 msgstr "حدث خطأ أثناء جلب بيانات الرابط."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_workflow.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_workflow.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Remove this link"
 msgstr "إزالة هذا الرابط"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/release_notes_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/release_notes_setting.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/release_notes_setting.html
 msgid "Make this my app’s Post-Update form"
 msgstr "اجعل هذا نموذج ما بعد التحديث لتطبيقي"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/release_notes_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/release_notes_setting.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/release_notes_setting.html
 msgid "Post-Update form"
 msgstr "نموذج ما بعد التحديث"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/release_notes_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/release_notes_setting.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/release_notes_setting.html
 msgid ""
 "Users will be entered directly into this form when logging back into "
 "CommCare immediately after updating their CommCare app. You can use this to "
@@ -11276,23 +11049,19 @@ msgstr ""
 "مباشرة بعد تحديث تطبيق CommCare الخاص بهم. يمكنك استخدام ذلك لإعطاء "
 "المستخدمين معلومات حول ما تم تغييره في إصدار التطبيق الجديد"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/release_notes_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/release_notes_setting.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/release_notes_setting.html
 msgid "You have already set another form as this app’s Post-Update form"
 msgstr "لقد قمت بالفعل بتعيين نموذج آخر كنموذج ما بعد التحديث لهذا التطبيق"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/release_notes_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/release_notes_setting.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/release_notes_setting.html
 msgid "Enable the Post-Update form for this release"
 msgstr "تفعيل نموذج ما بعد التحديث لهذا الإصدار"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/release_notes_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/release_notes_setting.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/release_notes_setting.html
 msgid "Enable this"
 msgstr "تفعيل هذا"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/release_notes_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/release_notes_setting.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/release_notes_setting.html
 msgid ""
 "You can disable the Post-Update form if it is not necessary for the current "
 "app release, but you don’t want to delete it"
@@ -11300,52 +11069,25 @@ msgstr ""
 "يمكنك تعطيل نموذج ما بعد التحديث إذا لم يكن ضروريًا لإصدار التطبيق الحالي، "
 "ولكنك لا ترغب في حذفه"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/shadow_parent_select.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/shadow_parent_select.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/shadow_parent_select.html
 msgid "Shadow source"
 msgstr "مصدر الظل"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/shadow_parent_select.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/shadow_parent_select.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/shadow_parent_select.html
 msgid "The form which this form will shadow"
 msgstr "النموذج الذي سيظلله هذا النموذج"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/usercase_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/usercase_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/usercase_config.html
 msgid ""
 "\n"
-"      <strong>User Properties</strong> allow you to store data about the user and use that data in forms.\n"
+"      <strong>User Properties</strong> allow you to store data about the user\n"
+"      and use that data in forms.\n"
 "    "
 msgstr ""
 "\n"
-"      <strong>خصائص المستخدم</strong> تتيح لك تخزين بيانات عن المستخدم واستخدام تلك البيانات في النماذج.\n"
+"      <strong>خصائص المستخدم</strong> تتيح لك تخزين بيانات عن المستخدم\n"
+"      واستخدام تلك البيانات في النماذج.\n"
 "    "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-msgid "Followup: This form loads a case and may then update or btn-close it"
-msgstr ""
-"متابعة: هذا النموذج يقوم بتحميل حالة وقد يقوم بعد ذلك بتحديثها أو btn-close"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_filter.html
-msgid ""
-"\n"
-"              To use display conditions which reference a case, <br />\n"
-"              (1) the <strong>Menu Mode</strong> setting must be set to\n"
-"              <em>Display menu and then forms</em> <br />\n"
-"              (2) all the forms in the case list must update or btn-close a case,  \n"
-"              which means registration forms must go in a separate case list, or\n"
-"              if your project uses user properties, your display condition may\n"
-"              use user properties.\n"
-"            "
-msgstr ""
-"\n"
-"              لاستخدام شروط العرض التي تشير إلى حالة، <br />\n"
-"              (1) يجب ضبط إعداد <strong>وضع القائمة</strong> على\n"
-"              <em>عرض القائمة ثم النماذج</em> <br />\n"
-"              (2) يجب أن تقوم جميع النماذج في قائمة الحالات بتحديث أو btn-close حالة،\n"
-"              مما يعني أن نماذج التسجيل يجب أن توضع في قائمة حالات منفصلة، أو\n"
-"              إذا كان مشروعك يستخدم خصائص المستخدم، يمكن لشرط العرض استخدام خصائص المستخدم.\n"
-"            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap3/appnav_menu.html
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap5/appnav_menu.html
@@ -12336,6 +12078,23 @@ msgstr "بحث ومطالبة بالحالة"
 msgid ""
 "Add at least one search property to activate case search for this case list"
 msgstr "أضف خاصية بحث واحدة على الأقل لتفعيل البحث عن الحالات لهذه القائمة"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+#| msgid "Back"
+msgid "Backend"
+msgstr "الخلفية"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+#| msgid "Case Search Endpoints"
+msgid "Case Search Endpoint"
+msgstr "نقطة نهاية بحث الحالات"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+msgid "-- None --"
+msgstr "-- لا يوجد --"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -13947,13 +13706,12 @@ msgstr "الرجوع"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"        All add-ons have been enabled for this app using the\n"
-"        \"Enable All Application Add-Ons\" project setting.\n"
+"        All add-ons have been enabled for this app using the \"Enable All\n"
+"        Application Add-Ons\" project setting.\n"
 "      "
 msgstr ""
 "\n"
-"        تم تفعيل جميع الإضافات لهذا التطبيق باستخدام إعداد المشروع\n"
-"        \"تفعيل جميع إضافات التطبيق\".\n"
+"        تم تفعيل جميع الإضافات لهذا التطبيق باستخدام إعداد المشروع \"تفعيل جميع إضافات التطبيق\".\n"
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
@@ -13977,24 +13735,25 @@ msgstr "اعرف المزيد."
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"                    You have previously enabled this feature in your app, but have since lost access\n"
-"                    to it.\n"
-"                  "
+"                You have previously enabled this feature in your app, but have\n"
+"                since lost access to it.\n"
+"              "
 msgstr ""
 "\n"
-"                    لقد قمت سابقًا بتمكين هذه الميزة في تطبيقك، لكنك فقدت الوصول إليها منذ ذلك الحين.\n"
-"                  "
+"                لقد قمت سابقًا بتفعيل هذه الميزة في تطبيقك، لكنك فقدت الوصول إليها منذ ذلك الحين.\n"
+"              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"                    Your application will continue to function in places that utilized this feature, but\n"
-"                    you will not be able to edit any related functionality until you upgrade.\n"
-"                  "
+"                Your application will continue to function in places that\n"
+"                utilized this feature, but you will not be able to edit any\n"
+"                related functionality until you upgrade.\n"
+"              "
 msgstr ""
 "\n"
-"                    سيستمر تطبيقك في العمل في الأماكن التي استخدمت فيها هذه الميزة، لكن لن تتمكن من تعديل أي وظيفة ذات صلة حتى تقوم بالترقية.\n"
-"                  "
+"                سيستمر تطبيقك في العمل في الأماكن التي استخدمت فيها هذه الميزة، لكنك لن تتمكن من تعديل أي وظائف ذات صلة حتى تقوم بالترقية.\n"
+"              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid ""
@@ -14499,6 +14258,13 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py
 msgid ""
+"Locked questions cannot be modified. Unlock the question in the form builder"
+" first."
+msgstr ""
+"لا يمكن تعديل الأسئلة المقفلة. يرجى إلغاء قفل السؤال أولاً في منشئ النماذج."
+
+#: corehq/apps/app_manager/views/forms.py
+msgid ""
 "This form could not be copied because it is not compatible with the selected"
 " module."
 msgstr "تعذر نسخ هذا النموذج لأنه غير متوافق مع الوحدة المحددة."
@@ -14508,7 +14274,6 @@ msgid "There was an error saving, please try again!"
 msgstr "حدث خطأ أثناء الحفظ، يرجى المحاولة مرة أخرى!"
 
 #: corehq/apps/app_manager/views/forms.py
-#| msgid "You do not have permissions to assign one of those locations."
 msgid ""
 "You do not have permission to upload an XForm for a form that contains "
 "locked questions."
@@ -15767,6 +15532,11 @@ msgid "Recent Uploads"
 msgstr "التحميلات الأخيرة"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
+msgid "Comment"
+msgstr "تعليق"
+
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/export/templates/export/download_data_files.html
 msgid "File"
 msgstr "الملف"
@@ -15990,6 +15760,20 @@ msgid ""
 "{}"
 msgstr "لا نعرف ماذا نفعل مع الدالة \"{}\". الدوال المقبولة هي: {}"
 
+#: corehq/apps/case_search/endpoint_views.py
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/tabs/tabclasses.py
+msgid "Case Search Endpoints"
+msgstr "نقاط نهاية بحث الحالة"
+
+#: corehq/apps/case_search/endpoint_views.py
+msgid "New Case Search Endpoint"
+msgstr "نقطة نهاية بحث حالة جديدة"
+
+#: corehq/apps/case_search/endpoint_views.py
+msgid "Edit Case Search Endpoint"
+msgstr "تعديل نقطة نهاية بحث الحالة"
+
 #: corehq/apps/case_search/filter_dsl.py
 msgid "You cannot query related cases here"
 msgstr "لا يمكنك الاستعلام عن الحالات المرتبطة هنا"
@@ -16051,6 +15835,31 @@ msgstr "يجب أن يكون {param} نصًا"
 #: corehq/apps/case_search/models.py
 msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
 msgstr "المشغل غير صالح \"{criteria[\"operator\"]}\". القيم المسموح بها هي "
+
+#: corehq/apps/case_search/models.py
+msgid "Project Database"
+msgstr "قاعدة بيانات المشروع"
+
+#: corehq/apps/case_search/models.py
+msgid "Elastic Search"
+msgstr "البحث المرن"
+
+#: corehq/apps/case_search/models.py
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap3/web_users.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/web_users.html
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Deactivate"
+msgstr "إلغاء التفعيل"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
@@ -16137,6 +15946,7 @@ msgid "Results"
 msgstr "النتائج"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 msgid "Query"
 msgstr "الاستعلام"
 
@@ -16188,6 +15998,67 @@ msgstr "تضمين التثبيت في معايير الاستعادة"
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 msgid "Add Criteria"
 msgstr "إضافة معيار"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "Endpoint Details"
+msgstr "تفاصيل نقطة النهاية"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+msgid "Target Type"
+msgstr "نوع الهدف"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "-- Select a case type --"
+msgstr "-- اختر نوع الحالة --"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "Parameters"
+msgstr "المعلمات"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "JSON array"
+msgstr "مصفوفة JSON"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "JSON object"
+msgstr "كائن JSON"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+msgid "New Endpoint"
+msgstr "نقطة نهاية جديدة"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#| msgid "Updated"
+msgid "Updated On"
+msgstr "تم التحديث في"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#| msgid "Updated"
+msgid "Updated By"
+msgstr "تم التحديث بواسطة"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+msgid "Deactivate Endpoint"
+msgstr "تعطيل نقطة النهاية"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+msgid ""
+"Are you sure you want to deactivate this endpoint? This cannot be undone."
+msgstr "هل أنت متأكد أنك تريد تعطيل نقطة النهاية هذه؟ لا يمكن التراجع عن هذا."
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+msgid "No endpoints configured."
+msgstr "لم يتم تكوين أي نقاط نهاية."
+
+#: corehq/apps/case_search/utils.py
+msgid "Configurable Endpoints are not available"
+msgstr "نقاط النهاية القابلة للتكوين غير متوفرة"
+
+#: corehq/apps/case_search/utils.py
+#| msgid "LocationType '{}' not found"
+msgid "Endpoint '{}' not found"
+msgstr "لم يتم العثور على نقطة النهاية '{}'"
 
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
@@ -19503,8 +19374,8 @@ msgstr "يتم تعيين القيم الأولية بواسطة النموذج"
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
-#: corehq/apps/domain/forms.py corehq/apps/hqadmin/forms.py
-#: corehq/apps/reminders/forms.py corehq/apps/styleguide/example_forms.py
+#: corehq/apps/domain/forms.py corehq/apps/reminders/forms.py
+#: corehq/apps/styleguide/example_forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
 #: corehq/apps/styleguide/examples/bootstrap5/switch_form.py
@@ -19955,21 +19826,6 @@ msgstr "استكشاف التكرارات"
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 msgid "Activate"
 msgstr "تفعيل"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/web_users.html
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Deactivate"
-msgstr "إلغاء التفعيل"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
@@ -25630,6 +25486,8 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
+#: corehq/apps/hqadmin/forms.py
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "Reset Two-Factor Authentication"
 msgstr "إعادة تعيين المصادقة الثنائية"
 
@@ -26437,6 +26295,11 @@ msgid "Form ID"
 msgstr "معرّف النموذج"
 
 #: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/reports/standard/monitoring.py
+msgid "Form Name"
+msgstr "اسم النموذج"
+
+#: corehq/apps/enterprise/enterprise.py
 msgid "Submitted [UTC]"
 msgstr "تم الإرسال [UTC]"
 
@@ -26898,14 +26761,14 @@ msgid ""
 "Enterprise Administrators can manage subscriptions, billing, and account-"
 "level settings for all project spaces in this account. See <a "
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/Enterprise+Console#Enterprise-"
-"Admins\" target=\"_blank\" >Enterprise Console | Enterprise Admins</a > for "
-"more on Enterprise Admins."
+"Admins\" target=\"_blank\" >Enterprise Console | Enterprise "
+"Administrators</a > for more on Enterprise Admins."
 msgstr ""
-"يمكن لمسؤولي المؤسسة إدارة الاشتراكات والفوترة وإعدادات الحساب لجميع مساحات "
-"المشاريع في هذا الحساب. راجع <a "
+"يمكن لمسؤولي المؤسسات إدارة الاشتراكات والفوترة وإعدادات الحساب لجميع مساحات"
+" المشاريع في هذا الحساب. راجع <a "
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/Enterprise+Console#Enterprise-"
-"Admins\" target=\"_blank\" >وحدة تحكم المؤسسة | مسؤولو المؤسسة</a > لمزيد من"
-" المعلومات حول مسؤولي المؤسسة."
+"Admins\" target=\"_blank\" >وحدة تحكم المؤسسات | مسؤولو المؤسسات</a > لمزيد "
+"من المعلومات حول مسؤولي المؤسسات."
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
 msgid "Add an Administrator"
@@ -31479,18 +31342,19 @@ msgid "Verified by"
 msgstr "تم التحقق بواسطة"
 
 #: corehq/apps/hqadmin/forms.py
-msgid "Days to allow access"
-msgstr "عدد الأيام المسموح بها للوصول"
+msgid "Days of temporary access"
+msgstr "أيام الوصول المؤقت"
 
 #: corehq/apps/hqadmin/forms.py
 msgid ""
-"Number of days the user can access CommCare HQ before needing to re-enable "
-"two-factor auth.This is useful if someone has lost their phone and can't "
-"immediately re-setup two-factor auth."
+"Number of days the user can access a Two-Factor Authentication enforced "
+"domain without setting up two-factor authentication again. This is useful if"
+" someone has lost their phone and can't immediately re-setup two-factor "
+"auth."
 msgstr ""
-"عدد الأيام التي يمكن للمستخدم الوصول فيها إلى CommCare HQ قبل الحاجة إلى "
-"إعادة تفعيل المصادقة الثنائية. هذا مفيد إذا فقد شخص ما هاتفه ولا يمكنه إعادة"
-" إعداد المصادقة الثنائية فورًا."
+"عدد الأيام التي يمكن للمستخدم خلالها الوصول إلى نطاق مفروض عليه المصادقة "
+"الثنائية دون إعداد المصادقة الثنائية مرة أخرى. هذا مفيد إذا فقد شخص ما هاتفه"
+" ولا يمكنه إعادة إعداد المصادقة الثنائية فوراً."
 
 #: corehq/apps/hqadmin/forms.py
 msgid "Please give a reason for this action."
@@ -31722,11 +31586,12 @@ msgstr "إجراءات الحالة"
 #: corehq/apps/hqadmin/templates/hqadmin/disable_two_factor.html
 #, python-format
 msgid ""
-"You are about to temporarily disable two-factor authentication for %(username)s. This\n"
-"    compromises their account security, are you sure?"
+"You are about to reset two-factor authentication for <strong>%(username)s</strong>. This\n"
+"    permanently deletes the user's existing two-factor authentication and cannot be undone, so it compromises\n"
+"    their account security. Are you sure?"
 msgstr ""
-"أنت على وشك تعطيل المصادقة الثنائية مؤقتًا لـ %(username)s.\n"
-"    هذا يعرض أمان حسابهم للخطر، هل أنت متأكد؟"
+"أنت على وشك إعادة تعيين المصادقة الثنائية للمستخدم <strong>%(username)s</strong>. هذا\n"
+"    سيحذف بشكل دائم المصادقة الثنائية الحالية للمستخدم ولا يمكن التراجع عنه، مما قد يعرض أمان الحساب للخطر. هل أنت متأكد؟"
 
 #: corehq/apps/hqadmin/templates/hqadmin/disable_user.html
 #, python-format
@@ -31875,6 +31740,14 @@ msgstr "بحث في elasticsearch"
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "Is Superuser"
 msgstr "مستخدم فائق"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+msgid "View User Audit Report"
+msgstr "عرض تقرير تدقيق المستخدم"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+msgid "Disable/Enable User Account"
+msgstr "تعطيل/تمكين حساب المستخدم"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "Offboard Staff User"
@@ -35250,6 +35123,14 @@ msgstr "النشاط"
 msgid "Funder"
 msgstr "الممول"
 
+#: corehq/apps/integration/payments/filters.py
+msgid "Campaign worker role"
+msgstr "دور عامل الحملة"
+
+#: corehq/apps/integration/payments/filters.py
+msgid "Case creation date range"
+msgstr "نطاق تاريخ إنشاء الحالة"
+
 #: corehq/apps/integration/payments/forms.py
 msgid "Environment"
 msgstr "البيئة"
@@ -35336,6 +35217,10 @@ msgstr "رقم الدفعة"
 #: corehq/apps/integration/payments/tables.py
 msgid "Currency"
 msgstr "العملة"
+
+#: corehq/apps/integration/payments/tables.py
+msgid "Campaign Worker Role"
+msgstr "دور عامل الحملة"
 
 #: corehq/apps/integration/payments/tables.py
 msgid "User or Case ID"
@@ -35482,6 +35367,18 @@ msgstr "تم تعيين الحالة يدويًا إلى قيمة غير صال�
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 msgid "Not Checked"
 msgstr "لم يتم الفحص"
+
+#: corehq/apps/integration/templates/payments/filters/case_created_date_range.html
+msgid "Show All Dates"
+msgstr "عرض جميع التواريخ"
+
+#: corehq/apps/integration/templates/payments/filters/case_created_date_range.html
+#: corehq/apps/reports/templates/reports/filters/bootstrap3/datespan.html
+#: corehq/apps/reports/templates/reports/filters/bootstrap5/datespan.html
+#: corehq/messaging/scheduling/templates/scheduling/schedule_instance_filter.html
+#, python-format
+msgid "This report's timezone is %(timezone)s."
+msgstr "المنطقة الزمنية لهذا التقرير هي %(timezone)s."
 
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
 msgid "Confirm Payments"
@@ -36576,10 +36473,6 @@ msgstr ""
 "مسؤول المشروع ليتم تعيينك إلى موقع.\n"
 
 #: corehq/apps/locations/permissions.py
-#| msgid ""
-#| "This project has restricted data access rules. Please contact your project "
-#| "administrator to be assigned access to data in this project. More "
-#| "information is available <a href=\"{}\">here</a>."
 msgid ""
 "This project limits access to users based on their location. If your "
 "location or your access limits are incorrect, please contact your project "
@@ -41941,13 +41834,6 @@ msgstr "إلى"
 msgid "Showing %(datespan)s."
 msgstr "عرض %(datespan)s."
 
-#: corehq/apps/reports/templates/reports/filters/bootstrap3/datespan.html
-#: corehq/apps/reports/templates/reports/filters/bootstrap5/datespan.html
-#: corehq/messaging/scheduling/templates/scheduling/schedule_instance_filter.html
-#, python-format
-msgid "This report's timezone is %(timezone)s."
-msgstr "المنطقة الزمنية لهذا التقرير هي %(timezone)s."
-
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/form_app_module_drilldown.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/form_app_module_drilldown.html
 msgid "Known Forms"
@@ -44507,21 +44393,27 @@ msgstr "اسم المستخدم {0} طويل جدًا. يجب أن يكون أق
 
 #: corehq/apps/sms/messages.py
 #, python-brace-format
+#| msgid ""
+#| "Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to {1}"
+#| " to start using SMS with CommCareHQ."
 msgid ""
-"Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to {1}"
-" to start using SMS with CommCareHQ."
+"Welcome to CommCare HQ! Is this phone used by {0}? If yes, reply '123' to "
+"{1} to start using SMS with CommCareHQ."
 msgstr ""
-"مرحبًا بك في CommCareHQ! هل يُستخدم هذا الهاتف من قبل {0}؟ إذا كانت الإجابة "
-"نعم، أرسل '123' إلى {1} لبدء استخدام الرسائل القصيرة مع CommCareHQ."
+"مرحبًا بك في CommCare HQ! هل يُستخدم هذا الهاتف من قبل {0}؟ إذا كانت الإجابة"
+" نعم، أرسل '123' إلى {1} لبدء استخدام الرسائل القصيرة مع CommCareHQ."
 
 #: corehq/apps/sms/messages.py
 #, python-brace-format
+#| msgid ""
+#| "Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to "
+#| "start using SMS with CommCareHQ."
 msgid ""
-"Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to "
+"Welcome to CommCare HQ! Is this phone used by {0}? If yes, reply '123' to "
 "start using SMS with CommCareHQ."
 msgstr ""
-"مرحبًا بك في CommCareHQ! هل يُستخدم هذا الهاتف من قبل {0}؟ إذا كانت الإجابة "
-"نعم، أرسل '123' لبدء استخدام الرسائل القصيرة مع CommCareHQ."
+"مرحبًا بك في CommCare HQ! هل يُستخدم هذا الهاتف من قبل {0}؟ إذا كانت الإجابة"
+" نعم، أرسل '123' لبدء استخدام الرسائل القصيرة مع CommCareHQ."
 
 #: corehq/apps/sms/messages.py
 msgid "Thank you. This phone has been verified for using SMS with CommCareHQ"
@@ -52709,8 +52601,8 @@ msgid "Profile conflicts with existing data"
 msgstr "تعارض الملف الشخصي مع بيانات موجودة"
 
 #: corehq/apps/users/user_data.py
-msgid "User data profile not found"
-msgstr "لم يتم العثور على ملف بيانات المستخدم"
+msgid "Profile not found"
+msgstr "الملف الشخصي غير موجود"
 
 #: corehq/apps/users/user_data.py
 msgid "'{}' cannot be set directly"
@@ -52740,6 +52632,11 @@ msgstr "مكون اسم المستخدم '{}' من '{}' لا يجوز أن يح�
 #: corehq/apps/users/validation.py
 msgid "The username email domain '@{}' should be '@{}'."
 msgstr "يجب أن يكون نطاق البريد الإلكتروني لاسم المستخدم '@{}' هو '@{}'."
+
+#: corehq/apps/users/validation.py
+#, python-brace-format
+msgid "Profile with id {id} not found."
+msgstr "الملف الشخصي بالمعرف {id} غير موجود."
 
 #: corehq/apps/users/validation.py
 msgid "A profile assignment is required for Mobile Workers."
@@ -53681,14 +53578,6 @@ msgstr "انقر لتصدير [بيانات النموذج]({}) الخاصة ب�
 msgid "Click to export your [case data]({})."
 msgstr "انقر لتصدير [بيانات الحالة]({}) الخاصة بك."
 
-#: corehq/messaging/fcm/exceptions.py
-msgid "One of the fields from 'title, body, data' is required!"
-msgstr "أحد الحقول من 'العنوان، النص، البيانات' مطلوب!"
-
-#: corehq/messaging/fcm/exceptions.py
-msgid "FCM is not setup on this environment!"
-msgstr "لم يتم إعداد FCM في هذه البيئة!"
-
 #: corehq/messaging/scheduling/forms.py
 msgid "Please enter a valid 24-hour time in the format HH:MM"
 msgstr "يرجى إدخال وقت صحيح بنظام 24 ساعة بالتنسيق HH:MM"
@@ -54430,18 +54319,6 @@ msgid ""
 "filter criteria below."
 msgstr ""
 "سيتم إنشاء نسخة من الجدول لكل حالة مفتوحة تطابق جميع معايير التصفية أدناه."
-
-#: corehq/messaging/scheduling/models/content.py
-msgid "Background Sync"
-msgstr "المزامنة في الخلفية"
-
-#: corehq/messaging/scheduling/models/content.py
-msgid "Display Messages"
-msgstr "عرض الرسائل"
-
-#: corehq/messaging/scheduling/models/content.py
-msgid "Data Messages"
-msgstr "رسائل البيانات"
 
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 msgid "Add Broadcast"
@@ -57348,14 +57225,6 @@ msgstr "عناوين الإشعار"
 msgid "Used By"
 msgstr "يستخدم بواسطة"
 
-#: corehq/motech/views.py
-msgid "Please enter client secret again."
-msgstr "يرجى إدخال سر العميل مرة أخرى."
-
-#: corehq/motech/views.py
-msgid "Please enter API password again."
-msgstr "يرجى إدخال كلمة مرور واجهة برمجة التطبيقات مرة أخرى."
-
 #: corehq/privileges.py
 msgid "API Access"
 msgstr "الوصول إلى واجهة برمجة التطبيقات"
@@ -58604,6 +58473,75 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
 
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "              Use this %(badge)s for all languages\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              استخدم هذه %(badge)s لجميع اللغات\n"
+#~ "            "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "            This %(badge)s is linked to the default language, and can only be\n"
+#~ "            modified there.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            هذه %(badge)s مرتبطة باللغة الافتراضية، ولا يمكن تعديلها إلا هناك.\n"
+#~ "          "
+
+#~ msgid "Followup: This form loads a case and may then update or btn-close it"
+#~ msgstr ""
+#~ "متابعة: هذا النموذج يقوم بتحميل حالة وقد يقوم بعد ذلك بتحديثها أو btn-close"
+
+#~ msgid ""
+#~ "\n"
+#~ "              To use display conditions which reference a case, <br />\n"
+#~ "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
+#~ "              <em>Display menu and then forms</em> <br />\n"
+#~ "              (2) all the forms in the case list must update or btn-close a case,  \n"
+#~ "              which means registration forms must go in a separate case list, or\n"
+#~ "              if your project uses user properties, your display condition may\n"
+#~ "              use user properties.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              لاستخدام شروط العرض التي تشير إلى حالة، <br />\n"
+#~ "              (1) يجب ضبط إعداد <strong>وضع القائمة</strong> على\n"
+#~ "              <em>عرض القائمة ثم النماذج</em> <br />\n"
+#~ "              (2) يجب أن تقوم جميع النماذج في قائمة الحالات بتحديث أو btn-close حالة،\n"
+#~ "              مما يعني أن نماذج التسجيل يجب أن توضع في قائمة حالات منفصلة، أو\n"
+#~ "              إذا كان مشروعك يستخدم خصائص المستخدم، يمكن لشرط العرض استخدام خصائص المستخدم.\n"
+#~ "            "
+
+#~ msgid "One of the fields from 'title, body, data' is required!"
+#~ msgstr "أحد الحقول من 'العنوان، النص، البيانات' مطلوب!"
+
+#~ msgid "FCM is not setup on this environment!"
+#~ msgstr "لم يتم إعداد FCM في هذه البيئة!"
+
+#~ msgid "Background Sync"
+#~ msgstr "المزامنة في الخلفية"
+
+#~ msgid "Display Messages"
+#~ msgstr "عرض الرسائل"
+
+#~ msgid "Data Messages"
+#~ msgstr "رسائل البيانات"
+
+#~ msgid "User data profile not found"
+#~ msgstr "لم يتم العثور على ملف بيانات المستخدم"
+
+#~ msgid "Please enter client secret again."
+#~ msgstr "يرجى إدخال سر العميل مرة أخرى."
+
+#~ msgid "Please enter API password again."
+#~ msgstr "يرجى إدخال كلمة مرور واجهة برمجة التطبيقات مرة أخرى."
+
 #~ msgid "Claim Condition"
 #~ msgstr "شرط المطالبة"
 
@@ -59185,9 +59123,6 @@ msgstr "أدخل JSON صالحًا"
 
 #~ msgid "APHL Exposure Notifications"
 #~ msgstr "إشعارات التعرض APHL"
-
-#~ msgid "Server Endpoint"
-#~ msgstr "نقطة نهاية الخادم"
 
 #~ msgid "Server Auth Token"
 #~ msgstr "رمز مصادقة الخادم"
@@ -61224,9 +61159,6 @@ msgstr "أدخل JSON صالحًا"
 
 #~ msgid "Could not find the report filter '{}'"
 #~ msgstr "تعذر العثور على عامل تصفية التقرير '{}'"
-
-#~ msgid "Project Data"
-#~ msgstr "بيانات المشروع"
 
 #~ msgid ""
 #~ "Setting a password is disabled. The user will set their own password on "

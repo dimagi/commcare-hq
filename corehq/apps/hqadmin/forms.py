@@ -228,11 +228,12 @@ class DisableTwoFactorForm(forms.Form):
         help_text="If you verified the request via someone else please enter their email address."
     )
     disable_for_days = forms.IntegerField(
-        label=_("Days to allow access"),
+        label=_("Days of temporary access"),
         min_value=0,
         max_value=30,
         help_text=_(
-            "Number of days the user can access CommCare HQ before needing to re-enable two-factor auth."
+            "Number of days the user can access a Two-Factor Authentication enforced domain without "
+            "setting up two-factor authentication again. "
             "This is useful if someone has lost their phone and can't immediately re-setup two-factor auth.")
     )
 
@@ -249,17 +250,14 @@ class DisableTwoFactorForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Basic Information"),
-                crispy.Field('username'),
-                crispy.Field('verification_mode'),
-                crispy.Field('via_who'),
-                crispy.Field('disable_for_days'),
-            ),
+            crispy.Field('username'),
+            crispy.Field('verification_mode'),
+            crispy.Field('via_who'),
+            crispy.Field('disable_for_days'),
             hqcrispy.FormActions(
                 crispy.Submit(
                     "disable",
-                    _("Disable"),
+                    _("Reset Two-Factor Authentication"),
                     css_class="btn btn-danger",
                 ),
                 css_class='modal-footer',

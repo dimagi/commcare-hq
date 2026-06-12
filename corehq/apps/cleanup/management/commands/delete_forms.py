@@ -15,9 +15,6 @@ class Command(BaseCommand):
         parser.add_argument('domain', help='Domain name that owns the forms to be deleted')
         parser.add_argument('filename', help='path to the CSV file')
         parser.add_argument('--resume_id', help='form ID to start at, within the CSV file')
-        parser.add_argument(
-            '--permanent', action='store_true', default=False, help='Hard delete forms. Defaults to soft deletion.'
-        )
 
     def handle(self, domain, filename, resume_id=None, permanent=False, **options):
         # expects the filename to have a CSV with a header containing a "Form ID" field
@@ -44,25 +41,11 @@ class Command(BaseCommand):
         for chunk in chunked(rows, CHUNK_SIZE):
             form_ids = [row[INDEX_FORM_ID] for row in chunk]
             try:
-                if permanent:
-                    num_deleted += self.hard_delete_forms(domain, form_ids)
-                else:
-                    num_deleted += self.soft_delete_forms(domain, form_ids)
+                num_deleted += self.soft_delete_forms(domain, form_ids)
             except Exception:
                 print('Failed whilte attempting to delete:', form_ids)
                 raise
-        deletion_type = 'hard' if permanent else 'soft'
-        print(f'Completed {deletion_type} deletion of {num_deleted} forms')
-
-    def hard_delete_forms(self, domain, form_ids):
-        deleted_form_ids = set(XFormInstance.objects.hard_delete_forms(domain, form_ids, return_ids=True))
-        for form_id in form_ids:
-            if form_id in deleted_form_ids:
-                print('Hard deleted:', form_id)
-            else:
-                print('Not found:', form_id)
-
-        return len(deleted_form_ids)
+        print(f'Completed soft deletion of {num_deleted} forms')
 
     def soft_delete_forms(self, domain, form_ids):
         print("Soft deleted chunk:", form_ids)

@@ -606,8 +606,7 @@ msgid "Lookup Table Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Lookup Table"
 msgstr ""
 
@@ -726,129 +725,104 @@ msgid ""
 "The \"%(format)s\" format requires columns with formats: %(dependencies)s."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Type required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Tag required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Tag already in use"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "subcase of"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "autoselect mode: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid " (from fixture)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Autoselect mode required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Property required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Lookup table tag required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Expected case type required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Subcase parent reference is missing"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Parent reference ID required for subcases: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Subcase must be in same repeat context as parent \""
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Select parent"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "User Data"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "User Properties"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Case Index"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Load / Update / Close a case"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Automatic Case Selection"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Load Case From Fixture"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Open a Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Property updated by two questions"
 msgstr ""
 
@@ -857,8 +831,7 @@ msgid "Reserved word: "
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Inside the wrong repeat!"
 msgstr ""
 
@@ -870,29 +843,9 @@ msgstr ""
 msgid "Two properties load to the same question"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
-msgid "You have unchanged case settings"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
-msgid "You have unchanged user properties settings"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
-msgid "Property uses unrecognized prefix <strong>"
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_designer.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_designer.js
 msgid "Edit Form"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_view.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_view.js
-msgid "Form Settings"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
@@ -925,6 +878,18 @@ msgstr ""
 msgid "XPath Expression"
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "You have unchanged case settings"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "You have unchanged user properties settings"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Property uses unrecognized prefix <strong>"
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid " (Hidden)"
 msgstr ""
@@ -946,6 +911,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Select a Question"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
+msgid "Form Settings"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
@@ -1213,6 +1182,46 @@ msgstr ""
 msgid "[unknown]"
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "Drag question here"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is equal to"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is not equal to"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is less than"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is less than or equal to"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is greater than"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is greater than or equal to"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "has selected value"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "True when ALL of the expressions are true."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "True when ANY of the expressions are true."
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
 msgid "loadXFormOrError"
 msgstr ""
@@ -1253,52 +1262,12 @@ msgstr ""
 msgid "jstree"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/229.js
-msgid "\n"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "Drag question here"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is equal to"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is not equal to"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is less than"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is less than or equal to"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is greater than"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is greater than or equal to"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "has selected value"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "True when ALL of the expressions are true."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "True when ANY of the expressions are true."
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/96.js
+msgid "\n"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
@@ -1924,6 +1893,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+#: corehq/apps/integration/static/integration/js/payments/payments_verify.js
 msgid "Last 30 Days"
 msgstr ""
 
@@ -2695,6 +2665,14 @@ msgstr ""
 
 #: corehq/apps/integration/static/integration/js/dialer/domain_dialer_main.js
 msgid "You already have an active call."
+msgstr ""
+
+#: corehq/apps/integration/static/integration/js/payments/payments_verify.js
+msgid "Last 7 Days"
+msgstr ""
+
+#: corehq/apps/integration/static/integration/js/payments/payments_verify.js
+msgid "Last Month"
 msgstr ""
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js

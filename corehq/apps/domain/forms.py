@@ -1930,7 +1930,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
     ):
         self.plan_version = plan_version
         self.current_subscription = current_subscription
-        super().__init__(account, domain, creating_user, data=data, *args, **kwargs)
+        super().__init__(account, domain, creating_user, data, *args, **kwargs)
 
         email_list = [email for email in self.initial.get('email_list', []) if email]  # filter out empty strings
         if not email_list:
@@ -2134,7 +2134,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                  renewed_version, data=None, *args, **kwargs):
         self.current_subscription = current_subscription
         super(ConfirmSubscriptionRenewalForm, self).__init__(
-            account, domain, creating_user, data=data, *args, **kwargs
+            account, domain, creating_user, data, *args, **kwargs
         )
         self.renewed_version = renewed_version
         self.helper.label_class = 'col-sm-3 col-md-2'

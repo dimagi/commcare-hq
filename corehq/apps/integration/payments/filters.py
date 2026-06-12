@@ -57,46 +57,47 @@ class PaymentCaseListFilter(CaseListFilter):
 class BaseLookupTableFilter(BaseSingleOptionFilter):
     """Filter whose options are sourced from a per-domain lookup table.
 
-    The lookup table's tag is ``LOOKUP_TABLE_TAG_PREFIX + case_property`` and
-    its row column name is ``case_property``. The prefix namespaces these
-    tables so they don't collide with unrelated lookup tables a domain may
-    already have under the bare case-property name.
+    Each subclass sets ``slug`` to its underlying case-property name. That
+    same value is the lookup-table row's column name, and prefixed with
+    ``LOOKUP_TABLE_TAG_PREFIX`` it is the table's tag. The prefix
+    namespaces these tables so they don't collide with unrelated lookup
+    tables a domain may already have under the bare case-property name.
     """
     default_text = _("Show all")
-    case_property = None
 
     @property
     def options(self):
-        if not self.case_property:
-            raise NotImplementedError("Subclasses must define 'case_property'")
-        column = self.case_property.value
+        if not self.slug:
+            raise NotImplementedError("Subclasses must define 'slug'")
+        column = self.slug
         tag = LOOKUP_TABLE_TAG_PREFIX + column
         values = get_lookup_table_values(self.domain, tag, column)
         return [(v, v) for v in sorted({v for v in values if v})]
 
 
 class BatchNumberFilter(BaseLookupTableFilter):
-    slug = "batch_number"
+    slug = PaymentProperties.BATCH_NUMBER.value
     label = _("Batch number")
-    case_property = PaymentProperties.BATCH_NUMBER
 
 
 class CampaignFilter(BaseLookupTableFilter):
-    slug = 'campaign'
+    slug = PaymentProperties.CAMPAIGN.value
     label = _('Campaign')
-    case_property = PaymentProperties.CAMPAIGN
 
 
 class ActivityFilter(BaseLookupTableFilter):
-    slug = 'activity'
+    slug = PaymentProperties.ACTIVITY.value
     label = _('Activity')
-    case_property = PaymentProperties.ACTIVITY
 
 
 class FunderFilter(BaseLookupTableFilter):
-    slug = 'funder'
+    slug = PaymentProperties.FUNDER.value
     label = _('Funder')
-    case_property = PaymentProperties.FUNDER
+
+
+class CampaignWorkerRoleFilter(BaseLookupTableFilter):
+    slug = PaymentProperties.CAMPAIGN_WORKER_ROLE.value
+    label = _('Campaign worker role')
 
 
 class PhoneNumberFilter(BaseSimpleFilter):

@@ -106,7 +106,6 @@ dependencies = [
     "sh",
     "simpleeval",
     "simplejson",
-    "six",
     "sqlagg",
     "SQLAlchemy",
     "stripe",
@@ -244,3 +243,9 @@ ignore = ["F403"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/**" = ["E", "F", "W"]
+
+[tool.pyright]
+typeCheckingMode = "off"
+extraPaths = [
+    "corehq/ex-submodules",
+]

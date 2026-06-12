@@ -1,4 +1,4 @@
-import six
+import urllib.parse
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -67,7 +67,7 @@ class FormplayerRestoreTest(TestCase):
     def _do_post(self, data, uri=None, hmac=None):
         uri = uri or self.uri
         data["device_id"] = "WebAppsLogin"
-        params = six.moves.urllib.parse.urlencode(data)
+        params = urllib.parse.urlencode(data)
         # have to format url with params directly to ensure ordering remains unchanged
         full_url = '{}?{}'.format(uri, params)
         hmac_header_value = hmac or get_hmac_digest(b'123abc', full_url)

@@ -1,7 +1,7 @@
 from django.core.exceptions import FieldError
 from django.test import TestCase
 from field_audit.models import AuditEvent
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION
 from corehq.apps.userreports.models import UCRExpression

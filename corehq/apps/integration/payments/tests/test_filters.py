@@ -13,6 +13,7 @@ from corehq.apps.integration.payments.filters import (
     BaseLookupTableFilter,
     BatchNumberFilter,
     CampaignFilter,
+    CampaignWorkerRoleFilter,
     FunderFilter,
     get_lookup_table_values,
 )
@@ -103,6 +104,13 @@ class TestLookupTableFilters(TestCase):
         self._seed('funder', ['ACME'])
         assert self._build(FunderFilter).options == [('ACME', 'ACME')]
 
+    def test_campaign_worker_role_options_from_lookup_table(self):
+        self._seed('campaign_worker_role', ['Supervisor', 'Field Officer'])
+        assert self._build(CampaignWorkerRoleFilter).options == [
+            ('Field Officer', 'Field Officer'),
+            ('Supervisor', 'Supervisor'),
+        ]
+
     def test_options_dedupe_and_sort_at_filter(self):
         self._seed('campaign', ['Gamma', 'Alpha', 'Beta', 'Alpha'])
         assert self._build(CampaignFilter).options == [
@@ -123,6 +131,7 @@ class TestLookupTableFilters(TestCase):
         assert self._build(CampaignFilter).options == []
         assert self._build(ActivityFilter).options == []
         assert self._build(FunderFilter).options == []
+        assert self._build(CampaignWorkerRoleFilter).options == []
 
     def test_options_empty_when_unprefixed_table_exists(self):
         # A pre-existing 'campaign' table (no payments_ prefix) must not be
@@ -142,10 +151,9 @@ class TestLookupTableFilters(TestCase):
         ).save()
         assert self._build(CampaignFilter).options == []
 
-    def test_subclass_without_case_property_raises(self):
+    def test_subclass_without_slug_raises(self):
         class _MisconfiguredFilter(BaseLookupTableFilter):
-            slug = 'misconfigured'
             label = 'Misconfigured'
 
         with pytest.raises(NotImplementedError):
-            self._build(_MisconfiguredFilter).options
+            self._build(_MisconfiguredFilter)

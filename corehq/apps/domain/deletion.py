@@ -206,7 +206,9 @@ def delete_all_forms(domain_name):
     logger.info('Deleting forms...')
     form_ids = iter_ids(XFormInstance, 'form_id', domain_name)
     for chunk in chunked(form_ids, 1000, list):
-        XFormInstance.objects.hard_delete_forms(domain_name, chunk, publish_changes=False)
+        XFormInstance.objects.hard_delete_forms(
+            domain_name, chunk, publish_changes=False, leave_tombstones=False
+        )
     _delete_es_docs(FormES, domain_name)
     logger.info('Deleting forms complete.')
 
@@ -255,7 +257,7 @@ def _delete_sms_content_events_schedules(domain_name):
     models = [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
         'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent',
-        'FCMNotificationContent', 'ConnectMessageContent', 'ConnectMessageSurveyContent'
+        'ConnectMessageContent', 'ConnectMessageSurveyContent'
     ]
     filters = [
         'alertevent__schedule__domain',
@@ -409,7 +411,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('linked_domain', 'DomainLink', 'linked_domain', ['DomainLinkHistory']),
     CustomDeletion('scheduling', _delete_sms_content_events_schedules, [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
-        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent', 'FCMNotificationContent',
+        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent',
         'ConnectMessageContent', 'ConnectMessageSurveyContent'
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'broadcast__domain'),
@@ -489,6 +491,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('fixtures', 'LookupTable', 'domain'),
     ModelDeletion('case_search', 'CSQLFixtureExpression', 'domain'),
     ModelDeletion('case_search', 'CSQLFixtureExpressionLog', 'expression__domain'),
+    ModelDeletion('case_search', 'CaseSearchEndpoint', 'domain',
+                  extra_models=['CaseSearchEndpointVersion']),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),

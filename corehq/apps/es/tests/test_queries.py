@@ -1,7 +1,7 @@
 import json
 from unittest import TestCase
 
-from nose.tools import assert_equal, assert_raises
+import pytest
 
 from couchforms.geopoint import GeoPoint
 
@@ -70,9 +70,7 @@ class TestQueries(TestCase):
 
 
 def test_valid_geo_distance():
-    assert_equal(
-        geo_distance('gps_location', GeoPoint(-33.1, 151.8), kilometers=100),
-        {
+    assert geo_distance('gps_location', GeoPoint(-33.1, 151.8), kilometers=100) == {
             'geo_distance': {
                 'gps_location': {
                     'lat': -33.1,
@@ -81,9 +79,8 @@ def test_valid_geo_distance():
                 'distance': '100kilometers',
             }
         }
-    )
 
 
 def test_invalid_geo_distance():
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         geo_distance('gps_location', GeoPoint(-33.1, 151.8), smoots=100)

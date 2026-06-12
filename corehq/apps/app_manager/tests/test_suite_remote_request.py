@@ -38,6 +38,7 @@ from corehq.apps.app_manager.tests.util import (
 )
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
+from corehq.apps.case_search.models import CASE_SEARCH_ENDPOINT_ID_KEY
 from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'test_domain'
@@ -208,6 +209,27 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             suite,
             "./remote-request[1]"
         )
+
+    def test_remote_request_endpoint_id(self):
+        """
+        case_search_endpoint_id is emitted as an x_commcare_endpoint_id data
+        element on the remote-request query only when the CASE_SEARCH_ENDPOINTS
+        toggle is enabled and the field is set.
+        """
+        xpath = f"./remote-request/session/query/data[@key='{CASE_SEARCH_ENDPOINT_ID_KEY}']"
+
+        suite = self.app.create_suite()
+        self.assertXmlDoesNotHaveXpath(suite, xpath)
+
+        self.module.search_config.case_search_endpoint_id = 42
+        suite = self.app.create_suite()
+        self.assertXmlDoesNotHaveXpath(suite, xpath)
+
+        with flag_enabled('CASE_SEARCH_ENDPOINTS'):
+            suite = self.app.create_suite()
+        self.assertXmlHasXpath(suite, xpath)
+        [element] = parse_normalize(suite, to_string=False).xpath(xpath)
+        self.assertEqual(element.get('ref'), "'42'")
 
     def test_remote_request_custom_detail(self):
         """Remote requests for modules with custom details point to the custom detail

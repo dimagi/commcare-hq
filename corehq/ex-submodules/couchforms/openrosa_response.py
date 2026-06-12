@@ -1,6 +1,5 @@
 from django.http import HttpResponse
 
-import six
 from lxml import etree
 from lxml import etree as ElementTree
 
@@ -52,7 +51,7 @@ class OpenRosaResponse(object):
         msg_elem = ElementTree.Element('message')
         if self.nature:
             msg_elem.set('nature', self.nature)
-        msg_elem.text = six.text_type(self.message)
+        msg_elem.text = str(self.message)
         elem.append(msg_elem)
         return elem
 

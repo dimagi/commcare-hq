@@ -1076,15 +1076,6 @@
     },
     {
       "directories": [
-        "partials/releases/bootstrap3",
-        "partials/releases/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "app_manager/partials/releases",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
         "partials/settings/bootstrap3",
         "partials/settings/bootstrap5"
       ],
@@ -1128,15 +1119,6 @@
       ],
       "file_type": "javascript",
       "label": "javascript/app_manager/js/forms",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "forms/advanced/bootstrap3",
-        "forms/advanced/bootstrap5"
-      ],
-      "file_type": "javascript",
-      "label": "javascript/app_manager/js/forms/advanced",
       "compare_all_files": true
     },
     {

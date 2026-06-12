@@ -662,8 +662,7 @@ msgid "Lookup Table Options"
 msgstr "लुकअप टेबल विकल्प"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Lookup Table"
 msgstr "लुकअप टेबल"
 
@@ -785,129 +784,104 @@ msgstr ""
 "\"%(format)s\" प्रारूप के लिए निम्नलिखित प्रारूपों वाले कॉलम आवश्यक हैं: "
 "%(dependencies)s."
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Type required"
 msgstr "केस प्रकार आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Tag required"
 msgstr "केस टैग आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr "केस टैग: केवल अक्षर, संख्या, '-', और '_' की अनुमति है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Tag already in use"
 msgstr "केस टैग पहले से उपयोग में है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "subcase of"
 msgstr "सबकेस"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "autoselect mode: "
 msgstr "ऑटोसेलेक्ट मोड: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid " (from fixture)"
 msgstr " (फिक्सचर से)"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Autoselect mode required"
 msgstr "ऑटोसेलेक्ट मोड आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Property required"
 msgstr "प्रॉपर्टी आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case required"
 msgstr "केस आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Lookup table tag required"
 msgstr "लुकअप टेबल टैग आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Expected case type required"
 msgstr "अपेक्षित केस प्रकार आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Subcase parent reference is missing"
 msgstr "सबकेस के लिए पैरेंट संदर्भ गायब है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Parent reference ID required for subcases: "
 msgstr "सबकेस के लिए पैरेंट संदर्भ आईडी आवश्यक है: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Subcase must be in same repeat context as parent \""
 msgstr "सबकेस को पैरेंट \" के समान रिपीट संदर्भ में होना चाहिए"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Select parent"
 msgstr "पैरेंट चुनें"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
 msgstr "कच्चा"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "User Data"
 msgstr "यूज़र डेटा"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "User Properties"
 msgstr "यूज़र प्रॉपर्टीज़"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Case Index"
 msgstr "केस इंडेक्स"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Load / Update / Close a case"
 msgstr "केस लोड / अपडेट / बंद करें"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Automatic Case Selection"
 msgstr "स्वचालित केस चयन"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Load Case From Fixture"
 msgstr "फिक्सचर से केस लोड करें"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Open a Case"
 msgstr "केस खोलें"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Property updated by two questions"
 msgstr "प्रॉपर्टी दो प्रश्नों द्वारा अपडेट की गई"
 
@@ -916,8 +890,7 @@ msgid "Reserved word: "
 msgstr "आरक्षित शब्द: "
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Inside the wrong repeat!"
 msgstr "गलत रिपीट के अंदर!"
 
@@ -929,30 +902,10 @@ msgstr "सबकेस के लिए पैरेंट प्रॉपर�
 msgid "Two properties load to the same question"
 msgstr "दो प्रॉपर्टी एक ही प्रश्न में लोड हो रही हैं"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
-msgid "You have unchanged case settings"
-msgstr "आपके केस सेटिंग्स में कोई बदलाव नहीं हुआ है"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
-msgid "You have unchanged user properties settings"
-msgstr "आपकी यूज़र प्रॉपर्टीज़ सेटिंग्स में कोई बदलाव नहीं हुआ है"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
-msgid "Property uses unrecognized prefix <strong>"
-msgstr "संपत्ति अपरिचित उपसर्ग <strong> का उपयोग करती है"
-
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_designer.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_designer.js
 msgid "Edit Form"
 msgstr "फॉर्म संपादित करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_view.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_view.js
-msgid "Form Settings"
-msgstr "फॉर्म सेटिंग्स"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
@@ -984,6 +937,18 @@ msgstr "डेटम आईडी"
 msgid "XPath Expression"
 msgstr "XPath अभिव्यक्ति"
 
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "You have unchanged case settings"
+msgstr "आपके केस सेटिंग्स में कोई बदलाव नहीं हुआ है"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "You have unchanged user properties settings"
+msgstr "आपकी यूज़र प्रॉपर्टीज़ सेटिंग्स में कोई बदलाव नहीं हुआ है"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Property uses unrecognized prefix <strong>"
+msgstr "संपत्ति अपरिचित उपसर्ग <strong> का उपयोग करती है"
+
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid " (Hidden)"
 msgstr " (छुपा हुआ)"
@@ -1009,6 +974,10 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Select a Question"
 msgstr "प्रश्न चुनें"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
+msgid "Form Settings"
+msgstr "फॉर्म सेटिंग्स"
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
 #: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
@@ -1281,6 +1250,46 @@ msgstr "नवीनतम सहेजा गया"
 msgid "[unknown]"
 msgstr "[अज्ञात]"
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "Drag question here"
+msgstr "प्रश्न को यहाँ खींचें"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is equal to"
+msgstr "के बराबर है"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is not equal to"
+msgstr "के बराबर नहीं है"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is less than"
+msgstr "से कम है"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is less than or equal to"
+msgstr "से कम या बराबर है"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is greater than"
+msgstr "से अधिक है"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is greater than or equal to"
+msgstr "से अधिक या बराबर है"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "has selected value"
+msgstr "चयनित मान है"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "True when ALL of the expressions are true."
+msgstr "सभी अभिव्यक्तियाँ सत्य होने पर ही सत्य।"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "True when ANY of the expressions are true."
+msgstr "कोई भी अभिव्यक्ति सत्य होने पर सत्य।"
+
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
 msgid "loadXFormOrError"
 msgstr "loadXFormOrError"
@@ -1321,53 +1330,13 @@ msgstr "checkMove"
 msgid "jstree"
 msgstr "jstree"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/229.js
-msgid "\n"
-msgstr "\n"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "Drag question here"
-msgstr "प्रश्न को यहाँ खींचें"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is equal to"
-msgstr "के बराबर है"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is not equal to"
-msgstr "के बराबर नहीं है"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is less than"
-msgstr "से कम है"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is less than or equal to"
-msgstr "से कम या बराबर है"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is greater than"
-msgstr "से अधिक है"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is greater than or equal to"
-msgstr "से अधिक या बराबर है"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "has selected value"
-msgstr "चयनित मान है"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "True when ALL of the expressions are true."
-msgstr "सभी अभिव्यक्तियाँ सत्य होने पर ही सत्य।"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "True when ANY of the expressions are true."
-msgstr "कोई भी अभिव्यक्ति सत्य होने पर सत्य।"
-
 #: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} मान्य डेटा पैरेंट नहीं है"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/96.js
+msgid "\n"
+msgstr "\n"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "New Form"
@@ -2048,6 +2017,7 @@ msgstr ""
 "email %></a> से संपर्क करें।"
 
 #: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+#: corehq/apps/integration/static/integration/js/payments/payments_verify.js
 msgid "Last 30 Days"
 msgstr "पिछले 30 दिन"
 
@@ -2846,6 +2816,14 @@ msgstr "आपने लॉग इन नहीं किया है।"
 #: corehq/apps/integration/static/integration/js/dialer/domain_dialer_main.js
 msgid "You already have an active call."
 msgstr "आपके पास पहले से एक सक्रिय कॉल है।"
+
+#: corehq/apps/integration/static/integration/js/payments/payments_verify.js
+msgid "Last 7 Days"
+msgstr "पिछले 7 दिन"
+
+#: corehq/apps/integration/static/integration/js/payments/payments_verify.js
+msgid "Last Month"
+msgstr "पिछला महीना"
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
 msgid "Error updating."

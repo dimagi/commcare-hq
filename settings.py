@@ -391,7 +391,6 @@ HQ_APPS = (
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
-    'corehq.apps.app_execution',
     'corehq.apps.tombstones',
 
     # custom reports
@@ -808,6 +807,8 @@ GREENHOUSE_API_KEY = ''
 
 MAPBOX_ACCESS_TOKEN = ''
 
+USERFLOW_TOKEN = ''
+
 OPEN_EXCHANGE_RATES_API_ID = ''
 
 # import local settings if we find them
@@ -1162,7 +1163,7 @@ CONNECTID_CHANNEL_URL = 'http://localhost:8080/messaging/create_channel/'
 CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
 CONNECTID_CREDENTIALS_URL = 'http://localhost:8080/users/add_credential/'
 CONNECTID_CREDENTIALS_CLIENT_ID = ''
-CONNECTID_CREDENTIALS_CLIENT_SECRET = ''
+CONNECTID_CREDENTIALS_SECRET_KEY = ''
 CONNECTID_ADD_USER_ANALYTICS_URL = 'http://localhost:8080/users/add_user_analytics/'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
@@ -1883,11 +1884,6 @@ PILLOWTOPS = {
             'name': 'AppDbChangeFeedPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
-        },
-        {
-            'name': 'DefaultChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
         },
         {
             'name': 'DomainDbKafkaPillow',

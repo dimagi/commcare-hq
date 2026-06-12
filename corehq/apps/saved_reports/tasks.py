@@ -6,7 +6,6 @@ from django.conf import settings
 from django.http import HttpRequest
 from django.utils.translation import gettext as _
 
-import six
 from celery.schedules import crontab
 from couchdbkit import ResourceNotFound
 
@@ -186,7 +185,7 @@ def create_config_for_email(report_type, report_slug, user_id, domain, request_d
     config.owner_id = user_id
     config.domain = domain
 
-    GET = dict(six.iterlists(request_data['GET']))
+    GET = dict(request_data['GET'].lists())
     exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
     filters = {}
     for field in GET:

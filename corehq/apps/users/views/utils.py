@@ -247,6 +247,6 @@ def send_hq_sso_date_metric(link: ConnectIDUserLink):
             },
             auth=(
                 settings.CONNECTID_CREDENTIALS_CLIENT_ID,
-                settings.CONNECTID_CREDENTIALS_CLIENT_SECRET,
+                settings.CONNECTID_CREDENTIALS_SECRET_KEY,
             ),
         )

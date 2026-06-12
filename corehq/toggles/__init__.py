@@ -73,6 +73,12 @@ TAG_GA_PATH = Tag(
     css_class='release',
     description='This is a feature that we plan to move to General Availability in the future.',
 )
+TAG_CONNECT_DIVISION = Tag(
+    name='Connect Division',
+    slug='connect_division',
+    css_class='default',
+    description='Feature flags owned and maintained by the Connect Division.',
+)
 
 ALL_TAG_GROUPS = [
     TAG_RELEASE,
@@ -80,6 +86,7 @@ ALL_TAG_GROUPS = [
     TAG_FROZEN,
     TAG_DEPRECATED,
     TAG_INTERNAL,
+    TAG_CONNECT_DIVISION,
 ]
 ALL_TAGS = ALL_TAG_GROUPS
 
@@ -986,6 +993,13 @@ CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
     parent_toggles=[CASE_SEARCH_ADVANCED],
 )
 
+CASE_SEARCH_ENDPOINTS = StaticToggle(
+    'case_search_endpoints',
+    'Case Search Endpoints: configurable query builder for case search',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
@@ -1161,15 +1175,6 @@ VELLUM_ALLOW_BULK_FORM_ACTIONS = StaticToggle(
     description="This shows Bulk Form Actions (mark all questions required, "
                 "set default values to matching case properties) in "
                 "the Form Builder's main dropdown menu.",
-)
-
-LOCKED_ADMIN_QUESTIONS = FeatureRelease(
-    'locked_admin_questions',
-    "Locked Admin Questions",
-    TAG_RELEASE,
-    [NAMESPACE_DOMAIN],
-    owner="Evan Joseph-Pinero",
-    description="Enables Locked Admin Questions workflows in HQ and the form builder.",
 )
 
 CACHE_AND_INDEX = StaticToggle(
@@ -2223,7 +2228,7 @@ CAMPAIGN_DASHBOARD = StaticToggle(
 COMMCARE_CONNECT = StaticToggle(
     'commcare_connect',
     'Enable CommCare Connect features',
-    tag=TAG_INTERNAL,
+    tag=TAG_CONNECT_DIVISION,
     namespaces=[NAMESPACE_DOMAIN],
     description='More details to come',
 )
