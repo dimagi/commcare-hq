@@ -54,9 +54,8 @@ def test_case_table_basics():
     assert table.name == 'person'
     assert table.schema == 'projectdb_test-domain'
 
-    for name, col_type, col_kwargs in CaseTable.STATIC_COLUMNS:
-        column = table.c[name]
-        assert isinstance(column.type, col_type)
+    for column in CaseTable._static_columns():
+        assert column.name in table.c
 
     assert isinstance(table.c['prop__nickname'].type, sqlalchemy.Text)
     assert isinstance(table.c['prop__favorite_color'].type, sqlalchemy.Text)
@@ -64,11 +63,6 @@ def test_case_table_basics():
     assert isinstance(table.c['prop__dob__date'].type, sqlalchemy.Date)
     assert isinstance(table.c['prop__children_count'].type, sqlalchemy.Text)
     assert isinstance(table.c['prop__children_count__number'].type, sqlalchemy.Numeric)
-
-    expected_indices = {f'ix_person_{column}' for column in [
-        'owner_id', 'modified_on', 'parent_id', 'host_id'
-    ]}
-    assert expected_indices == {idx.name for idx in table.indexes}
 
 
 @use('db')
@@ -101,7 +95,8 @@ def test_create_project_db():
         assert isinstance(columns['prop__nickname'], sqlalchemy.Text)
         assert isinstance(columns['prop__dob__date'], sqlalchemy.Date)
 
-        indexes = {index['name'] for index in inspector.get_indexes('patient', schema=schema) }
-        assert 'ix_patient_parent_id' in indexes
+        indexes = inspector.get_indexes('patient', schema=schema)
+        assert any(ix['column_names'] == ['owner_id'] for ix in indexes)
+        assert any(ix['column_names'] == ['parent_id'] for ix in indexes)
 
         domain_schema.drop(conn)

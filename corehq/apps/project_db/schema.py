@@ -4,7 +4,6 @@ from sqlalchemy import (
     Column,
     Date,
     DateTime,
-    Index,
     Numeric,
     Table,
     Text,
@@ -51,21 +50,6 @@ class DomainSchema:
 
 
 class CaseTable:
-    STATIC_COLUMNS = (
-        # (name, type, column_kwargs).
-        ('case_id', Text, {'primary_key': True}),
-        ('owner_id', Text, {'nullable': False}),
-        ('case_name', Text, {}),
-        ('opened_on', DateTime, {}),
-        ('closed_on', DateTime, {}),
-        ('modified_on', DateTime, {}),
-        ('closed', Boolean, {}),
-        ('external_id', Text, {}),
-        ('server_modified_on', DateTime, {}),
-        ('parent_id', Text, {}),
-        ('host_id', Text, {}),
-    )
-
     COERCED_PROPERTY_TYPES = {
         # CaseProperty data_type to SQLAlchemy column type
         CaseProperty.DataType.DATE: Date,
@@ -79,20 +63,13 @@ class CaseTable:
 
     def build_definition(self, metadata):
         """Build a SQLAlchemy Table object defining the case type table"""
-        static_columns = [Column(name, col_type, **kwargs)
-                          for name, col_type, kwargs in self.STATIC_COLUMNS]
-        table = Table(
+        return Table(
             self.case_type,
             metadata,  # The table is also attached to the provided metadata
             *self._build_property_columns(),
-            *static_columns,
+            *self._static_columns(),
             schema=self.domain_schema.name,
         )
-        Index(f'ix_{self.case_type}_owner_id', table.c['owner_id'])
-        Index(f'ix_{self.case_type}_modified_on', table.c['modified_on'])
-        Index(f'ix_{self.case_type}_parent_id', table.c['parent_id'])
-        Index(f'ix_{self.case_type}_host_id', table.c['host_id'])
-        return table
 
     def _build_property_columns(self):
         """Build Column objects for dynamic case properties.
@@ -115,6 +92,22 @@ class CaseTable:
             case_type__is_deprecated=False,
             deprecated=False,
         ).values_list('name', 'data_type')
+
+    @staticmethod
+    def _static_columns():
+        return [
+            Column('case_id', Text, primary_key=True),
+            Column('owner_id', Text, nullable=False, index=True),
+            Column('case_name', Text),
+            Column('opened_on', DateTime),
+            Column('closed_on', DateTime),
+            Column('modified_on', DateTime),
+            Column('closed', Boolean),
+            Column('external_id', Text),
+            Column('server_modified_on', DateTime),
+            Column('parent_id', Text, index=True),
+            Column('host_id', Text, index=True),
+        ]
 
 
 def create_project_db(domain):
