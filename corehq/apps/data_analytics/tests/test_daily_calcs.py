@@ -73,7 +73,7 @@ class TestCalcWebUsersAccessed30d(TestCase):
 
         # Active only in another domain -> excluded by the domain filter.
         other_domain_user = self._make_web_user('elsewhere', 'web-access-other', today)
-        other_domain_user.add_domain_membership('web-access-test')
+        other_domain_user.add_domain_membership(self.domain_obj.name)
         other_domain_user.save()
 
         assert _calc_web_users_accessed_30d(DomainContext(self.domain_obj)) == 0
