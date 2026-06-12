@@ -14,6 +14,8 @@ from corehq.sql_db.util import (
 )
 from corehq.util.queries import queryset_to_iterator
 
+DEFAULT_CHUNK_SIZE = 5000
+
 
 class DomainFilter(metaclass=ABCMeta):
     @abstractmethod
@@ -86,7 +88,7 @@ class IDFilter(DomainFilter):
 
     def get_filters(self, domain_name, db_alias=None):
         for chunk in chunked(self.get_ids(domain_name, db_alias=db_alias), self.chunksize):
-            query_kwarg = '{}__in'.format(self.field)
+            query_kwarg = f'{self.field}__in'
             yield Q(**{query_kwarg: chunk})
 
 
@@ -167,9 +169,9 @@ class UnfilteredModelIteratorBuilder(object):
     def count(self):
         return sum(q.count() for q in self.querysets())
 
-    def iterators(self):
+    def iterators(self, chunk_size=DEFAULT_CHUNK_SIZE):
         for queryset in self.querysets():
-            yield queryset_to_iterator(queryset, self.model_class, ignore_ordering=True)
+            yield queryset_to_iterator(queryset, self.model_class, limit=chunk_size, ignore_ordering=True)
 
     def build(self, domain, model_class, db_alias):
         return self.__class__(self.model_label, self.use_all_objects).prepare(domain, model_class, db_alias)
@@ -199,7 +201,8 @@ class FilteredModelIteratorBuilder(UnfilteredModelIteratorBuilder):
 
 
 class UniqueFilteredModelIteratorBuilder(FilteredModelIteratorBuilder):
-    def iterators(self):
+    def iterators(self, chunk_size=DEFAULT_CHUNK_SIZE):
+        # chunk_size is unused, but needed to preserve the base class signature
         def _unique(iterator):
             seen = set()
             for model in iterator:
@@ -207,6 +210,5 @@ class UniqueFilteredModelIteratorBuilder(FilteredModelIteratorBuilder):
                     seen.add(model.pk)
                     yield model
 
-        querysets = self.querysets()
-        for querysets in querysets:
-            yield _unique(querysets)
+        for queryset in self.querysets():
+            yield _unique(queryset)

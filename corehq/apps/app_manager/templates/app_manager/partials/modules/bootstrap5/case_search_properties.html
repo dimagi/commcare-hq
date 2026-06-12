@@ -9,6 +9,33 @@
     {% trans "Add at least one search property to activate case search for this case list" %}
   </div>
   <form>
+    {% if request|toggle_enabled:'CASE_SEARCH_ENDPOINTS' %}
+      <div class="card panel-appmanager">  {# todo B5: css-panel #}
+        <div class="card-header">
+          <h4 class="card-title card-title-nolink">
+            {% trans "Backend" %}
+          </h4>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <label>
+                {% trans "Case Search Endpoint" %}
+              </label>
+              <select
+                class="form-select"
+                data-bind="value: searchConfig.case_search_endpoint_id"
+              >
+                <option value>{% trans "-- None --" %}</option>
+                {% for endpoint in case_search_endpoints %}
+                  <option value="{{ endpoint.id }}">{{ endpoint.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
     <div class="card panel-appmanager">  {# todo B5: css-panel #}
       <div class="card-header">
         <h4 class="card-title card-title-nolink">

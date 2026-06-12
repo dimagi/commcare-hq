@@ -659,8 +659,7 @@ msgid "Lookup Table Options"
 msgstr "Параметри таблиці пошуку"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Lookup Table"
 msgstr "Таблиця пошуку"
 
@@ -779,129 +778,104 @@ msgid "The \"%(format)s\" format requires columns with formats: %(dependencies)s
 msgstr ""
 "Формат \"%(format)s\" вимагає стовпці з такими форматами: %(dependencies)s."
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Type required"
 msgstr "Потрібен тип справи"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Tag required"
 msgstr "Потрібен тег справи"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr "Тег справи: дозволені лише літери, цифри, '-', і '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case Tag already in use"
 msgstr "Тег справи вже використовується"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "subcase of"
 msgstr "підсправа для"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "autoselect mode: "
 msgstr "режим автоселекту: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid " (from fixture)"
 msgstr " (з фікстури)"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Autoselect mode required"
 msgstr "Потрібен режим автоселекту"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Property required"
 msgstr "Потрібна властивість"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Case required"
 msgstr "Потрібна справа"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Lookup table tag required"
 msgstr "Потрібен тег таблиці пошуку"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Expected case type required"
 msgstr "Потрібен очікуваний тип справи"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Subcase parent reference is missing"
 msgstr "Відсутнє посилання на батьківську підсправу"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Parent reference ID required for subcases: "
 msgstr "Потрібен ідентифікатор посилання на батьківську підсправу: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Subcase must be in same repeat context as parent \""
 msgstr "Підсправа повинна бути в тому ж контексті повтору, що й батьківська \""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
 msgid "Select parent"
 msgstr "Виберіть батьківську справу"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
 msgstr "Сирий"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "User Data"
 msgstr "Дані користувача"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "User Properties"
 msgstr "Властивості користувача"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Case Index"
 msgstr "Індекс справи"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Load / Update / Close a case"
 msgstr "Завантажити / Оновити / Закрити справу"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Automatic Case Selection"
 msgstr "Автоматичний вибір справи"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Load Case From Fixture"
 msgstr "Завантажити справу з фікстури"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Open a Case"
 msgstr "Відкрити справу"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Property updated by two questions"
 msgstr "Властивість оновлюється двома питаннями"
 
@@ -910,8 +884,7 @@ msgid "Reserved word: "
 msgstr "Зарезервоване слово: "
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Inside the wrong repeat!"
 msgstr "Всередині неправильного повтору!"
 
@@ -924,30 +897,10 @@ msgstr ""
 msgid "Two properties load to the same question"
 msgstr "Дві властивості завантажуються в одне питання"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
-msgid "You have unchanged case settings"
-msgstr "У вас немає змінених налаштувань справи"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
-msgid "You have unchanged user properties settings"
-msgstr "У вас незмінені налаштування властивостей користувача"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
-msgid "Property uses unrecognized prefix <strong>"
-msgstr "Властивість використовує невідомий префікс <strong>"
-
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_designer.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_designer.js
 msgid "Edit Form"
 msgstr "Редагувати форму"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_view.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_view.js
-msgid "Form Settings"
-msgstr "Налаштування форми"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
@@ -979,6 +932,18 @@ msgstr "ID датуму"
 msgid "XPath Expression"
 msgstr "XPath-вираз"
 
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "You have unchanged case settings"
+msgstr "У вас немає змінених налаштувань справи"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "You have unchanged user properties settings"
+msgstr "У вас незмінені налаштування властивостей користувача"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Property uses unrecognized prefix <strong>"
+msgstr "Властивість використовує невідомий префікс <strong>"
+
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid " (Hidden)"
 msgstr " (Приховано)"
@@ -1004,6 +969,10 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Select a Question"
 msgstr "Виберіть питання"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
+msgid "Form Settings"
+msgstr "Налаштування форми"
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
 #: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
@@ -1276,6 +1245,46 @@ msgstr "Останнє збережене"
 msgid "[unknown]"
 msgstr "[невідомо]"
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "Drag question here"
+msgstr "Перетягніть питання сюди"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is equal to"
+msgstr "дорівнює"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is not equal to"
+msgstr "не дорівнює"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is less than"
+msgstr "менше ніж"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is less than or equal to"
+msgstr "менше або дорівнює"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is greater than"
+msgstr "більше ніж"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is greater than or equal to"
+msgstr "більше або дорівнює"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "has selected value"
+msgstr "має вибране значення"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "True when ALL of the expressions are true."
+msgstr "Правда, якщо ВСІ вирази істинні."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "True when ANY of the expressions are true."
+msgstr "Правда, якщо БУДЬ-ЯКИЙ з виразів істинний."
+
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
 msgid "loadXFormOrError"
 msgstr "завантажитиXFormАбоПомилку"
@@ -1315,46 +1324,6 @@ msgstr "checkMove"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
 msgid "jstree"
 msgstr "jstree"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "Drag question here"
-msgstr "Перетягніть питання сюди"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is equal to"
-msgstr "дорівнює"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is not equal to"
-msgstr "не дорівнює"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is less than"
-msgstr "менше ніж"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is less than or equal to"
-msgstr "менше або дорівнює"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is greater than"
-msgstr "більше ніж"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is greater than or equal to"
-msgstr "більше або дорівнює"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "has selected value"
-msgstr "має вибране значення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "True when ALL of the expressions are true."
-msgstr "Правда, якщо ВСІ вирази істинні."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "True when ANY of the expressions are true."
-msgstr "Правда, якщо БУДЬ-ЯКИЙ з виразів істинний."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
@@ -2048,6 +2017,7 @@ msgstr ""
 " щоб змінити список доменів."
 
 #: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+#: corehq/apps/integration/static/integration/js/payments/payments_verify.js
 msgid "Last 30 Days"
 msgstr "Останні 30 днів"
 
@@ -2852,6 +2822,14 @@ msgstr "Ви не ввійшли в систему."
 #: corehq/apps/integration/static/integration/js/dialer/domain_dialer_main.js
 msgid "You already have an active call."
 msgstr "У вас вже є активний дзвінок."
+
+#: corehq/apps/integration/static/integration/js/payments/payments_verify.js
+msgid "Last 7 Days"
+msgstr "Останні 7 днів"
+
+#: corehq/apps/integration/static/integration/js/payments/payments_verify.js
+msgid "Last Month"
+msgstr "Минулий місяць"
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js
 msgid "Error updating."

@@ -1345,7 +1345,7 @@ class DomainRequestForm(forms.Form):
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
     def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
         super(ConfirmExtraUserChargesForm, self).__init__(
-            account, domain, creating_user, data=data, *args, **kwargs)
+            account, domain, creating_user, data, *args, **kwargs)
 
         from corehq.apps.users.views.mobile import MobileWorkerListView
         self.helper.label_class = 'col-sm-3 col-md-2'

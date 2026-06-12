@@ -80,11 +80,11 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         user_count = len(distance_costs)
         case_count = len(distance_costs[0])
 
-        # Define decision variables
-        decision_variables = self.get_decision_variables(x_dim=user_count, y_dim=case_count)
-
         # Create a linear programming problem
         problem = pulp.LpProblem("assign_user_cases", sense=pulp.LpMinimize)
+
+        # Define decision variables
+        decision_variables = self.get_decision_variables(problem, x_dim=user_count, y_dim=case_count)
 
         # Add constraints
         problem = self.add_user_case_assignment_constraint(
@@ -139,11 +139,11 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         return {"assigned": assigned, "unassigned": unassigned, "parameters": parameters.__dict__}
 
     @staticmethod
-    def get_decision_variables(x_dim, y_dim):
+    def get_decision_variables(lp_problem, x_dim, y_dim):
         matrix = {}
         for i in range(x_dim):
             for j in range(y_dim):
-                matrix[i, j] = pulp.LpVariable(f"x_{i}_{j}", lowBound=0, upBound=1, cat=pulp.LpBinary)
+                matrix[i, j] = lp_problem.add_variable(f"x_{i}_{j}", lowBound=0, upBound=1, cat=pulp.LpBinary)
         return matrix
 
     @staticmethod

@@ -31,8 +31,7 @@ class CasePillowTest(TestCase):
 
     def setUp(self):
         super(CasePillowTest, self).setUp()
-        self.process_case_changes = process_pillow_changes('DefaultChangeFeedPillow')
-        self.process_case_changes.add_pillow('case-pillow', {'skip_ucr': True})
+        self.process_case_changes = process_pillow_changes('case-pillow', {'skip_ucr': True})
         FormProcessorTestUtils.delete_all_cases()
 
     def tearDown(self):

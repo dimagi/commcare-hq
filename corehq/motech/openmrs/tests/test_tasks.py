@@ -7,9 +7,9 @@ from contextlib import contextmanager
 
 from django.test import SimpleTestCase
 
+import pytest
 import pytz
 from unittest.mock import patch
-from nose.tools import assert_raises
 from requests.exceptions import ConnectTimeout, ReadTimeout
 
 from corehq.apps.groups.models import Group
@@ -195,7 +195,7 @@ def test_bad_data_type():
         'property': 'data_proxima_consulta'
     }
     with get_importer(bad_column_mapping) as importer:
-        with assert_raises(ConfigurationError, msg=re.compile(re.escape(
+        with pytest.raises(ConfigurationError, match=re.compile(re.escape(
             'Errors importing from <OpenmrsImporter None admin@http://www.example.com/openmrs>:\n'
             'Unable to deserialize value 1551564000000 '
             'in column "data_proxima_consulta" '

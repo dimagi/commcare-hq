@@ -1,6 +1,5 @@
 from django.test import SimpleTestCase
 
-from nose.tools import assert_false
 
 from corehq.motech.openmrs.const import OPENMRS_DATA_TYPE_BOOLEAN
 from corehq.motech.openmrs.finders import (
@@ -119,7 +118,7 @@ class PatientFinderTests(SimpleTestCase):
 
 def test_constant_false():
     info = CaseTriggerInfo('test-domain', '123456')
-    assert_false(get_value(constant_false, info))
+    assert not get_value(constant_false, info)
 
 
 class WeightedPropertyPatientFinderTests(SimpleTestCase):

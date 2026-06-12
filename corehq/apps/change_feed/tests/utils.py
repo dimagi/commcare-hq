@@ -2,7 +2,7 @@ from django.conf import settings
 
 from kafka import KafkaConsumer
 from kafka.errors import KafkaUnavailableError
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from corehq.util.test_utils import trap_extra_setup
 

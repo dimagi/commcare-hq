@@ -11,7 +11,7 @@ from django.test import SimpleTestCase, TestCase
 import attr
 from dateutil.tz import tzoffset, tzutc
 from lxml import etree
-from nose.tools import assert_equal, assert_is_none, assert_raises
+import pytest
 from corehq.motech.models import ConnectionSettings
 
 import corehq.motech.openmrs.atom_feed
@@ -466,7 +466,7 @@ def test_get_feed_xml_feed_does_not_exist():
         domain_name='test_domain',
         get=lambda url: response,
     )
-    with assert_raises(OpenmrsFeedRuntimeException):
+    with pytest.raises(OpenmrsFeedRuntimeException):
         get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, page)
     requests.notify_exception.assert_called_with(
         'Domain "test_domain": Page does not exist in Atom feed '
@@ -496,7 +496,7 @@ def test_get_feed_xml_feedid_zero():
         domain_name='test_domain',
         get=lambda url: response,
     )
-    with assert_raises(OpenmrsFeedRuntimeException):
+    with pytest.raises(OpenmrsFeedRuntimeException):
         get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, '0')
     requests.notify_exception.assert_called_with(
         f'Domain "test_domain": Page "{page}" is not valid in Atom feed '
@@ -519,7 +519,7 @@ def test_get_feed_xml_500():
         domain_name='test_domain',
         get=lambda url: response,
     )
-    with assert_raises(OpenmrsException):
+    with pytest.raises(OpenmrsException):
         get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, page)
     requests.notify_exception.assert_called_with(
         'Domain "test_domain": Unrecognized error in Atom feed '
@@ -541,7 +541,7 @@ def test_get_feed_xml_bad_xml():
         domain_name='test_domain',
         get=lambda url: response,
     )
-    with assert_raises(OpenmrsFeedSyntaxError):
+    with pytest.raises(OpenmrsFeedSyntaxError):
         get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, page)
     requests.notify_exception.assert_called_with(
         'Opening and ending tag mismatch: body line 1 and html, line 1, '
@@ -576,8 +576,8 @@ def test_get_feed_updates():
 
 def test_status_defaults():
     status = AtomFeedStatus()
-    assert_is_none(status.last_polled_at)
-    assert_equal(status.last_page, 'recent')
+    assert status.last_polled_at is None
+    assert status.last_page == 'recent'
 
 
 def test_doctests():

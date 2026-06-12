@@ -4,11 +4,9 @@ from collections import namedtuple
 from django.conf import settings
 from django.db import IntegrityError
 
-import six
 from celery.result import GroupResult
 
 from corehq.util.metrics import metrics_counter
-from soil.exceptions import TaskFailedError
 
 TaskProgress = namedtuple('TaskProgress',
                           ['current', 'total', 'percent', 'error', 'error_message'])
@@ -168,7 +166,7 @@ def get_task_status(task, is_multiple_download_task=False):
             context_result = result and result.get('messages')
         elif result and isinstance(result, Exception):
             exception = result
-            context_error = six.text_type(result)
+            context_error = str(result)
             if '\t' in context_error:
                 context_error = [err for err in context_error.split('\t') if err]
         elif result and result.get('errors'):

@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy, gettext_noop
 
 from django_prbac.utils import has_privilege
 from memoized import memoized
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
@@ -29,6 +29,7 @@ from corehq.apps.accounting.views import (
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.builds.views import EditMenuView
+from corehq.apps.case_search.endpoint_views import CaseSearchEndpointsView
 from corehq.apps.case_search.views import CSQLFixtureExpressionView
 from corehq.apps.data_cleaning.decorators import (
     bulk_data_cleaning_enabled_for_request,
@@ -633,6 +634,12 @@ class ProjectDataTab(UITab):
                 'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
             }]])
 
+        if toggles.CASE_SEARCH_ENDPOINTS.enabled(self.domain):
+            items.append([_('Case Search Endpoints'), [{
+                'title': _(CaseSearchEndpointsView.page_title),
+                'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain]),
+            }]])
+
         if self._can_view_data_dictionary:
             items.append([DataDictionaryView.page_title, [{
                 'title': DataDictionaryView.page_title,
@@ -1192,40 +1199,6 @@ class ApplicationsTab(UITab):
                 url=(reverse('default_new_app', args=[self.domain])),
             ))
         return submenu_context
-
-    @property
-    @memoized
-    def sidebar_items(self):
-        return [
-            (_("Application Test Flows"), [
-                {
-                    'title': "Workflow List",
-                    'url': reverse("app_execution:workflow_list", args=[self.domain]),
-                    'subpages': [
-                        {
-                            'title': _("New"),
-                            'urlname': "new_workflow",
-                        },
-                        {
-                            'title': _("Edit"),
-                            'urlname': "edit_workflow",
-                        },
-                        {
-                            'title': _("Run"),
-                            'urlname': "test_workflow",
-                        },
-                        {
-                            'title': _("Logs"),
-                            'urlname': "workflow_logs",
-                        },
-                        {
-                            'title': _("Log Details"),
-                            'urlname': "workflow_log",
-                        },
-                    ],
-                },
-            ]),
-        ]
 
     @property
     def _is_viewable(self):

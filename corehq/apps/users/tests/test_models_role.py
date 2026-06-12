@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase, TestCase
 from field_audit.models import AuditEvent
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import HqPermissions
