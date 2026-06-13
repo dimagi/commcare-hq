@@ -140,7 +140,7 @@ jobs:
     - name: Rebuild vellum-staging
       if: steps.vellum-check.outputs.needs-rebuild == 'true'
       env:
-        GIT_EDITOR: 'true'
+        GIT_EDITOR: 'true'  # bypass "git commit --edit" in vellum-to-hq
       run: uv run --with sh scripts/vellum-to-hq staging --no-test --push --vellum-dir=./vellum-repo
     - name: Rebuild staging
       run: ./scripts/rebuildstaging
