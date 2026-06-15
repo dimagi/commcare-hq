@@ -188,11 +188,14 @@ def _lexicographic_greater_than(fields, values):
     """Build the tuple comparison ``(a, b, ...) > (va, vb, ...)`` as a Q
     expression, expanding it to ``a > va OR (a = va AND b > vb) OR ...``.
 
-    For a compound key it also ANDs a redundant ``a >= va`` on the leading
-    field. It's implied by the comparison, but Postgres won't derive a bound
-    from inside the OR [1], so the explicit ``>=`` is what lets it seek ``a``'s
-    index instead of scanning from the start. This acts as a query planner hint:
-    it makes a seek on ``a``'s index one of the options the planner can choose.
+    TODO: for a compound key this OR form can't seek the leading field's own
+    index -- Postgres won't derive a bound on ``a`` from inside the OR [1], so it
+    scans from the start. Callers that page a child model by its parent's id avoid
+    this by seeking the parent's index via ``use_fk_index_hint`` instead. A
+    single-table compound-key caller that wanted a leading-index seek would need
+    to AND back a redundant ``a >= va`` (a planner hint), or better, switch to a
+    row-value comparison ``(a, b, ...) > (va, vb, ...)``, which Postgres supports
+    and can seek with [1].
 
     [1] https://use-the-index-luke.com/sql/partial-results/fetch-next-page#sb-equivalent-logic
     """
@@ -200,8 +203,6 @@ def _lexicographic_greater_than(fields, values):
     for index, (field, value) in enumerate(zip(fields, values)):
         ties = dict(zip(fields[:index], values[:index]))
         condition |= Q(**ties, **{f"{field}__gt": value})
-    if len(fields) > 1:
-        condition = Q(**{f"{fields[0]}__gte": values[0]}) & condition
     return condition
 
 
