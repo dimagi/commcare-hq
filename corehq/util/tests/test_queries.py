@@ -1,12 +1,80 @@
+from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
 from django.contrib.auth.models import User
 from django.db import connections
+from django.db.models import Q
 from django.db.utils import InterfaceError, OperationalError
 from django.test.testcases import TestCase
 
 from corehq.util import queries
-from corehq.util.queries import queryset_to_iterator
+from corehq.util.queries import (
+    _lexicographic_greater_than,
+    _validate_pagination_index,
+    queryset_to_iterator,
+)
+
+
+def test_lexicographic_greater_than_single_field():
+    assert _lexicographic_greater_than(('id',), (5,)) == Q(id__gt=5)
+
+
+def test_lexicographic_greater_than_multiple_fields():
+    # the leading a >= va is redundant but lets Postgres seek a's index
+    assert (
+        _lexicographic_greater_than(('a', 'b'), (1, 2))
+        == Q(a__gte=1) & (Q(a__gt=1) | Q(a=1, b__gt=2))
+    )
+    assert (
+        _lexicographic_greater_than(('a', 'b', 'c'), (1, 2, 3))
+        == Q(a__gte=1) & (Q(a__gt=1) | Q(a=1, b__gt=2) | Q(a=1, b=2, c__gt=3))
+    )
+
+
+def test_lexicographic_greater_than_relation_path():
+    # the seek key can point at a joined table's column (e.g. case__case_id)
+    assert (
+        _lexicographic_greater_than(('case__case_id', 'id'), ('abc', 5))
+        == Q(case__case_id__gte='abc') & (Q(case__case_id__gt='abc') | Q(case__case_id='abc', id__gt=5))
+    )
+
+
+def test_validate_pagination_index_accepts_a_real_fk_traversal():
+    from corehq.form_processor.models import CaseTransaction
+    # case_id is the stored column of CaseTransaction.case; case__case_id is its target
+    _validate_pagination_index(CaseTransaction, ('case_id', 'pk'), 'case__case_id')  # no raise
+
+
+@pytest.mark.parametrize("pagination_key, pagination_index", [
+    (('pk', 'case_id'), 'case__case_id'),  # leading key isn't backed by a foreign key
+    (('case_id', 'pk'), 'case_id'),        # missing the foreign key traversal
+    (('case_id', 'pk'), 'case__domain'),   # right foreign key, wrong target column
+])
+def test_validate_pagination_index_rejects_value_inequivalent_paths(pagination_key, pagination_index):
+    from corehq.form_processor.models import CaseTransaction
+    with pytest.raises(ValueError):
+        _validate_pagination_index(CaseTransaction, pagination_key, pagination_index)
+
+
+def test_pagination_index_seeks_on_the_index_not_the_cursor_key():
+    # The cursor is read from pagination_key ('case_id'/'pk'), but the WHERE seek
+    # is built from pagination_index ('case__case_id') -- the parent's column.
+    from corehq.form_processor.models import CaseTransaction
+    # _fetch_chunk is patched, so the queryset is never executed against the db
+    queryset = CaseTransaction.objects.using('default')
+    chunks = [[SimpleNamespace(case_id='abc', pk=5)], []]
+    with patch.object(queries, '_fetch_chunk', side_effect=chunks), \
+            patch.object(queries, '_lexicographic_greater_than',
+                         wraps=queries._lexicographic_greater_than) as build_seek:
+        list(queryset_to_iterator(
+            queryset, CaseTransaction, limit=1, ignore_ordering=True,
+            pagination_key=('case_id', 'pk'), pagination_index='case__case_id',
+        ))
+
+    assert build_seek.call_args_list  # paged past the first chunk
+    assert all(call.args[0] == ('case__case_id', 'pk') for call in build_seek.call_args_list)
+    assert all(call.args[1] == ('abc', 5) for call in build_seek.call_args_list)
 
 
 class TestQuerysetToIterator(TestCase):
@@ -34,6 +102,33 @@ class TestQuerysetToIterator(TestCase):
             # query 3: Users 9, 10
             # query 4: Check that there are no users past #10
             all_users = list(queryset_to_iterator(query, User, limit=4))
+
+        self.assertEqual(
+            [u.username for u in all_users],
+            [u.username for u in self.users],
+        )
+
+    def test_pagination_key_multiple_fields(self):
+        query = User.objects.filter(last_name="Tenenbaum")
+
+        # All users share a last_name, so paging hinges on the pk tie-breaker
+        with self.assertNumQueries(4):
+            all_users = list(
+                queryset_to_iterator(query, User, limit=4, pagination_key=('last_name', 'pk'))
+            )
+
+        self.assertEqual(
+            [u.username for u in all_users],
+            [u.username for u in self.users],
+        )
+
+    def test_pagination_key_pk_first(self):
+        query = User.objects.filter(last_name="Tenenbaum")
+
+        with self.assertNumQueries(4):
+            all_users = list(
+                queryset_to_iterator(query, User, limit=4, pagination_key=('pk', 'username'))
+            )
 
         self.assertEqual(
             [u.username for u in all_users],
