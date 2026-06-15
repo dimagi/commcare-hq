@@ -61,13 +61,11 @@ def _build_my_role(couch_user, domain):
 def _resolve_item_names(domain, list_field, raw_items):
     """Map raw IDs to user-facing names; unknown IDs fall through unchanged."""
     name_map = _name_map_for(domain, list_field)
-    if name_map is None:
-        return raw_items
     return [name_map.get(item, item) for item in raw_items]
 
 
 def _name_map_for(domain, list_field):
-    """Build the {raw_id: friendly_name} map for one parameterized list, or None."""
+    """Build the {raw_id: friendly_name} map for one parameterized list."""
     if list_field == 'view_report_list':
         return {r['path']: r['name'] for r in get_possible_reports(domain)}
 
@@ -92,4 +90,4 @@ def _name_map_for(domain, list_field):
             return {}
         return {str(profile.id): profile.name for profile in definition.get_profiles()}
 
-    return None
+    return {}
