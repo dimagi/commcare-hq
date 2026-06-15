@@ -10,8 +10,10 @@ from django.utils.translation import gettext_lazy
 
 from corehq import toggles
 from corehq.apps.case_search.endpoint_capability import (
-    MAX_QUERY_DEPTH,
     get_capability,
+)
+from corehq.apps.case_search.filter_spec import (
+    MAX_QUERY_DEPTH,
     validate_filter_spec,
 )
 from corehq.apps.case_search.models import (
