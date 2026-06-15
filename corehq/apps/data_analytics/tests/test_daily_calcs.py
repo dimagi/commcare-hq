@@ -47,9 +47,23 @@ class TestCalcWebUsersAccessed30d(TestCase):
         user_adapter.index(user, refresh=True)
         return user
 
-    def test_counts_web_users_accessed_in_last_30_days(self):
+    def test_counts_web_users_accessed_recently(self):
         today = date.today()
         self._make_web_user('recent', self.domain_obj.name, today)
+        assert _calc_web_users_accessed_30d(DomainContext(self.domain_obj)) == 1
+
+    def test_counts_web_users_with_other_domain_memberships_accessed_recently(self):
+        today = date.today()
+        other_domain_obj = create_domain('web-access-other')
+        self.addCleanup(other_domain_obj.delete)
+
+        # Multi-domain member who was active in this domain -> included in count.
+        other_domain_user = self._make_web_user('elsewhere', 'web-access-other', None)
+        other_domain_user.add_domain_membership(self.domain_obj.name)
+        other_domain_user.get_domain_membership(self.domain_obj.name).last_accessed = today
+        other_domain_user.save()
+        user_adapter.index(other_domain_user, refresh=True)
+
         assert _calc_web_users_accessed_30d(DomainContext(self.domain_obj)) == 1
 
     def test_counts_web_users_accessed_30_days_ago(self):
@@ -75,6 +89,7 @@ class TestCalcWebUsersAccessed30d(TestCase):
         other_domain_user = self._make_web_user('elsewhere', 'web-access-other', today)
         other_domain_user.add_domain_membership(self.domain_obj.name)
         other_domain_user.save()
+        user_adapter.index(other_domain_user, refresh=True)
 
         assert _calc_web_users_accessed_30d(DomainContext(self.domain_obj)) == 0
 
