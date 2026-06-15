@@ -9,7 +9,10 @@ from corehq.apps.case_search.endpoint_capability import (
 from corehq.apps.case_search.filter_spec import (
     MAX_GROUP_WIDTH,
     MAX_QUERY_DEPTH,
-    validate_filter_spec,
+    ComponentNode,
+    ConstantInput,
+    GroupNode,
+    parse_filter_spec,
 )
 
 
@@ -60,7 +63,18 @@ def test_valid_simple_spec():
             }
         ],
     }
-    assert validate_filter_spec(spec, 'patient', sample_capability()) == []
+    root, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    assert errors == []
+    assert root == GroupNode(
+        op='all',
+        children=[
+            ComponentNode(
+                field='province',
+                component='equals',
+                inputs={'value': ConstantInput(value='ON')},
+            )
+        ],
+    )
 
 
 @use(sample_capability)
@@ -75,14 +89,37 @@ def test_valid_multi_input_spec():
             'unit': {'type': 'constant', 'value': 'km'},
         },
     }
-    assert validate_filter_spec(spec, 'patient', sample_capability()) == []
+    root, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    assert errors == []
+    assert isinstance(root, ComponentNode)
+    assert set(root.inputs) == {'point', 'distance', 'unit'}
+    assert root.inputs['distance'] == ConstantInput(value='5')
+
+
+@use(sample_capability)
+def test_ast_round_trips_through_json():
+    spec = {
+        'type': 'all',
+        'children': [
+            {
+                'type': 'component',
+                'field': 'province',
+                'component': 'equals',
+                'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
+            }
+        ],
+    }
+    root, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    assert errors == []
+    assert root.to_json() == spec
 
 
 @use(sample_capability)
 def test_invalid_root_type():
-    errors = validate_filter_spec(
+    root, errors = parse_filter_spec(
         {'type': 'invalid'}, 'patient', sample_capability()
     )
+    assert root is None
     assert any('type' in e.lower() for e in errors)
 
 
@@ -94,7 +131,10 @@ def test_date_field_accepts_lt():
         'field': 'dob',
         'inputs': {'value': {'type': 'constant', 'value': '2020-01-01'}},
     }
-    assert validate_filter_spec(spec, 'patient', sample_capability()) == []
+    root, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    assert errors == []
+    assert isinstance(root, ComponentNode)
+    assert root.component == 'lt'
 
 
 @use(sample_capability)
@@ -105,7 +145,8 @@ def test_unknown_field():
         'field': 'nonexistent',
         'inputs': {'value': {'type': 'constant', 'value': 'x'}},
     }
-    errors = validate_filter_spec(spec, 'patient', sample_capability())
+    root, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    assert root is None
     assert any('nonexistent' in e for e in errors)
 
 
@@ -117,7 +158,7 @@ def test_incompatible_component_for_field():
         'field': 'province',
         'inputs': {'point': {'type': 'constant', 'value': '0 0'}},
     }
-    errors = validate_filter_spec(spec, 'patient', sample_capability())
+    _, errors = parse_filter_spec(spec, 'patient', sample_capability())
     assert any('within_distance' in e for e in errors)
 
 
@@ -129,7 +170,7 @@ def test_missing_required_input_slot():
         'field': 'location',
         'inputs': {'point': {'type': 'constant', 'value': '0 0'}},
     }
-    errors = validate_filter_spec(spec, 'patient', sample_capability())
+    _, errors = parse_filter_spec(spec, 'patient', sample_capability())
     assert any('distance' in e for e in errors)
 
 
@@ -142,8 +183,20 @@ def test_non_constant_input_type_rejected():
             'field': 'province',
             'inputs': {'value': {'type': input_type, 'ref': 'some_ref'}},
         }
-        errors = validate_filter_spec(spec, 'patient', sample_capability())
+        _, errors = parse_filter_spec(spec, 'patient', sample_capability())
         assert any('Invalid input type' in e for e in errors), input_type
+
+
+@use(sample_capability)
+def test_non_dict_input_rejected():
+    spec = {
+        'type': 'component',
+        'component': 'equals',
+        'field': 'province',
+        'inputs': {'value': 'not_an_object'},
+    }
+    _, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    assert any('expected object' in e for e in errors)
 
 
 @use(sample_capability)
@@ -159,7 +212,10 @@ def test_none_group_accepted():
             }
         ],
     }
-    assert validate_filter_spec(spec, 'patient', sample_capability()) == []
+    root, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    assert errors == []
+    assert isinstance(root, GroupNode)
+    assert root.op == 'none'
 
 
 @use(sample_capability)
@@ -182,19 +238,27 @@ def test_nested_all_any():
             }
         ],
     }
-    assert validate_filter_spec(spec, 'patient', sample_capability()) == []
+    root, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    assert errors == []
+    assert root.op == 'all'
+    inner = root.children[0]
+    assert isinstance(inner, GroupNode)
+    assert inner.op == 'any'
 
 
 @use(sample_capability)
 def test_empty_children_allowed():
-    spec = {'type': 'all', 'children': []}
-    assert validate_filter_spec(spec, 'patient', sample_capability()) == []
+    root, errors = parse_filter_spec(
+        {'type': 'all', 'children': []}, 'patient', sample_capability()
+    )
+    assert errors == []
+    assert root == GroupNode(op='all', children=[])
 
 
 @use(sample_capability)
 def test_non_dict_child_node_returns_error():
     spec = {'type': 'all', 'children': ['not_a_dict']}
-    errors = validate_filter_spec(spec, 'patient', sample_capability())
+    _, errors = parse_filter_spec(spec, 'patient', sample_capability())
     assert any('str' in e for e in errors)
 
 
@@ -206,21 +270,21 @@ def test_deeply_nested_query_returns_error():
         child = {'type': 'all', 'children': []}
         node['children'] = [child]
         node = child
-    errors = validate_filter_spec(root, 'patient', sample_capability())
+    _, errors = parse_filter_spec(root, 'patient', sample_capability())
     assert any('nested too deeply' in e for e in errors)
 
 
 @use(sample_capability)
 def test_none_group_counts_toward_depth():
-    # Unlike the old `not` wrapper, `none` is a regular group and counts
-    # toward the nesting limit like `all`/`any`.
+    # `none` is a regular group and counts toward the nesting limit like
+    # `all`/`any` (the old `not` wrapper was exempt).
     node = {'type': 'none', 'children': []}
     root = node
     for _ in range(MAX_QUERY_DEPTH + 2):
         child = {'type': 'none', 'children': []}
         node['children'] = [child]
         node = child
-    errors = validate_filter_spec(root, 'patient', sample_capability())
+    _, errors = parse_filter_spec(root, 'patient', sample_capability())
     assert any('nested too deeply' in e for e in errors)
 
 
@@ -230,7 +294,7 @@ def test_group_exceeding_max_width_returns_error():
         'type': 'all',
         'children': [{'type': 'all', 'children': []}] * (MAX_GROUP_WIDTH + 1),
     }
-    errors = validate_filter_spec(spec, 'patient', sample_capability())
+    _, errors = parse_filter_spec(spec, 'patient', sample_capability())
     assert any('too many conditions' in e for e in errors)
 
 
@@ -240,15 +304,14 @@ def test_group_at_max_width_is_valid():
         'type': 'all',
         'children': [{'type': 'all', 'children': []}] * MAX_GROUP_WIDTH,
     }
-    errors = validate_filter_spec(spec, 'patient', sample_capability())
+    _, errors = parse_filter_spec(spec, 'patient', sample_capability())
     assert not any('too many conditions' in e for e in errors)
 
 
 @use(sample_capability)
 def test_total_node_limit_returns_error():
-    # Build a wide-but-shallow tree: root has MAX_GROUP_WIDTH children,
-    # each with 4 children.  No group exceeds the width limit, but total
-    # nodes = 1 + 50 + 50*4 = 251 > MAX_TOTAL_NODES (200).
+    # Wide-but-shallow: 1 + 50 + 50*4 = 251 > MAX_TOTAL_NODES (200). No group
+    # exceeds the width limit, but the total node count does.
     spec = {
         'type': 'all',
         'children': [
@@ -261,5 +324,5 @@ def test_total_node_limit_returns_error():
             for _ in range(MAX_GROUP_WIDTH)
         ],
     }
-    errors = validate_filter_spec(spec, 'patient', sample_capability())
+    _, errors = parse_filter_spec(spec, 'patient', sample_capability())
     assert any('too many nodes' in e for e in errors)

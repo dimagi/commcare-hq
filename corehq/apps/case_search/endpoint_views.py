@@ -14,7 +14,7 @@ from corehq.apps.case_search.endpoint_capability import (
 )
 from corehq.apps.case_search.filter_spec import (
     MAX_QUERY_DEPTH,
-    validate_filter_spec,
+    parse_filter_spec,
 )
 from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
@@ -118,9 +118,10 @@ class CaseSearchEndpointForm(forms.Form):
         # Only run semantic validation when both fields parsed cleanly.
         if query is not None and parameters is not None:
             capability = self.capability or get_capability(self.domain)
-            for error in validate_filter_spec(
+            _, errors = parse_filter_spec(
                 query, cleaned.get('case_type') or '', capability
-            ):
+            )
+            for error in errors:
                 self.add_error(None, error)
         return cleaned
 
@@ -192,7 +193,6 @@ class _CaseSearchEndpointEditBaseView(BaseProjectDataView):
         if self.request.method == 'POST':
             data = self._form.data
             return {
-                'initial_name': data.get('name', ''),
                 'initial_target_type': data.get(
                     'target_type', CaseSearchEndpoint.TargetType.PROJECT_DB
                 ),
