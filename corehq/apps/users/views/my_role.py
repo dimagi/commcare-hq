@@ -64,30 +64,48 @@ def _resolve_item_names(domain, list_field, raw_items):
     return [name_map.get(item, item) for item in raw_items]
 
 
+def _report_name_map(domain):
+    return {r['path']: r['name'] for r in get_possible_reports(domain)}
+
+
+def _tableau_name_map(domain):
+    return {
+        str(viz.id): viz.name
+        for viz in TableauVisualization.objects.filter(domain=domain)
+    }
+
+
+def _web_apps_name_map(domain):
+    return {app._id: app.name for app in get_cloudcare_apps(domain)}
+
+
+def _data_registry_name_map(domain):
+    return {r['slug']: r['name'] for r in get_data_registry_dropdown_options(domain)}
+
+
+def _analytics_roles_name_map(domain):
+    return {r['slug']: r['name'] for r in _commcare_analytics_roles_options()}
+
+
+def _user_profile_name_map(domain):
+    definition = CustomDataFieldsDefinition.get(domain, CUSTOM_USER_DATA_FIELD_TYPE)
+    if definition is None:
+        return {}
+    return {str(profile.id): profile.name for profile in definition.get_profiles()}
+
+
+_NAME_MAP_BUILDERS = {
+    'view_report_list': _report_name_map,
+    'view_tableau_list': _tableau_name_map,
+    'web_apps_list': _web_apps_name_map,
+    'manage_data_registry_list': _data_registry_name_map,
+    'view_data_registry_contents_list': _data_registry_name_map,
+    'commcare_analytics_roles_list': _analytics_roles_name_map,
+    'edit_user_profile_list': _user_profile_name_map,
+}
+
+
 def _name_map_for(domain, list_field):
     """Build the {raw_id: friendly_name} map for one parameterized list."""
-    if list_field == 'view_report_list':
-        return {r['path']: r['name'] for r in get_possible_reports(domain)}
-
-    if list_field == 'view_tableau_list':
-        return {
-            str(viz.id): viz.name
-            for viz in TableauVisualization.objects.filter(domain=domain)
-        }
-
-    if list_field == 'web_apps_list':
-        return {app._id: app.name for app in get_cloudcare_apps(domain)}
-
-    if list_field in ('manage_data_registry_list', 'view_data_registry_contents_list'):
-        return {r['slug']: r['name'] for r in get_data_registry_dropdown_options(domain)}
-
-    if list_field == 'commcare_analytics_roles_list':
-        return {r['slug']: r['name'] for r in _commcare_analytics_roles_options()}
-
-    if list_field == 'edit_user_profile_list':
-        definition = CustomDataFieldsDefinition.get(domain, CUSTOM_USER_DATA_FIELD_TYPE)
-        if definition is None:
-            return {}
-        return {str(profile.id): profile.name for profile in definition.get_profiles()}
-
-    return {}
+    builder = _NAME_MAP_BUILDERS.get(list_field)
+    return builder(domain) if builder else {}
