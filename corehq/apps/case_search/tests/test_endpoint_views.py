@@ -44,6 +44,7 @@ class EndpointViewTestCase(TestCase):
             version_number=1,
             query={'type': 'and', 'children': []},
             parameters=[],
+            action=CaseSearchEndpointVersion.Action.CREATE,
         )
         endpoint.current_version = version
         endpoint.save(update_fields=['current_version'])
@@ -101,6 +102,8 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         assert endpoint.current_version is not None
         assert endpoint.current_version.version_number == 1
         assert endpoint.current_version.query == {'type': 'and', 'children': []}
+        assert endpoint.current_version.action == CaseSearchEndpointVersion.Action.CREATE
+        assert endpoint.current_version.created_by == self.username
 
     def test_create_with_empty_query_defaults_to_empty_object(self):
         self.client.post(self._new_url(), {
@@ -196,6 +199,8 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
         assert ep.current_version.version_number == 2
         assert ep.current_version.query == new_query
         assert ep.current_version.parameters == [{'name': 'p1'}]
+        assert ep.current_version.action == CaseSearchEndpointVersion.Action.UPDATE
+        assert ep.current_version.created_by == self.username
         assert ep.versions.count() == 2
 
     def test_edit_updates_endpoint_fields(self):
@@ -244,6 +249,12 @@ class TestCaseSearchEndpointDeactivateView(EndpointViewTestCase):
         self.assertRedirects(response, self._list_url())
         ep.refresh_from_db()
         assert not ep.is_active
+        assert ep.current_version is not None
+        assert ep.current_version.action == CaseSearchEndpointVersion.Action.DEACTIVATE
+        assert ep.current_version.created_by == self.username
+        assert ep.current_version.query is None
+        assert ep.current_version.parameters is None
+        assert ep.versions.count() == 2
 
     def test_404_for_wrong_domain(self):
         ep = self._make_endpoint()

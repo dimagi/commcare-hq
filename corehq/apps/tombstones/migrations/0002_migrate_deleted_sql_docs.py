@@ -3,7 +3,6 @@ from collections import defaultdict
 from django.conf import settings
 from django.db import migrations
 
-from corehq.apps.tombstones.models import Tombstone
 from corehq.sql_db.config import plproxy_config
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.django_migrations import skip_on_fresh_install
@@ -20,6 +19,7 @@ def copy_deleted_sql_docs_to_tombstones(apps, schema_editor):
             return
 
     DeletedSQLDoc = apps.get_model('cleanup', 'DeletedSQLDoc')
+    Tombstone = apps.get_model('tombstones', 'Tombstone')
     queryset = DeletedSQLDoc.objects.all().order_by('id')
 
     by_shard = defaultdict(list)
@@ -37,18 +37,18 @@ def copy_deleted_sql_docs_to_tombstones(apps, schema_editor):
         )
         pending += 1
         if pending >= BATCH_SIZE:
-            _bulk_save(by_shard)
+            _bulk_save(Tombstone, by_shard)
             total += pending
             pending = 0
-    _bulk_save(by_shard)
+    _bulk_save(Tombstone, by_shard)
     total += pending
     print(f"Created {total} Tombstone records")
 
 
-def _bulk_save(by_shard):
+def _bulk_save(tombstone_cls, by_shard):
     for db_alias, tombstones in by_shard.items():
         if tombstones:
-            Tombstone.objects.using(db_alias).bulk_create(tombstones, ignore_conflicts=True)
+            tombstone_cls.objects.using(db_alias).bulk_create(tombstones, ignore_conflicts=True)
     by_shard.clear()
 
 

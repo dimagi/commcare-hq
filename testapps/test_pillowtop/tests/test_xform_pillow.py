@@ -33,8 +33,7 @@ class XFormPillowTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.process_form_changes = process_pillow_changes('DefaultChangeFeedPillow')
-        cls.process_form_changes.add_pillow(cls.pillow_id, {'skip_ucr': True})
+        cls.process_form_changes = process_pillow_changes(cls.pillow_id, {'skip_ucr': True})
         cls.user = CommCareUser.create(
             cls.domain,
             cls.username,

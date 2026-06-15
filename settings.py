@@ -391,7 +391,6 @@ HQ_APPS = (
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
-    'corehq.apps.app_execution',
     'corehq.apps.tombstones',
 
     # custom reports
@@ -807,6 +806,8 @@ ANALYTICS_CONFIG = {
 GREENHOUSE_API_KEY = ''
 
 MAPBOX_ACCESS_TOKEN = ''
+
+USERFLOW_TOKEN = ''
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 
@@ -1883,11 +1884,6 @@ PILLOWTOPS = {
             'name': 'AppDbChangeFeedPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
-        },
-        {
-            'name': 'DefaultChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
         },
         {
             'name': 'DomainDbKafkaPillow',
