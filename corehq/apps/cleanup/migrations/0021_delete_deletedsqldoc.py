@@ -7,6 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('cleanup', '0020_delete_app_execution_models'),
+        ('tombstones', '0002_migrate_deleted_sql_docs'),
     ]
 
     operations = [
