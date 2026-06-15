@@ -209,7 +209,7 @@ class MetaDB(object):
             kw["type_code"] = type_code
         return list(BlobMeta.objects.partitioned_query(parent_id).filter(**kw))
 
-    def get_for_parents(self, parent_ids, type_code=None, domain=None):
+    def get_for_parents(self, parent_ids, type_code=None):
         """Get a list of `BlobMeta` objects for the given parent(s)
 
         :param parent_ids: List of `BlobMeta.parent_id` values.
