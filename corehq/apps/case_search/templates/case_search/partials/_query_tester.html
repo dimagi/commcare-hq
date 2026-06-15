@@ -1,0 +1,19 @@
+{% load i18n %}
+{# Query tester: posts the current builder query (the hidden `query` field,  #}
+{# kept current by Alpine) plus the case type to the test endpoint and swaps #}
+{# the rendered results/errors into #test-results. `closest form` also       #}
+{# carries the CSRF token.                                                    #}
+
+<button
+  type="button"
+  class="btn btn-secondary btn-sm"
+  hx-post="{% url 'case_search_endpoint_test' domain %}"
+  hx-include="closest form"
+  hx-target="#test-results"
+  hx-swap="innerHTML"
+  hx-indicator="#test-spinner"
+>
+  {% trans "Test query" %}
+</button>
+
+<div id="test-results"></div>
