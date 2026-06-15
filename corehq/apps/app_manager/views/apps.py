@@ -364,6 +364,7 @@ def get_apps_base_context(request, domain, app):
     context = {
         'lang': lang,
         'langs': langs,
+        'langs_for_ocs_context': app.langs if app and app.langs else [],
         'domain': domain,
         'app': app,
         'linked_name': linked_name,
