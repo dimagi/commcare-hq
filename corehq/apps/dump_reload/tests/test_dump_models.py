@@ -50,7 +50,6 @@ IGNORE_MODELS = {
     "blobs.BlobMigrationState",
     "celery.TaskRecord",
     "cleanup.DeletedCouchDoc",
-    "cleanup.DeletedSQLDoc",
     "contenttypes.ContentType",
     "data_analytics.DomainMetrics",
     "data_analytics.GIRRow",
