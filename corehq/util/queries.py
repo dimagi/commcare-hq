@@ -110,7 +110,7 @@ def paginated_queryset(queryset, chunk_size):
 
 
 def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False,
-                         pagination_key=('pk',), pagination_index=None):
+                         pagination_key=('pk',), use_fk_index_hint=False):
     """
     Pull from queryset in chunks. This is suitable for deep pagination, but
     cannot be used with ordered querysets (results will be sorted by the
@@ -121,12 +121,11 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False,
     jointly unique to guarantee that every matching result is returned -- e.g.
     ``('pk',)`` or ``('owner_id', 'pk')`` is okay, but just ``('owner_id',)`` is not.
 
-    ``pagination_index`` is an optional query planner hint that coaxes the
-    planner into using the index on the specified related-table field, which
-    must be value-equivalent to the leading field of pagination_key, working
-    around the fact that Postgres won't carry an inequality in the WHERE clause
-    across a join [1][2]. Example:
-    ``pagination_key=('case_id', 'pk'), pagination_index='case__case_id'``.
+    ``use_fk_index_hint``: when the leading pagination key is a foreign key's
+    stored column (e.g. ``case_id`` backs the ``case`` FK), bound the parent's
+    column each page so Postgres seeks the parent's index -- which it otherwise
+    won't, since it won't carry the keyset's inequality across the join [1][2].
+    Example: ``pagination_key=('case_id', 'pk'), use_fk_index_hint=True``.
 
     Retries on transient database connection failures (bounded at ~31
     minutes total) so long-running iterations survive brief outages.
@@ -139,9 +138,7 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False,
         raise AssertionError("queryset_to_iterator does not respect ordering.  "
                              "Pass ignore_ordering=True to continue.")
 
-    parent_column = None
-    if pagination_index is not None:
-        parent_column = _fk_index_column(model_cls, pagination_key, pagination_index)
+    parent_column = _fk_index_column(model_cls, pagination_key) if use_fk_index_hint else None
     queryset = queryset.order_by(*pagination_key)
     last_doc_values = None
     while True:
@@ -164,16 +161,15 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False,
         last_doc_values = tuple(getattr(doc, key) for key in pagination_key)
 
 
-def _fk_index_column(model_cls, pagination_key, pagination_index):
-    """Validate ``pagination_index`` and return the parent column to bound, as a
-    quoted ``"table"."column"`` SQL fragment (see ``queryset_to_iterator``).
+def _fk_index_column(model_cls, pagination_key):
+    """Return the parent column for the foreign key backing the leading pagination
+    key, as a quoted ``"table"."column"`` SQL fragment (see ``queryset_to_iterator``).
 
-    ``pagination_index`` names a foreign key traversal (e.g. ``case__case_id``)
-    whose value equals the leading pagination key on every row -- a foreign key
-    with ``to_field`` guarantees this, since the child's stored ``<fk>_id`` column
-    *is* the parent's ``to_field``. Exactly one such index is allowable for a given
-    leading key, and only when it is a foreign key column. For example, for
-    ``pagination_key[0] = 'case_id'``, only ``pagination_index='case__case_id'``.
+    The leading key must be a foreign key's stored column (e.g. ``case_id`` backs
+    the ``case`` FK). A foreign key with ``to_field`` guarantees the child's stored
+    ``<fk>_id`` column equals the parent's ``to_field`` on every row, so a bound on
+    the parent column is value-equivalent to the keyset's leading bound -- and,
+    unlike the child column, one Postgres can seek the parent's index with.
     """
     leading_key = pagination_key[0]
     foreign_key = next(
@@ -182,15 +178,8 @@ def _fk_index_column(model_cls, pagination_key, pagination_index):
     )
     if foreign_key is None:
         raise ValueError(
-            f"pagination_index can't be used: pagination_key[0]={leading_key!r} is not a "
-            f"foreign key's column on {model_cls.__name__}, so there's no parent index to seek"
-        )
-    allowable = f"{foreign_key.name}__{foreign_key.target_field.name}"
-    if pagination_index != allowable:
-        raise ValueError(
-            f"if set, pagination_index must be {allowable!r} -- the foreign key backing "
-            f"pagination_key[0]={leading_key!r}, traversed to its target column -- "
-            f"not {pagination_index!r}"
+            f"use_fk_index_hint requires pagination_key[0]={leading_key!r} to be a foreign "
+            f"key's column on {model_cls.__name__}, but none is"
         )
     return f'"{foreign_key.related_model._meta.db_table}"."{foreign_key.target_field.column}"'
 

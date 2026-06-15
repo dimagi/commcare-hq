@@ -65,7 +65,7 @@ class TestSqlChunkSizeFlag:
         limits = []
 
         def capture_limit(queryset, model_class, limit, ignore_ordering=False,
-                          pagination_key=('pk',), pagination_index=None):
+                          pagination_key=('pk',), use_fk_index_hint=False):
             limits.append(limit)
             return iter([])
 

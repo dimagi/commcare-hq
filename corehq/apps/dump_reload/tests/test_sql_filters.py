@@ -112,8 +112,8 @@ class TestMultimediaBlobMetaFilter(TestCase):
 @sharded
 class TestPagingChildModelByParentId(TestCase):
     """Page a case child model over the case__domain join with the seek aimed at
-    the parent's case_id (pagination_index='case__case_id'), and check the keyset
-    returns every transaction exactly once across pages and shards."""
+    the parent's case_id (use_fk_index_hint=True), and check the keyset returns
+    every transaction exactly once across pages and shards."""
     domain = 'test-paging-child-by-parent-id'
 
     @classmethod
@@ -127,7 +127,7 @@ class TestPagingChildModelByParentId(TestCase):
             'form_processor.CaseTransaction',
             SimpleFilter('case__domain'),
             pagination_key=('case_id', 'pk'),
-            pagination_index='case__case_id',
+            use_fk_index_hint=True,
         )
         # chunk_size=2 with 3 cases forces paging across the seek boundary
         transactions = [
@@ -142,10 +142,10 @@ class TestPagingChildModelByParentId(TestCase):
         assert len({(txn.case_id, txn.id) for txn in transactions}) == len(transactions)
 
 
-def test_dump_builders_have_valid_pagination_index():
-    """Guard the dump config: every builder that sets pagination_index must name a
-    foreign key traversal value-equivalent to its leading pagination key. A typo
-    would otherwise pass review and silently return no rows at dump time."""
+def test_dump_builders_with_fk_index_hint_have_a_foreign_key_leading_key():
+    """Guard the dump config: every builder that sets use_fk_index_hint must have a
+    leading pagination key backed by a foreign key (so the parent column can be
+    derived). Otherwise it would raise at dump time."""
     from corehq.apps.dump_reload.sql.dump import APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP
     from corehq.apps.dump_reload.util import get_model_class
     from corehq.util.queries import _fk_index_column
@@ -154,10 +154,10 @@ def test_dump_builders_have_valid_pagination_index():
         builder
         for builders in APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP.values()
         for builder in builders
-        if builder.pagination_index
+        if builder.use_fk_index_hint
     ]
-    assert builders, "expected some dump builders to set pagination_index"
+    assert builders, "expected some dump builders to set use_fk_index_hint"
     for builder in builders:
         _, model_cls = get_model_class(builder.model_label)
-        # raises ValueError unless pagination_index is a valid FK traversal of the leading key
-        _fk_index_column(model_cls, builder.pagination_key, builder.pagination_index)
+        # raises ValueError unless pagination_key[0] is a foreign key's column
+        _fk_index_column(model_cls, builder.pagination_key)

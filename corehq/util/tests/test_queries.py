@@ -10,8 +10,8 @@ from django.test.testcases import TestCase
 
 from corehq.util import queries
 from corehq.util.queries import (
-    _lexicographic_greater_than,
     _fk_index_column,
+    _lexicographic_greater_than,
     queryset_to_iterator,
 )
 
@@ -43,24 +43,23 @@ def test_lexicographic_greater_than_relation_path():
 def test_fk_index_column_returns_the_parent_column():
     from corehq.form_processor.models import CaseTransaction
     # case_id is the stored column of CaseTransaction.case; case__case_id is its target
-    assert (_fk_index_column(CaseTransaction, ('case_id', 'pk'), 'case__case_id')
+    assert (_fk_index_column(CaseTransaction, ('case_id', 'pk'))
             == '"form_processor_commcarecasesql"."case_id"')
 
 
-@pytest.mark.parametrize("pagination_key, pagination_index", [
-    (('pk', 'case_id'), 'case__case_id'),  # leading key isn't backed by a foreign key
-    (('case_id', 'pk'), 'case_id'),        # missing the foreign key traversal
-    (('case_id', 'pk'), 'case__domain'),   # right foreign key, wrong target column
+@pytest.mark.parametrize("pagination_key", [
+    ('pk', 'case_id'),       # pk is not a foreign key's column
+    ('server_date', 'pk'),   # nor is a plain field
 ])
-def test_fk_index_column_rejects_value_inequivalent_paths(pagination_key, pagination_index):
+def test_fk_index_column_rejects_a_leading_key_with_no_foreign_key(pagination_key):
     from corehq.form_processor.models import CaseTransaction
     with pytest.raises(ValueError):
-        _fk_index_column(CaseTransaction, pagination_key, pagination_index)
+        _fk_index_column(CaseTransaction, pagination_key)
 
 
-def test_pagination_index_seeks_the_parent_column_while_keyset_stays_on_the_child():
-    # The keyset is built on the child's own column (pagination_key); pagination_index
-    # adds a raw bound on the parent column so Postgres can seek the parent's index.
+def test_use_fk_index_hint_seeks_the_parent_column_while_keyset_stays_on_the_child():
+    # The keyset is built on the child's own column (pagination_key); the hint adds
+    # a raw bound on the parent column so Postgres can seek the parent's index.
     from corehq.form_processor.models import CaseTransaction
     pages = []
 
@@ -72,7 +71,7 @@ def test_pagination_index_seeks_the_parent_column_while_keyset_stays_on_the_chil
         list(queryset_to_iterator(
             CaseTransaction.objects.using('default'), CaseTransaction, limit=1,
             ignore_ordering=True, pagination_key=('case_id', 'pk'),
-            pagination_index='case__case_id',
+            use_fk_index_hint=True,
         ))
 
     assert len(pages) == 2  # first page, then the seeked page
