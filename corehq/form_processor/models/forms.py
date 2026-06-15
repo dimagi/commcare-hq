@@ -442,7 +442,7 @@ class XFormInstanceManager(RequireDBManager):
                         .filter(domain_filter, form_id__in=form_ids_to_delete)
                         .delete()
                     )
-                if batch_count:
+                if form_ids_to_delete:
                     metas = BlobMeta.objects.using(db_name).filter(
                         domain_filter, parent_id__in=form_ids_to_delete
                     )

@@ -21,7 +21,7 @@ UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME
 
 logger = logging.getLogger(__name__)
 
-# special class used to bypass domain filter in hard_delete_forms
+# special object used to bypass domain filter in hard_delete_forms
 # should only ever be used by permanently_delete_eligible_data
 SENTINEL_DOMAIN = object()
 
