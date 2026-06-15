@@ -20,8 +20,8 @@
 +import previewApp from "app_manager/js/bootstrap5/preview_app";
  import sectionChanger from "app_manager/js/section_changer";
  import "hqwebapp/js/components/inline_edit";  // app, menu, and form names and comments all use these
- import "select2/dist/js/select2.full.min";
-@@ -179,25 +180,30 @@
+ import "app_manager/js/ocs_widget_app_manager_context";  // publishes App Builder context to the OCS chat widget
+@@ -180,25 +181,30 @@
   * @private
   */
  var _initAddItemPopovers = function () {
@@ -67,7 +67,7 @@
              var dataType = $(e.target).closest('button').data('type'),
                  stopSubmit = $(e.target).closest('button').data('stopsubmit') === 'yes',
                  $form;
-@@ -207,7 +213,7 @@
+@@ -208,7 +214,7 @@
              }
  
              var caseAction =  $(e.target).closest('button').data('case-action'),
@@ -76,7 +76,7 @@
                  moduleId = $popoverContent.data("module-unique-id"),
                  $trigger = $('.js-add-new-item[data-module-unique-id="' + moduleId + '"]');
  
-@@ -222,13 +228,13 @@
+@@ -223,13 +229,13 @@
          });
      }).on('click', function (e) {
          e.preventDefault();
@@ -92,7 +92,7 @@
          }
      });
  };
-@@ -343,7 +349,7 @@
+@@ -344,7 +350,7 @@
          });
      }
      function promptToSaveOrdering() {
@@ -101,7 +101,7 @@
      }
      function initSortable($sortable) {
          var options = {
-@@ -480,7 +486,9 @@
+@@ -481,7 +487,9 @@
          }
      });
  
@@ -112,7 +112,7 @@
  
      // https://github.com/twitter/bootstrap/issues/6122
      // this is necessary to get popovers to be able to extend
-@@ -508,13 +516,17 @@
+@@ -509,13 +517,17 @@
      });
  
      // Handling for popup displayed when accessing a deleted app
@@ -137,7 +137,7 @@
  
      // Set up app preview
      previewApp.initPreviewWindow();
-@@ -536,15 +548,15 @@
+@@ -537,15 +549,15 @@
          var $form = $('#new-module-form');
  
          if (moduleType === "case") {
@@ -156,7 +156,7 @@
              $form.submit();
          }
      });
-@@ -586,15 +598,13 @@
+@@ -587,15 +599,13 @@
  
              $caseType.on('change', function () {
                  var valueNoSpaces = $(this).val();
@@ -173,7 +173,7 @@
                  $createBtn.prop('disabled', false);
  
                  if (!valueNoSpaces) {
-@@ -603,9 +613,8 @@
+@@ -604,9 +614,8 @@
                  }
  
                  function displayError(errorMsg) {
@@ -184,7 +184,7 @@
                      $help.hide();
                      $createBtn.prop('disabled', true);
                  }
-@@ -642,14 +651,14 @@
+@@ -643,14 +652,14 @@
          newCaseTypeHiddenInput.val(value);
  
          $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
@@ -202,7 +202,7 @@
      });
  
      // Clear selection when modal is hidden
-@@ -671,7 +680,7 @@
+@@ -672,7 +681,7 @@
      $('.new-module-option').each(function () {
          var type = $(this).data('type');
          if (hoverHelpTexts[type]) {
