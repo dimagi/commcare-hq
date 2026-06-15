@@ -70,7 +70,7 @@ jobs:
     steps:
     - name: Generate GitHub App token
       id: app-token
-      uses: actions/create-github-app-token@v1
+      uses: actions/create-github-app-token@v3
       with:
         app-id: ${{ secrets.STAGING_BRANCHES_APP_ID }}
         private-key: ${{ secrets.STAGING_BRANCHES_APP_PRIVATE_KEY }}
