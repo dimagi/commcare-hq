@@ -1,5 +1,6 @@
 import logging
-from collections import Counter
+from collections import defaultdict
+
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from io import BytesIO
@@ -195,25 +196,6 @@ class XFormInstanceManager(RequireDBManager):
             )
         return result
 
-    def hard_delete_expired_forms(self, commit=False):
-        """
-        Permanently deletes forms that were soft deleted outside of
-        the DATA_RETENTION_WINDOW, meaning the ``deleted_on`` field is
-        older than the current time - the DATA_RETENTION_WINDOW.
-        :param commit: defaults to False. If True, will delete expired forms
-        :return: dictionary of count of deleted forms
-        """
-        expiration_date = get_cutoff_date_for_data_deletion()
-        total_count = {}
-        for db_name in get_db_aliases_for_partitioned_query():
-            queryset = self.using(db_name).filter(deleted_on__lt=expiration_date)
-            if commit:
-                deleted_counts = queryset.delete()[1]
-            else:
-                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
-            total_count = Counter(total_count) + Counter(deleted_counts)
-        return total_count
-
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
         if xmlns:
@@ -391,37 +373,70 @@ class XFormInstanceManager(RequireDBManager):
 
         return count
 
+    def hard_delete_expired_forms(self, commit=False):
+        """
+        Permanently deletes forms that were soft deleted outside of
+        the DATA_RETENTION_WINDOW, meaning the ``deleted_on`` field is
+        older than the current time - the DATA_RETENTION_WINDOW.
+        :param commit: defaults to False. If True, will delete expired forms
+        :return: dictionary of count of deleted forms
+        """
+        from corehq.apps.cleanup.tasks import SENTINEL_DOMAIN
+
+        expiration_date = get_cutoff_date_for_data_deletion()
+        total_count = 0
+        for db_name in get_db_aliases_for_partitioned_query():
+            queryset = (
+                self.using(db_name)
+                .filter(deleted_on__lt=expiration_date)
+                .values_list('form_id', flat=True)
+            )
+            if commit:
+                deleted_counts = self.hard_delete_forms(
+                    SENTINEL_DOMAIN, list(queryset)
+                )
+            else:
+                deleted_counts = queryset.count()
+            total_count += deleted_counts
+        return total_count
+
     def hard_delete_forms(self, domain, form_ids, *, publish_changes=True, leave_tombstones=True):
         """Delete forms permanently
 
+        :param domain: only delete forms in the specified domain.
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
         :param leave_tombstones: If adding a new usage, DO NOT SET THIS TO FALSE.
             The user location mapping case and domain deletion are the only valid
             use cases for not leaving tombstones.
         """
+        from corehq.apps.cleanup.tasks import SENTINEL_DOMAIN
         assert isinstance(form_ids, list)
+
+        domain_filter = Q() if domain == SENTINEL_DOMAIN else Q(domain=domain)
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
             queryset = (
                 self.using(db_name)
-                .filter(domain=domain, form_id__in=split_form_ids)
-                .values_list('form_id', 'deleted_on')
+                .filter(domain_filter, form_id__in=split_form_ids)
+                .values_list('form_id', 'deleted_on', 'domain')
             )
             shard_count = 0
             while results := queryset[:BATCH_SIZE]:
                 hard_deletion_date = datetime.now(tz=UTC)
                 form_ids_to_delete = []
+                form_ids_by_domain = defaultdict(list)
                 tombstones = []
-                for form_id, soft_deleted_on in results:
+                for form_id, soft_deleted_on, _domain in results:
+                    form_ids_by_domain[_domain].append(form_id)
                     form_ids_to_delete.append(form_id)
                     if leave_tombstones:
                         tombstones.append(
                             build_tombstone(
                                 XFormInstance,
                                 form_id,
-                                domain,
+                                _domain,
                                 soft_deleted_on,
                                 hard_deletion_date,
                             )
@@ -433,21 +448,18 @@ class XFormInstanceManager(RequireDBManager):
                     )
                     _, batch_count = (
                         self.using(db_name)
-                        .filter(domain=domain, form_id__in=form_ids_to_delete)
+                        .filter(domain_filter, form_id__in=form_ids_to_delete)
                         .delete()
                     )
+                    if batch_count:
+                        count_mismatch = batch_count != len(form_ids_to_delete)
+                        self.hard_delete_blobs(form_ids_to_delete, verify_deleted=count_mismatch)
+                    if publish_changes:
+                        for _domain, form_ids_in_domain in form_ids_by_domain.items():
+                            self.publish_deleted_forms(_domain, form_ids_in_domain)
 
                 shard_count += batch_count.get(self.model._meta.label, 0)
-
             deleted_count += shard_count
-
-        if deleted_count:
-            count_mismatch = deleted_count != len(form_ids)
-            self.hard_delete_blobs(form_ids, verify_deleted=count_mismatch)
-
-        if publish_changes:
-            self.publish_deleted_forms(domain, form_ids)
-
         return deleted_count
 
     def hard_delete_blobs(self, form_ids, verify_deleted=False):
