@@ -182,6 +182,7 @@
     {% registerurl 'send_mobile_reminder' %}  {# used by mobile reminder popup below #}
     {% if domain %}
       {% registerurl 'submit_feedback' domain %}   {# used by feedback knockout widget #}
+      {% registerurl 'my_role' domain %}   {# used by hqwebapp/js/ocs_widget_global_context.js #}
     {% endif %}
 
     <div class="commcarehq-urls hide">

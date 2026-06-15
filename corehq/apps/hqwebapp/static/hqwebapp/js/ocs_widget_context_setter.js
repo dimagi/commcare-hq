@@ -32,8 +32,38 @@ function setDomain(domain) {
     _publish();
 }
 
+function setRole(role) {
+    _currentContext.role = role;
+    _publish();
+}
+
+function setIsDimagiAdmin(isDimagiAdmin) {
+    _currentContext.is_dimagi_admin = isDimagiAdmin;
+    _publish();
+}
+
+function setIsDomainAdmin(isDomainAdmin) {
+    _currentContext.is_domain_admin = isDomainAdmin;
+    _publish();
+}
+
+function setIsEnterpriseAdmin(isEnterpriseAdmin) {
+    _currentContext.is_enterprise_admin = isEnterpriseAdmin;
+    _publish();
+}
+
+function setPermissions(permissions) {
+    _currentContext.permissions = permissions;
+    _publish();
+}
+
 export default {
     setUrl: setUrl,
     setPageTitle: setPageTitle,
     setDomain: setDomain,
+    setRole: setRole,
+    setIsDimagiAdmin: setIsDimagiAdmin,
+    setIsDomainAdmin: setIsDomainAdmin,
+    setIsEnterpriseAdmin: setIsEnterpriseAdmin,
+    setPermissions: setPermissions,
 };
