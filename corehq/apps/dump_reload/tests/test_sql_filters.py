@@ -148,7 +148,7 @@ def test_dump_builders_have_valid_pagination_index():
     would otherwise pass review and silently return no rows at dump time."""
     from corehq.apps.dump_reload.sql.dump import APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP
     from corehq.apps.dump_reload.util import get_model_class
-    from corehq.util.queries import _validate_pagination_index
+    from corehq.util.queries import _fk_index_column
 
     builders = [
         builder
@@ -160,4 +160,4 @@ def test_dump_builders_have_valid_pagination_index():
     for builder in builders:
         _, model_cls = get_model_class(builder.model_label)
         # raises ValueError unless pagination_index is a valid FK traversal of the leading key
-        _validate_pagination_index(model_cls, builder.pagination_key, builder.pagination_index)
+        _fk_index_column(model_cls, builder.pagination_key, builder.pagination_index)

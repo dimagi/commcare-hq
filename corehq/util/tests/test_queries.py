@@ -11,7 +11,7 @@ from django.test.testcases import TestCase
 from corehq.util import queries
 from corehq.util.queries import (
     _lexicographic_greater_than,
-    _validate_pagination_index,
+    _fk_index_column,
     queryset_to_iterator,
 )
 
@@ -40,10 +40,11 @@ def test_lexicographic_greater_than_relation_path():
     )
 
 
-def test_validate_pagination_index_accepts_a_real_fk_traversal():
+def test_fk_index_column_returns_the_parent_column():
     from corehq.form_processor.models import CaseTransaction
     # case_id is the stored column of CaseTransaction.case; case__case_id is its target
-    _validate_pagination_index(CaseTransaction, ('case_id', 'pk'), 'case__case_id')  # no raise
+    assert (_fk_index_column(CaseTransaction, ('case_id', 'pk'), 'case__case_id')
+            == '"form_processor_commcarecasesql"."case_id"')
 
 
 @pytest.mark.parametrize("pagination_key, pagination_index", [
@@ -51,30 +52,35 @@ def test_validate_pagination_index_accepts_a_real_fk_traversal():
     (('case_id', 'pk'), 'case_id'),        # missing the foreign key traversal
     (('case_id', 'pk'), 'case__domain'),   # right foreign key, wrong target column
 ])
-def test_validate_pagination_index_rejects_value_inequivalent_paths(pagination_key, pagination_index):
+def test_fk_index_column_rejects_value_inequivalent_paths(pagination_key, pagination_index):
     from corehq.form_processor.models import CaseTransaction
     with pytest.raises(ValueError):
-        _validate_pagination_index(CaseTransaction, pagination_key, pagination_index)
+        _fk_index_column(CaseTransaction, pagination_key, pagination_index)
 
 
-def test_pagination_index_seeks_on_the_index_not_the_cursor_key():
-    # The cursor is read from pagination_key ('case_id'/'pk'), but the WHERE seek
-    # is built from pagination_index ('case__case_id') -- the parent's column.
+def test_pagination_index_seeks_the_parent_column_while_keyset_stays_on_the_child():
+    # The keyset is built on the child's own column (pagination_key); pagination_index
+    # adds a raw bound on the parent column so Postgres can seek the parent's index.
     from corehq.form_processor.models import CaseTransaction
-    # _fetch_chunk is patched, so the queryset is never executed against the db
-    queryset = CaseTransaction.objects.using('default')
-    chunks = [[SimpleNamespace(case_id='abc', pk=5)], []]
-    with patch.object(queries, '_fetch_chunk', side_effect=chunks), \
-            patch.object(queries, '_lexicographic_greater_than',
-                         wraps=queries._lexicographic_greater_than) as build_seek:
+    pages = []
+
+    def capture(queryset, limit):
+        pages.append(str(queryset.query))   # compiles SQL; no db access
+        return [SimpleNamespace(case_id='abc', pk=5)] if len(pages) == 1 else []
+
+    with patch.object(queries, '_fetch_chunk', side_effect=capture):
         list(queryset_to_iterator(
-            queryset, CaseTransaction, limit=1, ignore_ordering=True,
-            pagination_key=('case_id', 'pk'), pagination_index='case__case_id',
+            CaseTransaction.objects.using('default'), CaseTransaction, limit=1,
+            ignore_ordering=True, pagination_key=('case_id', 'pk'),
+            pagination_index='case__case_id',
         ))
 
-    assert build_seek.call_args_list  # paged past the first chunk
-    assert all(call.args[0] == ('case__case_id', 'pk') for call in build_seek.call_args_list)
-    assert all(call.args[1] == ('abc', 5) for call in build_seek.call_args_list)
+    assert len(pages) == 2  # first page, then the seeked page
+    seeked_page = pages[1]
+    # raw bound on the parent column -- the planner hint
+    assert '"form_processor_commcarecasesql"."case_id" >= ' in seeked_page
+    # keyset still on the child's own column
+    assert '"form_processor_casetransaction"."case_id"' in seeked_page
 
 
 class TestQuerysetToIterator(TestCase):

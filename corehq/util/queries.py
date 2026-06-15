@@ -139,18 +139,22 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False,
         raise AssertionError("queryset_to_iterator does not respect ordering.  "
                              "Pass ignore_ordering=True to continue.")
 
-    if pagination_index is None:
-        seek_keys = pagination_key
-    else:
-        _validate_pagination_index(model_cls, pagination_key, pagination_index)
-        seek_keys = (pagination_index, *pagination_key[1:])
+    parent_column = None
+    if pagination_index is not None:
+        parent_column = _fk_index_column(model_cls, pagination_key, pagination_index)
     queryset = queryset.order_by(*pagination_key)
     last_doc_values = None
     while True:
         if last_doc_values is None:
             chunk_qs = queryset
         else:
-            chunk_qs = queryset.filter(_lexicographic_greater_than(seek_keys, last_doc_values))
+            chunk_qs = queryset.filter(_lexicographic_greater_than(pagination_key, last_doc_values))
+            if parent_column is not None:
+                # The parent bound must be raw SQL: the ORM collapses
+                # ``case__case_id`` to the child's own column, which Postgres can't
+                # use to seek the parent. Safe: the column comes from model metadata
+                # and the value is a bound parameter.
+                chunk_qs = chunk_qs.extra(where=[f'{parent_column} >= %s'], params=[last_doc_values[0]])
         chunk = _fetch_chunk_with_retry(chunk_qs, limit, model_cls, last_doc_values)
         if not chunk:
             return
@@ -160,19 +164,16 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False,
         last_doc_values = tuple(getattr(doc, key) for key in pagination_key)
 
 
-def _validate_pagination_index(model_cls, pagination_key, pagination_index):
-    """Confirm ``pagination_index`` is value-equivalent to the leading
-    pagination key (see ``queryset_to_iterator``).
+def _fk_index_column(model_cls, pagination_key, pagination_index):
+    """Validate ``pagination_index`` and return the parent column to bound, as a
+    quoted ``"table"."column"`` SQL fragment (see ``queryset_to_iterator``).
 
-    The next-page start value is read from ``pagination_key[0]`` but the seek
-    compares ``pagination_index``, so they must hold the same value in every
-    row. A foreign key with ``to_field`` guarantees this: the child's stored
-    ``<fk>_id`` column *is* the parent's ``to_field``.
-
-    So currently exactly one ``pagination_index`` is allowable for a given
-    ``pagination_key[0]``, and only when it is a foreign key column. For example,
-    for ``pagination_key[0] = 'case_id'``, only ``pagination_index='case__case_id'``
-    is allowed.
+    ``pagination_index`` names a foreign key traversal (e.g. ``case__case_id``)
+    whose value equals the leading pagination key on every row -- a foreign key
+    with ``to_field`` guarantees this, since the child's stored ``<fk>_id`` column
+    *is* the parent's ``to_field``. Exactly one such index is allowable for a given
+    leading key, and only when it is a foreign key column. For example, for
+    ``pagination_key[0] = 'case_id'``, only ``pagination_index='case__case_id'``.
     """
     leading_key = pagination_key[0]
     foreign_key = next(
@@ -191,6 +192,7 @@ def _validate_pagination_index(model_cls, pagination_key, pagination_index):
             f"pagination_key[0]={leading_key!r}, traversed to its target column -- "
             f"not {pagination_index!r}"
         )
+    return f'"{foreign_key.related_model._meta.db_table}"."{foreign_key.target_field.column}"'
 
 
 def _lexicographic_greater_than(fields, values):
