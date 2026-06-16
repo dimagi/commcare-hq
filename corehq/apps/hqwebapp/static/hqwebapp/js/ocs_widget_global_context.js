@@ -59,8 +59,19 @@ function _observePageTitleChanges() {
 }
 
 function _observeUrlChanges() {
-    window.addEventListener('hashchange', ocsContext.setUrl(window.location.href));
-    window.addEventListener('popstate', ocsContext.setUrl(window.location.href));
+    var update = function () { ocsContext.setUrl(window.location.href); };
+    window.addEventListener('hashchange', update);
+    window.addEventListener('popstate', update);
+    // history.pushState/replaceState don't fire any event natively, so
+    // monkey-patch them. Vellum uses replaceState when the user selects
+    // a different question — without this, the URL change goes unseen.
+    ['pushState', 'replaceState'].forEach(function (method) {
+        var original = history[method];
+        history[method] = function () {
+            original.apply(this, arguments);
+            update();
+        };
+    });
 }
 
 // Only listen to top window to ignore App Preview iframe
