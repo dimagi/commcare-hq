@@ -103,6 +103,19 @@ class CaseTable:
             Column('host_id', Text, index=True),
         ]
 
+    def reflect(self):
+        """Reflect a SQLAlchemy ``Table`` from the database by inspection"""
+        try:
+            return Table(
+                self.case_type,
+                sqlalchemy.MetaData(),
+                schema=self.domain_schema.name,
+                autoload=True,
+                autoload_with=get_project_db_engine(),
+            )
+        except sqlalchemy.exc.NoSuchTableError:
+            return None
+
 
 def create_or_update_project_db(domain):
     metadata = sqlalchemy.MetaData()
