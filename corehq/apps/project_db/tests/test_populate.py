@@ -2,13 +2,18 @@ import datetime
 from decimal import Decimal
 
 import pytest
+from unmagic import use
 
 from corehq.apps.project_db.populate import (
     case_to_row,
     coerce_to_date,
     coerce_to_number,
+    upsert_case,
 )
+from corehq.apps.project_db.table_ddl import CaseTable, get_project_db_engine
 from corehq.form_processor.models import CommCareCase
+
+from .util import project_db_table
 
 
 @pytest.mark.parametrize('value, expected', [
@@ -128,3 +133,17 @@ def test_case_json_keys_cannot_collide_with_fixed_fields():
     # case_json values are namespaced under prop__, so they coexist safely
     assert result['prop__case_id'] == 'fake-id'
     assert result['prop__owner_id'] == 'fake-owner'
+
+
+@use('db', project_db_table('test-upsert', 'patient', {'first_name': 'plain'}))
+def test_upsert():
+    table = CaseTable('test-upsert', 'patient').reflect()
+    with get_project_db_engine().begin() as conn:
+        upsert_case(conn, table, _make_case(case_id='c1', name='Alice'))
+        rows = conn.execute(table.select()).fetchall()
+        assert [row['case_id'] for row in rows] == ['c1']
+
+        upsert_case(conn, table, _make_case(case_id='c1', name='Bob'))
+        rows = conn.execute(table.select()).fetchall()
+        assert len(rows) == 1  # updated in place, not inserted twice
+        assert rows[0]['case_name'] == 'Bob'

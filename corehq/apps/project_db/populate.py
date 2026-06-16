@@ -1,7 +1,23 @@
 import datetime
 from decimal import Decimal, InvalidOperation
 
+from sqlalchemy.dialects.postgresql import insert
+
 from corehq.apps.data_dictionary.models import CaseProperty
+
+
+def upsert_case(conn, table, case):
+    """Insert or update a single case into a project DB table"""
+    table_columns = set(table.c.keys())
+    values = case_to_row(case, table_columns)
+
+    stmt = insert(table).values(**values)
+    update_dict = {k: v for k, v in values.items() if k != 'case_id'}
+    stmt = stmt.on_conflict_do_update(
+        index_elements=['case_id'],
+        set_=update_dict,
+    )
+    conn.execute(stmt)
 
 
 def case_to_row(case, table_columns):
