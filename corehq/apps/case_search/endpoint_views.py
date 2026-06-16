@@ -30,7 +30,8 @@ _ENDPOINT_DECORATORS = [
     toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
 ]
 
-EMPTY_QUERY = {'type': 'all', 'children': []}
+def empty_query():
+    return {'type': 'all', 'children': []}
 
 
 def _get_endpoint(domain, endpoint_id):
@@ -91,7 +92,7 @@ class CaseSearchEndpointForm(forms.Form):
 
     def clean_query(self):
         raw = (self.cleaned_data.get('query') or '').strip() or json.dumps(
-            EMPTY_QUERY
+            empty_query()
         )
         try:
             data = json.loads(raw)
@@ -195,7 +196,7 @@ class _CaseSearchEndpointEditBaseView(BaseProjectDataView):
         if self.request.method == 'POST':
             return {
                 'initial_parameters': self._posted_json('parameters', []),
-                'initial_query': self._posted_json('query', dict(EMPTY_QUERY)),
+                'initial_query': self._posted_json('query', empty_query()),
             }
         return self._default_initial()
 
@@ -237,7 +238,7 @@ class CaseSearchEndpointNewView(_CaseSearchEndpointEditBaseView):
     def _default_initial(self):
         return {
             'initial_parameters': [],
-            'initial_query': dict(EMPTY_QUERY),
+            'initial_query': empty_query(),
         }
 
     def post(self, request, *args, **kwargs):
@@ -300,7 +301,7 @@ class CaseSearchEndpointEditView(_CaseSearchEndpointEditBaseView):
         current = self._endpoint.current_version
         return {
             'initial_parameters': current.parameters if current else [],
-            'initial_query': current.query if current else dict(EMPTY_QUERY),
+            'initial_query': current.query if current else empty_query(),
         }
 
     @property
