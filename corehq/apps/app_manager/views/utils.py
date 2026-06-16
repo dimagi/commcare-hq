@@ -111,7 +111,10 @@ def back_to_main(request, domain, app_id, module_id=None, form_id=None,
 def get_langs(request, app):
     lang = request.GET.get(
         'lang',
-        request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
+        request.COOKIES.get(
+            'lang',
+            app.langs[0] if hasattr(app, 'langs') and app.langs else ''
+        )
     )
     langs = None
     if app and hasattr(app, 'langs'):
