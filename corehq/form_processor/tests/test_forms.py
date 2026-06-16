@@ -451,6 +451,7 @@ class TestHardDeleteForms(TestCase):
         XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id], leave_tombstones=True)
         tombstone = Tombstone.objects.partitioned_get(form.form_id)
         assert tombstone.doc_id == form.form_id
+        assert tombstone.domain == DOMAIN
 
     def test_tombstones_are_not_created(self):
         form = create_form_for_test(DOMAIN)
@@ -476,6 +477,18 @@ class TestHardDeleteForms(TestCase):
         count = XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id])
 
         assert count == 1
+
+    def test_sentinel_value_deletes_across_domains_and_creates_tombstones(self):
+        from corehq.apps.cleanup.tasks import SENTINEL_DOMAIN
+        form = create_form_for_test(DOMAIN)
+        other_form = create_form_for_test('other_domain')
+        deleted = XFormInstance.objects.hard_delete_forms(SENTINEL_DOMAIN, [form.form_id, other_form.form_id])
+        assert deleted == 2
+        for f in [form, other_form]:
+            # should not raise errors
+            Tombstone.objects.partitioned_query(f.form_id).get(
+                doc_id=f.form_id, domain=f.domain, model=XFormInstance
+            )
 
 
 class DeleteAttachmentsFSDBTests(TestCase):
