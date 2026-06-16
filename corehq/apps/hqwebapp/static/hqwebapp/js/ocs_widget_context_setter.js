@@ -76,6 +76,10 @@ function setQuestionTypes(questionTypes) {
     _setFormContextField('question_types', questionTypes);
 }
 
+function setCurrentSelectedQuestion(currentSelectedQuestion) {
+    _setFormContextField('current_selected_question', currentSelectedQuestion);
+}
+
 export {WIDGET_SELECTOR};
 export default {
     setUrl: setUrl,
@@ -89,4 +93,5 @@ export default {
     setAppStructure: setAppStructure,
     setFormXml: setFormXml,
     setQuestionTypes: setQuestionTypes,
+    setCurrentSelectedQuestion: setCurrentSelectedQuestion,
 };

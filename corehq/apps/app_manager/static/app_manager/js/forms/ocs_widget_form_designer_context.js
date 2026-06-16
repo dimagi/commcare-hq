@@ -31,17 +31,34 @@ function _publishQuestionTypes() {
     ocsContext.setQuestionTypes(types);
 }
 
+function _publishCurrentSelectedQuestion() {
+    const mug = _vellum()?.getCurrentlySelectedMug();
+    if (!mug) {
+        ocsContext.setCurrentSelectedQuestion(null);
+        return;
+    }
+    ocsContext.setCurrentSelectedQuestion({
+        type: mug.options?.typeName,
+        question_id: mug.p?.nodeID || undefined,
+        path: mug.hashtagPath || undefined,
+    });
+}
+
 function _initListener() {
-    const form = _vellum()?.data?.core?.form;
+    const vellum = _vellum();
+    const form = vellum?.data?.core?.form;
     if (!form) {
         return;
     }
     _publishXml();
     _publishQuestionTypes();
+    _publishCurrentSelectedQuestion();
     form.on('change', _.debounce(function () {
         _publishXml();
         _publishQuestionTypes();
     }, PUBLISH_DEBOUNCE_MS));
+    // User clicks a different question without editing don't fire form.change.
+    vellum.data.core.$tree.on('select_node.jstree', _publishCurrentSelectedQuestion);
 }
 
 $(function () {
