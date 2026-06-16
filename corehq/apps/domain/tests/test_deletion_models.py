@@ -44,8 +44,6 @@ IGNORE_APPS = {
 
 IGNORE_MODELS = {
     'api.ApiUser',
-    'app_execution.AppWorkflowConfig',
-    'app_execution.AppExecutionLog',
     'app_manager.ExchangeApplication',
     'auth.Group',
     'auth.Permission',
@@ -53,7 +51,6 @@ IGNORE_MODELS = {
     'blobs.BlobMigrationState',
     'blobs.DeletedBlobMeta',
     'cleanup.DeletedCouchDoc',
-    'cleanup.DeletedSQLDoc',
     'domain.DomainAuditRecordEntry',
     'domain.SuperuserProjectEntryRecord',
     'dropbox.DropboxUploadHelper',

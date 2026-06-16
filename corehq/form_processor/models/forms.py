@@ -1,7 +1,7 @@
 import logging
 from collections import Counter
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from io import BytesIO
 
 from django.db import InternalError, models, transaction
@@ -21,6 +21,7 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.cleanup.utils import get_cutoff_date_for_data_deletion
+from corehq.apps.tombstones.models import Tombstone, build_tombstone
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -50,6 +51,7 @@ from .util import attach_prefetch_models, fetchall_as_namedtuple, sort_with_id_l
 log = logging.getLogger(__name__)
 
 ARCHIVE_FORM = "archive_form"
+BATCH_SIZE = 2000
 
 
 class XFormInstanceManager(RequireDBManager):
@@ -389,39 +391,72 @@ class XFormInstanceManager(RequireDBManager):
 
         return count
 
-    def hard_delete_forms(self, domain, form_ids, *, publish_changes=True):
+    def hard_delete_forms(self, domain, form_ids, *, publish_changes=True, leave_tombstones=True):
         """Delete forms permanently
 
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
+        :param leave_tombstones: If adding a new usage, DO NOT SET THIS TO FALSE.
+            The user location mapping case and domain deletion are the only valid
+            use cases for not leaving tombstones.
         """
         assert isinstance(form_ids, list)
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
-            # cascade should delete the operations
-            query = self.using(db_name).filter(domain=domain, form_id__in=split_form_ids)
-            with transaction.atomic():
-                _, deleted_models = query.delete()
-            deleted_count += deleted_models.get(self.model._meta.label, 0)
+            queryset = (
+                self.using(db_name)
+                .filter(domain=domain, form_id__in=split_form_ids)
+                .values_list('form_id', 'deleted_on')
+            )
+            shard_count = 0
+            while results := queryset[:BATCH_SIZE]:
+                hard_deletion_date = datetime.now(tz=UTC)
+                form_ids_to_delete = []
+                tombstones = []
+                for form_id, soft_deleted_on in results:
+                    form_ids_to_delete.append(form_id)
+                    if leave_tombstones:
+                        tombstones.append(
+                            build_tombstone(
+                                XFormInstance,
+                                form_id,
+                                domain,
+                                soft_deleted_on,
+                                hard_deletion_date,
+                            )
+                        )
+
+                with transaction.atomic(using=db_name):
+                    Tombstone.objects.using(db_name).bulk_create(
+                        tombstones, ignore_conflicts=True
+                    )
+                    _, batch_count = (
+                        self.using(db_name)
+                        .filter(domain=domain, form_id__in=form_ids_to_delete)
+                        .delete()
+                    )
+
+                shard_count += batch_count.get(self.model._meta.label, 0)
+
+            deleted_count += shard_count
 
         if deleted_count:
-            if deleted_count != len(form_ids):
-                # in the unlikely event that we didn't delete all forms (because they weren't all
-                # in the specified domain), only delete attachments for forms that were deleted.
-                deleted_forms = [
-                    form_id for form_id in form_ids
-                    if not self.form_exists(form_id)
-                ]
-            else:
-                deleted_forms = form_ids
-            metas = get_blob_db().metadb.get_for_parents(deleted_forms)
-            get_blob_db().bulk_delete(metas=metas)
+            count_mismatch = deleted_count != len(form_ids)
+            self.hard_delete_blobs(form_ids, verify_deleted=count_mismatch)
 
         if publish_changes:
             self.publish_deleted_forms(domain, form_ids)
 
         return deleted_count
+
+    def hard_delete_blobs(self, form_ids, verify_deleted=False):
+        if verify_deleted:
+            deleted_forms = [f for f in form_ids if not self.form_exists(f)]
+        else:
+            deleted_forms = form_ids
+        metas = get_blob_db().metadb.get_for_parents(deleted_forms)
+        get_blob_db().bulk_delete(metas=metas)
 
     @staticmethod
     def publish_deleted_forms(domain, form_ids):

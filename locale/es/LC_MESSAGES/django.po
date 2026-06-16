@@ -10968,16 +10968,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-#| msgid ""
-#| "\n"
-#| "              To use display conditions which reference a case, <br />\n"
-#| "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
-#| "              <em>Display menu and then forms</em> <br />\n"
-#| "              (2) all the forms in the case list must update or close a case,\n"
-#| "              which means registration forms must go in a separate case list, or\n"
-#| "              if your project uses user properties, your display condition may\n"
-#| "              use user properties.\n"
-#| "            "
 msgid ""
 "\n"
 "              To use display conditions which reference a case, <br />\n"
@@ -11136,7 +11126,6 @@ msgid "Form Relevancy Window"
 msgstr "Formulario Ventana de Relevancia"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
-#| msgid "Show this form "
 msgid "Show this form"
 msgstr "Mostrar este formulario"
 
@@ -11156,7 +11145,6 @@ msgid "after the anchor date"
 msgstr "después de la fecha de anclaje"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
-#| msgid "Hide this form "
 msgid "Hide this form"
 msgstr "Ocultar este formulario"
 
@@ -11380,10 +11368,6 @@ msgid "The form which this form will shadow"
 msgstr "El formulario al que este formulario opacará"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/usercase_config.html
-#| msgid ""
-#| "\n"
-#| "      <strong>User Properties</strong> allow you to store data about the user and use that data in forms.\n"
-#| "    "
 msgid ""
 "\n"
 "      <strong>User Properties</strong> allow you to store data about the user\n"
@@ -12398,6 +12382,23 @@ msgid ""
 msgstr ""
 "Agrega al menos una propiedad de búsqueda para activar la búsqueda de casos "
 "en esta lista de casos"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+#| msgid "Back"
+msgid "Backend"
+msgstr "Backend"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+#| msgid "Case Search Endpoints"
+msgid "Case Search Endpoint"
+msgstr "Punto de Acceso de Búsqueda de Casos"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+msgid "-- None --"
+msgstr "-- Ninguno --"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -16176,17 +16177,14 @@ msgstr ""
 #: corehq/apps/case_search/endpoint_views.py
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/tabs/tabclasses.py
-#| msgid "Case Search Settings"
 msgid "Case Search Endpoints"
 msgstr "Puntos finales de Búsqueda de Casos"
 
 #: corehq/apps/case_search/endpoint_views.py
-#| msgid "Case Search and Claim"
 msgid "New Case Search Endpoint"
 msgstr "Nuevo Punto Final de Búsqueda de Casos"
 
 #: corehq/apps/case_search/endpoint_views.py
-#| msgid "Edit Case Data Export"
 msgid "Edit Case Search Endpoint"
 msgstr "Editar Punto Final de Búsqueda de Casos"
 
@@ -16262,6 +16260,23 @@ msgstr "Base de Datos del Proyecto"
 #: corehq/apps/case_search/models.py
 msgid "Elastic Search"
 msgstr "Búsqueda Elástica"
+
+#: corehq/apps/case_search/models.py
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap3/web_users.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/web_users.html
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Deactivate"
+msgstr "Desactivar"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
@@ -16402,23 +16417,19 @@ msgid "Add Criteria"
 msgstr "Agregar criterio"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Edit Form Details"
 msgid "Endpoint Details"
 msgstr "Detalles del Punto Final"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#| msgid "Parent Type"
 msgid "Target Type"
 msgstr "Tipo de Destino"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Select a Case Type"
 msgid "-- Select a case type --"
 msgstr "-- Selecciona un tipo de caso --"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Add Parameter"
 msgid "Parameters"
 msgstr "Parámetros"
 
@@ -16427,38 +16438,28 @@ msgid "JSON array"
 msgstr "Arreglo JSON"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Subject"
 msgid "JSON object"
 msgstr "Objeto JSON"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#| msgid "Server Endpoint"
 msgid "New Endpoint"
 msgstr "Nuevo Punto Final"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/web_users.html
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Deactivate"
-msgstr "Desactivar"
+#| msgid "Updated"
+msgid "Updated On"
+msgstr "Actualizado el"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#| msgid "Deactivated"
+#| msgid "Updated"
+msgid "Updated By"
+msgstr "Actualizado por"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
 msgid "Deactivate Endpoint"
 msgstr "Desactivar Punto Final"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#| msgid "Are you sure you want to delete this invitation?"
 msgid ""
 "Are you sure you want to deactivate this endpoint? This cannot be undone."
 msgstr ""
@@ -16466,9 +16467,17 @@ msgstr ""
 "deshacer."
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#| msgid "SNS Endpoint Secret"
 msgid "No endpoints configured."
 msgstr "No hay puntos finales configurados."
+
+#: corehq/apps/case_search/utils.py
+msgid "Configurable Endpoints are not available"
+msgstr "Los Puntos de Acceso Configurables no están disponibles"
+
+#: corehq/apps/case_search/utils.py
+#| msgid "LocationType '{}' not found"
+msgid "Endpoint '{}' not found"
+msgstr "Punto de acceso '{}' no encontrado"
 
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
@@ -32105,15 +32114,10 @@ msgid "Verified by"
 msgstr "Verificado por"
 
 #: corehq/apps/hqadmin/forms.py
-#| msgid "Days to allow access"
 msgid "Days of temporary access"
 msgstr "Días de acceso temporal"
 
 #: corehq/apps/hqadmin/forms.py
-#| msgid ""
-#| "Number of days the user can access CommCare HQ before needing to re-enable "
-#| "two-factor auth.This is useful if someone has lost their phone and can't "
-#| "immediately re-setup two-factor auth."
 msgid ""
 "Number of days the user can access a Two-Factor Authentication enforced "
 "domain without setting up two-factor authentication again. This is useful if"
@@ -32360,9 +32364,6 @@ msgstr "Acciones del caso"
 
 #: corehq/apps/hqadmin/templates/hqadmin/disable_two_factor.html
 #, python-format
-#| msgid ""
-#| "You are about to temporarily disable two-factor authentication for %(username)s. This\n"
-#| "    compromises their account security, are you sure?"
 msgid ""
 "You are about to reset two-factor authentication for <strong>%(username)s</strong>. This\n"
 "    permanently deletes the user's existing two-factor authentication and cannot be undone, so it compromises\n"
@@ -32532,12 +32533,10 @@ msgid "Is Superuser"
 msgstr "Es superusuario"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
-#| msgid "User Audit Events"
 msgid "View User Audit Report"
 msgstr "Ver Informe de Auditoría de Usuario"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
-#| msgid "Disable Mobile Worker Lockout"
 msgid "Disable/Enable User Account"
 msgstr "Desactivar/Activar Cuenta de Usuario"
 
@@ -35975,12 +35974,10 @@ msgid "Funder"
 msgstr "Financiador"
 
 #: corehq/apps/integration/payments/filters.py
-#| msgid "Campaign Name"
 msgid "Campaign worker role"
 msgstr "Rol de trabajador/a de campaña"
 
 #: corehq/apps/integration/payments/filters.py
-#| msgid "Number of cases created in the date range."
 msgid "Case creation date range"
 msgstr "Rango de fechas de creación de caso"
 
@@ -36076,7 +36073,6 @@ msgid "Currency"
 msgstr "Moneda"
 
 #: corehq/apps/integration/payments/tables.py
-#| msgid "Campaign Name"
 msgid "Campaign Worker Role"
 msgstr "Rol de Trabajador/a de Campaña"
 
@@ -36233,7 +36229,6 @@ msgid "Not Checked"
 msgstr "No verificado"
 
 #: corehq/apps/integration/templates/payments/filters/case_created_date_range.html
-#| msgid "Show All Statements"
 msgid "Show All Dates"
 msgstr "Mostrar todas las fechas"
 
@@ -45503,21 +45498,27 @@ msgstr ""
 
 #: corehq/apps/sms/messages.py
 #, python-brace-format
+#| msgid ""
+#| "Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to {1}"
+#| " to start using SMS with CommCareHQ."
 msgid ""
-"Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to {1}"
-" to start using SMS with CommCareHQ."
+"Welcome to CommCare HQ! Is this phone used by {0}? If yes, reply '123' to "
+"{1} to start using SMS with CommCareHQ."
 msgstr ""
-"¡Bienvenido a CommCareHQ! ¿Es este el teléfono usado por  {0}? Si es así, "
-"responda '123' a {1} para empezar a usar SMS con CommCareHQ."
+"¡Bienvenido/a a CommCare HQ! ¿Este teléfono es usado por {0}? Si es así, "
+"responde '123' a {1} para comenzar a usar SMS con CommCareHQ."
 
 #: corehq/apps/sms/messages.py
 #, python-brace-format
+#| msgid ""
+#| "Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to "
+#| "start using SMS with CommCareHQ."
 msgid ""
-"Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to "
+"Welcome to CommCare HQ! Is this phone used by {0}? If yes, reply '123' to "
 "start using SMS with CommCareHQ."
 msgstr ""
-"¡Bienvenido a CommCare! ¿Este teléfono es usado por {0}? Si es así, responda"
-" '123' para empezar a usar SMS con CommCareHQ."
+"¡Bienvenido/a a CommCare HQ! ¿Este teléfono es usado por {0}? Si es así, "
+"responde '123' para comenzar a usar SMS con CommCareHQ."
 
 #: corehq/apps/sms/messages.py
 msgid "Thank you. This phone has been verified for using SMS with CommCareHQ"

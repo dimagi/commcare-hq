@@ -10563,6 +10563,21 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+msgid "Backend"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+msgid "Case Search Endpoint"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+msgid "-- None --"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search Properties"
 msgstr ""
 
@@ -13912,6 +13927,23 @@ msgstr ""
 msgid "Elastic Search"
 msgstr ""
 
+#: corehq/apps/case_search/models.py
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap3/web_users.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/web_users.html
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Deactivate"
+msgstr ""
+
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
 msgid ""
@@ -14076,19 +14108,11 @@ msgid "New Endpoint"
 msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/web_users.html
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Deactivate"
+msgid "Updated On"
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+msgid "Updated By"
 msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
@@ -14102,6 +14126,14 @@ msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 msgid "No endpoints configured."
+msgstr ""
+
+#: corehq/apps/case_search/utils.py
+msgid "Configurable Endpoints are not available"
+msgstr ""
+
+#: corehq/apps/case_search/utils.py
+msgid "Endpoint '{}' not found"
 msgstr ""
 
 #: corehq/apps/case_search/utils.py
@@ -39385,14 +39417,14 @@ msgstr ""
 #: corehq/apps/sms/messages.py
 #, python-brace-format
 msgid ""
-"Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to {1} "
-"to start using SMS with CommCareHQ."
+"Welcome to CommCare HQ! Is this phone used by {0}? If yes, reply '123' to "
+"{1} to start using SMS with CommCareHQ."
 msgstr ""
 
 #: corehq/apps/sms/messages.py
 #, python-brace-format
 msgid ""
-"Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to "
+"Welcome to CommCare HQ! Is this phone used by {0}? If yes, reply '123' to "
 "start using SMS with CommCareHQ."
 msgstr ""
 

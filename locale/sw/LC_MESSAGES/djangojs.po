@@ -1245,6 +1245,46 @@ msgstr "Iliyohifadhiwa hivi karibuni"
 msgid "[unknown]"
 msgstr "[haijulikani]"
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "Drag question here"
+msgstr "Buruta swali hapa"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is equal to"
+msgstr "ni sawa na"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is not equal to"
+msgstr "si sawa na"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is less than"
+msgstr "ni chini ya"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is less than or equal to"
+msgstr "ni chini au sawa na"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is greater than"
+msgstr "ni zaidi ya"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "is greater than or equal to"
+msgstr "ni zaidi au sawa na"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "has selected value"
+msgstr "ina thamani iliyochaguliwa"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "True when ALL of the expressions are true."
+msgstr "Kweli ikiwa KAULI ZOTE ni kweli."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
+msgid "True when ANY of the expressions are true."
+msgstr "Kweli ikiwa YOYOTE kati ya kauli ni kweli."
+
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
 msgid "loadXFormOrError"
 msgstr "pakiaXFormAuHitilafu"
@@ -1284,46 +1324,6 @@ msgstr "kaguaUhamisho"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
 msgid "jstree"
 msgstr "jstree"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "Drag question here"
-msgstr "Buruta swali hapa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is equal to"
-msgstr "ni sawa na"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is not equal to"
-msgstr "si sawa na"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is less than"
-msgstr "ni chini ya"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is less than or equal to"
-msgstr "ni chini au sawa na"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is greater than"
-msgstr "ni zaidi ya"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "is greater than or equal to"
-msgstr "ni zaidi au sawa na"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "has selected value"
-msgstr "ina thamani iliyochaguliwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "True when ALL of the expressions are true."
-msgstr "Kweli ikiwa KAULI ZOTE ni kweli."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
-msgid "True when ANY of the expressions are true."
-msgstr "Kweli ikiwa YOYOTE kati ya kauli ni kweli."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
@@ -2822,12 +2822,10 @@ msgid "You already have an active call."
 msgstr "Tayari una simu inayoendelea."
 
 #: corehq/apps/integration/static/integration/js/payments/payments_verify.js
-#| msgid "Last 30 Days"
 msgid "Last 7 Days"
 msgstr "Siku 7 Zilizopita"
 
 #: corehq/apps/integration/static/integration/js/payments/payments_verify.js
-#| msgid "Next Month"
 msgid "Last Month"
 msgstr "Mwezi Uliopita"
 
