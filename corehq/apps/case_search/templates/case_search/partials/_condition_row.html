@@ -16,7 +16,7 @@
     :disabled="mode === 'readonly'"
   >
     <option value="" :selected="!node.field">{% trans "-- Field --" %}</option>
-    <template x-for="field in currentFields" :key="field.name">
+    <template x-for="field in Object.values(currentFields)" :key="field.name">
       <option
         :value="field.name"
         x-text="field.name"

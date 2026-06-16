@@ -134,10 +134,7 @@ def _fields_by_name(capability, case_type_name, errors):
     if case_type_name not in case_types:
         errors.append(f"Unknown case type: '{case_type_name}'")
         return {}
-    fields = case_types.get(case_type_name)
-    if not fields:
-        return {}
-    return {field['name']: field for field in fields}
+    return case_types[case_type_name]
 
 
 def _validate_node(node, fields_by_name, errors, depth, counter):

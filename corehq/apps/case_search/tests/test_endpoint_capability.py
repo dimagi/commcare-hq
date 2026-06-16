@@ -70,7 +70,7 @@ def patient_case_type():
 def test_returns_case_types_with_fields():
     cap = get_capability('test-domain')
     assert cap['case_types'].keys() == {'patient'}
-    field_names = [f['name'] for f in cap['case_types']['patient']]
+    field_names = cap['case_types']['patient'].keys()
     assert 'first_name' in field_names
     assert 'dob' in field_names
 
@@ -78,7 +78,7 @@ def test_returns_case_types_with_fields():
 @use(patient_case_type)
 def test_field_has_operations():
     cap = get_capability('test-domain')
-    name_field = next(f for f in cap['case_types']['patient'] if f['name'] == 'first_name')
+    name_field = cap['case_types']['patient']['first_name']
     op_names = [op['name'] for op in name_field['operations']]
     assert 'equals' in op_names
 
@@ -112,7 +112,7 @@ def test_date_lt_gt_labels_match_data_cleaning_phrasing():
 @use(patient_case_type)
 def test_select_field_has_options():
     cap = get_capability('test-domain')
-    status_field = next(f for f in cap['case_types']['patient'] if f['name'] == 'status')
+    status_field = cap['case_types']['patient']['status']
     assert set(status_field['options']) == {'active', 'closed'}
 
 
@@ -140,7 +140,7 @@ def test_excludes_deprecated_properties():
     )
     try:
         cap = get_capability('test-domain')
-        field_names = [f['name'] for f in cap['case_types']['patient']]
+        field_names = cap['case_types']['patient'].keys()
         assert 'legacy_prop' not in field_names
     finally:
         legacy.delete()
@@ -156,7 +156,7 @@ def test_excludes_password_fields():
     )
     try:
         cap = get_capability('test-domain')
-        field_names = [f['name'] for f in cap['case_types']['patient']]
+        field_names = cap['case_types']['patient'].keys()
         assert 'secret' not in field_names
     finally:
         secret.delete()

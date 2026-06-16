@@ -20,29 +20,29 @@ from corehq.apps.case_search.filter_spec import (
 def sample_capability():
     yield {
         'case_types': {
-            'patient': [
-                {
+            'patient': {
+                'province': {
                     'name': 'province',
                     'type': FIELD_TYPE_TEXT,
                     'operations': get_operations_for_field_type(
                         FIELD_TYPE_TEXT
                     ),
                 },
-                {
+                'dob': {
                     'name': 'dob',
                     'type': FIELD_TYPE_DATE,
                     'operations': get_operations_for_field_type(
                         FIELD_TYPE_DATE
                     ),
                 },
-                {
+                'location': {
                     'name': 'location',
                     'type': FIELD_TYPE_GEOPOINT,
                     'operations': get_operations_for_field_type(
                         FIELD_TYPE_GEOPOINT
                     ),
                 },
-            ],
+            },
         },
     }
 

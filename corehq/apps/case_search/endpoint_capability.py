@@ -144,7 +144,7 @@ def get_capability(domain):
 
     result_case_types = {}
     for ct in case_types:
-        fields = []
+        fields = {}
         for prop in ct.active_properties:
             field_type = get_field_type(prop.data_type)
             if field_type is None:
@@ -158,7 +158,7 @@ def get_capability(domain):
                 field['options'] = [
                     av.allowed_value for av in prop.allowed_values.all()
                 ]
-            fields.append(field)
+            fields[prop.name] = field
         result_case_types[ct.name] = fields
 
     return {

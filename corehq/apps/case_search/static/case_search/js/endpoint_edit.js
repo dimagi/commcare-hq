@@ -15,15 +15,11 @@ Alpine.data("endpointForm", () => {
         _nextId: 1,
 
         get currentFields() {
-            if (!this.targetCasetype) {
-                return [];
-            }
-            const fields = this.capability.case_types[this.targetCasetype];
-            return fields || [];
+            return this.capability.case_types[this.targetCasetype] || {};
         },
 
         getFieldDef(fieldName) {
-            return this.currentFields.find((f) => f.name === fieldName) || null;
+            return this.currentFields[fieldName] || null;
         },
 
         getOperationsForField(fieldName) {
