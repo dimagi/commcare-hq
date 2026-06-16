@@ -109,6 +109,12 @@ def back_to_main(request, domain, app_id, module_id=None, form_id=None,
 
 
 def get_langs(request, app):
+    """
+    Returns a tuple ``(lang, langs)``:
+    * lang: The preferred language of the app's languages
+    * langs: A list of the app's languages, with the preferred language
+        prepended
+    """
     lang = request.GET.get(
         'lang',
         request.COOKIES.get(
