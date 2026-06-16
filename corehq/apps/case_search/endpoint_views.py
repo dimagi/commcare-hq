@@ -188,15 +188,12 @@ class _CaseSearchEndpointEditBaseView(BaseProjectDataView):
         return default
 
     def _initial_values(self):
-        """Seed the query builder: defaults on GET, submitted values on a
-        failed POST so the user's work survives re-render."""
+        """Seed the query builder JSON state: defaults on GET, submitted
+        values on a failed POST so the user's work survives re-render. The
+        scalar fields (name, target type, case type) come from the bound form
+        via ``form.<field>.value`` in the template."""
         if self.request.method == 'POST':
-            data = self._form.data
             return {
-                'initial_target_type': data.get(
-                    'target_type', CaseSearchEndpoint.TargetType.PROJECT_DB
-                ),
-                'initial_target_name': data.get('case_type', ''),
                 'initial_parameters': self._posted_json('parameters', []),
                 'initial_query': self._posted_json('query', dict(EMPTY_QUERY)),
             }
@@ -230,13 +227,15 @@ class CaseSearchEndpointNewView(_CaseSearchEndpointEditBaseView):
         return reverse(self.urlname, args=[self.domain])
 
     def _make_form(self, data=None):
-        return CaseSearchEndpointForm(data, domain=self.domain, capability=self.capability)
+        return CaseSearchEndpointForm(
+            data,
+            domain=self.domain,
+            capability=self.capability,
+            initial={'target_type': CaseSearchEndpoint.TargetType.PROJECT_DB},
+        )
 
     def _default_initial(self):
         return {
-            'initial_name': '',
-            'initial_target_type': CaseSearchEndpoint.TargetType.PROJECT_DB,
-            'initial_target_name': '',
             'initial_parameters': [],
             'initial_query': dict(EMPTY_QUERY),
         }
@@ -286,16 +285,20 @@ class CaseSearchEndpointEditView(_CaseSearchEndpointEditBaseView):
 
     def _make_form(self, data=None):
         return CaseSearchEndpointForm(
-            data, domain=self.domain, exclude_pk=self._endpoint.pk,
+            data,
+            domain=self.domain,
+            exclude_pk=self._endpoint.pk,
             capability=self.capability,
+            initial={
+                'name': self._endpoint.name,
+                'target_type': self._endpoint.target_type,
+                'case_type': self._endpoint.target_name,
+            },
         )
 
     def _default_initial(self):
         current = self._endpoint.current_version
         return {
-            'initial_name': self._endpoint.name,
-            'initial_target_type': self._endpoint.target_type,
-            'initial_target_name': self._endpoint.target_name,
             'initial_parameters': current.parameters if current else [],
             'initial_query': current.query if current else dict(EMPTY_QUERY),
         }

@@ -110,6 +110,11 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         assert response.context['endpoint_mode'] == 'new'
         assert response.context['initial_query'] == EMPTY_QUERY
         assert 'capability' in response.context
+        # target_type default is seeded on the form (read via form.<field>.value).
+        form = response.context['form']
+        assert form['target_type'].value() == (
+            CaseSearchEndpoint.TargetType.PROJECT_DB
+        )
 
     def test_create_endpoint(self):
         response = self.client.post(
@@ -212,8 +217,10 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
         assert response.status_code == 200
         assert response.context['endpoint'] == ep
         assert response.context['endpoint_mode'] == 'edit'
-        assert response.context['initial_name'] == ep.name
-        assert response.context['initial_target_name'] == ep.target_name
+        # Scalar fields are seeded on the form (read via form.<field>.value).
+        form = response.context['form']
+        assert form['name'].value() == ep.name
+        assert form['case_type'].value() == ep.target_name
 
     def test_404_for_wrong_domain(self):
         ep = self._make_endpoint()

@@ -17,8 +17,8 @@
 {% block page_content %}
   {% initial_page_data "endpoint_mode" endpoint_mode %}
   {% initial_page_data "initial_name" form.name.value %}
-  {% initial_page_data "initial_target_type" initial_target_type %}
-  {% initial_page_data "initial_target_name" initial_target_name %}
+  {% initial_page_data "initial_target_type" form.target_type.value %}
+  {% initial_page_data "initial_target_name" form.case_type.value %}
   {% initial_page_data "initial_query" initial_query %}
   {% initial_page_data "capability" capability %}
 
