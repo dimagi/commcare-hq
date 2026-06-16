@@ -30,8 +30,10 @@ _DATA_TYPE_MAP = {
     CaseProperty.DataType.NUMBER: FIELD_TYPE_NUMBER,
     CaseProperty.DataType.SELECT: FIELD_TYPE_SELECT,
     CaseProperty.DataType.GPS: FIELD_TYPE_GEOPOINT,
-    # PASSWORD intentionally omitted — returns None
 }
+
+# DataTypes excluded from the query builder (not an oversight).
+_EXCLUDED_DATA_TYPES = {CaseProperty.DataType.PASSWORD}
 
 # Field type -> available operations as (name, label) pairs.
 # `name` is the stable operator identity used by the API and validation;
@@ -104,9 +106,17 @@ COMPONENT_INPUT_SCHEMAS = {
 
 def get_field_type(data_type):
     """Map a CaseProperty.DataType to a query builder field type.
-    Returns None for types that should be excluded (e.g. PASSWORD).
+
+    Returns ``None`` for intentionally excluded types (e.g. PASSWORD).
+    Raises ``ValueError`` for unmapped types — a new ``DataType`` must be
+    explicitly added to ``_DATA_TYPE_MAP`` or ``_EXCLUDED_DATA_TYPES``.
     """
-    return _DATA_TYPE_MAP.get(data_type)
+    if data_type in _EXCLUDED_DATA_TYPES:
+        return None
+    field_type = _DATA_TYPE_MAP.get(data_type)
+    if field_type is None:
+        raise ValueError(f"Unmapped CaseProperty.DataType: {data_type!r}")
+    return field_type
 
 
 def get_operations_for_field_type(field_type):

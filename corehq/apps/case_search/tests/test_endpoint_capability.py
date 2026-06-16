@@ -1,10 +1,13 @@
 from unmagic import fixture, use
 
+import pytest
+
 from corehq.apps.case_search.endpoint_capability import (
     COMPONENT_INPUT_SCHEMAS,
     FIELD_TYPE_DATE,
     FIELD_TYPE_TEXT,
     get_capability,
+    get_field_type,
     get_operations_for_field_type,
 )
 from corehq.apps.data_dictionary.models import (
@@ -157,6 +160,11 @@ def test_excludes_password_fields():
         assert 'secret' not in field_names
     finally:
         secret.delete()
+
+
+def test_get_field_type_raises_for_unmapped_data_type():
+    with pytest.raises(ValueError, match="Unmapped"):
+        get_field_type('totally_unknown_type')
 
 
 @use(patient_case_type)
