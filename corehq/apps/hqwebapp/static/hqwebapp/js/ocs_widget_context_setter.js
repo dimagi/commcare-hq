@@ -80,6 +80,10 @@ function setCurrentSelectedQuestion(currentSelectedQuestion) {
     _setFormContextField('current_selected_question', currentSelectedQuestion);
 }
 
+function setModuleName(moduleName) {
+    _setFormContextField('module_name', moduleName);
+}
+
 export {WIDGET_SELECTOR};
 export default {
     setUrl: setUrl,
@@ -94,4 +98,5 @@ export default {
     setFormXml: setFormXml,
     setQuestionTypes: setQuestionTypes,
     setCurrentSelectedQuestion: setCurrentSelectedQuestion,
+    setModuleName: setModuleName,
 };

@@ -1,5 +1,6 @@
 import $ from "jquery";
 import _ from "underscore";
+import initialPageData from "hqwebapp/js/initial_page_data";
 import ocsContext, {WIDGET_SELECTOR} from "hqwebapp/js/ocs_widget_context_setter";
 
 const FORMDESIGNER = '#formdesigner';
@@ -53,6 +54,7 @@ function _initListener() {
     _publishXml();
     _publishQuestionTypes();
     _publishCurrentSelectedQuestion();
+    ocsContext.setModuleName(initialPageData.get('module_name'));
     form.on('change', _.debounce(function () {
         _publishXml();
         _publishQuestionTypes();
