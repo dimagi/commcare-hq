@@ -135,6 +135,14 @@ def test_date_field_accepts_lt():
 
 
 @use(sample_capability)
+def test_unknown_case_type():
+    spec = {'type': 'all', 'children': []}
+    root, errors = parse_filter_spec(spec, 'nonexistent_type', sample_capability())
+    assert root is None
+    assert any('nonexistent_type' in e for e in errors)
+
+
+@use(sample_capability)
 def test_unknown_field():
     spec = {
         'type': 'component',

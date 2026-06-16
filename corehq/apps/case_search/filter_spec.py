@@ -120,16 +120,21 @@ def parse_filter_spec(spec, case_type_name, capability):
         attrs ``GroupNode``/``ComponentNode``), or ``None`` when ``errors`` (a
         list of message strings) is non-empty.
     """
-    fields_by_name = _fields_by_name(capability, case_type_name)
     errors = []
+    fields_by_name = _fields_by_name(capability, case_type_name, errors)
+
     _validate_node(spec, fields_by_name, errors, depth=0, counter=[0])
     if errors:
         return None, errors
     return node_from_json(spec), errors
 
 
-def _fields_by_name(capability, case_type_name):
-    fields = capability.get('case_types', {}).get(case_type_name)
+def _fields_by_name(capability, case_type_name, errors):
+    case_types = capability.get('case_types', {})
+    if case_type_name not in case_types:
+        errors.append(f"Unknown case type: '{case_type_name}'")
+        return {}
+    fields = case_types.get(case_type_name)
     if not fields:
         return {}
     return {field['name']: field for field in fields}

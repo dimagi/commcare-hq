@@ -3,6 +3,7 @@ import json
 from django.test import TestCase
 from django.urls import reverse
 
+from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
@@ -30,6 +31,9 @@ class EndpointViewTestCase(TestCase):
             cls.domain, cls.username, 'password', None, None, is_admin=True
         )
         cls.addClassCleanup(cls.user.delete, cls.domain, None)
+        for name in ('my_case_type', 'case_type_a', 'new_target'):
+            ct = CaseType.objects.create(domain=cls.domain, name=name)
+            cls.addClassCleanup(ct.delete)
 
     def setUp(self):
         self.client.login(username=self.username, password='password')
