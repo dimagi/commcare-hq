@@ -128,11 +128,7 @@ jobs:
         fi
     - name: Check out Vellum
       if: steps.vellum-check.outputs.needs-rebuild == 'true'
-      uses: actions/checkout@v6
-      with:
-        repository: dimagi/Vellum
-        ref: staging
-        path: vellum-repo
+      run: git clone --depth 1 --branch staging https://github.com/dimagi/Vellum.git ../Vellum
     - uses: actions/setup-node@v6
       if: steps.vellum-check.outputs.needs-rebuild == 'true'
       with:
@@ -141,6 +137,6 @@ jobs:
       if: steps.vellum-check.outputs.needs-rebuild == 'true'
       env:
         GIT_EDITOR: 'true'  # bypass "git commit --edit" in vellum-to-hq
-      run: uv run --with sh scripts/vellum-to-hq staging --no-test --push --vellum-dir=./vellum-repo
+      run: uv run --with sh scripts/vellum-to-hq staging --no-test --push --vellum-dir=../Vellum
     - name: Rebuild staging
       run: ./scripts/rebuildstaging
