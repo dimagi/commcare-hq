@@ -119,7 +119,8 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False,
     ``pagination_key`` is the tuple of field names to paginate by (the pk by
     default), and the order in which results will be yielded. Its fields must be
     jointly unique to guarantee that every matching result is returned -- e.g.
-    ``('pk',)`` or ``('owner_id', 'pk')`` is okay, but just ``('owner_id',)`` is not.
+    ``('pk',)`` or ``('owner_id', 'pk')`` is okay, but ``('owner_id',)`` is not,
+    assuming multiple rows can share an ``owner_id``.
 
     ``use_fk_index_hint``: when the leading pagination key is a foreign key's
     stored column (e.g. ``case_id`` backs the ``case`` FK), bound the parent's
