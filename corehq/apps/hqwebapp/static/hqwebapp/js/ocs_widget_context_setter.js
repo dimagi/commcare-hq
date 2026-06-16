@@ -62,6 +62,16 @@ function setAppStructure(appStructure) {
     _publish();
 }
 
+function _setFormContextField(field, value) {
+    _currentContext.form_context = _currentContext.form_context || {};
+    _currentContext.form_context[field] = value;
+    _publish();
+}
+
+function setFormXml(formXml) {
+    _setFormContextField('form_xml', formXml);
+}
+
 export {WIDGET_SELECTOR};
 export default {
     setUrl: setUrl,
@@ -73,4 +83,5 @@ export default {
     setIsEnterpriseAdmin: setIsEnterpriseAdmin,
     setPermissions: setPermissions,
     setAppStructure: setAppStructure,
+    setFormXml: setFormXml,
 };
