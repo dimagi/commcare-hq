@@ -16,13 +16,32 @@ function _publishXml() {
     }
 }
 
+function _publishQuestionTypes() {
+    const form = _vellum()?.data?.core?.form;
+    if (!form) {
+        return;
+    }
+    const types = {};
+    form.tree.walk(function (mug, _nodeID, processChildren) {
+        if (mug && mug.options?.typeName) {
+            types[mug.absolutePath] = mug.options.typeName;
+        }
+        processChildren();
+    });
+    ocsContext.setQuestionTypes(types);
+}
+
 function _initListener() {
     const form = _vellum()?.data?.core?.form;
     if (!form) {
         return;
     }
     _publishXml();
-    form.on('change', _.debounce(_publishXml, PUBLISH_DEBOUNCE_MS));
+    _publishQuestionTypes();
+    form.on('change', _.debounce(function () {
+        _publishXml();
+        _publishQuestionTypes();
+    }, PUBLISH_DEBOUNCE_MS));
 }
 
 $(function () {

@@ -72,6 +72,10 @@ function setFormXml(formXml) {
     _setFormContextField('form_xml', formXml);
 }
 
+function setQuestionTypes(questionTypes) {
+    _setFormContextField('question_types', questionTypes);
+}
+
 export {WIDGET_SELECTOR};
 export default {
     setUrl: setUrl,
@@ -84,4 +88,5 @@ export default {
     setPermissions: setPermissions,
     setAppStructure: setAppStructure,
     setFormXml: setFormXml,
+    setQuestionTypes: setQuestionTypes,
 };
