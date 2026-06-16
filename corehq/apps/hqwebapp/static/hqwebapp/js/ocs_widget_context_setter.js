@@ -7,7 +7,7 @@
 *  Widget API: https://docs.openchatstudio.com/chat_widget/reference/#page-context
 */
 
-export const WIDGET_SELECTOR = 'open-chat-studio-widget';
+const WIDGET_SELECTOR = 'open-chat-studio-widget';
 let _currentContext = {};
 
 function _publish() {
@@ -62,6 +62,7 @@ function setAppStructure(appStructure) {
     _publish();
 }
 
+export {WIDGET_SELECTOR};
 export default {
     setUrl: setUrl,
     setPageTitle: setPageTitle,
