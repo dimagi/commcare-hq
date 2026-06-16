@@ -1,12 +1,76 @@
+from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
 from django.contrib.auth.models import User
 from django.db import connections
+from django.db.models import Q
 from django.db.utils import InterfaceError, OperationalError
 from django.test.testcases import TestCase
 
 from corehq.util import queries
-from corehq.util.queries import queryset_to_iterator
+from corehq.util.queries import (
+    _fk_index_column,
+    _lexicographic_greater_than,
+    queryset_to_iterator,
+)
+
+
+def test_lexicographic_greater_than_single_field():
+    assert _lexicographic_greater_than(('id',), (5,)) == Q(id__gt=5)
+
+
+def test_lexicographic_greater_than_multiple_fields():
+    assert (
+        _lexicographic_greater_than(('a', 'b'), (1, 2))
+        == (Q(a__gt=1) | Q(a=1, b__gt=2))
+    )
+    assert (
+        _lexicographic_greater_than(('a', 'b', 'c'), (1, 2, 3))
+        == (Q(a__gt=1) | Q(a=1, b__gt=2) | Q(a=1, b=2, c__gt=3))
+    )
+
+
+def test_fk_index_column_returns_the_parent_column():
+    from corehq.form_processor.models import CaseTransaction
+    # case_id is the stored column of CaseTransaction.case; case__case_id is its target
+    assert (_fk_index_column(CaseTransaction, ('case_id', 'pk'))
+            == '"form_processor_commcarecasesql"."case_id"')
+
+
+@pytest.mark.parametrize("pagination_key", [
+    ('pk', 'case_id'),       # pk is not a foreign key's column
+    ('server_date', 'pk'),   # nor is a plain field
+])
+def test_fk_index_column_rejects_a_leading_key_with_no_foreign_key(pagination_key):
+    from corehq.form_processor.models import CaseTransaction
+    with pytest.raises(ValueError):
+        _fk_index_column(CaseTransaction, pagination_key)
+
+
+def test_use_fk_index_hint_seeks_the_parent_column_while_keyset_stays_on_the_child():
+    # The keyset is built on the child's own column (pagination_key); the hint adds
+    # a raw bound on the parent column so Postgres can seek the parent's index.
+    from corehq.form_processor.models import CaseTransaction
+    pages = []
+
+    def capture(queryset, limit):
+        pages.append(str(queryset.query))   # compiles SQL; no db access
+        return [SimpleNamespace(case_id='abc', pk=5)] if len(pages) == 1 else []
+
+    with patch.object(queries, '_fetch_chunk', side_effect=capture):
+        list(queryset_to_iterator(
+            CaseTransaction.objects.using('default'), CaseTransaction, limit=1,
+            ignore_ordering=True, pagination_key=('case_id', 'pk'),
+            use_fk_index_hint=True,
+        ))
+
+    assert len(pages) == 2  # first page, then the seeked page
+    seeked_page = pages[1]
+    # raw bound on the parent column -- the planner hint
+    assert '"form_processor_commcarecasesql"."case_id" >= ' in seeked_page
+    # keyset still on the child's own column
+    assert '"form_processor_casetransaction"."case_id"' in seeked_page
 
 
 class TestQuerysetToIterator(TestCase):
@@ -34,6 +98,33 @@ class TestQuerysetToIterator(TestCase):
             # query 3: Users 9, 10
             # query 4: Check that there are no users past #10
             all_users = list(queryset_to_iterator(query, User, limit=4))
+
+        self.assertEqual(
+            [u.username for u in all_users],
+            [u.username for u in self.users],
+        )
+
+    def test_pagination_key_multiple_fields(self):
+        query = User.objects.filter(last_name="Tenenbaum")
+
+        # All users share a last_name, so paging hinges on the pk tie-breaker
+        with self.assertNumQueries(4):
+            all_users = list(
+                queryset_to_iterator(query, User, limit=4, pagination_key=('last_name', 'pk'))
+            )
+
+        self.assertEqual(
+            [u.username for u in all_users],
+            [u.username for u in self.users],
+        )
+
+    def test_pagination_key_pk_first(self):
+        query = User.objects.filter(last_name="Tenenbaum")
+
+        with self.assertNumQueries(4):
+            all_users = list(
+                queryset_to_iterator(query, User, limit=4, pagination_key=('pk', 'username'))
+            )
 
         self.assertEqual(
             [u.username for u in all_users],

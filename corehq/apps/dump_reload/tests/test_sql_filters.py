@@ -1,10 +1,14 @@
 from django.db import router
 from django.test import TestCase
 
+from casexml.apps.case.mock import CaseFactory
+
 from corehq.apps.dump_reload.sql.filters import MultimediaBlobMetaFilter, FilteredModelIteratorBuilder
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
+from corehq.form_processor.models import CaseTransaction
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.motech.repeaters.models import Repeater
 from corehq.motech.models import ConnectionSettings
@@ -103,3 +107,57 @@ class TestMultimediaBlobMetaFilter(TestCase):
         cls.addClassCleanup(cls.db.close)
         cls.domain = 'test-multimedia'
         cls.db_alias = get_db_aliases_for_partitioned_query()[0]
+
+
+@sharded
+class TestPagingChildModelByParentId(TestCase):
+    """Page a case child model over the case__domain join with the seek aimed at
+    the parent's case_id (use_fk_index_hint=True), and check the keyset returns
+    every transaction exactly once across pages and shards."""
+    domain = 'test-paging-child-by-parent-id'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.cases = [CaseFactory(cls.domain).create_case() for _ in range(3)]
+        cls.addClassCleanup(FormProcessorTestUtils.delete_all_cases_forms_ledgers, cls.domain)
+
+    def test_returns_every_transaction_exactly_once(self):
+        builder = FilteredModelIteratorBuilder(
+            'form_processor.CaseTransaction',
+            SimpleFilter('case__domain'),
+            pagination_key=('case_id', 'pk'),
+            use_fk_index_hint=True,
+        )
+        # chunk_size=2 with 3 cases forces paging across the seek boundary
+        transactions = [
+            txn
+            for db_alias in get_db_aliases_for_partitioned_query()
+            for iterator in builder.build(self.domain, CaseTransaction, db_alias).iterators(2)
+            for txn in iterator
+        ]
+
+        assert {txn.case_id for txn in transactions} == {case.case_id for case in self.cases}
+        # no dupes; (case_id, id) is the unique key -- id (pk) repeats across shards
+        assert len({(txn.case_id, txn.id) for txn in transactions}) == len(transactions)
+
+
+def test_dump_builders_with_fk_index_hint_have_a_foreign_key_leading_key():
+    """Guard the dump config: every builder that sets use_fk_index_hint must have a
+    leading pagination key backed by a foreign key (so the parent column can be
+    derived). Otherwise it would raise at dump time."""
+    from corehq.apps.dump_reload.sql.dump import APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP
+    from corehq.apps.dump_reload.util import get_model_class
+    from corehq.util.queries import _fk_index_column
+
+    builders = [
+        builder
+        for builders in APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP.values()
+        for builder in builders
+        if builder.use_fk_index_hint
+    ]
+    assert builders, "expected some dump builders to set use_fk_index_hint"
+    for builder in builders:
+        _, model_cls = get_model_class(builder.model_label)
+        # raises ValueError unless pagination_key[0] is a foreign key's column
+        _fk_index_column(model_cls, builder.pagination_key)
