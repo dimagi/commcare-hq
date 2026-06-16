@@ -5,6 +5,10 @@ import ocsContext, {WIDGET_SELECTOR} from "hqwebapp/js/ocs_widget_context_setter
 const FORMDESIGNER = '#formdesigner';
 const PUBLISH_DEBOUNCE_MS = 1000;
 
+function _vellum() {
+    return $(FORMDESIGNER).vellum("get");
+}
+
 function _publishXml() {
     const xml = $(FORMDESIGNER).vellum("createXML", {withCaseMappings: true});
     if (xml) {
@@ -13,7 +17,7 @@ function _publishXml() {
 }
 
 function _initListener() {
-    const form = $(FORMDESIGNER).vellum("get")?.data?.core?.form;
+    const form = _vellum()?.data?.core?.form;
     if (!form) {
         return;
     }
