@@ -5,6 +5,22 @@ from sqlalchemy.dialects.postgresql import insert
 
 from corehq.apps.data_dictionary.models import CaseProperty
 
+from .table_ddl import CaseTable, get_project_db_engine
+
+
+def send_to_project_db(domain, cases):
+    """Upsert CommCareCases into the appropriate project DB tables"""
+    tables = {}
+    for case_type in {c.type for c in cases}:
+        if (table := CaseTable(domain, case_type).reflect()) is not None:
+            tables[case_type] = table
+
+    if tables:
+        with get_project_db_engine().begin() as conn:
+            for case in cases:
+                if (table := tables.get(case.type)) is not None:
+                    upsert_case(conn, table, case)
+
 
 def upsert_case(conn, table, case):
     """Insert or update a single case into a project DB table"""

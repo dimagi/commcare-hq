@@ -1,5 +1,6 @@
 import datetime
 from decimal import Decimal
+import uuid
 
 import pytest
 from unmagic import use
@@ -8,6 +9,7 @@ from corehq.apps.project_db.populate import (
     case_to_row,
     coerce_to_date,
     coerce_to_number,
+    send_to_project_db,
     upsert_case,
 )
 from corehq.apps.project_db.table_ddl import CaseTable, get_project_db_engine
@@ -47,7 +49,7 @@ def _make_index(identifier, referenced_id):
 
 def _make_case(case_json=None, indices=None, **fields):
     return CommCareCase(
-        case_id=fields.get('case_id', 'abc123'),
+        case_id=fields.get('case_id', str(uuid.uuid4())),
         domain=fields.get('domain', 'test-domain'),
         type=fields.get('type', 'patient'),
         name=fields.get('name', 'Test Case'),
@@ -147,3 +149,18 @@ def test_upsert():
         rows = conn.execute(table.select()).fetchall()
         assert len(rows) == 1  # updated in place, not inserted twice
         assert rows[0]['case_name'] == 'Bob'
+
+
+@use('db', project_db_table('test-send', 'patient', {'first_name': 'plain'}))
+def test_send_to_project_db():
+    send_to_project_db('test-send', [
+        _make_case({'first_name': 'Alice'}, type='patient'),
+        _make_case({'first_name': 'Bob'}, type='patient'),
+        _make_case({}, type='clinic'),
+    ])
+
+    table = CaseTable('test-send', 'patient').reflect()
+    with get_project_db_engine().begin() as conn:
+        rows = conn.execute(table.select()).fetchall()
+    assert [r[0] for r in rows] == ['Alice', 'Bob']
+    assert CaseTable('test-upsert', 'clinic').reflect() is None
