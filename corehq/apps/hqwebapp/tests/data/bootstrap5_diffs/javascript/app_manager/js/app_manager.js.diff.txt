@@ -20,7 +20,7 @@
 +import previewApp from "app_manager/js/bootstrap5/preview_app";
  import sectionChanger from "app_manager/js/section_changer";
  import "hqwebapp/js/components/inline_edit";  // app, menu, and form names and comments all use these
- import "app_manager/js/ocs_widget_app_manager_context";  // publishes App Builder context to the OCS chat widget
+ import "app_manager/js/ocs_widget_app_manager_context";
 @@ -180,25 +181,30 @@
   * @private
   */
