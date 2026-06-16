@@ -169,4 +169,4 @@ def test_excludes_password_fields():
 def test_component_input_schemas_present():
     cap = get_capability('test-domain')
     assert 'component_input_schemas' in cap
-    assert 'exact_match' in cap['component_input_schemas']
+    assert cap['component_input_schemas']

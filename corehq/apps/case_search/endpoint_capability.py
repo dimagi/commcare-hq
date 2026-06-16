@@ -66,7 +66,6 @@ _OPERATIONS_BY_TYPE = {
     FIELD_TYPE_SELECT: [
         ('selected_any', _('is any')),
         ('selected_all', _('is all')),
-        ('exact_match', _('is exactly')),
         ('is_empty', _('is empty')),
     ],
     FIELD_TYPE_GEOPOINT: [
@@ -83,7 +82,6 @@ _OPERATIONS_BY_TYPE = {
 INPUT_TYPE_MATCH_FIELD = 'match_field'
 
 COMPONENT_INPUT_SCHEMAS = {
-    'exact_match': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'not_equals': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'starts_with': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'selected_any': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
