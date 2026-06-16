@@ -192,7 +192,15 @@ class _CaseSearchEndpointEditBaseView(BaseProjectDataView):
         """Seed the query builder JSON state: defaults on GET, submitted
         values on a failed POST so the user's work survives re-render. The
         scalar fields (name, target type, case type) come from the bound form
-        via ``form.<field>.value`` in the template."""
+        via ``form.<field>.value`` in the template.
+
+        ``query`` and ``parameters`` cannot follow the same pattern because
+        ``initial_page_data`` must receive parsed Python objects (dict/list),
+        not raw JSON strings, so that the Alpine.js query builder is seeded
+        correctly. On a bound (POST) form, ``BoundField.value()`` returns the
+        raw submitted string rather than the cleaned value, so we read from
+        ``cleaned_data`` when available and fall back to re-parsing the raw
+        data ourselves."""
         if self.request.method == 'POST':
             return {
                 'initial_parameters': self._posted_json('parameters', []),
