@@ -18,10 +18,8 @@ Alpine.data("endpointForm", () => {
             if (!this.targetCasetype) {
                 return [];
             }
-            const ct = this.capability.case_types.find(
-                (c) => c.name === this.targetCasetype,
-            );
-            return ct ? ct.fields : [];
+            const fields = this.capability.case_types[this.targetCasetype];
+            return fields || [];
         },
 
         getFieldDef(fieldName) {

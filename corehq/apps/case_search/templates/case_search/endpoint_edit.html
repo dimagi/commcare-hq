@@ -95,8 +95,8 @@
               @change="onCasetypeChange()"
             >
               <option value="">{% trans "-- Select a case type --" %}</option>
-              {% for ct in capability.case_types %}
-                <option value="{{ ct.name }}">{{ ct.name }}</option>
+              {% for ct_name in capability.case_types %}
+                <option value="{{ ct_name }}">{{ ct_name }}</option>
               {% endfor %}
             </select>
             {% for error in form.case_type.errors %}

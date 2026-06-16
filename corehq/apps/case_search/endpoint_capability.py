@@ -132,7 +132,7 @@ def get_capability(domain):
         ),
     )
 
-    result_case_types = []
+    result_case_types = {}
     for ct in case_types:
         fields = []
         for prop in ct.active_properties:
@@ -149,12 +149,7 @@ def get_capability(domain):
                     av.allowed_value for av in prop.allowed_values.all()
                 ]
             fields.append(field)
-        result_case_types.append(
-            {
-                'name': ct.name,
-                'fields': fields,
-            }
-        )
+        result_case_types[ct.name] = fields
 
     return {
         'case_types': result_case_types,

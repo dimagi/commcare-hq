@@ -129,17 +129,10 @@ def parse_filter_spec(spec, case_type_name, capability):
 
 
 def _fields_by_name(capability, case_type_name):
-    case_type = next(
-        (
-            case_type
-            for case_type in capability.get('case_types', [])
-            if case_type['name'] == case_type_name
-        ),
-        None,
-    )
-    if not case_type:
+    fields = capability.get('case_types', {}).get(case_type_name)
+    if not fields:
         return {}
-    return {field['name']: field for field in case_type['fields']}
+    return {field['name']: field for field in fields}
 
 
 def _validate_node(node, fields_by_name, errors, depth, counter):

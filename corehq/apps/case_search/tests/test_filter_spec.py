@@ -19,34 +19,31 @@ from corehq.apps.case_search.filter_spec import (
 @fixture
 def sample_capability():
     yield {
-        'case_types': [
-            {
-                'name': 'patient',
-                'fields': [
-                    {
-                        'name': 'province',
-                        'type': FIELD_TYPE_TEXT,
-                        'operations': get_operations_for_field_type(
-                            FIELD_TYPE_TEXT
-                        ),
-                    },
-                    {
-                        'name': 'dob',
-                        'type': FIELD_TYPE_DATE,
-                        'operations': get_operations_for_field_type(
-                            FIELD_TYPE_DATE
-                        ),
-                    },
-                    {
-                        'name': 'location',
-                        'type': FIELD_TYPE_GEOPOINT,
-                        'operations': get_operations_for_field_type(
-                            FIELD_TYPE_GEOPOINT
-                        ),
-                    },
-                ],
-            }
-        ],
+        'case_types': {
+            'patient': [
+                {
+                    'name': 'province',
+                    'type': FIELD_TYPE_TEXT,
+                    'operations': get_operations_for_field_type(
+                        FIELD_TYPE_TEXT
+                    ),
+                },
+                {
+                    'name': 'dob',
+                    'type': FIELD_TYPE_DATE,
+                    'operations': get_operations_for_field_type(
+                        FIELD_TYPE_DATE
+                    ),
+                },
+                {
+                    'name': 'location',
+                    'type': FIELD_TYPE_GEOPOINT,
+                    'operations': get_operations_for_field_type(
+                        FIELD_TYPE_GEOPOINT
+                    ),
+                },
+            ],
+        },
     }
 
 
