@@ -11,10 +11,10 @@ function _readStructure() {
         app_name: _text(document.querySelector('[data-ocs-app-name]')),
         current_language: initialPageData.get('lang'),
         available_languages: initialPageData.get('langs_for_ocs_context') || [],
-        modules: [].slice.call(document.querySelectorAll('[data-ocs-module]')).map(function (moduleEl) {
+        modules: [...document.querySelectorAll('[data-ocs-module]')].map(function (moduleEl) {
             return {
                 name: _text(moduleEl.querySelector('[data-ocs-module-name]')),
-                forms: [].slice.call(moduleEl.querySelectorAll('[data-ocs-form-name]')).map(_text),
+                forms: [...moduleEl.querySelectorAll('[data-ocs-form-name]')].map(_text),
             };
         }),
     };
