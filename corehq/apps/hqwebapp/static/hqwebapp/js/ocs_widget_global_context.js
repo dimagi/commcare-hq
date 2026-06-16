@@ -34,7 +34,7 @@ function _fetchMyRole() {
             if (data.permissions !== undefined) {
                 ocsContext.setPermissions(data.permissions);
             }
-        })
+        });
 }
 
 function _setInitialContext() {
