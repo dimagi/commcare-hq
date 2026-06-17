@@ -188,6 +188,39 @@ class TestCaseIDFilter(TestCase):
         assert CaseIDFilter().count(self.domain) is None
 
 
+@sharded
+class TestCaseTransactionDumpViaCaseIDFilter(TestCase):
+    domain = 'test-casetxn-caseid-filter'
+    other_domain = 'test-casetxn-caseid-filter-other'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.cases = [CaseFactory(cls.domain).create_case() for _ in range(3)]
+        cls.other_case = CaseFactory(cls.other_domain).create_case()
+        cls.addClassCleanup(FormProcessorTestUtils.delete_all_cases_forms_ledgers, cls.domain)
+        cls.addClassCleanup(FormProcessorTestUtils.delete_all_cases_forms_ledgers, cls.other_domain)
+
+    def test_dumps_exactly_this_domains_transactions(self):
+        builder = FilteredModelIteratorBuilder(
+            'form_processor.CaseTransaction',
+            CaseIDFilter(chunksize=2),  # 3 cases over batches of 2 ids
+            pagination_key=('case_id', 'pk'),
+        )
+        transactions = [
+            txn
+            for db_alias in get_db_aliases_for_partitioned_query()
+            # chunk_size=1 forces queryset_to_iterator to page within each IN batch
+            for iterator in builder.build(self.domain, CaseTransaction, db_alias).iterators(1)
+            for txn in iterator
+        ]
+
+        assert {txn.case_id for txn in transactions} == {case.case_id for case in self.cases}
+        assert self.other_case.case_id not in {txn.case_id for txn in transactions}
+        # no dupes; (case_id, id) is the unique key -- id (pk) repeats across shards
+        assert len({(txn.case_id, txn.id) for txn in transactions}) == len(transactions)
+
+
 def test_dump_builders_with_fk_index_hint_have_a_foreign_key_leading_key():
     """Guard the dump config: every builder that sets use_fk_index_hint must have a
     leading pagination key backed by a foreign key (so the parent column can be
