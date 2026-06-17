@@ -183,6 +183,12 @@ def _fk_index_column(model_cls, pagination_key):
             f"use_fk_index_hint requires pagination_key[0]={leading_key!r} to be a foreign "
             f"key's column on {model_cls.__name__}, but none is"
         )
+    if any('"' in name for name in (foreign_key.related_model._meta.db_table, foreign_key.target_field.column)):
+        # This guard exists because we do not do formal escaping below on these names
+        # which is relatively safe because they're not user input.
+        # If this ever raises for a legitimate reason,
+        # consider using quote_name below and removing this guard
+        raise ValueError(f'Unexpected " in name: {name}')
     return f'"{foreign_key.related_model._meta.db_table}"."{foreign_key.target_field.column}"'
 
 
