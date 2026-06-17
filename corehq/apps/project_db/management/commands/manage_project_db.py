@@ -1,6 +1,8 @@
 from django.core.management.base import BaseCommand, CommandError
 
 import dateutil.parser
+import sqlalchemy
+from sqlalchemy.schema import CreateIndex, CreateTable
 
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.project_db.populate import send_to_project_db
@@ -44,8 +46,13 @@ class Command(BaseCommand):
                 "(ISO 8601, e.g. 2026-01-15 or 2026-01-15T08:00:00)."
             ),
         )
+        parser.add_argument(
+            '--describe',
+            action='store_true',
+            help="Describe the tables in the domain's ProjectDB",
+        )
 
-    def handle(self, domain, sync, drop, populate, since, **options):
+    def handle(self, domain, sync, drop, populate, since, describe, **options):
         if drop and (sync or populate):
             raise CommandError("--drop cannot be combined with --sync or --populate.")
         if since and not populate:
@@ -61,6 +68,8 @@ class Command(BaseCommand):
             with get_project_db_engine().begin() as conn:
                 DomainSchema(domain).drop(conn)
             self.stdout.write("Deleted ProjectDB table")
+        if describe:
+            _describe(domain)
 
 
 def _populate(domain, start_date):
@@ -79,3 +88,24 @@ def _populate_case_type(domain, case_type, start_date, prefix):
     cases = with_progress_bar(iter_all_rows(accessor), length=total,
                               oneline='concise', prefix=f"{prefix}: {case_type}")
     send_to_project_db(domain, case_type, cases)
+
+
+def _describe(domain):
+    engine = get_project_db_engine()
+    metadata = sqlalchemy.MetaData()
+    metadata.reflect(bind=engine, schema=DomainSchema(domain).name)
+    if not metadata.tables:
+        raise CommandError(f"No project DB tables found for domain '{domain}'")
+
+    print(f"Project DB schema for domain: {domain}")
+    with engine.connect() as conn:
+        for table in sorted(metadata.tables.values(), key=lambda t: t.name):
+            row_count = conn.execute(
+                sqlalchemy.select([sqlalchemy.func.count()]).select_from(table)
+            ).scalar()
+            ddl = str(CreateTable(table).compile(dialect=engine.dialect)).strip()
+            print(f"\n-- {row_count} rows")
+            print(f"{ddl};")
+            for index in table.indexes:
+                idx_ddl = str(CreateIndex(index).compile(dialect=engine.dialect)).strip()
+                print(f"{idx_ddl};")
