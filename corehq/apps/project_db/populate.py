@@ -3,37 +3,39 @@ from decimal import Decimal, InvalidOperation
 
 from sqlalchemy.dialects.postgresql import insert
 
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.data_dictionary.models import CaseProperty
 
 from .table_ddl import CaseTable, get_project_db_engine
 
 
-def send_to_project_db(domain, cases):
-    """Upsert CommCareCases into the appropriate project DB tables"""
-    tables = {}
-    for case_type in {c.type for c in cases}:
-        if (table := CaseTable(domain, case_type).reflect()) is not None:
-            tables[case_type] = table
+def send_to_project_db(domain, case_type, cases):
+    """Bulk upsert CommCareCases of a single case type"""
+    engine = get_project_db_engine()
+    table = CaseTable(domain, case_type).reflect()
+    if table is not None:
+        for chunk in chunked(cases, 1000):
+            if not all(c.type == case_type for c in chunk):
+                raise ValueError(f'All cases much be of type {case_type}')
 
-    if tables:
-        with get_project_db_engine().begin() as conn:
-            for case in cases:
-                if (table := tables.get(case.type)) is not None:
-                    upsert_case(conn, table, case)
+            with engine.begin() as conn:
+                upsert_cases(conn, table, chunk)
 
 
-def upsert_case(conn, table, case):
-    """Insert or update a single case into a project DB table"""
-    table_columns = set(table.c.keys())
-    values = case_to_row(case, table_columns)
-
-    stmt = insert(table).values(**values)
-    update_dict = {k: v for k, v in values.items() if k != 'case_id'}
+def upsert_cases(conn, table, cases):
+    """Insert or update cases into a project DB table"""
+    columns = table.c.keys()
+    rows = [case_to_row(case, columns) for case in cases]
+    # Make sure every column is specified
+    rows = [{col: row.get(col, None) for col in columns}
+            for row in rows]
+    stmt = insert(table)
     stmt = stmt.on_conflict_do_update(
         index_elements=['case_id'],
-        set_=update_dict,
+        set_={col: stmt.excluded[col] for col in columns if col != 'case_id'},
     )
-    conn.execute(stmt)
+    conn.execute(stmt, rows)
 
 
 def case_to_row(case, table_columns):

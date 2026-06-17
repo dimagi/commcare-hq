@@ -10,7 +10,7 @@ from corehq.apps.project_db.populate import (
     coerce_to_date,
     coerce_to_number,
     send_to_project_db,
-    upsert_case,
+    upsert_cases,
 )
 from corehq.apps.project_db.table_ddl import CaseTable, get_project_db_engine
 from corehq.form_processor.models import CommCareCase
@@ -141,11 +141,11 @@ def test_case_json_keys_cannot_collide_with_fixed_fields():
 def test_upsert():
     table = CaseTable('test-upsert', 'patient').reflect()
     with get_project_db_engine().begin() as conn:
-        upsert_case(conn, table, _make_case(case_id='c1', name='Alice'))
+        upsert_cases(conn, table, [_make_case(case_id='c1', name='Alice')])
         rows = conn.execute(table.select()).fetchall()
         assert [row['case_id'] for row in rows] == ['c1']
 
-        upsert_case(conn, table, _make_case(case_id='c1', name='Bob'))
+        upsert_cases(conn, table, [_make_case(case_id='c1', name='Bob')])
         rows = conn.execute(table.select()).fetchall()
         assert len(rows) == 1  # updated in place, not inserted twice
         assert rows[0]['case_name'] == 'Bob'
@@ -153,10 +153,9 @@ def test_upsert():
 
 @use('db', project_db_table('test-send', 'patient', {'first_name': 'plain'}))
 def test_send_to_project_db():
-    send_to_project_db('test-send', [
+    send_to_project_db('test-send', 'patient', [
         _make_case({'first_name': 'Alice'}, type='patient'),
         _make_case({'first_name': 'Bob'}, type='patient'),
-        _make_case({}, type='clinic'),
     ])
 
     table = CaseTable('test-send', 'patient').reflect()
@@ -164,3 +163,13 @@ def test_send_to_project_db():
         rows = conn.execute(table.select()).fetchall()
     assert [r[0] for r in rows] == ['Alice', 'Bob']
     assert CaseTable('test-upsert', 'clinic').reflect() is None
+
+
+@use('db', project_db_table('test-send', 'patient', {'first_name': 'plain'}))
+def test_send_to_project_db_bad_type():
+    with pytest.raises(ValueError):
+        send_to_project_db('test-send', 'patient', [
+            _make_case({'first_name': 'Alice'}, type='patient'),
+            _make_case({'first_name': 'Bob'}, type='patient'),
+            _make_case({}, type='clinic'),
+        ])

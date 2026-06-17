@@ -75,4 +75,4 @@ def _populate(domain, start_date):
 def _populate_case_type(domain, case_type, start_date):
     accessor = CaseReindexAccessor(domain=domain, case_type=case_type, start_date=start_date)
     cases = iter_all_rows(accessor)
-    send_to_project_db(domain, cases)
+    send_to_project_db(domain, case_type, cases)
