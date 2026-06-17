@@ -22,6 +22,11 @@ from corehq.apps.case_search.const import (
     COMMCARE_PROJECT,
     IS_RELATED_CASE,
 )
+from corehq.apps.case_search.endpoint_capability import (
+    FIELD_TYPE_DATE,
+    FIELD_TYPE_NUMBER,
+    get_capability,
+)
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
     CaseSearchUserError,
@@ -39,6 +44,7 @@ from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     extract_search_request_config,
 )
+from corehq.apps.case_search.endpoint_query_spec import parse_query_spec
 from corehq.apps.es import HQESQuery, case_search
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters, queries
@@ -46,7 +52,9 @@ from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_date_range,
     case_property_missing,
+    case_property_numeric_range,
     case_property_query,
+    case_property_starts_with,
     reverse_index_case_query,
     wrap_case_search_hit,
 )
@@ -112,11 +120,40 @@ def get_case_search_results(domain, config, app_id=None, couch_user=None, profil
 
 def get_endpoint_results(helper, config):
     try:
-        CaseSearchEndpoint.objects.get(domain=helper.domain, id=config.endpoint_id)
+        # TODO: cache? Prefetch endpoint version?
+        endpoint = CaseSearchEndpoint.objects.get(domain=helper.domain, id=config.endpoint_id)
     except (CaseSearchEndpoint.DoesNotExist, ValueError):
         raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
-    # TODO use the endpoint to process the CaseSearchRequestConfig object
-    return get_primary_case_search_results(helper, config.case_types, config.criteria, config.commcare_sort)
+    if not endpoint.is_active:
+        raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
+
+    query_root, errors = parse_query_spec(
+        endpoint.current_version.query,
+        endpoint.target_name,
+        get_capability(helper.domain)
+    )
+    if errors:
+        notify_exception(None, "Stored endpoint query failed validation", details={
+            'endpoint': endpoint.id, 'errors': errors,
+        })
+        raise CaseSearchUserError(_("Endpoint '{}' query is invalid").format(config.endpoint_id))
+    return get_primary_case_search_endpoint_results(
+        helper,
+        [endpoint.target_name],
+        config.criteria,
+        query_root)
+
+@time_function()
+def get_primary_case_search_endpoint_results(helper, case_types, criteria, endpoint_query):
+    builder = CaseSearchEndpointQueryBuilder(helper, case_types, endpoint_query)
+    with helper.profiler.timing_context('build_query'):
+        search_es = builder.build_query(criteria)
+
+    results = search_es.run()
+    with helper.profiler.timing_context('wrap_cases'):
+        cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
+    helper.profiler.primary_count = len(cases)
+    return cases
 
 
 def get_unconfigured_endpoint_results(helper, config, app_id):
@@ -235,6 +272,7 @@ class CaseSearchQueryBuilder:
         max_results = CASE_SEARCH_MAX_RESULTS
         if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
             max_results = 1500
+
         return (self.helper.get_base_queryset('main')
                 .case_type(self.case_types)
                 .is_closed(False)
@@ -351,6 +389,76 @@ class CaseSearchQueryBuilder:
             for prop in properties_config.properties
         ]
 
+class CaseSearchEndpointQueryBuilder:
+    """Compiles the case search object for the view"""
+    def __init__(
+        self,
+        helper,
+        case_types,
+        query_root):
+        self.request_domain = helper.domain
+        self.case_types = case_types
+        self.query_root = query_root
+        self.helper = helper
+        self.config = helper.config
+
+    def build_query(self, search_criteria):
+        search_es = self._get_initial_search_es()
+        return search_es.add_query(self._parse_query(self.query_root), queries.MUST)
+
+    def _get_initial_search_es(self):
+        max_results = CASE_SEARCH_MAX_RESULTS
+        if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
+            max_results = 1500
+
+        return (self.helper.get_base_queryset('main')
+                .case_type(self.case_types)
+                .is_closed(False)
+                .size(max_results))
+
+    def _parse_query(self, node):
+        if node.type == 'all':
+            return filters.AND(
+                *[self._parse_query(child) for child in node.children]
+            )
+        elif node.type == 'any':
+            return filters.OR(
+                *[self._parse_query(child) for child in node.children]
+            )
+        elif node.type == 'none':
+            return filters.NOT(
+                filters.OR(*[self._parse_query(child) for child in node.children])
+            )
+        elif node.type == 'component':
+            return self._parse_component_node(node)
+        else:
+            return None
+
+    def _parse_component_node(self, node):
+        field = node.field
+        value = node.inputs['value'].value
+        operator = node.operator
+
+        if node.field_type == FIELD_TYPE_DATE:
+            if operator == 'equals':
+                return case_property_query(field, value)
+            elif operator == 'lt':
+                return case_property_date_range(field, lt=value)
+            elif operator == 'gt':
+                return case_property_date_range(field, gt=value)
+        elif node.field_type == FIELD_TYPE_NUMBER:
+            if operator == 'equals':
+                return case_property_query(field, value)
+            elif operator in ('lt', 'gt', 'lte', 'gte'):
+                return case_property_numeric_range(field, **{operator: value})
+        else:
+            if operator == 'equals':
+                return case_property_query(field, value)
+            elif operator == 'not_equals':
+                return filters.NOT(case_property_query(field, value))
+            elif operator == 'starts_with':
+                return case_property_starts_with(field, value)
+        return None
 
 @time_function()
 def get_and_tag_related_cases(helper, app_id, case_types, cases,
