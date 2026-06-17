@@ -12,8 +12,7 @@ BEGIN
             "name",
             "key",
             "type_code",
-            "created_on",
-            "deleted_on"
+            "created_on"
         )
         SELECT
             "id",
@@ -22,8 +21,7 @@ BEGIN
             "name",
             "key",
             "type_code",
-            "created_on",
-            NOW() AT TIME ZONE 'UTC'
+            "created_on"
         FROM deleted
         WHERE expires_on IS NULL
     ) SELECT COUNT(*) FROM deleted;

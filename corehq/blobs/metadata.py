@@ -103,8 +103,7 @@ class MetaDB(object):
                 "name",
                 "key",
                 "type_code",
-                "created_on",
-                "deleted_on"
+                "created_on"
             ) (
                 SELECT
                     "id",
@@ -113,27 +112,24 @@ class MetaDB(object):
                     "name",
                     "key",
                     "type_code",
-                    "created_on",
-                    %s AS "deleted_on"
+                    "created_on"
                 FROM deleted
                 WHERE expires_on IS NULL
             ) ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
                 key = EXCLUDED.key,
                 type_code = EXCLUDED.type_code,
-                created_on = EXCLUDED.created_on,
-                deleted_on = CLOCK_TIMESTAMP()
+                created_on = EXCLUDED.created_on
             WHERE blobs_deletedblobmeta.parent_id = EXCLUDED.parent_id and blobs_deletedblobmeta.key = EXCLUDED.key
         ) SELECT COUNT(*) FROM deleted;
         """
-        now = _utcnow()
         parents = defaultdict(list)
         for meta in metas:
             parents[meta.parent_id].append(meta.id)
         for dbname, split_parent_ids in split_list_by_db_partition(parents):
             ids = tuple(m for p in split_parent_ids for m in parents[p])
             with BlobMeta.get_cursor_for_partition_db(dbname) as cursor:
-                cursor.execute(delete_blobs_sql, [ids, now])
+                cursor.execute(delete_blobs_sql, [ids])
         deleted_bytes = sum(m.stored_content_length for m in metas)
         metrics_counter('commcare.blobs.deleted.count', value=len(metas))
         metrics_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)

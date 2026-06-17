@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from io import BytesIO
 
 from django.test import TestCase
-from unittest.mock import patch
 
 from corehq.blobs.models import BlobMeta, DeletedBlobMeta
 from corehq.blobs.tests.util import get_meta, new_meta, TemporaryFilesystemBlobDB
@@ -33,19 +32,15 @@ class TestBlobMeta(TestCase):
         with self.assertRaises(BlobMeta.DoesNotExist):
             get_meta(meta)
         deleted = get_meta(meta, deleted=True)
-        self.assertFalse(deleted.deleted_on is None)
-        self.assertGreaterEqual(deleted.deleted_on, meta.created_on)
-        self.assertLessEqual(deleted.deleted_on, datetime.utcnow())
+        self.assertIsNone(deleted.deleted_on)
 
     def test_bulk_delete_permanent_metadata(self):
         meta = self.db.put(BytesIO(b"content"), meta=new_meta())
-        now = datetime.utcnow()
-        with patch('corehq.blobs.metadata._utcnow', return_value=now):
-            self.db.bulk_delete(metas=[meta])
-            with self.assertRaises(BlobMeta.DoesNotExist):
-                get_meta(meta)
-            deleted = get_meta(meta, deleted=True)
-            self.assertEqual(deleted.deleted_on, now)
+        self.db.bulk_delete(metas=[meta])
+        with self.assertRaises(BlobMeta.DoesNotExist):
+            get_meta(meta)
+        deleted = get_meta(meta, deleted=True)
+        self.assertIsNone(deleted.deleted_on)
 
     def test_delete_temporary_metadata(self):
         exp = datetime.utcnow() + timedelta(seconds=30)
