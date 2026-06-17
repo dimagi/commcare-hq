@@ -24,7 +24,9 @@ from corehq.apps.case_search.const import (
 )
 from corehq.apps.case_search.endpoint_capability import (
     FIELD_TYPE_DATE,
+    FIELD_TYPE_DATETIME,
     FIELD_TYPE_NUMBER,
+    FIELD_TYPE_SELECT,
     get_capability,
 )
 from corehq.apps.case_search.exceptions import (
@@ -439,7 +441,8 @@ class CaseSearchEndpointQueryBuilder:
         value = node.inputs['value'].value
         operator = node.operator
 
-        if node.field_type == FIELD_TYPE_DATE:
+        if node.field_type in (FIELD_TYPE_DATE, FIELD_TYPE_DATETIME):
+            value = node.inputs['value'].value
             if operator == 'equals':
                 return case_property_query(field, value)
             elif operator == 'lt':
@@ -447,11 +450,22 @@ class CaseSearchEndpointQueryBuilder:
             elif operator == 'gt':
                 return case_property_date_range(field, gt=value)
         elif node.field_type == FIELD_TYPE_NUMBER:
+            value = node.inputs['value'].value
             if operator == 'equals':
                 return case_property_query(field, value)
+            elif operator == 'not_equals':
+                return filters.NOT(case_property_query(field, value))
             elif operator in ('lt', 'gt', 'lte', 'gte'):
                 return case_property_numeric_range(field, **{operator: value})
+        elif node.field_type == FIELD_TYPE_SELECT:
+            if operator == 'selected_any':
+                return case_property_query(field, node.inputs['value'].value, multivalue_mode='or')
+            elif operator == 'selected_all':
+                return case_property_query(field, node.inputs['value'].value, multivalue_mode='and')
+            elif operator == 'is_empty':
+                return case_property_missing(field)
         else:
+            value = node.inputs['value'].value
             if operator == 'equals':
                 return case_property_query(field, value)
             elif operator == 'not_equals':
