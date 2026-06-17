@@ -194,22 +194,6 @@ msgstr "Siamo spiacenti, si è verificato un errore imprevisto."
 msgid "Submit Request"
 msgstr "Invia richiesta"
 
-#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
-msgid "Seconds"
-msgstr "Secondi"
-
-#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
-msgid "Chart"
-msgstr "Grafico"
-
-#: corehq/apps/app_execution/static/app_execution/js/workflow_logs.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
-#: corehq/apps/registry/static/registry/js/registry_logs.js
-#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
-#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
-msgid "Show All Dates"
-msgstr "Mostra tutte le date"
-
 #: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
 msgid "Hide Past Versions"
 msgstr "Nascondi versioni precedenti"
@@ -2643,6 +2627,13 @@ msgstr "Caricamento dell'immagine non riuscito. Riprova."
 msgid "Clear"
 msgstr "Cancella"
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
+#: corehq/apps/registry/static/registry/js/registry_logs.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
+msgid "Show All Dates"
+msgstr "Mostra tutte le date"
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_base.js
 msgid "Gateway Timeout Error. Max retries exceeded."
 msgstr "Errore Gateway Timeout. Numero massimo di tentativi superato."
@@ -4347,6 +4338,12 @@ msgstr "Fallito! La risposta è: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
+
+#~ msgid "Seconds"
+#~ msgstr "Secondi"
+
+#~ msgid "Chart"
+#~ msgstr "Grafico"
 
 #~ msgid "Command Bar"
 #~ msgstr "Barra dei comandi"
