@@ -92,6 +92,65 @@ class IDFilter(DomainFilter):
             yield Q(**{query_kwarg: chunk})
 
 
+# Cap on case_ids materialized in memory per shard. case_ids are ~37-byte strings,
+# so 5M is on the order of 0.5 GB of Python strings -- a deliberate ceiling, not a
+# hard limit. Beyond it the dump gives up (see CaseIDLimitExceeded) rather than risk
+# the process; lifting it means paginating the case_id fetch instead of materializing
+# the whole list at once.
+MAX_CASE_IDS_PER_SHARD = 5_000_000
+
+
+class CaseIDLimitExceeded(Exception):
+    """A shard has more case_ids than the dump can hold in memory at once."""
+
+
+class CaseIDFilter(IDFilter):
+    """Filter a case-owned model to a domain by its case_ids.
+
+    Fetches the domain's case_ids for a shard and yields them in
+    ``Q(case_id__in=chunk)`` batches. This avoids joining the model back to
+    ``CommCareCase`` (via ``case__domain``) just to resolve the domain, seeking the
+    model's own indexed ``case_id`` column instead.
+
+    Chunk order does not matter: ``Q(case_id__in=...)`` is set membership, and each
+    chunk's completeness and no-dupes come from the within-chunk ``(case_id, pk)``
+    keyset paging in ``queryset_to_iterator`` -- so the case_ids need no sorting.
+    """
+
+    def __init__(self, chunksize=1000):
+        super().__init__('case_id', None, chunksize=chunksize)
+
+    def get_ids(self, domain_name, db_alias=None):
+        return _get_case_ids(domain_name, db_alias)
+
+    def count(self, domain_name):
+        # count is per-shard but db_alias is unknown here, and IDFilter.count would
+        # call get_ids() against the wrong (non-partition) database. Return None so
+        # the builder counts each Q(case_id__in=...) queryset per shard instead.
+        return None
+
+
+def _get_case_ids(domain, db_alias):
+    from corehq.form_processor.models import CommCareCase
+    case_ids_qs = (
+        CommCareCase.objects.using(db_alias)
+        .filter(domain=domain)
+        .values_list('case_id', flat=True)
+    )
+    # Server-side cursors are disabled (pgBouncer transaction pooling), so .iterator()
+    # would buffer the whole result client-side. Bound memory in the DB with a LIMIT;
+    # order_by() clears any default ordering so the LIMIT pays for no SQL sort.
+    case_ids = list(case_ids_qs.order_by()[:MAX_CASE_IDS_PER_SHARD + 1])
+    if len(case_ids) > MAX_CASE_IDS_PER_SHARD:
+        raise CaseIDLimitExceeded(
+            f"Domain '{domain}' has more than {MAX_CASE_IDS_PER_SHARD} case_ids on "
+            f"shard '{db_alias}'. The dump materializes the shard's case_ids in memory, "
+            f"which no longer fits. Paginate the case_id fetch (chunk it without "
+            f"materializing the full list) to dump this domain."
+        )
+    return case_ids
+
+
 class UserIDFilter(IDFilter):
     def __init__(self, user_id_field, include_web_users=True):
         super().__init__(user_id_field, None)
