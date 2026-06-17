@@ -912,6 +912,17 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+PUBLIC_WEBFORMS = FeatureRelease(
+    'public_webforms',
+    "Public Webforms",
+    TAG_RELEASE,
+    [NAMESPACE_DOMAIN],
+    owner='Evan Joseph-Pinero',
+    description="""
+        Enables access to public webform permissions and functionality while the feature is in development.
+    """
+)
+
 WEB_APPS_PERMISSIONS_VIA_GROUPS = StaticToggle(
     'web_apps_permissions_via_groups',
     "USH: Allow users to control access to specific web apps via mobile worker groups.",
