@@ -10,6 +10,7 @@ from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
     DEFAULT_CHUNK_SIZE,
+    CaseIDFilter,
     FilteredModelIteratorBuilder,
     ManyFilters,
     MultimediaBlobMetaFilter,
@@ -40,8 +41,10 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('form_processor.CommCareCaseIndex', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CaseAttachment', SimpleFilter('case__domain'),
                                  pagination_key=('case_id', 'pk'), use_fk_index_hint=True),
-    FilteredModelIteratorBuilder('form_processor.CaseTransaction', SimpleFilter('case__domain'),
-                                 pagination_key=('case_id', 'pk'), use_fk_index_hint=True),
+    # pagination_key must stay ('case_id', 'pk'); see CaseIDFilter for why a deeper
+    # key degrades catastrophically against the case_id IN (...) filter.
+    FilteredModelIteratorBuilder('form_processor.CaseTransaction', CaseIDFilter(),
+                                 pagination_key=('case_id', 'pk')),
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.LedgerTransaction', SimpleFilter('case__domain'),
                                  pagination_key=('case_id', 'pk'), use_fk_index_hint=True),
