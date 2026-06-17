@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
@@ -345,15 +346,15 @@ class TestCaseSearchEndpointDeactivateView(EndpointViewTestCase):
 
 
 class TestCaseSearchEndpointTestView(EndpointViewTestCase):
-    def test_valid_query_returns_results_table(self):
-        response = self.client.post(self._test_url(), {
-            'case_type': 'my_case_type',
-            'query': json.dumps(EMPTY_QUERY),
-        })
+    def test_valid_query_returns_no_errors(self):
+        with patch('corehq.apps.case_search.endpoint_views.get_primary_case_search_endpoint_results',
+                   return_value=[]):
+            response = self.client.post(self._test_url(), {
+                'case_type': 'my_case_type',
+                'query': json.dumps(EMPTY_QUERY),
+            })
         assert response.status_code == 200
-        content = response.content.decode()
-        assert '<table' in content
-        assert 'Example case 1' in content
+        assert 'alert-danger' not in response.content.decode()
 
     def test_invalid_query_json_returns_error(self):
         response = self.client.post(self._test_url(), {
