@@ -13,6 +13,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
     iter_all_rows,
 )
+from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
@@ -68,11 +69,13 @@ def _populate(domain, start_date):
         is_deprecated=False
     ).values_list('name', flat=True)
 
-    for case_type in case_types:
-        _populate_case_type(domain, case_type, start_date)
+    for i, case_type in enumerate(case_types, 1):
+        _populate_case_type(domain, case_type, start_date, f"{i}/{len(case_types)}")
 
 
-def _populate_case_type(domain, case_type, start_date):
+def _populate_case_type(domain, case_type, start_date, prefix):
     accessor = CaseReindexAccessor(domain=domain, case_type=case_type, start_date=start_date)
-    cases = iter_all_rows(accessor)
+    total = sum(accessor.get_approximate_doc_count(db) for db in accessor.sql_db_aliases)
+    cases = with_progress_bar(iter_all_rows(accessor), length=total,
+                              oneline='concise', prefix=f"{prefix}: {case_type}")
     send_to_project_db(domain, case_type, cases)
