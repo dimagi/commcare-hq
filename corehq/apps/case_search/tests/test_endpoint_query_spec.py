@@ -63,7 +63,7 @@ def test_valid_simple_spec():
     root, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert errors == []
     assert root == GroupNode(
-        op='all',
+        type='all',
         children=[
             ComponentNode(
                 field='province',
@@ -220,7 +220,7 @@ def test_none_group_accepted():
     root, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert errors == []
     assert isinstance(root, GroupNode)
-    assert root.op == 'none'
+    assert root.type == 'none'
 
 
 @use(sample_capability)
@@ -245,10 +245,10 @@ def test_nested_all_any():
     }
     root, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert errors == []
-    assert root.op == 'all'
+    assert root.type == 'all'
     inner = root.children[0]
     assert isinstance(inner, GroupNode)
-    assert inner.op == 'any'
+    assert inner.type == 'any'
 
 
 @use(sample_capability)
@@ -257,7 +257,7 @@ def test_empty_children_allowed():
         {'type': 'all', 'children': []}, 'patient', sample_capability()
     )
     assert errors == []
-    assert root == GroupNode(op='all', children=[])
+    assert root == GroupNode(type='all', children=[])
 
 
 @use(sample_capability)

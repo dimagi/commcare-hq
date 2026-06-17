@@ -13,12 +13,12 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from attr import Factory, define
+from attr import Factory, define, field, validators
 
 from corehq.apps.case_search.endpoint_capability import COMPONENT_INPUT_SCHEMAS
 
-# Group operators: all = AND, any = OR, none = NOR (no child matches).
-GROUP_OPS = ('all', 'any', 'none')
+# Group node types: all = AND, any = OR, none = NOR (no child matches).
+GROUP_TYPES = ('all', 'any', 'none')
 
 # Maximum nesting depth of all/any/none groups.
 MAX_QUERY_DEPTH = 5
@@ -86,19 +86,19 @@ class ComponentNode:
 class GroupNode:
     """A boolean group combining child nodes with all/any/none."""
 
-    op: str  # one of GROUP_OPS
+    type: str = field(validator=validators.in_(GROUP_TYPES))
     children: list = Factory(list)  # list[GroupNode | ComponentNode]
 
     def to_json(self):
         return {
-            'type': self.op,
+            'type': self.type,
             'children': [child.to_json() for child in self.children],
         }
 
     @classmethod
     def from_json(cls, data):
         return cls(
-            op=data['type'],
+            type=data['type'],
             children=[node_from_json(c) for c in data.get('children', [])],
         )
 
@@ -106,7 +106,7 @@ class GroupNode:
 def node_from_json(data):
     """Build a node tree from an already-validated raw spec."""
     node_type = data['type']
-    if node_type in GROUP_OPS:
+    if node_type in GROUP_TYPES:
         return GroupNode.from_json(data)
     if node_type == ComponentNode.type:
         return ComponentNode.from_json(data)
@@ -154,7 +154,7 @@ def _validate_node(node, fields_by_name, errors, depth, counter):
         return
 
     node_type = node.get('type')
-    if node_type in GROUP_OPS:
+    if node_type in GROUP_TYPES:
         children = node.get('children', [])
         if len(children) > MAX_GROUP_WIDTH:
             errors.append(
