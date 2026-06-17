@@ -92,6 +92,61 @@ class IDFilter(DomainFilter):
             yield Q(**{query_kwarg: chunk})
 
 
+class CaseIDFilter(IDFilter):
+    """Filter a case-owned model to a domain by its case_ids.
+
+    Streams the domain's case_ids for a shard and yields them in
+    ``Q(case_id__in=chunk)`` batches. This avoids joining the model back to
+    ``CommCareCase`` (via ``case__domain``) just to resolve the domain, seeking the
+    model's own indexed ``case_id`` column instead.
+
+    Chunk order does not matter: ``Q(case_id__in=...)`` is set membership, and each
+    chunk's completeness and no-dupes come from the within-chunk ``(case_id, pk)``
+    keyset paging in ``queryset_to_iterator`` -- so the case_ids need no sorting.
+
+    Consumers must paginate by ``('case_id', 'pk')``, never a deeper key like
+    ``('case_id', 'server_date', 'pk')``. A multi-column keyset emits a
+    ``ROW(case_id, server_date) >= (...)`` index bound that Postgres cannot
+    intersect with the ``case_id IN (...)`` array: once a page holds case_ids below
+    the cursor (any multi-page chunk), the scalar-array scan collapses into a full
+    index-range scan over the shared shard. ``('case_id', 'pk')`` reduces to a
+    scalar ``case_id >= (...)`` bound that intersects the array cleanly. (PG 17
+    reworked btree scalar-array scans and may avoid the collapse, but
+    ``('case_id', 'pk')`` is safe on every version.)
+    """
+
+    def __init__(self, chunksize=1000):
+        super().__init__('case_id', None, chunksize=chunksize)
+
+    def get_ids(self, domain_name, db_alias=None):
+        return _get_case_ids(domain_name, db_alias)
+
+    def count(self, domain_name):
+        # count is per-shard but db_alias is unknown here, and IDFilter.count would
+        # call get_ids() against the wrong (non-partition) database. Return None so
+        # the builder counts each Q(case_id__in=...) queryset per shard instead.
+        return None
+
+
+def _get_case_ids(domain, db_alias):
+    """Yield the domain's case_ids on a shard, keyset-paginating by ``(type, id)``
+    so each page seeks the ``(domain, type, id)`` index. Streaming (rather than one
+    big query) keeps only a page of case_ids in memory at a time -- ``IDFilter``
+    chunks the generator lazily, so the full id set is never materialized.
+    """
+    from corehq.form_processor.models import CommCareCase
+    queryset = (
+        CommCareCase.objects.using(db_alias)
+        .filter(domain=domain)
+        .only('case_id', 'type')
+    )
+    for case in queryset_to_iterator(
+        queryset, CommCareCase, limit=DEFAULT_CHUNK_SIZE,
+        ignore_ordering=True, pagination_key=('type', 'id'),
+    ):
+        yield case.case_id
+
+
 class UserIDFilter(IDFilter):
     def __init__(self, user_id_field, include_web_users=True):
         super().__init__(user_id_field, None)

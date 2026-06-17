@@ -3,7 +3,12 @@ from django.test import TestCase
 
 from casexml.apps.case.mock import CaseFactory
 
-from corehq.apps.dump_reload.sql.filters import MultimediaBlobMetaFilter, FilteredModelIteratorBuilder
+from corehq.apps.dump_reload.sql.filters import (
+    CaseIDFilter,
+    FilteredModelIteratorBuilder,
+    MultimediaBlobMetaFilter,
+    SimpleFilter,
+)
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
@@ -12,7 +17,6 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.motech.repeaters.models import Repeater
 from corehq.motech.models import ConnectionSettings
-from corehq.apps.dump_reload.sql.filters import SimpleFilter
 
 
 class TestUseAllObjectsInModelIteratorBuilder(TestCase):
@@ -140,6 +144,48 @@ class TestPagingChildModelByParentId(TestCase):
         assert {txn.case_id for txn in transactions} == {case.case_id for case in self.cases}
         # no dupes; (case_id, id) is the unique key -- id (pk) repeats across shards
         assert len({(txn.case_id, txn.id) for txn in transactions}) == len(transactions)
+
+
+@sharded
+class TestCaseIDFilter(TestCase):
+    domain = 'test-caseid-filter'
+    other_domain = 'test-caseid-filter-other'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.cases = [CaseFactory(cls.domain).create_case() for _ in range(3)]
+        cls.other_case = CaseFactory(cls.other_domain).create_case()
+        cls.addClassCleanup(FormProcessorTestUtils.delete_all_cases_forms_ledgers, cls.domain)
+        cls.addClassCleanup(FormProcessorTestUtils.delete_all_cases_forms_ledgers, cls.other_domain)
+
+    def _ids_across_shards(self, filter_):
+        ids = []
+        for db_alias in get_db_aliases_for_partitioned_query():
+            ids.extend(filter_.get_ids(self.domain, db_alias=db_alias))
+        return ids
+
+    def test_get_ids_returns_only_this_domains_case_ids(self):
+        found = set(self._ids_across_shards(CaseIDFilter()))
+        assert found == {case.case_id for case in self.cases}
+        assert self.other_case.case_id not in found
+
+    def test_get_filters_yields_chunked_case_id_in_queries(self):
+        chunks = [
+            q
+            for db_alias in get_db_aliases_for_partitioned_query()
+            for q in CaseIDFilter(chunksize=2).get_filters(self.domain, db_alias=db_alias)
+        ]
+        all_ids = []
+        for q in chunks:
+            (lookup, ids), = q.children  # Q(case_id__in=[...]) -> [('case_id__in', [...])]
+            assert lookup == 'case_id__in'
+            assert len(ids) <= 2
+            all_ids.extend(ids)
+        assert set(all_ids) == {case.case_id for case in self.cases}
+
+    def test_count_is_none(self):
+        assert CaseIDFilter().count(self.domain) is None
 
 
 def test_dump_builders_with_fk_index_hint_have_a_foreign_key_leading_key():
