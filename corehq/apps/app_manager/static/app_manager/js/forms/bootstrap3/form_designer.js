@@ -4,6 +4,7 @@ import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import noopMetrics from "analytix/js/noopMetrics";
 import appManager from "app_manager/js/bootstrap3/app_manager";
+import "app_manager/js/forms/ocs_widget_form_designer_context";
 import "jquery-ui/ui/widgets/sortable";
 import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
 
@@ -67,6 +68,7 @@ $(function () {
             $("#formdesigner").vellum("get").data.core.form.on("question-create", function () {
                 noopMetricsTrack();
             });
+            document.dispatchEvent(new CustomEvent('vellum:ready'));
         },
     });
 

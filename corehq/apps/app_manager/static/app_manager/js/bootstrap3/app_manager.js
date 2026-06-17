@@ -14,6 +14,7 @@ import menu from "app_manager/js/menu";
 import previewApp from "app_manager/js/bootstrap3/preview_app";
 import sectionChanger from "app_manager/js/section_changer";
 import "hqwebapp/js/components/inline_edit";  // app, menu, and form names and comments all use these
+import "app_manager/js/ocs_widget_app_manager_context";
 import "select2/dist/js/select2.full.min";
 
 var module = main.eventize({});
