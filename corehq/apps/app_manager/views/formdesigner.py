@@ -359,7 +359,6 @@ def _get_vellum_features(request, domain, app):
         'markdown_tables': app.enable_markdown_tables,
         'use_custom_repeat_button_text': app.build_version >= LooseVersion('2.55'),
         'support_document_upload': app.support_document_upload,
-        'face_capture': toggles.FACE_CAPTURE.enabled(domain),
         'edit_locked_questions': request.couch_user.can_edit_locked_questions_in_apps(),
     })
     return vellum_features
