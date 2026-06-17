@@ -12,9 +12,9 @@ from corehq import toggles
 from corehq.apps.case_search.endpoint_capability import (
     get_capability,
 )
-from corehq.apps.case_search.filter_spec import (
+from corehq.apps.case_search.endpoint_query_spec import (
     MAX_QUERY_DEPTH,
-    parse_filter_spec,
+    parse_query_spec,
 )
 from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
@@ -119,7 +119,7 @@ class CaseSearchEndpointForm(forms.Form):
         # Only run semantic validation when both fields parsed cleanly.
         if query is not None and parameters is not None:
             capability = self.capability or get_capability(self.domain)
-            _, errors = parse_filter_spec(
+            _, errors = parse_query_spec(
                 query, cleaned.get('case_type') or '', capability
             )
             for error in errors:

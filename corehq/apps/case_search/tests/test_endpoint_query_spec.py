@@ -6,13 +6,13 @@ from corehq.apps.case_search.endpoint_capability import (
     FIELD_TYPE_TEXT,
     get_operations_for_field_type,
 )
-from corehq.apps.case_search.filter_spec import (
+from corehq.apps.case_search.endpoint_query_spec import (
     MAX_GROUP_WIDTH,
     MAX_QUERY_DEPTH,
     ComponentNode,
     ConstantInput,
     GroupNode,
-    parse_filter_spec,
+    parse_query_spec,
 )
 
 
@@ -60,7 +60,7 @@ def test_valid_simple_spec():
             }
         ],
     }
-    root, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    root, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert errors == []
     assert root == GroupNode(
         op='all',
@@ -86,7 +86,7 @@ def test_valid_multi_input_spec():
             'unit': {'type': 'constant', 'value': 'km'},
         },
     }
-    root, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    root, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert errors == []
     assert isinstance(root, ComponentNode)
     assert set(root.inputs) == {'point', 'distance', 'unit'}
@@ -106,14 +106,14 @@ def test_ast_round_trips_through_json():
             }
         ],
     }
-    root, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    root, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert errors == []
     assert root.to_json() == spec
 
 
 @use(sample_capability)
 def test_invalid_root_type():
-    root, errors = parse_filter_spec(
+    root, errors = parse_query_spec(
         {'type': 'invalid'}, 'patient', sample_capability()
     )
     assert root is None
@@ -128,7 +128,7 @@ def test_date_field_accepts_lt():
         'field': 'dob',
         'inputs': {'value': {'type': 'constant', 'value': '2020-01-01'}},
     }
-    root, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    root, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert errors == []
     assert isinstance(root, ComponentNode)
     assert root.component == 'lt'
@@ -137,7 +137,7 @@ def test_date_field_accepts_lt():
 @use(sample_capability)
 def test_unknown_case_type():
     spec = {'type': 'all', 'children': []}
-    root, errors = parse_filter_spec(spec, 'nonexistent_type', sample_capability())
+    root, errors = parse_query_spec(spec, 'nonexistent_type', sample_capability())
     assert root is None
     assert any('nonexistent_type' in e for e in errors)
 
@@ -150,7 +150,7 @@ def test_unknown_field():
         'field': 'nonexistent',
         'inputs': {'value': {'type': 'constant', 'value': 'x'}},
     }
-    root, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    root, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert root is None
     assert any('nonexistent' in e for e in errors)
 
@@ -163,7 +163,7 @@ def test_incompatible_component_for_field():
         'field': 'province',
         'inputs': {'point': {'type': 'constant', 'value': '0 0'}},
     }
-    _, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    _, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert any('within_distance' in e for e in errors)
 
 
@@ -175,7 +175,7 @@ def test_missing_required_input_slot():
         'field': 'location',
         'inputs': {'point': {'type': 'constant', 'value': '0 0'}},
     }
-    _, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    _, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert any('distance' in e for e in errors)
 
 
@@ -188,7 +188,7 @@ def test_non_constant_input_type_rejected():
             'field': 'province',
             'inputs': {'value': {'type': input_type, 'ref': 'some_ref'}},
         }
-        _, errors = parse_filter_spec(spec, 'patient', sample_capability())
+        _, errors = parse_query_spec(spec, 'patient', sample_capability())
         assert any('Invalid input type' in e for e in errors), input_type
 
 
@@ -200,7 +200,7 @@ def test_non_dict_input_rejected():
         'field': 'province',
         'inputs': {'value': 'not_an_object'},
     }
-    _, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    _, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert any('expected object' in e for e in errors)
 
 
@@ -217,7 +217,7 @@ def test_none_group_accepted():
             }
         ],
     }
-    root, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    root, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert errors == []
     assert isinstance(root, GroupNode)
     assert root.op == 'none'
@@ -243,7 +243,7 @@ def test_nested_all_any():
             }
         ],
     }
-    root, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    root, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert errors == []
     assert root.op == 'all'
     inner = root.children[0]
@@ -253,7 +253,7 @@ def test_nested_all_any():
 
 @use(sample_capability)
 def test_empty_children_allowed():
-    root, errors = parse_filter_spec(
+    root, errors = parse_query_spec(
         {'type': 'all', 'children': []}, 'patient', sample_capability()
     )
     assert errors == []
@@ -263,7 +263,7 @@ def test_empty_children_allowed():
 @use(sample_capability)
 def test_non_dict_child_node_returns_error():
     spec = {'type': 'all', 'children': ['not_a_dict']}
-    _, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    _, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert any('str' in e for e in errors)
 
 
@@ -275,7 +275,7 @@ def test_deeply_nested_query_returns_error():
         child = {'type': 'all', 'children': []}
         node['children'] = [child]
         node = child
-    _, errors = parse_filter_spec(root, 'patient', sample_capability())
+    _, errors = parse_query_spec(root, 'patient', sample_capability())
     assert any('nested too deeply' in e for e in errors)
 
 
@@ -289,7 +289,7 @@ def test_none_group_counts_toward_depth():
         child = {'type': 'none', 'children': []}
         node['children'] = [child]
         node = child
-    _, errors = parse_filter_spec(root, 'patient', sample_capability())
+    _, errors = parse_query_spec(root, 'patient', sample_capability())
     assert any('nested too deeply' in e for e in errors)
 
 
@@ -299,7 +299,7 @@ def test_group_exceeding_max_width_returns_error():
         'type': 'all',
         'children': [{'type': 'all', 'children': []}] * (MAX_GROUP_WIDTH + 1),
     }
-    _, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    _, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert any('too many conditions' in e for e in errors)
 
 
@@ -309,7 +309,7 @@ def test_group_at_max_width_is_valid():
         'type': 'all',
         'children': [{'type': 'all', 'children': []}] * MAX_GROUP_WIDTH,
     }
-    _, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    _, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert not any('too many conditions' in e for e in errors)
 
 
@@ -329,5 +329,5 @@ def test_total_node_limit_returns_error():
             for _ in range(MAX_GROUP_WIDTH)
         ],
     }
-    _, errors = parse_filter_spec(spec, 'patient', sample_capability())
+    _, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert any('too many nodes' in e for e in errors)

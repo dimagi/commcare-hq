@@ -113,8 +113,8 @@ def node_from_json(data):
     raise ValueError(f'Unknown node type: {node_type!r}')
 
 
-def parse_filter_spec(spec, case_type_name, capability):
-    """Validate a filter spec against capability metadata and parse it.
+def parse_query_spec(query_spec, case_type_name, capability):
+    """Validate a query spec against capability metadata and parse it.
 
     :returns: a ``(root, errors)`` tuple. ``root`` is the parsed node tree (an
         attrs ``GroupNode``/``ComponentNode``), or ``None`` when ``errors`` (a
@@ -123,10 +123,10 @@ def parse_filter_spec(spec, case_type_name, capability):
     errors = []
     fields_by_name = _fields_by_name(capability, case_type_name, errors)
 
-    _validate_node(spec, fields_by_name, errors, depth=0, counter=[0])
+    _validate_node(query_spec, fields_by_name, errors, depth=0, counter=[0])
     if errors:
         return None, errors
-    return node_from_json(spec), errors
+    return node_from_json(query_spec), errors
 
 
 def _fields_by_name(capability, case_type_name, errors):

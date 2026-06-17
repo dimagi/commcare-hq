@@ -186,7 +186,7 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         assert response.status_code == 200
         assert 'JSON array' in response.context['form'].errors['parameters'][0]
 
-    def test_invalid_filter_spec_rejected(self):
+    def test_invalid_query_spec_rejected(self):
         # An unknown node type surfaces as a non-field (semantic) error.
         response = self.client.post(
             self._new_url(),

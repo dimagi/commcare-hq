@@ -2,7 +2,7 @@
 
 Describes which fields, operations, and input shapes are available for a
 domain (built from the data dictionary). Query builder filter specs are
-parsed and validated against this metadata in :mod:`.filter_spec`.
+parsed and validated against this metadata in :mod:`.endpoint_query_spec`.
 """
 
 from django.db.models import Prefetch
