@@ -41,7 +41,7 @@
        {% endif %}
      </nav>
    {% endif %}
-@@ -71,7 +71,7 @@
+@@ -73,7 +73,7 @@
      {% registerurl "all_case_types" domain %}
      {% block pre_form_content %}{% endblock %}
      {% block form-view %}{% endblock %}
@@ -50,7 +50,7 @@
      <script type="text/html" id="XPathValidator.template">
        <div class="js-xpath-input-target control-group" data-bind="css: {error: xpathValidator.error}">
          <textarea class="form-control vertical-resize" spellcheck="false"
-@@ -90,12 +90,12 @@
+@@ -92,12 +92,12 @@
  {% block modals %}
    {{ block.super }}
    {% if app.is_deleted %}

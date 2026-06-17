@@ -57,6 +57,12 @@ function setPermissions(permissions) {
     _publish();
 }
 
+function setAppStructure(appStructure) {
+    _currentContext.app_structure = appStructure;
+    _publish();
+}
+
+export {WIDGET_SELECTOR};
 export default {
     setUrl: setUrl,
     setPageTitle: setPageTitle,
@@ -66,4 +72,5 @@ export default {
     setIsDomainAdmin: setIsDomainAdmin,
     setIsEnterpriseAdmin: setIsEnterpriseAdmin,
     setPermissions: setPermissions,
+    setAppStructure: setAppStructure,
 };
