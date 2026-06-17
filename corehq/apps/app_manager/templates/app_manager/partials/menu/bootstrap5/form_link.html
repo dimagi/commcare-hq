@@ -45,7 +45,7 @@
             data-bs-html="true"
             >
         </i>
-        <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
+        <span data-ocs-form-name {% if form == selected_form %}class="variable-form_name"{% endif %}>
             {{ form.name|html_trans_prefix:langs }}
         </span>
     </a>
