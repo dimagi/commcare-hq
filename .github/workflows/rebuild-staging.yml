@@ -109,5 +109,34 @@ jobs:
       run: |
         git config user.name "GitHub Actions"
         git config user.email "actions@github.com"
+    - name: Check if vellum-staging needs rebuild
+      id: vellum-check
+      run: |
+        if ! git fetch origin vellum-staging 2>/dev/null; then
+          echo "vellum-staging branch not found, skipping"
+          echo "needs-rebuild=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        if git merge --no-commit --no-ff origin/vellum-staging; then
+          echo "vellum-staging merges cleanly, no rebuild needed"
+          git merge --abort
+          echo "needs-rebuild=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "vellum-staging conflicts with master, rebuild needed"
+          git merge --abort
+          echo "needs-rebuild=true" >> "$GITHUB_OUTPUT"
+        fi
+    - name: Check out Vellum
+      if: steps.vellum-check.outputs.needs-rebuild == 'true'
+      run: git clone --depth 1 --branch staging https://github.com/dimagi/Vellum.git ../Vellum
+    - uses: actions/setup-node@v6
+      if: steps.vellum-check.outputs.needs-rebuild == 'true'
+      with:
+        node-version: '24'
+    - name: Rebuild vellum-staging
+      if: steps.vellum-check.outputs.needs-rebuild == 'true'
+      env:
+        GIT_EDITOR: 'true'  # bypass "git commit --edit" in vellum-to-hq
+      run: uv run --with sh scripts/vellum-to-hq staging --no-test --push --vellum-dir=../Vellum
     - name: Rebuild staging
       run: ./scripts/rebuildstaging
