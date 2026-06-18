@@ -31,17 +31,41 @@ function _publishQuestionTypes() {
     ocsContext.setQuestionTypes(types);
 }
 
-function _publishCurrentSelectedQuestion() {
-    const mug = _vellum()?.getCurrentlySelectedMug();
+function _buildSelectedQuestion(mug) {
     if (!mug) {
-        ocsContext.setCurrentSelectedQuestion(null);
-        return;
+        return null;
     }
-    ocsContext.setCurrentSelectedQuestion({
+    const parent = mug.parentMug;
+    const belongsToQuestion = parent && {
+        type: parent.options.typeName,
+        question_id: parent.p.nodeID || undefined,
+        path: parent.hashtagPath || undefined,
+    };
+
+    if (mug.__className === "Choice") {
+        return {
+            type: mug.options.typeName,
+            value: mug.p.nodeID || undefined,
+            belongs_to_question: belongsToQuestion,
+        };
+    }
+    if (mug.__className === "Itemset") {
+        return {
+            type: mug.options.typeName,
+            belongs_to_question: belongsToQuestion,
+        };
+    }
+    return {
         type: mug.options.typeName,
         question_id: mug.p.nodeID || undefined,
         path: mug.hashtagPath || undefined,
-    });
+    };
+}
+
+function _publishCurrentSelectedQuestion() {
+    ocsContext.setCurrentSelectedQuestion(
+        _buildSelectedQuestion(_vellum()?.getCurrentlySelectedMug()),
+    );
 }
 
 function _initListener() {
