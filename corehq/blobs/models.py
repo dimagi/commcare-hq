@@ -139,7 +139,7 @@ class DeletedBlobMeta(PartitionedModel, Model):
     key = CharField(max_length=255)
     type_code = PositiveSmallIntegerField()
     created_on = DateTimeField()
-    deleted_on = DateTimeField()
+    deleted_on = DateTimeField(null=True)
 
 
 class BlobMigrationState(Model):
