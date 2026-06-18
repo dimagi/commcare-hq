@@ -42,8 +42,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('form_processor.CaseTransaction', CaseIDFilter(),
                                  pagination_key=('case_id', 'pk')),
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.LedgerTransaction', SimpleFilter('case__domain'),
-                                 pagination_key=('case_id', 'pk'), use_fk_index_hint=True),
+    FilteredModelIteratorBuilder('form_processor.LedgerTransaction', CaseIDFilter(),
+                                 pagination_key=('case_id', 'pk')),
 
     FilteredModelIteratorBuilder('case_search.DomainsNotInCaseSearchIndex', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),
