@@ -74,10 +74,11 @@ def test_create_project_db(get_dd_properties, get_case_types):
     domain_schema = DomainSchema(domain)
 
     get_case_types.return_value = ['patient']
-    get_dd_properties.return_value = [('nickname', 'plain'), ('dob', 'date')]
+    get_dd_properties.return_value = [('nickname', 'plain'), ('dob', 'plain')]
     create_or_update_project_db(domain)
     _assert_db_created_as_expected(domain_schema.name)
 
+    # Drop nickname, make dob a date, add a new prop
     get_dd_properties.return_value = [('favorite_color', 'plain'), ('dob', 'date')]
     create_or_update_project_db(domain)
     _assert_db_updated_as_expected(domain_schema.name)
@@ -99,7 +100,8 @@ def _assert_db_created_as_expected(schema):
         assert isinstance(columns['case_name'], sqlalchemy.Text)
         assert isinstance(columns['opened_on'], sqlalchemy.DateTime)
         assert isinstance(columns['prop__nickname'], sqlalchemy.Text)
-        assert isinstance(columns['prop__dob__date'], sqlalchemy.Date)
+        assert isinstance(columns['prop__dob'], sqlalchemy.Text)
+        assert 'prop__dob__date' not in columns
 
         indexes = inspector.get_indexes('patient', schema=schema)
         assert any(ix['column_names'] == ['owner_id'] for ix in indexes)
@@ -120,3 +122,6 @@ def _assert_db_updated_as_expected(schema):
         assert isinstance(columns['prop__favorite_color'], sqlalchemy.Text)
         # Column for deleted case property is still present
         assert isinstance(columns['prop__nickname'], sqlalchemy.Text)
+        # Both a plain and a date column for dob
+        assert isinstance(columns['prop__dob'], sqlalchemy.Text)
+        assert isinstance(columns['prop__dob__date'], sqlalchemy.Date)
