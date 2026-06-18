@@ -1,6 +1,7 @@
 from unmagic import fixture, use
 
 from corehq.apps.case_search.endpoint_capability import (
+    COMPONENT_INPUT_SCHEMAS,
     FIELD_TYPE_DATE,
     FIELD_TYPE_GEOPOINT,
     FIELD_TYPE_TEXT,
@@ -44,6 +45,7 @@ def sample_capability():
                 },
             },
         },
+        'component_input_schemas': COMPONENT_INPUT_SCHEMAS,
     }
 
 

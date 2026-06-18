@@ -15,8 +15,6 @@ from typing import ClassVar
 
 from attr import Factory, define, field, validators
 
-from corehq.apps.case_search.endpoint_capability import COMPONENT_INPUT_SCHEMAS
-
 # Group node types: all = AND, any = OR, none = NOR (no child matches).
 GROUP_TYPES = ('all', 'any', 'none')
 
@@ -125,8 +123,9 @@ def parse_query_spec(query_spec, case_type_name, capability):
     """
     errors = []
     fields_by_name = _fields_by_name(capability, case_type_name, errors)
+    component_input_schemas = capability.get('component_input_schemas', {})
 
-    _validate_node(query_spec, fields_by_name, errors, depth=0, counter=[0])
+    _validate_node(query_spec, fields_by_name, component_input_schemas, errors, depth=0, counter=[0])
     if errors:
         return None, errors
     return node_from_json(query_spec), errors
@@ -140,7 +139,7 @@ def _fields_by_name(capability, case_type_name, errors):
     return case_types[case_type_name]
 
 
-def _validate_node(node, fields_by_name, errors, depth, counter):
+def _validate_node(node, fields_by_name, component_input_schemas, errors, depth, counter):
     counter[0] += 1
     if counter[0] > MAX_TOTAL_NODES:
         errors.append(f'Query has too many nodes (max {MAX_TOTAL_NODES})')
@@ -165,16 +164,16 @@ def _validate_node(node, fields_by_name, errors, depth, counter):
             )
             return
         for child in children:
-            _validate_node(child, fields_by_name, errors, depth + 1, counter)
+            _validate_node(child, fields_by_name, component_input_schemas, errors, depth + 1, counter)
     elif node_type == 'component':
-        _validate_component(node, fields_by_name, errors)
+        _validate_component(node, fields_by_name, component_input_schemas, errors)
     else:
         errors.append(
             f"Invalid node type: '{node_type}'. Expected 'all', 'any', 'none', or 'component'."
         )
 
 
-def _validate_component(node, fields_by_name, errors):
+def _validate_component(node, fields_by_name, component_input_schemas, errors):
     field_name = node.get('field', '')
     component_name = node.get('component', '')
     inputs = node.get('inputs', {})
@@ -192,7 +191,7 @@ def _validate_component(node, fields_by_name, errors):
         )
         return
 
-    for slot in COMPONENT_INPUT_SCHEMAS.get(component_name, []):
+    for slot in component_input_schemas.get(component_name, []):
         slot_name = slot['name']
         if slot_name not in inputs:
             errors.append(
