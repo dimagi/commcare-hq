@@ -479,6 +479,23 @@ Alpine.data('initRole', (roleJson) => {
                             },
                             impliedEnabled: false,
                         },
+                        {
+                            get show() {
+                                return (
+                                    toggles.toggleEnabled("PUBLIC_WEBFORMS") &&
+                                    privileges.hasPrivilege("public_webforms")
+                                );
+                            },
+                            text: gettext("Allow creating and modifying public webforms."),
+                            id: "edit-public-webforms-checkbox",
+                            get permission() {
+                                return self.role.permissions.edit_public_webforms;
+                            },
+                            set permission(value) {
+                                self.role.permissions.edit_public_webforms = value;
+                            },
+                            impliedEnabled: false,
+                        },
                     ],
                 },
                 {

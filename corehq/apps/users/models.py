@@ -204,6 +204,7 @@ class HqPermissions(DocumentSchema):
     edit_apps = BooleanProperty(default=False)
     view_apps = BooleanProperty(default=False)
     edit_locked_questions_in_apps = BooleanProperty(default=False)
+    edit_public_webforms = BooleanProperty(default=False)
 
     edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
