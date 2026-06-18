@@ -23,11 +23,10 @@ function _publishQuestionTypes() {
         return;
     }
     const types = {};
-    form.tree.walk(function (mug, _nodeID, processChildren) {
-        if (mug && mug.options?.typeName) {
+    form.walkMugs(function (mug) {
+        if (mug.options?.typeName) {
             types[mug.absolutePath] = mug.options.typeName;
         }
-        processChildren();
     });
     ocsContext.setQuestionTypes(types);
 }
