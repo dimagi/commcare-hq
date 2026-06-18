@@ -1,6 +1,6 @@
 import json
 from collections import OrderedDict
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from django import template
 from django.conf import settings
@@ -814,14 +814,6 @@ def request_has_privilege(request, privilege_name):
     from corehq.apps.accounting.utils import domain_has_privilege
     privilege = _get_obj_from_name_or_instance(privileges, privilege_name)
     return domain_has_privilege(request.domain, privilege)
-
-
-@register.filter
-def iso_utc(dt):
-    """Convert a datetime to an ISO 8601 string in UTC"""
-    if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc).isoformat()
-    return dt.astimezone(timezone.utc).isoformat()
 
 
 @register.filter

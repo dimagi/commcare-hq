@@ -167,7 +167,7 @@
     {% if request.couch_user and USERFLOW_TOKEN %}
       {% initial_page_data 'userflow_token' USERFLOW_TOKEN %}
       {% initial_page_data 'userflow_user_id' request.couch_user.user_id %}
-      {% initial_page_data 'userflow_signed_up_at' request.couch_user.date_joined|iso_utc %}
+      {% initial_page_data 'userflow_signed_up_at' request.couch_user.date_joined|utc|date:'c' %}
       {% initial_page_data 'userflow_server_env' server_environment %}
       {% initial_page_data 'userflow_domain' domain %}
       {% if request.subscription %}
