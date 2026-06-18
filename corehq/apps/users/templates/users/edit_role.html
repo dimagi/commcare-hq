@@ -208,61 +208,26 @@
                     </div>
                     <div class="col-md-10 form-label">
                       <div x-html="area.text"></div>
-                      {# PLACEHOLDER checkbox when implicitly enabled by another permission and editPermission() is true #}
-                      <div
-                        class="form-check"
-                        x-show="area.allowCheckboxImpliedEnabled && area.editPermission && area.showAllowCheckbox"
-                      >
-                        <input
-                          class="form-check-input"
-                          type="checkbox"
-                          checked="checked"
-                          disabled="disabled"
-                          :id="area.allowCheckboxId + '-disabled'"
-                        />
-                        <label
-                          class="form-check-label"
-                          x-text="area.allowCheckboxText"
-                          :for="area.allowCheckboxId + '-disabled'"
-                        ></label>
-                      </div>
-                      {# end PLACEHOLDER #}
-                      {# REAL checkbox for allowCheckboxPermission #}
-                      <div
-                        class="form-check"
-                        x-show="!area.allowCheckboxImpliedEnabled && area.editPermission && area.showAllowCheckbox"
-                      >
-                        <input
-                          class="form-check-input"
-                          type="checkbox"
-                          :id="area.allowCheckboxId"
-                          x-model="area.allowCheckboxPermission"
-                        />
-                        <label
-                          class="form-check-label"
-                          :for="area.allowCheckboxId"
-                          x-text="area.allowCheckboxText"
-                        ></label>
-                      </div>
-                      {# end REAL #}
-                      {# PLACEHOLDER checkbox when showAllowCheckbox is false #}
-                      <div
-                        class="form-check"
-                        x-show="!area.editPermission && area.showAllowCheckbox"
-                      >
-                        <input
-                          class="form-check-input"
-                          type="checkbox"
-                          disabled="disabled"
-                          :id="area.allowCheckboxId + '-disabled2'"
-                        />
-                        <label
-                          class="form-check-label"
-                          :for="area.allowCheckboxId + '-disabled2'"
-                          x-text="area.allowCheckboxText"
-                        ></label>
-                      </div>
-                      {# end PLACEHOLDER #}
+                      <template x-for="nested in area.nestedPermissions">
+                        <div
+                          class="form-check"
+                          x-show="nested.show"
+                        >
+                          <input
+                            class="form-check-input"
+                            type="checkbox"
+                            x-model="nested.permission"
+                            :id="nested.id"
+                            :disabled="!area.editPermission || nested.impliedEnabled"
+                            :checked="area.editPermission && nested.impliedEnabled"
+                          />
+                          <label
+                            class="form-check-label"
+                            x-text="nested.text"
+                            :for="nested.id"
+                          ></label>
+                        </div>
+                      </template>
                     </div>
                   </div>
                 </template>

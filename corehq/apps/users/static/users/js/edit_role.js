@@ -248,10 +248,7 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-user-tableau-config-checkbox",
                     screenReaderEditAndViewText: gettext("Edit & View tableau configuration for web users"),
                     screenReaderViewOnlyText: gettext("View-Only tableau configuration for web users"),
-                    showAllowCheckbox: false,
-                    allowCheckboxText: null,
-                    allowCheckboxId: null,
-                    allowCheckboxPermission: null,
+                    nestedPermissions: [],
                 },
                 {
                     showOption: true,
@@ -274,10 +271,7 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-commcare-users-checkbox",
                     screenReaderEditAndViewText: gettext("Edit & View Web Users"),
                     screenReaderViewOnlyText: gettext("View-Only Web Users"),
-                    showAllowCheckbox: false,
-                    allowCheckboxText: null,
-                    allowCheckboxId: null,
-                    allowCheckboxPermission: null,
+                    nestedPermissions: [],
                 },
                 {
                     get showOption() {
@@ -302,18 +296,22 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-groups-checkbox",
                     screenReaderEditAndViewText: gettext("Edit & View Groups"),
                     screenReaderViewOnlyText: gettext("View-Only Web Groups"),
-                    showAllowCheckbox: true,
-                    allowCheckboxText: gettext("Allow changing group membership (requires edit groups)."),
-                    allowCheckboxId: "edit-users-groups-checkbox",
-                    get allowCheckboxPermission() {
-                        return self.role.permissions.edit_users_in_groups;
-                    },
-                    set allowCheckboxPermission(value) { // Add this setter
-                        self.role.permissions.edit_users_in_groups = value;
-                    },
-                    get allowCheckboxImpliedEnabled() {
-                        return self.role.permissions.edit_commcare_users;
-                    },
+                    nestedPermissions: [
+                        {
+                            show: true,
+                            text: gettext("Allow changing group membership (requires edit groups)."),
+                            id: "edit-users-groups-checkbox",
+                            get permission() {
+                                return self.role.permissions.edit_users_in_groups;
+                            },
+                            set permission(value) {
+                                self.role.permissions.edit_users_in_groups = value;
+                            },
+                            get impliedEnabled() {
+                                return self.role.permissions.edit_commcare_users;
+                            },
+                        },
+                    ],
                 },
                 {
                     showOption: true,
@@ -336,18 +334,22 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-locations-checkbox",
                     screenReaderEditAndViewText: gettext("Edit & View Locations"),
                     screenReaderViewOnlyText: gettext("View-Only Web Locations"),
-                    showAllowCheckbox: true,
-                    allowCheckboxText: gettext("Allow changing workers at a location."),
-                    allowCheckboxId: "edit-users-locations-checkbox",
-                    get allowCheckboxPermission() {
-                        return self.role.permissions.edit_users_in_locations;
-                    },
-                    set allowCheckboxPermission(value) { // Add this setter
-                        self.role.permissions.edit_users_in_locations = value;
-                    },
-                    get allowCheckboxImpliedEnabled() {
-                        return self.role.permissions.edit_commcare_users;
-                    },
+                    nestedPermissions: [
+                        {
+                            show: true,
+                            text: gettext("Allow changing workers at a location."),
+                            id: "edit-users-locations-checkbox",
+                            get permission() {
+                                return self.role.permissions.edit_users_in_locations;
+                            },
+                            set permission(value) {
+                                self.role.permissions.edit_users_in_locations = value;
+                            },
+                            get impliedEnabled() {
+                                return self.role.permissions.edit_commcare_users;
+                            },
+                        },
+                    ],
                 },
                 {
                     get showOption() {
@@ -372,10 +374,7 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-data-dict-checkbox",
                     screenReaderEditAndViewText: gettext("Edit & View Data Dictionary"),
                     screenReaderViewOnlyText: gettext("View-Only Data Dictionary"),
-                    showAllowCheckbox: false,
-                    allowCheckboxText: null,
-                    allowCheckboxId: null,
-                    allowCheckboxPermission: null,
+                    nestedPermissions: [],
                 },
                 {
                     showOption: true,
@@ -393,10 +392,7 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-data-checkbox",
                     screenReaderEditAndViewText: gettext("Edit & View Data"),
                     screenReaderViewOnlyText: null,
-                    showAllowCheckbox: false,
-                    allowCheckboxText: null,
-                    allowCheckboxId: null,
-                    allowCheckboxPermission: null,
+                    nestedPermissions: [],
                 },
                 {
                     showOption: true,
@@ -414,10 +410,7 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-messaging-checkbox",
                     screenReaderEditAndViewText: gettext("Access Messaging"),
                     screenReaderViewOnlyText: null,
-                    showAllowCheckbox: false,
-                    allowCheckboxText: null,
-                    allowCheckboxId: null,
-                    allowCheckboxPermission: null,
+                    nestedPermissions: [],
                 },
                 {
                     // Since disabling "Full Organization Access" automatically disables "Access APIs"
@@ -446,10 +439,7 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-apis-checkbox",
                     screenReaderEditAndViewText: gettext("Access APIs"),
                     screenReaderViewOnlyText: null,
-                    showAllowCheckbox: false,
-                    allowCheckboxText: null,
-                    allowCheckboxId: null,
-                    allowCheckboxPermission: null,
+                    nestedPermissions: [],
                 },
                 {
                     get showOption() {
@@ -474,16 +464,22 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-apps-checkbox",
                     screenReaderEditAndViewText: gettext("Edit & View Apps"),
                     screenReaderViewOnlyText: gettext("View-Only Applications"),
-                    showAllowCheckbox: privileges.hasPrivilege("locked_admin_questions"),
-                    allowCheckboxText: gettext("Allow locking and unlocking questions in forms."),
-                    allowCheckboxId: "edit-locked-questions-checkbox",
-                    get allowCheckboxPermission() {
-                        return self.role.permissions.edit_locked_questions_in_apps;
-                    },
-                    set allowCheckboxPermission(value) {
-                        self.role.permissions.edit_locked_questions_in_apps = value;
-                    },
-                    allowCheckboxImpliedEnabled: false,
+                    nestedPermissions: [
+                        {
+                            get show() {
+                                return privileges.hasPrivilege("locked_admin_questions");
+                            },
+                            text: gettext("Allow locking and unlocking questions in forms."),
+                            id: "edit-locked-questions-checkbox",
+                            get permission() {
+                                return self.role.permissions.edit_locked_questions_in_apps;
+                            },
+                            set permission(value) {
+                                self.role.permissions.edit_locked_questions_in_apps = value;
+                            },
+                            impliedEnabled: false,
+                        },
+                    ],
                 },
                 {
                     get showOption() {
@@ -503,10 +499,7 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-roles-checkbox",
                     screenReaderEditAndViewText: null,
                     screenReaderViewOnlyText: gettext("View Roles and Permissions"),
-                    showAllowCheckbox: false,
-                    allowCheckboxText: null,
-                    allowCheckboxId: null,
-                    allowCheckboxPermission: null,
+                    nestedPermissions: [],
                 },
                 {
                     get showOption() {
@@ -531,10 +524,7 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-dropzone-checkbox",
                     screenReaderEditAndViewText: gettext("Edit & Download files from the Dropzone "),
                     screenReaderViewOnlyText: gettext("View-Only Dropzone"),
-                    showAllowCheckbox: false,
-                    allowCheckboxText: null,
-                    allowCheckboxId: null,
-                    allowCheckboxPermission: null,
+                    nestedPermissions: [],
                 },
                 {
                     get showOption() {
@@ -554,10 +544,7 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-shared-exports-checkbox",
                     screenReaderEditAndViewText: null,
                     screenReaderViewOnlyText: null,
-                    showAllowCheckbox: false,
-                    allowCheckboxText: null,
-                    allowCheckboxId: null,
-                    allowCheckboxPermission: null,
+                    nestedPermissions: [],
                 },
                 {
                     get showOption() {
@@ -582,10 +569,7 @@ Alpine.data('initRole', (roleJson) => {
                     viewCheckboxLabel: "view-commcare-analytics-checkbox",
                     screenReaderEditAndViewText: gettext("Edit & View CommCare Analytics"),
                     screenReaderViewOnlyText: gettext("View-Only CommCare Analytics"),
-                    showAllowCheckbox: false,
-                    allowCheckboxText: null,
-                    allowCheckboxId: null,
-                    allowCheckboxPermission: null,
+                    nestedPermissions: [],
                 },
             ]; // end accessAreas
 
