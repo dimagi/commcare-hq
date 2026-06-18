@@ -311,6 +311,9 @@ class HqPermissions(DocumentSchema):
 
         if self.edit_apps:
             self.view_apps = True
+        else:
+            self.edit_locked_questions_in_apps = False
+            self.edit_public_webforms = False
 
         if not (self.view_reports or self.view_report_list):
             self.download_reports = False
