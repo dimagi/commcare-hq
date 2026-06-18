@@ -38,15 +38,15 @@ function _publishCurrentSelectedQuestion() {
         return;
     }
     ocsContext.setCurrentSelectedQuestion({
-        type: mug.options?.typeName,
-        question_id: mug.p?.nodeID || undefined,
+        type: mug.options.typeName,
+        question_id: mug.p.nodeID || undefined,
         path: mug.hashtagPath || undefined,
     });
 }
 
 function _initListener() {
     const vellum = _vellum();
-    const form = vellum?.data?.core?.form;
+    const form = vellum?.data.core.form;
     if (!form) {
         return;
     }
