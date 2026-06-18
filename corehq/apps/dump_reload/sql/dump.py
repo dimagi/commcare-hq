@@ -33,14 +33,12 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('blobs.BlobMeta', MultimediaBlobMetaFilter()),
 
     FilteredModelIteratorBuilder('form_processor.XFormInstance', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.XFormOperation', SimpleFilter('form__domain'),
-                                 pagination_key=('form_id', 'pk'), use_fk_index_hint=True),
+    FilteredModelIteratorBuilder('form_processor.XFormOperation', SimpleFilter('form__domain')),
 
     FilteredModelIteratorBuilder('form_processor.CommCareCase', SimpleFilter('domain'),
                                  pagination_key=("type", "id")),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseIndex', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.CaseAttachment', SimpleFilter('case__domain'),
-                                 pagination_key=('case_id', 'pk'), use_fk_index_hint=True),
+    FilteredModelIteratorBuilder('form_processor.CaseAttachment', SimpleFilter('case__domain')),
     FilteredModelIteratorBuilder('form_processor.CaseTransaction', CaseIDFilter(),
                                  pagination_key=('case_id', 'pk')),
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
