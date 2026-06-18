@@ -48,7 +48,10 @@ INPUT_TYPES = {ConstantInput.type: ConstantInput}
 
 
 def input_from_json(data):
-    return INPUT_TYPES[data['type']].from_json(data)
+    input_type = data.get('type')
+    if input_type not in INPUT_TYPES:
+        raise ValueError(f"Unknown input type: {input_type!r}")
+    return INPUT_TYPES[input_type].from_json(data)
 
 
 @define
@@ -105,7 +108,7 @@ class GroupNode:
 
 def node_from_json(data):
     """Build a node tree from an already-validated raw spec."""
-    node_type = data['type']
+    node_type = data.get('type')
     if node_type in GROUP_TYPES:
         return GroupNode.from_json(data)
     if node_type == ComponentNode.type:
