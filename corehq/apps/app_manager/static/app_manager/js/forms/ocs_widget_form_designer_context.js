@@ -18,13 +18,13 @@ function _publishXml() {
 }
 
 function _publishQuestionTypes() {
-    const form = _vellum()?.data?.core?.form;
+    const form = _vellum()?.data.core.form;
     if (!form) {
         return;
     }
     const types = {};
     form.walkMugs(function (mug) {
-        if (mug.options?.typeName) {
+        if (mug.options.typeName) {
             types[mug.absolutePath] = mug.options.typeName;
         }
     });
