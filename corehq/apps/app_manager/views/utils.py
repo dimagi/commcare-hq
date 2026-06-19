@@ -109,21 +109,31 @@ def back_to_main(request, domain, app_id, module_id=None, form_id=None,
 
 
 def get_langs(request, app):
-    lang = request.GET.get(
-        'lang',
-        request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
+    """
+    Returns a tuple ``(lang, langs)``:
+    * lang: The preferred language of the app's languages
+    * langs: A list of the app's languages, with the preferred language
+        prepended
+    """
+    preferred_lang = (
+        request.GET.get('lang')
+        or request.COOKIES.get('lang')
+        or ''
     )
-    langs = None
-    if app and hasattr(app, 'langs'):
-        if not app.langs and not app.is_remote_app:
+    if not app or not hasattr(app, 'langs'):
+        return preferred_lang, None
+
+    if app.langs:
+        if preferred_lang not in app.langs:
+            preferred_lang = app.langs[0]
+    else:
+        preferred_lang = 'en'
+        if not app.is_remote_app:
             # lots of things fail if the app doesn't have any languages.
             # the best we can do is add 'en' if there's nothing else.
             app.langs.append('en')
             app.save()
-        if not lang or lang not in app.langs:
-            lang = (app.langs or ['en'])[0]
-        langs = [lang] + app.langs
-    return lang, langs
+    return preferred_lang, [preferred_lang] + app.langs
 
 
 def set_lang_cookie(response, lang):

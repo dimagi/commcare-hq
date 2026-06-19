@@ -150,11 +150,6 @@ api
  0002_alter_permissions
  0003_populate_apiuser
  0004_rename_apiuser
-app_execution
- 0001_initial
- 0002_alter_appworkflowconfig_unique_together
- 0003_appexecutionlog_updated
- 0004_alter_appworkflowconfig_notification_emails_and_more
 app_manager
  0001_linked_app_domain
  0002_latestenabledbuildprofiles
@@ -292,6 +287,8 @@ cleanup
  0017_delete_oauth_integrations_models
  0018_delete_ewsghana_models
  0019_alter_deletedsqldoc_table
+ 0020_delete_app_execution_models
+ 0021_delete_deletedsqldoc
 cloudcare
  0001_initial
  0002_sqlapplicationaccess
@@ -347,6 +344,7 @@ data_analytics
  0011_domainmetrics
  0012_update_domainmetrics_fields
  0013_domainmetrics_bulk_case_editing_sessions_and_more
+ 0014_domainmetrics_users_with_web_apps_submission_in_last_30_days_and_more
 data_cleaning
  0001_initial
  0002_update_fields_and_ordering
@@ -1269,6 +1267,7 @@ toggles
 tombstones
  0001_create_tombstone_model
  0002_migrate_deleted_sql_docs
+ 0003_tombstone_improvements
 translations
  0001_initial
  0002_transifexblacklist

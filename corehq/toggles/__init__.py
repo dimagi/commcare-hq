@@ -1810,30 +1810,6 @@ REFER_CASE_REPEATER = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
 )
 
-# WIDGET_DIALER = StaticToggle(
-#     'widget_dialer',
-#     'USH: Enable usage of AWS Connect Dialer',
-#     TAG_DEPRECATED,
-#     namespaces=[NAMESPACE_DOMAIN],
-#     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+usage+of+AWS+Connect+Dialer",
-# )
-
-# HMAC_CALLOUT = StaticToggle(
-#     'hmac_callout',
-#     'USH: Enable signed messaging url callouts in cloudcare',
-#     TAG_DEPRECATED,
-#     namespaces=[NAMESPACE_DOMAIN],
-#     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",  # noqa: E501
-# )
-
-# GAEN_OTP_SERVER = StaticToggle(
-#     'gaen_otp_server',
-#     'USH: Enable retrieving OTPs from a GAEN Server',
-#     TAG_DEPRECATED,
-#     namespaces=[NAMESPACE_DOMAIN],
-#     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+retrieving+OTPs+from+a+GAEN+Server",
-# )
-
 PARALLEL_USER_IMPORTS = StaticToggle(
     'parallel_user_imports',
     'USH: Process user imports in parallel on a dedicated queue',
@@ -2164,33 +2140,6 @@ TABLEAU_USER_SYNCING = StaticToggle(
     parent_toggles=[EMBEDDED_TABLEAU],
     help_link='https://confluence.dimagi.com/display/USH/Tableau+User+Syncing',
 )
-
-
-# def _handle_attendance_tracking_role(domain, is_enabled):
-#     from corehq.apps.accounting.utils import domain_has_privilege
-#     from corehq.apps.users.role_utils import (
-#         archive_attendance_coordinator_role_for_domain,
-#         enable_attendance_coordinator_role_for_domain,
-#     )
-#
-#     if not domain_has_privilege(domain, privileges.ATTENDANCE_TRACKING):
-#         return
-#
-#     if is_enabled:
-#         enable_attendance_coordinator_role_for_domain(domain)
-#     else:
-#         archive_attendance_coordinator_role_for_domain(domain)
-#
-#
-# ATTENDANCE_TRACKING = StaticToggle(
-#     'attendance_tracking',
-#     'Allows access to the attendance tracking page',
-#     TAG_DEPRECATED,
-#     namespaces=[NAMESPACE_DOMAIN],
-#     description='Additional views will be added to simplify the process of '
-#                 'using CommCare HQ for attendance tracking.',
-#     save_fn=_handle_attendance_tracking_role,
-# )
 
 
 def _handle_geospatial_es_index(domain, is_enabled):

@@ -1,12 +1,13 @@
 """
 Daily metric calculation functions.
 """
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
+from corehq.apps.cloudcare import const as cloudcare_const
 from corehq.apps.domain.calculations import (
     _get_domain_apps,
     active,
@@ -26,7 +27,9 @@ from corehq.apps.domain.calculations import (
     sms_in_last_bool,
     sms_out_in_last,
 )
+from corehq.apps.es import filters
 from corehq.apps.es.forms import FormES
+from corehq.apps.es.users import UserES
 from corehq.apps.export.dbaccessors import get_export_count_by_domain
 from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.groups.models import Group
@@ -40,7 +43,6 @@ from corehq.apps.userreports.util import (
 )
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.role_utils import get_custom_roles_for_domain
-from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.motech.repeaters.models import Repeater
 
@@ -70,12 +72,49 @@ def _calc_active_cases(ctx):
 def _calc_users_with_submission(ctx):
     """Get total number of users who've ever submitted a form in a domain."""
     query = FormES().domain(ctx.domain).user_aggregation()
-    terms = {
-        user_id for user_id in query.run().aggregations.user.keys
-        if user_id not in WEIRD_USER_IDS
-    }
-    user_ids = terms.intersection(set(CouchUser.ids_by_domain(ctx.domain)))
-    return len(user_ids)
+    return len(_exclude_non_domain_user_ids(query, ctx.domain))
+
+
+def _calc_users_with_web_apps_submission_30d(ctx):
+    """Get total number of users who've submitted a form from web apps in a domain in the last 30 days."""
+    target_date = datetime.today() - timedelta(days=30)
+    query = (
+        FormES()
+        .domain(ctx.domain)
+        .submitted(gt=target_date)
+        .filter(filters.term('form.meta.deviceID', cloudcare_const.DEVICE_ID))
+        .user_aggregation()
+    )
+    return len(_exclude_non_domain_user_ids(query, ctx.domain))
+
+
+def _exclude_non_domain_user_ids(es_query, domain):
+    return (
+        set(es_query.run().aggregations.user.keys)
+        & set(CouchUser.ids_by_domain(domain))
+    )
+
+
+def _calc_web_users_accessed_30d(ctx):
+    """Count web users who accessed this domain in the last 30 days."""
+    target_date = date.today() - timedelta(days=30)
+    count = 0
+    es_web_users = (
+        UserES().domain(ctx.domain)
+            .web_users()
+            .source(include='user_domain_memberships')
+            .run()
+            .hits
+    )
+    for user in es_web_users:
+        if any(
+            membership['domain'] == ctx.domain
+            and membership.get('last_accessed')
+            and date.fromisoformat(membership['last_accessed']) >= target_date
+            for membership in user['user_domain_memberships']
+        ):
+            count += 1
+    return count
 
 
 def _calc_inactive_cases(ctx):
@@ -295,6 +334,8 @@ DAILY_METRICS = [
     # User Metrics
     MetricDef('web_users', 'cp_n_web_users',
               _calc_web_users, is_boolean=False, schedule='daily'),
+    MetricDef('web_users_accessed_in_last_30_days', 'cp_n_web_users_accessed_in_30_days',
+              _calc_web_users_accessed_30d, is_boolean=False, schedule='daily'),
     MetricDef('active_mobile_workers', 'cp_n_active_cc_users',
               _calc_active_mobile_workers, is_boolean=False, schedule='daily'),
     MetricDef('active_mobile_workers_in_last_365_days',
@@ -305,6 +346,8 @@ DAILY_METRICS = [
               _calc_mobile_workers, is_boolean=False, schedule='daily'),
     MetricDef('users_with_submission', 'cp_n_users_submitted_form',
               _calc_users_with_submission, is_boolean=False, schedule='daily'),
+    MetricDef('users_with_web_apps_submission_in_last_30_days', 'cp_n_users_submitted_web_apps_30_days',
+              _calc_users_with_web_apps_submission_30d, is_boolean=False, schedule='daily'),
     MetricDef('custom_roles', 'cp_n_custom_roles',
               _calc_custom_roles, is_boolean=False, schedule='daily'),
     MetricDef('has_users_with_location', 'cp_using_locations',
