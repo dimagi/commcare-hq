@@ -27,6 +27,8 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import not_found
 from corehq.apps.settings.views import BaseProjectDataView
 
+from dimagi.utils.logging import notify_exception
+
 _ENDPOINT_DECORATORS = [
     use_bootstrap5,
     toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
@@ -216,7 +218,7 @@ class CaseSearchEndpointNewView(_CaseSearchEndpointEditBaseView):
                 domain=self.domain,
                 name=cd['name'],
                 target_type=cd['target_type'],
-                target_name=cd['case_type'],
+                case_type=cd['case_type'],
             )
             _add_endpoint_version(
                 endpoint,
@@ -259,7 +261,7 @@ class CaseSearchEndpointEditView(_CaseSearchEndpointEditBaseView):
             initial={
                 'name': self._endpoint.name,
                 'target_type': self._endpoint.target_type,
-                'case_type': self._endpoint.target_name,
+                'case_type': self._endpoint.case_type,
                 'query': current.query if current else empty_query,
                 'parameters': current.parameters if current else list,
             },
@@ -280,14 +282,14 @@ class CaseSearchEndpointEditView(_CaseSearchEndpointEditBaseView):
         with transaction.atomic():
             endpoint.name = cd['name']
             endpoint.target_type = cd['target_type']
-            endpoint.target_name = cd['case_type']
+            endpoint.case_type = cd['case_type']
             _add_endpoint_version(
                 endpoint,
                 action=CaseSearchEndpointVersion.Action.UPDATE,
                 created_by=request.couch_user.username,
                 query=cd['query'],
                 parameters=cd['parameters'],
-                extra_update_fields=['name', 'target_type', 'target_name'],
+                extra_update_fields=['name', 'target_type', 'case_type'],
             )
         return redirect(
             reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
@@ -348,7 +350,11 @@ class CaseSearchEndpointTestView(BaseDomainView):
         query_root, errors = parse_query_spec(query, case_type, get_capability(self.domain))
         if errors:
             return self._render_results(request, errors=errors)
-        columns, rows = self._run_query(case_type, query_root)
+        try:
+            columns, rows = self._run_query(case_type, query_root)
+        except Exception as e:
+            notify_exception(request, str(e))
+            return self._render_results(request, errors=['Query Execution Failed'])
         return self._render_results(request, columns=columns, rows=rows)
 
     def _run_query(self, case_type, query):

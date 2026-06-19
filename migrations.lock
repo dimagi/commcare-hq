@@ -269,6 +269,7 @@ case_search
  0016_csqlfixtureexpression_user_data_criteria
  0017_add_case_search_endpoint_models
  0018_add_endpoint_version_audit_fields
+ 0019_rename_target_name_casesearchendpoint_case_type
 celery
  0001_taskrecord
  0002_taskrecord_kombu_serialization
