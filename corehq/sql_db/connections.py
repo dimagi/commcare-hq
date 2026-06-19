@@ -84,7 +84,7 @@ class ConnectionManager(object):
         self.engine_id_django_db_map = {}
         self._populate_connection_map()
 
-    def _get_or_create_helper(self, connection_url: str):
+    def _get_or_create_helper(self, connection_url):
         if connection_url not in self._session_helpers:
             self._session_helpers[connection_url] = SessionHelper(connection_url)
 

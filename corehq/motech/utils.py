@@ -1,6 +1,5 @@
 import json
 from base64 import b64decode, b64encode
-from typing import Sequence
 
 from django.conf import settings
 
@@ -169,7 +168,7 @@ def get_endpoint_url(base_url, endpoint):
     return '/'.join((base_url.rstrip('/'), endpoint.lstrip('/')))
 
 
-def simplify_list(seq: Sequence):
+def simplify_list(seq):
     """
     Reduces ``seq`` to its only element, or ``None`` if it is empty.
 

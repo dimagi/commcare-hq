@@ -237,14 +237,21 @@ quote-style = "single"
 max-line-length = 115
 
 [tool.ruff.lint]
-select = ["E", "F", "W"]
-ignore = ["F403"]
+select = ["E", "F", "W", "ANN"]
+ignore = [
+    "F403",  # wildcard imports
+    "ANN002",  # missing annotation for *args
+    "ANN003",  # missing annotation for **kwargs
+]
 
 [tool.ruff.lint.per-file-ignores]
 "**/migrations/*.py" = ["E501", "E303"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/**" = ["E", "F", "W"]
+
+[tool.ruff.lint.flake8-annotations]
+ignore-fully-untyped = true
 
 [tool.pyright]
 typeCheckingMode = "off"

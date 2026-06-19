@@ -5,6 +5,7 @@ from base64 import b64decode, b64encode
 from collections import namedtuple
 from dataclasses import InitVar, dataclass
 from datetime import datetime, timedelta
+from typing import Iterable
 from urllib.parse import urlencode
 from dimagi.utils.parsing import string_to_boolean
 
@@ -1562,7 +1563,11 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
             return list(queryset[:params.limit])
 
     @classmethod
-    def _query(cls, domain: str, params: NavigationEventAuditResourceParams):
+    def _query(
+        cls,
+        domain: str,
+        params: NavigationEventAuditResourceParams,
+    ) -> Iterable[NavigationEventAudit]:
         queryset = NavigationEventAudit.objects.filter(domain=domain)
         if params.users:
             queryset = queryset.filter(user__in=params.users)
@@ -1590,7 +1595,11 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         return results
 
     @classmethod
-    def _get_compound_filter(cls, param_field_name: str, params: NavigationEventAuditResourceParams):
+    def _get_compound_filter(
+        cls,
+        param_field_name: str,
+        params: NavigationEventAuditResourceParams
+    ) -> Q:
         compound_filter = Q()
         if param_field_name in cls.COMPOUND_FILTERS:
             for qualifier, val in getattr(params, param_field_name).items():
