@@ -13,7 +13,9 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from attr import Factory, define, field, validators
+from attr import Factory, define, field as attr_field, validators
+
+from corehq.apps.case_search.endpoint_capability import OPERATORS
 
 # Group node types: all = AND, any = OR, none = NOR (no child matches).
 GROUP_TYPES = ('all', 'any', 'none')
@@ -57,9 +59,9 @@ class ComponentNode:
     """A leaf condition: an operation applied to a field with its inputs."""
 
     type: ClassVar[str] = 'component'
-    field: str = ''
-    operator: str = ''
+    operator: str = attr_field(validator=validators.in_(OPERATORS))
     inputs: dict = Factory(dict)  # slot name -> input object
+    field: str = ''
 
     def to_json(self):
         return {
@@ -87,7 +89,7 @@ class ComponentNode:
 class GroupNode:
     """A boolean group combining child nodes with all/any/none."""
 
-    type: str = field(validator=validators.in_(GROUP_TYPES))
+    type: str = attr_field(validator=validators.in_(GROUP_TYPES))
     children: list = Factory(list)  # list[GroupNode | ComponentNode]
 
     def to_json(self):

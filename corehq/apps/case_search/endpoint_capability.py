@@ -103,6 +103,8 @@ OPERATOR_INPUT_SCHEMAS = {
     ],
 }
 
+OPERATORS = OPERATOR_INPUT_SCHEMAS.keys()
+
 
 def get_field_type(data_type):
     """Map a CaseProperty.DataType to a query builder field type.
