@@ -68,16 +68,15 @@ class CaseTable:
     def _build_property_columns(self):
         """Build Column objects for dynamic case properties.
 
-        Every property gets a raw Text column named
-        ``prop__<name>``. Some typed properties get an additional
-        typed column.
+        Every property gets a raw Text column named ``prop__<name>``. Some
+        typed properties get an additional typed column named
+        ``<data_type>_prop__<name>``.
         """
         for name, data_type in self._get_dd_properties():
-            col_name = f'prop__{name}'
-            yield Column(col_name, Text)
+            yield Column(f'prop__{name}', Text)
 
             if col_type := self.COERCED_PROPERTY_TYPES.get(data_type):
-                yield Column(f'{col_name}__{data_type}', col_type)
+                yield Column(f'{data_type}_prop__{name}', col_type)
 
     def _get_dd_properties(self):
         return CaseProperty.objects.filter(

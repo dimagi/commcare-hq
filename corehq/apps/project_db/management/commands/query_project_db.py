@@ -27,7 +27,7 @@ Example:
         "SELECT p.case_name, h.prop__district
          FROM patient p
          JOIN household h ON p.parent_id = h.case_id
-         WHERE p.prop__dob__date > '2000-01-01'"
+         WHERE p.date_prop__dob > '2000-01-01'"
 """.format(limit=DEFAULT_ROW_LIMIT)
 
 

@@ -14,7 +14,7 @@ Layout
 - One table per case type, named after the case type.
 - Each table has a fixed set of columns mirroring ``CommCareCase``, plus a
   ``prop__<name>`` column for every case property. Typed properties (date,
-  number) get an additional coerced column, e.g. ``prop__<name>__date``.
+  number) get an additional typed column, e.g. ``date_prop__<name>``.
 
 Definitions are built with `SQLAlchemy Core
 <https://docs.sqlalchemy.org/en/13/core/>`_ and live in the database configured
@@ -49,10 +49,6 @@ TODOs
   Postgres schema rather than a Django model, the standard model-based
   registration won't catch it; deleting a domain would orphan its
   ``projectdb_<domain>`` schema and data.
-- Typed property collisions. If a project had a ``dob`` prop and
-  a ``dob__date`` prop, I think that could cause undefined behavior.
-  Consider adding type as a prefix, maybe even before prop?  Eg
-  instead of ``prop__dob__date`` try ``date_prop__dob``.
 - Store raw case prop name as a comment. This could then be used to know how
   to insert a case based on inspecting the table.  It'd change ``case_to_row``
   to iterate through columns instead of properties

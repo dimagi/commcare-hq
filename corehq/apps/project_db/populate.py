@@ -58,8 +58,8 @@ def case_to_row(case, table_columns):
         col_name = f'prop__{key}'
         if col_name in table_columns:
             row[col_name] = str(value)
-            for suffix, coerce_fn in _TYPED_COERCIONS:
-                typed_col = f'{col_name}__{suffix}'
+            for data_type, coerce_fn in _TYPED_COERCIONS:
+                typed_col = f'{data_type}_prop__{key}'
                 if typed_col in table_columns:
                     row[typed_col] = coerce_fn(value)
     return row

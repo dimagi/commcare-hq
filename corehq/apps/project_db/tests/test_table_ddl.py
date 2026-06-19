@@ -62,9 +62,9 @@ def test_case_table_basics():
     assert isinstance(table.c['prop__nickname'].type, sqlalchemy.Text)
     assert isinstance(table.c['prop__favorite_color'].type, sqlalchemy.Text)
     assert isinstance(table.c['prop__dob'].type, sqlalchemy.Text)
-    assert isinstance(table.c['prop__dob__date'].type, sqlalchemy.Date)
+    assert isinstance(table.c['date_prop__dob'].type, sqlalchemy.Date)
     assert isinstance(table.c['prop__children_count'].type, sqlalchemy.Text)
-    assert isinstance(table.c['prop__children_count__number'].type, sqlalchemy.Numeric)
+    assert isinstance(table.c['number_prop__children_count'].type, sqlalchemy.Numeric)
 
 
 @use('db')
@@ -103,7 +103,7 @@ def _assert_db_created_as_expected(schema):
         assert isinstance(columns['opened_on'], sqlalchemy.DateTime)
         assert isinstance(columns['prop__nickname'], sqlalchemy.Text)
         assert isinstance(columns['prop__dob'], sqlalchemy.Text)
-        assert 'prop__dob__date' not in columns
+        assert 'date_prop__dob' not in columns
 
         indexes = inspector.get_indexes('patient', schema=schema)
         assert any(ix['column_names'] == ['owner_id'] for ix in indexes)
@@ -126,7 +126,7 @@ def _assert_db_updated_as_expected(schema):
         assert isinstance(columns['prop__nickname'], sqlalchemy.Text)
         # Both a plain and a date column for dob
         assert isinstance(columns['prop__dob'], sqlalchemy.Text)
-        assert isinstance(columns['prop__dob__date'], sqlalchemy.Date)
+        assert isinstance(columns['date_prop__dob'], sqlalchemy.Date)
 
 
 @use('db', project_db_table('test-reflect', 'patient', {
@@ -141,4 +141,4 @@ def test_case_table_reflect():
         assert column.name in table.c
     assert isinstance(table.c['prop__nickname'].type, sqlalchemy.Text)
     assert isinstance(table.c['prop__dob'].type, sqlalchemy.Text)
-    assert isinstance(table.c['prop__dob__date'].type, sqlalchemy.Date)
+    assert isinstance(table.c['date_prop__dob'].type, sqlalchemy.Date)
