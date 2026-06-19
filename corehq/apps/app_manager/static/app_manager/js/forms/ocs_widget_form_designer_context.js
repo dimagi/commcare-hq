@@ -10,11 +10,25 @@ function _vellum() {
     return $(FORMDESIGNER).vellum("get");
 }
 
+function extractFormXml(vellum) {
+    return vellum.createXML({withCaseMappings: true});
+}
+
 function _publishXml() {
-    const xml = $(FORMDESIGNER).vellum("createXML", {withCaseMappings: true});
+    const xml = extractFormXml(_vellum());
     if (xml) {
         ocsContext.setFormXml(xml);
     }
+}
+
+function extractQuestionTypes(form) {
+    const types = {};
+    form.walkMugs(function (mug) {
+        if (mug.options.typeName) {
+            types[mug.absolutePath] = mug.options.typeName;
+        }
+    });
+    return types;
 }
 
 function _publishQuestionTypes() {
@@ -22,16 +36,10 @@ function _publishQuestionTypes() {
     if (!form) {
         return;
     }
-    const types = {};
-    form.walkMugs(function (mug) {
-        if (mug.options.typeName) {
-            types[mug.absolutePath] = mug.options.typeName;
-        }
-    });
-    ocsContext.setQuestionTypes(types);
+    ocsContext.setQuestionTypes(extractQuestionTypes(form));
 }
 
-function _buildSelectedQuestion(mug) {
+function buildSelectedQuestion(mug) {
     if (!mug) {
         return null;
     }
@@ -62,10 +70,12 @@ function _buildSelectedQuestion(mug) {
     };
 }
 
+function extractSelectedQuestion(vellum) {
+    return buildSelectedQuestion(vellum?.getCurrentlySelectedMug());
+}
+
 function _publishCurrentSelectedQuestion() {
-    ocsContext.setCurrentSelectedQuestion(
-        _buildSelectedQuestion(_vellum()?.getCurrentlySelectedMug()),
-    );
+    ocsContext.setCurrentSelectedQuestion(extractSelectedQuestion(_vellum()));
 }
 
 function _initListener() {
@@ -92,3 +102,5 @@ $(function () {
     }
     document.addEventListener('vellum:ready', _initListener, {once: true});
 });
+
+export {extractFormXml, extractQuestionTypes, extractSelectedQuestion};
