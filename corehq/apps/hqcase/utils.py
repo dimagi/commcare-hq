@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from decimal import Decimal
 from types import EllipsisType
 from typing import Any, Optional
 from xml.etree import cElementTree as ElementTree
@@ -230,7 +231,8 @@ def update_case(
 
 
 type CaseID = str
-type CaseProperties = dict[str, Any]
+type CasePropertyValue = str | Decimal | datetime.date | datetime.datetime
+type CaseProperties = dict[str, CasePropertyValue]
 type CaseChange = tuple[CaseID, Optional[CaseProperties], bool]
 
 
