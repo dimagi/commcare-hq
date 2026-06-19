@@ -112,13 +112,13 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         response = self.client.get(self._new_url())
         assert response.status_code == 200
         assert response.context['endpoint_mode'] == 'new'
-        assert response.context['initial_query'] == EMPTY_QUERY
         assert 'capability' in response.context
-        # target_type default is seeded on the form (read via form.<field>.value).
+        # Defaults are seeded on the form (read via form.<field>.value).
         form = response.context['form']
         assert form['target_type'].value() == (
             CaseSearchEndpoint.TargetType.PROJECT_DB
         )
+        assert json.loads(form['query'].value()) == EMPTY_QUERY
 
     def test_create_endpoint(self):
         response = self.client.post(
@@ -211,7 +211,8 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
             ),
         )
         assert response.status_code == 200
-        assert response.context['initial_query'] == submitted
+        form = response.context['form']
+        assert json.loads(form['query'].value()) == submitted
 
 
 class TestCaseSearchEndpointEditView(EndpointViewTestCase):

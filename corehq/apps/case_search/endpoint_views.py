@@ -1,5 +1,3 @@
-import json
-
 from django import forms
 from django.db import transaction
 from django.shortcuts import redirect
@@ -70,8 +68,8 @@ class CaseSearchEndpointForm(forms.Form):
         choices=CaseSearchEndpoint.TargetType.choices
     )
     case_type = forms.CharField(required=False)
-    query = forms.CharField(required=False, widget=forms.Textarea)
-    parameters = forms.CharField(required=False, widget=forms.Textarea)
+    query = forms.JSONField(required=False)
+    parameters = forms.JSONField(required=False)
 
     def __init__(self, *args, domain, exclude_pk=None, capability=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -91,23 +89,17 @@ class CaseSearchEndpointForm(forms.Form):
         return name
 
     def clean_query(self):
-        raw = (self.cleaned_data.get('query') or '').strip() or json.dumps(
-            empty_query()
-        )
-        try:
-            data = json.loads(raw)
-        except (json.JSONDecodeError, ValueError):
-            raise forms.ValidationError('Must be valid JSON.')
+        data = self.cleaned_data.get('query')
+        if data is None:
+            return empty_query()
         if not isinstance(data, dict):
             raise forms.ValidationError('Must be a JSON object.')
         return data
 
     def clean_parameters(self):
-        raw = (self.cleaned_data.get('parameters') or '').strip() or '[]'
-        try:
-            data = json.loads(raw)
-        except (json.JSONDecodeError, ValueError):
-            raise forms.ValidationError('Must be valid JSON.')
+        data = self.cleaned_data.get('parameters')
+        if data is None:
+            return []
         if not isinstance(data, list):
             raise forms.ValidationError('Must be a JSON array.')
         return data
@@ -173,52 +165,15 @@ class _CaseSearchEndpointEditBaseView(BaseProjectDataView):
     def _make_form(self, data=None):
         raise NotImplementedError
 
-    def _default_initial(self):
-        """Initial query builder state for an unbound (GET) form."""
-        raise NotImplementedError
-
-    def _posted_json(self, field, default):
-        if field in self._form.cleaned_data:
-            return self._form.cleaned_data[field]
-        raw = self._form.data.get(field)
-        if raw:
-            try:
-                return json.loads(raw)
-            except (json.JSONDecodeError, ValueError):
-                pass
-        return default
-
-    def _initial_values(self):
-        """Seed the query builder JSON state: defaults on GET, submitted
-        values on a failed POST so the user's work survives re-render. The
-        scalar fields (name, target type, case type) come from the bound form
-        via ``form.<field>.value`` in the template.
-
-        ``query`` and ``parameters`` cannot follow the same pattern because
-        ``initial_page_data`` must receive parsed Python objects (dict/list),
-        not raw JSON strings, so that the Alpine.js query builder is seeded
-        correctly. On a bound (POST) form, ``BoundField.value()`` returns the
-        raw submitted string rather than the cleaned value, so we read from
-        ``cleaned_data`` when available and fall back to re-parsing the raw
-        data ourselves."""
-        if self.request.method == 'POST':
-            return {
-                'initial_parameters': self._posted_json('parameters', []),
-                'initial_query': self._posted_json('query', empty_query()),
-            }
-        return self._default_initial()
-
     @property
     def page_context(self):
-        context = {
+        return {
             'capability': self.capability,
             'endpoint_mode': self.mode,
             'max_group_depth': MAX_QUERY_DEPTH - 1,
             'post_url': self.page_url,
             'form': self._form,
         }
-        context.update(self._initial_values())
-        return context
 
     def get(self, request, *args, **kwargs):
         self._form = self._make_form()
@@ -240,14 +195,12 @@ class CaseSearchEndpointNewView(_CaseSearchEndpointEditBaseView):
             data,
             domain=self.domain,
             capability=self.capability,
-            initial={'target_type': CaseSearchEndpoint.TargetType.PROJECT_DB},
+            initial={
+                'target_type': CaseSearchEndpoint.TargetType.PROJECT_DB,
+                'query': empty_query,
+                'parameters': list,
+            },
         )
-
-    def _default_initial(self):
-        return {
-            'initial_parameters': [],
-            'initial_query': empty_query(),
-        }
 
     def post(self, request, *args, **kwargs):
         self._form = self._make_form(request.POST)
@@ -293,6 +246,7 @@ class CaseSearchEndpointEditView(_CaseSearchEndpointEditBaseView):
         return reverse(self.urlname, args=[self.domain, self._endpoint.id])
 
     def _make_form(self, data=None):
+        current = self._endpoint.current_version
         return CaseSearchEndpointForm(
             data,
             domain=self.domain,
@@ -302,15 +256,10 @@ class CaseSearchEndpointEditView(_CaseSearchEndpointEditBaseView):
                 'name': self._endpoint.name,
                 'target_type': self._endpoint.target_type,
                 'case_type': self._endpoint.target_name,
+                'query': current.query if current else empty_query,
+                'parameters': current.parameters if current else list,
             },
         )
-
-    def _default_initial(self):
-        current = self._endpoint.current_version
-        return {
-            'initial_parameters': current.parameters if current else [],
-            'initial_query': current.query if current else empty_query(),
-        }
 
     @property
     def page_context(self):
