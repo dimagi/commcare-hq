@@ -28,24 +28,24 @@
     <select
       class="form-select form-select-sm"
       style="width: auto; min-width: 120px;"
-      @change="node.component = $event.target.value; onComponentChange(node)"
+      @change="node.operator = $event.target.value; onOperatorChange(node)"
       :disabled="mode === 'readonly'"
     >
-      <option value="" :selected="!node.component">
+      <option value="" :selected="!node.operator">
         {% trans "-- Operation --" %}
       </option>
       <template x-for="op in getOperationsForField(node.field)" :key="op.name">
         <option
           :value="op.name"
           x-text="op.label"
-          :selected="node.component === op.name"
+          :selected="node.operator === op.name"
         ></option>
       </template>
     </select>
   </template>
-  <template x-if="node.component">
+  <template x-if="node.operator">
     <template
-      x-for="slot in getInputSchemaForOperation(node.component)"
+      x-for="slot in getInputSchemaForOperation(node.operator)"
       :key="slot.name"
     >
       <div class="d-flex gap-1 flex-grow-1">

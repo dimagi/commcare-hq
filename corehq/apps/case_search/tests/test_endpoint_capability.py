@@ -3,7 +3,7 @@ from unmagic import fixture, use
 import pytest
 
 from corehq.apps.case_search.endpoint_capability import (
-    COMPONENT_INPUT_SCHEMAS,
+    OPERATOR_INPUT_SCHEMAS,
     FIELD_TYPE_DATE,
     FIELD_TYPE_TEXT,
     get_capability,
@@ -17,15 +17,15 @@ from corehq.apps.data_dictionary.models import (
 )
 
 
-def test_component_input_schemas_all_values_are_lists():
-    for op, schema in COMPONENT_INPUT_SCHEMAS.items():
+def test_operator_input_schemas_all_values_are_lists():
+    for op, schema in OPERATOR_INPUT_SCHEMAS.items():
         assert isinstance(schema, list), (
             f'{op}: expected list, got {type(schema)}'
         )
 
 
-def test_component_input_schemas_all_items_have_name_and_type_strings():
-    for op, schema in COMPONENT_INPUT_SCHEMAS.items():
+def test_operator_input_schemas_all_items_have_name_and_type_strings():
+    for op, schema in OPERATOR_INPUT_SCHEMAS.items():
         for item in schema:
             assert isinstance(item.get('name'), str), (
                 f"{op}: item 'name' must be str"
@@ -168,7 +168,7 @@ def test_get_field_type_raises_for_unmapped_data_type():
 
 
 @use(patient_case_type)
-def test_component_input_schemas_present():
+def test_operator_input_schemas_present():
     cap = get_capability('test-domain')
-    assert 'component_input_schemas' in cap
-    assert cap['component_input_schemas']
+    assert 'operator_input_schemas' in cap
+    assert cap['operator_input_schemas']

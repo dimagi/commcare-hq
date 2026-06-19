@@ -1,7 +1,7 @@
 from unmagic import fixture, use
 
 from corehq.apps.case_search.endpoint_capability import (
-    COMPONENT_INPUT_SCHEMAS,
+    OPERATOR_INPUT_SCHEMAS,
     FIELD_TYPE_DATE,
     FIELD_TYPE_GEOPOINT,
     FIELD_TYPE_TEXT,
@@ -45,7 +45,7 @@ def sample_capability():
                 },
             },
         },
-        'component_input_schemas': COMPONENT_INPUT_SCHEMAS,
+        'operator_input_schemas': OPERATOR_INPUT_SCHEMAS,
     }
 
 
@@ -56,7 +56,7 @@ def test_valid_simple_spec():
         'children': [
             {
                 'type': 'component',
-                'component': 'equals',
+                'operator': 'equals',
                 'field': 'province',
                 'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
             }
@@ -69,7 +69,7 @@ def test_valid_simple_spec():
         children=[
             ComponentNode(
                 field='province',
-                component='equals',
+                operator='equals',
                 inputs={'value': ConstantInput(value='ON')},
             )
         ],
@@ -80,7 +80,7 @@ def test_valid_simple_spec():
 def test_valid_multi_input_spec():
     spec = {
         'type': 'component',
-        'component': 'within_distance',
+        'operator': 'within_distance',
         'field': 'location',
         'inputs': {
             'point': {'type': 'constant', 'value': '0 0'},
@@ -103,7 +103,7 @@ def test_ast_round_trips_through_json():
             {
                 'type': 'component',
                 'field': 'province',
-                'component': 'equals',
+                'operator': 'equals',
                 'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
             }
         ],
@@ -126,14 +126,14 @@ def test_invalid_root_type():
 def test_date_field_accepts_lt():
     spec = {
         'type': 'component',
-        'component': 'lt',
+        'operator': 'lt',
         'field': 'dob',
         'inputs': {'value': {'type': 'constant', 'value': '2020-01-01'}},
     }
     root, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert errors == []
     assert isinstance(root, ComponentNode)
-    assert root.component == 'lt'
+    assert root.operator == 'lt'
 
 
 @use(sample_capability)
@@ -148,7 +148,7 @@ def test_unknown_case_type():
 def test_unknown_field():
     spec = {
         'type': 'component',
-        'component': 'equals',
+        'operator': 'equals',
         'field': 'nonexistent',
         'inputs': {'value': {'type': 'constant', 'value': 'x'}},
     }
@@ -161,7 +161,7 @@ def test_unknown_field():
 def test_incompatible_component_for_field():
     spec = {
         'type': 'component',
-        'component': 'within_distance',
+        'operator': 'within_distance',
         'field': 'province',
         'inputs': {'point': {'type': 'constant', 'value': '0 0'}},
     }
@@ -173,7 +173,7 @@ def test_incompatible_component_for_field():
 def test_missing_required_input_slot():
     spec = {
         'type': 'component',
-        'component': 'within_distance',
+        'operator': 'within_distance',
         'field': 'location',
         'inputs': {'point': {'type': 'constant', 'value': '0 0'}},
     }
@@ -186,7 +186,7 @@ def test_non_constant_input_type_rejected():
     for input_type in ['parameter', 'auto_value']:
         spec = {
             'type': 'component',
-            'component': 'equals',
+            'operator': 'equals',
             'field': 'province',
             'inputs': {'value': {'type': input_type, 'ref': 'some_ref'}},
         }
@@ -198,7 +198,7 @@ def test_non_constant_input_type_rejected():
 def test_non_dict_input_rejected():
     spec = {
         'type': 'component',
-        'component': 'equals',
+        'operator': 'equals',
         'field': 'province',
         'inputs': {'value': 'not_an_object'},
     }
@@ -213,7 +213,7 @@ def test_none_group_accepted():
         'children': [
             {
                 'type': 'component',
-                'component': 'equals',
+                'operator': 'equals',
                 'field': 'province',
                 'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
             }
@@ -235,7 +235,7 @@ def test_nested_all_any():
                 'children': [
                     {
                         'type': 'component',
-                        'component': 'equals',
+                        'operator': 'equals',
                         'field': 'province',
                         'inputs': {
                             'value': {'type': 'constant', 'value': 'ON'}

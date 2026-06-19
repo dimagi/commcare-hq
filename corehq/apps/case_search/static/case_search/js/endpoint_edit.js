@@ -28,7 +28,7 @@ Alpine.data("endpointForm", () => {
         },
 
         getInputSchemaForOperation(operation) {
-            return this.capability.component_input_schemas[operation] || [];
+            return this.capability.operator_input_schemas[operation] || [];
         },
 
         getFieldType(fieldName) {
@@ -84,7 +84,7 @@ Alpine.data("endpointForm", () => {
                 _id: this._nextId++,
                 type: "component",
                 field: "",
-                component: "",
+                operator: "",
                 inputs: {},
             };
         },
@@ -112,12 +112,12 @@ Alpine.data("endpointForm", () => {
         },
 
         onFieldChange(node) {
-            node.component = "";
+            node.operator = "";
             node.inputs = {};
         },
 
-        onComponentChange(node) {
-            const schema = this.getInputSchemaForOperation(node.component);
+        onOperatorChange(node) {
+            const schema = this.getInputSchemaForOperation(node.operator);
             if (schema.every((slot) => slot.name in (node.inputs || {}))) {
                 return;
             }

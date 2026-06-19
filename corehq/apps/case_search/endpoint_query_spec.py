@@ -58,14 +58,14 @@ class ComponentNode:
 
     type: ClassVar[str] = 'component'
     field: str = ''
-    component: str = ''
+    operator: str = ''
     inputs: dict = Factory(dict)  # slot name -> input object
 
     def to_json(self):
         return {
             'type': self.type,
             'field': self.field,
-            'component': self.component,
+            'operator': self.operator,
             'inputs': {
                 name: inp.to_json() for name, inp in self.inputs.items()
             },
@@ -75,7 +75,7 @@ class ComponentNode:
     def from_json(cls, data):
         return cls(
             field=data.get('field', ''),
-            component=data.get('component', ''),
+            operator=data.get('operator', ''),
             inputs={
                 name: input_from_json(value)
                 for name, value in (data.get('inputs') or {}).items()
@@ -123,9 +123,9 @@ def parse_query_spec(query_spec, case_type_name, capability):
     """
     errors = []
     fields_by_name = _fields_by_name(capability, case_type_name, errors)
-    component_input_schemas = capability.get('component_input_schemas', {})
+    operator_input_schemas = capability.get('operator_input_schemas', {})
 
-    _validate_node(query_spec, fields_by_name, component_input_schemas, errors, depth=0, counter=[0])
+    _validate_node(query_spec, fields_by_name, operator_input_schemas, errors, depth=0, counter=[0])
     if errors:
         return None, errors
     return node_from_json(query_spec), errors
@@ -139,7 +139,7 @@ def _fields_by_name(capability, case_type_name, errors):
     return case_types[case_type_name]
 
 
-def _validate_node(node, fields_by_name, component_input_schemas, errors, depth, counter):
+def _validate_node(node, fields_by_name, operator_input_schemas, errors, depth, counter):
     counter[0] += 1
     if counter[0] > MAX_TOTAL_NODES:
         errors.append(f'Query has too many nodes (max {MAX_TOTAL_NODES})')
@@ -164,18 +164,18 @@ def _validate_node(node, fields_by_name, component_input_schemas, errors, depth,
             )
             return
         for child in children:
-            _validate_node(child, fields_by_name, component_input_schemas, errors, depth + 1, counter)
+            _validate_node(child, fields_by_name, operator_input_schemas, errors, depth + 1, counter)
     elif node_type == 'component':
-        _validate_component(node, fields_by_name, component_input_schemas, errors)
+        _validate_component(node, fields_by_name, operator_input_schemas, errors)
     else:
         errors.append(
             f"Invalid node type: '{node_type}'. Expected 'all', 'any', 'none', or 'component'."
         )
 
 
-def _validate_component(node, fields_by_name, component_input_schemas, errors):
+def _validate_component(node, fields_by_name, operator_input_schemas, errors):
     field_name = node.get('field', '')
-    component_name = node.get('component', '')
+    component_name = node.get('operator', '')
     inputs = node.get('inputs', {})
 
     field = fields_by_name.get(field_name)
@@ -191,7 +191,7 @@ def _validate_component(node, fields_by_name, component_input_schemas, errors):
         )
         return
 
-    for slot in component_input_schemas.get(component_name, []):
+    for slot in operator_input_schemas.get(component_name, []):
         slot_name = slot['name']
         if slot_name not in inputs:
             errors.append(

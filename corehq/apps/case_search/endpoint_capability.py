@@ -41,7 +41,7 @@ _EXCLUDED_DATA_TYPES = {CaseProperty.DataType.PASSWORD}
 # phrasing from the data cleaning tool (corehq.apps.data_cleaning) so the
 # already-translated strings carry over.
 # Labels intentionally match the ones in corehq/apps/data_cleaning/models/types.py
-_OPERATIONS_BY_TYPE = {
+_OPERATOR_BY_TYPE = {
     FIELD_TYPE_TEXT: [
         ('equals', _('is exactly')),
         ('not_equals', _('is not')),
@@ -83,7 +83,7 @@ _OPERATIONS_BY_TYPE = {
 # (e.g. a date picker for a date field); that resolution is not implemented yet.
 INPUT_TYPE_MATCH_FIELD = 'match_field'
 
-COMPONENT_INPUT_SCHEMAS = {
+OPERATOR_INPUT_SCHEMAS = {
     'not_equals': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'starts_with': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'selected_any': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
@@ -123,7 +123,7 @@ def get_operations_for_field_type(field_type):
     """Return the operations available for a field type as {name, label} dicts."""
     return [
         {'name': name, 'label': label}
-        for name, label in _OPERATIONS_BY_TYPE.get(field_type, [])
+        for name, label in _OPERATOR_BY_TYPE.get(field_type, [])
     ]
 
 
@@ -163,5 +163,5 @@ def get_capability(domain):
 
     return {
         'case_types': result_case_types,
-        'component_input_schemas': COMPONENT_INPUT_SCHEMAS,
+        'operator_input_schemas': OPERATOR_INPUT_SCHEMAS,
     }
