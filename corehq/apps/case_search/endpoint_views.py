@@ -27,6 +27,8 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import not_found
 from corehq.apps.settings.views import BaseProjectDataView
 
+from dimagi.utils.logging import notify_exception
+
 _ENDPOINT_DECORATORS = [
     use_bootstrap5,
     toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
@@ -348,7 +350,11 @@ class CaseSearchEndpointTestView(BaseDomainView):
         query_root, errors = parse_query_spec(query, case_type, get_capability(self.domain))
         if errors:
             return self._render_results(request, errors=errors)
-        columns, rows = self._run_query(case_type, query_root)
+        try:
+            columns, rows = self._run_query(case_type, query_root)
+        except Exception as e:
+            notify_exception(request, str(e))
+            return self._render_results(request, errors=['Query Execution Failed'])
         return self._render_results(request, columns=columns, rows=rows)
 
     def _run_query(self, case_type, query):
