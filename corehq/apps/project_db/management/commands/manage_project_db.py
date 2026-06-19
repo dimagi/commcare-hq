@@ -31,7 +31,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--drop',
             action='store_true',
-            help="Drop the domain's ProjectDB schema.",
+            help="Drop the domain's ProjectDB schema, including all tables and data",
         )
         parser.add_argument(
             '--populate',
