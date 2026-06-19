@@ -253,7 +253,6 @@ extraPaths = [
 ]
 
 [tool.ty.environment]
-python = ".venv"
 extra-paths = [
     "corehq/ex-submodules",
 ]
