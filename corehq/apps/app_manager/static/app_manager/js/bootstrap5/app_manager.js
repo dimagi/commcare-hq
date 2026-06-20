@@ -12,6 +12,7 @@ import noopMetrics from "analytix/js/noopMetrics";
 import alertUser from "hqwebapp/js/bootstrap5/alert_user";
 import main from "hqwebapp/js/bootstrap5/main";
 import menu from "app_manager/js/menu";
+import appManagerUtils from "app_manager/js/app_manager_utils";
 import previewApp from "app_manager/js/bootstrap5/preview_app";
 import sectionChanger from "app_manager/js/section_changer";
 import "hqwebapp/js/components/inline_edit";  // app, menu, and form names and comments all use these
@@ -49,7 +50,7 @@ module.updatePageTitle = function (pageTitle) {
 };
 
 module.checkCommcareVersion = function (version) {
-    return module.versionGE(module.commcareVersion(), version);
+    return appManagerUtils.versionGE(module.commcareVersion(), version);
 };
 
 module.checkAreWeThereYet = function (version) {
@@ -57,25 +58,7 @@ module.checkAreWeThereYet = function (version) {
         // We don't know the latest version. Assume this version has arrived
         return true;
     } else {
-        return module.versionGE(module.latestCommcareVersion(), version);
-    }
-};
-
-module.versionGE = function (commcareVersion1, commcareVersion2) {
-    function parse(version) {
-        version = version.split('.');
-        version = [parseInt(version[0]), parseInt(version[1])];
-        return version;
-    }
-    commcareVersion1 = parse(commcareVersion1);
-    commcareVersion2 = parse(commcareVersion2);
-    if (commcareVersion1[0] > commcareVersion2[0]) {
-        return true;
-    } else if (commcareVersion1[0] === commcareVersion2[0]) {
-        return commcareVersion1[1] >= commcareVersion2[1];
-
-    } else {
-        return false;
+        return appManagerUtils.versionGE(module.latestCommcareVersion(), version);
     }
 };
 
