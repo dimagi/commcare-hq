@@ -46,14 +46,14 @@ function buildSelectedQuestion(mug) {
     const parent = mug.parentMug;
     const belongsToQuestion = parent && {
         type: parent.options.typeName,
-        question_id: parent.p.nodeID || undefined,
-        path: parent.hashtagPath || undefined,
+        question_id: parent.p.nodeID,
+        path: parent.hashtagPath,
     };
 
     if (mug.__className === "Choice") {
         return {
             type: mug.options.typeName,
-            value: mug.p.nodeID || undefined,
+            value: mug.p.nodeID,
             belongs_to_question: belongsToQuestion,
         };
     }
@@ -65,8 +65,8 @@ function buildSelectedQuestion(mug) {
     }
     return {
         type: mug.options.typeName,
-        question_id: mug.p.nodeID || undefined,
-        path: mug.hashtagPath || undefined,
+        question_id: mug.p.nodeID,
+        path: mug.hashtagPath,
     };
 }
 
