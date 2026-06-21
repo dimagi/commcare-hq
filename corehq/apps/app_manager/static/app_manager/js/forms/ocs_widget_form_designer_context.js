@@ -92,7 +92,7 @@ function _initListener() {
         _publishXml();
         _publishQuestionTypes();
     }, PUBLISH_DEBOUNCE_MS));
-    // User clicks a different question without editing don't fire form.change.
+    // User clicks a different question without editing doesn't fire form.change.
     vellum.data.core.$tree.on('select_node.jstree', _publishCurrentSelectedQuestion);
 }
 
