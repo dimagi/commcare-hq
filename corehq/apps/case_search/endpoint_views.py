@@ -147,7 +147,7 @@ class CaseSearchEndpointsView(BaseProjectDataView):
         }
 
 
-class _CaseSearchEndpointEditBaseView(BaseProjectDataView):
+class CaseSearchEndpointEditBaseView(BaseProjectDataView):
     """Shared logic for the new and edit endpoint query builder views."""
 
     template_name = 'case_search/endpoint_edit.html'
@@ -187,7 +187,7 @@ class _CaseSearchEndpointEditBaseView(BaseProjectDataView):
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointNewView(_CaseSearchEndpointEditBaseView):
+class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
     urlname = 'case_search_endpoint_new'
     page_title = gettext_lazy('New Case Search Endpoint')
     mode = 'new'
@@ -236,7 +236,7 @@ class CaseSearchEndpointNewView(_CaseSearchEndpointEditBaseView):
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointEditView(_CaseSearchEndpointEditBaseView):
+class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
     urlname = 'case_search_endpoint_edit'
     page_title = gettext_lazy('Edit Case Search Endpoint')
     mode = 'edit'
