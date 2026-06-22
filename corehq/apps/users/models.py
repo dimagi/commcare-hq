@@ -204,6 +204,7 @@ class HqPermissions(DocumentSchema):
     edit_apps = BooleanProperty(default=False)
     view_apps = BooleanProperty(default=False)
     edit_locked_questions_in_apps = BooleanProperty(default=False)
+    edit_public_webforms = BooleanProperty(default=False)
 
     edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
@@ -310,6 +311,9 @@ class HqPermissions(DocumentSchema):
 
         if self.edit_apps:
             self.view_apps = True
+        else:
+            self.edit_locked_questions_in_apps = False
+            self.edit_public_webforms = False
 
         if not (self.view_reports or self.view_report_list):
             self.download_reports = False

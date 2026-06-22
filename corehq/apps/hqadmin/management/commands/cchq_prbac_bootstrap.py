@@ -262,6 +262,9 @@ class Command(BaseCommand):
              name='Advanced Case Actions (old Save To Case questions)',
              description="Allow adding Advanced Case Actions (old Save To Case questions) "
                          "in the form builder."),
+        Role(slug=privileges.PUBLIC_WEBFORMS,
+             name='Public Webforms',
+             description="Allow creating publicly accessible webforms."),
     ]
 
     BOOTSTRAP_PLANS = [
