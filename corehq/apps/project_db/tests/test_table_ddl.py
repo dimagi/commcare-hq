@@ -11,6 +11,8 @@ from corehq.apps.project_db.table_ddl import (
     get_project_db_engine,
 )
 
+from .util import project_db_table
+
 
 def test_schema_name():
     assert DomainSchema('my-domain').name == 'projectdb_my-domain'
@@ -125,3 +127,18 @@ def _assert_db_updated_as_expected(schema):
         # Both a plain and a date column for dob
         assert isinstance(columns['prop__dob'], sqlalchemy.Text)
         assert isinstance(columns['prop__dob__date'], sqlalchemy.Date)
+
+
+@use('db', project_db_table('test-reflect', 'patient', {
+    'nickname': 'plain',
+    'dob': 'date'
+}))
+def test_case_table_reflect():
+    table = CaseTable('test-reflect', 'patient').reflect()
+    assert table.name == 'patient'
+    assert table.schema == 'projectdb_test-reflect'
+    for column in CaseTable._static_columns():
+        assert column.name in table.c
+    assert isinstance(table.c['prop__nickname'].type, sqlalchemy.Text)
+    assert isinstance(table.c['prop__dob'].type, sqlalchemy.Text)
+    assert isinstance(table.c['prop__dob__date'].type, sqlalchemy.Date)
