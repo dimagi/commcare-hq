@@ -10,6 +10,7 @@ from django.test import SimpleTestCase, TestCase
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.export import BlobExporter
 from corehq.blobs.management.commands.run_blob_import import Command as ImportCommand
+from corehq.blobs.targzipdb import TarGzipBlobDB
 from corehq.blobs.tests.fixtures import blob_db
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, new_meta
 
@@ -222,6 +223,23 @@ class MockBigBlobIO(RawIOBase):
 
     def readinto(self, buffer):
         raise NotImplementedError
+
+
+class TestTarGzipCopyBlobContentLength(SimpleTestCase):
+
+    def test_explicit_content_length_used_for_fileobj_without_attribute(self):
+        data = b'spam and eggs'
+        with NamedTemporaryFile(suffix='.tar.gz') as out:
+            db = TarGzipBlobDB(out.name)
+            db.open('w:gz')
+            # io.BytesIO has no `content_length` attribute
+            db.copy_blob(io.BytesIO(data), key='k', content_length=len(data))
+            db.close()
+
+            with tarfile.open(out.name, 'r:gz') as tgz:
+                member = tgz.getmember('k')
+                assert member.size == len(data)
+                assert tgz.extractfile('k').read() == data
 
 
 def test_doctests():

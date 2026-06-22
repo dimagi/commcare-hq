@@ -36,9 +36,12 @@ class TarGzipBlobDB(AbstractBlobDB):
     def bulk_delete(self, metas):
         raise NotImplementedError
 
-    def copy_blob(self, in_fileobj, key):
+    def copy_blob(self, in_fileobj, key, content_length=None):
         """
         Streams content from ``in_fileobj`` to a tar gzip file.
+
+        :param content_length: Size of the blob in bytes. When ``None``,
+            ``in_fileobj.content_length`` is used.
 
         .. NOTE::
             ``copy_blob()`` does not include BlobMeta. In order to
@@ -46,8 +49,10 @@ class TarGzipBlobDB(AbstractBlobDB):
             need to use the ``dump_domain_data`` management command.
 
         """
+        if content_length is None:
+            content_length = in_fileobj.content_length
         tarinfo = tarfile.TarInfo(name=key)
-        tarinfo.size = in_fileobj.content_length
+        tarinfo.size = content_length
         self._tgzfile.addfile(tarinfo, in_fileobj)
 
     def exists(self, key):
