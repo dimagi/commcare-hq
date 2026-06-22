@@ -1,9 +1,9 @@
 import doctest
 import io
 import tarfile
-from contextlib import redirect_stdout
+from contextlib import chdir, redirect_stdout
 from io import BytesIO, RawIOBase
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from django.test import SimpleTestCase, TestCase
 
@@ -70,7 +70,10 @@ class TestBlobExporter(TestCase):
         orphaned_meta = new_meta(domain=self.domain, type_code=CODES.form_xml, content_length=42)
         orphaned_meta.save()
 
-        with NamedTemporaryFile() as out:
+        # migrate() writes missing_blob_ids.txt to the cwd for the orphaned
+        # meta; run in a temp dir so the test stays idempotent and does not
+        # pollute the repo root.
+        with TemporaryDirectory() as tmpdir, chdir(tmpdir), NamedTemporaryFile() as out:
             self.exporter.migrate(out.name, force=True)
             with tarfile.open(out.name, 'r:gz') as tgzfile:
                 self.assertEqual([expected_meta.key], tgzfile.getnames())
