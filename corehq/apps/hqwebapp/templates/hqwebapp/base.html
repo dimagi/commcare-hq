@@ -1,4 +1,4 @@
-{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
+{% load menu_tags %}{% load i18n %}{% load tz %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
 {% js_entry "hqwebapp/js/base" %}{# Do not change. See special handling of this module in webpack/generateDetails.js #}
 <!--[if lt IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8 lt-ie7"><![endif]-->
@@ -167,7 +167,7 @@
     {% if request.couch_user and USERFLOW_TOKEN %}
       {% initial_page_data 'userflow_token' USERFLOW_TOKEN %}
       {% initial_page_data 'userflow_user_id' request.couch_user.user_id %}
-      {% initial_page_data 'userflow_signed_up_at' request.couch_user.date_joined_iso_utc %}
+      {% initial_page_data 'userflow_signed_up_at' request.couch_user.date_joined|utc|date:'c' %}
       {% initial_page_data 'userflow_server_env' server_environment %}
       {% initial_page_data 'userflow_domain' domain %}
       {% if request.subscription %}
