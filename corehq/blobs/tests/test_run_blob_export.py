@@ -3,7 +3,33 @@ import tempfile
 from contextlib import contextmanager
 from unittest import mock
 
+import pytest
+from django.conf import settings
 from django.core.management import call_command
+from django.test import override_settings
+
+from corehq.blobs.management.commands.run_blob_export import _ensure_s3_pool_size
+
+
+@pytest.mark.parametrize("s3_settings, concurrency, expected", [
+    ({'url': 'x'}, 25, 25),                             # no pool set -> raise to concurrency
+    ({'url': 'x'}, 10, None),                           # at the default -> leave config unset
+    ({'config': {'max_pool_connections': 50}}, 25, 50),  # larger configured pool -> kept
+    ({'config': {'max_pool_connections': 5}}, 25, 25),   # smaller configured pool -> raised
+])
+def test_ensure_s3_pool_size(s3_settings, concurrency, expected):
+    with override_settings(S3_BLOB_DB_SETTINGS=s3_settings, OLD_S3_BLOB_DB_SETTINGS=None):
+        _ensure_s3_pool_size(concurrency)
+        config = settings.S3_BLOB_DB_SETTINGS.get('config')
+        if expected is None:
+            assert config is None or 'max_pool_connections' not in config
+        else:
+            assert config['max_pool_connections'] == expected
+
+
+def test_ensure_s3_pool_size_without_s3_configured_is_noop():
+    with override_settings(S3_BLOB_DB_SETTINGS=None, OLD_S3_BLOB_DB_SETTINGS=None):
+        _ensure_s3_pool_size(25)  # must not raise
 
 
 @contextmanager
