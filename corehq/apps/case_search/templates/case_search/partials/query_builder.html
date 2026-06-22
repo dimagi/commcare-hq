@@ -1,0 +1,30 @@
+{% load i18n %}
+{# Query builder partial — rendered inside an Alpine.js x-data="endpointForm()" context. #}
+{# Groups use a `type` of all/any/none and share their shape with the       #}
+{# stored spec, so builder state serializes to the spec by just dropping    #}
+{# the Alpine-only `_id` keys (see strippedQuery() in the JS).              #}
+
+<div class="filter-tree">
+  <div x-data="{ node: query, _removeParent: null, _removeIdx: null }">
+    {% include 'case_search/partials/_group_node.html' with depth=max_group_depth %}
+  </div>
+
+  <div class="form-check mt-3" x-data="{ showJson: false }">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      id="show-query-json"
+      x-model="showJson"
+    />
+    <label class="form-check-label" for="show-query-json"
+      >{% trans "Show query JSON" %}</label
+    >
+    <textarea
+      x-show="showJson"
+      class="form-control font-monospace mt-2"
+      rows="20"
+      readonly
+      x-text="JSON.stringify(strippedQuery(), null, 2)"
+    ></textarea>
+  </div>
+</div>

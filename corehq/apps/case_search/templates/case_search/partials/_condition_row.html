@@ -1,0 +1,83 @@
+{% load i18n %}
+{# Condition row partial — expects Alpine scope with: node, _removeParent, _removeIdx #}
+{# All other bindings (mode, currentFields, capability, helper functions) #}
+{# are inherited from the enclosing endpointForm() Alpine context.        #}
+
+<div class="d-flex align-items-center gap-2 flex-wrap">
+  <span
+    class="ep-type-badge d-inline-flex align-items-center justify-content-center flex-shrink-0 rounded-1 bg-secondary text-white"
+  >
+    <i :class="typeIconClass(getFieldType(node.field))"></i>
+  </span>
+  <select
+    class="form-select form-select-sm"
+    style="width: auto; min-width: 120px;"
+    @change="node.field = $event.target.value; onFieldChange(node)"
+    :disabled="mode === 'readonly'"
+  >
+    <option value="" :selected="!node.field">{% trans "-- Field --" %}</option>
+    <template x-for="field in Object.values(currentFields)" :key="field.name">
+      <option
+        :value="field.name"
+        x-text="field.name"
+        :selected="node.field === field.name"
+      ></option>
+    </template>
+  </select>
+  <template x-if="node.field">
+    <select
+      class="form-select form-select-sm"
+      style="width: auto; min-width: 120px;"
+      @change="node.operator = $event.target.value; onOperatorChange(node)"
+      :disabled="mode === 'readonly'"
+    >
+      <option value="" :selected="!node.operator">
+        {% trans "-- Operation --" %}
+      </option>
+      <template x-for="op in getOperationsForField(node.field)" :key="op.name">
+        <option
+          :value="op.name"
+          x-text="op.label"
+          :selected="node.operator === op.name"
+        ></option>
+      </template>
+    </select>
+  </template>
+  <template x-if="node.operator">
+    <template
+      x-for="slot in getInputSchemaForOperation(node.operator)"
+      :key="slot.name"
+    >
+      <div class="d-flex gap-1 flex-grow-1">
+        <select
+          class="form-select form-select-sm"
+          style="width: auto;"
+          :value="getInputValue(node, slot.name).type"
+          @change="setInputType(node, slot.name, $event.target.value)"
+          :disabled="mode === 'readonly'"
+        >
+          <option value="constant">{% trans "Value" %}</option>
+        </select>
+        <template x-if="getInputValue(node, slot.name).type === 'constant'">
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            x-model="node.inputs[slot.name].value"
+            :disabled="mode === 'readonly'"
+            :placeholder="slot.name"
+          />
+        </template>
+      </div>
+    </template>
+  </template>
+  <template x-if="mode !== 'readonly'">
+    <button
+      type="button"
+      class="btn btn-sm text-secondary border-0 p-1 ms-auto flex-shrink-0"
+      @click="removeNode(_removeParent, _removeIdx)"
+      aria-label="{% trans "Remove condition" %}"
+    >
+      <i class="fa-regular fa-trash-can"></i>
+    </button>
+  </template>
+</div>
