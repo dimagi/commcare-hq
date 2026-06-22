@@ -17,7 +17,7 @@ def send_to_project_db(domain, case_type, cases):
     if table is not None:
         for chunk in chunked(cases, 1000):
             if not all(c.type == case_type for c in chunk):
-                raise ValueError(f'All cases much be of type {case_type}')
+                raise ValueError(f'All cases must be of type {case_type}')
 
             with engine.begin() as conn:
                 upsert_cases(conn, table, chunk)
