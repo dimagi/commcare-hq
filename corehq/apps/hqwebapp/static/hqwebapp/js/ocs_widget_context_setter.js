@@ -62,6 +62,28 @@ function setAppStructure(appStructure) {
     _publish();
 }
 
+function _setFormContextField(field, value) {
+    _currentContext.form_context = _currentContext.form_context || {};
+    _currentContext.form_context[field] = value;
+    _publish();
+}
+
+function setFormXml(formXml) {
+    _setFormContextField('form_xml', formXml);
+}
+
+function setQuestionTypes(questionTypes) {
+    _setFormContextField('question_types', questionTypes);
+}
+
+function setCurrentSelectedQuestion(currentSelectedQuestion) {
+    _setFormContextField('current_selected_question', currentSelectedQuestion);
+}
+
+function setModuleName(moduleName) {
+    _setFormContextField('module_name', moduleName);
+}
+
 export {WIDGET_SELECTOR};
 export default {
     setUrl: setUrl,
@@ -73,4 +95,8 @@ export default {
     setIsEnterpriseAdmin: setIsEnterpriseAdmin,
     setPermissions: setPermissions,
     setAppStructure: setAppStructure,
+    setFormXml: setFormXml,
+    setQuestionTypes: setQuestionTypes,
+    setCurrentSelectedQuestion: setCurrentSelectedQuestion,
+    setModuleName: setModuleName,
 };

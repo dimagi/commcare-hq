@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -2,16 +2,17 @@
+@@ -2,17 +2,18 @@
  import $ from "jquery";
  import ko from "knockout";
  import _ from "underscore";
@@ -15,13 +15,15 @@
 -import main from "hqwebapp/js/bootstrap3/main";
 +import alertUser from "hqwebapp/js/bootstrap5/alert_user";
 +import main from "hqwebapp/js/bootstrap5/main";
- import menu from "app_manager/js/menu";
++import menu from "app_manager/js/menu";
+ import appManagerUtils from "app_manager/js/app_manager_utils";
+-import menu from "app_manager/js/menu";
 -import previewApp from "app_manager/js/bootstrap3/preview_app";
 +import previewApp from "app_manager/js/bootstrap5/preview_app";
  import sectionChanger from "app_manager/js/section_changer";
  import "hqwebapp/js/components/inline_edit";  // app, menu, and form names and comments all use these
  import "app_manager/js/ocs_widget_app_manager_context";
-@@ -180,25 +181,30 @@
+@@ -163,25 +164,30 @@
   * @private
   */
  var _initAddItemPopovers = function () {
@@ -67,7 +69,7 @@
              var dataType = $(e.target).closest('button').data('type'),
                  stopSubmit = $(e.target).closest('button').data('stopsubmit') === 'yes',
                  $form;
-@@ -208,7 +214,7 @@
+@@ -191,7 +197,7 @@
              }
  
              var caseAction =  $(e.target).closest('button').data('case-action'),
@@ -76,7 +78,7 @@
                  moduleId = $popoverContent.data("module-unique-id"),
                  $trigger = $('.js-add-new-item[data-module-unique-id="' + moduleId + '"]');
  
-@@ -223,13 +229,13 @@
+@@ -206,13 +212,13 @@
          });
      }).on('click', function (e) {
          e.preventDefault();
@@ -92,7 +94,7 @@
          }
      });
  };
-@@ -344,7 +350,7 @@
+@@ -327,7 +333,7 @@
          });
      }
      function promptToSaveOrdering() {
@@ -101,7 +103,7 @@
      }
      function initSortable($sortable) {
          var options = {
-@@ -481,7 +487,9 @@
+@@ -464,7 +470,9 @@
          }
      });
  
@@ -112,7 +114,7 @@
  
      // https://github.com/twitter/bootstrap/issues/6122
      // this is necessary to get popovers to be able to extend
-@@ -509,13 +517,17 @@
+@@ -492,13 +500,17 @@
      });
  
      // Handling for popup displayed when accessing a deleted app
@@ -137,7 +139,7 @@
  
      // Set up app preview
      previewApp.initPreviewWindow();
-@@ -537,15 +549,15 @@
+@@ -520,15 +532,15 @@
          var $form = $('#new-module-form');
  
          if (moduleType === "case") {
@@ -156,7 +158,7 @@
              $form.submit();
          }
      });
-@@ -587,15 +599,13 @@
+@@ -570,15 +582,13 @@
  
              $caseType.on('change', function () {
                  var valueNoSpaces = $(this).val();
@@ -173,7 +175,7 @@
                  $createBtn.prop('disabled', false);
  
                  if (!valueNoSpaces) {
-@@ -604,9 +614,8 @@
+@@ -587,9 +597,8 @@
                  }
  
                  function displayError(errorMsg) {
@@ -184,7 +186,7 @@
                      $help.hide();
                      $createBtn.prop('disabled', true);
                  }
-@@ -643,14 +652,14 @@
+@@ -626,14 +635,14 @@
          newCaseTypeHiddenInput.val(value);
  
          $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
@@ -202,7 +204,7 @@
      });
  
      // Clear selection when modal is hidden
-@@ -672,7 +681,7 @@
+@@ -655,7 +664,7 @@
      $('.new-module-option').each(function () {
          var type = $(this).data('type');
          if (hoverHelpTexts[type]) {
