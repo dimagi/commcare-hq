@@ -9,7 +9,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
 from corehq import toggles
-from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.case_search.endpoint_capability import (
     get_capability,
 )
@@ -347,37 +346,36 @@ class CaseSearchEndpointTestView(BaseDomainView):
             query = json.loads(request.POST.get('query') or '{}')
         except (json.JSONDecodeError, ValueError):
             return self._render_results(request, errors=['Invalid query JSON.'])
-        query_root, errors = parse_query_spec(query, case_type, get_capability(self.domain))
+        capability = get_capability(domain=self.domain)
+        fields = capability['case_types'][case_type]
+        query_root, errors = parse_query_spec(query, case_type, capability)
         if errors:
             return self._render_results(request, errors=errors)
         try:
-            columns, rows = self._run_query(case_type, query_root)
+            results = self._run_query(case_type, query_root)
         except Exception as e:
             notify_exception(request, str(e))
             return self._render_results(request, errors=['Query Execution Failed'])
-        return self._render_results(request, columns=columns, rows=rows)
+        return self._render_results(request, fields=fields, results=results)
 
     def _run_query(self, case_type, query):
         helper = QueryHelper(self.domain)
         results = get_primary_case_search_endpoint_results(helper, [case_type], [], query)
-        # TODO: translate the filter spec into a case search ES query, run it,
-        # and shape the hits into columns/rows. Dummy data for now.
-        if results:
-            columns = (['Case Name'] +
-                       [name for name in results[0].dynamic_case_properties().keys() if name != RELEVANCE_SCORE])
-        else:
-            columns = []
-        rows = [
-            [case.name] +
-            [value for (name, value) in case.dynamic_case_properties().items() if name != RELEVANCE_SCORE]
-            for case in results
-        ]
-        return columns, rows
+        return results
 
-    def _render_results(self, request, *, errors=None, columns=None, rows=None):
+    def _render_results(self, request, *, errors=None, fields=None, results=None):
         # Always 200 so HTMX swaps the partial in (it ignores error statuses).
+        field_names = (fields or {}).keys()
+        if results:
+            rows = [
+                [case.name] +
+                [case.get_case_property(field) or '' for field in field_names]
+                for case in results
+            ]
+        else:
+            rows = []
         return render(request, self._results_template, {
             'errors': errors or [],
-            'columns': columns or [],
+            'columns': (['Case Name'] + [k for k in field_names]),
             'rows': rows or [],
         })
