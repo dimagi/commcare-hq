@@ -102,6 +102,14 @@ def test_format_rate(total_seconds, row_count, expected):
     assert format_rate(total_seconds, row_count) == expected
 
 
+@pytest.mark.parametrize("total_seconds, row_count, expected", [
+    (3651.84, 1_000_000, '1.014h /1M objects'),
+    (5.0, 0, 'n/a /1M objects'),
+])
+def test_format_rate_custom_unit(total_seconds, row_count, expected):
+    assert format_rate(total_seconds, row_count, unit='objects') == expected
+
+
 class RecordingLogger:
     def __init__(self):
         self.messages = []
