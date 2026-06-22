@@ -138,6 +138,7 @@ accounting
  0116_creditadjustment_payment_type
  0117_locked_admin_questions_priv
  0118_vellum_save_to_case_priv
+ 0119_public_webforms_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
