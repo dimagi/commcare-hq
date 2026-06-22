@@ -5,7 +5,7 @@ import sys
 
 from django.core.management import BaseCommand, CommandError
 
-from corehq.blobs.export import BlobExporter, PROGRESS_INTERVAL
+from corehq.blobs.export import BlobExporter, DEFAULT_CONCURRENCY, PROGRESS_INTERVAL
 from corehq.util.decorators import change_log_level
 
 USAGE = "Usage: ./manage.py run_blob_export [options] <domain>"
@@ -43,6 +43,13 @@ class Command(BaseCommand):
                                  "the exporter to a single database.")
         parser.add_argument('--already_exported', dest='already_exported',
                             help='Pass a file with a list of blob names already exported')
+        parser.add_argument(
+            '--concurrency', type=int, default=DEFAULT_CONCURRENCY,
+            help="Number of blobs to fetch from S3 in parallel (default: "
+                 f"{DEFAULT_CONCURRENCY}). Effective parallelism is capped at "
+                 "botocore's max_pool_connections (default 10); to go higher, "
+                 "also raise 'max_pool_connections' in S3_BLOB_DB_SETTINGS['config'].",
+        )
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
@@ -53,6 +60,7 @@ class Command(BaseCommand):
         reset=False,
         progress_interval=PROGRESS_INTERVAL,
         limit_to_db=None,
+        concurrency=DEFAULT_CONCURRENCY,
         **options,
     ):
         already_exported = get_lines_from_file(options['already_exported'])
@@ -79,6 +87,7 @@ class Command(BaseCommand):
             progress_interval=progress_interval,
             limit_to_db=limit_to_db,
             already_exported=already_exported,
+            concurrency=concurrency,
         )
         self.stdout.write(f'\nData dumped to file: {export_filename}')
         if skips:
