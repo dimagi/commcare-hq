@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from unittest.mock import patch
 
 import pytest
@@ -67,26 +68,33 @@ def test_case_table_basics():
     assert isinstance(table.c['number_prop__children_count'].type, sqlalchemy.Numeric)
 
 
-@use('db')
+@contextmanager
+def _project_db_schema(domain):
+    schema = DomainSchema(domain)
+    try:
+        yield schema
+    finally:
+        with get_project_db_engine().begin() as conn:
+            schema.drop(conn)
+
+
+@use('db', _project_db_schema('test_create_project_db'))
 @patch('corehq.apps.project_db.table_ddl._get_case_types')
 @patch.object(CaseTable, '_get_dd_properties')
 def test_create_project_db(get_dd_properties, get_case_types):
     # Actually commit the project_db definition to postgres and spot check results
     domain = 'test_create_project_db'
-    domain_schema = DomainSchema(domain)
+    schema_name = DomainSchema(domain).name
 
     get_case_types.return_value = ['patient']
     get_dd_properties.return_value = [('nickname', 'plain'), ('dob', 'plain')]
     create_or_update_project_db(domain)
-    _assert_db_created_as_expected(domain_schema.name)
+    _assert_db_created_as_expected(schema_name)
 
     # Drop nickname, make dob a date, add a new prop
     get_dd_properties.return_value = [('favorite_color', 'plain'), ('dob', 'date')]
     create_or_update_project_db(domain)
-    _assert_db_updated_as_expected(domain_schema.name)
-
-    with get_project_db_engine().begin() as conn:
-        domain_schema.drop(conn)
+    _assert_db_updated_as_expected(schema_name)
 
 
 def _assert_db_created_as_expected(schema):
