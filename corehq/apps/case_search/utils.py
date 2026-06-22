@@ -131,7 +131,7 @@ def get_endpoint_results(helper, config):
 
     query_root, errors = parse_query_spec(
         endpoint.current_version.query,
-        endpoint.target_name,
+        endpoint.case_type,
         get_capability(helper.domain)
     )
     if errors:
@@ -141,7 +141,7 @@ def get_endpoint_results(helper, config):
         raise CaseSearchUserError(_("Endpoint '{}' query is invalid").format(config.endpoint_id))
     return get_primary_case_search_endpoint_results(
         helper,
-        [endpoint.target_name],
+        [endpoint.case_type],
         config.criteria,
         query_root)
 

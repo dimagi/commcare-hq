@@ -217,7 +217,7 @@ class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
                 domain=self.domain,
                 name=cd['name'],
                 target_type=cd['target_type'],
-                target_name=cd['case_type'],
+                case_type=cd['case_type'],
             )
             _add_endpoint_version(
                 endpoint,
@@ -260,7 +260,7 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
             initial={
                 'name': self._endpoint.name,
                 'target_type': self._endpoint.target_type,
-                'case_type': self._endpoint.target_name,
+                'case_type': self._endpoint.case_type,
                 'query': current.query if current else empty_query,
                 'parameters': current.parameters if current else list,
             },
@@ -281,14 +281,14 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
         with transaction.atomic():
             endpoint.name = cd['name']
             endpoint.target_type = cd['target_type']
-            endpoint.target_name = cd['case_type']
+            endpoint.case_type = cd['case_type']
             _add_endpoint_version(
                 endpoint,
                 action=CaseSearchEndpointVersion.Action.UPDATE,
                 created_by=request.couch_user.username,
                 query=cd['query'],
                 parameters=cd['parameters'],
-                extra_update_fields=['name', 'target_type', 'target_name'],
+                extra_update_fields=['name', 'target_type', 'case_type'],
             )
         return redirect(
             reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
