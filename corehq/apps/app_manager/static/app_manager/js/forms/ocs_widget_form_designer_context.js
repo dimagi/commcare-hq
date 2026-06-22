@@ -24,7 +24,7 @@ function _publishXml() {
 function extractQuestionTypes(form) {
     const types = {};
     form.walkMugs(function (mug) {
-        if (mug.options.typeName) {
+        if (mug.absolutePath && mug.options.typeName) {
             types[mug.absolutePath] = mug.options.typeName;
         }
     });

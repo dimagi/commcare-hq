@@ -89,6 +89,16 @@ describe("OCS form designer context extractors", function () {
             assert.equal(types["/data/first_name"], "Text");
             assert.equal(types["/data/age"], "Integer");
         });
+
+        it("excludes control-only mugs (choices, lookup tables) that have no path", function () {
+            addQuestion("Select", "color");
+            addQuestion("Choice", "red");
+
+            const types = extractQuestionTypes(vellum.data.core.form);
+
+            assert.equal(types["/data/color"], "Multiple Choice");
+            assert.notProperty(types, "null");
+        });
     });
 
     describe("extractSelectedQuestion", function () {
