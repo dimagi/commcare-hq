@@ -335,7 +335,7 @@ class CaseSearchEndpointTestView(BaseDomainView):
 
     urlname = 'case_search_endpoint_test'
     http_method_names = ['post']
-    _results_template = 'case_search/partials/_test_results.html'
+    _results_template = 'case_search/partials/test_results.html'
 
     @property
     def page_url(self):

@@ -6,7 +6,7 @@
 
 <div class="filter-tree">
   <div x-data="{ node: query, _removeParent: null, _removeIdx: null }">
-    {% include 'case_search/partials/_group_node.html' with depth=max_group_depth %}
+    {% include 'case_search/partials/group_node.html' with depth=max_group_depth %}
   </div>
 
   <div class="form-check mt-3" x-data="{ showJson: false }">
