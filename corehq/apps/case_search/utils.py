@@ -146,10 +146,12 @@ def get_endpoint_results(helper, config):
         query_root)
 
 @time_function()
-def get_primary_case_search_endpoint_results(helper, case_types, criteria, endpoint_query):
+def get_primary_case_search_endpoint_results(helper, case_types, criteria, endpoint_query, limit=None):
     builder = CaseSearchEndpointQueryBuilder(helper, case_types, endpoint_query)
     with helper.profiler.timing_context('build_query'):
         search_es = builder.build_query(criteria)
+    if limit:
+        search_es = search_es.size(limit)
 
     results = search_es.run()
     with helper.profiler.timing_context('wrap_cases'):

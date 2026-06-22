@@ -360,7 +360,7 @@ class CaseSearchEndpointTestView(BaseDomainView):
 
     def _run_query(self, case_type, query):
         helper = QueryHelper(self.domain)
-        results = get_primary_case_search_endpoint_results(helper, [case_type], [], query)
+        results = get_primary_case_search_endpoint_results(helper, [case_type], [], query, 20)
         return results
 
     def _render_results(self, request, *, errors=None, fields=None, results=None):
