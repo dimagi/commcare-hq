@@ -38,28 +38,27 @@ Populating the tables with case data and querying them are not yet implemented.
 TODOs
 ----
 
-- **Identifier length & collisions.** ``domain`` and ``case_type`` are used
+- Identifier length & collisions. ``domain`` and ``case_type`` are used
   directly as Postgres identifiers, which are silently truncated at 63 bytes.
   ``CaseProperty.name`` allows up to 255 chars, so generated ``prop__<name>``
   columns can truncate and collide; long domain names can collide on schema
   name, where ``DROP SCHEMA ... CASCADE`` could affect another domain's data.
   Truncate-and-hash before use (see the ``# TODO`` in ``table_ddl.py``).
-
-- **Wire schema cleanup to domain deletion.** ``DomainSchema.drop`` exists but
+- Wire schema cleanup to domain deletion. ``DomainSchema.drop`` exists but
   is not registered in ``corehq/apps/domain/deletion.py``. Because this is a raw
   Postgres schema rather than a Django model, the standard model-based
   registration won't catch it; deleting a domain would orphan its
   ``projectdb_<domain>`` schema and data.
-
-- **Typed property collisions** If a project had a ``dob`` prop and
+- Typed property collisions. If a project had a ``dob`` prop and
   a ``dob__date`` prop, I think that could cause undefined behavior.
   Consider adding type as a prefix, maybe even before prop?  Eg
   instead of ``prop__dob__date`` try ``date_prop__dob``.
-
-- **Store raw case prop name as a comment** This could then be used to know how
+- Store raw case prop name as a comment. This could then be used to know how
   to insert a case based on inspecting the table.  It'd change ``case_to_row``
   to iterate through columns instead of properties
-
-- **Date vs Datetime** Looks like the DD only supports date
+- Date vs Datetime. Looks like the DD only supports date
   properties, not datetime - does it intend the latter? Should we
   support both?
+- Index external ID.
+- Put limit on number of property columns
+- Store blank values as null, so users can functionally "delete" case properties
