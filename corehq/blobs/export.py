@@ -10,7 +10,7 @@ from .migrate import PROCESSING_COMPLETE_MESSAGE
 from .models import BlobMeta
 from .targzipdb import TarGzipBlobDB
 
-PROGRESS_INTERVAL = 100  # print a progress line every N objects processed
+PROGRESS_INTERVAL = 10_000  # print a progress line every N objects processed
 
 
 class BlobDbBackendExporter(object):
