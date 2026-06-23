@@ -67,13 +67,12 @@ class Command(BaseCommand):
             self._report_preview(columns, rows, elapsed)
 
     def _report_preview(self, columns, rows, elapsed):
-        rows = rows[:DEFAULT_ROW_LIMIT]
-        self.stdout.write(f"{len(rows)} rows returned in {elapsed:.3f}s.")
-        writer = SimpleTableWriter(self.stdout, TableRowFormatter())
-        writer.write_table(columns, rows)
         if len(rows) > DEFAULT_ROW_LIMIT:
             self.stdout.write(f"\nShowing the first {DEFAULT_ROW_LIMIT} rows. "
                               "Pass --full to fetch all rows as a CSV.")
+        self.stdout.write(f"{len(rows)} rows returned in {elapsed:.3f}s.")
+        writer = SimpleTableWriter(self.stdout, TableRowFormatter())
+        writer.write_table(columns, rows[:DEFAULT_ROW_LIMIT])
 
     def _report_full(self, domain, columns, rows, elapsed):
         self.stdout.write(f"{len(rows)} rows returned in {elapsed:.3f}s.")
