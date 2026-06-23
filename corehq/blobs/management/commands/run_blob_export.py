@@ -5,7 +5,7 @@ import sys
 
 from django.core.management import BaseCommand, CommandError
 
-from corehq.blobs.export import BlobExporter
+from corehq.blobs.export import BlobExporter, PROGRESS_INTERVAL
 from corehq.util.decorators import change_log_level
 
 USAGE = "Usage: ./manage.py run_blob_export [options] <domain>"
@@ -35,8 +35,9 @@ class Command(BaseCommand):
             help="Optionally specify a directory to write the file to. "
                  "The directory will be created if it does not exist.",
         )
-        parser.add_argument('--chunk-size', type=int, default=100,
-                            help='Maximum number of records to read from couch at once.')
+        parser.add_argument('--progress-interval', type=int, default=PROGRESS_INTERVAL,
+                            help='Print a progress line (with throughput) every N objects '
+                                 f'processed (default: {PROGRESS_INTERVAL}).')
         parser.add_argument('--limit-to-db', dest='limit_to_db',
                             help="When specifying a SQL importer use this to restrict "
                                  "the exporter to a single database.")
@@ -50,7 +51,7 @@ class Command(BaseCommand):
         domain=None,
         dir=None,
         reset=False,
-        chunk_size=100,
+        progress_interval=PROGRESS_INTERVAL,
         limit_to_db=None,
         **options,
     ):
@@ -75,7 +76,7 @@ class Command(BaseCommand):
         exporter = BlobExporter(domain)
         total, skips = exporter.migrate(
             export_filename,
-            chunk_size=chunk_size,
+            progress_interval=progress_interval,
             limit_to_db=limit_to_db,
             already_exported=already_exported,
         )
