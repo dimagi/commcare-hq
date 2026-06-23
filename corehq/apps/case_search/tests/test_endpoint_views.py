@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
@@ -13,6 +14,7 @@ from ..endpoint_views import (
     CaseSearchEndpointEditView,
     CaseSearchEndpointNewView,
     CaseSearchEndpointsView,
+    CaseSearchEndpointTestView,
 )
 from ..models import CaseSearchEndpoint, CaseSearchEndpointVersion
 
@@ -74,6 +76,9 @@ class EndpointViewTestCase(TestCase):
             CaseSearchEndpointDeactivateView.urlname,
             args=[self.domain, endpoint_id],
         )
+
+    def _test_url(self):
+        return reverse(CaseSearchEndpointTestView.urlname, args=[self.domain])
 
     def _post_data(self, **overrides):
         data = {
@@ -338,3 +343,39 @@ class TestCaseSearchEndpointDeactivateView(EndpointViewTestCase):
         ep.save(update_fields=['is_active'])
         response = self.client.post(self._deactivate_url(ep.id))
         assert response.status_code == 404
+
+
+class TestCaseSearchEndpointTestView(EndpointViewTestCase):
+    def test_valid_query_returns_no_errors(self):
+        with patch('corehq.apps.case_search.endpoint_views.get_primary_case_search_endpoint_results',
+                   return_value=[]):
+            response = self.client.post(self._test_url(), {
+                'case_type': 'my_case_type',
+                'query': json.dumps(EMPTY_QUERY),
+            })
+        assert response.status_code == 200
+        assert 'alert-danger' not in response.content.decode()
+
+    def test_invalid_query_json_returns_error(self):
+        response = self.client.post(self._test_url(), {
+            'case_type': 'my_case_type',
+            'query': 'not json',
+        })
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'Invalid query JSON' in content
+        assert '<table' not in content
+
+    def test_invalid_filter_spec_returns_error(self):
+        response = self.client.post(self._test_url(), {
+            'case_type': 'my_case_type',
+            'query': json.dumps({'type': 'bogus'}),
+        })
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'alert-danger' in content
+        assert '<table' not in content
+
+    def test_requires_post(self):
+        response = self.client.get(self._test_url())
+        assert response.status_code == 405

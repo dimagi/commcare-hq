@@ -1,4 +1,5 @@
 import "commcarehq";
+import "hqwebapp/js/htmx_base";
 import Alpine from "alpinejs";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
