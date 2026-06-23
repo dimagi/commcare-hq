@@ -17,7 +17,7 @@ from .migrate import PROCESSING_COMPLETE_MESSAGE
 from .models import BlobMeta
 from .targzipdb import TarGzipBlobDB
 
-DEFAULT_CONCURRENCY = 10  # matches botocore default max_pool_connections
+DEFAULT_CONCURRENCY = 15  # benchmarked sweet spot; the S3 pool is auto-bumped to match
 SPILL_THRESHOLD = 10 * 1024 * 1024  # buffer blobs in RAM up to 10 MB, then spill to disk
 PROGRESS_INTERVAL = 10_000  # print a progress line every N objects processed
 # Blobs are largely already compressed at rest, so gzip's default level 9 burns
