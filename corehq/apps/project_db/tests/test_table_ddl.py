@@ -67,6 +67,12 @@ def test_case_table_basics():
     assert isinstance(table.c['prop__children_count'].type, sqlalchemy.Text)
     assert isinstance(table.c['number_prop__children_count'].type, sqlalchemy.Numeric)
 
+    # Text property columns are NOT NULL; typed columns stay nullable
+    assert table.c['prop__nickname'].nullable is False
+    assert table.c['prop__dob'].nullable is False
+    assert table.c['date_prop__dob'].nullable is True
+    assert table.c['number_prop__children_count'].nullable is True
+
 
 @contextmanager
 def _project_db_schema(domain):
@@ -103,15 +109,21 @@ def _assert_db_created_as_expected(schema):
         assert schema in inspector.get_schema_names()
         assert ['patient'] == inspector.get_table_names(schema=schema)
 
-        columns = {
-            col['name']: col['type']
-            for col in inspector.get_columns('patient', schema=schema)
-        }
-        assert isinstance(columns['case_name'], sqlalchemy.Text)
-        assert isinstance(columns['opened_on'], sqlalchemy.DateTime)
-        assert isinstance(columns['prop__nickname'], sqlalchemy.Text)
-        assert isinstance(columns['prop__dob'], sqlalchemy.Text)
-        assert 'date_prop__dob' not in columns
+        cols = {col['name']: col for col in inspector.get_columns('patient', schema=schema)}
+        col_types = {name: col['type'] for name, col in cols.items()}
+        assert isinstance(col_types['case_name'], sqlalchemy.Text)
+        assert isinstance(col_types['opened_on'], sqlalchemy.DateTime)
+        assert isinstance(col_types['prop__nickname'], sqlalchemy.Text)
+        assert isinstance(col_types['prop__dob'], sqlalchemy.Text)
+        assert 'date_prop__dob' not in cols
+
+        # Text property columns and external_id are NOT NULL, defaulting to ''
+        for name in ['prop__nickname', 'prop__dob', 'external_id']:
+            assert cols[name]['nullable'] is False, name
+            assert cols[name]['default'] == "''::text", name
+        # Other columns remain nullable
+        assert cols['case_name']['nullable'] is True
+        assert cols['parent_id']['nullable'] is True
 
         indexes = inspector.get_indexes('patient', schema=schema)
         assert any(ix['column_names'] == ['owner_id'] for ix in indexes)

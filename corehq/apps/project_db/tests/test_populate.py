@@ -1,6 +1,6 @@
 import datetime
-from decimal import Decimal
 import uuid
+from decimal import Decimal
 
 import pytest
 from unmagic import use
@@ -156,12 +156,13 @@ def test_send_to_project_db():
     send_to_project_db('test-send', 'patient', [
         _make_case({'first_name': 'Alice'}, type='patient'),
         _make_case({'first_name': 'Bob'}, type='patient'),
+        _make_case({}, type='patient'),
     ])
 
     table = CaseTable('test-send', 'patient').reflect()
     with get_project_db_engine().begin() as conn:
         rows = conn.execute(table.select()).fetchall()
-    assert [r[0] for r in rows] == ['Alice', 'Bob']
+    assert [r[0] for r in rows] == ['Alice', 'Bob', '']
     assert CaseTable('test-upsert', 'clinic').reflect() is None
 
 

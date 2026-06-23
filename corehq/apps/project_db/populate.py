@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal, InvalidOperation
 
+from sqlalchemy import Text
 from sqlalchemy.dialects.postgresql import insert
 
 from dimagi.utils.chunked import chunked
@@ -25,17 +26,25 @@ def send_to_project_db(domain, case_type, cases):
 
 def upsert_cases(conn, table, cases):
     """Insert or update cases into a project DB table"""
-    columns = table.c.keys()
-    rows = [case_to_row(case, columns) for case in cases]
-    # Make sure every column is specified
-    rows = [{col: row.get(col, None) for col in columns}
-            for row in rows]
+    column_names = table.c.keys()
+    rows = [case_to_row(case, column_names) for case in cases]
+    rows = [_normalize(row, table.c) for row in rows]
     stmt = insert(table)
     stmt = stmt.on_conflict_do_update(
         index_elements=['case_id'],
-        set_={col: stmt.excluded[col] for col in columns if col != 'case_id'},
+        set_={col: stmt.excluded[col] for col in column_names if col != 'case_id'},
     )
     conn.execute(stmt, rows)
+
+
+def _normalize(row, columns):
+    filled = {}  # Row with all columns present
+    for column in columns:
+        value = row.get(column.name)
+        if value is None and not column.nullable and isinstance(column.type, Text):
+            value = ''
+        filled[column.name] = value
+    return filled
 
 
 def case_to_row(case, table_columns):

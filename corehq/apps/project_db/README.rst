@@ -13,8 +13,9 @@ Layout
 - One schema per domain, named ``projectdb_<domain>``.
 - One table per case type, named after the case type.
 - Each table has a fixed set of columns mirroring ``CommCareCase``, plus a
-  ``prop__<name>`` column for every case property. Typed properties (date,
-  number) get an additional typed column, e.g. ``date_prop__<name>``.
+  ``prop__<name>`` column for every case property (defaults to `''`). Typed
+  properties (date, number) get an additional typed column, e.g.
+  ``date_prop__<name>``.
 
 Definitions are built with `SQLAlchemy Core
 <https://docs.sqlalchemy.org/en/13/core/>`_ and live in the database configured
@@ -57,4 +58,3 @@ TODOs
   support both?
 - Index external ID.
 - Put limit on number of property columns
-- Store blank values as null, so users can functionally "delete" case properties
