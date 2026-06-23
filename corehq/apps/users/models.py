@@ -21,7 +21,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 from django.utils.translation import override as override_language
 
 from couchdbkit import MultipleResultsFound, ResourceNotFound
