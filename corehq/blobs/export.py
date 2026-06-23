@@ -82,9 +82,9 @@ class BlobExporter:
                     for obj in iterator:
                         migrator.process_object(obj)
                         if migrator.total_blobs % chunk_size == 0:
-                            print("Processed {} objects".format(migrator.total_blobs))
+                            print(f"Processed {migrator.total_blobs} objects")
 
-        print("Processed {} total objects".format(migrator.total_blobs))
+        print(f"Processed {migrator.total_blobs} total objects")
         return migrator.total_blobs, 0
 
 
