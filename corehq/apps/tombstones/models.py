@@ -60,6 +60,7 @@ class Tombstone(PartitionedModel):
     doc_id = models.CharField(max_length=126)
     model = ModelClassField()
     domain = models.CharField(max_length=255)
+    deletion_id = models.CharField(max_length=255, null=True)
     soft_deleted_on = models.DateTimeField(db_index=True)
     hard_deleted_on = models.DateTimeField()
 
