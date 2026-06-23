@@ -20,6 +20,10 @@ from .targzipdb import TarGzipBlobDB
 DEFAULT_CONCURRENCY = 15  # benchmarked sweet spot; the S3 pool is auto-bumped to match
 SPILL_THRESHOLD = 10 * 1024 * 1024  # buffer blobs in RAM up to 10 MB, then spill to disk
 PROGRESS_INTERVAL = 10_000  # print a progress line every N objects processed
+# Blobs are largely already compressed at rest, so gzip's default level 9 burns
+# CPU scanning incompressible data for almost no size gain. Level 1 keeps the
+# .tar.gz format (readable by run_blob_import) at a fraction of the CPU.
+COMPRESS_LEVEL = 1
 
 _Fetched = namedtuple('_Fetched', 'key fileobj content_length')
 _Missing = namedtuple('_Missing', 'key')
@@ -41,7 +45,7 @@ class BlobDbBackendExporter(object):
         self.missing_ids_filename = "missing_blob_ids.txt"
 
     def __enter__(self):
-        self.db.open('w:gz')
+        self.db.open('w:gz', compresslevel=COMPRESS_LEVEL)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.db.close()

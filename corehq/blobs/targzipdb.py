@@ -17,8 +17,9 @@ class TarGzipBlobDB(AbstractBlobDB):
         self.filename = filename
         self._tgzfile = None
 
-    def open(self, mode='r:gz'):
-        self._tgzfile = tarfile.open(self.filename, mode)
+    def open(self, mode='r:gz', compresslevel=None):
+        kwargs = {} if compresslevel is None else {'compresslevel': compresslevel}
+        self._tgzfile = tarfile.open(self.filename, mode, **kwargs)
 
     def close(self):
         self._tgzfile.close()
