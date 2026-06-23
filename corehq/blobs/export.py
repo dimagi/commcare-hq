@@ -1,9 +1,11 @@
 import os
+import time
 
 from corehq.apps.dump_reload.sql.dump import (
     APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP,
     get_all_model_iterators_builders_for_domain,
 )
+from corehq.apps.dump_reload.timing import format_rate
 
 from . import NotFound, get_blob_db, CODES
 from .migrate import PROCESSING_COMPLETE_MESSAGE
@@ -75,6 +77,7 @@ class BlobExporter:
             )
 
         migrator = BlobDbBackendExporter(filename, already_exported)
+        start = batch_start = time.monotonic()
         with migrator:
             iterator_builders = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP['blobs.BlobMeta']
             builders = get_all_model_iterators_builders_for_domain(
@@ -85,9 +88,17 @@ class BlobExporter:
                     for obj in iterator:
                         migrator.process_object(obj)
                         if migrator.total_blobs % progress_interval == 0:
-                            print("Processed {} objects".format(migrator.total_blobs))
+                            now = time.monotonic()
+                            batch_elapsed = now - batch_start
+                            print("Processed {} objects (last {} in {:.1f}s, {})".format(
+                                migrator.total_blobs, progress_interval, batch_elapsed,
+                                format_rate(batch_elapsed, progress_interval, unit='objects')))
+                            batch_start = now
 
-        print("Processed {} total objects".format(migrator.total_blobs))
+        elapsed = time.monotonic() - start
+        print("Processed {} objects in {:.1f}s ({})".format(
+            migrator.total_blobs, elapsed,
+            format_rate(elapsed, migrator.total_blobs, unit='objects')))
         return migrator.total_blobs, 0
 
 

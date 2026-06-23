@@ -1,5 +1,7 @@
 import doctest
+import io
 import tarfile
+from contextlib import redirect_stdout
 from io import BytesIO, RawIOBase
 from tempfile import NamedTemporaryFile
 
@@ -36,6 +38,19 @@ class TestBlobExporter(TestCase):
             self.exporter.migrate(out.name, force=True)
             with tarfile.open(out.name, 'r:gz') as tgzfile:
                 self.assertEqual([expected_meta.key], tgzfile.getnames())
+
+    def test_progress_and_summary_report_throughput(self):
+        for _ in range(3):
+            self.db.put(BytesIO(self.blob_data), meta=new_meta(domain=self.domain, type_code=CODES.form_xml))
+
+        out = io.StringIO()
+        with NamedTemporaryFile() as f, redirect_stdout(out):
+            self.exporter.migrate(f.name, progress_interval=2, force=True)
+        printed = out.getvalue()
+        # per-chunk line at the 2-object boundary, then the final summary
+        assert "Processed 2 objects (last 2 in " in printed
+        assert "Processed 3 objects in " in printed
+        assert "/1M objects)" in printed
 
     def test_different_blob_types_are_exported(self):
         form = self.db.put(BytesIO(self.blob_data), meta=new_meta(domain=self.domain, type_code=CODES.form_xml))
