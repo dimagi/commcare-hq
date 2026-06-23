@@ -117,10 +117,10 @@ class CaseSearchEndpointForm(forms.Form):
         # Only run semantic validation when both fields parsed cleanly.
         if query is not None and parameters is not None:
             capability = self.capability or get_capability(self.domain)
-            _, errors = parse_parameter_spec(parameters)
+            parameters, errors = parse_parameter_spec(parameters)
             if not errors:
                 _, errors = parse_query_spec(
-                    query, cleaned.get('case_type') or '', capability
+                    query, parameters, cleaned.get('case_type') or '', capability
                 )
             for error in errors:
                 self.add_error(None, error)
@@ -361,7 +361,7 @@ class CaseSearchEndpointTestView(BaseDomainView):
 
         capability = get_capability(domain=self.domain)
         fields = capability['case_types'][case_type]
-        query_root, errors = parse_query_spec(query, case_type, capability)
+        query_root, errors = parse_query_spec(query, parameters, case_type, capability)
         if errors:
             return self._render_results(request, errors=errors)
         try:

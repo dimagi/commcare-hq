@@ -129,8 +129,11 @@ def get_endpoint_results(helper, config):
     if not endpoint.is_active:
         raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
 
+    parameters, errors = parse_parameter_spec(endpoint.current_version.parameters)
+
     query_root, errors = parse_query_spec(
         endpoint.current_version.query,
+        parameters,
         endpoint.case_type,
         get_capability(helper.domain)
     )

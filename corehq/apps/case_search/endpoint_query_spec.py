@@ -15,7 +15,7 @@ from typing import ClassVar
 
 from attr import Factory, define, field as attr_field, validators
 
-from corehq.apps.case_search.endpoint_capability import FIELD_TYPES, OPERATORS
+from corehq.apps.case_search.endpoint_capability import FIELD_TYPES, INPUT_TYPE_MATCH_FIELD, OPERATORS
 
 # Group node types: all = AND, any = OR, none = NOR (no child matches).
 GROUP_TYPES = ('all', 'any', 'none')
@@ -85,8 +85,25 @@ class ConstantInput:
     def from_json(cls, data):
         return cls(value=data.get('value'))
 
+@define
+class ParameterInput:
+    """A literal input value supplied directly in the spec."""
+
+    type: ClassVar[str] = 'parameter'
+    value: object = None
+
+    def to_json(self):
+        return {'type': self.type, 'value': self.value}
+
+    @classmethod
+    def from_json(cls, data):
+        return cls(value=data.get('value'))
+
 # input type -> class. Add parameter/function input kinds here.
-INPUT_TYPES = {ConstantInput.type: ConstantInput}
+INPUT_TYPES = {
+    ConstantInput.type: ConstantInput,
+    ParameterInput.type: ParameterInput,
+}
 
 def input_from_json(data):
     input_type = data.get('type')
@@ -162,7 +179,7 @@ def node_from_json(data, fields_by_name=None):
     raise ValueError(f'Unknown node type: {node_type!r}')
 
 
-def parse_query_spec(query_spec, case_type_name, capability):
+def parse_query_spec(query_spec, parameters, case_type_name, capability):
     """Validate a query spec against capability metadata and parse it.
 
     :returns: a ``(root, errors)`` tuple. ``root`` is the parsed node tree (an
@@ -173,7 +190,7 @@ def parse_query_spec(query_spec, case_type_name, capability):
     fields_by_name = _fields_by_name(capability, case_type_name, errors)
     operator_input_schemas = capability.get('operator_input_schemas', {})
 
-    _validate_node(query_spec, fields_by_name, operator_input_schemas, errors, depth=0, counter=[0])
+    _validate_node(query_spec, fields_by_name, parameters, operator_input_schemas, errors, depth=0, counter=[0])
     if errors:
         return None, errors
     return node_from_json(query_spec, fields_by_name), errors
@@ -187,7 +204,7 @@ def _fields_by_name(capability, case_type_name, errors):
     return case_types[case_type_name]
 
 
-def _validate_node(node, fields_by_name, operator_input_schemas, errors, depth, counter):
+def _validate_node(node, fields_by_name, parameters, operator_input_schemas, errors, depth, counter):
     counter[0] += 1
     if counter[0] > MAX_TOTAL_NODES:
         errors.append(f'Query has too many nodes (max {MAX_TOTAL_NODES})')
@@ -212,16 +229,16 @@ def _validate_node(node, fields_by_name, operator_input_schemas, errors, depth, 
             )
             return
         for child in children:
-            _validate_node(child, fields_by_name, operator_input_schemas, errors, depth + 1, counter)
+            _validate_node(child, fields_by_name, parameters, operator_input_schemas, errors, depth + 1, counter)
     elif node_type == 'component':
-        _validate_component(node, fields_by_name, operator_input_schemas, errors)
+        _validate_component(node, fields_by_name, parameters, operator_input_schemas, errors)
     else:
         errors.append(
             f"Invalid node type: '{node_type}'. Expected 'all', 'any', 'none', or 'component'."
         )
 
 
-def _validate_component(node, fields_by_name, operator_input_schemas, errors):
+def _validate_component(node, fields_by_name, parameters, operator_input_schemas, errors):
     field_name = node.get('field', '')
     component_name = node.get('operator', '')
     inputs = node.get('inputs', {})
@@ -239,6 +256,12 @@ def _validate_component(node, fields_by_name, operator_input_schemas, errors):
         )
         return
 
+    field_type = field['type']
+    resolved_slots = {
+        slot['name']: field_type if slot['type'] == INPUT_TYPE_MATCH_FIELD else slot['type']
+        for slot in operator_input_schemas.get(component_name, [])
+    }
+
     for slot in operator_input_schemas.get(component_name, []):
         slot_name = slot['name']
         if slot_name not in inputs:
@@ -246,10 +269,10 @@ def _validate_component(node, fields_by_name, operator_input_schemas, errors):
                 f"Missing required input '{slot_name}' for component '{component_name}'"
             )
             continue
-        _validate_input(inputs[slot_name], slot_name, errors)
+        _validate_input(inputs[slot_name], parameters, slot_name, resolved_slots[slot_name], errors)
 
 
-def _validate_input(value, slot_name, errors):
+def _validate_input(value, parameters, slot_name, slot_type, errors):
     if not isinstance(value, dict):
         errors.append(
             f"Invalid input '{slot_name}': expected object, "
@@ -259,3 +282,17 @@ def _validate_input(value, slot_name, errors):
     value_type = value.get('type')
     if value_type not in INPUT_TYPES:
         errors.append(f"Invalid input type '{value_type}' in '{slot_name}'")
+
+    if value_type == ParameterInput.type:
+        param_name = value.get('value')
+        if not param_name:
+            errors.append(f"Input '{slot_name}': parameter name is required")
+
+        referenced_parameter = next((p for p in parameters if p.name == param_name), None)
+        if not referenced_parameter:
+            errors.append(f"Input '{slot_name}': parameter {param_name} not configured")
+        elif referenced_parameter.type != slot_type:
+            errors.append(
+                f"Input '{slot_name}': parameter '{param_name}' has type "
+                f"'{referenced_parameter.type}', expected '{slot_type}'"
+            )
