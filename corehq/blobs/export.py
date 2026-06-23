@@ -10,6 +10,8 @@ from .migrate import PROCESSING_COMPLETE_MESSAGE
 from .models import BlobMeta
 from .targzipdb import TarGzipBlobDB
 
+PROGRESS_INTERVAL = 100  # print a progress line every N objects processed
+
 
 class BlobDbBackendExporter(object):
 
@@ -61,7 +63,8 @@ class BlobExporter:
     def __init__(self, domain):
         self.domain = domain
 
-    def migrate(self, filename, chunk_size=100, limit_to_db=None, already_exported=None, force=False):
+    def migrate(self, filename, progress_interval=PROGRESS_INTERVAL, limit_to_db=None,
+                already_exported=None, force=False):
         if not self.domain:
             raise ExportError("Must specify domain")
 
@@ -81,7 +84,7 @@ class BlobExporter:
                 for iterator in builder.iterators():
                     for obj in iterator:
                         migrator.process_object(obj)
-                        if migrator.total_blobs % chunk_size == 0:
+                        if migrator.total_blobs % progress_interval == 0:
                             print(f"Processed {migrator.total_blobs} objects")
 
         print(f"Processed {migrator.total_blobs} total objects")
