@@ -15,7 +15,7 @@ from typing import ClassVar
 
 from attr import Factory, define, field as attr_field, validators
 
-from corehq.apps.case_search.endpoint_capability import OPERATORS
+from corehq.apps.case_search.endpoint_capability import FIELD_TYPES, OPERATORS
 
 # Group node types: all = AND, any = OR, none = NOR (no child matches).
 GROUP_TYPES = ('all', 'any', 'none')
@@ -27,6 +27,49 @@ MAX_GROUP_WIDTH = 50
 # Maximum total nodes across the entire query tree.
 MAX_TOTAL_NODES = 200
 
+@define
+class Parameter:
+    name: str = attr_field(converter=str.strip, validator=validators.min_len(1))
+    type: str = attr_field(validator=validators.in_(FIELD_TYPES))
+
+def parse_parameter_spec(spec):
+    """Validate a parameter list spec and parse it.
+
+    :returns: a ``(parameters, errors)`` tuple. ``parameters`` is a list of
+        :class:`Parameter` objects, or ``None`` when ``errors`` is non-empty.
+    """
+    errors = []
+    if not isinstance(spec, list):
+        return None, ['Parameters must be a JSON array.']
+
+    parameters = []
+    seen_names = set()
+    for i, item in enumerate(spec, 1):
+        if not isinstance(item, dict):
+            errors.append(f'Parameter {i}: expected object, got {type(item).__name__}')
+            continue
+
+        name = item.get('name', '').strip()
+        if not name or not isinstance(name, str):
+            errors.append(f'Parameter {i}: name is required')
+        elif name in seen_names:
+            errors.append(f"Duplicate parameter name: '{name}'")
+        else:
+            seen_names.add(name)
+
+        param_type = item.get('type', '')
+        if param_type not in FIELD_TYPES:
+            errors.append(
+                f"Parameter '{name or i}': invalid type '{param_type}'."
+                f" Must be one of: {', '.join(FIELD_TYPES)}"
+            )
+
+        if not errors:
+            parameters.append(Parameter(name=name, type=param_type))
+
+    if errors:
+        return None, errors
+    return parameters, []
 
 @define
 class ConstantInput:
@@ -42,17 +85,14 @@ class ConstantInput:
     def from_json(cls, data):
         return cls(value=data.get('value'))
 
-
 # input type -> class. Add parameter/function input kinds here.
 INPUT_TYPES = {ConstantInput.type: ConstantInput}
-
 
 def input_from_json(data):
     input_type = data.get('type')
     if input_type not in INPUT_TYPES:
         raise ValueError(f"Unknown input type: {input_type!r}")
     return INPUT_TYPES[input_type].from_json(data)
-
 
 @define
 class ComponentNode:

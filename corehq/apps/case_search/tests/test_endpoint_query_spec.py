@@ -1,9 +1,12 @@
 from unmagic import fixture, use
 
+import pytest
+
 from corehq.apps.case_search.endpoint_capability import (
     OPERATOR_INPUT_SCHEMAS,
     FIELD_TYPE_DATE,
     FIELD_TYPE_GEOPOINT,
+    FIELD_TYPE_NUMBER,
     FIELD_TYPE_TEXT,
     get_operations_for_field_type,
 )
@@ -13,6 +16,8 @@ from corehq.apps.case_search.endpoint_query_spec import (
     ComponentNode,
     ConstantInput,
     GroupNode,
+    Parameter,
+    parse_parameter_spec,
     parse_query_spec,
 )
 
@@ -334,3 +339,75 @@ def test_total_node_limit_returns_error():
     }
     _, errors = parse_query_spec(spec, 'patient', sample_capability())
     assert any('too many nodes' in e for e in errors)
+
+
+# ── parse_parameter_spec ──────────────────────────────────────────────────────
+
+def test_parse_parameter_spec_empty_list():
+    params, errors = parse_parameter_spec([])
+    assert errors == []
+    assert params == []
+
+
+def test_parse_parameter_spec_valid_single():
+    params, errors = parse_parameter_spec([{'name': 'region', 'type': FIELD_TYPE_TEXT}])
+    assert errors == []
+    assert params == [Parameter(name='region', type=FIELD_TYPE_TEXT)]
+
+
+def test_parse_parameter_spec_multiple():
+    spec = [
+        {'name': 'region', 'type': FIELD_TYPE_TEXT},
+        {'name': 'age', 'type': FIELD_TYPE_NUMBER},
+    ]
+    params, errors = parse_parameter_spec(spec)
+    assert errors == []
+    assert len(params) == 2
+
+
+def test_parse_parameter_spec_strips_name_whitespace():
+    params, errors = parse_parameter_spec([{'name': '  region  ', 'type': FIELD_TYPE_TEXT}])
+    assert errors == []
+    assert params[0].name == 'region'
+
+
+def test_parse_parameter_spec_not_a_list():
+    params, errors = parse_parameter_spec({'name': 'region'})
+    assert params is None
+    assert errors == ['Parameters must be a JSON array.']
+
+
+def test_parse_parameter_spec_item_not_dict():
+    _, errors = parse_parameter_spec(['not_a_dict'])
+    assert any('expected object' in e for e in errors)
+
+
+def test_parse_parameter_spec_missing_name():
+    _, errors = parse_parameter_spec([{'type': FIELD_TYPE_TEXT}])
+    assert any('name is required' in e for e in errors)
+
+
+def test_parse_parameter_spec_empty_name():
+    _, errors = parse_parameter_spec([{'name': '   ', 'type': FIELD_TYPE_TEXT}])
+    assert any('name is required' in e for e in errors)
+
+
+def test_parse_parameter_spec_duplicate_name():
+    spec = [
+        {'name': 'region', 'type': FIELD_TYPE_TEXT},
+        {'name': 'region', 'type': FIELD_TYPE_NUMBER},
+    ]
+    _, errors = parse_parameter_spec(spec)
+    assert any('Duplicate' in e for e in errors)
+
+
+def test_parse_parameter_spec_invalid_type():
+    _, errors = parse_parameter_spec([{'name': 'region', 'type': 'bogus'}])
+    assert any("invalid type 'bogus'" in e for e in errors)
+
+
+@pytest.mark.parametrize("type_val", [FIELD_TYPE_TEXT, FIELD_TYPE_NUMBER, FIELD_TYPE_DATE])
+def test_parse_parameter_spec_all_valid_types(type_val):
+    params, errors = parse_parameter_spec([{'name': 'p', 'type': type_val}])
+    assert errors == []
+    assert params[0].type == type_val

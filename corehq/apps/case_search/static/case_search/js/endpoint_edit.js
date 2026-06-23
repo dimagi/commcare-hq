@@ -10,6 +10,7 @@ Alpine.data("endpointForm", () => {
         name: initialPageData.get("initial_name"),
         targetType: initialPageData.get("initial_target_type"),
         targetCasetype: initialPageData.get("initial_case_type"),
+        parameters: initialPageData.get("initial_parameters") || [],
         query: initialPageData.get("initial_query"),
         capability: initialPageData.get("capability"),
         mode: mode,
@@ -78,6 +79,14 @@ Alpine.data("endpointForm", () => {
 
         onCasetypeChange() {
             this.query = { type: "all", children: [] };
+        },
+
+        addParameter() {
+            this.parameters.push({ name: "", type: "text"});
+        },
+
+        removeParameter(idx) {
+            this.parameters.splice(idx, 1);
         },
 
         _newCondition() {

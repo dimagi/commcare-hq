@@ -62,7 +62,7 @@
           <input
             type="text"
             class="form-control form-control-sm"
-            x-model="node.inputs[slot.name].value"
+            x-model="getInputValue(node, slot.name).value"
             :disabled="mode === 'readonly'"
             :placeholder="slot.name"
           />

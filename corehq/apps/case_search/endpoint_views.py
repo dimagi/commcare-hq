@@ -14,6 +14,7 @@ from corehq.apps.case_search.endpoint_capability import (
 )
 from corehq.apps.case_search.endpoint_query_spec import (
     MAX_QUERY_DEPTH,
+    parse_parameter_spec,
     parse_query_spec,
 )
 from corehq.apps.case_search.models import (
@@ -116,9 +117,11 @@ class CaseSearchEndpointForm(forms.Form):
         # Only run semantic validation when both fields parsed cleanly.
         if query is not None and parameters is not None:
             capability = self.capability or get_capability(self.domain)
-            _, errors = parse_query_spec(
-                query, cleaned.get('case_type') or '', capability
-            )
+            _, errors = parse_parameter_spec(parameters)
+            if not errors:
+                _, errors = parse_query_spec(
+                    query, cleaned.get('case_type') or '', capability
+                )
             for error in errors:
                 self.add_error(None, error)
         return cleaned
@@ -343,9 +346,19 @@ class CaseSearchEndpointTestView(BaseDomainView):
     def post(self, request, *args, **kwargs):
         case_type = request.POST.get('case_type', '')
         try:
+            parameters = json.loads(request.POST.get('parameters', '[]'))
+        except (json.JSONDecodeError, ValueError):
+            return self._render_results(request, errors=['Invalid parameters JSON.'])
+
+        try:
             query = json.loads(request.POST.get('query') or '{}')
         except (json.JSONDecodeError, ValueError):
             return self._render_results(request, errors=['Invalid query JSON.'])
+
+        parameters, errors = parse_parameter_spec(parameters)
+        if errors:
+            return self._render_results(request, errors=errors)
+
         capability = get_capability(domain=self.domain)
         fields = capability['case_types'][case_type]
         query_root, errors = parse_query_spec(query, case_type, capability)
