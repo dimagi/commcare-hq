@@ -10,8 +10,7 @@
     <i :class="typeIconClass(getFieldType(node.field))"></i>
   </span>
   <select
-    class="form-select form-select-sm"
-    style="width: auto; min-width: 120px;"
+    class="form-select form-select-sm w-auto"
     @change="node.field = $event.target.value; onFieldChange(node)"
   >
     <option value="" :selected="!node.field">{% trans "-- Field --" %}</option>
@@ -25,8 +24,7 @@
   </select>
   <template x-if="node.field">
     <select
-      class="form-select form-select-sm"
-      style="width: auto; min-width: 120px;"
+      class="form-select form-select-sm w-auto"
       @change="node.operator = $event.target.value; onOperatorChange(node)"
       :disabled="mode === 'readonly'"
     >
@@ -46,8 +44,7 @@
     <template x-for="slot in getInputSchemaForOperation(node)" :key="slot.name">
       <div class="d-flex gap-1 flex-grow-1">
         <select
-          class="form-select form-select-sm"
-          style="width: auto;"
+          class="form-select form-select-sm w-auto"
           :value="getInputValue(node, slot.name).type"
           @change="setInputType(node, slot.name, $event.target.value)"
           :disabled="mode === 'readonly'"
@@ -66,8 +63,7 @@
         </template>
         <template x-if="getInputValue(node, slot.name).type === 'parameter'">
           <select
-            class="form-select form-select-sm"
-            style="width: auto;"
+            class="form-select form-select-sm w-auto"
             :value="getInputValue(node, slot.name).value"
             @change="node.inputs[slot.name].value = $event.target.value"
           >
