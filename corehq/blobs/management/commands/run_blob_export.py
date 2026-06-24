@@ -5,10 +5,11 @@ import sys
 
 from django.core.management import BaseCommand, CommandError
 
-from corehq.blobs.export import BlobExporter, PROGRESS_INTERVAL
+from corehq.blobs.export import BlobExporter, DEFAULT_CONCURRENCY, PROGRESS_INTERVAL
 from corehq.util.decorators import change_log_level
 
 USAGE = "Usage: ./manage.py run_blob_export [options] <domain>"
+BOTOCORE_DEFAULT_POOL_SIZE = 10  # botocore's default max_pool_connections
 
 
 class Command(BaseCommand):
@@ -43,6 +44,14 @@ class Command(BaseCommand):
                                  "the exporter to a single database.")
         parser.add_argument('--already_exported', dest='already_exported',
                             help='Pass a file with a list of blob names already exported')
+        parser.add_argument(
+            '--concurrency', type=int, default=DEFAULT_CONCURRENCY,
+            help="Number of blobs to fetch from S3 in parallel (default: "
+                 f"{DEFAULT_CONCURRENCY}). Values above botocore's default "
+                 f"connection-pool size ({BOTOCORE_DEFAULT_POOL_SIZE}) raise "
+                 "max_pool_connections to match, so the extra connections are "
+                 "reused rather than opened and discarded each request.",
+        )
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
@@ -53,6 +62,7 @@ class Command(BaseCommand):
         reset=False,
         progress_interval=PROGRESS_INTERVAL,
         limit_to_db=None,
+        concurrency=DEFAULT_CONCURRENCY,
         **options,
     ):
         already_exported = get_lines_from_file(options['already_exported'])
@@ -73,16 +83,38 @@ class Command(BaseCommand):
                 f"Export file '{export_filename}' exists. Remove the file and re-run the command."
             )
 
+        _ensure_s3_pool_size(concurrency)
         exporter = BlobExporter(domain)
         total, skips = exporter.migrate(
             export_filename,
             progress_interval=progress_interval,
             limit_to_db=limit_to_db,
             already_exported=already_exported,
+            concurrency=concurrency,
         )
         self.stdout.write(f'\nData dumped to file: {export_filename}')
         if skips:
             sys.exit(skips)
+
+
+def _ensure_s3_pool_size(concurrency):
+    """Raise botocore's connection pool to serve ``concurrency`` parallel fetches.
+
+    The pool defaults to ``BOTOCORE_DEFAULT_POOL_SIZE``. botocore doesn't block
+    when it's exceeded; it opens connections beyond the pool and discards them
+    after use, so a higher ``--concurrency`` would otherwise churn connections
+    (new TLS handshake per excess fetch). Must run before the blob db client is
+    built (i.e. before the first ``get_blob_db()`` call).
+    """
+    from django.conf import settings
+    for key in ('S3_BLOB_DB_SETTINGS', 'OLD_S3_BLOB_DB_SETTINGS'):
+        s3_settings = getattr(settings, key, None)
+        if not s3_settings:
+            continue
+        config = s3_settings.get('config') or {}
+        if concurrency > config.get('max_pool_connections', BOTOCORE_DEFAULT_POOL_SIZE):
+            config['max_pool_connections'] = concurrency
+            s3_settings['config'] = config
 
 
 def get_lines_from_file(filename):
