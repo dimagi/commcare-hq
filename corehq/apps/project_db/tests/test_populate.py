@@ -1,6 +1,6 @@
 import datetime
-from decimal import Decimal
 import uuid
+from decimal import Decimal
 
 import pytest
 from unmagic import use
@@ -100,15 +100,15 @@ def test_static_fields_mapped_to_columns():
     ({'count': 42}, {'prop__count'}, {'prop__count': '42'}),
     # typed columns populated via coercion
     ({'dob': '1990-05-20', 'weight': '70.5'},
-     {'prop__dob', 'prop__dob__date', 'prop__weight', 'prop__weight__number'},
-     {'prop__dob': '1990-05-20', 'prop__dob__date': datetime.date(1990, 5, 20),
-      'prop__weight': '70.5', 'prop__weight__number': Decimal('70.5')}),
+     {'prop__dob', 'date_prop__dob', 'prop__weight', 'number_prop__weight'},
+     {'prop__dob': '1990-05-20', 'date_prop__dob': datetime.date(1990, 5, 20),
+      'prop__weight': '70.5', 'number_prop__weight': Decimal('70.5')}),
     # typed value skipped when only the raw column exists
     ({'dob': '1990-05-20'}, {'prop__dob'}, {'prop__dob': '1990-05-20'}),
 ])
 def test_property_columns(case_json, columns, expected_props):
     result = case_to_row(_make_case(case_json=case_json), columns)
-    assert {k: v for k, v in result.items() if k.startswith('prop__')} == expected_props
+    assert {k: v for k, v in result.items() if 'prop__' in k} == expected_props
 
 
 @pytest.mark.parametrize('indices, expected_parent, expected_host', [
@@ -156,12 +156,13 @@ def test_send_to_project_db():
     send_to_project_db('test-send', 'patient', [
         _make_case({'first_name': 'Alice'}, type='patient'),
         _make_case({'first_name': 'Bob'}, type='patient'),
+        _make_case({}, type='patient'),
     ])
 
     table = CaseTable('test-send', 'patient').reflect()
     with get_project_db_engine().begin() as conn:
         rows = conn.execute(table.select()).fetchall()
-    assert [r[0] for r in rows] == ['Alice', 'Bob']
+    assert [r[0] for r in rows] == ['Alice', 'Bob', '']
     assert CaseTable('test-upsert', 'clinic').reflect() is None
 
 

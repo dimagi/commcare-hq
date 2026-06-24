@@ -84,7 +84,7 @@ def _populate(domain, start_date):
 
 def _populate_case_type(domain, case_type, start_date, prefix):
     accessor = CaseReindexAccessor(domain=domain, case_type=case_type, start_date=start_date)
-    total = sum(accessor.get_approximate_doc_count(db) for db in accessor.sql_db_aliases)
+    total = sum(accessor.query(db).count() for db in accessor.sql_db_aliases)
     cases = with_progress_bar(iter_all_rows(accessor), length=total,
                               oneline='concise', prefix=f"{prefix}: {case_type}")
     send_to_project_db(domain, case_type, cases)
@@ -97,7 +97,7 @@ def _describe(domain):
     if not metadata.tables:
         raise CommandError(f"No project DB tables found for domain '{domain}'")
 
-    print(f"Project DB schema for domain: {domain}")
+    print(f"-- Project DB schema for domain: {domain}")
     with engine.connect() as conn:
         for table in sorted(metadata.tables.values(), key=lambda t: t.name):
             row_count = conn.execute(
