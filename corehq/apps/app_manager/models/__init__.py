@@ -72,7 +72,10 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import (
+    ANDROID_LOGO_PROPERTY_MAPPING,
     FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS,
+    LATEST_APK_VALUE,
+    LATEST_APP_VALUE,
 )
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
@@ -192,17 +195,6 @@ DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 FIELD_SEPARATOR = ':'
 
 ATTACHMENT_REGEX = r'[^/]*\.xml'
-
-ANDROID_LOGO_PROPERTY_MAPPING = {
-    'hq_logo_android_home': 'brand-banner-home',
-    'hq_logo_android_login': 'brand-banner-login',
-    'hq_logo_android_demo': 'brand-banner-home-demo',
-    'hq_logo_web_apps': 'brand-banner-web-apps',
-}
-
-
-LATEST_APK_VALUE = 'latest'
-LATEST_APP_VALUE = 0
 
 
 class LabelProperty(DictProperty):
