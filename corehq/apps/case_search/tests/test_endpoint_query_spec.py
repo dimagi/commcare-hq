@@ -125,7 +125,7 @@ def test_invalid_root_type():
         {'type': 'invalid'}, [], 'patient', sample_capability()
     )
     assert root is None
-    assert any('type' in e.lower() for e in errors)
+    assert errors == ['Invalid query']
 
 
 @use(sample_capability)
@@ -187,12 +187,12 @@ def test_missing_required_input_slot():
     assert any('distance' in e for e in errors)
 
 
-@pytest.mark.parametrize("input_value,error_fragment", [
-    ({'type': 'auto_value', 'ref': 'some_ref'}, 'Invalid input type'),
-    ('not_an_object', 'expected object'),
+@pytest.mark.parametrize("input_value", [
+    {'type': 'auto_value', 'ref': 'some_ref'},
+    'not_an_object',
 ])
 @use(sample_capability)
-def test_invalid_input_rejected(input_value, error_fragment):
+def test_invalid_input_rejected(input_value):
     spec = {
         'type': 'component',
         'operator': 'equals',
@@ -200,7 +200,7 @@ def test_invalid_input_rejected(input_value, error_fragment):
         'inputs': {'value': input_value},
     }
     _, errors = parse_query_spec(spec, [], 'patient', sample_capability())
-    assert any(error_fragment in e for e in errors)
+    assert errors == ['Invalid query']
 
 
 @use(sample_capability)
@@ -263,7 +263,7 @@ def test_empty_children_allowed():
 def test_non_dict_child_node_returns_error():
     spec = {'type': 'all', 'children': ['not_a_dict']}
     _, errors = parse_query_spec(spec, [], 'patient', sample_capability())
-    assert any('str' in e for e in errors)
+    assert errors == ['Invalid query']
 
 
 @pytest.mark.parametrize("group_type", ["all", "none"])
@@ -409,7 +409,7 @@ def test_parameter_input_valid(field, param_name, param_type):
     (
         [Parameter(name='region', type=FIELD_TYPE_TEXT)],
         {'type': 'parameter', 'value': ''},
-        'parameter name is required',
+        'Invalid query',
     ),
     (
         [Parameter(name='my_date', type=FIELD_TYPE_DATE)],
