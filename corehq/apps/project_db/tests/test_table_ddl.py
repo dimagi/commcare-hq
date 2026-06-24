@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 import pytest
 import sqlalchemy
+from sqlalchemy import Table
 from unmagic import use
 
 from corehq.apps.project_db.table_ddl import (
@@ -10,6 +11,7 @@ from corehq.apps.project_db.table_ddl import (
     DomainSchema,
     create_or_update_project_db,
     get_project_db_engine,
+    update_table,
 )
 
 from .util import project_db_table
@@ -82,6 +84,25 @@ def _project_db_schema(domain):
     finally:
         with get_project_db_engine().begin() as conn:
             schema.drop(conn)
+
+
+@use('db', _project_db_schema('this-is-my-really-really-long-domain-name'))
+def test_truncated_index_name():
+    domain_schema = DomainSchema('this-is-my-really-really-long-domain-name')
+    table = Table(
+        'fairly-long-table-name',
+        sqlalchemy.MetaData(),
+        sqlalchemy.Column('case_id', sqlalchemy.Text, primary_key=True),
+        sqlalchemy.Column('owner_id', sqlalchemy.Text, index=True),
+        schema=domain_schema.name,
+    )
+    # char limit is 64, this is 86
+    assert list(table.indexes)[0].name == \
+        'ix_projectdb_this-is-my-really-really-long-domain-name_fairly-long-table-name_owner_id'
+    with get_project_db_engine().begin() as conn:
+        domain_schema.create(conn)
+        table.create(bind=conn)
+        update_table(conn, table)  # this should no-op, not fail
 
 
 @use('db', _project_db_schema('test_create_project_db'))
