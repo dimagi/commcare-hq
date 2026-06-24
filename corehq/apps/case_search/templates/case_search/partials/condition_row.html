@@ -43,10 +43,7 @@
     </select>
   </template>
   <template x-if="node.operator">
-    <template
-      x-for="slot in getInputSchemaForOperation(node)"
-      :key="slot.name"
-    >
+    <template x-for="slot in getInputSchemaForOperation(node)" :key="slot.name">
       <div class="d-flex gap-1 flex-grow-1">
         <select
           class="form-select form-select-sm"
@@ -74,7 +71,9 @@
             :value="getInputValue(node, slot.name).value"
             @change="node.inputs[slot.name].value = $event.target.value"
           >
-            <option value="" disabled selected>{% trans "-- Parameter --" %}</option>
+            <option value="" disabled selected>
+              {% trans "-- Parameter --" %}
+            </option>
             <template x-for="parameter in getParametersOfType(slot.type)">
               <option :value="parameter" x-text="parameter"></option>
             </template>
