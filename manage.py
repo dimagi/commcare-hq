@@ -21,6 +21,7 @@ def main():
         GeventCommand('run_ptop', with_option='--gevent-workers'),
         GeventCommand('run_sql'),
         GeventCommand('run_blob_migration'),
+        GeventCommand('run_blob_export'),
         GeventCommand('check_blob_logs'),
         GeventCommand('preindex_everything'),
         GeventCommand('migrate', env_exclude=['SKIP_GEVENT_PATCHING']),
