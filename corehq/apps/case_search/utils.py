@@ -46,7 +46,7 @@ from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     extract_search_request_config,
 )
-from corehq.apps.case_search.endpoint_query_spec import parse_query_spec
+from corehq.apps.case_search.endpoint_query_spec import ParameterInput, parse_parameter_spec, parse_query_spec
 from corehq.apps.es import HQESQuery, case_search
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters, queries
@@ -410,6 +410,7 @@ class CaseSearchEndpointQueryBuilder:
         self.config = helper.config
 
     def build_query(self, search_criteria):
+        self.param_values = {c.key: c.value for c in search_criteria}
         search_es = self._get_initial_search_es()
         return search_es.add_query(self._parse_query(self.query_root), queries.MUST)
 
@@ -423,31 +424,42 @@ class CaseSearchEndpointQueryBuilder:
                 .is_closed(False)
                 .size(max_results))
 
+    def _non_none_child_query(self, node):
+        child_queries = [self._parse_query(child) for child in node.children]
+        return [q for q in child_queries if q is not None]
+
     def _parse_query(self, node):
         if node.type == 'all':
             return filters.AND(
-                *[self._parse_query(child) for child in node.children]
+                *self._non_none_child_query(node)
             )
         elif node.type == 'any':
             return filters.OR(
-                *[self._parse_query(child) for child in node.children]
+                *self._non_none_child_query(node)
             )
         elif node.type == 'none':
             return filters.NOT(
-                filters.OR(*[self._parse_query(child) for child in node.children])
+                filters.OR(*self._non_none_child_query(node))
             )
         elif node.type == 'component':
             return self._parse_component_node(node)
         else:
             return None
 
+    def _input_value(self, input_):
+        if isinstance(input_, ParameterInput):
+            return self.param_values.get(input_.value)
+        return input_.value
+
     def _parse_component_node(self, node):
         field = node.field
-        value = node.inputs['value'].value
+        value = self._input_value(node.inputs['value'])
+        if value is None:
+            return None # ignore component if value is not given
+
         operator = node.operator
 
         if node.field_type in (FIELD_TYPE_DATE, FIELD_TYPE_DATETIME):
-            value = node.inputs['value'].value
             if operator == 'equals':
                 return case_property_query(field, value)
             elif operator == 'lt':
@@ -455,7 +467,6 @@ class CaseSearchEndpointQueryBuilder:
             elif operator == 'gt':
                 return case_property_date_range(field, gt=value)
         elif node.field_type == FIELD_TYPE_NUMBER:
-            value = node.inputs['value'].value
             if operator == 'equals':
                 return case_property_query(field, value)
             elif operator == 'not_equals':
@@ -464,13 +475,12 @@ class CaseSearchEndpointQueryBuilder:
                 return case_property_numeric_range(field, **{operator: value})
         elif node.field_type == FIELD_TYPE_SELECT:
             if operator == 'selected_any':
-                return case_property_query(field, node.inputs['value'].value, multivalue_mode='or')
+                return case_property_query(field, value, multivalue_mode='or')
             elif operator == 'selected_all':
-                return case_property_query(field, node.inputs['value'].value, multivalue_mode='and')
+                return case_property_query(field, value, multivalue_mode='and')
             elif operator == 'is_empty':
                 return case_property_missing(field)
         else:
-            value = node.inputs['value'].value
             if operator == 'equals':
                 return case_property_query(field, value)
             elif operator == 'not_equals':

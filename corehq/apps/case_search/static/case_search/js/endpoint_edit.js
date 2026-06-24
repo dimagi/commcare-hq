@@ -11,6 +11,7 @@ Alpine.data("endpointForm", () => {
         targetType: initialPageData.get("initial_target_type"),
         targetCasetype: initialPageData.get("initial_case_type"),
         parameters: initialPageData.get("initial_parameters") || [],
+        testParamValues: {},
         query: initialPageData.get("initial_query"),
         capability: initialPageData.get("capability"),
         mode: mode,

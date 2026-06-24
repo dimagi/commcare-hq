@@ -20,6 +20,7 @@ from corehq.apps.case_search.endpoint_query_spec import (
 from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     CaseSearchEndpointVersion,
+    criteria_dict_to_criteria_list,
 )
 from corehq.apps.case_search.utils import QueryHelper, get_primary_case_search_endpoint_results
 from corehq.apps.domain.views.base import BaseDomainView
@@ -351,6 +352,11 @@ class CaseSearchEndpointTestView(BaseDomainView):
             return self._render_results(request, errors=['Invalid parameters JSON.'])
 
         try:
+            test_param_values = json.loads(request.POST.get('test_param_values', '{}'))
+        except (json.JSONDecodeError, ValueError):
+            return self._render_results(request, errors=['Invalid test parameter values.'])
+
+        try:
             query = json.loads(request.POST.get('query') or '{}')
         except (json.JSONDecodeError, ValueError):
             return self._render_results(request, errors=['Invalid query JSON.'])
@@ -365,16 +371,17 @@ class CaseSearchEndpointTestView(BaseDomainView):
         if errors:
             return self._render_results(request, errors=errors)
         try:
-            results = self._run_query(case_type, query_root)
+            results = self._run_query(case_type, query_root, test_param_values)
         except Exception as e:
             notify_exception(request, str(e))
             return self._render_results(request, errors=['Query Execution Failed'])
         return self._render_results(request, fields=fields, results=results)
 
-    def _run_query(self, case_type, query):
+    def _run_query(self, case_type, query, test_param_values):
         helper = QueryHelper(self.domain)
-        results = get_primary_case_search_endpoint_results(helper, [case_type], [], query, 20)
-        return results
+        criteria = criteria_dict_to_criteria_list(test_param_values)
+        print(test_param_values)
+        return get_primary_case_search_endpoint_results(helper, [case_type], criteria, query, 20)
 
     def _render_results(self, request, *, errors=None, fields=None, results=None):
         # Always 200 so HTMX swaps the partial in (it ignores error statuses).
