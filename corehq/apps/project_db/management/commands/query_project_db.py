@@ -27,7 +27,7 @@ Example:
         "SELECT p.case_name, h.prop__district
          FROM patient p
          JOIN household h ON p.parent_id = h.case_id
-         WHERE p.prop__dob__date > '2000-01-01'"
+         WHERE p.date_prop__dob > '2000-01-01'"
 """.format(limit=DEFAULT_ROW_LIMIT)
 
 
@@ -67,13 +67,12 @@ class Command(BaseCommand):
             self._report_preview(columns, rows, elapsed)
 
     def _report_preview(self, columns, rows, elapsed):
-        rows = rows[:DEFAULT_ROW_LIMIT]
-        self.stdout.write(f"{len(rows)} rows returned in {elapsed:.3f}s.")
-        writer = SimpleTableWriter(self.stdout, TableRowFormatter())
-        writer.write_table(columns, rows)
         if len(rows) > DEFAULT_ROW_LIMIT:
             self.stdout.write(f"\nShowing the first {DEFAULT_ROW_LIMIT} rows. "
                               "Pass --full to fetch all rows as a CSV.")
+        self.stdout.write(f"{len(rows)} rows returned in {elapsed:.3f}s.")
+        writer = SimpleTableWriter(self.stdout, TableRowFormatter())
+        writer.write_table(columns, rows[:DEFAULT_ROW_LIMIT])
 
     def _report_full(self, domain, columns, rows, elapsed):
         self.stdout.write(f"{len(rows)} rows returned in {elapsed:.3f}s.")
