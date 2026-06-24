@@ -170,26 +170,20 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         assert response.status_code == 200
         assert 'already exists' in response.context['form'].errors['name'][0]
 
-    def test_invalid_query_json_error(self):
-        response = self.client.post(
-            self._new_url(), self._post_data(query='not json')
-        )
-        assert response.status_code == 200
-        assert 'query' in response.context['form'].errors
-
-    def test_query_must_be_object_not_array(self):
-        response = self.client.post(
-            self._new_url(), self._post_data(query='[1, 2]')
-        )
-        assert response.status_code == 200
-        assert 'JSON object' in response.context['form'].errors['query'][0]
-
-    def test_parameters_must_be_array(self):
-        response = self.client.post(
-            self._new_url(), self._post_data(parameters='{"not": "array"}')
-        )
-        assert response.status_code == 200
-        assert 'JSON array' in response.context['form'].errors['parameters'][0]
+    def test_form_field_validation_error(self):
+        cases = [
+            ({'query': 'not json'}, 'query', None),
+            ({'query': '[1, 2]'}, 'query', 'JSON object'),
+            ({'parameters': '{"not": "array"}'}, 'parameters', 'JSON array'),
+        ]
+        for overrides, error_field, error_fragment in cases:
+            with self.subTest(overrides=overrides):
+                response = self.client.post(self._new_url(), self._post_data(**overrides))
+                assert response.status_code == 200
+                errors = response.context['form'].errors
+                assert error_field in errors
+                if error_fragment:
+                    assert error_fragment in errors[error_field][0]
 
     def test_invalid_query_spec_rejected(self):
         # An unknown node type surfaces as a non-field (semantic) error.
@@ -356,25 +350,21 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         assert response.status_code == 200
         assert 'alert-danger' not in response.content.decode()
 
-    def test_invalid_query_json_returns_error(self):
-        response = self.client.post(self._test_url(), {
-            'case_type': 'my_case_type',
-            'query': 'not json',
-        })
-        assert response.status_code == 200
-        content = response.content.decode()
-        assert 'Invalid query JSON' in content
-        assert '<table' not in content
-
-    def test_invalid_filter_spec_returns_error(self):
-        response = self.client.post(self._test_url(), {
-            'case_type': 'my_case_type',
-            'query': json.dumps({'type': 'bogus'}),
-        })
-        assert response.status_code == 200
-        content = response.content.decode()
-        assert 'alert-danger' in content
-        assert '<table' not in content
+    def test_invalid_query_returns_error(self):
+        cases = [
+            ('not json', 'Invalid query JSON'),
+            (json.dumps({'type': 'bogus'}), 'alert-danger'),
+        ]
+        for query, expected_text in cases:
+            with self.subTest(query=query):
+                response = self.client.post(self._test_url(), {
+                    'case_type': 'my_case_type',
+                    'query': query,
+                })
+                assert response.status_code == 200
+                content = response.content.decode()
+                assert expected_text in content
+                assert '<table' not in content
 
     def test_requires_post(self):
         response = self.client.get(self._test_url())

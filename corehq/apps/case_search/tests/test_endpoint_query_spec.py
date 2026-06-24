@@ -187,28 +187,20 @@ def test_missing_required_input_slot():
     assert any('distance' in e for e in errors)
 
 
+@pytest.mark.parametrize("input_value,error_fragment", [
+    ({'type': 'auto_value', 'ref': 'some_ref'}, 'Invalid input type'),
+    ('not_an_object', 'expected object'),
+])
 @use(sample_capability)
-def test_unknown_input_type_rejected():
+def test_invalid_input_rejected(input_value, error_fragment):
     spec = {
         'type': 'component',
         'operator': 'equals',
         'field': 'province',
-        'inputs': {'value': {'type': 'auto_value', 'ref': 'some_ref'}},
+        'inputs': {'value': input_value},
     }
     _, errors = parse_query_spec(spec, [], 'patient', sample_capability())
-    assert any('Invalid input type' in e for e in errors)
-
-
-@use(sample_capability)
-def test_non_dict_input_rejected():
-    spec = {
-        'type': 'component',
-        'operator': 'equals',
-        'field': 'province',
-        'inputs': {'value': 'not_an_object'},
-    }
-    _, errors = parse_query_spec(spec, [], 'patient', sample_capability())
-    assert any('expected object' in e for e in errors)
+    assert any(error_fragment in e for e in errors)
 
 
 @use(sample_capability)
@@ -274,26 +266,13 @@ def test_non_dict_child_node_returns_error():
     assert any('str' in e for e in errors)
 
 
+@pytest.mark.parametrize("group_type", ["all", "none"])
 @use(sample_capability)
-def test_deeply_nested_query_returns_error():
-    node = {'type': 'all', 'children': []}
+def test_deeply_nested_group_returns_error(group_type):
+    node = {'type': group_type, 'children': []}
     root = node
     for _ in range(MAX_QUERY_DEPTH + 2):
-        child = {'type': 'all', 'children': []}
-        node['children'] = [child]
-        node = child
-    _, errors = parse_query_spec(root, [], 'patient', sample_capability())
-    assert any('nested too deeply' in e for e in errors)
-
-
-@use(sample_capability)
-def test_none_group_counts_toward_depth():
-    # `none` is a regular group and counts toward the nesting limit like
-    # `all`/`any` (the old `not` wrapper was exempt).
-    node = {'type': 'none', 'children': []}
-    root = node
-    for _ in range(MAX_QUERY_DEPTH + 2):
-        child = {'type': 'none', 'children': []}
+        child = {'type': group_type, 'children': []}
         node['children'] = [child]
         node = child
     _, errors = parse_query_spec(root, [], 'patient', sample_capability())
@@ -376,33 +355,16 @@ def test_parse_parameter_spec_not_a_list():
     assert errors == ['Parameters must be a JSON array.']
 
 
-def test_parse_parameter_spec_item_not_dict():
-    _, errors = parse_parameter_spec(['not_a_dict'])
-    assert any('expected object' in e for e in errors)
-
-
-def test_parse_parameter_spec_missing_name():
-    _, errors = parse_parameter_spec([{'type': FIELD_TYPE_TEXT}])
-    assert any('name is required' in e for e in errors)
-
-
-def test_parse_parameter_spec_empty_name():
-    _, errors = parse_parameter_spec([{'name': '   ', 'type': FIELD_TYPE_TEXT}])
-    assert any('name is required' in e for e in errors)
-
-
-def test_parse_parameter_spec_duplicate_name():
-    spec = [
-        {'name': 'region', 'type': FIELD_TYPE_TEXT},
-        {'name': 'region', 'type': FIELD_TYPE_NUMBER},
-    ]
-    _, errors = parse_parameter_spec(spec)
-    assert any('Duplicate' in e for e in errors)
-
-
-def test_parse_parameter_spec_invalid_type():
-    _, errors = parse_parameter_spec([{'name': 'region', 'type': 'bogus'}])
-    assert any("invalid type 'bogus'" in e for e in errors)
+@pytest.mark.parametrize("spec_input,error_fragment", [
+    (['not_a_dict'], 'expected object'),
+    ([{'type': FIELD_TYPE_TEXT}], 'name is required'),
+    ([{'name': '   ', 'type': FIELD_TYPE_TEXT}], 'name is required'),
+    ([{'name': 'region', 'type': FIELD_TYPE_TEXT}, {'name': 'region', 'type': FIELD_TYPE_NUMBER}], 'Duplicate'),
+    ([{'name': 'region', 'type': 'bogus'}], "invalid type 'bogus'"),
+])
+def test_parse_parameter_spec_invalid(spec_input, error_fragment):
+    _, errors = parse_parameter_spec(spec_input)
+    assert any(error_fragment in e for e in errors)
 
 
 @pytest.mark.parametrize("type_val", [FIELD_TYPE_TEXT, FIELD_TYPE_NUMBER, FIELD_TYPE_DATE])
@@ -428,50 +390,37 @@ def _component_spec(field, operator, input_value):
     }
 
 
+@pytest.mark.parametrize("field,param_name,param_type", [
+    ('province', 'region', FIELD_TYPE_TEXT),
+    ('dob', 'cutoff', FIELD_TYPE_DATE),
+])
 @use(sample_capability)
-def test_parameter_input_valid():
-    params = [Parameter(name='region', type=FIELD_TYPE_TEXT, required=False)]
+def test_parameter_input_valid(field, param_name, param_type):
+    params = [Parameter(name=param_name, type=param_type)]
     _, errors = parse_query_spec(
-        _component_spec('province', 'equals', {'type': 'parameter', 'value': 'region'}),
+        _component_spec(field, 'equals', {'type': 'parameter', 'value': param_name}),
         params, 'patient', sample_capability(),
     )
     assert errors == []
 
 
+@pytest.mark.parametrize("params,input_value,error_fragment", [
+    ([], {'type': 'parameter', 'value': 'nonexistent'}, 'not configured'),
+    (
+        [Parameter(name='region', type=FIELD_TYPE_TEXT)],
+        {'type': 'parameter', 'value': ''},
+        'parameter name is required',
+    ),
+    (
+        [Parameter(name='my_date', type=FIELD_TYPE_DATE)],
+        {'type': 'parameter', 'value': 'my_date'},
+        "has type 'date', expected 'text'",
+    ),
+])
 @use(sample_capability)
-def test_parameter_input_unknown_parameter():
+def test_parameter_input_error(params, input_value, error_fragment):
     _, errors = parse_query_spec(
-        _component_spec('province', 'equals', {'type': 'parameter', 'value': 'nonexistent'}),
-        [], 'patient', sample_capability(),
-    )
-    assert any('not configured' in e for e in errors)
-
-
-@use(sample_capability)
-def test_parameter_input_empty_name():
-    params = [Parameter(name='region', type=FIELD_TYPE_TEXT, required=False)]
-    _, errors = parse_query_spec(
-        _component_spec('province', 'equals', {'type': 'parameter', 'value': ''}),
+        _component_spec('province', 'equals', input_value),
         params, 'patient', sample_capability(),
     )
-    assert any('parameter name is required' in e for e in errors)
-
-
-@use(sample_capability)
-def test_parameter_input_type_mismatch():
-    params = [Parameter(name='my_date', type=FIELD_TYPE_DATE, required=False)]
-    _, errors = parse_query_spec(
-        _component_spec('province', 'equals', {'type': 'parameter', 'value': 'my_date'}),
-        params, 'patient', sample_capability(),
-    )
-    assert any("has type 'date', expected 'text'" in e for e in errors)
-
-
-@use(sample_capability)
-def test_parameter_input_type_matches_field_type():
-    params = [Parameter(name='cutoff', type=FIELD_TYPE_DATE, required=False)]
-    _, errors = parse_query_spec(
-        _component_spec('dob', 'equals', {'type': 'parameter', 'value': 'cutoff'}),
-        params, 'patient', sample_capability(),
-    )
-    assert errors == []
+    assert any(error_fragment in e for e in errors)
