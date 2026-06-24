@@ -4,7 +4,6 @@ import hashlib
 import itertools
 import json
 import logging
-import os
 import random
 import re
 import types
@@ -12,7 +11,6 @@ import uuid
 from collections import Counter, OrderedDict, defaultdict, namedtuple
 from copy import deepcopy
 from functools import wraps
-from io import open
 from itertools import chain
 from mimetypes import guess_type
 from urllib.parse import urljoin
@@ -199,12 +197,6 @@ class LabelProperty(DictProperty):
     """Stores a {lang_code: translated_string} dict"""
 
 
-def jsonpath_update(datum_context, value):
-    field = datum_context.path.fields[0]
-    parent = jsonpath.Parent().find(datum_context)[0]
-    parent.value[field] = value
-
-
 # store a list of references to form ID's so that
 # when an app is copied we can update the references
 # with the new values
@@ -234,16 +226,6 @@ def _rename_key(dct, old, new):
             dct["%s_backup_%s" % (new, hex(random.getrandbits(32))[2:-1])] = dct[new]
         dct[new] = dct[old]
         del dct[old]
-
-
-def app_template_dir(slug):
-    return os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'template_apps', slug)
-
-
-@memoized
-def load_app_template(slug):
-    with open(os.path.join(app_template_dir(slug), 'app.json')) as f:
-        return json.load(f)
 
 
 class IndexedSchema(DocumentSchema):

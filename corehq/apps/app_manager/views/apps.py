@@ -18,6 +18,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
+from memoized import memoized
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -55,8 +56,6 @@ from corehq.apps.app_manager.models import (
     LinkedApplication,
     Module,
     ModuleNotFoundException,
-    app_template_dir,
-    load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
@@ -488,6 +487,16 @@ def app_from_template(request, domain, slug):
     build = load_app_from_slug(domain, request.user.username, slug)
     cloudcare_state = '{{"appId":"{}"}}'.format(build._id)
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
+
+
+def app_template_dir(slug):
+    return os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'template_apps', slug)
+
+
+@memoized
+def load_app_template(slug):
+    with open(os.path.join(app_template_dir(slug), 'app.json')) as f:
+        return json.load(f)
 
 
 def load_app_from_slug(domain, username, slug):

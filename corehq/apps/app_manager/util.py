@@ -14,6 +14,7 @@ from django.utils.translation import gettext as _
 import yaml
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import DocTypeError
+from jsonpath_ng import jsonpath
 
 from dimagi.utils.couch import CriticalSection
 
@@ -453,12 +454,18 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
     return session_data
 
 
+def jsonpath_update(datum_context, value):
+    field = datum_context.path.fields[0]
+    parent = jsonpath.Parent().find(datum_context)[0]
+    parent.value[field] = value
+
+
 def update_form_unique_ids(app_source, ids_map, update_all=True):
     """
     Accepts an ids_map translating IDs in app_source to the desired replacement
     ID. Form IDs not present in ids_map will be given new random UUIDs.
     """
-    from corehq.apps.app_manager.models import form_id_references, jsonpath_update
+    from corehq.apps.app_manager.models import form_id_references
 
     app_source = deepcopy(app_source)
     attachments = app_source['_attachments']
