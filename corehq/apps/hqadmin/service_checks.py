@@ -124,6 +124,18 @@ def check_blobdb():
     return ServiceStatus(False, "Failed to save a file to the blobdb")
 
 
+def check_celery_broker():
+    import redis
+    broker_url = settings.CELERY_BROKER_URL
+    try:
+        client = redis.Redis.from_url(broker_url, socket_connect_timeout=5, socket_timeout=5)
+        client.ping()
+        memory = client.info()['used_memory_human']
+    except Exception as e:
+        return ServiceStatus(False, f"Could not connect to celery broker: {e}")
+    return ServiceStatus(True, f"Celery broker is up and using {memory} memory")
+
+
 def check_celery():
     bad_queues = []
 
@@ -249,6 +261,10 @@ CHECKS = {
     'celery': {
         "always_check": False,
         "check_func": check_celery,
+    },
+    'celery_broker': {
+        "always_check": True,
+        "check_func": check_celery_broker,
     },
     'elasticsearch': {
         "always_check": True,
