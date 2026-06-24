@@ -18,7 +18,7 @@ class TestAppResource(APIResourceTest):
         super(TestAppResource, cls).setUpClass()
         cls.apps = [cls.make_app(), cls.make_app()]
 
-        with patch('corehq.apps.app_manager.models.validate_xform', return_value=None):
+        with patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None):
             cls.apps[0].make_build().save()
 
     @classmethod
