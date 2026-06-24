@@ -424,22 +424,22 @@ class CaseSearchEndpointQueryBuilder:
                 .is_closed(False)
                 .size(max_results))
 
-    def _non_none_child_query(self, node):
+    def _get_child_queries(self, node):
         child_queries = [self._parse_query(child) for child in node.children]
         return [q for q in child_queries if q is not None]
 
     def _parse_query(self, node):
         if node.type == 'all':
             return filters.AND(
-                *self._non_none_child_query(node)
+                *self._get_child_queries(node)
             )
         elif node.type == 'any':
             return filters.OR(
-                *self._non_none_child_query(node)
+                *self._get_child_queries(node)
             )
         elif node.type == 'none':
             return filters.NOT(
-                filters.OR(*self._non_none_child_query(node))
+                filters.OR(*self._get_child_queries(node))
             )
         elif node.type == 'component':
             return self._parse_component_node(node)
