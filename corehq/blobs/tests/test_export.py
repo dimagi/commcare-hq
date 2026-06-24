@@ -8,6 +8,7 @@ from io import BytesIO, RawIOBase
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
 
+import gevent
 from django.test import SimpleTestCase, TestCase
 
 from corehq.blobs import CODES, get_blob_db
@@ -22,33 +23,39 @@ from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, new_meta
 _Meta = namedtuple('_Meta', 'key')
 
 
-class _FakeStream(io.BytesIO):
-    """BytesIO with a ``content_length``, standing in for a blob read."""
+class _YieldingStream(io.BytesIO):
+    """BytesIO that yields to other greenlets on every read, to force
+    interleaving opportunities during the parallel export."""
 
     def __init__(self, data):
         super().__init__(data)
         self.content_length = len(data)
 
+    def read(self, *args, **kwargs):
+        gevent.sleep(0)
+        return super().read(*args, **kwargs)
 
-class _FakeSrcDB:
+
+class _YieldingFakeSrcDB:
     def __init__(self, blobs):
         self.blobs = blobs  # {key: bytes}
 
     def get(self, key, type_code=None):
+        gevent.sleep(0)  # force a context switch before returning the stream
         if key not in self.blobs:
             raise NotFound(key)
-        return _FakeStream(self.blobs[key])
+        return _YieldingStream(self.blobs[key])
 
 
-def _export_with_fake_src(blobs, metas, already_exported=None, src_db=None,
+def _export_with_fake_src(blobs, metas, already_exported=None, concurrency=8, src_db=None,
                           progress_interval=100):
-    """Run an export against a fake source DB; return (names->bytes, missing_ids, total)."""
+    """Run a parallel export against a fake source DB; return (names->bytes, missing_ids, total)."""
     if src_db is None:
-        src_db = _FakeSrcDB(blobs)
+        src_db = _YieldingFakeSrcDB(blobs)
     with mock.patch.object(export_module, 'get_blob_db', return_value=src_db), \
             NamedTemporaryFile(suffix='.tar.gz') as out, \
             TemporaryDirectory() as tmpdir:
-        migrator = BlobDbBackendExporter(out.name, already_exported)
+        migrator = BlobDbBackendExporter(out.name, already_exported, concurrency=concurrency)
         migrator.missing_ids_filename = os.path.join(tmpdir, 'missing_blob_ids.txt')
         with migrator:
             migrator.run(metas, progress_interval=progress_interval)
@@ -58,6 +65,18 @@ def _export_with_fake_src(blobs, metas, already_exported=None, src_db=None,
 
 
 class TestExportRun(SimpleTestCase):
+
+    def test_all_blobs_written_intact_under_concurrency(self):
+        # varied sizes, including a blob larger than a chunk read, to exercise
+        # multi-read copies that interleave across greenlets
+        blobs = {f'key-{i}': bytes([i % 256]) * (i * 37) for i in range(1, 31)}
+        metas = [_Meta(k) for k in blobs]
+
+        extracted, missing, total = _export_with_fake_src(blobs, metas)
+
+        assert extracted == blobs  # every blob present and byte-identical
+        assert missing == []
+        assert total == 30
 
     def test_missing_blob_is_recorded(self):
         blobs = {'present': b'data'}
@@ -85,10 +104,40 @@ class TestExportRun(SimpleTestCase):
         assert total == 150  # all counted
         assert "Processed 100 objects (last 100 in " in out.getvalue()  # and reported
 
+    def test_blob_larger_than_spill_threshold_round_trips(self):
+        with mock.patch.object(export_module, 'SPILL_THRESHOLD', 16):
+            blobs = {'big': b'x' * 1000}  # 1000 > 16 -> spills to disk
+            metas = [_Meta('big')]
+            extracted, missing, total = _export_with_fake_src(blobs, metas)
+        assert extracted == blobs
+
+    def test_spill_files_are_written_to_the_output_directory(self):
+        """Spilled blob buffers go next to the output archive, not the system
+        temp dir, so the operator's chosen disk absorbs the I/O."""
+        captured = []
+        real_spooled = export_module.SpooledTemporaryFile
+
+        def spy(*args, **kwargs):
+            captured.append(kwargs.get('dir'))
+            return real_spooled(*args, **kwargs)
+
+        blobs = {'k': b'data'}
+        with TemporaryDirectory() as outdir:
+            out_path = os.path.join(outdir, 'export.tar.gz')
+            with mock.patch.object(export_module, 'get_blob_db',
+                                   return_value=_YieldingFakeSrcDB(blobs)), \
+                    mock.patch.object(export_module, 'SpooledTemporaryFile',
+                                      side_effect=spy):
+                migrator = BlobDbBackendExporter(out_path, None, concurrency=2)
+                migrator.missing_ids_filename = os.path.join(outdir, 'missing.txt')
+                with migrator:
+                    migrator.run([_Meta('k')], progress_interval=100)
+            assert captured == [outdir]
+
     def test_non_notfound_fetch_error_propagates(self):
         """A fetch error that is not NotFound must propagate, aborting the export."""
 
-        class _ErrorDB(_FakeSrcDB):
+        class _ErrorDB(_YieldingFakeSrcDB):
             def get(self, key, type_code=None):
                 if key == 'bad':
                     raise RuntimeError("boom")

@@ -1,6 +1,10 @@
 import os
+import shutil
 import time
 from collections import namedtuple
+from tempfile import SpooledTemporaryFile
+
+from gevent.pool import Pool
 
 from corehq.apps.dump_reload.sql.dump import (
     APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP,
@@ -13,6 +17,8 @@ from .migrate import PROCESSING_COMPLETE_MESSAGE
 from .models import BlobMeta
 from .targzipdb import TarGzipBlobDB
 
+DEFAULT_CONCURRENCY = 15  # default number of parallel S3 fetches
+SPILL_THRESHOLD = 10 * 1024 * 1024  # buffer blobs in RAM up to 10 MB, then spill to disk
 PROGRESS_INTERVAL = 10_000  # print a progress line every N objects processed
 
 _Fetched = namedtuple('_Fetched', 'key fileobj content_length')
@@ -22,10 +28,14 @@ _Skipped = namedtuple('_Skipped', 'key')
 
 class BlobDbBackendExporter(object):
 
-    def __init__(self, filename, already_exported):
+    def __init__(self, filename, already_exported, concurrency=DEFAULT_CONCURRENCY):
         self.db = TarGzipBlobDB(filename)
         self._already_exported = already_exported or set()
         self.src_db = get_blob_db()
+        self.concurrency = concurrency
+        # Spill large blob buffers next to the output archive (the operator's
+        # chosen --dir), not the system temp dir which may be small or tmpfs.
+        self._spill_dir = os.path.dirname(os.path.abspath(filename))
         self.total_blobs = 0
         self.missing_ids = []
         self.missing_ids_filename = "missing_blob_ids.txt"
@@ -41,35 +51,61 @@ class BlobDbBackendExporter(object):
             print(f"Missing blob ids have been written in the log file: {self.missing_ids_filename}")
 
     def run(self, metas, progress_interval=PROGRESS_INTERVAL):
-        """Export each blob in ``metas``, logging per-chunk throughput every
-        ``progress_interval`` objects and a total-time summary at the end."""
+        """Fetch blobs concurrently and write them to the tar archive serially.
+
+        ``_fetch_object`` runs in many worker greenlets; ``_write_object``
+        runs only here in the single consume loop, so it is the sole tar
+        writer and entries cannot interleave.
+        """
+        pool = Pool(self.concurrency)
         start = batch_start = time.monotonic()
-        for meta in metas:
-            self._write_object(self._fetch_object(meta))
-            self.total_blobs += 1
-            if self.total_blobs % progress_interval == 0:
-                now = time.monotonic()
-                batch_elapsed = now - batch_start
-                rate = format_rate(batch_elapsed, progress_interval, unit='objects')
-                print(f"Processed {self.total_blobs} objects "
-                      f"(last {progress_interval} in {batch_elapsed:.1f}s, {rate})")
-                batch_start = now
+        try:
+            for result in pool.imap_unordered(self._fetch_object, metas, maxsize=self.concurrency):
+                self._write_object(result)
+                self.total_blobs += 1
+                if self.total_blobs % progress_interval == 0:
+                    now = time.monotonic()
+                    batch_elapsed = now - batch_start
+                    rate = format_rate(batch_elapsed, progress_interval, unit='objects')
+                    print(f"Processed {self.total_blobs} objects "
+                          f"(last {progress_interval} in {batch_elapsed:.1f}s, {rate})")
+                    batch_start = now
+        finally:
+            # On the fail-fast path (a fetch raising a non-NotFound error),
+            # stop outstanding fetchers so their buffers are released promptly
+            # rather than relying on process exit.
+            pool.kill()
         elapsed = time.monotonic() - start
         rate = format_rate(elapsed, self.total_blobs, unit='objects')
         print(f"Processed {self.total_blobs} objects in {elapsed:.1f}s ({rate})")
 
     def _fetch_object(self, meta):
-        """Fetch one blob, returning a _Fetched/_Missing/_Skipped result."""
+        """Fetch and fully buffer one blob, returning a _Fetched/_Missing/_Skipped result.
+
+        Safe for concurrent use -- it only reads shared state and buffers into
+        its own file, never touching the tar, so many fetches can run in
+        parallel.
+        """
         if meta.key in self._already_exported:
             return _Skipped(meta.key)
         try:
             content = self.src_db.get(meta.key, CODES.maybe_compressed)
         except NotFound:
             return _Missing(meta.key)
-        return _Fetched(meta.key, content, content.content_length)
+        spool = SpooledTemporaryFile(max_size=SPILL_THRESHOLD, dir=self._spill_dir)
+        with content:
+            content_length = content.content_length
+            shutil.copyfileobj(content, spool)
+        spool.seek(0)
+        return _Fetched(meta.key, spool, content_length)
 
     def _write_object(self, result):
-        """Apply one fetched result: write it to the tar, or record it missing."""
+        """Apply one fetched result: write it to the tar, or record it missing.
+
+        Not safe for concurrent use -- it writes to the shared tar stream, so
+        callers must invoke it serially. Interleaved calls (e.g. from multiple
+        greenlets) would corrupt the archive.
+        """
         if isinstance(result, _Fetched):
             with result.fileobj as fileobj:
                 self.db.copy_blob(fileobj, result.key, result.content_length)
@@ -94,7 +130,7 @@ class BlobExporter:
         self.domain = domain
 
     def migrate(self, filename, progress_interval=PROGRESS_INTERVAL, limit_to_db=None,
-                already_exported=None, force=False):
+                already_exported=None, force=False, concurrency=DEFAULT_CONCURRENCY):
         if not self.domain:
             raise ExportError("Must specify domain")
 
@@ -104,7 +140,7 @@ class BlobExporter:
                 "To re-run the export use 'reset'".format(self.slug)
             )
 
-        migrator = BlobDbBackendExporter(filename, already_exported)
+        migrator = BlobDbBackendExporter(filename, already_exported, concurrency)
         with migrator:
             iterator_builders = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP['blobs.BlobMeta']
             builders = get_all_model_iterators_builders_for_domain(
