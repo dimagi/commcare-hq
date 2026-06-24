@@ -1,5 +1,6 @@
 import os
 import time
+from collections import namedtuple
 
 from corehq.apps.dump_reload.sql.dump import (
     APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP,
@@ -13,6 +14,10 @@ from .models import BlobMeta
 from .targzipdb import TarGzipBlobDB
 
 PROGRESS_INTERVAL = 10_000  # print a progress line every N objects processed
+
+_Fetched = namedtuple('_Fetched', 'key fileobj content_length')
+_Missing = namedtuple('_Missing', 'key')
+_Skipped = namedtuple('_Skipped', 'key')
 
 
 class BlobDbBackendExporter(object):
@@ -40,7 +45,8 @@ class BlobDbBackendExporter(object):
         ``progress_interval`` objects and a total-time summary at the end."""
         start = batch_start = time.monotonic()
         for meta in metas:
-            self.process_object(meta)
+            self._write_object(self._fetch_object(meta))
+            self.total_blobs += 1
             if self.total_blobs % progress_interval == 0:
                 now = time.monotonic()
                 batch_elapsed = now - batch_start
@@ -52,19 +58,24 @@ class BlobDbBackendExporter(object):
         rate = format_rate(elapsed, self.total_blobs, unit='objects')
         print(f"Processed {self.total_blobs} objects in {elapsed:.1f}s ({rate})")
 
-    def process_object(self, meta):
-        self.total_blobs += 1
+    def _fetch_object(self, meta):
+        """Fetch one blob, returning a _Fetched/_Missing/_Skipped result."""
         if meta.key in self._already_exported:
-            # This object is already in an another dump
-            return
-
+            return _Skipped(meta.key)
         try:
             content = self.src_db.get(meta.key, CODES.maybe_compressed)
         except NotFound:
-            self.missing_ids.append(meta.key)
-        else:
-            with content:
-                self.db.copy_blob(content, key=meta.key)
+            return _Missing(meta.key)
+        return _Fetched(meta.key, content, content.content_length)
+
+    def _write_object(self, result):
+        """Apply one fetched result: write it to the tar, or record it missing."""
+        if isinstance(result, _Fetched):
+            with result.fileobj as fileobj:
+                self.db.copy_blob(fileobj, result.key, result.content_length)
+        elif isinstance(result, _Missing):
+            self.missing_ids.append(result.key)
+        # _Skipped: already in another dump; counted but not written.
 
     def _write_missing_ids(self):
         if os.path.exists(self.missing_ids_filename):
