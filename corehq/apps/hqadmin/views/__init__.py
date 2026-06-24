@@ -15,7 +15,6 @@ from corehq.apps.hqadmin.views.system import (
     SystemInfoView,
     branches_on_staging,
     check_services,
-    get_rabbitmq_management_url,
     pillow_operation_api,
     system_ajax,
 )
