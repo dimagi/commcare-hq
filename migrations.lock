@@ -290,6 +290,7 @@ cleanup
  0019_alter_deletedsqldoc_table
  0020_delete_app_execution_models
  0021_delete_deletedsqldoc
+ 0022_bulkdeletionjob
 cloudcare
  0001_initial
  0002_sqlapplicationaccess
