@@ -20,6 +20,8 @@ from corehq.apps.app_manager.models import (
     Module,
     ReportAppConfig,
     ReportModule,
+)
+from corehq.apps.app_manager.models.filters import (
     _filter_by_user_id,
     _get_auto_filter_function,
 )
