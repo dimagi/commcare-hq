@@ -578,7 +578,7 @@ class _CaseImportRow(object):
                     "when 'parent_relationship_type' column is set to 'extension'"
                 ))
         else:
-            raise InvalidParentId(_("Invalid value for 'parent_relationship_type' column"))
+            raise InvalidParentId(message=_("Invalid value for 'parent_relationship_type' column"))
 
     def relies_on_uncreated_case(self, uncreated_external_ids):
         return any(lookup_id and lookup_id in uncreated_external_ids
