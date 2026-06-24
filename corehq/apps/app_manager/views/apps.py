@@ -45,6 +45,7 @@ from corehq.apps.app_manager.exceptions import (
     AppLinkError,
     AppValidationError,
     IncompatibleFormTypeException,
+    ModuleNotFoundException,
     RearrangeError,
 )
 from corehq.apps.app_manager.forms import CopyApplicationForm
@@ -55,7 +56,6 @@ from corehq.apps.app_manager.models import (
     ExchangeApplication,
     LinkedApplication,
     Module,
-    ModuleNotFoundException,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
