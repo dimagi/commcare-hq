@@ -343,7 +343,7 @@ class BuildErrorsTest(TestCase):
         self._clean_unique_id(errors)
         self.assertIn(case_tile_error, errors)
 
-    @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.app_manager.models.applications.domain_has_privilege', return_value=True)
     def test_training_module_as_parent(self, *args):
         factory = AppFactory(build_version='2.43.0')
         app = factory.app
@@ -358,7 +358,7 @@ class BuildErrorsTest(TestCase):
             'module': {'id': 1, 'unique_id': 'child_module', 'name': {'en': 'child module'}}
         }, app.validate_app())
 
-    @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.app_manager.models.applications.domain_has_privilege', return_value=True)
     def test_training_module_as_child(self, *args):
         factory = AppFactory(build_version='2.43.0')
         app = factory.app
