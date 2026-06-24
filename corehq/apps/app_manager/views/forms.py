@@ -53,6 +53,7 @@ from corehq.apps.app_manager.exceptions import (
     AppInDifferentDomainException,
     AppMisconfigurationError,
     FormNotFoundException,
+    IncompatibleFormTypeException,
     LockedQuestionError,
     ModuleNotFoundException,
     XFormValidationFailed,
@@ -81,7 +82,6 @@ from corehq.apps.app_manager.models import (
     FormActions,
     FormDatum,
     FormLink,
-    IncompatibleFormTypeException,
     OpenCaseAction,
     UpdateCaseAction,
 )
