@@ -157,7 +157,10 @@ def update_table(conn, table):
     existing_indexes = {
         idx['name'] for idx in inspector.get_indexes(table.name, schema=schema)
     }
-    new_indexes = [idx for idx in table.indexes if idx.name not in existing_indexes]
+    new_indexes = [
+        idx for idx in table.indexes
+        if _index_name(idx, conn.dialect) not in existing_indexes
+    ]
 
     if not new_columns and not new_indexes:
         return
@@ -170,3 +173,9 @@ def update_table(conn, table):
         op.add_column(table.name, detached_col, schema=schema)
     for index in new_indexes:
         index.create(bind=conn)
+
+
+def _index_name(index, dialect):
+    """Return the index name as it is actually stored in the database."""
+    preparer = dialect.identifier_preparer
+    return preparer.unformat_identifiers(preparer.format_index(index))[0]
