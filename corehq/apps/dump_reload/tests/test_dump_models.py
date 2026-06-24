@@ -49,6 +49,7 @@ IGNORE_MODELS = {
     "auth.Permission",
     "blobs.BlobMigrationState",
     "celery.TaskRecord",
+    "cleanup.BulkDeletionJob",
     "cleanup.DeletedCouchDoc",
     "contenttypes.ContentType",
     "data_analytics.DomainMetrics",

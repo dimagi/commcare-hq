@@ -359,6 +359,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'CaseSearchConfig', 'domain'),
     ModelDeletion('case_search', 'FuzzyProperties', 'domain'),
     ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
+    ModelDeletion('cleanup', 'BulkDeletionJob', 'domain'),
     ModelDeletion('cloudcare', 'ApplicationAccess', 'domain', ['SQLAppGroup']),
     ModelDeletion('commtrack', 'CommtrackConfig', 'domain', [
         'ActionConfig', 'AlertConfig', 'ConsumptionConfig',
