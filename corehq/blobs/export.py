@@ -35,6 +35,23 @@ class BlobDbBackendExporter(object):
             print(PROCESSING_COMPLETE_MESSAGE.format(len(self.missing_ids), self.total_blobs))
             print(f"Missing blob ids have been written in the log file: {self.missing_ids_filename}")
 
+    def run(self, metas, progress_interval=PROGRESS_INTERVAL):
+        """Export each blob in ``metas``, logging per-chunk throughput every
+        ``progress_interval`` objects and a total-time summary at the end."""
+        start = batch_start = time.monotonic()
+        for meta in metas:
+            self.process_object(meta)
+            if self.total_blobs % progress_interval == 0:
+                now = time.monotonic()
+                batch_elapsed = now - batch_start
+                rate = format_rate(batch_elapsed, progress_interval, unit='objects')
+                print(f"Processed {self.total_blobs} objects "
+                      f"(last {progress_interval} in {batch_elapsed:.1f}s, {rate})")
+                batch_start = now
+        elapsed = time.monotonic() - start
+        rate = format_rate(elapsed, self.total_blobs, unit='objects')
+        print(f"Processed {self.total_blobs} objects in {elapsed:.1f}s ({rate})")
+
     def process_object(self, meta):
         self.total_blobs += 1
         if meta.key in self._already_exported:
@@ -77,28 +94,20 @@ class BlobExporter:
             )
 
         migrator = BlobDbBackendExporter(filename, already_exported)
-        start = batch_start = time.monotonic()
         with migrator:
             iterator_builders = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP['blobs.BlobMeta']
             builders = get_all_model_iterators_builders_for_domain(
                 BlobMeta, self.domain, iterator_builders, limit_to_db
             )
-            for model_class, builder in builders:
-                for iterator in builder.iterators():
-                    for obj in iterator:
-                        migrator.process_object(obj)
-                        if migrator.total_blobs % progress_interval == 0:
-                            now = time.monotonic()
-                            batch_elapsed = now - batch_start
-                            rate = format_rate(batch_elapsed, progress_interval, unit='objects')
-                            print(f"Processed {migrator.total_blobs} objects "
-                                  f"(last {progress_interval} in {batch_elapsed:.1f}s, {rate})")
-                            batch_start = now
+            migrator.run(self._iter_metas(builders), progress_interval=progress_interval)
 
-        elapsed = time.monotonic() - start
-        rate = format_rate(elapsed, migrator.total_blobs, unit='objects')
-        print(f"Processed {migrator.total_blobs} objects in {elapsed:.1f}s ({rate})")
         return migrator.total_blobs, 0
+
+    @staticmethod
+    def _iter_metas(builders):
+        for model_class, builder in builders:
+            for iterator in builder.iterators():
+                yield from iterator
 
 
 class ExportError(Exception):
