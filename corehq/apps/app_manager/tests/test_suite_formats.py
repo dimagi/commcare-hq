@@ -7,13 +7,13 @@ from django.test import SimpleTestCase
 from corehq import privileges
 from corehq.apps.app_manager.models import (
     Application,
-    BuildSpec,
     DetailColumn,
     MappingItem,
     Module,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
+from corehq.apps.builds.models import BuildSpec
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
