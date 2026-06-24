@@ -58,3 +58,6 @@ TODOs
   support both?
 - Index external ID.
 - Put limit on number of property columns
+- Add a SQL user per domain with only access to that domain's schema
+- Set up automatic update call on data dictionary change, and auto population
+  on case update
