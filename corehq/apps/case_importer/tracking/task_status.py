@@ -64,7 +64,7 @@ def normalize_task_status_result_errors(result):
             result_errors.append(TaskStatusResultError(
                 title=str(error_value['error']),
                 description=str(error_value['description']),
-                column=column_name,
+                column=str(column_name) if column_name is not None else '',
                 rows=error_value['rows'],
                 sample=error_value.get('sample', '')
             ))
