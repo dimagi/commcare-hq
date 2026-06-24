@@ -11,6 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('users', '0042_deactivatemobileworkertrigger'),
+        ('field_audit', '0002_add_is_bootstrap_column'),
     ]
 
     operations = [
