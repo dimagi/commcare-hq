@@ -8,6 +8,9 @@ from django.conf import settings
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
+from couchforms.geopoint import GeoPoint
+from jsonobject.exceptions import BadValueError
+
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.phone.data_providers.case.livequery import (
     get_all_related_live_cases,
@@ -25,6 +28,7 @@ from corehq.apps.case_search.const import (
 from corehq.apps.case_search.endpoint_capability import (
     FIELD_TYPE_DATE,
     FIELD_TYPE_DATETIME,
+    FIELD_TYPE_GEOPOINT,
     FIELD_TYPE_NUMBER,
     FIELD_TYPE_SELECT,
     get_capability,
@@ -53,6 +57,7 @@ from corehq.apps.es import filters, queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_date_range,
+    case_property_geo_distance,
     case_property_missing,
     case_property_numeric_range,
     case_property_query,
@@ -448,17 +453,36 @@ class CaseSearchEndpointQueryBuilder:
             return None
 
     def _input_value(self, input_):
+        if input_ is None:
+            return None
         if isinstance(input_, ParameterInput):
             return self.param_values.get(input_.value)
         return input_.value
 
     def _parse_component_node(self, node):
+        operator = node.operator
+
+        if node.field_type == FIELD_TYPE_GEOPOINT:
+            if operator == 'within_distance':
+                point = self._input_value(node.inputs.get('point'))
+                distance = self._input_value(node.inputs.get('distance'))
+                unit = self._input_value(node.inputs.get('unit'))
+                if None in (point, distance, unit):
+                    return None
+                try:
+                    geo_point = GeoPoint.from_string(point, flexible=True)
+                    distance = float(distance)
+                except (BadValueError, ValueError):
+                    return None
+                if unit not in queries.DISTANCE_UNITS:
+                    return None
+                return case_property_geo_distance(node.field, geo_point, **{unit: distance})
+            return None
+
         field = node.field
         value = self._input_value(node.inputs['value'])
         if value is None:
-            return None # ignore component if value is not given
-
-        operator = node.operator
+            return None  # ignore component if value is not given
 
         if node.field_type in (FIELD_TYPE_DATE, FIELD_TYPE_DATETIME):
             if operator == 'equals':
