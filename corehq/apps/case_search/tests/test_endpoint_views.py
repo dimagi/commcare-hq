@@ -366,6 +366,23 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
                 assert expected_text in content
                 assert '<table' not in content
 
+    def test_unknown_case_type_returns_error(self):
+        response = self.client.post(self._test_url(), {
+            'case_type': 'nonexistent_type',
+            'query': json.dumps(EMPTY_QUERY),
+        })
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'alert-danger' in content
+        assert '<table' not in content
+
+    def test_missing_case_type_returns_error(self):
+        response = self.client.post(self._test_url(), {
+            'query': json.dumps(EMPTY_QUERY),
+        })
+        assert response.status_code == 200
+        assert 'alert-danger' in response.content.decode()
+
     def test_requires_post(self):
         response = self.client.get(self._test_url())
         assert response.status_code == 405

@@ -366,6 +366,8 @@ class CaseSearchEndpointTestView(BaseDomainView):
             return self._render_results(request, errors=errors)
 
         capability = get_capability(domain=self.domain)
+        if case_type not in capability['case_types']:
+            return self._render_results(request, errors=[f"Unknown case type: '{case_type}'"])
         fields = capability['case_types'][case_type]
         query_root, errors = parse_query_spec(query, parameters, case_type, capability)
         if errors:
