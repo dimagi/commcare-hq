@@ -97,7 +97,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             </text>
           </template>
         </partial>
-        """.format(  # noqa: #501
+        """.format(  # noqa: E501
             key1_varname=key1_varname,
             key2_varname=key2_varname,
             key3_varname=key3_varname,
@@ -162,7 +162,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             </text>
           </template>
         </partial>
-        """  # noqa: #501
+        """  # noqa: E501
         # check correct suite is generated
         self.assertXmlPartialEqual(
             icon_mapping_spec,
@@ -292,7 +292,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
                 </text>
               </template>
             </partial>
-        """.format(  # noqa: #501
+        """.format(  # noqa: E501
             key1_varname=key1_varname,
             key2_varname=key2_varname,
             key3_varname=key3_varname,
@@ -364,7 +364,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             </text>
           </template>
         </partial>
-        """  # noqa: #501
+        """  # noqa: E501
         self.assertXmlPartialEqual(
             expected,
             app.create_suite(),
@@ -397,7 +397,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             </text>
           </template>
         </partial>
-        """
+        """  # noqa: E501
         self.assertXmlPartialEqual(
             expected,
             app.create_suite(),
@@ -426,7 +426,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             </text>
           </alt_text>
         </partial>
-        """  # noqa: #501
+        """  # noqa: E501
         self.assertXmlPartialEqual(
             expected,
             app.create_suite(),
@@ -472,7 +472,7 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
                 </text>
               </alt_text>
             </partial>
-        """.format(  # noqa: #501
+        """.format(
             key1=key1,
             key2=key2
         )

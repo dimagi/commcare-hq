@@ -42,7 +42,7 @@ INVALID_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
         </input>
     </h:body>
 </h:html>
-"""
+"""  # noqa: E501
 
 
 class FormVersioningTest(TestCase):

@@ -55,7 +55,7 @@ class ReleaseFormsEnabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMix
                 </resource>
               </xform>
             </partial>
-        """
+        """  # noqa: E501
         # not included in resource
         self.assertXmlPartialEqual(expected, suite, xpath)
 
@@ -135,7 +135,7 @@ class ReleaseFormsDisabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMi
                 </resource>
               </xform>
             </partial>
-        """
+        """  # noqa: E501
         self.assertXmlPartialEqual(expected, suite, './xform')
 
     def test_entry(self, *args):
