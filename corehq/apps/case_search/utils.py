@@ -130,13 +130,14 @@ def get_endpoint_results(helper, config):
         raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
 
     parameters, errors = parse_parameter_spec(endpoint.current_version.parameters)
-
-    query_root, errors = parse_query_spec(
-        endpoint.current_version.query,
-        parameters,
-        endpoint.case_type,
-        get_capability(helper.domain)
-    )
+    query_root = None
+    if not errors:
+        query_root, errors = parse_query_spec(
+            endpoint.current_version.query,
+            parameters,
+            endpoint.case_type,
+            get_capability(helper.domain)
+        )
     if errors:
         notify_exception(None, "Stored endpoint query failed validation", details={
             'endpoint': endpoint.id, 'errors': errors,
