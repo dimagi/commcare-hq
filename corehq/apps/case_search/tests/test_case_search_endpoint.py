@@ -118,7 +118,7 @@ class TestCaseSearchEndpoint(TestCase):
     @flag_enabled('CASE_SEARCH_ENDPOINTS')
     def test_endpoint_id_runs_query(self):
         endpoint = CaseSearchEndpoint.objects.create(
-            domain=self.domain, name='people', target_name='person')
+            domain=self.domain, name='people', case_type='person')
         version = CaseSearchEndpointVersion.objects.create(
             endpoint=endpoint,
             version_number=1,
