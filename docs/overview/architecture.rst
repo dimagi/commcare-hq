@@ -210,14 +210,6 @@ CommCare to create asynchronous feeds that power our change processors (pillows)
 
 .. _Kafka: https://kafka.apache.org/
 
-RabbitMQ
-~~~~~~~~
-
-RabbitMQ_ is an open source Advanced Message Queuing Protocol (AMQP) compliant server. As mentioned above CommCare
-uses the Celery_ framework to execute background tasks. The Celery task queues are managed by RabbitMQ.
-
-.. _RabbitMQ: https://www.rabbitmq.com/
-
 Gunicorn
 ~~~~~~~~
 
