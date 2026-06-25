@@ -42,7 +42,7 @@ class BlobDbBackendExporter(object):
         self._spill_dir = os.path.dirname(os.path.abspath(filename))
         self.total_blobs = 0
         self.missing_ids = []
-        self.missing_ids_filename = "missing_blob_ids.txt"
+        self.missing_ids_filename = missing_ids_filename_for(filename)
 
     def __enter__(self):
         self.db.open('w:gz', compresslevel=COMPRESS_LEVEL)
@@ -126,6 +126,17 @@ class BlobDbBackendExporter(object):
         with open(self.missing_ids_filename, 'w') as f:
             for missing_id in self.missing_ids:
                 f.write(f"{missing_id}\n")
+
+
+def missing_ids_filename_for(export_filename):
+    """Derive the missing-blob-ids log path from the export archive path.
+
+    Placing the log beside the archive -- same directory and filename prefix --
+    keeps a run's two outputs together, honors the ``--dir`` chosen by the
+    operator, and disambiguates the logs of repeated or concurrent runs that
+    would otherwise all clobber a single ``missing_blob_ids.txt`` in the cwd.
+    """
+    return f"{export_filename.removesuffix('.tar.gz')}-missing_blob_ids.txt"
 
 
 class BlobExporter:

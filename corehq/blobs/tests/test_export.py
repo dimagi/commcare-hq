@@ -3,24 +3,53 @@ import io
 import os
 import tarfile
 from collections import namedtuple
-from contextlib import chdir, redirect_stdout
+from contextlib import redirect_stdout
 from io import BytesIO, RawIOBase
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest import mock
 
 import gevent
+import pytest
 from django.test import SimpleTestCase, TestCase
 
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs import export as export_module
 from corehq.blobs.exceptions import NotFound
-from corehq.blobs.export import BlobDbBackendExporter, BlobExporter
+from corehq.blobs.export import (
+    BlobDbBackendExporter,
+    BlobExporter,
+    missing_ids_filename_for,
+)
 from corehq.blobs.management.commands.run_blob_import import Command as ImportCommand
 from corehq.blobs.targzipdb import TarGzipBlobDB
 from corehq.blobs.tests.fixtures import blob_db
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, new_meta
 
 _Meta = namedtuple('_Meta', 'key')
+
+
+@pytest.mark.parametrize("export_filename, expected", [
+    # full archive path: same dir and prefix, .tar.gz stripped
+    ("/data/2026-06-25_14.32-mydomain-blobs.tar.gz",
+     "/data/2026-06-25_14.32-mydomain-blobs-missing_blob_ids.txt"),
+    # -part / -db suffixes are part of the prefix and carried through
+    ("/data/2026-06-25_14.32-mydomain-blobs-part-p0.tar.gz",
+     "/data/2026-06-25_14.32-mydomain-blobs-part-p0-missing_blob_ids.txt"),
+    # no directory -> sits beside the archive in the cwd
+    ("export.tar.gz", "export-missing_blob_ids.txt"),
+    # no .tar.gz suffix (e.g. a bare temp file in tests) -> append as-is
+    ("/data/export", "/data/export-missing_blob_ids.txt"),
+])
+def test_missing_ids_filename_for(export_filename, expected):
+    assert missing_ids_filename_for(export_filename) == expected
+
+
+def test_exporter_derives_missing_ids_path_from_export_file():
+    with mock.patch.object(export_module, 'get_blob_db'):
+        migrator = BlobDbBackendExporter(
+            "/data/2026-06-25_14.32-mydomain-blobs.tar.gz", None)
+    assert migrator.missing_ids_filename == (
+        "/data/2026-06-25_14.32-mydomain-blobs-missing_blob_ids.txt")
 
 
 class _YieldingStream(io.BytesIO):
@@ -206,12 +235,13 @@ class TestBlobExporter(TestCase):
         orphaned_meta = new_meta(domain=self.domain, type_code=CODES.form_xml, content_length=42)
         orphaned_meta.save()
 
-        # migrate() writes missing_blob_ids.txt to the cwd for the orphaned
-        # meta; run in a temp dir so the test stays idempotent and does not
-        # pollute the repo root.
-        with TemporaryDirectory() as tmpdir, chdir(tmpdir), NamedTemporaryFile() as out:
-            self.exporter.migrate(out.name, force=True)
-            with tarfile.open(out.name, 'r:gz') as tgzfile:
+        # migrate() writes a missing-blob-ids log beside the export archive for
+        # the orphaned meta; export into a temp dir so both files are cleaned up
+        # and the test does not pollute the repo root.
+        with TemporaryDirectory() as tmpdir:
+            out = os.path.join(tmpdir, 'export.tar.gz')
+            self.exporter.migrate(out, force=True)
+            with tarfile.open(out, 'r:gz') as tgzfile:
                 self.assertEqual([expected_meta.key], tgzfile.getnames())
 
     def test_exported_blobs_can_be_imported_successfully(self):
