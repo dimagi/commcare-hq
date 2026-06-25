@@ -7,6 +7,7 @@ import urllib3
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request, json_response
 from django.contrib import messages
+from django.apps import apps as django_apps
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -490,13 +491,23 @@ def app_from_template(request, domain, slug):
 
 
 def app_template_dir(slug):
-    return os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'template_apps', slug)
+    root = os.path.join(
+        django_apps.get_app_config('app_manager').path,
+        'static',
+        'app_manager',
+        'template_apps',
+    )
+    # Resolve the slug against the set of template apps that actually exist
+    for name in os.listdir(root):
+        if name == slug:
+            return os.path.join(root, name)
 
 
 @memoized
 def load_app_template(slug):
-    with open(os.path.join(app_template_dir(slug), 'app.json')) as f:
-        return json.load(f)
+    if app_dir := app_template_dir(slug):
+        with open(os.path.join(app_dir, 'app.json')) as f:
+            return json.load(f)
 
 
 def load_app_from_slug(domain, username, slug):
