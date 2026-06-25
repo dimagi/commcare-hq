@@ -16,13 +16,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Check changed py files
-        id: changed-files
-        uses: tj-actions/changed-files@v47
-        with:
-          files: |
-            **/*.py
-
       - uses: astral-sh/setup-uv@v7
         with:
           version: '0.7.2'
@@ -31,4 +24,4 @@ jobs:
         run: uv sync --group=test --no-group=sso --locked --compile-bytecode --no-progress
 
       - name: Run ty check
-        run: uv run ty check ${{ steps.changed-files.outputs.all_changed_files }}
+        run: uv run ty check
