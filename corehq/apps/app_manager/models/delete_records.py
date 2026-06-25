@@ -16,6 +16,9 @@ class DeleteApplicationRecord(DeleteRecord):
 
     app_id = StringProperty()
 
+    class Meta:
+        app_label = 'app_manager'
+
     def undo(self):
         from .applications import ApplicationBase
         app = ApplicationBase.get(self.app_id)
@@ -33,6 +36,9 @@ class DeleteModuleRecord(DeleteRecord):
     app_id = StringProperty()
     module_id = IntegerProperty()
     module = SchemaProperty(ModuleBase)
+
+    class Meta:
+        app_label = 'app_manager'
 
     def undo(self):
         from .applications import Application
@@ -55,6 +61,9 @@ class DeleteFormRecord(DeleteRecord):
     module_unique_id = StringProperty()
     form_id = IntegerProperty()
     form = SchemaProperty(FormBase)
+
+    class Meta:
+        app_label = 'app_manager'
 
     def undo(self):
         from .applications import Application
