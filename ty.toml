@@ -30,7 +30,6 @@ missing-argument = "ignore"  # default: error
 no-matching-overload = "ignore"  # default: error
 not-iterable = "ignore"  # default: error
 not-subscriptable = "ignore"  # default: error
-parameter-already-assigned = "ignore"  # default: error
 possibly-missing-attribute = "ignore" # default: ignore
 possibly-missing-import = "ignore"  # default: ignore
 possibly-missing-submodule = "ignore" # default: warn
