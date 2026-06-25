@@ -3,6 +3,7 @@ from django.db import migrations
 from corehq.apps.es import UserES, filters
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couch import DocUpdate, iter_update
+from corehq.util.django_migrations import skip_on_fresh_install
 from corehq.util.log import with_progress_bar
 
 
@@ -19,6 +20,7 @@ def fix_user(user_doc):
         return DocUpdate(user_doc)
 
 
+@skip_on_fresh_install
 def reset_is_active(apps, schema_editor):
     iter_update(
         CommCareUser.get_db(),
