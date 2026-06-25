@@ -36,7 +36,7 @@ def FormIdProperty(*expressions, **kwargs):
     return StringProperty(**kwargs)
 
 
-def _rename_key(dct, old, new):
+def rename_key(dct, old, new):
     if old in dct:
         if new in dct and dct[new]:
             dct["%s_backup_%s" % (new, hex(random.getrandbits(32))[2:-1])] = dct[new]

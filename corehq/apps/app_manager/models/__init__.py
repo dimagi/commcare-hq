@@ -192,7 +192,7 @@ from .base import (  # noqa: F401
     IndexedSchema,
     LabelProperty,
     form_id_references,
-    _rename_key,
+    rename_key,
 )
 
 FIELD_SEPARATOR = ':'
@@ -1198,7 +1198,7 @@ class FormBase(DocumentSchema):
         return format_key
 
     def rename_lang(self, old_lang, new_lang):
-        _rename_key(self.name, old_lang, new_lang)
+        rename_key(self.name, old_lang, new_lang)
         try:
             self.rename_xform_language(old_lang, new_lang)
         except XFormException:
@@ -1846,7 +1846,7 @@ class DetailColumn(IndexedSchema):
 
     def rename_lang(self, old_lang, new_lang):
         for dct in [self.header] + [item.value for item in self.enum]:
-            _rename_key(dct, old_lang, new_lang)
+            rename_key(dct, old_lang, new_lang)
 
     @property
     def field_type(self):
@@ -2074,7 +2074,7 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
     show = BooleanProperty(default=False)
 
     def rename_lang(self, old_lang, new_lang):
-        _rename_key(self.label, old_lang, new_lang)
+        rename_key(self.label, old_lang, new_lang)
 
     def get_app(self):
         return self._module.get_app()
@@ -2255,7 +2255,7 @@ class CaseListForm(NavMenuItemMediaMixin):
     relevancy_expression = StringProperty(exclude_if_none=True)
 
     def rename_lang(self, old_lang, new_lang):
-        _rename_key(self.label, old_lang, new_lang)
+        rename_key(self.label, old_lang, new_lang)
 
     def get_app(self):
         return self._module.get_app()
@@ -2405,7 +2405,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
         )
 
     def rename_lang(self, old_lang, new_lang):
-        _rename_key(self.name, old_lang, new_lang)
+        rename_key(self.name, old_lang, new_lang)
         for form in self.get_forms():
             form.rename_lang(old_lang, new_lang)
         for __, detail, __ in self.get_details():
@@ -5189,7 +5189,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                     profile.langs[i] = new_lang
         for module in self.get_modules():
             module.rename_lang(old_lang, new_lang)
-        _rename_key(self.translations, old_lang, new_lang)
+        rename_key(self.translations, old_lang, new_lang)
 
     def rearrange_modules(self, from_index, to_index):
         modules = self.modules
