@@ -110,12 +110,14 @@ class BlobDbBackendExporter(object):
         callers must invoke it serially. Interleaved calls (e.g. from multiple
         greenlets) would corrupt the archive.
         """
-        if isinstance(result, _Fetched):
-            with result.fileobj as fileobj:
-                self.db.copy_blob(fileobj, result.key, result.content_length)
-        elif isinstance(result, _Missing):
-            self.missing_ids.append(result.key)
-        # _Skipped: already in another dump; counted but not written.
+        match result:
+            case _Fetched(key, fileobj, content_length):
+                with fileobj:
+                    self.db.copy_blob(fileobj, key, content_length)
+            case _Missing(key):
+                self.missing_ids.append(key)
+            case _Skipped():
+                pass  # already in another dump; counted but not written
 
     def _write_missing_ids(self):
         if os.path.exists(self.missing_ids_filename):
