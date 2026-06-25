@@ -762,7 +762,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                 self.lazy_put_attachment(other.lazy_fetch_attachment(name), name)
 
     def delete_app(self):
-        from . import DeleteApplicationRecord
+        from .delete_records import DeleteApplicationRecord
         domain_has_apps.clear(self.domain)
         get_app_languages.clear(self.domain)
         get_apps_in_domain.clear(self.domain, True)
@@ -1427,7 +1427,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         return self.get_module(-1)
 
     def delete_module(self, module_unique_id):
-        from . import DeleteModuleRecord
+        from .delete_records import DeleteModuleRecord
         module = self.get_module_by_unique_id(module_unique_id)
         record = DeleteModuleRecord(
             domain=self.domain,
@@ -1445,7 +1445,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         return module.new_form(name, lang, attachment)
 
     def delete_form(self, module_unique_id, form_unique_id):
-        from . import DeleteFormRecord
+        from .delete_records import DeleteFormRecord
         try:
             module = self.get_module_by_unique_id(module_unique_id)
             form = self.get_form(form_unique_id)
