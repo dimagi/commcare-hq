@@ -49,22 +49,25 @@ def parse_parameter_spec(spec):
             errors.append(f'Parameter {i}: expected object, got {type(item).__name__}')
             continue
 
+        item_errors = []
         name = item.get('name', '').strip()
         if not name or not isinstance(name, str):
-            errors.append(f'Parameter {i}: name is required')
+            item_errors.append(f'Parameter {i}: name is required')
         elif name in seen_names:
-            errors.append(f"Duplicate parameter name: '{name}'")
+            item_errors.append(f"Duplicate parameter name: '{name}'")
         else:
             seen_names.add(name)
 
         param_type = item.get('type', '')
         if param_type not in FIELD_TYPES:
-            errors.append(
+            item_errors.append(
                 f"Parameter '{name or i}': invalid type '{param_type}'."
                 f" Must be one of: {', '.join(FIELD_TYPES)}"
             )
 
-        if not errors:
+        if item_errors:
+            errors.extend(item_errors)
+        else:
             parameters.append(Parameter(name=name, type=param_type))
 
     if errors:
