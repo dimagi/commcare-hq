@@ -106,6 +106,8 @@ def _ensure_s3_pool_size(concurrency):
     (new TLS handshake per excess fetch). Must run before the blob db client is
     built (i.e. before the first ``get_blob_db()`` call).
     """
+    from corehq.blobs import _db
+    assert not _db, "blob db already built; max_pool_connections bump would be ignored"
     from django.conf import settings
     for key in ('S3_BLOB_DB_SETTINGS', 'OLD_S3_BLOB_DB_SETTINGS'):
         s3_settings = getattr(settings, key, None)
