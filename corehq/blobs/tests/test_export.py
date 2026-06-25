@@ -1,18 +1,104 @@
 import doctest
 import io
+import os
 import tarfile
+from collections import namedtuple
 from contextlib import chdir, redirect_stdout
 from io import BytesIO, RawIOBase
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+from unittest import mock
 
 from django.test import SimpleTestCase, TestCase
 
 from corehq.blobs import CODES, get_blob_db
-from corehq.blobs.export import BlobExporter
+from corehq.blobs import export as export_module
+from corehq.blobs.exceptions import NotFound
+from corehq.blobs.export import BlobDbBackendExporter, BlobExporter
 from corehq.blobs.management.commands.run_blob_import import Command as ImportCommand
 from corehq.blobs.targzipdb import TarGzipBlobDB
 from corehq.blobs.tests.fixtures import blob_db
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, new_meta
+
+_Meta = namedtuple('_Meta', 'key')
+
+
+class _FakeStream(io.BytesIO):
+    """BytesIO with a ``content_length``, standing in for a blob read."""
+
+    def __init__(self, data):
+        super().__init__(data)
+        self.content_length = len(data)
+
+
+class _FakeSrcDB:
+    def __init__(self, blobs):
+        self.blobs = blobs  # {key: bytes}
+
+    def get(self, key, type_code=None):
+        if key not in self.blobs:
+            raise NotFound(key)
+        return _FakeStream(self.blobs[key])
+
+
+def _export_with_fake_src(blobs, metas, already_exported=None, src_db=None,
+                          progress_interval=100):
+    """Run an export against a fake source DB; return (names->bytes, missing_ids, total)."""
+    if src_db is None:
+        src_db = _FakeSrcDB(blobs)
+    with mock.patch.object(export_module, 'get_blob_db', return_value=src_db), \
+            NamedTemporaryFile(suffix='.tar.gz') as out, \
+            TemporaryDirectory() as tmpdir:
+        migrator = BlobDbBackendExporter(out.name, already_exported)
+        migrator.missing_ids_filename = os.path.join(tmpdir, 'missing_blob_ids.txt')
+        with migrator:
+            migrator.run(metas, progress_interval=progress_interval)
+        with tarfile.open(out.name, 'r:gz') as tgz:
+            extracted = {n: tgz.extractfile(n).read() for n in tgz.getnames()}
+        return extracted, migrator.missing_ids, migrator.total_blobs
+
+
+class TestExportRun(SimpleTestCase):
+
+    def test_missing_blob_is_recorded(self):
+        blobs = {'present': b'data'}
+        metas = [_Meta('present'), _Meta('absent')]
+
+        extracted, missing, total = _export_with_fake_src(blobs, metas)
+
+        assert set(extracted) == {'present'}
+        assert missing == ['absent']
+        assert total == 2
+
+    def test_already_exported_blobs_are_skipped_but_counted(self):
+        """Already-exported blobs are not re-written, but are still counted --
+        in the total and the per-chunk progress heartbeat -- matching the
+        original sequential exporter."""
+        blobs = {f'k{i}': b'x' for i in range(150)}
+        metas = [_Meta(k) for k in blobs]
+
+        out = io.StringIO()
+        with redirect_stdout(out):
+            extracted, missing, total = _export_with_fake_src(
+                blobs, metas, already_exported=set(blobs))
+
+        assert extracted == {}  # nothing re-written
+        assert total == 150  # all counted
+        assert "Processed 100 objects (last 100 in " in out.getvalue()  # and reported
+
+    def test_non_notfound_fetch_error_propagates(self):
+        """A fetch error that is not NotFound must propagate, aborting the export."""
+
+        class _ErrorDB(_FakeSrcDB):
+            def get(self, key, type_code=None):
+                if key == 'bad':
+                    raise RuntimeError("boom")
+                return super().get(key, type_code)
+
+        blobs = {'ok': b'fine', 'bad': b'never'}
+        metas = [_Meta('ok'), _Meta('bad')]
+        src_db = _ErrorDB(blobs)
+        with self.assertRaises(RuntimeError):
+            _export_with_fake_src(blobs, metas, src_db=src_db)
 
 
 class TestBlobExporter(TestCase):
