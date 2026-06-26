@@ -4,7 +4,6 @@ from unittest.mock import patch
 import pytest
 from django.contrib.auth.models import User
 from django.db import connections
-from django.db.models import Q
 from django.db.utils import InterfaceError, OperationalError
 from django.test.testcases import TestCase
 
@@ -17,18 +16,13 @@ from corehq.util.queries import (
 
 
 def test_lexicographic_greater_than_single_field():
-    assert _lexicographic_greater_than(('id',), (5,)) == Q(id__gt=5)
+    qs = User.objects.filter(_lexicographic_greater_than(('pk',), (5,)))
+    assert '("auth_user"."id") > (' in str(qs.query)
 
 
 def test_lexicographic_greater_than_multiple_fields():
-    assert (
-        _lexicographic_greater_than(('a', 'b'), (1, 2))
-        == (Q(a__gt=1) | Q(a=1, b__gt=2))
-    )
-    assert (
-        _lexicographic_greater_than(('a', 'b', 'c'), (1, 2, 3))
-        == (Q(a__gt=1) | Q(a=1, b__gt=2) | Q(a=1, b=2, c__gt=3))
-    )
+    qs = User.objects.filter(_lexicographic_greater_than(('last_name', 'pk'), ('Tenenbaum', 5)))
+    assert '("auth_user"."last_name", "auth_user"."id") > (' in str(qs.query)
 
 
 def test_fk_index_column_returns_the_parent_column():
@@ -69,8 +63,28 @@ def test_use_fk_index_hint_seeks_the_parent_column_while_keyset_stays_on_the_chi
     seeked_page = pages[1]
     # raw bound on the parent column -- the planner hint
     assert '"form_processor_commcarecasesql"."case_id" >= ' in seeked_page
-    # keyset still on the child's own column
-    assert '"form_processor_casetransaction"."case_id"' in seeked_page
+    # keyset still on the child's own column, as a row-value comparison
+    assert ('("form_processor_casetransaction"."case_id", '
+            '"form_processor_casetransaction"."id") > (' in seeked_page)
+
+
+def test_keyset_seek_emits_a_row_value_comparison_in_the_query():
+    # The compound keyset bound is a row-value comparison ``(a, b) > (x, y)`` --
+    # the form Postgres can seek a multicolumn index with.
+    pages = []
+
+    def capture(queryset, limit):
+        pages.append(str(queryset.query))   # compiles SQL; no db access
+        return [SimpleNamespace(last_name='Tenenbaum', pk=5)] if len(pages) == 1 else []
+
+    with patch.object(queries, '_fetch_chunk', side_effect=capture):
+        list(queryset_to_iterator(
+            User.objects.using('default'), User, limit=1,
+            ignore_ordering=True, pagination_key=('last_name', 'pk'),
+        ))
+
+    assert len(pages) == 2  # first page, then the seeked page
+    assert '("auth_user"."last_name", "auth_user"."id") > (' in pages[1]
 
 
 class TestQuerysetToIterator(TestCase):

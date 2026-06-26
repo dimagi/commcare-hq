@@ -5,7 +5,8 @@ import time
 from django.core.paginator import Paginator
 from django.core.paginator import EmptyPage
 from django.db import DEFAULT_DB_ALIAS, connections
-from django.db.models import Q
+from django.db.models import F
+from django.db.models.fields.tuple_lookups import Tuple, TupleGreaterThan
 from django.db.utils import InterfaceError, OperationalError
 
 logger = logging.getLogger(__name__)
@@ -186,25 +187,25 @@ def _fk_index_column(model_cls, pagination_key):
 
 
 def _lexicographic_greater_than(fields, values):
-    """Build the tuple comparison ``(a, b, ...) > (va, vb, ...)`` as a Q
-    expression, expanding it to ``a > va OR (a = va AND b > vb) OR ...``.
+    """Build the keyset bound ``(a, b, ...) > (va, vb, ...)`` as a lookup for
+    ``QuerySet.filter``.
 
-    TODO: for a compound key this OR form can't seek the leading field's own
-    index -- Postgres won't derive a bound on ``a`` from inside the OR [1], so it
-    scans from the start. Callers that page a child model by its parent's id avoid
-    this by seeking the parent's index via ``use_fk_index_hint`` instead. A
-    single-table compound-key caller that wanted a leading-index seek would need
-    to AND back a redundant ``a >= va`` (a planner hint), or better, switch to a
-    row-value comparison ``(a, b, ...) > (va, vb, ...)``, which Postgres supports
-    and can seek with [1].
+    This is a row-value comparison, not the equivalent
+    ``a > va OR (a = va AND b > vb) OR ...``: Postgres can seek a matching
+    multicolumn index with the row-value form, but only ever *filters* with the
+    ``OR`` form -- scanning from the start of each page for a compound key [1].
+
+    Django exposes no lookup syntax for this, so we reuse its composite-primary-key
+    tuple lookups directly. They emit the row-value form where the backend supports
+    tuple lookups (Postgres does), else fall back to the equivalent ``OR`` form;
+    ``test_keyset_seek_emits_a_row_value_comparison_in_the_query`` guards against a
+    silent fallback. ``F`` resolves the ``pk`` alias and a foreign key's attname
+    (e.g. ``case_id``) as ``filter`` does.
 
     [1] https://use-the-index-luke.com/sql/partial-results/fetch-next-page#sb-equivalent-logic
     """
-    condition = Q()
-    for index, (field, value) in enumerate(zip(fields, values)):
-        ties = dict(zip(fields[:index], values[:index]))
-        condition |= Q(**ties, **{f"{field}__gt": value})
-    return condition
+    lhs = Tuple(*(F(field) for field in fields))
+    return TupleGreaterThan(lhs, list(values))
 
 
 def _fetch_chunk(queryset, limit):
