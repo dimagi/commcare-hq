@@ -111,7 +111,7 @@ def paginated_queryset(queryset, chunk_size):
 
 
 def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False,
-                         pagination_key=('pk',), use_fk_index_hint=False):
+                         pagination_key=('pk',)):
     """
     Pull from queryset in chunks. This is suitable for deep pagination, but
     cannot be used with ordered querysets (results will be sorted by the
@@ -123,24 +123,13 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False,
     ``('pk',)`` or ``('owner_id', 'pk')`` is okay, but ``('owner_id',)`` is not,
     assuming multiple rows can share an ``owner_id``.
 
-    ``use_fk_index_hint``: when the leading pagination key is a foreign key's
-    stored column (e.g. ``case_id`` backs the ``case`` FK), bound the parent's
-    column each page so Postgres seeks the parent's index -- which it otherwise
-    won't, since it won't carry the keyset's inequality across the join [1][2].
-    Example: ``pagination_key=('case_id', 'pk'), use_fk_index_hint=True``.
-
     Retries on transient database connection failures (bounded at ~31
     minutes total) so long-running iterations survive brief outages.
-
-    [1] https://postgrespro.com/list/thread-id/2550799
-    [2] https://github.com/postgres/postgres/blob/REL_18_4/src/backend/optimizer/README
-        (the EquivalenceClasses section, on how the planner propagates equalities across joins)
     """
     if queryset.ordered and not ignore_ordering:
         raise AssertionError("queryset_to_iterator does not respect ordering.  "
                              "Pass ignore_ordering=True to continue.")
 
-    parent_column = _fk_index_column(model_cls, pagination_key) if use_fk_index_hint else None
     queryset = queryset.order_by(*pagination_key)
     last_doc_values = None
     while True:
@@ -148,12 +137,6 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False,
             chunk_qs = queryset
         else:
             chunk_qs = queryset.filter(_lexicographic_greater_than(pagination_key, last_doc_values))
-            if parent_column is not None:
-                # The parent bound must be raw SQL: the ORM collapses
-                # ``case__case_id`` to the child's own column, which Postgres can't
-                # use to seek the parent. Safe: the column comes from model metadata
-                # and the value is a bound parameter.
-                chunk_qs = chunk_qs.extra(where=[f'{parent_column} >= %s'], params=[last_doc_values[0]])
         chunk = _fetch_chunk_with_retry(chunk_qs, limit, model_cls, last_doc_values)
         if not chunk:
             return
@@ -161,29 +144,6 @@ def queryset_to_iterator(queryset, model_cls, limit=500, ignore_ordering=False,
             yield doc
 
         last_doc_values = tuple(getattr(doc, key) for key in pagination_key)
-
-
-def _fk_index_column(model_cls, pagination_key):
-    """Return the parent column for the foreign key backing the leading pagination
-    key, as a quoted ``"table"."column"`` SQL fragment (see ``queryset_to_iterator``).
-
-    The leading key must be a foreign key's stored column (e.g. ``case_id`` backs
-    the ``case`` FK). A foreign key with ``to_field`` guarantees the child's stored
-    ``<fk>_id`` column equals the parent's ``to_field`` on every row, so a bound on
-    the parent column is value-equivalent to the keyset's leading bound -- and,
-    unlike the child column, one Postgres can seek the parent's index with.
-    """
-    leading_key = pagination_key[0]
-    foreign_key = next(
-        (f for f in model_cls._meta.fields if f.many_to_one and f.get_attname() == leading_key),
-        None,
-    )
-    if foreign_key is None:
-        raise ValueError(
-            f"use_fk_index_hint requires pagination_key[0]={leading_key!r} to be a foreign "
-            f"key's column on {model_cls.__name__}, but none is"
-        )
-    return f'"{foreign_key.related_model._meta.db_table}"."{foreign_key.target_field.column}"'
 
 
 def _lexicographic_greater_than(fields, values):
