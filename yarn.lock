@@ -7396,9 +7396,9 @@ tar-stream@^2.1.4:
     readable-stream "^3.1.1"
 
 tar@^7.4.3, tar@^7.5.1, tar@^7.5.2:
-  version "7.5.11"
-  resolved "https://registry.yarnpkg.com/tar/-/tar-7.5.11.tgz#1250fae45d98806b36d703b30973fa8e0a6d8868"
-  integrity sha512-ChjMH33/KetonMTAtpYdgUFr0tbz69Fp2v7zWxQfYZX4g5ZN2nOBXm1R2xyA+lMIKrLKIoKAwFj93jE/avX9cQ==
+  version "7.5.17"
+  resolved "https://registry.yarnpkg.com/tar/-/tar-7.5.17.tgz#5eace4af68b088bb1d737ba9fffdacbbb70ba6e0"
+  integrity sha512-wPEBwzapC+2PaTYPH6e2L+cNOEE227S47wUYFqlegcs8zlLLmeb9Fcff1HVZY4Fwku/1Eyv38n7GYwB2aaS71g==
   dependencies:
     "@isaacs/fs-minipass" "^4.0.0"
     chownr "^3.0.0"
