@@ -99,14 +99,14 @@ def test_date_operations_use_lt_gt_not_before_after():
     assert 'after' not in op_names
 
 
-def test_date_lt_gt_labels_match_data_cleaning_phrasing():
-    labels = {
-        op['name']: str(op['label'])
-        for op in get_operations_for_field_type(FIELD_TYPE_DATE)
-    }
-    assert labels['lt'] == 'before'
-    assert labels['gt'] == 'after'
-    assert labels['equals'] == 'on'
+@pytest.mark.parametrize("op_name,expected_label", [
+    ('lt', 'before'),
+    ('gt', 'after'),
+    ('equals', 'on'),
+])
+def test_date_op_labels(op_name, expected_label):
+    labels = {op['name']: str(op['label']) for op in get_operations_for_field_type(FIELD_TYPE_DATE)}
+    assert labels[op_name] == expected_label
 
 
 @use(patient_case_type)
@@ -129,37 +129,19 @@ def test_excludes_deprecated_case_types():
         deprecated.delete()
 
 
+@pytest.mark.parametrize("prop_name,prop_kwargs", [
+    ('legacy_prop', {'data_type': CaseProperty.DataType.PLAIN, 'deprecated': True}),
+    ('secret', {'data_type': CaseProperty.DataType.PASSWORD}),
+])
 @use(patient_case_type)
-def test_excludes_deprecated_properties():
+def test_excludes_property(prop_name, prop_kwargs):
     case_type = patient_case_type()
-    legacy = CaseProperty.objects.create(
-        case_type=case_type,
-        name='legacy_prop',
-        data_type=CaseProperty.DataType.PLAIN,
-        deprecated=True,
-    )
+    prop = CaseProperty.objects.create(case_type=case_type, name=prop_name, **prop_kwargs)
     try:
         cap = get_capability('test-domain')
-        field_names = cap['case_types']['patient'].keys()
-        assert 'legacy_prop' not in field_names
+        assert prop_name not in cap['case_types']['patient'].keys()
     finally:
-        legacy.delete()
-
-
-@use(patient_case_type)
-def test_excludes_password_fields():
-    case_type = patient_case_type()
-    secret = CaseProperty.objects.create(
-        case_type=case_type,
-        name='secret',
-        data_type=CaseProperty.DataType.PASSWORD,
-    )
-    try:
-        cap = get_capability('test-domain')
-        field_names = cap['case_types']['patient'].keys()
-        assert 'secret' not in field_names
-    finally:
-        secret.delete()
+        prop.delete()
 
 
 def test_get_field_type_raises_for_unmapped_data_type():
