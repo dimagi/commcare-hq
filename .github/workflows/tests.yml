@@ -66,8 +66,9 @@ jobs:
       uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        files: coverage.xml
+        files: ${{ github.workspace }}/coverage.xml
         fail_ci_if_error: true
+        working-directory: /tmp
     - name: Stop containers
       if: always()
       run: scripts/docker down
