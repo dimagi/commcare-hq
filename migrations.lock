@@ -138,6 +138,7 @@ accounting
  0116_creditadjustment_payment_type
  0117_locked_admin_questions_priv
  0118_vellum_save_to_case_priv
+ 0119_public_webforms_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -264,6 +265,7 @@ case_search
  0016_csqlfixtureexpression_user_data_criteria
  0017_add_case_search_endpoint_models
  0018_add_endpoint_version_audit_fields
+ 0019_rename_target_name_casesearchendpoint_case_type
 celery
  0001_taskrecord
  0002_taskrecord_kombu_serialization
@@ -344,6 +346,7 @@ data_analytics
  0011_domainmetrics
  0012_update_domainmetrics_fields
  0013_domainmetrics_bulk_case_editing_sessions_and_more
+ 0014_domainmetrics_users_with_web_apps_submission_in_last_30_days_and_more
 data_cleaning
  0001_initial
  0002_update_fields_and_ordering
@@ -1267,6 +1270,7 @@ tombstones
  0001_create_tombstone_model
  0002_migrate_deleted_sql_docs
  0003_tombstone_improvements
+ 0004_tombstone_deletion_id
 translations
  0001_initial
  0002_transifexblacklist

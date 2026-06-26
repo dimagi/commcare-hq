@@ -92,6 +92,52 @@ class IDFilter(DomainFilter):
             yield Q(**{query_kwarg: chunk})
 
 
+class CaseIDFilter(IDFilter):
+    """Filter a case-owned model to a domain by its case_ids.
+
+    Streams the domain's case_ids for a shard and yields them in
+    ``Q(case_id__in=chunk)`` batches. This avoids joining the model back to
+    ``CommCareCase`` (via ``case__domain``) just to resolve the domain, seeking the
+    model's own indexed ``case_id`` column instead.
+
+    Case IDs are not chunked in sorted order, so the final results will not
+    be globally sorted. Results for each case id chunk will be sorted as
+    necessary for pagination, but will not be sorted with respect to the results
+    for other chunks.
+
+    Limitation: Consumers must paginate by ``('case_id', 'pk')``, not a deeper key like
+    ``('case_id', 'server_date', 'pk')``. A deeper key performs atrociously for unintuitive
+    reasons. It surfaces on queries where the cursor
+    case_id is greater than the alphabetically first case_id in the chunk, and results in
+    (I think) a linear index scan of a huge range from the first case_id to the cursor case_id
+    that returns no results (because they're all less than the cursor). This pathological
+    behavior may be fixed in PG 17+.
+    """
+
+    def __init__(self, chunksize=1000):
+        super().__init__('case_id', None, chunksize=chunksize)
+
+    def get_ids(self, domain_name, db_alias=None):
+        """Stream the domain's case_ids on a shard, paginating by ``(type, id)``"""
+        from corehq.form_processor.models import CommCareCase
+        queryset = (
+            CommCareCase.objects.using(db_alias)
+            .filter(domain=domain_name)
+            .only('case_id', 'type')
+        )
+        for case in queryset_to_iterator(
+            queryset, CommCareCase, limit=DEFAULT_CHUNK_SIZE,
+            ignore_ordering=True, pagination_key=('type', 'id'),
+        ):
+            yield case.case_id
+
+    def count(self, domain_name):
+        # count is per-shard but db_alias is unknown here, and IDFilter.count would
+        # call get_ids() against the wrong (non-partition) database. Return None so
+        # the builder counts each Q(case_id__in=...) queryset per shard instead.
+        return None
+
+
 class UserIDFilter(IDFilter):
     def __init__(self, user_id_field, include_web_users=True):
         super().__init__(user_id_field, None)
@@ -149,6 +195,9 @@ class UnfilteredModelIteratorBuilder(object):
         self.model_label = model_label
         self.domain = self.model_class = self.db_alias = None
         self.use_all_objects = use_all_objects
+        # defaults so iterators() works for subclasses that set these
+        self.pagination_key = ('pk',)
+        self.use_fk_index_hint = False
 
     def prepare(self, domain, model_class, db_alias):
         self.domain = domain
@@ -171,21 +220,29 @@ class UnfilteredModelIteratorBuilder(object):
 
     def iterators(self, chunk_size=DEFAULT_CHUNK_SIZE):
         for queryset in self.querysets():
-            yield queryset_to_iterator(queryset, self.model_class, limit=chunk_size, ignore_ordering=True)
+            yield queryset_to_iterator(
+                queryset, self.model_class, limit=chunk_size,
+                ignore_ordering=True, pagination_key=self.pagination_key,
+                use_fk_index_hint=self.use_fk_index_hint,
+            )
 
     def build(self, domain, model_class, db_alias):
         return self.__class__(self.model_label, self.use_all_objects).prepare(domain, model_class, db_alias)
 
 
 class FilteredModelIteratorBuilder(UnfilteredModelIteratorBuilder):
-    def __init__(self, model_label, filter, use_all_objects=False):
+    def __init__(self, model_label, filter, use_all_objects=False, pagination_key=('pk',),
+                 use_fk_index_hint=False):
         super(FilteredModelIteratorBuilder, self).__init__(model_label, use_all_objects)
         self.filter = filter
+        self.pagination_key = pagination_key
+        self.use_fk_index_hint = use_fk_index_hint
 
     def build(self, domain, model_class, db_alias):
-        return self.__class__(self.model_label, self.filter, self.use_all_objects).prepare(
-            domain, model_class, db_alias
-        )
+        return self.__class__(
+            self.model_label, self.filter, self.use_all_objects, self.pagination_key,
+            self.use_fk_index_hint,
+        ).prepare(domain, model_class, db_alias)
 
     def count(self):
         count = self.filter.count(self.domain)
