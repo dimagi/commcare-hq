@@ -59,7 +59,9 @@ class AppManagerDataSourceConfigTest(TestCase):
         super(AppManagerDataSourceConfigTest, cls).tearDownClass()
 
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.domain_has_usercase_access')
+        self.is_usercase_in_use_patch = patch(
+            'corehq.apps.app_manager.models.applications.domain_has_usercase_access'
+        )
         is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
         is_usercase_in_use_mock.return_value = False
 
