@@ -21,6 +21,8 @@
     {# POC (DATA-2719): open the report in Tableau web authoring in a new tab. #}
     <button id="editInTableau" type="button" class="btn btn-default">{% trans "Edit in Tableau" %}</button>
     {% endif %}
+    <script src="https://{{ validate_hostname }}/javascripts/api/tableau.embedding.3.latest.min.js"
+            type="module"></script>
     <div id="vizContainer"></div>
     <div id="errorMessage" class="alert alert-danger hide"></div>
 </body>

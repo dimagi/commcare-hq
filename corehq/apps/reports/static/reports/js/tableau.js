@@ -33,18 +33,19 @@ self.requestViz = function () {
 };
 
 self.initViz = function (ticket) {
-    var containerDiv = document.getElementById("vizContainer");
     var url = _.template("https://<%- validate_hostname %>/<% if (is_server) { %>trusted/<%- ticket %>/<% } %><%- view_url %>")({
         validate_hostname: initialPageData.get("validate_hostname"),
         is_server: initialPageData.get("server_type") === "server",
         ticket: ticket,
         view_url: initialPageData.get("view_url"),
     });
-
-    $.getScript("https://" + initialPageData.get("validate_hostname") + "/javascripts/api/tableau-2.5.0.min.js", function () {
-        new window.tableau.Viz(containerDiv, url, {
-            hideTabs: true,
-        });
+    // The tableau.embedding script will register a tableau-viz element type
+    customElements.whenDefined("tableau-viz").then(function () {
+        var viz = document.createElement("tableau-viz");
+        viz.setAttribute("src", url);
+        viz.setAttribute("toolbar", "hidden");
+        viz.setAttribute("hide-tabs", "");
+        document.getElementById("vizContainer").appendChild(viz);
     });
 };
 
