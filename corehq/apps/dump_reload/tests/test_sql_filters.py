@@ -117,11 +117,11 @@ class TestMultimediaBlobMetaFilter(TestCase):
 
 
 @sharded
-class TestPagingChildModelByParentId(TestCase):
-    """Page a case child model over the case__domain join with the seek aimed at
-    the parent's case_id (use_fk_index_hint=True), and check the keyset returns
-    every transaction exactly once across pages and shards."""
-    domain = 'test-paging-child-by-parent-id'
+class TestPagingChildModelByCompoundKey(TestCase):
+    """Page a case child model over the case__domain join with a compound
+    (case_id, pk) keyset, and check it returns every transaction exactly once
+    across pages and shards."""
+    domain = 'test-paging-child-by-compound-key'
 
     @classmethod
     def setUpClass(cls):
@@ -134,7 +134,6 @@ class TestPagingChildModelByParentId(TestCase):
             'form_processor.CaseTransaction',
             SimpleFilter('case__domain'),
             pagination_key=('case_id', 'pk'),
-            use_fk_index_hint=True,
         )
         # chunk_size=2 with 3 cases forces paging across the seek boundary
         transactions = [
@@ -266,24 +265,3 @@ class TestLedgerTransactionDumpViaCaseIDFilter(TestCase):
         assert self.other_case.case_id not in {txn.case_id for txn in transactions}
         # no dupes; (case_id, id) is the unique key -- id (pk) repeats across shards
         assert len({(txn.case_id, txn.id) for txn in transactions}) == len(transactions)
-
-
-def test_dump_builders_with_fk_index_hint_have_a_foreign_key_leading_key():
-    """Guard the dump config: every builder that sets use_fk_index_hint must have a
-    leading pagination key backed by a foreign key (so the parent column can be
-    derived). Otherwise it would raise at dump time."""
-    from corehq.apps.dump_reload.sql.dump import APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP
-    from corehq.apps.dump_reload.util import get_model_class
-    from corehq.util.queries import _fk_index_column
-
-    builders = [
-        builder
-        for builders in APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP.values()
-        for builder in builders
-        if builder.use_fk_index_hint
-    ]
-    # No builders currently set use_fk_index_hint; this guards any that are added.
-    for builder in builders:
-        _, model_cls = get_model_class(builder.model_label)
-        # raises ValueError unless pagination_key[0] is a foreign key's column
-        _fk_index_column(model_cls, builder.pagination_key)
