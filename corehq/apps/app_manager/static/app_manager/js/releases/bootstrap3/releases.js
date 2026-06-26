@@ -5,7 +5,7 @@ import google from "analytix/js/google";
 import noopMetrics from "analytix/js/noopMetrics";
 import downloadAsyncModal from "app_manager/js/bootstrap3/download_async_modal";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import appManager from "app_manager/js/bootstrap3/app_manager";
+import appManagerUtils from "app_manager/js/app_manager_utils";
 import menu from "app_manager/js/menu";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // openModal binding
 
@@ -37,7 +37,7 @@ function savedAppModel(appData, releasesMain) {
     self.app_code = ko.observable(null);
     self.failed_url_generation = ko.observable(false);
     self.allowOfflineInstall = ko.observable(function () {
-        return appManager.versionGE(self.build_spec.version(), '2.13.0');
+        return appManagerUtils.versionGE(self.build_spec.version(), '2.13.0');
     });
     self.build_profile = ko.observable('');
 
