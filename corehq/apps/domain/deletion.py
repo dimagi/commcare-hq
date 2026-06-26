@@ -388,6 +388,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'fhir.FHIRResourceProperty',
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'rule__domain'),
+    ModelDeletion('data_interfaces', 'BulkAsyncJob', 'domain'),
     ModelDeletion('data_interfaces', 'ClosedParentDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'CustomMatchDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'MatchPropertyDefinition', 'caserulecriteria__rule__domain'),
