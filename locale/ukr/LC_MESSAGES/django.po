@@ -32405,10 +32405,10 @@ msgstr "Користувача '{username}' не знайдено."
 #, python-brace-format
 msgid "{count} domain membership"
 msgid_plural "{count} domain memberships"
-msgstr[0] "Оновити членство місця"
-msgstr[1] "Оновити членство місця"
-msgstr[2] "Оновити членство місця"
-msgstr[3] "Оновити членство місця"
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+msgstr[3] ""
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "superuser access"

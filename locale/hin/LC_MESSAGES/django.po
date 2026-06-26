@@ -32034,8 +32034,8 @@ msgstr "यूज़र '{username}' नहीं मिला।"
 #, python-brace-format
 msgid "{count} domain membership"
 msgid_plural "{count} domain memberships"
-msgstr[0] "स्थान सदस्यता अपडेट करें"
-msgstr[1] "स्थान सदस्यता अपडेट करें"
+msgstr[0] ""
+msgstr[1] ""
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "superuser access"
