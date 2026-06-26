@@ -69,6 +69,7 @@ jobs:
         files: ${{ github.workspace }}/coverage.xml
         fail_ci_if_error: true
         working-directory: /tmp
+        root_dir: ${{ github.workspace }}
     - name: Stop containers
       if: always()
       run: scripts/docker down
