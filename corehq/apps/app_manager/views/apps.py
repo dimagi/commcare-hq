@@ -490,7 +490,7 @@ def app_from_template(request, domain, slug):
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
 
 
-def app_template_dir(slug):
+def _app_template_dir(slug):
     root = os.path.join(
         django_apps.get_app_config('app_manager').path,
         'static',
@@ -504,21 +504,21 @@ def app_template_dir(slug):
 
 
 @memoized
-def load_app_template(slug):
-    if app_dir := app_template_dir(slug):
+def _load_app_template(slug):
+    if app_dir := _app_template_dir(slug):
         with open(os.path.join(app_dir, 'app.json')) as f:
             return json.load(f)
 
 
 def load_app_from_slug(domain, username, slug):
     # Import app itself
-    template = load_app_template(slug)
+    template = _load_app_template(slug)
     app = import_app_util(template, domain, {
         'created_from_template': '%s' % slug,
     })
 
     # Fetch multimedia, which is hosted elsewhere
-    multimedia_filename = os.path.join(app_template_dir(slug), 'multimedia.json')
+    multimedia_filename = os.path.join(_app_template_dir(slug), 'multimedia.json')
     if (os.path.exists(multimedia_filename)):
         with open(multimedia_filename) as f:
             path_url_map = json.load(f)
