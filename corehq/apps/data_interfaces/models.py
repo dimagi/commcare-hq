@@ -2,6 +2,7 @@ import csv
 import hashlib
 import operator
 import re
+import uuid
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 
@@ -65,6 +66,7 @@ from corehq.messaging.scheduling.tasks import (
     refresh_case_alert_schedule_instances,
     refresh_case_timed_schedule_instances,
 )
+from corehq.sql_db.fields import ModelClassField
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     paginate_query,
@@ -1937,3 +1939,47 @@ class DomainCaseRuleRun(models.Model):
                 run.status = cls.STATUS_FINISHED
             run.save()
             return run
+
+
+class BulkAsyncJob(models.Model):
+    """Tracks a bulk async action (archive/unarchive/delete)"""
+
+    class Status(models.TextChoices):
+        PENDING = 'pending'
+        RUNNING = 'running'
+        COMPLETE = 'complete'
+        FAILED = 'failed'
+
+    class Action(models.TextChoices):
+        ARCHIVE = 'archive'
+        UNARCHIVE = 'unarchive'
+        DELETE = 'delete'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    domain = models.CharField(max_length=126, db_index=True)
+    model = ModelClassField()
+    action = models.CharField(max_length=16, choices=Action.choices)
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    requested_by = models.CharField(max_length=255)
+    api_key = models.ForeignKey(
+        'users.HQApiKey',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='bulk_async_jobs',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    requested_ids_blob_key = models.CharField(max_length=64)
+    skipped_ids_blob_key = models.CharField(max_length=64)
+    requested_count = models.PositiveIntegerField(default=0)
+    processed_count = models.PositiveIntegerField(default=0)
+    succeeded_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        app_label = 'data_interfaces'
