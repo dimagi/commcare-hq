@@ -48,6 +48,39 @@ self.initViz = function (ticket) {
     });
 };
 
+// POC (DATA-2719): open the report in Tableau web authoring in a new tab,
+// reusing the trusted ticket. Tableau enforces edit permissions on its end.
+self.openAuthoring = function () {
+    // Open the tab synchronously (within the click gesture) so it isn't blocked
+    // as a popup, then point it at the authoring URL once we have a ticket.
+    var authoringTab = window.open("", "_blank");
+    $.ajax({
+        method: 'post',
+        url: initialPageData.reverse('get_tableau_server_ticket'),
+        data: {
+            viz_id: initialPageData.get("viz_id"),
+        },
+        dataType: 'json',
+        success: function (data) {
+            if (data.success) {
+                var authoringPath = initialPageData.get("view_url")
+                    .split('?')[0]
+                    .replace(/(^|\/)views\//, '$1authoring/');
+                authoringTab.location = "https://" + initialPageData.get("validate_hostname") +
+                    "/trusted/" + data.ticket + "/" + authoringPath;
+            } else {
+                authoringTab.close();
+                $('#errorMessage').removeClass("hide");
+                document.getElementById('errorMessage').innerHTML = '<b>' + data.message + '</b>';
+            }
+        },
+        error: function () {
+            authoringTab.close();
+        },
+    });
+};
+
 $(document).ready(function () {
     self.requestViz();
+    $('#editInTableau').click(self.openAuthoring);
 });

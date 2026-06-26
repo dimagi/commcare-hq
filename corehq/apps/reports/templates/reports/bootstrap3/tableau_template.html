@@ -1,5 +1,6 @@
 {% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% block page_content %}
 
@@ -16,6 +17,10 @@
     <div id="loadingDiv" class="fa-5x">
         <i class="fa fa-spin fa-spinner"></i>
     </div>
+    {% if server_type == 'server' %}
+    {# POC (DATA-2719): open the report in Tableau web authoring in a new tab. #}
+    <button id="editInTableau" type="button" class="btn btn-default">{% trans "Edit in Tableau" %}</button>
+    {% endif %}
     <div id="vizContainer"></div>
     <div id="errorMessage" class="alert alert-danger hide"></div>
 </body>
