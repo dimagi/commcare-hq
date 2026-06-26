@@ -56,9 +56,12 @@ class DumpTimingLogger:
         self._label = None
 
 
-def format_rate(total_seconds, row_count):
-    """Throughput as hours per million rows, e.g. ``1.014h /1M rows`` (``n/a`` for zero rows)."""
+def format_rate(total_seconds, row_count, unit='rows'):
+    """Throughput as hours per million rows, e.g. ``1.014h /1M rows`` (``n/a`` for zero rows).
+
+    :param unit: noun for the counted things, e.g. ``'objects'``.
+    """
     if not row_count:
-        return 'n/a /1M rows'
+        return f'n/a /1M {unit}'
     hours_per_million = total_seconds / row_count * 1_000_000 / 3600
-    return f'{hours_per_million:.3f}h /1M rows'
+    return f'{hours_per_million:.3f}h /1M {unit}'

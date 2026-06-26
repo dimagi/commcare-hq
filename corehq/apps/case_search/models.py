@@ -525,7 +525,7 @@ class CaseSearchEndpoint(models.Model):
         choices=TargetType.choices,
         default=TargetType.PROJECT_DB,
     )
-    target_name = models.CharField(max_length=255)
+    case_type = models.CharField(max_length=255)
     current_version = models.ForeignKey(
         'CaseSearchEndpointVersion',
         null=True,

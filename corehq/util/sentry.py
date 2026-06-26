@@ -22,9 +22,6 @@ RATE_LIMITED_EXCEPTIONS = {
 
     'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
 
-    'kombu.connection.OperationalError': 'rabbitmq',
-    'socket.error': 'rabbitmq',
-
     'redis.exceptions.ConnectionError': 'redis',
     'ClusterDownError': 'redis',
 
@@ -45,7 +42,6 @@ RATE_LIMIT_BY_PACKAGE = {
     # exception: (python package prefix, rate limit key)
     'requests.exceptions.ConnectionError': ('cloudant', 'couchdb'),
     'requests.exceptions.HTTPError': ('cloudant', 'couchdb'),
-    'builtins.BrokenPipeError': ('amqp', 'rabbitmq'),
 }
 
 

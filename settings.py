@@ -289,6 +289,7 @@ HQ_APPS = (
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.programs',
+    'corehq.apps.project_db',
     'corehq.apps.registry.app_config.RegistryAppConfig',
     'corehq.project_limits',
     'corehq.apps.commtrack',
@@ -965,7 +966,8 @@ STRIPE_PRIVATE_KEY = ''
 # }
 REPORTING_DATABASES = {
     'default': 'default',
-    'ucr': 'default'
+    'ucr': 'default',
+    'project_db': 'default',
 }
 
 PL_PROXY_CLUSTER_NAME = 'commcarehq'
