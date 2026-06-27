@@ -68,6 +68,7 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: coverage.xml
         fail_ci_if_error: true
+        use_pypi: true
     - name: Stop containers
       if: always()
       run: scripts/docker down
