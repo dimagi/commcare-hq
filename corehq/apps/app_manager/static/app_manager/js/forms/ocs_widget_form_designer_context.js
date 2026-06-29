@@ -1,10 +1,8 @@
 import $ from "jquery";
-import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import ocsContext, {WIDGET_SELECTOR} from "hqwebapp/js/ocs_widget_context_setter";
+import ocsContext, {WIDGET_SELECTOR} from "hqwebapp/js/ocs_page_context";
 
 const FORMDESIGNER = '#formdesigner';
-const PUBLISH_DEBOUNCE_MS = 1000;
 
 function _vellum() {
     return $(FORMDESIGNER).vellum("get");
@@ -12,13 +10,6 @@ function _vellum() {
 
 function extractFormXml(vellum) {
     return vellum.createXML({withCaseMappings: true});
-}
-
-function _publishXml() {
-    const xml = extractFormXml(_vellum());
-    if (xml) {
-        ocsContext.setFormXml(xml);
-    }
 }
 
 function extractQuestionTypes(form) {
@@ -29,14 +20,6 @@ function extractQuestionTypes(form) {
         }
     });
     return types;
-}
-
-function _publishQuestionTypes() {
-    const form = _vellum()?.data.core.form;
-    if (!form) {
-        return;
-    }
-    ocsContext.setQuestionTypes(extractQuestionTypes(form));
 }
 
 function buildSelectedQuestion(mug) {
@@ -74,33 +57,27 @@ function extractSelectedQuestion(vellum) {
     return buildSelectedQuestion(vellum?.getCurrentlySelectedMug());
 }
 
-function _publishCurrentSelectedQuestion() {
-    ocsContext.setCurrentSelectedQuestion(extractSelectedQuestion(_vellum()));
-}
-
-function _initListener() {
+function _collectFormContext() {
     const vellum = _vellum();
     const form = vellum?.data.core.form;
     if (!form) {
-        return;
+        return {};
     }
-    _publishXml();
-    _publishQuestionTypes();
-    _publishCurrentSelectedQuestion();
-    ocsContext.setModuleName(initialPageData.get('module_name'));
-    form.on('change', _.debounce(function () {
-        _publishXml();
-        _publishQuestionTypes();
-    }, PUBLISH_DEBOUNCE_MS));
-    // User clicks a different question without editing doesn't fire form.change.
-    vellum.data.core.$tree.on('select_node.jstree', _publishCurrentSelectedQuestion);
+    return {
+        form_context: {
+            form_xml: extractFormXml(vellum),
+            question_types: extractQuestionTypes(form),
+            current_selected_question: extractSelectedQuestion(vellum),
+            module_name: initialPageData.get('module_name'),
+        },
+    };
 }
 
 $(function () {
     if (!document.querySelector(WIDGET_SELECTOR)) {
         return;
     }
-    document.addEventListener('vellum:ready', _initListener, {once: true});
+    ocsContext.registerContextCollector(_collectFormContext);
 });
 
 export {extractFormXml, extractQuestionTypes, extractSelectedQuestion};
