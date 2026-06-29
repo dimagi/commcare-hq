@@ -30,6 +30,7 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import CASE_LIST_FILTER_LOCATIONS_FIXTURE, USERCASE_ID, USERCASE_TYPE
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
+    ModuleNotFoundException,
     ParentModuleReferenceError,
     SuiteValidationError,
 )
@@ -865,9 +866,6 @@ class EntriesHelper(object):
                 if module_id == module.unique_id:
                     return module
 
-                from corehq.apps.app_manager.exceptions import (
-                    ModuleNotFoundException,
-                )
                 try:
                     target = module.get_app().get_module_by_unique_id(module_id,
                              error=_("Could not find target module used by form '{}'").format(form.default_name()))
