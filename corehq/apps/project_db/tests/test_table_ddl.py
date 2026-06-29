@@ -10,6 +10,7 @@ from corehq.apps.project_db.table_ddl import (
     DomainSchema,
     create_or_update_project_db,
     get_project_db_engine,
+    preview_drop,
     update_table,
 )
 
@@ -104,6 +105,15 @@ def test_truncated_index_name():
         domain_schema.create(conn)
         table.create(bind=conn)
         update_table(conn, table)  # this should no-op, not fail
+
+
+@use('db', project_db_table('test-preview-drop', 'patient', {'first_name': 'plain'}))
+def test_preview_drop_lists_tables_without_dropping():
+    domain = 'test-preview-drop'
+    notices = '\n'.join(preview_drop(domain))
+    assert 'drop cascades to table "projectdb_test-preview-drop".patient' in notices
+    with get_project_db_engine().begin() as conn:
+        assert DomainSchema(domain).name in sqlalchemy.inspect(conn).get_schema_names()
 
 
 @use('db')

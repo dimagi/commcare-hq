@@ -135,6 +135,21 @@ def create_or_update_project_db(domain):
             update_table(conn, table)
 
 
+def preview_drop(domain):
+    """Return the PostgreSQL CASCADE notices for dropping a domain's schema"""
+    schema = DomainSchema(domain)
+    raw = get_project_db_engine().raw_connection()
+    try:
+        cursor = raw.cursor()
+        del raw.connection.notices[:]
+        cursor.execute(f'DROP SCHEMA {schema._quoted_name} CASCADE')
+        notices = list(raw.connection.notices)
+        raw.rollback()
+        return notices
+    finally:
+        raw.close()
+
+
 def _get_case_types(domain):
     return list(CaseType.objects.filter(
         domain=domain, is_deprecated=False,

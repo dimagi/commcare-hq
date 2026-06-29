@@ -10,6 +10,7 @@ from corehq.apps.project_db.table_ddl import (
     DomainSchema,
     create_or_update_project_db,
     get_project_db_engine,
+    preview_drop,
 )
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
@@ -65,11 +66,28 @@ class Command(BaseCommand):
             _populate(domain, since)
             self.stdout.write("Populated ProjectDB")
         if drop:
-            with get_project_db_engine().begin() as conn:
-                DomainSchema(domain).drop(conn)
-            self.stdout.write("Deleted ProjectDB table")
+            _drop(domain, self.stdout)
         if describe:
             _describe(domain)
+
+
+def _drop(domain, stdout):
+    schema = DomainSchema(domain)
+    engine = get_project_db_engine()
+    if schema.name not in sqlalchemy.inspect(engine).get_schema_names():
+        stdout.write(f"No ProjectDB schema found for domain '{domain}'")
+        return
+
+    stdout.write("The following objects will be dropped:")
+    for notice in preview_drop(domain):
+        stdout.write(notice.rstrip())
+
+    if input("confirm (y/N): ").strip().lower() in ('y', 'yes'):
+        with engine.begin() as conn:
+            schema.drop(conn)
+        stdout.write("Dropped ProjectDB schema")
+    else:
+        stdout.write("Aborted; nothing was dropped")
 
 
 def _populate(domain, start_date):
