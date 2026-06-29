@@ -1,7 +1,9 @@
+from contextlib import contextmanager
 from unittest.mock import patch
 
 import pytest
 import sqlalchemy
+from sqlalchemy import Table
 from unmagic import use
 
 from corehq.apps.project_db.table_ddl import (
@@ -9,6 +11,7 @@ from corehq.apps.project_db.table_ddl import (
     DomainSchema,
     create_or_update_project_db,
     get_project_db_engine,
+    update_table,
 )
 
 from .util import project_db_table
@@ -62,31 +65,63 @@ def test_case_table_basics():
     assert isinstance(table.c['prop__nickname'].type, sqlalchemy.Text)
     assert isinstance(table.c['prop__favorite_color'].type, sqlalchemy.Text)
     assert isinstance(table.c['prop__dob'].type, sqlalchemy.Text)
-    assert isinstance(table.c['prop__dob__date'].type, sqlalchemy.Date)
+    assert isinstance(table.c['date_prop__dob'].type, sqlalchemy.Date)
     assert isinstance(table.c['prop__children_count'].type, sqlalchemy.Text)
-    assert isinstance(table.c['prop__children_count__number'].type, sqlalchemy.Numeric)
+    assert isinstance(table.c['number_prop__children_count'].type, sqlalchemy.Numeric)
+
+    # Text property columns are NOT NULL; typed columns stay nullable
+    assert table.c['prop__nickname'].nullable is False
+    assert table.c['prop__dob'].nullable is False
+    assert table.c['date_prop__dob'].nullable is True
+    assert table.c['number_prop__children_count'].nullable is True
 
 
-@use('db')
+@contextmanager
+def _project_db_schema(domain):
+    schema = DomainSchema(domain)
+    try:
+        yield schema
+    finally:
+        with get_project_db_engine().begin() as conn:
+            schema.drop(conn)
+
+
+@use('db', _project_db_schema('this-is-my-really-really-long-domain-name'))
+def test_truncated_index_name():
+    domain_schema = DomainSchema('this-is-my-really-really-long-domain-name')
+    table = Table(
+        'fairly-long-table-name',
+        sqlalchemy.MetaData(),
+        sqlalchemy.Column('case_id', sqlalchemy.Text, primary_key=True),
+        sqlalchemy.Column('owner_id', sqlalchemy.Text, index=True),
+        schema=domain_schema.name,
+    )
+    # char limit is 64, this is 86
+    assert list(table.indexes)[0].name == \
+        'ix_projectdb_this-is-my-really-really-long-domain-name_fairly-long-table-name_owner_id'
+    with get_project_db_engine().begin() as conn:
+        domain_schema.create(conn)
+        table.create(bind=conn)
+        update_table(conn, table)  # this should no-op, not fail
+
+
+@use('db', _project_db_schema('test_create_project_db'))
 @patch('corehq.apps.project_db.table_ddl._get_case_types')
 @patch.object(CaseTable, '_get_dd_properties')
 def test_create_project_db(get_dd_properties, get_case_types):
     # Actually commit the project_db definition to postgres and spot check results
     domain = 'test_create_project_db'
-    domain_schema = DomainSchema(domain)
+    schema_name = DomainSchema(domain).name
 
     get_case_types.return_value = ['patient']
     get_dd_properties.return_value = [('nickname', 'plain'), ('dob', 'plain')]
     create_or_update_project_db(domain)
-    _assert_db_created_as_expected(domain_schema.name)
+    _assert_db_created_as_expected(schema_name)
 
     # Drop nickname, make dob a date, add a new prop
     get_dd_properties.return_value = [('favorite_color', 'plain'), ('dob', 'date')]
     create_or_update_project_db(domain)
-    _assert_db_updated_as_expected(domain_schema.name)
-
-    with get_project_db_engine().begin() as conn:
-        domain_schema.drop(conn)
+    _assert_db_updated_as_expected(schema_name)
 
 
 def _assert_db_created_as_expected(schema):
@@ -95,15 +130,21 @@ def _assert_db_created_as_expected(schema):
         assert schema in inspector.get_schema_names()
         assert ['patient'] == inspector.get_table_names(schema=schema)
 
-        columns = {
-            col['name']: col['type']
-            for col in inspector.get_columns('patient', schema=schema)
-        }
-        assert isinstance(columns['case_name'], sqlalchemy.Text)
-        assert isinstance(columns['opened_on'], sqlalchemy.DateTime)
-        assert isinstance(columns['prop__nickname'], sqlalchemy.Text)
-        assert isinstance(columns['prop__dob'], sqlalchemy.Text)
-        assert 'prop__dob__date' not in columns
+        cols = {col['name']: col for col in inspector.get_columns('patient', schema=schema)}
+        col_types = {name: col['type'] for name, col in cols.items()}
+        assert isinstance(col_types['case_name'], sqlalchemy.Text)
+        assert isinstance(col_types['opened_on'], sqlalchemy.DateTime)
+        assert isinstance(col_types['prop__nickname'], sqlalchemy.Text)
+        assert isinstance(col_types['prop__dob'], sqlalchemy.Text)
+        assert 'date_prop__dob' not in cols
+
+        # Text property columns and external_id are NOT NULL, defaulting to ''
+        for name in ['prop__nickname', 'prop__dob', 'external_id']:
+            assert cols[name]['nullable'] is False, name
+            assert cols[name]['default'] == "''::text", name
+        # Other columns remain nullable
+        assert cols['case_name']['nullable'] is True
+        assert cols['parent_id']['nullable'] is True
 
         indexes = inspector.get_indexes('patient', schema=schema)
         assert any(ix['column_names'] == ['owner_id'] for ix in indexes)
@@ -126,7 +167,7 @@ def _assert_db_updated_as_expected(schema):
         assert isinstance(columns['prop__nickname'], sqlalchemy.Text)
         # Both a plain and a date column for dob
         assert isinstance(columns['prop__dob'], sqlalchemy.Text)
-        assert isinstance(columns['prop__dob__date'], sqlalchemy.Date)
+        assert isinstance(columns['date_prop__dob'], sqlalchemy.Date)
 
 
 @use('db', project_db_table('test-reflect', 'patient', {
@@ -141,4 +182,4 @@ def test_case_table_reflect():
         assert column.name in table.c
     assert isinstance(table.c['prop__nickname'].type, sqlalchemy.Text)
     assert isinstance(table.c['prop__dob'].type, sqlalchemy.Text)
-    assert isinstance(table.c['prop__dob__date'].type, sqlalchemy.Date)
+    assert isinstance(table.c['date_prop__dob'].type, sqlalchemy.Date)

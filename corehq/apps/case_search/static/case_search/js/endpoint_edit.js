@@ -1,4 +1,5 @@
 import "commcarehq";
+import "hqwebapp/js/htmx_base";
 import Alpine from "alpinejs";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
@@ -8,7 +9,7 @@ Alpine.data("endpointForm", () => {
     return {
         name: initialPageData.get("initial_name"),
         targetType: initialPageData.get("initial_target_type"),
-        targetCasetype: initialPageData.get("initial_target_name"),
+        targetCasetype: initialPageData.get("initial_case_type"),
         query: initialPageData.get("initial_query"),
         capability: initialPageData.get("capability"),
         mode: mode,

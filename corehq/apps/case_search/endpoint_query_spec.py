@@ -62,6 +62,7 @@ class ComponentNode:
     operator: str = attr_field(validator=validators.in_(OPERATORS))
     inputs: dict = Factory(dict)  # slot name -> input object
     field: str = ''
+    field_type: str = ''  # resolved from capability at parse time
 
     def to_json(self):
         return {
@@ -74,14 +75,19 @@ class ComponentNode:
         }
 
     @classmethod
-    def from_json(cls, data):
+    def from_json(cls, data, fields_by_name=None):
+        field_name = data.get('field', '')
+        field_type = ''
+        if fields_by_name and field_name in fields_by_name:
+            field_type = fields_by_name[field_name]['type']
         return cls(
-            field=data.get('field', ''),
+            field=field_name,
             operator=data.get('operator', ''),
             inputs={
                 name: input_from_json(value)
                 for name, value in (data.get('inputs') or {}).items()
             },
+            field_type=field_type,
         )
 
 
@@ -99,20 +105,20 @@ class GroupNode:
         }
 
     @classmethod
-    def from_json(cls, data):
+    def from_json(cls, data, fields_by_name=None):
         return cls(
             type=data['type'],
-            children=[node_from_json(c) for c in data.get('children', [])],
+            children=[node_from_json(c, fields_by_name) for c in data.get('children', [])],
         )
 
 
-def node_from_json(data):
+def node_from_json(data, fields_by_name=None):
     """Build a node tree from an already-validated raw spec."""
     node_type = data.get('type')
     if node_type in GROUP_TYPES:
-        return GroupNode.from_json(data)
+        return GroupNode.from_json(data, fields_by_name)
     if node_type == ComponentNode.type:
-        return ComponentNode.from_json(data)
+        return ComponentNode.from_json(data, fields_by_name)
     raise ValueError(f'Unknown node type: {node_type!r}')
 
 
@@ -130,7 +136,7 @@ def parse_query_spec(query_spec, case_type_name, capability):
     _validate_node(query_spec, fields_by_name, operator_input_schemas, errors, depth=0, counter=[0])
     if errors:
         return None, errors
-    return node_from_json(query_spec), errors
+    return node_from_json(query_spec, fields_by_name), errors
 
 
 def _fields_by_name(capability, case_type_name, errors):

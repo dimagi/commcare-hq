@@ -71,6 +71,7 @@ def test_valid_simple_spec():
                 field='province',
                 operator='equals',
                 inputs={'value': ConstantInput(value='ON')},
+                field_type='text',
             )
         ],
     )

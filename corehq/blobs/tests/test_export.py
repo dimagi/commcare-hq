@@ -1,15 +1,182 @@
 import doctest
+import io
+import os
 import tarfile
+from collections import namedtuple
+from contextlib import redirect_stdout
 from io import BytesIO, RawIOBase
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+from unittest import mock
 
+import gevent
+import pytest
 from django.test import SimpleTestCase, TestCase
 
 from corehq.blobs import CODES, get_blob_db
-from corehq.blobs.export import BlobExporter
+from corehq.blobs import export as export_module
+from corehq.blobs.exceptions import NotFound
+from corehq.blobs.export import (
+    BlobDbBackendExporter,
+    BlobExporter,
+    missing_ids_filename_for,
+)
 from corehq.blobs.management.commands.run_blob_import import Command as ImportCommand
+from corehq.blobs.targzipdb import TarGzipBlobDB
 from corehq.blobs.tests.fixtures import blob_db
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, new_meta
+
+_Meta = namedtuple('_Meta', 'key')
+
+
+@pytest.mark.parametrize("export_filename, expected", [
+    # full archive path: same dir and prefix, .tar.gz stripped
+    ("/data/2026-06-25_14.32-mydomain-blobs.tar.gz",
+     "/data/2026-06-25_14.32-mydomain-blobs-missing_blob_ids.txt"),
+    # -part / -db suffixes are part of the prefix and carried through
+    ("/data/2026-06-25_14.32-mydomain-blobs-part-p0.tar.gz",
+     "/data/2026-06-25_14.32-mydomain-blobs-part-p0-missing_blob_ids.txt"),
+    # no directory -> sits beside the archive in the cwd
+    ("export.tar.gz", "export-missing_blob_ids.txt"),
+    # no .tar.gz suffix (e.g. a bare temp file in tests) -> append as-is
+    ("/data/export", "/data/export-missing_blob_ids.txt"),
+])
+def test_missing_ids_filename_for(export_filename, expected):
+    assert missing_ids_filename_for(export_filename) == expected
+
+
+def test_exporter_derives_missing_ids_path_from_export_file():
+    with mock.patch.object(export_module, 'get_blob_db'):
+        migrator = BlobDbBackendExporter(
+            "/data/2026-06-25_14.32-mydomain-blobs.tar.gz", None)
+    assert migrator.missing_ids_filename == (
+        "/data/2026-06-25_14.32-mydomain-blobs-missing_blob_ids.txt")
+
+
+class _YieldingStream(io.BytesIO):
+    """BytesIO that yields to other greenlets on every read, to force
+    interleaving opportunities during the parallel export."""
+
+    def __init__(self, data):
+        super().__init__(data)
+        self.content_length = len(data)
+
+    def read(self, *args, **kwargs):
+        gevent.sleep(0)
+        return super().read(*args, **kwargs)
+
+
+class _YieldingFakeSrcDB:
+    def __init__(self, blobs):
+        self.blobs = blobs  # {key: bytes}
+
+    def get(self, key, type_code=None):
+        gevent.sleep(0)  # force a context switch before returning the stream
+        if key not in self.blobs:
+            raise NotFound(key)
+        return _YieldingStream(self.blobs[key])
+
+
+def _export_with_fake_src(blobs, metas, already_exported=None, concurrency=8, src_db=None,
+                          progress_interval=100):
+    """Run a parallel export against a fake source DB; return (names->bytes, missing_ids, total)."""
+    if src_db is None:
+        src_db = _YieldingFakeSrcDB(blobs)
+    with mock.patch.object(export_module, 'get_blob_db', return_value=src_db), \
+            NamedTemporaryFile(suffix='.tar.gz') as out, \
+            TemporaryDirectory() as tmpdir:
+        migrator = BlobDbBackendExporter(out.name, already_exported, concurrency=concurrency)
+        migrator.missing_ids_filename = os.path.join(tmpdir, 'missing_blob_ids.txt')
+        with migrator:
+            migrator.run(metas, progress_interval=progress_interval)
+        with tarfile.open(out.name, 'r:gz') as tgz:
+            extracted = {n: tgz.extractfile(n).read() for n in tgz.getnames()}
+        return extracted, migrator.missing_ids, migrator.total_blobs
+
+
+class TestExportRun(SimpleTestCase):
+
+    def test_all_blobs_written_intact_under_concurrency(self):
+        # varied sizes, including a blob larger than a chunk read, to exercise
+        # multi-read copies that interleave across greenlets
+        blobs = {f'key-{i}': bytes([i % 256]) * (i * 37) for i in range(1, 31)}
+        metas = [_Meta(k) for k in blobs]
+
+        extracted, missing, total = _export_with_fake_src(blobs, metas)
+
+        assert extracted == blobs  # every blob present and byte-identical
+        assert missing == []
+        assert total == 30
+
+    def test_missing_blob_is_recorded(self):
+        blobs = {'present': b'data'}
+        metas = [_Meta('present'), _Meta('absent')]
+
+        extracted, missing, total = _export_with_fake_src(blobs, metas)
+
+        assert set(extracted) == {'present'}
+        assert missing == ['absent']
+        assert total == 2
+
+    def test_already_exported_blobs_are_skipped_but_counted(self):
+        """Already-exported blobs are not re-written, but are still counted --
+        in the total and the per-chunk progress heartbeat -- matching the
+        original sequential exporter."""
+        blobs = {f'k{i}': b'x' for i in range(150)}
+        metas = [_Meta(k) for k in blobs]
+
+        out = io.StringIO()
+        with redirect_stdout(out):
+            extracted, missing, total = _export_with_fake_src(
+                blobs, metas, already_exported=set(blobs))
+
+        assert extracted == {}  # nothing re-written
+        assert total == 150  # all counted
+        assert "Processed 100 objects (last 100 in " in out.getvalue()  # and reported
+
+    def test_blob_larger_than_spill_threshold_round_trips(self):
+        with mock.patch.object(export_module, 'SPILL_THRESHOLD', 16):
+            blobs = {'big': b'x' * 1000}  # 1000 > 16 -> spills to disk
+            metas = [_Meta('big')]
+            extracted, missing, total = _export_with_fake_src(blobs, metas)
+        assert extracted == blobs
+
+    def test_spill_files_are_written_to_the_output_directory(self):
+        """Spilled blob buffers go next to the output archive, not the system
+        temp dir, so the operator's chosen disk absorbs the I/O."""
+        captured = []
+        real_spooled = export_module.SpooledTemporaryFile
+
+        def spy(*args, **kwargs):
+            captured.append(kwargs.get('dir'))
+            return real_spooled(*args, **kwargs)
+
+        blobs = {'k': b'data'}
+        with TemporaryDirectory() as outdir:
+            out_path = os.path.join(outdir, 'export.tar.gz')
+            with mock.patch.object(export_module, 'get_blob_db',
+                                   return_value=_YieldingFakeSrcDB(blobs)), \
+                    mock.patch.object(export_module, 'SpooledTemporaryFile',
+                                      side_effect=spy):
+                migrator = BlobDbBackendExporter(out_path, None, concurrency=2)
+                migrator.missing_ids_filename = os.path.join(outdir, 'missing.txt')
+                with migrator:
+                    migrator.run([_Meta('k')], progress_interval=100)
+            assert captured == [outdir]
+
+    def test_non_notfound_fetch_error_propagates(self):
+        """A fetch error that is not NotFound must propagate, aborting the export."""
+
+        class _ErrorDB(_YieldingFakeSrcDB):
+            def get(self, key, type_code=None):
+                if key == 'bad':
+                    raise RuntimeError("boom")
+                return super().get(key, type_code)
+
+        blobs = {'ok': b'fine', 'bad': b'never'}
+        metas = [_Meta('ok'), _Meta('bad')]
+        src_db = _ErrorDB(blobs)
+        with self.assertRaises(RuntimeError):
+            _export_with_fake_src(blobs, metas, src_db=src_db)
 
 
 class TestBlobExporter(TestCase):
@@ -37,6 +204,19 @@ class TestBlobExporter(TestCase):
             with tarfile.open(out.name, 'r:gz') as tgzfile:
                 self.assertEqual([expected_meta.key], tgzfile.getnames())
 
+    def test_progress_and_summary_report_throughput(self):
+        for _ in range(3):
+            self.db.put(BytesIO(self.blob_data), meta=new_meta(domain=self.domain, type_code=CODES.form_xml))
+
+        out = io.StringIO()
+        with NamedTemporaryFile() as f, redirect_stdout(out):
+            self.exporter.migrate(f.name, progress_interval=2, force=True)
+        printed = out.getvalue()
+        # per-chunk line at the 2-object boundary, then the final summary
+        assert "Processed 2 objects (last 2 in " in printed
+        assert "Processed 3 objects in " in printed
+        assert "/1M objects)" in printed
+
     def test_different_blob_types_are_exported(self):
         form = self.db.put(BytesIO(self.blob_data), meta=new_meta(domain=self.domain, type_code=CODES.form_xml))
         multimedia = self.db.put(
@@ -55,9 +235,13 @@ class TestBlobExporter(TestCase):
         orphaned_meta = new_meta(domain=self.domain, type_code=CODES.form_xml, content_length=42)
         orphaned_meta.save()
 
-        with NamedTemporaryFile() as out:
-            self.exporter.migrate(out.name, force=True)
-            with tarfile.open(out.name, 'r:gz') as tgzfile:
+        # migrate() writes a missing-blob-ids log beside the export archive for
+        # the orphaned meta; export into a temp dir so both files are cleaned up
+        # and the test does not pollute the repo root.
+        with TemporaryDirectory() as tmpdir:
+            out = os.path.join(tmpdir, 'export.tar.gz')
+            self.exporter.migrate(out, force=True)
+            with tarfile.open(out, 'r:gz') as tgzfile:
                 self.assertEqual([expected_meta.key], tgzfile.getnames())
 
     def test_exported_blobs_can_be_imported_successfully(self):
@@ -204,6 +388,23 @@ class MockBigBlobIO(RawIOBase):
 
     def readinto(self, buffer):
         raise NotImplementedError
+
+
+class TestTarGzipCopyBlobContentLength(SimpleTestCase):
+
+    def test_explicit_content_length_used_for_fileobj_without_attribute(self):
+        data = b'spam and eggs'
+        with NamedTemporaryFile(suffix='.tar.gz') as out:
+            db = TarGzipBlobDB(out.name)
+            db.open('w:gz')
+            # io.BytesIO has no `content_length` attribute
+            db.copy_blob(io.BytesIO(data), key='k', content_length=len(data))
+            db.close()
+
+            with tarfile.open(out.name, 'r:gz') as tgz:
+                member = tgz.getmember('k')
+                assert member.size == len(data)
+                assert tgz.extractfile('k').read() == data
 
 
 def test_doctests():

@@ -62,6 +62,7 @@ class SimpleTableWriter(object):
 
     def write_rows(self, rows):
         for row in rows:
+            row = [str(cell) for cell in row]
             self.output.write(self.row_formatter.format_row(row))
 
 

@@ -1,6 +1,8 @@
+import json
+
 from django import forms
 from django.db import transaction
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -18,10 +20,13 @@ from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     CaseSearchEndpointVersion,
 )
+from corehq.apps.case_search.utils import QueryHelper, get_primary_case_search_endpoint_results
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import not_found
 from corehq.apps.settings.views import BaseProjectDataView
+
+from dimagi.utils.logging import notify_exception
 
 _ENDPOINT_DECORATORS = [
     use_bootstrap5,
@@ -141,7 +146,7 @@ class CaseSearchEndpointsView(BaseProjectDataView):
         }
 
 
-class _CaseSearchEndpointEditBaseView(BaseProjectDataView):
+class CaseSearchEndpointEditBaseView(BaseProjectDataView):
     """Shared logic for the new and edit endpoint query builder views."""
 
     template_name = 'case_search/endpoint_edit.html'
@@ -181,7 +186,7 @@ class _CaseSearchEndpointEditBaseView(BaseProjectDataView):
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointNewView(_CaseSearchEndpointEditBaseView):
+class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
     urlname = 'case_search_endpoint_new'
     page_title = gettext_lazy('New Case Search Endpoint')
     mode = 'new'
@@ -212,7 +217,7 @@ class CaseSearchEndpointNewView(_CaseSearchEndpointEditBaseView):
                 domain=self.domain,
                 name=cd['name'],
                 target_type=cd['target_type'],
-                target_name=cd['case_type'],
+                case_type=cd['case_type'],
             )
             _add_endpoint_version(
                 endpoint,
@@ -230,7 +235,7 @@ class CaseSearchEndpointNewView(_CaseSearchEndpointEditBaseView):
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointEditView(_CaseSearchEndpointEditBaseView):
+class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
     urlname = 'case_search_endpoint_edit'
     page_title = gettext_lazy('Edit Case Search Endpoint')
     mode = 'edit'
@@ -255,7 +260,7 @@ class CaseSearchEndpointEditView(_CaseSearchEndpointEditBaseView):
             initial={
                 'name': self._endpoint.name,
                 'target_type': self._endpoint.target_type,
-                'case_type': self._endpoint.target_name,
+                'case_type': self._endpoint.case_type,
                 'query': current.query if current else empty_query,
                 'parameters': current.parameters if current else list,
             },
@@ -276,14 +281,14 @@ class CaseSearchEndpointEditView(_CaseSearchEndpointEditBaseView):
         with transaction.atomic():
             endpoint.name = cd['name']
             endpoint.target_type = cd['target_type']
-            endpoint.target_name = cd['case_type']
+            endpoint.case_type = cd['case_type']
             _add_endpoint_version(
                 endpoint,
                 action=CaseSearchEndpointVersion.Action.UPDATE,
                 created_by=request.couch_user.username,
                 query=cd['query'],
                 parameters=cd['parameters'],
-                extra_update_fields=['name', 'target_type', 'target_name'],
+                extra_update_fields=['name', 'target_type', 'case_type'],
             )
         return redirect(
             reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
@@ -316,3 +321,61 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
         return redirect(
             reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
         )
+
+
+@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+class CaseSearchEndpointTestView(BaseDomainView):
+    """Runs a query builder spec against the project's cases and returns an
+    HTMX partial with the matching results (or validation errors).
+
+    Domain-scoped rather than endpoint-scoped so it works for unsaved
+    queries on the new-endpoint page too.
+    """
+
+    urlname = 'case_search_endpoint_test'
+    http_method_names = ['post']
+    _results_template = 'case_search/partials/test_results.html'
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    def post(self, request, *args, **kwargs):
+        case_type = request.POST.get('case_type', '')
+        try:
+            query = json.loads(request.POST.get('query') or '{}')
+        except (json.JSONDecodeError, ValueError):
+            return self._render_results(request, errors=['Invalid query JSON.'])
+        capability = get_capability(domain=self.domain)
+        fields = capability['case_types'][case_type]
+        query_root, errors = parse_query_spec(query, case_type, capability)
+        if errors:
+            return self._render_results(request, errors=errors)
+        try:
+            results = self._run_query(case_type, query_root)
+        except Exception as e:
+            notify_exception(request, str(e))
+            return self._render_results(request, errors=['Query Execution Failed'])
+        return self._render_results(request, fields=fields, results=results)
+
+    def _run_query(self, case_type, query):
+        helper = QueryHelper(self.domain)
+        results = get_primary_case_search_endpoint_results(helper, [case_type], [], query, 20)
+        return results
+
+    def _render_results(self, request, *, errors=None, fields=None, results=None):
+        # Always 200 so HTMX swaps the partial in (it ignores error statuses).
+        field_names = (fields or {}).keys()
+        if results:
+            rows = [
+                [case.name] +
+                [case.get_case_property(field) or '' for field in field_names]
+                for case in results
+            ]
+        else:
+            rows = []
+        return render(request, self._results_template, {
+            'errors': errors or [],
+            'columns': (['Case Name'] + [k for k in field_names]),
+            'rows': rows or [],
+        })

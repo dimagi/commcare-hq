@@ -18,7 +18,7 @@
   {% initial_page_data "endpoint_mode" endpoint_mode %}
   {% initial_page_data "initial_name" form.name.value %}
   {% initial_page_data "initial_target_type" form.target_type.value %}
-  {% initial_page_data "initial_target_name" form.case_type.value %}
+  {% initial_page_data "initial_case_type" form.case_type.value %}
   {% initial_page_data "initial_query" form.query.value %}
   {% initial_page_data "capability" capability %}
 
@@ -158,6 +158,17 @@
       </div>
       <div class="card-body">
         {% include "case_search/partials/query_builder.html" %}
+      </div>
+    </div>
+
+    {# ── Tester card ── #}
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="fa-solid fa-magnifying-glass me-1"></i
+        >{% trans "Test query" %}
+      </div>
+      <div class="card-body">
+        {% include "case_search/partials/query_tester.html" %}
       </div>
     </div>
 

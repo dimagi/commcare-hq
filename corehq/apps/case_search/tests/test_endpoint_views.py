@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
@@ -13,6 +14,7 @@ from ..endpoint_views import (
     CaseSearchEndpointEditView,
     CaseSearchEndpointNewView,
     CaseSearchEndpointsView,
+    CaseSearchEndpointTestView,
 )
 from ..models import CaseSearchEndpoint, CaseSearchEndpointVersion
 
@@ -41,11 +43,11 @@ class EndpointViewTestCase(TestCase):
         flag.__enter__()
         self.addCleanup(flag.__exit__, None, None, None)
 
-    def _make_endpoint(self, name='my-endpoint', target_name='case_type_a'):
+    def _make_endpoint(self, name='my-endpoint', case_type='case_type_a'):
         endpoint = CaseSearchEndpoint.objects.create(
             domain=self.domain,
             name=name,
-            target_name=target_name,
+            case_type=case_type,
         )
         version = CaseSearchEndpointVersion.objects.create(
             endpoint=endpoint,
@@ -74,6 +76,9 @@ class EndpointViewTestCase(TestCase):
             CaseSearchEndpointDeactivateView.urlname,
             args=[self.domain, endpoint_id],
         )
+
+    def _test_url(self):
+        return reverse(CaseSearchEndpointTestView.urlname, args=[self.domain])
 
     def _post_data(self, **overrides):
         data = {
@@ -132,7 +137,7 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         endpoint = CaseSearchEndpoint.objects.get(
             domain=self.domain, name='new-endpoint'
         )
-        assert endpoint.target_name == 'my_case_type'
+        assert endpoint.case_type == 'my_case_type'
         assert endpoint.current_version is not None
         assert endpoint.current_version.version_number == 1
         assert endpoint.current_version.query == EMPTY_QUERY
@@ -225,7 +230,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
         # Scalar fields are seeded on the form (read via form.<field>.value).
         form = response.context['form']
         assert form['name'].value() == ep.name
-        assert form['case_type'].value() == ep.target_name
+        assert form['case_type'].value() == ep.case_type
 
     def test_404_for_wrong_domain(self):
         ep = self._make_endpoint()
@@ -249,7 +254,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
             self._edit_url(ep.id),
             self._post_data(
                 name=ep.name,
-                case_type=ep.target_name,
+                case_type=ep.case_type,
                 query=json.dumps(new_query),
                 parameters='[]',
             ),
@@ -279,7 +284,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
         ep.refresh_from_db()
         assert ep.name == 'renamed'
         assert ep.target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH
-        assert ep.target_name == 'new_target'
+        assert ep.case_type == 'new_target'
 
     def test_duplicate_name_error(self):
         self._make_endpoint(name='ep1')
@@ -288,7 +293,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
             self._edit_url(ep2.id),
             self._post_data(
                 name='ep1',
-                case_type=ep2.target_name,
+                case_type=ep2.case_type,
             ),
         )
         assert response.status_code == 200
@@ -300,7 +305,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
             self._edit_url(ep.id),
             self._post_data(
                 name='my-ep',
-                case_type=ep.target_name,
+                case_type=ep.case_type,
             ),
         )
         assert response.status_code == 302
@@ -338,3 +343,39 @@ class TestCaseSearchEndpointDeactivateView(EndpointViewTestCase):
         ep.save(update_fields=['is_active'])
         response = self.client.post(self._deactivate_url(ep.id))
         assert response.status_code == 404
+
+
+class TestCaseSearchEndpointTestView(EndpointViewTestCase):
+    def test_valid_query_returns_no_errors(self):
+        with patch('corehq.apps.case_search.endpoint_views.get_primary_case_search_endpoint_results',
+                   return_value=[]):
+            response = self.client.post(self._test_url(), {
+                'case_type': 'my_case_type',
+                'query': json.dumps(EMPTY_QUERY),
+            })
+        assert response.status_code == 200
+        assert 'alert-danger' not in response.content.decode()
+
+    def test_invalid_query_json_returns_error(self):
+        response = self.client.post(self._test_url(), {
+            'case_type': 'my_case_type',
+            'query': 'not json',
+        })
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'Invalid query JSON' in content
+        assert '<table' not in content
+
+    def test_invalid_filter_spec_returns_error(self):
+        response = self.client.post(self._test_url(), {
+            'case_type': 'my_case_type',
+            'query': json.dumps({'type': 'bogus'}),
+        })
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'alert-danger' in content
+        assert '<table' not in content
+
+    def test_requires_post(self):
+        response = self.client.get(self._test_url())
+        assert response.status_code == 405
