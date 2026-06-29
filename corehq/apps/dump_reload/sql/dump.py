@@ -221,6 +221,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('app_manager.ApplicationReleaseLog', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.ResourceOverride', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.CredentialApplication', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('app_manager.PublicWebform', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('app_manager.PublicFormSession', SimpleFilter('public_webform__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFileMeta', SimpleFilter('caseuploadrecord__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFormRecord', SimpleFilter('case_upload_record__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
