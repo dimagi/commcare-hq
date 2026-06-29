@@ -1,6 +1,6 @@
 import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import ocsContext, {WIDGET_SELECTOR} from "hqwebapp/js/ocs_widget_context_setter";
+import ocsContext, {WIDGET_SELECTOR} from "hqwebapp/js/ocs_page_context";
 
 function _text(el) {
     return el?.textContent.trim() ?? '';
@@ -20,18 +20,16 @@ function _readStructure() {
     };
 }
 
-function _readDomThenUpdate() {
+function _collectAppStructureContext() {
     if (!document.querySelector('[data-ocs-app-name]')) {
-        return;
+        return {};
     }
-    ocsContext.setAppStructure(_readStructure());
+    return {app_structure: _readStructure()};
 }
 
 $(function () {
     if (!document.querySelector(WIDGET_SELECTOR)) {
         return;
     }
-    _readDomThenUpdate();
-
-    $(document).on('inline-edit-save', _readDomThenUpdate);
+    ocsContext.registerContextCollector(_collectAppStructureContext);
 });
