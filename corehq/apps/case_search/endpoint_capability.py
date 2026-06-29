@@ -75,6 +75,8 @@ _OPERATOR_BY_TYPE = {
     ],
 }
 
+FIELD_TYPES = _OPERATOR_BY_TYPE.keys()
+
 # Sentinel input-slot type: the slot has no fixed type of its own and instead
 # takes the type of the field the condition is applied to. Used by operators
 # shared across field types (e.g. lt/gt work on both numbers and dates), where
