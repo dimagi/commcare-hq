@@ -6,7 +6,7 @@ from django.test import SimpleTestCase, TestCase
 
 from unittest.mock import Mock, patch
 
-from corehq.apps.app_manager.models.filters import (
+from corehq.apps.app_manager.models.report_app_config import (
     AncestorLocationTypeFilter,
     CustomMonthFilter,
     NumericFilter,

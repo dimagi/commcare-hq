@@ -65,7 +65,6 @@ from .case_list import (
    CaseList,
 )
 from .case_search import CaseSearch
-from .filters import ReportAppFilter
 from .form_actions import (
     AdvancedOpenCaseAction,
     CaseIndex,
@@ -83,6 +82,7 @@ from .mixins import (
     CommentMixin,
     NavMenuItemMediaMixin,
 )
+from .report_app_config import ReportAppFilter
 
 
 class ParentSelect(DocumentSchema):
