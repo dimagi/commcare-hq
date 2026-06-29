@@ -302,7 +302,7 @@ class TestCanUserAccessWebApp(TestCase):
 
 
 @patch_validate_xform()
-@patch('corehq.apps.app_manager.models._refresh_data_dictionary', MagicMock)
+@patch('corehq.apps.app_manager.models.applications._refresh_data_dictionary', MagicMock)
 class TestGetWebAppsAvailableToUser(TestCase):
     domain = 'test-get_web_app_ids_available_to_user'
 

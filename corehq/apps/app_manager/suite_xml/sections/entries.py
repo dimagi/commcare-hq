@@ -865,7 +865,7 @@ class EntriesHelper(object):
                 if module_id == module.unique_id:
                     return module
 
-                from corehq.apps.app_manager.models import (
+                from corehq.apps.app_manager.exceptions import (
                     ModuleNotFoundException,
                 )
                 try:
