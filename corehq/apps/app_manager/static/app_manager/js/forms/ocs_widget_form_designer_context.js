@@ -29,6 +29,7 @@ function buildSelectedQuestion(mug) {
     const parent = mug.parentMug;
     const belongsToQuestion = parent && {
         type: parent.options.typeName,
+        label: parent.form.vellum.getMugDisplayName(parent),
         question_id: parent.p.nodeID,
         path: parent.hashtagPath,
     };
@@ -36,6 +37,7 @@ function buildSelectedQuestion(mug) {
     if (mug.__className === "Choice") {
         return {
             type: mug.options.typeName,
+            label: mug.form.vellum.getMugDisplayName(mug),
             value: mug.p.nodeID,
             belongs_to_question: belongsToQuestion,
         };
@@ -43,11 +45,13 @@ function buildSelectedQuestion(mug) {
     if (mug.__className === "Itemset") {
         return {
             type: mug.options.typeName,
+            label: mug.form.vellum.getMugDisplayName(mug),
             belongs_to_question: belongsToQuestion,
         };
     }
     return {
         type: mug.options.typeName,
+        label: mug.form.vellum.getMugDisplayName(mug),
         question_id: mug.p.nodeID,
         path: mug.hashtagPath,
     };
