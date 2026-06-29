@@ -114,6 +114,7 @@ describe("OCS form designer context extractors", function () {
 
             assert.deepEqual(extractSelectedQuestion(vellum), {
                 type: "Text",
+                label: vellum.getMugDisplayName(mug),
                 question_id: "patient_name",
                 path: mug.hashtagPath,
             });
@@ -126,9 +127,11 @@ describe("OCS form designer context extractors", function () {
 
             assert.deepEqual(extractSelectedQuestion(vellum), {
                 type: "Choice",
+                label: vellum.getMugDisplayName(choice),
                 value: "red",
                 belongs_to_question: {
                     type: "Multiple Choice",
+                    label: vellum.getMugDisplayName(select),
                     question_id: "color",
                     path: select.hashtagPath,
                 },
