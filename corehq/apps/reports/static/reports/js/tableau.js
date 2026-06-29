@@ -1,6 +1,5 @@
 import "commcarehq";
 import $ from "jquery";
-import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
 var self = {};
@@ -15,7 +14,7 @@ self.requestViz = function () {
     }
     $.ajax({
         method: 'post',
-        url: initialPageData.reverse('get_tableau_server_ticket'),
+        url: initialPageData.reverse('get_tableau_embedding_jwt'),
         data: {
             viz_id: initialPageData.get("viz_id"),
         },
@@ -23,7 +22,7 @@ self.requestViz = function () {
         success: function (data) {
             $('#loadingDiv').addClass("hide");
             if (data.success) {
-                self.initViz(data.ticket);
+                self.initViz(data.token);
             } else {
                 $('#errorMessage').removeClass("hide");
                 document.getElementById('errorMessage').innerHTML = '<b>' + data.message + '</b>';
@@ -39,19 +38,20 @@ self.requestViz = function () {
     });
 };
 
-self.initViz = function (ticket) {
-    var url = _.template("https://<%- validate_hostname %>/<% if (is_server) { %>trusted/<%- ticket %>/<% } %><%- view_url %>")({
-        validate_hostname: initialPageData.get("validate_hostname"),
-        is_server: initialPageData.get("server_type") === "server",
-        ticket: ticket,
-        view_url: initialPageData.get("view_url"),
-    });
+self.initViz = function (token) {
+    // Embedding API v3 uses a clean view URL; auth comes from the JWT token
+    // (Tableau Server) rather than a /trusted/<ticket>/ URL prefix.
+    var url = "https://" + initialPageData.get("validate_hostname") + "/" + initialPageData.get("view_url");
     // The tableau.embedding script will register a tableau-viz element type
     customElements.whenDefined("tableau-viz").then(function () {
         var viz = document.createElement("tableau-viz");
         viz.setAttribute("src", url);
         viz.setAttribute("toolbar", "hidden");
         viz.setAttribute("hide-tabs", "");
+        if (token) {
+            // Connected App JWT for Tableau Server; omitted for Online/Public.
+            viz.setAttribute("token", token);
+        }
         document.getElementById("vizContainer").appendChild(viz);
     });
 };
