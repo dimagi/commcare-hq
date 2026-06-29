@@ -65,6 +65,8 @@ class TableauView(BaseDomainView):
             "validate_hostname": _get_hostname(self.visualization.server),
             "view_url": self.visualization.view_url,
             "viz_id": self.visualization.id,
+            "has_connected_app": TableauConnectedApp.objects.filter(
+                server=self.visualization.server).exists(),
         }
 
     def get(self, request, *args, **kwargs):

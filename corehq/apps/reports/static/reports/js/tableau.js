@@ -6,6 +6,13 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 var self = {};
 
 self.requestViz = function () {
+    if (!initialPageData.get("has_connected_app")) {
+        // No Connected App configured (e.g. Tableau Public): embed the view URL
+        // directly without an auth token.
+        $('#loadingDiv').addClass("hide");
+        self.initViz(null);
+        return;
+    }
     $.ajax({
         method: 'post',
         url: initialPageData.reverse('get_tableau_server_ticket'),
