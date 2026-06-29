@@ -18,6 +18,8 @@ from corehq.blobs.exceptions import NotFound
 from corehq.blobs.export import (
     BlobDbBackendExporter,
     BlobExporter,
+    _Result,
+    _SKIPPED,
     missing_ids_filename_for,
 )
 from corehq.blobs.management.commands.run_blob_import import Command as ImportCommand
@@ -91,6 +93,40 @@ def _export_with_fake_src(blobs, metas, already_exported=None, concurrency=8, sr
         with tarfile.open(out.name, 'r:gz') as tgz:
             extracted = {n: tgz.extractfile(n).read() for n in tgz.getnames()}
         return extracted, migrator.missing_ids, migrator.total_blobs
+
+
+@pytest.mark.parametrize("kwargs", [
+    {},  # fetched: key + fileobj + content_length
+    {"missing": True},  # missing: key + missing flag
+])
+def test_result_valid_states(kwargs):
+    # fetched/missing both carry a key; the only difference is the payload
+    if kwargs:
+        _Result("k", **kwargs)
+    else:
+        _Result("k", fileobj=io.BytesIO(b'data'), content_length=4)
+
+
+def test_result_skipped_constant_is_valid():
+    assert _SKIPPED.key is None
+    assert _SKIPPED.fileobj is None
+    assert not _SKIPPED.missing
+
+
+@pytest.mark.parametrize("args, kwargs", [
+    # fetched without a content_length is not a complete fetched result, and
+    # has no other state set, so it is not any valid state
+    (("k",), {"fileobj": io.BytesIO(b'data')}),
+    # fetched payload on a keyless (skipped) result -> two states at once
+    ((None,), {"fileobj": io.BytesIO(b'data'), "content_length": 4}),
+    # keyless and flagged missing -> skipped and missing at once
+    ((None,), {"missing": True}),
+    # fetched payload and flagged missing -> two states at once
+    (("k",), {"fileobj": io.BytesIO(b'data'), "content_length": 4, "missing": True}),
+])
+def test_result_invalid_states_raise(args, kwargs):
+    with pytest.raises(AssertionError):
+        _Result(*args, **kwargs)
 
 
 class TestExportRun(SimpleTestCase):
