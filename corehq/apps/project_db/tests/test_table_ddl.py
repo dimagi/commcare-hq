@@ -1,10 +1,9 @@
-from contextlib import contextmanager
 from unittest.mock import patch
 
 import pytest
 import sqlalchemy
 from sqlalchemy import Table
-from unmagic import use
+from unmagic import fixture, use
 
 from corehq.apps.project_db.table_ddl import (
     CaseTable,
@@ -76,19 +75,21 @@ def test_case_table_basics():
     assert table.c['number_prop__children_count'].nullable is True
 
 
-@contextmanager
 def _project_db_schema(domain):
-    schema = DomainSchema(domain)
-    try:
-        yield schema
-    finally:
-        with get_project_db_engine().begin() as conn:
-            schema.drop(conn)
+    @fixture
+    def inner():
+        schema = DomainSchema(domain)
+        try:
+            yield schema
+        finally:
+            with get_project_db_engine().begin() as conn:
+                schema.drop(conn)
+    return inner()
 
 
-@use('db', _project_db_schema('this-is-my-really-really-long-domain-name'))
+@use('db')
 def test_truncated_index_name():
-    domain_schema = DomainSchema('this-is-my-really-really-long-domain-name')
+    domain_schema = _project_db_schema('this-is-my-really-really-long-domain-name')
     table = Table(
         'fairly-long-table-name',
         sqlalchemy.MetaData(),
@@ -105,23 +106,23 @@ def test_truncated_index_name():
         update_table(conn, table)  # this should no-op, not fail
 
 
-@use('db', _project_db_schema('test_create_project_db'))
+@use('db')
 @patch('corehq.apps.project_db.table_ddl._get_case_types')
 @patch.object(CaseTable, '_get_dd_properties')
 def test_create_project_db(get_dd_properties, get_case_types):
     # Actually commit the project_db definition to postgres and spot check results
     domain = 'test_create_project_db'
-    schema_name = DomainSchema(domain).name
+    schema = _project_db_schema('test_create_project_db')
 
     get_case_types.return_value = ['patient']
     get_dd_properties.return_value = [('nickname', 'plain'), ('dob', 'plain')]
     create_or_update_project_db(domain)
-    _assert_db_created_as_expected(schema_name)
+    _assert_db_created_as_expected(schema.name)
 
     # Drop nickname, make dob a date, add a new prop
     get_dd_properties.return_value = [('favorite_color', 'plain'), ('dob', 'date')]
     create_or_update_project_db(domain)
-    _assert_db_updated_as_expected(schema_name)
+    _assert_db_updated_as_expected(schema.name)
 
 
 def _assert_db_created_as_expected(schema):
