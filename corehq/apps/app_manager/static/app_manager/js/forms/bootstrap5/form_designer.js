@@ -68,7 +68,6 @@ $(function () {
             $("#formdesigner").vellum("get").data.core.form.on("question-create", function () {
                 noopMetricsTrack();
             });
-            document.dispatchEvent(new CustomEvent('vellum:ready'));
         },
     });
 
