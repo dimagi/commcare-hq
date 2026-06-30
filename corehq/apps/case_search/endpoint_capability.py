@@ -12,6 +12,7 @@ from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CaseType,
 )
+from corehq.apps.es.queries import DISTANCE_UNITS
 
 FIELD_TYPE_TEXT = 'text'
 FIELD_TYPE_NUMBER = 'number'
@@ -92,6 +93,11 @@ FIELD_TYPES = _OPERATOR_BY_TYPE.keys()
 # (e.g. a date picker for a date field); that resolution is not implemented yet.
 INPUT_TYPE_MATCH_FIELD = 'match_field'
 
+# Input-slot type for a fixed set of string choices. The value is always a
+# constant (parameters cannot bind to it) and must be one of the slot's
+# ``options``. Not a field type.
+INPUT_TYPE_CHOICE = 'choice'
+
 OPERATOR_INPUT_SCHEMAS = {
     'not_equals': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'starts_with': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
@@ -111,7 +117,7 @@ OPERATOR_INPUT_SCHEMAS = {
     'within_distance': [
         {'name': 'point', 'type': FIELD_TYPE_GEOPOINT},
         {'name': 'distance', 'type': FIELD_TYPE_NUMBER},
-        {'name': 'unit', 'type': 'choice'},
+        {'name': 'unit', 'type': INPUT_TYPE_CHOICE, 'options': DISTANCE_UNITS},
     ],
 }
 

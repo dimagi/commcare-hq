@@ -91,7 +91,7 @@ def test_valid_multi_input_spec():
         'inputs': {
             'point': {'type': 'constant', 'value': '0 0'},
             'distance': {'type': 'constant', 'value': '5'},
-            'unit': {'type': 'constant', 'value': 'km'},
+            'unit': {'type': 'constant', 'value': 'kilometers'},
         },
     }
     root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
@@ -99,6 +99,36 @@ def test_valid_multi_input_spec():
     assert isinstance(root, ComponentNode)
     assert set(root.inputs) == {'point', 'distance', 'unit'}
     assert root.inputs['distance'] == ConstantInput(value='5')
+
+
+def _within_distance_spec(unit_input):
+    return {
+        'type': 'component',
+        'operator': 'within_distance',
+        'field': 'location',
+        'inputs': {
+            'point': {'type': 'constant', 'value': '0 0'},
+            'distance': {'type': 'constant', 'value': '5'},
+            'unit': unit_input,
+        },
+    }
+
+
+@use(sample_capability)
+def test_choice_input_rejects_invalid_option():
+    spec = _within_distance_spec({'type': 'constant', 'value': 'parsecs'})
+    root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert root is None
+    assert any('parsecs' in e for e in errors)
+
+
+@use(sample_capability)
+def test_choice_input_rejects_parameter():
+    spec = _within_distance_spec({'type': 'parameter', 'value': 'my_unit'})
+    parameters = [Parameter(name='my_unit', type=FIELD_TYPE_TEXT)]
+    root, errors = parse_query_spec(spec, parameters, 'patient', sample_capability())
+    assert root is None
+    assert any('must be a fixed value' in e for e in errors)
 
 
 @use(sample_capability)
