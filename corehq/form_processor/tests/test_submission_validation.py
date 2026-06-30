@@ -198,9 +198,7 @@ class TestCheckImageAttachmentsCachingFootprint(TestCase):
             pre_handler_state['form_xml_fetches'] = [
                 name for name in get_attachment_calls if name == 'form.xml'
             ]
-            return check_image_attachments(
-                sender=sender, xform=xform, **kwargs
-            )
+            return check_image_attachments(sender=sender, xform=xform, **kwargs)
 
         from couchforms.signals import successful_form_received
 
