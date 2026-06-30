@@ -109,9 +109,27 @@ def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None,
     xform = interface.new_xform(instance_json)
     xform.domain = domain
     xform.auth_context = auth_context
-    # Cache `instance_json` on `xform` for when SubmissionPost.run()
-    # calls `self._invalidate_caches()`, which calls `instance.metadata`
-    scrub_form_meta(xform.form_id, instance_json)  # Scrub to mimic `form_data`
+
+    # Call flow:
+    #
+    #     SubmissionPost.run()
+    #     |
+    #     +-- process_xform_xml()
+    #     |   |
+    #     |   +-- _create_new_xform()  <-- you are here
+    #     |
+    #     +-- self._invalidate_caches()
+    #         |
+    #         +-- instance.metadata
+    #             |
+    #             +-- XFormInstance.form_data
+    #                 |
+    #                 +-- XFormInstance._form_json  <-- cached scrubbed instance_json
+    #
+    # Scrub and cache `instance_json` in `XFormInstance._form_json` the way
+    # that `XFormInstance.form_data` does, so that `XFormInstance.form_data`
+    # doesn't have to fetch the form XML and convert it to JSON again.
+    scrub_form_meta(xform.form_id, instance_json)
     xform._form_json = instance_json
 
     # Maps all attachments to uniform format and adds form.xml to list before storing
