@@ -51,24 +51,6 @@ from .delete_records import (  # noqa: F401
     DeleteFormRecord,
     DeleteModuleRecord,
 )
-from .filters import (  # noqa: F401
-    AncestorLocationTypeFilter,
-    AutoFilter,
-    AutoFilterConfig,
-    CustomDataAutoFilter,
-    CustomDatespanFilter,
-    CustomMonthFilter,
-    MobileFilterConfig,
-    MobileSelectFilter,
-    NumericFilter,
-    ReportAppFilter,
-    StaticChoiceFilter,
-    StaticChoiceListFilter,
-    StaticDatespanFilter,
-    get_all_mobile_filter_configs,
-    get_auto_filter_configurations,
-    get_report_filter_class_for_doc_type,
-)
 from .form_actions import (  # noqa: F401
     AdvancedAction,
     AdvancedFormActions,
@@ -123,9 +105,26 @@ from .modules import (  # noqa: F401
     ModuleBase,
     ModuleDetailsMixin,
     ParentSelect,
-    ReportAppConfig,
     ReportModule,
     ShadowFormEndpoint,
     ShadowModule,
 )
-
+from .report_app_config import (  # noqa: F401
+    AncestorLocationTypeFilter,
+    AutoFilter,
+    AutoFilterConfig,
+    CustomDataAutoFilter,
+    CustomDatespanFilter,
+    CustomMonthFilter,
+    MobileFilterConfig,
+    MobileSelectFilter,
+    NumericFilter,
+    ReportAppConfig,
+    ReportAppFilter,
+    StaticChoiceFilter,
+    StaticChoiceListFilter,
+    StaticDatespanFilter,
+    get_all_mobile_filter_configs,
+    get_auto_filter_configurations,
+    get_report_filter_class_for_doc_type,
+)

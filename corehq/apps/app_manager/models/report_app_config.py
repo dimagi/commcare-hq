@@ -1,12 +1,18 @@
 import calendar
 import datetime
+import uuid
 from collections import namedtuple
 
 from couchdbkit.exceptions import BadValueError
+from corehq.apps.app_manager.models.case_list import GraphConfiguration
 from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DecimalProperty,
+    DictProperty,
     DocumentSchema,
     FloatProperty,
     IntegerProperty,
+    SchemaDictProperty,
     StringListProperty,
     StringProperty,
 )
@@ -335,3 +341,40 @@ class NumericFilter(ReportAppFilter):
             'operator': self.operator,
             'operand': self.operand,
         }
+
+
+class ReportAppConfig(DocumentSchema):
+    """
+    Class for configuring how a user configurable report shows up in an app
+    """
+    # ID of the ReportConfiguration
+    report_id = StringProperty(required=True)
+    header = DictProperty()
+    localized_description = DictProperty()
+    xpath_description = StringProperty()
+    use_xpath_description = BooleanProperty(default=False)
+    show_data_table = BooleanProperty(default=True)
+    complete_graph_configs = DictProperty(GraphConfiguration)
+
+    filters = SchemaDictProperty(ReportAppFilter)
+    # Unique ID of this mobile report config
+    uuid = StringProperty(required=True)
+    report_slug = StringProperty(required=False)  # optional, user-provided
+    sync_delay = DecimalProperty(default=0.0)  # in hours
+
+    _report = None
+
+    def __init__(self, *args, **kwargs):
+        super(ReportAppConfig, self).__init__(*args, **kwargs)
+        if not self.uuid:
+            self.uuid = uuid.uuid4().hex
+
+    def report(self, domain):
+        if self._report is None:
+            from corehq.apps.userreports.models import get_report_config
+            self._report = get_report_config(self.report_id, domain)[0]
+        return self._report
+
+    @property
+    def instance_id(self):
+        return self.report_slug or self.uuid
