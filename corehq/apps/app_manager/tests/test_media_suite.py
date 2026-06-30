@@ -40,7 +40,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         actualResources = {node.text for node in parsedActual.findall("media/resource/location")}
         self.assertSetEqual(expectedResources, actualResources)
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
     def test_all_media_paths(self, mock):
         image_path = 'jr://file/commcare/image{}.jpg'
         audio_path = 'jr://file/commcare/audio{}.mp3'
@@ -102,7 +102,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         }
         self.assertXmlEqual(self.get_xml('media-suite-lazy-false'), MediaSuiteGenerator(app).generate_suite())
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
     def test_all_media_paths_with_inline_video(self, mock):
         inline_video_path = 'jr://file/commcare/video-inline/data/inline_video.mp4'
         app = Application.wrap(self.get_json('app_video_inline'))
@@ -130,7 +130,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
 
     @patch('corehq.apps.hqmedia.models.domain_has_privilege', return_value=True)
     @patch('corehq.apps.app_manager.models.ApplicationBase.get_latest_build', lambda _: None)
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
     def test_form_media_with_app_profile(self, *args):
         # Test that media for languages not in the profile are removed from the media suite
@@ -243,7 +243,7 @@ class TestRemoveMedia(TestCase, TestXmlMixin):
         cls.domain = uuid.uuid4().hex
 
     @softer_assert()
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
     def test_unused_media_removed(self, mock):
         image_path = 'jr://file/commcare/image{}_{}.jpg'
         audio_path = 'jr://file/commcare/audio{}_{}.mp3'
@@ -504,7 +504,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         )
 
     @patch_get_xform_resource_overrides()
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
     def test_suite_media_with_app_profile(self, *args):
         # Test that suite includes only media relevant to the profile
 

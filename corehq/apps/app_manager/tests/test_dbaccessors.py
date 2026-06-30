@@ -350,7 +350,7 @@ class TestGetLatestAppMeta(TestCase):
 
     @classmethod
     @patch_validate_xform()
-    @patch('corehq.apps.app_manager.models._refresh_data_dictionary', MagicMock)
+    @patch('corehq.apps.app_manager.models.applications._refresh_data_dictionary', MagicMock)
     def setUpClass(cls):
         super().setUpClass()
         cls.project = Domain.get_or_create_with_name(cls.domain)

@@ -16,7 +16,7 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 patches = [
     patch('corehq.apps.app_manager.app_schemas.casedb_schema.get_case_property_description_dict',
        MagicMock(return_value={})),
-    patch('corehq.apps.app_manager.models.domain_has_usercase_access', MagicMock(return_value=False)),
+    patch('corehq.apps.app_manager.models.applications.domain_has_usercase_access', MagicMock(return_value=False)),
     patch('corehq.apps.app_manager.app_schemas.casedb_schema.domain_has_usercase_access',
         MagicMock(return_value=False)),
     patch('corehq.apps.app_manager.app_schemas.session_schema.domain_has_usercase_access',
