@@ -2,15 +2,24 @@ from unittest.mock import patch
 
 import pytest
 
-from corehq.apps.case_search.endpoint_capability import FIELD_TYPE_GEOPOINT, FIELD_TYPE_TEXT
+from corehq.apps.case_search.endpoint_capability import (
+    FIELD_TYPE_DATE,
+    FIELD_TYPE_GEOPOINT,
+    FIELD_TYPE_TEXT,
+)
 from corehq.apps.case_search.endpoint_query_spec import ComponentNode, ConstantInput, ParameterInput
 from corehq.apps.case_search.utils import (
     CaseSearchEndpointQueryBuilder,
     CaseSearchProfiler,
     get_expanded_case_results,
 )
+from corehq.apps.case_search.xpath_functions.query_functions import date_permutations
 from corehq.apps.es import CaseSearchES
-from corehq.apps.es.case_search import case_property_query, sounds_like_text_query
+from corehq.apps.es.case_search import (
+    case_property_date_range,
+    case_property_query,
+    sounds_like_text_query,
+)
 from corehq.form_processor.models import CommCareCase
 
 
@@ -152,4 +161,32 @@ def test_parse_component_node_text_missing_parameter_value_returns_none(operator
     builder = _make_builder()
     builder.param_values = {}  # parameter not supplied
     result = builder._parse_component_node(node)
+    assert result is None
+
+
+def _make_date_node(operator, value='2020-01-01'):
+    return ComponentNode(
+        operator=operator,
+        field='dob',
+        field_type=FIELD_TYPE_DATE,
+        inputs={'value': ConstantInput(value=value)},
+    )
+
+
+@pytest.mark.parametrize('operator', ['lt', 'gt', 'lte', 'gte'])
+def test_parse_component_node_date_ranges(operator):
+    result = _make_builder()._parse_component_node(_make_date_node(operator))
+    assert result == case_property_date_range('dob', **{operator: '2020-01-01'})
+
+
+def test_parse_component_node_fuzzy_date():
+    result = _make_builder()._parse_component_node(_make_date_node('fuzzy_date'))
+    assert result == case_property_query(
+        'dob', date_permutations('2020-01-01'), boost_first=True
+    )
+
+
+def test_parse_component_node_fuzzy_date_invalid_returns_none():
+    node = _make_date_node('fuzzy_date', value='not-a-date')
+    result = _make_builder()._parse_component_node(node)
     assert result is None

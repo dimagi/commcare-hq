@@ -51,6 +51,7 @@ from corehq.apps.case_search.models import (
     extract_search_request_config,
 )
 from corehq.apps.case_search.endpoint_query_spec import ParameterInput, parse_parameter_spec, parse_query_spec
+from corehq.apps.case_search.xpath_functions.query_functions import date_permutations, validate_date
 from corehq.apps.es import HQESQuery, case_search
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters, queries
@@ -492,6 +493,14 @@ class CaseSearchEndpointQueryBuilder:
                 return case_property_date_range(field, lt=value)
             elif operator == 'gt':
                 return case_property_date_range(field, gt=value)
+            elif operator == 'lte':
+                return case_property_date_range(field, lte=value)
+            elif operator == 'gte':
+                return case_property_date_range(field, gte=value)
+            elif operator == 'fuzzy_date':
+                if not validate_date(value):
+                    return None
+                return case_property_query(field, date_permutations(value), boost_first=True)
         elif node.field_type == FIELD_TYPE_NUMBER:
             if operator == 'equals':
                 return case_property_query(field, value)

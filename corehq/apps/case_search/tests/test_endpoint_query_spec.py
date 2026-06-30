@@ -144,17 +144,18 @@ def test_text_field_accepts_fuzzy_and_phonetic(operator):
 
 
 @use(sample_capability)
-def test_date_field_accepts_lt():
+@pytest.mark.parametrize('operator', ['lt', 'gt', 'lte', 'gte', 'fuzzy_date'])
+def test_date_field_accepts_range_and_fuzzy_operators(operator):
     spec = {
         'type': 'component',
-        'operator': 'lt',
+        'operator': operator,
         'field': 'dob',
         'inputs': {'value': {'type': 'constant', 'value': '2020-01-01'}},
     }
     root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
     assert errors == []
     assert isinstance(root, ComponentNode)
-    assert root.operator == 'lt'
+    assert root.operator == operator
 
 
 @use(sample_capability)

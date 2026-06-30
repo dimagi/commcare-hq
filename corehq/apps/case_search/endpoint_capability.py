@@ -61,11 +61,16 @@ _OPERATOR_BY_TYPE = {
         ('equals', _('on')),
         ('lt', _('before')),
         ('gt', _('after')),
+        ('lte', _('on or before')),
+        ('gte', _('on or after')),
+        ('fuzzy_date', _('is approximately')),
     ],
     FIELD_TYPE_DATETIME: [
         ('equals', _('on')),
         ('lt', _('before')),
         ('gt', _('after')),
+        ('lte', _('on or before')),
+        ('gte', _('on or after')),
     ],
     FIELD_TYPE_SELECT: [
         ('selected_any', _('is any')),
@@ -102,6 +107,7 @@ OPERATOR_INPUT_SCHEMAS = {
     'gte': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'lt': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'lte': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
+    'fuzzy_date': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'within_distance': [
         {'name': 'point', 'type': FIELD_TYPE_GEOPOINT},
         {'name': 'distance', 'type': FIELD_TYPE_NUMBER},
