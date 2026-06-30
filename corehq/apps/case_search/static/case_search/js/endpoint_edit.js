@@ -10,6 +10,8 @@ Alpine.data("endpointForm", () => {
         name: initialPageData.get("initial_name"),
         targetType: initialPageData.get("initial_target_type"),
         targetCasetype: initialPageData.get("initial_case_type"),
+        parameters: initialPageData.get("initial_parameters") || [],
+        testParamValues: {},
         query: initialPageData.get("initial_query"),
         capability: initialPageData.get("capability"),
         mode: mode,
@@ -28,8 +30,14 @@ Alpine.data("endpointForm", () => {
             return f ? f.operations : [];
         },
 
-        getInputSchemaForOperation(operation) {
-            return this.capability.operator_input_schemas[operation] || [];
+        getInputSchemaForOperation(node) {
+            const operation = node.operator;
+            const inputs = this.capability.operator_input_schemas[operation] || [];
+            return inputs.map(input =>
+                input.type === "match_field"
+                    ? { ...input, type: this.getFieldType(node.field) }
+                    : input
+            );
         },
 
         getFieldType(fieldName) {
@@ -80,6 +88,18 @@ Alpine.data("endpointForm", () => {
             this.query = { type: "all", children: [] };
         },
 
+        addParameter() {
+            this.parameters.push({ name: "", type: "text"});
+        },
+
+        removeParameter(idx) {
+            this.parameters.splice(idx, 1);
+        },
+
+        getParametersOfType(fieldType) {
+            return this.parameters.filter(param => param.type === fieldType).map(param => param.name);
+        },
+
         _newCondition() {
             return {
                 _id: this._nextId++,
@@ -118,7 +138,7 @@ Alpine.data("endpointForm", () => {
         },
 
         onOperatorChange(node) {
-            const schema = this.getInputSchemaForOperation(node.operator);
+            const schema = this.getInputSchemaForOperation(node);
             if (schema.every((slot) => slot.name in (node.inputs || {}))) {
                 return;
             }
@@ -141,6 +161,11 @@ Alpine.data("endpointForm", () => {
                 node.inputs[slotName] = {
                     type: "constant",
                     value: current.value || "",
+                };
+            } else if (valueType === "parameter") {
+                node.inputs[slotName] = {
+                    type: "parameter",
+                    value: "",
                 };
             }
         },
