@@ -36,7 +36,7 @@ Alpine.data("endpointForm", () => {
             return inputs.map(input =>
                 input.type === "match_field"
                     ? { ...input, type: this.getFieldType(node.field) }
-                    : input
+                    : input,
             );
         },
 
@@ -144,8 +144,17 @@ Alpine.data("endpointForm", () => {
             }
             node.inputs = {};
             for (const slot of schema) {
-                node.inputs[slot.name] = { type: "constant", value: "" };
+                node.inputs[slot.name] = this._defaultInputForSlot(slot);
             }
+        },
+
+        _defaultInputForSlot(slot) {
+            // Choice slots are constant-only; default to the first valid option
+            // so the dropdown is never blank (which would fail validation).
+            if (slot.type === "choice") {
+                return { type: "constant", value: (slot.options || [])[0] || "" };
+            }
+            return { type: "constant", value: "" };
         },
 
         getInputValue(node, slotName) {

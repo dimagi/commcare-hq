@@ -2,14 +2,29 @@ from unittest.mock import patch
 
 import pytest
 
-from corehq.apps.case_search.endpoint_capability import FIELD_TYPE_GEOPOINT
-from corehq.apps.case_search.endpoint_query_spec import ComponentNode, ConstantInput, ParameterInput
+from corehq.apps.case_search.endpoint_capability import (
+    FIELD_TYPE_DATE,
+    FIELD_TYPE_GEOPOINT,
+    FIELD_TYPE_TEXT,
+)
+from corehq.apps.case_search.endpoint_query_spec import (
+    ComponentNode,
+    ConstantInput,
+    GroupNode,
+    ParameterInput,
+)
 from corehq.apps.case_search.utils import (
     CaseSearchEndpointQueryBuilder,
     CaseSearchProfiler,
     get_expanded_case_results,
 )
+from corehq.apps.case_search.xpath_functions.query_functions import date_permutations
 from corehq.apps.es import CaseSearchES
+from corehq.apps.es.case_search import (
+    case_property_date_range,
+    case_property_query,
+    sounds_like_text_query,
+)
 from corehq.form_processor.models import CommCareCase
 
 
@@ -111,3 +126,144 @@ def test_parse_component_node_geopoint_missing_parameter_value_returns_none():
     builder.param_values = {}  # parameter not supplied
     result = builder._parse_component_node(node)
     assert result is None
+
+
+def _make_text_node(operator, value='alice'):
+    return ComponentNode(
+        operator=operator,
+        field='name',
+        field_type=FIELD_TYPE_TEXT,
+        inputs={'value': ConstantInput(value=value)},
+    )
+
+
+def test_parse_component_node_text_fuzzy():
+    node = _make_text_node('fuzzy')
+    result = _make_builder()._parse_component_node(node)
+    assert result == case_property_query('name', 'alice', fuzzy=True)
+
+
+def test_parse_component_node_text_phonetic():
+    node = _make_text_node('phonetic')
+    result = _make_builder()._parse_component_node(node)
+    assert result == sounds_like_text_query('name', 'alice')
+
+
+def test_parse_component_node_text_fuzzy_differs_from_exact():
+    fuzzy = _make_builder()._parse_component_node(_make_text_node('fuzzy'))
+    exact = _make_builder()._parse_component_node(_make_text_node('equals'))
+    assert fuzzy != exact
+
+
+@pytest.mark.parametrize('operator', ['fuzzy', 'phonetic'])
+def test_parse_component_node_text_missing_parameter_value_returns_none(operator):
+    node = ComponentNode(
+        operator=operator,
+        field='name',
+        field_type=FIELD_TYPE_TEXT,
+        inputs={'value': ParameterInput(value='search_term')},
+    )
+    builder = _make_builder()
+    builder.param_values = {}  # parameter not supplied
+    result = builder._parse_component_node(node)
+    assert result is None
+
+
+def _make_date_node(operator, value='2020-01-01'):
+    return ComponentNode(
+        operator=operator,
+        field='dob',
+        field_type=FIELD_TYPE_DATE,
+        inputs={'value': ConstantInput(value=value)},
+    )
+
+
+@pytest.mark.parametrize('operator', ['lt', 'gt', 'lte', 'gte'])
+def test_parse_component_node_date_ranges(operator):
+    result = _make_builder()._parse_component_node(_make_date_node(operator))
+    assert result == case_property_date_range('dob', **{operator: '2020-01-01'})
+
+
+def test_parse_component_node_fuzzy_date():
+    result = _make_builder()._parse_component_node(_make_date_node('fuzzy_date'))
+    assert result == case_property_query(
+        'dob', date_permutations('2020-01-01'), boost_first=True
+    )
+
+
+def test_parse_component_node_fuzzy_date_invalid_returns_none():
+    node = _make_date_node('fuzzy_date', value='not-a-date')
+    result = _make_builder()._parse_component_node(node)
+    assert result is None
+
+
+def _valid_component():
+    # An equals component with a literal value always produces a query.
+    return ComponentNode(
+        operator='equals',
+        field='name',
+        field_type=FIELD_TYPE_TEXT,
+        inputs={'value': ConstantInput(value='alice')},
+    )
+
+
+def _droppable_component():
+    # An equals component whose parameter value is not supplied resolves to
+    # None, so the component is dropped.
+    return ComponentNode(
+        operator='equals',
+        field='name',
+        field_type=FIELD_TYPE_TEXT,
+        inputs={'value': ParameterInput(value='missing')},
+    )
+
+
+@pytest.mark.parametrize('group_type', ['all', 'any', 'none'])
+def test_parse_query_group_with_all_children_dropped_returns_none(group_type):
+    node = GroupNode(
+        type=group_type,
+        children=[_droppable_component(), _droppable_component()],
+    )
+    assert _make_builder()._parse_query(node) is None
+
+
+def test_parse_query_drops_empty_nested_group_in_any():
+    # Reproduces the match-all bug: an empty nested `all` group (all its
+    # children dropped) must not survive inside an `any`/OR as an empty bool.
+    builder = _make_builder()
+    empty_nested = GroupNode(type='all', children=[_droppable_component()])
+    with_empty = GroupNode(type='any', children=[_valid_component(), empty_nested])
+    without_empty = GroupNode(type='any', children=[_valid_component()])
+    assert builder._parse_query(with_empty) == builder._parse_query(without_empty)
+
+
+def test_parse_query_keeps_only_surviving_children():
+    builder = _make_builder()
+    mixed = GroupNode(type='all', children=[_valid_component(), _droppable_component()])
+    only_valid = GroupNode(type='all', children=[_valid_component()])
+    assert builder._parse_query(mixed) == builder._parse_query(only_valid)
+
+
+def test_build_query_all_dropped_applies_no_extra_filter():
+    builder = _make_builder()
+    builder.query_root = GroupNode(type='all', children=[_droppable_component()])
+    sentinel = object()
+    builder._get_initial_search_es = lambda: sentinel
+    # No surviving conditions => return the base query untouched, never
+    # add_query(None) or a match-all empty bool.
+    assert builder.build_query([]) is sentinel
+
+
+def test_build_query_with_surviving_condition_adds_query():
+    builder = _make_builder()
+    builder.query_root = GroupNode(type='all', children=[_valid_component()])
+
+    class FakeES:
+        def add_query(self, query, clause):
+            self.added_query = query
+            return self
+
+    fake = FakeES()
+    builder._get_initial_search_es = lambda: fake
+    assert builder.build_query([]) is fake
+    assert fake.added_query is not None

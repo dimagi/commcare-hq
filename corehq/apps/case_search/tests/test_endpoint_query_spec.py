@@ -91,7 +91,7 @@ def test_valid_multi_input_spec():
         'inputs': {
             'point': {'type': 'constant', 'value': '0 0'},
             'distance': {'type': 'constant', 'value': '5'},
-            'unit': {'type': 'constant', 'value': 'km'},
+            'unit': {'type': 'constant', 'value': 'kilometers'},
         },
     }
     root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
@@ -99,6 +99,36 @@ def test_valid_multi_input_spec():
     assert isinstance(root, ComponentNode)
     assert set(root.inputs) == {'point', 'distance', 'unit'}
     assert root.inputs['distance'] == ConstantInput(value='5')
+
+
+def _within_distance_spec(unit_input):
+    return {
+        'type': 'component',
+        'operator': 'within_distance',
+        'field': 'location',
+        'inputs': {
+            'point': {'type': 'constant', 'value': '0 0'},
+            'distance': {'type': 'constant', 'value': '5'},
+            'unit': unit_input,
+        },
+    }
+
+
+@use(sample_capability)
+def test_choice_input_rejects_invalid_option():
+    spec = _within_distance_spec({'type': 'constant', 'value': 'parsecs'})
+    root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert root is None
+    assert any('parsecs' in e for e in errors)
+
+
+@use(sample_capability)
+def test_choice_input_rejects_parameter():
+    spec = _within_distance_spec({'type': 'parameter', 'value': 'my_unit'})
+    parameters = [Parameter(name='my_unit', type=FIELD_TYPE_TEXT)]
+    root, errors = parse_query_spec(spec, parameters, 'patient', sample_capability())
+    assert root is None
+    assert any('must be a fixed value' in e for e in errors)
 
 
 @use(sample_capability)
@@ -129,17 +159,33 @@ def test_invalid_root_type():
 
 
 @use(sample_capability)
-def test_date_field_accepts_lt():
+@pytest.mark.parametrize('operator', ['fuzzy', 'phonetic'])
+def test_text_field_accepts_fuzzy_and_phonetic(operator):
     spec = {
         'type': 'component',
-        'operator': 'lt',
+        'operator': operator,
+        'field': 'province',
+        'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
+    }
+    root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert errors == []
+    assert isinstance(root, ComponentNode)
+    assert root.operator == operator
+
+
+@use(sample_capability)
+@pytest.mark.parametrize('operator', ['lt', 'gt', 'lte', 'gte', 'fuzzy_date'])
+def test_date_field_accepts_range_and_fuzzy_operators(operator):
+    spec = {
+        'type': 'component',
+        'operator': operator,
         'field': 'dob',
         'inputs': {'value': {'type': 'constant', 'value': '2020-01-01'}},
     }
     root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
     assert errors == []
     assert isinstance(root, ComponentNode)
-    assert root.operator == 'lt'
+    assert root.operator == operator
 
 
 @use(sample_capability)

@@ -51,6 +51,7 @@ from corehq.apps.case_search.models import (
     extract_search_request_config,
 )
 from corehq.apps.case_search.endpoint_query_spec import ParameterInput, parse_parameter_spec, parse_query_spec
+from corehq.apps.case_search.xpath_functions.query_functions import date_permutations, validate_date
 from corehq.apps.es import HQESQuery, case_search
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters, queries
@@ -63,6 +64,7 @@ from corehq.apps.es.case_search import (
     case_property_query,
     case_property_starts_with,
     reverse_index_case_query,
+    sounds_like_text_query,
     wrap_case_search_hit,
 )
 from corehq.apps.es.profiling import ESQueryProfiler
@@ -418,7 +420,12 @@ class CaseSearchEndpointQueryBuilder:
     def build_query(self, search_criteria):
         self.param_values = {c.key: c.value for c in search_criteria}
         search_es = self._get_initial_search_es()
-        return search_es.add_query(self._parse_query(self.query_root), queries.MUST)
+        query = self._parse_query(self.query_root)
+        if query is None:
+            # Every condition dropped (e.g. all inputs were unsupplied
+            # parameters). Apply no extra filter rather than match-all-via-empty.
+            return search_es
+        return search_es.add_query(query, queries.MUST)
 
     def _get_initial_search_es(self):
         max_results = CASE_SEARCH_MAX_RESULTS
@@ -435,18 +442,18 @@ class CaseSearchEndpointQueryBuilder:
         return [q for q in child_queries if q is not None]
 
     def _parse_query(self, node):
-        if node.type == 'all':
-            return filters.AND(
-                *self._get_child_queries(node)
-            )
-        elif node.type == 'any':
-            return filters.OR(
-                *self._get_child_queries(node)
-            )
-        elif node.type == 'none':
-            return filters.NOT(
-                filters.OR(*self._get_child_queries(node))
-            )
+        if node.type in ('all', 'any', 'none'):
+            # Drop a group with no surviving children rather than collapsing to
+            # an empty AND/OR. An empty bool matches all documents, which in an
+            # `any`/OR context would make the whole query match everything.
+            children = self._get_child_queries(node)
+            if not children:
+                return None
+            if node.type == 'all':
+                return filters.AND(*children)
+            if node.type == 'any':
+                return filters.OR(*children)
+            return filters.NOT(filters.OR(*children))
         elif node.type == 'component':
             return self._parse_component_node(node)
         else:
@@ -491,6 +498,14 @@ class CaseSearchEndpointQueryBuilder:
                 return case_property_date_range(field, lt=value)
             elif operator == 'gt':
                 return case_property_date_range(field, gt=value)
+            elif operator == 'lte':
+                return case_property_date_range(field, lte=value)
+            elif operator == 'gte':
+                return case_property_date_range(field, gte=value)
+            elif operator == 'fuzzy_date':
+                if not validate_date(value):
+                    return None
+                return case_property_query(field, date_permutations(value), boost_first=True)
         elif node.field_type == FIELD_TYPE_NUMBER:
             if operator == 'equals':
                 return case_property_query(field, value)
@@ -512,6 +527,10 @@ class CaseSearchEndpointQueryBuilder:
                 return filters.NOT(case_property_query(field, value))
             elif operator == 'starts_with':
                 return case_property_starts_with(field, value)
+            elif operator == 'fuzzy':
+                return case_property_query(field, value, fuzzy=True)
+            elif operator == 'phonetic':
+                return sounds_like_text_query(field, value)
         return None
 
 @time_function()

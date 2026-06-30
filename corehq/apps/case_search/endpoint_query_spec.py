@@ -15,7 +15,12 @@ from typing import ClassVar
 
 from attr import Factory, define, field as attr_field, validators
 
-from corehq.apps.case_search.endpoint_capability import FIELD_TYPES, INPUT_TYPE_MATCH_FIELD, OPERATORS
+from corehq.apps.case_search.endpoint_capability import (
+    FIELD_TYPES,
+    INPUT_TYPE_CHOICE,
+    INPUT_TYPE_MATCH_FIELD,
+    OPERATORS,
+)
 
 # Group node types: all = AND, any = OR, none = NOR (no child matches).
 GROUP_TYPES = ('all', 'any', 'none')
@@ -272,8 +277,22 @@ def _check_component(node, fields_by_name, parameters, operator_input_schemas, e
             )
             continue
         inp = node.inputs[slot_name]
-        if isinstance(inp, ParameterInput):
+        if slot['type'] == INPUT_TYPE_CHOICE:
+            _check_choice_input(inp, slot, slot_name, errors)
+        elif isinstance(inp, ParameterInput):
             _check_parameter_input(inp, parameters, slot_name, resolved_slots[slot_name], errors)
+
+
+def _check_choice_input(inp, slot, slot_name, errors):
+    if not isinstance(inp, ConstantInput):
+        errors.append(f"Input '{slot_name}' must be a fixed value, not a parameter")
+        return
+    options = slot.get('options', [])
+    if inp.value not in options:
+        errors.append(
+            f"Input '{slot_name}': '{inp.value}' is not a valid option."
+            f" Must be one of: {', '.join(options)}"
+        )
 
 
 def _check_parameter_input(inp, parameters, slot_name, slot_type, errors):
