@@ -46,6 +46,8 @@ _OPERATOR_BY_TYPE = {
         ('equals', _('is exactly')),
         ('not_equals', _('is not')),
         ('starts_with', _('starts with')),
+        ('fuzzy', _('is like')),
+        ('phonetic', _('sounds like')),
     ],
     FIELD_TYPE_NUMBER: [
         ('equals', _('equals')),
@@ -88,6 +90,8 @@ INPUT_TYPE_MATCH_FIELD = 'match_field'
 OPERATOR_INPUT_SCHEMAS = {
     'not_equals': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'starts_with': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
+    'fuzzy': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
+    'phonetic': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'selected_any': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'selected_all': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'is_empty': [],

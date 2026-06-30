@@ -129,6 +129,21 @@ def test_invalid_root_type():
 
 
 @use(sample_capability)
+@pytest.mark.parametrize('operator', ['fuzzy', 'phonetic'])
+def test_text_field_accepts_fuzzy_and_phonetic(operator):
+    spec = {
+        'type': 'component',
+        'operator': operator,
+        'field': 'province',
+        'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
+    }
+    root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert errors == []
+    assert isinstance(root, ComponentNode)
+    assert root.operator == operator
+
+
+@use(sample_capability)
 def test_date_field_accepts_lt():
     spec = {
         'type': 'component',

@@ -63,6 +63,7 @@ from corehq.apps.es.case_search import (
     case_property_query,
     case_property_starts_with,
     reverse_index_case_query,
+    sounds_like_text_query,
     wrap_case_search_hit,
 )
 from corehq.apps.es.profiling import ESQueryProfiler
@@ -512,6 +513,10 @@ class CaseSearchEndpointQueryBuilder:
                 return filters.NOT(case_property_query(field, value))
             elif operator == 'starts_with':
                 return case_property_starts_with(field, value)
+            elif operator == 'fuzzy':
+                return case_property_query(field, value, fuzzy=True)
+            elif operator == 'phonetic':
+                return sounds_like_text_query(field, value)
         return None
 
 @time_function()

@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from corehq.apps.case_search.endpoint_capability import FIELD_TYPE_GEOPOINT
+from corehq.apps.case_search.endpoint_capability import FIELD_TYPE_GEOPOINT, FIELD_TYPE_TEXT
 from corehq.apps.case_search.endpoint_query_spec import ComponentNode, ConstantInput, ParameterInput
 from corehq.apps.case_search.utils import (
     CaseSearchEndpointQueryBuilder,
@@ -10,6 +10,7 @@ from corehq.apps.case_search.utils import (
     get_expanded_case_results,
 )
 from corehq.apps.es import CaseSearchES
+from corehq.apps.es.case_search import case_property_query, sounds_like_text_query
 from corehq.form_processor.models import CommCareCase
 
 
@@ -106,6 +107,47 @@ def test_parse_component_node_geopoint_missing_parameter_value_returns_none():
             'distance': ConstantInput(value='5'),
             'unit': ConstantInput(value='miles'),
         },
+    )
+    builder = _make_builder()
+    builder.param_values = {}  # parameter not supplied
+    result = builder._parse_component_node(node)
+    assert result is None
+
+
+def _make_text_node(operator, value='alice'):
+    return ComponentNode(
+        operator=operator,
+        field='name',
+        field_type=FIELD_TYPE_TEXT,
+        inputs={'value': ConstantInput(value=value)},
+    )
+
+
+def test_parse_component_node_text_fuzzy():
+    node = _make_text_node('fuzzy')
+    result = _make_builder()._parse_component_node(node)
+    assert result == case_property_query('name', 'alice', fuzzy=True)
+
+
+def test_parse_component_node_text_phonetic():
+    node = _make_text_node('phonetic')
+    result = _make_builder()._parse_component_node(node)
+    assert result == sounds_like_text_query('name', 'alice')
+
+
+def test_parse_component_node_text_fuzzy_differs_from_exact():
+    fuzzy = _make_builder()._parse_component_node(_make_text_node('fuzzy'))
+    exact = _make_builder()._parse_component_node(_make_text_node('equals'))
+    assert fuzzy != exact
+
+
+@pytest.mark.parametrize('operator', ['fuzzy', 'phonetic'])
+def test_parse_component_node_text_missing_parameter_value_returns_none(operator):
+    node = ComponentNode(
+        operator=operator,
+        field='name',
+        field_type=FIELD_TYPE_TEXT,
+        inputs={'value': ParameterInput(value='search_term')},
     )
     builder = _make_builder()
     builder.param_values = {}  # parameter not supplied
