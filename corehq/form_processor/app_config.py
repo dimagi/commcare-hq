@@ -6,6 +6,7 @@ class FormProcessorAppConfig(AppConfig):
 
     def ready(self):
         from corehq.form_processor import tasks  # noqa
+        from corehq.form_processor import submission_validation  # noqa
         from psycopg2.extensions import register_adapter
         from corehq.form_processor.utils.sql import (
             form_adapter, form_operation_adapter,
