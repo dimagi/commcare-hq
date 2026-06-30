@@ -79,7 +79,7 @@ class ViewsBase(TestCase):
 
 
 @flag_enabled('CUSTOM_PROPERTIES')
-@patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+@patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
 @es_test(requires=[app_adapter], setup_class=True)
 class TestViews(ViewsBase):
     domain = 'app-manager-testviews-domain'
@@ -592,7 +592,7 @@ def apps_modules_setup(test_case):
         Application.get_db().delete_doc(test_case.other_app.id)
 
 
-@patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+@patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
 @es_test(requires=[app_adapter], setup_class=True)
 class TestViewGeneric(ViewsBase):
     domain = 'test-view-generic'

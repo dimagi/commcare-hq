@@ -13,8 +13,8 @@ from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.linked_domain.models import DomainLink
 
+from .const import LATEST_APK_VALUE, LATEST_APP_VALUE
 from .dbaccessors import get_all_built_app_ids_and_versions
-from .models import LATEST_APK_VALUE, LATEST_APP_VALUE
 from .util import get_commcare_builds
 from ..hqwebapp.widgets import BootstrapCheckboxInput
 from ..linked_domain.util import can_domain_access_linked_domains

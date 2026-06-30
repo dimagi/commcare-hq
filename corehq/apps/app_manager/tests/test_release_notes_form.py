@@ -55,7 +55,7 @@ class ReleaseFormsEnabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMix
                 </resource>
               </xform>
             </partial>
-        """
+        """  # noqa: E501
         # not included in resource
         self.assertXmlPartialEqual(expected, suite, xpath)
 
@@ -135,7 +135,7 @@ class ReleaseFormsDisabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMi
                 </resource>
               </xform>
             </partial>
-        """
+        """  # noqa: E501
         self.assertXmlPartialEqual(expected, suite, './xform')
 
     def test_entry(self, *args):
@@ -188,7 +188,7 @@ class ReleaseNotesResourceFileTest(TestCase, ReleaseFormsSetupMixin, TestXmlMixi
 
         super(ReleaseNotesResourceFileTest, self).setUp()
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
     @patch('corehq.apps.app_manager.models.FormBase.is_a_disabled_release_form', return_value=False)
     def test_enabled(self, *args):
         # check form in resource files
@@ -197,7 +197,7 @@ class ReleaseNotesResourceFileTest(TestCase, ReleaseFormsSetupMixin, TestXmlMixi
         copy.save()
         self.assertTrue(copy.lazy_fetch_attachment('files/modules-0/forms-0.xml'))
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
     @patch('corehq.apps.app_manager.models.FormBase.is_a_disabled_release_form', return_value=True)
     def test_disabled(self, *args):
         self.factory.app.create_build_files()

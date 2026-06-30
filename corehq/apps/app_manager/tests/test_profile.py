@@ -103,7 +103,7 @@ class ProfileTest(TestCase, TestXmlMixin):
             '"force" should always be true for custom properties"{}"'.format(key)
         )
 
-    @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.app_manager.models.applications.domain_has_privilege', return_value=True)
     def test_profile_properties(self, *args):
         for setting in get_custom_commcare_settings():
             if setting['id'] == 'users':
