@@ -420,7 +420,12 @@ class CaseSearchEndpointQueryBuilder:
     def build_query(self, search_criteria):
         self.param_values = {c.key: c.value for c in search_criteria}
         search_es = self._get_initial_search_es()
-        return search_es.add_query(self._parse_query(self.query_root), queries.MUST)
+        query = self._parse_query(self.query_root)
+        if query is None:
+            # Every condition dropped (e.g. all inputs were unsupplied
+            # parameters). Apply no extra filter rather than match-all-via-empty.
+            return search_es
+        return search_es.add_query(query, queries.MUST)
 
     def _get_initial_search_es(self):
         max_results = CASE_SEARCH_MAX_RESULTS
@@ -437,18 +442,18 @@ class CaseSearchEndpointQueryBuilder:
         return [q for q in child_queries if q is not None]
 
     def _parse_query(self, node):
-        if node.type == 'all':
-            return filters.AND(
-                *self._get_child_queries(node)
-            )
-        elif node.type == 'any':
-            return filters.OR(
-                *self._get_child_queries(node)
-            )
-        elif node.type == 'none':
-            return filters.NOT(
-                filters.OR(*self._get_child_queries(node))
-            )
+        if node.type in ('all', 'any', 'none'):
+            # Drop a group with no surviving children rather than collapsing to
+            # an empty AND/OR. An empty bool matches all documents, which in an
+            # `any`/OR context would make the whole query match everything.
+            children = self._get_child_queries(node)
+            if not children:
+                return None
+            if node.type == 'all':
+                return filters.AND(*children)
+            if node.type == 'any':
+                return filters.OR(*children)
+            return filters.NOT(filters.OR(*children))
         elif node.type == 'component':
             return self._parse_component_node(node)
         else:
