@@ -454,7 +454,6 @@ msgstr "%s Підписка"
 
 #: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
@@ -636,9 +635,8 @@ msgstr "Введіть унікальний slug ролі."
 msgid "A name is required for this new role."
 msgstr "Для цієї нової ролі потрібне ім'я."
 
-#: corehq/apps/accounting/forms.py
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_manager/forms.py corehq/apps/app_manager/models.py
+#: corehq/apps/accounting/forms.py corehq/apps/app_manager/forms.py
+#: corehq/apps/app_manager/models.py
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
@@ -1912,8 +1910,6 @@ msgstr "Номер виписки"
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/data_cleaning/tables.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
@@ -2732,8 +2728,7 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
-#: corehq/apps/accounting/views.py corehq/apps/app_execution/forms.py
-#: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/accounting/views.py corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
@@ -4116,7 +4111,6 @@ msgid "Payment Type"
 msgstr "Тип оплати"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/hqadmin/reports.py corehq/apps/linked_domain/views.py
@@ -5209,427 +5203,6 @@ msgstr "Цей домен не має прав на профілі корист�
 #: corehq/apps/api/validation.py corehq/apps/registration/validation.py
 msgid "This domain does not have locations privileges."
 msgstr "Цей домен не має прав на місця розташування."
-
-#: corehq/apps/app_execution/forms.py
-msgid "Run Every (minutes)"
-msgstr "Виконувати кожні (хвилин)"
-
-#: corehq/apps/app_execution/forms.py
-msgid "Username of the user to run the workflow"
-msgstr "Ім'я користувача, від імені якого запускати робочий процес"
-
-#: corehq/apps/app_execution/forms.py
-msgid "HAR File"
-msgstr "HAR-файл"
-
-#: corehq/apps/app_execution/forms.py
-msgid ""
-"HAR file recording should start with the selection of the app "
-"(navigate_menu_start)."
-msgstr ""
-"Запис HAR-файлу має починатися з вибору додатку (navigate_menu_start)."
-
-#: corehq/apps/app_execution/forms.py
-msgid "Populate workflow from HAR file"
-msgstr "Заповнити робочий процес з HAR-файлу"
-
-#: corehq/apps/app_execution/forms.py
-#: corehq/apps/case_search/templates/case_search/csql_expression_form.html
-#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
-#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-#: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/geospatial/forms.py
-#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
-#: corehq/apps/groups/templates/groups/group_members.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
-#: corehq/apps/integration/kyc/forms.py
-#: corehq/apps/integration/payments/forms.py
-#: corehq/apps/locations/templates/locations/location_types.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/reminders/forms.py corehq/apps/reports/forms.py
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/filter_panel.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
-#: corehq/apps/sms/forms.py corehq/apps/styleguide/example_forms.py
-#: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
-#: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
-#: corehq/apps/userreports/forms.py
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
-#: corehq/apps/userreports/ui/forms.py
-#: corehq/apps/users/templates/users/edit_role.html
-#: corehq/messaging/scheduling/forms.py
-#: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_save.html
-#: corehq/motech/dhis2/forms.py corehq/motech/forms.py
-#: corehq/motech/generic_inbound/forms.py
-#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-msgid "Save"
-msgstr "Зберегти"
-
-#: corehq/apps/app_execution/forms.py
-msgid "User not found"
-msgstr "Користувача не знайдено"
-
-#: corehq/apps/app_execution/forms.py
-#, python-brace-format
-msgid "App not found in domain: {domain}:{app_id}"
-msgstr "Додаток не знайдено в домені: {domain}:{app_id}"
-
-#: corehq/apps/app_execution/models.py
-msgid "Human: Answer each question individually and submit form"
-msgstr "Людина: Відповідайте на кожне питання окремо та надсилайте форму"
-
-#: corehq/apps/app_execution/models.py
-msgid "No Submit: Answer all questions but don't submit the form"
-msgstr "Без надсилання: Відповідайте на всі питання, але не надсилайте форму"
-
-#: corehq/apps/app_execution/models.py
-msgid "Ignore: Do not complete or submit forms"
-msgstr "Ігнорувати: Не заповнювати та не надсилати форми"
-
-#: corehq/apps/app_execution/models.py
-msgid "Sync user data before running"
-msgstr "Синхронізуйте дані користувача перед запуском"
-
-#: corehq/apps/app_execution/models.py
-msgid "Number of minutes between runs"
-msgstr "Кількість хвилин між запусками"
-
-#: corehq/apps/app_execution/models.py
-msgid "Emails to notify on failure"
-msgstr "Email-адреси для сповіщення у разі помилки"
-
-#: corehq/apps/app_execution/templates/app_execution/components/logs.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-#: corehq/messaging/scheduling/views.py
-#: corehq/motech/generic_inbound/models.py
-#: corehq/motech/repeaters/templates/repeaters/repeaters.html
-#: corehq/motech/repeaters/views/repeat_record_display.py
-msgid "Success"
-msgstr "Успішно"
-
-#: corehq/apps/app_execution/templates/app_execution/components/logs.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
-msgid "Error:"
-msgstr "Помилка:"
-
-#: corehq/apps/app_execution/templates/app_execution/components/logs.html
-msgid "Workflow"
-msgstr "Робочий процес"
-
-#: corehq/apps/app_execution/templates/app_execution/components/logs.html
-msgid "Current Workflow"
-msgstr "Поточний робочий процес"
-
-#: corehq/apps/app_execution/templates/app_execution/components/logs.html
-msgid ""
-"\n"
-"              The workflow shown here is the current version which may differ from the version\n"
-"              executed at the time of this run.\n"
-"            "
-msgstr ""
-"\n"
-"              Робочий процес, показаний тут, є поточною версією, яка може відрізнятися від версії,\n"
-"              виконаної під час цього запуску.\n"
-"            "
-
-#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
-#: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#: corehq/apps/data_interfaces/forms.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/views.py
-#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/settings/views.py corehq/apps/sms/views.py
-#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
-#: corehq/apps/userreports/views.py
-#: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/web_users.html
-#: corehq/apps/users/templates/users/roles_and_permissions.html
-#: corehq/motech/generic_inbound/views.py
-msgid "Actions"
-msgstr "Дії"
-
-#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/tabs/tabclasses.py
-msgid "Logs"
-msgstr "Журнали"
-
-#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_run.html
-#: corehq/tabs/tabclasses.py
-msgid "Run"
-msgstr "Запустити"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_form.html
-#, python-format
-msgid ""
-"\n"
-"      Editing \"%(workflow_name)s\"\n"
-"    "
-msgstr ""
-"\n"
-"      Редагування «%(workflow_name)s»\n"
-"    "
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_form.html
-msgid "New workflow"
-msgstr "Новий робочий процес"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "Average Timings"
-msgstr "Середній час виконання"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/enterprise/enterprise.py
-msgid "App Name"
-msgstr "Назва додатку"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-msgid "Last Run"
-msgstr "Останній запуск"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-msgid "Last 10 Runs"
-msgstr "Останні 10 запусків"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/confirm_delete_app.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/confirm_delete_app.html
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap3/module_link.html
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap5/module_link.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
-#: corehq/apps/case_search/models.py
-#: corehq/apps/case_search/templates/case_search/case_search.html
-#: corehq/apps/case_search/templates/case_search/csql_expression_form.html
-#: corehq/apps/case_search/templates/case_search/csql_user_data_criteria_fields.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
-#: corehq/apps/groups/templates/groups/group_members.html
-#: corehq/apps/locations/templates/locations/manage/location_template.html
-#: corehq/apps/programs/templates/programs/manage/programs.html
-#: corehq/apps/reminders/templates/reminders/keyword_list.html
-#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
-#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
-#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
-#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
-#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form.html
-#: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/sms/templates/sms/gateway_list.html
-#: corehq/apps/sms/templates/sms/global_gateway_list.html
-#: corehq/apps/users/models.py
-#: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/web_users.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
-#: corehq/apps/users/templates/users/roles_and_permissions.html
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-#: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
-#: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
-#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-#: corehq/motech/templates/motech/connection_settings.html
-msgid "Delete"
-msgstr "Видалити"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-#, python-format
-msgid ""
-"\n"
-"    Workflow Execution Log for %(workflow_name)s: %(date)s\n"
-"  "
-msgstr ""
-"\n"
-"    Журнал виконання робочого процесу для %(workflow_name)s: %(date)s\n"
-"  "
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/motech/generic_inbound/reports.py
-msgid "Details"
-msgstr "Деталі"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-#, python-format
-msgid "Started: %(date_started)s"
-msgstr "Почато: %(date_started)s"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-#, python-format
-msgid "Ended: %(date_ended)s"
-msgstr "Завершено: %(date_ended)s"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-#, python-format
-msgid "Duration: %(duration)s"
-msgstr "Тривалість: %(duration)s"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-msgid "Status:"
-msgstr "Статус:"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-#: corehq/apps/data_interfaces/models.py
-#: corehq/apps/domain/templates/error.html
-#: corehq/apps/integration/kyc/models.py
-#: corehq/apps/integration/payments/const.py
-#: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
-#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-#: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
-#: corehq/apps/sms/models.py corehq/messaging/scheduling/views.py
-#: corehq/motech/generic_inbound/models.py
-#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
-#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
-#: corehq/motech/views.py
-msgid "Error"
-msgstr "Помилка"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-#, python-format
-msgid "Logs for workflow \"%(name)s\""
-msgstr "Журнали для робочого процесу \"%(name)s\""
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "Log Status"
-msgstr "Статус журналу"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_filtering.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/filter_configs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_filtering.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/filter_configs.html
-#: corehq/apps/registry/templates/registry/partials/audit_logs.html
-msgid "Filter"
-msgstr "Фільтр"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "All Status"
-msgstr "Усі статуси"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "Started"
-msgstr "Почато"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "Duration"
-msgstr "Тривалість"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "Avg Timings"
-msgstr "Середній час"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "Max Timings"
-msgstr "Максимальний час"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_run.html
-#, python-format
-msgid "Testing %(name)s"
-msgstr "Тестування %(name)s"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_run.html
-msgid "Running..."
-msgstr "Виконується..."
-
-#: corehq/apps/app_execution/views.py
-msgid "Automatically Executed App Workflows"
-msgstr "Автоматично виконувані робочі процеси додатка"
-
-#: corehq/apps/app_execution/views.py
-msgid "New App Workflow"
-msgstr "Новий робочий процес додатка"
-
-#: corehq/apps/app_execution/views.py
-msgid "You must use the 'Import HAR' button to upload a HAR file."
-msgstr ""
-"Ви повинні скористатися кнопкою 'Імпортувати HAR', щоб завантажити файл HAR."
-
-#: corehq/apps/app_execution/views.py
-#, python-brace-format
-msgid "Edit App Workflow: {name}"
-msgstr "Редагувати робочий процес додатка: {name}"
-
-#: corehq/apps/app_execution/views.py
-#, python-brace-format
-msgid "Unable to process HAR file: {error}"
-msgstr "Не вдалося обробити файл HAR: {error}"
-
-#: corehq/apps/app_execution/views.py
-msgid "Automatically Executed App Workflow Logs"
-msgstr "Журнали автоматично виконуваних робочих процесів додатка"
-
-#: corehq/apps/app_execution/views.py
-msgid "Invalid date parameter"
-msgstr "Недійсний параметр дати"
-
-#: corehq/apps/app_execution/views.py
-#, python-brace-format
-msgid "Workflow Log: {name}"
-msgstr "Журнал робочого процесу: {name}"
 
 #: corehq/apps/app_manager/add_ons.py
 msgid "Case Detail Overwrite"
@@ -8016,6 +7589,36 @@ msgstr "Налаштування меню"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/apps/data_interfaces/forms.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/views.py
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/settings/views.py corehq/apps/sms/views.py
+#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/userreports/views.py
+#: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap3/web_users.html
+#: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/web_users.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#: corehq/motech/generic_inbound/views.py
+msgid "Actions"
+msgstr "Дії"
+
+#: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
 msgid "Session Endpoint Id"
 msgstr "Ідентифікатор кінцевої точки сесії"
 
@@ -8340,6 +7943,7 @@ msgid "Nodeset"
 msgstr "Набір вузлів"
 
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 #: corehq/apps/data_cleaning/forms/filters.py
 #: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
@@ -9750,6 +9354,68 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/confirm_delete_app.html
 msgid "You are about to delete this application"
 msgstr "Ви збираєтеся видалити цю програму"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/confirm_delete_app.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/confirm_delete_app.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap3/module_link.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap5/module_link.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
+#: corehq/apps/case_search/models.py
+#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_user_data_criteria_fields.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
+#: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/locations/templates/locations/manage/location_template.html
+#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/reminders/templates/reminders/keyword_list.html
+#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
+#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
+#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
+#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
+#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form.html
+#: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/sms/templates/sms/gateway_list.html
+#: corehq/apps/sms/templates/sms/global_gateway_list.html
+#: corehq/apps/users/models.py
+#: corehq/apps/users/templates/users/bootstrap3/web_users.html
+#: corehq/apps/users/templates/users/bootstrap5/web_users.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+#: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
+#: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
+#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
+#: corehq/motech/templates/motech/connection_settings.html
+msgid "Delete"
+msgstr "Видалити"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/custom_icon.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/custom_icon.html
@@ -11816,6 +11482,14 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_filtering.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/filter_configs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_filtering.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/filter_configs.html
+#: corehq/apps/registry/templates/registry/partials/audit_logs.html
+msgid "Filter"
+msgstr "Фільтр"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_filtering.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_filtering.html
 msgid ""
 "\n"
@@ -12244,13 +11918,11 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#| msgid "Back"
 msgid "Backend"
 msgstr "Бекенд"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#| msgid "Case Search Endpoints"
 msgid "Case Search Endpoint"
 msgstr "Кінцева точка пошуку кейсів"
 
@@ -12281,6 +11953,7 @@ msgstr "Додати властивість для пошуку"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/groups/templates/groups/all_groups.html
 msgid "Add Group"
@@ -15688,8 +15361,9 @@ msgid "Confirm Import"
 msgstr "Підтвердити імпорт"
 
 #: corehq/apps/case_importer/templates/case_importer/import_cases.html
-msgid "Upload an Excel File From Your Computer to Import From"
-msgstr "Завантажте файл Excel зі свого комп’ютера для імпорту"
+#| msgid "Upload File"
+msgid "Upload an Excel File"
+msgstr "Завантажити файл Excel"
 
 #: corehq/apps/case_importer/templates/case_importer/import_cases.html
 msgid "Select a file to upload"
@@ -15729,36 +15403,54 @@ msgid "blank"
 msgstr "порожньо"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
+#| msgid ""
+#| "\n"
+#| "      Case importer is a tool for bulk uploading new cases or modifying existing ones.\n"
+#| "    "
 msgid ""
 "\n"
-"      Case importer is a tool for bulk uploading new cases or modifying existing ones.\n"
+"      Bulk upload new cases or update existing ones from a spreadsheet.\n"
 "    "
 msgstr ""
 "\n"
-"      Імпортер справ — це інструмент для масового завантаження нових справ або зміни існуючих.\n"
+"      Масове завантаження нових справ або оновлення існуючих з електронної таблиці.\n"
 "    "
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
+#| msgid ""
+#| "\n"
+#| "      This tool can make changes to your data that might confuse your reports or applications.\n"
+#| "      Please exercise caution and see the\n"
+#| "      <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Case+Import+with+Excel\" target=\"_blank\">\n"
+#| "        help pages for this feature.\n"
+#| "      </a>\n"
+#| "    "
 msgid ""
 "\n"
-"      This tool can make changes to your data that might confuse your reports or applications.\n"
-"      Please exercise caution and see the\n"
-"      <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Case+Import+with+Excel\" target=\"_blank\">\n"
-"        help pages for this feature.\n"
-"      </a>\n"
+"      Imports can modify existing data and may affect your reports. Review the\n"
+"      <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Case+Import+with+Excel\"\n"
+"         target=\"_blank\"> help guide</a> for more information.\n"
 "    "
 msgstr ""
 "\n"
-"      Цей інструмент може вносити зміни у ваші дані, які можуть вплинути на ваші звіти або додатки.\n"
-"      Будь ласка, будьте обережні та ознайомтеся з\n"
-"      <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Case+Import+with+Excel\" target=\"_blank\">\n"
-"        довідковими сторінками для цієї функції.\n"
-"      </a>\n"
+"      Імпорт може змінити наявні дані та вплинути на ваші звіти. Перегляньте\n"
+"      <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Case+Import+with+Excel\"\n"
+"         target=\"_blank\">довідковий посібник</a> для отримання додаткової інформації.\n"
 "    "
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-msgid "Recent Uploads"
-msgstr "Останні завантаження"
+#| msgid "Recent Uploads"
+msgid "Recent Imports"
+msgstr "Останні імпорти"
+
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+msgid "Imports are processed one at a time."
+msgstr "Імпорти обробляються по одному за раз."
+
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/motech/generic_inbound/reports.py
+msgid "Details"
+msgstr "Деталі"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
@@ -15778,6 +15470,15 @@ msgstr "ID форм"
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 msgid "Case IDs"
 msgstr "ID справ"
+
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
+#: corehq/messaging/scheduling/views.py
+#: corehq/motech/generic_inbound/models.py
+#: corehq/motech/repeaters/templates/repeaters/repeaters.html
+#: corehq/motech/repeaters/views/repeat_record_display.py
+msgid "Success"
+msgstr "Успішно"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 msgid "Success with warnings"
@@ -15803,8 +15504,9 @@ msgid "Complete"
 msgstr "Завершено"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-msgid "No recent uploads found."
-msgstr "Останніх завантажень не знайдено."
+#| msgid "No recent uploads found."
+msgid "No recent imports found."
+msgstr "Останніх імпортів не знайдено."
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_status.html
 #, python-format
@@ -15989,6 +15691,98 @@ msgid ""
 "We don't know what to do with the function \"{}\". Accepted functions are: "
 "{}"
 msgstr "Ми не знаємо, що робити з функцією \"{}\". Дозволені функції: {}"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "is exactly"
+msgstr "точно дорівнює"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "is not"
+msgstr "не є"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "starts with"
+msgstr "починається з"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "equals"
+msgstr "дорівнює"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "does not equal"
+msgstr "не дорівнює"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "greater than"
+msgstr "більше ніж"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "greater than or equal to"
+msgstr "більше або дорівнює"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "less than"
+msgstr "менше ніж"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "less than or equal to"
+msgstr "менше або дорівнює"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "on"
+msgstr "на"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "before"
+msgstr "до"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/messaging/scheduling/forms.py
+msgid "after"
+msgstr "після"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "is any"
+msgstr "є будь-яким"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "is all"
+msgstr "є всіма"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "is empty"
+msgstr "порожнє"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#| msgid "Instance"
+msgid "within distance"
+msgstr "у межах відстані"
 
 #: corehq/apps/case_search/endpoint_views.py
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
@@ -16217,6 +16011,50 @@ msgstr ""
 "                Дивіться <a href='https://www.elastic.co/guide/en/elasticsearch/reference/current/search-profile.html' target='_blank'>документацію ElasticSearch</a> для допомоги з інтерпретацією даних профілю.\n"
 "              "
 
+#: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+#: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
+#: corehq/apps/geospatial/forms.py
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
+#: corehq/apps/integration/kyc/forms.py
+#: corehq/apps/integration/payments/forms.py
+#: corehq/apps/locations/templates/locations/location_types.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/reminders/forms.py corehq/apps/reports/forms.py
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
+#: corehq/apps/sms/forms.py corehq/apps/styleguide/example_forms.py
+#: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
+#: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
+#: corehq/apps/userreports/forms.py
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
+#: corehq/apps/userreports/ui/forms.py
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/messaging/scheduling/forms.py
+#: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_save.html
+#: corehq/motech/dhis2/forms.py corehq/motech/forms.py
+#: corehq/motech/generic_inbound/forms.py
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
+msgid "Save"
+msgstr "Зберегти"
+
 #: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
 #: corehq/apps/case_search/views.py
 msgid "CSQL Fixture Configuration"
@@ -16239,6 +16077,11 @@ msgid "Endpoint Details"
 msgstr "Деталі кінцевої точки"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#| msgid "Enter report name here"
+msgid "Enter endpoint name"
+msgstr "Введіть назву кінцевої точки"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 msgid "Target Type"
 msgstr "Цільовий тип"
@@ -16256,20 +16099,25 @@ msgid "JSON array"
 msgstr "JSON-масив"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-msgid "JSON object"
-msgstr "JSON-об'єкт"
+#: corehq/apps/case_search/templates/case_search/partials/query_tester.html
+#| msgid "Test API Key"
+msgid "Test query"
+msgstr "Тестувати запит"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#| msgid "Deactivate Endpoint"
+msgid "Create Endpoint"
+msgstr "Створити кінцеву точку"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 msgid "New Endpoint"
 msgstr "Нова кінцева точка"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#| msgid "Updated"
 msgid "Updated On"
 msgstr "Оновлено"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#| msgid "Updated"
 msgid "Updated By"
 msgstr "Оновлено користувачем"
 
@@ -16287,14 +16135,78 @@ msgstr ""
 msgid "No endpoints configured."
 msgstr "Жодної кінцевої точки не налаштовано."
 
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+#| msgid "Add Field"
+msgid "-- Field --"
+msgstr "-- Поле --"
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+msgid "-- Operation --"
+msgstr "-- Операція --"
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+#| msgid "Remove Action"
+msgid "Remove condition"
+msgstr "Видалити умову"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+msgid "ALL"
+msgstr "ВСІ"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#| msgid "AND"
+msgid "ANY"
+msgstr "БУДЬ-ЯКІ"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+msgid "NONE"
+msgstr "ЖОДНІ"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#| msgid "format must be one of the following: {}"
+msgid "match all of the following"
+msgstr "відповідає всім наступним"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#| msgid "format must be one of the following: {}"
+msgid "match any of the following"
+msgstr "відповідає будь-якому з наступних"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#| msgid "format must be one of the following: {}"
+msgid "match none of the following"
+msgstr "не відповідає жодному з наступних"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#| msgid "Remove User"
+msgid "Remove group"
+msgstr "Видалити групу"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "No conditions yet. Add a condition or group below."
+msgstr "Поки що немає умов. Додайте умову або групу нижче."
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+#| msgid "Conditions"
+msgid "Add Condition"
+msgstr "Додати умову"
+
+#: corehq/apps/case_search/templates/case_search/partials/query_builder.html
+msgid "Show query JSON"
+msgstr "Показати запит у форматі JSON"
+
 #: corehq/apps/case_search/utils.py
 msgid "Configurable Endpoints are not available"
 msgstr "Налаштовувані кінцеві точки недоступні"
 
 #: corehq/apps/case_search/utils.py
-#| msgid "LocationType '{}' not found"
 msgid "Endpoint '{}' not found"
 msgstr "Кінцева точка '{}' не знайдена"
+
+#: corehq/apps/case_search/utils.py
+#| msgid "Endpoint '{}' not found"
+msgid "Endpoint '{}' query is invalid"
+msgstr "Запит кінцевої точки '{}' є недійсним"
 
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
@@ -18048,11 +17960,6 @@ msgid "Multiple Choice"
 msgstr "Множинний вибір"
 
 #: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-msgid "is empty"
-msgstr "порожнє"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "is not empty"
 msgstr "не порожнє"
 
@@ -18063,20 +17970,6 @@ msgstr "відсутнє"
 #: corehq/apps/data_cleaning/models/types.py
 msgid "is not missing"
 msgstr "не відсутнє"
-
-#: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-msgid "is exactly"
-msgstr "точно дорівнює"
-
-#: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-msgid "is not"
-msgstr "не є"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "starts with"
-msgstr "починається з"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "does not start with"
@@ -18099,69 +17992,16 @@ msgid "does not sound like"
 msgstr "не звучить як"
 
 #: corehq/apps/data_cleaning/models/types.py
-msgid "is any"
-msgstr "є будь-яким"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "is not any"
 msgstr "не є жодним"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "is all"
-msgstr "є всіма"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "is not all"
 msgstr "не є всіма"
 
 #: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
-msgid "equals"
-msgstr "дорівнює"
-
-#: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
-msgid "does not equal"
-msgstr "не дорівнює"
-
-#: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
-msgid "less than"
-msgstr "менше ніж"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "less than or equal to"
-msgstr "менше або дорівнює"
-
-#: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
-msgid "greater than"
-msgstr "більше ніж"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "greater than or equal to"
-msgstr "більше або дорівнює"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "on"
-msgstr "на"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "before"
-msgstr "до"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "before or on"
 msgstr "до або на"
-
-#: corehq/apps/data_cleaning/models/types.py
-#: corehq/messaging/scheduling/forms.py
-msgid "after"
-msgstr "після"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "on or after"
@@ -19905,6 +19745,21 @@ msgstr "Завершено"
 msgid "Stopped"
 msgstr "Зупинено"
 
+#: corehq/apps/data_interfaces/models.py
+#: corehq/apps/domain/templates/error.html
+#: corehq/apps/integration/kyc/models.py
+#: corehq/apps/integration/payments/const.py
+#: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
+#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
+#: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
+#: corehq/apps/sms/models.py corehq/messaging/scheduling/views.py
+#: corehq/motech/generic_inbound/models.py
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+#: corehq/motech/views.py
+msgid "Error"
+msgstr "Помилка"
+
 #: corehq/apps/data_interfaces/tasks.py
 msgid "No Forms are supplied"
 msgstr "Форми не надано"
@@ -20302,6 +20157,11 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+msgid "Last Run"
+msgstr "Останній запуск"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 msgid ""
 "\n"
 "                          Are you sure you want to <strong>delete</strong> this rule?\n"
@@ -20340,6 +20200,13 @@ msgstr "Кількість оновлених справ"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
 msgid "# of Cases Closed"
 msgstr "Кількість закритих справ"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "Error:"
+msgstr "Помилка:"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
@@ -26729,6 +26596,10 @@ msgstr "Назва форми"
 #: corehq/apps/enterprise/enterprise.py
 msgid "Submitted [UTC]"
 msgstr "Відправлено [UTC]"
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "App Name"
+msgstr "Назва додатку"
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Mobile User"
@@ -45111,9 +44982,6 @@ msgstr "Ім'я користувача {0} занадто довге. Має б�
 
 #: corehq/apps/sms/messages.py
 #, python-brace-format
-#| msgid ""
-#| "Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to {1}"
-#| " to start using SMS with CommCareHQ."
 msgid ""
 "Welcome to CommCare HQ! Is this phone used by {0}? If yes, reply '123' to "
 "{1} to start using SMS with CommCareHQ."
@@ -45123,9 +44991,6 @@ msgstr ""
 
 #: corehq/apps/sms/messages.py
 #, python-brace-format
-#| msgid ""
-#| "Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to "
-#| "start using SMS with CommCareHQ."
 msgid ""
 "Welcome to CommCare HQ! Is this phone used by {0}? If yes, reply '123' to "
 "start using SMS with CommCareHQ."
@@ -58461,6 +58326,11 @@ msgstr "Заблоковані питання адміністратора"
 msgid "Save to Case"
 msgstr "Зберегти до справи"
 
+#: corehq/privileges.py
+#| msgid "Public Name"
+msgid "Public Webforms"
+msgstr "Публічні вебформи"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Звіти Конструктора Звітів"
@@ -58536,14 +58406,6 @@ msgstr "Мої додатки"
 #: corehq/tabs/tabclasses.py
 msgid "New Application"
 msgstr "Новий додаток"
-
-#: corehq/tabs/tabclasses.py
-msgid "Application Test Flows"
-msgstr "Тестові потоки додатка"
-
-#: corehq/tabs/tabclasses.py
-msgid "Log Details"
-msgstr "Деталі журналу"
 
 #: corehq/tabs/tabclasses.py
 msgid "Test Inbound SMS"
@@ -59457,6 +59319,185 @@ msgstr "Обов'язкові колонки: {column_names}"
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
 
+#~ msgid "Run Every (minutes)"
+#~ msgstr "Виконувати кожні (хвилин)"
+
+#~ msgid "Username of the user to run the workflow"
+#~ msgstr "Ім'я користувача, від імені якого запускати робочий процес"
+
+#~ msgid "HAR File"
+#~ msgstr "HAR-файл"
+
+#~ msgid ""
+#~ "HAR file recording should start with the selection of the app "
+#~ "(navigate_menu_start)."
+#~ msgstr ""
+#~ "Запис HAR-файлу має починатися з вибору додатку (navigate_menu_start)."
+
+#~ msgid "Populate workflow from HAR file"
+#~ msgstr "Заповнити робочий процес з HAR-файлу"
+
+#~ msgid "User not found"
+#~ msgstr "Користувача не знайдено"
+
+#, python-brace-format
+#~ msgid "App not found in domain: {domain}:{app_id}"
+#~ msgstr "Додаток не знайдено в домені: {domain}:{app_id}"
+
+#~ msgid "Human: Answer each question individually and submit form"
+#~ msgstr "Людина: Відповідайте на кожне питання окремо та надсилайте форму"
+
+#~ msgid "No Submit: Answer all questions but don't submit the form"
+#~ msgstr "Без надсилання: Відповідайте на всі питання, але не надсилайте форму"
+
+#~ msgid "Ignore: Do not complete or submit forms"
+#~ msgstr "Ігнорувати: Не заповнювати та не надсилати форми"
+
+#~ msgid "Sync user data before running"
+#~ msgstr "Синхронізуйте дані користувача перед запуском"
+
+#~ msgid "Number of minutes between runs"
+#~ msgstr "Кількість хвилин між запусками"
+
+#~ msgid "Emails to notify on failure"
+#~ msgstr "Email-адреси для сповіщення у разі помилки"
+
+#~ msgid "Workflow"
+#~ msgstr "Робочий процес"
+
+#~ msgid "Current Workflow"
+#~ msgstr "Поточний робочий процес"
+
+#~ msgid ""
+#~ "\n"
+#~ "              The workflow shown here is the current version which may differ from the version\n"
+#~ "              executed at the time of this run.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Робочий процес, показаний тут, є поточною версією, яка може відрізнятися від версії,\n"
+#~ "              виконаної під час цього запуску.\n"
+#~ "            "
+
+#~ msgid "Logs"
+#~ msgstr "Журнали"
+
+#~ msgid "Run"
+#~ msgstr "Запустити"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      Editing \"%(workflow_name)s\"\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Редагування «%(workflow_name)s»\n"
+#~ "    "
+
+#~ msgid "New workflow"
+#~ msgstr "Новий робочий процес"
+
+#~ msgid "Average Timings"
+#~ msgstr "Середній час виконання"
+
+#~ msgid "Last 10 Runs"
+#~ msgstr "Останні 10 запусків"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    Workflow Execution Log for %(workflow_name)s: %(date)s\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Журнал виконання робочого процесу для %(workflow_name)s: %(date)s\n"
+#~ "  "
+
+#, python-format
+#~ msgid "Started: %(date_started)s"
+#~ msgstr "Почато: %(date_started)s"
+
+#, python-format
+#~ msgid "Ended: %(date_ended)s"
+#~ msgstr "Завершено: %(date_ended)s"
+
+#, python-format
+#~ msgid "Duration: %(duration)s"
+#~ msgstr "Тривалість: %(duration)s"
+
+#~ msgid "Status:"
+#~ msgstr "Статус:"
+
+#, python-format
+#~ msgid "Logs for workflow \"%(name)s\""
+#~ msgstr "Журнали для робочого процесу \"%(name)s\""
+
+#~ msgid "Log Status"
+#~ msgstr "Статус журналу"
+
+#~ msgid "All Status"
+#~ msgstr "Усі статуси"
+
+#~ msgid "Started"
+#~ msgstr "Почато"
+
+#~ msgid "Duration"
+#~ msgstr "Тривалість"
+
+#~ msgid "Avg Timings"
+#~ msgstr "Середній час"
+
+#~ msgid "Max Timings"
+#~ msgstr "Максимальний час"
+
+#, python-format
+#~ msgid "Testing %(name)s"
+#~ msgstr "Тестування %(name)s"
+
+#~ msgid "Running..."
+#~ msgstr "Виконується..."
+
+#~ msgid "Automatically Executed App Workflows"
+#~ msgstr "Автоматично виконувані робочі процеси додатка"
+
+#~ msgid "New App Workflow"
+#~ msgstr "Новий робочий процес додатка"
+
+#~ msgid "You must use the 'Import HAR' button to upload a HAR file."
+#~ msgstr ""
+#~ "Ви повинні скористатися кнопкою 'Імпортувати HAR', щоб завантажити файл HAR."
+
+#, python-brace-format
+#~ msgid "Edit App Workflow: {name}"
+#~ msgstr "Редагувати робочий процес додатка: {name}"
+
+#, python-brace-format
+#~ msgid "Unable to process HAR file: {error}"
+#~ msgstr "Не вдалося обробити файл HAR: {error}"
+
+#~ msgid "Automatically Executed App Workflow Logs"
+#~ msgstr "Журнали автоматично виконуваних робочих процесів додатка"
+
+#~ msgid "Invalid date parameter"
+#~ msgstr "Недійсний параметр дати"
+
+#, python-brace-format
+#~ msgid "Workflow Log: {name}"
+#~ msgstr "Журнал робочого процесу: {name}"
+
+#~ msgid "Upload an Excel File From Your Computer to Import From"
+#~ msgstr "Завантажте файл Excel зі свого комп’ютера для імпорту"
+
+#~ msgid "JSON object"
+#~ msgstr "JSON-об'єкт"
+
+#~ msgid "Application Test Flows"
+#~ msgstr "Тестові потоки додатка"
+
+#~ msgid "Log Details"
+#~ msgstr "Деталі журналу"
+
 #, python-format
 #~ msgid ""
 #~ "\n"
@@ -60063,9 +60104,6 @@ msgstr "Введіть коректний JSON"
 #~ msgstr ""
 #~ "Введіть тут свій токен API Mapbox. Переконайтеся, що ваш токен має "
 #~ "налаштовану правильну область для використання Mapbox Matrix API."
-
-#~ msgid "Test API Key"
-#~ msgstr "Перевірити ключ API"
 
 #~ msgid "Mapbox API token required"
 #~ msgstr "Потрібен токен API Mapbox"
