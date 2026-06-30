@@ -144,11 +144,6 @@ class TestCheckImageAttachmentsCachingFootprint(TestCase):
     domain = 'submission-validation-tests'
 
     @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        FormProcessorTestUtils.delete_all_xforms(cls.domain)
-
-    @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_xforms(cls.domain)
         super().tearDownClass()
