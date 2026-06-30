@@ -12,7 +12,7 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.util.test_utils import flag_enabled
 
 
-@patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+@patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
 @patch.object(Application, 'enable_practice_users', return_value=False)
 class BuildErrorsInlineSearchTest(SimpleTestCase):

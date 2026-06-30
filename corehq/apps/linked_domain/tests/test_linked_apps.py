@@ -513,7 +513,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(self.linked_app.linked_app_translations, translations)
         self.assertEqual(self.linked_app.translations, translations)
 
-    @patch('corehq.apps.app_manager.models.get_and_assert_practice_user_in_domain', lambda x, y: None)
+    @patch('corehq.apps.app_manager.models.applications.get_and_assert_practice_user_in_domain', lambda x, y: None)
     def test_overrides(self, *args):
         self.master1.practice_mobile_worker_id = "123456"
         self.master1.save()

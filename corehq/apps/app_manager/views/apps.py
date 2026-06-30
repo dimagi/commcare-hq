@@ -7,6 +7,7 @@ import urllib3
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request, json_response
 from django.contrib import messages
+from django.apps import apps as django_apps
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -18,6 +19,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
+from memoized import memoized
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -44,6 +46,7 @@ from corehq.apps.app_manager.exceptions import (
     AppLinkError,
     AppValidationError,
     IncompatibleFormTypeException,
+    ModuleNotFoundException,
     RearrangeError,
 )
 from corehq.apps.app_manager.forms import CopyApplicationForm
@@ -54,9 +57,6 @@ from corehq.apps.app_manager.models import (
     ExchangeApplication,
     LinkedApplication,
     Module,
-    ModuleNotFoundException,
-    app_template_dir,
-    load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
@@ -490,15 +490,35 @@ def app_from_template(request, domain, slug):
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
 
 
+def _app_template_dir(slug):
+    root = os.path.join(
+        django_apps.get_app_config('app_manager').path,
+        'static',
+        'app_manager',
+        'template_apps',
+    )
+    # Resolve the slug against the set of template apps that actually exist
+    for name in os.listdir(root):
+        if name == slug:
+            return os.path.join(root, name)
+
+
+@memoized
+def _load_app_template(slug):
+    if app_dir := _app_template_dir(slug):
+        with open(os.path.join(app_dir, 'app.json')) as f:
+            return json.load(f)
+
+
 def load_app_from_slug(domain, username, slug):
     # Import app itself
-    template = load_app_template(slug)
+    template = _load_app_template(slug)
     app = import_app_util(template, domain, {
         'created_from_template': '%s' % slug,
     })
 
     # Fetch multimedia, which is hosted elsewhere
-    multimedia_filename = os.path.join(app_template_dir(slug), 'multimedia.json')
+    multimedia_filename = os.path.join(_app_template_dir(slug), 'multimedia.json')
     if (os.path.exists(multimedia_filename)):
         with open(multimedia_filename) as f:
             path_url_map = json.load(f)
