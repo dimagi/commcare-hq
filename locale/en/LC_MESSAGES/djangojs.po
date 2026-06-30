@@ -161,22 +161,6 @@ msgstr ""
 msgid "Submit Request"
 msgstr ""
 
-#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
-msgid "Seconds"
-msgstr ""
-
-#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
-msgid "Chart"
-msgstr ""
-
-#: corehq/apps/app_execution/static/app_execution/js/workflow_logs.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
-#: corehq/apps/registry/static/registry/js/registry_logs.js
-#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
-#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
-msgid "Show All Dates"
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
 msgid "Hide Past Versions"
 msgstr ""
@@ -2483,6 +2467,13 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
 msgid "Clear"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
+#: corehq/apps/registry/static/registry/js/registry_logs.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
+msgid "Show All Dates"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_base.js

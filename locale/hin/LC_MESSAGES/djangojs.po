@@ -198,22 +198,6 @@ msgstr "हमें खेद है, लेकिन कुछ अप्रत
 msgid "Submit Request"
 msgstr "अनुरोध सबमिट करें"
 
-#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
-msgid "Seconds"
-msgstr "सेकंड्स"
-
-#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
-msgid "Chart"
-msgstr "चार्ट"
-
-#: corehq/apps/app_execution/static/app_execution/js/workflow_logs.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
-#: corehq/apps/registry/static/registry/js/registry_logs.js
-#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
-#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
-msgid "Show All Dates"
-msgstr "सभी तिथियाँ दिखाएँ"
-
 #: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
 msgid "Hide Past Versions"
 msgstr "पिछले संस्करण छुपाएँ"
@@ -2634,6 +2618,13 @@ msgstr "छवि अपलोड करने में विफल। कृ�
 msgid "Clear"
 msgstr "साफ़ करें"
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
+#: corehq/apps/registry/static/registry/js/registry_logs.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
+msgid "Show All Dates"
+msgstr "सभी तिथियाँ दिखाएँ"
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_base.js
 msgid "Gateway Timeout Error. Max retries exceeded."
 msgstr "गेटवे टाइमआउट त्रुटि। अधिकतम पुनः प्रयासों की सीमा पार हो गई है।"
@@ -4323,6 +4314,12 @@ msgstr "विफल! प्रतिक्रिया है: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ अनुरोध करने में असमर्थ था: "
+
+#~ msgid "Seconds"
+#~ msgstr "सेकंड्स"
+
+#~ msgid "Chart"
+#~ msgstr "चार्ट"
 
 #~ msgid "Command Bar"
 #~ msgstr "कमांड बार"
