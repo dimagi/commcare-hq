@@ -3,6 +3,14 @@ import "hqwebapp/js/htmx_base";
 import Alpine from "alpinejs";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
+// Input-slot type sentinels. These MUST stay in sync with the constants in
+// corehq/apps/case_search/endpoint_capability.py (INPUT_TYPE_CHOICE,
+// INPUT_TYPE_MATCH_FIELD). The capability metadata is the contract that drives
+// both this UI and backend query validation, so a mismatch silently diverges
+// the two.
+const SLOT_TYPE_CHOICE = "choice";
+const SLOT_TYPE_MATCH_FIELD = "match_field";
+
 Alpine.data("endpointForm", () => {
     const mode = initialPageData.get("endpoint_mode");
 
@@ -16,6 +24,9 @@ Alpine.data("endpointForm", () => {
         capability: initialPageData.get("capability"),
         mode: mode,
         _nextId: 1,
+        // Exposed so condition_row.html can compare against the sentinel rather
+        // than re-typing the "choice" literal.
+        slotTypeChoice: SLOT_TYPE_CHOICE,
 
         get currentFields() {
             return this.capability.case_types[this.targetCasetype] || {};
@@ -34,7 +45,7 @@ Alpine.data("endpointForm", () => {
             const operation = node.operator;
             const inputs = this.capability.operator_input_schemas[operation] || [];
             return inputs.map(input =>
-                input.type === "match_field"
+                input.type === SLOT_TYPE_MATCH_FIELD
                     ? { ...input, type: this.getFieldType(node.field) }
                     : input,
             );
@@ -151,7 +162,7 @@ Alpine.data("endpointForm", () => {
         _defaultInputForSlot(slot) {
             // Choice slots are constant-only; default to the first valid option
             // so the dropdown is never blank (which would fail validation).
-            if (slot.type === "choice") {
+            if (slot.type === SLOT_TYPE_CHOICE) {
                 return { type: "constant", value: (slot.options || [])[0] || "" };
             }
             return { type: "constant", value: "" };

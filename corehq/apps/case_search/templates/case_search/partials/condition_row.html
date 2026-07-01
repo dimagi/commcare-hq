@@ -43,8 +43,9 @@
   <template x-if="node.operator">
     <template x-for="slot in getInputSchemaForOperation(node)" :key="slot.name">
       <div class="d-flex gap-1 flex-grow-1">
-        {# Choice slots are constant-only: a dropdown of fixed options, no type selector. #}
-        <template x-if="slot.type === 'choice'">
+        {# Choice slots are constant-only: a dropdown of fixed options, no type #}
+        {# selector. `slotTypeChoice` mirrors endpoint_capability.INPUT_TYPE_CHOICE. #}
+        <template x-if="slot.type === slotTypeChoice">
           <select
             class="form-select form-select-sm"
             x-model="getInputValue(node, slot.name).value"
@@ -56,7 +57,7 @@
             </template>
           </select>
         </template>
-        <template x-if="slot.type !== 'choice'">
+        <template x-if="slot.type !== slotTypeChoice">
           <div class="d-flex gap-1 flex-grow-1">
             <select
               class="form-select form-select-sm w-auto"
