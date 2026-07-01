@@ -529,7 +529,12 @@ class PoTranslationFormat(TranslationFormat):
                     print(f"msgid: {entry.msgid} at line {current_msgid_line_num}")
                     print(f"msgstr: {entry.msgstr}")
                     print("--------------------------------")
-                    entry.msgstr = ""
+                    if entry.msgid_plural:
+                        # Plural entries store their translations in msgstr_plural,
+                        # not msgstr, so blank every plural form to actually clear it.
+                        entry.msgstr_plural = {k: "" for k in entry.msgstr_plural}
+                    else:
+                        entry.msgstr = ""
                     count += 1
                     if len(errored_msgstr_line_nums) > 0:
                         msg_str_lin_num = errored_msgstr_line_nums.pop(0)
