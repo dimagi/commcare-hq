@@ -66,12 +66,66 @@
               <option value="parameter">{% trans "Parameter" %}</option>
             </select>
             <template x-if="getInputValue(node, slot.name).type === 'constant'">
-              <input
-                type="text"
-                class="form-control form-control-sm"
-                x-model="getInputValue(node, slot.name).value"
-                :placeholder="slot.name"
-              />
+              <div class="flex-grow-1">
+                <template x-if="slot.type === 'date'">
+                  <div
+                    class="input-group input-group-sm"
+                    data-td-target-input="nearest"
+                    data-td-target-toggle="nearest"
+                  >
+                    <input
+                      type="text"
+                      class="form-control form-control-sm"
+                      :id="'cond-' + node._id + '-' + slot.name"
+                      x-model="getInputValue(node, slot.name).value"
+                      x-datepicker='{"useInputGroup": true}'
+                      :placeholder="slot.name"
+                      autocomplete="off"
+                    />
+                    <button
+                      class="btn btn-outline-secondary"
+                      type="button"
+                      data-td-toggle="datetimepicker"
+                    >
+                      <i class="fa-solid fa-calendar-days"></i>
+                    </button>
+                  </div>
+                </template>
+                <template x-if="slot.type === 'datetime'">
+                  <div
+                    class="input-group input-group-sm"
+                    data-td-target-input="nearest"
+                    data-td-target-toggle="nearest"
+                  >
+                    <input
+                      type="text"
+                      class="form-control form-control-sm"
+                      :id="'cond-' + node._id + '-' + slot.name"
+                      x-model="getInputValue(node, slot.name).value"
+                      x-datepicker='{"datetime": true, "useInputGroup": true}'
+                      :placeholder="slot.name"
+                      autocomplete="off"
+                    />
+                    <button
+                      class="btn btn-outline-secondary"
+                      type="button"
+                      data-td-toggle="datetimepicker"
+                    >
+                      <i class="fa-solid fa-calendar-days"></i>
+                    </button>
+                  </div>
+                </template>
+                <template
+                  x-if="slot.type !== 'date' && slot.type !== 'datetime'"
+                >
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    x-model="getInputValue(node, slot.name).value"
+                    :placeholder="slot.name"
+                  />
+                </template>
+              </div>
             </template>
             <template
               x-if="getInputValue(node, slot.name).type === 'parameter'"

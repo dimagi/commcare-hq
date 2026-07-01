@@ -12,12 +12,37 @@
       x-text="param.name"
     ></label>
     <div class="col-sm-10 ">
-      <input
-        type="text"
-        class="form-control form-control-sm font-monospace flex-grow-1"
-        :id="'param-value-' + idx"
-        x-model="testParamValues[param.name]"
-      />
+      <template x-if="param.type === 'date'">
+        <div
+          class="input-group input-group-sm"
+          data-td-target-input="nearest"
+          data-td-target-toggle="nearest"
+        >
+          <input
+            type="text"
+            class="form-control form-control-sm font-monospace"
+            :id="'param-value-' + idx"
+            x-model="testParamValues[param.name]"
+            x-datepicker='{"useInputGroup": true}'
+            autocomplete="off"
+          />
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            data-td-toggle="datetimepicker"
+          >
+            <i class="fa-solid fa-calendar-days"></i>
+          </button>
+        </div>
+      </template>
+      <template x-if="param.type !== 'date'">
+        <input
+          type="text"
+          class="form-control form-control-sm font-monospace flex-grow-1"
+          :id="'param-value-' + idx"
+          x-model="testParamValues[param.name]"
+        />
+      </template>
     </div>
   </div>
 </template>
