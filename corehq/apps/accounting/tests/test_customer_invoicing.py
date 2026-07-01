@@ -806,3 +806,16 @@ class TestDomainsInLineItemForCustomerInvoicing(TestCase):
         )
         line_item_factory = LineItemFactory(new_subscription, None, self.mock_customer_invoice)
         self.assertEqual(line_item_factory.subscribed_domains, [self.domain.name])
+
+
+class TestBillingAccountDomainHistory(BaseCustomerInvoiceCase):
+
+    def test_unique_per_account_and_date(self):
+        from django.db import IntegrityError, transaction
+        from corehq.apps.accounting.models import BillingAccountDomainHistory
+        record_date = date(2016, 5, 31)
+        BillingAccountDomainHistory.objects.create(
+            billing_account=self.account, record_date=record_date, num_domains=3)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            BillingAccountDomainHistory.objects.create(
+                billing_account=self.account, record_date=record_date, num_domains=4)
