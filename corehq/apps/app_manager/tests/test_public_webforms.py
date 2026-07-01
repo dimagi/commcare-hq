@@ -1,10 +1,17 @@
 import datetime
+from uuid import uuid4
 
 import pytest
 
-from django.test import SimpleTestCase
+from django.http import HttpResponse
+from django.test import RequestFactory, SimpleTestCase, TestCase
 
 from casexml.apps.phone.xml import get_registration_element_data
+from corehq.apps.app_manager.const import (
+    PUBLIC_FORM_SESSION_COOKIE_NAME,
+    PUBLIC_FORM_SESSION_HEADER,
+)
+from corehq.apps.app_manager.decorators import allow_public_form_session
 from corehq.apps.app_manager.models import (
     OTARestorePublicFormUser,
     PublicFormSession,
@@ -129,3 +136,83 @@ class OTARestorePublicFormUserTests(SimpleTestCase):
 
     def test_no_call_center_indicators(self):
         assert self.restore_user.get_call_center_indicators(None) is None
+
+
+class AllowPublicFormSessionTests(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.existing_user = object()
+        future_expiration = datetime.datetime.today() + datetime.timedelta(days=30)
+        self.webform = PublicWebform.objects.create(
+            domain='public-forms-domain',
+            app_id='app',
+            app_build_id='build',
+            form_unique_id='form',
+            endpoint_id='endpoint',
+            session_type='survey',
+            allow_sms=False,
+            allow_email=True,
+            expires_at=future_expiration,
+        )
+        self.session = PublicFormSession.objects.create(
+            public_webform=self.webform,
+            expires_at=future_expiration,
+        )
+        self.factory = RequestFactory()
+
+    def _request(self, with_header=True, cookie_value=None):
+        headers = {PUBLIC_FORM_SESSION_HEADER: 'true'} if with_header else {}
+        request = self.factory.post('/a/public-forms-domain/receiver/', headers=headers)
+        request.couch_user = self.existing_user
+        if cookie_value is not None:
+            request.COOKIES[PUBLIC_FORM_SESSION_COOKIE_NAME] = cookie_value
+        return request
+
+    @staticmethod
+    def _decorated_view():
+        @allow_public_form_session
+        def view(request):
+            return HttpResponse('ok')
+        return view
+
+    def test_valid_header_and_cookie_sets_public_form_user(self):
+        request = self._request(cookie_value=str(self.session.session_key))
+        self._decorated_view()(request)
+        assert isinstance(request.couch_user, PublicFormUser)
+        assert request.couch_user.user_id == PUBLIC_USER_ID
+
+    def test_no_header_leaves_couch_user_untouched(self):
+        request = self._request(
+            with_header=False, cookie_value=str(self.session.session_key))
+        self._decorated_view()(request)
+        assert request.couch_user is self.existing_user
+
+    def test_no_cookie_leaves_couch_user_untouched(self):
+        request = self._request(cookie_value=None)
+        self._decorated_view()(request)
+        assert request.couch_user is self.existing_user
+
+    def test_invalid_cookie_leaves_couch_user_untouched(self):
+        request = self._request(cookie_value='not-a-uuid')
+        self._decorated_view()(request)
+        assert request.couch_user is self.existing_user
+
+    def test_unknown_key_leaves_couch_user_untouched(self):
+        request = self._request(cookie_value=str(uuid4()))
+        self._decorated_view()(request)
+        assert request.couch_user is self.existing_user
+
+    def test_expired_session_leaves_couch_user_untouched(self):
+        self.session.expires_at = datetime.datetime(2000, 1, 1)
+        self.session.save()
+        request = self._request(cookie_value=str(self.session.session_key))
+        self._decorated_view()(request)
+        assert request.couch_user is self.existing_user
+
+    def test_submitted_session_leaves_couch_user_untouched(self):
+        self.session.submitted_at = datetime.datetime(2020, 1, 1)
+        self.session.save()
+        request = self._request(cookie_value=str(self.session.session_key))
+        self._decorated_view()(request)
+        assert request.couch_user is self.existing_user
