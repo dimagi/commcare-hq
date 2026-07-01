@@ -470,6 +470,38 @@ def test_remove_errored_translations():
     os.remove(po_file_path)
 
 
+def test_remove_errored_translations_clears_plural_forms():
+    po_content = (
+        'msgid ""\n'
+        'msgstr ""\n'
+        '"Content-Type: text/plain; charset=UTF-8\\n"\n'
+        '"Plural-Forms: nplurals=2; plural=(n != 1);\\n"\n\n'
+        '#, python-brace-format\n'
+        'msgid "{count} domain membership"\n'
+        'msgid_plural "{count} domain memberships"\n'
+        'msgstr[0] "Actualizar Membresia de Ubicacion"\n'
+        'msgstr[1] "Actualizar Membresia de Ubicacion"\n'
+    )
+    with tempfile.NamedTemporaryFile("w", suffix=".po", delete=False) as tmp:
+        tmp.write(po_content)
+        po_file_path = tmp.name
+
+    try:
+        po_format = PoTranslationFormat(po_file_path)
+        # Sanity check: the file is genuinely uncompilable before the fix.
+        assert po_format._extract_errored_msgstr_ids(po_format._run_msgfmt(po_file_path))
+
+        po_format.check_and_remove_errored_messages(po_file_path)
+
+        updated = polib.pofile(po_file_path)
+        entry = updated.find("{count} domain membership")
+        assert all(v == "" for v in entry.msgstr_plural.values())
+        # No compile errors remain
+        assert not po_format._extract_errored_msgstr_ids(po_format._run_msgfmt(po_file_path))
+    finally:
+        os.remove(po_file_path)
+
+
 def test_fuzzy_handling_with_real_po_content():
     po_content = '''# Test PO file
 msgid ""
