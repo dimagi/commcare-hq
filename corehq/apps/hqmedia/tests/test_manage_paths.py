@@ -16,7 +16,7 @@ from corehq.apps.hqmedia.view_helpers import (
 )
 
 
-@patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+@patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
 class ManagePathsTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data',)
 

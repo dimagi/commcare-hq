@@ -3,8 +3,8 @@ from django.core.management.base import BaseCommand, CommandError
 import csv
 
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
-from corehq.apps.app_manager.models import Application, Domain
-from corehq.apps.domain.models import all_app_manager_add_ons_enabled
+from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.models import Domain, all_app_manager_add_ons_enabled
 from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.toggles import NAMESPACE_DOMAIN
 

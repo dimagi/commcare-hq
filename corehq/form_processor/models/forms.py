@@ -644,20 +644,23 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         }
 
     @property
-    @memoized
     def form_data(self):
         """Returns the JSON representation of the form XML"""
-        from couchforms import XMLSyntaxError
-        from ..utils import convert_xform_to_json, adjust_datetimes
-        from corehq.form_processor.utils.metadata import scrub_form_meta
-        xml = self.get_xml()
-        try:
-            form_json = convert_xform_to_json(xml)
-        except XMLSyntaxError:
-            return {}
-        adjust_datetimes(form_json)
+        form_json = getattr(self, '_form_json', None)
+        if form_json is None:
+            from couchforms import XMLSyntaxError
+            from ..utils import convert_xform_to_json, adjust_datetimes
+            from corehq.form_processor.utils.metadata import scrub_form_meta
 
-        scrub_form_meta(self.form_id, form_json)
+            xml = self.get_xml()
+            try:
+                form_json = convert_xform_to_json(xml)
+            except XMLSyntaxError:
+                return {}
+            adjust_datetimes(form_json)
+
+            scrub_form_meta(self.form_id, form_json)
+            self._form_json = form_json
         return form_json
 
     @property

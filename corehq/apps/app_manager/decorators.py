@@ -17,10 +17,10 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import (
+    AppEditingError,
     BuildConflictException,
     CaseError,
 )
-from corehq.apps.app_manager.models import AppEditingError
 from corehq.apps.app_manager.util import get_latest_app_release_by_location
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain

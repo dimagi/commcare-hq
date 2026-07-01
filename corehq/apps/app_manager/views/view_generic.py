@@ -9,14 +9,15 @@ from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import add_ons
-from corehq.apps.app_manager.const import APP_V1
+from corehq.apps.app_manager.const import ANDROID_LOGO_PROPERTY_MAPPING, APP_V1
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.exceptions import FormNotFoundException
+from corehq.apps.app_manager.exceptions import (
+    FormNotFoundException,
+    ModuleNotFoundException,
+)
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
-    ANDROID_LOGO_PROPERTY_MAPPING,
     CustomIcon,
-    ModuleNotFoundException,
     ReportModule,
 )
 from corehq.apps.app_manager.util import get_commcare_versions, is_remote_app

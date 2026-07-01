@@ -32389,8 +32389,8 @@ msgstr "Mtumiaji '{username}' hakupatikana."
 #, python-brace-format
 msgid "{count} domain membership"
 msgid_plural "{count} domain memberships"
-msgstr[0] "Sasisha Uanachama wa Eneo"
-msgstr[1] "Sasisha Uanachama wa Eneo"
+msgstr[0] ""
+msgstr[1] ""
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "superuser access"

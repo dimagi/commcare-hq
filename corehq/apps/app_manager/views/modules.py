@@ -48,6 +48,7 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppMisconfigurationError,
     CaseSearchConfigError,
+    ModuleNotFoundException,
 )
 from corehq.apps.app_manager.models import (
     Application,
@@ -64,7 +65,6 @@ from corehq.apps.app_manager.models import (
     FixtureSelect,
     FormActionCondition,
     Module,
-    ModuleNotFoundException,
     OpenCaseAction,
     ParentSelect,
     ReportAppConfig,
