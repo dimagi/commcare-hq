@@ -44,6 +44,7 @@ from corehq.apps.accounting.invoicing import (
 )
 from corehq.apps.accounting.models import (
     BillingAccount,
+    BillingAccountDomainHistory,
     BillingAccountWebUserHistory,
     CreditLine,
     Currency,
@@ -974,5 +975,24 @@ def calculate_web_users_in_all_billing_accounts(today=None):
         except Exception as e:
             log_accounting_error(
                 f"Unable to create BillingAccountWebUserHistory for account {account.name}: {e}",
+                show_stack_trace=True,
+            )
+
+
+@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True, durable=True)
+def calculate_domains_in_all_billing_accounts(today=None):
+    today = today or datetime.date.today()
+    record_date = today - relativedelta(days=1)
+    for account in BillingAccount.objects.filter(is_customer_billing_account=True):
+        num_domains = len(account.get_domains())
+        try:
+            BillingAccountDomainHistory.objects.create(
+                billing_account=account,
+                num_domains=num_domains,
+                record_date=record_date,
+            )
+        except Exception as e:
+            log_accounting_error(
+                f"Unable to create BillingAccountDomainHistory for account {account.name}: {e}",
                 show_stack_trace=True,
             )
