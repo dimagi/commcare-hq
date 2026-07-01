@@ -2,6 +2,9 @@ from uuid import uuid4
 
 from django.db import models
 
+from casexml.apps.phone.models import OTARestoreUser
+
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import PUBLIC_USER_ID
 
 
@@ -97,3 +100,58 @@ class PublicFormUser:
 
     def get_domains(self):
         return [self._session.public_webform.domain]
+
+    def to_ota_restore_user(self, domain, request_user=None):
+        return OTARestorePublicFormUser(domain, self, request_user=request_user)
+
+
+class OTARestorePublicFormUser(OTARestoreUser):
+    """
+    OTA restore user for a public form session. Sandboxed: no owner ids, no
+    locations, no role, no case sharing, so the restore payload contains only
+    the user registration block and global fixtures, never project case data.
+    """
+
+    def __init__(self, domain, couch_user, **kwargs):
+        assert isinstance(couch_user, PublicFormUser)
+        super().__init__(domain, couch_user, **kwargs)
+
+    @property
+    def password(self):
+        return ''
+
+    @property
+    def date_joined(self):
+        return self._couch_user.session.created_at
+
+    @property
+    def user_session_data(self):
+        return {}
+
+    @property
+    def sql_location(self):
+        return None
+
+    def get_owner_ids(self):
+        return []
+
+    def get_location_ids(self, domain):
+        return []
+
+    def get_sql_locations(self, domain):
+        return SQLLocation.objects.none()
+
+    def get_role(self, domain):
+        return None
+
+    def get_case_sharing_groups(self):
+        return []
+
+    def get_fixture_data_items(self):
+        return []
+
+    def get_commtrack_location_id(self):
+        return None
+
+    def get_call_center_indicators(self, config):
+        return None
