@@ -17,6 +17,10 @@ Layout
   properties (date, number) get an additional typed column, e.g.
   ``date_prop__<name>``.
 
+Postgres truncates identifiers at 63 bytes, so schema, table, and column names
+are truncated with a hash suffix for uniqueness, with the raw values stored as
+postgresql comments so they can be recovered on inspection.
+
 Definitions are built with `SQLAlchemy Core
 <https://docs.sqlalchemy.org/en/13/core/>`_ and live in the database configured
 for the ``project_db`` engine (the default database unless
@@ -39,20 +43,15 @@ Populating the tables with case data and querying them are not yet implemented.
 TODOs
 ----
 
-- Identifier length & collisions. ``domain`` and ``case_type`` are used
-  directly as Postgres identifiers, which are silently truncated at 63 bytes.
-  ``CaseProperty.name`` allows up to 255 chars, so generated ``prop__<name>``
-  columns can truncate and collide; long domain names can collide on schema
-  name, where ``DROP SCHEMA ... CASCADE`` could affect another domain's data.
-  Truncate-and-hash before use (see the ``# TODO`` in ``table_ddl.py``).
 - Wire schema cleanup to domain deletion. ``DomainSchema.drop`` exists but
   is not registered in ``corehq/apps/domain/deletion.py``. Because this is a raw
   Postgres schema rather than a Django model, the standard model-based
   registration won't catch it; deleting a domain would orphan its
   ``projectdb_<domain>`` schema and data.
-- Store raw case prop name as a comment. This could then be used to know how
-  to insert a case based on inspecting the table.  It'd change ``case_to_row``
-  to iterate through columns instead of properties
+- Use the stored property-name comments when populating. Each property column
+  stores its raw case property name as a Postgres comment, which lets the
+  source property be recovered by inspecting the table. ``case_to_row`` could
+  use this to iterate through columns instead of properties.
 - Date vs Datetime. Looks like the DD only supports date
   properties, not datetime - does it intend the latter? Should we
   support both?

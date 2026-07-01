@@ -1,3 +1,5 @@
+import hashlib
+
 import sqlalchemy
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
@@ -6,6 +8,26 @@ from sqlalchemy.dialects import postgresql
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.sql_db.connections import PROJECT_DB_ENGINE_ID, connection_manager
+
+MAX_IDENTIFIER_LENGTH = 63
+_HASH_LENGTH = 8
+
+
+def truncate_identifier(identifier):
+    """Return a Postgres-safe identifier no longer than 63 bytes"""
+    encoded = identifier.encode('utf-8')
+    if len(encoded) <= MAX_IDENTIFIER_LENGTH:
+        return identifier
+    suffix = '_' + hashlib.sha256(encoded).hexdigest()[:_HASH_LENGTH]
+    # Decode may drop a trailing partial character; that only shortens the result
+    kept = encoded[:MAX_IDENTIFIER_LENGTH - len(suffix)].decode('utf-8', errors='ignore')
+    return kept + suffix
+
+
+def property_column(name, data_type=None):
+    if data_type is None:
+        return truncate_identifier(f'prop__{name}')
+    return truncate_identifier(f'{data_type}_prop__{name}')
 
 
 def get_project_db_engine():
@@ -20,7 +42,7 @@ class DomainSchema:
 
     @property
     def name(self):
-        return f'projectdb_{self.domain}'
+        return truncate_identifier(f'projectdb_{self.domain}')
 
     @property
     def _quoted_name(self):
@@ -30,6 +52,21 @@ class DomainSchema:
         conn.execute(sqlalchemy.text(
             f'CREATE SCHEMA IF NOT EXISTS {self._quoted_name}'
         ))
+        # Store the raw, not-truncated domain name as a comment
+        conn.execute(
+            sqlalchemy.text(f'COMMENT ON SCHEMA {self._quoted_name} IS :comment'),
+            {'comment': self.domain},
+        )
+
+    def get_comment(self, conn):
+        """Return the raw domain stored as this schema's Postgres comment"""
+        return conn.execute(
+            sqlalchemy.text(
+                "SELECT obj_description(oid, 'pg_namespace') "
+                "FROM pg_namespace WHERE nspname = :name"
+            ),
+            {'name': self.name},
+        ).scalar()
 
     def set_local_search_path(self, conn):
         """Scope the connection's search_path to a domain's project DB schema"""
@@ -52,17 +89,22 @@ class CaseTable:
 
     def __init__(self, domain, case_type):
         self.domain = domain
-        self.case_type = case_type  # TODO truncate and append hash if needed
+        self.case_type = case_type
         self.domain_schema = DomainSchema(domain)
+
+    @property
+    def table_name(self):
+        return truncate_identifier(self.case_type)
 
     def build_definition(self, metadata):
         """Build a SQLAlchemy Table object defining the case type table"""
         return Table(
-            self.case_type,
+            self.table_name,
             metadata,  # The table is also attached to the provided metadata
             *self._build_property_columns(),
             *self._static_columns(),
             schema=self.domain_schema.name,
+            comment=self.case_type,  # raw case type, recoverable if truncated
         )
 
     def _build_property_columns(self):
@@ -70,13 +112,14 @@ class CaseTable:
 
         Every property gets a raw Text column named ``prop__<name>``. Some
         typed properties get an additional typed column named
-        ``<data_type>_prop__<name>``.
+        ``<data_type>_prop__<name>``. The raw property name is stored as a
+        postgres comment.
         """
         for name, data_type in self._get_dd_properties():
-            yield Column(f'prop__{name}', Text, nullable=False, server_default='')
+            yield Column(property_column(name), Text, nullable=False, server_default='', comment=name)
 
             if col_type := self.COERCED_PROPERTY_TYPES.get(data_type):
-                yield Column(f'{data_type}_prop__{name}', col_type)
+                yield Column(property_column(name, data_type), col_type, comment=name)
 
     def _get_dd_properties(self):
         return CaseProperty.objects.filter(
@@ -106,7 +149,7 @@ class CaseTable:
         """Reflect a SQLAlchemy ``Table`` from the database by inspection"""
         try:
             return Table(
-                self.case_type,
+                self.table_name,
                 sqlalchemy.MetaData(),
                 schema=self.domain_schema.name,
                 autoload=True,
@@ -133,6 +176,21 @@ def create_or_update_project_db(domain):
         metadata.create_all(bind=conn, checkfirst=True)
         for table in case_tables:
             update_table(conn, table)
+
+
+def preview_drop(domain):
+    """Return the PostgreSQL CASCADE notices for dropping a domain's schema"""
+    schema = DomainSchema(domain)
+    raw = get_project_db_engine().raw_connection()
+    try:
+        cursor = raw.cursor()
+        del raw.connection.notices[:]
+        cursor.execute(f'DROP SCHEMA {schema._quoted_name} CASCADE')
+        notices = list(raw.connection.notices)
+        raw.rollback()
+        return notices
+    finally:
+        raw.close()
 
 
 def _get_case_types(domain):

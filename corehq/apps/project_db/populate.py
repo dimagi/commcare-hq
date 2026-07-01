@@ -8,7 +8,7 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.data_dictionary.models import CaseProperty
 
-from .table_ddl import CaseTable, get_project_db_engine
+from .table_ddl import CaseTable, get_project_db_engine, property_column
 
 
 def send_to_project_db(domain, case_type, cases):
@@ -64,11 +64,11 @@ def case_to_row(case, table_columns):
         'host_id': ids_by_identifier.get('host'),
     }
     for key, value in case.case_json.items():
-        col_name = f'prop__{key}'
+        col_name = property_column(key)
         if col_name in table_columns:
             row[col_name] = str(value)
             for data_type, coerce_fn in _TYPED_COERCIONS:
-                typed_col = f'{data_type}_prop__{key}'
+                typed_col = property_column(key, data_type)
                 if typed_col in table_columns:
                     row[typed_col] = coerce_fn(value)
     return row
