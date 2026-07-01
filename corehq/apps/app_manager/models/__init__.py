@@ -111,6 +111,7 @@ from .modules import (  # noqa: F401
 )
 from .public_webforms import (  # noqa: F401
     PublicFormSession,
+    PublicFormUser,
     PublicWebform,
     PublicWebformTypes,
 )

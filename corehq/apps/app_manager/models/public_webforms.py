@@ -45,3 +45,55 @@ class PublicFormSession(models.Model):
     @property
     def session_username(self):
         return f"{PUBLIC_USER_ID}{self.id.hex}@{self.public_webform.domain}.commcarehq.org"
+
+
+class PublicFormUser:
+    """
+    Duck-typed CouchUser proxy used during a public form session request. Wraps
+    a PublicFormSession and exposes the minimal CouchUser interface that
+    public-form request paths read.
+    """
+
+    def __init__(self, session):
+        self._session = session
+
+    @property
+    def session(self):
+        """The underlying PublicFormSession (e.g. for session consumption)."""
+        return self._session
+
+    @property
+    def user_id(self):
+        # Shared attribution id for every public submission.
+        return PUBLIC_USER_ID
+
+    @property
+    def get_id(self):
+        return self.user_id
+
+    @property
+    def username(self):
+        return self._session.session_username
+
+    @property
+    def raw_username(self):
+        return self.username
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    def is_web_user(self):
+        return False
+
+    def is_commcare_user(self):
+        return False
+
+    def has_permission(self, domain, permission, data=None):
+        return (
+            permission == 'access_mobile_endpoints'
+            and domain == self._session.public_webform.domain
+        )
+
+    def get_domains(self):
+        return [self._session.public_webform.domain]
