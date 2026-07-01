@@ -75,6 +75,7 @@ def test_case_table_basics():
 
     assert table.name == 'person'
     assert table.schema == 'projectdb_test-domain'
+    assert table.comment == 'person'  # raw case type, recoverable if truncated
 
     for column in CaseTable._static_columns():
         assert column.name in table.c
@@ -111,6 +112,19 @@ def test_long_property_names_are_truncated():
     # The full property name remains recoverable via the column comment
     assert table.c[plain_col].comment == long_name
     assert table.c[typed_col].comment == long_name
+
+
+def test_long_case_type_is_truncated():
+    long_type = 'x' * 100
+    case_table = CaseTable('test-domain', long_type)
+    assert case_table.case_type == long_type
+    assert case_table.table_name == truncate_identifier(long_type)
+
+    with patch.object(CaseTable, '_get_dd_properties', return_value=[]):
+        table = case_table.build_definition(sqlalchemy.MetaData())
+    assert table.name == truncate_identifier(long_type)
+    assert len(table.name.encode('utf-8')) <= 63
+    assert table.comment == long_type
 
 
 def _project_db_schema(domain):
@@ -177,6 +191,8 @@ def _assert_db_created_as_expected(schema):
         inspector = sqlalchemy.inspect(conn)
         assert schema in inspector.get_schema_names()
         assert ['patient'] == inspector.get_table_names(schema=schema)
+        # The table stores the raw case type as a comment
+        assert inspector.get_table_comment('patient', schema=schema) == {'text': 'patient'}
 
         cols = {col['name']: col for col in inspector.get_columns('patient', schema=schema)}
         col_types = {name: col['type'] for name, col in cols.items()}

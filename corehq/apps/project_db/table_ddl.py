@@ -74,17 +74,22 @@ class CaseTable:
 
     def __init__(self, domain, case_type):
         self.domain = domain
-        self.case_type = case_type  # TODO truncate and append hash if needed
+        self.case_type = case_type
         self.domain_schema = DomainSchema(domain)
+
+    @property
+    def table_name(self):
+        return truncate_identifier(self.case_type)
 
     def build_definition(self, metadata):
         """Build a SQLAlchemy Table object defining the case type table"""
         return Table(
-            self.case_type,
+            self.table_name,
             metadata,  # The table is also attached to the provided metadata
             *self._build_property_columns(),
             *self._static_columns(),
             schema=self.domain_schema.name,
+            comment=self.case_type,  # raw case type, recoverable if truncated
         )
 
     def _build_property_columns(self):
@@ -129,7 +134,7 @@ class CaseTable:
         """Reflect a SQLAlchemy ``Table`` from the database by inspection"""
         try:
             return Table(
-                self.case_type,
+                self.table_name,
                 sqlalchemy.MetaData(),
                 schema=self.domain_schema.name,
                 autoload=True,
