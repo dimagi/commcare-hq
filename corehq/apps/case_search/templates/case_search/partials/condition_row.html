@@ -82,14 +82,21 @@
             >
               <select
                 class="form-select form-select-sm w-auto"
-                :value="getInputValue(node, slot.name).value"
                 @change="node.inputs[slot.name].value = $event.target.value"
               >
-                <option value="" disabled selected>
+                <option
+                  value=""
+                  disabled
+                  :selected="!getInputValue(node, slot.name).value"
+                >
                   {% trans "-- Parameter --" %}
                 </option>
                 <template x-for="parameter in getParametersOfType(slot.type)">
-                  <option :value="parameter" x-text="parameter"></option>
+                  <option
+                    :value="parameter"
+                    x-text="parameter"
+                    :selected="parameter === getInputValue(node, slot.name).value"
+                  ></option>
                 </template>
               </select>
             </template>
