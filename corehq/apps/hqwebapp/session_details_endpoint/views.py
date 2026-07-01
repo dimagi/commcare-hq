@@ -47,6 +47,10 @@ class SessionDetailsView(View):
         if not data or not isinstance(data, dict):
             return HttpResponseBadRequest()
 
+        public_session_key = data.get('publicSessionKey')
+        if public_session_key:
+            return self._public_session_details(public_session_key, start_time)
+
         session_id = data.get('sessionId', None)
         if not session_id:
             return HttpResponseBadRequest()
@@ -76,19 +80,47 @@ class SessionDetailsView(View):
 
         enabled_toggles = toggles_enabled_for_user(user.username) | toggles_enabled_for_domain(domain)
         enabled_previews = previews_enabled_for_domain(domain)
-        end_time = datetime.now()
-        metrics_histogram("commcare.session_details.processing_time",
-                      int((end_time - start_time).total_seconds() * 1000),
-                      bucket_tag='duration_bucket',
-                      buckets=(250, 1000, 3000),
-                      bucket_unit='ms',
-                      tags={'domain': limit_domains(domain)})
+        self._record_processing_time(start_time, domain)
         return JsonResponse({
             'username': user.username,
             'djangoUserId': user.pk,
             'superUser': user.is_superuser,
             'authToken': session_id,
             'domains': list(domains),
+            'public': False,
             'enabled_toggles': list(sorted(enabled_toggles)),
             'enabled_previews': list(enabled_previews)
         })
+
+    def _public_session_details(self, public_session_key, start_time):
+        from corehq.apps.app_manager.models import PublicFormSession
+
+        session = PublicFormSession.get_active_by_key(public_session_key)
+        if session is None:
+            raise Http404
+
+        domain = session.public_webform.domain
+        if toggles.DISABLE_WEB_APPS.enabled(domain):
+            return HttpResponse('Service Temporarily Unavailable', content_type='text/plain', status=503)
+
+        self._record_processing_time(start_time, domain)
+        return JsonResponse({
+            'username': session.session_username,
+            'djangoUserId': None,
+            'superUser': False,
+            'authToken': str(public_session_key),
+            'domains': [domain],
+            'public': True,
+            'enabled_toggles': list(sorted(toggles_enabled_for_domain(domain))),
+            'enabled_previews': list(previews_enabled_for_domain(domain)),
+        })
+
+    @staticmethod
+    def _record_processing_time(start_time, domain):
+        elapsed_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+        metrics_histogram("commcare.session_details.processing_time",
+                      elapsed_ms,
+                      bucket_tag='duration_bucket',
+                      buckets=(250, 1000, 3000),
+                      bucket_unit='ms',
+                      tags={'domain': limit_domains(domain)})

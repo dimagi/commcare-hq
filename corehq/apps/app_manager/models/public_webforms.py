@@ -1,6 +1,7 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from django.db import models
+from django.utils import timezone
 
 from casexml.apps.phone.models import OTARestoreUser
 
@@ -45,6 +46,22 @@ class PublicFormSession(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=['public_webform', 'id'])]
+
+    @classmethod
+    def get_active_by_key(cls, session_key):
+        """Return the usable (unsubmitted, unexpired) session for a raw
+        session_key value, or None if the key is malformed or no such
+        session is usable."""
+        try:
+            key = UUID(str(session_key))
+        except (ValueError, TypeError):
+            return None
+        return cls.objects.filter(
+            session_key=key,
+            submitted_at__isnull=True,
+            expires_at__gt=timezone.now(),
+        ).first()
+
     @property
     def session_username(self):
         return f"{PUBLIC_USER_ID}{self.id.hex}@{self.public_webform.domain}.commcarehq.org"

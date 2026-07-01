@@ -1,9 +1,7 @@
 import json
 import logging
-from datetime import datetime
 from functools import wraps
 from urllib.parse import urljoin
-from uuid import UUID
 
 from django.contrib import messages
 from django.core.cache import cache
@@ -165,15 +163,7 @@ def _get_public_form_session(request):
     raw_key = request.COOKIES.get(PUBLIC_FORM_SESSION_COOKIE_NAME)
     if not raw_key:
         return None
-    try:
-        session_key = UUID(raw_key)
-    except (ValueError, TypeError):
-        return None
-    return PublicFormSession.objects.filter(
-        session_key=session_key,
-        submitted_at__isnull=True,
-        expires_at__gt=datetime.utcnow(),
-    ).first()
+    return PublicFormSession.get_active_by_key(raw_key)
 
 
 def no_conflict_require_POST(fn):
