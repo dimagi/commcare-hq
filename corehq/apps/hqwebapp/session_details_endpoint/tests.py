@@ -31,7 +31,6 @@ class SessionDetailsViewTest(TestCase):
             'superUser': cls.sql_user.is_superuser,
             'authToken': None,
             'domains': [cls.domain.name],
-            'anonymous': False,
             'enabled_toggles': [],
             'enabled_previews': [],
         }

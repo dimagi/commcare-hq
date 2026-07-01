@@ -89,7 +89,6 @@ class SessionDetailsView(View):
             'superUser': user.is_superuser,
             'authToken': session_id,
             'domains': list(domains),
-            'anonymous': False,
             'enabled_toggles': list(sorted(enabled_toggles)),
             'enabled_previews': list(enabled_previews)
         })
