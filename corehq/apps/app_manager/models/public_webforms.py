@@ -2,6 +2,9 @@ from uuid import uuid4
 
 from django.db import models
 
+from corehq.apps.users.util import PUBLIC_USER_ID
+
+
 class PublicWebformTypes(models.TextChoices):
     # inferred based on the form and not user-defined; no need to translate
     REGISTRATION = 'registration'
@@ -39,3 +42,6 @@ class PublicFormSession(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=['public_webform', 'id'])]
+    @property
+    def session_username(self):
+        return f"{PUBLIC_USER_ID}{self.id.hex}@{self.public_webform.domain}.commcarehq.org"
