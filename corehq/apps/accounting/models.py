@@ -134,12 +134,14 @@ class FeatureType(object):
     SMS = "SMS"
     WEB_USER = "Web User"
     FORM_SUBMITTING_MOBILE_WORKER = "Form-Submitting Mobile Worker"
+    DOMAIN = "Domain"
 
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
         (WEB_USER, WEB_USER),
         (FORM_SUBMITTING_MOBILE_WORKER, FORM_SUBMITTING_MOBILE_WORKER),
+        (DOMAIN, DOMAIN),
     )
     EDITIONED_FEATURES = [
         USER,
