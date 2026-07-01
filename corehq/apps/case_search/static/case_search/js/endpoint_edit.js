@@ -1,6 +1,7 @@
 import "commcarehq";
 import "hqwebapp/js/htmx_base";
 import Alpine from "alpinejs";
+import "hqwebapp/js/alpinejs/directives/datepicker";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
 // Input-slot type sentinels. These MUST stay in sync with the constants in
