@@ -470,11 +470,25 @@ def test_remove_errored_translations():
     os.remove(po_file_path)
 
 
+def test_extract_errored_msgstr_ids_skips_lines_without_line_number():
+    """Warnings like "<file>: warning: Charset missing in header." have no line
+    number and must be skipped rather than crashing the parser."""
+    po_format = PoTranslationFormat("test_file.po")
+    error_output = (
+        "django.po: warning: Charset missing in header.\n"
+        "django.po:42: a format specification for argument 'count' "
+        "doesn't exist in 'msgstr[1]'\n"
+    )
+    result = po_format._extract_errored_msgstr_ids(error_output)
+    assert list(result.keys()) == [42]
+
+
 def test_remove_errored_translations_clears_plural_forms():
+    # A Plural-Forms header is the minimum needed for msgfmt to parse the plural
+    # entry and reach the format-placeholder check.
     po_content = (
         'msgid ""\n'
         'msgstr ""\n'
-        '"Content-Type: text/plain; charset=UTF-8\\n"\n'
         '"Plural-Forms: nplurals=2; plural=(n != 1);\\n"\n\n'
         '#, python-brace-format\n'
         'msgid "{count} domain membership"\n'

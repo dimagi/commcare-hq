@@ -483,7 +483,14 @@ class PoTranslationFormat(TranslationFormat):
                 if error_parts[2].strip() == 'warning':
                     # Ignore warnings
                     continue
-                line_num = int(error_parts[1].strip())
+                # Some msgfmt lines lack a line number (e.g.
+                # "<file>: warning: Charset missing in header."). These don't map
+                # to a msgstr, so skip anything without a numeric line number.
+                # We expect these errors to be caught by msgfmt itself, not us.
+                try:
+                    line_num = int(error_parts[1].strip())
+                except ValueError:
+                    continue
                 line_num_error_map[line_num] = ": ".join(error_parts[2:]).strip()
         print(f"Line num error map: {line_num_error_map}")
         return line_num_error_map
