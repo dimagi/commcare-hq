@@ -11,8 +11,7 @@
       type="button"
       class="btn"
       :class="node.type === 'all' ? 'btn-primary' : 'btn-outline-secondary'"
-      @click="if (mode !== 'readonly') node.type = 'all'"
-      :disabled="mode === 'readonly'"
+      @click="node.type = 'all'"
     >
       {% trans "ALL" %}
     </button>
@@ -20,8 +19,7 @@
       type="button"
       class="btn"
       :class="node.type === 'any' ? 'btn-primary' : 'btn-outline-secondary'"
-      @click="if (mode !== 'readonly') node.type = 'any'"
-      :disabled="mode === 'readonly'"
+      @click="node.type = 'any'"
     >
       {% trans "ANY" %}
     </button>
@@ -29,8 +27,7 @@
       type="button"
       class="btn"
       :class="node.type === 'none' ? 'btn-primary' : 'btn-outline-secondary'"
-      @click="if (mode !== 'readonly') node.type = 'none'"
-      :disabled="mode === 'readonly'"
+      @click="node.type = 'none'"
     >
       {% trans "NONE" %}
     </button>
@@ -46,7 +43,7 @@
       >{% trans "match none of the following" %}</span
     >
   </span>
-  <template x-if="mode !== 'readonly' && _removeParent !== null">
+  <template x-if="_removeParent !== null">
     <button
       type="button"
       class="btn btn-sm text-secondary border-0 p-1 ms-auto"

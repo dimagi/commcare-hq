@@ -37,24 +37,22 @@
   </template>
 
   {# Add buttons #}
-  <template x-if="mode !== 'readonly'">
-    <div class="d-flex gap-2 mt-2 flex-wrap">
+  <div class="d-flex gap-2 mt-2 flex-wrap">
+    <button
+      type="button"
+      class="btn btn-outline-primary btn-sm"
+      @click="addCondition(node)"
+    >
+      <i class="fa-solid fa-plus me-1"></i>{% trans "Add Condition" %}
+    </button>
+    {% if depth > 0 %}
       <button
         type="button"
         class="btn btn-outline-primary btn-sm"
-        @click="addCondition(node)"
+        @click="addGroup(node, 'all')"
       >
-        <i class="fa-solid fa-plus me-1"></i>{% trans "Add Condition" %}
+        <i class="fa-solid fa-code-branch me-1"></i>{% trans "Add Group" %}
       </button>
-      {% if depth > 0 %}
-        <button
-          type="button"
-          class="btn btn-outline-primary btn-sm"
-          @click="addGroup(node, 'all')"
-        >
-          <i class="fa-solid fa-code-branch me-1"></i>{% trans "Add Group" %}
-        </button>
-      {% endif %}
-    </div>
-  </template>
+    {% endif %}
+  </div>
 </div>

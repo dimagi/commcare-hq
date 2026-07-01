@@ -12,8 +12,6 @@ const SLOT_TYPE_CHOICE = "choice";
 const SLOT_TYPE_MATCH_FIELD = "match_field";
 
 Alpine.data("endpointForm", () => {
-    const mode = initialPageData.get("endpoint_mode");
-
     return {
         name: initialPageData.get("initial_name"),
         targetType: initialPageData.get("initial_target_type"),
@@ -22,7 +20,6 @@ Alpine.data("endpointForm", () => {
         testParamValues: {},
         query: initialPageData.get("initial_query"),
         capability: initialPageData.get("capability"),
-        mode: mode,
         _nextId: 1,
         // Exposed so condition_row.html can compare against the sentinel rather
         // than re-typing the "choice" literal.

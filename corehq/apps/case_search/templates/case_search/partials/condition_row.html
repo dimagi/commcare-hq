@@ -26,7 +26,6 @@
     <select
       class="form-select form-select-sm w-auto"
       @change="node.operator = $event.target.value; onOperatorChange(node)"
-      :disabled="mode === 'readonly'"
     >
       <option value="" :selected="!node.operator">
         {% trans "-- Operation --" %}
@@ -49,7 +48,6 @@
           <select
             class="form-select form-select-sm"
             x-model="getInputValue(node, slot.name).value"
-            :disabled="mode === 'readonly'"
             :aria-label="slot.name"
           >
             <template x-for="option in slot.options" :key="option">
@@ -63,7 +61,6 @@
               class="form-select form-select-sm w-auto"
               :value="getInputValue(node, slot.name).type"
               @change="setInputType(node, slot.name, $event.target.value)"
-              :disabled="mode === 'readonly'"
             >
               <option value="constant">{% trans "Value" %}</option>
               <option value="parameter">{% trans "Parameter" %}</option>
@@ -73,7 +70,6 @@
                 type="text"
                 class="form-control form-control-sm"
                 x-model="getInputValue(node, slot.name).value"
-                :disabled="mode === 'readonly'"
                 :placeholder="slot.name"
               />
             </template>
@@ -105,14 +101,12 @@
       </div>
     </template>
   </template>
-  <template x-if="mode !== 'readonly'">
-    <button
-      type="button"
-      class="btn btn-sm text-secondary border-0 p-1 ms-auto flex-shrink-0"
-      @click="removeNode(_removeParent, _removeIdx)"
-      aria-label="{% trans "Remove condition" %}"
-    >
-      <i class="fa-regular fa-trash-can"></i>
-    </button>
-  </template>
+  <button
+    type="button"
+    class="btn btn-sm text-secondary border-0 p-1 ms-auto flex-shrink-0"
+    @click="removeNode(_removeParent, _removeIdx)"
+    aria-label="{% trans "Remove condition" %}"
+  >
+    <i class="fa-regular fa-trash-can"></i>
+  </button>
 </div>
