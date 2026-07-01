@@ -70,13 +70,15 @@ class CaseTable:
 
         Every property gets a raw Text column named ``prop__<name>``. Some
         typed properties get an additional typed column named
-        ``<data_type>_prop__<name>``.
+        ``<data_type>_prop__<name>``. The raw property name is stored as a
+        postgres comment.
         """
         for name, data_type in self._get_dd_properties():
-            yield Column(f'prop__{name}', Text, nullable=False, server_default='')
+            yield Column(f'prop__{name}', Text, nullable=False, server_default='',
+                         comment=name)
 
             if col_type := self.COERCED_PROPERTY_TYPES.get(data_type):
-                yield Column(f'{data_type}_prop__{name}', col_type)
+                yield Column(f'{data_type}_prop__{name}', col_type, comment=name)
 
     def _get_dd_properties(self):
         return CaseProperty.objects.filter(

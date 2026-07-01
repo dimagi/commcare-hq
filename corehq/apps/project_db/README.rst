@@ -50,9 +50,10 @@ TODOs
   Postgres schema rather than a Django model, the standard model-based
   registration won't catch it; deleting a domain would orphan its
   ``projectdb_<domain>`` schema and data.
-- Store raw case prop name as a comment. This could then be used to know how
-  to insert a case based on inspecting the table.  It'd change ``case_to_row``
-  to iterate through columns instead of properties
+- Use the stored property-name comments when populating. Each property column
+  stores its raw case property name as a Postgres comment, which lets the
+  source property be recovered by inspecting the table. ``case_to_row`` could
+  use this to iterate through columns instead of properties.
 - Date vs Datetime. Looks like the DD only supports date
   properties, not datetime - does it intend the latter? Should we
   support both?

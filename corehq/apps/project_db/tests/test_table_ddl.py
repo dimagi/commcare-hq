@@ -75,6 +75,12 @@ def test_case_table_basics():
     assert table.c['date_prop__dob'].nullable is True
     assert table.c['number_prop__children_count'].nullable is True
 
+    # Both plain and typed columns carry the raw property name as a comment
+    assert table.c['prop__dob'].comment == 'dob'
+    assert table.c['date_prop__dob'].comment == 'dob'
+    assert table.c['prop__children_count'].comment == 'children_count'
+    assert table.c['number_prop__children_count'].comment == 'children_count'
+
 
 def _project_db_schema(domain):
     @fixture
@@ -149,6 +155,10 @@ def _assert_db_created_as_expected(schema):
         assert isinstance(col_types['prop__dob'], sqlalchemy.Text)
         assert 'date_prop__dob' not in cols
 
+        # Property columns store the raw case property name as a comment
+        assert cols['prop__nickname']['comment'] == 'nickname'
+        assert cols['prop__dob']['comment'] == 'dob'
+
         # Text property columns and external_id are NOT NULL, defaulting to ''
         for name in ['prop__nickname', 'prop__dob', 'external_id']:
             assert cols[name]['nullable'] is False, name
@@ -168,17 +178,15 @@ def _assert_db_updated_as_expected(schema):
         # still only the one table
         assert ['patient'] == inspector.get_table_names(schema=schema)
 
-        columns = {
-            col['name']: col['type']
-            for col in inspector.get_columns('patient', schema=schema)
-        }
-        # New column added
-        assert isinstance(columns['prop__favorite_color'], sqlalchemy.Text)
+        columns = {col['name']: col for col in inspector.get_columns('patient', schema=schema)}
+        # New column added, with its raw property name as a comment
+        assert isinstance(columns['prop__favorite_color']['type'], sqlalchemy.Text)
+        assert columns['prop__favorite_color']['comment'] == 'favorite_color'
         # Column for deleted case property is still present
-        assert isinstance(columns['prop__nickname'], sqlalchemy.Text)
+        assert isinstance(columns['prop__nickname']['type'], sqlalchemy.Text)
         # Both a plain and a date column for dob
-        assert isinstance(columns['prop__dob'], sqlalchemy.Text)
-        assert isinstance(columns['date_prop__dob'], sqlalchemy.Date)
+        assert isinstance(columns['prop__dob']['type'], sqlalchemy.Text)
+        assert isinstance(columns['date_prop__dob']['type'], sqlalchemy.Date)
 
 
 @use('db', project_db_table('test-reflect', 'patient', {
