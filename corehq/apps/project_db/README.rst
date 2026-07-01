@@ -17,6 +17,10 @@ Layout
   properties (date, number) get an additional typed column, e.g.
   ``date_prop__<name>``.
 
+Postgres truncates identifiers at 63 bytes, so schema, table, and column names
+are truncated with a hash suffix for uniqueness, with the raw values stored as
+postgresql comments so they can be recovered on inspection.
+
 Definitions are built with `SQLAlchemy Core
 <https://docs.sqlalchemy.org/en/13/core/>`_ and live in the database configured
 for the ``project_db`` engine (the default database unless
@@ -39,10 +43,6 @@ Populating the tables with case data and querying them are not yet implemented.
 TODOs
 ----
 
-- Identifier length & collisions. Postgres silently truncates identifiers at
-  63 bytes. Property column names are now run through ``truncate_identifier``,
-  but ``domain`` and ``case_type`` are still used directly as the schema and
-  table names. Long domain names can collide. Truncate-and-hash these too.
 - Wire schema cleanup to domain deletion. ``DomainSchema.drop`` exists but
   is not registered in ``corehq/apps/domain/deletion.py``. Because this is a raw
   Postgres schema rather than a Django model, the standard model-based

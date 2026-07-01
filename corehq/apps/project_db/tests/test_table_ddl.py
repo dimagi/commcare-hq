@@ -22,6 +22,13 @@ def test_schema_name():
     assert DomainSchema('my-domain').name == 'projectdb_my-domain'
 
 
+def test_schema_name_truncation():
+    long_domain = 'd' * 100
+    schema = DomainSchema(long_domain)
+    assert schema.name == f'projectdb_{"d" * 44}_954c9921'
+    assert len(schema.name.encode('utf-8')) <= 63
+
+
 @pytest.mark.parametrize('identifier, expected', [
     ('prop__short', 'prop__short'),  # unchanged
     ('p' * 63, 'p' * 63),  # exactly at the limit
@@ -60,6 +67,22 @@ def test_schema_lifecycle():
         assert search_path == schema.name
 
         schema.drop(conn)
+        assert schema.name not in sqlalchemy.inspect(conn).get_schema_names()
+
+
+@use('db')
+def test_long_domain_schema_lifecycle():
+    # A domain whose schema name exceeds Postgres's 63-byte limit round-trips
+    # through create -> lookup -> drop under its truncated name.
+    engine = get_project_db_engine()
+    schema = DomainSchema('d' * 100)
+    with engine.begin() as conn:
+        schema.create(conn)
+        try:
+            assert schema.name in sqlalchemy.inspect(conn).get_schema_names()
+            assert schema.get_comment(conn) == 'd' * 100
+        finally:
+            schema.drop(conn)
         assert schema.name not in sqlalchemy.inspect(conn).get_schema_names()
 
 

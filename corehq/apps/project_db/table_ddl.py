@@ -42,7 +42,7 @@ class DomainSchema:
 
     @property
     def name(self):
-        return f'projectdb_{self.domain}'
+        return truncate_identifier(f'projectdb_{self.domain}')
 
     @property
     def _quoted_name(self):
@@ -52,6 +52,21 @@ class DomainSchema:
         conn.execute(sqlalchemy.text(
             f'CREATE SCHEMA IF NOT EXISTS {self._quoted_name}'
         ))
+        # Store the raw, not-truncated domain name as a comment
+        conn.execute(
+            sqlalchemy.text(f'COMMENT ON SCHEMA {self._quoted_name} IS :comment'),
+            {'comment': self.domain},
+        )
+
+    def get_comment(self, conn):
+        """Return the raw domain stored as this schema's Postgres comment"""
+        return conn.execute(
+            sqlalchemy.text(
+                "SELECT obj_description(oid, 'pg_namespace') "
+                "FROM pg_namespace WHERE nspname = :name"
+            ),
+            {'name': self.name},
+        ).scalar()
 
     def set_local_search_path(self, conn):
         """Scope the connection's search_path to a domain's project DB schema"""
