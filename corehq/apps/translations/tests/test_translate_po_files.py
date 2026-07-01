@@ -87,8 +87,6 @@ def test_llm_translator_base_prompt_with_unsupported_lang():
 
 
 def test_openai_translator_supported_models():
-    mock_client = MagicMock()
-
     translation_format = MockTranslationFormat()
     translator = OpenaiTranslator(
         api_key="test-api-key",
