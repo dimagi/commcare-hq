@@ -15,7 +15,7 @@ from typing import ClassVar
 
 from attr import Factory, define, field as attr_field, validators
 
-from corehq.apps.case_search.endpoint_capability import OPERATORS
+from corehq.apps.case_search.endpoint_capability import FIELD_TYPES, INPUT_TYPE_MATCH_FIELD, OPERATORS
 
 # Group node types: all = AND, any = OR, none = NOR (no child matches).
 GROUP_TYPES = ('all', 'any', 'none')
@@ -27,6 +27,52 @@ MAX_GROUP_WIDTH = 50
 # Maximum total nodes across the entire query tree.
 MAX_TOTAL_NODES = 200
 
+@define
+class Parameter:
+    name: str = attr_field(converter=str.strip, validator=validators.min_len(1))
+    type: str = attr_field(validator=validators.in_(FIELD_TYPES))
+
+def parse_parameter_spec(spec):
+    """Validate a parameter list spec and parse it.
+
+    :returns: a ``(parameters, errors)`` tuple. ``parameters`` is a list of
+        :class:`Parameter` objects, or ``None`` when ``errors`` is non-empty.
+    """
+    errors = []
+    if not isinstance(spec, list):
+        return None, ['Parameters must be a JSON array.']
+
+    parameters = []
+    seen_names = set()
+    for i, item in enumerate(spec, 1):
+        if not isinstance(item, dict):
+            errors.append(f'Parameter {i}: expected object, got {type(item).__name__}')
+            continue
+
+        item_errors = []
+        name = item.get('name', '').strip()
+        if not name or not isinstance(name, str):
+            item_errors.append(f'Parameter {i}: name is required')
+        elif name in seen_names:
+            item_errors.append(f"Duplicate parameter name: '{name}'")
+        else:
+            seen_names.add(name)
+
+        param_type = item.get('type', '')
+        if param_type not in FIELD_TYPES:
+            item_errors.append(
+                f"Parameter '{name or i}': invalid type '{param_type}'."
+                f" Must be one of: {', '.join(FIELD_TYPES)}"
+            )
+
+        if item_errors:
+            errors.extend(item_errors)
+        else:
+            parameters.append(Parameter(name=name, type=param_type))
+
+    if errors:
+        return None, errors
+    return parameters, []
 
 @define
 class ConstantInput:
@@ -42,17 +88,31 @@ class ConstantInput:
     def from_json(cls, data):
         return cls(value=data.get('value'))
 
+@define
+class ParameterInput:
+    """An input value supplied by referencing a named parameter."""
+
+    type: ClassVar[str] = 'parameter'
+    value: str = attr_field(converter=str.strip, validator=validators.min_len(1))
+
+    def to_json(self):
+        return {'type': self.type, 'value': self.value}
+
+    @classmethod
+    def from_json(cls, data):
+        return cls(value=data.get('value'))
 
 # input type -> class. Add parameter/function input kinds here.
-INPUT_TYPES = {ConstantInput.type: ConstantInput}
-
+INPUT_TYPES = {
+    ConstantInput.type: ConstantInput,
+    ParameterInput.type: ParameterInput,
+}
 
 def input_from_json(data):
     input_type = data.get('type')
     if input_type not in INPUT_TYPES:
         raise ValueError(f"Unknown input type: {input_type!r}")
     return INPUT_TYPES[input_type].from_json(data)
-
 
 @define
 class ComponentNode:
@@ -113,7 +173,7 @@ class GroupNode:
 
 
 def node_from_json(data, fields_by_name=None):
-    """Build a node tree from an already-validated raw spec."""
+    """Build a node tree from a raw spec dict."""
     node_type = data.get('type')
     if node_type in GROUP_TYPES:
         return GroupNode.from_json(data, fields_by_name)
@@ -122,7 +182,7 @@ def node_from_json(data, fields_by_name=None):
     raise ValueError(f'Unknown node type: {node_type!r}')
 
 
-def parse_query_spec(query_spec, case_type_name, capability):
+def parse_query_spec(query_spec, parameters, case_type_name, capability):
     """Validate a query spec against capability metadata and parse it.
 
     :returns: a ``(root, errors)`` tuple. ``root`` is the parsed node tree (an
@@ -131,12 +191,23 @@ def parse_query_spec(query_spec, case_type_name, capability):
     """
     errors = []
     fields_by_name = _fields_by_name(capability, case_type_name, errors)
-    operator_input_schemas = capability.get('operator_input_schemas', {})
-
-    _validate_node(query_spec, fields_by_name, operator_input_schemas, errors, depth=0, counter=[0])
     if errors:
         return None, errors
-    return node_from_json(query_spec, fields_by_name), errors
+
+    try:
+        root = node_from_json(query_spec, fields_by_name)
+    except (TypeError, ValueError, KeyError, AttributeError):
+        return None, ['Invalid query']
+
+    _check_structural_limits(root, errors)
+    if not errors:
+        _check_semantics(
+            root, fields_by_name, parameters,
+            capability.get('operator_input_schemas', {}), errors,
+        )
+    if errors:
+        return None, errors
+    return root, []
 
 
 def _fields_by_name(capability, case_type_name, errors):
@@ -147,75 +218,70 @@ def _fields_by_name(capability, case_type_name, errors):
     return case_types[case_type_name]
 
 
-def _validate_node(node, fields_by_name, operator_input_schemas, errors, depth, counter):
+def _check_structural_limits(node, errors, depth=0, counter=None):
+    if counter is None:
+        counter = [0]
     counter[0] += 1
     if counter[0] > MAX_TOTAL_NODES:
         errors.append(f'Query has too many nodes (max {MAX_TOTAL_NODES})')
         return
-    if not isinstance(node, dict):
-        errors.append(
-            f'Invalid node: expected object, got {type(node).__name__}'
-        )
-        return
     if depth > MAX_QUERY_DEPTH:
-        errors.append(
-            f'Query is nested too deeply (max {MAX_QUERY_DEPTH} levels)'
-        )
+        errors.append(f'Query is nested too deeply (max {MAX_QUERY_DEPTH} levels)')
         return
-
-    node_type = node.get('type')
-    if node_type in GROUP_TYPES:
-        children = node.get('children', [])
-        if len(children) > MAX_GROUP_WIDTH:
-            errors.append(
-                f'Group has too many conditions (max {MAX_GROUP_WIDTH})'
-            )
+    if isinstance(node, GroupNode):
+        if len(node.children) > MAX_GROUP_WIDTH:
+            errors.append(f'Group has too many conditions (max {MAX_GROUP_WIDTH})')
             return
-        for child in children:
-            _validate_node(child, fields_by_name, operator_input_schemas, errors, depth + 1, counter)
-    elif node_type == 'component':
-        _validate_component(node, fields_by_name, operator_input_schemas, errors)
-    else:
-        errors.append(
-            f"Invalid node type: '{node_type}'. Expected 'all', 'any', 'none', or 'component'."
-        )
+        for child in node.children:
+            _check_structural_limits(child, errors, depth + 1, counter)
 
 
-def _validate_component(node, fields_by_name, operator_input_schemas, errors):
-    field_name = node.get('field', '')
-    component_name = node.get('operator', '')
-    inputs = node.get('inputs', {})
+def _check_semantics(node, fields_by_name, parameters, operator_input_schemas, errors):
+    if isinstance(node, GroupNode):
+        for child in node.children:
+            _check_semantics(child, fields_by_name, parameters, operator_input_schemas, errors)
+    elif isinstance(node, ComponentNode):
+        _check_component(node, fields_by_name, parameters, operator_input_schemas, errors)
 
-    field = fields_by_name.get(field_name)
+
+def _check_component(node, fields_by_name, parameters, operator_input_schemas, errors):
+    field = fields_by_name.get(node.field)
     if not field:
-        errors.append(f"Unknown field: '{field_name}'")
+        errors.append(f"Unknown field: '{node.field}'")
         return
 
     operation_names = [op['name'] for op in field.get('operations', [])]
-    if component_name not in operation_names:
+    if node.operator not in operation_names:
         errors.append(
-            f"'{component_name}' is not a valid operation for field "
-            f"'{field_name}' (type: {field['type']})"
+            f"'{node.operator}' is not a valid operation for field "
+            f"'{node.field}' (type: {field['type']})"
         )
         return
 
-    for slot in operator_input_schemas.get(component_name, []):
+    field_type = field['type']
+    resolved_slots = {
+        slot['name']: field_type if slot['type'] == INPUT_TYPE_MATCH_FIELD else slot['type']
+        for slot in operator_input_schemas.get(node.operator, [])
+    }
+
+    for slot in operator_input_schemas.get(node.operator, []):
         slot_name = slot['name']
-        if slot_name not in inputs:
+        if slot_name not in node.inputs:
             errors.append(
-                f"Missing required input '{slot_name}' for component '{component_name}'"
+                f"Missing required input '{slot_name}' for component '{node.operator}'"
             )
             continue
-        _validate_input(inputs[slot_name], slot_name, errors)
+        inp = node.inputs[slot_name]
+        if isinstance(inp, ParameterInput):
+            _check_parameter_input(inp, parameters, slot_name, resolved_slots[slot_name], errors)
 
 
-def _validate_input(value, slot_name, errors):
-    if not isinstance(value, dict):
+def _check_parameter_input(inp, parameters, slot_name, slot_type, errors):
+    referenced = next((p for p in parameters if p.name == inp.value), None)
+    if not referenced:
+        errors.append(f"Input '{slot_name}': parameter {inp.value} not configured")
+    elif referenced.type != slot_type:
         errors.append(
-            f"Invalid input '{slot_name}': expected object, "
-            f'got {type(value).__name__}'
+            f"Input '{slot_name}': parameter '{inp.value}' has type "
+            f"'{referenced.type}', expected '{slot_type}'"
         )
-        return
-    value_type = value.get('type')
-    if value_type not in INPUT_TYPES:
-        errors.append(f"Invalid input type '{value_type}' in '{slot_name}'")

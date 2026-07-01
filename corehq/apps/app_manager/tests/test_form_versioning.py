@@ -42,13 +42,13 @@ INVALID_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
         </input>
     </h:body>
 </h:html>
-"""
+"""  # noqa: E501
 
 
 class FormVersioningTest(TestCase):
 
     @patch_default_builds
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
     def test(self, mock):
         add_build(version='2.7.0', build_number=20655)
         domain = 'form-versioning-test'

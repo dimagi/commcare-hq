@@ -19,6 +19,7 @@
   {% initial_page_data "initial_name" form.name.value %}
   {% initial_page_data "initial_target_type" form.target_type.value %}
   {% initial_page_data "initial_case_type" form.case_type.value %}
+  {% initial_page_data "initial_parameters" form.parameters.value %}
   {% initial_page_data "initial_query" form.query.value %}
   {% initial_page_data "capability" capability %}
 
@@ -122,32 +123,66 @@
     </div>
 
     {# ── Parameters card ── #}
-    {# Hidden until query conditions can reference parameters; the textarea #}
-    {# still round-trips the stored parameters through the form POST.       #}
-    <div class="card mb-3 d-none">
+    <div class="card mb-3">
       <div class="card-header">
         <i class="fa-solid fa-sliders me-1"></i>{% trans "Parameters" %}
       </div>
       <div class="card-body">
-        <div class="row g-3">
-          <div class="mb-3">
-            <label class="form-label" for="parameters">
-              {% trans "Parameters" %}
-              <small class="text-muted">({% trans "JSON array" %})</small>
-            </label>
-            <textarea
-              class="form-control font-monospace{% if form.parameters.errors %}is-invalid{% endif %}"
-              id="parameters"
-              name="parameters"
-              rows="5"
-            >
-{{ form.parameters.value }}</textarea
-            >
-            {% for error in form.parameters.errors %}
-              <div class="invalid-feedback">{{ error }}</div>
-            {% endfor %}
-          </div>
+        <div class="mb-2">
+          <span class="text-muted small fst-italic">Parameter names need to match case property names to work in case lists.</span>
         </div>
+        <template x-for="(param, idx) in parameters" :key="idx">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span
+              class="ep-type-badge d-inline-flex align-items-center justify-content-center flex-shrink-0 rounded-1 bg-secondary text-white"
+            >
+              <i :class="typeIconClass(param.type || 'text')"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control form-control-sm font-monospace flex-grow-1"
+              x-model="param.name"
+              :id="'param-name-' + idx"
+              required
+              pattern=".*\S.*"
+              title="{% trans "Name cannot be empty or only whitespace" %}"
+              placeholder="{% trans "parameter name" %}"
+            />
+            <select
+              class="form-select form-select-sm w-auto"
+              x-model="param.type"
+            >
+              <option value="text">{% trans "text" %}</option>
+              <option value="number">{% trans "number" %}</option>
+              <option value="date">{% trans "date" %}</option>
+            </select>
+            <button
+              type="button"
+              class="btn btn-sm text-secondary border-0 p-1"
+              @click="removeParameter(idx)"
+              :aria-label="'{% trans "Remove parameter" %}'"
+            >
+              <i class="fa-regular fa-trash-can"></i>
+            </button>
+          </div>
+        </template>
+
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm"
+          @click="addParameter()"
+        >
+          <i class="fa-solid fa-plus me-1"></i>{% trans "Add Parameter" %}
+        </button>
+
+        <input
+          type="hidden"
+          name="parameters"
+          :value="JSON.stringify(parameters)"
+        />
+        {% for error in form.parameters.errors %}
+          <div class="alert alert-danger mt-2">{{ error }}</div>
+        {% endfor %}
       </div>
     </div>
 

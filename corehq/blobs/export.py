@@ -1,9 +1,9 @@
 import os
 import shutil
 import time
-from collections import namedtuple
 from tempfile import SpooledTemporaryFile
 
+from attrs import define, field
 from gevent.pool import Pool
 
 from corehq.apps.dump_reload.sql.dump import (
@@ -25,9 +25,31 @@ PROGRESS_INTERVAL = 10_000  # print a progress line every N objects processed
 # .tar.gz format (readable by run_blob_import) at a fraction of the CPU.
 COMPRESS_LEVEL = 1
 
-_Fetched = namedtuple('_Fetched', 'key fileobj content_length')
-_Missing = namedtuple('_Missing', 'key')
-_Skipped = namedtuple('_Skipped', 'key')
+@define
+class _Result:
+    """A blob fetch outcome: exactly one of fetched / missing / skipped.
+
+    - fetched: ``key`` set, ``fileobj`` and ``content_length`` present
+    - missing: ``key`` set, ``missing`` is True
+    - skipped: ``key`` is None (already in another dump)
+    """
+    key = field()
+    fileobj = field(default=None)
+    content_length = field(default=None)
+    missing = field(default=False)
+
+    def __attrs_post_init__(self):
+        states = (
+            self.key is None,                                              # skipped
+            self.fileobj is not None and self.content_length is not None,  # fetched
+            self.missing,                                                  # missing
+        )
+        assert sum(states) == 1, f"invalid _Result state: {self}"
+
+
+# Already in another dump: counted but not written. Shared because it carries no
+# per-blob state and is only ever read, so it's safe to return from any greenlet.
+_SKIPPED = _Result(None)
 
 
 class BlobDbBackendExporter(object):
@@ -42,7 +64,7 @@ class BlobDbBackendExporter(object):
         self._spill_dir = os.path.dirname(os.path.abspath(filename))
         self.total_blobs = 0
         self.missing_ids = []
-        self.missing_ids_filename = "missing_blob_ids.txt"
+        self.missing_ids_filename = missing_ids_filename_for(filename)
 
     def __enter__(self):
         self.db.open('w:gz', compresslevel=COMPRESS_LEVEL)
@@ -84,24 +106,24 @@ class BlobDbBackendExporter(object):
         print(f"Processed {self.total_blobs} objects in {elapsed:.1f}s ({rate})")
 
     def _fetch_object(self, meta):
-        """Fetch and fully buffer one blob, returning a _Fetched/_Missing/_Skipped result.
+        """Fetch and fully buffer one blob, returning a fetched/missing/skipped _Result.
 
         Safe for concurrent use -- it only reads shared state and buffers into
         its own file, never touching the tar, so many fetches can run in
         parallel.
         """
         if meta.key in self._already_exported:
-            return _Skipped(meta.key)
+            return _SKIPPED
         try:
             content = self.src_db.get(meta.key, CODES.maybe_compressed)
         except NotFound:
-            return _Missing(meta.key)
+            return _Result(meta.key, missing=True)
         spool = SpooledTemporaryFile(max_size=SPILL_THRESHOLD, dir=self._spill_dir)
         with content:
             content_length = content.content_length
             shutil.copyfileobj(content, spool)
         spool.seek(0)
-        return _Fetched(meta.key, spool, content_length)
+        return _Result(meta.key, spool, content_length)
 
     def _write_object(self, result):
         """Apply one fetched result: write it to the tar, or record it missing.
@@ -110,12 +132,12 @@ class BlobDbBackendExporter(object):
         callers must invoke it serially. Interleaved calls (e.g. from multiple
         greenlets) would corrupt the archive.
         """
-        if isinstance(result, _Fetched):
+        if result.fileobj is not None:
             with result.fileobj as fileobj:
                 self.db.copy_blob(fileobj, result.key, result.content_length)
-        elif isinstance(result, _Missing):
+        elif result.missing:
             self.missing_ids.append(result.key)
-        # _Skipped: already in another dump; counted but not written.
+        # else skipped: already in another dump; counted but not written.
 
     def _write_missing_ids(self):
         if os.path.exists(self.missing_ids_filename):
@@ -126,6 +148,17 @@ class BlobDbBackendExporter(object):
         with open(self.missing_ids_filename, 'w') as f:
             for missing_id in self.missing_ids:
                 f.write(f"{missing_id}\n")
+
+
+def missing_ids_filename_for(export_filename):
+    """Derive the missing-blob-ids log path from the export archive path.
+
+    Placing the log beside the archive -- same directory and filename prefix --
+    keeps a run's two outputs together, honors the ``--dir`` chosen by the
+    operator, and disambiguates the logs of repeated or concurrent runs that
+    would otherwise all clobber a single ``missing_blob_ids.txt`` in the cwd.
+    """
+    return f"{export_filename.removesuffix('.tar.gz')}-missing_blob_ids.txt"
 
 
 class BlobExporter:

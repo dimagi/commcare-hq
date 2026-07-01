@@ -79,7 +79,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
                 relevant="count(/data/question1) &gt; 0 and instance('casedb')/casedb/case[@case_id=/data/case/@case_id]/question1 != /data/question1"
                 calculate="/data/question1"/>
             </partial>
-        """
+        """  # noqa: E501
         xpath = './{h}head/{w3x}model/{w3x}bind[@nodeset="/data/case/update/question1"]'.format(
             h='{http://www.w3.org/1999/xhtml}', w3x='{http://www.w3.org/2002/xforms}'
         )
@@ -97,7 +97,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
                 relevant="count(/data/question1) &gt; 0 and instance('casedb')/casedb/case[@case_id=/data/commcare_usercase/case/@case_id]/case_name != /data/question1"
                 calculate="/data/question1"/>
             </partial>
-        """
+        """  # noqa: E501
         xpath = './{h}head/{w3x}model/{w3x}bind[@nodeset="/data/commcare_usercase/case/update/case_name"]'.format(
             h='{http://www.w3.org/1999/xhtml}', w3x='{http://www.w3.org/2002/xforms}'
         )
@@ -244,7 +244,9 @@ class SubcaseParentRefTeset(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'form_preparation_v2')
 
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.domain_has_usercase_access')
+        self.is_usercase_in_use_patch = patch(
+            'corehq.apps.app_manager.models.applications.domain_has_usercase_access'
+        )
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
     def tearDown(self):
@@ -301,7 +303,9 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         self.form = self.module.new_form("Untitled Form", "en",
                                          self.get_xml('original_form', override_path=('data',)).decode('utf-8'))
 
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.domain_has_usercase_access')
+        self.is_usercase_in_use_patch = patch(
+            'corehq.apps.app_manager.models.applications.domain_has_usercase_access'
+        )
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
     def tearDown(self):
@@ -341,7 +345,7 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
                 relevant="count(/data/question1) &gt; 0 and instance('casedb')/casedb/case[@case_id=/data/case_load_1/case/@case_id]/question1 != /data/question1"
                 calculate="/data/question1"/>
             </partial>
-        """
+        """  # noqa: E501
         xpath = './{h}head/{w3x}model/{w3x}bind[@nodeset="/data/case_load_1/case/update/question1"]'.format(
             h='{http://www.w3.org/1999/xhtml}', w3x='{http://www.w3.org/2002/xforms}'
         )
@@ -519,7 +523,9 @@ class BaseIndexTest(SimpleTestCase, TestXmlMixin):
         child_module_1.case_type ='child1'
         child_module_2 = self.app.add_module(Module.new_module('New Module', lang='en'))
         child_module_2.case_type ='child2'
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.domain_has_usercase_access')
+        self.is_usercase_in_use_patch = patch(
+            'corehq.apps.app_manager.models.applications.domain_has_usercase_access'
+        )
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
     def tearDown(self):

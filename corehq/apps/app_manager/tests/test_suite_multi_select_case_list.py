@@ -254,7 +254,7 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
             "./entry",
         )
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
     @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
     def test_select_parent_first_parent_not_allowed(self, *args):
         self.module.parent_select.active = True
