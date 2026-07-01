@@ -3,10 +3,15 @@ from unittest.mock import patch
 import pytest
 
 from corehq.apps.case_search.endpoint_capability import (
+    _OPERATOR_BY_TYPE,
     FIELD_TYPE_DATE,
+    FIELD_TYPE_DATETIME,
     FIELD_TYPE_GEOPOINT,
+    FIELD_TYPE_NUMBER,
+    FIELD_TYPE_SELECT,
     FIELD_TYPE_TEXT,
 )
+from corehq.apps.es.queries import DISTANCE_UNITS
 from corehq.apps.case_search.endpoint_query_spec import (
     ComponentNode,
     ConstantInput,
@@ -267,3 +272,43 @@ def test_build_query_with_surviving_condition_adds_query():
     builder._get_initial_search_es = lambda: fake
     assert builder.build_query([]) is fake
     assert fake.added_query is not None
+
+
+_VALUE_BY_FIELD_TYPE = {
+    FIELD_TYPE_TEXT: 'alice',
+    FIELD_TYPE_NUMBER: '5',
+    FIELD_TYPE_DATE: '2020-01-01',
+    FIELD_TYPE_DATETIME: '2020-01-01',
+    FIELD_TYPE_SELECT: 'a',
+}
+
+
+def _inputs_for_operator(operator, field_type):
+    if operator == 'within_distance':
+        return {
+            'point': ConstantInput(value='12.5 13.5'),
+            'distance': ConstantInput(value='10'),
+            'unit': ConstantInput(value=DISTANCE_UNITS[0]),
+        }
+    # Every non-geopoint operator resolves its value through the single
+    # 'value' slot, which the builder reads unconditionally.
+    return {'value': ConstantInput(value=_VALUE_BY_FIELD_TYPE[field_type])}
+
+
+@pytest.mark.parametrize('field_type,operator', [
+    (field_type, name)
+    for field_type, operators in _OPERATOR_BY_TYPE.items()
+    for name, _label in operators
+])
+def test_every_declared_operator_is_handled_by_builder(field_type, operator):
+    node = ComponentNode(
+        operator=operator,
+        field='some_field',
+        field_type=field_type,
+        inputs=_inputs_for_operator(operator, field_type),
+    )
+    result = _make_builder()._parse_component_node(node)
+    assert result is not None, (
+        f"operator '{operator}' is declared for field type '{field_type}' "
+        f"but _parse_component_node returned None"
+    )
