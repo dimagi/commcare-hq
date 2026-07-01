@@ -32546,8 +32546,8 @@ msgstr "Utente '{username}' non trovato."
 #, python-brace-format
 msgid "{count} domain membership"
 msgid_plural "{count} domain memberships"
-msgstr[0] "Aggiorna appartenenza alla posizione"
-msgstr[1] "Aggiorna appartenenza alla posizione"
+msgstr[0] ""
+msgstr[1] ""
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "superuser access"

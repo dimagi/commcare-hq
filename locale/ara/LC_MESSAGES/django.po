@@ -31903,12 +31903,12 @@ msgstr "المستخدم '{username}' غير موجود."
 #, python-brace-format
 msgid "{count} domain membership"
 msgid_plural "{count} domain memberships"
-msgstr[0] "تحديث عضوية الموقع"
-msgstr[1] "تحديث عضوية الموقع"
-msgstr[2] "تحديث عضوية الموقع"
-msgstr[3] "تحديث عضوية الموقع"
-msgstr[4] "تحديث عضوية الموقع"
-msgstr[5] "تحديث عضوية الموقع"
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+msgstr[3] ""
+msgstr[4] ""
+msgstr[5] ""
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "superuser access"
