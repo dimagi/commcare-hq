@@ -494,14 +494,8 @@ class CaseSearchEndpointQueryBuilder:
         if node.field_type in (FIELD_TYPE_DATE, FIELD_TYPE_DATETIME):
             if operator == 'equals':
                 return case_property_query(field, value)
-            elif operator == 'lt':
-                return case_property_date_range(field, lt=value)
-            elif operator == 'gt':
-                return case_property_date_range(field, gt=value)
-            elif operator == 'lte':
-                return case_property_date_range(field, lte=value)
-            elif operator == 'gte':
-                return case_property_date_range(field, gte=value)
+            elif operator in ('lt', 'gt', 'lte', 'gte'):
+                return case_property_date_range(field, **{operator: value})
             elif operator == 'fuzzy_date':
                 if not validate_date(value):
                     return None
