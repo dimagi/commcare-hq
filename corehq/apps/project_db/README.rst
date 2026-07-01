@@ -39,12 +39,10 @@ Populating the tables with case data and querying them are not yet implemented.
 TODOs
 ----
 
-- Identifier length & collisions. ``domain`` and ``case_type`` are used
-  directly as Postgres identifiers, which are silently truncated at 63 bytes.
-  ``CaseProperty.name`` allows up to 255 chars, so generated ``prop__<name>``
-  columns can truncate and collide; long domain names can collide on schema
-  name, where ``DROP SCHEMA ... CASCADE`` could affect another domain's data.
-  Truncate-and-hash before use (see the ``# TODO`` in ``table_ddl.py``).
+- Identifier length & collisions. Postgres silently truncates identifiers at
+  63 bytes. Property column names are now run through ``truncate_identifier``,
+  but ``domain`` and ``case_type`` are still used directly as the schema and
+  table names. Long domain names can collide. Truncate-and-hash these too.
 - Wire schema cleanup to domain deletion. ``DomainSchema.drop`` exists but
   is not registered in ``corehq/apps/domain/deletion.py``. Because this is a raw
   Postgres schema rather than a Django model, the standard model-based

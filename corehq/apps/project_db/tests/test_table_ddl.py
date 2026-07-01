@@ -11,6 +11,7 @@ from corehq.apps.project_db.table_ddl import (
     create_or_update_project_db,
     get_project_db_engine,
     preview_drop,
+    truncate_identifier,
     update_table,
 )
 
@@ -19,6 +20,22 @@ from .util import project_db_table
 
 def test_schema_name():
     assert DomainSchema('my-domain').name == 'projectdb_my-domain'
+
+
+@pytest.mark.parametrize('identifier, expected', [
+    ('prop__short', 'prop__short'),  # unchanged
+    ('p' * 63, 'p' * 63),  # exactly at the limit
+    ('p' * 64, 'p' * 54 + '_153ac90a'),  # over the limit
+    ('prop__how_many_pecks_of_pickled_peppers_did_peter_piper_pick__a_peck',
+     'prop__how_many_pecks_of_pickled_peppers_did_peter_pipe_aebfc91f'),
+    ('prop__how_many_pecks_of_pickled_peppers_did_peter_piper_pick__enough',  # Same prefix as above
+     'prop__how_many_pecks_of_pickled_peppers_did_peter_pipe_6e49f8dc'),
+    ("A son dotà ‘d sust e ‘d consiensa e a dëvo agì j’un con j’àutri ant n’ëspìrit ëd fradlansa",
+     "A son dotà ‘d sust e ‘d consiensa e a dëvo agì _47f54a51"),  # multi-byte chars > shorter result
+])
+def test_truncate_identifier(identifier, expected):
+    assert len(expected.encode('utf-8')) <= 63
+    assert truncate_identifier(identifier) == expected
 
 
 @pytest.mark.parametrize('domain, expected', [
@@ -80,6 +97,20 @@ def test_case_table_basics():
     assert table.c['date_prop__dob'].comment == 'dob'
     assert table.c['prop__children_count'].comment == 'children_count'
     assert table.c['number_prop__children_count'].comment == 'children_count'
+
+
+def test_long_property_names_are_truncated():
+    long_name = 'this_is_a_really_really_frankly_unreasonably_long_property_name'
+    with patch.object(CaseTable, '_get_dd_properties', return_value=[(long_name, 'date')]):
+        table = (CaseTable('test-domain', 'person').build_definition(sqlalchemy.MetaData()))
+
+    plain_col = 'prop__this_is_a_really_really_frankly_unreasonably_lon_37418cd6'
+    typed_col = 'date_prop__this_is_a_really_really_frankly_unreasonabl_2fd77f90'
+    assert plain_col in table.c
+    assert typed_col in table.c
+    # The full property name remains recoverable via the column comment
+    assert table.c[plain_col].comment == long_name
+    assert table.c[typed_col].comment == long_name
 
 
 def _project_db_schema(domain):

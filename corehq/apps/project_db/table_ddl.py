@@ -1,3 +1,5 @@
+import hashlib
+
 import sqlalchemy
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
@@ -6,6 +8,26 @@ from sqlalchemy.dialects import postgresql
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.sql_db.connections import PROJECT_DB_ENGINE_ID, connection_manager
+
+MAX_IDENTIFIER_LENGTH = 63
+_HASH_LENGTH = 8
+
+
+def truncate_identifier(identifier):
+    """Return a Postgres-safe identifier no longer than 63 bytes"""
+    encoded = identifier.encode('utf-8')
+    if len(encoded) <= MAX_IDENTIFIER_LENGTH:
+        return identifier
+    suffix = '_' + hashlib.sha256(encoded).hexdigest()[:_HASH_LENGTH]
+    # Decode may drop a trailing partial character; that only shortens the result
+    kept = encoded[:MAX_IDENTIFIER_LENGTH - len(suffix)].decode('utf-8', errors='ignore')
+    return kept + suffix
+
+
+def property_column(name, data_type=None):
+    if data_type is None:
+        return truncate_identifier(f'prop__{name}')
+    return truncate_identifier(f'{data_type}_prop__{name}')
 
 
 def get_project_db_engine():
@@ -74,11 +96,10 @@ class CaseTable:
         postgres comment.
         """
         for name, data_type in self._get_dd_properties():
-            yield Column(f'prop__{name}', Text, nullable=False, server_default='',
-                         comment=name)
+            yield Column(property_column(name), Text, nullable=False, server_default='', comment=name)
 
             if col_type := self.COERCED_PROPERTY_TYPES.get(data_type):
-                yield Column(f'{data_type}_prop__{name}', col_type, comment=name)
+                yield Column(property_column(name, data_type), col_type, comment=name)
 
     def _get_dd_properties(self):
         return CaseProperty.objects.filter(
