@@ -749,6 +749,8 @@ class UserLineItemFactory(FeatureLineItemFactory):
     @property
     @memoized
     def quantity(self):
+        if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
+            return 0
         # Iterate through all months in the invoice date range to aggregate total users into one line item
         dates = self.all_month_ends_in_invoice()
         excess_users = 0

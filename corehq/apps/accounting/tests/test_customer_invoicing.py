@@ -291,6 +291,21 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         self.invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start,
                                                    random.randint(2, self.non_main_subscription_length))
 
+    def test_unlimited_monthly_limit_charges_nothing(self):
+        from corehq.apps.accounting.models import UNLIMITED_FEATURE_USAGE
+        self.user_rate.monthly_limit = UNLIMITED_FEATURE_USAGE
+        self.user_rate.save()
+        # Even with zero users, max(total - (-1), 0) would charge quantity 1
+        # per month-end without the sentinel guard.
+        calculate_users_in_all_domains(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        invoice = CustomerInvoice.objects.first()
+        user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).first()
+        self.assertEqual(user_line_item.quantity, 0)
+        self.assertEqual(user_line_item.total, Decimal('0.0000'))
+        self.assertIsNone(user_line_item.unit_description)
+
     def test_under_limit(self):
         num_users_main_domain = random.randint(0, self.user_rate.monthly_limit // 2)
         generator.arbitrary_commcare_users_for_domain(self.main_domain.name, num_users_main_domain)
@@ -896,6 +911,19 @@ class TestDomainLineItem(BaseCustomerInvoiceCase):
         self.assertEqual(domain_line_item.quantity, 2)
         self.assertEqual(domain_line_item.unit_cost, Decimal('100.00'))
         self.assertEqual(domain_line_item.total, Decimal('200.00'))
+
+    def test_unlimited_monthly_limit_charges_nothing(self):
+        from corehq.apps.accounting.models import UNLIMITED_FEATURE_USAGE
+        from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
+        self.domain_rate.monthly_limit = UNLIMITED_FEATURE_USAGE
+        self.domain_rate.save()
+        calculate_domains_in_all_billing_accounts(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        invoice = CustomerInvoice.objects.first()
+        domain_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN).first()
+        self.assertEqual(domain_line_item.quantity, 0)
+        self.assertEqual(domain_line_item.total, Decimal('0.0000'))
 
     def test_within_allowance_charges_nothing(self):
         from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
