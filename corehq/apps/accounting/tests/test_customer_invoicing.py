@@ -953,6 +953,23 @@ class TestDomainLineItem(BaseCustomerInvoiceCase):
         self.assertEqual(domain_line_item.unit_cost, Decimal('100.00'))
         self.assertEqual(domain_line_item.total, Decimal('700.00'))
 
+    def test_missing_snapshot_charges_zero_excess(self):
+        """Before a DOMAIN feature rate exists on a plan, there is no concept
+        of an excess domain at all -- the account is just billed the flat
+        product fee. A missing BillingAccountDomainHistory snapshot (e.g. the
+        cold-start window right after a Domain rate is first attached, before
+        monthly snapshots have accumulated) must be treated the same way: as
+        zero excess domains for that month, not as a hard failure that blocks
+        the entire invoice."""
+        # Deliberately no calculate_domains_in_all_billing_accounts run.
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        domain_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN).first()
+        self.assertEqual(domain_line_item.quantity, 0)
+        self.assertEqual(domain_line_item.total, Decimal('0.0000'))
+
     def test_within_allowance_charges_nothing(self):
         from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
         self.domain_rate.monthly_limit = 10

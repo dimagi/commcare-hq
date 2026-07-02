@@ -837,8 +837,15 @@ class WebUserLineItemFactory(UserLineItemFactory):
 class DomainLineItemFactory(UserLineItemFactory):
 
     def total_users_for_date(self, date):
-        history = BillingAccountDomainHistory.objects.get(
-            billing_account=self.subscription.account, record_date=date)
+        # Before a DOMAIN feature rate exists on a plan, there is no concept
+        # of an excess domain -- a missing snapshot (e.g. the cold-start
+        # window right after a Domain rate is first attached) means zero
+        # excess for that month, not a hard failure blocking the invoice.
+        try:
+            history = BillingAccountDomainHistory.objects.get(
+                billing_account=self.subscription.account, record_date=date)
+        except BillingAccountDomainHistory.DoesNotExist:
+            return 0
         return history.num_domains
 
     @property
