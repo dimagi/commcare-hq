@@ -45,6 +45,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_doc,
 )
+from corehq.apps.app_manager.models import PublicFormUser
 from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
     WEB_APPS_ENVIRONMENT,
@@ -127,6 +128,11 @@ class FormplayerMain(View):
 
         def set_cookie(response):  # set_cookie is a noop by default
             return response
+
+        if isinstance(request.couch_user, PublicFormUser):
+            # A public form session is locked to its own identity and cannot
+            # restore as anyone else; skip the restoreAs cookie handling.
+            return request.couch_user, set_cookie
 
         def _get_login_as_user_query():
             return login_as_user_query(
