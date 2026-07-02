@@ -22,14 +22,20 @@ class PublicWebform(models.Model):
     expires_at = models.DateTimeField()
     is_disabled = models.BooleanField(default=False)
 
+    class Meta:
+        indexes = [models.Index(fields=['domain', 'id'])]
+
 
 class PublicFormSession(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid4)
     session_key = models.UUIDField(default=uuid4, unique=True, db_index=True)
-    public_webform = models.ForeignKey(PublicWebform, on_delete=models.CASCADE)
+    public_webform = models.ForeignKey(PublicWebform, on_delete=models.CASCADE, db_index=False)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     opened_at = models.DateTimeField(null=True)
     submitted_at = models.DateTimeField(null=True)
     xform_id = models.CharField(null=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['public_webform', 'id'])]
