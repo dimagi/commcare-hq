@@ -403,28 +403,29 @@ class CustomerAccountInvoiceFactory(object):
             )
 
     def _generate_customer_invoice(self):
-        # We have unique index on account, date_start and date_end
-        invoice, is_new_invoice = CustomerInvoice.objects.create_or_get(
-            account=self.account,
-            date_start=self.date_start,
-            date_end=self.date_end
-        )
-        if not is_new_invoice:
-            raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
+        with transaction.atomic():
+            # We have unique index on account, date_start and date_end
+            invoice, is_new_invoice = CustomerInvoice.objects.create_or_get(
+                account=self.account,
+                date_start=self.date_start,
+                date_end=self.date_end
+            )
+            if not is_new_invoice:
+                raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
 
-        all_subscriptions = []
-        for plan in self.subscriptions:
-            # Use oldest subscription to bill client for the full length of their software plan
-            self.subscriptions[plan].sort(key=lambda s: s.date_start)
-            oldest_subscription = self.subscriptions[plan][0]
-            generate_line_items(invoice, oldest_subscription)
-            all_subscriptions.extend(self.subscriptions[plan])
-        invoice.subscriptions.set(all_subscriptions)
-        invoice.calculate_credit_adjustments()
-        invoice.update_balance()
-        invoice.save()
-        self._update_invoice_due_date(invoice, self.date_end)
-        self.customer_invoice = invoice
+            all_subscriptions = []
+            for plan in self.subscriptions:
+                # Use oldest subscription to bill client for the full length of their software plan
+                self.subscriptions[plan].sort(key=lambda s: s.date_start)
+                oldest_subscription = self.subscriptions[plan][0]
+                generate_line_items(invoice, oldest_subscription)
+                all_subscriptions.extend(self.subscriptions[plan])
+            invoice.subscriptions.set(all_subscriptions)
+            invoice.calculate_credit_adjustments()
+            invoice.update_balance()
+            invoice.save()
+            self._update_invoice_due_date(invoice, self.date_end)
+            self.customer_invoice = invoice
 
     def _update_invoice_due_date(self, invoice, factory_date_end):
         should_set_date_due = (
