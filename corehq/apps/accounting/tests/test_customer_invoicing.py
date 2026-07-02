@@ -925,6 +925,34 @@ class TestDomainLineItem(BaseCustomerInvoiceCase):
         self.assertEqual(domain_line_item.quantity, 0)
         self.assertEqual(domain_line_item.total, Decimal('0.0000'))
 
+    def test_domain_line_item_in_quarterly_invoice(self):
+        from corehq.apps.accounting.models import BillingAccountDomainHistory
+        self.account.invoicing_plan = InvoicingPlan.QUARTERLY
+        self.account.save()
+        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 14)
+        # Quarterly invoicing sums excess domains over the three month-ends
+        # in the quarter: 2017-01-31, 2017-02-28, 2017-03-31 (record_date is
+        # always the day before the snapshot task's "today", as in
+        # calculate_domains_in_all_billing_accounts).
+        for months_before_invoice_date, num_domains in zip(range(3), [2, 3, 5]):
+            user_date = date(invoice_date.year, invoice_date.month, 1)
+            user_date -= relativedelta.relativedelta(months=months_before_invoice_date)
+            calculate_users_in_all_domains(user_date)
+            record_date = user_date - relativedelta.relativedelta(days=1)
+            BillingAccountDomainHistory.objects.create(
+                billing_account=self.account, record_date=record_date, num_domains=num_domains)
+        tasks.generate_invoices_based_on_date(invoice_date)
+
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        domain_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN)
+        self.assertEqual(domain_line_items.count(), 1)
+        domain_line_item = domain_line_items.first()
+        # allowance of 1: (2-1) + (3-1) + (5-1) = 1 + 2 + 4 = 7
+        self.assertEqual(domain_line_item.quantity, 7)
+        self.assertEqual(domain_line_item.unit_cost, Decimal('100.00'))
+        self.assertEqual(domain_line_item.total, Decimal('700.00'))
+
     def test_within_allowance_charges_nothing(self):
         from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
         self.domain_rate.monthly_limit = 10
