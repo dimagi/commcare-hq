@@ -43,37 +43,57 @@
   <template x-if="node.operator">
     <template x-for="slot in getInputSchemaForOperation(node)" :key="slot.name">
       <div class="d-flex gap-1 flex-grow-1">
-        <select
-          class="form-select form-select-sm w-auto"
-          :value="getInputValue(node, slot.name).type"
-          @change="setInputType(node, slot.name, $event.target.value)"
-          :disabled="mode === 'readonly'"
-        >
-          <option value="constant">{% trans "Value" %}</option>
-          <option value="parameter">{% trans "Parameter" %}</option>
-        </select>
-        <template x-if="getInputValue(node, slot.name).type === 'constant'">
-          <input
-            type="text"
-            class="form-control form-control-sm"
+        {# Choice slots are constant-only: a dropdown of fixed options, no type #}
+        {# selector. `slotTypeChoice` mirrors endpoint_capability.INPUT_TYPE_CHOICE. #}
+        <template x-if="slot.type === slotTypeChoice">
+          <select
+            class="form-select form-select-sm"
             x-model="getInputValue(node, slot.name).value"
             :disabled="mode === 'readonly'"
-            :placeholder="slot.name"
-          />
-        </template>
-        <template x-if="getInputValue(node, slot.name).type === 'parameter'">
-          <select
-            class="form-select form-select-sm w-auto"
-            :value="getInputValue(node, slot.name).value"
-            @change="node.inputs[slot.name].value = $event.target.value"
+            :aria-label="slot.name"
           >
-            <option value="" disabled selected>
-              {% trans "-- Parameter --" %}
-            </option>
-            <template x-for="parameter in getParametersOfType(slot.type)">
-              <option :value="parameter" x-text="parameter"></option>
+            <template x-for="option in slot.options" :key="option">
+              <option :value="option" x-text="option"></option>
             </template>
           </select>
+        </template>
+        <template x-if="slot.type !== slotTypeChoice">
+          <div class="d-flex gap-1 flex-grow-1">
+            <select
+              class="form-select form-select-sm w-auto"
+              :value="getInputValue(node, slot.name).type"
+              @change="setInputType(node, slot.name, $event.target.value)"
+              :disabled="mode === 'readonly'"
+            >
+              <option value="constant">{% trans "Value" %}</option>
+              <option value="parameter">{% trans "Parameter" %}</option>
+            </select>
+            <template x-if="getInputValue(node, slot.name).type === 'constant'">
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                x-model="getInputValue(node, slot.name).value"
+                :disabled="mode === 'readonly'"
+                :placeholder="slot.name"
+              />
+            </template>
+            <template
+              x-if="getInputValue(node, slot.name).type === 'parameter'"
+            >
+              <select
+                class="form-select form-select-sm w-auto"
+                :value="getInputValue(node, slot.name).value"
+                @change="node.inputs[slot.name].value = $event.target.value"
+              >
+                <option value="" disabled selected>
+                  {% trans "-- Parameter --" %}
+                </option>
+                <template x-for="parameter in getParametersOfType(slot.type)">
+                  <option :value="parameter" x-text="parameter"></option>
+                </template>
+              </select>
+            </template>
+          </div>
         </template>
       </div>
     </template>

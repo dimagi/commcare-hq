@@ -5,6 +5,7 @@ import pytest
 from corehq.apps.case_search.endpoint_capability import (
     OPERATOR_INPUT_SCHEMAS,
     FIELD_TYPE_DATE,
+    FIELD_TYPE_DATETIME,
     FIELD_TYPE_TEXT,
     get_capability,
     get_field_type,
@@ -92,17 +93,27 @@ def test_operations_have_name_and_label():
         assert isinstance(str(op['label']), str)
 
 
-def test_date_operations_use_lt_gt_not_before_after():
+def test_date_operations_use_operator_names_not_before_after():
     op_names = {op['name'] for op in get_operations_for_field_type(FIELD_TYPE_DATE)}
-    assert op_names == {'equals', 'lt', 'gt'}
+    assert op_names == {'equals', 'lt', 'gt', 'lte', 'gte', 'fuzzy_date'}
     assert 'before' not in op_names
     assert 'after' not in op_names
+
+
+def test_fuzzy_date_is_date_only():
+    date_ops = {op['name'] for op in get_operations_for_field_type(FIELD_TYPE_DATE)}
+    datetime_ops = {op['name'] for op in get_operations_for_field_type(FIELD_TYPE_DATETIME)}
+    assert 'fuzzy_date' in date_ops
+    assert 'fuzzy_date' not in datetime_ops
 
 
 @pytest.mark.parametrize("op_name,expected_label", [
     ('lt', 'before'),
     ('gt', 'after'),
     ('equals', 'on'),
+    ('lte', 'on or before'),
+    ('gte', 'on or after'),
+    ('fuzzy_date', 'is approximately'),
 ])
 def test_date_op_labels(op_name, expected_label):
     labels = {op['name']: str(op['label']) for op in get_operations_for_field_type(FIELD_TYPE_DATE)}
