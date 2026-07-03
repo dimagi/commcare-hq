@@ -47,12 +47,21 @@ function collectGlobalContext() {
     }, _roleContext);
 }
 
+function runCollector(collectContext) {
+    try {
+        return collectContext() || {};
+    } catch (error) {
+        console.error("OCS context collector failed");
+        return {};
+    }
+}
+
 function getClientPageContext() {
-    return Object.assign(
-        {},
-        collectGlobalContext(),
-        ..._contextCollectors.map((collectContext) => collectContext() || {}),
-    );
+    const context = collectGlobalContext();
+    for (const collectContext of _contextCollectors) {
+        Object.assign(context, runCollector(collectContext));
+    }
+    return context;
 }
 
 document.addEventListener('DOMContentLoaded', function () {
