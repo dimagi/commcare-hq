@@ -3,7 +3,6 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import ocsContext, {WIDGET_SELECTOR} from "hqwebapp/js/ocs_page_context";
 
 const FORMDESIGNER = '#formdesigner';
-let fd;
 
 function _vellum() {
     return $(FORMDESIGNER).vellum("get");
@@ -87,7 +86,7 @@ function _collectMugErrors(mug) {
     return result;
 }
 
-function _cardListFieldErrors(mug) {
+function _cardListFieldErrors(mug, fd) {
     // `.fd-field-error` is cardList-only and lives only in the DOM.
     const out = [];
     fd.querySelectorAll('.fd-card-list .has-error').forEach(row => {
@@ -111,7 +110,7 @@ function _cardListFieldErrors(mug) {
     return out;
 }
 
-function _xpathEditorError(mug) {
+function _xpathEditorError(mug, fd) {
     const el = fd.querySelector('.fd-xpath-validation-summary');
     if (!_isVisible(el)) {return [];}
     const editedProp = mug.form.vellum.data.core.currentlyEditedProperty;
@@ -128,11 +127,11 @@ function _xpathEditorError(mug) {
     }];
 }
 
-function _selectedQuestionWarnings(mug) {
+function _selectedQuestionWarnings(mug, fd) {
     return [
         ..._collectMugErrors(mug),
-        ..._cardListFieldErrors(mug),
-        ..._xpathEditorError(mug),
+        ..._cardListFieldErrors(mug, fd),
+        ..._xpathEditorError(mug, fd),
     ];
 }
 
@@ -168,15 +167,15 @@ function _formWarnings(form) {
     return formWarnings.map(err => err.message.trim());
 }
 
-function _dataSourceWarnings() {
+function _dataSourceWarnings(fd) {
     // External data source load failures only exist as a DOM banner.
     const banner = fd.querySelector('.fd-external-sources-error');
     if (!_isVisible(banner)) {return [];}
     return [banner.querySelector('.help-block').textContent.trim()];
 }
 
-function _formLoadWarnings(form) {
-    return [..._formWarnings(form), ..._dataSourceWarnings()];
+function _formLoadWarnings(form, fd) {
+    return [..._formWarnings(form), ..._dataSourceWarnings(fd)];
 }
 
 function _collectFormContext() {
@@ -185,17 +184,18 @@ function _collectFormContext() {
     if (!form) {
         return {};
     }
+    const fd = document.querySelector(FORMDESIGNER);
     const selectedMug = vellum.getCurrentlySelectedMug();
     const currentSelectedQuestion = buildSelectedQuestion(selectedMug);
     if (currentSelectedQuestion) {
-        currentSelectedQuestion.warnings = _selectedQuestionWarnings(selectedMug);
+        currentSelectedQuestion.warnings = _selectedQuestionWarnings(selectedMug, fd);
     }
     return {
         form_context: {
             form_xml: extractFormXml(vellum),
             question_types: extractQuestionTypes(form),
             unselected_question_warnings: _unselectedQuestionWarnings(form, selectedMug?.ufid),
-            form_load_warnings: _formLoadWarnings(form),
+            form_load_warnings: _formLoadWarnings(form, fd),
             current_selected_question: currentSelectedQuestion,
             module_name: initialPageData.get('module_name'),
         },
@@ -206,7 +206,6 @@ $(function () {
     if (!document.querySelector(WIDGET_SELECTOR)) {
         return;
     }
-    fd = document.querySelector(FORMDESIGNER);
     ocsContext.registerContextCollector(_collectFormContext);
 });
 
