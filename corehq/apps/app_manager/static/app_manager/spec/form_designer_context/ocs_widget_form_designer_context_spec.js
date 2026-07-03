@@ -1,30 +1,12 @@
 import $ from "jquery";
 
+import VELLUM_OPTIONS from "app_manager/spec/form_designer_context/vellum_options";
 import {
     extractFormXml,
     extractQuestionTypes,
     extractSelectedQuestion,
 } from "app_manager/js/forms/ocs_widget_form_designer_context";
 
-// Minimum options to boot the bundled Vellum
-const VELLUM_OPTIONS = {
-    core: {
-        loadDelay: 0,
-        formName: "Test Form",
-        dataSourcesEndpoint: function (callback) { callback([]); },
-        saveUrl: function () {},
-    },
-    javaRosa: {
-        langs: ["en"],
-        displayLanguage: "en",
-    },
-    features: {
-        disable_popovers: true,
-    },
-    intents: {
-        templates: [{id: "intent", name: "Intent", mime: "text/plain"}],
-    },
-};
 
 function bootVellum() {
     return new Promise(function (resolve) {
