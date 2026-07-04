@@ -12,10 +12,15 @@ const VELLUM_OPTIONS = {
     },
     features: {
         disable_popovers: true,
+        rich_text: true,
     },
     intents: {
         templates: [{id: "intent", name: "Intent", mime: "text/plain"}],
     },
+    plugins: [
+        "databrowser",
+        "saveToCase",
+    ],
 };
 
 export default VELLUM_OPTIONS;
