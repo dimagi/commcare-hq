@@ -209,4 +209,14 @@ $(function () {
     ocsContext.registerContextCollector(_collectFormContext);
 });
 
-export {extractFormXml, extractQuestionTypes, extractSelectedQuestion};
+export {
+    extractFormXml,
+    extractQuestionTypes,
+    extractSelectedQuestion,
+    _collectMugErrors,
+    _unselectedQuestionWarnings,
+    _formWarnings,
+    _cardListFieldErrors,
+    _xpathEditorError,
+    _dataSourceWarnings,
+};
