@@ -5,12 +5,12 @@ count the translatable strings and source-language words that a bulk AI
 translation run would operate on, along with the domain and its
 CommCare plan edition.
 
-Outputs a CSV with one row per app. Designed to be resumable
-(``--start-from-domain``) and safe to run against production: it only
+Outputs a CSV with one row per app. Designed to be resumable and safe to run against production: it only
 reads data, processes one domain at a time, and writes results
 incrementally.
 """
 import csv
+import os
 import sys
 import traceback
 
@@ -45,23 +45,29 @@ class Command(BaseCommand):
             "with domain and plan, and write the result to a CSV.")
 
     def add_arguments(self, parser):
-        parser.add_argument('output_file', help='Path to write the CSV to')
-        parser.add_argument(
-            '--start-from-domain',
-            help='Skip domains that sort before this one (for resuming a '
-                 'previous run; domains are processed in sorted order)',
+        parser.add_argument('output_file', help='Path to write the CSV to',
+                            default='/home/cchq/app_string_count/app_translation_baseline.csv'
         )
         parser.add_argument(
-            '--include-inactive-domains',
-            action='store_true',
-            help='Also include inactive/paused domains (default: active only)',
+            '--domains',
+            help='Comma-separated list of domain names to process, instead '
+                 'of every domain in the system. Bypasses --start-from-domain '
+                 'and the automatic resume-from-output_file behavior; '
+                 'per-app dedup against output_file still applies.',
         )
 
     def handle(self, output_file, **options):
-        domain_names = sorted(Domain.get_all_names())
-        start_from = options['start_from_domain']
-        if start_from:
-            domain_names = [d for d in domain_names if d >= start_from]
+        written_app_ids, last_domain = self._get_resume_state(output_file)
+
+        if options['domains']:
+            domain_names = sorted(
+                d.strip() for d in options['domains'].split(',') if d.strip()
+            )
+        else:
+            domain_names = sorted(Domain.get_all_names())
+            start_from = last_domain
+            if start_from:
+                domain_names = [d for d in domain_names if d >= start_from]
 
         with open(output_file, 'a', newline='') as f:
             writer = csv.writer(f)
@@ -69,7 +75,7 @@ class Command(BaseCommand):
                 writer.writerow(CSV_HEADERS)
             for i, domain_name in enumerate(domain_names):
                 try:
-                    self._process_domain(domain_name, writer, options)
+                    self._process_domain(domain_name, writer, options, written_app_ids)
                 except Exception:
                     self.stderr.write(f"Error processing domain {domain_name}")
                     traceback.print_exc(file=sys.stderr)
@@ -79,11 +85,39 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f"Done. Output written to {output_file}"))
 
-    def _process_domain(self, domain_name, writer, options):
+    @staticmethod
+    def _get_resume_state(output_file):
+        """
+        Reads any rows already written by a previous (possibly interrupted)
+        run, so apps that were already processed can be skipped and
+        processing can pick back up from the last domain reached. Domains
+        are written in sorted order, so the last domain seen is the
+        furthest point reached by the previous run.
+        """
+        if not os.path.exists(output_file):
+            return set(), None
+
+        with open(output_file, newline='') as f:
+            reader = csv.reader(f)
+            try:
+                header = next(reader)
+            except StopIteration:
+                return set(), None
+            domain_index = header.index('domain')
+            app_id_index = header.index('app_id')
+
+            written_app_ids = set()
+            last_domain = None
+            for row in reader:
+                if len(row) <= max(domain_index, app_id_index):
+                    continue
+                written_app_ids.add(row[app_id_index])
+                last_domain = row[domain_index]
+            return written_app_ids, last_domain
+
+    def _process_domain(self, domain_name, writer, options, written_app_ids):
         domain_obj = Domain.get_by_name(domain_name)
         if domain_obj is None:
-            return
-        if not domain_obj.is_active and not options['include_inactive_domains']:
             return
 
         apps = get_apps_in_domain(domain_name, include_remote=False)
@@ -92,7 +126,10 @@ class Command(BaseCommand):
 
         plan_edition = self._get_plan_edition(domain_name)
         for app in apps:
+            if app.get_id in written_app_ids:
+                continue
             writer.writerow(self._app_row(domain_name, plan_edition, app))
+            written_app_ids.add(app.get_id)
 
     @staticmethod
     def _get_plan_edition(domain_name):
