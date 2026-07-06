@@ -61,8 +61,8 @@ function extractSelectedQuestion(vellum) {
     return buildSelectedQuestion(vellum?.getCurrentlySelectedMug());
 }
 
-function _isVisible(el) {
-    return el && el.offsetParent !== null;
+function _isVisible(elem) {
+    return elem && elem.offsetParent !== null;
 }
 
 function _toSingleLine(text) {
@@ -111,14 +111,14 @@ function _cardListFieldErrors(mug, fd) {
 }
 
 function _xpathEditorError(mug, fd) {
-    const el = fd.querySelector('.fd-xpath-validation-summary');
-    if (!_isVisible(el)) {return [];}
+    const elem = fd.querySelector('.fd-xpath-validation-summary');
+    if (!_isVisible(elem)) {return [];}
     const editedProp = mug.form.vellum.data.core.currentlyEditedProperty;
 
     const input = fd.querySelector('.fd-xpath-editor-text');
     const expression = _toSingleLine(input.value || input.textContent);
 
-    const error = _toSingleLine(el.querySelector('pre').textContent);
+    const error = _toSingleLine(elem.querySelector('pre').textContent);
 
     return [{
         field: `${mug.spec[editedProp].lstring} - XPath Editor`,
