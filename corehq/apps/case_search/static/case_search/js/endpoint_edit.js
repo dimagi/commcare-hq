@@ -4,6 +4,11 @@ import Alpine from "alpinejs";
 import "hqwebapp/js/alpinejs/directives/datepicker";
 import "hqwebapp/js/alpinejs/directives/select2";
 import initialPageData from "hqwebapp/js/initial_page_data";
+import {
+    subtreeGroupHeight,
+    cloneWithNewIds,
+    normalizeRoot,
+} from "case_search/js/endpoint_tree";
 
 // Input-slot type sentinels. These MUST stay in sync with the constants in
 // corehq/apps/case_search/endpoint_capability.py (INPUT_TYPE_CHOICE,
@@ -79,22 +84,8 @@ Alpine.data("endpointForm", () => {
             }
         },
 
-        // The stored spec and builder state share the same shape, so the only
-        // adjustment needed is at the root: the builder always renders a
-        // group, so wrap a bare-component or empty/legacy root in an `all`
-        // group.
-        normalizeRoot(node) {
-            if (node && ["all", "any", "none"].includes(node.type)) {
-                return node;
-            }
-            if (node && node.type === "component") {
-                return { type: "all", children: [node] };
-            }
-            return { type: "all", children: (node && node.children) || [] };
-        },
-
         init() {
-            this.query = this.normalizeRoot(this.query);
+            this.query = normalizeRoot(this.query);
             this.initializeIds(this.query);
         },
 
@@ -150,20 +141,10 @@ Alpine.data("endpointForm", () => {
             this.copiedNode = JSON.parse(JSON.stringify(node));
         },
 
-        _subtreeGroupHeight(node) {
-            if (node.type === "component") {
-                return 0;
-            }
-            const heights = (node.children || []).map((c) =>
-                this._subtreeGroupHeight(c),
-            );
-            return 1 + Math.max(0, ...heights);
-        },
-
         canPasteInto(depth) {
             return (
                 !!this.copiedNode &&
-                this._subtreeGroupHeight(this.copiedNode) <= depth
+                subtreeGroupHeight(this.copiedNode) <= depth
             );
         },
 
@@ -171,8 +152,11 @@ Alpine.data("endpointForm", () => {
             if (!this.copiedNode) {
                 return;
             }
-            const clone = JSON.parse(JSON.stringify(this.copiedNode));
-            this.initializeIds(clone);
+            const { node: clone, nextId } = cloneWithNewIds(
+                this.copiedNode,
+                this._nextId,
+            );
+            this._nextId = nextId;
             if (!group.children) {
                 group.children = [];
             }
