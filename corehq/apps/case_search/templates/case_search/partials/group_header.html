@@ -6,7 +6,7 @@
   >
     <i class="fa-solid fa-code-branch"></i>
   </span>
-  <div class="btn-group btn-group-sm" role="group">
+  <div class="btn-group" role="group">
     <button
       type="button"
       class="btn"
@@ -46,7 +46,7 @@
   <template x-if="_removeParent !== null">
     <button
       type="button"
-      class="btn btn-sm text-secondary border-0 p-1 ms-auto"
+      class="btn text-secondary border-0 p-1 ms-auto"
       @click="removeNode(_removeParent, _removeIdx)"
       aria-label="{% trans "Remove group" %}"
     >

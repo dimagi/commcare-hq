@@ -14,13 +14,13 @@
     <div class="col-sm-10 ">
       <template x-if="param.type === 'date'">
         <div
-          class="input-group input-group-sm"
+          class="input-group"
           data-td-target-input="nearest"
           data-td-target-toggle="nearest"
         >
           <input
             type="text"
-            class="form-control form-control-sm font-monospace"
+            class="form-control font-monospace"
             :id="'param-value-' + idx"
             x-model="testParamValues[param.name]"
             x-datepicker='{"useInputGroup": true}'
@@ -38,7 +38,7 @@
       <template x-if="param.type !== 'date'">
         <input
           type="text"
-          class="form-control form-control-sm font-monospace flex-grow-1"
+          class="form-control font-monospace flex-grow-1"
           :id="'param-value-' + idx"
           x-model="testParamValues[param.name]"
         />
@@ -49,7 +49,7 @@
 
 <button
   type="button"
-  class="btn btn-secondary btn-sm"
+  class="btn btn-secondary"
   hx-post="{% url 'case_search_endpoint_test' domain %}"
   hx-include="closest form"
   :hx-vals="JSON.stringify({test_param_values: testParamValues})"

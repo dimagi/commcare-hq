@@ -40,7 +40,7 @@
   <div class="d-flex gap-2 mt-2 flex-wrap">
     <button
       type="button"
-      class="btn btn-outline-primary btn-sm"
+      class="btn btn-outline-primary"
       @click="addCondition(node)"
     >
       <i class="fa-solid fa-plus me-1"></i>{% trans "Add Condition" %}
@@ -48,7 +48,7 @@
     {% if depth > 0 %}
       <button
         type="button"
-        class="btn btn-outline-primary btn-sm"
+        class="btn btn-outline-primary"
         @click="addGroup(node, 'all')"
       >
         <i class="fa-solid fa-code-branch me-1"></i>{% trans "Add Group" %}
