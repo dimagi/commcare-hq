@@ -8,6 +8,7 @@ import {
     subtreeGroupHeight,
     cloneWithNewIds,
     normalizeRoot,
+    removeChild,
 } from "case_search/js/endpoint_tree";
 
 // Input-slot type sentinels. These MUST stay in sync with the constants in
@@ -133,8 +134,8 @@ Alpine.data("endpointForm", () => {
             });
         },
 
-        removeNode(parentGroup, idx) {
-            parentGroup.children.splice(idx, 1);
+        removeNode(parentGroup, node) {
+            removeChild(parentGroup, node);
         },
 
         copyNode(node) {

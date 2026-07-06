@@ -1,5 +1,5 @@
 {% load i18n %}
-{# Condition row partial — expects Alpine scope with: node, _removeParent, _removeIdx #}
+{# Condition row partial — expects Alpine scope with: node, _removeParent #}
 {# All other bindings (mode, currentFields, capability, helper functions) #}
 {# are inherited from the enclosing endpointForm() Alpine context.        #}
 
@@ -170,7 +170,7 @@
   <button
     type="button"
     class="btn text-secondary border-0 p-1 flex-shrink-0"
-    @click="removeNode(_removeParent, _removeIdx)"
+    @click="removeNode(_removeParent, node)"
     aria-label="{% trans "Remove condition" %}"
   >
     <i class="fa-regular fa-trash-can"></i>

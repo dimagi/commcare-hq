@@ -1,17 +1,15 @@
 {% load i18n %}
 {# Recursive all/any/none group renderer.                                    #}
-{# Expects Alpine scope: node, _removeParent (null = no remove), _removeIdx. #}
+{# Expects Alpine scope: node, _removeParent (null = no remove button).      #}
 {# Expects template context: depth = remaining nesting levels below this     #}
 {# group; the template includes itself until depth runs out.                 #}
 {% include 'case_search/partials/group_header.html' %}
 <div class="ps-4 border-start border-2">
-  <template x-for="(child, childIdx) in node.children" :key="child._id">
+  <template x-for="child in node.children" :key="child._id">
     <div class="mb-2">
       {# Component condition #}
       <template x-if="child.type === 'component'">
-        <div
-          x-data="{ node: child, _removeParent: node, _removeIdx: childIdx }"
-        >
+        <div x-data="{ node: child, _removeParent: node }">
           {% include 'case_search/partials/condition_row.html' %}
         </div>
       </template>
@@ -19,9 +17,7 @@
       {# Nested all/any/none group #}
       {% if depth > 0 %}
         <template x-if="['all', 'any', 'none'].includes(child.type)">
-          <div
-            x-data="{ node: child, _removeParent: node, _removeIdx: childIdx }"
-          >
+          <div x-data="{ node: child, _removeParent: node }">
             {% include 'case_search/partials/group_node.html' with depth=depth|add:"-1" %}
           </div>
         </template>

@@ -31,3 +31,16 @@ export function normalizeRoot(node) {
     }
     return { type: "all", children: (node && node.children) || [] };
 }
+
+// Remove `node` from `parent.children` by identity, returning true if found.
+// Identity rather than index because the builder's x-for is keyed by `_id` and
+// Alpine does not re-run a child's scope after the list mutates, so a captured
+// index goes stale and would delete the wrong sibling.
+export function removeChild(parent, node) {
+    const idx = (parent.children || []).indexOf(node);
+    if (idx === -1) {
+        return false;
+    }
+    parent.children.splice(idx, 1);
+    return true;
+}

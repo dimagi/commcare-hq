@@ -2,6 +2,7 @@ import {
     subtreeGroupHeight,
     cloneWithNewIds,
     normalizeRoot,
+    removeChild,
 } from "case_search/js/endpoint_tree";
 
 const component = (extra = {}) => ({ type: "component", ...extra });
@@ -112,6 +113,44 @@ describe("endpoint_tree", function () {
             const result = normalizeRoot({ type: "legacy", children });
             assert.equal(result.type, "all");
             assert.deepEqual(result.children, children);
+        });
+    });
+
+    describe("removeChild", function () {
+        it("removes the node and returns true", function () {
+            const b = component({ field: "b" });
+            const parent = group("all", [component({ field: "a" }), b]);
+            assert.isTrue(removeChild(parent, b));
+            assert.deepEqual(parent.children, [component({ field: "a" })]);
+        });
+
+        it("removes by identity, not by matching value", function () {
+            // Two structurally identical siblings: only the referenced one goes.
+            const first = component({ field: "x" });
+            const second = component({ field: "x" });
+            const parent = group("all", [first, second]);
+            removeChild(parent, second);
+            assert.equal(parent.children.length, 1);
+            assert.strictEqual(parent.children[0], first);
+        });
+
+        it("removes the correct sibling regardless of position", function () {
+            const a = component({ field: "a" });
+            const b = component({ field: "b" });
+            const c = component({ field: "c" });
+            const parent = group("all", [a, b, c]);
+            removeChild(parent, b);
+            assert.deepEqual(parent.children, [a, c]);
+        });
+
+        it("returns false and does not mutate when node is absent", function () {
+            const parent = group("all", [component({ field: "a" })]);
+            assert.isFalse(removeChild(parent, component({ field: "a" })));
+            assert.equal(parent.children.length, 1);
+        });
+
+        it("returns false when the parent has no children", function () {
+            assert.isFalse(removeChild({ type: "all" }, component()));
         });
     });
 });
