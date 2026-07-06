@@ -1,18 +1,17 @@
 {% load i18n %}
-{# Expects Alpine scope: node, _removeParent (null = no remove button), _removeIdx #}
+{# Expects Alpine scope: node, _removeParent (null = no remove button) #}
 <div class="d-flex align-items-center gap-2 mb-2">
   <span
     class="ep-type-badge d-inline-flex align-items-center justify-content-center flex-shrink-0 rounded-1 bg-secondary text-white"
   >
     <i class="fa-solid fa-code-branch"></i>
   </span>
-  <div class="btn-group btn-group-sm" role="group">
+  <div class="btn-group" role="group">
     <button
       type="button"
       class="btn"
       :class="node.type === 'all' ? 'btn-primary' : 'btn-outline-secondary'"
-      @click="if (mode !== 'readonly') node.type = 'all'"
-      :disabled="mode === 'readonly'"
+      @click="node.type = 'all'"
     >
       {% trans "ALL" %}
     </button>
@@ -20,8 +19,7 @@
       type="button"
       class="btn"
       :class="node.type === 'any' ? 'btn-primary' : 'btn-outline-secondary'"
-      @click="if (mode !== 'readonly') node.type = 'any'"
-      :disabled="mode === 'readonly'"
+      @click="node.type = 'any'"
     >
       {% trans "ANY" %}
     </button>
@@ -29,8 +27,7 @@
       type="button"
       class="btn"
       :class="node.type === 'none' ? 'btn-primary' : 'btn-outline-secondary'"
-      @click="if (mode !== 'readonly') node.type = 'none'"
-      :disabled="mode === 'readonly'"
+      @click="node.type = 'none'"
     >
       {% trans "NONE" %}
     </button>
@@ -46,11 +43,19 @@
       >{% trans "match none of the following" %}</span
     >
   </span>
-  <template x-if="mode !== 'readonly' && _removeParent !== null">
+  <button
+    type="button"
+    class="btn text-secondary border-0 p-1 ms-auto"
+    @click="copyNode(node)"
+    aria-label="{% trans "Copy group" %}"
+  >
+    <i class="fa-regular fa-clone"></i>
+  </button>
+  <template x-if="_removeParent !== null">
     <button
       type="button"
-      class="btn btn-sm text-secondary border-0 p-1 ms-auto"
-      @click="removeNode(_removeParent, _removeIdx)"
+      class="btn text-secondary border-0 p-1"
+      @click="removeNode(_removeParent, node)"
       aria-label="{% trans "Remove group" %}"
     >
       <i class="fa-regular fa-trash-can"></i>
