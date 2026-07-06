@@ -54,5 +54,26 @@
         <i class="fa-solid fa-code-branch me-1"></i>{% trans "Add Group" %}
       </button>
     {% endif %}
+    <template x-if="copiedNode">
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        :disabled="!canPasteInto({{ depth }})"
+        @click="pasteInto(node)"
+      >
+        <i class="fa-regular fa-clipboard me-1"></i>
+        <span x-show="copiedNode.type === 'component'"
+          >{% trans "Paste Condition" %}</span
+        >
+        <span x-show="copiedNode.type !== 'component'"
+          >{% trans "Paste Group" %}</span
+        >
+      </button>
+    </template>
+    <template x-if="copiedNode && !canPasteInto({{ depth }})">
+      <span class="text-muted small fst-italic align-self-center">
+        {% trans "Copied group is nested too deeply to paste here" %}
+      </span>
+    </template>
   </div>
 </div>

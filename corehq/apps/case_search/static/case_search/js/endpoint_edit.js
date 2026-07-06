@@ -23,6 +23,10 @@ Alpine.data("endpointForm", () => {
         query: initialPageData.get("initial_query"),
         capability: initialPageData.get("capability"),
         _nextId: 1,
+        // Holds a snapshot of a copied condition/group, or null. Shared across
+        // the whole builder so a node copied in one group can be pasted into
+        // another.
+        copiedNode: null,
         // Exposed so condition_row.html can compare against the sentinel rather
         // than re-typing the "choice" literal.
         slotTypeChoice: SLOT_TYPE_CHOICE,
@@ -140,6 +144,39 @@ Alpine.data("endpointForm", () => {
 
         removeNode(parentGroup, idx) {
             parentGroup.children.splice(idx, 1);
+        },
+
+        copyNode(node) {
+            this.copiedNode = JSON.parse(JSON.stringify(node));
+        },
+
+        _subtreeGroupHeight(node) {
+            if (node.type === "component") {
+                return 0;
+            }
+            const heights = (node.children || []).map((c) =>
+                this._subtreeGroupHeight(c),
+            );
+            return 1 + Math.max(0, ...heights);
+        },
+
+        canPasteInto(depth) {
+            return (
+                !!this.copiedNode &&
+                this._subtreeGroupHeight(this.copiedNode) <= depth
+            );
+        },
+
+        pasteInto(group) {
+            if (!this.copiedNode) {
+                return;
+            }
+            const clone = JSON.parse(JSON.stringify(this.copiedNode));
+            this.initializeIds(clone);
+            if (!group.children) {
+                group.children = [];
+            }
+            group.children.push(clone);
         },
 
         onFieldChange(node) {
