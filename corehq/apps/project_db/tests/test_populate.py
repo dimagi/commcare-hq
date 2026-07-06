@@ -12,7 +12,11 @@ from corehq.apps.project_db.populate import (
     send_to_project_db,
     upsert_cases,
 )
-from corehq.apps.project_db.table_ddl import CaseTable, get_project_db_engine
+from corehq.apps.project_db.table_ddl import (
+    CaseTable,
+    get_project_db_engine,
+    truncate_identifier,
+)
 from corehq.form_processor.models import CommCareCase
 
 from .util import project_db_table
@@ -164,6 +168,24 @@ def test_send_to_project_db():
         rows = conn.execute(table.select()).fetchall()
     assert [r[0] for r in rows] == ['Alice', 'Bob', '']
     assert CaseTable('test-upsert', 'clinic').reflect() is None
+
+
+@use('db', project_db_table('test-long-prop', 'patient', {'x' * 100: 'date'}))
+def test_send_long_property_name_round_trip():
+    # A property whose column name exceeds Postgres's 63-byte limit must survive
+    # create -> reflect -> upsert with the DDL and populate sides agreeing.
+    long_name = 'x' * 100
+    send_to_project_db('test-long-prop', 'patient', [
+        _make_case({long_name: '1990-05-20'}, type='patient'),
+    ])
+
+    table = CaseTable('test-long-prop', 'patient').reflect()
+    plain_col = truncate_identifier(f'prop__{long_name}')
+    typed_col = truncate_identifier(f'date_prop__{long_name}')
+    with get_project_db_engine().begin() as conn:
+        rows = conn.execute(table.select()).fetchall()
+    assert rows[0][plain_col] == '1990-05-20'
+    assert rows[0][typed_col] == datetime.date(1990, 5, 20)
 
 
 @use('db', project_db_table('test-send', 'patient', {'first_name': 'plain'}))

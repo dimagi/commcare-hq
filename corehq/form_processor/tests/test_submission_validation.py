@@ -1,3 +1,4 @@
+import doctest
 import uuid
 from io import BytesIO
 from types import SimpleNamespace
@@ -257,3 +258,10 @@ class TestCheckImageAttachmentsCachingFootprint(TestCase):
         assert handler_form_xml_fetches == 0, (
             'handler must not trigger an additional form.xml blob fetch'
         )
+
+
+def test_doctests():
+    import corehq.form_processor.submission_validation as module
+
+    results = doctest.testmod(module)
+    assert results.failed == 0
