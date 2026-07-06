@@ -2,6 +2,7 @@ import "commcarehq";
 import "hqwebapp/js/htmx_base";
 import Alpine from "alpinejs";
 import "hqwebapp/js/alpinejs/directives/datepicker";
+import "hqwebapp/js/alpinejs/directives/select2";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
 // Input-slot type sentinels. These MUST stay in sync with the constants in
@@ -171,6 +172,18 @@ Alpine.data("endpointForm", () => {
                 node.inputs[slotName] = { type: "constant", value: "" };
             }
             return node.inputs[slotName];
+        },
+
+        slotStretches(node, slot) {
+            // Only free-text constant inputs grow to fill the row; choice,
+            // date/datetime, and parameter selects stay at their content width.
+            if (slot.type === this.slotTypeChoice) {
+                return false;
+            }
+            if (slot.type === "date" || slot.type === "datetime") {
+                return false;
+            }
+            return this.getInputValue(node, slot.name).type === "constant";
         },
 
         setInputType(node, slotName, valueType) {
