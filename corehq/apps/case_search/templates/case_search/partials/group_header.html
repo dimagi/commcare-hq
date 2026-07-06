@@ -1,5 +1,5 @@
 {% load i18n %}
-{# Expects Alpine scope: node, _removeParent (null = no remove button), _removeIdx #}
+{# Expects Alpine scope: node, _removeParent (null = no remove button) #}
 <div class="d-flex align-items-center gap-2 mb-2">
   <span
     class="ep-type-badge d-inline-flex align-items-center justify-content-center flex-shrink-0 rounded-1 bg-secondary text-white"
@@ -55,7 +55,7 @@
     <button
       type="button"
       class="btn text-secondary border-0 p-1"
-      @click="removeNode(_removeParent, _removeIdx)"
+      @click="removeNode(_removeParent, node)"
       aria-label="{% trans "Remove group" %}"
     >
       <i class="fa-regular fa-trash-can"></i>
