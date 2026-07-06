@@ -10,10 +10,11 @@
     <i :class="typeIconClass(getFieldType(node.field))"></i>
   </span>
   <select
-    class="form-select form-select-sm w-auto"
-    @change="node.field = $event.target.value; onFieldChange(node)"
+    class="form-select w-auto ep-field-select"
+    x-select2='{"placeholder": "{% trans "Field" %}", "allowClear": true}'
+    @select2change="node.field = $event.detail; onFieldChange(node)"
   >
-    <option value="" :selected="!node.field">{% trans "-- Field --" %}</option>
+    <option value=""></option>
     <template x-for="field in Object.values(currentFields)" :key="field.name">
       <option
         :value="field.name"
@@ -24,7 +25,7 @@
   </select>
   <template x-if="node.field">
     <select
-      class="form-select form-select-sm w-auto"
+      class="form-select w-auto"
       @change="node.operator = $event.target.value; onOperatorChange(node)"
     >
       <option value="" :selected="!node.operator">
@@ -41,12 +42,15 @@
   </template>
   <template x-if="node.operator">
     <template x-for="slot in getInputSchemaForOperation(node)" :key="slot.name">
-      <div class="d-flex gap-1 flex-grow-1">
+      <div
+        class="d-flex gap-1"
+        :class="{ 'flex-grow-1': slotStretches(node, slot) }"
+      >
         {# Choice slots are constant-only: a dropdown of fixed options, no type #}
         {# selector. `slotTypeChoice` mirrors endpoint_capability.INPUT_TYPE_CHOICE. #}
         <template x-if="slot.type === slotTypeChoice">
           <select
-            class="form-select form-select-sm"
+            class="form-select w-auto"
             x-model="getInputValue(node, slot.name).value"
             :aria-label="slot.name"
           >
@@ -58,7 +62,7 @@
         <template x-if="slot.type !== slotTypeChoice">
           <div class="d-flex gap-1 flex-grow-1">
             <select
-              class="form-select form-select-sm w-auto"
+              class="form-select w-auto"
               :value="getInputValue(node, slot.name).type"
               @change="setInputType(node, slot.name, $event.target.value)"
             >
@@ -69,13 +73,13 @@
               <div class="flex-grow-1">
                 <template x-if="slot.type === 'date'">
                   <div
-                    class="input-group input-group-sm"
+                    class="input-group ep-date-input"
                     data-td-target-input="nearest"
                     data-td-target-toggle="nearest"
                   >
                     <input
                       type="text"
-                      class="form-control form-control-sm"
+                      class="form-control"
                       :id="'cond-' + node._id + '-' + slot.name"
                       x-model="getInputValue(node, slot.name).value"
                       x-datepicker='{"useInputGroup": true}'
@@ -93,13 +97,13 @@
                 </template>
                 <template x-if="slot.type === 'datetime'">
                   <div
-                    class="input-group input-group-sm"
+                    class="input-group ep-date-input"
                     data-td-target-input="nearest"
                     data-td-target-toggle="nearest"
                   >
                     <input
                       type="text"
-                      class="form-control form-control-sm"
+                      class="form-control"
                       :id="'cond-' + node._id + '-' + slot.name"
                       x-model="getInputValue(node, slot.name).value"
                       x-datepicker='{"datetime": true, "useInputGroup": true}'
@@ -120,7 +124,7 @@
                 >
                   <input
                     type="text"
-                    class="form-control form-control-sm"
+                    class="form-control"
                     x-model="getInputValue(node, slot.name).value"
                     :placeholder="slot.name"
                   />
@@ -131,7 +135,7 @@
               x-if="getInputValue(node, slot.name).type === 'parameter'"
             >
               <select
-                class="form-select form-select-sm w-auto"
+                class="form-select w-auto"
                 @change="node.inputs[slot.name].value = $event.target.value"
               >
                 <option
@@ -157,7 +161,7 @@
   </template>
   <button
     type="button"
-    class="btn btn-sm text-secondary border-0 p-1 ms-auto flex-shrink-0"
+    class="btn text-secondary border-0 p-1 ms-auto flex-shrink-0"
     @click="removeNode(_removeParent, _removeIdx)"
     aria-label="{% trans "Remove condition" %}"
   >
