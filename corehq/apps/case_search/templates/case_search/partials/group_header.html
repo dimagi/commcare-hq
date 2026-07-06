@@ -43,10 +43,18 @@
       >{% trans "match none of the following" %}</span
     >
   </span>
+  <button
+    type="button"
+    class="btn text-secondary border-0 p-1 ms-auto"
+    @click="copyNode(node)"
+    aria-label="{% trans "Copy group" %}"
+  >
+    <i class="fa-regular fa-clone"></i>
+  </button>
   <template x-if="_removeParent !== null">
     <button
       type="button"
-      class="btn text-secondary border-0 p-1 ms-auto"
+      class="btn text-secondary border-0 p-1"
       @click="removeNode(_removeParent, _removeIdx)"
       aria-label="{% trans "Remove group" %}"
     >
