@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -63,50 +64,85 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data, progress_track
     return response
 
 
+SUCCEEDED = 'succeeded'
+SKIPPED = 'skipped'
+
+
+@dataclass(frozen=True)
+class FormActionResult:
+    """Outcome of a bulk form action for a single requested form id."""
+    form_id: str
+    status: str  # SUCCEEDED | SKIPPED
+    reason: Optional[str] = None  # not_found | not_archived | unexpected_error
+
+
+def apply_form_action(domain, form_ids, action_fn):
+    """Apply ``action_fn`` to each form and yield a ``FormActionResult`` per id.
+
+    :param action_fn: callable taking an ``XFormInstance``
+    """
+    unresolved_ids = set(form_ids)
+    for xform in XFormInstance.objects.iter_forms(form_ids):
+        if xform.domain != domain:
+            # skip forms not belonging to the specified domain
+            continue
+        unresolved_ids.discard(xform.form_id)
+        try:
+            action_fn(xform)
+        except Exception:
+            yield FormActionResult(xform.form_id, SKIPPED, 'unexpected_error')
+        else:
+            yield FormActionResult(xform.form_id, SUCCEEDED)
+    for form_id in unresolved_ids:
+        yield FormActionResult(form_id, SKIPPED, 'not_found')
+
+
 def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_restore, task=None, from_excel=False):
     response = {
         'errors': [],
         'success': [],
     }
+    captured_errors = {}
+    is_archive = archive_or_restore.is_archive_mode()
 
-    missing_forms = set(form_ids)
+    def action_fn(xform):
+        try:
+            if is_archive:
+                xform.archive(user_id=user_id)
+            else:
+                xform.unarchive(user_id=user_id)
+        except Exception as e:
+            captured_errors[xform.form_id] = e
+            raise
+
     success_count = 0
-
     if task:
         DownloadBase.set_progress(task, 0, len(form_ids))
 
-    for xform in XFormInstance.objects.iter_forms(form_ids):
-        missing_forms.discard(xform.form_id)
-
-        if xform.domain != domain:
-            response['errors'].append(_("XForm {form_id} does not belong to domain {domain}").format(
-                form_id=xform.form_id, domain=domain))
+    for result in apply_form_action(domain, form_ids, action_fn):
+        if result.reason == 'not_found':
+            response['errors'].append(
+                _("Could not find XForm {form_id}").format(form_id=result.form_id))
             continue
 
         xform_string = _("XForm {form_id} for domain {domain} by user '{username}'").format(
-            form_id=xform.form_id,
-            domain=xform.domain,
+            form_id=result.form_id,
+            domain=domain,
             username=username)
 
-        try:
-            if archive_or_restore.is_archive_mode():
-                xform.archive(user_id=user_id)
+        if result.status == SUCCEEDED:
+            if is_archive:
                 message = _("Successfully archived {form}").format(form=xform_string)
             else:
-                xform.unarchive(user_id=user_id)
                 message = _("Successfully unarchived {form}").format(form=xform_string)
             response['success'].append(message)
             success_count = success_count + 1
-        except Exception as e:
+        else:
             response['errors'].append(_("Could not archive {form}: {error}").format(
-                form=xform_string, error=e))
+                form=xform_string, error=captured_errors.get(result.form_id)))
 
         if task:
             DownloadBase.set_progress(task, success_count, len(form_ids))
-
-    for missing_form_id in missing_forms:
-        response['errors'].append(
-            _("Could not find XForm {form_id}").format(form_id=missing_form_id))
 
     if from_excel:
         return response

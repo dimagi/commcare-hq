@@ -4,7 +4,14 @@ from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.data_interfaces.interfaces import FormManagementMode
 from corehq.apps.data_interfaces.tasks import task_generate_ids_and_operate_on_payloads
-from corehq.apps.data_interfaces.utils import archive_or_restore_forms, operate_on_payloads
+from corehq.apps.data_interfaces.utils import (
+    SKIPPED,
+    SUCCEEDED,
+    FormActionResult,
+    apply_form_action,
+    archive_or_restore_forms,
+    operate_on_payloads,
+)
 
 
 DOMAIN = 'test-domain'
@@ -471,15 +478,13 @@ class TestArchiveOrRestoreForms(SimpleTestCase):
         assert result['messages']['errors'] == ["Could not find XForm missing"]
         assert result['messages']['success'] == []
 
-    def test_wrong_domain_reports_does_not_belong(self):
+    def test_wrong_domain_reports_not_found(self):
         form = Mock(form_id='f1', domain='other-domain')
         result = self._patched_archive_or_restore_forms(
             self._archive_mode(), ['f1'], [form]
         )
         form.archive.assert_not_called()
-        assert result['messages']['errors'] == [
-            "XForm f1 does not belong to domain test-domain"
-        ]
+        assert result['messages']['errors'] == ["Could not find XForm f1"]
 
     def test_action_exception_reported(self):
         form = Mock(form_id='f1', domain=DOMAIN)
@@ -505,3 +510,58 @@ class TestArchiveOrRestoreForms(SimpleTestCase):
             "by user 'user@example.com'"
         ]
         assert result['errors'] == []
+
+
+class TestApplyFormAction(SimpleTestCase):
+
+    def _patched_apply_form_action(self, form_ids, forms, action_fn=None):
+        action_fn = action_fn or (lambda xform: None)
+        with patch(
+            'corehq.apps.data_interfaces.utils.XFormInstance.objects.iter_forms',
+            return_value=forms,
+        ):
+            return list(apply_form_action(DOMAIN, form_ids, action_fn))
+
+    def test_empty_form_ids(self):
+        assert self._patched_apply_form_action([], []) == []
+
+    def test_success(self):
+        form = Mock(form_id='f1', domain=DOMAIN)
+        calls = []
+        results = self._patched_apply_form_action(
+            ['f1'], [form], action_fn=calls.append
+        )
+        assert calls == [form]
+        assert results == [FormActionResult('f1', SUCCEEDED)]
+
+    def test_missing_is_not_found(self):
+        results = self._patched_apply_form_action(['missing'], [])
+        assert results == [FormActionResult('missing', SKIPPED, 'not_found')]
+
+    def test_wrong_domain_is_not_found(self):
+        form = Mock(form_id='f1', domain='other-domain')
+        called = []
+        results = self._patched_apply_form_action(
+            ['f1'], [form], action_fn=called.append
+        )
+        assert called == []  # action not applied to out-of-domain forms
+        assert results == [FormActionResult('f1', SKIPPED, 'not_found')]
+
+    def test_exception_is_unexpected_error(self):
+        form = Mock(form_id='f1', domain=DOMAIN)
+
+        def unexpected_error(xform):
+            raise Exception('error')
+
+        results = self._patched_apply_form_action(
+            ['f1'], [form], action_fn=unexpected_error
+        )
+        assert results == [FormActionResult('f1', SKIPPED, 'unexpected_error')]
+
+    def test_mixed_results(self):
+        found = Mock(form_id='f1', domain=DOMAIN)
+        results = self._patched_apply_form_action(['f1', 'missing'], [found])
+        assert results == [
+            FormActionResult('f1', SUCCEEDED),
+            FormActionResult('missing', SKIPPED, 'not_found'),
+        ]
