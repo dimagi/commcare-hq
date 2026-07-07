@@ -29,6 +29,7 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.models import (
     UNLIMITED_FEATURE_USAGE,
     BillingAccount,
+    BillingAccountDomainHistory,
     BillingAccountWebUserHistory,
     BillingRecord,
     CreditLine,
@@ -489,6 +490,9 @@ def generate_line_items(invoice, subscription):
         )
         if feature_factory_class == WebUserLineItemFactory and not subscription.account.bill_web_user:
             continue
+        if (feature_factory_class == DomainLineItemFactory
+                and not subscription.account.is_customer_billing_account):
+            continue
         feature_factory = feature_factory_class(subscription, feature_rate, invoice)
         feature_factory.create()
 
@@ -559,6 +563,7 @@ class LineItemFactory(object):
                 FeatureType.FORM_SUBMITTING_MOBILE_WORKER: FormSubmittingMobileWorkerLineItemFactory,
                 FeatureType.USER: UserLineItemFactory,
                 FeatureType.WEB_USER: WebUserLineItemFactory,
+                FeatureType.DOMAIN: DomainLineItemFactory,
             }[feature_type]
         except KeyError:
             raise LineItemError("No line item factory exists for the feature type '%s" % feature_type)
@@ -744,6 +749,8 @@ class UserLineItemFactory(FeatureLineItemFactory):
     @property
     @memoized
     def quantity(self):
+        if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
+            return 0
         # Iterate through all months in the invoice date range to aggregate total users into one line item
         dates = self.all_month_ends_in_invoice()
         excess_users = 0
@@ -825,6 +832,25 @@ class WebUserLineItemFactory(UserLineItemFactory):
     @property
     def unit_description(self):
         return super()._unit_description_by_user_type("web user")
+
+
+class DomainLineItemFactory(UserLineItemFactory):
+
+    def total_users_for_date(self, date):
+        # Before a DOMAIN feature rate exists on a plan, there is no concept
+        # of an excess domain -- a missing snapshot (e.g. the cold-start
+        # window right after a Domain rate is first attached) means zero
+        # excess for that month, not a hard failure blocking the invoice.
+        try:
+            history = BillingAccountDomainHistory.objects.get(
+                billing_account=self.subscription.account, record_date=date)
+        except BillingAccountDomainHistory.DoesNotExist:
+            return 0
+        return history.num_domains
+
+    @property
+    def unit_description(self):
+        return super()._unit_description_by_user_type("domain")
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):

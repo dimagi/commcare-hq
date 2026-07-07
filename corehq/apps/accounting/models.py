@@ -134,12 +134,14 @@ class FeatureType(object):
     SMS = "SMS"
     WEB_USER = "Web User"
     FORM_SUBMITTING_MOBILE_WORKER = "Form-Submitting Mobile Worker"
+    DOMAIN = "Domain"
 
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
         (WEB_USER, WEB_USER),
         (FORM_SUBMITTING_MOBILE_WORKER, FORM_SUBMITTING_MOBILE_WORKER),
+        (DOMAIN, DOMAIN),
     )
     EDITIONED_FEATURES = [
         USER,
@@ -3922,6 +3924,21 @@ class BillingAccountWebUserHistory(models.Model):
     billing_account = models.ForeignKey(BillingAccount, on_delete=models.CASCADE)
     record_date = models.DateField()
     num_users = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ('billing_account', 'record_date')
+
+
+class BillingAccountDomainHistory(models.Model):
+    """
+    A record of the number of active domains for a billing account at the
+    record_date. Created by task calculate_domains_in_all_billing_accounts on
+    the first of every month. Used to bill enterprise accounts for the number
+    of domains above their plan's included-domains allowance.
+    """
+    billing_account = models.ForeignKey(BillingAccount, on_delete=models.CASCADE)
+    record_date = models.DateField()
+    num_domains = models.IntegerField(default=0)
 
     class Meta:
         unique_together = ('billing_account', 'record_date')
