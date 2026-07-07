@@ -107,6 +107,17 @@ var _show = function (message, $el, autoHideTime, classes, isHTML) {
     return $container;
 };
 
+const getErrorNotificationTexts = function () {
+    const texts = [];
+    $('#cloudcare-notifications .alert-danger').each(function () {
+        const text = $(this).text().replace(/\s+/g, ' ').trim();
+        if (text) {
+            texts.push(text);
+        }
+    });
+    return texts;
+};
+
 var shouldShowLoading = function () {
     const answerInProgress = (sessionStorage.answerQuestionInProgress && JSON.parse(sessionStorage.answerQuestionInProgress));
     const validationInProgress = (sessionStorage.validationInProgress && JSON.parse(sessionStorage.validationInProgress));
@@ -435,6 +446,7 @@ export default {
     showWarning: showWarning,
     showHTMLError: showHTMLError,
     showSuccess: showSuccess,
+    getErrorNotificationTexts: getErrorNotificationTexts,
     clearUserDataComplete: clearUserDataComplete,
     breakLocksComplete: breakLocksComplete,
     formplayerLoading: formplayerLoading,
