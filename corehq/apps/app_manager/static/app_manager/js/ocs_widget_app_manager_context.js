@@ -1,5 +1,6 @@
 import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
+import {SELECTORS} from "app_manager/js/preview_app_constants";
 import ocsContext, {WIDGET_SELECTOR} from "hqwebapp/js/ocs_page_context";
 
 function _text(el) {
@@ -27,9 +28,19 @@ function _collectAppStructureContext() {
     return {app_structure: _readStructure()};
 }
 
+function _collectAppPreviewContext() {
+    const getErrors = document.querySelector(SELECTORS.PREVIEW_WINDOW_IFRAME)?.contentWindow.getAppPreviewErrors;
+    if (typeof getErrors !== 'function') {
+        return {};
+    }
+    const errors = getErrors();
+    return errors.length ? {app_preview_errors: errors} : {};
+}
+
 $(function () {
     if (!document.querySelector(WIDGET_SELECTOR)) {
         return;
     }
     ocsContext.registerContextCollector(_collectAppStructureContext);
+    ocsContext.registerContextCollector(_collectAppPreviewContext);
 });
