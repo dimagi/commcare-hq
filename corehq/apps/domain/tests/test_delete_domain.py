@@ -56,6 +56,7 @@ from corehq.apps.data_dictionary.models import (
 )
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
+    BulkAsyncJob,
     CaseRuleAction,
     CaseRuleCriteria,
     CaseRuleSubmission,
@@ -615,6 +616,51 @@ class TestDeleteDomain(TestCase):
 
         self._assert_export_counts(self.domain.name, 0)
         self._assert_export_counts(self.domain2.name, 1)
+
+    def test_bulk_async_job_blobs_delete(self):
+        blobdb = get_blob_db()
+        keys = {}
+        for domain_name in [self.domain.name, self.domain2.name]:
+            requested_meta = blobdb.put(
+                BytesIO((domain_name + " ids").encode('utf-8')),
+                domain=domain_name,
+                parent_id=domain_name,
+                type_code=CODES.bulk_async_job,
+            )
+            skipped_meta = blobdb.put(
+                BytesIO((domain_name + " skipped").encode('utf-8')),
+                domain=domain_name,
+                parent_id=domain_name,
+                type_code=CODES.bulk_async_job,
+            )
+            keys[domain_name] = [requested_meta.key, skipped_meta.key]
+            BulkAsyncJob.objects.create(
+                domain=domain_name,
+                model=XFormInstance,
+                action=BulkAsyncJob.Action.ARCHIVE,
+                requested_by='user@example.com',
+                requested_ids_blob_key=requested_meta.key,
+                skipped_ids_blob_key=skipped_meta.key,
+            )
+
+        self.domain.delete()
+
+        deleted_requested_key, deleted_skipped_key = keys[self.domain.name]
+        with self.assertRaises(NotFound):
+            blobdb.get(key=deleted_requested_key, type_code=CODES.bulk_async_job)
+        with self.assertRaises(NotFound):
+            blobdb.get(key=deleted_skipped_key, type_code=CODES.bulk_async_job)
+
+        remaining_requested_key, remaining_skipped_key = keys[self.domain2.name]
+        with blobdb.get(key=remaining_requested_key, type_code=CODES.bulk_async_job) as f:
+            self.assertEqual(f.read(), (self.domain2.name + " ids").encode('utf-8'))
+        with blobdb.get(key=remaining_skipped_key, type_code=CODES.bulk_async_job) as f:
+            self.assertEqual(f.read(), (self.domain2.name + " skipped").encode('utf-8'))
+
+        self.assertEqual(
+            BulkAsyncJob.objects.filter(domain=self.domain.name).count(), 0)
+        self.assertEqual(
+            BulkAsyncJob.objects.filter(domain=self.domain2.name).count(), 1)
 
     def _assert_location_counts(self, domain_name, count):
         self._assert_queryset_count([

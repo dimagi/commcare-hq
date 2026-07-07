@@ -253,6 +253,15 @@ def _delete_data_files(domain_name):
     )))
 
 
+def _delete_bulk_async_jobs(domain_name):
+    from corehq.apps.data_interfaces.models import BulkAsyncJob
+    get_blob_db().bulk_delete(metas=list(BlobMeta.objects.partitioned_query(domain_name).filter(
+        parent_id=domain_name,
+        type_code=CODES.bulk_async_job,
+    )))
+    BulkAsyncJob.objects.filter(domain=domain_name).delete()
+
+
 def _delete_sms_content_events_schedules(domain_name):
     models = [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
@@ -388,7 +397,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'fhir.FHIRResourceProperty',
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'rule__domain'),
-    ModelDeletion('data_interfaces', 'BulkAsyncJob', 'domain'),
+    CustomDeletion('data_interfaces', _delete_bulk_async_jobs, ['BulkAsyncJob']),
     ModelDeletion('data_interfaces', 'ClosedParentDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'CustomMatchDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'MatchPropertyDefinition', 'caserulecriteria__rule__domain'),
