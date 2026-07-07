@@ -213,8 +213,11 @@ export {
     extractFormXml,
     extractQuestionTypes,
     extractSelectedQuestion,
-    _collectMugErrors,
     unselectedQuestionWarnings,
+};
+
+export const exportedForTesting = {
+    _collectMugErrors,
     _formWarnings,
     _cardListFieldErrors,
     _xpathEditorError,

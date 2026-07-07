@@ -6,13 +6,17 @@ import {
     extractFormXml,
     extractQuestionTypes,
     extractSelectedQuestion,
-    _collectMugErrors,
+    exportedForTesting,
     unselectedQuestionWarnings,
+} from "app_manager/js/forms/ocs_widget_form_designer_context";
+
+const {
+    _collectMugErrors,
     _formWarnings,
     _cardListFieldErrors,
     _xpathEditorError,
     _dataSourceWarnings,
-} from "app_manager/js/forms/ocs_widget_form_designer_context";
+} = exportedForTesting;
 
 
 function bootVellum() {
