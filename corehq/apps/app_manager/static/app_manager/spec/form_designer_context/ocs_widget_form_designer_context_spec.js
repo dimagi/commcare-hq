@@ -7,7 +7,7 @@ import {
     extractQuestionTypes,
     extractSelectedQuestion,
     _collectMugErrors,
-    _unselectedQuestionWarnings,
+    unselectedQuestionWarnings,
     _formWarnings,
     _cardListFieldErrors,
     _xpathEditorError,
@@ -164,7 +164,7 @@ describe("OCS form designer context extractors", function () {
             }]);
         });
 
-        it("_unselectedQuestionWarnings walks mugs and collects errors from unselected questions", function () {
+        it("unselectedQuestionWarnings walks mugs and collects errors from unselected questions", function () {
             const first = addQuestion("Text", "first");
             first.p.nodeID = "invalid id";
             first.validate();
@@ -179,7 +179,7 @@ describe("OCS form designer context extractors", function () {
             assert.isNull(dupRed.absolutePath);
             assert.equal(dupRed.parentMug, select);
 
-            const result = _unselectedQuestionWarnings(vellum.data.core.form, second.ufid);
+            const result = unselectedQuestionWarnings(vellum.data.core.form, second.ufid);
 
             const invalidIdError = "invalid id is not a valid Question ID. " +
                 "It must start with a letter and contain only " +

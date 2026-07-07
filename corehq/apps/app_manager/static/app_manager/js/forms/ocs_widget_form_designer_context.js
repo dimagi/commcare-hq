@@ -127,7 +127,7 @@ function _xpathEditorError(mug, fd) {
     }];
 }
 
-function _selectedQuestionWarnings(mug, fd) {
+function selectedQuestionWarnings(mug, fd) {
     return [
         ..._collectMugErrors(mug),
         ..._cardListFieldErrors(mug, fd),
@@ -135,7 +135,7 @@ function _selectedQuestionWarnings(mug, fd) {
     ];
 }
 
-function _unselectedQuestionWarnings(form, selectedUfid) {
+function unselectedQuestionWarnings(form, selectedUfid) {
     const warnings = {};
     form.walkMugs(mug => {
         if (mug.ufid === selectedUfid) {return;}
@@ -174,7 +174,7 @@ function _dataSourceWarnings(fd) {
     return [banner.querySelector('.help-block').textContent.trim()];
 }
 
-function _formLoadWarnings(form, fd) {
+function formLoadWarnings(form, fd) {
     return [..._formWarnings(form), ..._dataSourceWarnings(fd)];
 }
 
@@ -188,14 +188,14 @@ function _collectFormContext() {
     const selectedMug = vellum.getCurrentlySelectedMug();
     const currentSelectedQuestion = buildSelectedQuestion(selectedMug);
     if (currentSelectedQuestion) {
-        currentSelectedQuestion.warnings = _selectedQuestionWarnings(selectedMug, fd);
+        currentSelectedQuestion.warnings = selectedQuestionWarnings(selectedMug, fd);
     }
     return {
         form_context: {
             form_xml: extractFormXml(vellum),
             question_types: extractQuestionTypes(form),
-            unselected_question_warnings: _unselectedQuestionWarnings(form, selectedMug?.ufid),
-            form_load_warnings: _formLoadWarnings(form, fd),
+            unselected_question_warnings: unselectedQuestionWarnings(form, selectedMug?.ufid),
+            form_load_warnings: formLoadWarnings(form, fd),
             current_selected_question: currentSelectedQuestion,
             module_name: initialPageData.get('module_name'),
         },
@@ -214,7 +214,7 @@ export {
     extractQuestionTypes,
     extractSelectedQuestion,
     _collectMugErrors,
-    _unselectedQuestionWarnings,
+    unselectedQuestionWarnings,
     _formWarnings,
     _cardListFieldErrors,
     _xpathEditorError,
