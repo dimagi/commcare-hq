@@ -17785,6 +17785,16 @@ msgstr "починається з"
 
 #: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
+msgid "is like"
+msgstr "схоже на"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "sounds like"
+msgstr "звучить як"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "equals"
@@ -17836,6 +17846,21 @@ msgstr "до"
 #: corehq/messaging/scheduling/forms.py
 msgid "after"
 msgstr "після"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#, fuzzy
+#| msgid "on or after"
+msgid "on or before"
+msgstr "на або після"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "on or after"
+msgstr "на або після"
+
+#: corehq/apps/case_search/endpoint_capability.py
+msgid "is approximately"
+msgstr ""
 
 #: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
@@ -18224,6 +18249,12 @@ msgstr "Число"
 #: corehq/apps/reports/standard/cases/case_data.py
 msgid "date"
 msgstr "дата"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#, fuzzy
+#| msgid "gps_point"
+msgid "geopoint"
+msgstr "gps_point"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #, fuzzy
@@ -20273,16 +20304,8 @@ msgid "does not start with"
 msgstr "не починається з"
 
 #: corehq/apps/data_cleaning/models/types.py
-msgid "is like"
-msgstr "схоже на"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "is not like"
 msgstr "не схоже на"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "sounds like"
-msgstr "звучить як"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "does not sound like"
@@ -20299,10 +20322,6 @@ msgstr "не є всіма"
 #: corehq/apps/data_cleaning/models/types.py
 msgid "before or on"
 msgstr "до або на"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "on or after"
-msgstr "на або після"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "Find & Replace"

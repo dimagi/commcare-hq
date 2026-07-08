@@ -3983,7 +3983,6 @@ msgid "Allow locking and unlocking questions in forms."
 msgstr "Permitir bloquear y desbloquear preguntas en los formularios."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#| msgid "Allow locking and unlocking questions in forms."
 msgid "Allow creating and modifying public webforms."
 msgstr "Permitir crear y modificar formularios web públicos."
 

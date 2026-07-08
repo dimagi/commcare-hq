@@ -3869,7 +3869,6 @@ msgid "Allow locking and unlocking questions in forms."
 msgstr "السماح بقفل وفتح الأسئلة في النماذج."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#| msgid "Allow locking and unlocking questions in forms."
 msgid "Allow creating and modifying public webforms."
 msgstr "السماح بإنشاء وتعديل النماذج العامة على الويب."
 
