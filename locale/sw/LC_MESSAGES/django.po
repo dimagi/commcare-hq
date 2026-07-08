@@ -2216,12 +2216,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
-#| msgid ""
-#| "\n"
-#| "    Statement From:\n"
-#| "    CommCare and the corporation Dimagi, Inc.\n"
-#| "    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
-#| "  "
 msgid ""
 "\n"
 "    Statement From: CommCare and the corporation Dimagi, Inc. 245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
@@ -15388,7 +15382,6 @@ msgid "Confirm Import"
 msgstr "Thibitisha Uingizaji"
 
 #: corehq/apps/case_importer/templates/case_importer/import_cases.html
-#| msgid "Upload File"
 msgid "Upload an Excel File"
 msgstr "Pakia Faili la Excel"
 
@@ -15430,10 +15423,6 @@ msgid "blank"
 msgstr "wazi"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
-#| msgid ""
-#| "\n"
-#| "      Case importer is a tool for bulk uploading new cases or modifying existing ones.\n"
-#| "    "
 msgid ""
 "\n"
 "      Bulk upload new cases or update existing ones from a spreadsheet.\n"
@@ -15444,14 +15433,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
-#| msgid ""
-#| "\n"
-#| "      This tool can make changes to your data that might confuse your reports or applications.\n"
-#| "      Please exercise caution and see the\n"
-#| "      <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Case+Import+with+Excel\" target=\"_blank\">\n"
-#| "        help pages for this feature.\n"
-#| "      </a>\n"
-#| "    "
 msgid ""
 "\n"
 "      Imports can modify existing data and may affect your reports. Review the\n"
@@ -15466,7 +15447,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#| msgid "Recent Uploads"
 msgid "Recent Imports"
 msgstr "Uingizaji wa Hivi Karibuni"
 
@@ -15531,7 +15511,6 @@ msgid "Complete"
 msgstr "Imekamilika"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#| msgid "No recent uploads found."
 msgid "No recent imports found."
 msgstr "Hakuna uingizaji wa hivi karibuni uliopatikana."
 
@@ -15742,6 +15721,16 @@ msgstr "inaanza na"
 
 #: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
+msgid "is like"
+msgstr "inafanana na"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "sounds like"
+msgstr "inasikika kama"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "equals"
@@ -15795,6 +15784,20 @@ msgid "after"
 msgstr "baada ya"
 
 #: corehq/apps/case_search/endpoint_capability.py
+#| msgid "on or after"
+msgid "on or before"
+msgstr "kabla au siku hiyo"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "on or after"
+msgstr "katika au baada ya"
+
+#: corehq/apps/case_search/endpoint_capability.py
+msgid "is approximately"
+msgstr "ni takriban"
+
+#: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
 msgid "is any"
 msgstr "ni yoyote"
@@ -15811,7 +15814,6 @@ msgid "is empty"
 msgstr "ni tupu"
 
 #: corehq/apps/case_search/endpoint_capability.py
-#| msgid "Instance"
 msgid "within distance"
 msgstr "ndani ya umbali"
 
@@ -16109,7 +16111,6 @@ msgid "Endpoint Details"
 msgstr "Maelezo ya Kituo"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Enter report name here"
 msgid "Enter endpoint name"
 msgstr "Weka jina la endpoint"
 
@@ -16131,7 +16132,6 @@ msgid "Name cannot be empty or only whitespace"
 msgstr "Jina haliwezi kuwa tupu au nafasi tupu pekee"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Parameters"
 msgid "parameter name"
 msgstr "jina la kigezo"
 
@@ -16140,7 +16140,6 @@ msgid "text"
 msgstr "maandishi"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Number"
 msgid "number"
 msgstr "nambari"
 
@@ -16150,7 +16149,11 @@ msgid "date"
 msgstr "tarehe"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Remove Characters"
+#| msgid "gps_point"
+msgid "geopoint"
+msgstr "geopoint"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 msgid "Remove parameter"
 msgstr "Ondoa kigezo"
 
@@ -16161,12 +16164,10 @@ msgstr "Ongeza Kigezo"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/partials/query_tester.html
-#| msgid "Test API Key"
 msgid "Test query"
 msgstr "Jaribu hoja"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Deactivate Endpoint"
 msgid "Create Endpoint"
 msgstr "Unda Endpoint"
 
@@ -16196,7 +16197,6 @@ msgid "No endpoints configured."
 msgstr "Hakuna vituo vilivyosanidiwa."
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Add Field"
 msgid "-- Field --"
 msgstr "-- Sehemu --"
 
@@ -16205,17 +16205,14 @@ msgid "-- Operation --"
 msgstr "-- Operesheni --"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Parameters"
 msgid "Parameter"
 msgstr "Kigezo"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Parameters"
 msgid "-- Parameter --"
 msgstr "-- Kigezo --"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Remove Action"
 msgid "Remove condition"
 msgstr "Ondoa sharti"
 
@@ -16224,7 +16221,6 @@ msgid "ALL"
 msgstr "YOTE"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "AND"
 msgid "ANY"
 msgstr "YOYOTE"
 
@@ -16233,22 +16229,18 @@ msgid "NONE"
 msgstr "HAKUNA"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match all of the following"
 msgstr "linganisha yote yafuatayo"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match any of the following"
 msgstr "linganisha yoyote kati ya yafuatayo"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match none of the following"
 msgstr "usilinganishe yoyote kati ya yafuatayo"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "Remove User"
 msgid "Remove group"
 msgstr "Ondoa kundi"
 
@@ -16257,7 +16249,6 @@ msgid "No conditions yet. Add a condition or group below."
 msgstr "Bado hakuna masharti. Ongeza sharti au kundi hapa chini."
 
 #: corehq/apps/case_search/templates/case_search/partials/group_node.html
-#| msgid "Conditions"
 msgid "Add Condition"
 msgstr "Ongeza Sharti"
 
@@ -16274,7 +16265,6 @@ msgid "Endpoint '{}' not found"
 msgstr "Mwisho '{}' haujapatikana"
 
 #: corehq/apps/case_search/utils.py
-#| msgid "Endpoint '{}' not found"
 msgid "Endpoint '{}' query is invalid"
 msgstr "Hoja ya endpoint '{}' si sahihi"
 
@@ -18042,16 +18032,8 @@ msgid "does not start with"
 msgstr "haianzi na"
 
 #: corehq/apps/data_cleaning/models/types.py
-msgid "is like"
-msgstr "inafanana na"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "is not like"
 msgstr "haifanani na"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "sounds like"
-msgstr "inasikika kama"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "does not sound like"
@@ -18068,10 +18050,6 @@ msgstr "sio zote"
 #: corehq/apps/data_cleaning/models/types.py
 msgid "before or on"
 msgstr "kabla au katika"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "on or after"
-msgstr "katika au baada ya"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "Find & Replace"
@@ -58358,7 +58336,6 @@ msgid "Save to Case"
 msgstr "Hifadhi kwenye Kesi"
 
 #: corehq/privileges.py
-#| msgid "Public Name"
 msgid "Public Webforms"
 msgstr "Fomu za Wavuti za Umma"
 
