@@ -21,14 +21,12 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.users.util import PUBLIC_USER_ID
 
 
-class PublicFormSessionTests(SimpleTestCase):
-
-    def test_session_username(self):
-        webform = PublicWebform(domain='public-forms-domain')
-        session = PublicFormSession(public_webform=webform)
-        assert session.session_username == (
-            f'{PUBLIC_USER_ID}{session.id.hex}@public-forms-domain.commcarehq.org'
-        )
+def test_public_form_session_username():
+    webform = PublicWebform(domain='public-forms-domain')
+    session = PublicFormSession(public_webform=webform)
+    assert session.session_username == (
+        f'{PUBLIC_USER_ID}{session.id.hex}@public-forms-domain.commcarehq.org'
+    )
 
 
 class PublicFormUserTests(SimpleTestCase):
