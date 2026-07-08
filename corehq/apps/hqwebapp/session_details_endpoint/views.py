@@ -7,6 +7,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from corehq import toggles
+from corehq.apps.app_manager.models import PublicFormSession
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
@@ -93,8 +94,6 @@ class SessionDetailsView(View):
         })
 
     def _public_session_details(self, public_session_key, start_time):
-        from corehq.apps.app_manager.models import PublicFormSession
-
         session = PublicFormSession.get_active_by_key(public_session_key)
         if session is None:
             raise Http404
