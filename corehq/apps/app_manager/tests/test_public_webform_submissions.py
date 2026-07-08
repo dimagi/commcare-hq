@@ -14,11 +14,18 @@ from corehq.form_processor.utils.xform import convert_xform_to_json
 DOMAIN = 'public-webform-submissions'
 
 
-def _form_json(*case_blocks):
+def _form_json(*case_blocks, user_id=PUBLIC_USER_ID):
+    return convert_xform_to_json(_form_xml(*case_blocks, user_id=user_id))
+
+
+def _form_xml(*case_blocks, user_id=PUBLIC_USER_ID):
+    meta = (
+        '<n0:meta xmlns:n0="http://openrosa.org/jr/xforms">'
+        f'<n0:userID>{user_id}</n0:userID>'
+        '</n0:meta>'
+    ) if user_id is not None else ''
     cases = ''.join(cb.as_text() for cb in case_blocks)
-    return convert_xform_to_json(
-        f'<data xmlns="http://example.com/public-form">{cases}</data>'
-    )
+    return f'<data xmlns="http://example.com/public-form">{meta}{cases}</data>'
 
 
 def _create_block(owner_id=PUBLIC_USER_ID, case_id=None, **kwargs):
@@ -37,6 +44,21 @@ def _session(session_type, domain=DOMAIN):
     domain off the (unsaved) webform."""
     webform = PublicWebform(domain=domain, session_type=session_type)
     return PublicFormSession(public_webform=webform)
+
+
+class TestValidateAttribution:
+    # userID attribution is checked for every session type before any case
+    # data, so a survey session is sufficient to exercise it.
+
+    def test_wrong_user_id_is_rejected(self):
+        session = _session('survey')
+        assert validate_public_form_submission(
+            session, _form_json(user_id='some-real-user')) is not None
+
+    def test_missing_user_id_is_rejected(self):
+        session = _session('survey')
+        assert validate_public_form_submission(
+            session, _form_json(user_id=None)) is not None
 
 
 class TestValidateSurveySubmission:
@@ -82,8 +104,13 @@ class TestValidateRegistrationSubmission:
             f'<update><owner_id>some-real-user</owner_id></update>'
             f'</case>'
         )
+        meta = (
+            '<n0:meta xmlns:n0="http://openrosa.org/jr/xforms">'
+            f'<n0:userID>{PUBLIC_USER_ID}</n0:userID>'
+            '</n0:meta>'
+        )
         form_json = convert_xform_to_json(
-            f'<data xmlns="http://example.com/public-form">{case_xml}</data>'
+            f'<data xmlns="http://example.com/public-form">{meta}{case_xml}</data>'
         )
         assert validate_public_form_submission(session, form_json) is not None
 

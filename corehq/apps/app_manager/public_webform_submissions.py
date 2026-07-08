@@ -5,6 +5,7 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.apps.app_manager.models import PublicWebformTypes
 from corehq.apps.users.util import PUBLIC_USER_ID
 from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.utils.xform import extract_meta_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +16,13 @@ def validate_public_form_submission(session, form_json):
     persisted. Returns an error message if the submission is not allowed for
     the session's webform type, else ``None``.
 
+    - Every submission must be attributed to PUBLIC_USER_ID.
     - Survey webforms may not submit any case data.
     - Registration webforms may only create new cases with PUBLIC_USER_ID.
     """
+    if extract_meta_user_id(form_json) != PUBLIC_USER_ID:
+        return f"Public form submissions must be attributed to '{PUBLIC_USER_ID}'."
+
     session_type = session.public_webform.session_type
     case_updates = get_case_updates(form_json)
 
