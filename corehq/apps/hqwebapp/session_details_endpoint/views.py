@@ -94,7 +94,7 @@ class SessionDetailsView(View):
         })
 
     def _public_session_details(self, public_session_key, start_time):
-        session = PublicFormSession.get_active_by_key(public_session_key)
+        session = PublicFormSession.get_active_session_by_key(public_session_key)
         if session is None:
             raise Http404
 

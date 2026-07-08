@@ -163,7 +163,7 @@ def _get_public_form_session(request):
     raw_key = request.COOKIES.get(PUBLIC_FORM_SESSION_COOKIE_NAME)
     if not raw_key:
         return None
-    return PublicFormSession.get_active_by_key(raw_key)
+    return PublicFormSession.get_active_session_by_key(raw_key)
 
 
 def no_conflict_require_POST(fn):

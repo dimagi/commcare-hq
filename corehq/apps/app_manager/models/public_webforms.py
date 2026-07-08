@@ -48,7 +48,7 @@ class PublicFormSession(models.Model):
         indexes = [models.Index(fields=['public_webform', 'id'])]
 
     @classmethod
-    def get_active_by_key(cls, session_key):
+    def get_active_session_by_key(cls, session_key):
         """Return the usable (unsubmitted, unexpired) session for a raw
         session_key value, or None if the key is malformed or no such
         session is usable."""
