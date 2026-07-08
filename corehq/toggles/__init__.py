@@ -2531,9 +2531,9 @@ ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-BULK_FORM_DELETION = FeatureRelease(
-    slug='bulk_form_deletion',
-    label='Allows deleting archived forms in bulk via the API.',
+BULK_FORM_ACTIONS = FeatureRelease(
+    slug='bulk_form_actions',
+    label='Archive, unarchive, and delete forms in bulk via the API.',
     tag=TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     owner="Graham Herceg",
