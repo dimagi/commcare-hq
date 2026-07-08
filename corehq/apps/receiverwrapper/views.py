@@ -7,6 +7,11 @@ from django.views.decorators.http import require_POST
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
+from corehq.apps.app_manager.decorators import allow_public_form_session
+from corehq.apps.app_manager.models import PublicFormUser
+from corehq.apps.app_manager.public_webform_submissions import (
+    validate_public_form_submission,
+)
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.device_rate_limiter import device_rate_limiter, DEVICE_RATE_LIMIT_MESSAGE
@@ -140,6 +145,18 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         if should_limit:
             return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
 
+    couch_user = getattr(request, 'couch_user', None)
+    if isinstance(couch_user, PublicFormUser) and instance_json is not None:
+        error = validate_public_form_submission(couch_user.session, instance_json)
+        if error is not None:
+            metrics_counter(
+                'commcare.public_form.rejected_submission',
+                tags={'domain': domain},
+            )
+            response = HttpResponseBadRequest(error)
+            _record_metrics(metric_tags, 'known_failures', response)
+            return response
+
     with TimingContext() as timer:
         app_id, build_id = get_app_and_build_ids(domain, app_id)
         submission_post = SubmissionPost(
@@ -261,6 +278,7 @@ def post_api(request, domain):
 @require_POST
 @check_domain_mobile_access
 @set_request_duration_reporting_threshold(60)
+@allow_public_form_session
 def post(request, domain, app_id=None):
     try:
         if domain_requires_auth(domain):
