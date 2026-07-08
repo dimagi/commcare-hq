@@ -1,11 +1,14 @@
 import logging
 
+from django.utils import timezone
+
 from casexml.apps.case.xform import get_case_updates
 
-from corehq.apps.app_manager.models import PublicWebformTypes
+from corehq.apps.app_manager.models import PublicFormSession, PublicWebformTypes
 from corehq.apps.users.util import PUBLIC_USER_ID
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils.xform import extract_meta_user_id
+from corehq.util.metrics import metrics_counter
 
 logger = logging.getLogger(__name__)
 
@@ -56,3 +59,20 @@ def _validate_registration_case_updates(session, case_updates):
     if case_ids and CommCareCase.objects.get_case_ids_that_exist(domain, case_ids):
         return "Registration public form may not reuse an existing case id."
     return None
+
+
+def consume_public_form_session(session, xform):
+    """
+    On the first successful submission, mark the session used and record the
+    resulting xform id.
+    """
+    consumed = PublicFormSession.objects.filter(
+        pk=session.pk,
+        submitted_at__isnull=True,
+    ).update(submitted_at=timezone.now(), xform_id=xform.form_id)
+    if not consumed:
+        metrics_counter(
+            'commcare.public_form.already_consumed',
+            tags={'domain': session.public_webform.domain},
+        )
+    return bool(consumed)

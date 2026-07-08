@@ -10,6 +10,7 @@ from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.app_manager.decorators import allow_public_form_session
 from corehq.apps.app_manager.models import PublicFormUser
 from corehq.apps.app_manager.public_webform_submissions import (
+    consume_public_form_session,
     validate_public_form_submission,
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
@@ -197,6 +198,13 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
     response = result.response
     response.request_timer = timer  # logged as Sentry breadcrumbs in LogLongRequestMiddleware
+
+    if (
+        isinstance(couch_user, PublicFormUser)
+        and result.xform is not None
+        and response.status_code < 400
+    ):
+        consume_public_form_session(couch_user.session, result.xform)
 
     _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
 
