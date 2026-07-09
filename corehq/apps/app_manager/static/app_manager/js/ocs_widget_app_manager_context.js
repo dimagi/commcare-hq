@@ -29,11 +29,10 @@ function _collectAppStructureContext() {
 }
 
 function _collectAppPreviewContext() {
-    const getErrors = document.querySelector(SELECTORS.PREVIEW_WINDOW_IFRAME)?.contentWindow.getAppPreviewErrors;
-    if (typeof getErrors !== 'function') {
-        return {};
-    }
-    const errors = getErrors();
+    const errors = (
+        document.querySelector(SELECTORS.PREVIEW_WINDOW_IFRAME)?.contentWindow
+        .getAppPreviewErrors?.()
+    ) || [];
     return errors.length ? {app_preview_errors: errors} : {};
 }
 
