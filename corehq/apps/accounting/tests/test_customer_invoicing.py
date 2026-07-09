@@ -1238,3 +1238,39 @@ class TestBundledUserAllowance(BaseCustomerInvoiceCase):
         domain_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN).first()
         # excess domains: 0 + 2 + 4
         self.assertEqual(domain_line_item.quantity, 6)
+
+    def test_user_line_item_description_shows_effective_limit(self):
+        base = self.user_rate.monthly_limit
+        self._snapshot_domains(self.month_end, 3)
+        self._create_user_histories(self.month_end, base + 12)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        description = self._user_line_item().unit_description
+        # 2 excess domains x 5 bundled users raise the displayed limit
+        self.assertIn("plan limit of %d" % (base + 10), description)
+
+    def test_domain_line_item_description_mentions_bundled_users(self):
+        base = self.user_rate.monthly_limit
+        self._snapshot_domains(self.month_end, 3)
+        self._create_user_histories(self.month_end, base)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        invoice = CustomerInvoice.objects.first()
+        domain_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN).first()
+        self.assertIn("project space", domain_line_item.unit_description)
+        self.assertIn("includes 5 mobile workers", domain_line_item.unit_description)
+
+    def test_effective_limit_helper_for_subscription_page(self):
+        from corehq.apps.domain.views.accounting import get_effective_feature_limit
+        plan_version = self.main_subscription.plan_version
+        # 3 live active domains, allowance 1, N=5 -> base + 10
+        self.assertEqual(
+            get_effective_feature_limit(plan_version, self.user_rate, self.account),
+            self.user_rate.monthly_limit + 10)
+        # non-USER rates and missing account fall back to the static limit
+        self.assertEqual(
+            get_effective_feature_limit(plan_version, self.domain_rate, self.account),
+            self.domain_rate.monthly_limit)
+        self.assertEqual(
+            get_effective_feature_limit(plan_version, self.user_rate, None),
+            self.user_rate.monthly_limit)
