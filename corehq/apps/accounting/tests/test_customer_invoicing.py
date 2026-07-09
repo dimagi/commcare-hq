@@ -119,6 +119,21 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
         cls.addClassCleanup(domain_obj.delete)
         return domain_obj
 
+    def add_domain_feature_rate(self, monthly_limit, per_excess_fee,
+                                included_users_per_excess_domain=0):
+        from corehq.apps.accounting.models import Feature, FeatureRate
+        domain_feature, __ = Feature.objects.get_or_create(
+            name="Domain", defaults={"feature_type": FeatureType.DOMAIN})
+        rate = FeatureRate.objects.create(
+            feature=domain_feature,
+            monthly_fee=Decimal('0.00'),
+            monthly_limit=monthly_limit,
+            per_excess_fee=per_excess_fee,
+            included_users_per_excess_domain=included_users_per_excess_domain,
+        )
+        self.main_subscription.plan_version.feature_rates.add(rate)
+        return rate
+
 
 class TestCustomerInvoice(BaseCustomerInvoiceCase):
 
@@ -923,19 +938,14 @@ class TestDomainLineItem(BaseCustomerInvoiceCase):
 
     def setUp(self):
         super().setUp()
-        from corehq.apps.accounting.models import Feature, FeatureRate
         # get_domains() filters on is_active=True (wall-clock state); the
         # generator's default is is_active=False, so activate the snapshot
         # source. Invoice generation itself selects by date overlap.
         Subscription.visible_and_suppressed_objects.filter(account=self.account).update(is_active=True)
-        domain_feature = Feature.objects.create(name="Domain", feature_type=FeatureType.DOMAIN)
-        self.domain_rate = FeatureRate.objects.create(
-            feature=domain_feature,
-            monthly_fee=Decimal('0.00'),
+        self.domain_rate = self.add_domain_feature_rate(
             monthly_limit=1,                 # included-domains allowance
             per_excess_fee=Decimal('100.00'),
         )
-        self.main_subscription.plan_version.feature_rates.add(self.domain_rate)
         # Fixed mid-life month so all three subscriptions span the full
         # invoice month (no proration).
         self.invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 5)
@@ -1097,3 +1107,134 @@ class TestDomainLineItem(BaseCustomerInvoiceCase):
         from corehq.apps.accounting.usage import FeatureUsageCalculator
         calc = FeatureUsageCalculator(self.domain_rate, "domain-with-no-subscription")
         self.assertEqual(calc.get_usage(), 0)
+
+
+class TestBundledUserAllowance(BaseCustomerInvoiceCase):
+    """Each excess domain bundles included_users_per_excess_domain mobile
+    workers into the plan's effective user limit: per month-end,
+    effective_limit = base + max(num_domains - included_domains, 0) * N."""
+
+    is_using_test_plans = True
+
+    def setUp(self):
+        super().setUp()
+        Subscription.visible_and_suppressed_objects.filter(account=self.account).update(is_active=True)
+        self.domain_rate = self.add_domain_feature_rate(
+            monthly_limit=1,
+            per_excess_fee=Decimal('100.00'),
+            included_users_per_excess_domain=5,
+        )
+        self.user_rate = self.main_subscription.plan_version.feature_rates \
+            .filter(feature__feature_type=FeatureType.USER).get()
+        self.invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 5)
+        self.month_end = self.invoice_date - relativedelta.relativedelta(days=1)
+
+    def _create_user_histories(self, month_end, num_users_main_domain):
+        # The USER factory sums DomainUserHistory across all subscribed
+        # domains and raises on a missing row; put all usage on main domain.
+        for domain_obj in [self.main_domain, self.non_main_domain1, self.non_main_domain2]:
+            num_users = num_users_main_domain if domain_obj is self.main_domain else 0
+            DomainUserHistory.objects.create(
+                domain=domain_obj.name, record_date=month_end, num_users=num_users)
+
+    def _snapshot_domains(self, month_end, num_domains):
+        from corehq.apps.accounting.models import BillingAccountDomainHistory
+        BillingAccountDomainHistory.objects.create(
+            billing_account=self.account, record_date=month_end, num_domains=num_domains)
+
+    def _user_line_item(self):
+        invoice = CustomerInvoice.objects.first()
+        return invoice.lineitem_set.get_feature_by_type(FeatureType.USER).first()
+
+    def test_excess_domains_raise_user_limit(self):
+        base = self.user_rate.monthly_limit
+        # 3 domains, allowance 1 -> 2 excess x 5 = +10 included users
+        self._snapshot_domains(self.month_end, 3)
+        self._create_user_histories(self.month_end, base + 12)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        user_line_item = self._user_line_item()
+        self.assertEqual(user_line_item.quantity, 2)
+        self.assertEqual(user_line_item.unit_cost, self.user_rate.per_excess_fee)
+
+    def test_no_bundling_when_not_configured(self):
+        self.domain_rate.included_users_per_excess_domain = 0
+        self.domain_rate.save()
+        base = self.user_rate.monthly_limit
+        self._snapshot_domains(self.month_end, 3)
+        self._create_user_histories(self.month_end, base + 12)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        self.assertEqual(self._user_line_item().quantity, 12)
+
+    def test_missing_domain_snapshot_uses_base_limit(self):
+        base = self.user_rate.monthly_limit
+        self._create_user_histories(self.month_end, base + 12)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        self.assertEqual(self._user_line_item().quantity, 12)
+
+    def test_unlimited_domain_rate_gives_no_bonus(self):
+        from corehq.apps.accounting.models import UNLIMITED_FEATURE_USAGE
+        self.domain_rate.monthly_limit = UNLIMITED_FEATURE_USAGE
+        self.domain_rate.save()
+        base = self.user_rate.monthly_limit
+        self._snapshot_domains(self.month_end, 3)
+        self._create_user_histories(self.month_end, base + 12)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        self.assertEqual(self._user_line_item().quantity, 12)
+        invoice = CustomerInvoice.objects.first()
+        domain_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN).first()
+        self.assertEqual(domain_line_item.quantity, 0)
+
+    def test_web_user_line_item_unaffected_by_bundling(self):
+        from corehq.apps.accounting.models import (
+            BillingAccountWebUserHistory,
+            Feature,
+            FeatureRate,
+        )
+        web_feature, __ = Feature.objects.get_or_create(
+            name="Web User", defaults={"feature_type": FeatureType.WEB_USER})
+        web_rate = FeatureRate.objects.create(
+            feature=web_feature, monthly_limit=1, per_excess_fee=Decimal('10.00'))
+        self.main_subscription.plan_version.feature_rates.add(web_rate)
+        self.addCleanup(setattr, self.account, 'bill_web_user', self.account.bill_web_user)
+        self.account.bill_web_user = True
+        self.account.save()
+        # 2 excess domains would grant +10 if the bundling wrongly applied here
+        self._snapshot_domains(self.month_end, 3)
+        BillingAccountWebUserHistory.objects.create(
+            billing_account=self.account, record_date=self.month_end, num_users=4)
+        self._create_user_histories(self.month_end, 0)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        invoice = CustomerInvoice.objects.first()
+        web_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.WEB_USER).first()
+        self.assertEqual(web_line_item.quantity, 3)
+
+    def test_quarterly_effective_limit_varies_by_month(self):
+        # self.account is the shared class-level fixture; Django's rollback
+        # undoes the DB write but not this in-memory attribute mutation, and a
+        # later test's account.save() would re-persist it.
+        self.addCleanup(setattr, self.account, 'invoicing_plan', self.account.invoicing_plan)
+        self.account.invoicing_plan = InvoicingPlan.QUARTERLY
+        self.account.save()
+        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 14)
+        base = self.user_rate.monthly_limit
+        # Domain counts 1, 3, 5 over the quarter's month-ends give bonuses
+        # of 0, +10, +20 against a constant base+15 users each month:
+        # excesses 15, 5, 0 -> summed quantity 20.
+        for months_before_invoice_date, num_domains in zip(range(3), [1, 3, 5]):
+            first_of_month = date(invoice_date.year, invoice_date.month, 1)
+            first_of_month -= relativedelta.relativedelta(months=months_before_invoice_date)
+            month_end = first_of_month - relativedelta.relativedelta(days=1)
+            self._snapshot_domains(month_end, num_domains)
+            self._create_user_histories(month_end, base + 15)
+        tasks.generate_invoices_based_on_date(invoice_date)
+
+        self.assertEqual(self._user_line_item().quantity, 20)
+        invoice = CustomerInvoice.objects.first()
+        domain_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN).first()
+        # excess domains: 0 + 2 + 4
+        self.assertEqual(domain_line_item.quantity, 6)

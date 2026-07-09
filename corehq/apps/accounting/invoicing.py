@@ -561,7 +561,7 @@ class LineItemFactory(object):
             return {
                 FeatureType.SMS: SmsLineItemFactory,
                 FeatureType.FORM_SUBMITTING_MOBILE_WORKER: FormSubmittingMobileWorkerLineItemFactory,
-                FeatureType.USER: UserLineItemFactory,
+                FeatureType.USER: MobileUserLineItemFactory,
                 FeatureType.WEB_USER: WebUserLineItemFactory,
                 FeatureType.DOMAIN: DomainLineItemFactory,
             }[feature_type]
@@ -756,8 +756,11 @@ class UserLineItemFactory(FeatureLineItemFactory):
         excess_users = 0
         for date in dates:
             total_users = self.total_users_for_date(date)
-            excess_users += max(total_users - self.rate.monthly_limit, 0)
+            excess_users += max(total_users - self.monthly_limit_for_date(date), 0)
         return excess_users
+
+    def monthly_limit_for_date(self, date):
+        return self.rate.monthly_limit
 
     def total_users_for_date(self, date):
         total_users = 0
@@ -800,6 +803,54 @@ class UserLineItemFactory(FeatureLineItemFactory):
         return self._unit_description_by_user_type("mobile user")
 
 
+def excess_domains(num_domains, domain_rate):
+    if domain_rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
+        return 0
+    return max(num_domains - domain_rate.monthly_limit, 0)
+
+
+def excess_domains_for_date(account, record_date, domain_rate):
+    # Before a DOMAIN feature rate exists on a plan, there is no concept of an
+    # excess domain -- a missing snapshot (e.g. the cold-start window right
+    # after a Domain rate is first attached) means zero excess for that month,
+    # not a hard failure blocking the invoice.
+    try:
+        history = BillingAccountDomainHistory.objects.get(
+            billing_account=account, record_date=record_date)
+    except BillingAccountDomainHistory.DoesNotExist:
+        return 0
+    return excess_domains(history.num_domains, domain_rate)
+
+
+class MobileUserLineItemFactory(UserLineItemFactory):
+    """
+    Bills mobile workers against a limit that scales with the account's
+    domain count: each domain beyond the DOMAIN rate's allowance bundles
+    included_users_per_excess_domain additional included users.
+
+    Deliberately a subclass rather than UserLineItemFactory behavior: the
+    other user-family factories (web users, form-submitting workers, domains)
+    share that base class and must not inherit the bundling.
+    """
+
+    @property
+    @memoized
+    def _bundling_domain_rate(self):
+        return self.subscription.plan_version.feature_rates.filter(
+            feature__feature_type=FeatureType.DOMAIN,
+            included_users_per_excess_domain__gt=0,
+        ).first()
+
+    def monthly_limit_for_date(self, date):
+        base_limit = self.rate.monthly_limit
+        domain_rate = self._bundling_domain_rate
+        if domain_rate is None:
+            return base_limit
+        bonus = (excess_domains_for_date(self.subscription.account, date, domain_rate)
+                 * domain_rate.included_users_per_excess_domain)
+        return base_limit + bonus
+
+
 class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
 
     def total_users_for_date(self, date):
@@ -836,17 +887,13 @@ class WebUserLineItemFactory(UserLineItemFactory):
 
 class DomainLineItemFactory(UserLineItemFactory):
 
-    def total_users_for_date(self, date):
-        # Before a DOMAIN feature rate exists on a plan, there is no concept
-        # of an excess domain -- a missing snapshot (e.g. the cold-start
-        # window right after a Domain rate is first attached) means zero
-        # excess for that month, not a hard failure blocking the invoice.
-        try:
-            history = BillingAccountDomainHistory.objects.get(
-                billing_account=self.subscription.account, record_date=date)
-        except BillingAccountDomainHistory.DoesNotExist:
-            return 0
-        return history.num_domains
+    @property
+    @memoized
+    def quantity(self):
+        return sum(
+            excess_domains_for_date(self.subscription.account, date, self.rate)
+            for date in self.all_month_ends_in_invoice()
+        )
 
     @property
     def unit_description(self):
