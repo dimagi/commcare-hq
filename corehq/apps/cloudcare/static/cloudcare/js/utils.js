@@ -107,6 +107,17 @@ var _show = function (message, $el, autoHideTime, classes, isHTML) {
     return $container;
 };
 
+const getErrorNotificationTexts = function () {
+    const texts = [];
+    $(`${constants.NOTIFICATIONS_CONTAINER} .alert-danger`).each(function () {
+        const text = $(this).text().replace(/\s+/g, ' ').trim();
+        if (text) {
+            texts.push(text);
+        }
+    });
+    return texts;
+};
+
 var shouldShowLoading = function () {
     const answerInProgress = (sessionStorage.answerQuestionInProgress && JSON.parse(sessionStorage.answerQuestionInProgress));
     const validationInProgress = (sessionStorage.validationInProgress && JSON.parse(sessionStorage.validationInProgress));
@@ -179,7 +190,7 @@ var formplayerLoadingComplete = function (isError, message) {
     sessionStorage.formplayerQueryInProgress = false;
     hideLoading();
     if (isError) {
-        showError(message || gettext('Error saving!'), $('#cloudcare-notifications'));
+        showError(message || gettext('Error saving!'), $(constants.NOTIFICATIONS_CONTAINER));
     }
 };
 
@@ -191,11 +202,11 @@ var formplayerSyncComplete = function (isError) {
     hideLoading();
     if (isError) {
         const notificationText = gettext('Could not sync user data. Please report an issue if this persists.');
-        showError(notificationText, $('#cloudcare-notifications'));
+        showError(notificationText, $(constants.NOTIFICATIONS_CONTAINER));
         updateScreenReaderNotification(notificationText);
     } else {
         const notificationText = gettext('User Data successfully synced.');
-        showSuccess(notificationText, $('#cloudcare-notifications'), 5000);
+        showSuccess(notificationText, $(constants.NOTIFICATIONS_CONTAINER), 5000);
         updateScreenReaderNotification(notificationText);
     }
 };
@@ -205,10 +216,10 @@ var clearUserDataComplete = function (isError) {
     if (isError) {
         showError(
             gettext('Could not clear user data. Please report an issue if this persists.'),
-            $('#cloudcare-notifications'),
+            $(constants.NOTIFICATIONS_CONTAINER),
         );
     } else {
-        showSuccess(gettext('User data successfully cleared.'), $('#cloudcare-notifications'), 5000);
+        showSuccess(gettext('User data successfully cleared.'), $(constants.NOTIFICATIONS_CONTAINER), 5000);
     }
 };
 
@@ -217,10 +228,10 @@ var breakLocksComplete = function (isError, message) {
     if (isError) {
         showError(
             gettext('Error breaking locks. Please report an issue if this persists.'),
-            $('#cloudcare-notifications'),
+            $(constants.NOTIFICATIONS_CONTAINER),
         );
     } else {
-        showSuccess(message, $('#cloudcare-notifications'), 5000);
+        showSuccess(message, $(constants.NOTIFICATIONS_CONTAINER), 5000);
     }
 };
 
@@ -435,6 +446,7 @@ export default {
     showWarning: showWarning,
     showHTMLError: showHTMLError,
     showSuccess: showSuccess,
+    getErrorNotificationTexts: getErrorNotificationTexts,
     clearUserDataComplete: clearUserDataComplete,
     breakLocksComplete: breakLocksComplete,
     formplayerLoading: formplayerLoading,
