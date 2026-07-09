@@ -2,6 +2,7 @@ import datetime
 from uuid import uuid4
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test import Client
 from django.urls import reverse
 
@@ -9,6 +10,7 @@ from unmagic import fixture, use
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 
+from corehq.apps.accounting.tests import generator as accounting_generator
 from corehq.apps.app_manager.models import PublicFormSession, PublicWebform
 from corehq.apps.app_manager.public_webform_submissions import (
     consume_public_form_session,
@@ -207,8 +209,17 @@ def receiver_webform():
         domain_obj.delete()
 
 
+@use('transactional_db')
+@fixture
+def default_software_plans():
+    call_command('cchq_prbac_bootstrap')
+    accounting_generator.init_default_currency()
+    accounting_generator.bootstrap_test_software_plan_versions()
+    yield
+
+
 @sharded
-@use(receiver_webform)
+@use(default_software_plans, receiver_webform)
 class TestPublicFormReceiverIntegration:
     """End-to-end: a submission carrying the public session cookie + header is
     resolved to a PublicFormUser, validated pre-persist, and consumes the
