@@ -5,11 +5,11 @@ import utils from "cloudcare/js/utils";
 
 describe("Cloudcare Utils", function () {
     it("getErrorNotificationTexts reads errors shown via showError", function () {
-        utils.showError("Something went wrong", $(utils.NOTIFICATIONS_CONTAINER), false);
+        utils.showError("Something went wrong", $(constants.NOTIFICATIONS_CONTAINER), false);
 
         assert.deepEqual(utils.getErrorNotificationTexts(), ["Something went wrong"]);
 
-        $(utils.NOTIFICATIONS_CONTAINER).empty();
+        $(constants.NOTIFICATIONS_CONTAINER).empty();
     });
 
     describe('Small Screen Listener', function () {

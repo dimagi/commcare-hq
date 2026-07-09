@@ -11,7 +11,7 @@ import {Modal} from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import GGAnalytics from "analytix/js/google";
 import noopMetrics from "analytix/js/noopMetrics";
-import CloudcareUtils, {NOTIFICATIONS_CONTAINER} from "cloudcare/js/utils";
+import CloudcareUtils from "cloudcare/js/utils";
 import AppsAPI from "cloudcare/js/formplayer/apps/api";
 import Const from "cloudcare/js/formplayer/constants";
 
@@ -141,23 +141,23 @@ $(document).on("ajaxStart", function () {
 });
 
 FormplayerFrontend.on('clearNotifications', function () {
-    $(NOTIFICATIONS_CONTAINER).empty();
+    $(Const.NOTIFICATIONS_CONTAINER).empty();
 });
 
 FormplayerFrontend.on('showError', function (errorMessage, isHTML, reportToHq, additionalData) {
     if (isHTML) {
-        CloudcareUtils.showHTMLError(errorMessage, $(NOTIFICATIONS_CONTAINER), null, reportToHq);
+        CloudcareUtils.showHTMLError(errorMessage, $(Const.NOTIFICATIONS_CONTAINER), null, reportToHq);
     } else {
-        CloudcareUtils.showError(errorMessage, $(NOTIFICATIONS_CONTAINER), reportToHq, additionalData);
+        CloudcareUtils.showError(errorMessage, $(Const.NOTIFICATIONS_CONTAINER), reportToHq, additionalData);
     }
 });
 
 FormplayerFrontend.on('showWarning', function (message) {
-    CloudcareUtils.showWarning(message, $(NOTIFICATIONS_CONTAINER));
+    CloudcareUtils.showWarning(message, $(Const.NOTIFICATIONS_CONTAINER));
 });
 
 FormplayerFrontend.on('showSuccess', function (successMessage) {
-    CloudcareUtils.showSuccess(successMessage, $(NOTIFICATIONS_CONTAINER), 10000);
+    CloudcareUtils.showSuccess(successMessage, $(Const.NOTIFICATIONS_CONTAINER), 10000);
 });
 
 FormplayerFrontend.on('handleNotification', function (notification) {
@@ -194,9 +194,9 @@ FormplayerFrontend.on('startForm', function (data) {
             message = resp.notification.message;
         }
         if (resp.is_html) {
-            CloudcareUtils.showHTMLError(message, $(NOTIFICATIONS_CONTAINER), null, resp.reportToHq);
+            CloudcareUtils.showHTMLError(message, $(Const.NOTIFICATIONS_CONTAINER), null, resp.reportToHq);
         } else {
-            CloudcareUtils.showError(message, $(NOTIFICATIONS_CONTAINER), resp.reportToHq);
+            CloudcareUtils.showError(message, $(Const.NOTIFICATIONS_CONTAINER), resp.reportToHq);
         }
     };
     noopMetrics.track.event('Viewed Form', {
@@ -226,10 +226,10 @@ FormplayerFrontend.on('startForm', function (data) {
                             });
                         }
                     };
-                $(NOTIFICATIONS_CONTAINER).off('click').on('click', dataFeedbackLoopAnalytics);
-                $alert = CloudcareUtils.showSuccess(markdowner().render(resp.submitResponseMessage), $(NOTIFICATIONS_CONTAINER), undefined, true);
+                $(Const.NOTIFICATIONS_CONTAINER).off('click').on('click', dataFeedbackLoopAnalytics);
+                $alert = CloudcareUtils.showSuccess(markdowner().render(resp.submitResponseMessage), $(Const.NOTIFICATIONS_CONTAINER), undefined, true);
             } else {
-                $alert = CloudcareUtils.showSuccess(gettext("Form successfully saved!"), $(NOTIFICATIONS_CONTAINER));
+                $alert = CloudcareUtils.showSuccess(gettext("Form successfully saved!"), $(Const.NOTIFICATIONS_CONTAINER));
             }
             if ($alert) {
                 // Clear the success notification the next time user changes screens
@@ -270,7 +270,7 @@ FormplayerFrontend.on('startForm', function (data) {
                 FormplayerUtils.navigate('/apps', { trigger: true });
             }
         } else {
-            CloudcareUtils.showError(resp.output, $(NOTIFICATIONS_CONTAINER));
+            CloudcareUtils.showError(resp.output, $(Const.NOTIFICATIONS_CONTAINER));
         }
     };
     data.debuggerEnabled = user.debuggerEnabled;
@@ -343,7 +343,7 @@ FormplayerFrontend.on("start", function (model, options) {
                 if (!navigator.onLine && (new Date() - offlineTime) > reconnectTimingWindow) {
                     CloudcareUtils.showError(gettext("You are now offline. Web Apps is not optimized " +
                         "for offline use. Please reconnect to the Internet before " +
-                        "continuing."), $(NOTIFICATIONS_CONTAINER));
+                        "continuing."), $(Const.NOTIFICATIONS_CONTAINER));
                     $('.submit').prop('disabled', 'disabled');
                     $('.form-control, .form-select').prop('disabled', 'disabled');
                 }
@@ -353,7 +353,7 @@ FormplayerFrontend.on("start", function (model, options) {
     window.addEventListener(
         'online', function () {
             if ((new Date() - offlineTime) > reconnectTimingWindow) {
-                CloudcareUtils.showSuccess(gettext("You are are back online."), $(NOTIFICATIONS_CONTAINER));
+                CloudcareUtils.showSuccess(gettext("You are are back online."), $(Const.NOTIFICATIONS_CONTAINER));
                 $('.submit').prop('disabled', false);
                 $('.form-control, .form-select').prop('disabled', false);
             }
@@ -641,7 +641,7 @@ FormplayerFrontend.on('refreshApplication', function (appId) {
         }
 
         CloudcareUtils.formplayerLoadingComplete();
-        $(NOTIFICATIONS_CONTAINER).empty();
+        $(Const.NOTIFICATIONS_CONTAINER).empty();
         FormplayerFrontend.trigger('navigateHome');
     });
 });
