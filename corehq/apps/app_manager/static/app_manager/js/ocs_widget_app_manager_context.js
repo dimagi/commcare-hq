@@ -33,7 +33,7 @@ function _collectAppPreviewContext() {
         document.querySelector(SELECTORS.PREVIEW_WINDOW_IFRAME)?.contentWindow
         .getAppPreviewErrors?.()
     ) || [];
-    return errors.length ? {app_preview_errors: errors} : {};
+    return errors.length ? {app_preview_warnings: errors} : {};
 }
 
 $(function () {
