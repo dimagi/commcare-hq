@@ -414,6 +414,7 @@ data_interfaces
  0037_add_dedupe_update_toggle
  0038_alter_caseduplicate_potential_duplicates
  0039_rename_caserulesubmission_domain_created_on_data_interf_domain_718740_idx_and_more
+ 0040_bulkasyncjob
 dhis2
  0001_initial
  0002_auto_20170322_1323

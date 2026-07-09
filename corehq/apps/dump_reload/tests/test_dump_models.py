@@ -54,6 +54,7 @@ IGNORE_MODELS = {
     "data_analytics.DomainMetrics",
     "data_analytics.GIRRow",
     "data_analytics.MALTRow",
+    "data_interfaces.BulkAsyncJob",
     "django_celery_results.ChordCounter",
     "django_celery_results.GroupResult",
     "django_celery_results.TaskResult",
