@@ -149,9 +149,9 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
     if from_excel:
         return response
 
-    response["success_count_msg"] = _("{success_msg} {count} form(s)".format(
+    response["success_count_msg"] = _("{success_msg} {count} form(s)").format(
         success_msg=archive_or_restore.success_text,
-        count=success_count))
+        count=success_count)
     return {"messages": response}
 
 
