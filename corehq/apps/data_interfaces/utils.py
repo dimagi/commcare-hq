@@ -137,8 +137,11 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
             response['success'].append(message)
             success_count = success_count + 1
         else:
-            response['errors'].append(
-                _("Could not archive {form}").format(form=xform_string))
+            if is_archive:
+                message = _("Could not archive {form}").format(form=xform_string)
+            else:
+                message = _("Could not unarchive {form}").format(form=xform_string)
+            response['errors'].append(message)
 
         if task:
             DownloadBase.set_progress(task, success_count, len(form_ids))
