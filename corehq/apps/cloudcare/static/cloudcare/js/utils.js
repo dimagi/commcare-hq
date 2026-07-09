@@ -108,14 +108,9 @@ var _show = function (message, $el, autoHideTime, classes, isHTML) {
 };
 
 const getErrorNotificationTexts = function () {
-    const texts = [];
-    $(`${constants.NOTIFICATIONS_CONTAINER} .alert-danger`).each(function () {
-        const text = $(this).text().replace(/\s+/g, ' ').trim();
-        if (text) {
-            texts.push(text);
-        }
-    });
-    return texts;
+    return $(`${constants.NOTIFICATIONS_CONTAINER} .alert-danger`).map(function () {
+                return $(this).text().replace(/\s+/g, ' ').trim();
+            }).get();
 };
 
 var shouldShowLoading = function () {
