@@ -49,7 +49,10 @@ from corehq.apps.accounting.exceptions import (
     SubscriptionRenewalError,
 )
 from corehq.apps.accounting.forms import PlanContactForm
-from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
+from corehq.apps.accounting.invoicing import (
+    DomainWireInvoiceFactory,
+    excess_domains,
+)
 from corehq.apps.accounting.models import (
     MINIMUM_SUBSCRIPTION_LENGTH,
     UNLIMITED_FEATURE_USAGE,
@@ -60,6 +63,7 @@ from corehq.apps.accounting.models import (
     CustomerInvoice,
     DefaultProductPlan,
     EntryPoint,
+    FeatureType,
     Invoice,
     InvoicePdf,
     PaymentMethodType,
@@ -217,6 +221,28 @@ class DomainAccountingSettings(BaseProjectSettingsView):
         context = super(DomainAccountingSettings, self).main_context
         context['show_prepaid_modal'] = False
         return context
+
+
+def get_effective_feature_limit(plan_version, feature_rate, account):
+    """
+    The limit to display for a feature rate, accounting for the bundled
+    mobile-worker allowance: each domain beyond the plan's DOMAIN-rate
+    allowance includes included_users_per_excess_domain USER-type users.
+    Uses the account's live domain count, matching what the Project Spaces
+    row on the same page displays.
+    """
+    if feature_rate.feature.feature_type != FeatureType.USER or account is None:
+        return feature_rate.monthly_limit
+    domain_rate = plan_version.feature_rates.filter(
+        feature__feature_type=FeatureType.DOMAIN,
+        included_users_per_excess_domain__gt=0,
+    ).first()
+    if domain_rate is None:
+        return feature_rate.monthly_limit
+    return feature_rate.monthly_limit + (
+        excess_domains(len(account.get_domains()), domain_rate)
+        * domain_rate.included_users_per_excess_domain
+    )
 
 
 class DomainSubscriptionView(DomainAccountingSettings):
@@ -398,7 +424,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             if feature_rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
                 remaining = limit = _('Unlimited')
             else:
-                limit = feature_rate.monthly_limit
+                limit = get_effective_feature_limit(plan_version, feature_rate, account)
                 remaining = limit - usage
                 if remaining < 0:
                     remaining = _("%d over limit") % (-1 * remaining)

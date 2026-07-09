@@ -134,12 +134,14 @@ class FeatureType(object):
     SMS = "SMS"
     WEB_USER = "Web User"
     FORM_SUBMITTING_MOBILE_WORKER = "Form-Submitting Mobile Worker"
+    DOMAIN = "Domain"
 
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
         (WEB_USER, WEB_USER),
         (FORM_SUBMITTING_MOBILE_WORKER, FORM_SUBMITTING_MOBILE_WORKER),
+        (DOMAIN, DOMAIN),
     )
     EDITIONED_FEATURES = [
         USER,
@@ -772,6 +774,13 @@ class FeatureRate(models.Model):
                                         validators=integer_field_validators)
     per_excess_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
                                          verbose_name="Fee Per Excess of Limit")
+    # Only meaningful on DOMAIN rates: each domain beyond the monthly_limit
+    # allowance also raises the plan's mobile-worker (USER) limit by this many
+    # included users.
+    included_users_per_excess_domain = models.IntegerField(
+        default=0,
+        verbose_name="Included Users Per Excess Domain",
+        validators=integer_field_validators)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     last_modified = models.DateTimeField(auto_now=True)
@@ -784,10 +793,20 @@ class FeatureRate(models.Model):
             self.feature.name, self.monthly_fee, self.per_excess_fee, self.monthly_limit
         )
 
+    def clean(self):
+        super().clean()
+        if (self.included_users_per_excess_domain and self.feature_id
+                and self.feature.feature_type != FeatureType.DOMAIN):
+            raise ValidationError({
+                'included_users_per_excess_domain':
+                    "Only applicable to Domain feature rates.",
+            })
+
     def __eq__(self, other):
         if not isinstance(other, self.__class__) or not self.feature.pk == other.feature.pk:
             return False
-        for field in ['monthly_fee', 'monthly_limit', 'per_excess_fee', 'is_active']:
+        for field in ['monthly_fee', 'monthly_limit', 'per_excess_fee',
+                      'included_users_per_excess_domain', 'is_active']:
             if not getattr(self, field) == getattr(other, field):
                 return False
         return True
@@ -3922,6 +3941,21 @@ class BillingAccountWebUserHistory(models.Model):
     billing_account = models.ForeignKey(BillingAccount, on_delete=models.CASCADE)
     record_date = models.DateField()
     num_users = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ('billing_account', 'record_date')
+
+
+class BillingAccountDomainHistory(models.Model):
+    """
+    A record of the number of active domains for a billing account at the
+    record_date. Created by task calculate_domains_in_all_billing_accounts on
+    the first of every month. Used to bill enterprise accounts for the number
+    of domains above their plan's included-domains allowance.
+    """
+    billing_account = models.ForeignKey(BillingAccount, on_delete=models.CASCADE)
+    record_date = models.DateField()
+    num_domains = models.IntegerField(default=0)
 
     class Meta:
         unique_together = ('billing_account', 'record_date')
