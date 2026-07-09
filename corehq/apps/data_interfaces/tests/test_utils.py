@@ -489,12 +489,14 @@ class TestArchiveOrRestoreForms(SimpleTestCase):
     def test_action_exception_reported(self):
         form = Mock(form_id='f1', domain=DOMAIN)
         form.archive.side_effect = Exception('error')
-        result = self._patched_archive_or_restore_forms(
-            self._archive_mode(), ['f1'], [form]
-        )
+        with patch('corehq.apps.data_interfaces.utils.notify_exception') as notify:
+            result = self._patched_archive_or_restore_forms(
+                self._archive_mode(), ['f1'], [form]
+            )
+        notify.assert_called_once()
         assert result['messages']['errors'] == [
             "Could not archive XForm f1 for domain test-domain "
-            "by user 'user@example.com': error"
+            "by user 'user@example.com'"
         ]
         assert result['messages']['success'] == []
 
@@ -553,10 +555,14 @@ class TestApplyFormAction(SimpleTestCase):
         def unexpected_error(xform):
             raise Exception('error')
 
-        results = self._patched_apply_form_action(
-            ['f1'], [form], action_fn=unexpected_error
-        )
+        with patch(
+            'corehq.apps.data_interfaces.utils.notify_exception'
+        ) as notify:
+            results = self._patched_apply_form_action(
+                ['f1'], [form], action_fn=unexpected_error
+            )
         assert results == [FormActionResult('f1', SKIPPED, 'unexpected_error')]
+        notify.assert_called_once()
 
     def test_mixed_results(self):
         found = Mock(form_id='f1', domain=DOMAIN)

@@ -73,7 +73,7 @@ class FormActionResult:
     """Outcome of a bulk form action for a single requested form id."""
     form_id: str
     status: str  # SUCCEEDED | SKIPPED
-    reason: Optional[str] = None  # not_found | not_archived | unexpected_error
+    reason: Optional[str] = None  # not_found | unexpected_error
 
 
 def apply_form_action(domain, form_ids, action_fn):
@@ -90,6 +90,10 @@ def apply_form_action(domain, form_ids, action_fn):
         try:
             action_fn(xform)
         except Exception:
+            notify_exception(None, "Error applying bulk form action", {
+                'domain': domain,
+                'form_id': xform.form_id,
+            })
             yield FormActionResult(xform.form_id, SKIPPED, 'unexpected_error')
         else:
             yield FormActionResult(xform.form_id, SUCCEEDED)
@@ -102,18 +106,13 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
         'errors': [],
         'success': [],
     }
-    captured_errors = {}
     is_archive = archive_or_restore.is_archive_mode()
 
     def action_fn(xform):
-        try:
-            if is_archive:
-                xform.archive(user_id=user_id)
-            else:
-                xform.unarchive(user_id=user_id)
-        except Exception as e:
-            captured_errors[xform.form_id] = e
-            raise
+        if is_archive:
+            xform.archive(user_id=user_id)
+        else:
+            xform.unarchive(user_id=user_id)
 
     success_count = 0
     if task:
@@ -138,8 +137,8 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
             response['success'].append(message)
             success_count = success_count + 1
         else:
-            response['errors'].append(_("Could not archive {form}: {error}").format(
-                form=xform_string, error=captured_errors.get(result.form_id)))
+            response['errors'].append(
+                _("Could not archive {form}").format(form=xform_string))
 
         if task:
             DownloadBase.set_progress(task, success_count, len(form_ids))
