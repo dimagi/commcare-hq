@@ -110,7 +110,9 @@ from .modules import (  # noqa: F401
     ShadowModule,
 )
 from .public_webforms import (  # noqa: F401
+    OTARestorePublicFormUser,
     PublicFormSession,
+    PublicFormUser,
     PublicWebform,
     PublicWebformTypes,
 )
