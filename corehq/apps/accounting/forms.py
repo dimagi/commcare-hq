@@ -1888,7 +1888,8 @@ class FeatureRateForm(forms.ModelForm):
 
     class Meta(object):
         model = FeatureRate
-        fields = ['monthly_fee', 'monthly_limit', 'per_excess_fee']
+        fields = ['monthly_fee', 'monthly_limit', 'per_excess_fee',
+                  'included_users_per_excess_domain']
 
     def __init__(self, data=None, *args, **kwargs):
         super(FeatureRateForm, self).__init__(data, *args, **kwargs)
@@ -1913,7 +1914,23 @@ class FeatureRateForm(forms.ModelForm):
                              data_bind="value: per_excess_fee"),
                 data_bind="visible: isPerExcessVisible",
             ),
+            crispy.Div(
+                crispy.Field('included_users_per_excess_domain',
+                             data_bind="value: included_users_per_excess_domain"),
+                data_bind="visible: isBundledUsersVisible",
+            ),
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # The model's clean() can't enforce this here: the feature FK is only
+        # attached later, in get_instance().
+        if cleaned_data.get('included_users_per_excess_domain'):
+            feature = Feature.objects.filter(id=self['feature_id'].value()).first()
+            if feature and feature.feature_type != FeatureType.DOMAIN:
+                self.add_error('included_users_per_excess_domain',
+                               _("Only applicable to Domain feature rates."))
+        return cleaned_data
 
     def is_new(self):
         return not self['rate_id'].value()

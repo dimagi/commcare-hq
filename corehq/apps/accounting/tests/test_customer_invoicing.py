@@ -836,6 +836,54 @@ class TestBillingAccountDomainHistory(BaseCustomerInvoiceCase):
                 billing_account=self.account, record_date=record_date, num_domains=4)
 
 
+class TestFeatureRateBundledUsersField(TestCase):
+
+    def test_rates_differing_only_in_bundled_users_are_not_equal(self):
+        from corehq.apps.accounting.models import Feature, FeatureRate
+        feature = Feature.objects.create(name="Domain eq test", feature_type=FeatureType.DOMAIN)
+        rate = FeatureRate(feature=feature, monthly_limit=1,
+                           per_excess_fee=Decimal('100.00'),
+                           included_users_per_excess_domain=5)
+        same = FeatureRate(feature=feature, monthly_limit=1,
+                           per_excess_fee=Decimal('100.00'),
+                           included_users_per_excess_domain=5)
+        different = FeatureRate(feature=feature, monthly_limit=1,
+                                per_excess_fee=Decimal('100.00'),
+                                included_users_per_excess_domain=10)
+        # __eq__ drives _retrieve_feature_rate's is-this-a-new-rate decision;
+        # a bundling change must register as a rate change.
+        self.assertEqual(rate, same)
+        self.assertNotEqual(rate, different)
+
+    def test_bundled_users_rejected_on_non_domain_rates(self):
+        from django.core.exceptions import ValidationError
+        from corehq.apps.accounting.models import Feature, FeatureRate
+        user_feature = Feature.objects.create(name="User clean test", feature_type=FeatureType.USER)
+        rate = FeatureRate(feature=user_feature, included_users_per_excess_domain=5)
+        with self.assertRaises(ValidationError):
+            rate.full_clean()
+
+    def test_bundled_users_allowed_on_domain_rates(self):
+        from corehq.apps.accounting.models import Feature, FeatureRate
+        domain_feature = Feature.objects.create(name="Domain clean test", feature_type=FeatureType.DOMAIN)
+        rate = FeatureRate(feature=domain_feature, included_users_per_excess_domain=5)
+        rate.full_clean()  # no error
+
+    def test_form_rejects_bundled_users_on_non_domain_rates(self):
+        from corehq.apps.accounting.forms import FeatureRateForm
+        from corehq.apps.accounting.models import Feature
+        user_feature = Feature.objects.create(name="User form test", feature_type=FeatureType.USER)
+        form = FeatureRateForm({
+            'feature_id': user_feature.id,
+            'monthly_fee': '0.00',
+            'monthly_limit': 10,
+            'per_excess_fee': '1.00',
+            'included_users_per_excess_domain': 5,
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('included_users_per_excess_domain', form.errors)
+
+
 class TestCalculateDomainsInAllBillingAccounts(BaseCustomerInvoiceCase):
 
     def setUp(self):
