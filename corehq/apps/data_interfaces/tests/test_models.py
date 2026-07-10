@@ -693,3 +693,20 @@ class TestBulkAsyncJobModelField(TestCase):
         job.save()
         job.refresh_from_db()
         assert job.model is XFormInstance
+
+
+class TestBulkAsyncJobIsDone(SimpleTestCase):
+
+    def _job(self, status):
+        return BulkAsyncJob(
+            domain='test-domain', model=XFormInstance,
+            action=BulkAsyncJob.Action.ARCHIVE, requested_by='u', status=status,
+        )
+
+    def test_terminal_statuses_are_done(self):
+        assert self._job(BulkAsyncJob.Status.COMPLETE).is_done
+        assert self._job(BulkAsyncJob.Status.FAILED).is_done
+
+    def test_non_terminal_statuses_are_not_done(self):
+        assert not self._job(BulkAsyncJob.Status.PENDING).is_done
+        assert not self._job(BulkAsyncJob.Status.RUNNING).is_done
