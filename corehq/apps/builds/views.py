@@ -17,7 +17,7 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.util.view_utils import json_error
 
-from .models import CommCareBuild, CommCareBuildConfig, SemanticVersionProperty
+from .models import CommCareBuild, CommCareBuildConfig, CommCareMobileBuild, SemanticVersionProperty
 from .utils import get_all_versions
 
 
@@ -32,7 +32,7 @@ def post(request):
     except ValueError:
         return HttpResponseBadRequest("build_number has to be a base-10 integer")
 
-    CommCareBuild.create_without_artifacts(version, build_number)
+    CommCareMobileBuild.objects.create(version=version, build_number=build_number)
     return HttpResponse()
 
 
@@ -97,12 +97,11 @@ def import_build(request):
             }
         }, status_code=400)
 
-    build = CommCareBuild.create_without_artifacts(version, None)
+    build = CommCareMobileBuild.objects.create(version=version, build_number=None)
 
     return json_response({
         'message': 'New CommCare build added',
         'info': {
             'version': version,
-            '_id': build.get_id,
         }
     })
