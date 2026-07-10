@@ -516,13 +516,13 @@ class TestArchiveOrRestoreForms(SimpleTestCase):
 
 class TestApplyFormAction(SimpleTestCase):
 
-    def _patched_apply_form_action(self, form_ids, forms, action_fn=None):
+    def _patched_apply_form_action(self, form_ids, forms, action_fn=None, validate=None):
         action_fn = action_fn or (lambda xform: None)
         with patch(
             'corehq.apps.data_interfaces.utils.XFormInstance.objects.iter_forms',
             return_value=forms,
         ):
-            return list(apply_form_action(DOMAIN, form_ids, action_fn))
+            return list(apply_form_action(DOMAIN, form_ids, action_fn, validate=validate))
 
     def test_empty_form_ids(self):
         assert self._patched_apply_form_action([], []) == []
@@ -571,3 +571,20 @@ class TestApplyFormAction(SimpleTestCase):
             FormActionResult('f1', SUCCEEDED),
             FormActionResult('missing', SKIPPED, 'not_found'),
         ]
+
+    def test_validate_skip_reason(self):
+        form = Mock(form_id='f1', domain=DOMAIN)
+        acted = []
+        results = self._patched_apply_form_action(
+            ['f1'], [form], action_fn=acted.append,
+            validate=lambda f: 'not_archived',
+        )
+        assert acted == []  # validation skip means action is never applied
+        assert results == [FormActionResult('f1', SKIPPED, 'not_archived')]
+
+    def test_validate_pass_runs_action(self):
+        form = Mock(form_id='f1', domain=DOMAIN)
+        results = self._patched_apply_form_action(
+            ['f1'], [form], action_fn=lambda f: None, validate=lambda f: None,
+        )
+        assert results == [FormActionResult('f1', SUCCEEDED)]
