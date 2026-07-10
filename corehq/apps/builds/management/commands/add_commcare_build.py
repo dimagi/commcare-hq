@@ -8,6 +8,7 @@ from corehq.apps.builds.models import (
     BuildSpec,
     CommCareBuild,
     CommCareBuildConfig,
+    CommCareMobileBuild,
 )
 
 
@@ -41,7 +42,7 @@ class Command(BaseCommand):
         if any(build.version == version for build in CommCareBuild.all_builds()):
             self.stdout.write(f"A build for version {version} already exists. You're up-to-date!")
         else:
-            CommCareBuild.create_without_artifacts(version, None)
+            CommCareMobileBuild.objects.create(version=version, build_number=None)
             _update_commcare_build_menu(version)
             self.stdout.write(f"Added build for version {version}.")
 
