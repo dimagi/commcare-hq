@@ -107,60 +107,6 @@ def apply_form_action(domain, form_ids, action_fn, validate=None):
         yield FormActionResult(form_id, SKIPPED, 'not_found')
 
 
-def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_restore, task=None, from_excel=False):
-    response = {
-        'errors': [],
-        'success': [],
-    }
-    is_archive = archive_or_restore.is_archive_mode()
-
-    def action_fn(xform):
-        if is_archive:
-            xform.archive(user_id=user_id)
-        else:
-            xform.unarchive(user_id=user_id)
-
-    success_count = 0
-    if task:
-        DownloadBase.set_progress(task, 0, len(form_ids))
-
-    for result in apply_form_action(domain, form_ids, action_fn):
-        if result.reason == 'not_found':
-            response['errors'].append(
-                _("Could not find XForm {form_id}").format(form_id=result.form_id))
-            continue
-
-        xform_string = _("XForm {form_id} for domain {domain} by user '{username}'").format(
-            form_id=result.form_id,
-            domain=domain,
-            username=username)
-
-        if result.status == SUCCEEDED:
-            if is_archive:
-                message = _("Successfully archived {form}").format(form=xform_string)
-            else:
-                message = _("Successfully unarchived {form}").format(form=xform_string)
-            response['success'].append(message)
-            success_count = success_count + 1
-        else:
-            if is_archive:
-                message = _("Could not archive {form}").format(form=xform_string)
-            else:
-                message = _("Could not unarchive {form}").format(form=xform_string)
-            response['errors'].append(message)
-
-        if task:
-            DownloadBase.set_progress(task, success_count, len(form_ids))
-
-    if from_excel:
-        return response
-
-    response["success_count_msg"] = _("{success_msg} {count} form(s)").format(
-        success_msg=archive_or_restore.success_text,
-        count=success_count)
-    return {"messages": response}
-
-
 def property_references_parent(case_property):
     return isinstance(case_property, str) and (
         case_property.startswith("parent/")
