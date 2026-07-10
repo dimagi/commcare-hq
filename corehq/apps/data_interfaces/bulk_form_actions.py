@@ -75,6 +75,19 @@ def run_bulk_form_action(job):
     job.save()
 
 
+def mark_job_failed(job_id):
+    """Mark a job ``failed`` unless it already reached a terminal state."""
+    try:
+        job = BulkAsyncJob.objects.get(id=job_id)
+    except BulkAsyncJob.DoesNotExist:
+        return
+    if job.is_done:
+        return
+    job.status = BulkAsyncJob.Status.FAILED
+    job.completed_at = datetime.now(tz=UTC)
+    job.save()
+
+
 def _resolve_user_id(username):
     user = CouchUser.get_by_username(username)
     if user is None:
