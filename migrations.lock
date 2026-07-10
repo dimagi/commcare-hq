@@ -226,6 +226,7 @@ blobs
  0015_rename_blobmeta_parent_id_type_code_name_blobs_blobm_parent__73d7c2_idx
 builds
  0001_initial
+ 0002_populate_commcaremobilebuild
 campaign
  0001_initial
  0002_dashboardmap_dashboardreport
