@@ -24,7 +24,7 @@ from no_exceptions.exceptions import Http403
 
 from dimagi.utils.logging import notify_exception
 from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
+from soil.util import get_download_context
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -56,6 +56,7 @@ from corehq.apps.data_interfaces.forms import (
     DedupeCaseFilterForm,
     UpdateCaseGroupForm,
 )
+from corehq.apps.data_interfaces.bulk_form_actions import create_bulk_form_job
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseDeduplicationActionDefinition,
@@ -63,7 +64,7 @@ from corehq.apps.data_interfaces.models import (
     DomainCaseRuleRun,
 )
 from corehq.apps.data_interfaces.tasks import (
-    bulk_form_management_async,
+    bulk_form_action_async,
     bulk_upload_cases_to_group,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -455,6 +456,8 @@ class XFormManagementView(DataInterfaceSection):
 
     def post(self, request, *args, **kwargs):
         form_ids = self.get_xform_ids(request)
+        if not form_ids:
+            return HttpResponseBadRequest(_("No forms were supplied."))
         if not self.request.can_access_all_locations:
             inaccessible_forms_accessed = self.inaccessible_forms_accessed(
                 form_ids, self.domain, request.couch_user)
@@ -463,19 +466,14 @@ class XFormManagementView(DataInterfaceSection):
                     "Inaccessible forms accessed. Id(s): %s " % ','.join(inaccessible_forms_accessed))
 
         mode = self.request.POST.get('mode')
-        task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-        task = bulk_form_management_async.delay(
-            mode,
-            self.domain,
-            self.request.couch_user,
-            form_ids
-        )
-        task_ref.set_task(task)
-
+        job = create_bulk_form_job(
+            self.domain, mode, self.request.couch_user.username, form_ids)
+        # download_id must be in hex format (no hyphens) to conform to soil's framework
+        bulk_form_action_async.delay(job.id.hex, self.domain)
         return HttpResponseRedirect(
             reverse(
                 XFormManagementStatusView.urlname,
-                args=[self.domain, mode, task_ref.download_id]
+                args=[self.domain, mode, job.id.hex]
             )
         )
 
