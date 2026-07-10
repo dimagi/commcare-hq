@@ -3,6 +3,7 @@ import uuid
 
 from django.contrib import messages
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import (
     Http404,
@@ -59,6 +60,7 @@ from corehq.apps.data_interfaces.forms import (
 from corehq.apps.data_interfaces.bulk_form_actions import create_bulk_form_job
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
+    BulkAsyncJob,
     CaseDeduplicationActionDefinition,
     CaseDuplicateNew,
     DomainCaseRuleRun,
@@ -555,19 +557,37 @@ class XFormManagementStatusView(DataInterfaceSection):
 @require_form_management_privilege
 def xform_management_job_poll(request, domain, download_id,
                               template="data_interfaces/partials/xform_management_status.html"):
-    mode = FormManagementMode(request.GET.get('mode'), validate=True)
     try:
-        context = get_download_context(download_id)
-    except TaskFailedError:
-        return HttpResponseServerError()
+        job = BulkAsyncJob.objects.get(id=download_id, domain=domain)
+    except (BulkAsyncJob.DoesNotExist, ValueError, ValidationError):
+        # A legacy soil download_id (pre-cutover, mid-deploy) isn't a valid
+        # job UUID. Render a terminal message so polling stops.
+        return render(request, template, {'legacy': True, 'download_id': download_id})
+    mode = FormManagementMode(request.GET.get('mode'), validate=True)
+    context = _xform_management_job_context(job, mode)
+    return render(request, template, context)
 
-    context.update({
+
+def _job_percent(job):
+    if not job.requested_count:
+        return 0
+    return int(100 * job.processed_count / job.requested_count)
+
+
+def _xform_management_job_context(job, mode):
+    """Build the soil-compatible poll context for ``job``."""
+    return {
+        'download_id': job.id.hex,
+        'is_done': job.is_done,
+        'has_failed': job.status == BulkAsyncJob.Status.FAILED,
+        'succeeded_count': job.succeeded_count,
+        'skipped': job.get_skipped() if job.is_done and job.skipped_ids_blob_key else {},
+        'progress': {'percent': _job_percent(job)},
         'on_complete_short': mode.complete_short,
         'mode': mode,
         'form_management_url': reverse(EditDataInterfaceDispatcher.name(),
-                                       args=[domain, BulkFormManagementInterface.slug])
-    })
-    return render(request, template, context)
+                                       args=[job.domain, BulkFormManagementInterface.slug]),
+    }
 
 
 class BulkCaseActionSatusView(DataInterfaceSection):
