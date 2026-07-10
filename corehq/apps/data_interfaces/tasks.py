@@ -27,7 +27,11 @@ from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
 from corehq.util.log import send_HTML_email
 
-from .bulk_form_actions import mark_job_failed, run_bulk_form_action
+from .bulk_form_actions import (
+    create_bulk_form_job,
+    mark_job_failed,
+    run_bulk_form_action,
+)
 from .deduplication import backfill_deduplicate_rule, reset_deduplicate_rule
 from .models import (
     AutomaticUpdateRule,
@@ -105,6 +109,16 @@ def bulk_form_action_async(job_id, domain):
     except Exception:
         mark_job_failed(job_id)
         raise
+
+
+@task(serializer='pickle')
+def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids):
+    """Deprecated shim: drains messages queued under the old task name before
+    the BulkAsyncJob cutover. Reconstructs a job from the old pickle args and
+    hands off to bulk_form_action_async. Remove one release after deploy.
+    """
+    job = create_bulk_form_job(domain, archive_or_restore, couch_user.username, form_ids)
+    bulk_form_action_async.delay(job.id.hex, domain)
 
 
 @periodic_task(

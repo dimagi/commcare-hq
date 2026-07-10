@@ -5,9 +5,12 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.data_interfaces.models import BulkAsyncJob
 from corehq.apps.data_interfaces.tasks import (
     bulk_form_action_async,
+    bulk_form_management_async,
     task_generate_ids_and_operate_on_payloads,
     task_operate_on_payloads,
 )
+from corehq.apps.users.models import WebUser
+from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.form_processor.models.forms import XFormInstance
 
 TASK_DOMAIN = 'bulk-task-test'
@@ -118,3 +121,24 @@ class TestBulkFormActionAsync(TestCase):
             bulk_form_action_async(str(job.id), TASK_DOMAIN)
         job.refresh_from_db()
         assert job.status == BulkAsyncJob.Status.FAILED
+
+
+class TestBulkFormManagementShim(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.blob_db = TemporaryFilesystemBlobDB()
+        cls.addClassCleanup(cls.blob_db.close)
+
+    def test_reroutes_legacy_message_to_new_task(self):
+        couch_user = WebUser(username='someone')
+        with patch(
+            'corehq.apps.data_interfaces.tasks.bulk_form_action_async.delay'
+        ) as mock_delay:
+            bulk_form_management_async('archive', TASK_DOMAIN, couch_user, ['form-1', 'form-2'])
+        job = BulkAsyncJob.objects.get(domain=TASK_DOMAIN)
+        assert job.action == BulkAsyncJob.Action.ARCHIVE
+        assert job.requested_count == 2
+        assert job.get_requested_ids() == ['form-1', 'form-2']
+        mock_delay.assert_called_once_with(job.id.hex, TASK_DOMAIN)
