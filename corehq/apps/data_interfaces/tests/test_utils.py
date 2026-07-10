@@ -2,14 +2,12 @@ from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.data_interfaces.interfaces import FormManagementMode
 from corehq.apps.data_interfaces.tasks import task_generate_ids_and_operate_on_payloads
 from corehq.apps.data_interfaces.utils import (
     SKIPPED,
     SUCCEEDED,
     FormActionResult,
     apply_form_action,
-    archive_or_restore_forms,
     operate_on_payloads,
 )
 
@@ -419,99 +417,6 @@ class TestTasks(TestCase):
         self.assertEqual(mock_payload_one.requeue.call_count, 1)
         self.assertEqual(mock_payload_two.requeue.call_count, 0)
         self.assertEqual(response, expected_response)
-
-
-class TestArchiveOrRestoreForms(SimpleTestCase):
-    """Only intended to test how archive_or_restore_forms behaves"""
-
-    USER_ID = 'user-id'
-    USERNAME = 'user@example.com'
-
-    def _archive_mode(self):
-        return FormManagementMode(FormManagementMode.ARCHIVE_MODE)
-
-    def _restore_mode(self):
-        return FormManagementMode(FormManagementMode.RESTORE_MODE)
-
-    def _patched_archive_or_restore_forms(
-        self, mode, form_ids, forms, **kwargs
-    ):
-        with patch(
-            'corehq.apps.data_interfaces.utils.XFormInstance.objects.iter_forms',
-            return_value=forms,
-        ):
-            return archive_or_restore_forms(
-                DOMAIN, self.USER_ID, self.USERNAME, form_ids, mode, **kwargs
-            )
-
-    def test_archive_success(self):
-        form = Mock(form_id='f1', domain=DOMAIN)
-        result = self._patched_archive_or_restore_forms(
-            self._archive_mode(), ['f1'], [form]
-        )
-        form.archive.assert_called_once_with(user_id=self.USER_ID)
-        messages = result['messages']
-        assert messages['errors'] == []
-        assert messages['success'] == [
-            "Successfully archived XForm f1 for domain test-domain "
-            "by user 'user@example.com'"
-        ]
-        assert messages['success_count_msg'] == 'Successfully archived  1 form(s)'
-
-    def test_restore_success(self):
-        form = Mock(form_id='f1', domain=DOMAIN)
-        result = self._patched_archive_or_restore_forms(
-            self._restore_mode(), ['f1'], [form]
-        )
-        form.unarchive.assert_called_once_with(user_id=self.USER_ID)
-        messages = result['messages']
-        assert messages['success'] == [
-            "Successfully unarchived XForm f1 for domain test-domain "
-            "by user 'user@example.com'"
-        ]
-        assert messages['success_count_msg'] == 'Successfully restored  1 form(s)'
-
-    def test_missing_form_reported_not_found(self):
-        result = self._patched_archive_or_restore_forms(
-            self._archive_mode(), ['missing'], []
-        )
-        assert result['messages']['errors'] == ["Could not find XForm missing"]
-        assert result['messages']['success'] == []
-
-    def test_wrong_domain_reports_not_found(self):
-        form = Mock(form_id='f1', domain='other-domain')
-        result = self._patched_archive_or_restore_forms(
-            self._archive_mode(), ['f1'], [form]
-        )
-        form.archive.assert_not_called()
-        assert result['messages']['errors'] == ["Could not find XForm f1"]
-
-    def test_action_exception_reported(self):
-        form = Mock(form_id='f1', domain=DOMAIN)
-        form.archive.side_effect = Exception('error')
-        with patch('corehq.apps.data_interfaces.utils.notify_exception') as notify:
-            result = self._patched_archive_or_restore_forms(
-                self._archive_mode(), ['f1'], [form]
-            )
-        notify.assert_called_once()
-        assert result['messages']['errors'] == [
-            "Could not archive XForm f1 for domain test-domain "
-            "by user 'user@example.com'"
-        ]
-        assert result['messages']['success'] == []
-
-    def test_from_excel_returns_raw_response(self):
-        form = Mock(form_id='f1', domain=DOMAIN)
-        result = self._patched_archive_or_restore_forms(
-            self._archive_mode(), ['f1'], [form], from_excel=True
-        )
-        assert 'messages' not in result
-        assert 'success_count_msg' not in result
-        assert result['success'] == [
-            "Successfully archived XForm f1 for domain test-domain "
-            "by user 'user@example.com'"
-        ]
-        assert result['errors'] == []
 
 
 class TestApplyFormAction(SimpleTestCase):
