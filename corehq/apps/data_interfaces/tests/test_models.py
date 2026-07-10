@@ -5,6 +5,7 @@ from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
+    BulkAsyncJob,
     CaseDeduplicationActionDefinition,
     CaseRuleAction,
     CaseRuleCriteria,
@@ -24,7 +25,9 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.form_processor.models.cases import CommCareCase
+from corehq.form_processor.models.forms import XFormInstance
 
 from corehq.apps.data_interfaces.tests.deduplication_helpers import create_dedupe_rule
 
@@ -644,3 +647,32 @@ def create_dict_mock(class_, data):
     obj = class_()
     patch.object(obj, 'to_dict', lambda: data).start()
     return obj
+
+
+class TestBulkAsyncJobBlobs(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.blob_db = TemporaryFilesystemBlobDB()
+        cls.addClassCleanup(cls.blob_db.close)
+
+    def _job(self):
+        return BulkAsyncJob(
+            domain='test-domain',
+            model=XFormInstance,
+            action=BulkAsyncJob.Action.ARCHIVE,
+            requested_by='someone',
+        )
+
+    def test_requested_ids_round_trip_dedups_and_sorts(self):
+        job = self._job()
+        stored = job.set_requested_ids(['c', 'a', 'b', 'a'])
+        assert stored == ['a', 'b', 'c']
+        assert job.requested_ids_blob_key
+        assert job.get_requested_ids() == ['a', 'b', 'c']
+
+    def test_skipped_round_trip_sorts_each_group(self):
+        job = self._job()
+        job.set_skipped({'not_found': ['z', 'a'], 'not_archived': ['n', 'm']})
+        assert job.get_skipped() == {'not_found': ['a', 'z'], 'not_archived': ['m', 'n']}

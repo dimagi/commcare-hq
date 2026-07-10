@@ -618,44 +618,43 @@ class TestDeleteDomain(TestCase):
         self._assert_export_counts(self.domain2.name, 1)
 
     def test_bulk_async_job_blobs_delete(self):
+        from corehq.blobs.models import BlobMeta
         blobdb = get_blob_db()
         keys = {}
+        parent_ids = {}
         for domain_name in [self.domain.name, self.domain2.name]:
-            requested_meta = blobdb.put(
-                BytesIO((domain_name + " ids").encode('utf-8')),
-                domain=domain_name,
-                parent_id=domain_name,
-                type_code=CODES.bulk_async_job,
-            )
-            skipped_meta = blobdb.put(
-                BytesIO((domain_name + " skipped").encode('utf-8')),
-                domain=domain_name,
-                parent_id=domain_name,
-                type_code=CODES.bulk_async_job,
-            )
-            keys[domain_name] = [requested_meta.key, skipped_meta.key]
-            BulkAsyncJob.objects.create(
+            obj = BulkAsyncJob(
                 domain=domain_name,
                 model=XFormInstance,
                 action=BulkAsyncJob.Action.ARCHIVE,
                 requested_by='user@example.com',
-                requested_ids_blob_key=requested_meta.key,
-                skipped_ids_blob_key=skipped_meta.key,
             )
+            obj.set_requested_ids(['a', 'b', 'c'])
+            obj.set_skipped({"skipped": ['a', 'b', 'c']})
+            obj.save()
+            keys[domain_name] = [obj.requested_ids_blob_key, obj.skipped_ids_blob_key]
+            parent_ids[domain_name] = obj.id.hex
 
         self.domain.delete()
 
         deleted_requested_key, deleted_skipped_key = keys[self.domain.name]
-        with self.assertRaises(NotFound):
-            blobdb.get(key=deleted_requested_key, type_code=CODES.bulk_async_job)
-        with self.assertRaises(NotFound):
-            blobdb.get(key=deleted_skipped_key, type_code=CODES.bulk_async_job)
+        deleted_parent_id = parent_ids[self.domain.name]
+        with self.assertRaises(BlobMeta.DoesNotExist):
+            blobdb.metadb.get(key=deleted_requested_key, parent_id=deleted_parent_id)
+
+        with self.assertRaises(BlobMeta.DoesNotExist):
+            blobdb.metadb.get(key=deleted_skipped_key, parent_id=deleted_parent_id)
+        assert not blobdb.exists(deleted_requested_key)
+        assert not blobdb.exists(deleted_skipped_key)
 
         remaining_requested_key, remaining_skipped_key = keys[self.domain2.name]
-        with blobdb.get(key=remaining_requested_key, type_code=CODES.bulk_async_job) as f:
-            self.assertEqual(f.read(), (self.domain2.name + " ids").encode('utf-8'))
-        with blobdb.get(key=remaining_skipped_key, type_code=CODES.bulk_async_job) as f:
-            self.assertEqual(f.read(), (self.domain2.name + " skipped").encode('utf-8'))
+        remaining_parent_id = parent_ids[self.domain2.name]
+        requested_meta = blobdb.metadb.get(key=remaining_requested_key, parent_id=remaining_parent_id)
+        skipped_meta = blobdb.metadb.get(key=remaining_skipped_key, parent_id=remaining_parent_id)
+        with blobdb.get(meta=requested_meta) as f:
+            self.assertEqual(f.read(), b'["a", "b", "c"]')
+        with blobdb.get(meta=skipped_meta) as f:
+            self.assertEqual(f.read(), b'{"skipped": ["a", "b", "c"]}')
 
         self.assertEqual(
             BulkAsyncJob.objects.filter(domain=self.domain.name).count(), 0)
