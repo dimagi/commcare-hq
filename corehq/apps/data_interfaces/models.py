@@ -1987,6 +1987,10 @@ class BulkAsyncJob(models.Model):
     class Meta:
         app_label = 'data_interfaces'
 
+    @property
+    def is_done(self):
+        return self.status in (self.Status.COMPLETE, self.Status.FAILED)
+
     def set_requested_ids(self, form_ids):
         ids = sorted(set(form_ids))
         self.requested_ids_blob_key = self._put_blob(ids)
