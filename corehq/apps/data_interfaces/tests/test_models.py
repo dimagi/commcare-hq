@@ -676,3 +676,20 @@ class TestBulkAsyncJobBlobs(TestCase):
         job = self._job()
         job.set_skipped({'not_found': ['z', 'a'], 'not_archived': ['n', 'm']})
         assert job.get_skipped() == {'not_found': ['a', 'z'], 'not_archived': ['m', 'n']}
+
+
+class TestBulkAsyncJobModelField(TestCase):
+
+    def test_survives_update_after_insert(self):
+        # Regression: the model= ModelClassField column made the worker's
+        # second save (an UPDATE) raise TypeError. See ModelClassField.pre_save.
+        job = BulkAsyncJob.objects.create(
+            domain='test-domain',
+            model=XFormInstance,
+            action=BulkAsyncJob.Action.ARCHIVE,
+            requested_by='someone',
+        )
+        job.status = BulkAsyncJob.Status.RUNNING
+        job.save()
+        job.refresh_from_db()
+        assert job.model is XFormInstance
