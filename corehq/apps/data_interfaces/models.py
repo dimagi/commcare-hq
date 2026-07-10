@@ -1,10 +1,12 @@
 import csv
 import hashlib
+import json
 import operator
 import re
 import uuid
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
+from io import BytesIO
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
@@ -47,6 +49,7 @@ from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS, is_copied_case, resave_case
 from corehq.apps.users.util import SYSTEM_USER_ID, cached_owner_id_to_display
 from corehq.apps.users.cases import get_wrapped_owner
+from corehq.blobs import CODES, get_blob_db
 from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCaseIndex, CommCareCase, XFormInstance
@@ -1983,3 +1986,37 @@ class BulkAsyncJob(models.Model):
 
     class Meta:
         app_label = 'data_interfaces'
+
+    def set_requested_ids(self, form_ids):
+        ids = sorted(set(form_ids))
+        self.requested_ids_blob_key = self._put_blob(ids)
+        return ids
+
+    def get_requested_ids(self):
+        return self._get_blob(self.requested_ids_blob_key)
+
+    def set_skipped(self, grouped):
+        sorted_groups = {reason: sorted(ids) for reason, ids in grouped.items()}
+        self.skipped_ids_blob_key = self._put_blob(sorted_groups)
+
+    def get_skipped(self):
+        return self._get_blob(self.skipped_ids_blob_key)
+
+    def _put_blob(self, payload):
+        db = get_blob_db()
+        content = BytesIO(json.dumps(payload).encode("utf-8"))
+        meta = db.put(
+            content,
+            domain=self.domain,
+            parent_id=self.id.hex,
+            type_code=CODES.bulk_async_job,
+            key=uuid.uuid4().hex,
+        )
+        return meta.key
+
+    def _get_blob(self, key):
+        # Read through the BlobMeta to ensure content is decompressed.
+        db = get_blob_db()
+        meta = db.metadb.get(key=key, parent_id=self.id.hex)
+        with db.get(meta=meta) as stream:
+            return json.loads(stream.read())
