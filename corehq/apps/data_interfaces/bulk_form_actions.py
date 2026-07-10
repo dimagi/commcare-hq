@@ -10,13 +10,39 @@ from typing import Callable, Optional
 
 from attrs import frozen
 
+from corehq.apps.data_interfaces.interfaces import FormManagementMode
 from corehq.apps.data_interfaces.models import BulkAsyncJob
 from corehq.apps.data_interfaces.utils import SUCCEEDED, apply_form_action
 from corehq.apps.users.models import CouchUser
+from corehq.blobs import get_blob_db
+from corehq.blobs.atomic import AtomicBlobs
+from corehq.form_processor.models import XFormInstance
 
 log = logging.getLogger(__name__)
 
 SAVE_EVERY = 100
+
+
+def create_bulk_form_job(domain, mode, requested_by, form_ids):
+    """Create and persist a BulkAsyncJob for a bulk form archive/unarchive.
+
+    The blob write and row save share an ``AtomicBlobs`` transaction so a
+    failed save can't orphan the requested-ids blob.
+    """
+    action = (BulkAsyncJob.Action.UNARCHIVE
+              if mode == FormManagementMode.RESTORE_MODE
+              else BulkAsyncJob.Action.ARCHIVE)
+    with AtomicBlobs(get_blob_db()) as db:
+        job = BulkAsyncJob(
+            domain=domain,
+            model=XFormInstance,
+            action=action,
+            requested_by=requested_by,
+        )
+        stored_ids = job.set_requested_ids(form_ids, db=db)
+        job.requested_count = len(stored_ids)
+        job.save()
+    return job
 
 
 @frozen
