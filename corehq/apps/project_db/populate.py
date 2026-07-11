@@ -1,7 +1,7 @@
 import datetime
 from decimal import Decimal, InvalidOperation
 
-from sqlalchemy import Text
+from sqlalchemy import ARRAY, Text
 from sqlalchemy.dialects.postgresql import insert
 
 from dimagi.utils.chunked import chunked
@@ -41,8 +41,11 @@ def _normalize(row, columns):
     filled = {}  # Row with all columns present
     for column in columns:
         value = row.get(column.name)
-        if value is None and not column.nullable and isinstance(column.type, Text):
-            value = ''
+        if value is None and not column.nullable:
+            if isinstance(column.type, ARRAY):
+                value = []
+            elif isinstance(column.type, Text):
+                value = ''
         filled[column.name] = value
     return filled
 
@@ -92,8 +95,16 @@ def coerce_to_number(value):
         return None
 
 
+def coerce_to_select(value):
+    """Split a space-separated multi-select value into a list of choices"""
+    if value is None:
+        return []
+    return [x for x in str(value).split(' ') if x]
+
+
 # Parallels CaseTable.COERCED_PROPERTY_TYPES
 _TYPED_COERCIONS = [
     (CaseProperty.DataType.DATE, coerce_to_date),
     (CaseProperty.DataType.NUMBER, coerce_to_number),
+    (CaseProperty.DataType.SELECT, coerce_to_select),
 ]

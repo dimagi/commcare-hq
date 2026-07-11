@@ -14,7 +14,7 @@ Layout
 - One table per case type, named after the case type.
 - Each table has a fixed set of columns mirroring ``CommCareCase``, plus a
   ``prop__<name>`` column for every case property (defaults to `''`). Typed
-  properties (date, number) get an additional typed column, e.g.
+  properties (date, number, select) get an additional typed column, e.g.
   ``date_prop__<name>``.
 
 Postgres truncates identifiers at 63 bytes, so schema, table, and column names

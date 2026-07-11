@@ -9,6 +9,7 @@ from corehq.apps.project_db.populate import (
     case_to_row,
     coerce_to_date,
     coerce_to_number,
+    coerce_to_select,
     send_to_project_db,
     upsert_cases,
 )
@@ -45,6 +46,19 @@ def test_coerce_to_date(value, expected):
 ])
 def test_coerce_to_number(value, expected):
     assert coerce_to_number(value) == expected
+
+
+@pytest.mark.parametrize('value, expected', [
+    ('red',            ['red']),
+    (' red ',         ['red']),
+    ('red  blue',     ['red', 'blue']),
+    ('red green blue', ['red', 'green', 'blue']),
+    (None,            []),
+    ('',              []),
+    ('  ',           []),
+])
+def test_coerce_to_select(value, expected):
+    assert coerce_to_select(value) == expected
 
 
 def _make_index(identifier, referenced_id):
@@ -109,6 +123,11 @@ def test_static_fields_mapped_to_columns():
       'prop__weight': '70.5', 'number_prop__weight': Decimal('70.5')}),
     # typed value skipped when only the raw column exists
     ({'dob': '1990-05-20'}, {'prop__dob'}, {'prop__dob': '1990-05-20'}),
+    # select property populates both the raw and the text[] column
+    ({'interests': 'sports music'},
+     {'prop__interests', 'select_prop__interests'},
+     {'prop__interests': 'sports music',
+      'select_prop__interests': ['sports', 'music']}),
 ])
 def test_property_columns(case_json, columns, expected_props):
     result = case_to_row(_make_case(case_json=case_json), columns)
@@ -168,6 +187,22 @@ def test_send_to_project_db():
         rows = conn.execute(table.select()).fetchall()
     assert [r[0] for r in rows] == ['Alice', 'Bob', '']
     assert CaseTable('test-upsert', 'clinic').reflect() is None
+
+
+@use('db', project_db_table('test-select', 'patient', {'interests': 'select'}))
+def test_send_select_property_round_trip():
+    send_to_project_db('test-select', 'patient', [
+        _make_case({'interests': 'sports music'}, case_id='c1', type='patient'),
+        _make_case({}, case_id='c2', type='patient'),  # absent -> empty array, not NULL
+    ])
+
+    table = CaseTable('test-select', 'patient').reflect()
+    with get_project_db_engine().begin() as conn:
+        rows = conn.execute(
+            table.select().order_by(table.c.case_id)
+        ).fetchall()
+    interests = {r['case_id']: r['select_prop__interests'] for r in rows}
+    assert interests == {'c1': ['sports', 'music'], 'c2': []}
 
 
 @use('db', project_db_table('test-long-prop', 'patient', {'x' * 100: 'date'}))
