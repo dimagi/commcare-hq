@@ -5,7 +5,7 @@ from django.core.exceptions import ImproperlyConfigured
 import sqlalchemy
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
-from sqlalchemy import Boolean, Column, Date, DateTime, Numeric, Table, Text
+from sqlalchemy import ARRAY, Boolean, Column, Date, DateTime, Numeric, Table, Text
 from sqlalchemy.dialects import postgresql
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -102,9 +102,10 @@ class DomainSchema:
 
 class CaseTable:
     COERCED_PROPERTY_TYPES = {
-        # CaseProperty data_type to SQLAlchemy column type
-        CaseProperty.DataType.DATE: Date,
-        CaseProperty.DataType.NUMBER: Numeric,
+        # CaseProperty data_type:  (SQLAlchemy column type, default)
+        CaseProperty.DataType.DATE: (Date, None),
+        CaseProperty.DataType.NUMBER: (Numeric, None),
+        CaseProperty.DataType.SELECT: (ARRAY(Text), '{}'),
     }
 
     def __init__(self, domain, case_type):
@@ -138,8 +139,10 @@ class CaseTable:
         for name, data_type in self._get_dd_properties():
             yield Column(property_column(name), Text, nullable=False, server_default='', comment=name)
 
-            if col_type := self.COERCED_PROPERTY_TYPES.get(data_type):
-                yield Column(property_column(name, data_type), col_type, comment=name)
+            if data_type in self.COERCED_PROPERTY_TYPES:
+                col_type, default = self.COERCED_PROPERTY_TYPES[data_type]
+                yield Column(property_column(name, data_type), col_type, comment=name,
+                             nullable=default is None, server_default=default)
 
     def _get_dd_properties(self):
         return CaseProperty.objects.filter(

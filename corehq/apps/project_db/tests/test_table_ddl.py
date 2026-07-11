@@ -116,22 +116,27 @@ def test_case_table_basics():
 
     assert isinstance(table.c['prop__nickname'].type, sqlalchemy.Text)
     assert isinstance(table.c['prop__favorite_color'].type, sqlalchemy.Text)
+    assert isinstance(table.c['select_prop__favorite_color'].type, sqlalchemy.ARRAY)
+    assert isinstance(table.c['select_prop__favorite_color'].type.item_type, sqlalchemy.Text)
     assert isinstance(table.c['prop__dob'].type, sqlalchemy.Text)
     assert isinstance(table.c['date_prop__dob'].type, sqlalchemy.Date)
     assert isinstance(table.c['prop__children_count'].type, sqlalchemy.Text)
     assert isinstance(table.c['number_prop__children_count'].type, sqlalchemy.Numeric)
 
-    # Text property columns are NOT NULL; typed columns stay nullable
+    # Text property columns are NOT NULL; date/number columns stay nullable,
+    # but select columns are NOT NULL and default to an empty array
     assert table.c['prop__nickname'].nullable is False
     assert table.c['prop__dob'].nullable is False
     assert table.c['date_prop__dob'].nullable is True
     assert table.c['number_prop__children_count'].nullable is True
+    assert table.c['select_prop__favorite_color'].nullable is False
 
     # Both plain and typed columns carry the raw property name as a comment
     assert table.c['prop__dob'].comment == 'dob'
     assert table.c['date_prop__dob'].comment == 'dob'
     assert table.c['prop__children_count'].comment == 'children_count'
     assert table.c['number_prop__children_count'].comment == 'children_count'
+    assert table.c['select_prop__favorite_color'].comment == 'favorite_color'
 
 
 def test_long_property_names_are_truncated():
@@ -210,7 +215,8 @@ def test_create_project_db(get_dd_properties, get_case_types):
     schema = _project_db_schema('test_create_project_db')
 
     get_case_types.return_value = ['patient']
-    get_dd_properties.return_value = [('nickname', 'plain'), ('dob', 'plain')]
+    get_dd_properties.return_value = [
+        ('nickname', 'plain'), ('dob', 'plain'), ('interests', 'select')]
     create_or_update_project_db(domain)
     _assert_db_created_as_expected(schema.name)
 
@@ -235,6 +241,10 @@ def _assert_db_created_as_expected(schema):
         assert isinstance(col_types['prop__nickname'], sqlalchemy.Text)
         assert isinstance(col_types['prop__dob'], sqlalchemy.Text)
         assert 'date_prop__dob' not in cols
+        # A select property gets a text[] column that is NOT NULL, defaulting to {}
+        assert isinstance(col_types['select_prop__interests'], sqlalchemy.ARRAY)
+        assert cols['select_prop__interests']['nullable'] is False
+        assert cols['select_prop__interests']['default'] == "'{}'::text[]"
 
         # Property columns store the raw case property name as a comment
         assert cols['prop__nickname']['comment'] == 'nickname'
