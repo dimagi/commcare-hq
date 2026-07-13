@@ -2,6 +2,7 @@
 from contextlib import contextmanager
 from unittest.mock import patch
 
+import attr
 import pytest
 
 from django.test import TestCase
@@ -24,50 +25,83 @@ from corehq.util.test_utils import flag_disabled, flag_enabled
 DOMAIN = 'restore-rate-limit-test'
 
 
+@attr.s(auto_attribs=True)
+class LimiterMocks:
+    global_report_usage: object
+    domain_report_usage: object
+    wait: object
+
+
 @contextmanager
-def restore_rate_limiters(global_allowed, domain_allowed):
+def restore_rate_limiters(global_allowed, domain_allowed, wait_acquires=False):
     with (
         patch('corehq.apps.ota.rate_limiter.SHOULD_RATE_LIMIT_RESTORES', True),
         patch.object(global_restore_rate_limiter, 'allow_usage',
                      return_value=global_allowed),
         patch.object(restore_rate_limiter, 'allow_usage',
                      return_value=domain_allowed),
+        patch.object(restore_rate_limiter, 'wait',
+                     return_value=wait_acquires) as wait,
         patch.object(global_restore_rate_limiter, 'report_usage') as global_report_usage,
         patch.object(restore_rate_limiter, 'report_usage') as domain_report_usage,
         patch('corehq.apps.ota.rate_limiter._report_current_global_restore_thresholds'),
     ):
-        yield global_report_usage, domain_report_usage
+        yield LimiterMocks(global_report_usage, domain_report_usage, wait)
 
 
-@pytest.mark.parametrize("global_allowed, domain_allowed, expect_limited", [
-    (True, True, False),
+@pytest.mark.parametrize("global_allowed, domain_allowed, wait_acquires, expect_limited", [
+    (True, True, False, False),
     # under the global threshold, domain limits don't apply
-    (True, False, False),
+    (True, False, False, False),
     # over the global threshold, but the domain has capacity
-    (False, True, False),
-    # over the global threshold and the domain's own limits
-    (False, False, True),
+    (False, True, False, False),
+    # over all limits, but capacity freed up while waiting
+    (False, False, True, False),
+    # over all limits and no capacity freed up while waiting
+    (False, False, False, True),
 ])
-def test_rate_limit_restore(global_allowed, domain_allowed, expect_limited):
+def test_rate_limit_restore(global_allowed, domain_allowed, wait_acquires, expect_limited):
     with flag_enabled('RATE_LIMIT_RESTORES'), \
-            restore_rate_limiters(global_allowed, domain_allowed):
+            restore_rate_limiters(global_allowed, domain_allowed, wait_acquires):
         assert rate_limit_restore(DOMAIN) is expect_limited
+
+
+def test_restore_with_capacity_does_not_wait():
+    with flag_enabled('RATE_LIMIT_RESTORES'), \
+            restore_rate_limiters(False, True) as mocks:
+        rate_limit_restore(DOMAIN)
+    mocks.wait.assert_not_called()
+
+
+def test_over_limit_restore_waits_for_capacity():
+    with flag_enabled('RATE_LIMIT_RESTORES'), \
+            restore_rate_limiters(False, False) as mocks:
+        rate_limit_restore(DOMAIN)
+    mocks.wait.assert_called_once_with(DOMAIN, timeout=15)
 
 
 def test_allowed_restore_reports_usage_to_both_limiters():
     with flag_enabled('RATE_LIMIT_RESTORES'), \
-            restore_rate_limiters(True, False) as (global_report_usage, domain_report_usage):
+            restore_rate_limiters(True, False) as mocks:
         rate_limit_restore(DOMAIN)
-    global_report_usage.assert_called_once()
-    domain_report_usage.assert_called_once_with(DOMAIN)
+    mocks.global_report_usage.assert_called_once()
+    mocks.domain_report_usage.assert_called_once_with(DOMAIN)
+
+
+def test_delayed_restore_reports_usage_to_both_limiters():
+    with flag_enabled('RATE_LIMIT_RESTORES'), \
+            restore_rate_limiters(False, False, wait_acquires=True) as mocks:
+        rate_limit_restore(DOMAIN)
+    mocks.global_report_usage.assert_called_once()
+    mocks.domain_report_usage.assert_called_once_with(DOMAIN)
 
 
 def test_rate_limited_restore_does_not_report_usage():
     with flag_enabled('RATE_LIMIT_RESTORES'), \
-            restore_rate_limiters(False, False) as (global_report_usage, domain_report_usage):
+            restore_rate_limiters(False, False) as mocks:
         rate_limit_restore(DOMAIN)
-    global_report_usage.assert_not_called()
-    domain_report_usage.assert_not_called()
+    mocks.global_report_usage.assert_not_called()
+    mocks.domain_report_usage.assert_not_called()
 
 
 def test_rate_limited_restore_emits_metric():
@@ -92,12 +126,13 @@ def test_block_restores_rejects_regardless_of_capacity():
         assert rate_limit_restore(DOMAIN) is True
 
 
-def test_toggles_off_never_limits_but_still_reports_usage():
+def test_toggles_off_never_limits_never_waits_but_still_reports_usage():
     with flag_disabled('RATE_LIMIT_RESTORES'), flag_disabled('BLOCK_RESTORES'), \
-            restore_rate_limiters(False, False) as (global_report_usage, domain_report_usage):
+            restore_rate_limiters(False, False) as mocks:
         assert rate_limit_restore(DOMAIN) is False
-    global_report_usage.assert_called_once()
-    domain_report_usage.assert_called_once_with(DOMAIN)
+    mocks.wait.assert_not_called()
+    mocks.global_report_usage.assert_called_once()
+    mocks.domain_report_usage.assert_called_once_with(DOMAIN)
 
 
 class RestoreRateDefinitionDefaultsTest(TestCase):
