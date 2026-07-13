@@ -6,7 +6,10 @@ from corehq.project_limits.rate_limiter import (
     RateLimiter,
     get_dynamic_rate_definition,
 )
-from corehq.project_limits.shortcuts import get_standard_ratio_rate_definition
+from corehq.project_limits.shortcuts import (
+    delay_and_report_rate_limit,
+    get_standard_ratio_rate_definition,
+)
 from corehq.toggles import RATE_LIMIT_RESTORES, NAMESPACE_DOMAIN, BLOCK_RESTORES
 from corehq.util.decorators import run_only_when, silence_and_report_error
 from corehq.util.metrics import metrics_counter, metrics_gauge
@@ -61,9 +64,9 @@ SHOULD_RATE_LIMIT_RESTORES = not settings.ENTERPRISE_MODE and not settings.UNIT_
 @run_only_when(lambda: SHOULD_RATE_LIMIT_RESTORES)
 @silence_and_report_error("Exception raised in the restore rate limiter",
                           'commcare.restores.rate_limiter_errors')
-def rate_limit_restore(domain):
+def rate_limit_restore(domain, max_wait=15):
     if RATE_LIMIT_RESTORES.enabled(domain, namespace=NAMESPACE_DOMAIN):
-        return _rate_limit_restore(domain)
+        return _rate_limit_restore(domain, max_wait=max_wait)
     elif BLOCK_RESTORES.enabled(domain, namespace=NAMESPACE_DOMAIN):
         return True
     else:
@@ -82,16 +85,19 @@ def _report_restore_usage(domain):
     _report_current_global_restore_thresholds()
 
 
-def _rate_limit_restore(domain):
+def _rate_limit_restore(domain, max_wait=15):
 
     allow_usage = _allow_restore_usage(domain)
 
+    if not allow_usage:
+        allow_usage = delay_and_report_rate_limit(
+            domain, max_wait=max_wait, delay_rather_than_reject=False,
+            datadog_metric='commcare.restore.rate_limited',
+            limiter=restore_rate_limiter,
+        )
+
     if allow_usage:
         _report_restore_usage(domain)
-    else:
-        metrics_counter('commcare.restore.rate_limited', tags={
-            'domain': domain,
-        })
 
     return not allow_usage
 
