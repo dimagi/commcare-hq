@@ -92,7 +92,7 @@ def _rate_limit_restore(domain, max_wait=15):
     if not allow_usage:
         allow_usage = delay_and_report_rate_limit(
             domain, max_wait=max_wait, delay_rather_than_reject=False,
-            datadog_metric='commcare.restore.rate_limited',
+            datadog_metric='commcare.restores.rate_limited',
             limiter=restore_rate_limiter,
         )
 
@@ -104,7 +104,7 @@ def _rate_limit_restore(domain, max_wait=15):
 
 def _rate_limit_restore_test(domain):
     if not _allow_restore_usage(domain):
-        metrics_counter('commcare.restore.rate_limited.test', tags={
+        metrics_counter('commcare.restores.rate_limited.test', tags={
             'domain': domain,
         })
     _report_restore_usage(domain)

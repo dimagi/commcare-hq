@@ -109,7 +109,7 @@ def test_rate_limited_restore_emits_metric():
             flag_enabled('RATE_LIMIT_RESTORES'), \
             restore_rate_limiters(False, False):
         rate_limit_restore(DOMAIN)
-    assert metrics.list('commcare.restore.rate_limited', domain=DOMAIN)
+    assert metrics.list('commcare.restores.rate_limited', domain=DOMAIN)
 
 
 def test_toggles_off_rate_limited_restore_emits_test_metric():
@@ -117,7 +117,7 @@ def test_toggles_off_rate_limited_restore_emits_test_metric():
             flag_disabled('RATE_LIMIT_RESTORES'), flag_disabled('BLOCK_RESTORES'), \
             restore_rate_limiters(False, False):
         rate_limit_restore(DOMAIN)
-    assert metrics.list('commcare.restore.rate_limited.test', domain=DOMAIN)
+    assert metrics.list('commcare.restores.rate_limited.test', domain=DOMAIN)
 
 
 def test_block_restores_rejects_regardless_of_capacity():
