@@ -338,15 +338,21 @@ var featureRate = function (data) {
     self.monthly_fee = ko.observable(data.monthly_fee);
     self.per_excess_fee = ko.observable(data.per_excess_fee);
     self.monthly_limit = ko.observable(data.monthly_limit);
+    self.included_users_per_excess_domain = ko.observable(data.included_users_per_excess_domain);
 
     self.isPerExcessVisible = ko.computed(function () {
         return self.feature_type() !== 'SMS';
     });
 
+    self.isBundledUsersVisible = ko.computed(function () {
+        return self.feature_type() === 'Domain';
+    });
+
     self.asJSON = function () {
         var result = {};
         _.each(['name', 'feature_type', 'feature_id', 'rate_id', 'monthly_fee',
-            'per_excess_fee', 'monthly_limit'], function (field) {
+            'per_excess_fee', 'monthly_limit',
+            'included_users_per_excess_domain'], function (field) {
             result[field] = self[field]();
         });
         return result;
