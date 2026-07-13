@@ -35,6 +35,7 @@ module.exports = function (grunt) {
         'locations',
         'userreports/bootstrap3',
         'userreports/bootstrap5',
+        'case_search',
         'cloudcare',
         'cloudcare/form_entry',
         'hqwebapp/bootstrap3',
