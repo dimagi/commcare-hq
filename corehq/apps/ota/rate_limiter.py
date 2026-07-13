@@ -31,7 +31,7 @@ restore_rate_limiter = RateLimiter(
 SHOULD_RATE_LIMIT_RESTORES = not settings.ENTERPRISE_MODE and not settings.UNIT_TESTING
 
 
-@run_only_when(SHOULD_RATE_LIMIT_RESTORES)
+@run_only_when(lambda: SHOULD_RATE_LIMIT_RESTORES)
 @silence_and_report_error("Exception raised in the restore rate limiter",
                           'commcare.restores.rate_limiter_errors')
 def rate_limit_restore(domain):
