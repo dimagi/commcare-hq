@@ -15,6 +15,7 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.app_manager.models import PublicFormSession, PublicWebform
 from corehq.apps.app_manager.public_webform_submissions import (
     consume_public_form_session,
+    public_form_session_already_submitted,
     validate_public_form_submission,
 )
 from corehq.apps.domain.shortcuts import create_domain
@@ -180,6 +181,18 @@ class TestConsumePublicFormSession:
         session.refresh_from_db()
         # still the first form; the replay did not overwrite
         assert session.xform_id == 'form-abc'
+
+
+@use(consumable_session)
+class TestPublicFormSessionAlreadySubmitted:
+
+    def test_false_before_submission(self):
+        assert public_form_session_already_submitted(consumable_session()) is False
+
+    def test_true_after_submission(self):
+        session = consumable_session()
+        consume_public_form_session(session, _FakeXForm('form-abc'))
+        assert public_form_session_already_submitted(session) is True
 
 
 @use('transactional_db')

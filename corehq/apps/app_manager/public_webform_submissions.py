@@ -1,5 +1,3 @@
-import logging
-
 from django.utils import timezone
 
 from casexml.apps.case.xform import get_case_updates
@@ -8,9 +6,6 @@ from corehq.apps.app_manager.models import PublicFormSession, PublicWebformTypes
 from corehq.apps.users.util import PUBLIC_USER_ID
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils.xform import extract_meta_user_id
-from corehq.util.metrics import metrics_counter
-
-logger = logging.getLogger(__name__)
 
 
 def validate_public_form_submission(session, form_json):
@@ -61,18 +56,16 @@ def _validate_registration_case_updates(session, case_updates):
     return None
 
 
+def public_form_session_already_submitted(session):
+    return PublicFormSession.objects.filter(
+        pk=session.pk,
+        submitted_at__isnull=False,
+    ).exists()
+
+
 def consume_public_form_session(session, xform):
-    """
-    On the first successful submission, mark the session used and record the
-    resulting xform id.
-    """
     consumed = PublicFormSession.objects.filter(
         pk=session.pk,
         submitted_at__isnull=True,
     ).update(submitted_at=timezone.now(), xform_id=xform.form_id)
-    if not consumed:
-        metrics_counter(
-            'commcare.public_form.already_consumed',
-            tags={'domain': session.public_webform.domain},
-        )
     return bool(consumed)
