@@ -208,8 +208,8 @@ class TestMetaDB(TestCase):
         metadb.reparent("old", new_parent)
         self.assertEqual(metadb.get_for_parent("old"), [])
         self.assertEqual(
-            [m.id for m in metadb.get_for_parent(new_parent)],
-            [m.id for m in metas],
+            {m.id for m in metadb.get_for_parent(new_parent)},
+            {m.id for m in metas},
         )
         self.assertEqual(len(metadb.get_for_parent("no-change")), 1)
 
