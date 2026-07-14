@@ -28,7 +28,7 @@ in files like ``corehq/apps/<app>/management/commands/my_command.py``
 **Private release** - If you need to run code from a branch that’s not currently
 deployed, use a `private release`_.
 
-.. _`private release`: https://github.com/dimagi/commcare-cloud/blob/master/src/commcare_cloud/fab/README.md#private-releases
+.. _`private release`: https://commcare-cloud.readthedocs.io/en/latest/reference/1-commcare-cloud/commands.html#private
 
 
 General Principles
@@ -192,8 +192,8 @@ the deploy.
 Multiple deploys
 ----------------
 
-This is the most robust approach, and is advocated for in the `couch-to-sql
-<https://commcare-hq.readthedocs.io/couch_to_sql_models.html>`__ pattern. You
+This is the most robust approach, and is advocated for in the
+:ref:`couch-to-sql <couch-to-sql-model-migration>` pattern. You
 make two PRs:
 
 - **PR 1**: Schema migration; handle new data correctly; data migration
