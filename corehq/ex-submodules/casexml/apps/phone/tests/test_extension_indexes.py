@@ -8,7 +8,7 @@ from corehq.tests.tools import nottest
 from casexml.apps.case.mock import CaseIndex, CaseStructure
 from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
 from corehq.form_processor.tests.utils import sharded
-from corehq.util.test_utils import softer_assert
+from corehq.util.test_utils import flag_enabled, softer_assert
 
 
 @nottest
@@ -185,3 +185,8 @@ class IndexTreeTest(BaseSyncTest, metaclass=SequenceTestMeta):
             ))
 
         self.device.post_changes(case_structures)
+
+
+@flag_enabled('CHUNKED_LIVEQUERY')
+class ChunkedLiveQueryIndexTreeTest(IndexTreeTest):
+    pass

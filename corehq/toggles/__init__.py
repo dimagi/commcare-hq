@@ -2538,3 +2538,10 @@ BULK_FORM_ACTIONS_API = FeatureRelease(
     namespaces=[NAMESPACE_DOMAIN],
     owner="Graham Herceg",
 )
+
+CHUNKED_LIVEQUERY = StaticToggle(
+    slug='chunked_livequery',
+    label='LiveQuery variant: fetch case indexes in chunks rather than all at once. More but smaller queries.',
+    tag=TAG_GA_PATH,
+    namespaces=[NAMESPACE_DOMAIN],
+)
