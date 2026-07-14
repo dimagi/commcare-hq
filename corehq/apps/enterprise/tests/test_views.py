@@ -4,6 +4,7 @@ from importlib import reload
 from unittest.mock import patch
 
 from corehq.apps.accounting.tests.generator import billing_account
+from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.apps.enterprise import views
 from corehq.apps.enterprise.enterprise import EnterpriseReport
 
@@ -100,3 +101,28 @@ class EnterpriseDashboardEmailTests(EnterpriseViewMixin, TestCase):
             kwargs = mocked.delay.call_args[1]
             self.assertEqual(kwargs['start_date'], datetime(year=2015, month=4, day=8))
             self.assertEqual(kwargs['end_date'], datetime(year=2015, month=4, day=10))
+
+    def test_export_request_is_tracked(self):
+        request = self._make_request()
+
+        with patch.object(views, 'email_enterprise_report'):
+            views.enterprise_dashboard_email(
+                request,
+                'test-domain',
+                EnterpriseReport.FORM_SUBMISSIONS,
+            )
+
+        entry = DomainAuditRecordEntry.objects.get(domain='test-domain')
+        self.assertEqual(entry.cp_n_enterprise_console_exports, 1)
+
+
+class EditEnterpriseSettingsTrackingTests(EnterpriseViewMixin, TestCase):
+
+    def test_settings_edit_is_tracked(self):
+        request = self._make_request(method='post')
+
+        with patch.object(views, 'messages'):
+            views.edit_enterprise_settings(request, 'test-domain')
+
+        entry = DomainAuditRecordEntry.objects.get(domain='test-domain')
+        self.assertEqual(entry.cp_n_enterprise_settings_edits, 1)
