@@ -10,6 +10,7 @@ from unmagic import fixture, use
 from corehq.apps.project_db.table_ddl import (
     CaseTable,
     DomainSchema,
+    Earth,
     create_or_update_project_db,
     get_project_db_engine,
     preview_drop,
@@ -103,6 +104,7 @@ def test_case_table_basics():
         ('favorite_color', 'select'),
         ('dob', 'date'),
         ('children_count', 'number'),
+        ('location', 'gps'),
     ]):
         table = (CaseTable('test-domain', 'person')
                  .build_definition(sqlalchemy.MetaData()))
@@ -122,13 +124,16 @@ def test_case_table_basics():
     assert isinstance(table.c['date_prop__dob'].type, sqlalchemy.Date)
     assert isinstance(table.c['prop__children_count'].type, sqlalchemy.Text)
     assert isinstance(table.c['number_prop__children_count'].type, sqlalchemy.Numeric)
+    assert isinstance(table.c['prop__location'].type, sqlalchemy.Text)
+    assert isinstance(table.c['gps_prop__location'].type, Earth)
 
-    # Text property columns are NOT NULL; date/number columns stay nullable,
+    # Text property columns are NOT NULL; date/number/gps columns stay nullable,
     # but select columns are NOT NULL and default to an empty array
     assert table.c['prop__nickname'].nullable is False
     assert table.c['prop__dob'].nullable is False
     assert table.c['date_prop__dob'].nullable is True
     assert table.c['number_prop__children_count'].nullable is True
+    assert table.c['gps_prop__location'].nullable is True
     assert table.c['select_prop__favorite_color'].nullable is False
 
     # Both plain and typed columns carry the raw property name as a comment
@@ -136,6 +141,7 @@ def test_case_table_basics():
     assert table.c['date_prop__dob'].comment == 'dob'
     assert table.c['prop__children_count'].comment == 'children_count'
     assert table.c['number_prop__children_count'].comment == 'children_count'
+    assert table.c['gps_prop__location'].comment == 'location'
     assert table.c['select_prop__favorite_color'].comment == 'favorite_color'
 
 
