@@ -11,6 +11,9 @@ import ocsContext from "hqwebapp/js/ocs_page_context";
 const SCRAPE_SELECTORS = [
     {selector: '.alert-danger', level: 'error', type: 'banner'},
     {selector: '.alert-warning', level: 'warning', type: 'banner'},
+    {selector: '.invalid-feedback', level: 'error', type: 'inline'},
+    {selector: '.error-message', level: 'error', type: 'inline'},
+    {selector: '.has-error .help-block', level: 'error', type: 'inline'},
 ];
 
 function _elementText(element) {
@@ -27,6 +30,19 @@ function _isReportable(element) {
     return element.offsetParent !== null && !element.closest('#formdesigner');
 }
 
+// Label for an inline field error.
+// Walk up to a field wrapper, then take its first label/legend.
+// Wrappers:
+//   [id^="div_"]  — crispy forms (#div_id_<field>)
+//   .form-group   — Bootstrap 3 field groups
+//   fieldset      — grouped inputs with a <legend>
+//   .q            — Web Apps questions
+function _fieldLabel(element) {
+    const container = element.closest('[id^="div_"], .form-group, fieldset, .q');
+    const label = container && container.querySelector('label, legend');
+    return label ? _elementText(label) : '';
+}
+
 function _scrapeErrorMessages() {
     const messages = [];
     SCRAPE_SELECTORS.forEach(({selector, level, type}) => {
@@ -34,7 +50,11 @@ function _scrapeErrorMessages() {
             if (!_isReportable(element)) {
                 return;
             }
-            const message = _elementText(element);
+            let message = _elementText(element);
+            if (type === 'inline') {
+                const label = _fieldLabel(element);
+                message = label ? `${label}: ${message}` : message;
+            }
             messages.push({level, message, type});
         });
     });

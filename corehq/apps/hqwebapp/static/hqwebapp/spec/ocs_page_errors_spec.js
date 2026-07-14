@@ -42,4 +42,36 @@ describe("OCS page warnings collector", function () {
             document.body.removeChild(dom);
         }
     });
+
+    it("scrapes inline field errors with the field label, ignoring sr-only text", function () {
+        const dom = document.createElement("div");
+        dom.innerHTML = `
+            <div id="div_id_name" class="mb-3">
+                <label for="id_name" class="form-label">Name</label>
+                <span class="invalid-feedback" style="display: block;">This field is required</span>
+            </div>
+            <div class="q">
+                <label class="caption form-label">
+                    <span class="caption-text">Age</span>
+                    <span class="sr-only">A response is required for this question.</span>
+                </label>
+                <div class="text-danger error-message">An answer is required</div>
+            </div>
+            <div class="form-group has-error">
+                <label class="control-label">Email</label>
+                <span class="help-block">Enter a valid email</span>
+            </div>
+        `;
+        document.body.appendChild(dom);
+
+        try {
+            assert.deepEqual(_scrapeErrorMessages(), [
+                {level: "error", message: "Name: This field is required", type: "inline"},
+                {level: "error", message: "Age: An answer is required", type: "inline"},
+                {level: "error", message: "Email: Enter a valid email", type: "inline"},
+            ]);
+        } finally {
+            document.body.removeChild(dom);
+        }
+    });
 });
