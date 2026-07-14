@@ -17476,6 +17476,16 @@ msgstr "يبدأ بـ"
 
 #: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
+msgid "is like"
+msgstr "يشبه"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "sounds like"
+msgstr "يبدو مثل"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "equals"
@@ -17527,6 +17537,21 @@ msgstr "قبل"
 #: corehq/messaging/scheduling/forms.py
 msgid "after"
 msgstr "بعد"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#, fuzzy
+#| msgid "on or after"
+msgid "on or before"
+msgstr "في أو بعد"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "on or after"
+msgstr "في أو بعد"
+
+#: corehq/apps/case_search/endpoint_capability.py
+msgid "is approximately"
+msgstr ""
 
 #: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
@@ -17908,6 +17933,12 @@ msgstr "رقم"
 #: corehq/apps/reports/standard/cases/case_data.py
 msgid "date"
 msgstr "التاريخ"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#, fuzzy
+#| msgid "gps_point"
+msgid "geopoint"
+msgstr "gps_point"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #, fuzzy
@@ -19918,16 +19949,8 @@ msgid "does not start with"
 msgstr "لا يبدأ بـ"
 
 #: corehq/apps/data_cleaning/models/types.py
-msgid "is like"
-msgstr "يشبه"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "is not like"
 msgstr "لا يشبه"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "sounds like"
-msgstr "يبدو مثل"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "does not sound like"
@@ -19944,10 +19967,6 @@ msgstr "ليس كلها"
 #: corehq/apps/data_cleaning/models/types.py
 msgid "before or on"
 msgstr "قبل أو في"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "on or after"
-msgstr "في أو بعد"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "Find & Replace"

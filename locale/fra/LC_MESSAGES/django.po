@@ -2291,12 +2291,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
-#| msgid ""
-#| "\n"
-#| "    Statement From:\n"
-#| "    CommCare and the corporation Dimagi, Inc.\n"
-#| "    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
-#| "  "
 msgid ""
 "\n"
 "    Statement From: CommCare and the corporation Dimagi, Inc. 245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
@@ -15641,7 +15635,6 @@ msgid "Confirm Import"
 msgstr "Confirmer l'importation"
 
 #: corehq/apps/case_importer/templates/case_importer/import_cases.html
-#| msgid "Upload File"
 msgid "Upload an Excel File"
 msgstr "Télécharger un fichier Excel"
 
@@ -15683,10 +15676,6 @@ msgid "blank"
 msgstr "vide"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
-#| msgid ""
-#| "\n"
-#| "      Case importer is a tool for bulk uploading new cases or modifying existing ones.\n"
-#| "    "
 msgid ""
 "\n"
 "      Bulk upload new cases or update existing ones from a spreadsheet.\n"
@@ -15697,14 +15686,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
-#| msgid ""
-#| "\n"
-#| "      This tool can make changes to your data that might confuse your reports or applications.\n"
-#| "      Please exercise caution and see the\n"
-#| "      <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Case+Import+with+Excel\" target=\"_blank\">\n"
-#| "        help pages for this feature.\n"
-#| "      </a>\n"
-#| "    "
 msgid ""
 "\n"
 "      Imports can modify existing data and may affect your reports. Review the\n"
@@ -15719,7 +15700,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#| msgid "Recent Uploads"
 msgid "Recent Imports"
 msgstr "Importations récentes"
 
@@ -15784,7 +15764,6 @@ msgid "Complete"
 msgstr "Complet"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#| msgid "No recent uploads found."
 msgid "No recent imports found."
 msgstr "Aucune importation récente trouvée."
 
@@ -16002,6 +15981,16 @@ msgstr "commence par"
 
 #: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
+msgid "is like"
+msgstr "est comme"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "sounds like"
+msgstr "sonne comme"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "equals"
@@ -16055,6 +16044,20 @@ msgid "after"
 msgstr "après"
 
 #: corehq/apps/case_search/endpoint_capability.py
+#| msgid "on or after"
+msgid "on or before"
+msgstr "au plus tard"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "on or after"
+msgstr "le ou après"
+
+#: corehq/apps/case_search/endpoint_capability.py
+msgid "is approximately"
+msgstr "est approximativement"
+
+#: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
 msgid "is any"
 msgstr "est n'importe lequel"
@@ -16071,7 +16074,6 @@ msgid "is empty"
 msgstr "est vide"
 
 #: corehq/apps/case_search/endpoint_capability.py
-#| msgid "Instance"
 msgid "within distance"
 msgstr "dans la distance"
 
@@ -16368,7 +16370,6 @@ msgid "Endpoint Details"
 msgstr "Détails du point de terminaison"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Enter report name here"
 msgid "Enter endpoint name"
 msgstr "Saisir le nom du point de terminaison"
 
@@ -16390,7 +16391,6 @@ msgid "Name cannot be empty or only whitespace"
 msgstr "Le nom ne peut pas être vide ou uniquement des espaces"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Parameters"
 msgid "parameter name"
 msgstr "nom du paramètre"
 
@@ -16399,7 +16399,6 @@ msgid "text"
 msgstr "texte"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Number"
 msgid "number"
 msgstr "nombre"
 
@@ -16409,7 +16408,11 @@ msgid "date"
 msgstr "date"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Remove Characters"
+#| msgid "gps_point"
+msgid "geopoint"
+msgstr "géopoint"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 msgid "Remove parameter"
 msgstr "Supprimer le paramètre"
 
@@ -16420,12 +16423,10 @@ msgstr "Ajouter un paramètre"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/partials/query_tester.html
-#| msgid "Test API Key"
 msgid "Test query"
 msgstr "Tester la requête"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Deactivate Endpoint"
 msgid "Create Endpoint"
 msgstr "Créer un point de terminaison"
 
@@ -16457,7 +16458,6 @@ msgid "No endpoints configured."
 msgstr "Aucun point de terminaison configuré."
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Add Field"
 msgid "-- Field --"
 msgstr "-- Champ --"
 
@@ -16466,17 +16466,14 @@ msgid "-- Operation --"
 msgstr "-- Opération --"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Parameters"
 msgid "Parameter"
 msgstr "Paramètre"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Parameters"
 msgid "-- Parameter --"
 msgstr "-- Paramètre --"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Remove Action"
 msgid "Remove condition"
 msgstr "Supprimer la condition"
 
@@ -16485,7 +16482,6 @@ msgid "ALL"
 msgstr "TOUT"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "AND"
 msgid "ANY"
 msgstr "N'IMPORTE LEQUEL"
 
@@ -16494,22 +16490,18 @@ msgid "NONE"
 msgstr "AUCUN"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match all of the following"
 msgstr "correspond à toutes les conditions suivantes"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match any of the following"
 msgstr "correspond à n'importe laquelle des conditions suivantes"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match none of the following"
 msgstr "ne correspond à aucune des conditions suivantes"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "Remove User"
 msgid "Remove group"
 msgstr "Supprimer le groupe"
 
@@ -16520,7 +16512,6 @@ msgstr ""
 "dessous."
 
 #: corehq/apps/case_search/templates/case_search/partials/group_node.html
-#| msgid "Conditions"
 msgid "Add Condition"
 msgstr "Ajouter une condition"
 
@@ -16537,7 +16528,6 @@ msgid "Endpoint '{}' not found"
 msgstr "Point de terminaison '{}' non trouvé"
 
 #: corehq/apps/case_search/utils.py
-#| msgid "Endpoint '{}' not found"
 msgid "Endpoint '{}' query is invalid"
 msgstr "La requête du point de terminaison '{}' est invalide"
 
@@ -18339,16 +18329,8 @@ msgid "does not start with"
 msgstr "ne commence pas par"
 
 #: corehq/apps/data_cleaning/models/types.py
-msgid "is like"
-msgstr "est comme"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "is not like"
 msgstr "n'est pas comme"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "sounds like"
-msgstr "sonne comme"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "does not sound like"
@@ -18365,10 +18347,6 @@ msgstr "n'est pas tout"
 #: corehq/apps/data_cleaning/models/types.py
 msgid "before or on"
 msgstr "avant ou le"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "on or after"
-msgstr "le ou après"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "Find & Replace"
@@ -59156,7 +59134,6 @@ msgid "Save to Case"
 msgstr "Enregistrer dans le dossier"
 
 #: corehq/privileges.py
-#| msgid "Public Name"
 msgid "Public Webforms"
 msgstr "Formulaires web publics"
 

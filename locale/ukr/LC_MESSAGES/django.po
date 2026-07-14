@@ -2204,12 +2204,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
-#| msgid ""
-#| "\n"
-#| "    Statement From:\n"
-#| "    CommCare and the corporation Dimagi, Inc.\n"
-#| "    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
-#| "  "
 msgid ""
 "\n"
 "    Statement From: CommCare and the corporation Dimagi, Inc. 245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
@@ -15369,7 +15363,6 @@ msgid "Confirm Import"
 msgstr "Підтвердити імпорт"
 
 #: corehq/apps/case_importer/templates/case_importer/import_cases.html
-#| msgid "Upload File"
 msgid "Upload an Excel File"
 msgstr "Завантажити файл Excel"
 
@@ -15411,10 +15404,6 @@ msgid "blank"
 msgstr "порожньо"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
-#| msgid ""
-#| "\n"
-#| "      Case importer is a tool for bulk uploading new cases or modifying existing ones.\n"
-#| "    "
 msgid ""
 "\n"
 "      Bulk upload new cases or update existing ones from a spreadsheet.\n"
@@ -15425,14 +15414,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
-#| msgid ""
-#| "\n"
-#| "      This tool can make changes to your data that might confuse your reports or applications.\n"
-#| "      Please exercise caution and see the\n"
-#| "      <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Case+Import+with+Excel\" target=\"_blank\">\n"
-#| "        help pages for this feature.\n"
-#| "      </a>\n"
-#| "    "
 msgid ""
 "\n"
 "      Imports can modify existing data and may affect your reports. Review the\n"
@@ -15447,7 +15428,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#| msgid "Recent Uploads"
 msgid "Recent Imports"
 msgstr "Останні імпорти"
 
@@ -15512,7 +15492,6 @@ msgid "Complete"
 msgstr "Завершено"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#| msgid "No recent uploads found."
 msgid "No recent imports found."
 msgstr "Останніх імпортів не знайдено."
 
@@ -15719,6 +15698,16 @@ msgstr "починається з"
 
 #: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
+msgid "is like"
+msgstr "схоже на"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "sounds like"
+msgstr "звучить як"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "equals"
@@ -15772,6 +15761,20 @@ msgid "after"
 msgstr "після"
 
 #: corehq/apps/case_search/endpoint_capability.py
+#| msgid "on or after"
+msgid "on or before"
+msgstr "до або раніше"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "on or after"
+msgstr "на або після"
+
+#: corehq/apps/case_search/endpoint_capability.py
+msgid "is approximately"
+msgstr "приблизно"
+
+#: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
 msgid "is any"
 msgstr "є будь-яким"
@@ -15788,7 +15791,6 @@ msgid "is empty"
 msgstr "порожнє"
 
 #: corehq/apps/case_search/endpoint_capability.py
-#| msgid "Instance"
 msgid "within distance"
 msgstr "у межах відстані"
 
@@ -16085,7 +16087,6 @@ msgid "Endpoint Details"
 msgstr "Деталі кінцевої точки"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Enter report name here"
 msgid "Enter endpoint name"
 msgstr "Введіть назву кінцевої точки"
 
@@ -16107,7 +16108,6 @@ msgid "Name cannot be empty or only whitespace"
 msgstr "Назва не може бути порожньою або складатися лише з пробілів"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Parameters"
 msgid "parameter name"
 msgstr "назва параметра"
 
@@ -16116,7 +16116,6 @@ msgid "text"
 msgstr "текст"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Number"
 msgid "number"
 msgstr "число"
 
@@ -16126,7 +16125,11 @@ msgid "date"
 msgstr "дата"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Remove Characters"
+#| msgid "gps_point"
+msgid "geopoint"
+msgstr "геоточка"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 msgid "Remove parameter"
 msgstr "Видалити параметр"
 
@@ -16137,12 +16140,10 @@ msgstr "Додати параметр"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/partials/query_tester.html
-#| msgid "Test API Key"
 msgid "Test query"
 msgstr "Тестувати запит"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Deactivate Endpoint"
 msgid "Create Endpoint"
 msgstr "Створити кінцеву точку"
 
@@ -16173,7 +16174,6 @@ msgid "No endpoints configured."
 msgstr "Жодної кінцевої точки не налаштовано."
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Add Field"
 msgid "-- Field --"
 msgstr "-- Поле --"
 
@@ -16182,17 +16182,14 @@ msgid "-- Operation --"
 msgstr "-- Операція --"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Parameters"
 msgid "Parameter"
 msgstr "Параметр"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Parameters"
 msgid "-- Parameter --"
 msgstr "-- Параметр --"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Remove Action"
 msgid "Remove condition"
 msgstr "Видалити умову"
 
@@ -16201,7 +16198,6 @@ msgid "ALL"
 msgstr "ВСІ"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "AND"
 msgid "ANY"
 msgstr "БУДЬ-ЯКИЙ"
 
@@ -16210,22 +16206,18 @@ msgid "NONE"
 msgstr "ЖОДЕН"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match all of the following"
 msgstr "відповідає всім наступним"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match any of the following"
 msgstr "відповідає будь-якому з наступних"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match none of the following"
 msgstr "не відповідає жодному з наступних"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "Remove User"
 msgid "Remove group"
 msgstr "Видалити групу"
 
@@ -16234,7 +16226,6 @@ msgid "No conditions yet. Add a condition or group below."
 msgstr "Ще немає умов. Додайте умову або групу нижче."
 
 #: corehq/apps/case_search/templates/case_search/partials/group_node.html
-#| msgid "Conditions"
 msgid "Add Condition"
 msgstr "Додати умову"
 
@@ -16251,7 +16242,6 @@ msgid "Endpoint '{}' not found"
 msgstr "Кінцева точка '{}' не знайдена"
 
 #: corehq/apps/case_search/utils.py
-#| msgid "Endpoint '{}' not found"
 msgid "Endpoint '{}' query is invalid"
 msgstr "Запит кінцевої точки '{}' є некоректним"
 
@@ -18023,16 +18013,8 @@ msgid "does not start with"
 msgstr "не починається з"
 
 #: corehq/apps/data_cleaning/models/types.py
-msgid "is like"
-msgstr "схоже на"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "is not like"
 msgstr "не схоже на"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "sounds like"
-msgstr "звучить як"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "does not sound like"
@@ -18049,10 +18031,6 @@ msgstr "не є всіма"
 #: corehq/apps/data_cleaning/models/types.py
 msgid "before or on"
 msgstr "до або на"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "on or after"
-msgstr "на або після"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "Find & Replace"
@@ -58366,7 +58344,6 @@ msgid "Save to Case"
 msgstr "Зберегти до справи"
 
 #: corehq/privileges.py
-#| msgid "Public Name"
 msgid "Public Webforms"
 msgstr "Публічні веб-форми"
 

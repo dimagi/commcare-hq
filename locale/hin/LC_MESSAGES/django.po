@@ -2210,12 +2210,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
-#| msgid ""
-#| "\n"
-#| "    Statement From:\n"
-#| "    CommCare and the corporation Dimagi, Inc.\n"
-#| "    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
-#| "  "
 msgid ""
 "\n"
 "    Statement From: CommCare and the corporation Dimagi, Inc. 245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
@@ -15211,7 +15205,6 @@ msgid "Confirm Import"
 msgstr "आयात की पुष्टि करें"
 
 #: corehq/apps/case_importer/templates/case_importer/import_cases.html
-#| msgid "Upload File"
 msgid "Upload an Excel File"
 msgstr "एक एक्सेल फ़ाइल अपलोड करें"
 
@@ -15251,10 +15244,6 @@ msgid "blank"
 msgstr "रिक्त"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
-#| msgid ""
-#| "\n"
-#| "      Case importer is a tool for bulk uploading new cases or modifying existing ones.\n"
-#| "    "
 msgid ""
 "\n"
 "      Bulk upload new cases or update existing ones from a spreadsheet.\n"
@@ -15265,14 +15254,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
-#| msgid ""
-#| "\n"
-#| "      This tool can make changes to your data that might confuse your reports or applications.\n"
-#| "      Please exercise caution and see the\n"
-#| "      <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Case+Import+with+Excel\" target=\"_blank\">\n"
-#| "        help pages for this feature.\n"
-#| "      </a>\n"
-#| "    "
 msgid ""
 "\n"
 "      Imports can modify existing data and may affect your reports. Review the\n"
@@ -15287,7 +15268,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#| msgid "Recent Uploads"
 msgid "Recent Imports"
 msgstr "हाल की इम्पोर्ट्स"
 
@@ -15352,7 +15332,6 @@ msgid "Complete"
 msgstr "पूर्ण"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#| msgid "No recent uploads found."
 msgid "No recent imports found."
 msgstr "कोई हाल की इम्पोर्ट्स नहीं मिली।"
 
@@ -15565,6 +15544,16 @@ msgstr "से शुरू होता है"
 
 #: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
+msgid "is like"
+msgstr "जैसा है"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "sounds like"
+msgstr "जैसी आवाज़ है"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "equals"
@@ -15618,6 +15607,20 @@ msgid "after"
 msgstr "के बाद"
 
 #: corehq/apps/case_search/endpoint_capability.py
+#| msgid "on or after"
+msgid "on or before"
+msgstr "या उससे पहले"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "on or after"
+msgstr "उस दिन या उसके बाद"
+
+#: corehq/apps/case_search/endpoint_capability.py
+msgid "is approximately"
+msgstr "लगभग है"
+
+#: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
 msgid "is any"
 msgstr "कोई भी है"
@@ -15634,7 +15637,6 @@ msgid "is empty"
 msgstr "खाली है"
 
 #: corehq/apps/case_search/endpoint_capability.py
-#| msgid "Instance"
 msgid "within distance"
 msgstr "दूरी के भीतर"
 
@@ -15928,7 +15930,6 @@ msgid "Endpoint Details"
 msgstr "एंडपॉइंट विवरण"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Enter report name here"
 msgid "Enter endpoint name"
 msgstr "एंडपॉइंट नाम दर्ज करें"
 
@@ -15950,7 +15951,6 @@ msgid "Name cannot be empty or only whitespace"
 msgstr "नाम खाली या केवल व्हाइटस्पेस नहीं हो सकता"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Parameters"
 msgid "parameter name"
 msgstr "पैरामीटर नाम"
 
@@ -15959,7 +15959,6 @@ msgid "text"
 msgstr "पाठ"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Number"
 msgid "number"
 msgstr "संख्या"
 
@@ -15969,7 +15968,11 @@ msgid "date"
 msgstr "तारीख"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Remove Characters"
+#| msgid "gps_point"
+msgid "geopoint"
+msgstr "जियोपॉइंट"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 msgid "Remove parameter"
 msgstr "पैरामीटर हटाएँ"
 
@@ -15980,12 +15983,10 @@ msgstr "पैरामीटर जोड़ें"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/partials/query_tester.html
-#| msgid "Test API Key"
 msgid "Test query"
 msgstr "क्वेरी का परीक्षण करें"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Deactivate Endpoint"
 msgid "Create Endpoint"
 msgstr "एंडपॉइंट बनाएँ"
 
@@ -16017,7 +16018,6 @@ msgid "No endpoints configured."
 msgstr "कोई एंडपॉइंट कॉन्फ़िगर नहीं किया गया है।"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Add Field"
 msgid "-- Field --"
 msgstr "-- फ़ील्ड --"
 
@@ -16026,17 +16026,14 @@ msgid "-- Operation --"
 msgstr "-- ऑपरेशन --"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Parameters"
 msgid "Parameter"
 msgstr "पैरामीटर"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Parameters"
 msgid "-- Parameter --"
 msgstr "-- पैरामीटर --"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Remove Action"
 msgid "Remove condition"
 msgstr "शर्त हटाएँ"
 
@@ -16045,7 +16042,6 @@ msgid "ALL"
 msgstr "सभी"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "AND"
 msgid "ANY"
 msgstr "कोई भी"
 
@@ -16054,22 +16050,18 @@ msgid "NONE"
 msgstr "कोई नहीं"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match all of the following"
 msgstr "निम्न में से सभी से मेल खाता है"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match any of the following"
 msgstr "निम्न में से किसी से भी मेल खाता है"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match none of the following"
 msgstr "निम्न में से किसी से भी मेल नहीं खाता है"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "Remove User"
 msgid "Remove group"
 msgstr "समूह हटाएँ"
 
@@ -16078,7 +16070,6 @@ msgid "No conditions yet. Add a condition or group below."
 msgstr "अभी तक कोई शर्त नहीं है। नीचे एक शर्त या समूह जोड़ें।"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_node.html
-#| msgid "Conditions"
 msgid "Add Condition"
 msgstr "शर्त जोड़ें"
 
@@ -16095,7 +16086,6 @@ msgid "Endpoint '{}' not found"
 msgstr "एंडपॉइंट '{}' नहीं मिला"
 
 #: corehq/apps/case_search/utils.py
-#| msgid "Endpoint '{}' not found"
 msgid "Endpoint '{}' query is invalid"
 msgstr "एंडपॉइंट '{}' क्वेरी अमान्य है"
 
@@ -17852,16 +17842,8 @@ msgid "does not start with"
 msgstr "से शुरू नहीं होता है"
 
 #: corehq/apps/data_cleaning/models/types.py
-msgid "is like"
-msgstr "जैसा है"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "is not like"
 msgstr "जैसा नहीं है"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "sounds like"
-msgstr "जैसी आवाज़ है"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "does not sound like"
@@ -17878,10 +17860,6 @@ msgstr "सभी नहीं हैं"
 #: corehq/apps/data_cleaning/models/types.py
 msgid "before or on"
 msgstr "से पहले या उसी दिन"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "on or after"
-msgstr "उस दिन या उसके बाद"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "Find & Replace"
@@ -57812,7 +57790,6 @@ msgid "Save to Case"
 msgstr "केस में सहेजें"
 
 #: corehq/privileges.py
-#| msgid "Public Name"
 msgid "Public Webforms"
 msgstr "सार्वजनिक वेबफॉर्म्स"
 

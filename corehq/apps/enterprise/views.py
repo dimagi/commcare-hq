@@ -46,6 +46,7 @@ from corehq.apps.analytics.tasks import record_google_analytics_event
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
+    track_domain_request,
 )
 from corehq.apps.domain.views import BaseDomainView, DomainAccountingSettings
 from corehq.apps.domain.views.accounting import (
@@ -215,6 +216,7 @@ def _get_export_filename(request, slug):
 
 @require_enterprise_admin
 @login_and_domain_required
+@track_domain_request(calculated_prop='cp_n_enterprise_console_exports')
 def enterprise_dashboard_email(request, domain, slug):
     kwargs = {}
     date_range_slugs = [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS]
@@ -286,6 +288,7 @@ def enterprise_settings(request, domain):
 @require_enterprise_admin
 @login_and_domain_required
 @require_POST
+@track_domain_request(calculated_prop='cp_n_enterprise_settings_edits')
 def edit_enterprise_settings(request, domain):
     export_settings = get_default_export_settings_if_available(domain)
     form = EnterpriseSettingsForm(request.POST, username=request.user.username,

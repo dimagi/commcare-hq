@@ -13571,6 +13571,16 @@ msgstr ""
 
 #: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
+msgid "is like"
+msgstr ""
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "sounds like"
+msgstr ""
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "equals"
@@ -13621,6 +13631,19 @@ msgstr ""
 #: corehq/apps/data_cleaning/models/types.py
 #: corehq/messaging/scheduling/forms.py
 msgid "after"
+msgstr ""
+
+#: corehq/apps/case_search/endpoint_capability.py
+msgid "on or before"
+msgstr ""
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "on or after"
+msgstr ""
+
+#: corehq/apps/case_search/endpoint_capability.py
+msgid "is approximately"
 msgstr ""
 
 #: corehq/apps/case_search/endpoint_capability.py
@@ -13958,6 +13981,10 @@ msgstr ""
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/reports/standard/cases/case_data.py
 msgid "date"
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "geopoint"
 msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
@@ -15677,15 +15704,7 @@ msgid "does not start with"
 msgstr ""
 
 #: corehq/apps/data_cleaning/models/types.py
-msgid "is like"
-msgstr ""
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "is not like"
-msgstr ""
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "sounds like"
 msgstr ""
 
 #: corehq/apps/data_cleaning/models/types.py
@@ -15702,10 +15721,6 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "before or on"
-msgstr ""
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "on or after"
 msgstr ""
 
 #: corehq/apps/data_cleaning/models/types.py

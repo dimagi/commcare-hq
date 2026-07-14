@@ -187,6 +187,7 @@ app_manager
  0029_delete_case_list_custom_variable_xml
  0030_credentialapplication
  0031_delete_latestenabledbuildprofiles
+ 0032_publicwebform_publicformsession
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -413,6 +414,7 @@ data_interfaces
  0037_add_dedupe_update_toggle
  0038_alter_caseduplicate_potential_duplicates
  0039_rename_caserulesubmission_domain_created_on_data_interf_domain_718740_idx_and_more
+ 0040_bulkasyncjob
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -464,6 +466,7 @@ domain
  0019_remove_usercase_enabled_field
  0020_delete_transferdomainrequest
  0021_delete_smsaccountconfirmationsettings
+ 0022_domainauditrecordentry_cp_n_enterprise_console_exports_and_more
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -642,6 +645,7 @@ form_processor
  0097_case_domain_type_id_index
  0098_rename_caseattachment_case_name_form_proces_case_id_2fd259_idx_and_more
  0099_xforminstance_form_proces_domain_3bcfdd_idx_and_more
+ 0100_remove_commcarecaseindex_form_proces_domain_7afdfe_idx_and_more
 formplayer_api
  0001_drop_old_tables
 generic_inbound

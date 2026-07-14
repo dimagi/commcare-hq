@@ -64,5 +64,20 @@ def _walk(node, found):
         for value in node:
             _walk(value, found)
     elif isinstance(node, str):
-        if node.lower().endswith(IMAGE_EXTENSIONS):
+        if _is_image_answer(node):
             found.add(node)
+
+
+def _is_image_answer(form_answer):
+    """
+    Returns True if ``form_answer`` is an image answer. Excludes form
+    images like icons.
+
+    >>> _is_image_answer('https://www.commcarehq.org/a/domain/api/form/attachment/abc/123.jpg')
+    True
+    >>> _is_image_answer('jr://file/commcare/image/data/green_increased.png')
+    False
+
+    """
+    lower = form_answer.lower()
+    return lower.endswith(IMAGE_EXTENSIONS) and not lower.startswith('jr://')

@@ -2132,6 +2132,14 @@ ENTERPRISE_ADMIN_SELF_SERVICE = FeatureRelease(
     ),
 )
 
+FACE_CAPTURE = FeatureRelease(
+    'face_capture',
+    'Form Builder includes a "Face Capture" question type',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    owner='Norman Hooper',
+)
+
 APPLICATION_RELEASE_LOGS = StaticToggle(
     'application_release_logs',
     'Show Application release logs',
@@ -2523,9 +2531,9 @@ ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-BULK_FORM_DELETION = FeatureRelease(
-    slug='bulk_form_deletion',
-    label='Allows deleting archived forms in bulk via the API.',
+BULK_FORM_ACTIONS_API = FeatureRelease(
+    slug='bulk_form_actions_api',
+    label='Archive, unarchive, and delete forms in bulk via the API.',
     tag=TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     owner="Graham Herceg",
