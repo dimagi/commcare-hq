@@ -1,12 +1,16 @@
 import datetime
+import math
 from decimal import Decimal, InvalidOperation
 
 from sqlalchemy import ARRAY, Text
 from sqlalchemy.dialects.postgresql import insert
 
+from jsonobject.exceptions import BadValueError
+
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.data_dictionary.models import CaseProperty
+from couchforms.geopoint import GeoPoint
 
 from .table_ddl import CaseTable, get_project_db_engine, property_column
 
@@ -102,9 +106,29 @@ def coerce_to_select(value):
     return [x for x in str(value).split(' ') if x]
 
 
+
+
+def coerce_to_gps(value):
+    """Parse a GPS case property into an earthdistance ``earth`` cube literal."""
+    try:
+        point = GeoPoint.from_string(str(value), flexible=True)
+    except BadValueError:
+        return None
+
+    # Mirrors `ll_to_earth(lat, lon)` from the earthdistance extension
+    lat = math.radians(point.latitude)
+    lon = math.radians(point.longitude)
+    EARTH_RADIUS = 6378168.0  # In meters, from earthdistance
+    x = EARTH_RADIUS * math.cos(lat) * math.cos(lon)
+    y = EARTH_RADIUS * math.cos(lat) * math.sin(lon)
+    z = EARTH_RADIUS * math.sin(lat)
+    return f'({x}, {y}, {z})'
+
+
 # Parallels CaseTable.COERCED_PROPERTY_TYPES
 _TYPED_COERCIONS = [
     (CaseProperty.DataType.DATE, coerce_to_date),
     (CaseProperty.DataType.NUMBER, coerce_to_number),
     (CaseProperty.DataType.SELECT, coerce_to_select),
+    (CaseProperty.DataType.GPS, coerce_to_gps),
 ]
