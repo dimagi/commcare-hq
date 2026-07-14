@@ -1179,7 +1179,7 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     class Meta(object):
         indexes = [
             models.Index(fields=["domain", "case"]),
-            models.Index(fields=["domain", "referenced_id"]),
+            models.Index(fields=["domain", "referenced_id", "relationship_id"]),
         ]
         unique_together = ('case', 'identifier')
         db_table = 'form_processor_commcarecaseindexsql'
