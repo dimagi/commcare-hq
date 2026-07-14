@@ -17,7 +17,7 @@ complicated if not backwards-compatible.
 potential to be quite slow
 
 **Django migration** - A migration (either kind) that is run automatically on
-deploy by ``./manage.py migrate``. These are in files like
+deploy by ``./manage.py migrate_multi``. These are in files like
 ``corehq/apps/<app>/migrations/0001_my_migration.py``
 
 **Management command** - Some data migrations are written as management
@@ -28,7 +28,7 @@ in files like ``corehq/apps/<app>/management/commands/my_command.py``
 **Private release** - If you need to run code from a branch that’s not currently
 deployed, use a `private release`_.
 
-.. _`private release`: https://github.com/dimagi/commcare-cloud/blob/master/src/commcare_cloud/fab/README.md#private-releases
+.. _`private release`: https://commcare-cloud.readthedocs.io/en/latest/reference/1-commcare-cloud/commands.html#private
 
 
 General Principles
@@ -192,8 +192,8 @@ the deploy.
 Multiple deploys
 ----------------
 
-This is the most robust approach, and is advocated for in the `couch-to-sql
-<https://commcare-hq.readthedocs.io/couch_to_sql_models.html>`__ pattern. You
+This is the most robust approach, and is advocated for in the
+:ref:`couch-to-sql <couch-to-sql-model-migration>` pattern. You
 make two PRs:
 
 - **PR 1**: Schema migration; handle new data correctly; data migration
@@ -273,8 +273,10 @@ production environment is on the master branch.
 
 Run your schema migration and management command directly:
 
-    ``cchq <ENV> django-manage --release=<NAME> migrate <APP_NAME>``
-    ``cchq <ENV> django-manage --release=<NAME> my_data_migration_command``
+.. code-block:: sh
+
+    cchq <ENV> django-manage --release=<NAME> migrate_multi <APP_NAME>
+    cchq <ENV> django-manage --release=<NAME> my_data_migration_command
 
 Then merge PR 2. The subsequent deploy will run your management command again,
 though it should be very quick this time around, since nearly all data has been
