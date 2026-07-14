@@ -74,4 +74,22 @@ describe("OCS page warnings collector", function () {
             document.body.removeChild(dom);
         }
     });
+
+    it("scrapes the visible HTMX error modal", function () {
+        const dom = document.createElement("div");
+        dom.innerHTML = `
+            <div id="htmxRequestErrorModal">
+                <div class="modal-body">Server Error Encountered (500)</div>
+            </div>
+        `;
+        document.body.appendChild(dom);
+
+        try {
+            assert.deepEqual(_scrapeErrorMessages(), [
+                {level: "error", message: "Server Error Encountered (500)", type: "modal"},
+            ]);
+        } finally {
+            document.body.removeChild(dom);
+        }
+    });
 });

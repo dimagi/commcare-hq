@@ -14,6 +14,8 @@ const SCRAPE_SELECTORS = [
     {selector: '.invalid-feedback', level: 'error', type: 'inline'},
     {selector: '.error-message', level: 'error', type: 'inline'},
     {selector: '.has-error .help-block', level: 'error', type: 'inline'},
+    // The shared HTMX error modal.
+    {selector: '#htmxRequestErrorModal .modal-body', level: 'error', type: 'modal'},
 ];
 
 function _elementText(element) {
