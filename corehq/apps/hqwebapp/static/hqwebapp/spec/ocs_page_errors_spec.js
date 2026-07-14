@@ -92,4 +92,20 @@ describe("OCS page warnings collector", function () {
             document.body.removeChild(dom);
         }
     });
+
+    it("scrapes error banners inside the App Preview's same-origin iframe", function () {
+        const iframe = document.createElement("iframe");
+        iframe.className = "preview-phone-window";
+        document.body.appendChild(iframe);
+        iframe.contentDocument.body.innerHTML =
+            `<div class="alert alert-danger">Preview form error</div>`;
+
+        try {
+            assert.deepEqual(_scrapeErrorMessages(), [
+                {level: "error", message: "Preview form error", type: "banner"},
+            ]);
+        } finally {
+            document.body.removeChild(iframe);
+        }
+    });
 });

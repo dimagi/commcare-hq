@@ -45,19 +45,30 @@ function _fieldLabel(element) {
     return label ? _elementText(label) : '';
 }
 
+function _documentsToScrape() {
+    const roots = [document];
+    const previewDoc = document.querySelector('iframe.preview-phone-window')?.contentDocument;
+    if (previewDoc) {
+        roots.push(previewDoc);
+    }
+    return roots;
+}
+
 function _scrapeErrorMessages() {
     const messages = [];
-    SCRAPE_SELECTORS.forEach(({selector, level, type}) => {
-        document.querySelectorAll(selector).forEach((element) => {
-            if (!_isReportable(element)) {
-                return;
-            }
-            let message = _elementText(element);
-            if (type === 'inline') {
-                const label = _fieldLabel(element);
-                message = label ? `${label}: ${message}` : message;
-            }
-            messages.push({level, message, type});
+    _documentsToScrape().forEach((root) => {
+        SCRAPE_SELECTORS.forEach(({selector, level, type}) => {
+            root.querySelectorAll(selector).forEach((element) => {
+                if (!_isReportable(element)) {
+                    return;
+                }
+                let message = _elementText(element);
+                if (type === 'inline') {
+                    const label = _fieldLabel(element);
+                    message = label ? `${label}: ${message}` : message;
+                }
+                messages.push({level, message, type});
+            });
         });
     });
     return messages;
