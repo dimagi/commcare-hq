@@ -20,6 +20,8 @@ class EnterpriseViewMixin:
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        # Restore the real view decorators after the patches are cleaned up
+        cls.addClassCleanup(reload, views)
         cls._patch_decorators()
         reload(views)
 
