@@ -364,13 +364,12 @@ def get_apps_base_context(request, domain, app):
     context = {
         'lang': lang,
         'langs': langs,
+        'langs_for_ocs_context': app.langs if app and app.langs else [],
         'domain': domain,
         'app': app,
         'linked_name': linked_name,
         'app_subset': {
             'commcare_minor_release': app.commcare_minor_release,
-            'doc_type': app.get_doc_type(),
-            'form_counts_by_module': [len(m.forms) for m in app.modules] if not app.is_remote_app() else [],
             'version': app.version,
         } if app else {},
         'timezone': timezone,

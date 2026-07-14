@@ -3,37 +3,16 @@ import $ from "jquery";
 import googleAnalytics from "analytix/js/google";
 import noopMetrics from "analytix/js/noopMetrics";
 import appManagerUtils from "app_manager/js/app_manager_utils";
+import {DATA, EVENTS, POSITION, SELECTORS} from "app_manager/js/preview_app_constants";
 import layoutController from "hqwebapp/js/layout";
 
 var module = {};
 var _private = {};
 
-module.SELECTORS = {
-    BTN_TOGGLE_PREVIEW: '.js-preview-toggle',
-    PREVIEW_WINDOW: '#js-appmanager-preview',
-    PREVIEW_WINDOW_IFRAME: '#js-appmanager-preview iframe',
-    APP_MANAGER_BODY: '#js-appmanager-body',
-    PREVIEW_ACTION_TEXT_SHOW: '.js-preview-action-show',
-    PREVIEW_ACTION_TEXT_HIDE: '.js-preview-action-hide',
-    BTN_REFRESH: '.js-preview-refresh',
-    OFFSET_FOR_PREVIEW: '.offset-for-preview',
-    FORMDESIGNER: '#formdesigner',
-};
-
-module.EVENTS = {
-    RESIZE: 'previewApp.resize',
-};
-
-module.POSITION = {
-    FIXED: 'fixed',
-    ABSOLUTE: 'absolute',
-};
-
-module.DATA = {
-    OPEN: 'preview-isopen',
-    POSITION: 'position',
-    TABLET: 'preview-tablet',   // also referenced in cloudcare/js/preview_app/preview_app
-};
+module.SELECTORS = SELECTORS;
+module.EVENTS = EVENTS;
+module.POSITION = POSITION;
+module.DATA = DATA;
 
 _private.isFormdesigner = false;
 
