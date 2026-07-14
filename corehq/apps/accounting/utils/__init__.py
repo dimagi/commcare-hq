@@ -59,6 +59,7 @@ def fmt_feature_rate_dict(feature, feature_rate=None):
         'monthly_fee': str(feature_rate.monthly_fee),
         'monthly_limit': feature_rate.monthly_limit,
         'per_excess_fee': str(feature_rate.per_excess_fee),
+        'included_users_per_excess_domain': feature_rate.included_users_per_excess_domain,
     }
 
 
