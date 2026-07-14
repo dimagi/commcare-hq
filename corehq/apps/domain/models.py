@@ -904,6 +904,8 @@ class DomainAuditRecordEntry(models.Model):
     cp_n_click_app_deploy = models.BigIntegerField(default=0)
     cp_n_form_builder_entered = models.BigIntegerField(default=0)
     cp_n_saved_app_changes = models.BigIntegerField(default=0)
+    cp_n_enterprise_console_exports = models.BigIntegerField(default=0)
+    cp_n_enterprise_settings_edits = models.BigIntegerField(default=0)
 
     @classmethod
     @atomic
