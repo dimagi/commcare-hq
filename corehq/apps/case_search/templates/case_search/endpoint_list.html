@@ -57,13 +57,13 @@
             <td>
               <a
                 href="{% url 'case_search_endpoint_edit' domain endpoint.id %}"
-                class="btn btn-sm btn-outline-primary"
+                class="btn btn-outline-primary"
               >
                 {% trans "Edit" %}
               </a>
               <button
                 type="button"
-                class="btn btn-sm btn-outline-danger"
+                class="btn btn-outline-danger"
                 data-bs-toggle="modal"
                 data-bs-target="#deactivate-modal"
                 data-endpoint-name="{{ endpoint.name }}"
