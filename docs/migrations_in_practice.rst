@@ -17,7 +17,7 @@ complicated if not backwards-compatible.
 potential to be quite slow
 
 **Django migration** - A migration (either kind) that is run automatically on
-deploy by ``./manage.py migrate``. These are in files like
+deploy by ``./manage.py migrate_multi``. These are in files like
 ``corehq/apps/<app>/migrations/0001_my_migration.py``
 
 **Management command** - Some data migrations are written as management
@@ -275,7 +275,7 @@ Run your schema migration and management command directly:
 
 .. code-block:: sh
 
-    cchq <ENV> django-manage --release=<NAME> migrate <APP_NAME>
+    cchq <ENV> django-manage --release=<NAME> migrate_multi <APP_NAME>
     cchq <ENV> django-manage --release=<NAME> my_data_migration_command
 
 Then merge PR 2. The subsequent deploy will run your management command again,
