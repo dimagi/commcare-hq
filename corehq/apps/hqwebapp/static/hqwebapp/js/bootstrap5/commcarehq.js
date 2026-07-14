@@ -10,3 +10,4 @@ import 'hqwebapp/js/bootstrap5/base_main';
 import 'open-chat-studio-widget';
 import 'hqwebapp/js/lib/userflow';
 import 'hqwebapp/js/ocs_page_context';
+import 'hqwebapp/js/ocs_page_errors';
