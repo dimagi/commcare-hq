@@ -10,7 +10,8 @@ from unmagic import fixture, use
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 
-from corehq.apps.accounting.tests import generator as accounting_generator
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.app_manager.models import PublicFormSession, PublicWebform
 from corehq.apps.app_manager.public_webform_submissions import (
     consume_public_form_session,
@@ -183,43 +184,46 @@ class TestConsumePublicFormSession:
 
 @use('transactional_db')
 @fixture
-def receiver_webform():
-    """A survey webform on a real domain, for driving the receiver end to end.
+def receiver_domain():
+    """A domain with an active subscription, for driving the receiver end to end.
 
-    Uses transactional_db (not db): the receiver writes the form to the
-    sharded backend, whose proxy reads cannot see uncommitted changes, so a
-    wrapping per-test transaction would hide the write. transactional_db
-    truncates between tests instead of rolling back.
+    Uses transactional_db (not db): the receiver writes the form to the sharded
+    backend, whose proxy reads cannot see uncommitted changes, so a wrapping
+    per-test transaction would hide the write. transactional_db truncates
+    between tests instead of rolling back; the subscription setup here must
+    re-bootstrap roles and default plans.
     """
+    call_command('cchq_prbac_bootstrap')
     domain_obj = create_domain('public-receiver')
+    subscription = DomainSubscriptionMixin()
+    subscription.setup_subscription(domain_obj.name, SoftwarePlanEdition.ADVANCED)
     try:
-        yield PublicWebform.objects.create(
-            domain=domain_obj.name,
-            app_id='app',
-            app_build_id='build',
-            form_unique_id='form',
-            endpoint_id='endpoint',
-            session_type='survey',
-            allow_sms=False,
-            allow_email=True,
-            expires_at=datetime.datetime.today() + datetime.timedelta(days=30),
-        )
+        yield domain_obj
     finally:
+        subscription.teardown_subscription(domain_obj.name)
         FormProcessorTestUtils.delete_all_xforms(domain_obj.name)
         domain_obj.delete()
 
 
-@use('transactional_db')
+@use(receiver_domain)
 @fixture
-def default_software_plans():
-    call_command('cchq_prbac_bootstrap')
-    accounting_generator.init_default_currency()
-    accounting_generator.bootstrap_test_software_plan_versions()
-    yield
+def receiver_webform():
+    """A survey webform on the receiver domain, for driving the receiver end to end."""
+    yield PublicWebform.objects.create(
+        domain=receiver_domain().name,
+        app_id='app',
+        app_build_id='build',
+        form_unique_id='form',
+        endpoint_id='endpoint',
+        session_type='survey',
+        allow_sms=False,
+        allow_email=True,
+        expires_at=datetime.datetime.today() + datetime.timedelta(days=30),
+    )
 
 
 @sharded
-@use(default_software_plans, receiver_webform)
+@use(receiver_webform)
 class TestPublicFormReceiverIntegration:
     """End-to-end: a submission carrying the public session cookie + header is
     resolved to a PublicFormUser, validated pre-persist, and consumes the
