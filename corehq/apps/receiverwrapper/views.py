@@ -64,7 +64,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.form_processor.exceptions import XFormLockError
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.submission_post import SubmissionPost
-from corehq.form_processor.utils.xform import convert_xform_to_json
+from corehq.form_processor.utils.xform import convert_xform_to_json, extract_meta_instance_id
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext, set_request_duration_reporting_threshold
 from couchdbkit import ResourceNotFound
@@ -207,8 +207,9 @@ def _process_form(request, domain, app_id, user_id, authenticated,
                 metrics_counter('commcare.xformlocked.count', tags={
                     'domain': domain, 'authenticated': authenticated
                 })
+                locked_form_id = extract_meta_instance_id(instance_json) if instance_json else None
                 return _submission_error(
-                    request, "XFormLockError: %s" % err,
+                    request, "XFormLockError: %s" % locked_form_id,
                     metric_tags, domain, app_id, user_id, authenticated, status=423,
                     notify=False,
                 )
