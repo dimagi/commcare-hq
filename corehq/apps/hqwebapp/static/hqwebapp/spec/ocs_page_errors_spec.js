@@ -43,6 +43,24 @@ describe("OCS page warnings collector", function () {
         }
     });
 
+    it("reports only the outermost of nested alerts", function () {
+        const dom = document.createElement("div");
+        dom.innerHTML = `
+            <div class="alert alert-danger">
+                <div class="alert alert-warning alert-build">Cannot make new version</div>
+            </div>
+        `;
+        document.body.appendChild(dom);
+
+        try {
+            assert.deepEqual(_scrapeErrorMessages(), [
+                {level: "error", message: "Cannot make new version", type: "banner"},
+            ]);
+        } finally {
+            document.body.removeChild(dom);
+        }
+    });
+
     it("scrapes inline field errors with the field label, ignoring sr-only text", function () {
         const dom = document.createElement("div");
         dom.innerHTML = `

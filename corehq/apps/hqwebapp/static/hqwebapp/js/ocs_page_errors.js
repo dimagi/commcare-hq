@@ -28,8 +28,18 @@ function _elementText(element) {
 
 function _isReportable(element) {
     // offsetParent is null when the element or an ancestor is display:none.
+    if (element.offsetParent === null) {
+        return false;
+    }
     // Vellum has its own collector in ocs_widget_form_designer_context.js
-    return element.offsetParent !== null && !element.closest('#formdesigner');
+    if (element.closest('#formdesigner')) {
+        return false;
+    }
+    // Skip alerts nested inside another alert so the same text isn't reported twice.
+    if (element.parentElement.closest('.alert-danger, .alert-warning')) {
+        return false;
+    }
+    return true;
 }
 
 // Label for an inline field error.
