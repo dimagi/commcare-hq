@@ -832,14 +832,11 @@ class TestCustomerInvoiceGenerationIsAtomic(BaseCustomerInvoiceCase):
 
     def test_missing_web_user_snapshot_rolls_back_partial_invoice(self):
         """WebUserLineItemFactory.total_users_for_date raises DoesNotExist
-        unconditionally when the account's BillingAccountWebUserHistory
-        snapshot for a month is missing. Without wrapping
-        _generate_customer_invoice in a transaction, the CustomerInvoice row
-        created before that exception survives as a permanent partial
-        invoice, and every retry hits InvoiceAlreadyCreatedError with no way
-        to recover short of manual cleanup. The whole invoice must roll back
-        instead. The task catches per-account exceptions, so assert on DB
-        state rather than on a raised error."""
+        when the account's BillingAccountWebUserHistory for a month is
+        missing. Invoice generation must be atomic: the whole invoice rolls
+        back rather than leaving a partial CustomerInvoice row. The task
+        catches per-account exceptions, so assert on DB state rather than on
+        a raised error."""
         # Deliberately no BillingAccountWebUserHistory snapshot created.
         tasks.generate_invoices_based_on_date(self.invoice_date)
 
