@@ -15944,7 +15944,6 @@ msgid "after"
 msgstr "después"
 
 #: corehq/apps/case_search/endpoint_capability.py
-#| msgid "on or after"
 msgid "on or before"
 msgstr "en o antes de"
 
@@ -16306,7 +16305,6 @@ msgid "date"
 msgstr "fecha"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "gps_point"
 msgid "geopoint"
 msgstr "geopunto"
 

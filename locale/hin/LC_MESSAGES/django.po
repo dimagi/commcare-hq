@@ -15607,7 +15607,6 @@ msgid "after"
 msgstr "के बाद"
 
 #: corehq/apps/case_search/endpoint_capability.py
-#| msgid "on or after"
 msgid "on or before"
 msgstr "या उससे पहले"
 
@@ -15968,7 +15967,6 @@ msgid "date"
 msgstr "तारीख"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "gps_point"
 msgid "geopoint"
 msgstr "जियोपॉइंट"
 
