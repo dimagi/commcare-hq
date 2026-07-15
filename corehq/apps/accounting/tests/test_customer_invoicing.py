@@ -806,3 +806,38 @@ class TestDomainsInLineItemForCustomerInvoicing(TestCase):
         )
         line_item_factory = LineItemFactory(new_subscription, None, self.mock_customer_invoice)
         self.assertEqual(line_item_factory.subscribed_domains, [self.domain.name])
+
+
+class TestCustomerInvoiceGenerationIsAtomic(BaseCustomerInvoiceCase):
+
+    def setUp(self):
+        super().setUp()
+        from corehq.apps.accounting.models import Feature, FeatureRate
+        web_user_feature, __ = Feature.objects.get_or_create(
+            name="Web User", defaults={"feature_type": FeatureType.WEB_USER})
+        self.web_user_rate = FeatureRate.objects.create(
+            feature=web_user_feature,
+            monthly_fee=Decimal('0.00'),
+            monthly_limit=1,
+            per_excess_fee=Decimal('10.00'),
+        )
+        self.main_subscription.plan_version.feature_rates.add(self.web_user_rate)
+        self.account.bill_web_user = True
+        self.account.save()
+        self.invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 5)
+        # The default ADVANCED test plan also carries a USER feature rate, so
+        # invoice generation needs a DomainUserHistory snapshot to succeed at
+        # all (independent of the web-user feature under test).
+        calculate_users_in_all_domains(self.invoice_date)
+
+    def test_missing_web_user_snapshot_rolls_back_partial_invoice(self):
+        """WebUserLineItemFactory.total_users_for_date raises DoesNotExist
+        when the account's BillingAccountWebUserHistory for a month is
+        missing. Invoice generation must be atomic: the whole invoice rolls
+        back rather than leaving a partial CustomerInvoice row. The task
+        catches per-account exceptions, so assert on DB state rather than on
+        a raised error."""
+        # Deliberately no BillingAccountWebUserHistory snapshot created.
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        self.assertEqual(CustomerInvoice.objects.count(), 0)

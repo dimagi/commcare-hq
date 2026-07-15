@@ -402,6 +402,7 @@ class CustomerAccountInvoiceFactory(object):
                 show_stack_trace=True,
             )
 
+    @transaction.atomic
     def _generate_customer_invoice(self):
         # We have unique index on account, date_start and date_end
         invoice, is_new_invoice = CustomerInvoice.objects.create_or_get(
