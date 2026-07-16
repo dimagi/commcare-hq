@@ -52,6 +52,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.utils import (
     ensure_domain_instance,
+    is_active_subscription,
     log_accounting_error,
     log_accounting_info,
     get_first_day_x_months_later,
@@ -532,15 +533,24 @@ class LineItemFactory(object):
     @memoized
     def subscribed_domains(self):
         if self.subscription.account.is_customer_billing_account:
-            return list(self.subscription.account.subscription_set.filter(
-                Q(date_end__isnull=True) | Q(date_end__gt=self.invoice.date_start),
-                date_start__lte=self.invoice.date_end
-            ).filter(
-                plan_version=self.subscription.plan_version
-            ).values_list(
-                'subscriber__domain', flat=True
-            ))
+            return list(self._subscription_date_ranges_by_domain)
         return [self.subscription.subscriber.domain]
+
+    @property
+    @memoized
+    def _subscription_date_ranges_by_domain(self):
+        """The account's subscriptions on this line item's plan version that
+        overlap the invoice period, as ``{domain: [(date_start, date_end)]}``.
+        """
+        date_ranges = defaultdict(list)
+        subscriptions = self.subscription.account.subscription_set.filter(
+            Q(date_end__isnull=True) | Q(date_end__gt=self.invoice.date_start),
+            date_start__lte=self.invoice.date_end,
+            plan_version=self.subscription.plan_version,
+        ).values_list('subscriber__domain', 'date_start', 'date_end')
+        for domain, date_start, date_end in subscriptions:
+            date_ranges[domain].append((date_start, date_end))
+        return date_ranges
 
     def create(self):
         line_item = LineItem(
@@ -769,23 +779,10 @@ class UserLineItemFactory(FeatureLineItemFactory):
             domain
             for domain, date_ranges in self._subscription_date_ranges_by_domain.items()
             if any(
-                date_start <= date and (date_end is None or date < date_end)
+                is_active_subscription(date_start, date_end, today=date)
                 for date_start, date_end in date_ranges
             )
         ]
-
-    @property
-    @memoized
-    def _subscription_date_ranges_by_domain(self):
-        date_ranges = defaultdict(list)
-        subscriptions = self.subscription.account.subscription_set.filter(
-            Q(date_end__isnull=True) | Q(date_end__gt=self.invoice.date_start),
-            date_start__lte=self.invoice.date_end,
-            plan_version=self.subscription.plan_version,
-        ).values_list('subscriber__domain', 'date_start', 'date_end')
-        for domain, date_start, date_end in subscriptions:
-            date_ranges[domain].append((date_start, date_end))
-        return date_ranges
 
     def total_users_for_date(self, date):
         total_users = 0
@@ -851,7 +848,7 @@ class WebUserLineItemFactory(UserLineItemFactory):
     def total_users_for_date(self, date):
         # Web users are counted account-wide, so bill a month end only if
         # this line item's plan version had an active subscription then
-        if self.invoice.is_customer_invoice and not self.subscribed_domains_for_date(date):
+        if not self.subscribed_domains_for_date(date):
             return 0
         try:
             history = BillingAccountWebUserHistory.objects.get(
