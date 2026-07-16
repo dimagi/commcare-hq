@@ -127,13 +127,26 @@ class ConstructedPillow:
             time.sleep(10)
 
     def _update_checkpoint(self, change, context):
-        if change and context:
+        if change is not None and context is not None:
             updated = self.update_checkpoint(change, context)
         else:
-            updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
+            updated = self._checkpoint_on_idle()
         if updated:
             self._record_checkpoint_in_datadog()
         cleanup_connections(self.pillow_id)
+
+    def _checkpoint_on_idle(self):
+        """Update the checkpoint if the consumer has caught up to ensure freshness
+
+        Delegates to the event handler, which for Kafka advances the checkpoint
+        to the consumed offset and otherwise just refreshes the timestamp. Pillows
+        configured without an event handler have no checkpoint policy, so fall back
+        to updating the timestamp.
+        """
+        handler = self._change_processed_event_handler
+        if handler is not None:
+            return handler.update_checkpoint_on_idle()
+        return self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
 
     @property
     @memoized

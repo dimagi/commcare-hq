@@ -1,5 +1,6 @@
 import json
 from copy import copy
+from datetime import datetime
 from typing import Dict, Iterator, Optional
 
 from django.conf import settings
@@ -198,6 +199,23 @@ class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
 
     def get_new_seq(self, change):
         return self.change_feed.get_current_checkpoint_offsets()
+
+    def update_checkpoint_on_idle(self):
+        """Called when the consumer times out waiting for changes
+
+        Without this the checkpointed offset can remain behind the consumed
+        offset until the next change arrives. This is especially common on
+        low volume feeds where checkpoint_frequency is > 1.
+
+        :return: True if the checkpoint was updated otherwise False
+        """
+        new_seq = self.change_feed.get_current_checkpoint_offsets()
+        committed = self.checkpoint.get_or_create_wrapped().wrapped_sequence
+        if all(committed.get(tp) == offset for tp, offset in new_seq.items()):
+            return False
+        self.checkpoint.update_to(new_seq)
+        self.last_update = datetime.utcnow()
+        return True
 
 
 def change_from_kafka_message(message):

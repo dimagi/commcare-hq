@@ -97,6 +97,25 @@ def test_process_changes(cfg, expected_calls):
     assert calls == expected_calls
 
 
+def test_update_checkpoint_on_idle_routes_to_event_handler():
+    # An idle/timeout tick (change and context both None) should give the event
+    # handler a chance to advance the checkpoint (e.g. flush the consumed Kafka
+    # offset), rather than only touching the checkpoint timestamp.
+    handler = Mock()
+    handler.update_checkpoint_on_idle.return_value = False
+    pillow = ConstructedPillow(
+        name='TestPillow',
+        checkpoint=Mock(),
+        change_feed=None,
+        processor=None,
+        change_processed_event_handler=handler,
+    )
+    with patch('pillowtop.pillow.interface.cleanup_connections'):
+        pillow._update_checkpoint(None, None)
+    handler.update_checkpoint_on_idle.assert_called_once_with()
+    pillow.checkpoint.touch.assert_not_called()
+
+
 def test_run_should_continue_on_checkpoint_reset():
     class Stop(Exception):
         pass

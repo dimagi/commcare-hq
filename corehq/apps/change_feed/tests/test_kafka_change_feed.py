@@ -1,9 +1,10 @@
 import uuid
 from copy import deepcopy
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from django.test import SimpleTestCase, TestCase
+from kafka import TopicPartition
 
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.feed.interface import ChangeMeta
@@ -165,6 +166,33 @@ class KafkaCheckpointTest(TestCase):
         self.assertEqual(8, processor.count)
         self.assertEqual(feed.get_current_checkpoint_offsets(), pillow.get_last_checkpoint_sequence())
 
+    def test_idle_does_not_recommit_when_caught_up(self):
+        # Guards the real-object comparison in update_checkpoint_on_idle: the
+        # consumed offsets (TopicPartition-keyed) must compare equal to the
+        # committed offsets (tuple-keyed) once caught up, so an idle tick is a
+        # no-op rather than a redundant write every timeout.
+        feed = KafkaChangeFeed(topics=[topics.FORM_SQL], client_id='test-kafka-feed')
+        pillow_name = 'test-idle-no-recommit'
+        checkpoint = PillowCheckpoint(pillow_name, feed.sequence_format)
+        handler = KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=1, change_feed=feed,
+        )
+        pillow = ConstructedPillow(
+            name=pillow_name,
+            checkpoint=checkpoint,
+            change_feed=feed,
+            processor=CountingProcessor(),
+            change_processed_event_handler=handler,
+        )
+        offsets = feed.get_latest_offsets()
+        publish_stub_change(topics.FORM_SQL)
+        pillow.process_changes(since=offsets, forever=False)
+
+        # checkpoint is now caught up to the consumed position
+        self.assertEqual(feed.get_current_checkpoint_offsets(), pillow.get_last_checkpoint_sequence())
+        # ...so an idle tick must not write the checkpoint again
+        self.assertFalse(handler.update_checkpoint_on_idle())
+
     def test_dont_create_checkpoint_past_current(self):
         pillow_name = 'test-checkpoint-reset'
 
@@ -199,3 +227,50 @@ def publish_stub_change(topic):
     meta = ChangeMeta(document_id=uuid.uuid4().hex, data_source_type='dummy-type', data_source_name='dummy-name')
     producer.send_change(topic, meta)
     return meta
+
+
+class KafkaCheckpointEventHandlerIdleTest(SimpleTestCase):
+    """When the consumer catches up and is idle, the checkpoint should be
+    updated to the consumed offset to accurately reflect its state."""
+
+    def _make_handler(self, consumed_offsets, committed_offsets):
+        change_feed = Mock(spec=KafkaChangeFeed)
+        change_feed.get_current_checkpoint_offsets.return_value = consumed_offsets
+        checkpoint = Mock()
+        checkpoint.get_or_create_wrapped.return_value.wrapped_sequence = committed_offsets
+        handler = KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=10, change_feed=change_feed,
+        )
+        return handler, checkpoint
+
+    def test_update_when_consumed_offset_is_ahead(self):
+        tp = TopicPartition('group', 0)
+        handler, checkpoint = self._make_handler(
+            consumed_offsets={tp: 5}, committed_offsets={tp: 3},
+        )
+        assert handler.update_checkpoint_on_idle() is True
+        checkpoint.update_to.assert_called_once_with({tp: 5})
+
+    def test_no_update_when_already_caught_up(self):
+        tp = TopicPartition('group', 0)
+        handler, checkpoint = self._make_handler(
+            consumed_offsets={tp: 5}, committed_offsets={tp: 5},
+        )
+        assert handler.update_checkpoint_on_idle() is False
+        checkpoint.update_to.assert_not_called()
+
+    def test_ignores_partitions_owned_by_other_processes(self):
+        tp = TopicPartition('group', 0)
+        handler, checkpoint = self._make_handler(
+            consumed_offsets={tp: 5}, committed_offsets={tp: 5, ('group', 1): 2},
+        )
+        assert handler.update_checkpoint_on_idle() is False
+        checkpoint.update_to.assert_not_called()
+
+    def test_updates_own_partition_even_when_another_process_appears_caught_up(self):
+        tp = TopicPartition('group', 0)
+        handler, checkpoint = self._make_handler(
+            consumed_offsets={tp: 5}, committed_offsets={tp: 3, ('group', 1): 5},
+        )
+        assert handler.update_checkpoint_on_idle() is True
+        checkpoint.update_to.assert_called_once_with({tp: 5})

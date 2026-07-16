@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import transaction
 from kafka import TopicPartition
 
+from pillowtop.const import CHECKPOINT_MIN_WAIT
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
 from pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str, str_to_kafka_seq
@@ -140,6 +141,16 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
 
     def get_new_seq(self, change):
         return change['seq']
+
+    def update_checkpoint_on_idle(self):
+        """Called when a consumer times out waiting for changes
+
+        The base handler has no awareness of a consumed-offset to persist, so
+        it refreshes the checkpoint timestamp (without moving the sequence).
+
+        :return: True if the checkpoint was updated otherwise False
+        """
+        return self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
 
     def update_checkpoint(self, change, context):
         if self.should_update_checkpoint(context):
