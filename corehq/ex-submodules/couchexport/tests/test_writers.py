@@ -258,7 +258,7 @@ class HeaderNameTest(SimpleTestCase):
         preview = writer.get_preview()
         self.assertGreater(len(table_index), writer.max_table_name_size)
         assert preview[0]['table_name'] == "my_t...dex"
-        self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
+        assert len(preview[0]['table_name']) <= writer.max_table_name_size
 
     def test_odd_max_header_length(self):
         writer = PythonDictWriter()
@@ -273,7 +273,7 @@ class HeaderNameTest(SimpleTestCase):
         writer.close()
         preview = writer.get_preview()
         assert preview[0]['table_name'] == "anothe...b name"
-        self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
+        assert len(preview[0]['table_name']) <= writer.max_table_name_size
 
     def test_exact_max_header_length(self):
         writer = PythonDictWriter()
@@ -288,7 +288,7 @@ class HeaderNameTest(SimpleTestCase):
         writer.close()
         preview = writer.get_preview()
         assert preview[0]['table_name'] == "sheet_name_for_tabs"
-        self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
+        assert len(preview[0]['table_name']) <= writer.max_table_name_size
 
     def test_max_header_length_duplicates(self):
         writer = PythonDictWriter()
