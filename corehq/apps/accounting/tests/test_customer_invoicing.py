@@ -649,10 +649,16 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
 
         invoice = CustomerInvoice.objects.first()
         user_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.USER)
-        num_excess_users_quarterly = (self.num_users * 2 - self.user_rate.monthly_limit) * 12
+        # The yearly invoice covers Apr 2016 - Mar 2017, and the non-main
+        # subscriptions end on 2016-12-23, so non_main_domain1's users only
+        # count toward the eight month ends through November
+        num_excess_users_yearly = (
+            8 * (self.num_users * 2 - self.user_rate.monthly_limit)
+            + 4 * (self.num_users - self.user_rate.monthly_limit)
+        )
         self.assertEqual(user_line_items.count(), 1)
         for user_line_item in user_line_items:
-            self.assertEqual(user_line_item.quantity, num_excess_users_quarterly)
+            self.assertEqual(user_line_item.quantity, num_excess_users_yearly)
 
     def test_sms_over_limit_in_quarterly_invoice(self):
         num_sms = random.randint(self.sms_rate.monthly_limit + 1, self.sms_rate.monthly_limit + 2)

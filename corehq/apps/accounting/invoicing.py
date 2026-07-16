@@ -753,9 +753,43 @@ class UserLineItemFactory(FeatureLineItemFactory):
             excess_users += max(total_users - self.rate.monthly_limit, 0)
         return excess_users
 
+    def subscribed_domains_for_date(self, date):
+        """Domains whose subscription on this line item's plan version was
+        active on ``date``.
+
+        A customer invoice can span months during which a domain moved to a
+        different plan version (ending one subscription and starting another,
+        as ``Subscription.change_plan`` does). Each month end must only be
+        billed under the plan version that was active on that date, otherwise
+        the same month's users are billed once per plan version.
+        """
+        if not self.invoice.is_customer_invoice:
+            return self.subscribed_domains
+        return [
+            domain
+            for domain, date_ranges in self._subscription_date_ranges_by_domain.items()
+            if any(
+                date_start <= date and (date_end is None or date < date_end)
+                for date_start, date_end in date_ranges
+            )
+        ]
+
+    @property
+    @memoized
+    def _subscription_date_ranges_by_domain(self):
+        date_ranges = defaultdict(list)
+        subscriptions = self.subscription.account.subscription_set.filter(
+            Q(date_end__isnull=True) | Q(date_end__gt=self.invoice.date_start),
+            date_start__lte=self.invoice.date_end,
+            plan_version=self.subscription.plan_version,
+        ).values_list('subscriber__domain', 'date_start', 'date_end')
+        for domain, date_start, date_end in subscriptions:
+            date_ranges[domain].append((date_start, date_end))
+        return date_ranges
+
     def total_users_for_date(self, date):
         total_users = 0
-        for domain in self.subscribed_domains:
+        for domain in self.subscribed_domains_for_date(date):
             try:
                 history = DomainUserHistory.objects.get(domain=domain, record_date=date)
                 total_users += history.num_users
@@ -815,6 +849,10 @@ class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
 class WebUserLineItemFactory(UserLineItemFactory):
 
     def total_users_for_date(self, date):
+        # Web users are counted account-wide, so bill a month end only if
+        # this line item's plan version had an active subscription then
+        if self.invoice.is_customer_invoice and not self.subscribed_domains_for_date(date):
+            return 0
         try:
             history = BillingAccountWebUserHistory.objects.get(
                 billing_account=self.subscription.account, record_date=date)
