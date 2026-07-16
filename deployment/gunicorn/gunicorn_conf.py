@@ -5,10 +5,12 @@ preload_app = True
 worker_class = 'gevent'
 keepalive = 60
 timeout = 900
-max_requests = 240
+max_requests = 2000
 max_requests_jitter = int(max_requests * 0.5)
-# defaults to 30 sec, setting to 5 minutes to fight `GreenletExit`s
-graceful_timeout = 5*60
+# Should be at least as long as the longest request we're willing to serve
+# (nginx proxy_read_timeout allows up to 900s), otherwise worker recycling
+# force-kills in-flight requests when this expires.
+graceful_timeout = 900
 # defaults to 4094, increasing to avoid https://manage.dimagi.com/default.asp?283517#1532884
 limit_request_line = 4500
 
