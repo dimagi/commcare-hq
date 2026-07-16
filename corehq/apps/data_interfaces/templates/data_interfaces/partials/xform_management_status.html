@@ -1,42 +1,61 @@
 {% load i18n %}
-{% if is_ready %}
+{% if legacy %}
   <div id="ready_{{ download_id }}">
-    <legend>{{ on_complete_short }}</legend>
-    {% block results %}
-      {% if result.success %}
-        <div class="alert alert-success">
-          <h4>{{ result.success_count_msg }}</h4>
-          {% if result.errors %}
-            {% for s in result.success %}
-              <p>{{ s }}</p>
-            {% endfor %}
-          {% endif %}
-        </div>
-        {% if result.errors %}
-          <div class="alert alert-danger">
-            <h3>{% trans "However, we ran into the following problems:" %}</h3>
-            {% for e in result.errors %}
-              <p>{{ e }}</p>
-            {% endfor %}
-          </div>
-        {% endif %}
-      {% else %}
-        <div class="alert alert-danger">
-          <h3>{{ mode.fail_text }}</h3>
-          {% for e in result.errors %}
-            <p>{{ e }}</p>
+    <div class="alert alert-info">
+      <p>
+        {% trans "This request is being processed. Return to Manage Forms to check for changes to your forms." %}
+      </p>
+    </div>
+  </div>
+{% elif is_done %}
+  <div id="ready_{{ download_id }}">
+    {% if has_failed %}
+      <div class="alert alert-danger">
+        <h3>{{ mode.fail_text }}</h3>
+        <p>{% trans "The job failed. Please try again." %}</p>
+      </div>
+    {% else %}
+      <legend>{{ on_complete_short }}</legend>
+      <div class="alert alert-success">
+        <h4>
+          {# prettier-ignore-start #}
+          {% blocktrans count counter=succeeded_count %}
+            {{ counter }} form processed successfully
+          {% plural %}
+            {{ counter }} forms processed successfully
+          {% endblocktrans %}
+          {# prettier-ignore-end #}
+        </h4>
+      </div>
+      {% if skipped %}
+        <div class="alert alert-warning">
+          <h3>{% trans "Some forms were skipped:" %}</h3>
+          {% for reason, ids in skipped.items %}
+            <p><strong>{{ reason }}</strong>: {{ ids|length }}</p>
           {% endfor %}
         </div>
       {% endif %}
-    {% endblock results %}
+    {% endif %}
   </div>
   <span>{{ mode.help_message }}</span>
   {% blocktrans %}
-    <span>Return to <a href="{{form_management_url}}">Manage Forms</a> to reverse this.</span>
+    <span
+      >Return to <a href="{{ form_management_url }}">Manage Forms</a> to reverse
+      this.</span
+    >
   {% endblocktrans %}
 {% else %}
-  <legend>
-    {{ mode.progress_text }}
-  </legend>
-  {% include 'soil/partials/download_in_progress.html' %}
+  <legend>{{ mode.progress_text }}</legend>
+  <div class="progress">
+    <div
+      class="progress-bar progress-bar-striped active"
+      role="progressbar"
+      aria-valuenow="{{ progress.percent }}"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      style="width: {{ progress.percent }}%"
+    >
+      {{ progress.percent }}%
+    </div>
+  </div>
 {% endif %}

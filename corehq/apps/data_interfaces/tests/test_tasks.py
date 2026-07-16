@@ -1,10 +1,19 @@
-from django.test import SimpleTestCase
 from unittest.mock import patch
 
+from django.test import SimpleTestCase, TestCase
+
+from corehq.apps.data_interfaces.models import BulkAsyncJob
 from corehq.apps.data_interfaces.tasks import (
+    bulk_form_action_async,
+    bulk_form_management_async,
     task_generate_ids_and_operate_on_payloads,
     task_operate_on_payloads,
 )
+from corehq.apps.users.models import WebUser
+from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
+from corehq.form_processor.models.forms import XFormInstance
+
+TASK_DOMAIN = 'bulk-task-test'
 
 
 class TestTasks(SimpleTestCase):
@@ -82,3 +91,54 @@ class TestTasks(SimpleTestCase):
         )
         self.assertEqual(response,
                          {'messages': {'errors': ['No payloads specified']}})
+
+
+class TestBulkFormActionAsync(TestCase):
+
+    def _job(self):
+        job = BulkAsyncJob(
+            domain=TASK_DOMAIN, model=XFormInstance,
+            action=BulkAsyncJob.Action.ARCHIVE, requested_by='u',
+        )
+        job.save()
+        return job
+
+    def test_task_runs_job(self):
+        job = self._job()
+        with patch(
+            'corehq.apps.data_interfaces.tasks.run_bulk_form_action'
+        ) as mock_run:
+            bulk_form_action_async(str(job.id), TASK_DOMAIN)
+        assert mock_run.call_count == 1
+        assert mock_run.call_args[0][0].id == job.id
+
+    def test_task_marks_job_failed_on_error(self):
+        job = self._job()
+        with patch(
+            'corehq.apps.data_interfaces.tasks.run_bulk_form_action',
+            side_effect=ValueError('boom'),
+        ), self.assertRaises(ValueError):
+            bulk_form_action_async(str(job.id), TASK_DOMAIN)
+        job.refresh_from_db()
+        assert job.status == BulkAsyncJob.Status.FAILED
+
+
+class TestBulkFormManagementShim(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.blob_db = TemporaryFilesystemBlobDB()
+        cls.addClassCleanup(cls.blob_db.close)
+
+    def test_reroutes_legacy_message_to_new_task(self):
+        couch_user = WebUser(username='someone')
+        with patch(
+            'corehq.apps.data_interfaces.tasks.bulk_form_action_async.delay'
+        ) as mock_delay:
+            bulk_form_management_async('archive', TASK_DOMAIN, couch_user, ['form-1', 'form-2'])
+        job = BulkAsyncJob.objects.get(domain=TASK_DOMAIN)
+        assert job.action == BulkAsyncJob.Action.ARCHIVE
+        assert job.requested_count == 2
+        assert job.get_requested_ids() == ['form-1', 'form-2']
+        mock_delay.assert_called_once_with(job.id.hex, TASK_DOMAIN)
