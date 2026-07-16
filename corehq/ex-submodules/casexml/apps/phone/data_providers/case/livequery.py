@@ -31,7 +31,7 @@ from casexml.apps.case.const import CASE_INDEX_EXTENSION as EXTENSION
 from casexml.apps.phone.const import ASYNC_RETRY_AFTER
 from corehq.celery_monitoring.signals import CELERY_STATE_SENT
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
-from corehq.toggles import CHUNKED_LIVEQUERY
+from corehq.toggles import CHUNKED_LIVEQUERY, NAMESPACE_DOMAIN
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.timer import TimingContext
@@ -283,7 +283,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
                 )
             yield list(index_by_key.values())
 
-    if CHUNKED_LIVEQUERY.enabled(domain):
+    if CHUNKED_LIVEQUERY.enabled(domain, namespace=NAMESPACE_DOMAIN):
         timed_get_related = chunked_get_related
     else:
         timed_get_related = get_related_with_db_exclude
