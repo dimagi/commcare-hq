@@ -1,7 +1,15 @@
 import "commcarehq";
 import "hqwebapp/js/htmx_base";
 import Alpine from "alpinejs";
+import "hqwebapp/js/alpinejs/directives/datepicker";
+import "hqwebapp/js/alpinejs/directives/select2";
 import initialPageData from "hqwebapp/js/initial_page_data";
+import {
+    subtreeGroupHeight,
+    cloneWithNewIds,
+    normalizeRoot,
+    removeChild,
+} from "case_search/js/endpoint_tree";
 
 // Input-slot type sentinels. These MUST stay in sync with the constants in
 // corehq/apps/case_search/endpoint_capability.py (INPUT_TYPE_CHOICE,
@@ -12,8 +20,6 @@ const SLOT_TYPE_CHOICE = "choice";
 const SLOT_TYPE_MATCH_FIELD = "match_field";
 
 Alpine.data("endpointForm", () => {
-    const mode = initialPageData.get("endpoint_mode");
-
     return {
         name: initialPageData.get("initial_name"),
         targetType: initialPageData.get("initial_target_type"),
@@ -22,8 +28,11 @@ Alpine.data("endpointForm", () => {
         testParamValues: {},
         query: initialPageData.get("initial_query"),
         capability: initialPageData.get("capability"),
-        mode: mode,
         _nextId: 1,
+        // Holds a snapshot of a copied condition/group, or null. Shared across
+        // the whole builder so a node copied in one group can be pasted into
+        // another.
+        copiedNode: null,
         // Exposed so condition_row.html can compare against the sentinel rather
         // than re-typing the "choice" literal.
         slotTypeChoice: SLOT_TYPE_CHOICE,
@@ -76,22 +85,8 @@ Alpine.data("endpointForm", () => {
             }
         },
 
-        // The stored spec and builder state share the same shape, so the only
-        // adjustment needed is at the root: the builder always renders a
-        // group, so wrap a bare-component or empty/legacy root in an `all`
-        // group.
-        normalizeRoot(node) {
-            if (node && ["all", "any", "none"].includes(node.type)) {
-                return node;
-            }
-            if (node && node.type === "component") {
-                return { type: "all", children: [node] };
-            }
-            return { type: "all", children: (node && node.children) || [] };
-        },
-
         init() {
-            this.query = this.normalizeRoot(this.query);
+            this.query = normalizeRoot(this.query);
             this.initializeIds(this.query);
         },
 
@@ -139,8 +134,34 @@ Alpine.data("endpointForm", () => {
             });
         },
 
-        removeNode(parentGroup, idx) {
-            parentGroup.children.splice(idx, 1);
+        removeNode(parentGroup, node) {
+            removeChild(parentGroup, node);
+        },
+
+        copyNode(node) {
+            this.copiedNode = JSON.parse(JSON.stringify(node));
+        },
+
+        canPasteInto(depth) {
+            return (
+                !!this.copiedNode &&
+                subtreeGroupHeight(this.copiedNode) <= depth
+            );
+        },
+
+        pasteInto(group) {
+            if (!this.copiedNode) {
+                return;
+            }
+            const { node: clone, nextId } = cloneWithNewIds(
+                this.copiedNode,
+                this._nextId,
+            );
+            this._nextId = nextId;
+            if (!group.children) {
+                group.children = [];
+            }
+            group.children.push(clone);
         },
 
         onFieldChange(node) {
@@ -173,6 +194,18 @@ Alpine.data("endpointForm", () => {
                 node.inputs[slotName] = { type: "constant", value: "" };
             }
             return node.inputs[slotName];
+        },
+
+        slotStretches(node, slot) {
+            // Only free-text constant inputs grow to fill the row; choice,
+            // date/datetime, and parameter selects stay at their content width.
+            if (slot.type === this.slotTypeChoice) {
+                return false;
+            }
+            if (slot.type === "date" || slot.type === "datetime") {
+                return false;
+            }
+            return this.getInputValue(node, slot.name).type === "constant";
         },
 
         setInputType(node, slotName, valueType) {
