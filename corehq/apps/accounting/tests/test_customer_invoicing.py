@@ -12,10 +12,13 @@ from dimagi.utils.dates import add_months_to_date
 from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.invoicing import LineItemFactory
 from corehq.apps.accounting.models import (
+    BillingAccountWebUserHistory,
     CreditLine,
     CustomerInvoice,
     DefaultProductPlan,
     DomainUserHistory,
+    Feature,
+    FeatureRate,
     FeatureType,
     InvoicingPlan,
     SoftwarePlanEdition,
@@ -714,6 +717,178 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
         return invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)
+
+
+class TestUserLineItemsAfterMidQuarterPlanVersionChange(BaseAccountingTest):
+    """
+    Changing a customer account subscription's plan version part-way through
+    a multi-month invoicing period (e.g. via the bulk upgrade on the
+    plan-version admin form) end-dates the old subscription and starts a new
+    one on the change date, so the customer invoice bills each plan version's
+    line items separately. Each month end's user count must be billed under
+    exactly one plan version — the one whose subscription was active on that
+    date.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        generator.bootstrap_test_software_plan_versions()
+        cls.addClassCleanup(utils.clear_plan_version_cache)
+        generator.init_default_currency()
+
+        billing_contact = generator.create_arbitrary_web_user_name()
+        dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
+        cls.account = generator.billing_account(dimagi_user, billing_contact)
+        cls.account.is_customer_billing_account = True
+        cls.account.invoicing_plan = InvoicingPlan.QUARTERLY
+        cls.account.save()
+
+        cls.old_plan_version = DefaultProductPlan.get_default_plan_version(
+            edition=SoftwarePlanEdition.PRO)
+        cls.new_plan_version = DefaultProductPlan.get_default_plan_version(
+            edition=SoftwarePlanEdition.ADVANCED)
+        for plan_version in (cls.old_plan_version, cls.new_plan_version):
+            plan_version.plan.is_customer_software_plan = True
+            plan_version.plan.save()
+
+        cls.domain = cls._create_domain('mid-quarter-plan-change')
+
+        # Invoicing on 2018-04-01 creates the invoice for 2018-01-01 - 2018-03-31
+        cls.invoice_date = date(2018, 4, 1)
+        cls.month_ends = [date(2018, 1, 31), date(2018, 2, 28), date(2018, 3, 31)]
+        # As with Subscription.change_plan, the old subscription's date_end
+        # and the new subscription's date_start are both the change date
+        cls.change_date = date(2018, 2, 15)
+        cls.old_subscription = generator.generate_domain_subscription(
+            cls.account,
+            cls.domain,
+            date_start=date(2017, 7, 1),
+            date_end=cls.change_date,
+            plan_version=cls.old_plan_version,
+        )
+        cls.new_subscription = generator.generate_domain_subscription(
+            cls.account,
+            cls.domain,
+            date_start=cls.change_date,
+            date_end=date(2018, 7, 1),
+            plan_version=cls.new_plan_version,
+        )
+
+    @classmethod
+    def _create_domain(cls, name):
+        domain_obj = create_domain(name)
+        cls.addClassCleanup(domain_obj.delete)
+        return domain_obj
+
+    def _create_domain_user_history(self, domain, num_users):
+        for month_end in self.month_ends:
+            DomainUserHistory.objects.create(
+                domain=domain.name,
+                num_users=num_users,
+                record_date=month_end,
+            )
+
+    def _user_line_item(self, invoice, plan_version):
+        user_rate = plan_version.feature_rates.get(feature__feature_type=FeatureType.USER)
+        return invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get(feature_rate=user_rate)
+
+    def test_mobile_user_excess_is_billed_under_one_plan_version_per_month(self):
+        num_users = 20
+        self._create_domain_user_history(self.domain, num_users)
+
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        invoice = CustomerInvoice.objects.get()
+        old_line_item = self._user_line_item(invoice, self.old_plan_version)
+        new_line_item = self._user_line_item(invoice, self.new_plan_version)
+        # Only January's month end falls before the plan change
+        self.assertEqual(
+            old_line_item.quantity,
+            num_users - old_line_item.feature_rate.monthly_limit,
+        )
+        # February's and March's month ends fall after it
+        self.assertEqual(
+            new_line_item.quantity,
+            2 * (num_users - new_line_item.feature_rate.monthly_limit),
+        )
+
+    def test_web_user_excess_is_billed_under_one_plan_version_per_month(self):
+        old_web_user_rate, new_web_user_rate = self._add_web_user_rates()
+        self.account.bill_web_user = True
+        self.account.save()
+        # Both plan versions carry a USER rate, so mobile user history is
+        # needed for invoice generation to succeed at all
+        self._create_domain_user_history(self.domain, 0)
+        num_web_users = 30
+        for month_end in self.month_ends:
+            BillingAccountWebUserHistory.objects.create(
+                billing_account=self.account,
+                num_users=num_web_users,
+                record_date=month_end,
+            )
+
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        invoice = CustomerInvoice.objects.get()
+        web_user_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.WEB_USER)
+        old_line_item = web_user_line_items.get(feature_rate=old_web_user_rate)
+        new_line_item = web_user_line_items.get(feature_rate=new_web_user_rate)
+        self.assertEqual(
+            old_line_item.quantity,
+            num_web_users - old_web_user_rate.monthly_limit,
+        )
+        self.assertEqual(
+            new_line_item.quantity,
+            2 * (num_web_users - new_web_user_rate.monthly_limit),
+        )
+
+    def _add_web_user_rates(self):
+        web_user_feature, __ = Feature.objects.get_or_create(
+            name="Web User", defaults={"feature_type": FeatureType.WEB_USER})
+        rates = []
+        for plan_version, monthly_limit in ((self.old_plan_version, 10), (self.new_plan_version, 12)):
+            rate = FeatureRate.objects.create(
+                feature=web_user_feature,
+                monthly_fee=Decimal('0.00'),
+                monthly_limit=monthly_limit,
+                per_excess_fee=Decimal('10.00'),
+            )
+            plan_version.feature_rates.add(rate)
+            rates.append(rate)
+        return rates
+
+    def test_domain_remaining_on_the_old_plan_version_is_billed_every_month(self):
+        steady_domain = create_domain('steady-on-old-plan')
+        self.addCleanup(steady_domain.delete)
+        generator.generate_domain_subscription(
+            self.account,
+            steady_domain,
+            date_start=date(2017, 7, 1),
+            date_end=date(2018, 7, 1),
+            plan_version=self.old_plan_version,
+        )
+        num_users = 20
+        self._create_domain_user_history(self.domain, num_users)
+        self._create_domain_user_history(steady_domain, num_users)
+
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        invoice = CustomerInvoice.objects.get()
+        old_line_item = self._user_line_item(invoice, self.old_plan_version)
+        new_line_item = self._user_line_item(invoice, self.new_plan_version)
+        old_limit = old_line_item.feature_rate.monthly_limit
+        new_limit = new_line_item.feature_rate.monthly_limit
+        # January: both domains were on the old plan version; February and
+        # March: only the steady domain remained on it
+        self.assertEqual(
+            old_line_item.quantity,
+            (2 * num_users - old_limit) + 2 * (num_users - old_limit),
+        )
+        self.assertEqual(
+            new_line_item.quantity,
+            2 * (num_users - new_limit),
+        )
 
 
 class TestDomainsInLineItemForCustomerInvoicing(TestCase):
