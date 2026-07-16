@@ -13,7 +13,6 @@ from attrs import frozen
 
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.data_interfaces.interfaces import FormManagementMode
 from corehq.apps.data_interfaces.models import BulkAsyncJob
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import get_blob_db
@@ -36,15 +35,12 @@ class FormActionResult:
     reason: Optional[str] = None  # not_found | unexpected_error
 
 
-def create_bulk_form_job(domain, mode, requested_by, form_ids):
+def create_bulk_form_job(domain, action, requested_by, form_ids):
     """Create and persist a BulkAsyncJob for a bulk form archive/unarchive.
 
     The blob write and row save share an ``AtomicBlobs`` transaction so a
     failed save can't orphan the requested-ids blob.
     """
-    action = (BulkAsyncJob.Action.UNARCHIVE
-              if mode == FormManagementMode.RESTORE_MODE
-              else BulkAsyncJob.Action.ARCHIVE)
     with AtomicBlobs(get_blob_db()) as db:
         job = BulkAsyncJob(
             domain=domain,
