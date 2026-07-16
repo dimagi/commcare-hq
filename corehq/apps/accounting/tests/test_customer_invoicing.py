@@ -746,8 +746,7 @@ class TestUserLineItemsAfterMidQuarterPlanVersionChange(BaseAccountingTest):
 
         billing_contact = generator.create_arbitrary_web_user_name()
         dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
-        cls.account = generator.billing_account(dimagi_user, billing_contact)
-        cls.account.is_customer_billing_account = True
+        cls.account = generator.billing_account(dimagi_user, billing_contact, is_customer_account=True)
         cls.account.invoicing_plan = InvoicingPlan.QUARTERLY
         cls.account.save()
 
@@ -759,7 +758,8 @@ class TestUserLineItemsAfterMidQuarterPlanVersionChange(BaseAccountingTest):
             plan_version.plan.is_customer_software_plan = True
             plan_version.plan.save()
 
-        cls.domain = cls._create_domain('mid-quarter-plan-change')
+        cls.domain = create_domain('mid-quarter-plan-change')
+        cls.addClassCleanup(cls.domain.delete)
 
         # Invoicing on 2018-04-01 creates the invoice for 2018-01-01 - 2018-03-31
         cls.invoice_date = date(2018, 4, 1)
@@ -781,12 +781,6 @@ class TestUserLineItemsAfterMidQuarterPlanVersionChange(BaseAccountingTest):
             date_end=date(2018, 7, 1),
             plan_version=cls.new_plan_version,
         )
-
-    @classmethod
-    def _create_domain(cls, name):
-        domain_obj = create_domain(name)
-        cls.addClassCleanup(domain_obj.delete)
-        return domain_obj
 
     def _create_domain_user_history(self, domain, num_users):
         for month_end in self.month_ends:
@@ -895,6 +889,45 @@ class TestUserLineItemsAfterMidQuarterPlanVersionChange(BaseAccountingTest):
             plan_version.feature_rates.add(rate)
             rates.append(rate)
         return rates
+
+    def test_change_on_a_month_end_bills_that_month_under_the_new_plan_version(self):
+        boundary_domain = create_domain('plan-change-on-month-end')
+        self.addCleanup(boundary_domain.delete)
+        month_end_change_date = date(2018, 2, 28)
+        generator.generate_domain_subscription(
+            self.account,
+            boundary_domain,
+            date_start=date(2017, 7, 1),
+            date_end=month_end_change_date,
+            plan_version=self.old_plan_version,
+        )
+        generator.generate_domain_subscription(
+            self.account,
+            boundary_domain,
+            date_start=month_end_change_date,
+            date_end=None,
+            plan_version=self.new_plan_version,
+        )
+        num_users = 20
+        self._create_domain_user_history(self.domain, 0)
+        self._create_domain_user_history(boundary_domain, num_users)
+
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        invoice = CustomerInvoice.objects.get()
+        old_line_item = self._user_line_item(invoice, self.old_plan_version)
+        new_line_item = self._user_line_item(invoice, self.new_plan_version)
+        # A subscription's date_end is exclusive, so the old subscription is
+        # no longer active on its own end date and the February month end is
+        # billed under the new, open-ended subscription
+        self.assertEqual(
+            old_line_item.quantity,
+            num_users - old_line_item.feature_rate.monthly_limit,
+        )
+        self.assertEqual(
+            new_line_item.quantity,
+            2 * (num_users - new_line_item.feature_rate.monthly_limit),
+        )
 
     def test_domain_remaining_on_the_old_plan_version_is_billed_every_month(self):
         steady_domain = create_domain('steady-on-old-plan')
