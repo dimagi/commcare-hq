@@ -42,6 +42,8 @@ from .load_testing import get_xml_for_response
 from .stock import get_stock_payload
 from .utils import get_case_sync_updates
 
+MAX_RELATED_CHUNK = 1000
+
 
 def do_livequery(timing_context, restore_state, response, async_task=None):
     """Get case sync restore response
@@ -272,13 +274,14 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     @contextmanager
     def chunked_get_related(next_ids):
         with timing_context("get_related_indices({} cases)".format(len(next_ids))):
-            related = []
-            for next_chunk in chunked(next_ids, 1000, collection=list):
-                related.extend(
-                    index for index in get_related_indices(next_chunk, [])
+            index_by_key = {}
+            for next_chunk in chunked(next_ids, MAX_RELATED_CHUNK, collection=list):
+                index_by_key.update(
+                    (index_key(index), index)
+                    for index in get_related_indices(next_chunk, [])
                     if index_key(index) not in seen_ix[index.case_id]
                 )
-            yield related
+            yield list(index_by_key.values())
 
     if CHUNKED_LIVEQUERY.enabled(domain):
         get_related = chunked_get_related
