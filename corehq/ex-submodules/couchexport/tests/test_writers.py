@@ -256,7 +256,7 @@ class HeaderNameTest(SimpleTestCase):
         )
         writer.close()
         preview = writer.get_preview()
-        self.assertGreater(len(table_index), writer.max_table_name_size)
+        assert len(table_index) > writer.max_table_name_size
         assert preview[0]['table_name'] == "my_t...dex"
         assert len(preview[0]['table_name']) <= writer.max_table_name_size
 
