@@ -20,6 +20,7 @@ from corehq.apps.accounting.models import (
     Feature,
     FeatureRate,
     FeatureType,
+    FormSubmittingMobileWorkerHistory,
     InvoicingPlan,
     SoftwarePlanEdition,
     Subscription,
@@ -819,8 +820,39 @@ class TestUserLineItemsAfterMidQuarterPlanVersionChange(BaseAccountingTest):
             2 * (num_users - new_line_item.feature_rate.monthly_limit),
         )
 
+    def test_form_submitting_mobile_worker_excess_is_billed_under_one_plan_version_per_month(self):
+        old_worker_rate, new_worker_rate = self._add_feature_rates(
+            "Form-Submitting Mobile Worker", FeatureType.FORM_SUBMITTING_MOBILE_WORKER)
+        # Both plan versions carry a USER rate, so mobile user history is
+        # needed for invoice generation to succeed at all
+        self._create_domain_user_history(self.domain, 0)
+        num_workers = 20
+        for month_end in self.month_ends:
+            FormSubmittingMobileWorkerHistory.objects.create(
+                domain=self.domain.name,
+                num_users=num_workers,
+                record_date=month_end,
+            )
+
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        invoice = CustomerInvoice.objects.get()
+        worker_line_items = invoice.lineitem_set.get_feature_by_type(
+            FeatureType.FORM_SUBMITTING_MOBILE_WORKER)
+        old_line_item = worker_line_items.get(feature_rate=old_worker_rate)
+        new_line_item = worker_line_items.get(feature_rate=new_worker_rate)
+        self.assertEqual(
+            old_line_item.quantity,
+            num_workers - old_worker_rate.monthly_limit,
+        )
+        self.assertEqual(
+            new_line_item.quantity,
+            2 * (num_workers - new_worker_rate.monthly_limit),
+        )
+
     def test_web_user_excess_is_billed_under_one_plan_version_per_month(self):
-        old_web_user_rate, new_web_user_rate = self._add_web_user_rates()
+        old_web_user_rate, new_web_user_rate = self._add_feature_rates(
+            "Web User", FeatureType.WEB_USER)
         self.account.bill_web_user = True
         self.account.save()
         # Both plan versions carry a USER rate, so mobile user history is
@@ -849,13 +881,13 @@ class TestUserLineItemsAfterMidQuarterPlanVersionChange(BaseAccountingTest):
             2 * (num_web_users - new_web_user_rate.monthly_limit),
         )
 
-    def _add_web_user_rates(self):
-        web_user_feature, __ = Feature.objects.get_or_create(
-            name="Web User", defaults={"feature_type": FeatureType.WEB_USER})
+    def _add_feature_rates(self, feature_name, feature_type):
+        feature, __ = Feature.objects.get_or_create(
+            name=feature_name, defaults={"feature_type": feature_type})
         rates = []
         for plan_version, monthly_limit in ((self.old_plan_version, 10), (self.new_plan_version, 12)):
             rate = FeatureRate.objects.create(
-                feature=web_user_feature,
+                feature=feature,
                 monthly_fee=Decimal('0.00'),
                 monthly_limit=monthly_limit,
                 per_excess_fee=Decimal('10.00'),
