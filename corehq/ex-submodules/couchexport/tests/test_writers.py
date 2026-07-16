@@ -345,7 +345,7 @@ class TestGeoJSONWriter(SimpleTestCase):
         features = GeoJSONWriter().get_features(table, data)
 
         features_names = [feature['properties']['name'] for feature in features]
-        self.assertTrue(data[1][2] not in features_names)
+        assert data[1][2] not in features_names
 
     def test_get_features_from_path(self):
         table = self.geopoint_table_configuration(
