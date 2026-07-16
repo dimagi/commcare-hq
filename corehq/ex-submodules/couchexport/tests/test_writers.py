@@ -236,9 +236,7 @@ class HeaderNameTest(SimpleTestCase):
 
         first_sheet_name = preview[0]['table_name']
         second_sheet_name = preview[1]['table_name']
-        self.assertNotEqual(
-            first_sheet_name.lower(),
-            second_sheet_name.lower(),
+        assert first_sheet_name.lower() != second_sheet_name.lower(), (
             "Sheet names must not be equal. Comparison is NOT case sensitive. Names were '{}' and '{}'".format(
                 first_sheet_name, second_sheet_name
             )
