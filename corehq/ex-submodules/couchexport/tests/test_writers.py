@@ -1,13 +1,16 @@
 from codecs import BOM_UTF8
 from contextlib import closing
+import gc
 import io
 import os
+import warnings
 
 from django.test import SimpleTestCase
 from lxml import html, etree
+from openpyxl.worksheet._write_only import WriteOnlyWorksheet
 from unittest.mock import patch, Mock
 
-from couchexport.export import export_from_tables
+from couchexport.export import export_from_tables, export_raw_to_writer
 from couchexport.models import Format
 from couchexport.writers import (
     MAX_XLS_COLUMNS,
@@ -122,6 +125,73 @@ class Excel2007ExportWriterTests(SimpleTestCase):
         ]
         tables = [[b'table\xe2\x80\x93title', table]]
         export_from_tables(tables, file_, format_)
+
+
+class ExportWriterCleanupTests(SimpleTestCase):
+    """
+    If a write fails partway through, the writer must still be closed.
+    Otherwise an in-progress openpyxl write-only workbook is abandoned:
+    its generator-based XML writer is left suspended and gets garbage
+    collected at some arbitrary later point (potentially during an
+    unrelated test), raising unraisable lxml errors at that time.
+    """
+
+    def test_export_from_tables_closes_writer_on_write_error(self):
+        mock_writer = Mock()
+        mock_writer.write.side_effect = ValueError("boom")
+        with patch('couchexport.export.get_writer', return_value=mock_writer):
+            with self.assertRaises(ValueError):
+                export_from_tables([['title', [['header']]]], io.BytesIO(), Format.XLS_2007)
+        mock_writer.close.assert_called_once()
+
+    def test_export_raw_to_writer_closes_writer_on_write_error(self):
+        mock_writer = Mock()
+        mock_writer.write.side_effect = ValueError("boom")
+        with patch('couchexport.export.get_writer', return_value=mock_writer):
+            with self.assertRaises(ValueError):
+                with export_raw_to_writer([['title', ['header']]], [['title', []]], io.BytesIO()):
+                    pass
+        mock_writer.close.assert_called_once()
+
+    def test_export_raw_to_writer_closes_writer_on_consumer_error(self):
+        mock_writer = Mock()
+        with patch('couchexport.export.get_writer', return_value=mock_writer):
+            with self.assertRaises(ValueError):
+                with export_raw_to_writer([['title', ['header']]], [['title', []]], io.BytesIO()):
+                    raise ValueError("boom")
+        mock_writer.close.assert_called_once()
+
+    def test_xlsx_write_failure_does_not_leave_unraisable_generator(self):
+        """
+        A real (unmocked) regression test for the mechanism above: an
+        openpyxl write-only workbook whose write is interrupted, and never
+        saved/closed, leaves its lxml-backed generators suspended. When
+        those get garbage collected -- possibly much later, during an
+        unrelated test -- lxml raises unraisable errors from within the
+        abandoned generator's __del__.
+        """
+        original_append = WriteOnlyWorksheet.append
+        calls = {'n': 0}
+
+        def flaky_append(self, *args, **kwargs):
+            calls['n'] += 1
+            if calls['n'] == 2:
+                raise ValueError("simulated failure mid-write")
+            return original_append(self, *args, **kwargs)
+
+        WriteOnlyWorksheet.append = flaky_append
+        try:
+            tables = [['title', [['h1', 'h2'], ['r1', 'r2']]]]
+            with self.assertRaises(ValueError):
+                export_from_tables(tables, io.BytesIO(), Format.XLS_2007)
+        finally:
+            WriteOnlyWorksheet.append = original_append
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter('always')
+            gc.collect()
+        unraisable = [w for w in caught if 'Unraisable' in w.category.__name__]
+        self.assertEqual(unraisable, [])
 
 
 class Excel2003ExportWriterTests(SimpleTestCase):
