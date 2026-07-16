@@ -469,7 +469,7 @@ class XFormManagementView(DataInterfaceSection):
 
         mode = self.request.POST.get('mode')
         job = create_bulk_form_job(
-            self.domain, mode, self.request.couch_user.username, form_ids)
+            self.domain, FormManagementMode.bulk_action(mode), self.request.couch_user.username, form_ids)
         # download_id must be in hex format (no hyphens) to conform to soil's framework
         bulk_form_action_async.delay(job.id.hex, self.domain)
         return HttpResponseRedirect(
