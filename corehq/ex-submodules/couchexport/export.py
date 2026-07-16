@@ -40,8 +40,10 @@ def export_from_tables(tables, file, format, max_column_size=2000):
         rows_by_sheet.append((worksheet_title, row_generator))
 
     writer.open(sheet_headers, file, max_column_size=max_column_size)
-    writer.write(rows_by_sheet)
-    writer.close()
+    try:
+        writer.write(rows_by_sheet)
+    finally:
+        writer.close()
 
 
 def export_raw(headers, data, file, format=Format.XLS_2007,
@@ -90,11 +92,13 @@ def export_raw_to_writer(headers, data, file, format=Format.XLS_2007,
     headers = FormattedRow.wrap_all_rows(headers)
     writer.open(headers, file, max_column_size=max_column_size)
 
-    # do the same for the data
-    data = FormattedRow.wrap_all_rows(data)
-    writer.write(data)
-    yield writer
-    writer.close()
+    try:
+        # do the same for the data
+        data = FormattedRow.wrap_all_rows(data)
+        writer.write(data)
+        yield writer
+    finally:
+        writer.close()
 
 
 class Constant(object):
