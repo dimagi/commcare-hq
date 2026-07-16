@@ -2544,4 +2544,5 @@ CHUNKED_LIVEQUERY = FeatureRelease(
     label='LiveQuery variant: fetch case indexes in chunks rather than all at once. More but smaller queries.',
     tag=TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
+    owner='Daniel Miller',
 )
