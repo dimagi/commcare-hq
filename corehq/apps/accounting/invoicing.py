@@ -832,7 +832,7 @@ class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
 
     def total_users_for_date(self, date):
         total_users = 0
-        for domain in self.subscribed_domains:
+        for domain in self.subscribed_domains_for_date(date):
             try:
                 history = FormSubmittingMobileWorkerHistory.objects.get(domain=domain, record_date=date)
                 total_users += history.num_users
