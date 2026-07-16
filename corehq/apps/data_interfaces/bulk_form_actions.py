@@ -102,9 +102,7 @@ def run_bulk_form_action(job):
 
     skipped = defaultdict(list)
     processed = succeeded = 0
-    for result in apply_form_action(
-        job.domain, form_ids, form_action.run, validate=form_action.validate,
-    ):
+    for result in _apply_form_action(job.domain, form_ids, form_action):
         processed += 1
         if result.status == SUCCEEDED:
             succeeded += 1
@@ -127,25 +125,20 @@ def run_bulk_form_action(job):
     job.save()
 
 
-def apply_form_action(domain, form_ids, action_fn, validate=None):
-    """Apply ``action_fn`` to each form and yield a ``FormActionResult`` per id.
-
-    :param action_fn: callable taking an ``XFormInstance``
-    :param validate: optional callable taking an ``XFormInstance`` and returning
-        a skip reason (or ``None`` to proceed).
-    """
+def _apply_form_action(domain, form_ids, form_action):
+    """Apply ``form_action`` to each form and yield a ``FormActionResult`` per id."""
     unresolved_ids = set(form_ids)
     for xform in XFormInstance.objects.iter_forms(form_ids):
         if xform.domain != domain:
             # skip forms not belonging to the specified domain
             continue
         unresolved_ids.discard(xform.form_id)
-        reason = validate(xform) if validate else None
+        reason = form_action.validate(xform) if form_action.validate else None
         if reason:
             yield FormActionResult(xform.form_id, SKIPPED, reason)
             continue
         try:
-            action_fn(xform)
+            form_action.run(xform)
         except Exception:
             notify_exception(None, "Error applying bulk form action", {
                 'domain': domain,
