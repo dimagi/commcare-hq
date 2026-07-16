@@ -1,10 +1,16 @@
-import pytest
+from unittest.mock import Mock, patch
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
+
+import pytest
 
 from corehq.apps.data_interfaces.bulk_form_actions import (
     SAVE_EVERY,
+    SKIPPED,
+    SUCCEEDED,
+    FormActionResult,
     _save_interval,
+    apply_form_action,
     build_form_action,
     mark_job_failed,
     run_bulk_form_action,
@@ -143,3 +149,79 @@ class TestMarkJobFailed(TestCase):
 ])
 def test_save_interval(requested_count, expected):
     assert _save_interval(requested_count) == expected
+
+
+class TestApplyFormAction(SimpleTestCase):
+
+    def _patched_apply_form_action(self, form_ids, forms, action_fn=None, validate=None):
+        action_fn = action_fn or (lambda xform: None)
+        with patch(
+            'corehq.apps.data_interfaces.bulk_form_actions.XFormInstance.objects.iter_forms',
+            return_value=forms,
+        ):
+            return list(apply_form_action(DOMAIN, form_ids, action_fn, validate=validate))
+
+    def test_empty_form_ids(self):
+        assert self._patched_apply_form_action([], []) == []
+
+    def test_success(self):
+        form = Mock(form_id='f1', domain=DOMAIN)
+        calls = []
+        results = self._patched_apply_form_action(
+            ['f1'], [form], action_fn=calls.append
+        )
+        assert calls == [form]
+        assert results == [FormActionResult('f1', SUCCEEDED)]
+
+    def test_missing_is_not_found(self):
+        results = self._patched_apply_form_action(['missing'], [])
+        assert results == [FormActionResult('missing', SKIPPED, 'not_found')]
+
+    def test_wrong_domain_is_not_found(self):
+        form = Mock(form_id='f1', domain='other-domain')
+        called = []
+        results = self._patched_apply_form_action(
+            ['f1'], [form], action_fn=called.append
+        )
+        assert called == []  # action not applied to out-of-domain forms
+        assert results == [FormActionResult('f1', SKIPPED, 'not_found')]
+
+    def test_exception_is_unexpected_error(self):
+        form = Mock(form_id='f1', domain=DOMAIN)
+
+        def unexpected_error(xform):
+            raise Exception('error')
+
+        with patch(
+            'corehq.apps.data_interfaces.bulk_form_actions.notify_exception'
+        ) as notify:
+            results = self._patched_apply_form_action(
+                ['f1'], [form], action_fn=unexpected_error
+            )
+        assert results == [FormActionResult('f1', SKIPPED, 'unexpected_error')]
+        notify.assert_called_once()
+
+    def test_mixed_results(self):
+        found = Mock(form_id='f1', domain=DOMAIN)
+        results = self._patched_apply_form_action(['f1', 'missing'], [found])
+        assert results == [
+            FormActionResult('f1', SUCCEEDED),
+            FormActionResult('missing', SKIPPED, 'not_found'),
+        ]
+
+    def test_validate_skip_reason(self):
+        form = Mock(form_id='f1', domain=DOMAIN)
+        acted = []
+        results = self._patched_apply_form_action(
+            ['f1'], [form], action_fn=acted.append,
+            validate=lambda f: 'not_archived',
+        )
+        assert acted == []  # validation skip means action is never applied
+        assert results == [FormActionResult('f1', SKIPPED, 'not_archived')]
+
+    def test_validate_pass_runs_action(self):
+        form = Mock(form_id='f1', domain=DOMAIN)
+        results = self._patched_apply_form_action(
+            ['f1'], [form], action_fn=lambda f: None, validate=lambda f: None,
+        )
+        assert results == [FormActionResult('f1', SUCCEEDED)]

@@ -5,14 +5,16 @@ Celery. The Celery task is a thin wrapper around ``run_bulk_form_action``.
 """
 import logging
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Callable, Optional
 
 from attrs import frozen
 
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.data_interfaces.interfaces import FormManagementMode
 from corehq.apps.data_interfaces.models import BulkAsyncJob
-from corehq.apps.data_interfaces.utils import SUCCEEDED, apply_form_action
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
@@ -21,6 +23,17 @@ from corehq.form_processor.models import XFormInstance
 log = logging.getLogger(__name__)
 
 SAVE_EVERY = 100
+
+SUCCEEDED = 'succeeded'
+SKIPPED = 'skipped'
+
+
+@dataclass(frozen=True)
+class FormActionResult:
+    """Outcome of a bulk form action for a single requested form id."""
+    form_id: str
+    status: str  # SUCCEEDED | SKIPPED
+    reason: Optional[str] = None  # not_found | unexpected_error
 
 
 def create_bulk_form_job(domain, mode, requested_by, form_ids):
@@ -112,6 +125,37 @@ def run_bulk_form_action(job):
     job.status = BulkAsyncJob.Status.COMPLETE
     job.completed_at = datetime.now(tz=UTC)
     job.save()
+
+
+def apply_form_action(domain, form_ids, action_fn, validate=None):
+    """Apply ``action_fn`` to each form and yield a ``FormActionResult`` per id.
+
+    :param action_fn: callable taking an ``XFormInstance``
+    :param validate: optional callable taking an ``XFormInstance`` and returning
+        a skip reason (or ``None`` to proceed).
+    """
+    unresolved_ids = set(form_ids)
+    for xform in XFormInstance.objects.iter_forms(form_ids):
+        if xform.domain != domain:
+            # skip forms not belonging to the specified domain
+            continue
+        unresolved_ids.discard(xform.form_id)
+        reason = validate(xform) if validate else None
+        if reason:
+            yield FormActionResult(xform.form_id, SKIPPED, reason)
+            continue
+        try:
+            action_fn(xform)
+        except Exception:
+            notify_exception(None, "Error applying bulk form action", {
+                'domain': domain,
+                'form_id': xform.form_id,
+            })
+            yield FormActionResult(xform.form_id, SKIPPED, 'unexpected_error')
+        else:
+            yield FormActionResult(xform.form_id, SUCCEEDED)
+    for form_id in unresolved_ids:
+        yield FormActionResult(form_id, SKIPPED, 'not_found')
 
 
 def mark_job_failed(job_id):
