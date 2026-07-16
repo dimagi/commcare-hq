@@ -33,6 +33,7 @@ from .bulk_form_actions import (
     run_bulk_form_action,
 )
 from .deduplication import backfill_deduplicate_rule, reset_deduplicate_rule
+from .interfaces import FormManagementMode
 from .models import (
     AutomaticUpdateRule,
     BulkAsyncJob,
@@ -117,7 +118,8 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids)
     the BulkAsyncJob cutover. Reconstructs a job from the old pickle args and
     hands off to bulk_form_action_async. Remove one release after deploy.
     """
-    job = create_bulk_form_job(domain, archive_or_restore, couch_user.username, form_ids)
+    action = FormManagementMode.bulk_action(archive_or_restore)
+    job = create_bulk_form_job(domain, action, couch_user.username, form_ids)
     bulk_form_action_async.delay(job.id.hex, domain)
 
 
