@@ -284,9 +284,9 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
             yield list(index_by_key.values())
 
     if CHUNKED_LIVEQUERY.enabled(domain):
-        get_related = chunked_get_related
+        timed_get_related = chunked_get_related
     else:
-        get_related = get_related_with_db_exclude
+        timed_get_related = get_related_with_db_exclude
 
     IGNORE = object()
     debug = logging.getLogger(__name__).debug
@@ -305,7 +305,7 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     open_ids = set(owned_ids)
     get_related_indices = partial(CommCareCaseIndex.objects.get_related_indices, domain)
     while next_ids:
-        with get_related(next_ids) as related:
+        with timed_get_related(next_ids) as related:
             if not related:
                 break
 
