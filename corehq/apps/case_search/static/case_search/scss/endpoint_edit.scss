@@ -3,3 +3,15 @@
   height: 24px;
   font-size: 11px;
 }
+
+// The global `.select2-container { width: 100% !important; }` rule
+// (hqwebapp/scss/commcarehq/_select2.scss) would stretch the field select2
+// across the whole condition row. Constrain just this one so it sits inline
+// before the operator dropdown.
+.ep-field-select + .select2-container {
+  width: 12rem !important;
+}
+
+.ep-date-input {
+  width: 12rem;
+}
