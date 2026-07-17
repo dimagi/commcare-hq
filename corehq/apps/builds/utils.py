@@ -1,6 +1,6 @@
 import re
 
-from corehq.apps.builds.models import CommCareBuild, CommCareBuildConfig
+from corehq.apps.builds.models import CommCareBuild, CommCareBuildConfig, CommCareMobileBuild
 
 
 def get_all_versions(versions):
@@ -79,7 +79,7 @@ def get_build_time(version, cache=None):
         return cache[version]
 
     try:
-        build = CommCareBuild.get_build(version, latest=True)
+        build = CommCareMobileBuild.get_build(version)
     except KeyError:
         cache[version] = None
         return None
