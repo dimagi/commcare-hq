@@ -187,9 +187,9 @@ class BuildSpec(DocumentSchema):
 
     def get_build(self):
         if self.latest:
-            return CommCareBuild.get_build(self.version, latest=True)
+            return CommCareMobileBuild.get_build(self.version)
         else:
-            return CommCareBuild.get_build(self.version, self.build_number)
+            return CommCareMobileBuild.get_build(self.version, self.build_number)
 
     def is_null(self):
         return not (self.version and (self.build_number or self.latest))
