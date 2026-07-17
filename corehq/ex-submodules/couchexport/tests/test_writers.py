@@ -69,7 +69,7 @@ class CsvFileWriterTests(SimpleTestCase):
         writer.write_row(headers)
         writer.finish()
         file_start = writer.get_file().read(6)
-        self.assertEqual(file_start, BOM_UTF8 + b'ham')
+        assert file_start == BOM_UTF8 + b'ham'
 
     def test_csv_file_writer_utf8(self):
         writer = CsvFileWriter()
@@ -78,7 +78,7 @@ class CsvFileWriterTests(SimpleTestCase):
         writer.write_row(headers)
         writer.finish()
         file_start = writer.get_file().read(7)
-        self.assertEqual(file_start, BOM_UTF8 + 'hám'.encode('utf-8'))
+        assert file_start == BOM_UTF8 + 'hám'.encode('utf-8')
 
     def test_csv_file_writer_int(self):
         writer = CsvFileWriter()
@@ -87,7 +87,7 @@ class CsvFileWriterTests(SimpleTestCase):
         writer.write_row(headers)
         writer.finish()
         file_start = writer.get_file().read(6)
-        self.assertEqual(file_start, BOM_UTF8 + b'100')
+        assert file_start == BOM_UTF8 + b'100'
 
 
 class HtmlExportWriterTests(SimpleTestCase):
@@ -107,10 +107,11 @@ class HtmlExportWriterTests(SimpleTestCase):
             [etree.tostring(td, encoding='utf-8').strip().decode('utf-8') for td in tr.xpath('./td')]
             for tr in root.xpath('./body/table/tbody/tr')
         ]
-        self.assertEqual(html_rows,
-                         [['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>'],
-                          ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>'],
-                          ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>']])
+        assert html_rows == [
+            ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>'],
+            ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>'],
+            ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>'],
+        ]
 
 
 class Excel2007ExportWriterTests(SimpleTestCase):
@@ -190,8 +191,7 @@ class ExportWriterCleanupTests(SimpleTestCase):
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter('always')
             gc.collect()
-        unraisable = [w for w in caught if 'Unraisable' in w.category.__name__]
-        self.assertEqual(unraisable, [])
+        assert [w for w in caught if 'Unraisable' in w.category.__name__] == []
 
 
 class Excel2003ExportWriterTests(SimpleTestCase):
@@ -236,9 +236,7 @@ class HeaderNameTest(SimpleTestCase):
 
         first_sheet_name = preview[0]['table_name']
         second_sheet_name = preview[1]['table_name']
-        self.assertNotEqual(
-            first_sheet_name.lower(),
-            second_sheet_name.lower(),
+        assert first_sheet_name.lower() != second_sheet_name.lower(), (
             "Sheet names must not be equal. Comparison is NOT case sensitive. Names were '{}' and '{}'".format(
                 first_sheet_name, second_sheet_name
             )
@@ -256,9 +254,9 @@ class HeaderNameTest(SimpleTestCase):
         )
         writer.close()
         preview = writer.get_preview()
-        self.assertGreater(len(table_index), writer.max_table_name_size)
-        self.assertEqual(preview[0]['table_name'], "my_t...dex")
-        self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
+        assert len(table_index) > writer.max_table_name_size
+        assert preview[0]['table_name'] == "my_t...dex"
+        assert len(preview[0]['table_name']) <= writer.max_table_name_size
 
     def test_odd_max_header_length(self):
         writer = PythonDictWriter()
@@ -272,8 +270,8 @@ class HeaderNameTest(SimpleTestCase):
         )
         writer.close()
         preview = writer.get_preview()
-        self.assertEqual(preview[0]['table_name'], "anothe...b name")
-        self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
+        assert preview[0]['table_name'] == "anothe...b name"
+        assert len(preview[0]['table_name']) <= writer.max_table_name_size
 
     def test_exact_max_header_length(self):
         writer = PythonDictWriter()
@@ -287,8 +285,8 @@ class HeaderNameTest(SimpleTestCase):
         )
         writer.close()
         preview = writer.get_preview()
-        self.assertEqual(preview[0]['table_name'], "sheet_name_for_tabs")
-        self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
+        assert preview[0]['table_name'] == "sheet_name_for_tabs"
+        assert len(preview[0]['table_name']) <= writer.max_table_name_size
 
     def test_max_header_length_duplicates(self):
         writer = PythonDictWriter()
@@ -305,7 +303,7 @@ class HeaderNameTest(SimpleTestCase):
         writer.close()
         preview = writer.get_preview()
         table_names = {table['table_name'] for table in preview}
-        self.assertEqual(len(table_names), 2)
+        assert len(table_names) == 2
 
 
 class TestGeoJSONWriter(SimpleTestCase):
@@ -332,12 +330,12 @@ class TestGeoJSONWriter(SimpleTestCase):
                 'properties': {'name': 'Delhi', 'country': 'India'}
             },
         ]
-        self.assertEqual(features, expected_features)
+        assert features == expected_features
 
     def test_get_features__other_geo_property_configured(self):
         table = TableConfiguration(selected_geo_property="some-other-property")
         features = GeoJSONWriter().get_features(table, self._table_data())
-        self.assertEqual(features, [])
+        assert features == []
 
     def test_get_features__invalid_geo_property_column_value(self):
         table = TableConfiguration(selected_geo_property=self.GEO_PROPERTY)
@@ -347,7 +345,7 @@ class TestGeoJSONWriter(SimpleTestCase):
         features = GeoJSONWriter().get_features(table, data)
 
         features_names = [feature['properties']['name'] for feature in features]
-        self.assertTrue(data[1][2] not in features_names)
+        assert data[1][2] not in features_names
 
     def test_get_features_from_path(self):
         table = self.geopoint_table_configuration(
@@ -373,7 +371,7 @@ class TestGeoJSONWriter(SimpleTestCase):
                 'type': 'Feature'
             },
         ]
-        self.assertEqual(features, expected_features)
+        assert features == expected_features
 
     def test_get_features_from_path__invalid_path(self):
         table = self.geopoint_table_configuration(
@@ -383,7 +381,7 @@ class TestGeoJSONWriter(SimpleTestCase):
         features = GeoJSONWriter().get_features(table, self._table_data(geo_property_header='some.path'))
 
         expected_features = []
-        self.assertEqual(features, expected_features)
+        assert features == expected_features
 
     def test_get_features_from_path__location_metadata(self):
         table = self.geopoint_table_configuration(
@@ -410,7 +408,7 @@ class TestGeoJSONWriter(SimpleTestCase):
                 'type': 'Feature'
             },
         ]
-        self.assertEqual(features, expected_features)
+        assert features == expected_features
 
     def _table_data(self, geo_property_header=None):
         data = [self._table_header(geo_property_header)]
