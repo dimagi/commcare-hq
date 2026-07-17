@@ -53,7 +53,7 @@ class BootstrapCheckboxInput(CheckboxInput):
     def _merge_css_classes(self, base_class, incoming_classes):
         # crispy forms adds classes meant for generic full-width controls,
         # plus the lowercased widget class name; neither belongs on a
-        # checkbox, but classes like is-invalid must survive (SAAS-19669)
+        # checkbox, but classes like is-invalid must survive
         unwanted = {'form-control', 'form-select', base_class, type(self).__name__.lower()}
         merged = [base_class]
         merged += [css_class for css_class in incoming_classes.split() if css_class not in unwanted]
