@@ -28,6 +28,7 @@ module.exports = function (grunt) {
     var apps = [
         'app_manager/bootstrap3',
         'app_manager/bootstrap5',
+        'app_manager/form_designer_context',
         'export',
         'notifications/bootstrap3',
         'notifications/bootstrap5',
