@@ -15,7 +15,6 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.couch.migration import (
-    SyncCouchToSQLMixin,
     SyncSQLToCouchMixin,
 )
 from django.core.exceptions import ValidationError
@@ -41,81 +40,6 @@ class SemanticVersionProperty(StringProperty):
         except Exception:
             raise BadValueError("Build version %r does not comply with the x.y.z schema" % value)
         return value
-
-
-class CommCareBuild(SyncCouchToSQLMixin, Document):
-    build_number = IntegerProperty()
-    version = SemanticVersionProperty()
-    time = DateTimeProperty()
-
-    @classmethod
-    def create_without_artifacts(cls, version, build_number):
-        self = cls(build_number=build_number, version=version,
-                   time=datetime.utcnow())
-        self.save()
-        return self
-
-    def minor_release(self):
-        major, minor, _ = self.version.split('.')
-        return int(major), int(minor)
-
-    def major_release(self):
-        major, _, _ = self.version.split('.')
-        return int(major)
-
-    @classmethod
-    def get_build(cls, version, build_number=None, latest=False):
-        """
-        Call as either
-            CommCareBuild.get_build(version, build_number)
-        or
-            CommCareBuild.get_build(version, latest=True)
-        """
-
-        if latest:
-            startkey = [version]
-        else:
-            build_number = int(build_number)
-            startkey = [version, build_number]
-
-        self = cls.view('builds/all',
-                        startkey=startkey + [{}],
-                        endkey=startkey,
-                        descending=True,
-                        limit=1,
-                        include_docs=True,
-                        reduce=False,
-                        ).one()
-
-        if not self:
-            raise KeyError(
-                "Can't find build {label}. For instructions on how to add it, see "
-                "https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/"
-                "README.rst#adding-commcare-builds-to-commcare-hq".format(
-                    label=BuildSpec(
-                        version=version,
-                        build_number=build_number,
-                        latest=latest
-                    )
-                )
-            )
-        return self
-
-    @classmethod
-    def all_builds(cls):
-        return cls.view('builds/all', include_docs=True, reduce=False)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "version",
-            "build_number",
-            "time",
-        ]
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return CommCareMobileBuild
 
 
 def validate_semantic_version(value):
