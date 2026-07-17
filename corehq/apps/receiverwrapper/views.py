@@ -1,5 +1,6 @@
 import os
 import logging
+from contextlib import nullcontext
 
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
@@ -7,6 +8,13 @@ from django.views.decorators.http import require_POST
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
+from corehq.apps.app_manager.decorators import allow_public_form_session
+from corehq.apps.app_manager.models import PublicFormUser
+from corehq.apps.app_manager.public_webform_submissions import (
+    consume_public_form_session,
+    public_form_session_already_submitted,
+    validate_public_form_submission,
+)
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.device_rate_limiter import device_rate_limiter, DEVICE_RATE_LIMIT_MESSAGE
@@ -15,6 +23,7 @@ from couchforms import openrosa_response
 from couchforms.const import MAGIC_PROPERTY
 from couchforms.exceptions import BadSubmissionRequest, UnprocessableFormSubmission
 from couchforms.getters import MultimediaBug
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.profile import profile_dump
 from dimagi.utils.logging import notify_exception
 
@@ -55,7 +64,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.form_processor.exceptions import XFormLockError
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.submission_post import SubmissionPost
-from corehq.form_processor.utils.xform import convert_xform_to_json
+from corehq.form_processor.utils.xform import convert_xform_to_json, extract_meta_instance_id
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext, set_request_duration_reporting_threshold
 from couchdbkit import ResourceNotFound
@@ -140,46 +149,76 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         if should_limit:
             return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
 
-    with TimingContext() as timer:
-        app_id, build_id = get_app_and_build_ids(domain, app_id)
-        submission_post = SubmissionPost(
-            instance=instance,
-            instance_json=instance_json,
-            attachments=attachments,
-            domain=domain,
-            app_id=app_id,
-            build_id=build_id,
-            auth_context=auth_cls(
-                domain=domain,
-                user_id=user_id,
-                authenticated=authenticated,
-            ),
-            location=couchforms.get_location(request),
-            received_on=couchforms.get_received_on(request),
-            date_header=couchforms.get_date_header(request),
-            path=couchforms.get_path(request),
-            submit_ip=couchforms.get_submit_ip(request),
-            last_sync_token=couchforms.get_last_sync_token(request),
-            openrosa_headers=couchforms.get_openrosa_headers(request),
-            force_logs=request.GET.get('force_logs', 'false') == 'true',
-            timing_context=timer
-        )
-
-        try:
-            result = submission_post.run()
-        except XFormLockError as err:
-            logging.warning('Unable to get lock for form %s', err)
-            metrics_counter('commcare.xformlocked.count', tags={
-                'domain': domain, 'authenticated': authenticated
-            })
-            return _submission_error(
-                request, "XFormLockError: %s" % err,
-                metric_tags, domain, app_id, user_id, authenticated, status=423,
-                notify=False,
+    couch_user = getattr(request, 'couch_user', None)
+    is_public = isinstance(couch_user, PublicFormUser) and instance_json is not None
+    if is_public:
+        error = validate_public_form_submission(couch_user.session, instance_json)
+        if error is not None:
+            metrics_counter(
+                'commcare.public_form.rejected_submission',
+                tags={'domain': domain},
             )
+            response = HttpResponseBadRequest(error)
+            _record_metrics(metric_tags, 'known_failures', response)
+            return response
 
-    response = result.response
-    response.request_timer = timer  # logged as Sentry breadcrumbs in LogLongRequestMiddleware
+    with (
+        CriticalSection([f'public-form-session-{couch_user.session.id}'], fail_hard=True)
+        if is_public else nullcontext()
+    ):
+        # Ensure concurrent submissions on a public form session cannot persist more than one form.
+        if is_public and public_form_session_already_submitted(couch_user.session):
+            metrics_counter(
+                'commcare.public_form.already_consumed',
+                tags={'domain': domain},
+            )
+            response = HttpResponseBadRequest('This form link has already been used.')
+            _record_metrics(metric_tags, 'known_failures', response)
+            return response
+
+        with TimingContext() as timer:
+            app_id, build_id = get_app_and_build_ids(domain, app_id)
+            submission_post = SubmissionPost(
+                instance=instance,
+                instance_json=instance_json,
+                attachments=attachments,
+                domain=domain,
+                app_id=app_id,
+                build_id=build_id,
+                auth_context=auth_cls(
+                    domain=domain,
+                    user_id=user_id,
+                    authenticated=authenticated,
+                ),
+                location=couchforms.get_location(request),
+                received_on=couchforms.get_received_on(request),
+                date_header=couchforms.get_date_header(request),
+                path=couchforms.get_path(request),
+                submit_ip=couchforms.get_submit_ip(request),
+                last_sync_token=couchforms.get_last_sync_token(request),
+                openrosa_headers=couchforms.get_openrosa_headers(request),
+                force_logs=request.GET.get('force_logs', 'false') == 'true',
+                timing_context=timer
+            )
+            try:
+                result = submission_post.run()
+            except XFormLockError as err:
+                logging.warning('Unable to get lock for form %s', err)
+                metrics_counter('commcare.xformlocked.count', tags={
+                    'domain': domain, 'authenticated': authenticated
+                })
+                locked_form_id = extract_meta_instance_id(instance_json) if instance_json else None
+                return _submission_error(
+                    request, "XFormLockError: %s" % locked_form_id,
+                    metric_tags, domain, app_id, user_id, authenticated, status=423,
+                    notify=False,
+                )
+
+        response = result.response
+        response.request_timer = timer  # logged as Sentry breadcrumbs in LogLongRequestMiddleware
+
+        if is_public and result.xform is not None and response.status_code < 400:
+            consume_public_form_session(couch_user.session, result.xform)
 
     _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
 
@@ -261,6 +300,7 @@ def post_api(request, domain):
 @require_POST
 @check_domain_mobile_access
 @set_request_duration_reporting_threshold(60)
+@allow_public_form_session
 def post(request, domain, app_id=None):
     try:
         if domain_requires_auth(domain):

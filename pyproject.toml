@@ -19,10 +19,10 @@ dependencies = [
     "boto3",
     "celery[redis]",
     "CommcareTranslationChecker>=0.9.7",
-    "cryptography>=43.0.1",
+    "cryptography>=48.0.1",
     "csiphash",
     "datadog",
-    "ddtrace>=2.21.0",
+    "ddtrace>=4.8.2",
     "decorator==5.1.1", # required by django-digest
     "defusedxml",
     "diff-match-patch",
@@ -49,7 +49,7 @@ dependencies = [
     "django-transfer",
     "django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae", # waiting for next release after 1.16.0
     "django-user-agents",
-    "django~=5.2.14",
+    "django~=5.2.15",
     "djangorestframework",
     "dropbox",
     "elasticsearch6>=6.0.0,<7.0.0",

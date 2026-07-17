@@ -87,8 +87,6 @@ def test_llm_translator_base_prompt_with_unsupported_lang():
 
 
 def test_openai_translator_supported_models():
-    mock_client = MagicMock()
-
     translation_format = MockTranslationFormat()
     translator = OpenaiTranslator(
         api_key="test-api-key",
@@ -470,6 +468,52 @@ def test_remove_errored_translations():
     assert updated_po[1].msgstr == ""
     assert updated_po[2].msgstr == ""
     os.remove(po_file_path)
+
+
+def test_extract_errored_msgstr_ids_skips_lines_without_line_number():
+    """Warnings like "<file>: warning: Charset missing in header." have no line
+    number and must be skipped rather than crashing the parser."""
+    po_format = PoTranslationFormat("test_file.po")
+    error_output = (
+        "django.po: warning: Charset missing in header.\n"
+        "django.po:42: a format specification for argument 'count' "
+        "doesn't exist in 'msgstr[1]'\n"
+    )
+    result = po_format._extract_errored_msgstr_ids(error_output)
+    assert list(result.keys()) == [42]
+
+
+def test_remove_errored_translations_clears_plural_forms():
+    # A Plural-Forms header is the minimum needed for msgfmt to parse the plural
+    # entry and reach the format-placeholder check.
+    po_content = (
+        'msgid ""\n'
+        'msgstr ""\n'
+        '"Plural-Forms: nplurals=2; plural=(n != 1);\\n"\n\n'
+        '#, python-brace-format\n'
+        'msgid "{count} domain membership"\n'
+        'msgid_plural "{count} domain memberships"\n'
+        'msgstr[0] "Actualizar Membresia de Ubicacion"\n'
+        'msgstr[1] "Actualizar Membresia de Ubicacion"\n'
+    )
+    with tempfile.NamedTemporaryFile("w", suffix=".po", delete=False) as tmp:
+        tmp.write(po_content)
+        po_file_path = tmp.name
+
+    try:
+        po_format = PoTranslationFormat(po_file_path)
+        # Sanity check: the file is genuinely uncompilable before the fix.
+        assert po_format._extract_errored_msgstr_ids(po_format._run_msgfmt(po_file_path))
+
+        po_format.check_and_remove_errored_messages(po_file_path)
+
+        updated = polib.pofile(po_file_path)
+        entry = updated.find("{count} domain membership")
+        assert all(v == "" for v in entry.msgstr_plural.values())
+        # No compile errors remain
+        assert not po_format._extract_errored_msgstr_ids(po_format._run_msgfmt(po_file_path))
+    finally:
+        os.remove(po_file_path)
 
 
 def test_fuzzy_handling_with_real_po_content():

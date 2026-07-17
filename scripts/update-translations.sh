@@ -86,6 +86,22 @@ if $AGENT_INSTALLED; then
     OPENAI_API_KEY="${OPENAI_API_KEY}" ./manage.py translate_po_files
 fi
 
+# Validate that every locale file still compiles before we push to transifex.
+echo "Validating locale files with 'msgfmt --check'."
+msgfmt_errors=0
+for po_file in locale/*/LC_MESSAGES/*.po
+do
+    if ! msgfmt --check -o /dev/null "$po_file"
+    then
+        echo "  Failed: $po_file"
+        msgfmt_errors=1
+    fi
+done
+if [[ $msgfmt_errors -ne 0 ]]
+then
+    abort "One or more locale files failed 'msgfmt --check' (see errors above). Fix or blank the offending translations before re-running."
+fi
+
 echo "Pushing updates to transifex."
 tx push -s -t
 

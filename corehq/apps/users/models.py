@@ -204,6 +204,7 @@ class HqPermissions(DocumentSchema):
     edit_apps = BooleanProperty(default=False)
     view_apps = BooleanProperty(default=False)
     edit_locked_questions_in_apps = BooleanProperty(default=False)
+    edit_public_webforms = BooleanProperty(default=False)
 
     edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
@@ -310,6 +311,9 @@ class HqPermissions(DocumentSchema):
 
         if self.edit_apps:
             self.view_apps = True
+        else:
+            self.edit_locked_questions_in_apps = False
+            self.edit_public_webforms = False
 
         if not (self.view_reports or self.view_report_list):
             self.download_reports = False
@@ -823,12 +827,6 @@ class DjangoUserMixin(DocumentSchema):
     def check_password(self, password):
         """ Currently just for debugging"""
         return check_password(password, self.password)
-
-    @property
-    def date_joined_iso_utc(self):
-        if self.date_joined.tzinfo is None:
-            return self.date_joined.replace(tzinfo=tz.utc).isoformat()
-        return self.date_joined.astimezone(tz.utc).isoformat()
 
 
 class EulaMixin(DocumentSchema):

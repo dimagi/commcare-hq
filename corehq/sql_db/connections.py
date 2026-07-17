@@ -17,6 +17,7 @@ from .util import select_db_for_read
 
 DEFAULT_ENGINE_ID = DEFAULT_DB_ALIAS
 UCR_ENGINE_ID = 'ucr'
+PROJECT_DB_ENGINE_ID = 'project_db'
 
 
 def get_db_alias_or_none(enigne_id):
@@ -181,6 +182,8 @@ class ConnectionManager(object):
             self.engine_id_django_db_map[DEFAULT_ENGINE_ID] = DEFAULT_DB_ALIAS
         if UCR_ENGINE_ID not in self.engine_id_django_db_map:
             self.engine_id_django_db_map[UCR_ENGINE_ID] = DEFAULT_DB_ALIAS
+        if PROJECT_DB_ENGINE_ID not in self.engine_id_django_db_map:
+            self.engine_id_django_db_map[PROJECT_DB_ENGINE_ID] = DEFAULT_DB_ALIAS
 
     @memoized
     def _connection_string_from_django(self, django_alias):

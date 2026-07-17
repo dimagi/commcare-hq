@@ -9,6 +9,7 @@ from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment, XFormInstance
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
+from corehq.form_processor.utils.metadata import scrub_form_meta
 from corehq.util.soft_assert.api import soft_assert
 from couchforms import XMLSyntaxError
 from couchforms.exceptions import MissingXMLNSError
@@ -73,7 +74,11 @@ def process_xform_xml(domain, instance_xml, attachments=None, auth_context=None,
 
     try:
         return _create_new_xform(
-            domain, instance_xml, attachments=attachments, auth_context=auth_context, instance_json=instance_json
+            domain,
+            instance_xml,
+            attachments=attachments,
+            auth_context=auth_context,
+            instance_json=instance_json,
         )
     except (MissingXMLNSError, XMLSyntaxError) as e:
         return _get_submission_error(domain, instance_xml, e, auth_context)
@@ -108,6 +113,28 @@ def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None,
     xform = interface.new_xform(instance_json)
     xform.domain = domain
     xform.auth_context = auth_context
+
+    # Call flow:
+    #
+    #     SubmissionPost.run()
+    #     |
+    #     +-- process_xform_xml()
+    #     |   |
+    #     |   +-- _create_new_xform()  <-- you are here
+    #     |
+    #     +-- self._invalidate_caches()
+    #         |
+    #         +-- instance.metadata
+    #             |
+    #             +-- XFormInstance.form_data
+    #                 |
+    #                 +-- XFormInstance._form_json  <-- cached scrubbed instance_json
+    #
+    # Scrub and cache `instance_json` in `XFormInstance._form_json` the way
+    # that `XFormInstance.form_data` does, so that `XFormInstance.form_data`
+    # doesn't have to fetch the form XML and convert it to JSON again.
+    scrub_form_meta(xform.form_id, instance_json)
+    xform._form_json = instance_json
 
     # Maps all attachments to uniform format and adds form.xml to list before storing
     attachments = [

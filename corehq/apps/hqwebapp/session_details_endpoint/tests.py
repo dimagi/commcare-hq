@@ -1,5 +1,7 @@
 import datetime
 import json
+from uuid import uuid4
+
 import pytz
 
 from django.conf import settings
@@ -9,6 +11,7 @@ from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 
 from corehq import toggles
+from corehq.apps.app_manager.models import PublicFormSession, PublicWebform
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.util.hmac_request import get_hmac_digest
@@ -31,7 +34,7 @@ class SessionDetailsViewTest(TestCase):
             'superUser': cls.sql_user.is_superuser,
             'authToken': None,
             'domains': [cls.domain.name],
-            'anonymous': False,
+            'public': False,
             'enabled_toggles': [],
             'enabled_previews': [],
         }
@@ -216,6 +219,72 @@ class SessionDetailsViewTest(TestCase):
         expected_response['enabled_toggles'] = ['SECURE_SESSION_TIMEOUT']
         expected_response['enabled_previews'] = ['CALC_XPATHS']
         self.assertJSONEqual(response.content, expected_response)
+
+
+class PublicSessionDetailsViewTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = Domain.get_or_create_with_name('publictoyland', is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
+        cls.url = reverse('session_details')
+
+    def _make_session(self, expires_at=None, submitted_at=None):
+        future_expiration = datetime.datetime.today() + datetime.timedelta(days=30)
+        webform = PublicWebform.objects.create(
+            domain=self.domain.name,
+            app_id='app',
+            app_build_id='build',
+            form_unique_id='form',
+            endpoint_id='endpoint',
+            session_type='survey',
+            allow_sms=False,
+            allow_email=True,
+            expires_at=future_expiration,
+        )
+        return PublicFormSession.objects.create(
+            public_webform=webform,
+            expires_at=expires_at or future_expiration,
+            submitted_at=submitted_at,
+        )
+
+    def test_valid_public_session(self):
+        session = self._make_session()
+        data = json.dumps({'publicSessionKey': str(session.session_key)})
+        response = _post_with_hmac(self.url, data, content_type="application/json")
+        assert response.status_code == 200
+        assert json.loads(response.content) == {
+            'username': session.session_username,
+            'djangoUserId': None,
+            'superUser': False,
+            'authToken': str(session.session_key),
+            'domains': [self.domain.name],
+            'public': True,
+            'enabled_toggles': [],
+            'enabled_previews': [],
+        }
+
+    def test_unknown_public_session_key(self):
+        data = json.dumps({'publicSessionKey': str(uuid4())})
+        response = _post_with_hmac(self.url, data, content_type="application/json")
+        assert response.status_code == 404
+
+    def test_invalid_public_session_key(self):
+        data = json.dumps({'publicSessionKey': 'not-a-uuid'})
+        response = _post_with_hmac(self.url, data, content_type="application/json")
+        assert response.status_code == 404
+
+    def test_expired_public_session(self):
+        session = self._make_session(expires_at=datetime.datetime(2000, 1, 1))
+        data = json.dumps({'publicSessionKey': str(session.session_key)})
+        response = _post_with_hmac(self.url, data, content_type="application/json")
+        assert response.status_code == 404
+
+    def test_submitted_public_session(self):
+        session = self._make_session(submitted_at=datetime.datetime(2020, 1, 1))
+        data = json.dumps({'publicSessionKey': str(session.session_key)})
+        response = _post_with_hmac(self.url, data, content_type="application/json")
+        assert response.status_code == 404
 
 
 def _post_with_hmac(url, data, client=None, **kwargs):

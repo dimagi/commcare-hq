@@ -115,3 +115,16 @@ FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS = [
 
 CUSTOM_ICON_TYPE_TEXT = "text"
 CUSTOM_ICON_TYPE_XPATH = "xpath"
+
+ANDROID_LOGO_PROPERTY_MAPPING = {
+    'hq_logo_android_home': 'brand-banner-home',
+    'hq_logo_android_login': 'brand-banner-login',
+    'hq_logo_android_demo': 'brand-banner-home-demo',
+    'hq_logo_web_apps': 'brand-banner-web-apps',
+}
+
+LATEST_APK_VALUE = 'latest'
+LATEST_APP_VALUE = 0
+
+PUBLIC_FORM_SESSION_COOKIE_NAME = 'public_form_session_key'
+PUBLIC_FORM_SESSION_HEADER = 'CommCare-Public-Session'

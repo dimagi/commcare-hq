@@ -482,7 +482,6 @@ msgstr "الاشتراك"
 
 #: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
@@ -668,9 +667,8 @@ msgstr "أدخل رمز دور فريد."
 msgid "A name is required for this new role."
 msgstr "مطلوب اسم لهذا الدور الجديد."
 
-#: corehq/apps/accounting/forms.py
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_manager/forms.py corehq/apps/app_manager/models.py
+#: corehq/apps/accounting/forms.py corehq/apps/app_manager/forms.py
+#: corehq/apps/app_manager/models/modules.py
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
@@ -2042,8 +2040,6 @@ msgstr "رقم البيان"
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/data_cleaning/tables.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
@@ -2362,18 +2358,20 @@ msgstr ""
 #, fuzzy
 #| msgid ""
 #| "\n"
-#| "    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585\n"
-#| "    Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#| "    Statement From:\n"
+#| "    CommCare HQ and the corporation Dimagi, Inc.\n"
+#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 #| "  "
 msgid ""
 "\n"
-"    Statement From: CommCare and the corporation Dimagi, Inc. 585\n"
-"    Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    Statement From: CommCare and the corporation Dimagi, Inc. 245 Main "
+"Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  "
 msgstr ""
 "\n"
-"    بيان من: CommCare HQ والشركة Dimagi, Inc. 585\n"
-"    Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    بيان من:\n"
+"    CommCare HQ والشركة Dimagi, Inc.\n"
+"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
@@ -3048,8 +3046,7 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
-#: corehq/apps/accounting/views.py corehq/apps/app_execution/forms.py
-#: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/accounting/views.py corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
@@ -4694,7 +4691,6 @@ msgid "Payment Type"
 msgstr "نوع الأصل"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/hqadmin/reports.py corehq/apps/linked_domain/views.py
@@ -5925,425 +5921,6 @@ msgstr "هذا النطاق لا يمتلك امتيازات الملف الشخ
 msgid "This domain does not have locations privileges."
 msgstr "هذا النطاق لا يمتلك امتيازات المواقع."
 
-#: corehq/apps/app_execution/forms.py
-msgid "Run Every (minutes)"
-msgstr "تشغيل كل (دقائق)"
-
-#: corehq/apps/app_execution/forms.py
-msgid "Username of the user to run the workflow"
-msgstr "اسم المستخدم الذي سيشغل سير العمل"
-
-#: corehq/apps/app_execution/forms.py
-msgid "HAR File"
-msgstr "ملف HAR"
-
-#: corehq/apps/app_execution/forms.py
-msgid ""
-"HAR file recording should start with the selection of the app "
-"(navigate_menu_start)."
-msgstr "يجب أن يبدأ تسجيل ملف HAR باختيار التطبيق (navigate_menu_start)."
-
-#: corehq/apps/app_execution/forms.py
-msgid "Populate workflow from HAR file"
-msgstr "تعبئة سير العمل من ملف HAR"
-
-#: corehq/apps/app_execution/forms.py
-#: corehq/apps/case_search/templates/case_search/csql_expression_form.html
-#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
-#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-#: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/geospatial/forms.py
-#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
-#: corehq/apps/groups/templates/groups/group_members.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
-#: corehq/apps/integration/kyc/forms.py
-#: corehq/apps/integration/payments/forms.py
-#: corehq/apps/locations/templates/locations/location_types.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/reminders/forms.py corehq/apps/reports/forms.py
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/filter_panel.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
-#: corehq/apps/sms/forms.py corehq/apps/styleguide/example_forms.py
-#: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
-#: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
-#: corehq/apps/userreports/forms.py
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
-#: corehq/apps/userreports/ui/forms.py
-#: corehq/apps/users/templates/users/edit_role.html
-#: corehq/messaging/scheduling/forms.py
-#: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_save.html
-#: corehq/motech/dhis2/forms.py corehq/motech/forms.py
-#: corehq/motech/generic_inbound/forms.py
-#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-msgid "Save"
-msgstr "حفظ"
-
-#: corehq/apps/app_execution/forms.py
-msgid "User not found"
-msgstr "المستخدم غير موجود"
-
-#: corehq/apps/app_execution/forms.py
-#, python-brace-format
-msgid "App not found in domain: {domain}:{app_id}"
-msgstr "لم يتم العثور على التطبيق في النطاق: {domain}:{app_id}"
-
-#: corehq/apps/app_execution/models.py
-msgid "Human: Answer each question individually and submit form"
-msgstr "بشري: أجب عن كل سؤال بشكل منفصل ثم أرسل النموذج"
-
-#: corehq/apps/app_execution/models.py
-msgid "No Submit: Answer all questions but don't submit the form"
-msgstr "بدون إرسال: أجب عن جميع الأسئلة لكن لا ترسل النموذج"
-
-#: corehq/apps/app_execution/models.py
-msgid "Ignore: Do not complete or submit forms"
-msgstr "تجاهل: لا تكمل أو ترسل النماذج"
-
-#: corehq/apps/app_execution/models.py
-msgid "Sync user data before running"
-msgstr "مزامنة بيانات المستخدم قبل التشغيل"
-
-#: corehq/apps/app_execution/models.py
-msgid "Number of minutes between runs"
-msgstr "عدد الدقائق بين كل تشغيل"
-
-#: corehq/apps/app_execution/models.py
-msgid "Emails to notify on failure"
-msgstr "عناوين البريد الإلكتروني للإخطار عند الفشل"
-
-#: corehq/apps/app_execution/templates/app_execution/components/logs.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-#: corehq/messaging/scheduling/views.py corehq/motech/generic_inbound/models.py
-#: corehq/motech/repeaters/templates/repeaters/repeaters.html
-#: corehq/motech/repeaters/views/repeat_record_display.py
-msgid "Success"
-msgstr "نجاح"
-
-#: corehq/apps/app_execution/templates/app_execution/components/logs.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
-msgid "Error:"
-msgstr "خطأ:"
-
-#: corehq/apps/app_execution/templates/app_execution/components/logs.html
-msgid "Workflow"
-msgstr "سير العمل"
-
-#: corehq/apps/app_execution/templates/app_execution/components/logs.html
-msgid "Current Workflow"
-msgstr "سير العمل الحالي"
-
-#: corehq/apps/app_execution/templates/app_execution/components/logs.html
-msgid ""
-"\n"
-"              The workflow shown here is the current version which may "
-"differ from the version\n"
-"              executed at the time of this run.\n"
-"            "
-msgstr ""
-"\n"
-"              سير العمل المعروض هنا هو الإصدار الحالي وقد يختلف عن الإصدار\n"
-"              الذي تم تنفيذه في وقت هذا التشغيل.\n"
-"            "
-
-#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
-#: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#: corehq/apps/data_interfaces/forms.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/views.py
-#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/settings/views.py corehq/apps/sms/views.py
-#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
-#: corehq/apps/userreports/views.py
-#: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/web_users.html
-#: corehq/apps/users/templates/users/roles_and_permissions.html
-#: corehq/motech/generic_inbound/views.py
-msgid "Actions"
-msgstr "الإجراءات"
-
-#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/tabs/tabclasses.py
-msgid "Logs"
-msgstr "السجلات"
-
-#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_run.html
-#: corehq/tabs/tabclasses.py
-msgid "Run"
-msgstr "تشغيل"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_form.html
-#, python-format
-msgid ""
-"\n"
-"      Editing \"%(workflow_name)s\"\n"
-"    "
-msgstr ""
-"\n"
-"      تعديل \"%(workflow_name)s\"\n"
-"    "
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_form.html
-msgid "New workflow"
-msgstr "سير عمل جديد"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "Average Timings"
-msgstr "المتوسط الزمني"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/enterprise/enterprise.py
-msgid "App Name"
-msgstr "اسم التطبيق"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-msgid "Last Run"
-msgstr "آخر تشغيل"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-msgid "Last 10 Runs"
-msgstr "آخر 10 عمليات تشغيل"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/confirm_delete_app.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/confirm_delete_app.html
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap3/module_link.html
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap5/module_link.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
-#: corehq/apps/case_search/models.py
-#: corehq/apps/case_search/templates/case_search/case_search.html
-#: corehq/apps/case_search/templates/case_search/csql_expression_form.html
-#: corehq/apps/case_search/templates/case_search/csql_user_data_criteria_fields.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
-#: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
-#: corehq/apps/groups/templates/groups/group_members.html
-#: corehq/apps/locations/templates/locations/manage/location_template.html
-#: corehq/apps/programs/templates/programs/manage/programs.html
-#: corehq/apps/reminders/templates/reminders/keyword_list.html
-#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
-#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
-#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
-#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
-#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form.html
-#: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/sms/templates/sms/gateway_list.html
-#: corehq/apps/sms/templates/sms/global_gateway_list.html
-#: corehq/apps/users/models.py
-#: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/web_users.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
-#: corehq/apps/users/templates/users/roles_and_permissions.html
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-#: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
-#: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
-#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-#: corehq/motech/templates/motech/connection_settings.html
-msgid "Delete"
-msgstr "حذف"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-#, python-format
-msgid ""
-"\n"
-"    Workflow Execution Log for %(workflow_name)s: %(date)s\n"
-"  "
-msgstr ""
-"\n"
-"    سجل تنفيذ سير العمل لـ %(workflow_name)s: %(date)s\n"
-"  "
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/motech/generic_inbound/reports.py
-msgid "Details"
-msgstr "التفاصيل"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-#, python-format
-msgid "Started: %(date_started)s"
-msgstr "تاريخ البدء: %(date_started)s"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-#, python-format
-msgid "Ended: %(date_ended)s"
-msgstr "تاريخ الانتهاء: %(date_ended)s"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-#, python-format
-msgid "Duration: %(duration)s"
-msgstr "المدة: %(duration)s"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-msgid "Status:"
-msgstr "الحالة:"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-#: corehq/apps/data_interfaces/models.py
-#: corehq/apps/domain/templates/error.html
-#: corehq/apps/integration/kyc/models.py
-#: corehq/apps/integration/payments/const.py
-#: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
-#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-#: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
-#: corehq/apps/sms/models.py corehq/messaging/scheduling/views.py
-#: corehq/motech/generic_inbound/models.py
-#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
-#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
-#: corehq/motech/views.py
-msgid "Error"
-msgstr "خطأ"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-#, python-format
-msgid "Logs for workflow \"%(name)s\""
-msgstr "سجلات سير العمل للتطبيق \"%(name)s\""
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "Log Status"
-msgstr "حالة السجل"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_filtering.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/filter_configs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_filtering.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/filter_configs.html
-#: corehq/apps/registry/templates/registry/partials/audit_logs.html
-msgid "Filter"
-msgstr "تصفية"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "All Status"
-msgstr "كل الحالات"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "Started"
-msgstr "بدأ"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "Duration"
-msgstr "المدة"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "Avg Timings"
-msgstr "متوسط الأوقات"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "Max Timings"
-msgstr "أقصى الأوقات"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_run.html
-#, python-format
-msgid "Testing %(name)s"
-msgstr "اختبار %(name)s"
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_run.html
-msgid "Running..."
-msgstr "جارٍ التنفيذ..."
-
-#: corehq/apps/app_execution/views.py
-msgid "Automatically Executed App Workflows"
-msgstr "سير عمل التطبيقات المنفذة تلقائيًا"
-
-#: corehq/apps/app_execution/views.py
-msgid "New App Workflow"
-msgstr "سير عمل تطبيق جديد"
-
-#: corehq/apps/app_execution/views.py
-msgid "You must use the 'Import HAR' button to upload a HAR file."
-msgstr "يجب استخدام زر 'استيراد HAR' لتحميل ملف HAR."
-
-#: corehq/apps/app_execution/views.py
-#, python-brace-format
-msgid "Edit App Workflow: {name}"
-msgstr "تعديل سير عمل التطبيق: {name}"
-
-#: corehq/apps/app_execution/views.py
-#, python-brace-format
-msgid "Unable to process HAR file: {error}"
-msgstr "تعذر معالجة ملف HAR: {error}"
-
-#: corehq/apps/app_execution/views.py
-msgid "Automatically Executed App Workflow Logs"
-msgstr "سجلات سير عمل التطبيق المنفذة تلقائيًا"
-
-#: corehq/apps/app_execution/views.py
-msgid "Invalid date parameter"
-msgstr "معامل تاريخ غير صالح"
-
-#: corehq/apps/app_execution/views.py
-#, python-brace-format
-msgid "Workflow Log: {name}"
-msgstr "سجل سير العمل: {name}"
-
 #: corehq/apps/app_manager/add_ons.py
 msgid "Case Detail Overwrite"
 msgstr "استبدال تفاصيل الحالة"
@@ -6935,49 +6512,153 @@ msgstr "وسم الحالة"
 msgid "Lookup Table tag"
 msgstr "وسم جدول البحث"
 
-#: corehq/apps/app_manager/models.py
+#: corehq/apps/app_manager/models/applications.py
+#: corehq/apps/app_manager/models/forms.py
 msgid "Error in form \"{}\": {}"
 msgstr "خطأ في النموذج \"{}\": {}"
 
-#: corehq/apps/app_manager/models.py
-msgid "This form opens a {}"
-msgstr "يفتح هذا النموذج {}"
+#: corehq/apps/app_manager/models/applications.py
+msgid "Could not find module with index {}"
+msgstr "تعذر العثور على الوحدة بالرقم {}"
 
-#: corehq/apps/app_manager/models.py
-msgid "This form opens a subcase {}"
-msgstr "يفتح هذا النموذج حالة فرعية {}"
+#: corehq/apps/app_manager/models/applications.py
+#, python-brace-format
+msgid "Could not find module with ID='{unique_id}' in app '{app_name}'."
+msgstr "تعذر العثور على الوحدة بمعرّف='{unique_id}' في التطبيق '{app_name}'."
 
-#: corehq/apps/app_manager/models.py
-msgid "This form closes a {}"
-msgstr "يغلق هذا النموذج {}"
+#: corehq/apps/app_manager/models/applications.py
+#, python-brace-format
+msgid "Copy of {name}"
+msgstr "نسخة من {name}"
 
-#: corehq/apps/app_manager/models.py
-msgid "This form updates a {}"
-msgstr "يحدّث هذا النموذج {}"
+#: corehq/apps/app_manager/models/applications.py
+msgid ""
+"Problem loading suite file from profile file. Is your profile file correct?"
+msgstr "حدثت مشكلة في تحميل ملف المجموعة من ملف التعريف. هل ملف التعريف صحيح؟"
 
-#: corehq/apps/app_manager/models.py
+#: corehq/apps/app_manager/models/applications.py
+msgid "Remote Application"
+msgstr "تطبيق عن بُعد"
+
+#: corehq/apps/app_manager/models/applications.py
+msgid ""
+"Copying the application succeeded, but the application will have errors "
+"because your application contains a Mobile Report Module that references a "
+"UCR configured in this project space. Multimedia may be absent."
+msgstr ""
+"تم نسخ التطبيق بنجاح، لكن سيحتوي التطبيق على أخطاء لأن تطبيقك يحتوي على وحدة "
+"تقرير جوال تشير إلى UCR تم تكوينه في مساحة المشروع هذه. قد تكون الوسائط "
+"المتعددة غير متوفرة."
+
+#: corehq/apps/app_manager/models/applications.py
+msgid ""
+"Copying the application succeeded, but the application is missing multimedia "
+"file(s)."
+msgstr "تم نسخ التطبيق بنجاح، لكن التطبيق يفتقد ملف/ملفات وسائط متعددة."
+
+#: corehq/apps/app_manager/models/applications.py
+msgid "Space-separated list of privilege strings from corehq.privileges"
+msgstr "قائمة مفصولة بمسافات من سلاسل الامتيازات من corehq.privileges"
+
+#: corehq/apps/app_manager/models/applications.py
+msgid ""
+"Version {} not released. Please mark it as released to add restrictions."
+msgstr "الإصدار {} لم يتم إصداره. يرجى وضع علامة عليه كمُصدر لإضافة القيود."
+
+#: corehq/apps/app_manager/models/applications.py
+msgid "Higher version {} already enabled for this application and location"
+msgstr "إصدار أعلى {} مفعل بالفعل لهذا التطبيق والموقع"
+
+#: corehq/apps/app_manager/models/applications.py
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+msgid "Released"
+msgstr "تم الإصدار"
+
+#: corehq/apps/app_manager/models/applications.py
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+msgid "In Test"
+msgstr "قيد الاختبار"
+
+#: corehq/apps/app_manager/models/applications.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+#: corehq/apps/settings/views.py
+msgid "Created"
+msgstr "تم الإنشاء"
+
+#: corehq/apps/app_manager/models/applications.py
+#: corehq/motech/generic_inbound/models.py
+msgid "Reverted"
+msgstr "تم التراجع"
+
+#: corehq/apps/app_manager/models/applications.py
+#: corehq/apps/reports/standard/sms.py
+#: corehq/apps/reports/standard/users/reports.py
+#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
+#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expressions.html
+#: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
+#: corehq/motech/templates/motech/connection_settings.html
+#: corehq/tabs/tabclasses.py
+msgid "Deleted"
+msgstr "تم الحذف"
+
+#: corehq/apps/app_manager/models/case_list.py
 msgid "Sort property needs a property or a calculation"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py
+#: corehq/apps/app_manager/models/delete_records.py
+msgid "Could not find form '{}'"
+msgstr "تعذر العثور على النموذج '{}'"
+
+#: corehq/apps/app_manager/models/forms.py
+msgid "This form opens a {}"
+msgstr "يفتح هذا النموذج {}"
+
+#: corehq/apps/app_manager/models/forms.py
+msgid "This form opens a subcase {}"
+msgstr "يفتح هذا النموذج حالة فرعية {}"
+
+#: corehq/apps/app_manager/models/forms.py
+msgid "This form closes a {}"
+msgstr "يغلق هذا النموذج {}"
+
+#: corehq/apps/app_manager/models/forms.py
+msgid "This form updates a {}"
+msgstr "يحدّث هذا النموذج {}"
+
+#: corehq/apps/app_manager/models/forms.py
+msgid "Unknown, please change"
+msgstr "غير معروف، يرجى التغيير"
+
+#: corehq/apps/app_manager/models/forms.py
+#: corehq/apps/app_manager/models/modules.py
+msgid "You can't create a phase without an anchor property"
+msgstr "لا يمكنك إنشاء مرحلة بدون خاصية مرساة"
+
+#: corehq/apps/app_manager/models/forms.py
+msgid "You can't have more than one phase with the anchor {}"
+msgstr "لا يمكنك وجود أكثر من مرحلة واحدة بنفس المرساة {}"
+
+#: corehq/apps/app_manager/models/modules.py
 #, python-brace-format
 msgid "Could not find form with ID='{unique_id}' in module '{module_name}'."
 msgstr "تعذر العثور على نموذج بالمعرف='{unique_id}' في الوحدة '{module_name}'."
 
-#: corehq/apps/app_manager/models.py
+#: corehq/apps/app_manager/models/modules.py
 msgid "Could not find parent menu for '{}'"
 msgstr "تعذر العثور على القائمة الرئيسية لـ '{}'"
 
-#: corehq/apps/app_manager/models.py
+#: corehq/apps/app_manager/models/modules.py
 msgid "Untitled Menu"
 msgstr "قائمة بدون عنوان"
 
-#: corehq/apps/app_manager/models.py corehq/apps/app_manager/views/modules.py
-#: corehq/apps/reports/views.py
+#: corehq/apps/app_manager/models/modules.py
+#: corehq/apps/app_manager/views/modules.py corehq/apps/reports/views.py
 msgid "Untitled Form"
 msgstr "نموذج بدون عنوان"
 
-#: corehq/apps/app_manager/models.py
+#: corehq/apps/app_manager/models/modules.py
 msgid ""
 "\n"
 "                Cannot move an advanced form with actions into a basic "
@@ -6988,19 +6669,7 @@ msgstr ""
 "                لا يمكن نقل نموذج متقدم يحتوي على إجراءات إلى قائمة أساسية.\n"
 "            "
 
-#: corehq/apps/app_manager/models.py
-msgid "Unknown, please change"
-msgstr "غير معروف، يرجى التغيير"
-
-#: corehq/apps/app_manager/models.py
-msgid "You can't create a phase without an anchor property"
-msgstr "لا يمكنك إنشاء مرحلة بدون خاصية مرساة"
-
-#: corehq/apps/app_manager/models.py
-msgid "You can't have more than one phase with the anchor {}"
-msgstr "لا يمكنك وجود أكثر من مرحلة واحدة بنفس المرساة {}"
-
-#: corehq/apps/app_manager/models.py
+#: corehq/apps/app_manager/models/modules.py
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/products/views.py
 #: corehq/apps/programs/templates/programs/manage/program.html
@@ -7010,7 +6679,7 @@ msgstr "لا يمكنك وجود أكثر من مرحلة واحدة بنفس ا
 msgid "Product"
 msgstr "منتج"
 
-#: corehq/apps/app_manager/models.py
+#: corehq/apps/app_manager/models/modules.py
 #, python-brace-format
 msgid ""
 "You can't delete phases with anchors {phase_anchors} because they have forms "
@@ -7019,72 +6688,7 @@ msgstr ""
 "لا يمكنك حذف المراحل ذات المراسي {phase_anchors} لأنها تحتوي على نماذج "
 "مرتبطة بها"
 
-#: corehq/apps/app_manager/models.py
-msgid "Value equal to a standard user property"
-msgstr "قيمة مساوية لخاصية مستخدم قياسية"
-
-#: corehq/apps/app_manager/models.py
-msgid "Value equal to a custom user property"
-msgstr "قيمة مساوية لخاصية مستخدم مخصصة"
-
-#: corehq/apps/app_manager/models.py
-msgid "An exact match of a constant value"
-msgstr "تطابق تام لقيمة ثابتة"
-
-#: corehq/apps/app_manager/models.py
-msgid "An exact match of a dynamic property"
-msgstr "تطابق تام لخاصية ديناميكية"
-
-#: corehq/apps/app_manager/models.py
-msgid "A standard date range"
-msgstr "نطاق تاريخ قياسي"
-
-#: corehq/apps/app_manager/models.py
-msgid "A custom range relative to today"
-msgstr "نطاق مخصص بالنسبة لليوم"
-
-#: corehq/apps/app_manager/models.py
-msgid "Custom Month Filter (you probably don't want this)"
-msgstr "تصفية شهر مخصصة (ربما لا ترغب في ذلك)"
-
-#: corehq/apps/app_manager/models.py
-msgid "Show choices on mobile device"
-msgstr "عرض الخيارات على الجهاز المحمول"
-
-#: corehq/apps/app_manager/models.py
-msgid "Ancestor location of the user's assigned location of a particular type"
-msgstr "موقع السلف من نوع معين لموقع المستخدم المخصص له"
-
-#: corehq/apps/app_manager/models.py
-msgid "A numeric expression"
-msgstr "تعبير رقمي"
-
-#: corehq/apps/app_manager/models.py
-msgid "The user's case sharing group (filter must be of choice_provider type)"
-msgstr ""
-"مجموعة مشاركة الحالات للمستخدم (يجب أن يكون الفلتر من نوع choice_provider)"
-
-#: corehq/apps/app_manager/models.py
-msgid "The user's assigned location"
-msgstr "الموقع المخصص للمستخدم"
-
-#: corehq/apps/app_manager/models.py
-msgid "All of the user's assigned locations"
-msgstr "جميع المواقع المخصصة للمستخدم"
-
-#: corehq/apps/app_manager/models.py
-msgid "The parent location of the user's assigned location"
-msgstr "الموقع الرئيسي للموقع المخصص للمستخدم"
-
-#: corehq/apps/app_manager/models.py
-msgid "The user's username"
-msgstr "اسم المستخدم الخاص بالمستخدم"
-
-#: corehq/apps/app_manager/models.py
-msgid "The user's ID"
-msgstr "معرّف المستخدم"
-
-#: corehq/apps/app_manager/models.py
+#: corehq/apps/app_manager/models/modules.py
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
 #: corehq/apps/dashboard/views.py
@@ -7097,93 +6701,70 @@ msgstr "معرّف المستخدم"
 msgid "Reports"
 msgstr "التقارير"
 
-#: corehq/apps/app_manager/models.py
-msgid "Could not find module with index {}"
-msgstr "تعذر العثور على الوحدة بالرقم {}"
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "Value equal to a standard user property"
+msgstr "قيمة مساوية لخاصية مستخدم قياسية"
 
-#: corehq/apps/app_manager/models.py
-#, python-brace-format
-msgid "Could not find module with ID='{unique_id}' in app '{app_name}'."
-msgstr "تعذر العثور على الوحدة بمعرّف='{unique_id}' في التطبيق '{app_name}'."
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "Value equal to a custom user property"
+msgstr "قيمة مساوية لخاصية مستخدم مخصصة"
 
-#: corehq/apps/app_manager/models.py
-#, python-brace-format
-msgid "Copy of {name}"
-msgstr "نسخة من {name}"
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "An exact match of a constant value"
+msgstr "تطابق تام لقيمة ثابتة"
 
-#: corehq/apps/app_manager/models.py
-msgid ""
-"Problem loading suite file from profile file. Is your profile file correct?"
-msgstr "حدثت مشكلة في تحميل ملف المجموعة من ملف التعريف. هل ملف التعريف صحيح؟"
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "An exact match of a dynamic property"
+msgstr "تطابق تام لخاصية ديناميكية"
 
-#: corehq/apps/app_manager/models.py
-msgid "Remote Application"
-msgstr "تطبيق عن بُعد"
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "A standard date range"
+msgstr "نطاق تاريخ قياسي"
 
-#: corehq/apps/app_manager/models.py
-msgid ""
-"Copying the application succeeded, but the application will have errors "
-"because your application contains a Mobile Report Module that references a "
-"UCR configured in this project space. Multimedia may be absent."
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "A custom range relative to today"
+msgstr "نطاق مخصص بالنسبة لليوم"
+
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "Custom Month Filter (you probably don't want this)"
+msgstr "تصفية شهر مخصصة (ربما لا ترغب في ذلك)"
+
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "Show choices on mobile device"
+msgstr "عرض الخيارات على الجهاز المحمول"
+
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "Ancestor location of the user's assigned location of a particular type"
+msgstr "موقع السلف من نوع معين لموقع المستخدم المخصص له"
+
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "A numeric expression"
+msgstr "تعبير رقمي"
+
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "The user's case sharing group (filter must be of choice_provider type)"
 msgstr ""
-"تم نسخ التطبيق بنجاح، لكن سيحتوي التطبيق على أخطاء لأن تطبيقك يحتوي على وحدة "
-"تقرير جوال تشير إلى UCR تم تكوينه في مساحة المشروع هذه. قد تكون الوسائط "
-"المتعددة غير متوفرة."
+"مجموعة مشاركة الحالات للمستخدم (يجب أن يكون الفلتر من نوع choice_provider)"
 
-#: corehq/apps/app_manager/models.py
-msgid ""
-"Copying the application succeeded, but the application is missing multimedia "
-"file(s)."
-msgstr "تم نسخ التطبيق بنجاح، لكن التطبيق يفتقد ملف/ملفات وسائط متعددة."
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "The user's assigned location"
+msgstr "الموقع المخصص للمستخدم"
 
-#: corehq/apps/app_manager/models.py
-msgid "Could not find form '{}'"
-msgstr "تعذر العثور على النموذج '{}'"
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "All of the user's assigned locations"
+msgstr "جميع المواقع المخصصة للمستخدم"
 
-#: corehq/apps/app_manager/models.py
-msgid "Space-separated list of privilege strings from corehq.privileges"
-msgstr "قائمة مفصولة بمسافات من سلاسل الامتيازات من corehq.privileges"
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "The parent location of the user's assigned location"
+msgstr "الموقع الرئيسي للموقع المخصص للمستخدم"
 
-#: corehq/apps/app_manager/models.py
-msgid ""
-"Version {} not released. Please mark it as released to add restrictions."
-msgstr "الإصدار {} لم يتم إصداره. يرجى وضع علامة عليه كمُصدر لإضافة القيود."
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "The user's username"
+msgstr "اسم المستخدم الخاص بالمستخدم"
 
-#: corehq/apps/app_manager/models.py
-msgid "Higher version {} already enabled for this application and location"
-msgstr "إصدار أعلى {} مفعل بالفعل لهذا التطبيق والموقع"
-
-#: corehq/apps/app_manager/models.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-msgid "Released"
-msgstr "تم الإصدار"
-
-#: corehq/apps/app_manager/models.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-msgid "In Test"
-msgstr "قيد الاختبار"
-
-#: corehq/apps/app_manager/models.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-#: corehq/apps/settings/views.py
-msgid "Created"
-msgstr "تم الإنشاء"
-
-#: corehq/apps/app_manager/models.py corehq/motech/generic_inbound/models.py
-msgid "Reverted"
-msgstr "تم التراجع"
-
-#: corehq/apps/app_manager/models.py corehq/apps/reports/standard/sms.py
-#: corehq/apps/reports/standard/users/reports.py
-#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
-#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
-#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expressions.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expressions.html
-#: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
-#: corehq/motech/templates/motech/connection_settings.html
-#: corehq/tabs/tabclasses.py
-msgid "Deleted"
-msgstr "تم الحذف"
+#: corehq/apps/app_manager/models/report_app_config.py
+msgid "The user's ID"
+msgstr "معرّف المستخدم"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "1 Day"
@@ -8719,6 +8300,36 @@ msgstr "إعدادات القائمة"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
+#: corehq/apps/app_manager/templates/app_manager/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/apps/data_interfaces/forms.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/views.py
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/settings/views.py corehq/apps/sms/views.py
+#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/userreports/views.py
+#: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap3/web_users.html
+#: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/web_users.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#: corehq/motech/generic_inbound/views.py
+msgid "Actions"
+msgstr "الإجراءات"
+
+#: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
 msgid "Session Endpoint Id"
 msgstr "معرّف نقطة نهاية الجلسة"
 
@@ -9054,6 +8665,7 @@ msgid "Nodeset"
 msgstr "مجموعة العقد"
 
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 #: corehq/apps/data_cleaning/forms/filters.py
 #: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
@@ -11068,6 +10680,68 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/confirm_delete_app.html
 msgid "You are about to delete this application"
 msgstr "أنت على وشك حذف هذا التطبيق"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/confirm_delete_app.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/confirm_delete_app.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap3/module_link.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap5/module_link.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
+#: corehq/apps/case_search/models.py
+#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_user_data_criteria_fields.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
+#: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
+#: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/locations/templates/locations/manage/location_template.html
+#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/reminders/templates/reminders/keyword_list.html
+#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
+#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
+#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
+#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
+#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form.html
+#: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/sms/templates/sms/gateway_list.html
+#: corehq/apps/sms/templates/sms/global_gateway_list.html
+#: corehq/apps/users/models.py
+#: corehq/apps/users/templates/users/bootstrap3/web_users.html
+#: corehq/apps/users/templates/users/bootstrap5/web_users.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+#: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
+#: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
+#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
+#: corehq/motech/templates/motech/connection_settings.html
+msgid "Delete"
+msgstr "حذف"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/custom_icon.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/custom_icon.html
@@ -13257,6 +12931,14 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_filtering.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/filter_configs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_filtering.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/filter_configs.html
+#: corehq/apps/registry/templates/registry/partials/audit_logs.html
+msgid "Filter"
+msgstr "تصفية"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_filtering.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_filtering.html
 msgid ""
 "\n"
@@ -13748,6 +13430,7 @@ msgstr "إضافة خاصية بحث"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/groups/templates/groups/all_groups.html
 msgid "Add Group"
@@ -17425,8 +17108,10 @@ msgid "Confirm Import"
 msgstr "تأكيد الاستيراد"
 
 #: corehq/apps/case_importer/templates/case_importer/import_cases.html
-msgid "Upload an Excel File From Your Computer to Import From"
-msgstr "قم برفع ملف إكسل من جهازك للاستيراد منه"
+#, fuzzy
+#| msgid "Upload File"
+msgid "Upload an Excel File"
+msgstr "رفع ملف"
 
 #: corehq/apps/case_importer/templates/case_importer/import_cases.html
 msgid "Select a file to upload"
@@ -17465,10 +17150,15 @@ msgid "blank"
 msgstr "فارغ"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      Case importer is a tool for bulk uploading new cases or modifying "
+#| "existing ones.\n"
+#| "    "
 msgid ""
 "\n"
-"      Case importer is a tool for bulk uploading new cases or modifying "
-"existing ones.\n"
+"      Bulk upload new cases or update existing ones from a spreadsheet.\n"
 "    "
 msgstr ""
 "\n"
@@ -17490,13 +17180,11 @@ msgstr ""
 #| "    "
 msgid ""
 "\n"
-"      This tool can make changes to your data that might confuse your "
-"reports or applications.\n"
-"      Please exercise caution and see the\n"
+"      Imports can modify existing data and may affect your reports. Review "
+"the\n"
 "      <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2143946828/Case+Import+with+Excel\" target=\"_blank\">\n"
-"        help pages for this feature.\n"
-"      </a>\n"
+"pages/2143946828/Case+Import+with+Excel\"\n"
+"         target=\"_blank\"> help guide</a> for more information.\n"
 "    "
 msgstr ""
 "\n"
@@ -17510,8 +17198,19 @@ msgstr ""
 "    "
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-msgid "Recent Uploads"
+#, fuzzy
+#| msgid "Recent Uploads"
+msgid "Recent Imports"
 msgstr "التحميلات الأخيرة"
+
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+msgid "Imports are processed one at a time."
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/motech/generic_inbound/reports.py
+msgid "Details"
+msgstr "التفاصيل"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
@@ -17531,6 +17230,14 @@ msgstr "معرفات النماذج"
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 msgid "Case IDs"
 msgstr "معرفات الحالات"
+
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
+#: corehq/messaging/scheduling/views.py corehq/motech/generic_inbound/models.py
+#: corehq/motech/repeaters/templates/repeaters/repeaters.html
+#: corehq/motech/repeaters/views/repeat_record_display.py
+msgid "Success"
+msgstr "نجاح"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 msgid "Success with warnings"
@@ -17556,7 +17263,9 @@ msgid "Complete"
 msgstr "مكتمل"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-msgid "No recent uploads found."
+#, fuzzy
+#| msgid "No recent uploads found."
+msgid "No recent imports found."
 msgstr "لم يتم العثور على تحميلات حديثة."
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_status.html
@@ -17747,6 +17456,124 @@ msgstr "نوع غير متوقع لتعبير القيمة"
 msgid ""
 "We don't know what to do with the function \"{}\". Accepted functions are: {}"
 msgstr "لا نعرف ماذا نفعل مع الدالة \"{}\". الدوال المقبولة هي: {}"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "is exactly"
+msgstr "يساوي تمامًا"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "is not"
+msgstr "لا يساوي"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "starts with"
+msgstr "يبدأ بـ"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "is like"
+msgstr "يشبه"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "sounds like"
+msgstr "يبدو مثل"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "equals"
+msgstr "يساوي"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "does not equal"
+msgstr "لا يساوي"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "greater than"
+msgstr "أكبر من"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "greater than or equal to"
+msgstr "أكبر من أو يساوي"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "less than"
+msgstr "أقل من"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "less than or equal to"
+msgstr "أقل من أو يساوي"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "on"
+msgstr "في"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "before"
+msgstr "قبل"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/messaging/scheduling/forms.py
+msgid "after"
+msgstr "بعد"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#, fuzzy
+#| msgid "on or after"
+msgid "on or before"
+msgstr "في أو بعد"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "on or after"
+msgstr "في أو بعد"
+
+#: corehq/apps/case_search/endpoint_capability.py
+msgid "is approximately"
+msgstr ""
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "is any"
+msgstr "أي من"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "is all"
+msgstr "كلها"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "is empty"
+msgstr "فارغ"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#, fuzzy
+#| msgid "Instance"
+msgid "within distance"
+msgstr "المثيل"
 
 #: corehq/apps/case_search/endpoint_views.py
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
@@ -17988,6 +17815,50 @@ msgstr ""
 "a> للمساعدة في تفسير بيانات الملف الشخصي.\n"
 "              "
 
+#: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+#: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
+#: corehq/apps/geospatial/forms.py
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
+#: corehq/apps/integration/kyc/forms.py
+#: corehq/apps/integration/payments/forms.py
+#: corehq/apps/locations/templates/locations/location_types.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/reminders/forms.py corehq/apps/reports/forms.py
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
+#: corehq/apps/sms/forms.py corehq/apps/styleguide/example_forms.py
+#: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
+#: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
+#: corehq/apps/userreports/forms.py
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
+#: corehq/apps/userreports/ui/forms.py
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/messaging/scheduling/forms.py
+#: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_save.html
+#: corehq/motech/dhis2/forms.py corehq/motech/forms.py
+#: corehq/motech/generic_inbound/forms.py
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
+msgid "Save"
+msgstr "حفظ"
+
 #: corehq/apps/case_search/templates/case_search/csql_fixture_configuration.html
 #: corehq/apps/case_search/views.py
 msgid "CSQL Fixture Configuration"
@@ -18014,6 +17885,12 @@ msgid "Endpoint Details"
 msgstr "تعديل تفاصيل النموذج"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#, fuzzy
+#| msgid "Enter report name here"
+msgid "Enter endpoint name"
+msgstr "أدخل اسم التقرير هنا"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #, fuzzy
 #| msgid "Parent Type"
@@ -18033,14 +17910,59 @@ msgid "Parameters"
 msgstr "إضافة معلمة"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-msgid "JSON array"
+msgid "Name cannot be empty or only whitespace"
 msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #, fuzzy
-#| msgid "Subject"
-msgid "JSON object"
-msgstr "الموضوع"
+#| msgid "Add Parameter"
+msgid "parameter name"
+msgstr "إضافة معلمة"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "text"
+msgstr "نص"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#, fuzzy
+#| msgid "Number"
+msgid "number"
+msgstr "رقم"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "date"
+msgstr "التاريخ"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#, fuzzy
+#| msgid "gps_point"
+msgid "geopoint"
+msgstr "gps_point"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#, fuzzy
+#| msgid "Remove Characters"
+msgid "Remove parameter"
+msgstr "إزالة الأحرف"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
+msgid "Add Parameter"
+msgstr "إضافة معلمة"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#: corehq/apps/case_search/templates/case_search/partials/query_tester.html
+#, fuzzy
+#| msgid "Test API Key"
+msgid "Test query"
+msgstr "اختبار مفتاح API"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#, fuzzy
+#| msgid "Deactivated"
+msgid "Create Endpoint"
+msgstr "غير نشط"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #, fuzzy
@@ -18079,6 +18001,86 @@ msgstr "هل أنت متأكد أنك تريد حذف هذه الدعوة؟"
 msgid "No endpoints configured."
 msgstr "سر نقطة نهاية SNS"
 
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+#, fuzzy
+#| msgid "Add Field"
+msgid "-- Field --"
+msgstr "إضافة حقل"
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+msgid "-- Operation --"
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+#, fuzzy
+#| msgid "Add Parameter"
+msgid "Parameter"
+msgstr "إضافة معلمة"
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+#, fuzzy
+#| msgid "Add Parameter"
+msgid "-- Parameter --"
+msgstr "إضافة معلمة"
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+#, fuzzy
+#| msgid "Remove Action"
+msgid "Remove condition"
+msgstr "إزالة الإجراء"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+msgid "ALL"
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#, fuzzy
+#| msgid "AND"
+msgid "ANY"
+msgstr "و"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+msgid "NONE"
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#, fuzzy
+#| msgid "format must be one of the following: {}"
+msgid "match all of the following"
+msgstr "يجب أن يكون التنسيق أحد الخيارات التالية: {}"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#, fuzzy
+#| msgid "format must be one of the following: {}"
+msgid "match any of the following"
+msgstr "يجب أن يكون التنسيق أحد الخيارات التالية: {}"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#, fuzzy
+#| msgid "format must be one of the following: {}"
+msgid "match none of the following"
+msgstr "يجب أن يكون التنسيق أحد الخيارات التالية: {}"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#, fuzzy
+#| msgid "Remove User"
+msgid "Remove group"
+msgstr "إزالة المستخدم"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "No conditions yet. Add a condition or group below."
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+#, fuzzy
+#| msgid "Conditions"
+msgid "Add Condition"
+msgstr "الشروط"
+
+#: corehq/apps/case_search/templates/case_search/partials/query_builder.html
+msgid "Show query JSON"
+msgstr ""
+
 #: corehq/apps/case_search/utils.py
 msgid "Configurable Endpoints are not available"
 msgstr ""
@@ -18087,6 +18089,12 @@ msgstr ""
 #, fuzzy
 #| msgid "LocationType '{}' not found"
 msgid "Endpoint '{}' not found"
+msgstr "لم يتم العثور على نوع الموقع '{}'"
+
+#: corehq/apps/case_search/utils.py
+#, fuzzy
+#| msgid "LocationType '{}' not found"
+msgid "Endpoint '{}' query is invalid"
 msgstr "لم يتم العثور على نوع الموقع '{}'"
 
 #: corehq/apps/case_search/utils.py
@@ -19925,11 +19933,6 @@ msgid "Multiple Choice"
 msgstr "اختيار من متعدد"
 
 #: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-msgid "is empty"
-msgstr "فارغ"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "is not empty"
 msgstr "غير فارغ"
 
@@ -19942,107 +19945,28 @@ msgid "is not missing"
 msgstr "غير مفقود"
 
 #: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-msgid "is exactly"
-msgstr "يساوي تمامًا"
-
-#: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-msgid "is not"
-msgstr "لا يساوي"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "starts with"
-msgstr "يبدأ بـ"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "does not start with"
 msgstr "لا يبدأ بـ"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "is like"
-msgstr "يشبه"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "is not like"
 msgstr "لا يشبه"
 
 #: corehq/apps/data_cleaning/models/types.py
-msgid "sounds like"
-msgstr "يبدو مثل"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "does not sound like"
 msgstr "لا يبدو مثل"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "is any"
-msgstr "أي من"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "is not any"
 msgstr "ليس أي من"
 
 #: corehq/apps/data_cleaning/models/types.py
-msgid "is all"
-msgstr "كلها"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "is not all"
 msgstr "ليس كلها"
 
 #: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
-msgid "equals"
-msgstr "يساوي"
-
-#: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
-msgid "does not equal"
-msgstr "لا يساوي"
-
-#: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
-msgid "less than"
-msgstr "أقل من"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "less than or equal to"
-msgstr "أقل من أو يساوي"
-
-#: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
-msgid "greater than"
-msgstr "أكبر من"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "greater than or equal to"
-msgstr "أكبر من أو يساوي"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "on"
-msgstr "في"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "before"
-msgstr "قبل"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "before or on"
 msgstr "قبل أو في"
-
-#: corehq/apps/data_cleaning/models/types.py
-#: corehq/messaging/scheduling/forms.py
-msgid "after"
-msgstr "بعد"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "on or after"
-msgstr "في أو بعد"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "Find & Replace"
@@ -22118,6 +22042,21 @@ msgstr "منتهي"
 msgid "Stopped"
 msgstr "متوقف"
 
+#: corehq/apps/data_interfaces/models.py
+#: corehq/apps/domain/templates/error.html
+#: corehq/apps/integration/kyc/models.py
+#: corehq/apps/integration/payments/const.py
+#: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
+#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
+#: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
+#: corehq/apps/sms/models.py corehq/messaging/scheduling/views.py
+#: corehq/motech/generic_inbound/models.py
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+#: corehq/motech/views.py
+msgid "Error"
+msgstr "خطأ"
+
 #: corehq/apps/data_interfaces/tasks.py
 msgid "No Forms are supplied"
 msgstr "لم يتم توفير أي نماذج"
@@ -22544,6 +22483,11 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+msgid "Last Run"
+msgstr "آخر تشغيل"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 msgid ""
 "\n"
 "                          Are you sure you want to <strong>delete</strong> "
@@ -22583,6 +22527,13 @@ msgstr "عدد الحالات التي تم تحديثها"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
 msgid "# of Cases Closed"
 msgstr "عدد الحالات التي تم إغلاقها"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
+msgid "Error:"
+msgstr "خطأ:"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_actions.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_actions.html
@@ -29581,6 +29532,10 @@ msgstr "اسم النموذج"
 #: corehq/apps/enterprise/enterprise.py
 msgid "Submitted [UTC]"
 msgstr "تم الإرسال [UTC]"
+
+#: corehq/apps/enterprise/enterprise.py
+msgid "App Name"
+msgstr "اسم التطبيق"
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "Mobile User"
@@ -43885,10 +43840,6 @@ msgstr ""
 "                    وقد تؤثر أيضًا على الحلول في مساحة هذا المشروع.</p>\n"
 "                "
 
-#: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
-msgid "Add Parameter"
-msgstr "إضافة معلمة"
-
 #: corehq/apps/reminders/views.py
 msgid "New Structured Keyword"
 msgstr "كلمة مفتاحية مُهيكلة جديدة"
@@ -44882,10 +44833,6 @@ msgstr "اسم الحالة"
 #: corehq/apps/reports/standard/cases/case_data.py
 msgid "section"
 msgstr "القسم"
-
-#: corehq/apps/reports/standard/cases/case_data.py
-msgid "date"
-msgstr "التاريخ"
 
 #: corehq/apps/reports/standard/cases/case_data.py
 msgid "product_id"
@@ -63061,6 +63008,12 @@ msgstr "عرض الأسئلة المتقدمة"
 msgid "Save to Case"
 msgstr "حفظ الحالة"
 
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Public Name"
+msgid "Public Webforms"
+msgstr "الاسم العام"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "تقارير منشئ التقارير"
@@ -63136,14 +63089,6 @@ msgstr "تطبيقاتي"
 #: corehq/tabs/tabclasses.py
 msgid "New Application"
 msgstr "تطبيق جديد"
-
-#: corehq/tabs/tabclasses.py
-msgid "Application Test Flows"
-msgstr "تدفقات اختبار التطبيق"
-
-#: corehq/tabs/tabclasses.py
-msgid "Log Details"
-msgstr "تفاصيل السجل"
 
 #: corehq/tabs/tabclasses.py
 msgid "Test Inbound SMS"
@@ -64051,6 +63996,204 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
 
+#, fuzzy
+#~| msgid ""
+#~| "\n"
+#~| "    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585\n"
+#~| "    Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~| "  "
+#~ msgid ""
+#~ "\n"
+#~ "    Statement From: CommCare and the corporation Dimagi, Inc. 585\n"
+#~ "    Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    بيان من: CommCare HQ والشركة Dimagi, Inc. 585\n"
+#~ "    Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~ "  "
+
+#~ msgid "Run Every (minutes)"
+#~ msgstr "تشغيل كل (دقائق)"
+
+#~ msgid "Username of the user to run the workflow"
+#~ msgstr "اسم المستخدم الذي سيشغل سير العمل"
+
+#~ msgid "HAR File"
+#~ msgstr "ملف HAR"
+
+#~ msgid ""
+#~ "HAR file recording should start with the selection of the app "
+#~ "(navigate_menu_start)."
+#~ msgstr "يجب أن يبدأ تسجيل ملف HAR باختيار التطبيق (navigate_menu_start)."
+
+#~ msgid "Populate workflow from HAR file"
+#~ msgstr "تعبئة سير العمل من ملف HAR"
+
+#~ msgid "User not found"
+#~ msgstr "المستخدم غير موجود"
+
+#, python-brace-format
+#~ msgid "App not found in domain: {domain}:{app_id}"
+#~ msgstr "لم يتم العثور على التطبيق في النطاق: {domain}:{app_id}"
+
+#~ msgid "Human: Answer each question individually and submit form"
+#~ msgstr "بشري: أجب عن كل سؤال بشكل منفصل ثم أرسل النموذج"
+
+#~ msgid "No Submit: Answer all questions but don't submit the form"
+#~ msgstr "بدون إرسال: أجب عن جميع الأسئلة لكن لا ترسل النموذج"
+
+#~ msgid "Ignore: Do not complete or submit forms"
+#~ msgstr "تجاهل: لا تكمل أو ترسل النماذج"
+
+#~ msgid "Sync user data before running"
+#~ msgstr "مزامنة بيانات المستخدم قبل التشغيل"
+
+#~ msgid "Number of minutes between runs"
+#~ msgstr "عدد الدقائق بين كل تشغيل"
+
+#~ msgid "Emails to notify on failure"
+#~ msgstr "عناوين البريد الإلكتروني للإخطار عند الفشل"
+
+#~ msgid "Workflow"
+#~ msgstr "سير العمل"
+
+#~ msgid "Current Workflow"
+#~ msgstr "سير العمل الحالي"
+
+#~ msgid ""
+#~ "\n"
+#~ "              The workflow shown here is the current version which may "
+#~ "differ from the version\n"
+#~ "              executed at the time of this run.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              سير العمل المعروض هنا هو الإصدار الحالي وقد يختلف عن "
+#~ "الإصدار\n"
+#~ "              الذي تم تنفيذه في وقت هذا التشغيل.\n"
+#~ "            "
+
+#~ msgid "Logs"
+#~ msgstr "السجلات"
+
+#~ msgid "Run"
+#~ msgstr "تشغيل"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      Editing \"%(workflow_name)s\"\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      تعديل \"%(workflow_name)s\"\n"
+#~ "    "
+
+#~ msgid "New workflow"
+#~ msgstr "سير عمل جديد"
+
+#~ msgid "Average Timings"
+#~ msgstr "المتوسط الزمني"
+
+#~ msgid "Last 10 Runs"
+#~ msgstr "آخر 10 عمليات تشغيل"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    Workflow Execution Log for %(workflow_name)s: %(date)s\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    سجل تنفيذ سير العمل لـ %(workflow_name)s: %(date)s\n"
+#~ "  "
+
+#, python-format
+#~ msgid "Started: %(date_started)s"
+#~ msgstr "تاريخ البدء: %(date_started)s"
+
+#, python-format
+#~ msgid "Ended: %(date_ended)s"
+#~ msgstr "تاريخ الانتهاء: %(date_ended)s"
+
+#, python-format
+#~ msgid "Duration: %(duration)s"
+#~ msgstr "المدة: %(duration)s"
+
+#~ msgid "Status:"
+#~ msgstr "الحالة:"
+
+#, python-format
+#~ msgid "Logs for workflow \"%(name)s\""
+#~ msgstr "سجلات سير العمل للتطبيق \"%(name)s\""
+
+#~ msgid "Log Status"
+#~ msgstr "حالة السجل"
+
+#~ msgid "All Status"
+#~ msgstr "كل الحالات"
+
+#~ msgid "Started"
+#~ msgstr "بدأ"
+
+#~ msgid "Duration"
+#~ msgstr "المدة"
+
+#~ msgid "Avg Timings"
+#~ msgstr "متوسط الأوقات"
+
+#~ msgid "Max Timings"
+#~ msgstr "أقصى الأوقات"
+
+#, python-format
+#~ msgid "Testing %(name)s"
+#~ msgstr "اختبار %(name)s"
+
+#~ msgid "Running..."
+#~ msgstr "جارٍ التنفيذ..."
+
+#~ msgid "Automatically Executed App Workflows"
+#~ msgstr "سير عمل التطبيقات المنفذة تلقائيًا"
+
+#~ msgid "New App Workflow"
+#~ msgstr "سير عمل تطبيق جديد"
+
+#~ msgid "You must use the 'Import HAR' button to upload a HAR file."
+#~ msgstr "يجب استخدام زر 'استيراد HAR' لتحميل ملف HAR."
+
+#, python-brace-format
+#~ msgid "Edit App Workflow: {name}"
+#~ msgstr "تعديل سير عمل التطبيق: {name}"
+
+#, python-brace-format
+#~ msgid "Unable to process HAR file: {error}"
+#~ msgstr "تعذر معالجة ملف HAR: {error}"
+
+#~ msgid "Automatically Executed App Workflow Logs"
+#~ msgstr "سجلات سير عمل التطبيق المنفذة تلقائيًا"
+
+#~ msgid "Invalid date parameter"
+#~ msgstr "معامل تاريخ غير صالح"
+
+#, python-brace-format
+#~ msgid "Workflow Log: {name}"
+#~ msgstr "سجل سير العمل: {name}"
+
+#~ msgid "Upload an Excel File From Your Computer to Import From"
+#~ msgstr "قم برفع ملف إكسل من جهازك للاستيراد منه"
+
+#, fuzzy
+#~| msgid "Subject"
+#~ msgid "JSON object"
+#~ msgstr "الموضوع"
+
+#~ msgid "Application Test Flows"
+#~ msgstr "تدفقات اختبار التطبيق"
+
+#~ msgid "Log Details"
+#~ msgstr "تفاصيل السجل"
+
 #, fuzzy, python-format
 #~| msgid ""
 #~| "\n"
@@ -64732,9 +64875,6 @@ msgstr "أدخل JSON صالحًا"
 #~ msgstr ""
 #~ "أدخل رمز واجهة برمجة تطبيقات Mapbox هنا. تأكد من أن الرمز يحتوي على "
 #~ "النطاق الصحيح لاستخدام واجهة برمجة تطبيقات Mapbox Matrix."
-
-#~ msgid "Test API Key"
-#~ msgstr "اختبار مفتاح API"
 
 #~ msgid "Mapbox API token required"
 #~ msgstr "مطلوب رمز API لـ Mapbox"
@@ -66924,9 +67064,6 @@ msgstr "أدخل JSON صالحًا"
 
 #~ msgid "Print template"
 #~ msgstr "قالب الطباعة"
-
-#~ msgid "text"
-#~ msgstr "نص"
 
 #~ msgid "New Template Uploaded Successfully"
 #~ msgstr "تم رفع القالب الجديد بنجاح"

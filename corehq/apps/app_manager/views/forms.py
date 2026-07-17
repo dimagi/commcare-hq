@@ -50,9 +50,11 @@ from corehq.apps.app_manager.decorators import (
     require_deploy_apps,
 )
 from corehq.apps.app_manager.exceptions import (
+    AppEditingError,
     AppInDifferentDomainException,
     AppMisconfigurationError,
     FormNotFoundException,
+    IncompatibleFormTypeException,
     LockedQuestionError,
     ModuleNotFoundException,
     XFormValidationFailed,
@@ -60,7 +62,6 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.form_action_diff import (
     collect_locked_advanced_mappings,
     collect_locked_mappings,
-    from_combined_diff,
     get_case_mappings,
     make_multi,
     merge_case_mappings,
@@ -70,7 +71,6 @@ from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
-    AppEditingError,
     ArbitraryDatum,
     CaseReferences,
     CustomIcon,
@@ -81,7 +81,6 @@ from corehq.apps.app_manager.models import (
     FormActions,
     FormDatum,
     FormLink,
-    IncompatibleFormTypeException,
     OpenCaseAction,
     UpdateCaseAction,
 )
@@ -254,16 +253,8 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     old_load_from_form = form.actions.load_from_form
 
     actions_json = json.loads(request.POST['actions'])
-
-    if 'case_mapping_diff' in request.POST:
-        diff = json.loads(request.POST['case_mapping_diff'])
-    elif 'update_diff' in request.POST:
-        # LEGACY can be removed after case_mapping_diff is deployed
-        # and enough time has passed for front-end code to be updated
-        diff = json.loads(request.POST['update_diff'])
-    else:
-        diff = {}
-
+    diff_json = request.POST.get('case_mapping_diff')
+    diff = json.loads(diff_json) if diff_json else {}
     try:
         _apply_form_actions_change(request, domain, form, actions_json, diff)
     except LockedQuestionError:
@@ -759,17 +750,10 @@ def apply_patch(patch, text):
 
 
 def _get_case_mapping_diff(request, form):
-    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
     is_advanced_form = isinstance(form, AdvancedForm)
-    if has_vellum_case_mapping and not is_advanced_form:
+    if not is_advanced_form:
         if 'case_mapping_diff' in request.POST:
             return json.loads(request.POST['case_mapping_diff'])
-        if 'mapping_diff' in request.POST:
-            # Legacy, can be removed when Vellum always sends case_mapping_diff
-            return from_combined_diff(
-                json.loads(request.POST['mapping_diff']),
-                is_registration=form.is_registration_form(),
-            )
         return {}  # not None, prevent name mapping in save_xform
     return None
 
@@ -787,10 +771,9 @@ def _get_xform_conflict_response(form, sha1_checksum):
 
 def _add_case_management_data(response_json, form, request):
     """Allow clients to immediately display concurrent edit conflict warnings"""
-    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
     is_advanced_form = isinstance(form, AdvancedForm)
     case_type = form.get_module().case_type
-    if case_type and has_vellum_case_mapping and not is_advanced_form:
+    if case_type and not is_advanced_form:
         response_json['caseManagement'] = {
             "mappings": get_case_mappings(form.actions),
         }

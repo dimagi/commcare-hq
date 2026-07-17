@@ -8,6 +8,9 @@ from django.conf import settings
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
+from couchforms.geopoint import GeoPoint
+from jsonobject.exceptions import BadValueError
+
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.phone.data_providers.case.livequery import (
     get_all_related_live_cases,
@@ -21,6 +24,14 @@ from corehq.apps.case_search.const import (
     CASE_SEARCH_MAX_RESULTS,
     COMMCARE_PROJECT,
     IS_RELATED_CASE,
+)
+from corehq.apps.case_search.endpoint_capability import (
+    FIELD_TYPE_DATE,
+    FIELD_TYPE_DATETIME,
+    FIELD_TYPE_GEOPOINT,
+    FIELD_TYPE_NUMBER,
+    FIELD_TYPE_SELECT,
+    get_capability,
 )
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
@@ -39,15 +50,21 @@ from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     extract_search_request_config,
 )
+from corehq.apps.case_search.endpoint_query_spec import ParameterInput, parse_parameter_spec, parse_query_spec
+from corehq.apps.case_search.xpath_functions.query_functions import date_permutations, validate_date
 from corehq.apps.es import HQESQuery, case_search
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters, queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_date_range,
+    case_property_geo_distance,
     case_property_missing,
+    case_property_numeric_range,
     case_property_query,
+    case_property_starts_with,
     reverse_index_case_query,
+    sounds_like_text_query,
     wrap_case_search_hit,
 )
 from corehq.apps.es.profiling import ESQueryProfiler
@@ -112,11 +129,46 @@ def get_case_search_results(domain, config, app_id=None, couch_user=None, profil
 
 def get_endpoint_results(helper, config):
     try:
-        CaseSearchEndpoint.objects.get(domain=helper.domain, id=config.endpoint_id)
+        # TODO: cache? Prefetch endpoint version?
+        endpoint = CaseSearchEndpoint.objects.get(domain=helper.domain, id=config.endpoint_id)
     except (CaseSearchEndpoint.DoesNotExist, ValueError):
         raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
-    # TODO use the endpoint to process the CaseSearchRequestConfig object
-    return get_primary_case_search_results(helper, config.case_types, config.criteria, config.commcare_sort)
+    if not endpoint.is_active:
+        raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
+
+    parameters, errors = parse_parameter_spec(endpoint.current_version.parameters)
+    query_root = None
+    if not errors:
+        query_root, errors = parse_query_spec(
+            endpoint.current_version.query,
+            parameters,
+            endpoint.case_type,
+            get_capability(helper.domain)
+        )
+    if errors:
+        notify_exception(None, "Stored endpoint query failed validation", details={
+            'endpoint': endpoint.id, 'errors': errors,
+        })
+        raise CaseSearchUserError(_("Endpoint '{}' query is invalid").format(config.endpoint_id))
+    return get_primary_case_search_endpoint_results(
+        helper,
+        [endpoint.case_type],
+        config.criteria,
+        query_root)
+
+@time_function()
+def get_primary_case_search_endpoint_results(helper, case_types, criteria, endpoint_query, limit=None):
+    builder = CaseSearchEndpointQueryBuilder(helper, case_types, endpoint_query)
+    with helper.profiler.timing_context('build_query'):
+        search_es = builder.build_query(criteria)
+    if limit:
+        search_es = search_es.size(limit)
+
+    results = search_es.run()
+    with helper.profiler.timing_context('wrap_cases'):
+        cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
+    helper.profiler.primary_count = len(cases)
+    return cases
 
 
 def get_unconfigured_endpoint_results(helper, config, app_id):
@@ -235,6 +287,7 @@ class CaseSearchQueryBuilder:
         max_results = CASE_SEARCH_MAX_RESULTS
         if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
             max_results = 1500
+
         return (self.helper.get_base_queryset('main')
                 .case_type(self.case_types)
                 .is_closed(False)
@@ -351,6 +404,128 @@ class CaseSearchQueryBuilder:
             for prop in properties_config.properties
         ]
 
+class CaseSearchEndpointQueryBuilder:
+    """Compiles the case search object for the view"""
+    def __init__(
+        self,
+        helper,
+        case_types,
+        query_root):
+        self.request_domain = helper.domain
+        self.case_types = case_types
+        self.query_root = query_root
+        self.helper = helper
+        self.config = helper.config
+
+    def build_query(self, search_criteria):
+        self.param_values = {c.key: c.value for c in search_criteria}
+        search_es = self._get_initial_search_es()
+        query = self._parse_query(self.query_root)
+        if query is None:
+            # Every condition dropped (e.g. all inputs were unsupplied
+            # parameters). Apply no extra filter rather than match-all-via-empty.
+            return search_es
+        return search_es.add_query(query, queries.MUST)
+
+    def _get_initial_search_es(self):
+        max_results = CASE_SEARCH_MAX_RESULTS
+        if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
+            max_results = 1500
+
+        return (self.helper.get_base_queryset('main')
+                .case_type(self.case_types)
+                .is_closed(False)
+                .size(max_results))
+
+    def _get_child_queries(self, node):
+        child_queries = [self._parse_query(child) for child in node.children]
+        return [q for q in child_queries if q is not None]
+
+    def _parse_query(self, node):
+        if node.type in ('all', 'any', 'none'):
+            # Drop a group with no surviving children rather than collapsing to
+            # an empty AND/OR. An empty bool matches all documents, which in an
+            # `any`/OR context would make the whole query match everything.
+            children = self._get_child_queries(node)
+            if not children:
+                return None
+            if node.type == 'all':
+                return filters.AND(*children)
+            if node.type == 'any':
+                return filters.OR(*children)
+            return filters.NOT(filters.OR(*children))
+        elif node.type == 'component':
+            return self._parse_component_node(node)
+        else:
+            return None
+
+    def _input_value(self, input_):
+        if input_ is None:
+            return None
+        if isinstance(input_, ParameterInput):
+            return self.param_values.get(input_.value)
+        return input_.value
+
+    def _parse_component_node(self, node):
+        operator = node.operator
+
+        if node.field_type == FIELD_TYPE_GEOPOINT:
+            if operator == 'within_distance':
+                point = self._input_value(node.inputs.get('point'))
+                distance = self._input_value(node.inputs.get('distance'))
+                unit = self._input_value(node.inputs.get('unit'))
+                if None in (point, distance, unit):
+                    return None
+                try:
+                    geo_point = GeoPoint.from_string(point, flexible=True)
+                    distance = float(distance)
+                except (BadValueError, ValueError):
+                    return None
+                if unit not in queries.DISTANCE_UNITS:
+                    return None
+                return case_property_geo_distance(node.field, geo_point, **{unit: distance})
+            return None
+
+        field = node.field
+        value = self._input_value(node.inputs['value'])
+        if value is None:
+            return None  # ignore component if value is not given
+
+        if node.field_type in (FIELD_TYPE_DATE, FIELD_TYPE_DATETIME):
+            if operator == 'equals':
+                return case_property_query(field, value)
+            elif operator in ('lt', 'gt', 'lte', 'gte'):
+                return case_property_date_range(field, **{operator: value})
+            elif operator == 'fuzzy_date':
+                if not validate_date(value):
+                    return None
+                return case_property_query(field, date_permutations(value), boost_first=True)
+        elif node.field_type == FIELD_TYPE_NUMBER:
+            if operator == 'equals':
+                return case_property_query(field, value)
+            elif operator == 'not_equals':
+                return filters.NOT(case_property_query(field, value))
+            elif operator in ('lt', 'gt', 'lte', 'gte'):
+                return case_property_numeric_range(field, **{operator: value})
+        elif node.field_type == FIELD_TYPE_SELECT:
+            if operator == 'selected_any':
+                return case_property_query(field, value, multivalue_mode='or')
+            elif operator == 'selected_all':
+                return case_property_query(field, value, multivalue_mode='and')
+            elif operator == 'is_empty':
+                return case_property_missing(field)
+        else:
+            if operator == 'equals':
+                return case_property_query(field, value)
+            elif operator == 'not_equals':
+                return filters.NOT(case_property_query(field, value))
+            elif operator == 'starts_with':
+                return case_property_starts_with(field, value)
+            elif operator == 'fuzzy':
+                return case_property_query(field, value, fuzzy=True)
+            elif operator == 'phonetic':
+                return sounds_like_text_query(field, value)
+        return None
 
 @time_function()
 def get_and_tag_related_cases(helper, app_id, case_types, cases,

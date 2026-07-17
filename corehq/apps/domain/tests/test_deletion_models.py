@@ -45,13 +45,13 @@ IGNORE_APPS = {
 IGNORE_MODELS = {
     'api.ApiUser',
     'app_manager.ExchangeApplication',
+    'app_manager.PublicFormSession',  # handled by cascading delete of PublicWebform
     'auth.Group',
     'auth.Permission',
     'blobs.BlobMeta',
     'blobs.BlobMigrationState',
     'blobs.DeletedBlobMeta',
     'cleanup.DeletedCouchDoc',
-    'cleanup.DeletedSQLDoc',
     'domain.DomainAuditRecordEntry',
     'domain.SuperuserProjectEntryRecord',
     'dropbox.DropboxUploadHelper',

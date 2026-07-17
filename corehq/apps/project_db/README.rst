@@ -1,0 +1,62 @@
+Project DB
+==========
+
+Project DB provides auto-generated PostgreSQL tables for CommCare case data.
+Each domain gets its own PostgreSQL schema containing one table per case type,
+with columns derived from the data dictionary. The aim is a relational, typed
+representation of case data that supports JOINs across case types without any
+project-specific configuration.
+
+Layout
+------
+
+- One schema per domain, named ``projectdb_<domain>``.
+- One table per case type, named after the case type.
+- Each table has a fixed set of columns mirroring ``CommCareCase``, plus a
+  ``prop__<name>`` column for every case property (defaults to `''`). Typed
+  properties (date, number) get an additional typed column, e.g.
+  ``date_prop__<name>``.
+
+Postgres truncates identifiers at 63 bytes, so schema, table, and column names
+are truncated with a hash suffix for uniqueness, with the raw values stored as
+postgresql comments so they can be recovered on inspection.
+
+Definitions are built with `SQLAlchemy Core
+<https://docs.sqlalchemy.org/en/13/core/>`_ and live in the database configured
+for the ``project_db`` engine (the default database unless
+``REPORTING_DATABASES`` maps it elsewhere).
+
+Evolution
+---------
+
+Provisioning is **append-only** and idempotent: a domain's schema and tables are
+created if absent, and new columns and indexes are added, but existing ones are
+never dropped or rewritten. A new case property becomes a new column; a new case
+type becomes a new table.
+
+Status
+------
+
+This module currently defines and provisions the table structure only.
+Populating the tables with case data and querying them are not yet implemented.
+
+TODOs
+----
+
+- Wire schema cleanup to domain deletion. ``DomainSchema.drop`` exists but
+  is not registered in ``corehq/apps/domain/deletion.py``. Because this is a raw
+  Postgres schema rather than a Django model, the standard model-based
+  registration won't catch it; deleting a domain would orphan its
+  ``projectdb_<domain>`` schema and data.
+- Use the stored property-name comments when populating. Each property column
+  stores its raw case property name as a Postgres comment, which lets the
+  source property be recovered by inspecting the table. ``case_to_row`` could
+  use this to iterate through columns instead of properties.
+- Date vs Datetime. Looks like the DD only supports date
+  properties, not datetime - does it intend the latter? Should we
+  support both?
+- Index external ID.
+- Put limit on number of property columns
+- Add a SQL user per domain with only access to that domain's schema
+- Set up automatic update call on data dictionary change, and auto population
+  on case update

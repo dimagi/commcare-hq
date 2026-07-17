@@ -20,7 +20,6 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
-    ActivityLevel,
     Application,
     CredentialApplication,
 )
@@ -37,7 +36,7 @@ from corehq.apps.domain.views.settings import (
 )
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.toggle_ui.models import ToggleAudit
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import ActivityLevel, WebUser
 from corehq.feature_previews import FeaturePreview
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import AppStructureRepeater

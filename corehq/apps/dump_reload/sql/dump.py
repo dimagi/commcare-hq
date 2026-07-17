@@ -10,6 +10,7 @@ from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
     DEFAULT_CHUNK_SIZE,
+    CaseIDFilter,
     FilteredModelIteratorBuilder,
     ManyFilters,
     MultimediaBlobMetaFilter,
@@ -34,12 +35,15 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('form_processor.XFormInstance', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.XFormOperation', SimpleFilter('form__domain')),
 
-    FilteredModelIteratorBuilder('form_processor.CommCareCase', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('form_processor.CommCareCase', SimpleFilter('domain'),
+                                 pagination_key=("type", "id")),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseIndex', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.CaseAttachment', SimpleFilter('case__domain')),
-    FilteredModelIteratorBuilder('form_processor.CaseTransaction', SimpleFilter('case__domain')),
+    FilteredModelIteratorBuilder('form_processor.CaseTransaction', CaseIDFilter(),
+                                 pagination_key=('case_id', 'pk')),
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.LedgerTransaction', SimpleFilter('case__domain')),
+    FilteredModelIteratorBuilder('form_processor.LedgerTransaction', CaseIDFilter(),
+                                 pagination_key=('case_id', 'pk')),
 
     FilteredModelIteratorBuilder('case_search.DomainsNotInCaseSearchIndex', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),
@@ -217,6 +221,9 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('app_manager.ApplicationReleaseLog', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.ResourceOverride', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.CredentialApplication', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('app_manager.PublicWebform', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('app_manager.PublicFormSession', SimpleFilter('public_webform__domain'),
+                                 pagination_key=('public_webform_id', 'pk')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFileMeta', SimpleFilter('caseuploadrecord__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFormRecord', SimpleFilter('case_upload_record__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),

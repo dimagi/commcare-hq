@@ -148,7 +148,7 @@ def patch_get_xform_resource_overrides():
 
 
 def patch_validate_xform():
-    return mock.patch('corehq.apps.app_manager.models.validate_xform', lambda _: None)
+    return mock.patch('corehq.apps.app_manager.models.forms.validate_xform', lambda _: None)
 
 
 def case_search_sync_cases_on_form_entry_enabled_for_domain():

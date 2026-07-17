@@ -573,12 +573,20 @@ class _CaseImportRow(object):
             return
         elif self.parent_relationship_type == 'extension':
             if not self.parent_identifier:
-                raise InvalidParentId(_(
-                    "'parent_identifier' column must be provided "
-                    "when 'parent_relationship_type' column is set to 'extension'"
-                ))
+                raise InvalidParentId(
+                    column_name='parent_identifier',
+                    message=_(
+                        "'parent_identifier' column must be provided "
+                        "when 'parent_relationship_type' column is set to 'extension'"
+                    ),
+                )
         else:
-            raise InvalidParentId(_("Invalid value for 'parent_relationship_type' column"))
+            raise InvalidParentId(
+                column_name='parent_relationship_type',
+                message=_(
+                    "Invalid value for 'parent_relationship_type' column"
+                ),
+            )
 
     def relies_on_uncreated_case(self, uncreated_external_ids):
         return any(lookup_id and lookup_id in uncreated_external_ids

@@ -29,6 +29,7 @@ from corehq.util.quickcache import quickcache
 
 SYSTEM_USER_ID = 'system'
 DEMO_USER_ID = 'demo_user'
+PUBLIC_USER_ID = '_public_'
 WEIRD_USER_IDS = [
     'commtrack-system',    # internal HQ/commtrack system forms
     DEMO_USER_ID,           # demo mode
@@ -36,7 +37,8 @@ WEIRD_USER_IDS = [
     UNOWNED_EXTENSION_OWNER_ID,
     SYSTEM_USER_ID,
     ARCHIVED_CASE_OWNER_ID,
-    CALLCENTER_USER
+    CALLCENTER_USER,
+    PUBLIC_USER_ID
 ]
 USER_FIELDS_TO_IGNORE_FOR_HISTORY = [
     '_id', '_rev', 'reporting_metadata', 'password',
