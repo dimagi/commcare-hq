@@ -17,7 +17,7 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.util.view_utils import json_error
 
-from .models import CommCareBuild, CommCareBuildConfig, CommCareMobileBuild, SemanticVersionProperty
+from .models import CommCareBuildConfig, CommCareMobileBuild, SemanticVersionProperty
 from .utils import get_all_versions
 
 
@@ -39,7 +39,7 @@ def post(request):
 @require_GET
 @require_superuser
 def get_all(request):
-    builds = sorted(CommCareBuild.all_builds(), key=lambda build: build.time)
+    builds = CommCareMobileBuild.objects.all().order_by('time')
     return render(request, 'builds/all.html', {'builds': builds})
 
 
