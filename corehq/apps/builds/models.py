@@ -136,12 +136,6 @@ class CommCareMobileBuild(SyncSQLToCouchMixin, models.Model):
     version = models.CharField(max_length=11, null=False, validators=[validate_semantic_version])
     build_number = models.IntegerField(null=True, blank=True)
     time = models.DateTimeField(null=False)
-    couch_id = models.CharField(max_length=126, blank=True, default='')
-
-    class Meta:
-        indexes = (
-            models.Index(fields=('couch_id',)),
-        )
 
     def save(self, *args, **kwargs):
         # TODO: replace with auto_now_add=True after couch2sql migration is complete

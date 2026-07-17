@@ -227,6 +227,7 @@ blobs
 builds
  0001_initial
  0002_populate_commcaremobilebuild
+ 0003_remove_commcaremobilebuild_couch_id
 campaign
  0001_initial
  0002_dashboardmap_dashboardreport
