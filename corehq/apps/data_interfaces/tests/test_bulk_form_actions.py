@@ -1,6 +1,10 @@
+import pytest
+
 from django.test import TestCase
 
 from corehq.apps.data_interfaces.bulk_form_actions import (
+    SAVE_EVERY,
+    _save_interval,
     build_form_action,
     mark_job_failed,
     run_bulk_form_action,
@@ -82,6 +86,23 @@ class TestRunBulkFormAction(TestCase):
         job.refresh_from_db()
         assert job.get_skipped() == {'already_unarchived': [normal.form_id]}
 
+    def test_persists_progress_before_completion(self):
+        # A small job (interval == 1) must persist counts as it goes, not only
+        # at completion, so the status poll's progress bar advances.
+        forms = [create_form_for_test(DOMAIN, state=XFormInstance.NORMAL) for _ in range(3)]
+        job = self._job(BulkAsyncJob.Action.ARCHIVE, [f.form_id for f in forms])
+        seen = []
+        original_save = job.save
+
+        def record_processed(*args, **kwargs):
+            seen.append(job.processed_count)
+            return original_save(*args, **kwargs)
+
+        job.save = record_processed
+        run_bulk_form_action(job)
+
+        assert seen == [0, 1, 2, 3, 3]
+
 
 class TestMarkJobFailed(TestCase):
 
@@ -108,3 +129,17 @@ class TestMarkJobFailed(TestCase):
 
     def test_missing_job_is_noop(self):
         mark_job_failed('00000000-0000-0000-0000-000000000000')  # no error
+
+
+@pytest.mark.parametrize("requested_count, expected", [
+    (0, SAVE_EVERY),   # empty job: guard against ZeroDivisionError, value unused
+    (1, 1),
+    (5, 1),            # tiny jobs save after every form
+    (20, 1),
+    (40, 2),
+    (100, 5),          # ~5% steps
+    (2000, SAVE_EVERY),  # first size that reaches the cap
+    (10000, SAVE_EVERY),  # very large jobs stay capped
+])
+def test_save_interval(requested_count, expected):
+    assert _save_interval(requested_count) == expected

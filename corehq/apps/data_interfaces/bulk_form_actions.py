@@ -63,6 +63,19 @@ def build_form_action(job, user_id):
     raise ValueError(f'unknown bulk action: {job.action}')
 
 
+def _save_interval(requested_count):
+    """How often ``run_bulk_form_action`` should persist progress.
+
+    Persist counts roughly every 5% of the job so the status poll's progress
+    bar advances smoothly on small jobs, while never writing more often than
+    every ``SAVE_EVERY`` forms on large ones. Guards against a zero interval
+    (and a ``ZeroDivisionError`` in the caller) for an empty job.
+    """
+    if requested_count <= 0:
+        return SAVE_EVERY
+    return max(1, min(SAVE_EVERY, requested_count // 20))
+
+
 def run_bulk_form_action(job):
     """Execute ``job`` start to finish, updating counts and status on the row."""
     job.status = BulkAsyncJob.Status.RUNNING
@@ -72,6 +85,7 @@ def run_bulk_form_action(job):
     user_id = _resolve_user_id(job.requested_by)
     form_ids = job.get_requested_ids()
     form_action = build_form_action(job, user_id)
+    save_interval = _save_interval(job.requested_count)
 
     skipped = defaultdict(list)
     processed = succeeded = 0
@@ -83,7 +97,7 @@ def run_bulk_form_action(job):
             succeeded += 1
         else:
             skipped[result.reason].append(result.form_id)
-        if processed % SAVE_EVERY == 0:
+        if processed % save_interval == 0:
             job.processed_count = processed
             job.succeeded_count = succeeded
             job.save(update_fields=['processed_count', 'succeeded_count'])
