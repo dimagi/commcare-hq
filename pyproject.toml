@@ -22,7 +22,7 @@ dependencies = [
     "cryptography>=48.0.1",
     "csiphash",
     "datadog",
-    "ddtrace>=2.21.0",
+    "ddtrace>=4.8.2",
     "decorator==5.1.1", # required by django-digest
     "defusedxml",
     "diff-match-patch",
