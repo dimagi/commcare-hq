@@ -141,23 +141,23 @@ $(document).on("ajaxStart", function () {
 });
 
 FormplayerFrontend.on('clearNotifications', function () {
-    $("#cloudcare-notifications").empty();
+    $(Const.NOTIFICATIONS_CONTAINER).empty();
 });
 
 FormplayerFrontend.on('showError', function (errorMessage, isHTML, reportToHq, additionalData) {
     if (isHTML) {
-        CloudcareUtils.showHTMLError(errorMessage, $("#cloudcare-notifications"), null, reportToHq);
+        CloudcareUtils.showHTMLError(errorMessage, $(Const.NOTIFICATIONS_CONTAINER), null, reportToHq);
     } else {
-        CloudcareUtils.showError(errorMessage, $("#cloudcare-notifications"), reportToHq, additionalData);
+        CloudcareUtils.showError(errorMessage, $(Const.NOTIFICATIONS_CONTAINER), reportToHq, additionalData);
     }
 });
 
 FormplayerFrontend.on('showWarning', function (message) {
-    CloudcareUtils.showWarning(message, $("#cloudcare-notifications"));
+    CloudcareUtils.showWarning(message, $(Const.NOTIFICATIONS_CONTAINER));
 });
 
 FormplayerFrontend.on('showSuccess', function (successMessage) {
-    CloudcareUtils.showSuccess(successMessage, $("#cloudcare-notifications"), 10000);
+    CloudcareUtils.showSuccess(successMessage, $(Const.NOTIFICATIONS_CONTAINER), 10000);
 });
 
 FormplayerFrontend.on('handleNotification', function (notification) {
@@ -194,9 +194,9 @@ FormplayerFrontend.on('startForm', function (data) {
             message = resp.notification.message;
         }
         if (resp.is_html) {
-            CloudcareUtils.showHTMLError(message, $("#cloudcare-notifications"), null, resp.reportToHq);
+            CloudcareUtils.showHTMLError(message, $(Const.NOTIFICATIONS_CONTAINER), null, resp.reportToHq);
         } else {
-            CloudcareUtils.showError(message, $("#cloudcare-notifications"), resp.reportToHq);
+            CloudcareUtils.showError(message, $(Const.NOTIFICATIONS_CONTAINER), resp.reportToHq);
         }
     };
     noopMetrics.track.event('Viewed Form', {
@@ -226,10 +226,10 @@ FormplayerFrontend.on('startForm', function (data) {
                             });
                         }
                     };
-                $("#cloudcare-notifications").off('click').on('click', dataFeedbackLoopAnalytics);
-                $alert = CloudcareUtils.showSuccess(markdowner().render(resp.submitResponseMessage), $("#cloudcare-notifications"), undefined, true);
+                $(Const.NOTIFICATIONS_CONTAINER).off('click').on('click', dataFeedbackLoopAnalytics);
+                $alert = CloudcareUtils.showSuccess(markdowner().render(resp.submitResponseMessage), $(Const.NOTIFICATIONS_CONTAINER), undefined, true);
             } else {
-                $alert = CloudcareUtils.showSuccess(gettext("Form successfully saved!"), $("#cloudcare-notifications"));
+                $alert = CloudcareUtils.showSuccess(gettext("Form successfully saved!"), $(Const.NOTIFICATIONS_CONTAINER));
             }
             if ($alert) {
                 // Clear the success notification the next time user changes screens
@@ -270,7 +270,7 @@ FormplayerFrontend.on('startForm', function (data) {
                 FormplayerUtils.navigate('/apps', { trigger: true });
             }
         } else {
-            CloudcareUtils.showError(resp.output, $("#cloudcare-notifications"));
+            CloudcareUtils.showError(resp.output, $(Const.NOTIFICATIONS_CONTAINER));
         }
     };
     data.debuggerEnabled = user.debuggerEnabled;
@@ -343,7 +343,7 @@ FormplayerFrontend.on("start", function (model, options) {
                 if (!navigator.onLine && (new Date() - offlineTime) > reconnectTimingWindow) {
                     CloudcareUtils.showError(gettext("You are now offline. Web Apps is not optimized " +
                         "for offline use. Please reconnect to the Internet before " +
-                        "continuing."), $("#cloudcare-notifications"));
+                        "continuing."), $(Const.NOTIFICATIONS_CONTAINER));
                     $('.submit').prop('disabled', 'disabled');
                     $('.form-control, .form-select').prop('disabled', 'disabled');
                 }
@@ -353,7 +353,7 @@ FormplayerFrontend.on("start", function (model, options) {
     window.addEventListener(
         'online', function () {
             if ((new Date() - offlineTime) > reconnectTimingWindow) {
-                CloudcareUtils.showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
+                CloudcareUtils.showSuccess(gettext("You are are back online."), $(Const.NOTIFICATIONS_CONTAINER));
                 $('.submit').prop('disabled', false);
                 $('.form-control, .form-select').prop('disabled', false);
             }
@@ -641,7 +641,7 @@ FormplayerFrontend.on('refreshApplication', function (appId) {
         }
 
         CloudcareUtils.formplayerLoadingComplete();
-        $("#cloudcare-notifications").empty();
+        $(Const.NOTIFICATIONS_CONTAINER).empty();
         FormplayerFrontend.trigger('navigateHome');
     });
 });
