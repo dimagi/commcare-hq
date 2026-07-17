@@ -14,9 +14,6 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.couch.migration import (
-    SyncSQLToCouchMixin,
-)
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -56,7 +53,7 @@ def validate_semantic_version(value):
         )
 
 
-class CommCareMobileBuild(SyncSQLToCouchMixin, models.Model):
+class CommCareMobileBuild(models.Model):
     version = models.CharField(max_length=11, null=False, validators=[validate_semantic_version])
     build_number = models.IntegerField(null=True, blank=True)
     time = models.DateTimeField(null=False)
@@ -86,17 +83,6 @@ class CommCareMobileBuild(SyncSQLToCouchMixin, models.Model):
                 )
             )
 
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "version",
-            "build_number",
-            "time",
-        ]
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return CommCareBuild
 
 class BuildSpec(DocumentSchema):
     version = SemanticVersionProperty(required=False)

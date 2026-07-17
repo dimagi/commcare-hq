@@ -1,16 +1,17 @@
 from django.db import migrations
 
-from corehq.apps.builds.management.commands.populate_commcarebuild import Command
-
 
 class Migration(migrations.Migration):
+    # This was a couch-to-sql data population migration. The couch model and
+    # its populate command have since been removed, so the operation is now a
+    # no-op retained to preserve the migration history.
 
     dependencies = [
         ('builds', '0001_initial'),
     ]
 
     operations = [
-        migrations.RunPython(Command.migrate_from_migration,
+        migrations.RunPython(migrations.RunPython.noop,
                              reverse_code=migrations.RunPython.noop,
                              elidable=True),
     ]
