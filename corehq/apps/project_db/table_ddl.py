@@ -1,5 +1,7 @@
 import hashlib
 
+from django.core.exceptions import ImproperlyConfigured
+
 import sqlalchemy
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
@@ -32,6 +34,10 @@ def property_column(name, data_type=None):
 
 def get_project_db_engine():
     """Return a SQLAlchemy engine for project DB tables"""
+    if not connection_manager.engine_id_is_available(PROJECT_DB_ENGINE_ID):
+        raise ImproperlyConfigured(
+            f"'{PROJECT_DB_ENGINE_ID}' database not defined in REPORTING_DATABASES"
+        )
     return connection_manager.get_engine(PROJECT_DB_ENGINE_ID)
 
 
