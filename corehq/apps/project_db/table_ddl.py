@@ -41,6 +41,20 @@ def get_project_db_engine():
     return connection_manager.get_engine(PROJECT_DB_ENGINE_ID)
 
 
+def create_project_db_extensions():
+    """Create the Postgres extensions project DB depends on, if absent."""
+    # Production envs install extensions via commcare-cloud
+    engine = get_project_db_engine()
+    with engine.begin() as conn:
+        for ext in [
+            'cube',  # Provides `cube` type needed by earthdistance
+            'earthdistance',  # `earth` column type and associated geopoint distance calculations
+            'pg_trgm',  # trigram-based similarity() function for fuzzy search
+            'fuzzystrmatch',  # phonetic match dmetaphone() function, also soundex and levenshtein
+        ]:
+            conn.execute(sqlalchemy.text(f'CREATE EXTENSION IF NOT EXISTS {ext}'))
+
+
 class DomainSchema:
     """A PostgreSQL schema that stores a domain's ProjectDB tables"""
     def __init__(self, domain):
