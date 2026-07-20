@@ -119,6 +119,19 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
         cls.addClassCleanup(domain_obj.delete)
         return domain_obj
 
+    def add_domain_feature_rate(self, monthly_limit, per_excess_fee):
+        from corehq.apps.accounting.models import Feature, FeatureRate
+        domain_feature, __ = Feature.objects.get_or_create(
+            name="Domain", defaults={"feature_type": FeatureType.DOMAIN})
+        rate = FeatureRate.objects.create(
+            feature=domain_feature,
+            monthly_fee=Decimal('0.00'),
+            monthly_limit=monthly_limit,
+            per_excess_fee=per_excess_fee,
+        )
+        self.main_subscription.plan_version.feature_rates.add(rate)
+        return rate
+
 
 class TestCustomerInvoice(BaseCustomerInvoiceCase):
 
@@ -887,3 +900,180 @@ class TestCalculateDomainsInAllBillingAccounts(BaseCustomerInvoiceCase):
         calculate_domains_in_all_billing_accounts(date(2016, 6, 1))
 
         self.assertEqual(BillingAccountDomainHistory.objects.count(), 0)
+
+
+class TestDomainLineItem(BaseCustomerInvoiceCase):
+
+    is_using_test_plans = True
+
+    def setUp(self):
+        super().setUp()
+        # get_domains() filters on is_active=True (wall-clock state); the
+        # generator's default is is_active=False, so activate the snapshot
+        # source. Invoice generation itself selects by date overlap.
+        Subscription.visible_and_suppressed_objects.filter(account=self.account).update(is_active=True)
+        self.domain_rate = self.add_domain_feature_rate(
+            monthly_limit=1,                 # included-domains allowance
+            per_excess_fee=Decimal('100.00'),
+        )
+        # Fixed mid-life month so all three subscriptions span the full
+        # invoice month (no proration).
+        self.invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 5)
+        # The default ADVANCED test plan also carries a USER feature rate, so
+        # invoice generation needs a DomainUserHistory snapshot to succeed at
+        # all (independent of the Domain feature under test); without it,
+        # invoice generation raises and is swallowed as a logged [BILLING]
+        # error, silently producing zero line items and masking assertions.
+        calculate_users_in_all_domains(self.invoice_date)
+
+    def test_over_allowance_charges_per_excess_domain(self):
+        from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
+        calculate_domains_in_all_billing_accounts(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        invoice = CustomerInvoice.objects.first()
+        domain_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN)
+        self.assertEqual(domain_line_items.count(), 1)
+        domain_line_item = domain_line_items.first()
+        # 3 active domains - allowance of 1 = 2 excess
+        self.assertEqual(domain_line_item.quantity, 2)
+        self.assertEqual(domain_line_item.unit_cost, Decimal('100.00'))
+        self.assertEqual(domain_line_item.total, Decimal('200.00'))
+
+    def test_unlimited_monthly_limit_charges_nothing(self):
+        from corehq.apps.accounting.models import UNLIMITED_FEATURE_USAGE
+        from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
+        self.domain_rate.monthly_limit = UNLIMITED_FEATURE_USAGE
+        self.domain_rate.save()
+        calculate_domains_in_all_billing_accounts(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        invoice = CustomerInvoice.objects.first()
+        domain_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN).first()
+        self.assertEqual(domain_line_item.quantity, 0)
+        self.assertEqual(domain_line_item.total, Decimal('0.0000'))
+
+    def test_domain_line_item_in_quarterly_invoice(self):
+        from corehq.apps.accounting.models import BillingAccountDomainHistory
+        self.account.invoicing_plan = InvoicingPlan.QUARTERLY
+        self.account.save()
+        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 14)
+        # Quarterly invoicing sums excess domains over the three month-ends
+        # in the quarter: 2017-01-31, 2017-02-28, 2017-03-31 (record_date is
+        # always the day before the snapshot task's "today", as in
+        # calculate_domains_in_all_billing_accounts).
+        for months_before_invoice_date, num_domains in zip(range(3), [2, 3, 5]):
+            user_date = date(invoice_date.year, invoice_date.month, 1)
+            user_date -= relativedelta.relativedelta(months=months_before_invoice_date)
+            calculate_users_in_all_domains(user_date)
+            record_date = user_date - relativedelta.relativedelta(days=1)
+            BillingAccountDomainHistory.objects.create(
+                billing_account=self.account, record_date=record_date, num_domains=num_domains)
+        tasks.generate_invoices_based_on_date(invoice_date)
+
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        domain_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN)
+        self.assertEqual(domain_line_items.count(), 1)
+        domain_line_item = domain_line_items.first()
+        # allowance of 1: (2-1) + (3-1) + (5-1) = 1 + 2 + 4 = 7
+        self.assertEqual(domain_line_item.quantity, 7)
+        self.assertEqual(domain_line_item.unit_cost, Decimal('100.00'))
+        self.assertEqual(domain_line_item.total, Decimal('700.00'))
+
+    def test_missing_snapshot_charges_zero_excess(self):
+        """Before a DOMAIN feature rate exists on a plan, there is no concept
+        of an excess domain at all -- the account is just billed the flat
+        product fee. A missing BillingAccountDomainHistory snapshot (e.g. the
+        cold-start window right after a Domain rate is first attached, before
+        monthly snapshots have accumulated) must be treated the same way: as
+        zero excess domains for that month, not as a hard failure that blocks
+        the entire invoice."""
+        # Deliberately no calculate_domains_in_all_billing_accounts run.
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        domain_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN).first()
+        self.assertEqual(domain_line_item.quantity, 0)
+        self.assertEqual(domain_line_item.total, Decimal('0.0000'))
+
+    def test_within_allowance_charges_nothing(self):
+        from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
+        self.domain_rate.monthly_limit = 10
+        self.domain_rate.save()
+        calculate_domains_in_all_billing_accounts(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        invoice = CustomerInvoice.objects.first()
+        domain_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN).first()
+        self.assertEqual(domain_line_item.quantity, 0)
+        self.assertEqual(domain_line_item.total, Decimal('0.0000'))
+
+    def test_no_domain_line_item_without_domain_rate(self):
+        from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
+        self.main_subscription.plan_version.feature_rates.remove(self.domain_rate)
+        calculate_domains_in_all_billing_accounts(self.invoice_date)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN).count(), 0)
+
+    def test_domain_rate_on_non_customer_account_is_skipped(self):
+        """A Domain rate on a non-customer plan must not crash regular
+        invoicing (snapshots only exist for customer accounts) — the guard in
+        generate_line_items skips the factory entirely."""
+        from unittest.mock import patch
+        from corehq.apps.accounting.models import Invoice
+        # self.account is the class-level fixture shared across this test
+        # class's methods; restore it so later tests still see a customer
+        # account (Django's TestCase rolls back the DB row, but not this
+        # Python attribute mutation).
+        self.addCleanup(setattr, self.account, 'is_customer_billing_account', True)
+        self.account.is_customer_billing_account = False
+        self.account.save()
+        # setUp() already ran calculate_users_in_all_domains, so regular
+        # invoices have the user-count snapshot for their USER line item;
+        # the only missing history is the domain one.
+        # No domain snapshot task run: without the guard this would raise
+        # BillingAccountDomainHistory.DoesNotExist during invoice generation.
+        # The PDF footer reverses a domain-scoped URL, which doesn't match
+        # the base fixture's domain names (e.g. "main domain" contains a
+        # space); that's incidental to what's under test here, so stub it out.
+        with patch('corehq.apps.accounting.invoice_pdf.absolute_reverse', return_value='http://example.com'):
+            tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        self.assertEqual(CustomerInvoice.objects.count(), 0)
+        invoice = Invoice.objects.filter(subscription=self.main_subscription).first()
+        self.assertIsNotNone(invoice)
+        self.assertEqual(invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN).count(), 0)
+
+    def test_get_feature_name_does_not_raise(self):
+        from corehq.apps.accounting.user_text import get_feature_name
+        self.assertEqual(get_feature_name(FeatureType.DOMAIN), "Project Spaces")
+
+    def test_user_facing_description_with_domain_rate(self):
+        # Regression: FEATURE_TYPE_TO_NAME lookup in user_facing_description
+        # used to KeyError for a plan version carrying a Domain feature rate.
+        description = self.main_subscription.plan_version.user_facing_description
+        domain_rates = [r for r in description['rates'] if r['name'] == "Project Spaces"]
+        self.assertEqual(len(domain_rates), 1)
+        self.assertEqual(domain_rates[0]['included'], self.domain_rate.monthly_limit)
+
+    def test_usage_calculator_returns_active_domain_count_for_account(self):
+        from corehq.apps.accounting.usage import FeatureUsageCalculator
+        # get_active_subscription_by_domain is quickcache'd; the fixture's
+        # activation of subscriptions uses a bulk .update() (bypasses .save(),
+        # so it never invalidates this cache). Clear it after populating so a
+        # stale cached Subscription doesn't leak into sibling tests / the
+        # class's domain-deletion teardown.
+        self.addCleanup(Subscription._get_active_subscription_by_domain.clear,
+                         Subscription, self.main_domain.name)
+        calc = FeatureUsageCalculator(self.domain_rate, self.main_domain.name)
+        # BaseCustomerInvoiceCase sets up 3 active domains on the account.
+        self.assertEqual(calc.get_usage(), 3)
+
+    def test_usage_calculator_returns_zero_without_active_subscription(self):
+        from corehq.apps.accounting.usage import FeatureUsageCalculator
+        calc = FeatureUsageCalculator(self.domain_rate, "domain-with-no-subscription")
+        self.assertEqual(calc.get_usage(), 0)
