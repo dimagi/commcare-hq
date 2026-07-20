@@ -76,12 +76,10 @@ class FormActionResult:
     reason: Optional[str] = None  # not_found | unexpected_error
 
 
-def apply_form_action(domain, form_ids, action_fn, validate=None):
+def apply_form_action(domain, form_ids, action_fn):
     """Apply ``action_fn`` to each form and yield a ``FormActionResult`` per id.
 
     :param action_fn: callable taking an ``XFormInstance``
-    :param validate: optional callable taking an ``XFormInstance`` and returning
-        a skip reason (or ``None`` to proceed).
     """
     unresolved_ids = set(form_ids)
     for xform in XFormInstance.objects.iter_forms(form_ids):
@@ -89,10 +87,6 @@ def apply_form_action(domain, form_ids, action_fn, validate=None):
             # skip forms not belonging to the specified domain
             continue
         unresolved_ids.discard(xform.form_id)
-        reason = validate(xform) if validate else None
-        if reason:
-            yield FormActionResult(xform.form_id, SKIPPED, reason)
-            continue
         try:
             action_fn(xform)
         except Exception:
