@@ -562,7 +562,7 @@ class LineItemFactory(object):
             return {
                 FeatureType.SMS: SmsLineItemFactory,
                 FeatureType.FORM_SUBMITTING_MOBILE_WORKER: FormSubmittingMobileWorkerLineItemFactory,
-                FeatureType.USER: UserLineItemFactory,
+                FeatureType.USER: MobileUserLineItemFactory,
                 FeatureType.WEB_USER: WebUserLineItemFactory,
                 FeatureType.DOMAIN: DomainLineItemFactory,
             }[feature_type]
@@ -757,8 +757,11 @@ class UserLineItemFactory(FeatureLineItemFactory):
         excess_users = 0
         for date in dates:
             total_users = self.total_users_for_date(date)
-            excess_users += max(total_users - self.rate.monthly_limit, 0)
+            excess_users += max(total_users - self.monthly_limit_for_date(date), 0)
         return excess_users
+
+    def monthly_limit_for_date(self, date):
+        return self.rate.monthly_limit
 
     def total_users_for_date(self, date):
         total_users = 0
@@ -818,6 +821,37 @@ def excess_domains_for_date(account, record_date, domain_rate):
     if domain_rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
         return 0
     return max(domains_for_date(account, record_date) - domain_rate.monthly_limit, 0)
+
+
+class MobileUserLineItemFactory(UserLineItemFactory):
+    """
+    Bills mobile workers against a limit that scales with the account's
+    domain count: every project space bundles the DOMAIN rate's USER-type
+    BundledFeatureUnit quantity into the included user allowance.
+
+    Deliberately a subclass rather than UserLineItemFactory behavior: the
+    other user-family factories (web users, form-submitting workers, domains)
+    share that base class and must not inherit the bundling.
+    """
+
+    @property
+    @memoized
+    def _bundled_users_per_domain(self):
+        domain_rate = self.subscription.plan_version.feature_rates.filter(
+            feature__feature_type=FeatureType.DOMAIN).first()
+        if domain_rate is None:
+            return 0
+        unit = domain_rate.bundled_units.filter(feature_type=FeatureType.USER).first()
+        return unit.quantity_per_unit if unit else 0
+
+    def monthly_limit_for_date(self, date):
+        base_limit = self.rate.monthly_limit
+        if not self._bundled_users_per_domain:
+            return base_limit
+        return base_limit + (
+            domains_for_date(self.subscription.account, date)
+            * self._bundled_users_per_domain
+        )
 
 
 class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
