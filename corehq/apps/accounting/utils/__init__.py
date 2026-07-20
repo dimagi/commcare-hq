@@ -59,7 +59,16 @@ def fmt_feature_rate_dict(feature, feature_rate=None):
         'monthly_fee': str(feature_rate.monthly_fee),
         'monthly_limit': feature_rate.monthly_limit,
         'per_excess_fee': str(feature_rate.per_excess_fee),
+        'bundled_mobile_workers': _bundled_mobile_workers(feature_rate),
     }
+
+
+def _bundled_mobile_workers(feature_rate):
+    from corehq.apps.accounting.models import FeatureType
+    if feature_rate.pk is None:
+        return 0
+    unit = feature_rate.bundled_units.filter(feature_type=FeatureType.USER).first()
+    return unit.quantity_per_unit if unit else 0
 
 
 def fmt_product_rate_dict(product_name, product_rate=None):

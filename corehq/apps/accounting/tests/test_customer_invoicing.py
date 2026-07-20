@@ -1092,3 +1092,103 @@ class TestDomainLineItem(BaseCustomerInvoiceCase):
         from corehq.apps.accounting.usage import FeatureUsageCalculator
         calc = FeatureUsageCalculator(self.domain_rate, "domain-with-no-subscription")
         self.assertEqual(calc.get_usage(), 0)
+
+
+class TestBundledFeatureUnit(TestCase):
+    """A BundledFeatureUnit row bundles units of another feature type into
+    each unit of the carrier rate's feature (spec §2a)."""
+
+    def _domain_rate(self, units=()):
+        from corehq.apps.accounting.models import BundledFeatureUnit, Feature, FeatureRate
+        feature, __ = Feature.objects.get_or_create(
+            name="Domain", defaults={"feature_type": FeatureType.DOMAIN})
+        rate = FeatureRate.objects.create(
+            feature=feature, monthly_limit=1, per_excess_fee=Decimal('100.00'))
+        for feature_type, quantity in units:
+            BundledFeatureUnit.objects.create(
+                feature_rate=rate, feature_type=feature_type, quantity_per_unit=quantity)
+        return rate
+
+    def test_unit_change_registers_as_rate_change(self):
+        # __eq__ drives _retrieve_feature_rate's is-this-a-new-rate decision
+        # when a plan version is edited; a bundling change must produce a new
+        # immutable rate row. The form stashes not-yet-saved units on the
+        # instance as _pending_bundled_units.
+        from corehq.apps.accounting.models import FeatureRate
+        current = self._domain_rate(units=[(FeatureType.USER, 100)])
+        edited_same = FeatureRate(
+            feature=current.feature, monthly_limit=1, per_excess_fee=Decimal('100.00'))
+        edited_same._pending_bundled_units = [(FeatureType.USER, 100)]
+        edited_qty = FeatureRate(
+            feature=current.feature, monthly_limit=1, per_excess_fee=Decimal('100.00'))
+        edited_qty._pending_bundled_units = [(FeatureType.USER, 150)]
+        edited_removed = FeatureRate(
+            feature=current.feature, monthly_limit=1, per_excess_fee=Decimal('100.00'))
+        edited_removed._pending_bundled_units = []
+
+        self.assertEqual(current, edited_same)
+        self.assertNotEqual(current, edited_qty)
+        self.assertNotEqual(current, edited_removed)
+
+    def test_units_rejected_on_non_domain_carrier(self):
+        from django.core.exceptions import ValidationError
+        from corehq.apps.accounting.models import BundledFeatureUnit, Feature, FeatureRate
+        user_feature = Feature.objects.create(name="User carrier test", feature_type=FeatureType.USER)
+        user_rate = FeatureRate.objects.create(feature=user_feature)
+        unit = BundledFeatureUnit(
+            feature_rate=user_rate, feature_type=FeatureType.USER, quantity_per_unit=100)
+        with self.assertRaises(ValidationError):
+            unit.full_clean()
+
+    def test_non_user_unit_type_rejected(self):
+        from django.core.exceptions import ValidationError
+        from corehq.apps.accounting.models import BundledFeatureUnit
+        rate = self._domain_rate()
+        unit = BundledFeatureUnit(
+            feature_rate=rate, feature_type=FeatureType.SMS, quantity_per_unit=500)
+        with self.assertRaises(ValidationError):
+            unit.full_clean()
+
+    def test_user_unit_on_domain_carrier_is_valid(self):
+        from corehq.apps.accounting.models import BundledFeatureUnit
+        rate = self._domain_rate()
+        unit = BundledFeatureUnit(
+            feature_rate=rate, feature_type=FeatureType.USER, quantity_per_unit=100)
+        unit.full_clean()  # no error
+
+    def test_form_round_trips_bundled_mobile_workers(self):
+        from corehq.apps.accounting.forms import FeatureRateForm
+        from corehq.apps.accounting.utils import fmt_feature_rate_dict
+        rate = self._domain_rate(units=[(FeatureType.USER, 100)])
+        self.assertEqual(
+            fmt_feature_rate_dict(rate.feature, rate)['bundled_mobile_workers'], 100)
+
+        form = FeatureRateForm({
+            'feature_id': rate.feature.id,
+            'monthly_fee': '0.00',
+            'monthly_limit': 1,
+            'per_excess_fee': '100.00',
+            'bundled_mobile_workers': 150,
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+        instance = form.get_instance(rate.feature)
+        self.assertEqual(instance._pending_bundled_units, [(FeatureType.USER, 150)])
+        instance.save()
+        instance.save_pending_bundled_units()
+        self.assertEqual(
+            instance.bundled_units.get(feature_type=FeatureType.USER).quantity_per_unit,
+            150)
+
+    def test_form_rejects_bundled_workers_on_non_domain_rates(self):
+        from corehq.apps.accounting.forms import FeatureRateForm
+        from corehq.apps.accounting.models import Feature
+        user_feature = Feature.objects.create(name="User form test", feature_type=FeatureType.USER)
+        form = FeatureRateForm({
+            'feature_id': user_feature.id,
+            'monthly_fee': '0.00',
+            'monthly_limit': 10,
+            'per_excess_fee': '1.00',
+            'bundled_mobile_workers': 5,
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('bundled_mobile_workers', form.errors)

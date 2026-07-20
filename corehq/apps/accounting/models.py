@@ -792,7 +792,27 @@ class FeatureRate(models.Model):
         for field in ['monthly_fee', 'monthly_limit', 'per_excess_fee', 'is_active']:
             if not getattr(self, field) == getattr(other, field):
                 return False
-        return True
+        return self._bundled_units_signature() == other._bundled_units_signature()
+
+    def _bundled_units_signature(self):
+        # A rate built by the plan-version form carries its not-yet-saved
+        # units in _pending_bundled_units; a bundling change must register as
+        # a rate change (creating a new immutable rate) just like any field.
+        if hasattr(self, '_pending_bundled_units'):
+            return sorted(self._pending_bundled_units)
+        if self.pk is None:
+            return []
+        return sorted(
+            (unit.feature_type, unit.quantity_per_unit)
+            for unit in self.bundled_units.all()
+        )
+
+    def save_pending_bundled_units(self):
+        for feature_type, quantity in getattr(self, '_pending_bundled_units', []):
+            self.bundled_units.get_or_create(
+                feature_type=feature_type,
+                defaults={'quantity_per_unit': quantity},
+            )
 
     @classmethod
     def new_rate(cls, feature_name, feature_type,
@@ -810,6 +830,37 @@ class FeatureRate(models.Model):
         if save:
             rate.save()
         return rate
+
+
+class BundledFeatureUnit(models.Model):
+    """
+    Bundles quantity_per_unit units of feature_type into every unit of the
+    carrier rate's feature -- e.g. "each project space includes 100 mobile
+    workers" as a row on a plan's DOMAIN rate. Immutable, like the rate that
+    carries it: changing a bundle means creating a new FeatureRate with new
+    unit rows.
+    """
+    feature_rate = models.ForeignKey(FeatureRate, on_delete=models.CASCADE,
+                                     related_name='bundled_units')
+    feature_type = models.CharField(max_length=40, choices=FeatureType.CHOICES)
+    quantity_per_unit = models.IntegerField(validators=integer_field_validators)
+
+    class Meta(object):
+        app_label = 'accounting'
+        unique_together = ('feature_rate', 'feature_type')
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        if (self.feature_rate_id
+                and self.feature_rate.feature.feature_type != FeatureType.DOMAIN):
+            errors['feature_rate'] = \
+                "Bundled units are only supported on Domain feature rates."
+        if self.feature_type and self.feature_type != FeatureType.USER:
+            errors['feature_type'] = \
+                "Only User units can be bundled for now."
+        if errors:
+            raise ValidationError(errors)
 
 
 class SoftwarePlan(models.Model):
