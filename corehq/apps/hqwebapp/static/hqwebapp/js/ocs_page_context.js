@@ -51,7 +51,7 @@ function collectGlobalContext() {
 function runCollector(collectContext) {
     try {
         return collectContext() || {};
-    } catch (error) {
+    } catch {
         console.error("OCS context collector failed");
         return {};
     }
