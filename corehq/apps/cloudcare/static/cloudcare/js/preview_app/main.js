@@ -3,7 +3,6 @@ import $ from "jquery";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import sentry from "cloudcare/js/sentry";
-import utils from "cloudcare/js/utils";
 import * as previewApp from "cloudcare/js/preview_app/preview_app";
 import "cloudcare/js/preview_app/dragscroll";  // for .dragscroll elements
 
@@ -11,11 +10,6 @@ $(function () {
     sentry.initSentry();
 
     window.MAPBOX_ACCESS_TOKEN = initialPageData.get('mapbox_access_token'); // maps api is loaded on-demand
-
-    // OCS context collector reads this
-    window.getAppPreviewErrors = function () {
-        return utils.getErrorNotificationTexts();
-    };
     previewApp.start({
         apps: [initialPageData.get('app')],
         language: initialPageData.get('language'),
