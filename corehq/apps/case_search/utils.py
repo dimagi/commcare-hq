@@ -128,6 +128,10 @@ def get_case_search_results(domain, config, app_id=None, couch_user=None, profil
 
 
 def get_endpoint_results(helper, config):
+    from corehq.apps.project_db.endpoints import STATIC_ENDPOINTS
+    if endpoint := STATIC_ENDPOINTS.get(int(config.endpoint_id)):
+        return endpoint[1](helper, config)
+
     try:
         # TODO: cache? Prefetch endpoint version?
         endpoint = CaseSearchEndpoint.objects.get(domain=helper.domain, id=config.endpoint_id)
