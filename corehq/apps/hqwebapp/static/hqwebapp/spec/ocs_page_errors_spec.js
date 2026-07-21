@@ -93,6 +93,38 @@ describe("OCS page warnings collector", function () {
         }
     });
 
+    it("reports the label and error but never the field's own value (possible PII)", function () {
+        const ssn = "123-45-6789";
+        const patientName = "Jane Doe";
+        const dom = document.createElement("div");
+        dom.innerHTML = `
+            <div id="div_id_ssn" class="mb-3">
+                <label for="id_ssn" class="form-label">Social security number</label>
+                <input id="id_ssn" class="form-control is-invalid" value="${ssn}">
+                <span class="invalid-feedback" style="display: block;">Invalid format</span>
+            </div>
+            <div class="form-group has-error">
+                <label class="control-label">Notes</label>
+                <textarea class="form-control">${patientName}</textarea>
+                <span class="help-block">This field is required</span>
+            </div>
+        `;
+        document.body.appendChild(dom);
+
+        try {
+            const messages = _scrapeErrorMessages();
+            assert.deepEqual(messages, [
+                {level: "error", message: "Social security number: Invalid format", type: "inline"},
+                {level: "error", message: "Notes: This field is required", type: "inline"},
+            ]);
+            const allText = messages.map((m) => m.message).join(" ");
+            assert.notInclude(allText, ssn);
+            assert.notInclude(allText, patientName);
+        } finally {
+            document.body.removeChild(dom);
+        }
+    });
+
     it("scrapes the visible HTMX error modal", function () {
         const dom = document.createElement("div");
         dom.innerHTML = `
