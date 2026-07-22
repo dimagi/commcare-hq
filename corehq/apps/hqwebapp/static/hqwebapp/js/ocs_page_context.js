@@ -8,6 +8,7 @@
 
 import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
+import toggles from "hqwebapp/js/toggles";
 
 const WIDGET_SELECTOR = 'open-chat-studio-widget';
 const BEFORE_SEND_EVENT = 'ocs:message:before-send';
@@ -50,7 +51,7 @@ function collectGlobalContext() {
 function runCollector(collectContext) {
     try {
         return collectContext() || {};
-    } catch (error) {
+    } catch {
         console.error("OCS context collector failed");
         return {};
     }
@@ -66,7 +67,7 @@ function getClientPageContext() {
 
 document.addEventListener('DOMContentLoaded', function () {
     const widget = document.querySelector(WIDGET_SELECTOR);
-    if (!widget) {
+    if (!widget || !toggles.toggleEnabled('OCS_CHATBOT_PAGE_CONTEXT')) {
         return;
     }
     _fetchMyRole();

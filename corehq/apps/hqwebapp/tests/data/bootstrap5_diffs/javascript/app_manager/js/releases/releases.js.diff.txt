@@ -75,7 +75,7 @@
 -        $('.modal.fade.in').modal('hide');
 -        try {
 -            self.download_modal.modal({show: true});
--        } catch (e) {
+-        } catch {
 -            // do nothing. this error only shows up in mocha tests when run
 -            // via grunt rather than the browser due to how the DOM is
 -            // interpreted. this runs fine in the browser.
