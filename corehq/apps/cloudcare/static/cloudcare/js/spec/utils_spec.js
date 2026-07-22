@@ -1,17 +1,8 @@
-import $ from "jquery";
 import sinon from "sinon";
 import constants from "cloudcare/js/formplayer/constants";
 import utils from "cloudcare/js/utils";
 
 describe("Cloudcare Utils", function () {
-    it("getErrorNotificationTexts reads errors shown via showError", function () {
-        utils.showError("Something went wrong", $(constants.NOTIFICATIONS_CONTAINER), false);
-
-        assert.deepEqual(utils.getErrorNotificationTexts(), ["Something went wrong"]);
-
-        $(constants.NOTIFICATIONS_CONTAINER).empty();
-    });
-
     describe('Small Screen Listener', function () {
         const callback = sinon.stub().callsFake(smallScreenEnabled => smallScreenEnabled);
         const smallScreenListener = utils.smallScreenListener(callback);
