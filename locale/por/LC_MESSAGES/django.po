@@ -20763,8 +20763,8 @@ msgstr "Caso com o identificador '{}' foi adicionado a este grupo."
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "XForm {form_id} does not belong to domain {domain}"
-msgstr "O XForm {form_id} não pertence ao domínio {domain}"
+msgid "Could not find XForm {form_id}"
+msgstr "Não foi possível encontrar o XForm {form_id}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -20783,13 +20783,15 @@ msgstr "{form} desarquivado com sucesso"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not archive {form}: {error}"
-msgstr "Não foi possível arquivar {form}: {error}"
+#| msgid "Could not archive {form}: {error}"
+msgid "Could not archive {form}"
+msgstr "Não foi possível arquivar {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not find XForm {form_id}"
-msgstr "Não foi possível encontrar o XForm {form_id}"
+#| msgid "Could not archive {form}: {error}"
+msgid "Could not unarchive {form}"
+msgstr "Não foi possível desarquivar {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -59718,6 +59720,10 @@ msgstr "Colunas obrigatórias são {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Insira um JSON válido"
+
+#, python-brace-format
+#~ msgid "XForm {form_id} does not belong to domain {domain}"
+#~ msgstr "O XForm {form_id} não pertence ao domínio {domain}"
 
 #~ msgid ""
 #~ "\n"

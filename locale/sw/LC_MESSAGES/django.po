@@ -20582,8 +20582,8 @@ msgstr "Kesi yenye kitambulisho '{}' imeongezwa kwenye kundi hili."
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "XForm {form_id} does not belong to domain {domain}"
-msgstr "XForm {form_id} haihusiani na domain {domain}"
+msgid "Could not find XForm {form_id}"
+msgstr "Haikuweza kupatikana XForm {form_id}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -20602,13 +20602,15 @@ msgstr "Umefanikiwa kuondoa kwenye kumbukumbu {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not archive {form}: {error}"
-msgstr "Haikuwezekana kuhifadhi kwenye kumbukumbu {form}: {error}"
+#| msgid "Could not archive {form}: {error}"
+msgid "Could not archive {form}"
+msgstr "Imeshindikana kuhifadhi {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not find XForm {form_id}"
-msgstr "Haikuweza kupatikana XForm {form_id}"
+#| msgid "Could not archive {form}: {error}"
+msgid "Could not unarchive {form}"
+msgstr "Imeshindikana kufungua {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -59322,6 +59324,10 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#, python-brace-format
+#~ msgid "XForm {form_id} does not belong to domain {domain}"
+#~ msgstr "XForm {form_id} haihusiani na domain {domain}"
 
 #~ msgid ""
 #~ "\n"
