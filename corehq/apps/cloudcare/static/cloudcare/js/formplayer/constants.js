@@ -50,4 +50,6 @@ export default {
     MILLIS_BEFORE_SHOW_LOADING: 1000,
 
     SCROLLABLE_CONTENT_CONTAINER: '#content-plus-version-info-container',
+
+    NOTIFICATIONS_CONTAINER: '#cloudcare-notifications',
 };
