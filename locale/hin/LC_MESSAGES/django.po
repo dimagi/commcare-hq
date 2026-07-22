@@ -20367,8 +20367,8 @@ msgstr "'{}' पहचानकर्ता वाला केस इस सम
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "XForm {form_id} does not belong to domain {domain}"
-msgstr "XForm {form_id} डोमेन {domain} से संबंधित नहीं है"
+msgid "Could not find XForm {form_id}"
+msgstr "XForm {form_id} नहीं मिला"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -20387,13 +20387,15 @@ msgstr "{form} को सफलतापूर्वक अनआर्काइ
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not archive {form}: {error}"
-msgstr "{form} को आर्काइव नहीं किया जा सका: {error}"
+#| msgid "Could not archive {form}: {error}"
+msgid "Could not archive {form}"
+msgstr "{form} को आर्काइव नहीं किया जा सका"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not find XForm {form_id}"
-msgstr "XForm {form_id} नहीं मिला"
+#| msgid "Could not archive {form}: {error}"
+msgid "Could not unarchive {form}"
+msgstr "{form} को अनआर्काइव नहीं किया जा सका"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -58773,6 +58775,10 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#, python-brace-format
+#~ msgid "XForm {form_id} does not belong to domain {domain}"
+#~ msgstr "XForm {form_id} डोमेन {domain} से संबंधित नहीं है"
 
 #~ msgid ""
 #~ "\n"

@@ -17941,7 +17941,7 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "XForm {form_id} does not belong to domain {domain}"
+msgid "Could not find XForm {form_id}"
 msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py
@@ -17961,12 +17961,12 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not archive {form}: {error}"
+msgid "Could not archive {form}"
 msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not find XForm {form_id}"
+msgid "Could not unarchive {form}"
 msgstr ""
 
 #: corehq/apps/data_interfaces/utils.py

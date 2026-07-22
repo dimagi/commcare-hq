@@ -20558,8 +20558,8 @@ msgstr "Справу з ідентифікатором '{}' додано до ц
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "XForm {form_id} does not belong to domain {domain}"
-msgstr "XForm {form_id} не належить домену {domain}"
+msgid "Could not find XForm {form_id}"
+msgstr "Не вдалося знайти XForm {form_id}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -20578,13 +20578,15 @@ msgstr "Успішно розархівовано {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not archive {form}: {error}"
-msgstr "Не вдалося заархівувати {form}: {error}"
+#| msgid "Could not archive {form}: {error}"
+msgid "Could not archive {form}"
+msgstr "Не вдалося архівувати {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not find XForm {form_id}"
-msgstr "Не вдалося знайти XForm {form_id}"
+#| msgid "Could not archive {form}: {error}"
+msgid "Could not unarchive {form}"
+msgstr "Не вдалося розархівувати {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -59332,6 +59334,10 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#, python-brace-format
+#~ msgid "XForm {form_id} does not belong to domain {domain}"
+#~ msgstr "XForm {form_id} не належить домену {domain}"
 
 #~ msgid ""
 #~ "\n"
