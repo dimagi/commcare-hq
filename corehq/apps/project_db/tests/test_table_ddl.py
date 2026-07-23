@@ -2,6 +2,8 @@ from unittest.mock import patch
 
 import pytest
 import sqlalchemy
+from django.core.exceptions import ImproperlyConfigured
+from django.test import override_settings
 from sqlalchemy import Table
 from unmagic import fixture, use
 
@@ -14,8 +16,17 @@ from corehq.apps.project_db.table_ddl import (
     truncate_identifier,
     update_table,
 )
+from corehq.sql_db.connections import ConnectionManager
 
 from .util import project_db_table
+
+
+# DEBUG/UNIT_TESTING off so the dev/test fallback doesn't supply project_db
+@override_settings(REPORTING_DATABASES={'default': 'default'}, DEBUG=False, UNIT_TESTING=False)
+def test_get_project_db_engine_not_configured():
+    with patch('corehq.apps.project_db.table_ddl.connection_manager', ConnectionManager()):
+        with pytest.raises(ImproperlyConfigured, match='project_db'):
+            get_project_db_engine()
 
 
 def test_schema_name():

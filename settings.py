@@ -967,7 +967,6 @@ STRIPE_PRIVATE_KEY = ''
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
-    'project_db': 'default',
 }
 
 PL_PROXY_CLUSTER_NAME = 'commcarehq'

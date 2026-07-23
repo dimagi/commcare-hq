@@ -182,7 +182,11 @@ class ConnectionManager(object):
             self.engine_id_django_db_map[DEFAULT_ENGINE_ID] = DEFAULT_DB_ALIAS
         if UCR_ENGINE_ID not in self.engine_id_django_db_map:
             self.engine_id_django_db_map[UCR_ENGINE_ID] = DEFAULT_DB_ALIAS
-        if PROJECT_DB_ENGINE_ID not in self.engine_id_django_db_map:
+        # Real environments must configure project_db explicitly; only fall
+        # back to the default database for local dev and tests.
+        if PROJECT_DB_ENGINE_ID not in self.engine_id_django_db_map and (
+            settings.DEBUG or settings.UNIT_TESTING
+        ):
             self.engine_id_django_db_map[PROJECT_DB_ENGINE_ID] = DEFAULT_DB_ALIAS
 
     @memoized
