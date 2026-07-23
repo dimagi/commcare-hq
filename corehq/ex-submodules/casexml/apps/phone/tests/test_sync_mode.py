@@ -281,6 +281,36 @@ class SyncTokenUpdateTest(BaseSyncTest):
         self.device.sync()
         self._testUpdate(self.device.last_sync.log.get_id, {extension_id}, set())
 
+    def test_delete_child_index_removes_case(self):
+        owned_id = "owned_id"
+        parent_id = "parent_id"
+        index_id = 'parent_index_id'
+        self.device.post_changes(CaseStructure(
+            case_id=owned_id,
+            attrs={'create': True, 'owner_id': self.device.user_id},
+            indices=[CaseIndex(
+                CaseStructure(case_id=parent_id, attrs={'create': True, 'owner_id': 'someone else'}),
+                relationship=CHILD_RELATIONSHIP,
+                related_type=PARENT_TYPE,
+                identifier=index_id,
+            )],
+        ))
+        self._testUpdate(self.device.last_sync.log.get_id, {owned_id}, {parent_id})
+
+        # delete the index outside of the purview of the device
+        self.device.case_factory.post_case_blocks([
+            CaseBlock(
+                create=False,
+                case_id=owned_id,
+                user_id=self.user_id,
+                index={index_id: (PARENT_TYPE, "")},
+            ).as_text()
+        ])
+
+        # purge the parent case from the device
+        self.device.sync()
+        self._testUpdate(self.device.last_sync.log.get_id, {owned_id}, set())
+
     def _initialize_parent_child(self):
         child_id = "child_id"
         parent_id = "parent_id"
