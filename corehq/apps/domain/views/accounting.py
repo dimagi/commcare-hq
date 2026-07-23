@@ -60,6 +60,7 @@ from corehq.apps.accounting.models import (
     CustomerInvoice,
     DefaultProductPlan,
     EntryPoint,
+    FeatureType,
     Invoice,
     InvoicePdf,
     PaymentMethodType,
@@ -217,6 +218,29 @@ class DomainAccountingSettings(BaseProjectSettingsView):
         context = super(DomainAccountingSettings, self).main_context
         context['show_prepaid_modal'] = False
         return context
+
+
+def get_effective_feature_limit(plan_version, feature_rate, account):
+    """
+    The limit to display for a feature rate, accounting for bundled mobile
+    workers: every project space bundles the DOMAIN rate's USER-type
+    BundledFeatureUnit quantity into the plan's user allowance. Uses the
+    account's live domain count, matching what the Project Spaces row on the
+    same page displays.
+    """
+    if feature_rate.feature.feature_type != FeatureType.USER or account is None:
+        return feature_rate.monthly_limit
+    domain_rate = plan_version.feature_rates.filter(
+        feature__feature_type=FeatureType.DOMAIN).first()
+    if domain_rate is None:
+        return feature_rate.monthly_limit
+    user_unit = domain_rate.bundled_units.filter(
+        feature_type=FeatureType.USER).first()
+    if user_unit is None:
+        return feature_rate.monthly_limit
+    return feature_rate.monthly_limit + (
+        len(account.get_domains()) * user_unit.quantity_per_unit
+    )
 
 
 class DomainSubscriptionView(DomainAccountingSettings):
@@ -398,7 +422,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             if feature_rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
                 remaining = limit = _('Unlimited')
             else:
-                limit = feature_rate.monthly_limit
+                limit = get_effective_feature_limit(plan_version, feature_rate, account)
                 remaining = limit - usage
                 if remaining < 0:
                     remaining = _("%d over limit") % (-1 * remaining)

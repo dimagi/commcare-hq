@@ -796,8 +796,12 @@ class UserLineItemFactory(FeatureLineItemFactory):
             )
         if self.quantity > 0:
             return _("Fee for each {user} exceeding the plan limit of {monthly_limit}.").format(
-                user=_(user_type), monthly_limit=self.rate.monthly_limit
+                user=_(user_type), monthly_limit=self._display_monthly_limit
             ) + prorated_notice
+
+    @property
+    def _display_monthly_limit(self):
+        return self.rate.monthly_limit
 
     @property
     def unit_description(self):
@@ -853,6 +857,15 @@ class MobileUserLineItemFactory(UserLineItemFactory):
             * self._bundled_users_per_domain
         )
 
+    @property
+    def _display_monthly_limit(self):
+        # The effective limit of the latest month-end -- exact for monthly
+        # invoicing, the common case.
+        dates = self.all_month_ends_in_invoice()
+        if not dates:
+            return self.rate.monthly_limit
+        return self.monthly_limit_for_date(dates[0])
+
 
 class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
 
@@ -900,7 +913,14 @@ class DomainLineItemFactory(UserLineItemFactory):
 
     @property
     def unit_description(self):
-        return super()._unit_description_by_user_type("project space")
+        description = self._unit_description_by_user_type("project space")
+        user_unit = self.rate.bundled_units.filter(
+            feature_type=FeatureType.USER).first()
+        if description and user_unit:
+            description += _(
+                " Each project space includes {num_users} mobile workers."
+            ).format(num_users=user_unit.quantity_per_unit)
+        return description
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):
