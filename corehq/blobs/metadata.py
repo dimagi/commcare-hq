@@ -14,6 +14,9 @@ from . import CODES
 
 from .models import BlobMeta
 
+# Blob type codes whose contents are always gzipped.
+ALWAYS_COMPRESSED_CODES = (CODES.form_xml, CODES.bulk_async_job)
+
 
 class MetaDB(object):
     """Blob metadata database interface
@@ -35,7 +38,7 @@ class MetaDB(object):
                     "keyword arguments are incompatible with `meta` argument")
             return blob_meta_args["meta"]
         timeout = blob_meta_args.pop("timeout", None)
-        if blob_meta_args.get('type_code') == CODES.form_xml:
+        if blob_meta_args.get('type_code') in ALWAYS_COMPRESSED_CODES:
             blob_meta_args['compressed_length'] = -1
         meta = BlobMeta(**blob_meta_args)
         if not meta.domain:
