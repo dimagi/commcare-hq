@@ -2907,11 +2907,11 @@ wheels = [
 
 [[package]]
 name = "sh"
-version = "2.0.3"
+version = "2.2.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b7/96/18aa20a143e2eaf1f0b4ae41a5ec57fd45b76b4a76cc4a07ffb476161ae3/sh-2.0.3.tar.gz", hash = "sha256:800efeda403b63879b0a5625f65a0021fd1ea61ed181954da0346372a7b2a341", size = 345365, upload-time = "2023-03-20T19:59:13.786Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/58/cd/e31a5fdc7e851e37d3b4b729692da7a130dbbd36c755e0b3f24b30323c97/sh-2.2.4.tar.gz", hash = "sha256:38c65e836b289ce14436b57ba35d3a87438218a1c0af535d89d648b1ed6b072e", size = 346840, upload-time = "2026-06-06T19:33:24.455Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/06/dd/13b1cd87bfcd54e664304718535b33ce93a6ef2ebddb00f8ed0b743d90b9/sh-2.0.3-py3-none-any.whl", hash = "sha256:351f8968a2ed99755665fef62f038d60b5245999d73c2f1b1705f48b22e2a853", size = 38317, upload-time = "2023-03-20T19:59:11.931Z" },
+    { url = "https://files.pythonhosted.org/packages/41/ac/ec18f388caed492de297886df4b37583f26aa58e60a6fcb2062d2ffa75f2/sh-2.2.4-py3-none-any.whl", hash = "sha256:a45af832d92d423290b7ebc416c00b04250c15ec95715513e3c32c1b431e2c00", size = 38364, upload-time = "2026-06-06T19:33:22.738Z" },
 ]
 
 [[package]]
