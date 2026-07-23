@@ -2031,6 +2031,42 @@ def _update_valid_domains_for_media(app, domain_to_add):
                 media.save()
 
 
+# Fields preserved from the existing app when updating from an uploaded source,
+# rather than being copied from the source. Modeled on overwrite_app's
+# excluded_fields, without the linked-app fields (upstream tracking, report and
+# resource overrides).
+UPDATE_EXCLUDED_FIELDS = frozenset(Application._meta_fields).union([
+    'date_created', 'name', 'comment', 'doc_type', '_attachments',
+    'multimedia_map', 'family_id', 'build_spec', 'copy_history',
+    'build_profiles', 'custom_base_url', 'practice_mobile_worker_id',
+])
+
+
+def _merge_source_into_app(existing_app_json, source, extra_properties=None):
+    """Return a new app JSON built from ``existing_app_json`` with content
+    fields replaced from ``source``.
+
+    Fields in ``UPDATE_EXCLUDED_FIELDS`` (identity, name, multimedia map,
+    version metadata) are preserved from the existing app. ``extra_properties``
+    are applied last, so an explicit ``name`` override wins. Raises
+    ``AppEditingError`` if ``source`` declares a ``doc_type`` incompatible with
+    the existing app.
+    """
+    source_doc_type = source.get('doc_type')
+    if source_doc_type and source_doc_type != existing_app_json.get('doc_type'):
+        raise AppEditingError(
+            "Uploaded app type '{}' does not match existing app type '{}'".format(
+                source_doc_type, existing_app_json.get('doc_type')
+            )
+        )
+    merged = dict(existing_app_json)
+    for key, value in source.items():
+        if key not in UPDATE_EXCLUDED_FIELDS:
+            merged[key] = value
+    if extra_properties:
+        merged.update(extra_properties)
+    return merged
+
 
 class ExchangeApplication(models.Model):
     domain = models.CharField(max_length=255, null=False)
