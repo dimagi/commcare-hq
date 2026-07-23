@@ -7,7 +7,7 @@ from dimagi.ext import jsonobject
 from corehq.apps.app_manager.models import Application
 from corehq.util.couch import stale_ok
 
-SimpleFormInfo = namedtuple('FormInfo', ['app_id', 'xmlns'])
+SimpleFormInfo = namedtuple('SimpleFormInfo', ['app_id', 'xmlns'])
 
 
 class AppInfo(jsonobject.JsonObject):

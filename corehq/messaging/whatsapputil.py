@@ -44,7 +44,7 @@ def extract_error_message_from_template_string(message_text):
 def get_template_hsm_parts(message_text):
     """The magic string users enter looks like: cc_wa_template:template_name:lang_code:{var1}{var2}{var3}
     """
-    HsmParts = namedtuple("hsm_parts", "template_name lang_code params")
+    HsmParts = namedtuple("HsmParts", "template_name lang_code params")
     parts = message_text.split(":", maxsplit=3)
 
     try:

@@ -1,9 +1,8 @@
 import json
 import re
-from typing import Literal
 
 from django.db.models import Q
-from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -350,7 +349,7 @@ def _get_record_ids_from_request(request):
     return record_ids.strip().split()
 
 
-def _get_state(request: HttpRequest) -> str:
+def _get_state(request):
     state_from_request = request.POST.get('state')
     if not state_from_request:
         return None
@@ -361,9 +360,9 @@ def _get_state(request: HttpRequest) -> str:
 
 
 def _schedule_task_with_state(
-    request: HttpRequest,
-    domain: str,
-    action: Literal['resend', 'cancel', 'requeue']
+    request,
+    domain,
+    action
 ):
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
     payload_id = request.POST.get('payload_id', None)
@@ -377,9 +376,9 @@ def _schedule_task_with_state(
 
 
 def _schedule_task_without_state(
-    request: HttpRequest,
-    domain: str,
-    action: Literal['resend', 'cancel', 'requeue']
+    request,
+    domain,
+    action
 ):
     record_ids = _get_record_ids_from_request(request)
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)

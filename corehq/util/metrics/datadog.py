@@ -1,5 +1,4 @@
 import logging
-from typing import List, Dict
 
 from datadog import api
 from django.conf import settings
@@ -12,7 +11,7 @@ from datadog.dogstatsd.base import DogStatsd
 datadog_logger = logging.getLogger('datadog')
 
 
-def _format_tags(tag_values: Dict[str, str]):
+def _format_tags(tag_values):
     if not tag_values:
         return None
 
@@ -50,20 +49,27 @@ class DatadogMetrics(HqMetrics):
         else:
             initialize(settings.DATADOG_API_KEY, settings.DATADOG_APP_KEY)
 
-    def _counter(self, name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
+    def _counter(self, name, value, tags=None, documentation=''):
         """Although this is submitted as a COUNT the Datadog app represents these as a RATE.
         See https://docs.datadoghq.com/developers/metrics/types/?tab=rate#definition"""
         dd_tags = _format_tags(tags)
         _datadog_record(statsd.increment, name, value, dd_tags)
 
-    def _gauge(self, name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
+    def _gauge(self, name, value, tags=None, documentation=''):
         """See https://docs.datadoghq.com/developers/metrics/types/?tab=gauge#definition"""
         dd_tags = _format_tags(tags)
         _datadog_record(statsd.gauge, name, value, dd_tags)
 
-    def _histogram(self, name: str, value: float,
-                  bucket_tag: str, buckets: List[int], bucket_unit: str = '',
-                  tags: Dict[str, str] = None, documentation: str = ''):
+    def _histogram(
+        self,
+        name,
+        value,
+        bucket_tag,
+        buckets,
+        bucket_unit='',
+        tags=None,
+        documentation='',
+    ):
         """
         This implementation of histogram uses tagging to record the buckets.
         It does not use the Datadog Histogram metric type.
@@ -96,8 +102,14 @@ class DatadogMetrics(HqMetrics):
         tags.append(f'{bucket_tag}:{bucket}')
         _datadog_record(statsd.increment, name, 1, tags)
 
-    def _create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
-                      tags: Dict[str, str] = None, aggregation_key: str = None):
+    def _create_event(
+        self,
+        title,
+        text,
+        alert_type=ALERT_INFO,
+        tags=None,
+        aggregation_key=None,
+    ):
         if datadog_initialized():
             api.Event.create(
                 title=title, text=text, tags=tags,

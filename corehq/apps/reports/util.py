@@ -3,7 +3,6 @@ import json
 import logging
 import math
 import uuid
-from typing import List
 import warnings
 from collections import defaultdict, namedtuple
 from datetime import datetime
@@ -619,7 +618,7 @@ def tableau_username(HQ_username):
     return 'HQ/' + HQ_username
 
 
-def _group_json_to_tuples(group_json) -> TableauGroupTuple:
+def _group_json_to_tuples(group_json):
     group_tuples = [TableauGroupTuple(group_dict['name'], group_dict['id']) for group_dict in group_json]
     # Remove default Tableau group and HQ group:
     group_tuples_without_defaults = []
@@ -664,8 +663,7 @@ def _notify_tableau_exception(e, domain):
     })
 
 
-def get_tableau_groups_by_ids(interested_group_ids: List, domain: str,
-                            session: TableauAPISession = None) -> List[TableauGroupTuple]:
+def get_tableau_groups_by_ids(interested_group_ids, domain, session=None):
     if not interested_group_ids:
         return []
     group_json = get_tableau_group_json(domain, session)
@@ -673,15 +671,13 @@ def get_tableau_groups_by_ids(interested_group_ids: List, domain: str,
     return _group_json_to_tuples(filtered_group_json)
 
 
-def get_tableau_groups_by_names(interested_group_names: List, domain: str,
-                            session: TableauAPISession = None) -> List[TableauGroupTuple]:
+def get_tableau_groups_by_names(interested_group_names, domain, session=None):
     group_json = get_tableau_group_json(domain, session)
     filtered_group_json = [group for group in group_json if group['name'] in interested_group_names]
     return _group_json_to_tuples(filtered_group_json)
 
 
-def get_tableau_group_ids_by_names(group_names: List, domain: str,
-                              session: TableauAPISession = None) -> List[str]:
+def get_tableau_group_ids_by_names(group_names, domain, session=None):
     '''
     Returns a list of all Tableau group ids on the site derived from tableau group names passed in.
     '''
@@ -693,7 +689,7 @@ def get_tableau_group_ids_by_names(group_names: List, domain: str,
 
 
 @quickcache(['domain'], timeout=2 * 60)
-def get_tableau_group_json(domain: str, session: TableauAPISession = None):
+def get_tableau_group_json(domain, session=None):
     session = session or TableauAPISession.create_session_for_domain(domain)
     return session.query_groups()
 
@@ -788,8 +784,14 @@ def _delete_user_remote(session, deleted_user_id):
 
 
 @atomic
-def update_tableau_user(domain, username, role=None, groups: List[TableauGroupTuple] = None, session=None,
-                        blocking_exception=True):
+def update_tableau_user(
+    domain,
+    username,
+    role=None,
+    groups=None,
+    session=None,
+    blocking_exception=True,
+):
     '''
     Update the TableauUser object to have the given role and new group details. The `groups` arg should be a list
     of TableauGroupTuples.

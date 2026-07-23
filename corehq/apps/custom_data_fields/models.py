@@ -138,7 +138,7 @@ class CustomDataFieldsDefinition(models.Model):
             self.is_required_check_func = is_required_check_func or (lambda field: field.is_required)
 
     # Gets ordered, and optionally filtered, fields
-    def get_fields(self, field_filter_config: FieldFilterConfig = None, include_system=True):
+    def get_fields(self, field_filter_config=None, include_system=True):
         def _is_match(field):
             return not (
                 (field_filter_config

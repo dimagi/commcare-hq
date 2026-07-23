@@ -1,6 +1,5 @@
 import json
 from base64 import b64decode, b64encode
-from typing import Optional, Sequence
 
 from django.conf import settings
 
@@ -145,10 +144,7 @@ def unpack_request_args(request_method, args, kwargs):
     return params, data, headers
 
 
-def get_endpoint_url(
-    base_url: Optional[str],
-    endpoint: Optional[str],
-) -> str:
+def get_endpoint_url(base_url, endpoint):
     """
     Joins ``endpoint`` to ``base_url``. If either are None, returns the
     other. If both are None, raises ValueError.
@@ -172,7 +168,7 @@ def get_endpoint_url(
     return '/'.join((base_url.rstrip('/'), endpoint.lstrip('/')))
 
 
-def simplify_list(seq: Sequence):
+def simplify_list(seq):
     """
     Reduces ``seq`` to its only element, or ``None`` if it is empty.
 

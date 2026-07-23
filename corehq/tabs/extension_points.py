@@ -1,10 +1,8 @@
-from typing import List, Tuple
-
 from corehq.extensions import extension_point, ResultFormat
 
 
 @extension_point(result_format=ResultFormat.FLATTEN)
-def uitab_dropdown_items(tab_name, tab, domain, request) -> List[dict]:
+def uitab_dropdown_items(tab_name, tab, domain, request):
     """Add dropdown items to UI Tabs.
 
     Parameters:
@@ -26,7 +24,7 @@ def uitab_dropdown_items(tab_name, tab, domain, request) -> List[dict]:
 
 
 @extension_point(result_format=ResultFormat.FLATTEN)
-def uitab_sidebar_items(tab_name, tab, domain, request) -> List[Tuple[str, List[dict]]]:
+def uitab_sidebar_items(tab_name, tab, domain, request):
     """Add sidebar items to UI tabs.
 
     Parameters:

@@ -1,5 +1,4 @@
 from threading import Lock
-from typing import Dict, List
 
 from django.conf import settings
 
@@ -46,15 +45,21 @@ class PrometheusMetrics(HqMetrics):
     def accepted_gauge_params(self):
         return ['multiprocess_mode']
 
-    def _counter(self, name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
+    def _counter(self, name, value=1, tags=None, documentation=''):
         """See https://prometheus.io/docs/concepts/metric_types/#counter"""
         try:
             self._get_metric(PCounter, name, tags, documentation).inc(value)
         except ValueError:
             pass
 
-    def _gauge(self, name: str, value: float, tags: Dict[str, str]=None, documentation: str = '',
-               multiprocess_mode: str = MPM_ALL):
+    def _gauge(
+        self,
+        name,
+        value,
+        tags=None,
+        documentation='',
+        multiprocess_mode=MPM_ALL,
+    ):
         """
         See https://prometheus.io/docs/concepts/metric_types/#histogram
 
@@ -70,8 +75,16 @@ class PrometheusMetrics(HqMetrics):
         except ValueError:
             pass
 
-    def _histogram(self, name: str, value: float, bucket_tag: str, buckets: List[int], bucket_unit: str = '',
-                  tags: Dict[str, str] = None, documentation: str = ''):
+    def _histogram(
+        self,
+        name,
+        value,
+        bucket_tag,
+        buckets,
+        bucket_unit,
+        tags=None,
+        documentation='',
+    ):
         """
         A cumulative histogram with a base metric name of <name> exposes multiple time series
         during a scrape:

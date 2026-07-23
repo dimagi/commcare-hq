@@ -27,8 +27,8 @@ def get_aggregated_ledger_values(domain, case_ids, section_id, entry_ids=None):
     for ledger in ledgers:
         ret[ledger.entry_id] += ledger.balance
 
-    row_class = namedtuple('AggregateLedgerValue', ['entry_id', 'balance'])
+    AggregateLedgerValue = namedtuple('AggregateLedgerValue', ['entry_id', 'balance'])
     return [
-        row_class(entry_id, balance)
+        AggregateLedgerValue(entry_id, balance)
         for entry_id, balance in ret.items()
     ]

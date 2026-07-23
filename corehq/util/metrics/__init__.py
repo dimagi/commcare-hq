@@ -111,7 +111,6 @@ Other Notes
 """
 from contextlib import ContextDecorator
 from functools import wraps
-from typing import Callable, Dict, Iterable
 
 from django.conf import settings
 
@@ -150,13 +149,17 @@ __all__ = [
 ]
 
 
-def metrics_counter(name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
+def metrics_counter(name, value=1, tags=None, documentation=''):
     provider = _get_metrics_provider()
     provider.counter(name, value, tags=tags, documentation=documentation)
 
 
-def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, documentation: str = '',
-                  multiprocess_mode: str = MPM_ALL):
+def metrics_gauge(
+    name,
+    value,
+    tags=None,
+    documentation='',
+    multiprocess_mode=MPM_ALL):
     """
     kwargs:
         multiprocess_mode: See PrometheusMetrics._gauge for documentation. This is only passed
@@ -167,9 +170,14 @@ def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, document
 
 
 def metrics_histogram(
-        name: str, value: float,
-        bucket_tag: str, buckets: Iterable[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
-        tags: Dict[str, str] = None, documentation: str = ''):
+    name,
+    value,
+    bucket_tag,
+    buckets=DEFAULT_BUCKETS,
+    bucket_unit='',
+    tags=None,
+    documentation='',
+):
     provider = _get_metrics_provider()
     provider.histogram(
         name, value, bucket_tag,
@@ -203,8 +211,13 @@ def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
     return inner
 
 
-def create_metrics_event(title: str, text: str, alert_type: str = ALERT_INFO,
-                         tags: Dict[str, str] = None, aggregation_key: str = None):
+def create_metrics_event(
+    title,
+    text,
+    alert_type=ALERT_INFO,
+    tags=None,
+    aggregation_key=None,
+):
     """
     Send an event record to the monitoring provider.
 
@@ -251,8 +264,7 @@ class metrics_histogram_timer(TimingContext):
              and send the specified metric
     """
 
-    def __init__(self, metric: str, timing_buckets: Iterable[int], tags: Dict[str, str] = None,
-                 callback: Callable = None):
+    def __init__(self, metric, timing_buckets, tags=None, callback=None):
         super().__init__()
         self._metric = metric
         self._timing_buckets = timing_buckets
@@ -323,7 +335,7 @@ def limit_domains(domain_name):
     return '__other__'
 
 
-def limit_tags(tags: Dict[str, str], domain: str):
+def limit_tags(tags, domain):
     from corehq import toggles
     if toggles.HIGH_COUNT_DETAILED_TAGGING.enabled(domain):
         return tags

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from typing import Callable, Iterable
 from xml.etree import cElementTree as ElementTree
 
+from casexml.apps.case.mock import CaseBlock
 from corehq.apps.users.util import SYSTEM_USER_ID, username_to_user_id
 from corehq.form_processor.models import CommCareCase
 
@@ -36,7 +38,11 @@ class CaseBulkDB:
     Context manager to facilitate making case changes in chunks.
     """
 
-    def __init__(self, domain, form_meta: SystemFormMeta = None):
+    def __init__(
+        self,
+        domain: str,
+        form_meta: SystemFormMeta | None = None
+    ) -> None:
         self.domain = domain
         self.form_meta = form_meta or SystemFormMeta()
 
@@ -68,7 +74,12 @@ class CaseBulkDB:
             self.to_save = []
 
 
-def update_cases(domain, update_fn, case_ids, form_meta: SystemFormMeta = None):
+def update_cases(
+    domain: str,
+    update_fn: Callable[[CommCareCase], list[CaseBlock]],
+    case_ids: Iterable[str],
+    form_meta: SystemFormMeta | None = None,
+) -> int:
     """
     Perform a large number of case updates in chunks
 

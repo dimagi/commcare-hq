@@ -1,19 +1,17 @@
-from typing import List
-
 from corehq.motech.const import COMMCARE_DATA_TYPE_TEXT
 from corehq.motech.fhir.const import FHIR_DATA_TYPE_LIST_OF_STRING
 
 from corehq.motech.serializers import serializers
 
 
-def join_strings(value: List[str]) -> str:
+def join_strings(value):
     try:
         return ' '.join(value)
     except TypeError:
         pass
 
 
-def split_string(value: str) -> List[str]:
+def split_string(value):
     try:
         return value.split(' ')
     except AttributeError:
