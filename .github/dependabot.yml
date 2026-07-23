@@ -8,6 +8,11 @@ updates:
   open-pull-requests-limit: 7
   labels:
   - product/invisible
+  # Wait 7 days after a release before opening an upgrade PR.
+  cooldown:
+    default-days: 7
+    include:
+      - "*"
   # Focus on major versions only
   # Todo: remove once we're in steady-state on major versions
   ignore:
@@ -25,6 +30,10 @@ updates:
   labels:
   - product/invisible
   - dependencies/javascript
+  cooldown:
+    default-days: 7
+    include:
+      - "*"
   # Focus on major versions only
   # Todo: remove once we're in steady-state on major versions
   ignore:
