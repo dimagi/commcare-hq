@@ -50,7 +50,7 @@
         "jquery-memoized-ajax": "0.5.0",
         "jquery-textchange": "jmalonzo/bower-jquery-textchange#0.2.3",
         "jquery-tiny-pubsub": "cowboy/jquery-tiny-pubsub#~0.7.0",
-        "jquery-treetable": "ludo/jquery-treetable#3.2.0",
+        "jquery-treetable": "ludo/jquery-treetable#3.1.0",
         "jquery-ui": "1.13.2",
         "jquery-ui-built-themes": "1.12.1",
         "jquery.cookie": "dimagi/jquery-cookie#1.4.1",
