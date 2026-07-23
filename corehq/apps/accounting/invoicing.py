@@ -52,6 +52,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.utils import (
     ensure_domain_instance,
+    is_active_subscription,
     log_accounting_error,
     log_accounting_info,
     get_first_day_x_months_later,
@@ -532,15 +533,24 @@ class LineItemFactory(object):
     @memoized
     def subscribed_domains(self):
         if self.subscription.account.is_customer_billing_account:
-            return list(self.subscription.account.subscription_set.filter(
-                Q(date_end__isnull=True) | Q(date_end__gt=self.invoice.date_start),
-                date_start__lte=self.invoice.date_end
-            ).filter(
-                plan_version=self.subscription.plan_version
-            ).values_list(
-                'subscriber__domain', flat=True
-            ))
+            return list(self._subscription_date_ranges_by_domain)
         return [self.subscription.subscriber.domain]
+
+    @property
+    @memoized
+    def _subscription_date_ranges_by_domain(self):
+        """The account's subscriptions on this line item's plan version that
+        overlap the invoice period, as ``{domain: [(date_start, date_end)]}``.
+        """
+        date_ranges = defaultdict(list)
+        subscriptions = self.subscription.account.subscription_set.filter(
+            Q(date_end__isnull=True) | Q(date_end__gt=self.invoice.date_start),
+            date_start__lte=self.invoice.date_end,
+            plan_version=self.subscription.plan_version,
+        ).values_list('subscriber__domain', 'date_start', 'date_end')
+        for domain, date_start, date_end in subscriptions:
+            date_ranges[domain].append((date_start, date_end))
+        return date_ranges
 
     def create(self):
         line_item = LineItem(
@@ -753,9 +763,30 @@ class UserLineItemFactory(FeatureLineItemFactory):
             excess_users += max(total_users - self.rate.monthly_limit, 0)
         return excess_users
 
+    def subscribed_domains_for_date(self, date):
+        """Domains whose subscription on this line item's plan version was
+        active on ``date``.
+
+        A customer invoice can span months during which a domain moved to a
+        different plan version (ending one subscription and starting another,
+        as ``Subscription.change_plan`` does). Each month end must only be
+        billed under the plan version that was active on that date, otherwise
+        the same month's users are billed once per plan version.
+        """
+        if not self.invoice.is_customer_invoice:
+            return self.subscribed_domains
+        return [
+            domain
+            for domain, date_ranges in self._subscription_date_ranges_by_domain.items()
+            if any(
+                is_active_subscription(date_start, date_end, today=date)
+                for date_start, date_end in date_ranges
+            )
+        ]
+
     def total_users_for_date(self, date):
         total_users = 0
-        for domain in self.subscribed_domains:
+        for domain in self.subscribed_domains_for_date(date):
             try:
                 history = DomainUserHistory.objects.get(domain=domain, record_date=date)
                 total_users += history.num_users
@@ -798,7 +829,7 @@ class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
 
     def total_users_for_date(self, date):
         total_users = 0
-        for domain in self.subscribed_domains:
+        for domain in self.subscribed_domains_for_date(date):
             try:
                 history = FormSubmittingMobileWorkerHistory.objects.get(domain=domain, record_date=date)
                 total_users += history.num_users
@@ -815,6 +846,10 @@ class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
 class WebUserLineItemFactory(UserLineItemFactory):
 
     def total_users_for_date(self, date):
+        # Web users are counted account-wide, so bill a month end only if
+        # this line item's plan version had an active subscription then
+        if not self.subscribed_domains_for_date(date):
+            return 0
         try:
             history = BillingAccountWebUserHistory.objects.get(
                 billing_account=self.subscription.account, record_date=date)
