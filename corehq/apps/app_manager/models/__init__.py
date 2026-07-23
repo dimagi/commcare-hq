@@ -14,6 +14,7 @@ from .applications import (  # noqa: F401
     SavedAppBuild,
     absolute_url_property,
     import_app,
+    overwrite_app_from_source,
     validate_lang,
 )
 from .base import (  # noqa: F401

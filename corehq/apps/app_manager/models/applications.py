@@ -2068,6 +2068,44 @@ def _merge_source_into_app(existing_app_json, source, extra_properties=None):
     return merged
 
 
+def overwrite_app_from_source(domain, app_id, source, extra_properties=None, request=None):
+    """Update the app ``app_id`` in ``domain`` in place from an uploaded JSON
+    ``source``, preserving the app's identity, name, and multimedia.
+
+    The create-time counterpart is :func:`import_app`. Raises
+    ``ResourceNotFound`` if the app does not exist in ``domain`` and
+    ``AppEditingError`` if the source's app type is incompatible.
+    """
+    app = get_app(domain, app_id)
+
+    attachments = _get_attachments(source)
+    source['_attachments'] = {}
+
+    merged = _merge_source_into_app(app.to_json(), source, extra_properties)
+    app = wrap_app(merged)
+
+    report_map = get_static_report_mapping(source.get('domain'), domain)
+    _update_report_config_ids(app, report_map, source.get('domain'))
+
+    # save_attachments persists the doc and bumps the version (non-copy app);
+    # do not call app.save() again or the version would bump twice.
+    app.save_attachments(attachments)
+
+    try:
+        _update_valid_domains_for_media(app, domain)
+    except ReportConfigurationNotFoundError:
+        if request:
+            messages.warning(request, _("Updating the application succeeded, but the application will have "
+                                        "errors because it contains a Mobile Report Module that references a "
+                                        "custom report (UCR) that isn't available in this project space. "
+                                        "Multimedia may be absent."))
+    except ResourceNotFound:
+        messages.warning(request, _("Updating the application succeeded, but the application is missing "
+                                    "multimedia file(s)."))
+
+    return app
+
+
 class ExchangeApplication(models.Model):
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
