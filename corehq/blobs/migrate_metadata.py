@@ -280,7 +280,6 @@ def get_invoice_domain(doc):
 
 DOMAIN_MAP = {
     "InvoicePdf": get_invoice_domain,
-    "CommCareBuild": get_shared_domain,
     "CommCareAudio": get_shared_domain,
     "CommCareImage": get_shared_domain,
     "CommCareVideo": get_shared_domain,
