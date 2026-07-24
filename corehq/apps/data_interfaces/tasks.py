@@ -4,7 +4,6 @@ from typing import List, Literal, Optional  # noqa: F401
 from django.conf import settings
 from django.core.cache import cache
 from django.template.loader import render_to_string
-from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
@@ -28,10 +27,16 @@ from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
 from corehq.util.log import send_HTML_email
 
+from .bulk_form_actions import (
+    create_bulk_form_job,
+    mark_job_failed,
+    run_bulk_form_action,
+)
 from .deduplication import backfill_deduplicate_rule, reset_deduplicate_rule
 from .interfaces import FormManagementMode
 from .models import (
     AutomaticUpdateRule,
+    BulkAsyncJob,
     CaseDuplicate,
     CaseDuplicateNew,
     CaseRuleSubmission,
@@ -39,7 +44,6 @@ from .models import (
 )
 from .utils import (
     add_cases_to_case_group,
-    archive_or_restore_forms,
     iter_cases_and_run_rules,
     operate_on_payloads,
     run_rules_for_case,
@@ -98,16 +102,25 @@ def bulk_upload_cases_to_group(upload_id, domain, case_group_id, cases):
     cache.set(upload_id, results, ONE_HOUR)
 
 
+@serial_task('{domain}', default_retry_delay=300, max_retries=48, timeout=60 * 60)
+def bulk_form_action_async(job_id, domain):
+    try:
+        job = BulkAsyncJob.objects.get(id=job_id)
+        run_bulk_form_action(job)
+    except Exception:
+        mark_job_failed(job_id)
+        raise
+
+
 @task(serializer='pickle')
 def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids):
-    task = bulk_form_management_async
-    mode = FormManagementMode(archive_or_restore, validate=True)
-
-    if not form_ids:
-        return {'messages': {'errors': [_('No Forms are supplied')]}}
-
-    response = archive_or_restore_forms(domain, couch_user.user_id, couch_user.username, form_ids, mode, task)
-    return response
+    """Deprecated shim: drains messages queued under the old task name before
+    the BulkAsyncJob cutover. Reconstructs a job from the old pickle args and
+    hands off to bulk_form_action_async. Remove one release after deploy.
+    """
+    action = FormManagementMode.bulk_action(archive_or_restore)
+    job = create_bulk_form_job(domain, action, couch_user.username, form_ids)
+    bulk_form_action_async.delay(job.id.hex, domain)
 
 
 @periodic_task(
