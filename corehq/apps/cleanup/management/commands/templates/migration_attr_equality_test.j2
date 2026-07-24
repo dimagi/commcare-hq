@@ -19,4 +19,9 @@ class Test{{class_name}}ModelsAttrEquality(ModelAttrEqualityHelper):
     sql_only_attrs = {*[
         # new attrs
         # renamed attrs
+        # auto generated attrs
+        # Django 5.2 will auto generate get_next_by_FOO and get_previous_by_FOO methods for non-nullable DateTimeFields
+        # https://docs.djangoproject.com/en/5.2/ref/models/instances/#django.db.models.Model.get_next_by_FOO
+        # We don't want to test these, so we add them to the sql_only_attrs manually
+        # eg. 'get_next_by_time', 'get_previous_by_time',
     ]}
