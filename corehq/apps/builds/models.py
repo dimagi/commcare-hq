@@ -14,6 +14,13 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
+from dimagi.utils.couch.migration import (
+    SyncCouchToSQLMixin,
+    SyncSQLToCouchMixin,
+)
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.builds.fixtures import commcare_build_config
@@ -36,7 +43,7 @@ class SemanticVersionProperty(StringProperty):
         return value
 
 
-class CommCareBuild(Document):
+class CommCareBuild(SyncCouchToSQLMixin, Document):
     build_number = IntegerProperty()
     version = SemanticVersionProperty()
     time = DateTimeProperty()
@@ -98,6 +105,80 @@ class CommCareBuild(Document):
     def all_builds(cls):
         return cls.view('builds/all', include_docs=True, reduce=False)
 
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "version",
+            "build_number",
+            "time",
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return CommCareMobileBuild
+
+
+def validate_semantic_version(value):
+    try:
+        major, minor, point = value.split('.')
+        int(major)
+        int(minor)
+        int(point)
+    except Exception:
+        raise ValidationError(
+            _("Build version %(value)s does not comply with the x.y.z schema"),
+            params={"value": value},
+            code="invalid",
+        )
+
+
+class CommCareMobileBuild(SyncSQLToCouchMixin, models.Model):
+    version = models.CharField(max_length=11, null=False, validators=[validate_semantic_version])
+    build_number = models.IntegerField(null=True, blank=True)
+    time = models.DateTimeField(null=False)
+    couch_id = models.CharField(max_length=126, blank=True, default='')
+
+    class Meta:
+        indexes = (
+            models.Index(fields=('couch_id',)),
+        )
+
+    def save(self, *args, **kwargs):
+        # TODO: replace with auto_now_add=True after couch2sql migration is complete
+        if not self.time:
+            self.time = datetime.utcnow()
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_build(cls, version, build_number=None):
+        try:
+            if build_number is None:
+                build = cls.objects.filter(version=version).order_by('-time').first()
+                if build is None:
+                    raise cls.DoesNotExist()
+                return build
+            return cls.objects.get(version=version, build_number=build_number)
+        except cls.DoesNotExist:
+            raise KeyError(
+                "Can't find build {label}. For instructions on how to add it, see "
+                "https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/"
+                "README.rst#adding-commcare-builds-to-commcare-hq".format(
+                    label=BuildSpec(version=version, build_number=build_number)
+                )
+            )
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "version",
+            "build_number",
+            "time",
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return CommCareBuild
 
 class BuildSpec(DocumentSchema):
     version = SemanticVersionProperty(required=False)
