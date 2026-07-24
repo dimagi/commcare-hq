@@ -1,6 +1,6 @@
 import re
 
-from corehq.apps.builds.models import CommCareBuild, CommCareBuildConfig
+from corehq.apps.builds.models import CommCareBuildConfig, CommCareMobileBuild
 
 
 def get_all_versions(versions):
@@ -8,10 +8,10 @@ def get_all_versions(versions):
     Returns a list of all versions found in the database,
     plus those in the optional list parameter.
     """
-    db = CommCareBuild.get_db()
-    results = db.view('builds/all', group_level=1).all()
-    versions += [result['key'][0] for result in results]
-    return sorted(list(set(versions)))
+    versions += list(
+        CommCareMobileBuild.objects.values_list('version', flat=True).distinct()
+    )
+    return sorted(set(versions))
 
 
 def get_default_build_spec():
@@ -79,7 +79,7 @@ def get_build_time(version, cache=None):
         return cache[version]
 
     try:
-        build = CommCareBuild.get_build(version, latest=True)
+        build = CommCareMobileBuild.get_build(version)
     except KeyError:
         cache[version] = None
         return None

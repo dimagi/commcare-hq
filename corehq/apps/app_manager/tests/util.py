@@ -13,8 +13,8 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import app_doc_types
 from corehq.apps.builds.models import (
     BuildSpec,
-    CommCareBuild,
     CommCareBuildConfig,
+    CommCareMobileBuild,
 )
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.blobs import CODES, get_blob_db
@@ -105,7 +105,7 @@ class SuiteMixin(TestXmlMixin):
 
 
 def add_build(version, build_number):
-    return CommCareBuild.create_without_artifacts(version, build_number)
+    return CommCareMobileBuild.objects.create(version=version, build_number=build_number)
 
 
 @nottest
