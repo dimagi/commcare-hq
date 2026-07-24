@@ -1,3 +1,4 @@
+import jwt
 import requests
 from unittest import mock
 from django.test import TestCase
@@ -253,6 +254,15 @@ class TestTableauAPISession(TestCase):
         self.assertNotEqual(self.connected_app.encrypted_secret_value, 'a' * 32)
         self.assertEqual(self.connected_app.plaintext_secret_value, 'a' * 32)
         self.assertEqual(len(self.connected_app.encrypted_secret_value), 97)
+
+    def test_create_embedding_jwt(self):
+        token = self.connected_app.create_embedding_jwt('HQ/pbeasley')
+
+        claims = jwt.decode(token, 'a' * 32, algorithms=['HS256'], audience='tableau')
+        self.assertEqual(claims['iss'], 'asdf1234')
+        self.assertEqual(claims['sub'], 'HQ/pbeasley')
+        self.assertEqual(claims['scp'], ['tableau:views:embed'])
+        self.assertEqual(jwt.get_unverified_header(token)['kid'], 'zxcv5678')
 
     def _assert_subset(self, d1, d2):
         self.assertTrue(set(d1.items()).issubset(set(d2.items())))
