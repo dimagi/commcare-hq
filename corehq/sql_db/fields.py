@@ -39,6 +39,14 @@ class ModelClassField(CharField):
             return value
         return self._slug_by_model[value]
 
+    def pre_save(self, model_instance, add):
+        # This field's value is a model class, and every Django model has a
+        # prepare_database_save method. The UPDATE compiler treats any value with
+        # that method as a related-object assignment; since this isn't a relation it
+        # rejects the value before it would convert it. Return the slug so
+        # UPDATE sees a plain string, like every other column.
+        return self.get_prep_value(getattr(model_instance, self.attname))
+
 
 class CharIdField(CharField):
     """CharField that does not create varchar_pattern_ops index
