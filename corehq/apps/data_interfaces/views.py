@@ -3,6 +3,7 @@ import uuid
 
 from django.contrib import messages
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import (
     Http404,
@@ -24,7 +25,7 @@ from no_exceptions.exceptions import Http403
 
 from dimagi.utils.logging import notify_exception
 from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
+from soil.util import get_download_context
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -56,14 +57,16 @@ from corehq.apps.data_interfaces.forms import (
     DedupeCaseFilterForm,
     UpdateCaseGroupForm,
 )
+from corehq.apps.data_interfaces.bulk_form_actions import create_bulk_form_job
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
+    BulkAsyncJob,
     CaseDeduplicationActionDefinition,
     CaseDuplicateNew,
     DomainCaseRuleRun,
 )
 from corehq.apps.data_interfaces.tasks import (
-    bulk_form_management_async,
+    bulk_form_action_async,
     bulk_upload_cases_to_group,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -455,6 +458,8 @@ class XFormManagementView(DataInterfaceSection):
 
     def post(self, request, *args, **kwargs):
         form_ids = self.get_xform_ids(request)
+        if not form_ids:
+            return HttpResponseBadRequest(_("No forms were supplied."))
         if not self.request.can_access_all_locations:
             inaccessible_forms_accessed = self.inaccessible_forms_accessed(
                 form_ids, self.domain, request.couch_user)
@@ -463,19 +468,14 @@ class XFormManagementView(DataInterfaceSection):
                     "Inaccessible forms accessed. Id(s): %s " % ','.join(inaccessible_forms_accessed))
 
         mode = self.request.POST.get('mode')
-        task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-        task = bulk_form_management_async.delay(
-            mode,
-            self.domain,
-            self.request.couch_user,
-            form_ids
-        )
-        task_ref.set_task(task)
-
+        job = create_bulk_form_job(
+            self.domain, FormManagementMode.bulk_action(mode), self.request.couch_user.username, form_ids)
+        # download_id must be in hex format (no hyphens) to conform to soil's framework
+        bulk_form_action_async.delay(job.id.hex, self.domain)
         return HttpResponseRedirect(
             reverse(
                 XFormManagementStatusView.urlname,
-                args=[self.domain, mode, task_ref.download_id]
+                args=[self.domain, mode, job.id.hex]
             )
         )
 
@@ -557,19 +557,37 @@ class XFormManagementStatusView(DataInterfaceSection):
 @require_form_management_privilege
 def xform_management_job_poll(request, domain, download_id,
                               template="data_interfaces/partials/xform_management_status.html"):
-    mode = FormManagementMode(request.GET.get('mode'), validate=True)
     try:
-        context = get_download_context(download_id)
-    except TaskFailedError:
-        return HttpResponseServerError()
+        job = BulkAsyncJob.objects.get(id=download_id, domain=domain)
+    except (BulkAsyncJob.DoesNotExist, ValueError, ValidationError):
+        # A legacy soil download_id (pre-cutover, mid-deploy) isn't a valid
+        # job UUID. Render a terminal message so polling stops.
+        return render(request, template, {'legacy': True, 'download_id': download_id})
+    mode = FormManagementMode(request.GET.get('mode'), validate=True)
+    context = _xform_management_job_context(job, mode)
+    return render(request, template, context)
 
-    context.update({
+
+def _job_percent(job):
+    if not job.requested_count:
+        return 0
+    return int(100 * job.processed_count / job.requested_count)
+
+
+def _xform_management_job_context(job, mode):
+    """Build the soil-compatible poll context for ``job``."""
+    return {
+        'download_id': job.id.hex,
+        'is_done': job.is_done,
+        'has_failed': job.status == BulkAsyncJob.Status.FAILED,
+        'succeeded_count': job.succeeded_count,
+        'skipped': job.get_skipped() if job.is_done and job.skipped_ids_blob_key else {},
+        'progress': {'percent': _job_percent(job)},
         'on_complete_short': mode.complete_short,
         'mode': mode,
         'form_management_url': reverse(EditDataInterfaceDispatcher.name(),
-                                       args=[domain, BulkFormManagementInterface.slug])
-    })
-    return render(request, template, context)
+                                       args=[job.domain, BulkFormManagementInterface.slug]),
+    }
 
 
 class BulkCaseActionSatusView(DataInterfaceSection):
