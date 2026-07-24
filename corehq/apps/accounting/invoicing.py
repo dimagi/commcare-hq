@@ -29,6 +29,7 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.models import (
     UNLIMITED_FEATURE_USAGE,
     BillingAccount,
+    BillingAccountDomainHistory,
     BillingAccountWebUserHistory,
     BillingRecord,
     CreditLine,
@@ -490,6 +491,9 @@ def generate_line_items(invoice, subscription):
         )
         if feature_factory_class == WebUserLineItemFactory and not subscription.account.bill_web_user:
             continue
+        if (feature_factory_class == DomainLineItemFactory
+                and not subscription.account.is_customer_billing_account):
+            continue
         feature_factory = feature_factory_class(subscription, feature_rate, invoice)
         feature_factory.create()
 
@@ -558,8 +562,9 @@ class LineItemFactory(object):
             return {
                 FeatureType.SMS: SmsLineItemFactory,
                 FeatureType.FORM_SUBMITTING_MOBILE_WORKER: FormSubmittingMobileWorkerLineItemFactory,
-                FeatureType.USER: UserLineItemFactory,
+                FeatureType.USER: MobileUserLineItemFactory,
                 FeatureType.WEB_USER: WebUserLineItemFactory,
+                FeatureType.DOMAIN: DomainLineItemFactory,
             }[feature_type]
         except KeyError:
             raise LineItemError("No line item factory exists for the feature type '%s" % feature_type)
@@ -745,13 +750,18 @@ class UserLineItemFactory(FeatureLineItemFactory):
     @property
     @memoized
     def quantity(self):
+        if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
+            return 0
         # Iterate through all months in the invoice date range to aggregate total users into one line item
         dates = self.all_month_ends_in_invoice()
         excess_users = 0
         for date in dates:
             total_users = self.total_users_for_date(date)
-            excess_users += max(total_users - self.rate.monthly_limit, 0)
+            excess_users += max(total_users - self.monthly_limit_for_date(date), 0)
         return excess_users
+
+    def monthly_limit_for_date(self, date):
+        return self.rate.monthly_limit
 
     def total_users_for_date(self, date):
         total_users = 0
@@ -786,12 +796,75 @@ class UserLineItemFactory(FeatureLineItemFactory):
             )
         if self.quantity > 0:
             return _("Fee for each {user} exceeding the plan limit of {monthly_limit}.").format(
-                user=_(user_type), monthly_limit=self.rate.monthly_limit
+                user=_(user_type), monthly_limit=self._display_monthly_limit
             ) + prorated_notice
+
+    @property
+    def _display_monthly_limit(self):
+        return self.rate.monthly_limit
 
     @property
     def unit_description(self):
         return self._unit_description_by_user_type("mobile user")
+
+
+def domains_for_date(account, record_date):
+    # Before a DOMAIN feature rate exists on a plan, there is no concept of an
+    # excess domain -- a missing snapshot (e.g. the cold-start window right
+    # after a Domain rate is first attached) means zero for that month, not a
+    # hard failure blocking the invoice.
+    try:
+        history = BillingAccountDomainHistory.objects.get(
+            billing_account=account, record_date=record_date)
+    except BillingAccountDomainHistory.DoesNotExist:
+        return 0
+    return history.num_domains
+
+
+def excess_domains_for_date(account, record_date, domain_rate):
+    if domain_rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
+        return 0
+    return max(domains_for_date(account, record_date) - domain_rate.monthly_limit, 0)
+
+
+class MobileUserLineItemFactory(UserLineItemFactory):
+    """
+    Bills mobile workers against a limit that scales with the account's
+    domain count: every project space bundles the DOMAIN rate's USER-type
+    BundledFeatureUnit quantity into the included user allowance.
+
+    Deliberately a subclass rather than UserLineItemFactory behavior: the
+    other user-family factories (web users, form-submitting workers, domains)
+    share that base class and must not inherit the bundling.
+    """
+
+    @property
+    @memoized
+    def _bundled_users_per_domain(self):
+        domain_rate = self.subscription.plan_version.feature_rates.filter(
+            feature__feature_type=FeatureType.DOMAIN).first()
+        if domain_rate is None:
+            return 0
+        unit = domain_rate.bundled_units.filter(feature_type=FeatureType.USER).first()
+        return unit.quantity_per_unit if unit else 0
+
+    def monthly_limit_for_date(self, date):
+        base_limit = self.rate.monthly_limit
+        if not self._bundled_users_per_domain:
+            return base_limit
+        return base_limit + (
+            domains_for_date(self.subscription.account, date)
+            * self._bundled_users_per_domain
+        )
+
+    @property
+    def _display_monthly_limit(self):
+        # The effective limit of the latest month-end -- exact for monthly
+        # invoicing, the common case.
+        dates = self.all_month_ends_in_invoice()
+        if not dates:
+            return self.rate.monthly_limit
+        return self.monthly_limit_for_date(dates[0])
 
 
 class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
@@ -826,6 +899,28 @@ class WebUserLineItemFactory(UserLineItemFactory):
     @property
     def unit_description(self):
         return super()._unit_description_by_user_type("web user")
+
+
+class DomainLineItemFactory(UserLineItemFactory):
+
+    @property
+    @memoized
+    def quantity(self):
+        return sum(
+            excess_domains_for_date(self.subscription.account, date, self.rate)
+            for date in self.all_month_ends_in_invoice()
+        )
+
+    @property
+    def unit_description(self):
+        description = self._unit_description_by_user_type("project space")
+        user_unit = self.rate.bundled_units.filter(
+            feature_type=FeatureType.USER).first()
+        if description and user_unit:
+            description += _(
+                " Each project space includes {num_users} mobile workers."
+            ).format(num_users=user_unit.quantity_per_unit)
+        return description
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):
