@@ -47,6 +47,7 @@ IGNORE_MODELS = {
     'app_manager.ExchangeApplication',
     'auth.Group',
     'auth.Permission',
+    'builds.CommCareMobileBuild',
     'blobs.BlobMeta',
     'blobs.BlobMigrationState',
     'blobs.DeletedBlobMeta',
