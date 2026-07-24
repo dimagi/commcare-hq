@@ -58,4 +58,5 @@ DELETABLE_COUCH_DOC_TYPES = {
     'HQSubmission': (MAIN_DB,),
     'CommCareCase': (MAIN_DB,),
     'CommCareCase-Deleted': (MAIN_DB,),
+    'CommCareBuild': (MAIN_DB,),
 }
