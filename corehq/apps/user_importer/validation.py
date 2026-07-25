@@ -4,7 +4,7 @@ from typing import NamedTuple, Optional
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_boolean
