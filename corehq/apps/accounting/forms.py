@@ -1851,6 +1851,7 @@ class SoftwarePlanVersionForm(forms.Form):
 
         for feature_rate in self.new_feature_rates:
             feature_rate.save()
+            feature_rate.save_pending_bundled_units()
             new_version.feature_rates.add(feature_rate)
         new_version.save()
 
@@ -1885,6 +1886,15 @@ class FeatureRateForm(forms.ModelForm):
         required=False,
         widget=forms.HiddenInput,
     )
+    # Not a model field: reads/writes the USER-type BundledFeatureUnit row on
+    # the rate (only Domain rates may carry one).
+    bundled_mobile_workers = forms.IntegerField(
+        required=False,
+        min_value=0,
+        label="Bundled Mobile Workers Per Project Space",
+        help_text="Each project space includes this many mobile workers "
+                  "in the plan's user allowance. Domain rates only.",
+    )
 
     class Meta(object):
         model = FeatureRate
@@ -1913,7 +1923,21 @@ class FeatureRateForm(forms.ModelForm):
                              data_bind="value: per_excess_fee"),
                 data_bind="visible: isPerExcessVisible",
             ),
+            crispy.Div(
+                crispy.Field('bundled_mobile_workers',
+                             data_bind="value: bundled_mobile_workers"),
+                data_bind="visible: isBundledUsersVisible",
+            ),
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get('bundled_mobile_workers'):
+            feature = Feature.objects.filter(id=self['feature_id'].value()).first()
+            if feature and feature.feature_type != FeatureType.DOMAIN:
+                self.add_error('bundled_mobile_workers',
+                               _("Only applicable to Domain feature rates."))
+        return cleaned_data
 
     def is_new(self):
         return not self['rate_id'].value()
@@ -1921,6 +1945,10 @@ class FeatureRateForm(forms.ModelForm):
     def get_instance(self, feature):
         instance = self.save(commit=False)
         instance.feature = feature
+        quantity = self.cleaned_data.get('bundled_mobile_workers')
+        instance._pending_bundled_units = (
+            [(FeatureType.USER, quantity)] if quantity else []
+        )
         return instance
 
 
