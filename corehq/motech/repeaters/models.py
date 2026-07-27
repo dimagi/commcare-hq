@@ -566,6 +566,10 @@ class Repeater(RepeaterSuperProxy):
             return self.send_request(repeat_record, payload)
 
     def fire_for_record(self, repeat_record, timing_context=None):
+        if _payload_is_soft_deleted(self.payload_doc(repeat_record)):
+            repeat_record.cancel()
+            repeat_record.save()
+            return
         payload = self.get_payload(repeat_record)
         try:
             response = self._time_request(repeat_record, payload, timing_context)
@@ -1595,6 +1599,21 @@ def _clear_attempts_cache_after_save_new_attempt(sender, instance, **kwargs):
     record = instance.__dict__.pop("_record_with_new_attempt", None)
     if record is not None:
         record.attempt_set._remove_prefetched_objects()
+
+
+def _payload_is_soft_deleted(payload_doc):
+    """
+    Returns whether ``payload_doc`` has been soft-deleted.
+
+    Checks the ``deleted_on`` timestamp rather than an ``is_deleted``
+    attribute: on forms and cases ``is_deleted`` is a property, but on
+    ``CommCareUser`` it is a *method* (which is always truthy), and it is
+    absent on other payload docs (e.g. locations, or ``None`` for
+    ``AppStructureRepeater``). ``deleted_on`` is null-safe across all
+    payload types, so this guard only ever fires for genuinely
+    soft-deleted forms and cases.
+    """
+    return getattr(payload_doc, 'deleted_on', None) is not None
 
 
 def _get_retry_interval(last_checked, now):

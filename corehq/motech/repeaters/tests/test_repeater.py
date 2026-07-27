@@ -60,6 +60,7 @@ from ..models import (
     ShortFormRepeater,
     UserRepeater,
     _get_retry_interval,
+    _payload_is_soft_deleted,
     format_response,
 )
 from ..repeater_generators import (
@@ -722,6 +723,69 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         ]
 
 
+class SoftDeletedPayloadTest(BaseRepeaterTest):
+    """A payload whose form/case is soft-deleted before its record fires
+    should be cancelled rather than forwarded."""
+
+    domain = "soft-del-payload"
+
+    def setUp(self):
+        super().setUp()
+        self.form_repeater = self._make_repeater(FormRepeater, 'form_xml', 'form-url')
+        self.case_repeater = self._make_repeater(CaseRepeater, 'case_json', 'case-url')
+        submit_form_locally(self.xform_xml, self.domain)
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
+        super().tearDown()
+
+    def _make_repeater(self, repeater_class, format, url):
+        connx = ConnectionSettings.objects.create(domain=self.domain, url=url)
+        repeater = repeater_class(
+            domain=self.domain,
+            connection_settings_id=connx.id,
+            format=format,
+        )
+        repeater.save()
+        return repeater
+
+    def test_soft_deleted_form_is_cancelled_and_not_sent(self):
+        form = XFormInstance.objects.get_form(self.instance_id, self.domain)
+        form.soft_delete()
+        record = RepeatRecord.objects.get(
+            domain=self.domain, repeater_id=self.form_repeater.id, payload_id=self.instance_id)
+
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_send:
+            record.fire()
+
+        assert mock_send.call_count == 0
+        assert record.state == State.Cancelled
+        assert record.next_check is None
+
+    def test_soft_deleted_case_is_cancelled_and_not_sent(self):
+        CommCareCase.objects.soft_delete_cases(self.domain, [CASE_ID])
+        record = RepeatRecord.objects.get(
+            domain=self.domain, repeater_id=self.case_repeater.id, payload_id=CASE_ID)
+
+        with patch('corehq.motech.repeaters.models.simple_request') as mock_send:
+            record.fire()
+
+        assert mock_send.call_count == 0
+        assert record.state == State.Cancelled
+        assert record.next_check is None
+
+    def test_live_form_is_still_forwarded(self):
+        record = RepeatRecord.objects.get(
+            domain=self.domain, repeater_id=self.form_repeater.id, payload_id=self.instance_id)
+
+        with patch('corehq.motech.repeaters.models.simple_request',
+                   return_value=MockResponse(status_code=200, reason='OK')) as mock_send:
+            record.fire()
+
+        assert mock_send.call_count == 1
+        assert record.state == State.Success
+
+
 class RepeaterFailureTest(BaseRepeaterTest):
     domain = 'repeat-fail'
 
@@ -1204,6 +1268,21 @@ class DummyRepeater(Repeater):
 
     def payload_doc(self, repeat_record):
         return {}
+
+
+@pytest.mark.parametrize("payload_doc, expected", [
+    (XFormInstance(deleted_on=None), False),
+    (XFormInstance(deleted_on=datetime(2020, 1, 1)), True),
+    (CommCareCase(deleted_on=datetime(2020, 1, 1)), True),
+    # CommCareUser.is_deleted is a *method*, and the doc has no deleted_on
+    (CommCareUser(), False),
+    # SQLLocation has no deleted_on (it uses is_archived instead)
+    (SQLLocation(), False),
+    # AppStructureRepeater.payload_doc returns None
+    (None, False),
+])
+def test_payload_is_soft_deleted(payload_doc, expected):
+    assert _payload_is_soft_deleted(payload_doc) is expected
 
 
 class HandleResponseTests(SimpleTestCase):
