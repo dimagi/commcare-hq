@@ -223,10 +223,11 @@ class DomainAccountingSettings(BaseProjectSettingsView):
 def get_effective_feature_limit(plan_version, feature_rate, account):
     """
     The limit to display for a feature rate, accounting for bundled mobile
-    workers: every project space bundles the DOMAIN rate's USER-type
+    workers: each project space bundles the DOMAIN rate's USER-type
     BundledFeatureUnit quantity into the plan's user allowance. Uses the
     account's live domain count, matching what the Project Spaces row on the
-    same page displays.
+    same page displays -- floored at the included-spaces allowance, which the
+    flat fee covers whether or not the account uses them.
     """
     if feature_rate.feature.feature_type != FeatureType.USER or account is None:
         return feature_rate.monthly_limit
@@ -238,9 +239,8 @@ def get_effective_feature_limit(plan_version, feature_rate, account):
         feature_type=FeatureType.USER).first()
     if user_unit is None:
         return feature_rate.monthly_limit
-    return feature_rate.monthly_limit + (
-        len(account.get_domains()) * user_unit.quantity_per_unit
-    )
+    spaces = max(len(account.get_domains()), domain_rate.monthly_limit)
+    return feature_rate.monthly_limit + spaces * user_unit.quantity_per_unit
 
 
 class DomainSubscriptionView(DomainAccountingSettings):

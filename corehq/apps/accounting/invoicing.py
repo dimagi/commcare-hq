@@ -830,7 +830,7 @@ def excess_domains_for_date(account, record_date, domain_rate):
 class MobileUserLineItemFactory(UserLineItemFactory):
     """
     Bills mobile workers against a limit that scales with the account's
-    domain count: every project space bundles the DOMAIN rate's USER-type
+    project spaces: each space bundles the DOMAIN rate's USER-type
     BundledFeatureUnit quantity into the included user allowance.
 
     Deliberately a subclass rather than UserLineItemFactory behavior: the
@@ -840,22 +840,29 @@ class MobileUserLineItemFactory(UserLineItemFactory):
 
     @property
     @memoized
-    def _bundled_users_per_domain(self):
+    def _domain_bundle(self):
+        """
+        (included_spaces, bundled_users_per_space) from the plan's DOMAIN
+        rate, or None when the plan bundles no mobile workers into spaces.
+        """
         domain_rate = self.subscription.plan_version.feature_rates.filter(
             feature__feature_type=FeatureType.DOMAIN).first()
         if domain_rate is None:
-            return 0
+            return None
         unit = domain_rate.bundled_units.filter(feature_type=FeatureType.USER).first()
-        return unit.quantity_per_unit if unit else 0
+        if unit is None:
+            return None
+        return domain_rate.monthly_limit, unit.quantity_per_unit
 
     def monthly_limit_for_date(self, date):
-        base_limit = self.rate.monthly_limit
-        if not self._bundled_users_per_domain:
-            return base_limit
-        return base_limit + (
-            domains_for_date(self.subscription.account, date)
-            * self._bundled_users_per_domain
-        )
+        if self._domain_bundle is None:
+            return self.rate.monthly_limit
+        included_spaces, users_per_space = self._domain_bundle
+        # The flat fee covers the included spaces whether or not the account
+        # uses them, so they always contribute their bundled users; spaces
+        # beyond the allowance add theirs on top.
+        spaces = max(domains_for_date(self.subscription.account, date), included_spaces)
+        return self.rate.monthly_limit + spaces * users_per_space
 
     @property
     def _display_monthly_limit(self):

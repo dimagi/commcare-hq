@@ -1259,12 +1259,33 @@ class TestBundledUserAllowance(BaseCustomerInvoiceCase):
 
         self.assertEqual(self._user_line_item().quantity, 17)
 
-    def test_missing_domain_snapshot_uses_base_limit(self):
+    def test_included_spaces_floor_the_allowance(self):
+        # The flat fee buys the included project spaces whether or not the
+        # account uses them, so their bundled users count even when the actual
+        # space count is lower.
+        self.domain_rate.monthly_limit = 5      # 5 included spaces
+        self.domain_rate.save()
         base = self.user_rate.monthly_limit
+        self._snapshot_domains(self.month_end, 3)       # only 3 actually in use
+        # allowance = base + max(3, 5) * 5 = base + 25
+        self._create_user_histories(self.month_end, base + 27)
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        self.assertEqual(self._user_line_item().quantity, 2)
+        # ...and being under the allowance still means no per-space charge
+        invoice = CustomerInvoice.objects.first()
+        domain_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.DOMAIN).first()
+        self.assertEqual(domain_line_item.quantity, 0)
+
+    def test_missing_domain_snapshot_falls_back_to_included_spaces(self):
+        # No snapshot for the month: rather than assuming zero spaces, fall
+        # back to the contractual minimum the account pays for.
+        base = self.user_rate.monthly_limit             # domain_rate allows 1 space
         self._create_user_histories(self.month_end, base + 17)
         tasks.generate_invoices_based_on_date(self.invoice_date)
 
-        self.assertEqual(self._user_line_item().quantity, 17)
+        # allowance = base + max(0, 1) * 5 = base + 5
+        self.assertEqual(self._user_line_item().quantity, 12)
 
     def test_unlimited_domain_rate_still_bundles(self):
         # Unlimited project spaces means no per-space CHARGE, but under
@@ -1369,3 +1390,12 @@ class TestBundledUserAllowance(BaseCustomerInvoiceCase):
         self.assertEqual(
             get_effective_feature_limit(plan_version, self.user_rate, None),
             self.user_rate.monthly_limit)
+
+    def test_effective_limit_helper_floors_at_included_spaces(self):
+        from corehq.apps.domain.views.accounting import get_effective_feature_limit
+        self.domain_rate.monthly_limit = 5      # 5 included, only 3 live
+        self.domain_rate.save()
+        self.assertEqual(
+            get_effective_feature_limit(
+                self.main_subscription.plan_version, self.user_rate, self.account),
+            self.user_rate.monthly_limit + 25)
