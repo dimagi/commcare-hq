@@ -11,7 +11,9 @@ from soil.util import get_download_context
 
 from corehq.apps.api.decorators import api_throttle
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.models import import_app as import_app_util
+from corehq.apps.app_manager.models import overwrite_app_from_source
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
@@ -33,8 +35,11 @@ def import_app_api(request, domain):
 
 
 def _handle_import_app(request, domain):
+    app_id = request.POST.get('app_id')
+    is_update = bool(app_id)
+
     app_name = request.POST.get('app_name')
-    if not app_name:
+    if not is_update and not app_name:
         return JsonResponse({'success': False, 'error': 'app_name is required'}, status=400)
 
     app_file = request.FILES.get('app_file')
@@ -49,14 +54,29 @@ def _handle_import_app(request, domain):
     if not source:
         return JsonResponse({'success': False, 'error': 'Invalid JSON file'}, status=400)
 
-    extra = {'name': app_name, 'created_from_template': 'import_app_api'}
-    app = import_app_util(source, domain, extra, request=request)
+    extra = {'created_from_template': 'import_app_api'}
+    if app_name:
+        extra['name'] = app_name
+
+    if is_update:
+        try:
+            app = overwrite_app_from_source(domain, app_id, source, extra, request=request)
+        except ResourceNotFound:
+            return JsonResponse({'success': False, 'error': 'Application not found'}, status=404)
+        except AppEditingError as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+        status = 200
+    else:
+        app = import_app_util(source, domain, extra, request=request)
+        status = 201
 
     response = {'success': True, 'app_id': app._id}
+    if is_update:
+        response['version'] = app.version
     warnings = [str(m) for m in get_messages(request)]
     if warnings:
         response['warnings'] = warnings
-    return JsonResponse(response, status=201)
+    return JsonResponse(response, status=status)
 
 
 @waf_allow('XSS_BODY')
