@@ -9,6 +9,7 @@ from corehq.apps.app_manager.models.applications import (
     _merge_source_into_app,
     overwrite_app_from_source,
 )
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 
 APP_MODULE = 'corehq.apps.app_manager.models.applications'
 
@@ -112,3 +113,95 @@ def test_overwrite_app_from_source_orchestration(
 def test_overwrite_app_from_source_app_not_found(_mock_get_app):
     with pytest.raises(ResourceNotFound):
         overwrite_app_from_source('target-domain', 'missing-id', _source())
+
+
+@patch(f'{APP_MODULE}._update_valid_domains_for_media')
+@patch(f'{APP_MODULE}._update_report_config_ids')
+@patch(f'{APP_MODULE}.get_static_report_mapping', return_value={})
+@patch(f'{APP_MODULE}.wrap_app')
+@patch(f'{APP_MODULE}.get_app')
+def test_overwrite_app_from_source_passes_through_attachments(
+    mock_get_app, mock_wrap_app, mock_report_map, mock_update_reports, mock_valid_domains
+):
+    existing = MagicMock()
+    existing.to_json.return_value = _existing()
+    mock_get_app.return_value = existing
+
+    wrapped = MagicMock()
+    mock_wrap_app.return_value = wrapped
+
+    source = _source()
+    source['_attachments'] = {'foo.xml': 'some data'}
+
+    overwrite_app_from_source('target-domain', 'existing-id', source)
+
+    wrapped.save_attachments.assert_called_once_with({'foo.xml': 'some data'})
+    assert source['_attachments'] == {}
+
+
+@patch(f'{APP_MODULE}.messages')
+@patch(f'{APP_MODULE}._update_valid_domains_for_media', side_effect=ResourceNotFound())
+@patch(f'{APP_MODULE}._update_report_config_ids')
+@patch(f'{APP_MODULE}.get_static_report_mapping', return_value={})
+@patch(f'{APP_MODULE}.wrap_app')
+@patch(f'{APP_MODULE}.get_app')
+def test_overwrite_app_from_source_warns_on_missing_multimedia(
+    mock_get_app, mock_wrap_app, mock_report_map, mock_update_reports, mock_valid_domains, mock_messages
+):
+    existing = MagicMock()
+    existing.to_json.return_value = _existing()
+    mock_get_app.return_value = existing
+
+    wrapped = MagicMock()
+    mock_wrap_app.return_value = wrapped
+
+    request = MagicMock()
+    result = overwrite_app_from_source('target-domain', 'existing-id', _source(), request=request)
+
+    mock_messages.warning.assert_called_once()
+    assert result is wrapped
+
+
+@patch(f'{APP_MODULE}.messages')
+@patch(f'{APP_MODULE}._update_valid_domains_for_media', side_effect=ReportConfigurationNotFoundError())
+@patch(f'{APP_MODULE}._update_report_config_ids')
+@patch(f'{APP_MODULE}.get_static_report_mapping', return_value={})
+@patch(f'{APP_MODULE}.wrap_app')
+@patch(f'{APP_MODULE}.get_app')
+def test_overwrite_app_from_source_warns_on_missing_ucr_with_request(
+    mock_get_app, mock_wrap_app, mock_report_map, mock_update_reports, mock_valid_domains, mock_messages
+):
+    existing = MagicMock()
+    existing.to_json.return_value = _existing()
+    mock_get_app.return_value = existing
+
+    wrapped = MagicMock()
+    mock_wrap_app.return_value = wrapped
+
+    request = MagicMock()
+    result = overwrite_app_from_source('target-domain', 'existing-id', _source(), request=request)
+
+    mock_messages.warning.assert_called_once()
+    assert result is wrapped
+
+
+@patch(f'{APP_MODULE}.messages')
+@patch(f'{APP_MODULE}._update_valid_domains_for_media', side_effect=ReportConfigurationNotFoundError())
+@patch(f'{APP_MODULE}._update_report_config_ids')
+@patch(f'{APP_MODULE}.get_static_report_mapping', return_value={})
+@patch(f'{APP_MODULE}.wrap_app')
+@patch(f'{APP_MODULE}.get_app')
+def test_overwrite_app_from_source_swallows_missing_ucr_without_request(
+    mock_get_app, mock_wrap_app, mock_report_map, mock_update_reports, mock_valid_domains, mock_messages
+):
+    existing = MagicMock()
+    existing.to_json.return_value = _existing()
+    mock_get_app.return_value = existing
+
+    wrapped = MagicMock()
+    mock_wrap_app.return_value = wrapped
+
+    result = overwrite_app_from_source('target-domain', 'existing-id', _source(), request=None)
+
+    mock_messages.warning.assert_not_called()
+    assert result is wrapped
