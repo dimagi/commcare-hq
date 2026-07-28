@@ -856,7 +856,7 @@ class TestBillingAccountDomainHistory(BaseCustomerInvoiceCase):
                 billing_account=self.account, record_date=record_date, num_domains=4)
 
 
-class TestCalculateDomainsInAllBillingAccounts(BaseCustomerInvoiceCase):
+class TestCalculateDomainsInCustomerBillingAccounts(BaseCustomerInvoiceCase):
 
     def setUp(self):
         super().setUp()
@@ -867,12 +867,12 @@ class TestCalculateDomainsInAllBillingAccounts(BaseCustomerInvoiceCase):
 
     def test_snapshots_active_domain_count_for_customer_account(self):
         from corehq.apps.accounting.models import BillingAccountDomainHistory
-        from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
+        from corehq.apps.accounting.tasks import calculate_domains_in_customer_billing_accounts
 
         # BaseCustomerInvoiceCase sets up 3 subscriptions (main + 2 non-main)
         # on a single customer account.
         today = date(2016, 6, 1)
-        calculate_domains_in_all_billing_accounts(today)
+        calculate_domains_in_customer_billing_accounts(today)
 
         history = BillingAccountDomainHistory.objects.get(
             billing_account=self.account, record_date=date(2016, 5, 31))
@@ -880,10 +880,10 @@ class TestCalculateDomainsInAllBillingAccounts(BaseCustomerInvoiceCase):
 
     def test_skips_non_customer_accounts(self):
         from corehq.apps.accounting.models import BillingAccountDomainHistory
-        from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
+        from corehq.apps.accounting.tasks import calculate_domains_in_customer_billing_accounts
 
         self.account.is_customer_billing_account = False
         self.account.save()
-        calculate_domains_in_all_billing_accounts(date(2016, 6, 1))
+        calculate_domains_in_customer_billing_accounts(date(2016, 6, 1))
 
         self.assertEqual(BillingAccountDomainHistory.objects.count(), 0)

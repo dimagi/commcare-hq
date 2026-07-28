@@ -3930,7 +3930,7 @@ class BillingAccountWebUserHistory(models.Model):
 class BillingAccountDomainHistory(models.Model):
     """
     A record of the number of active domains for a billing account at the
-    record_date. Created by task calculate_domains_in_all_billing_accounts on
+    record_date. Created by task calculate_domains_in_customer_billing_accounts on
     the first of every month. Used to bill enterprise accounts for the number
     of domains above their plan's included-domains allowance.
     """

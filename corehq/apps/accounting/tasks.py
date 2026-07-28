@@ -980,7 +980,7 @@ def calculate_web_users_in_all_billing_accounts(today=None):
 
 
 @periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True, durable=True)
-def calculate_domains_in_all_billing_accounts(today=None):
+def calculate_domains_in_customer_billing_accounts(today=None):
     today = today or datetime.date.today()
     record_date = today - relativedelta(days=1)
     for account in BillingAccount.objects.filter(is_customer_billing_account=True):
