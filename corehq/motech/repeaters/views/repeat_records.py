@@ -28,7 +28,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.users.decorators import require_can_edit_web_users
-from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.motech.dhis2.parse_response import (
     get_diagnosis_message,
     get_errors,
@@ -256,7 +256,7 @@ class RepeatRecordView(View):
         content_type = record.repeater.generator.content_type
         try:
             payload_doc = record.repeater.payload_doc(record)
-        except XFormNotFound:
+        except (CaseNotFound, XFormNotFound):
             return self._payload_not_found_response(record.payload_id)
         if getattr(payload_doc, 'deleted_on', None) is not None:
             return self._payload_not_found_response(record.payload_id)

@@ -210,6 +210,14 @@ class TestRepeatRecordPayloadPreview(TestCase):
         self.assertEqual(response.status_code, 404)
 
     @privilege_enabled(privileges.DATA_FORWARDING)
+    def test_missing_case_returns_not_found(self):
+        record = self._make_record(self.case_repeater, "missing-case-id")
+
+        response = self._get_payload(record)
+
+        self.assertEqual(response.status_code, 404)
+
+    @privilege_enabled(privileges.DATA_FORWARDING)
     def test_live_form_payload_is_shown(self):
         form = create_form_for_test(self.domain, save=True)
         record = self._make_record(self.form_repeater, form.form_id)
