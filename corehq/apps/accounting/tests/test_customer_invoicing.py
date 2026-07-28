@@ -891,7 +891,7 @@ class TestBillingAccountDomainHistory(BaseCustomerInvoiceCase):
                 billing_account=self.account, record_date=record_date, num_domains=4)
 
 
-class TestCalculateDomainsInAllBillingAccounts(BaseCustomerInvoiceCase):
+class TestCalculateDomainsInCustomerBillingAccounts(BaseCustomerInvoiceCase):
 
     def setUp(self):
         super().setUp()
@@ -902,12 +902,12 @@ class TestCalculateDomainsInAllBillingAccounts(BaseCustomerInvoiceCase):
 
     def test_snapshots_active_domain_count_for_customer_account(self):
         from corehq.apps.accounting.models import BillingAccountDomainHistory
-        from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
+        from corehq.apps.accounting.tasks import calculate_domains_in_customer_billing_accounts
 
         # BaseCustomerInvoiceCase sets up 3 subscriptions (main + 2 non-main)
         # on a single customer account.
         today = date(2016, 6, 1)
-        calculate_domains_in_all_billing_accounts(today)
+        calculate_domains_in_customer_billing_accounts(today)
 
         history = BillingAccountDomainHistory.objects.get(
             billing_account=self.account, record_date=date(2016, 5, 31))
@@ -915,11 +915,11 @@ class TestCalculateDomainsInAllBillingAccounts(BaseCustomerInvoiceCase):
 
     def test_skips_non_customer_accounts(self):
         from corehq.apps.accounting.models import BillingAccountDomainHistory
-        from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
+        from corehq.apps.accounting.tasks import calculate_domains_in_customer_billing_accounts
 
         self.account.is_customer_billing_account = False
         self.account.save()
-        calculate_domains_in_all_billing_accounts(date(2016, 6, 1))
+        calculate_domains_in_customer_billing_accounts(date(2016, 6, 1))
 
         self.assertEqual(BillingAccountDomainHistory.objects.count(), 0)
 
@@ -949,8 +949,8 @@ class TestDomainLineItem(BaseCustomerInvoiceCase):
         calculate_users_in_all_domains(self.invoice_date)
 
     def test_over_allowance_charges_per_excess_domain(self):
-        from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
-        calculate_domains_in_all_billing_accounts(self.invoice_date)
+        from corehq.apps.accounting.tasks import calculate_domains_in_customer_billing_accounts
+        calculate_domains_in_customer_billing_accounts(self.invoice_date)
         tasks.generate_invoices_based_on_date(self.invoice_date)
 
         invoice = CustomerInvoice.objects.first()
@@ -964,10 +964,10 @@ class TestDomainLineItem(BaseCustomerInvoiceCase):
 
     def test_unlimited_monthly_limit_charges_nothing(self):
         from corehq.apps.accounting.models import UNLIMITED_FEATURE_USAGE
-        from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
+        from corehq.apps.accounting.tasks import calculate_domains_in_customer_billing_accounts
         self.domain_rate.monthly_limit = UNLIMITED_FEATURE_USAGE
         self.domain_rate.save()
-        calculate_domains_in_all_billing_accounts(self.invoice_date)
+        calculate_domains_in_customer_billing_accounts(self.invoice_date)
         tasks.generate_invoices_based_on_date(self.invoice_date)
 
         invoice = CustomerInvoice.objects.first()
@@ -983,7 +983,7 @@ class TestDomainLineItem(BaseCustomerInvoiceCase):
         # Quarterly invoicing sums excess domains over the three month-ends
         # in the quarter: 2017-01-31, 2017-02-28, 2017-03-31 (record_date is
         # always the day before the snapshot task's "today", as in
-        # calculate_domains_in_all_billing_accounts).
+        # calculate_domains_in_customer_billing_accounts).
         for months_before_invoice_date, num_domains in zip(range(3), [2, 3, 5]):
             user_date = date(invoice_date.year, invoice_date.month, 1)
             user_date -= relativedelta.relativedelta(months=months_before_invoice_date)
@@ -1011,7 +1011,7 @@ class TestDomainLineItem(BaseCustomerInvoiceCase):
         monthly snapshots have accumulated) must be treated the same way: as
         zero excess domains for that month, not as a hard failure that blocks
         the entire invoice."""
-        # Deliberately no calculate_domains_in_all_billing_accounts run.
+        # Deliberately no calculate_domains_in_customer_billing_accounts run.
         tasks.generate_invoices_based_on_date(self.invoice_date)
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
@@ -1021,10 +1021,10 @@ class TestDomainLineItem(BaseCustomerInvoiceCase):
         self.assertEqual(domain_line_item.total, Decimal('0.0000'))
 
     def test_within_allowance_charges_nothing(self):
-        from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
+        from corehq.apps.accounting.tasks import calculate_domains_in_customer_billing_accounts
         self.domain_rate.monthly_limit = 10
         self.domain_rate.save()
-        calculate_domains_in_all_billing_accounts(self.invoice_date)
+        calculate_domains_in_customer_billing_accounts(self.invoice_date)
         tasks.generate_invoices_based_on_date(self.invoice_date)
 
         invoice = CustomerInvoice.objects.first()
@@ -1033,9 +1033,9 @@ class TestDomainLineItem(BaseCustomerInvoiceCase):
         self.assertEqual(domain_line_item.total, Decimal('0.0000'))
 
     def test_no_domain_line_item_without_domain_rate(self):
-        from corehq.apps.accounting.tasks import calculate_domains_in_all_billing_accounts
+        from corehq.apps.accounting.tasks import calculate_domains_in_customer_billing_accounts
         self.main_subscription.plan_version.feature_rates.remove(self.domain_rate)
-        calculate_domains_in_all_billing_accounts(self.invoice_date)
+        calculate_domains_in_customer_billing_accounts(self.invoice_date)
         tasks.generate_invoices_based_on_date(self.invoice_date)
 
         invoice = CustomerInvoice.objects.first()
