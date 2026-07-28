@@ -245,10 +245,11 @@ class RepeatRecordView(View):
         return record
 
     @staticmethod
-    def _payload_not_found_response(payload_id):
-        return JsonResponse({
-            'error': 'Odd, could not find payload for: {}'.format(payload_id)
-        }, status=404)
+    def _payload_not_found_response():
+        return JsonResponse(
+            {'error': _('The payload could not be found. ')},
+            status=404,
+        )
 
     def get(self, request, domain):
         record_id = request.GET.get('record_id')
@@ -257,9 +258,9 @@ class RepeatRecordView(View):
         try:
             payload_doc = record.repeater.payload_doc(record)
         except (CaseNotFound, XFormNotFound):
-            return self._payload_not_found_response(record.payload_id)
+            return self._payload_not_found_response()
         if getattr(payload_doc, 'deleted_on', None) is not None:
-            return self._payload_not_found_response(record.payload_id)
+            return self._payload_not_found_response()
         payload = record.repeater.generator.get_payload(record, payload_doc)
 
         if content_type == 'text/xml':
