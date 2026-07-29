@@ -247,7 +247,7 @@ class RepeatRecordView(View):
     @staticmethod
     def _payload_not_found_response():
         return JsonResponse(
-            {'error': _('The payload could not be found. ')},
+            {'error': _('The payload could not be found.')},
             status=404,
         )
 
