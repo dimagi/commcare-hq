@@ -566,10 +566,6 @@ class Repeater(RepeaterSuperProxy):
             return self.send_request(repeat_record, payload)
 
     def fire_for_record(self, repeat_record, timing_context=None):
-        if _payload_is_soft_deleted(self.payload_doc(repeat_record)):
-            repeat_record.cancel()
-            repeat_record.save()
-            return
         payload = self.get_payload(repeat_record)
         try:
             response = self._time_request(repeat_record, payload, timing_context)

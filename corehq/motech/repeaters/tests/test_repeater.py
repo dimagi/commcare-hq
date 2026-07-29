@@ -68,7 +68,11 @@ from ..repeater_generators import (
     FormRepeaterXMLPayloadGenerator,
     RegisterGenerator,
 )
-from ..tasks import _process_repeat_record, check_repeaters
+from ..tasks import (
+    _process_repeat_record,
+    check_repeaters,
+    process_ready_repeat_record,
+)
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
 CASE_ID = "ABC123CASEID"
@@ -749,28 +753,29 @@ class SoftDeletedPayloadTest(BaseRepeaterTest):
         repeater.save()
         return repeater
 
-    def test_soft_deleted_form_is_cancelled_and_not_sent(self):
+    def test_soft_deleted_form_is_cancelled_by_legacy_path(self):
         form = XFormInstance.objects.get_form(self.instance_id, self.domain)
         form.soft_delete()
         record = RepeatRecord.objects.get(
             domain=self.domain, repeater_id=self.form_repeater.id, payload_id=self.instance_id)
 
         with patch('corehq.motech.repeaters.models.simple_request') as mock_send:
-            record.fire()
+            _process_repeat_record(record)
 
         assert mock_send.call_count == 0
         assert record.state == State.Cancelled
         assert record.next_check is None
 
-    def test_soft_deleted_case_is_cancelled_and_not_sent(self):
+    def test_soft_deleted_case_is_cancelled_by_process_repeaters_path(self):
         CommCareCase.objects.soft_delete_cases(self.domain, [CASE_ID])
         record = RepeatRecord.objects.get(
             domain=self.domain, repeater_id=self.case_repeater.id, payload_id=CASE_ID)
 
         with patch('corehq.motech.repeaters.models.simple_request') as mock_send:
-            record.fire()
+            process_ready_repeat_record(record.id)
 
         assert mock_send.call_count == 0
+        record.refresh_from_db()
         assert record.state == State.Cancelled
         assert record.next_check is None
 
