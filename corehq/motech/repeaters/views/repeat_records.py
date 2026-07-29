@@ -8,6 +8,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import View
@@ -67,7 +68,17 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             self.domain, toggles.NAMESPACE_DOMAIN
         ) and toggles.BACKOFF_REPEATERS.enabled(self.domain, toggles.NAMESPACE_DOMAIN)
 
-    def _make_view_payload_button(self, record_id):
+    def _make_view_payload_button(self, record):
+        if record.succeeded:
+            return mark_safe('''
+            <a
+                class="btn btn-default disabled"
+                role="button"
+                aria-disabled="true">
+                <i class="fa fa-search"></i>
+                Payload
+            </a>
+            ''')  # nosec: static markup, no interpolation
         return format_html('''
         <a
             class="btn btn-default"
@@ -78,7 +89,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             <i class="fa fa-search"></i>
             Payload
         </a>
-        ''', record_id)
+        ''', record.id)
 
     def _make_view_attempts_button(self, record_id):
         return format_html('''
@@ -179,7 +190,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             display.remote_service,
             display.next_check,
             self._make_view_attempts_button(record.id),
-            self._make_view_payload_button(record.id),
+            self._make_view_payload_button(record),
         ]
 
         if toggles.SUPPORT.enabled_for_request(self.request):
