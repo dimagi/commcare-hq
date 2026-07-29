@@ -20602,13 +20602,11 @@ msgstr "Umefanikiwa kuondoa kwenye kumbukumbu {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-#| msgid "Could not archive {form}: {error}"
 msgid "Could not archive {form}"
 msgstr "Imeshindikana kuhifadhi {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-#| msgid "Could not archive {form}: {error}"
 msgid "Could not unarchive {form}"
 msgstr "Imeshindikana kufungua {form}"
 
