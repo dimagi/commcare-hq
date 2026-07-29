@@ -393,10 +393,11 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
     @allow_remote_invocation
     def delete_domain_link(self, in_data):
-        linked_domain = in_data['linked_domain']
-        link = DomainLink.objects.filter(linked_domain=linked_domain, master_domain=self.domain).first()
-        link.deleted = True
-        link.save()
+        link = DomainLink.objects.get(
+            linked_domain=in_data['linked_domain'], master_domain=self.domain
+        )
+
+        unlink_domains(self.request.couch_user, link)
 
         track_workflow_noop(self.request.couch_user.username, "Linked domain: domain link deleted")
 
@@ -485,6 +486,13 @@ def link_domains(couch_user, upstream_domain, downstream_domain):
         raise DomainLinkNotAllowed(error)
 
     return DomainLink.link_domains(downstream_domain, upstream_domain)
+
+def unlink_domains(couch_user, domain_link):
+    from corehq.apps.linked_domain.applications import unlink_apps_in_domain
+    domain_link.deleted = True
+    domain_link.save()
+
+    unlink_apps_in_domain(domain_link.linked_domain)
 
 
 def validate_push(user, domain, downstream_domains):
