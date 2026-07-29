@@ -2051,6 +2051,12 @@ def _merge_source_into_app(existing_app_json, source, extra_properties=None):
     are applied last, so an explicit ``name`` override wins. Raises
     ``AppEditingError`` if ``source`` declares a ``doc_type`` incompatible with
     the existing app.
+
+    This overlays ``source`` onto a copy of the existing app rather than
+    performing a strict replace: a non-excluded content field present on the
+    existing app but absent from ``source`` is retained, not cleared. Callers
+    passing a partial ``source`` therefore keep the existing app's values for
+    any keys the source omits.
     """
     source_doc_type = source.get('doc_type')
     if source_doc_type and source_doc_type != existing_app_json.get('doc_type'):

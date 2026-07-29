@@ -118,6 +118,9 @@ its version is bumped. The response returns the new version:
       "version": 8
     }
 
+As with the create response, if the update succeeds but encounters non-fatal
+issues, the response also includes a ``warnings`` field.
+
 **Error Responses**
 
 .. list-table::

@@ -3,12 +3,15 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from couchdbkit.exceptions import ResourceNotFound
+from django.test import TestCase
 
 from corehq.apps.app_manager.exceptions import AppEditingError
+from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.models.applications import (
     _merge_source_into_app,
     overwrite_app_from_source,
 )
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 
 APP_MODULE = 'corehq.apps.app_manager.models.applications'
@@ -205,3 +208,65 @@ def test_overwrite_app_from_source_swallows_missing_ucr_without_request(
 
     mock_messages.warning.assert_not_called()
     assert result is wrapped
+
+
+class OverwriteAppFromSourceDbTest(TestCase):
+    """Live-DB round-trip covering the guarantees the mock-based tests can't:
+    the update persists in place at the same ``_id``, bumps the version exactly
+    once, replaces content from the source, and preserves the existing app's
+    multimedia map instead of taking the source's."""
+
+    domain = 'test-app-update-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        domain = create_domain(cls.domain)
+        cls.addClassCleanup(domain.delete)
+
+    def _make_app(self, app_name, module_name):
+        app = Application.new_app(self.domain, app_name)
+        app.add_module(Module.new_module(module_name, 'en'))
+        return app
+
+    def test_update_persists_in_place(self):
+        target = self._make_app('Target App', 'OriginalModule')
+        target.save()
+        self.addCleanup(target.delete)
+        target_id = target._id
+        original_version = target.version
+
+        source_app = self._make_app('Source App', 'UpdatedModule')
+        source_app.save()
+        self.addCleanup(source_app.delete)
+        source = source_app.export_json(dump_json=False)
+        # An entry in the source's map must NOT leak onto the updated app;
+        # the existing (empty) map is preserved instead.
+        source['multimedia_map'] = {
+            'jr://file/commcare/image/injected.png': {
+                'multimedia_id': 'from-source', 'media_type': 'CommCareImage',
+            }
+        }
+
+        overwrite_app_from_source(self.domain, target_id, source)
+
+        updated = Application.get(target_id)
+        assert updated._id == target_id
+        assert updated.version == original_version + 1
+        assert updated.get_module(0).name['en'] == 'UpdatedModule'
+        assert updated.multimedia_map == {}
+
+    def test_update_can_rename_via_extra_properties(self):
+        target = self._make_app('Original Name', 'OriginalModule')
+        target.save()
+        self.addCleanup(target.delete)
+
+        source_app = self._make_app('Source App', 'UpdatedModule')
+        source_app.save()
+        self.addCleanup(source_app.delete)
+        source = source_app.export_json(dump_json=False)
+
+        overwrite_app_from_source(self.domain, target._id, source, {'name': 'Renamed'})
+
+        updated = Application.get(target._id)
+        assert updated.name == 'Renamed'
