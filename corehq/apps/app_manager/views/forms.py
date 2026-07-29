@@ -53,6 +53,7 @@ from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     AppInDifferentDomainException,
     AppMisconfigurationError,
+    DangerousXmlException,
     FormNotFoundException,
     IncompatibleFormTypeException,
     LockedQuestionError,
@@ -125,6 +126,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
     track_domain_request,
 )
+from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
@@ -374,6 +376,30 @@ def _check_locked_questions_unmodified(request, domain, form, new_xml):
     for path in old_locked:
         if old_xform.get_question_signature(path) != new_xform.get_question_signature(path):
             raise LockedQuestionError
+
+
+def _count_newly_locked_questions(domain, form, new_xml):
+    """Number of questions ``new_xml`` locks that are not locked in the
+    form's current source, or 0 if the feature is off.
+
+    Must be called before ``save_xform`` replaces the form's source.
+    """
+    if not domain_has_privilege(domain, "locked_admin_questions"):
+        return 0
+    try:
+        new_locked = XForm(new_xml).locked_question_paths
+    except (XFormException, DangerousXmlException):
+        # unparseable XML; the save itself will fail
+        return 0
+    if not new_locked:
+        return 0
+    try:
+        old_locked = form.wrapped_xform().locked_question_paths
+    except (XFormException, DangerousXmlException):
+        # save_xform tolerates storing a broken source, so tolerate
+        # reading one; treat all locked questions in the new XML as new
+        old_locked = set()
+    return len(new_locked - old_locked)
 
 
 @waf_allow('XSS_BODY')
@@ -702,6 +728,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
     except LockedQuestionError:
         return HttpResponseForbidden()
 
+    num_newly_locked = _count_newly_locked_questions(domain, form, new_xml)
     try:
         xml = save_xform(app, form, new_xml, case_mapping_diff)
     except XFormException:
@@ -719,6 +746,9 @@ def patch_xform(request, domain, app_id, form_unique_id):
         request, form, lang, app)
 
     app.save(response_json)
+    if num_newly_locked:
+        DomainAuditRecordEntry.update_calculations(
+            domain, 'cp_n_questions_locked', count=num_newly_locked)
 
     if _case_mapping_diff_has_changes(case_mapping_diff):
         record_google_analytics_event(
