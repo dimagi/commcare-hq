@@ -1552,6 +1552,11 @@ class RepeatRecord(models.Model):
         return self.add_payload_rejected_attempt(message, traceback_str)
 
     def handle_generate_payload_error(self, message, traceback_str=''):
+        notify_exception(
+            None,
+            f'Error generating payload: {message}',
+            details={'domain': self.domain},
+        )
         log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
         return self.add_error_generating_payload_attempt(message, traceback_str)
 
