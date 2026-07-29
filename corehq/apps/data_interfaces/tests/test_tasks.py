@@ -1,10 +1,16 @@
-from django.test import SimpleTestCase
 from unittest.mock import patch
 
+from django.test import SimpleTestCase, TestCase
+
+from corehq.apps.data_interfaces.models import BulkAsyncJob
 from corehq.apps.data_interfaces.tasks import (
+    bulk_form_action_async,
     task_generate_ids_and_operate_on_payloads,
     task_operate_on_payloads,
 )
+from corehq.form_processor.models.forms import XFormInstance
+
+TASK_DOMAIN = 'bulk-task-test'
 
 
 class TestTasks(SimpleTestCase):
@@ -82,3 +88,33 @@ class TestTasks(SimpleTestCase):
         )
         self.assertEqual(response,
                          {'messages': {'errors': ['No payloads specified']}})
+
+
+class TestBulkFormActionAsync(TestCase):
+
+    def _job(self):
+        job = BulkAsyncJob(
+            domain=TASK_DOMAIN, model=XFormInstance,
+            action=BulkAsyncJob.Action.ARCHIVE, requested_by='u',
+        )
+        job.save()
+        return job
+
+    def test_task_runs_job(self):
+        job = self._job()
+        with patch(
+            'corehq.apps.data_interfaces.tasks.run_bulk_form_action'
+        ) as mock_run:
+            bulk_form_action_async(str(job.id), TASK_DOMAIN)
+        assert mock_run.call_count == 1
+        assert mock_run.call_args[0][0].id == job.id
+
+    def test_task_marks_job_failed_on_error(self):
+        job = self._job()
+        with patch(
+            'corehq.apps.data_interfaces.tasks.run_bulk_form_action',
+            side_effect=ValueError('boom'),
+        ), self.assertRaises(ValueError):
+            bulk_form_action_async(str(job.id), TASK_DOMAIN)
+        job.refresh_from_db()
+        assert job.status == BulkAsyncJob.Status.FAILED

@@ -28,10 +28,12 @@ from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
 from corehq.util.log import send_HTML_email
 
+from .bulk_form_actions import mark_job_failed, run_bulk_form_action
 from .deduplication import backfill_deduplicate_rule, reset_deduplicate_rule
 from .interfaces import FormManagementMode
 from .models import (
     AutomaticUpdateRule,
+    BulkAsyncJob,
     CaseDuplicate,
     CaseDuplicateNew,
     CaseRuleSubmission,
@@ -96,6 +98,16 @@ def bulk_upload_cases_to_group(upload_id, domain, case_group_id, cases):
         progress_tracker=_get_upload_progress_tracker(upload_id)
     )
     cache.set(upload_id, results, ONE_HOUR)
+
+
+@serial_task('{domain}', default_retry_delay=300, max_retries=48, timeout=60 * 60)
+def bulk_form_action_async(job_id, domain):
+    try:
+        job = BulkAsyncJob.objects.get(id=job_id)
+        run_bulk_form_action(job)
+    except Exception:
+        mark_job_failed(job_id)
+        raise
 
 
 @task(serializer='pickle')
