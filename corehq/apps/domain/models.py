@@ -911,7 +911,7 @@ class DomainAuditRecordEntry(models.Model):
     @classmethod
     @atomic
     def update_calculations(cls, domain, property_to_update, count=1):
-        obj, is_new = cls.objects.get_or_create(domain=domain)
+        obj, _ = cls.objects.get_or_create(domain=domain)
         setattr(obj, property_to_update, F(property_to_update) + count)
         # update_fields prevents the possibility of a race condition
         # https://stackoverflow.com/a/1599090
