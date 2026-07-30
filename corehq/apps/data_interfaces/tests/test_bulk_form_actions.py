@@ -1,0 +1,172 @@
+from unittest.mock import Mock, patch
+
+from django.test import SimpleTestCase, TestCase
+
+import pytest
+
+from corehq.apps.data_interfaces.bulk_form_actions import (
+    SKIPPED,
+    SUCCEEDED,
+    FormActionResult,
+    _apply_form_action,
+    _save_interval,
+    build_form_action,
+    run_bulk_form_action,
+)
+from corehq.apps.data_interfaces.models import BulkAsyncJob
+from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
+from corehq.form_processor.models.forms import XFormInstance
+from corehq.form_processor.tests.utils import create_form_for_test, sharded
+
+DOMAIN = 'bulk-actions-test'
+
+
+class TestBuildFormAction(TestCase):
+
+    def _job(self, action):
+        return BulkAsyncJob(
+            domain=DOMAIN, model=XFormInstance, action=action, requested_by='u',
+        )
+
+    def test_archive_action(self):
+        action_fn = build_form_action(self._job(BulkAsyncJob.Action.ARCHIVE), user_id='uid')
+        assert callable(action_fn)
+
+    def test_unarchive_action(self):
+        action_fn = build_form_action(self._job(BulkAsyncJob.Action.UNARCHIVE), user_id='uid')
+        assert callable(action_fn)
+
+
+@sharded
+class TestRunBulkFormAction(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.blob_db = TemporaryFilesystemBlobDB()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.blob_db.close()
+        super().tearDownClass()
+
+    def _job(self, action, form_ids):
+        job = BulkAsyncJob(
+            domain=DOMAIN, model=XFormInstance, action=action, requested_by='u',
+        )
+        stored = job.set_requested_ids(form_ids)
+        job.requested_count = len(stored)
+        job.save()
+        return job
+
+    def test_archive_marks_complete_and_counts(self):
+        form = create_form_for_test(DOMAIN, state=XFormInstance.NORMAL)
+        job = self._job(BulkAsyncJob.Action.ARCHIVE, [form.form_id])
+
+        run_bulk_form_action(job)
+
+        job.refresh_from_db()
+        assert job.status == BulkAsyncJob.Status.COMPLETE
+        assert job.started_at is not None and job.completed_at is not None
+        assert job.processed_count == 1
+        assert job.succeeded_count == 1
+        assert job.get_skipped() == {}
+        assert XFormInstance.objects.get_form(form.form_id, DOMAIN).is_archived
+
+    def test_missing_id_recorded_not_found(self):
+        job = self._job(BulkAsyncJob.Action.ARCHIVE, ['does-not-exist'])
+        run_bulk_form_action(job)
+        job.refresh_from_db()
+        assert job.succeeded_count == 0
+        assert job.get_skipped() == {'not_found': ['does-not-exist']}
+
+    def test_unarchive_already_unarchived_is_noop(self):
+        # unarchive is idempotent: a normal form is a no-op success, not a skip
+        normal = create_form_for_test(DOMAIN, state=XFormInstance.NORMAL)
+        job = self._job(BulkAsyncJob.Action.UNARCHIVE, [normal.form_id])
+        run_bulk_form_action(job)
+        job.refresh_from_db()
+        assert job.succeeded_count == 1
+        assert job.get_skipped() == {}
+
+    def test_persists_progress_before_completion(self):
+        # A small job (interval == 1) must persist counts as it goes, not only
+        # at completion, so the status poll's progress bar advances.
+        forms = [create_form_for_test(DOMAIN, state=XFormInstance.NORMAL) for _ in range(3)]
+        job = self._job(BulkAsyncJob.Action.ARCHIVE, [f.form_id for f in forms])
+        seen = []
+        original_save = job.save
+
+        def record_processed(*args, **kwargs):
+            seen.append(job.processed_count)
+            return original_save(*args, **kwargs)
+
+        job.save = record_processed
+        run_bulk_form_action(job)
+
+        assert seen == [0, 1, 2, 3, 3]
+
+
+@pytest.mark.parametrize("requested_count, expected", [
+    (0, 1),
+    (1, 1),
+    (5, 1),
+    (40, 2),
+    (100, 5),
+    (2000, 100),
+    (10000, 100),
+])
+def test_save_interval(requested_count, expected):
+    assert _save_interval(requested_count) == expected
+
+
+class TestApplyFormAction(SimpleTestCase):
+
+    def _patched_apply_form_action(self, form_ids, forms, action_fn):
+        with patch(
+            'corehq.apps.data_interfaces.bulk_form_actions.XFormInstance.objects.iter_forms',
+            return_value=forms,
+        ):
+            return list(_apply_form_action(DOMAIN, form_ids, action_fn))
+
+    def test_empty_form_ids(self):
+        assert self._patched_apply_form_action([], [], lambda f: None) == []
+
+    def test_success(self):
+        form = Mock(form_id='f1', domain=DOMAIN)
+        calls = []
+        results = self._patched_apply_form_action(['f1'], [form], calls.append)
+        assert calls == [form]
+        assert results == [FormActionResult('f1', SUCCEEDED)]
+
+    def test_missing_is_not_found(self):
+        results = self._patched_apply_form_action(['missing'], [], lambda f: None)
+        assert results == [FormActionResult('missing', SKIPPED, 'not_found')]
+
+    def test_wrong_domain_is_not_found(self):
+        form = Mock(form_id='f1', domain='other-domain')
+        called = []
+        results = self._patched_apply_form_action(['f1'], [form], called.append)
+        assert called == []  # action not applied to out-of-domain forms
+        assert results == [FormActionResult('f1', SKIPPED, 'not_found')]
+
+    def test_exception_is_unexpected_error(self):
+        form = Mock(form_id='f1', domain=DOMAIN)
+
+        def unexpected_error(xform):
+            raise Exception('error')
+
+        with patch(
+            'corehq.apps.data_interfaces.bulk_form_actions.notify_exception'
+        ) as notify:
+            results = self._patched_apply_form_action(['f1'], [form], unexpected_error)
+        assert results == [FormActionResult('f1', SKIPPED, 'unexpected_error')]
+        notify.assert_called_once()
+
+    def test_mixed_results(self):
+        found = Mock(form_id='f1', domain=DOMAIN)
+        results = self._patched_apply_form_action(['f1', 'missing'], [found], lambda f: None)
+        assert results == [
+            FormActionResult('f1', SUCCEEDED),
+            FormActionResult('missing', SKIPPED, 'not_found'),
+        ]
