@@ -8,7 +8,7 @@ import sqlglot
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
-from sqlalchemy import literal, select
+from sqlalchemy import and_, literal, not_, or_, select
 
 
 class UnsupportedSQL(Exception):
@@ -70,6 +70,11 @@ def _convert_column(node, table):
         raise UnsupportedSQL(f"unknown column: {identifier.name}")
 
 
+BOOLEAN_OPS = {
+    exp.And: and_,
+    exp.Or: or_,
+}
+
 COMPARISONS = {
     exp.EQ: operator.eq,
     exp.NEQ: operator.ne,
@@ -82,11 +87,28 @@ COMPARISONS = {
 
 def _convert_predicate(node, table):
     """Convert a boolean-valued SQL expression to a ``ColumnElement``"""
-    compare = COMPARISONS.get(type(node))
-    if compare is None:
+    if isinstance(node, exp.Paren):
+        inner, = _unpack(node, 'this')
+        return _convert_predicate(inner, table)
+    if isinstance(node, exp.Not):
+        inner, = _unpack(node, 'this')
+        return not_(_convert_predicate(inner, table))
+    if isinstance(node, exp.In):
+        value, values = _unpack(node, 'this', 'expressions')
+        if not values:
+            raise UnsupportedSQL("IN requires at least one value")
+        return _convert_value(value, table).in_(
+            [_convert_value(v, table) for v in values])
+    if combine := BOOLEAN_OPS.get(type(node)):
+        left, right = _unpack(node, 'this', 'expression')
+        return combine(_convert_predicate(left, table),
+                       _convert_predicate(right, table))
+    if compare := COMPARISONS.get(type(node)):
+        left, right = _unpack(node, 'this', 'expression')
+        return compare(_convert_value(left, table),
+                       _convert_value(right, table))
+    else:
         raise UnsupportedSQL(f"unsupported predicate: {type(node).__name__}")
-    left, right = _unpack(node, 'this', 'expression')
-    return compare(_convert_value(left, table), _convert_value(right, table))
 
 
 def _convert_value(node, table):
@@ -94,6 +116,9 @@ def _convert_value(node, table):
     if isinstance(node, exp.Literal):
         _unpack(node, 'this', 'is_string')
         return literal(node.to_py())  # Use `literal` to make this a bound parameter
+    if isinstance(node, exp.Boolean):
+        value, = _unpack(node, 'this')
+        return literal(bool(value))
     return _convert_column(node, table)
 
 
