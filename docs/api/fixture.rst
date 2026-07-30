@@ -304,7 +304,7 @@ Edit or Delete Lookup Table
         "fields": [
             {"field_name": "name", "properties": ["lang"]},
             {"field_name": "price", "properties": []}
-        ],
+        ]
     }
 
 

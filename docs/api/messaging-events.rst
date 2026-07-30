@@ -77,7 +77,7 @@ These are the filter parameters that the API call can use. Examples of how to us
      - event.status
      - ``status=error``
    * - error_code
-     - Filter on the event error code (e.g. NO_PHONE_NUMBER, NO_RECIPIENT, NO_MESSAGE-sent )
+     - Filter on the event error code (e.g. NO_PHONE_NUMBER, NO_RECIPIENT, NO_MESSAGE)
      - event.error_code
      - ``error_code=NO_MESSAGE``
    * - phone_number
