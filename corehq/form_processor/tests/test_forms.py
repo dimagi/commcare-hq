@@ -479,10 +479,10 @@ class TestHardDeleteForms(TestCase):
         assert count == 1
 
     def test_sentinel_value_deletes_across_domains_and_creates_tombstones(self):
-        from corehq.apps.cleanup.tasks import SENTINEL_DOMAIN
+        from corehq.apps.cleanup.tasks import ALL_DOMAINS_SENTINEL
         form = create_form_for_test(DOMAIN)
         other_form = create_form_for_test('other_domain')
-        deleted = XFormInstance.objects.hard_delete_forms(SENTINEL_DOMAIN, [form.form_id, other_form.form_id])
+        deleted = XFormInstance.objects.hard_delete_forms(ALL_DOMAINS_SENTINEL, [form.form_id, other_form.form_id])
         assert deleted == 2
         for f in [form, other_form]:
             # should not raise errors

@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # special object used to bypass domain filter in hard_delete_forms
 # should only ever be used by permanently_delete_eligible_data
-SENTINEL_DOMAIN = object()
+ALL_DOMAINS_SENTINEL = object()
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))

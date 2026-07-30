@@ -381,7 +381,7 @@ class XFormInstanceManager(RequireDBManager):
         :param commit: defaults to False. If True, will delete expired forms
         :return: dictionary of count of deleted forms
         """
-        from corehq.apps.cleanup.tasks import SENTINEL_DOMAIN
+        from corehq.apps.cleanup.tasks import ALL_DOMAINS_SENTINEL
 
         expiration_date = get_cutoff_date_for_data_deletion()
         total_count = 0
@@ -393,7 +393,7 @@ class XFormInstanceManager(RequireDBManager):
             )
             if commit:
                 deleted_count = self.hard_delete_forms(
-                    SENTINEL_DOMAIN, list(queryset)
+                    ALL_DOMAINS_SENTINEL, list(queryset)
                 )
             else:
                 deleted_count = queryset.count()
@@ -410,10 +410,10 @@ class XFormInstanceManager(RequireDBManager):
             The user location mapping case and domain deletion are the only valid
             use cases for not leaving tombstones.
         """
-        from corehq.apps.cleanup.tasks import SENTINEL_DOMAIN
+        from corehq.apps.cleanup.tasks import ALL_DOMAINS_SENTINEL
         assert isinstance(form_ids, list)
 
-        domain_filter = Q() if domain == SENTINEL_DOMAIN else Q(domain=domain)
+        domain_filter = Q() if domain == ALL_DOMAINS_SENTINEL else Q(domain=domain)
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
