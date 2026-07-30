@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import RequestFactory, TestCase, override_settings
 
 from django_prbac.models import Grant, Role
@@ -6,15 +8,19 @@ from corehq import privileges
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
+    BulkAsyncJob,
     CaseRuleAction,
     UpdateCaseDefinition,
 )
 from corehq.apps.data_interfaces.views import (
     AutomaticUpdateRuleListView,
     DeduplicationRuleCreateView,
+    XFormManagementView,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
+from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
+from corehq.form_processor.models import XFormInstance
 
 
 @override_settings(REQUIRE_TWO_FACTOR_FOR_SUPERUSERS=False)
@@ -89,6 +95,57 @@ class AutomaticUpdateRuleListViewTests(TestCase):
         request.user = self.user
         request.role = self.test_role
         return request
+
+
+class XFormManagementPostTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'xform-mgmt-test'
+        cls.blob_db = TemporaryFilesystemBlobDB()
+        cls.addClassCleanup(cls.blob_db.close)
+
+    def test_post_creates_job_and_enqueues(self):
+        request = RequestFactory().post(
+            '/x', {'mode': 'archive', 'xform_ids': ['form-1', 'form-2']})
+        request.couch_user = WebUser(username='someone')
+        request.can_access_all_locations = True
+
+        view = XFormManagementView()
+        view.request = request
+        view.args = ()
+        view.kwargs = {'domain': self.domain}
+
+        with patch(
+            'corehq.apps.data_interfaces.views.bulk_form_action_async.delay'
+        ) as mock_delay:
+            response = view.post(request)
+
+        assert response.status_code == 302
+        job = BulkAsyncJob.objects.get(domain=self.domain)
+        assert job.model is XFormInstance
+        assert job.action == BulkAsyncJob.Action.ARCHIVE
+        assert job.requested_count == 2
+        assert job.get_requested_ids() == ['form-1', 'form-2']
+        mock_delay.assert_called_once_with(job.id.hex, self.domain)
+        # the redirect (poll) url includes the job id
+        assert job.id.hex in response['Location']
+
+    def test_post_with_no_forms_is_rejected(self):
+        request = RequestFactory().post('/x', {'mode': 'archive'})
+        request.couch_user = WebUser(username='someone')
+        request.can_access_all_locations = True
+
+        view = XFormManagementView()
+        view.request = request
+        view.args = ()
+        view.kwargs = {'domain': self.domain}
+
+        response = view.post(request)
+
+        assert response.status_code == 400
+        assert not BulkAsyncJob.objects.filter(domain=self.domain).exists()
 
 
 class DeduplicationRuleCreateViewTests(TestCase):
