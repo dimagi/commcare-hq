@@ -2,11 +2,13 @@
 
 Only a strict subset of SQL is supported; anything outside it errors
 """
+import operator
+
 import sqlglot
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
-from sqlalchemy import select
+from sqlalchemy import literal, select
 
 
 class UnsupportedSQL(Exception):
@@ -38,11 +40,15 @@ def _unpack(node, *args):
 
 
 def _convert_select(node, tables):
-    expressions, from_ = _unpack(node, 'expressions', 'from_')
+    expressions, from_, where = _unpack(node, 'expressions', 'from_', 'where')
     if from_ is None:
         raise UnsupportedSQL("a FROM clause is required")
     table = _convert_table_ref(from_.this, tables)
-    return select(_convert_projection(expressions, table))
+    query = select(_convert_projection(expressions, table))
+    if where is not None:
+        predicate, = _unpack(where, 'this')
+        query = query.where(_convert_predicate(predicate, table))
+    return query
 
 
 def _convert_projection(expressions, table):
@@ -56,12 +62,39 @@ def _convert_projection(expressions, table):
 
 def _convert_column(node, table):
     if not isinstance(node, exp.Column):
-        raise UnsupportedSQL(f"unsupported projection: {type(node).__name__}")
+        raise UnsupportedSQL(f"unsupported expression: {type(node).__name__}")
     identifier, = _unpack(node, 'this')
     try:
         return table.c[identifier.name]
     except KeyError:
         raise UnsupportedSQL(f"unknown column: {identifier.name}")
+
+
+COMPARISONS = {
+    exp.EQ: operator.eq,
+    exp.NEQ: operator.ne,
+    exp.GT: operator.gt,
+    exp.GTE: operator.ge,
+    exp.LT: operator.lt,
+    exp.LTE: operator.le,
+}
+
+
+def _convert_predicate(node, table):
+    """Convert a boolean-valued SQL expression to a ``ColumnElement``"""
+    compare = COMPARISONS.get(type(node))
+    if compare is None:
+        raise UnsupportedSQL(f"unsupported predicate: {type(node).__name__}")
+    left, right = _unpack(node, 'this', 'expression')
+    return compare(_convert_value(left, table), _convert_value(right, table))
+
+
+def _convert_value(node, table):
+    """Convert a SQL value expression to a ``ColumnElement``"""
+    if isinstance(node, exp.Literal):
+        _unpack(node, 'this', 'is_string')
+        return literal(node.to_py())  # Use `literal` to make this a bound parameter
+    return _convert_column(node, table)
 
 
 def _convert_table_ref(node, tables):

@@ -1,5 +1,7 @@
+from decimal import Decimal
+
 import pytest
-from sqlalchemy import column, select, table
+from sqlalchemy import column, literal, select, table
 
 from corehq.apps.project_db.user_sql import UnsupportedSQL, translate
 
@@ -10,6 +12,22 @@ TABLES = {'client': CLIENT}
 @pytest.mark.parametrize('sql, expected', [
     ('SELECT * FROM client', select([CLIENT])),
     ('SELECT name, case_id FROM client', select([CLIENT.c.name, CLIENT.c.case_id])),
+    ("SELECT * FROM client WHERE name = 'x'",
+     select([CLIENT]).where(CLIENT.c.name == literal('x'))),
+    ("SELECT * FROM client WHERE name <> 'x'",
+     select([CLIENT]).where(CLIENT.c.name != literal('x'))),
+    ('SELECT * FROM client WHERE case_id > 5',
+     select([CLIENT]).where(CLIENT.c.case_id > literal(5))),
+    ('SELECT * FROM client WHERE case_id <= 5.5',
+     select([CLIENT]).where(CLIENT.c.case_id <= literal(Decimal('5.5')))),
+    ("SELECT name FROM client WHERE case_id = 'c1'",
+     select([CLIENT.c.name]).where(CLIENT.c.case_id == literal('c1'))),
+    # Operands may appear in either order
+    ("SELECT * FROM client WHERE 'x' = name",
+     select([CLIENT]).where(literal('x') == CLIENT.c.name)),
+    # Comparing two literals is pointless but harmless
+    ('SELECT * FROM client WHERE 1 = 1',
+     select([CLIENT]).where(literal(1) == literal(1))),
 ])
 def test_valid_queries(sql, expected):
     result = translate(sql, TABLES)
@@ -25,7 +43,6 @@ def test_valid_queries(sql, expected):
 
     # Not (yet) supported
     'SELECT case_id AS id FROM client',   # column alias
-    'SELECT * FROM client WHERE 1=1',     # extra clause
     'SELECT * FROM client LIMIT 5',       # extra clause
     'SELECT * FROM client, client',       # more than one table
     'SELECT * FROM (SELECT * FROM client) AS t',  # subquery is not a table
@@ -37,6 +54,21 @@ def test_valid_queries(sql, expected):
     'SELECT missing FROM client',         # unknown column
     'SELECT client.name FROM client',     # table-qualified column
     'SELECT bogus.name FROM client',      # qualified by some other table
+
+    # WHERE clauses beyond a single comparison
+    "SELECT * FROM client WHERE name = 'x' AND case_id = 'c1'",  # AND
+    "SELECT * FROM client WHERE name = 'x' OR case_id = 'c1'",   # OR
+    "SELECT * FROM client WHERE NOT name = 'x'",  # NOT
+    "SELECT * FROM client WHERE (name = 'x')",    # parenthesized
+    'SELECT * FROM client WHERE name IS NULL',    # IS NULL
+    'SELECT * FROM client WHERE closed = TRUE',   # boolean literal
+    'SELECT * FROM client WHERE case_id = -1',    # negative number
+    "SELECT * FROM client WHERE name LIKE 'x%'",  # LIKE
+    "SELECT * FROM client WHERE name IN ('x')",   # IN
+    'SELECT * FROM client WHERE name',            # not a comparison
+    "SELECT * FROM client WHERE missing = 'x'",   # unknown column
+    "SELECT * FROM client WHERE client.name = 'x'",  # qualified column
+    "SELECT * FROM client WHERE LOWER(name) = 'x'",  # function call
 ])
 def test_rejects_unsupported(sql):
     with pytest.raises(UnsupportedSQL):
