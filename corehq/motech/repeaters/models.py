@@ -91,6 +91,7 @@ from jsonfield import JSONField
 from memoized import memoized
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
+from botocore.exceptions import NoCredentialsError
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
 from couchforms.const import DEVICE_LOG_XMLNS
@@ -1462,7 +1463,7 @@ class RepeatRecord(models.Model):
         if force_send or not self.succeeded:
             try:
                 self.repeater.fire_for_record(self, timing_context=timing_context)
-            except OSError as e:
+            except (NoCredentialsError, OSError) as e:
                 self.handle_exception(str(e))
                 raise
             except Exception as e:
@@ -1552,6 +1553,11 @@ class RepeatRecord(models.Model):
         return self.add_payload_rejected_attempt(message, traceback_str)
 
     def handle_generate_payload_error(self, message, traceback_str=''):
+        notify_exception(
+            None,
+            f'Error generating payload: {message}',
+            details={'domain': self.domain},
+        )
         log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
         return self.add_error_generating_payload_attempt(message, traceback_str)
 
