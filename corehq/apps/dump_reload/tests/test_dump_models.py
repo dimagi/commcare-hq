@@ -13,6 +13,7 @@ IGNORE_MODELS = {
     "accounting.BillingAccountWebUserHistory",
     "accounting.BillingContactInfo",
     "accounting.BillingRecord",
+    "accounting.BundledFeatureUnit",
     "accounting.CreditAdjustment",
     "accounting.CreditLine",
     "accounting.Currency",
