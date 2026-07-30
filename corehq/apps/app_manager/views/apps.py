@@ -80,8 +80,8 @@ from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig
 from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.decorators import (
+    api_auth,
     login_and_domain_required,
-    login_or_digest,
     track_domain_request,
 )
 from corehq.apps.domain.models import all_app_manager_add_ons_enabled
@@ -410,7 +410,8 @@ def get_apps_base_context(request, domain, app):
     return context
 
 
-@login_or_digest
+@require_GET
+@api_auth()
 @require_can_edit_apps
 def app_source(request, domain, app_id):
     app = get_app(domain, app_id)

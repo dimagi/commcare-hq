@@ -1043,6 +1043,109 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         self.assertEqual(response.status_code, 403)
 
 
+class TestAppSourceViewByAPIKey(TestCase):
+    """Test that the app_source view can be accessed with an API key.
+
+    app_source uses ``api_auth()`` (not ``login_or_api_key``) so that HTTP
+    digest — relied on by the ``import_app`` management command — keeps
+    working alongside the newly added API-key auth."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = Domain(name="app-source-api-domain", is_active=True)
+        cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
+
+        cls.app = Application.new_app(cls.domain.name, "TestApp")
+        cls.app.save()
+        cls.addClassCleanup(cls.app.delete)
+
+        old_web_user = WebUser.get_by_username("app_source_api_user")
+        if old_web_user:
+            old_web_user.delete(cls.domain.name, deleted_by=None)
+        cls.web_user = WebUser.create(
+            cls.domain.name, "app_source_api_user", "my_password", None, None, is_active=True
+        )
+        cls.addClassCleanup(cls.web_user.delete, None, None)
+
+        cls.web_user_api_key = HQApiKey.objects.get_or_create(
+            user=cls.web_user.get_django_user()
+        )[0]
+        cls.web_user_api_key.save()
+
+        cls.url = reverse(
+            "app_source",
+            kwargs={"domain": cls.domain.name, "app_id": cls.app.get_id},
+        )
+
+    @has_permissions(edit_apps=True)
+    def test_correct_api_key(self):
+        """A correct API key returns the re-importable app source JSON."""
+        response = self.client.get(
+            self.url,
+            HTTP_AUTHORIZATION=f"ApiKey {self.web_user.username}:{self.web_user_api_key.plaintext_key}",
+        )
+
+        assert response.status_code == 200
+        assert response.headers['content-type'] == "application/json"
+        assert "modules" in json.loads(response.content)
+
+    @has_permissions(edit_apps=True)
+    def test_incorrect_api_key(self):
+        """A missing or incorrect API key returns a 401 response."""
+        with self.subTest("Missing API key"):
+            response = self.client.get(
+                self.url, HTTP_AUTHORIZATION=f"ApiKey {self.web_user.username}:"
+            )
+            assert response.status_code == 401
+
+        with self.subTest("Missing header"):
+            response = self.client.get(self.url)
+            assert response.status_code == 401
+
+        with self.subTest("Incorrect API key"):
+            response = self.client.get(
+                self.url,
+                HTTP_AUTHORIZATION=f"ApiKey {self.web_user.username}:Incorrectkey",
+            )
+            assert response.status_code == 401
+
+    @has_permissions(edit_apps=True)
+    def test_already_authenticated_does_not_need_api_key(self):
+        """Session auth continues to work without an API key."""
+        self.client.force_login(self.web_user.get_django_user())
+
+        response = self.client.get(self.url)
+
+        assert response.status_code == 200
+        assert response.headers['content-type'] == "application/json"
+
+    @has_permissions(edit_apps=True)
+    def test_unsupported_request_methods(self):
+        """Only GET is allowed; other methods return 405."""
+        for method_name in ["POST", "PUT", "PATCH", "DELETE"]:
+            with self.subTest(method_name=method_name):
+                request_method = getattr(self.client, method_name.lower())
+                response = request_method(
+                    self.url,
+                    HTTP_AUTHORIZATION=(
+                        f"ApiKey {self.web_user.username}:{self.web_user_api_key.plaintext_key}"
+                    ),
+                )
+                assert response.status_code == 405
+
+    @has_permissions(edit_apps=False)
+    def test_inadequate_permissions(self):
+        """An authenticated user without edit_apps is forbidden."""
+        response = self.client.get(
+            self.url,
+            HTTP_AUTHORIZATION=f"ApiKey {self.web_user.username}:{self.web_user_api_key.plaintext_key}",
+        )
+
+        assert response.status_code == 403
+
+
 class TestGetSpecificMedia(SimpleTestCase):
     domain = 'test-specific-media'
 
