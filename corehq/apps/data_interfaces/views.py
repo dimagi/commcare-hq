@@ -3,6 +3,7 @@ import uuid
 
 from django.contrib import messages
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import (
     Http404,
@@ -59,6 +60,7 @@ from corehq.apps.data_interfaces.forms import (
 from corehq.apps.data_interfaces.bulk_form_actions import create_bulk_form_job
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
+    BulkAsyncJob,
     CaseDeduplicationActionDefinition,
     CaseDuplicateNew,
     DomainCaseRuleRun,
@@ -557,18 +559,55 @@ class XFormManagementStatusView(DataInterfaceSection):
 def xform_management_job_poll(request, domain, download_id,
                               template="data_interfaces/partials/xform_management_status.html"):
     mode = FormManagementMode(request.GET.get('mode'), validate=True)
+    if download_id.startswith('dl-'):
+        # Legacy soil download_id: a bulk form action queued on the old
+        # bulk_form_management_async path before the BulkAsyncJob cutover, or a
+        # browser still polling one across the deploy. Serve live soil progress
+        # until these drain. Removed with the soil path in the rip-out PR.
+        return _legacy_xform_management_job_poll(request, domain, download_id, mode)
+    try:
+        job = BulkAsyncJob.objects.get(id=download_id, domain=domain)
+    except (BulkAsyncJob.DoesNotExist, ValueError, ValidationError):
+        raise Http404()
+    context = _xform_management_job_context(job, mode)
+    return render(request, template, context)
+
+
+def _legacy_xform_management_job_poll(request, domain, download_id, mode):
+    """Poll response for a pre-cutover soil download_id. Delete with the soil path."""
     try:
         context = get_download_context(download_id)
     except TaskFailedError:
         return HttpResponseServerError()
-
     context.update({
         'on_complete_short': mode.complete_short,
         'mode': mode,
         'form_management_url': reverse(EditDataInterfaceDispatcher.name(),
-                                       args=[domain, BulkFormManagementInterface.slug])
+                                       args=[domain, BulkFormManagementInterface.slug]),
     })
-    return render(request, template, context)
+    return render(request, 'data_interfaces/partials/xform_management_status_legacy.html', context)
+
+
+def _job_percent(job):
+    if not job.requested_count:
+        return 0
+    return int(100 * job.processed_count / job.requested_count)
+
+
+def _xform_management_job_context(job, mode):
+    """Build the soil-compatible poll context for ``job``."""
+    return {
+        'download_id': job.id.hex,
+        'is_done': job.is_done,
+        'has_failed': job.status == BulkAsyncJob.Status.FAILED,
+        'succeeded_count': job.succeeded_count,
+        'skipped': job.get_skipped() if job.is_done and job.skipped_ids_blob_key else {},
+        'progress': {'percent': _job_percent(job)},
+        'on_complete_short': mode.complete_short,
+        'mode': mode,
+        'form_management_url': reverse(EditDataInterfaceDispatcher.name(),
+                                       args=[job.domain, BulkFormManagementInterface.slug]),
+    }
 
 
 class BulkCaseActionSatusView(DataInterfaceSection):
