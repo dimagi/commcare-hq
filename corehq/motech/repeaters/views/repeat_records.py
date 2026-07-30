@@ -29,7 +29,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.users.decorators import require_can_edit_web_users
-from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.motech.dhis2.parse_response import (
     get_diagnosis_message,
     get_errors,
@@ -255,16 +255,24 @@ class RepeatRecordView(View):
 
         return record
 
+    @staticmethod
+    def _payload_not_found_response():
+        return JsonResponse(
+            {'error': _('The payload could not be found.')},
+            status=404,
+        )
+
     def get(self, request, domain):
         record_id = request.GET.get('record_id')
         record = self.get_record_or_404(domain, record_id)
         content_type = record.repeater.generator.content_type
         try:
-            payload = record.get_payload()
-        except XFormNotFound:
-            return JsonResponse({
-                'error': 'Odd, could not find payload for: {}'.format(record.payload_id)
-            }, status=404)
+            payload_doc = record.repeater.payload_doc(record)
+        except (CaseNotFound, XFormNotFound):
+            return self._payload_not_found_response()
+        if getattr(payload_doc, 'deleted_on', None) is not None:
+            return self._payload_not_found_response()
+        payload = record.repeater.generator.get_payload(record, payload_doc)
 
         if content_type == 'text/xml':
             payload = indent_xml(payload)
