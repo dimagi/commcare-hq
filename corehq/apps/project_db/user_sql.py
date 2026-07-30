@@ -93,6 +93,13 @@ def _convert_predicate(node, table):
     if isinstance(node, exp.Not):
         inner, = _unpack(node, 'this')
         return not_(_convert_predicate(inner, table))
+    if isinstance(node, exp.Is):
+        expression, operand, negate = _unpack(node, 'this', 'expression', 'negate')
+        if not isinstance(operand, (exp.Null, exp.Boolean)):
+            raise UnsupportedSQL("IS only supports NULL, TRUE, and FALSE")
+        target, = _unpack(operand, 'this')
+        value = _convert_value(expression, table)
+        return value.isnot(target) if negate else value.is_(target)
     if isinstance(node, exp.In):
         value, values = _unpack(node, 'this', 'expressions')
         if not values:

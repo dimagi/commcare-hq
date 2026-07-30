@@ -56,6 +56,18 @@ TABLES = {'client': CLIENT}
      select([CLIENT]).where(not_(CLIENT.c.name.in_([literal('x')])))),
     ('SELECT * FROM client WHERE name = TRUE',
      select([CLIENT]).where(CLIENT.c.name == literal(True))),
+    ('SELECT * FROM client WHERE name IS NULL',
+     select([CLIENT]).where(CLIENT.c.name.is_(None))),
+    ('SELECT * FROM client WHERE name IS NOT NULL',
+     select([CLIENT]).where(CLIENT.c.name.isnot(None))),
+    ('SELECT * FROM client WHERE NOT name IS NULL',
+     select([CLIENT]).where(not_(CLIENT.c.name.is_(None)))),
+    ('SELECT * FROM client WHERE name IS TRUE',
+     select([CLIENT]).where(CLIENT.c.name.is_(True))),
+    ('SELECT * FROM client WHERE name IS FALSE',
+     select([CLIENT]).where(CLIENT.c.name.is_(False))),
+    ('SELECT * FROM client WHERE name IS NOT TRUE',
+     select([CLIENT]).where(not_(CLIENT.c.name.is_(True)))),
 ])
 def test_valid_queries(sql, expected):
     result = translate(sql, TABLES)
@@ -82,8 +94,8 @@ def test_valid_queries(sql, expected):
     'SELECT missing FROM client',         # unknown column
     'SELECT client.name FROM client',     # table-qualified column
     'SELECT bogus.name FROM client',      # qualified by some other table
-    'SELECT * FROM client WHERE name IS NULL',    # IS NULL
-    'SELECT * FROM client WHERE name IS TRUE',    # IS
+    "SELECT * FROM client WHERE name IS 'x'",       # IS with an unsupported operand
+    'SELECT * FROM client WHERE name IS DISTINCT FROM NULL',  # IS DISTINCT FROM
     'SELECT * FROM client WHERE case_id = -1',    # negative number
     "SELECT * FROM client WHERE name LIKE 'x%'",  # LIKE
     'SELECT * FROM client WHERE name IN ()',      # IN with no values
