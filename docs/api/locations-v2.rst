@@ -105,7 +105,7 @@ Location Details
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[domain]/api/location/v2/[location_id]
+    GET https://www.commcarehq.org/a/[domain]/api/location/v2/[location_id]/
 
 
 Create Location (Individual)
@@ -170,7 +170,7 @@ Allows editing an individual location.
 
 .. code-block:: text
 
-    PUT https://www.commcarehq.org/a/[domain]/api/location/v2/[location_id]
+    PUT https://www.commcarehq.org/a/[domain]/api/location/v2/[location_id]/
 
 **Editable Fields**
 
