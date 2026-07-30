@@ -1,11 +1,13 @@
 from unittest.mock import patch
 
+from django.template.loader import render_to_string
 from django.test import RequestFactory, TestCase, override_settings
 
 from django_prbac.models import Grant, Role
 
 from corehq import privileges
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_interfaces.interfaces import FormManagementMode
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     BulkAsyncJob,
@@ -16,6 +18,9 @@ from corehq.apps.data_interfaces.views import (
     AutomaticUpdateRuleListView,
     DeduplicationRuleCreateView,
     XFormManagementView,
+    _job_percent,
+    _legacy_xform_management_job_poll,
+    _xform_management_job_context,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -146,6 +151,87 @@ class XFormManagementPostTests(TestCase):
 
         assert response.status_code == 400
         assert not BulkAsyncJob.objects.filter(domain=self.domain).exists()
+
+
+class XFormManagementJobPollTests(TestCase):
+
+    TEMPLATE = 'data_interfaces/partials/xform_management_status_new.html'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'xform-poll-test'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.blob_db = TemporaryFilesystemBlobDB()
+        cls.addClassCleanup(cls.blob_db.close)
+
+    def _job(self, **kw):
+        defaults = dict(domain=self.domain, model=XFormInstance,
+                        action=BulkAsyncJob.Action.ARCHIVE, requested_by='u')
+        defaults.update(kw)
+        return BulkAsyncJob(**defaults)
+
+    def test_job_percent_zero_when_nothing_requested(self):
+        assert _job_percent(self._job(requested_count=0)) == 0
+
+    def test_job_percent_is_correct(self):
+        assert _job_percent(self._job(requested_count=4, processed_count=1)) == 25
+
+    def test_context_running(self):
+        job = self._job(status=BulkAsyncJob.Status.RUNNING,
+                        requested_count=4, processed_count=1)
+        ctx = _xform_management_job_context(job, FormManagementMode('archive'))
+        assert ctx['is_done'] is False
+        assert ctx['has_failed'] is False
+        assert ctx['progress']['percent'] == 25
+        assert ctx['download_id'] == job.id.hex
+
+    def test_context_complete_reads_skipped(self):
+        job = self._job(status=BulkAsyncJob.Status.COMPLETE, requested_count=2,
+                        processed_count=2, succeeded_count=1)
+        job.set_skipped({'not_found': ['a']})
+        ctx = _xform_management_job_context(job, FormManagementMode('archive'))
+        assert ctx['is_done'] is True
+        assert ctx['has_failed'] is False
+        assert ctx['succeeded_count'] == 1
+        assert ctx['skipped'] == {'not_found': ['a']}
+
+    def test_context_failed_has_no_skipped(self):
+        job = self._job(status=BulkAsyncJob.Status.FAILED, requested_count=2)
+        ctx = _xform_management_job_context(job, FormManagementMode('archive'))
+        assert ctx['is_done'] is True
+        assert ctx['has_failed'] is True
+        assert ctx['skipped'] == {}
+
+    def test_template_running_shows_percent_not_ready(self):
+        job = self._job(status=BulkAsyncJob.Status.RUNNING,
+                        requested_count=4, processed_count=1)
+        ctx = _xform_management_job_context(job, FormManagementMode('archive'))
+        html = render_to_string(self.TEMPLATE, ctx)
+        assert 'ready_' not in html
+        assert '25%' in html
+
+    def test_template_complete_shows_ready_sentinel_and_counts(self):
+        job = self._job(status=BulkAsyncJob.Status.COMPLETE, requested_count=2,
+                        processed_count=2, succeeded_count=2)
+        job.set_skipped({})
+        ctx = _xform_management_job_context(job, FormManagementMode('archive'))
+        html = render_to_string(self.TEMPLATE, ctx)
+        assert f'ready_{job.id.hex}' in html
+        assert '2 forms processed successfully' in html
+
+    def test_legacy_poll_serves_soil_context(self):
+        request = RequestFactory().get('/x', {'mode': 'archive'})
+        soil_context = {'download_id': 'dl-abc123', 'is_ready': False}
+        with patch(
+            'corehq.apps.data_interfaces.views.get_download_context',
+            return_value=soil_context,
+        ) as mock_ctx:
+            response = _legacy_xform_management_job_poll(
+                request, self.domain, 'dl-abc123', FormManagementMode('archive'))
+        mock_ctx.assert_called_once_with('dl-abc123')
+        assert response.status_code == 200
 
 
 class DeduplicationRuleCreateViewTests(TestCase):
