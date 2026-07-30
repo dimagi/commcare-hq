@@ -220,18 +220,15 @@ class TableauConnectedApp(models.Model):
         ciphertext = b64_aes_cbc_encrypt(plaintext)
         self.encrypted_secret_value = f'${ALGO_AES_CBC}${ciphertext}'
 
-    def create_jwt(self):
-        connected_app_permissions = ["tableau:users:read", "tableau:users:create", "tableau:users:update",
-                                     "tableau:users:delete", "tableau:groups:read", "tableau:groups:create",
-                                     "tableau:groups:update", "tableau:groups:delete"]
+    def create_jwt(self, username, scopes):
         token = jwt.encode(
             {
                 "iss": self.app_client_id,
                 "exp": datetime.utcnow() + timedelta(minutes=5),
                 "jti": str(uuid.uuid4()),
                 "aud": "tableau",
-                "sub": "HQ_integration_admin",
-                "scp": connected_app_permissions
+                "sub": username,
+                "scp": scopes
             },
             self.plaintext_secret_value,
             algorithm="HS256",
@@ -241,6 +238,10 @@ class TableauConnectedApp(models.Model):
             }
         )
         return token
+
+    def create_embedding_jwt(self, username):
+        # include tableau:views:embed_authoring to allow web authoring
+        return self.create_jwt(username, ['tableau:views:embed'])
 
     @classmethod
     def get_server(cls, domain):
@@ -339,13 +340,16 @@ class TableauAPISession(object):
             )
 
     def sign_in(self):
+        scopes = ["tableau:users:read", "tableau:users:create", "tableau:users:update",
+                  "tableau:users:delete", "tableau:groups:read", "tableau:groups:create",
+                  "tableau:groups:update", "tableau:groups:delete"]
         response_body = self._make_request(
             self.POST,
             'Sign In',
             self.base_url + '/auth/signin',
             {
                 "credentials": {
-                    "jwt": self.tableau_connected_app.create_jwt(),
+                    "jwt": self.tableau_connected_app.create_jwt("HQ_integration_admin", scopes),
                     "site": {
                         "contentUrl": self.tableau_connected_app.server.target_site
                     }
