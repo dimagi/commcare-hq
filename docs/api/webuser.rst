@@ -341,13 +341,13 @@ Endpoint Specifications
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/web-user/v1/[id]/enable
+    https://www.commcarehq.org/a/[domain]/api/web-user/v1/[id]/activate/
 
 and
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/web-user/v1/[id]/disable
+    https://www.commcarehq.org/a/[domain]/api/web-user/v1/[id]/deactivate/
 
 **Method**
 
