@@ -9,6 +9,7 @@ TABLES = {'client': CLIENT}
 
 @pytest.mark.parametrize('sql, expected', [
     ('SELECT * FROM client', select([CLIENT])),
+    ('SELECT name, case_id FROM client', select([CLIENT.c.name, CLIENT.c.case_id])),
 ])
 def test_valid_queries(sql, expected):
     result = translate(sql, TABLES)
@@ -23,7 +24,6 @@ def test_valid_queries(sql, expected):
     'SELECT * FROM client WHERE $$',  # untokenizable
 
     # Not (yet) supported
-    'SELECT name FROM client',            # non-star projection
     'SELECT case_id AS id FROM client',   # column alias
     'SELECT * FROM client WHERE 1=1',     # extra clause
     'SELECT * FROM client LIMIT 5',       # extra clause
@@ -34,6 +34,9 @@ def test_valid_queries(sql, expected):
     'SELECT * FROM client; SELECT * FROM client',  # multiple statements
     'SELECT * FROM unknown',              # unknown table
     'SELECT * FROM otherdomain.client',   # schema-qualified table
+    'SELECT missing FROM client',         # unknown column
+    'SELECT client.name FROM client',     # table-qualified column
+    'SELECT bogus.name FROM client',      # qualified by some other table
 ])
 def test_rejects_unsupported(sql):
     with pytest.raises(UnsupportedSQL):
