@@ -1991,9 +1991,9 @@ class BulkAsyncJob(models.Model):
     def is_done(self):
         return self.status in (self.Status.COMPLETE, self.Status.FAILED)
 
-    def set_requested_ids(self, form_ids):
+    def set_requested_ids(self, form_ids, db=None):
         ids = sorted(set(form_ids))
-        self.requested_ids_blob_key = self._put_blob(ids)
+        self.requested_ids_blob_key = self._put_blob(ids, db=db)
         return ids
 
     def get_requested_ids(self):
@@ -2006,8 +2006,8 @@ class BulkAsyncJob(models.Model):
     def get_skipped(self):
         return self._get_blob(self.skipped_ids_blob_key)
 
-    def _put_blob(self, payload):
-        db = get_blob_db()
+    def _put_blob(self, payload, db=None):
+        db = db or get_blob_db()
         content = BytesIO(json.dumps(payload).encode("utf-8"))
         meta = db.put(
             content,

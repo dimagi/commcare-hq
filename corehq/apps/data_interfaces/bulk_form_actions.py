@@ -13,6 +13,8 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.apps.data_interfaces.models import BulkAsyncJob
 from corehq.apps.users.models import CouchUser
+from corehq.blobs import get_blob_db
+from corehq.blobs.atomic import AtomicBlobs
 from corehq.form_processor.models import XFormInstance
 
 log = logging.getLogger(__name__)
@@ -27,6 +29,21 @@ class FormActionResult:
     form_id: str
     status: str  # SUCCEEDED | SKIPPED
     reason: Optional[str] = None  # not_found | unexpected_error
+
+
+def create_bulk_form_job(domain, action, requested_by, form_ids):
+    """Use ``AtomicBlobs`` to prevent an orphaned requested ids blob"""
+    with AtomicBlobs(get_blob_db()) as db:
+        job = BulkAsyncJob(
+            domain=domain,
+            model=XFormInstance,
+            action=action,
+            requested_by=requested_by,
+        )
+        stored_ids = job.set_requested_ids(form_ids, db=db)
+        job.requested_count = len(stored_ids)
+        job.save()
+    return job
 
 
 def build_form_action(job, user_id):
