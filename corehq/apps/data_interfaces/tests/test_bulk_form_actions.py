@@ -11,6 +11,7 @@ from corehq.apps.data_interfaces.bulk_form_actions import (
     _apply_form_action,
     _save_interval,
     build_form_action,
+    mark_job_failed,
     run_bulk_form_action,
 )
 from corehq.apps.data_interfaces.models import BulkAsyncJob
@@ -105,6 +106,33 @@ class TestRunBulkFormAction(TestCase):
         run_bulk_form_action(job)
 
         assert seen == [0, 1, 2, 3, 3]
+
+
+class TestMarkJobFailed(TestCase):
+
+    def _job(self, status):
+        job = BulkAsyncJob(
+            domain=DOMAIN, model=XFormInstance,
+            action=BulkAsyncJob.Action.ARCHIVE, requested_by='u', status=status,
+        )
+        job.save()
+        return job
+
+    def test_marks_pending_job_failed(self):
+        job = self._job(BulkAsyncJob.Status.PENDING)
+        mark_job_failed(job.id)
+        job.refresh_from_db()
+        assert job.status == BulkAsyncJob.Status.FAILED
+        assert job.completed_at is not None
+
+    def test_does_not_touch_completed_job(self):
+        job = self._job(BulkAsyncJob.Status.COMPLETE)
+        mark_job_failed(job.id)
+        job.refresh_from_db()
+        assert job.status == BulkAsyncJob.Status.COMPLETE
+
+    def test_missing_job_is_noop(self):
+        mark_job_failed('00000000-0000-0000-0000-000000000000')  # no error
 
 
 @pytest.mark.parametrize("requested_count, expected", [
