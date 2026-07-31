@@ -40,34 +40,65 @@ def _unpack(node, *args):
 
 
 def _convert_select(node, tables):
-    expressions, from_, where = _unpack(node, 'expressions', 'from_', 'where')
+    expressions, from_, joins, where = _unpack(node, 'expressions', 'from_', 'joins', 'where')
     if from_ is None:
         raise UnsupportedSQL("a FROM clause is required")
-    table = _convert_table_ref(from_.this, tables)
-    query = select(_convert_projection(expressions, table))
+    selectable = _convert_table_ref(from_.this, tables)
+    # Tables available to resolve column references against, by name
+    sources = {selectable.name: selectable}
+    for join in joins or []:
+        selectable = _convert_join(join, selectable, sources, tables)
+    query = select(_convert_projection(expressions, sources)).select_from(selectable)
     if where is not None:
         predicate, = _unpack(where, 'this')
-        query = query.where(_convert_predicate(predicate, table))
+        query = query.where(_convert_predicate(predicate, sources))
     return query
 
 
-def _convert_projection(expressions, table):
-    """Resolve a SELECT's projection list against ``table``"""
+def _convert_join(node, selectable, sources, tables):
+    """Join another table onto ``selectable``, adding it to ``sources``"""
+    table_ref, on, side = _unpack(node, 'this', 'on', 'side')
+
+    table = _convert_table_ref(table_ref, tables)
+    if table.name in sources:
+        raise UnsupportedSQL(f"table joined more than once: {table.name}")
+    sources[table.name] = table
+    predicate = _convert_predicate(on, sources)
+
+    if not side:
+        return selectable.join(table, predicate)
+    if side == 'LEFT':
+        return selectable.outerjoin(table, predicate)
+    raise UnsupportedSQL(f"{side} JOIN not supported")
+
+
+def _convert_projection(expressions, sources):
+    """Resolve a SELECT's projection list against ``sources``"""
     if not expressions:
         raise UnsupportedSQL("a projection is required")
     if all(e == exp.Star() for e in expressions):
-        return [table]  # SELECT * selects the whole table
-    return [_convert_column(e, table) for e in expressions]
+        # SELECT * selects every column of every table in the query
+        return [col for table in sources.values() for col in table.c]
+    return [_convert_column(e, sources) for e in expressions]
 
 
-def _convert_column(node, table):
+def _convert_column(node, sources):
     if not isinstance(node, exp.Column):
         raise UnsupportedSQL(f"unsupported expression: {type(node).__name__}")
-    identifier, = _unpack(node, 'this')
-    try:
-        return table.c[identifier.name]
-    except KeyError:
-        raise UnsupportedSQL(f"unknown column: {identifier.name}")
+    identifier, qualifier = _unpack(node, 'this', 'table')
+    name = identifier.name
+    if qualifier is None:
+        candidates = [table for table in sources.values() if name in table.c]
+    elif qualifier.name in sources:
+        table = sources[qualifier.name]
+        candidates = [table] if name in table.c else []
+    else:
+        raise UnsupportedSQL(f"unknown table: {qualifier.name}")
+    if not candidates:
+        raise UnsupportedSQL(f"unknown column: {name}")
+    if len(candidates) > 1:
+        raise UnsupportedSQL(f"ambiguous column: {name}")
+    return candidates[0].c[name]
 
 
 BOOLEAN_OPS = {

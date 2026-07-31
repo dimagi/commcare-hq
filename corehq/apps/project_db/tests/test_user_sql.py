@@ -6,7 +6,13 @@ from sqlalchemy import and_, column, literal, not_, or_, select, table
 from corehq.apps.project_db.user_sql import UnsupportedSQL, translate
 
 CLIENT = table('client', column('case_id'), column('name'))
-TABLES = {'client': CLIENT}
+VISIT = table('visit', column('visit_id'), column('parent_id'), column('name'))
+FORM = table('form', column('form_id'), column('visit_id'))
+TABLES = {'client': CLIENT, 'visit': VISIT, 'form': FORM}
+
+ON = CLIENT.c.case_id == VISIT.c.parent_id
+CLIENT_VISIT = CLIENT.join(VISIT, ON)
+JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
 
 
 @pytest.mark.parametrize('sql, expected', [
@@ -28,6 +34,32 @@ TABLES = {'client': CLIENT}
     # Comparing two literals is pointless but harmless
     ('SELECT * FROM client WHERE 1 = 1',
      select([CLIENT]).where(literal(1) == literal(1))),
+
+    # Columns may be qualified by their table
+    ('SELECT client.name FROM client', select([CLIENT.c.name])),
+    ("SELECT * FROM client WHERE client.name = 'x'",
+     select([CLIENT]).where(CLIENT.c.name == literal('x'))),
+
+    # Joins
+    (f'SELECT * {JOIN_SQL}', select([CLIENT_VISIT])),
+    (f'SELECT client.name, visit.visit_id {JOIN_SQL}',
+     select([CLIENT.c.name, VISIT.c.visit_id]).select_from(CLIENT_VISIT)),
+    # An unqualified column is fine when only one table has it
+    (f'SELECT parent_id {JOIN_SQL}',
+     select([VISIT.c.parent_id]).select_from(CLIENT_VISIT)),
+    (f"SELECT * {JOIN_SQL} WHERE visit.name = 'x'",
+     select([CLIENT_VISIT]).where(VISIT.c.name == literal('x'))),
+    (f'SELECT client.name, form.form_id {JOIN_SQL} '
+     'JOIN form ON visit.visit_id = form.visit_id',
+     select([CLIENT.c.name, FORM.c.form_id]).select_from(
+         CLIENT_VISIT.join(FORM, VISIT.c.visit_id == FORM.c.visit_id))),
+    ("SELECT * FROM client JOIN visit "
+     "ON client.case_id = visit.parent_id AND visit.name = 'x'",
+     select([CLIENT.join(VISIT, and_(ON, VISIT.c.name == literal('x')))])),
+    ('SELECT * FROM client LEFT JOIN visit ON client.case_id = visit.parent_id',
+     select([CLIENT.join(VISIT, ON, isouter=True)])),
+
+    # WHERE clauses
     ("SELECT * FROM client WHERE name = 'x' AND case_id = 'c1'",
      select([CLIENT]).where(and_(CLIENT.c.name == literal('x'),
                                  CLIENT.c.case_id == literal('c1')))),
@@ -92,7 +124,7 @@ def test_valid_queries(sql, expected):
     'SELECT * FROM unknown',              # unknown table
     'SELECT * FROM otherdomain.client',   # schema-qualified table
     'SELECT missing FROM client',         # unknown column
-    'SELECT client.name FROM client',     # table-qualified column
+    'SELECT visit.name FROM client',      # qualified by a table not in the FROM
     'SELECT bogus.name FROM client',      # qualified by some other table
     "SELECT * FROM client WHERE name IS 'x'",       # IS with an unsupported operand
     'SELECT * FROM client WHERE name IS DISTINCT FROM NULL',  # IS DISTINCT FROM
@@ -103,8 +135,29 @@ def test_valid_queries(sql, expected):
     'SELECT * FROM client WHERE name IN (missing)',  # unknown column in the values
     'SELECT * FROM client WHERE name',            # not a comparison
     "SELECT * FROM client WHERE missing = 'x'",   # unknown column
-    "SELECT * FROM client WHERE client.name = 'x'",  # qualified column
     "SELECT * FROM client WHERE LOWER(name) = 'x'",  # function call
+
+    # Only `JOIN` and `LEFT JOIN` are supported for now
+    'SELECT * FROM client INNER JOIN visit ON client.case_id = visit.parent_id',
+    'SELECT * FROM client LEFT OUTER JOIN visit ON client.case_id = visit.parent_id',
+    'SELECT * FROM client RIGHT JOIN visit ON client.case_id = visit.parent_id',
+    'SELECT * FROM client RIGHT OUTER JOIN visit ON client.case_id = visit.parent_id',
+    'SELECT * FROM client FULL JOIN visit ON client.case_id = visit.parent_id',
+    'SELECT * FROM client FULL OUTER JOIN visit ON client.case_id = visit.parent_id',
+    # Not valid SQL in any case: OUTER needs a side, INNER must not have one
+    'SELECT * FROM client OUTER JOIN visit ON client.case_id = visit.parent_id',
+    'SELECT * FROM client LEFT INNER JOIN visit ON client.case_id = visit.parent_id',
+    'SELECT * FROM client CROSS JOIN visit',
+    'SELECT * FROM client NATURAL JOIN visit',
+    'SELECT * FROM client JOIN visit USING (case_id)',  # USING instead of ON
+    'SELECT * FROM client JOIN visit',                  # no ON clause
+    'SELECT * FROM client, visit',                      # comma join has no ON
+    'SELECT * FROM client AS c JOIN visit ON c.case_id = visit.parent_id',  # alias
+    'SELECT * FROM client JOIN client ON client.case_id = client.case_id',  # self join
+    f'SELECT name {JOIN_SQL}',              # ambiguous, both tables have `name`
+    f'SELECT unknown.name {JOIN_SQL}',      # unknown qualifier
+    f'SELECT client.visit_id {JOIN_SQL}',   # column belongs to the other table
+    f"SELECT * {JOIN_SQL} WHERE name = 'x'",  # ambiguous column in WHERE
 ])
 def test_rejects_unsupported(sql):
     with pytest.raises(UnsupportedSQL):
