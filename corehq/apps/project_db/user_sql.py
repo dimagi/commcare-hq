@@ -116,40 +116,40 @@ COMPARISONS = {
 }
 
 
-def _convert_predicate(node, table):
+def _convert_predicate(node, sources):
     """Convert a boolean-valued SQL expression to a ``ColumnElement``"""
     if isinstance(node, exp.Paren):
         inner, = _unpack(node, 'this')
-        return _convert_predicate(inner, table)
+        return _convert_predicate(inner, sources)
     if isinstance(node, exp.Not):
         inner, = _unpack(node, 'this')
-        return not_(_convert_predicate(inner, table))
+        return not_(_convert_predicate(inner, sources))
     if isinstance(node, exp.Is):
         expression, operand, negate = _unpack(node, 'this', 'expression', 'negate')
         if not isinstance(operand, (exp.Null, exp.Boolean)):
             raise UnsupportedSQL("IS only supports NULL, TRUE, and FALSE")
         target, = _unpack(operand, 'this')
-        value = _convert_value(expression, table)
+        value = _convert_value(expression, sources)
         return value.isnot(target) if negate else value.is_(target)
     if isinstance(node, exp.In):
         value, values = _unpack(node, 'this', 'expressions')
         if not values:
             raise UnsupportedSQL("IN requires at least one value")
-        return _convert_value(value, table).in_(
-            [_convert_value(v, table) for v in values])
+        return _convert_value(value, sources).in_(
+            [_convert_value(v, sources) for v in values])
     if combine := BOOLEAN_OPS.get(type(node)):
         left, right = _unpack(node, 'this', 'expression')
-        return combine(_convert_predicate(left, table),
-                       _convert_predicate(right, table))
+        return combine(_convert_predicate(left, sources),
+                       _convert_predicate(right, sources))
     if compare := COMPARISONS.get(type(node)):
         left, right = _unpack(node, 'this', 'expression')
-        return compare(_convert_value(left, table),
-                       _convert_value(right, table))
+        return compare(_convert_value(left, sources),
+                       _convert_value(right, sources))
     else:
         raise UnsupportedSQL(f"unsupported predicate: {type(node).__name__}")
 
 
-def _convert_value(node, table):
+def _convert_value(node, sources):
     """Convert a SQL value expression to a ``ColumnElement``"""
     if isinstance(node, exp.Literal):
         _unpack(node, 'this', 'is_string')
@@ -157,7 +157,7 @@ def _convert_value(node, table):
     if isinstance(node, exp.Boolean):
         value, = _unpack(node, 'this')
         return literal(bool(value))
-    return _convert_column(node, table)
+    return _convert_column(node, sources)
 
 
 def _convert_table_ref(node, tables):
