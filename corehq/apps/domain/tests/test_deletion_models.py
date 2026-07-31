@@ -48,6 +48,7 @@ IGNORE_MODELS = {
     'app_manager.PublicFormSession',  # handled by cascading delete of PublicWebform
     'auth.Group',
     'auth.Permission',
+    'builds.CommCareMobileBuild',
     'blobs.BlobMeta',
     'blobs.BlobMigrationState',
     'blobs.DeletedBlobMeta',
