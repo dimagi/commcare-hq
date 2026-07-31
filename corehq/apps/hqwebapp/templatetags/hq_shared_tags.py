@@ -427,8 +427,7 @@ def prelogin_url(urlname):
     Fetches the correct dimagi.com url for a "prelogin" view.
     """
     urlname_to_url = {
-        'go_to_pricing': 'https://commcare.dimagi.com/pricing/',
-        'public_pricing': 'https://commcare.dimagi.com/pricing/',  # noqa: E501
+        'price_page': 'https://commcare.dimagi.com/pricing/',
 
     }
     return urlname_to_url.get(urlname, 'https://dimagi.com/commcare/')
