@@ -53,6 +53,7 @@ FEATURE_TYPE_TO_NAME = {
     FeatureType.USER: _("Mobile Workers"),
     FeatureType.WEB_USER: _("Web Users"),
     FeatureType.FORM_SUBMITTING_MOBILE_WORKER: _("Form-Submitting Mobile Workers"),
+    FeatureType.DOMAIN: _("Project Spaces"),
 }
 
 
