@@ -12,7 +12,7 @@ integration.
 
     This feature is only available to CommCare users with a
     **Standard Plan or above**. For more details, please see the
-    `CommCare Pricing Overview <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview>`_
+    `CommCare Pricing Overview <https://commcare.dimagi.com/pricing/>`_
 
 
 Table of contents
