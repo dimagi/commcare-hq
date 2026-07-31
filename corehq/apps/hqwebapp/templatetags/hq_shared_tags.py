@@ -428,6 +428,7 @@ def prelogin_url(urlname):
     """
     urlname_to_url = {
         'price_page': 'https://commcare.dimagi.com/pricing/',
+        'pricing_plans': 'https://commcare.dimagi.com/pricing/#plans',
 
     }
     return urlname_to_url.get(urlname, 'https://dimagi.com/commcare/')
