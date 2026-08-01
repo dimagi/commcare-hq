@@ -197,7 +197,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('Remote Service')),
             DataTablesColumn(_('Retry Date')),
             DataTablesColumn(_('Delivery Attempts')),
-            DataTablesColumn(_('View Responses')),
+            DataTablesColumn(_('Preview Payloads')),
         ]
         if toggles.SUPPORT.enabled_for_request(self.request):
             columns.insert(2, DataTablesColumn(_('Payload ID')))
