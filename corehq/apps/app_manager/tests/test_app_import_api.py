@@ -14,6 +14,8 @@ from corehq.apps.app_manager.views.app_import_api import (
     _handle_import_app,
     _handle_multimedia_status,
     _handle_upload_multimedia,
+    import_app_api,
+    upload_multimedia_api,
 )
 
 DOMAIN = 'test-domain'
@@ -62,6 +64,14 @@ def _json(response):
 
 def _app_json():
     return json.dumps({'doc_type': 'Application'}).encode()
+
+
+@pytest.mark.parametrize('view', [import_app_api, upload_multimedia_api])
+def test_post_api_views_are_csrf_exempt(view):
+    # API clients authenticate with API keys and can't supply a CSRF
+    # token; csrf_exempt must be the outermost decorator to survive
+    # the rest of the decorator stack.
+    assert getattr(view, 'csrf_exempt', False)
 
 
 # --- import_app_api ---

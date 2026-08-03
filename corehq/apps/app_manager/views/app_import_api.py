@@ -3,6 +3,7 @@ import zipfile
 
 from django.contrib.messages import get_messages
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -17,11 +18,14 @@ from corehq.apps.domain.decorators import api_auth
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
 from corehq.apps.hqmedia.utils import save_multimedia_upload
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import json_error
 
 
+@waf_allow('XSS_BODY')
+@csrf_exempt
 @json_error
 @require_permission(HqPermissions.edit_apps, login_decorator=api_auth())
 @api_throttle
@@ -57,6 +61,8 @@ def _handle_import_app(request, domain):
     return JsonResponse(response, status=201)
 
 
+@waf_allow('XSS_BODY')
+@csrf_exempt
 @json_error
 @require_permission(HqPermissions.edit_apps, login_decorator=api_auth())
 @api_throttle
