@@ -58,7 +58,6 @@ from corehq.apps.accounting.models import (
     FormSubmittingMobileWorkerHistory,
     FundingSource,
     Invoice,
-    InvoicingPlan,
     PaymentType,
     PreOrPostPay,
     ProBonoStatus,
@@ -129,10 +128,6 @@ class BillingAccountBasicForm(forms.Form):
         required=False,
         help_text='ex: dimagi.com, commcarehq.org',
     )
-    invoicing_plan = forms.ChoiceField(
-        label="Invoicing Plan",
-        required=False
-    )
     active_accounts = forms.IntegerField(
         label=gettext_lazy("Transfer Subscriptions To"),
         help_text=gettext_lazy(
@@ -193,7 +188,6 @@ class BillingAccountBasicForm(forms.Form):
                 'is_sms_billable_report_visible': account.is_sms_billable_report_visible,
                 'enterprise_admin_emails': account.enterprise_admin_emails,
                 'enterprise_restricted_signup_domains': ','.join(account.enterprise_restricted_signup_domains),
-                'invoicing_plan': account.invoicing_plan,
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
                 'last_payment_method': account.last_payment_method,
@@ -208,12 +202,10 @@ class BillingAccountBasicForm(forms.Form):
                 'entry_point': EntryPoint.CONTRACTED,
                 'last_payment_method': PaymentType.NONE,
                 'pre_or_post_pay': PreOrPostPay.POSTPAY,
-                'invoicing_plan': InvoicingPlan.MONTHLY
             }
         super(BillingAccountBasicForm, self).__init__(*args, **kwargs)
         self.fields['currency'].choices =\
             [(cur.code, cur.code) for cur in Currency.objects.order_by('code')]
-        self.fields['invoicing_plan'].choices = InvoicingPlan.CHOICES
         self.helper = FormHelper()
         self.helper.form_id = "account-form"
         self.helper.form_class = "form-horizontal"
@@ -238,7 +230,6 @@ class BillingAccountBasicForm(forms.Form):
             ))
             additional_fields.append(
                 crispy.Div(
-                    'invoicing_plan',
                     crispy.Field(
                         'enterprise_admin_emails',
                         css_class='input-xxlarge accounting-email-select2',
@@ -429,7 +420,6 @@ class BillingAccountBasicForm(forms.Form):
         account.is_sms_billable_report_visible = self.cleaned_data['is_sms_billable_report_visible']
         account.enterprise_admin_emails = self.cleaned_data['enterprise_admin_emails']
         account.enterprise_restricted_signup_domains = self.cleaned_data['enterprise_restricted_signup_domains']
-        account.invoicing_plan = self.cleaned_data['invoicing_plan']
         account.block_hubspot_data_for_all_users = self.cleaned_data['block_hubspot_data_for_all_users']
         account.bill_web_user = self.cleaned_data['bill_web_user']
         account.require_auto_pay = self.cleaned_data['require_auto_pay']
@@ -2213,7 +2203,7 @@ class TriggerCustomerInvoiceForm(forms.Form):
         month = int(self.cleaned_data['month'])
         try:
             account = BillingAccount.objects.get(name=self.cleaned_data['customer_account'])
-            invoice_start, invoice_end = self.get_invoice_dates(account, year, month)
+            invoice_start, invoice_end = get_first_last_days(year, month)
             self.clean_previous_invoices(invoice_start, invoice_end, account)
             invoice_factory = CustomerAccountInvoiceFactory(
                 date_start=invoice_start,
@@ -2255,35 +2245,6 @@ class TriggerCustomerInvoiceForm(forms.Form):
         month = int(self.cleaned_data['month'])
         if (year, month) >= (today.year, today.month):
             raise ValidationError('Statement period must be in the past')
-
-    def get_invoice_dates(self, account, year, month):
-        if account.invoicing_plan == InvoicingPlan.YEARLY:
-            if month == 12:
-                # Set invoice start date to January 1st
-                return datetime.date(year, 1, 1), datetime.date(year, 12, 31)
-            else:
-                raise InvoiceError(
-                    "%s is set to be invoiced yearly, and you may not invoice in this month. "
-                    "You must select December in the year for which you are triggering an annual invoice."
-                    % self.cleaned_data['customer_account']
-                )
-        if account.invoicing_plan == InvoicingPlan.QUARTERLY:
-            if month == 3:
-                return datetime.date(year, 1, 1), datetime.date(year, 3, 31)    # Quarter 1
-            if month == 6:
-                return datetime.date(year, 4, 1), datetime.date(year, 6, 30)    # Quarter 2
-            if month == 9:
-                return datetime.date(year, 7, 1), datetime.date(year, 9, 30)    # Quarter 3
-            if month == 12:
-                return datetime.date(year, 10, 1), datetime.date(year, 12, 31)  # Quarter 4
-            else:
-                raise InvoiceError(
-                    "%s is set to be invoiced quarterly, and you may not invoice in this month. "
-                    "You must select the last month of a quarter to trigger a quarterly invoice."
-                    % self.cleaned_data['customer_account']
-                )
-        else:
-            return get_first_last_days(year, month)
 
 
 class TriggerBookkeeperEmailForm(forms.Form):
