@@ -1,7 +1,17 @@
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import and_, column, literal, not_, or_, select, table
+from sqlalchemy import (
+    and_,
+    column,
+    literal,
+    not_,
+    or_,
+    select,
+    table,
+    union,
+    union_all,
+)
 from sqlalchemy.dialects import postgresql
 
 from corehq.apps.project_db.user_sql import UnsupportedSQL, translate
@@ -61,6 +71,22 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
      select([CLIENT.join(VISIT, and_(ON, VISIT.c.name == literal('x')))])),
     ('SELECT * FROM client LEFT JOIN visit ON client.case_id = visit.parent_id',
      select([CLIENT.join(VISIT, ON, isouter=True)])),
+
+    # Unions
+    ('SELECT case_id FROM client UNION SELECT visit_id FROM visit',
+     union(select([CLIENT.c.case_id]), select([VISIT.c.visit_id]))),
+    ('SELECT case_id FROM client UNION ALL SELECT visit_id FROM visit',
+     union_all(select([CLIENT.c.case_id]), select([VISIT.c.visit_id]))),
+    # `client` and `form` both have two columns
+    ('SELECT * FROM client UNION SELECT * FROM form',
+     union(select([CLIENT]), select([FORM]))),
+    ('SELECT case_id FROM client UNION SELECT visit_id FROM visit '
+     'UNION SELECT form_id FROM form',
+     union(union(select([CLIENT.c.case_id]), select([VISIT.c.visit_id])),
+           select([FORM.c.form_id]))),
+    ("SELECT case_id FROM client WHERE name = 'x' UNION SELECT visit_id FROM visit",
+     union(select([CLIENT.c.case_id]).where(CLIENT.c.name == literal('x')),
+           select([VISIT.c.visit_id]))),
 
     # WHERE clauses
     ("SELECT * FROM client WHERE name = 'x' AND case_id = 'c1'",
@@ -129,6 +155,15 @@ def _compiled(query):
     'SELECT * FROM generate_series(1, 10)',  # table valued function not supported
     "INSERT INTO client VALUES ('x')",    # not a SELECT
     'SELECT * FROM client; SELECT * FROM client',  # multiple statements
+
+    # Only UNION combines queries, and both sides must select the same columns
+    'SELECT case_id FROM client INTERSECT SELECT visit_id FROM visit',
+    'SELECT case_id FROM client EXCEPT SELECT visit_id FROM visit',
+    'SELECT * FROM client UNION SELECT * FROM visit',  # 2 columns vs 3
+    'SELECT case_id FROM client UNION SELECT visit_id FROM visit ORDER BY 1',
+    'SELECT case_id FROM client UNION SELECT visit_id FROM visit LIMIT 5',
+    'SELECT case_id FROM client UNION SELECT missing FROM visit',  # unknown column
+
     'SELECT * FROM unknown',              # unknown table
     'SELECT * FROM otherdomain.client',   # schema-qualified table
     'SELECT missing FROM client',         # unknown column

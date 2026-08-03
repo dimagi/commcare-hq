@@ -8,7 +8,7 @@ import sqlglot
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
-from sqlalchemy import and_, literal, not_, or_, select
+from sqlalchemy import and_, literal, not_, or_, select, union, union_all
 
 
 class UnsupportedSQL(Exception):
@@ -25,10 +25,27 @@ def translate(sql, tables):
         statements = sqlglot.parse(sql, read='postgres')
     except SqlglotError:
         raise UnsupportedSQL("could not parse SQL")
-    if len(statements) != 1 or not isinstance(statements[0], exp.Select):
-        raise UnsupportedSQL("this only supports a single SELECT statement")
+    if len(statements) != 1:
+        raise UnsupportedSQL("this only supports a single statement")
 
-    return _convert_select(statements[0], tables)
+    return _convert_query(statements[0], tables)
+
+
+def _convert_query(node, tables):
+    """Convert a SELECT, or a UNION of them, to a SQLAlchemy ``Selectable``"""
+    if isinstance(node, exp.Select):
+        return _convert_select(node, tables)
+    if isinstance(node, exp.Union):
+        # INTERSECT and EXCEPT are other node types, so they are not supported
+        this, expression, distinct = _unpack(node, 'this', 'expression', 'distinct')
+        left = _convert_query(this, tables)
+        right = _convert_query(expression, tables)
+        if len(left.c) != len(right.c):
+            raise UnsupportedSQL(
+                "each side of a UNION must select the same number of columns, "
+                f"got {len(left.c)} and {len(right.c)}")
+        return union(left, right) if distinct else union_all(left, right)
+    raise UnsupportedSQL(f"unsupported statement: {type(node).__name__}")
 
 
 def _unpack(node, *args):
