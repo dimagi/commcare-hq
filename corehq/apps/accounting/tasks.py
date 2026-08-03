@@ -52,7 +52,6 @@ from corehq.apps.accounting.models import (
     DomainUserHistory,
     FeatureType,
     FormSubmittingMobileWorkerHistory,
-    InvoicingPlan,
     SoftwarePlanEdition,
     Subscription,
     SubscriptionAdjustment,
@@ -328,15 +327,9 @@ def generate_invoices_based_on_date(invoice_date):
     all_customer_billing_accounts = BillingAccount.objects.filter(is_customer_billing_account=True)
     for account in all_customer_billing_accounts:
         try:
-            if account.invoicing_plan == InvoicingPlan.QUARTERLY:
-                customer_invoice_start = invoice_start - relativedelta(months=2)
-            elif account.invoicing_plan == InvoicingPlan.YEARLY:
-                customer_invoice_start = invoice_start - relativedelta(months=11)
-            else:
-                customer_invoice_start = invoice_start
             invoice_factory = CustomerAccountInvoiceFactory(
                 account=account,
-                date_start=customer_invoice_start,
+                date_start=invoice_start,
                 date_end=invoice_end
             )
             invoice_factory.create_invoice()
