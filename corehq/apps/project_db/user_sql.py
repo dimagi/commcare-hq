@@ -79,7 +79,14 @@ def _convert_projection(expressions, sources):
     if all(e == exp.Star() for e in expressions):
         # SELECT * selects every column of every table in the query
         return [col for table in sources.values() for col in table.c]
-    return [_convert_column(e, sources) for e in expressions]
+    return [_convert_projected_column(e, sources) for e in expressions]
+
+
+def _convert_projected_column(node, sources):
+    if isinstance(node, exp.Alias):
+        expression, alias = _unpack(node, 'this', 'alias')
+        return _convert_column(expression, sources).label(alias.name)
+    return _convert_column(node, sources)
 
 
 def _convert_column(node, sources):

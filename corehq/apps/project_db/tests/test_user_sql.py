@@ -19,6 +19,13 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
 @pytest.mark.parametrize('sql, expected', [
     ('SELECT * FROM client', select([CLIENT])),
     ('SELECT name, case_id FROM client', select([CLIENT.c.name, CLIENT.c.case_id])),
+
+    # Column aliases
+    ('SELECT case_id AS id FROM client', select([CLIENT.c.case_id.label('id')])),
+    ('SELECT case_id id FROM client', select([CLIENT.c.case_id.label('id')])),
+    ('SELECT case_id AS "My Id" FROM client',
+     select([CLIENT.c.case_id.label('My Id')])),
+
     ("SELECT * FROM client WHERE name = 'x'",
      select([CLIENT]).where(CLIENT.c.name == literal('x'))),
     ("SELECT * FROM client WHERE name <> 'x'",
@@ -115,8 +122,9 @@ def _compiled(query):
     'SELECT * FROM client WHERE $$',  # untokenizable
 
     # Not (yet) supported
-    'SELECT case_id AS id FROM client',   # column alias
     'SELECT * FROM client LIMIT 5',       # extra clause
+    # Only columns may be selected, aliased or not
+    "SELECT 'x' AS foo FROM client",      # aliased literal
     'SELECT * FROM (SELECT * FROM client) AS t',  # subquery is not a table
     'SELECT * FROM generate_series(1, 10)',  # table valued function not supported
     "INSERT INTO client VALUES ('x')",    # not a SELECT
@@ -153,6 +161,23 @@ def _compiled(query):
 def test_rejects_unsupported(sql):
     with pytest.raises(UnsupportedSQL):
         translate(sql, TABLES)
+
+
+@pytest.mark.parametrize('alias, expected', [
+    ('id', 'id'),
+    ('"My Id"', '"My Id"'),
+    # A column alias is the only user-supplied identifier that reaches the
+    # generated SQL, so it must always come back out quoted and escaped.
+    ('"a""b"', '"a""b"'),
+    ('"a\'b"', '"a\'b"'),
+    ('"); DROP TABLE client; --"', '"); DROP TABLE client; --"'),
+    ('"select"', '"select"'),
+])
+def test_escapes_alias_identifiers(alias, expected):
+    query = translate(f'SELECT case_id AS {alias} FROM client', TABLES)
+    sql, params = _compiled(query)
+    assert sql == f'SELECT client.case_id AS {expected} \nFROM client'
+    assert params == {}
 
 
 def test_handle_quoted_tables():
