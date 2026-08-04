@@ -118,6 +118,7 @@ from .models import (
     DataSourceUpdate,
     Repeater,
     RepeatRecord,
+    _payload_is_soft_deleted,
     domain_can_forward,
     domain_can_forward_now,
 )
@@ -262,6 +263,11 @@ def _process_repeat_record(repeat_record):
             return
 
         if repeat_record.repeater.is_deleted:
+            repeat_record.cancel()
+            repeat_record.save()
+            return
+
+        if _payload_is_soft_deleted(repeat_record.repeater.payload_doc(repeat_record)):
             repeat_record.cancel()
             repeat_record.save()
             return
@@ -414,6 +420,13 @@ def process_ready_repeat_record(repeat_record_id):
                 .get(id=repeat_record_id)
             )
             if not is_repeat_record_ready(repeat_record):
+                return None
+
+            if _payload_is_soft_deleted(
+                repeat_record.repeater.payload_doc(repeat_record)
+            ):
+                repeat_record.cancel()
+                repeat_record.save()
                 return None
 
             _metrics_wait_duration(repeat_record)

@@ -1603,6 +1603,21 @@ def _clear_attempts_cache_after_save_new_attempt(sender, instance, **kwargs):
         record.attempt_set._remove_prefetched_objects()
 
 
+def _payload_is_soft_deleted(payload_doc):
+    """
+    Returns whether ``payload_doc`` has been soft-deleted.
+
+    Checks the ``deleted_on`` timestamp rather than an ``is_deleted``
+    attribute: on forms and cases ``is_deleted`` is a property, but on
+    ``CommCareUser`` it is a *method* (which is always truthy), and it is
+    absent on other payload docs (e.g. locations, or ``None`` for
+    ``AppStructureRepeater``). ``deleted_on`` is null-safe across all
+    payload types, so this guard only ever fires for genuinely
+    soft-deleted forms and cases.
+    """
+    return getattr(payload_doc, 'deleted_on', None) is not None
+
+
 def _get_retry_interval(last_checked, now):
     """
     Returns a timedelta between MIN_RETRY_WAIT and MAX_RETRY_WAIT that
