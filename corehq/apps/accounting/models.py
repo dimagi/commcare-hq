@@ -118,17 +118,6 @@ class BillingAccountType(object):
     )
 
 
-class InvoicingPlan(object):
-    MONTHLY = "MONTHLY"
-    QUARTERLY = "QUARTERLY"
-    YEARLY = "YEARLY"
-    CHOICES = (
-        (MONTHLY, "Monthly"),
-        (QUARTERLY, "Quarterly"),
-        (YEARLY, "Yearly")
-    )
-
-
 class FeatureType(object):
     USER = "User"
     SMS = "SMS"
@@ -412,11 +401,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
     is_sms_billable_report_visible = models.BooleanField(default=False)
     enterprise_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
     enterprise_restricted_signup_domains = ArrayField(models.CharField(max_length=128), default=list, blank=True)
-    invoicing_plan = models.CharField(
-        max_length=25,
-        default=InvoicingPlan.MONTHLY,
-        choices=InvoicingPlan.CHOICES
-    )
     entry_point = models.CharField(
         max_length=25,
         default=EntryPoint.NOT_SET,
