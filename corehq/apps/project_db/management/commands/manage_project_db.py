@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
@@ -112,6 +114,46 @@ def _populate_case_type(domain, case_type, start_date, prefix):
     send_to_project_db(domain, case_type, cases)
 
 
+def _query_notes(domain):
+    schema = DomainSchema(domain).name
+    return dedent(
+        f"""--
+        -- Notes for writing queries against this database:
+        --
+        -- The search_path is set to this domain's schema ({schema}), so the tables
+        -- below can be referenced by their unqualified name.
+        --
+        -- The following PostgreSQL functions are available:
+        --
+        --   earth_distance(earth, earth) -> double precision
+        --     Great-circle distance in meters between two `earth` points. GPS case
+        --     properties are stored in `gps_prop__<name>` columns as `earth` values.
+        --     Use ll_to_earth() to build a point to compare against:
+        --       SELECT case_id
+        --       FROM some_case_type
+        --       WHERE earth_distance(gps_prop__location, ll_to_earth(40.7128, -74.006)) < 5000;
+        --
+        --   ll_to_earth(latitude, longitude) -> earth
+        --     Convert a latitude/longitude (in degrees) to an `earth` point.
+        --
+        --   similarity(text, text) -> real
+        --     Trigram similarity between two strings, from 0 (none) to 1 (identical).
+        --     Useful for fuzzy matching; higher is a closer match:
+        --       SELECT case_id, prop__name
+        --       FROM some_case_type
+        --       WHERE similarity(prop__name, 'Jon Smith') > 0.3
+        --       ORDER BY similarity(prop__name, 'Jon Smith') DESC;
+        --
+        --   dmetaphone(text) -> text
+        --     Double Metaphone phonetic code of a string. Compare codes to match
+        --     words that sound alike:
+        --       SELECT case_id, prop__name
+        --       FROM some_case_type
+        --       WHERE dmetaphone(prop__name) = dmetaphone('Catherine');
+        --"""
+    )
+
+
 def _describe(domain):
     engine = get_project_db_engine()
     metadata = sqlalchemy.MetaData()
@@ -120,6 +162,7 @@ def _describe(domain):
         raise CommandError(f"No project DB tables found for domain '{domain}'")
 
     print(f"-- Project DB schema for domain: {domain}")
+    print(_query_notes(domain))
     with engine.connect() as conn:
         for table in sorted(metadata.tables.values(), key=lambda t: t.name):
             row_count = conn.execute(
