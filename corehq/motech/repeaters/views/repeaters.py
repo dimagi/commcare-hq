@@ -24,7 +24,7 @@ from corehq.apps.users.models import HqPermissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
 
-from ..const import RECORD_QUEUED_STATES, State
+from ..const import RECORD_QUEUED_STATES, STATE_GROUPS
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
 from ..models import (
     Repeater,
@@ -52,16 +52,11 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
         def get_repeaters_with_state_counts(repeater_class):
             repeaters = repeater_class.objects.by_domain(self.domain)
             for repeater in repeaters:
-                assert not hasattr(repeater, "count_State"), repeater.count_State
-                repeater.count_State = {s.name: state_counts[repeater.id][s] for s in State}
-                repeater.count_State['EmptyOrSuccess'] = (
-                    repeater.count_State[State.Empty.name]
-                    + repeater.count_State[State.Success.name]
-                )
-                repeater.count_State['ErrorGeneratingPayloadOrRejected'] = (
-                    repeater.count_State[State.ErrorGeneratingPayload.name]
-                    + repeater.count_State[State.PayloadRejected.name]
-                )
+                assert not hasattr(repeater, "state_group_counts"), repeater.state_group_counts
+                repeater.state_group_counts = {
+                    key: sum(state_counts[repeater.id][state] for state in states)
+                    for key, states in STATE_GROUPS.items()
+                }
             return repeaters
 
         return [

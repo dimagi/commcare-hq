@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import List, Literal, Optional  # noqa: F401
+from typing import List, Literal, Optional, Sequence  # noqa: F401
 
 from django.conf import settings
 from django.core.cache import cache
@@ -234,10 +234,12 @@ def task_generate_ids_and_operate_on_payloads(
     repeater_id: Optional[str],
     domain: str,
     action: Literal['resend', 'cancel', 'requeue'],
-    state: Literal[None, State.Pending, State.Cancelled] = None,
+    state: Optional[Sequence[State]] = None,
 ) -> dict:
+    # Backwards compatibility with already queued tasks.
+    states = [state] if isinstance(state, State) else state
     repeat_record_ids = RepeatRecord.objects.get_repeat_record_ids(
-        domain, repeater_id=repeater_id, state=state, payload_id=payload_id,
+        domain, repeater_id=repeater_id, states=states, payload_id=payload_id,
     )
     return operate_on_payloads(repeat_record_ids, domain, action,
                                task=task_generate_ids_and_operate_on_payloads)
