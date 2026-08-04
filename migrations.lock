@@ -142,6 +142,7 @@ accounting
  0120_billingaccountdomainhistory
  0121_invoicing_plan_monthly
  0122_stop_declaring_invoicing_plan
+ 0123_drop_invoicing_plan_column
 admin
  0001_initial
  0002_logentry_remove_auto_add
