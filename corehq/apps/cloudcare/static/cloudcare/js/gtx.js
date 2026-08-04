@@ -44,9 +44,14 @@ const logNavigateMenu = function (menuResponse) {
 
 const logCaseList = function (menuResponse, searchFieldList) {
     const selections = extractSelections(menuResponse);
+    let moduleName = menuResponse.title;
+    if (menuResponse.menuTitle) {
+        moduleName = menuResponse.menuTitle;
+    }
+    console.log(`moduleName: ${moduleName}`);
     let gtxEventData = {
         selections: selections,
-        moduleName: menuResponse.title,
+        moduleName: moduleName,
     };
     if (searchFieldList.length > 0) {
         let searchFieldData = formatSearchFieldData(searchFieldList);
