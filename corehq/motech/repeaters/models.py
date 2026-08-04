@@ -102,7 +102,7 @@ from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.models import (
     CaseTransaction,
     CommCareCase,
@@ -139,7 +139,11 @@ from .const import (
     RECORD_QUEUED_STATES,
     State,
 )
-from .exceptions import RequestConnectionError, UnknownRepeater
+from .exceptions import (
+    PayloadNotFoundError,
+    RequestConnectionError,
+    UnknownRepeater,
+)
 from .repeater_generators import (
     AppStructureGenerator,
     CaseRepeaterJsonPayloadGenerator,
@@ -674,6 +678,26 @@ class Repeater(RepeaterSuperProxy):
         return self._repeater_type
 
 
+def get_form_payload_doc(repeat_record):
+    try:
+        form = XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
+    except XFormNotFound:
+        form = None
+    if form is None or form.is_deleted:
+        raise PayloadNotFoundError(_('Form {} is not found').format(repeat_record.payload_id))
+    return form
+
+
+def get_case_payload_doc(repeat_record):
+    try:
+        case = CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain)
+    except CaseNotFound:
+        case = None
+    if case is None or case.is_deleted:
+        raise PayloadNotFoundError(_('Case {} is not found').format(repeat_record.payload_id))
+    return case
+
+
 class FormRepeater(Repeater):
 
     include_app_id_param = OptionValue(default=True)
@@ -689,7 +713,7 @@ class FormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
+        return get_form_payload_doc(repeat_record)
 
     @property
     def form_class_name(self):
@@ -718,7 +742,7 @@ class FormRepeater(Repeater):
             query = parse_qsl(url_parts[4])
             try:
                 query.append(("app_id", self.payload_doc(repeat_record).app_id))
-            except (XFormNotFound, ResourceNotFound):
+            except (PayloadNotFoundError, ResourceNotFound):
                 return None
             url_parts[4] = urlencode(query)
             return urlunparse(url_parts)
@@ -805,7 +829,7 @@ class CaseRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain)
+        return get_case_payload_doc(repeat_record)
 
     def get_headers(self, repeat_record):
         headers = super().get_headers(repeat_record)
@@ -940,7 +964,7 @@ class ShortFormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
+        return get_form_payload_doc(repeat_record)
 
     def allowed_to_forward(self, payload):
         return payload.xmlns != DEVICE_LOG_XMLNS

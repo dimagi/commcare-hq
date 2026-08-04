@@ -19,7 +19,7 @@ from dimagi.ext.couchdbkit import (
 )
 
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
-from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.openmrs.const import XMLNS_OPENMRS
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.repeater_helpers import (
@@ -40,7 +40,11 @@ from corehq.motech.repeater_helpers import (
     RepeaterResponse,
     get_relevant_case_updates_from_form_json,
 )
-from corehq.motech.repeaters.models import OptionValue, CaseRepeater
+from corehq.motech.repeaters.models import (
+    CaseRepeater,
+    OptionValue,
+    get_form_payload_doc,
+)
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
@@ -115,7 +119,7 @@ class OpenmrsRepeater(CaseRepeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
+        return get_form_payload_doc(repeat_record)
 
     @property
     def form_class_name(self):
