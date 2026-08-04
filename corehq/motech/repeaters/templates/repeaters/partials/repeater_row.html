@@ -11,27 +11,27 @@
     </td>
     <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=PENDING">
-            {{ repeater.count_State.Pending }}
+            {{ repeater.state_group_counts.PENDING }}
         </a>
     </td>
     <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=FAIL">
-            {{ repeater.count_State.Fail }}
+            {{ repeater.state_group_counts.FAIL }}
         </a>
     </td>
     <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=PAYLOADERROR">
-            {{ repeater.count_State.ErrorGeneratingPayloadOrRejected }}
+            {{ repeater.state_group_counts.PAYLOADERROR }}
         </a>
     </td>
     <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=CANCELLED">
-            {{ repeater.count_State.Cancelled }}
+            {{ repeater.state_group_counts.CANCELLED }}
         </a>
     </td>
     <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=SUCCESS">
-            {{ repeater.count_State.EmptyOrSuccess }}
+            {{ repeater.state_group_counts.SUCCESS }}
         </a>
     </td>
     <td>

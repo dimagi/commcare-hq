@@ -72,26 +72,45 @@ class TestDomainForwardingOptionsView(TestCase):
             next_check=datetime.utcnow(),
         )
 
-    def test_get_repeater_types_info(self):
+    def _get_repeater_with_counts(self):
         class view:
             domain = "test"
         state_counts = RepeatRecord.objects.count_by_repeater_and_state("test")
         infos = repeaters.DomainForwardingOptionsView.get_repeater_types_info(view, state_counts)
         repeater, = {i.class_name: i for i in infos}['FormRepeater'].instances
+        return repeater
 
-        self.assertEqual(repeater.count_State, {
-            # templates that reference `count_State` may need to be
-            # updated if the keys in this dict change
-            'Cancelled': 0,
-            'Empty': 0,
-            'EmptyOrSuccess': 0,
-            'ErrorGeneratingPayload': 0,
-            'ErrorGeneratingPayloadOrRejected': 0,
-            'Fail': 0,
-            'PayloadRejected': 0,
-            'Pending': 1,
-            'Success': 0
+    def test_get_repeater_types_info(self):
+        repeater = self._get_repeater_with_counts()
+
+        self.assertEqual(repeater.state_group_counts, {
+            # templates that reference `state_group_counts` may need to
+            # be updated if the keys in this dict change
+            'SUCCESS': 0,
+            'PENDING': 1,
+            'CANCELLED': 0,
+            'FAIL': 0,
+            'PAYLOADERROR': 0,
         })
+
+    def test_counts_include_every_state_in_a_group(self):
+        for state in (
+            State.Success,
+            State.Empty,
+            State.PayloadRejected,
+            State.ErrorGeneratingPayload,
+        ):
+            self.repeater.repeat_records.create(
+                domain=self.repeater.domain,
+                payload_id="3978e5d2bc2346fe958b933870c5b28a",
+                registered_at=datetime.utcnow(),
+                state=state,
+            )
+
+        repeater = self._get_repeater_with_counts()
+
+        assert repeater.state_group_counts['SUCCESS'] == 2
+        assert repeater.state_group_counts['PAYLOADERROR'] == 2
 
 
 class TestRepeatRecordView(TestCase):
