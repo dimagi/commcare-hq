@@ -6,8 +6,7 @@ from django.contrib.postgres.forms import SimpleArrayField
 from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 from django.utils import timezone
-from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy as _
 from zoneinfo import ZoneInfo
 
 from crispy_forms import bootstrap as twbscrispy
@@ -276,16 +275,16 @@ class HQApiKeyForm(forms.Form):
         forms.GenericIPAddressField(
             protocol='ipv4',
         ),
-        label=gettext_lazy("Allowed IP Addresses (comma separated)"),
+        label=_("Allowed IP Addresses (comma separated)"),
         required=False,
     )
     domain = forms.ChoiceField(
         required=True,
-        help_text=gettext_lazy("Limit the key's access to a single project space")
+        help_text=_("Limit the key's access to a single project space")
     )
     expiration_date = forms.DateTimeField(
         required=False,
-        help_text=gettext_lazy("Date and time the API key should expire on")
+        help_text=_("Date and time the API key should expire on")
     )
 
     def __init__(self, *args, user_domains=None, max_allowed_expiration_days=None, timezone=None, **kwargs):
@@ -315,7 +314,7 @@ class HQApiKeyForm(forms.Form):
         self.helper = HQFormHelper()
         self.helper.layout = Layout(
             crispy.Fieldset(
-                gettext_lazy("Add New API Key"),
+                _("Add New API Key"),
                 crispy.Field('name'),
                 crispy.Field('domain'),
                 crispy.Field('ip_allowlist'),
