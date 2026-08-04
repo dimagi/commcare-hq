@@ -44,6 +44,19 @@ class State(IntegerChoices):
         return state_map.get(key.upper() if key else None)
 
 
+STATE_GROUPS = {
+    'SUCCESS': (State.Success, State.Empty),
+    'PENDING': (State.Pending,),
+    'CANCELLED': (State.Cancelled,),
+    'FAIL': (State.Fail,),
+    'PAYLOADERROR': (State.PayloadRejected, State.ErrorGeneratingPayload),
+}
+
+
+def states_for_key(key):
+    return STATE_GROUPS.get(key.upper() if key else None)
+
+
 RECORD_QUEUED_STATES = (State.Pending, State.Fail)
 RECORD_FAILED_STATES = (
     State.Fail,
