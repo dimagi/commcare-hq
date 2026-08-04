@@ -677,6 +677,9 @@ class NestedTermAggregationsHelper(object):
 
     def _format_counts(self, counts):
         final_aggregation_name = ('doc_count')
-        row_class = namedtuple('NestedQueryRow', [term.name for term in self.terms] + [final_aggregation_name])
+        NestedQueryRow = namedtuple(
+            'NestedQueryRow',
+            [term.name for term in self.terms] + [final_aggregation_name]
+        )
         for combined_key, count in counts.items():
-            yield row_class(*(combined_key + (count,)))
+            yield NestedQueryRow(*(combined_key + (count,)))

@@ -5,6 +5,7 @@ from base64 import b64decode, b64encode
 from collections import namedtuple
 from dataclasses import InitVar, dataclass
 from datetime import datetime, timedelta
+from typing import Iterable
 from urllib.parse import urlencode
 from dimagi.utils.parsing import string_to_boolean
 
@@ -1373,16 +1374,16 @@ class ODataFormResource(BaseODataResource):
 
 @dataclass
 class NavigationEventAuditResourceParams:
-    domain: InitVar
-    default_limit: InitVar
-    max_limit: InitVar
-    raw_params: InitVar = None
+    domain: InitVar[str]
+    default_limit: InitVar[int]
+    max_limit: InitVar[int]
+    raw_params: InitVar[QueryDict | None] = None
 
     users: list[str] = dataclasses.field(default_factory=list)
     limit: int = None
     local_timezone: str = None
     cursor: str = None
-    local_date: dict[str:str] = dataclasses.field(default_factory=dict)
+    local_date: dict[str, str] = dataclasses.field(default_factory=dict)
     cursor_local_date: str = None
     cursor_user: str = None
     UTC_start_time_start: datetime = None
@@ -1562,7 +1563,11 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
             return list(queryset[:params.limit])
 
     @classmethod
-    def _query(cls, domain: str, params: NavigationEventAuditResourceParams):
+    def _query(
+        cls,
+        domain: str,
+        params: NavigationEventAuditResourceParams,
+    ) -> Iterable[NavigationEventAudit]:
         queryset = NavigationEventAudit.objects.filter(domain=domain)
         if params.users:
             queryset = queryset.filter(user__in=params.users)
@@ -1590,7 +1595,11 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
         return results
 
     @classmethod
-    def _get_compound_filter(cls, param_field_name: str, params: NavigationEventAuditResourceParams):
+    def _get_compound_filter(
+        cls,
+        param_field_name: str,
+        params: NavigationEventAuditResourceParams
+    ) -> Q:
         compound_filter = Q()
         if param_field_name in cls.COMPOUND_FILTERS:
             for qualifier, val in getattr(params, param_field_name).items():

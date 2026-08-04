@@ -3,7 +3,6 @@ import inspect
 import math
 from functools import wraps
 from importlib import import_module
-from typing import List
 
 from django.conf import settings
 from django.contrib import messages
@@ -527,7 +526,7 @@ def any_toggle_enabled(*toggles):
 
 
 @extension_point(result_format=ResultFormat.FLATTEN)
-def custom_toggle_modules() -> List[str]:
+def custom_toggle_modules():
     """Extension point to add toggles from custom code
 
     Parameters:

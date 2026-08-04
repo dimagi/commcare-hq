@@ -459,7 +459,7 @@ class SmsBillable(models.Model):
         )
 
 
-_ProviderChargeInfo = namedtuple('_ProviderCharges', [
+_ProviderChargeInfo = namedtuple('_ProviderChargeInfo', [
     'direct_gateway_fee',
     'gateway_fee',
     'multipart_count',

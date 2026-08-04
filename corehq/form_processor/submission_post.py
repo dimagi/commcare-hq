@@ -1,5 +1,6 @@
 import logging
 from collections import namedtuple
+from typing import NamedTuple
 
 from ddtrace import tracer
 from django.db import IntegrityError
@@ -31,7 +32,11 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
 from corehq.form_processor.exceptions import PostSaveError, XFormSaveError
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import (
+    CommCareCase,
+    LedgerValue,
+    XFormInstance,
+)
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
 from corehq.form_processor.utils.metadata import scrub_meta
@@ -57,7 +62,13 @@ CaseStockProcessingResult = namedtuple(
 )
 
 
-class FormProcessingResult(namedtuple('FormProcessingResult', 'response xform cases ledgers submission_type')):
+class FormProcessingResult(NamedTuple):
+    response: HttpResponse
+    xform: XFormInstance
+    cases: list[CommCareCase]
+    ledgers: list[LedgerValue]
+    submission_type: str
+
     @property
     def case(self):
         assert len(self.cases) == 1
@@ -245,7 +256,7 @@ class SubmissionPost(object):
         elif case_export_link:
             yield _("Click to export your [case data]({}).").format(case_export_link)
 
-    def run(self):
+    def run(self) -> FormProcessingResult:
         self.track_load()
         with self.timing_context("process_xml"):
             report_submission_usage(self.domain)

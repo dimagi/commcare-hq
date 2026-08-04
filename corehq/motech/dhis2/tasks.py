@@ -44,10 +44,7 @@ def send_datasets(domain_name, send_now=False, send_date=None):
             send_dataset(dataset_map, date_to_send)
 
 
-def send_dataset(
-    dataset_map: SQLDataSetMap,
-    send_date: datetime.date
-) -> dict:
+def send_dataset(dataset_map, send_date):
     """
     Sends a data set of data values in the following format. "period" is
     determined from ``send_date``. ::

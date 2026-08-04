@@ -1,0 +1,27 @@
+name: commcare-hq type checking
+
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  type-check:
+    name: Check type hints
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: '0.7.2'
+
+      - name: Install test requirements
+        run: uv sync --group=test --no-group=sso --locked --compile-bytecode --no-progress
+
+      - name: Run ty check
+        run: uv run ty check
