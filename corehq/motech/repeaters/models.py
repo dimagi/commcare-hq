@@ -677,6 +677,26 @@ class Repeater(RepeaterSuperProxy):
         return self._repeater_type
 
 
+def get_form_payload_doc(repeat_record):
+    try:
+        form = XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
+    except XFormNotFound:
+        form = None
+    if form is None or form.is_deleted:
+        raise PayloadNotFoundError(_('Form {} is not found').format(repeat_record.payload_id))
+    return form
+
+
+def get_case_payload_doc(repeat_record):
+    try:
+        case = CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain)
+    except CaseNotFound:
+        case = None
+    if case is None or case.is_deleted:
+        raise PayloadNotFoundError(_('Case {} is not found').format(repeat_record.payload_id))
+    return case
+
+
 class FormRepeater(Repeater):
 
     include_app_id_param = OptionValue(default=True)
@@ -692,13 +712,7 @@ class FormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        try:
-            form = XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
-        except XFormNotFound:
-            form = None
-        if form is None or form.is_deleted:
-            raise PayloadNotFoundError(_('Form {} is not found').format(repeat_record.payload_id))
-        return form
+        return get_form_payload_doc(repeat_record)
 
     @property
     def form_class_name(self):
@@ -814,13 +828,7 @@ class CaseRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        try:
-            case = CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain)
-        except CaseNotFound:
-            case = None
-        if case is None or case.is_deleted:
-            raise PayloadNotFoundError(_('Case {} is not found').format(repeat_record.payload_id))
-        return case
+        return get_case_payload_doc(repeat_record)
 
     def get_headers(self, repeat_record):
         headers = super().get_headers(repeat_record)
