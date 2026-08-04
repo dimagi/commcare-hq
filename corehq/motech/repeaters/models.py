@@ -1202,7 +1202,7 @@ class RepeatRecordManager(models.Manager):
             where &= models.Q(state=state)
         return paginate_query(db, self.model, where, query_size=chunk_size)
 
-    def page(self, domain, skip, limit, repeater_id=None, state=None):
+    def page(self, domain, skip, limit, repeater_id=None, states=None):
         """Get a page of repeat records
 
         WARNING this is inefficient for large skip values.
@@ -1210,8 +1210,8 @@ class RepeatRecordManager(models.Manager):
         queryset = self.filter(domain=domain)
         if repeater_id:
             queryset = queryset.filter(repeater__id=repeater_id)
-        if state is not None:
-            queryset = queryset.filter(state=state)
+        if states:
+            queryset = queryset.filter(state__in=states)
         return (queryset.order_by('-registered_at')[skip:skip + limit]
                 .select_related('repeater')
                 .prefetch_related('attempt_set'))
@@ -1237,12 +1237,12 @@ class RepeatRecordManager(models.Manager):
     def get_domains_with_records(self):
         return self.order_by().values_list("domain", flat=True).distinct()
 
-    def get_repeat_record_ids(self, domain, repeater_id=None, state=None, payload_id=None):
+    def get_repeat_record_ids(self, domain, repeater_id=None, states=None, payload_id=None):
         where = models.Q(domain=domain)
         if repeater_id:
             where &= models.Q(repeater__id=repeater_id)
-        if state:
-            where &= models.Q(state=state)
+        if states:
+            where &= models.Q(state__in=states)
         if payload_id:
             where &= models.Q(payload_id=payload_id)
 

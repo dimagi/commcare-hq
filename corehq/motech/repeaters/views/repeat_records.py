@@ -144,7 +144,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
                 self.pagination.start,
                 self.pagination.count,
                 repeater_id=self.repeater_id,
-                state=self.state
+                states=[self.state] if self.state else None,
             )
         rows = [self._make_row(record) for record in records]
         return rows
