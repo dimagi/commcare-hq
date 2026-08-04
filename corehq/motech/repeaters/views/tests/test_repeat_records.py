@@ -33,21 +33,25 @@ class TestUtilities(SimpleTestCase):
             records_ids = repeat_records._get_record_ids_from_request(mock_request)
             self.assertEqual(records_ids, expected_result)
 
-    def test__get_state(self):
+    def test__get_states(self):
         mock_request = Mock()
-        state_values = [None, 'PENDING']
-        expected_results = [None, State.Pending]
+        state_values = [None, '', 'PENDING', 'PAYLOADERROR']
+        expected_results = [
+            None,
+            None,
+            (State.Pending,),
+            (State.PayloadRejected, State.ErrorGeneratingPayload),
+        ]
         for value, expected_result in zip(state_values, expected_results):
             mock_request.POST.get.return_value = value
-            result = repeat_records._get_state(mock_request)
+            result = repeat_records._get_states(mock_request)
             assert result == expected_result
 
-    def test__get_state_raises_key_error(self):
+    def test__get_states_raises_key_error(self):
         mock_request = Mock()
-        state_values = ['', 'ALL']
-        for value in state_values:
-            with self.assertRaises(KeyError):
-                repeat_records._get_state(mock_request)
+        mock_request.POST.get.return_value = 'ALL'
+        with self.assertRaises(KeyError):
+            repeat_records._get_states(mock_request)
 
 
 class TestDomainForwardingOptionsView(TestCase):
