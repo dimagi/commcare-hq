@@ -1,7 +1,7 @@
 import calendar
 import datetime
 
-from corehq.apps.accounting.models import FeatureType
+from corehq.apps.accounting.models import FeatureType, Subscription
 from corehq.apps.accounting.utils import count_form_submitting_mobile_workers
 from corehq.apps.es.users import UserES
 from corehq.apps.smsbillables.models import SmsBillable
@@ -29,6 +29,7 @@ class FeatureUsageCalculator(object):
             FeatureType.SMS: self._get_sms_usage,
             FeatureType.WEB_USER: self._get_web_user_usage,
             FeatureType.FORM_SUBMITTING_MOBILE_WORKER: self._get_form_submitting_mobile_worker_user_usage,
+            FeatureType.DOMAIN: self._get_domain_usage,
         }
 
     def get_usage(self):
@@ -54,6 +55,12 @@ class FeatureUsageCalculator(object):
 
     def _get_form_submitting_mobile_worker_user_usage(self):
         return count_form_submitting_mobile_workers(self.domain, self.start_date, self.end_date)
+
+    def _get_domain_usage(self):
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        if subscription is None:
+            return 0
+        return len(subscription.account.get_domains())
 
 
 def get_web_user_usage(domains):
