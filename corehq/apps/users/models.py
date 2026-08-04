@@ -3343,8 +3343,7 @@ class DeactivateMobileWorkerTrigger(models.Model):
 
 
 def check_and_send_limit_email(domain, plan_limit, user_count, prev_count):
-    ADDITIONAL_USERS_PRICING = ("https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
-                                "2420015134/CommCare+Pricing+Overview#Additional-Mobile-Users-Fees")
+    ADDITIONAL_USERS_PRICING = 'https://commcare.dimagi.com/pricing/#add-ons'
     ENTERPRISE_LIMIT = -1
     if plan_limit == ENTERPRISE_LIMIT:
         return
