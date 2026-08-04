@@ -963,7 +963,7 @@ class ShortFormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
+        return get_form_payload_doc(repeat_record)
 
     def allowed_to_forward(self, payload):
         return payload.xmlns != DEVICE_LOG_XMLNS
