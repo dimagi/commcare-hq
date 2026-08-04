@@ -5,7 +5,7 @@
 {# the Alpine-only `_id` keys (see strippedQuery() in the JS).              #}
 
 <div class="filter-tree">
-  <div x-data="{ node: query, _removeParent: null, _removeIdx: null }">
+  <div x-data="{ node: query, _removeParent: null }">
     {% include 'case_search/partials/group_node.html' with depth=max_group_depth %}
   </div>
 
