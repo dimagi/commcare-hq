@@ -39,7 +39,7 @@ from corehq.motech.utils import pformat_json
 from corehq.util.xml_utils import indent_xml
 
 from ..const import State
-from ..exceptions import BulkActionMissingParameters
+from ..exceptions import BulkActionMissingParameters, PayloadNotFoundError
 from ..models import RepeatRecord
 from .repeat_record_display import RepeatRecordDisplay
 
@@ -250,7 +250,7 @@ class RepeatRecordView(View):
         content_type = record.repeater.generator.content_type
         try:
             payload = record.get_payload()
-        except XFormNotFound:
+        except (PayloadNotFoundError, XFormNotFound):
             return JsonResponse({
                 'error': 'Odd, could not find payload for: {}'.format(record.payload_id)
             }, status=404)

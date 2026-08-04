@@ -2,6 +2,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
 from corehq.motech.repeaters.const import RECORD_QUEUED_STATES, State
+from corehq.motech.repeaters.exceptions import PayloadNotFoundError
 from corehq.util.timezones.conversions import ServerTime
 
 MISSING_VALUE = '---'
@@ -43,9 +44,11 @@ class RepeatRecordDisplay:
     @property
     def url(self):
         if self.record.repeater:
-            return self.record.repeater.get_url(self.record)
-        else:
-            return _('Unable to generate url for record')
+            try:
+                return self.record.repeater.get_url(self.record)
+            except PayloadNotFoundError:
+                pass
+        return _('Unable to generate url for record')
 
     @property
     def remote_service(self):
