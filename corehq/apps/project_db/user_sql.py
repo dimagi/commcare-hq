@@ -61,26 +61,22 @@ def _convert_select(node, tables):
     if from_ is None:
         raise UnsupportedSQL("a FROM clause is required")
     selectable = _convert_table_ref(from_.this, tables)
-    # Tables available to resolve column references against, by name
-    sources = {selectable.name: selectable}
     for join in joins or []:
-        selectable = _convert_join(join, selectable, sources, tables)
-    query = select(_convert_projection(expressions, sources)).select_from(selectable)
+        selectable = _convert_join(join, selectable, tables)
+    query = select(_convert_projection(expressions, selectable.c)).select_from(selectable)
     if where is not None:
         predicate, = _unpack(where, 'this')
-        query = query.where(_convert_predicate(predicate, sources))
+        query = query.where(_convert_predicate(predicate, selectable.c))
     return query
 
 
-def _convert_join(node, selectable, sources, tables):
-    """Join another table onto ``selectable``, adding it to ``sources``"""
+def _convert_join(node, selectable, tables):
+    """Join another table onto ``selectable``"""
     table_ref, on, side = _unpack(node, 'this', 'on', 'side')
-
     table = _convert_table_ref(table_ref, tables)
-    if table.name in sources:
+    if table.name in {col.table.name for col in selectable.c}:
         raise UnsupportedSQL(f"table joined more than once: {table.name}")
-    sources[table.name] = table
-    predicate = _convert_predicate(on, sources)
+    predicate = _convert_predicate(on, list(selectable.c) + list(table.c))
 
     if not side:
         return selectable.join(table, predicate)
@@ -89,40 +85,36 @@ def _convert_join(node, selectable, sources, tables):
     raise UnsupportedSQL(f"{side} JOIN not supported")
 
 
-def _convert_projection(expressions, sources):
-    """Resolve a SELECT's projection list against ``sources``"""
+def _convert_projection(expressions, columns):
+    """Resolve a SELECT's projection list against the columns in the query"""
     if not expressions:
         raise UnsupportedSQL("a projection is required")
     if all(e == exp.Star() for e in expressions):
         # SELECT * selects every column of every table in the query
-        return [col for table in sources.values() for col in table.c]
-    return [_convert_projected_column(e, sources) for e in expressions]
+        return list(columns)
+    return [_convert_projected_column(e, columns) for e in expressions]
 
 
-def _convert_projected_column(node, sources):
+def _convert_projected_column(node, columns):
     if isinstance(node, exp.Alias):
         expression, alias = _unpack(node, 'this', 'alias')
-        return _convert_column(expression, sources).label(alias.name)
-    return _convert_column(node, sources)
+        return _convert_column(expression, columns).label(alias.name)
+    return _convert_column(node, columns)
 
 
-def _convert_column(node, sources):
+def _convert_column(node, columns):
+    """Resolve a SQL column reference against the columns in the query"""
     if not isinstance(node, exp.Column):
         raise UnsupportedSQL(f"unsupported expression: {type(node).__name__}")
     identifier, qualifier = _unpack(node, 'this', 'table')
-    name = identifier.name
-    if qualifier is None:
-        candidates = [table for table in sources.values() if name in table.c]
-    elif qualifier.name in sources:
-        table = sources[qualifier.name]
-        candidates = [table] if name in table.c else []
-    else:
-        raise UnsupportedSQL(f"unknown table: {qualifier.name}")
+    candidates = [col for col in columns
+                  if (qualifier is None or col.table.name == qualifier.name)
+                  and col.name == identifier.name]
     if not candidates:
-        raise UnsupportedSQL(f"unknown column: {name}")
+        raise UnsupportedSQL(f"unknown column: {str(node)}")
     if len(candidates) > 1:
-        raise UnsupportedSQL(f"ambiguous column: {name}")
-    return candidates[0].c[name]
+        raise UnsupportedSQL(f"ambiguous column: {str(node)}")
+    return candidates[0]
 
 
 BOOLEAN_OPS = {
@@ -140,40 +132,40 @@ COMPARISONS = {
 }
 
 
-def _convert_predicate(node, sources):
+def _convert_predicate(node, columns):
     """Convert a boolean-valued SQL expression to a ``ColumnElement``"""
     if isinstance(node, exp.Paren):
         inner, = _unpack(node, 'this')
-        return _convert_predicate(inner, sources)
+        return _convert_predicate(inner, columns)
     if isinstance(node, exp.Not):
         inner, = _unpack(node, 'this')
-        return not_(_convert_predicate(inner, sources))
+        return not_(_convert_predicate(inner, columns))
     if isinstance(node, exp.Is):
         expression, operand, negate = _unpack(node, 'this', 'expression', 'negate')
         if not isinstance(operand, (exp.Null, exp.Boolean)):
             raise UnsupportedSQL("IS only supports NULL, TRUE, and FALSE")
         target, = _unpack(operand, 'this')
-        value = _convert_value(expression, sources)
+        value = _convert_value(expression, columns)
         return value.isnot(target) if negate else value.is_(target)
     if isinstance(node, exp.In):
         value, values = _unpack(node, 'this', 'expressions')
         if not values:
             raise UnsupportedSQL("IN requires at least one value")
-        return _convert_value(value, sources).in_(
-            [_convert_value(v, sources) for v in values])
+        return _convert_value(value, columns).in_(
+            [_convert_value(v, columns) for v in values])
     if combine := BOOLEAN_OPS.get(type(node)):
         left, right = _unpack(node, 'this', 'expression')
-        return combine(_convert_predicate(left, sources),
-                       _convert_predicate(right, sources))
+        return combine(_convert_predicate(left, columns),
+                       _convert_predicate(right, columns))
     if compare := COMPARISONS.get(type(node)):
         left, right = _unpack(node, 'this', 'expression')
-        return compare(_convert_value(left, sources),
-                       _convert_value(right, sources))
+        return compare(_convert_value(left, columns),
+                       _convert_value(right, columns))
     else:
         raise UnsupportedSQL(f"unsupported predicate: {type(node).__name__}")
 
 
-def _convert_value(node, sources):
+def _convert_value(node, columns):
     """Convert a SQL value expression to a ``ColumnElement``"""
     if isinstance(node, exp.Literal):
         _unpack(node, 'this', 'is_string')
@@ -181,11 +173,11 @@ def _convert_value(node, sources):
     if isinstance(node, exp.Boolean):
         value, = _unpack(node, 'this')
         return literal(bool(value))
-    return _convert_column(node, sources)
+    return _convert_column(node, columns)
 
 
 def _convert_table_ref(node, tables):
-    """Convert a SQL table reference to a SQLAlchemy ``Selectable``"""
+    """Return the table a SQL table reference refers to"""
     if not (isinstance(node, exp.Table) and isinstance(node.this, exp.Identifier)):
         raise UnsupportedSQL(f"expected table, got {str(node)}")
     identifier, = _unpack(node, 'this')
