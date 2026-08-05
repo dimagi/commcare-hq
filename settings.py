@@ -787,6 +787,7 @@ AUDIT_ALL_VIEWS = False
 AUDIT_VIEWS = []
 AUDIT_MODULES = []
 AUDIT_ADMIN_VIEWS = False
+AUDITCARE_RETENTION_YEARS = 6
 
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
