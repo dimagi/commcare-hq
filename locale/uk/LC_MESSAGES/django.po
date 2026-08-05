@@ -27926,7 +27926,7 @@ msgstr ""
 "          "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#, fuzzy, python-format
+#, fuzzy
 #| msgid ""
 #| "\n"
 #| "                Learn more about exports on our <a\n"
@@ -27938,11 +27938,9 @@ msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-"
-"Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >our help site</a\n"
+"      >our pricing page</a\n"
 "    >.\n"
 "  "
 msgstr ""
@@ -63702,8 +63700,10 @@ msgid "Delivery Attempts"
 msgstr "Спроби доставки"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "View Responses"
-msgstr "Переглянути відповіді"
+#, fuzzy
+#| msgid "Preview Data"
+msgid "Preview Payloads"
+msgstr "Попередній перегляд даних"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -65115,6 +65115,9 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "View Responses"
+#~ msgstr "Переглянути відповіді"
 
 #, python-brace-format
 #~ msgid "XForm {form_id} does not belong to domain {domain}"

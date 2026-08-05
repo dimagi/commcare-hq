@@ -25046,23 +25046,31 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#, python-format
+#| msgid ""
+#| "\n"
+#| "    For more information about CommCare software plans, visit\n"
+#| "    <a\n"
+#| "      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+#| "      target=\"_blank\"\n"
+#| "      >our help site</a\n"
+#| "    >.\n"
+#| "  "
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >our help site</a\n"
+"      >our pricing page</a\n"
 "    >.\n"
 "  "
 msgstr ""
 "\n"
-"    Pour plus d'informations sur les forfaits logiciels CommCare, consultez\n"
+"    Pour plus d'informations sur les forfaits logiciels CommCare, visitez\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >notre site d'aide</a\n"
+"      >notre page de tarification</a\n"
 "    >.\n"
 "  "
 
@@ -58707,8 +58715,9 @@ msgid "Delivery Attempts"
 msgstr "Tentatives de livraison"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "View Responses"
-msgstr "Voir les réponses"
+#| msgid "Preview Data"
+msgid "Preview Payloads"
+msgstr "Aperçu des charges utiles"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -60124,6 +60133,9 @@ msgstr "Les colonnes requises sont {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "View Responses"
+#~ msgstr "Voir les réponses"
 
 #, python-brace-format
 #~ msgid "XForm {form_id} does not belong to domain {domain}"
