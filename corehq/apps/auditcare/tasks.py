@@ -16,7 +16,7 @@ from django.db import connections, router
 from celery.schedules import crontab
 from dateutil.relativedelta import relativedelta
 
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_error, notify_exception
 
 from corehq.apps.celery import periodic_task
 from corehq.util.metrics import metrics_gauge
@@ -89,6 +89,14 @@ def _drop_expired_partitions(model, cutoff):
     to_drop = _get_partitions_to_drop(partitioned_tables, base_table, cutoff)
     dropped = 0
     for table_name in sorted(to_drop):
+        newest = _get_newest_event_date(db, table_name)
+        if newest is not None and newest.date() >= cutoff:
+            notify_error(
+                f'Refusing to drop auditcare partition {table_name}: its name '
+                f'says it predates the {cutoff} retention cutoff but it holds '
+                f'rows up to {newest}'
+            )
+            continue
         with connections[db].cursor() as cursor:
             cursor.execute(f'DROP TABLE IF EXISTS "{table_name}"')
         log.info(
@@ -98,3 +106,10 @@ def _drop_expired_partitions(model, cutoff):
         )
         dropped += 1
     return dropped
+
+
+def _get_newest_event_date(db, table_name):
+    """Return the newest ``event_date`` in the partition, or None if it is empty"""
+    with connections[db].cursor() as cursor:
+        cursor.execute(f'SELECT MAX(event_date) FROM "{table_name}"')
+        return cursor.fetchone()[0]

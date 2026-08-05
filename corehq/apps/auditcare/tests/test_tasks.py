@@ -7,6 +7,7 @@ from django.db import connections, router
 
 from corehq.util.metrics.tests.utils import capture_metrics
 
+from ..models import AccessAudit
 from ..tasks import (
     MODELS_TO_PRUNE,
     _get_partitions_to_drop,
@@ -140,6 +141,46 @@ class TestPruneAuditcarePartitions(AuditcareTest):
             assert metrics.sum(
                 'commcare.auditcare.partitions_dropped', model=model.__name__
             ) == len(dropped)
+
+    def test_drops_an_expired_partition_holding_no_rows(self):
+        table_name = f'{BASE_TABLE}_y2015m03'
+        self.create_partition_without_check_constraint(table_name)
+
+        prune_auditcare_tables()
+
+        assert table_name not in self.get_partition_tables(AccessAudit)
+
+    def test_keeps_an_expired_partition_holding_rows_within_retention(self):
+        """This should be impossible in practice using architect, so
+        reaching it means an error with architect's configuration to
+        ensure data is only saved to its relevant partition
+        """
+        table_name = f'{BASE_TABLE}_y2015m03'
+        self.create_partition_without_check_constraint(table_name)
+        self.insert_row(table_name, datetime.utcnow())
+
+        prune_auditcare_tables()
+
+        assert table_name in self.get_partition_tables(AccessAudit)
+
+    def create_partition_without_check_constraint(self, table_name):
+        db = router.db_for_write(AccessAudit)
+        with connections[db].cursor() as cursor:
+            cursor.execute(
+                f'CREATE TABLE "{table_name}" '
+                f'(LIKE "{BASE_TABLE}" INCLUDING DEFAULTS) '
+                f'INHERITS ("{BASE_TABLE}")'
+            )
+
+    def insert_row(self, table_name, event_date):
+        db = router.db_for_write(AccessAudit)
+        with connections[db].cursor() as cursor:
+            cursor.execute(
+                f'INSERT INTO "{table_name}" '
+                f'(id, event_date, access_type, path, ip_address) '
+                f'VALUES (%s, %s, %s, %s, %s)',
+                [1, event_date, 'i', '/a/block/login', '127.0.0.1'],
+            )
 
     def get_partition_tables(self, model):
         db = router.db_for_write(model)
