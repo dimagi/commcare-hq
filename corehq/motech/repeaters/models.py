@@ -1490,6 +1490,12 @@ class RepeatRecord(models.Model):
             except (NoCredentialsError, OSError) as e:
                 self.handle_exception(str(e))
                 raise
+            except PayloadNotFoundError as e:
+                self.handle_generate_payload_error(
+                    str(e),
+                    traceback_str=traceback.format_exc(),
+                    notify=False,
+                )
             except Exception as e:
                 self.handle_generate_payload_error(str(e), traceback_str=traceback.format_exc())
             return self.state
@@ -1576,12 +1582,13 @@ class RepeatRecord(models.Model):
         log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
         return self.add_payload_rejected_attempt(message, traceback_str)
 
-    def handle_generate_payload_error(self, message, traceback_str=''):
-        notify_exception(
-            None,
-            f'Error generating payload: {message}',
-            details={'domain': self.domain},
-        )
+    def handle_generate_payload_error(self, message, traceback_str='', notify=True):
+        if notify:
+            notify_exception(
+                None,
+                f'Error generating payload: {message}',
+                details={'domain': self.domain},
+            )
         log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
         return self.add_error_generating_payload_attempt(message, traceback_str)
 
