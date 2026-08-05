@@ -28,7 +28,6 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.users.decorators import require_can_edit_web_users
-from corehq.form_processor.exceptions import XFormNotFound
 from corehq.motech.dhis2.parse_response import (
     get_diagnosis_message,
     get_errors,
@@ -39,7 +38,7 @@ from corehq.motech.utils import pformat_json
 from corehq.util.xml_utils import indent_xml
 
 from ..const import states_for_key
-from ..exceptions import BulkActionMissingParameters
+from ..exceptions import BulkActionMissingParameters, PayloadNotFoundError
 from ..models import RepeatRecord
 from .repeat_record_display import RepeatRecordDisplay
 
@@ -256,7 +255,7 @@ class RepeatRecordView(View):
         content_type = record.repeater.generator.content_type
         try:
             payload = record.get_payload()
-        except XFormNotFound:
+        except PayloadNotFoundError:
             return JsonResponse({
                 'error': 'Odd, could not find payload for: {}'.format(record.payload_id)
             }, status=404)

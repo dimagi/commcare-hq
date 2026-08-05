@@ -9,9 +9,13 @@ from couchforms.const import TAG_FORM, TAG_META
 
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.repeater_helpers import RepeaterResponse
-from corehq.motech.repeaters.models import OptionValue, CaseRepeater
+from corehq.motech.repeaters.models import (
+    CaseRepeater,
+    OptionValue,
+    get_form_payload_doc,
+)
 from corehq.motech.repeaters.repeater_generators import (
     FormDictPayloadGenerator,
 )
@@ -48,7 +52,7 @@ class FHIRRepeater(CaseRepeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
+        return get_form_payload_doc(repeat_record)
 
     @property
     def form_class_name(self):
