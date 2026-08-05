@@ -166,7 +166,7 @@ class OpenaiTranslator(LLMTranslator):
         return ["gpt-4o-mini", "gpt-4o", "gpt-4", "gpt-4.1"]
 
     def __init__(self, api_key, model, lang, translation_format, backup_model=''):
-        super().__init__(api_key, model, lang, translation_format)
+        super().__init__(api_key, model, lang, translation_format, backup_model=backup_model)
         try:
             import openai
             self.openai = openai
