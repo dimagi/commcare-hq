@@ -91,6 +91,7 @@ from jsonfield import JSONField
 from memoized import memoized
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
+from botocore.exceptions import NoCredentialsError
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
 from couchforms.const import DEVICE_LOG_XMLNS
@@ -1225,7 +1226,7 @@ class RepeatRecordManager(models.Manager):
             where &= models.Q(state=state)
         return paginate_query(db, self.model, where, query_size=chunk_size)
 
-    def page(self, domain, skip, limit, repeater_id=None, state=None):
+    def page(self, domain, skip, limit, repeater_id=None, states=None):
         """Get a page of repeat records
 
         WARNING this is inefficient for large skip values.
@@ -1233,8 +1234,8 @@ class RepeatRecordManager(models.Manager):
         queryset = self.filter(domain=domain)
         if repeater_id:
             queryset = queryset.filter(repeater__id=repeater_id)
-        if state is not None:
-            queryset = queryset.filter(state=state)
+        if states:
+            queryset = queryset.filter(state__in=states)
         return (queryset.order_by('-registered_at')[skip:skip + limit]
                 .select_related('repeater')
                 .prefetch_related('attempt_set'))
@@ -1260,12 +1261,12 @@ class RepeatRecordManager(models.Manager):
     def get_domains_with_records(self):
         return self.order_by().values_list("domain", flat=True).distinct()
 
-    def get_repeat_record_ids(self, domain, repeater_id=None, state=None, payload_id=None):
+    def get_repeat_record_ids(self, domain, repeater_id=None, states=None, payload_id=None):
         where = models.Q(domain=domain)
         if repeater_id:
             where &= models.Q(repeater__id=repeater_id)
-        if state:
-            where &= models.Q(state=state)
+        if states:
+            where &= models.Q(state__in=states)
         if payload_id:
             where &= models.Q(payload_id=payload_id)
 
@@ -1486,7 +1487,7 @@ class RepeatRecord(models.Model):
         if force_send or not self.succeeded:
             try:
                 self.repeater.fire_for_record(self, timing_context=timing_context)
-            except OSError as e:
+            except (NoCredentialsError, OSError) as e:
                 self.handle_exception(str(e))
                 raise
             except Exception as e:
@@ -1576,6 +1577,11 @@ class RepeatRecord(models.Model):
         return self.add_payload_rejected_attempt(message, traceback_str)
 
     def handle_generate_payload_error(self, message, traceback_str=''):
+        notify_exception(
+            None,
+            f'Error generating payload: {message}',
+            details={'domain': self.domain},
+        )
         log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
         return self.add_error_generating_payload_attempt(message, traceback_str)
 

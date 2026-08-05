@@ -20296,13 +20296,11 @@ msgstr "تم إلغاء أرشفة {form} بنجاح"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-#| msgid "Could not archive {form}: {error}"
 msgid "Could not archive {form}"
 msgstr "تعذر أرشفة {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-#| msgid "Could not archive {form}: {error}"
 msgid "Could not unarchive {form}"
 msgstr "تعذر إلغاء أرشفة {form}"
 
