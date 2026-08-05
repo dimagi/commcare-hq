@@ -5,6 +5,8 @@ updates:
   schedule:
     interval: daily
     time: "10:00"
+  cooldown:
+    default-days: 7
   open-pull-requests-limit: 7
   labels:
   - product/invisible
@@ -21,6 +23,8 @@ updates:
   schedule:
     interval: daily
     time: "10:00"
+  cooldown:
+    default-days: 7
   open-pull-requests-limit: 5
   labels:
   - product/invisible
@@ -37,5 +41,7 @@ updates:
   directory: "/"
   schedule:
     interval: weekly
+  cooldown:
+    default-days: 7
   labels:
   - product/invisible
