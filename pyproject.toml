@@ -19,7 +19,7 @@ dependencies = [
     "boto3",
     "celery[redis]",
     "CommcareTranslationChecker>=0.9.7",
-    "cryptography>=48.0.1",
+    "cryptography>=50.0.0",
     "csiphash",
     "datadog",
     "ddtrace>=4.8.2",
