@@ -7,8 +7,10 @@ from django.test import override_settings
 from corehq.apps.translations.integrations.llm import (
     LLMTranslatorError,
     OpenaiTranslator,
+    SingleStringFormat,
     get_llm_translator,
     language_name,
+    translate_string,
 )
 
 
@@ -43,6 +45,27 @@ def test_get_llm_translator_unknown_provider():
 def test_get_llm_translator_missing_api_key():
     with pytest.raises(LLMTranslatorError):
         get_llm_translator('hin', None)
+
+
+def test_single_string_format_round_trip():
+    fmt = SingleStringFormat()
+    assert fmt.format_input("Hello <output value=\"/data/name\"/>") == (
+        '{"0": "Hello <output value=\\"/data/name\\"/>"}')
+    assert fmt.parse_output('{"0": "Bonjour"}') == "Bonjour"
+    assert fmt.parse_output('not json') == ""
+    assert fmt.parse_output('{"1": "wrong key"}') == ""
+
+
+def test_translate_string_calls_translator():
+    fake_translator = MagicMock()
+    fake_translator.translate.return_value = "नमस्ते"
+    with patch(
+        'corehq.apps.translations.integrations.llm.get_llm_translator',
+        return_value=fake_translator,
+    ) as factory:
+        assert translate_string("Hello", "hin") == "नमस्ते"
+    factory.assert_called_once()
+    fake_translator.translate.assert_called_once_with("Hello")
 
 
 def test_openai_payload_uses_json_schema_mode():
