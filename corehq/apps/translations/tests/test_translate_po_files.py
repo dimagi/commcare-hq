@@ -61,13 +61,9 @@ def test_llm_translator_base_prompt():
         translation_format=translation_format
     )
 
-    with patch(
-        'corehq.apps.translations.integrations.llm.langcode_to_langname_map'
-    ) as mock_lang_map:
-        mock_lang_map.return_value = {"fra": "French"}
-        prompt = translator.base_prompt()
-        assert "professional translator" in prompt
-        assert "French" in prompt
+    prompt = translator.base_prompt()
+    assert "professional translator" in prompt
+    assert "French" in prompt
 
 
 def test_llm_translator_base_prompt_with_unsupported_lang():
@@ -79,13 +75,9 @@ def test_llm_translator_base_prompt_with_unsupported_lang():
         translation_format=translation_format
     )
 
-    with patch(
-        'corehq.apps.translations.integrations.llm.langcode_to_langname_map'
-    ) as mock_lang_map:
-        mock_lang_map.return_value = {"fra": "French"}
-        prompt = translator.base_prompt()
-        assert "professional translator" in prompt
-        assert "some_lang_code" in prompt
+    prompt = translator.base_prompt()
+    assert "professional translator" in prompt
+    assert "some_lang_code" in prompt
 
 
 def test_openai_translator_supported_models():

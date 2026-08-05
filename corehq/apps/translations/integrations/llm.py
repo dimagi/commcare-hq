@@ -8,11 +8,15 @@ providers are interchangeable behind ``LLMTranslator``.
 import abc
 import random
 
-from django.conf import settings
-
 import gevent
 import requests
-from memoized import memoized
+
+from langcodes import get_name as _langcodes_get_name
+
+
+def language_name(lang_code):
+    """Human-readable name for an HQ app language code (2- or 3-letter)."""
+    return _langcodes_get_name(lang_code) or lang_code
 
 
 def retry_with_exponential_backoff(
@@ -60,15 +64,6 @@ def retry_with_exponential_backoff(
     return decorator
 
 
-@memoized
-def langcode_to_langname_map():
-    langs = settings.LANGUAGES
-    lang_name_map = {}
-    for lang_code, lang_name in langs:
-        lang_name_map[lang_code] = lang_name
-    return lang_name_map
-
-
 class LLMTranslator(abc.ABC):
     """
     Abstract class for different LLM translators. This class can be extended to support different LLM clients.
@@ -91,8 +86,7 @@ class LLMTranslator(abc.ABC):
         self.translation_format = translation_format
 
     def base_prompt(self):
-        lang_map = langcode_to_langname_map()
-        lang_name = lang_map.get(self.lang, self.lang)
+        lang_name = language_name(self.lang)
         base_prompt = f"""You are a professional translator. Translate the following texts to {lang_name}.
         Keep the structure and formatting of the original text."""
         return base_prompt
