@@ -361,7 +361,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('app_manager', 'GlobalAppConfig', 'domain'),
     ModelDeletion('app_manager', 'ApplicationReleaseLog', 'domain'),
     ModelDeletion('app_manager', 'CredentialApplication', 'domain'),
-    ModelDeletion('app_manager', 'PublicWebform', 'domain'),
     ModelDeletion('case_importer', 'CaseUploadRecord', 'domain', [
         'CaseUploadFileMeta', 'CaseUploadFormRecord'
     ]),
@@ -451,6 +450,7 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('ota', _delete_demo_user_restores, ['DemoUserRestore']),
     ModelDeletion('phonelog', 'ForceCloseEntry', 'domain'),
     ModelDeletion('phonelog', 'UserErrorEntry', 'domain'),
+    ModelDeletion('public_webforms', 'PublicWebform', 'domain'),
     ModelDeletion('registration', 'RegistrationRequest', 'domain'),
     ModelDeletion('reminders', 'EmailUsage', 'domain'),
     ModelDeletion('registry', 'DataRegistry', 'domain', [

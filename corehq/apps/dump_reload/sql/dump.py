@@ -221,9 +221,6 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('app_manager.ApplicationReleaseLog', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.ResourceOverride', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.CredentialApplication', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('app_manager.PublicWebform', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('app_manager.PublicFormSession', SimpleFilter('public_webform__domain'),
-                                 pagination_key=('public_webform_id', 'pk')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFileMeta', SimpleFilter('caseuploadrecord__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFormRecord', SimpleFilter('case_upload_record__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
@@ -267,6 +264,9 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('dhis2.SQLDataSetMap', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('dhis2.SQLDataValueMap', SimpleFilter('dataset_map__domain')),
     FilteredModelIteratorBuilder('export.DeIdHash', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('public_webforms.PublicWebform', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('public_webforms.PublicFormSession', SimpleFilter('public_webform__domain'),
+                                 pagination_key=('public_webform_id', 'pk')),
 ]]
 
 

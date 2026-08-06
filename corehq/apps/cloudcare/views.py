@@ -45,7 +45,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_doc,
 )
-from corehq.apps.app_manager.models import PublicFormUser
 from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
     WEB_APPS_ENVIRONMENT,
@@ -79,6 +78,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
+from corehq.apps.public_webforms.models import PublicFormUser
 from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import get_complete_username

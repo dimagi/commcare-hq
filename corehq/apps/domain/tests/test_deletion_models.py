@@ -45,7 +45,6 @@ IGNORE_APPS = {
 IGNORE_MODELS = {
     'api.ApiUser',
     'app_manager.ExchangeApplication',
-    'app_manager.PublicFormSession',  # handled by cascading delete of PublicWebform
     'auth.Group',
     'auth.Permission',
     'blobs.BlobMeta',
@@ -61,6 +60,7 @@ IGNORE_MODELS = {
     'fixtures.UserLookupTableStatus',
     'fixtures.LookupTableRow',          # handled by cascading delete
     'fixtures.LookupTableRowOwner',     # handled by cascading delete
+    'public_webform.PublicFormSession',  # handled by cascading delete of PublicWebform
     'registration.AsyncSignupRequest',
     'registration.SelfSignupWorkflow',
     'repeaters.RepeatRecord',         # handled by cascading delete
