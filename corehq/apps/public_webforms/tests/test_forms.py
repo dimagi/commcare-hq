@@ -6,6 +6,8 @@ import pytest
 import pytz
 from unmagic import use
 
+from django.db import DatabaseError
+
 from corehq.apps.public_webforms import forms
 from corehq.apps.public_webforms.models import PublicWebformType
 
@@ -105,6 +107,26 @@ def _create_webform(**post_data):
         return_value=('build-1', 'endpoint-1'),
     ):
         return form.create_public_webform()
+
+
+def test_create_deletes_the_generated_build_if_the_webform_is_not_saved():
+    """Otherwise the build is left behind with nothing referencing it."""
+    form = _form(_post_data())
+    assert form.is_valid(), form.errors
+    with (
+        patch.object(
+            forms, 'create_public_webform_endpoint',
+            return_value=('build-1', 'endpoint-1'),
+        ),
+        patch.object(
+            forms.PublicWebform.objects, 'create', side_effect=DatabaseError,
+        ),
+        patch.object(forms, 'delete_public_webform_build') as delete_build,
+    ):
+        with pytest.raises(DatabaseError):
+            form.create_public_webform()
+
+    delete_build.assert_called_once_with(DOMAIN, 'build-1')
 
 
 @use('db')

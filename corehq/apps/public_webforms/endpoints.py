@@ -11,7 +11,7 @@ build lineage (version history, latest build, releases, revert).
 from copy import deepcopy
 from uuid import uuid4
 
-from corehq.apps.app_manager.dbaccessors import get_latest_released_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
 
 BUILD_COMMENT = "Automatically created for a public webform"
 STRIPPED_BUILD_KEYS = (
@@ -41,6 +41,13 @@ def create_public_webform_endpoint(domain, app_id, form_unique_id):
     new_build.create_build_files()
     new_build.save()
     return new_build._id, endpoint_id
+
+
+def delete_public_webform_build(domain, app_build_id):
+    """Delete a build that was generated explicitly for a public webform."""
+    build = get_app(domain, app_build_id)
+    build.delete_app()
+    build.save(increment_version=False)
 
 
 def _public_webform_copy_of(app_id):
