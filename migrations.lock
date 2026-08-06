@@ -189,6 +189,7 @@ app_manager
  0030_credentialapplication
  0031_delete_latestenabledbuildprofiles
  0032_publicwebform_publicformsession
+ 0033_delete_publicformsession_delete_publicwebform
 auditcare
  0001_sqlmodels
  0002_uniques
