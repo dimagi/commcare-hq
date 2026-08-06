@@ -10,6 +10,7 @@ from corehq.apps.translations.app_translations.ai_translator import (
     AppTranslationFormat,
     _string_key,
     is_valid_app_translation,
+    run_app_translation,
 )
 from corehq.apps.translations.const import MODE_FILL_MISSING, MODE_RETRANSLATE
 
@@ -240,3 +241,60 @@ class TestSaveOutput(TestCase):
         assert 'What is the name?' not in remaining
         # ... and the row we did NOT send kept its manual value
         assert app.get_module(0).name['fra'] == 'existing manual translation'
+
+
+class _FakeTranslator:
+    """Translates every batch by prefixing 'FR:', failing when asked."""
+    model = 'fake-model'
+
+    def __init__(self, fmt, fail_batches=()):
+        self.fmt = fmt
+        self.fail_batches = set(fail_batches)
+        self.calls = 0
+
+    def translate(self, batch):
+        self.calls += 1
+        if self.calls in self.fail_batches:
+            raise Exception('LLM exploded')
+        return self.fmt.parse_output(json.dumps(
+            {uid: f'FR:{unit.source_text}' for uid, unit in batch.items()}))
+
+
+class TestRunAppTranslation(TestCase):
+
+    def test_full_success(self):
+        app = _make_app()
+        fmt = AppTranslationFormat(app, 'fra')
+        summary = run_app_translation(
+            app, 'fra', MODE_FILL_MISSING, translation_format=fmt,
+            translator=_FakeTranslator(fmt), chunk_size=2)
+        assert summary == {
+            'total': 5, 'translated': 5, 'skipped': 0, 'failed': 0, 'errors': []}
+        assert app.get_module(0).name['fra'] == 'FR:register module'
+
+    def test_partial_apply_on_batch_failure(self):
+        app = _make_app()
+        fmt = AppTranslationFormat(app, 'fra')
+        summary = run_app_translation(
+            app, 'fra', MODE_FILL_MISSING, translation_format=fmt,
+            translator=_FakeTranslator(fmt, fail_batches={1}), chunk_size=2)
+        # first batch of 2 failed; remaining 3 strings applied
+        assert summary['total'] == 5
+        assert summary['translated'] == 3
+        assert summary['failed'] == 2
+        assert summary['skipped'] == 0
+
+    def test_nothing_to_translate(self):
+        app = _make_app()
+        # first run translates everything ...
+        fmt = AppTranslationFormat(app, 'fra')
+        run_app_translation(app, 'fra', MODE_FILL_MISSING, translation_format=fmt,
+                            translator=_FakeTranslator(fmt), chunk_size=50)
+        # ... so a fill_missing re-run finds nothing and makes no LLM calls
+        fmt2 = AppTranslationFormat(app, 'fra')
+        translator2 = _FakeTranslator(fmt2)
+        summary = run_app_translation(app, 'fra', MODE_FILL_MISSING,
+                                      translation_format=fmt2, translator=translator2)
+        assert summary['total'] == 0
+        assert summary['translated'] == 0
+        assert translator2.calls == 0

@@ -25,6 +25,44 @@ MODULES_AND_FORMS_KEY_PREFIX = 'menus_and_forms'
 MAX_STRING_KEY_LENGTH = 512  # AITranslation.string_key max_length
 
 
+def run_app_translation(app, target_lang, mode, provider=None, model=None,
+                        chunk_size=None, translation_format=None,
+                        translator=None, translator_factory=None,
+                        progress_callback=None):
+    """Batches that raise are recorded as failed and the run continues;
+    whatever succeeded is applied in one write at the end.
+    ``progress_callback(batches_done, batches_total)`` is optional.
+    """
+    from corehq.apps.translations.integrations.llm import get_llm_translator
+
+    fmt = translation_format or AppTranslationFormat(app, target_lang, mode=mode)
+    units = fmt.load_input()
+    if not units:
+        return {'total': 0, 'translated': 0, 'skipped': 0, 'failed': 0, 'errors': []}
+    if translator is None:
+        factory = translator_factory or get_llm_translator
+        translator = factory(target_lang, fmt,
+                             provider=provider or 'openai', model=model)
+    batches = fmt.create_batches(chunk_size=chunk_size)
+    for i, batch in enumerate(batches):
+        try:
+            translator.translate(batch)
+        except Exception:
+            pass  # failed units are simply absent from fmt.results
+        if progress_callback:
+            progress_callback(i + 1, len(batches))
+    errors = fmt.save_output()
+    translated = len(fmt.results)
+    skipped = len(fmt.skipped_ids)
+    return {
+        'total': len(units),
+        'translated': translated,
+        'skipped': skipped,
+        'failed': len(units) - translated - skipped,
+        'errors': errors,
+    }
+
+
 class AppTranslationFormat(TranslationFormat):
     """Adapts bulk app translation sheets to the LLM batch protocol.
 
