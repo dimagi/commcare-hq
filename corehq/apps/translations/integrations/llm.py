@@ -120,12 +120,10 @@ class LLMTranslator(abc.ABC):
 
     @abc.abstractmethod
     def _call_llm(self, system_prompt, user_message):
-        """Call LLM using the client library"""
         pass
 
     @abc.abstractmethod
     def _call_llm_http(self, system_prompt, user_message):
-        """Call LLM using direct HTTP requests without client libraries"""
         pass
 
 
