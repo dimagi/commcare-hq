@@ -1,13 +1,12 @@
 from functools import wraps
 
-from corehq.apps.app_manager.const import (
-    PUBLIC_FORM_SESSION_COOKIE_NAME,
-    PUBLIC_FORM_SESSION_HEADER,
-)
 from corehq.apps.public_webforms.models import (
     PublicFormSession,
     PublicFormUser,
 )
+
+PUBLIC_FORM_SESSION_COOKIE_NAME = 'public_form_session_key'
+PUBLIC_FORM_SESSION_HEADER = 'CommCare-Public-Session'
 
 
 def allow_public_form_session(view_func):
@@ -18,6 +17,7 @@ def allow_public_form_session(view_func):
     whose key resolves to a valid, usable PublicFormSession, sets
     ``request.couch_user`` to a PublicFormUser proxy for that session.
     """
+
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         session = _get_public_form_session(request)
