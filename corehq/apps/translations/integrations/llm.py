@@ -7,6 +7,9 @@ providers are interchangeable behind ``LLMTranslator``.
 """
 import abc
 import random
+from dataclasses import dataclass
+
+from django.conf import settings
 
 import gevent
 import requests
@@ -14,9 +17,38 @@ import requests
 from langcodes import get_name as _langcodes_get_name
 
 
+class LLMTranslatorError(Exception):
+    pass
+
+
+@dataclass(frozen=True)
+class ProviderSpec:
+    translator_class: type
+    default_model: str
+    backup_model: str = ''
+
+
 def language_name(lang_code):
     """Human-readable name for an HQ app language code (2- or 3-letter)."""
     return _langcodes_get_name(lang_code) or lang_code
+
+
+def get_llm_translator(lang, translation_format, provider='openai', model=None, api_key=None):
+    spec = PROVIDERS.get(provider)
+    if spec is None:
+        raise LLMTranslatorError(f"Unsupported LLM provider: {provider}")
+    api_key = api_key or getattr(settings, 'AI_TRANSLATION_API_KEYS', {}).get(provider)
+    if not api_key:
+        raise LLMTranslatorError(
+            f"No API key configured for provider '{provider}' "
+            "(settings.AI_TRANSLATION_API_KEYS)")
+    return spec.translator_class(
+        api_key=api_key,
+        model=model or spec.default_model,
+        lang=lang,
+        translation_format=translation_format,
+        backup_model=spec.backup_model,
+    )
 
 
 def retry_with_exponential_backoff(
@@ -228,3 +260,12 @@ class OpenaiTranslator(LLMTranslator):
             return result["choices"][0]["message"]["content"]
         except Exception as e:
             raise Exception("Error making HTTP request to OpenAI API") from e
+
+
+PROVIDERS = {
+    'openai': ProviderSpec(
+        translator_class=OpenaiTranslator,
+        default_model='gpt-4.1',
+        backup_model='gpt-4o',
+    ),
+}

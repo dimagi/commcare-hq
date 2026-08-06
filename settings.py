@@ -812,6 +812,13 @@ USERFLOW_TOKEN = ''
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 
+# API keys for AI app translations, per provider. Deliberately separate
+# from OPENAI_API_KEY, which is only used by the PO-file translation
+# pipeline in GitHub Actions.
+AI_TRANSLATION_API_KEYS = {
+    'openai': '',
+}
+
 # import local settings if we find them
 LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
