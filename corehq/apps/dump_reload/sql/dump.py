@@ -267,6 +267,9 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('dhis2.SQLDataSetMap', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('dhis2.SQLDataValueMap', SimpleFilter('dataset_map__domain')),
     FilteredModelIteratorBuilder('export.DeIdHash', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('public_webforms.PublicWebform', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('public_webforms.PublicFormSession', SimpleFilter('public_webform__domain'),
+                                 pagination_key=('public_webform_id', 'pk')),
 ]]
 
 
