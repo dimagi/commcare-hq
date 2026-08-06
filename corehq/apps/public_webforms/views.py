@@ -7,6 +7,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.apps.public_webforms.forms import CreatePublicWebformForm
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 
@@ -39,3 +40,17 @@ class CreatePublicWebformView(BasePublicWebformsView):
     urlname = 'create_public_webform'
     template_name = 'public_webforms/create.html'
     page_title = _("New Public Webform")
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'form': self.form,
+        })
+        return context
+
+    @property
+    @memoized
+    def form(self):
+        return CreatePublicWebformForm(
+            self.domain, self.domain_object.get_default_timezone())
