@@ -57,7 +57,7 @@ The API response includes an ``objects`` field, which is a list of configuration
       "objects": [
         {
           "id": "app uuid",
-          "build_on": null,
+          "built_on": null,
           "build_comment": null,
           "is_released": false,
           "version": 16,
@@ -94,7 +94,7 @@ The API response includes an ``objects`` field, which is a list of configuration
               "versions": [
                 {
                   "id": "app version uuid",
-                  "build_on": "2017-01-30T19:53:20",
+                  "built_on": "2017-01-30T19:53:20",
                   "build_comment": "",
                   "is_released": true,
                   "version": 16

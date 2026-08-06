@@ -390,7 +390,7 @@ class TestHardDeleteExpiredForms(TestCase):
         with override_settings(DATA_RETENTION_WINDOW=7):
             count = XFormInstance.objects.hard_delete_expired_forms(commit=True)
 
-        assert count == {'form_processor.XFormInstance': 1}
+        assert count == 1
         assert XFormInstance.objects.partitioned_get(valid_form.form_id)
         assert XFormInstance.objects.partitioned_get(soft_deleted_form.form_id)
         with pytest.raises(XFormInstance.DoesNotExist):
@@ -405,7 +405,7 @@ class TestHardDeleteExpiredForms(TestCase):
         with override_settings(DATA_RETENTION_WINDOW=7):
             count = XFormInstance.objects.hard_delete_expired_forms()
 
-        assert count == {'form_processor.XFormInstance': 1}
+        assert count == 1
         assert XFormInstance.objects.partitioned_get(valid_form.form_id)
         assert XFormInstance.objects.partitioned_get(soft_deleted_form.form_id)
         assert XFormInstance.objects.partitioned_get(expired_form.form_id)
@@ -423,8 +423,8 @@ class TestHardDeleteExpiredForms(TestCase):
             dry_run_counts = XFormInstance.objects.hard_delete_expired_forms()
             actual_counts = XFormInstance.objects.hard_delete_expired_forms(commit=True)
 
-        assert dry_run_counts == {'form_processor.XFormInstance': 5}
-        assert actual_counts == {'form_processor.XFormInstance': 5}
+        assert dry_run_counts == 5
+        assert actual_counts == 5
 
 
 @sharded
@@ -479,10 +479,10 @@ class TestHardDeleteForms(TestCase):
         assert count == 1
 
     def test_sentinel_value_deletes_across_domains_and_creates_tombstones(self):
-        from corehq.apps.cleanup.tasks import SENTINEL_DOMAIN
+        from corehq.apps.cleanup.tasks import ALL_DOMAINS_SENTINEL
         form = create_form_for_test(DOMAIN)
         other_form = create_form_for_test('other_domain')
-        deleted = XFormInstance.objects.hard_delete_forms(SENTINEL_DOMAIN, [form.form_id, other_form.form_id])
+        deleted = XFormInstance.objects.hard_delete_forms(ALL_DOMAINS_SENTINEL, [form.form_id, other_form.form_id])
         assert deleted == 2
         for f in [form, other_form]:
             # should not raise errors

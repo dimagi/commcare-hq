@@ -20602,13 +20602,11 @@ msgstr "Umefanikiwa kuondoa kwenye kumbukumbu {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-#| msgid "Could not archive {form}: {error}"
 msgid "Could not archive {form}"
 msgstr "Imeshindikana kuhifadhi {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-#| msgid "Could not archive {form}: {error}"
 msgid "Could not unarchive {form}"
 msgstr "Imeshindikana kufungua {form}"
 
@@ -24704,23 +24702,31 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#, python-format
+#| msgid ""
+#| "\n"
+#| "    For more information about CommCare software plans, visit\n"
+#| "    <a\n"
+#| "      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+#| "      target=\"_blank\"\n"
+#| "      >our help site</a\n"
+#| "    >.\n"
+#| "  "
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >our help site</a\n"
+"      >our pricing page</a\n"
 "    >.\n"
 "  "
 msgstr ""
 "\n"
 "    Kwa maelezo zaidi kuhusu mipango ya programu ya CommCare, tembelea\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >tovuti yetu ya msaada</a\n"
+"      >ukurasa wetu wa bei</a\n"
 "    >.\n"
 "  "
 
@@ -57917,8 +57923,9 @@ msgid "Delivery Attempts"
 msgstr "Majaribio ya Uwasilishaji"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "View Responses"
-msgstr "Tazama Majibu"
+#| msgid "Preview Data"
+msgid "Preview Payloads"
+msgstr "Onyesha Payloads"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -59324,6 +59331,9 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#~ msgid "View Responses"
+#~ msgstr "Tazama Majibu"
 
 #, python-brace-format
 #~ msgid "XForm {form_id} does not belong to domain {domain}"

@@ -48,6 +48,7 @@ from ..const import (
     MIN_RETRY_WAIT,
     State,
 )
+from ..exceptions import PayloadNotFoundError
 from ..models import (
     HTTP_STATUS_BACK_OFF,
     CaseRepeater,
@@ -720,6 +721,81 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             '(134340) Pluto',
             '(134340) Pluto I',
         ]
+
+
+class DeletedPayloadTest(BaseRepeaterTest):
+    domain = "deleted-payload"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.form_repeater = cls._make_repeater(FormRepeater, 'form_xml', 'form-url')
+        cls.case_repeater = cls._make_repeater(CaseRepeater, 'case_json', 'case-url')
+
+    def setUp(self):
+        super().setUp()
+        submit_form_locally(self.xform_xml, self.domain)
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
+        super().tearDown()
+
+    @classmethod
+    def _make_repeater(self, repeater_class, format, url):
+        connx = ConnectionSettings.objects.create(domain=self.domain, url=url)
+        repeater = repeater_class(
+            domain=self.domain,
+            connection_settings_id=connx.id,
+            format=format,
+        )
+        repeater.save()
+        return repeater
+
+    def _get_record(self, repeater, payload_id):
+        return RepeatRecord.objects.get(
+            domain=self.domain, repeater_id=repeater.id, payload_id=payload_id)
+
+    def test_payload_doc_returns_live_form(self):
+        record = self._get_record(self.form_repeater, self.instance_id)
+
+        form = self.form_repeater.payload_doc(record)
+
+        assert form.form_id == self.instance_id
+
+    def test_payload_doc_raises_for_soft_deleted_form(self):
+        XFormInstance.objects.soft_delete_forms(self.domain, [self.instance_id])
+        record = self._get_record(self.form_repeater, self.instance_id)
+
+        with pytest.raises(PayloadNotFoundError):
+            self.form_repeater.payload_doc(record)
+
+    def test_payload_doc_raises_for_missing_form(self):
+        record = self._get_record(self.form_repeater, self.instance_id)
+        XFormInstance.objects.hard_delete_forms(self.domain, [self.instance_id])
+
+        with pytest.raises(PayloadNotFoundError):
+            self.form_repeater.payload_doc(record)
+
+    def test_payload_doc_returns_live_case(self):
+        record = self._get_record(self.case_repeater, CASE_ID)
+
+        case = self.case_repeater.payload_doc(record)
+
+        assert case.case_id == CASE_ID
+
+    def test_payload_doc_raises_for_soft_deleted_case(self):
+        CommCareCase.objects.soft_delete_cases(self.domain, [CASE_ID])
+        record = self._get_record(self.case_repeater, CASE_ID)
+
+        with pytest.raises(PayloadNotFoundError):
+            self.case_repeater.payload_doc(record)
+
+    def test_payload_doc_raises_for_missing_case(self):
+        record = self._get_record(self.case_repeater, CASE_ID)
+        CommCareCase.objects.hard_delete_cases(self.domain, [CASE_ID])
+
+        with pytest.raises(PayloadNotFoundError):
+            self.case_repeater.payload_doc(record)
 
 
 class RepeaterFailureTest(BaseRepeaterTest):

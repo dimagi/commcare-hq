@@ -21400,16 +21400,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#, python-format
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-"
-"Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >our help site</a\n"
+"      >our pricing page</a\n"
 "    >.\n"
 "  "
 msgstr ""
@@ -50653,7 +50650,7 @@ msgid "Delivery Attempts"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "View Responses"
+msgid "Preview Payloads"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py

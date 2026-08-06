@@ -1,7 +1,7 @@
 Location API v2
 ===============
 
-V2 of the Location API updates the serilization used in v1 and adds the ability
+V2 of the Location API updates the serialization used in v1 and adds the ability
 to create and update locations, one at a time or in bulk.
 
 Data format
