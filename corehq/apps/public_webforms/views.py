@@ -33,3 +33,9 @@ class ManagePublicWebformsView(BasePublicWebformsView):
     urlname = 'manage_public_webforms'
     template_name = 'public_webforms/manage.html'
     page_title = _("Manage Public Webforms")
+
+
+class CreatePublicWebformView(BasePublicWebformsView):
+    urlname = 'create_public_webform'
+    template_name = 'public_webforms/create.html'
+    page_title = _("New Public Webform")

@@ -11,4 +11,14 @@
       revoke access at any time.
     {% endblocktrans %}
   </p>
+
+  <div class="mb-3">
+    <a
+      class="btn btn-primary icon-link"
+      href="{% url 'create_public_webform' domain %}"
+    >
+      <i class="fa fa-plus"></i>
+      {% trans "New Public Webform" %}
+    </a>
+  </div>
 {% endblock %}
