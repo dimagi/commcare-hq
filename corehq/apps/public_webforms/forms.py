@@ -16,7 +16,10 @@ from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapSwitchInput
-from corehq.apps.public_webforms.endpoints import create_public_webform_endpoint
+from corehq.apps.public_webforms.endpoints import (
+    create_public_webform_endpoint,
+    delete_public_webform_build,
+)
 from corehq.apps.public_webforms.form_choices import (
     get_public_webform_choices,
     get_public_webform_eligible_form,
@@ -161,16 +164,22 @@ class CreatePublicWebformForm(forms.Form):
         app_build_id, endpoint_id = create_public_webform_endpoint(
             self.domain, app_id, form_unique_id)
         link_choices = self.cleaned_data['link_choices']
-        return PublicWebform.objects.create(
-            domain=self.domain,
-            label=self.cleaned_data['label'],
-            app_id=app_id,
-            app_build_id=app_build_id,
-            form_unique_id=form_unique_id,
-            endpoint_id=endpoint_id,
-            session_type=self.cleaned_data['session_type'],
-            expires_at=self.cleaned_data['expires_at'],
-            allow_email='allow_email' in link_choices,
-            allow_sms='allow_sms' in link_choices,
-            is_disabled=not self.cleaned_data['open_to_requests'],
-        )
+        try:
+            return PublicWebform.objects.create(
+                domain=self.domain,
+                label=self.cleaned_data['label'],
+                app_id=app_id,
+                app_build_id=app_build_id,
+                form_unique_id=form_unique_id,
+                endpoint_id=endpoint_id,
+                session_type=self.cleaned_data['session_type'],
+                expires_at=self.cleaned_data['expires_at'],
+                allow_email='allow_email' in link_choices,
+                allow_sms='allow_sms' in link_choices,
+                is_disabled=not self.cleaned_data['open_to_requests'],
+            )
+        except Exception:
+            # The build is written to Couch and the webform to SQL; ensure we
+            # delete the build on webform create failure.
+            delete_public_webform_build(self.domain, app_build_id)
+            raise
