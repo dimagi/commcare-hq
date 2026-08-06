@@ -8,8 +8,8 @@ from django.views.decorators.http import require_POST
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
-from corehq.apps.app_manager.decorators import allow_public_form_session
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.public_webforms.decorators import allow_public_form_session
 from corehq.apps.public_webforms.models import PublicFormUser
 from corehq.apps.public_webforms.submissions import (
     consume_public_form_session,
