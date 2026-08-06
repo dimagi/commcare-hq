@@ -1,5 +1,5 @@
 import {
-    subtreeGroupHeight,
+    subtreeGroupDepth,
     cloneWithNewIds,
     normalizeRoot,
     removeChild,
@@ -9,24 +9,24 @@ const component = (extra = {}) => ({ type: "component", ...extra });
 const group = (type, children) => ({ type, children });
 
 describe("endpoint_tree", function () {
-    describe("subtreeGroupHeight", function () {
+    describe("subtreeGroupDepth", function () {
         it("is 0 for a component", function () {
-            assert.equal(subtreeGroupHeight(component()), 0);
+            assert.equal(subtreeGroupDepth(component()), 0);
         });
 
         it("is 1 for a group of only components", function () {
             assert.equal(
-                subtreeGroupHeight(group("all", [component(), component()])),
+                subtreeGroupDepth(group("all", [component(), component()])),
                 1,
             );
         });
 
         it("is 1 for an empty group", function () {
-            assert.equal(subtreeGroupHeight(group("any", [])), 1);
+            assert.equal(subtreeGroupDepth(group("any", [])), 1);
         });
 
         it("is 1 for a group with no children key", function () {
-            assert.equal(subtreeGroupHeight({ type: "all" }), 1);
+            assert.equal(subtreeGroupDepth({ type: "all" }), 1);
         });
 
         it("counts the deepest nested group", function () {
@@ -34,7 +34,7 @@ describe("endpoint_tree", function () {
                 component(),
                 group("any", [component()]),
             ]);
-            assert.equal(subtreeGroupHeight(tree), 2);
+            assert.equal(subtreeGroupDepth(tree), 2);
         });
 
         it("follows the deepest branch, not the first", function () {
@@ -42,7 +42,7 @@ describe("endpoint_tree", function () {
                 group("any", [component()]),
                 group("none", [group("all", [component()])]),
             ]);
-            assert.equal(subtreeGroupHeight(tree), 3);
+            assert.equal(subtreeGroupDepth(tree), 3);
         });
     });
 

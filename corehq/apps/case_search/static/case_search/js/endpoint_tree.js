@@ -1,11 +1,11 @@
 // Pure tree operations for the endpoint query builder. Kept free of Alpine and
 // page-data dependencies so they can be unit-tested directly.
 
-export function subtreeGroupHeight(node) {
+export function subtreeGroupDepth(node) {
     if (node.type === "component") {
         return 0;
     }
-    const heights = (node.children || []).map(subtreeGroupHeight);
+    const heights = (node.children || []).map(subtreeGroupDepth);
     return 1 + Math.max(0, ...heights);
 }
 

@@ -5,7 +5,7 @@ import "hqwebapp/js/alpinejs/directives/datepicker";
 import "hqwebapp/js/alpinejs/directives/select2";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import {
-    subtreeGroupHeight,
+    subtreeGroupDepth,
     cloneWithNewIds,
     normalizeRoot,
     removeChild,
@@ -145,7 +145,7 @@ Alpine.data("endpointForm", () => {
         canPasteInto(depth) {
             return (
                 !!this.copiedNode &&
-                subtreeGroupHeight(this.copiedNode) <= depth
+                subtreeGroupDepth(this.copiedNode) <= depth
             );
         },
 
