@@ -9,13 +9,13 @@ from django.views.decorators.http import require_POST
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.app_manager.decorators import allow_public_form_session
-from corehq.apps.app_manager.models import PublicFormUser
 from corehq.apps.app_manager.public_webform_submissions import (
     consume_public_form_session,
     public_form_session_already_submitted,
     validate_public_form_submission,
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.public_webforms.models import PublicFormUser
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.device_rate_limiter import device_rate_limiter, DEVICE_RATE_LIMIT_MESSAGE
 from corehq.apps.users.models import HqPermissions

@@ -2,7 +2,7 @@ from django.utils import timezone
 
 from casexml.apps.case.xform import get_case_updates
 
-from corehq.apps.app_manager.models import PublicFormSession, PublicWebformTypes
+from corehq.apps.public_webforms.models import PublicFormSession, PublicWebformType
 from corehq.apps.users.util import PUBLIC_USER_ID
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils.xform import extract_meta_user_id
@@ -24,12 +24,12 @@ def validate_public_form_submission(session, form_json):
     session_type = session.public_webform.session_type
     case_updates = get_case_updates(form_json)
 
-    if session_type == PublicWebformTypes.SURVEY:
+    if session_type == PublicWebformType.SURVEY:
         if case_updates:
             return "Survey public forms may not submit case data."
         return None
 
-    if session_type == PublicWebformTypes.REGISTRATION:
+    if session_type == PublicWebformType.REGISTRATION:
         return _validate_registration_case_updates(session, case_updates)
 
     return f"Unsupported public webform session type: {session_type}"

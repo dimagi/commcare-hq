@@ -11,8 +11,8 @@ from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 
 from corehq import toggles
-from corehq.apps.app_manager.models import PublicFormSession, PublicWebform
 from corehq.apps.domain.models import Domain
+from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.users.models import CommCareUser
 from corehq.util.hmac_request import get_hmac_digest
 from corehq.util.test_utils import flag_enabled, softer_assert

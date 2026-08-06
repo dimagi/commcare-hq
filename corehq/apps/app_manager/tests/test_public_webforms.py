@@ -12,7 +12,7 @@ from corehq.apps.app_manager.const import (
     PUBLIC_FORM_SESSION_HEADER,
 )
 from corehq.apps.app_manager.decorators import allow_public_form_session
-from corehq.apps.app_manager.models import (
+from corehq.apps.public_webforms.models import (
     OTARestorePublicFormUser,
     PublicFormSession,
     PublicFormUser,
