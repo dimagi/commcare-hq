@@ -2,6 +2,7 @@ from uuid import UUID, uuid4
 
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from casexml.apps.phone.models import OTARestoreUser
 
@@ -9,25 +10,26 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import PUBLIC_USER_ID
 
 
-class PublicWebformTypes(models.TextChoices):
-    # inferred based on the form and not user-defined; no need to translate
-    REGISTRATION = 'registration'
-    SURVEY = 'survey'
+class PublicWebformType(models.TextChoices):
+    REGISTRATION = ('registration', _("Registration"))
+    SURVEY = ('survey', _("Survey"))
 
 
 class PublicWebform(models.Model):
 
+    public_id = models.UUIDField(default=uuid4, unique=True)
+    label = models.CharField()
     domain = models.CharField()
     app_id = models.CharField()
     app_build_id = models.CharField()
     form_unique_id = models.CharField()
     endpoint_id = models.CharField()
-    session_type = models.CharField(choices=PublicWebformTypes)
+    session_type = models.CharField(choices=PublicWebformType)
     allow_sms = models.BooleanField()
     allow_email = models.BooleanField()
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
-    is_disabled = models.BooleanField(default=False)
+    is_disabled = models.BooleanField(default=True)
 
     class Meta:
         indexes = [models.Index(fields=['domain', 'id'])]
