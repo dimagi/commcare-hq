@@ -1,24 +1,31 @@
 from datetime import datetime
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 import pytest
 import pytz
 
-from corehq.apps.public_webforms.forms import CreatePublicWebformForm
+from corehq.apps.public_webforms import forms
+from corehq.apps.public_webforms.models import PublicWebformType
 
 DOMAIN = 'public-webform-forms'
 TIMEZONE = pytz.timezone('America/New_York')
+SURVEY_FORM = SimpleNamespace(is_registration_form=lambda: False)
+REGISTRATION_FORM = SimpleNamespace(is_registration_form=lambda: True)
 
 
-def _form(data=None, has_sms_privilege=False):
-    """Patches the privilege check, which is the form's only database read."""
+def _form(data=None, has_sms_privilege=False, eligible_form=SURVEY_FORM):
+    """Stubs the reads that go to the database or to released builds, which the
+    accounting and form_choices tests cover."""
     args = [data] if data is not None else []
-    with patch(
-        'corehq.apps.public_webforms.forms.domain_has_privilege',
-        return_value=has_sms_privilege,
+    with patch.multiple(
+        forms,
+        domain_has_privilege=Mock(return_value=has_sms_privilege),
+        get_public_webform_choices=Mock(return_value=[]),
+        get_public_webform_eligible_form=Mock(return_value=eligible_form),
     ):
-        form = CreatePublicWebformForm(DOMAIN, TIMEZONE, *args)
-    form.is_valid()
+        form = forms.CreatePublicWebformForm(DOMAIN, TIMEZONE, *args)
+        form.is_valid()
     return form
 
 
@@ -27,6 +34,8 @@ def _post_data(**kwargs):
         'label': 'Antenatal visit',
         'expires_at': '2026-09-01 17:00:00',
         'link_choices': ['allow_email'],
+        'app_id': 'app-1',
+        'form_unique_id': 'form-1',
         **kwargs,
     }
 
@@ -59,3 +68,27 @@ def test_sms_is_offered_only_with_the_privilege(has_sms_privilege):
     rendered = dict(form.fields['link_choices'].widget.choices)
     assert ('allow_sms' in rendered) == has_sms_privilege
     assert 'allow_email' in rendered
+
+
+@pytest.mark.parametrize('eligible_form, expected_type', [
+    (SURVEY_FORM, PublicWebformType.SURVEY),
+    (REGISTRATION_FORM, PublicWebformType.REGISTRATION),
+])
+def test_session_type_comes_from_the_selected_form(eligible_form, expected_type):
+    form = _form(_post_data(), eligible_form=eligible_form)
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data['session_type'] == expected_type
+
+
+@pytest.mark.parametrize('missing', ['app_id', 'form_unique_id'])
+def test_an_application_and_form_are_required(missing):
+    form = _form(_post_data(**{missing: ''}))
+    assert not form.is_valid()
+    assert form.non_field_errors() == ["Please select an application, menu, and form."]
+
+
+def test_an_ineligible_form_is_rejected():
+    """The selection is posted from hidden inputs, so it is re-checked."""
+    form = _form(_post_data(), eligible_form=None)
+    assert not form.is_valid()
+    assert form.non_field_errors() == ["The selected form can't be used for a public webform."]

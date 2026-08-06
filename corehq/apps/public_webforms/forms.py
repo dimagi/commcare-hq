@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timedelta
 
 from django import forms
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -15,6 +16,11 @@ from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapSwitchInput
+from corehq.apps.public_webforms.form_choices import (
+    get_public_webform_choices,
+    get_public_webform_eligible_form,
+    get_public_webform_type,
+)
 from corehq.util.timezones.conversions import ServerTime, UserTime
 
 
@@ -87,6 +93,10 @@ class CreatePublicWebformForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("New Public Webform"),
+                crispy.HTML(render_to_string(
+                    'public_webforms/partials/create_form_choices.html',
+                    context={'form_choices': json.dumps(get_public_webform_choices(self.domain))},
+                )),
                 crispy.Field('label'),
                 crispy.Div(
                     twbscrispy.AppendedText(
@@ -121,6 +131,22 @@ class CreatePublicWebformForm(forms.Form):
                 )
             ),
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        app_id = cleaned_data.get('app_id')
+        form_unique_id = cleaned_data.get('form_unique_id')
+        if not app_id or not form_unique_id:
+            raise forms.ValidationError(_("Please select an application, menu, and form."))
+
+        form = get_public_webform_eligible_form(self.domain, app_id, form_unique_id)
+        if not form:
+            raise forms.ValidationError(_(
+                "The selected form can't be used for a public webform."
+            ))
+
+        cleaned_data['session_type'] = get_public_webform_type(form).value
+        return cleaned_data
 
     def clean_expires_at(self):
         # The datepicker submits wall-clock time in the project's timezone; store UTC.
