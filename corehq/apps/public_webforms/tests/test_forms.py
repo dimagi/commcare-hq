@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 import pytz
+from unmagic import use
 
 from corehq.apps.public_webforms import forms
 from corehq.apps.public_webforms.models import PublicWebformType
@@ -92,3 +93,43 @@ def test_an_ineligible_form_is_rejected():
     form = _form(_post_data(), eligible_form=None)
     assert not form.is_valid()
     assert form.non_field_errors() == ["The selected form can't be used for a public webform."]
+
+
+def _create_webform(**post_data):
+    """Stubs generating the endpoint, which builds a copy of a released app.
+    SMS is granted so delivery options can be exercised independently of it."""
+    form = _form(_post_data(**post_data), has_sms_privilege=True)
+    assert form.is_valid(), form.errors
+    with patch.object(
+        forms, 'create_public_webform_endpoint',
+        return_value=('build-1', 'endpoint-1'),
+    ):
+        return form.create_public_webform()
+
+
+@use('db')
+def test_create_stores_the_selection_and_generated_endpoint():
+    webform = _create_webform()
+
+    assert webform.domain == DOMAIN
+    assert webform.label == 'Antenatal visit'
+    assert webform.app_id == 'app-1'
+    assert webform.form_unique_id == 'form-1'
+    assert webform.app_build_id == 'build-1'
+    assert webform.endpoint_id == 'endpoint-1'
+    assert webform.session_type == PublicWebformType.SURVEY
+    assert webform.expires_at == datetime(2026, 9, 1, 21, 0)
+    assert webform.is_disabled
+
+
+@use('db')
+@pytest.mark.parametrize('link_choices, allow_email, allow_sms', [
+    (['allow_email'], True, False),
+    (['allow_sms'], False, True),
+    (['allow_email', 'allow_sms'], True, True),
+])
+def test_create_maps_link_choices_to_delivery_options(link_choices, allow_email, allow_sms):
+    webform = _create_webform(link_choices=link_choices)
+
+    assert webform.allow_email == allow_email
+    assert webform.allow_sms == allow_sms

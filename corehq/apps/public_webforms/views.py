@@ -1,3 +1,5 @@
+from django.contrib import messages
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
@@ -41,6 +43,14 @@ class CreatePublicWebformView(BasePublicWebformsView):
     template_name = 'public_webforms/create.html'
     page_title = _("New Public Webform")
 
+    def post(self, request, *args, **kwargs):
+        if not self.form.is_valid():
+            return self.get(request, *args, **kwargs)
+        self.form.create_public_webform()
+        messages.success(request, _("Public webform created."))
+        return HttpResponseRedirect(
+            reverse(ManagePublicWebformsView.urlname, args=[self.domain]))
+
     @property
     def page_context(self):
         context = super().page_context
@@ -52,5 +62,6 @@ class CreatePublicWebformView(BasePublicWebformsView):
     @property
     @memoized
     def form(self):
+        data = [self.request.POST] if self.request.method == 'POST' else []
         return CreatePublicWebformForm(
-            self.domain, self.domain_object.get_default_timezone())
+            self.domain, self.domain_object.get_default_timezone(), *data)
