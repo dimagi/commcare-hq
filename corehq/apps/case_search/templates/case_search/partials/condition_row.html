@@ -95,33 +95,7 @@
                     </button>
                   </div>
                 </template>
-                <template x-if="slot.type === 'datetime'">
-                  <div
-                    class="input-group ep-date-input"
-                    data-td-target-input="nearest"
-                    data-td-target-toggle="nearest"
-                  >
-                    <input
-                      type="text"
-                      class="form-control"
-                      :id="'cond-' + node._id + '-' + slot.name"
-                      x-model="getInputValue(node, slot.name).value"
-                      x-datepicker='{"datetime": true, "useInputGroup": true}'
-                      :placeholder="slot.name"
-                      autocomplete="off"
-                    />
-                    <button
-                      class="btn btn-outline-secondary"
-                      type="button"
-                      data-td-toggle="datetimepicker"
-                    >
-                      <i class="fa-solid fa-calendar-days"></i>
-                    </button>
-                  </div>
-                </template>
-                <template
-                  x-if="slot.type !== 'date' && slot.type !== 'datetime'"
-                >
+                <template x-if="slot.type !== 'date'">
                   <input
                     type="text"
                     class="form-control"
