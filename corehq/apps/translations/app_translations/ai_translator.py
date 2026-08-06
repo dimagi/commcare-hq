@@ -2,7 +2,7 @@
 import hashlib
 import json
 import re
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 
 from corehq.apps.translations.app_translations.download import (
@@ -129,7 +129,48 @@ class AppTranslationFormat(TranslationFormat):
         return valid
 
     def save_output(self, output_data=None, output_path=None):
-        raise NotImplementedError  # arrives with the apply step
+        """Rows without buffered results are omitted and left untouched
+        (partial-upload semantics); the app is saved once. Returns
+        error messages, [] on success."""
+        from django.contrib import messages
+
+        from corehq.apps.translations.app_translations.upload_app import (
+            process_sheet_rows,
+        )
+
+        if not self.results:
+            return []
+
+        msgs = []
+        for sheet_name, translated_by_row in self._results_by_sheet().items():
+            rows = [
+                self._translated_row(sheet_name, row_index, translated)
+                for row_index, translated in sorted(translated_by_row.items())
+            ]
+            msgs += process_sheet_rows(
+                self.app, sheet_name, rows, names_map=self.sheet_unique_ids)
+        self.app.save()
+        return [msg for func, msg in msgs if func == messages.error]
+
+    def _results_by_sheet(self):
+        by_sheet = defaultdict(dict)
+        for unit_id, translated in self.results.items():
+            unit = self.units_by_id[unit_id]
+            by_sheet[unit.sheet_name][unit.row_index] = translated
+        return by_sheet
+
+    def _translated_row(self, sheet_name, row_index, translated):
+        headers = self.headers_by_sheet[sheet_name]
+        raw = self.sheets[sheet_name][row_index]
+        row = {header: _cell(raw, i) for i, header in enumerate(headers)}
+        row[f'default_{self.target_lang}'] = translated
+        return row
+
+    def applied_units(self):
+        return {
+            uid: (self.units_by_id[uid], translated)
+            for uid, translated in self.results.items()
+        }
 
     def format_input_description(self):
         return (

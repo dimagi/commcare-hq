@@ -2,7 +2,10 @@ import json
 
 import pytest
 
+from django.test import TestCase
+
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.translations.app_translations.ai_translator import (
     AppTranslationFormat,
     _string_key,
@@ -59,9 +62,9 @@ def _make_app():
     factory = AppFactory(build_version='2.40.0')
     factory.app.langs = ['en', 'fra']
     factory.new_basic_module('register', 'case')
-    # new forms pre-fill submit_label for every app language; blank the
-    # target copy so the app has an untranslated form-sheet string
-    factory.app.get_module(0).get_form(0).submit_label['fra'] = ''
+    xform = XFormBuilder()
+    xform.new_question('name', {'en': 'What is the name?', 'fra': ''})
+    factory.app.get_module(0).get_form(0).source = xform.tostring().decode('utf-8')
     return factory.app
 
 
@@ -190,3 +193,50 @@ def test_parse_output_buffers_valid_and_skips_invalid():
     assert parsed == {uid: 'traduction'}
     assert fmt.results == {uid: 'traduction'}
     assert fmt.parse_output('not json') == {}
+
+
+class TestSaveOutput(TestCase):
+    """save_output writes through the app document, which needs the test
+    couch database."""
+
+    def test_applies_buffered_translations_to_app(self):
+        app = _make_app()
+        fmt = AppTranslationFormat(app, 'fra')
+        units = fmt.load_input()
+        module_name_id = next(
+            uid for uid, u in units.items() if u.source_text == 'register module')
+        fmt.parse_output(json.dumps({module_name_id: 'module inscription'}))
+
+        errors = fmt.save_output()
+
+        assert errors == []
+        assert app.get_module(0).name['fra'] == 'module inscription'
+        assert app.get_module(0).name['en'] == 'register module'  # untouched
+        assert fmt.applied_units() == {
+            module_name_id: (units[module_name_id], 'module inscription')}
+
+    def test_with_no_results_is_a_noop(self):
+        app = _make_app()
+        fmt = AppTranslationFormat(app, 'fra')
+        fmt.load_input()
+        assert fmt.save_output() == []
+
+    def test_leaves_untranslated_rows_untouched(self):
+        """Rows without buffered results are omitted from the sheet's row
+        list; the updaters must not blank or alter their existing values —
+        the same semantics as a partial user upload."""
+        app = _make_app()
+        app.get_module(0).name['fra'] = 'existing manual translation'
+        fmt = AppTranslationFormat(app, 'fra', mode=MODE_RETRANSLATE)
+        units = fmt.load_input()
+        form_label_id = next(
+            uid for uid, u in units.items() if u.source_text == 'What is the name?')
+        fmt.parse_output(json.dumps({form_label_id: 'Quel est le nom ?'}))
+
+        assert fmt.save_output() == []
+        # the one translated string landed ...
+        fmt2 = AppTranslationFormat(app, 'fra', mode=MODE_FILL_MISSING)
+        remaining = {u.source_text for u in fmt2.load_input().values()}
+        assert 'What is the name?' not in remaining
+        # ... and the row we did NOT send kept its manual value
+        assert app.get_module(0).name['fra'] == 'existing manual translation'
