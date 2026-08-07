@@ -17,6 +17,8 @@ from casexml.apps.phone.data_providers.case.livequery import (
 )
 from dimagi.utils.logging import notify_exception
 
+from sqlalchemy import and_, not_, or_, select
+
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.apps.app_manager.util import module_offers_search
@@ -68,6 +70,8 @@ from corehq.apps.es.case_search import (
     wrap_case_search_hit,
 )
 from corehq.apps.es.profiling import ESQueryProfiler
+from corehq.apps.project_db.table_ddl import CaseTable, get_project_db_engine, property_column
+from corehq.apps.project_db.query import rows_to_cases
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
@@ -152,24 +156,43 @@ def get_endpoint_results(helper, config):
         raise CaseSearchUserError(_("Endpoint '{}' query is invalid").format(config.endpoint_id))
     return get_primary_case_search_endpoint_results(
         helper,
-        [endpoint.case_type],
+        endpoint.target_type,
+        endpoint.case_type,
         config.criteria,
         query_root)
 
 @time_function()
-def get_primary_case_search_endpoint_results(helper, case_types, criteria, endpoint_query, limit=None):
-    builder = CaseSearchEndpointQueryBuilder(helper, case_types, endpoint_query)
-    with helper.profiler.timing_context('build_query'):
-        search_es = builder.build_query(criteria)
-    if limit:
-        search_es = search_es.size(limit)
+def get_primary_case_search_endpoint_results(helper, target_type,
+                                             case_type, criteria, endpoint_query, limit=None):
+    if target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH:
+        builder = CaseSearchEndpointQueryBuilder(helper, [case_type], endpoint_query)
+        with helper.profiler.timing_context('build_query'):
+            search_es = builder.build_query(criteria)
+        if limit:
+            search_es = search_es.size(limit)
 
-    results = search_es.run()
-    with helper.profiler.timing_context('wrap_cases'):
-        cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
+        results = search_es.run()
+        with helper.profiler.timing_context('wrap_cases'):
+            cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
+    else:
+        builder = CaseSearchEndpointSqlQueryBuilder(helper, case_type, endpoint_query)
+        with helper.profiler.timing_context('build_query'):
+            query = builder.build_query(criteria)
+        if limit:
+            query = query.limit(limit)
+
+        engine = get_project_db_engine()
+
+        with engine.begin() as conn:
+            # In sqlalchemy 1.4+, use execution_options postgresql_readonly
+            # conn.execute(sqlalchemy.text('SET TRANSACTION READ ONLY'))
+            # DomainSchema(domain).set_local_search_path(conn)
+            result = conn.execute(query)
+            rows = result.fetchall()
+            cases = rows_to_cases(rows, builder.table, builder.request_domain, case_type)
+
     helper.profiler.primary_count = len(cases)
     return cases
-
 
 def get_unconfigured_endpoint_results(helper, config, app_id):
     cases = get_primary_case_search_results(helper, config.case_types, config.criteria, config.commcare_sort)
@@ -560,6 +583,61 @@ class CaseSearchEndpointQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
             elif operator == 'phonetic':
                 return sounds_like_text_query(field, value)
         return None
+
+class CaseSearchEndpointSqlQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
+    def __init__(
+        self,
+        helper,
+        case_type,
+        query_root):
+        super().__init__(query_root)
+        self.request_domain = helper.domain
+        self.case_type = case_type
+        self.helper = helper
+        self.config = helper.config
+        self.table = CaseTable(self.request_domain, self.case_type).reflect()
+
+    def build_query(self, search_criteria):
+        query = self._get_initial_query()
+        where_clause = self._parse_query_root(search_criteria)
+        if where_clause is None:
+            # Every condition dropped (e.g. all inputs were unsupplied
+            # parameters). Apply no extra filter rather than match-all-via-empty.
+            return query
+        return query.where(where_clause)
+
+    def _get_initial_query(self):
+        max_results = CASE_SEARCH_MAX_RESULTS
+        if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
+            max_results = 1500
+
+        return select(self.table.columns).limit(max_results)
+
+    def _combine_and(self, children):
+        return and_(*children)
+
+    def _combine_or(self, children):
+        return or_(*children)
+
+    def _combine_none(self, children):
+        return not_(and_(*children))
+
+    def _parse_component_node(self, node):
+        operator = node.operator
+
+        field = node.field
+        column = self.table.columns[property_column(field)]
+        value = self._input_value(node.inputs['value'])
+        if value is None:
+            return None  # ignore component if value is not given
+        if operator == 'equals':
+            return column == value
+        elif operator == 'not_equals':
+            return column != value
+        elif operator == 'starts_with':
+            return column.starts_with(value)
+        return None
+
 
 @time_function()
 def get_and_tag_related_cases(helper, app_id, case_types, cases,
