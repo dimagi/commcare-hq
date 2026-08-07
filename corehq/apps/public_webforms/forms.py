@@ -76,7 +76,12 @@ class PublicWebformFilterForm(forms.Form):
         return any(self.cleaned_data.get(field) for field in self.lookups)
 
 
-class CreatePublicWebformForm(forms.Form):
+class BasePublicWebformForm(forms.Form):
+
+    fieldset_title = None
+    submit_name = None
+    submit_label = None
+
     label = forms.CharField(
         label=gettext_lazy("Label"),
         help_text=gettext_lazy("Identifies this public webform. Respondents will see the form's name.")
@@ -94,17 +99,6 @@ class CreatePublicWebformForm(forms.Form):
         initial=['allow_email'],
         widget=forms.CheckboxSelectMultiple,
     )
-    open_to_requests = forms.BooleanField(
-        required=False,
-        label=gettext_lazy("Open to Requests"),
-        widget=BootstrapSwitchInput(
-            inline_label=gettext_lazy(
-                "Immediately open this public webform to one-time link requests."
-            ),
-        ),
-    )
-    app_id = forms.CharField(required=False, widget=forms.HiddenInput)
-    form_unique_id = forms.CharField(required=False, widget=forms.HiddenInput)
 
     def __init__(self, domain, timezone, *args, **kwargs):
         self.domain = domain
@@ -128,46 +122,17 @@ class CreatePublicWebformForm(forms.Form):
                     _("A short text with a shortened link. Billed per message sent.")
                 ),
             ))
+
         self.fields['link_choices'].choices = link_choices
 
-        default_expires_at = (
-            ServerTime(datetime.now(UTC).replace(tzinfo=None) + timedelta(days=30))
-            .user_time(self.timezone)
-            .ui_string(fmt='%Y-%m-%d %H:%M:%S')
-        )
-        self.fields['expires_at'].initial = default_expires_at
+        self.fields['expires_at'].initial = self.initial_expires_at()
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'POST'
-
-        alpine_data_model = {
-            'expires_at': self.fields['expires_at'].initial,
-        }
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _("New Public Webform"),
-                crispy.HTML(render_to_string(
-                    'public_webforms/partials/create_form_choices.html',
-                    context={'form_choices': json.dumps(get_public_webform_choices(self.domain))},
-                )),
-                crispy.Field('label'),
-                crispy.Div(
-                    twbscrispy.AppendedText(
-                        'expires_at',
-                        mark_safe(  # nosec: no user input
-                            '<i class="fcc fcc-fd-datetime"></i>'
-                        ),
-                        x_datepicker=json.dumps(
-                            {
-                                'useInputGroup': True,
-                                'datetime': True,
-                            }
-                        ),
-                    ),
-                    x_data=json.dumps(alpine_data_model),
-                ),
-                crispy.Field('link_choices'),
-                twbscrispy.PrependedText('open_to_requests', ''),
+                self.fieldset_title,
+                *self.fieldset_fields(),
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
@@ -177,13 +142,82 @@ class CreatePublicWebformForm(forms.Form):
                         css_class='btn btn-outline-primary',
                     ),
                     crispy.Submit(
-                        'create_public_webform',
-                        _("Create Public Webform"),
+                        self.submit_name,
+                        self.submit_label,
                         css_class='disable-on-submit',
                     ),
                 )
             ),
         )
+
+    def initial_expires_at(self):
+        """Wall-clock datetime in the project's timezone to prefill the picker."""
+        raise NotImplementedError
+
+    def fieldset_fields(self):
+        alpine_data_model = {
+            'expires_at': self.fields['expires_at'].initial,
+        }
+        return [
+            crispy.Field('label'),
+            crispy.Div(
+                twbscrispy.AppendedText(
+                    'expires_at',
+                    mark_safe(  # nosec: no user input
+                        '<i class="fcc fcc-fd-datetime"></i>'
+                    ),
+                    x_datepicker=json.dumps(
+                        {
+                            'useInputGroup': True,
+                            'datetime': True,
+                        }
+                    ),
+                ),
+                x_data=json.dumps(alpine_data_model),
+            ),
+            crispy.Field('link_choices'),
+        ]
+
+    def clean_expires_at(self):
+        # The datepicker submits wall-clock time in the project's timezone; store UTC.
+        expires_at = self.cleaned_data['expires_at']
+        return UserTime(expires_at, tzinfo=self.timezone).server_time().done()
+
+
+class CreatePublicWebformForm(BasePublicWebformForm):
+
+    fieldset_title = gettext_lazy("New Public Webform")
+    submit_name = 'create_public_webform'
+    submit_label = gettext_lazy("Create Public Webform")
+
+    open_to_requests = forms.BooleanField(
+        required=False,
+        label=gettext_lazy("Open to Requests"),
+        widget=BootstrapSwitchInput(
+            inline_label=gettext_lazy(
+                "Immediately open this public webform to one-time link requests."
+            ),
+        ),
+    )
+    app_id = forms.CharField(required=False, widget=forms.HiddenInput)
+    form_unique_id = forms.CharField(required=False, widget=forms.HiddenInput)
+
+    def initial_expires_at(self):
+        return (
+            ServerTime(datetime.now(UTC).replace(tzinfo=None) + timedelta(days=30))
+            .user_time(self.timezone)
+            .ui_string(fmt='%Y-%m-%d %H:%M:%S')
+        )
+
+    def fieldset_fields(self):
+        return [
+            crispy.HTML(render_to_string(
+                'public_webforms/partials/create_form_choices.html',
+                context={'form_choices': json.dumps(get_public_webform_choices(self.domain))},
+            )),
+            *super().fieldset_fields(),
+            twbscrispy.PrependedText('open_to_requests', ''),
+        ]
 
     def clean(self):
         cleaned_data = super().clean()
@@ -200,11 +234,6 @@ class CreatePublicWebformForm(forms.Form):
 
         cleaned_data['session_type'] = get_public_webform_type(form)
         return cleaned_data
-
-    def clean_expires_at(self):
-        # The datepicker submits wall-clock time in the project's timezone; store UTC.
-        expires_at = self.cleaned_data['expires_at']
-        return UserTime(expires_at, tzinfo=self.timezone).server_time().done()
 
     def create_public_webform(self):
         app_id = self.cleaned_data['app_id']
