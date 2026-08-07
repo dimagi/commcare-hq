@@ -1,5 +1,6 @@
 from datetime import datetime
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 import pytz
@@ -74,6 +75,15 @@ def test_form_column_names_form_and_links_its_app():
     assert 'Cohort Registration' in rendered
     assert 'v3' in rendered
     assert '/apps/view/app-1/' in rendered
+
+
+def test_the_public_url_column_offers_the_url_to_copy():
+    webform = PublicWebform(id=1, public_id=uuid4())
+
+    rendered = _cells(webform)['public_url']
+
+    assert webform.public_url in rendered
+    assert 'clipboard' in rendered
 
 
 @pytest.mark.parametrize('allow_email, allow_sms, expected_titles', [

@@ -64,7 +64,8 @@ class PublicWebformTable(BaseHtmxTable, tables.Table):
         attrs={'td': {'class': 'text-nowrap'}},
         empty_values=(),
     )
-    public_url = columns.Column(
+    public_url = columns.TemplateColumn(
+        template_name='public_webforms/columns/public_url.html',
         verbose_name=_("Public URL"),
     )
     actions = columns.Column(
