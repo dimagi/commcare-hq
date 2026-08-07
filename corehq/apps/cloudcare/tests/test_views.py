@@ -1,11 +1,11 @@
 from django.test import RequestFactory, SimpleTestCase
 
-from corehq.apps.app_manager.models import (
+from corehq.apps.cloudcare.views import FormplayerMain
+from corehq.apps.public_webforms.models import (
     PublicFormSession,
     PublicFormUser,
     PublicWebform,
 )
-from corehq.apps.cloudcare.views import FormplayerMain
 
 
 class GetRestoreAsUserTests(SimpleTestCase):

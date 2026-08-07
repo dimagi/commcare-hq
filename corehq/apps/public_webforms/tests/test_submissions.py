@@ -12,13 +12,13 @@ from casexml.apps.case.mock import CaseBlock, CaseFactory
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.app_manager.models import PublicFormSession, PublicWebform
-from corehq.apps.app_manager.public_webform_submissions import (
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
+from corehq.apps.public_webforms.submissions import (
     consume_public_form_session,
     public_form_session_already_submitted,
     validate_public_form_submission,
 )
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.util import PUBLIC_USER_ID
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.form_processor.utils.xform import convert_xform_to_json
