@@ -73,7 +73,8 @@ def test_every_column_renders_from_the_queryset():
     webform = create_webform(
         expires_at=datetime.datetime(2026, 9, 1, 21, 0), is_disabled=False)
     _create_session(webform, submitted_at=timezone.now())
-    table = PublicWebformTable(data=_table_view().get_queryset(), timezone=pytz.UTC)
+    table = PublicWebformTable(
+        data=_table_view().get_queryset(), domain=DOMAIN, timezone=pytz.UTC)
 
     [row] = table.rows
     cells = {column.name: str(value) for column, value in row.items()}

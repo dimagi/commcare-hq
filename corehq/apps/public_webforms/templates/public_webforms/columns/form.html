@@ -1,0 +1,18 @@
+{% load i18n %}
+
+<div class="fw-semibold">{{ label }}</div>
+<div>
+  {% for segment in path %}
+    {% if not forloop.first %}
+      <span class="text-body-tertiary">&gt;</span>
+    {% endif %}
+    {% if segment.url %}
+      <a href="{{ segment.url }}">{{ segment.name }}</a>
+    {% else %}
+      <span class="text-body-secondary">
+        {{ segment.name }}
+        {% if segment.is_deleted %}{% trans "(Deleted)" %}{% endif %}
+      </span>
+    {% endif %}
+  {% endfor %}
+</div>

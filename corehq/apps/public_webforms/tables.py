@@ -1,9 +1,14 @@
+from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 from django_tables2 import columns, tables
+from memoized import memoized
 
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
+from corehq.apps.public_webforms.form_paths import (
+    get_public_webform_form_paths,
+)
 from corehq.apps.public_webforms.models import (
     PublicWebformStatus,
     PublicWebformType,
@@ -67,12 +72,22 @@ class PublicWebformTable(BaseHtmxTable, tables.Table):
         verbose_name=_("Actions"),
     )
 
-    def __init__(self, timezone, **kwargs):
+    def __init__(self, domain, timezone, **kwargs):
         super().__init__(**kwargs)
+        self.domain = domain
         self.timezone = timezone
 
-    def render_label(self, value):
-        return format_html('<div class="fw-semibold">{}</div>', value)
+    @property
+    @memoized
+    def form_paths(self):
+        return get_public_webform_form_paths(
+            self.domain, [row.record for row in self.paginated_rows])
+
+    def render_label(self, record, value):
+        return render_to_string('public_webforms/columns/form.html', {
+            'label': value,
+            'path': self.form_paths[record.id],
+        })
 
     def render_session_type(self, record):
         session_type = PublicWebformType(record.session_type)
