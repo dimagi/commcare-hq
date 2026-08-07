@@ -74,6 +74,7 @@ class PublicWebformTableView(
 
     def get_table_kwargs(self):
         return {
+            'domain': self.domain,
             'timezone': self.domain_object.get_default_timezone(),
         }
 
