@@ -4,6 +4,24 @@ from django.utils.translation import gettext_lazy as _
 from django_tables2 import columns, tables
 
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
+from corehq.apps.public_webforms.models import (
+    PublicWebformStatus,
+    PublicWebformType,
+)
+from corehq.util.timezones.conversions import ServerTime
+
+STATUS_BADGES = {
+    PublicWebformStatus.OPEN:
+        'bg-success-subtle border border-success text-success-emphasis',
+    PublicWebformStatus.CLOSED:
+        'bg-secondary-subtle border border-secondary text-secondary-emphasis',
+    PublicWebformStatus.EXPIRED:
+        'bg-warning-subtle border border-warning text-warning-emphasis',
+}
+TYPE_BADGES = {
+    PublicWebformType.REGISTRATION: 'bg-primary-subtle text-primary-emphasis',
+    PublicWebformType.SURVEY: 'bg-info-subtle text-info-emphasis',
+}
 
 
 class PublicWebformTable(BaseHtmxTable, tables.Table):
@@ -35,8 +53,11 @@ class PublicWebformTable(BaseHtmxTable, tables.Table):
     expires_at = columns.Column(
         verbose_name=_("Closes"),
     )
-    delivery = columns.Column(
+    delivery = columns.TemplateColumn(
+        template_name='public_webforms/columns/delivery.html',
         verbose_name=_("Delivery"),
+        attrs={'td': {'class': 'text-nowrap'}},
+        empty_values=(),
     )
     public_url = columns.Column(
         verbose_name=_("Public URL"),
@@ -51,3 +72,22 @@ class PublicWebformTable(BaseHtmxTable, tables.Table):
 
     def render_label(self, value):
         return format_html('<div class="fw-semibold">{}</div>', value)
+
+    def render_session_type(self, record):
+        session_type = PublicWebformType(record.session_type)
+        return format_html(
+            '<span class="badge fs-6 {}">{}</span>',
+            TYPE_BADGES[session_type],
+            session_type.label,
+        )
+
+    def render_status(self, value):
+        status = PublicWebformStatus(value)
+        return format_html(
+            '<span class="badge fs-6 text-center rounded-pill {}">{}</span>',
+            STATUS_BADGES[status],
+            status.label,
+        )
+
+    def render_expires_at(self, value):
+        return ServerTime(value).user_time(self.timezone).ui_string()
