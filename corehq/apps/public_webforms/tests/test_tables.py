@@ -1,8 +1,10 @@
 from datetime import datetime
+from unittest.mock import patch
 
 import pytest
 import pytz
 
+from corehq.apps.public_webforms import tables
 from corehq.apps.public_webforms.models import (
     PublicWebform,
     PublicWebformStatus,
@@ -10,15 +12,16 @@ from corehq.apps.public_webforms.models import (
 )
 from corehq.apps.public_webforms.tables import PublicWebformTable
 
+DOMAIN = 'public-webform-tables'
 TIMEZONE = pytz.timezone('America/New_York')
 
 
 def _table():
-    return PublicWebformTable(data=[], timezone=TIMEZONE)
+    return PublicWebformTable(data=[], domain=DOMAIN, timezone=TIMEZONE)
 
 
 def _cells(webform):
-    table = PublicWebformTable(data=[webform], timezone=TIMEZONE)
+    table = PublicWebformTable(data=[webform], domain=DOMAIN, timezone=TIMEZONE)
     [row] = table.rows
     return {column.name: str(value) for column, value in row.items()}
 
@@ -52,6 +55,25 @@ def test_every_type_renders_a_labelled_badge(session_type, expected_label):
 ], ids=['daylight-saving-utc-4', 'standard-time-utc-5'])
 def test_closing_time_is_shown_in_the_projects_timezone(stored_utc, expected):
     assert _table().render_expires_at(stored_utc) == expected
+
+
+def test_form_column_names_form_and_links_its_app():
+    webform = PublicWebform(id=1, label='Antenatal visit')
+    path = {
+        'app_name': 'Frontline Program',
+        'app_url': '/apps/view/app-1/',
+        'app_version': 3,
+        'form_name': 'Cohort Registration',
+    }
+    with patch.object(
+        tables, 'get_public_webform_form_paths', return_value={1: path}
+    ):
+        rendered = _cells(webform)['label']
+
+    assert 'Antenatal visit' in rendered
+    assert 'Cohort Registration' in rendered
+    assert 'v3' in rendered
+    assert '/apps/view/app-1/' in rendered
 
 
 @pytest.mark.parametrize('allow_email, allow_sms, expected_titles', [
