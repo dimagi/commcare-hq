@@ -1,0 +1,21 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div class="input-group" x-data="{ copied: false }">
+  <input
+    type="text"
+    class="form-control form-control-sm"
+    aria-label="{% trans_html_attr "Public URL" %}"
+    value="{{ record.public_url }}"
+    x-ref="url"
+    readonly
+  />
+  <button
+    type="button"
+    class="btn btn-sm btn-outline-secondary"
+    title="{% trans_html_attr "Copy URL" %}"
+    @click="navigator.clipboard.writeText($refs.url.value); copied = true; setTimeout(() => copied = false, 1500)"
+  >
+    <i :class="copied ? 'fa fa-check' : 'fa-regular fa-copy'"></i>
+  </button>
+</div>
