@@ -5,6 +5,7 @@ from django.utils import timezone
 from corehq.apps.public_webforms.models import PublicWebform
 
 DOMAIN = 'public-forms-domain'
+OTHER_DOMAIN = 'public-forms-other-domain'
 
 
 def create_webform(**kwargs):

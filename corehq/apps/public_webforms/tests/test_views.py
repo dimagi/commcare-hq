@@ -4,13 +4,27 @@ import pytz
 from time_machine import travel
 from unmagic import use
 
-from django.test import RequestFactory
+from django.test import RequestFactory, TestCase
+from django.urls import reverse
 from django.utils import timezone
 
-from corehq.apps.public_webforms.models import PublicFormSession, PublicWebformStatus
+from corehq.apps.public_webforms.models import (
+    PublicFormSession,
+    PublicWebformStatus,
+)
 from corehq.apps.public_webforms.tables import PublicWebformTable
-from corehq.apps.public_webforms.tests.utils import DOMAIN, create_webform
+from corehq.apps.public_webforms.tests.mixins import (
+    NORMAL_USER,
+    PublicWebformViewTestMixin,
+)
+from corehq.apps.public_webforms.tests.utils import (
+    DOMAIN,
+    OTHER_DOMAIN,
+    create_webform,
+)
 from corehq.apps.public_webforms.views import PublicWebformTableView
+from corehq.privileges import PUBLIC_WEBFORMS
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
 def _table_view(domain=DOMAIN, **params):
@@ -85,3 +99,28 @@ def test_every_column_renders_from_the_queryset():
     assert cells['submissions'] == '1'
     assert cells['expires_at'] == 'Sep 01, 2026 21:00 UTC'
     assert 'fa-envelope' in cells['delivery']
+
+
+@flag_enabled('PUBLIC_WEBFORMS')
+@privilege_enabled(PUBLIC_WEBFORMS)
+class TestPublicWebformQrCode(PublicWebformViewTestMixin, TestCase):
+
+    def get(self, webform, domain=DOMAIN):
+        url = reverse('public_webform_qr_code', args=[domain, webform.id])
+        return self.client.get(url)
+
+    def test_the_public_url_is_served_as_a_png(self):
+        response = self.get(create_webform())
+
+        assert response['Content-Type'] == 'image/png'
+
+    def test_another_projects_webform_is_not_found(self):
+        other = create_webform(domain=OTHER_DOMAIN)
+
+        assert self.get(other).status_code == 404
+
+    def test_a_qr_code_is_not_served_without_the_permission(self):
+        webform = create_webform()
+        self.sign_in(NORMAL_USER)
+
+        assert self.get(webform).status_code != 200
