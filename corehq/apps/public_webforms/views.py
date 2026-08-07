@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.db.models import Count, Q
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -62,7 +63,14 @@ class PublicWebformTableView(
         return reverse(ManagePublicWebformsView.urlname, args=[self.domain])
 
     def get_queryset(self):
-        return PublicWebform.objects.filter(domain=self.domain).order_by('-expires_at')
+        return PublicWebform.objects.filter(
+            domain=self.domain
+        ).with_status().annotate(
+            submissions=Count(
+                'publicformsession',
+                filter=Q(publicformsession__submitted_at__isnull=False),
+            ),
+        ).order_by('-expires_at')
 
     def get_table_kwargs(self):
         return {
