@@ -290,6 +290,7 @@ HQ_APPS = (
     'corehq.apps.products',
     'corehq.apps.programs',
     'corehq.apps.project_db',
+    'corehq.apps.public_webforms',
     'corehq.apps.registry.app_config.RegistryAppConfig',
     'corehq.project_limits',
     'corehq.apps.commtrack',
