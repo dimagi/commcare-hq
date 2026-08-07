@@ -362,10 +362,11 @@ class CaseSearchEndpointTestView(BaseDomainView):
         if not form.is_valid():
             return self._render_results(request, errors=self._flatten_errors(form))
 
+        target_type = form.cleaned_data['target_type']
         case_type = form.cleaned_data['case_type']
         fields = capability['case_types'][case_type]
         try:
-            results = self._run_query(case_type, form.parsed_query, test_param_values)
+            results = self._run_query(case_type, form.parsed_query, test_param_values, target_type)
         except Exception as e:
             notify_exception(request, str(e))
             return self._render_results(request, errors=['Query Execution Failed'])
@@ -375,10 +376,10 @@ class CaseSearchEndpointTestView(BaseDomainView):
     def _flatten_errors(form):
         return [error for errors in form.errors.values() for error in errors]
 
-    def _run_query(self, case_type, query, test_param_values):
+    def _run_query(self, case_type, query, test_param_values, target_type):
         helper = QueryHelper(self.domain)
         criteria = criteria_dict_to_criteria_list(test_param_values)
-        return get_primary_case_search_endpoint_results(helper, [case_type], criteria, query, 20)
+        return get_primary_case_search_endpoint_results(helper, target_type, case_type, criteria, query, 20)
 
     def _render_results(self, request, *, errors=None, fields=None, results=None):
         # Always 200 so HTMX swaps the partial in (it ignores error statuses).
