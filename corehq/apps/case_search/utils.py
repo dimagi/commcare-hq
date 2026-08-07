@@ -2,6 +2,7 @@ import json
 import re
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import date
 from functools import wraps
 
 from django.conf import settings
@@ -17,7 +18,7 @@ from casexml.apps.phone.data_providers.case.livequery import (
 )
 from dimagi.utils.logging import notify_exception
 
-from sqlalchemy import and_, not_, or_, select
+from sqlalchemy import and_, func, not_, or_, select
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_cached
@@ -625,18 +626,38 @@ class CaseSearchEndpointSqlQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
     def _parse_component_node(self, node):
         operator = node.operator
 
-        field = node.field
-        column = self.table.columns[property_column(field)]
+        column = self.table.columns[property_column(node.field, node.field_type)]
         value = self._input_value(node.inputs['value'])
         if value is None:
             return None  # ignore component if value is not given
-        if operator == 'equals':
-            return column == value
-        elif operator == 'not_equals':
-            return column != value
-        elif operator == 'starts_with':
-            return column.starts_with(value)
-        return None
+
+        if node.field_type in (FIELD_TYPE_DATE, FIELD_TYPE_DATETIME):
+            date_value = date.fromisoformat(value)
+            if operator == 'equals':
+                return column == date_value
+            elif operator == 'lt':
+                return column < date_value
+            elif operator == 'gt':
+                return column > date_value
+            elif operator == 'lte':
+                return column <= date_value
+            elif operator == 'gte':
+                return column >= date_value
+            elif operator == 'fuzzy_date':
+                return column.in_([date.fromisoformat(p) for p in date_permutations(value)])
+            return None
+        else:
+            if operator == 'equals':
+                return column == value
+            elif operator == 'not_equals':
+                return column != value
+            elif operator == 'starts_with':
+                return column.startswith(value)
+            elif operator == 'fuzzy':
+                return func.similarity(column, value) >= 0.3
+            elif operator == 'phonetic':
+                return func.dmetaphone(column) == func.dmetaphone(value)
+            return None
 
 
 @time_function()

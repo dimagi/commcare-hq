@@ -27,7 +27,7 @@ def truncate_identifier(identifier):
 
 
 def property_column(name, data_type=None):
-    if data_type is None:
+    if data_type is None or data_type == 'text':
         return truncate_identifier(f'prop__{name}')
     return truncate_identifier(f'{data_type}_prop__{name}')
 
