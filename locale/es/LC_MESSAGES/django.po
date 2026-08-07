@@ -24914,23 +24914,31 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#, python-format
+#| msgid ""
+#| "\n"
+#| "    For more information about CommCare software plans, visit\n"
+#| "    <a\n"
+#| "      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+#| "      target=\"_blank\"\n"
+#| "      >our help site</a\n"
+#| "    >.\n"
+#| "  "
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >our help site</a\n"
+"      >our pricing page</a\n"
 "    >.\n"
 "  "
 msgstr ""
 "\n"
 "    Para más información sobre los planes de software de CommCare, visita\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >nuestro sitio de ayuda</a\n"
+"      >nuestra página de precios</a\n"
 "    >.\n"
 "  "
 
@@ -58438,8 +58446,9 @@ msgid "Delivery Attempts"
 msgstr "Intentos de Envíos"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "View Responses"
-msgstr "Ver Respuestas"
+#| msgid "Preview Data"
+msgid "Preview Payloads"
+msgstr "Vista previa de cargas útiles"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -59850,6 +59859,9 @@ msgstr "Las columnas requeridas son {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Ingrese un JSON válido"
+
+#~ msgid "View Responses"
+#~ msgstr "Ver Respuestas"
 
 #, python-brace-format
 #~ msgid "XForm {form_id} does not belong to domain {domain}"

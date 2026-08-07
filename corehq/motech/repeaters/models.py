@@ -102,7 +102,7 @@ from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.models import (
     CaseTransaction,
     CommCareCase,
@@ -139,7 +139,11 @@ from .const import (
     RECORD_QUEUED_STATES,
     State,
 )
-from .exceptions import RequestConnectionError, UnknownRepeater
+from .exceptions import (
+    PayloadNotFoundError,
+    RequestConnectionError,
+    UnknownRepeater,
+)
 from .repeater_generators import (
     AppStructureGenerator,
     CaseRepeaterJsonPayloadGenerator,
@@ -674,6 +678,26 @@ class Repeater(RepeaterSuperProxy):
         return self._repeater_type
 
 
+def get_form_payload_doc(repeat_record):
+    try:
+        form = XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
+    except XFormNotFound:
+        form = None
+    if form is None or form.is_deleted:
+        raise PayloadNotFoundError(_('Form {} is not found').format(repeat_record.payload_id))
+    return form
+
+
+def get_case_payload_doc(repeat_record):
+    try:
+        case = CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain)
+    except CaseNotFound:
+        case = None
+    if case is None or case.is_deleted:
+        raise PayloadNotFoundError(_('Case {} is not found').format(repeat_record.payload_id))
+    return case
+
+
 class FormRepeater(Repeater):
 
     include_app_id_param = OptionValue(default=True)
@@ -689,7 +713,7 @@ class FormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
+        return get_form_payload_doc(repeat_record)
 
     @property
     def form_class_name(self):
@@ -718,7 +742,7 @@ class FormRepeater(Repeater):
             query = parse_qsl(url_parts[4])
             try:
                 query.append(("app_id", self.payload_doc(repeat_record).app_id))
-            except (XFormNotFound, ResourceNotFound):
+            except (PayloadNotFoundError, ResourceNotFound):
                 return None
             url_parts[4] = urlencode(query)
             return urlunparse(url_parts)
@@ -805,7 +829,7 @@ class CaseRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain)
+        return get_case_payload_doc(repeat_record)
 
     def get_headers(self, repeat_record):
         headers = super().get_headers(repeat_record)
@@ -940,7 +964,7 @@ class ShortFormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
+        return get_form_payload_doc(repeat_record)
 
     def allowed_to_forward(self, payload):
         return payload.xmlns != DEVICE_LOG_XMLNS
@@ -1202,7 +1226,7 @@ class RepeatRecordManager(models.Manager):
             where &= models.Q(state=state)
         return paginate_query(db, self.model, where, query_size=chunk_size)
 
-    def page(self, domain, skip, limit, repeater_id=None, state=None):
+    def page(self, domain, skip, limit, repeater_id=None, states=None):
         """Get a page of repeat records
 
         WARNING this is inefficient for large skip values.
@@ -1210,8 +1234,8 @@ class RepeatRecordManager(models.Manager):
         queryset = self.filter(domain=domain)
         if repeater_id:
             queryset = queryset.filter(repeater__id=repeater_id)
-        if state is not None:
-            queryset = queryset.filter(state=state)
+        if states:
+            queryset = queryset.filter(state__in=states)
         return (queryset.order_by('-registered_at')[skip:skip + limit]
                 .select_related('repeater')
                 .prefetch_related('attempt_set'))
@@ -1237,12 +1261,12 @@ class RepeatRecordManager(models.Manager):
     def get_domains_with_records(self):
         return self.order_by().values_list("domain", flat=True).distinct()
 
-    def get_repeat_record_ids(self, domain, repeater_id=None, state=None, payload_id=None):
+    def get_repeat_record_ids(self, domain, repeater_id=None, states=None, payload_id=None):
         where = models.Q(domain=domain)
         if repeater_id:
             where &= models.Q(repeater__id=repeater_id)
-        if state:
-            where &= models.Q(state=state)
+        if states:
+            where &= models.Q(state__in=states)
         if payload_id:
             where &= models.Q(payload_id=payload_id)
 
@@ -1466,6 +1490,12 @@ class RepeatRecord(models.Model):
             except (NoCredentialsError, OSError) as e:
                 self.handle_exception(str(e))
                 raise
+            except PayloadNotFoundError as e:
+                self.handle_generate_payload_error(
+                    str(e),
+                    traceback_str=traceback.format_exc(),
+                    notify=False,
+                )
             except Exception as e:
                 self.handle_generate_payload_error(str(e), traceback_str=traceback.format_exc())
             return self.state
@@ -1552,12 +1582,13 @@ class RepeatRecord(models.Model):
         log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
         return self.add_payload_rejected_attempt(message, traceback_str)
 
-    def handle_generate_payload_error(self, message, traceback_str=''):
-        notify_exception(
-            None,
-            f'Error generating payload: {message}',
-            details={'domain': self.domain},
-        )
+    def handle_generate_payload_error(self, message, traceback_str='', notify=True):
+        if notify:
+            notify_exception(
+                None,
+                f'Error generating payload: {message}',
+                details={'domain': self.domain},
+            )
         log_repeater_error_in_datadog(self.domain, status_code=None, repeater_type=self.repeater_type)
         return self.add_error_generating_payload_attempt(message, traceback_str)
 
