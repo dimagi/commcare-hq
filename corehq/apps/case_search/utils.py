@@ -72,7 +72,7 @@ from corehq.apps.es.case_search import (
 )
 from corehq.apps.es.profiling import ESQueryProfiler
 
-from corehq.apps.project_db.populate import coerce_to_select, coerce_to_gps
+from corehq.apps.project_db.populate import coerce_to_date, coerce_to_gps, coerce_to_number, coerce_to_select
 from corehq.apps.project_db.query import rows_to_cases, to_distance_in_meters
 from corehq.apps.project_db.table_ddl import CaseTable, Earth, get_project_db_engine, property_column
 
@@ -649,7 +649,9 @@ class CaseSearchEndpointSqlQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
             return None
 
         elif node.field_type in (FIELD_TYPE_DATE, FIELD_TYPE_DATETIME):
-            date_value = date.fromisoformat(value)
+            date_value = coerce_to_date(value)
+            if date_value is None:
+                return None
             if operator == 'equals':
                 return column == date_value
             elif operator == 'lt':
@@ -664,6 +666,9 @@ class CaseSearchEndpointSqlQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
                 return column.in_([date.fromisoformat(p) for p in date_permutations(value)])
             return None
         elif node.field_type == FIELD_TYPE_NUMBER:
+            number_value = coerce_to_number(value)
+            if number_value is None:
+                return None
             if operator == 'equals':
                 return column == value
             elif operator == 'not_equals':
