@@ -1,7 +1,9 @@
 {% load i18n %}
 
-{# TODO: link to the edit view #}
-<a class="btn btn-sm btn-outline-primary disabled" aria-disabled="true">
+<a
+  class="btn btn-sm btn-outline-primary"
+  href="{% url 'edit_public_webform' domain record.id %}"
+>
   <i class="fa fa-pencil"></i>
   {% trans "Edit" %}
 </a>
