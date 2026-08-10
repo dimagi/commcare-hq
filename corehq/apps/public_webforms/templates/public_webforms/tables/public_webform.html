@@ -1,0 +1,8 @@
+{% extends "hqwebapp/tables/bootstrap5_htmx.html" %}
+{% load i18n %}
+
+{% block no_results_table %}
+  <p class="text-muted p-3 mb-0">
+    {% trans "No public webforms have been created yet." %}
+  </p>
+{% endblock no_results_table %}

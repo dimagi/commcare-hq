@@ -7,22 +7,29 @@ from memoized import memoized
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.decorators import LoginAndDomainMixin
+from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.apps.hqwebapp.tables.pagination import (
+    HtmxInvalidPageRedirectMixin,
+    SelectablePaginatedTableView,
+)
 from corehq.apps.public_webforms.forms import CreatePublicWebformForm
+from corehq.apps.public_webforms.models import PublicWebform
+from corehq.apps.public_webforms.tables import PublicWebformTable
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 
 
-@method_decorator(
-    [
-        use_bootstrap5,
-        require_permission(HqPermissions.edit_public_webforms),
-        requires_privilege_with_fallback(privileges.PUBLIC_WEBFORMS),
-        toggles.PUBLIC_WEBFORMS.required_decorator(),
-    ],
-    name='dispatch',
-)
+PUBLIC_WEBFORMS_ACCESS = [
+    use_bootstrap5,
+    require_permission(HqPermissions.edit_public_webforms),
+    requires_privilege_with_fallback(privileges.PUBLIC_WEBFORMS),
+    toggles.PUBLIC_WEBFORMS.required_decorator(),
+]
+
+
+@method_decorator(PUBLIC_WEBFORMS_ACCESS, name='dispatch')
 class BasePublicWebformsView(BaseDomainView):
     section_name = _("Public Webforms")
 
@@ -36,6 +43,31 @@ class ManagePublicWebformsView(BasePublicWebformsView):
     urlname = 'manage_public_webforms'
     template_name = 'public_webforms/manage.html'
     page_title = _("Manage Public Webforms")
+
+
+@method_decorator(PUBLIC_WEBFORMS_ACCESS, name='dispatch')
+class PublicWebformTableView(
+    HtmxInvalidPageRedirectMixin,
+    LoginAndDomainMixin,
+    DomainViewMixin,
+    SelectablePaginatedTableView,
+):
+    """The dashboard's table of webforms, fetched by the manage view over HTMX."""
+
+    urlname = 'public_webforms_table'
+    table_class = PublicWebformTable
+
+    def get_host_url(self):
+        # a page that goes out of range is re-rendered against the dashboard
+        return reverse(ManagePublicWebformsView.urlname, args=[self.domain])
+
+    def get_queryset(self):
+        return PublicWebform.objects.filter(domain=self.domain).order_by('-expires_at')
+
+    def get_table_kwargs(self):
+        return {
+            'timezone': self.domain_object.get_default_timezone(),
+        }
 
 
 class CreatePublicWebformView(BasePublicWebformsView):
