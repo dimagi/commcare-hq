@@ -20,3 +20,25 @@ def rows_to_cases(rows, table, domain, case_type):
                        if row[col.name]},
         ) for row in rows
     ]
+
+def to_distance_in_meters(distance, unit):
+    distance = float(distance)
+    if unit == 'meters':
+        return distance
+    elif unit == 'kilometers':
+        return distance * 1000
+    elif unit == 'centimeters':
+        return distance / 100
+    elif unit == 'millimeters':
+        return distance / 1000
+    elif unit == 'miles':
+        return distance * 1609.344
+    elif unit == 'yards':
+        return distance * 0.9144
+    elif unit == 'feet':
+        return distance * 0.3048
+    elif unit == 'inch':
+        return distance * 0.0254
+    elif unit == 'nauticalmiles':
+        return distance * 1852
+    return None

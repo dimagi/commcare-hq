@@ -18,7 +18,7 @@ from casexml.apps.phone.data_providers.case.livequery import (
 )
 from dimagi.utils.logging import notify_exception
 
-from sqlalchemy import and_, func, not_, or_, select
+from sqlalchemy import and_, cast, func, literal, not_, or_, select
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_cached
@@ -31,7 +31,7 @@ from corehq.apps.case_search.const import (
 from corehq.apps.case_search.endpoint_capability import (
     FIELD_TYPE_DATE,
     FIELD_TYPE_DATETIME,
-    FIELD_TYPE_GEOPOINT,
+    FIELD_TYPE_GPS,
     FIELD_TYPE_NUMBER,
     FIELD_TYPE_SELECT,
     get_capability,
@@ -72,9 +72,9 @@ from corehq.apps.es.case_search import (
 )
 from corehq.apps.es.profiling import ESQueryProfiler
 
-from corehq.apps.project_db.populate import coerce_to_select
-from corehq.apps.project_db.query import rows_to_cases
-from corehq.apps.project_db.table_ddl import CaseTable, get_project_db_engine, property_column
+from corehq.apps.project_db.populate import coerce_to_select, coerce_to_gps
+from corehq.apps.project_db.query import rows_to_cases, to_distance_in_meters
+from corehq.apps.project_db.table_ddl import CaseTable, Earth, get_project_db_engine, property_column
 
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
@@ -530,7 +530,7 @@ class CaseSearchEndpointQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
     def _parse_component_node(self, node):
         operator = node.operator
 
-        if node.field_type == FIELD_TYPE_GEOPOINT:
+        if node.field_type == FIELD_TYPE_GPS:
             if operator == 'within_distance':
                 point = self._input_value(node.inputs.get('point'))
                 distance = self._input_value(node.inputs.get('distance'))
@@ -628,13 +628,27 @@ class CaseSearchEndpointSqlQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
 
     def _parse_component_node(self, node):
         operator = node.operator
-
         column = self.table.columns[property_column(node.field, node.field_type)]
         value = self._input_value(node.inputs['value'])
         if value is None:
             return None  # ignore component if value is not given
 
-        if node.field_type in (FIELD_TYPE_DATE, FIELD_TYPE_DATETIME):
+        if node.field_type == FIELD_TYPE_GPS:
+            if operator == 'within_distance':
+                point = coerce_to_gps(self._input_value(node.inputs.get('point')))
+                distance = self._input_value(node.inputs.get('distance'))
+                unit = self._input_value(node.inputs.get('unit'))
+                print(f"point: {point}, distance: {distance}, unit: {unit}")
+                if None in (point, distance, unit):
+                    return None
+                if unit not in queries.DISTANCE_UNITS:
+                    return None
+                earth_point = cast(literal(point), Earth)
+                distance = to_distance_in_meters(distance, unit)
+                return func.earth_distance(column, earth_point) <= distance
+            return None
+
+        elif node.field_type in (FIELD_TYPE_DATE, FIELD_TYPE_DATETIME):
             date_value = date.fromisoformat(value)
             if operator == 'equals':
                 return column == date_value
