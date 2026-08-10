@@ -22,6 +22,13 @@ jobs:
       merged-branch: >-
         ${{ steps.check-merged.outputs.merged-branch }}
     steps:
+    # Audit-only: records egress from the runner, never fails the build.
+    # Tighten to egress-policy: block once audit logs confirm the endpoint list.
+    - name: Harden runner
+      uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+      with:
+        egress-policy: audit
+
     - name: Check if branch is in staging config
       id: check
       if: github.event_name == 'push'
@@ -68,6 +75,13 @@ jobs:
     if: needs.check-branch.outputs.is-merged-staging-branch == 'true'
     runs-on: ubuntu-latest
     steps:
+    # Audit-only: records egress from the runner, never fails the build.
+    # Tighten to egress-policy: block once audit logs confirm the endpoint list.
+    - name: Harden runner
+      uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+      with:
+        egress-policy: audit
+
     - name: Generate GitHub App token
       id: app-token
       uses: actions/create-github-app-token@v1
@@ -97,6 +111,13 @@ jobs:
     permissions:
       contents: write
     steps:
+    # Audit-only: records egress from the runner, never fails the build.
+    # Tighten to egress-policy: block once audit logs confirm the endpoint list.
+    - name: Harden runner
+      uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+      with:
+        egress-policy: audit
+
     - uses: actions/checkout@v6
       with:
         ref: master
