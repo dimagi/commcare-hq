@@ -28,7 +28,7 @@ from corehq.apps.case_search.const import (
 from corehq.apps.case_search.endpoint_capability import (
     FIELD_TYPE_DATE,
     FIELD_TYPE_DATETIME,
-    FIELD_TYPE_GEOPOINT,
+    FIELD_TYPE_GPS,
     FIELD_TYPE_NUMBER,
     FIELD_TYPE_SELECT,
     get_capability,
@@ -50,7 +50,9 @@ from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     extract_search_request_config,
 )
-from corehq.apps.case_search.endpoint_query_spec import ParameterInput, parse_parameter_spec, parse_query_spec
+from corehq.apps.case_search.endpoint_query_spec import parse_parameter_spec, parse_query_spec
+from corehq.apps.case_search.endpoint_sql_query_builder import get_sql_endpoint_results
+from corehq.apps.case_search.query_builder_base import BaseCaseSearchEndpointQueryBuilder
 from corehq.apps.case_search.xpath_functions.query_functions import date_permutations, validate_date
 from corehq.apps.es import HQESQuery, case_search
 from corehq.apps.es import cases as case_es
@@ -68,6 +70,7 @@ from corehq.apps.es.case_search import (
     wrap_case_search_hit,
 )
 from corehq.apps.es.profiling import ESQueryProfiler
+
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
@@ -156,24 +159,29 @@ def get_endpoint_results(helper, config):
         raise CaseSearchUserError(_("Endpoint '{}' query is invalid").format(config.endpoint_id))
     return get_primary_case_search_endpoint_results(
         helper,
-        [endpoint.case_type],
+        endpoint.target_type,
+        endpoint.case_type,
         config.criteria,
         query_root)
 
 @time_function()
-def get_primary_case_search_endpoint_results(helper, case_types, criteria, endpoint_query, limit=None):
-    builder = CaseSearchEndpointQueryBuilder(helper, case_types, endpoint_query)
-    with helper.profiler.timing_context('build_query'):
-        search_es = builder.build_query(criteria)
-    if limit:
-        search_es = search_es.size(limit)
+def get_primary_case_search_endpoint_results(helper, target_type,
+                                             case_type, criteria, endpoint_query, limit=None):
+    if target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH:
+        builder = CaseSearchEndpointQueryBuilder(helper, [case_type], endpoint_query)
+        with helper.profiler.timing_context('build_query'):
+            search_es = builder.build_query(criteria)
+        if limit:
+            search_es = search_es.size(limit)
 
-    results = search_es.run()
-    with helper.profiler.timing_context('wrap_cases'):
-        cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
+        results = search_es.run()
+        with helper.profiler.timing_context('wrap_cases'):
+            cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
+    else:
+        cases = get_sql_endpoint_results(helper, case_type, criteria, endpoint_query, limit)
+
     helper.profiler.primary_count = len(cases)
     return cases
-
 
 def get_unconfigured_endpoint_results(helper, config, app_id):
     cases = get_primary_case_search_results(helper, config.case_types, config.criteria, config.commcare_sort)
@@ -408,23 +416,22 @@ class CaseSearchQueryBuilder:
             for prop in properties_config.properties
         ]
 
-class CaseSearchEndpointQueryBuilder:
+class CaseSearchEndpointQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
     """Compiles the case search object for the view"""
     def __init__(
         self,
         helper,
         case_types,
         query_root):
+        super().__init__(query_root)
         self.request_domain = helper.domain
         self.case_types = case_types
-        self.query_root = query_root
         self.helper = helper
         self.config = helper.config
 
     def build_query(self, search_criteria):
-        self.param_values = {c.key: c.value for c in search_criteria}
         search_es = self._get_initial_search_es()
-        query = self._parse_query(self.query_root)
+        query = self._parse_query_root(search_criteria)
         if query is None:
             # Every condition dropped (e.g. all inputs were unsupplied
             # parameters). Apply no extra filter rather than match-all-via-empty.
@@ -441,39 +448,19 @@ class CaseSearchEndpointQueryBuilder:
                 .is_closed(False)
                 .size(max_results))
 
-    def _get_child_queries(self, node):
-        child_queries = [self._parse_query(child) for child in node.children]
-        return [q for q in child_queries if q is not None]
+    def _combine_and(self, children):
+        return filters.AND(*children)
 
-    def _parse_query(self, node):
-        if node.type in ('all', 'any', 'none'):
-            # Drop a group with no surviving children rather than collapsing to
-            # an empty AND/OR. An empty bool matches all documents, which in an
-            # `any`/OR context would make the whole query match everything.
-            children = self._get_child_queries(node)
-            if not children:
-                return None
-            if node.type == 'all':
-                return filters.AND(*children)
-            if node.type == 'any':
-                return filters.OR(*children)
-            return filters.NOT(filters.OR(*children))
-        elif node.type == 'component':
-            return self._parse_component_node(node)
-        else:
-            return None
+    def _combine_or(self, children):
+        return filters.OR(*children)
 
-    def _input_value(self, input_):
-        if input_ is None:
-            return None
-        if isinstance(input_, ParameterInput):
-            return self.param_values.get(input_.value)
-        return input_.value
+    def _combine_none(self, children):
+        return filters.NOT(filters.OR(*children))
 
     def _parse_component_node(self, node):
         operator = node.operator
 
-        if node.field_type == FIELD_TYPE_GEOPOINT:
+        if node.field_type == FIELD_TYPE_GPS:
             if operator == 'within_distance':
                 point = self._input_value(node.inputs.get('point'))
                 distance = self._input_value(node.inputs.get('distance'))
@@ -530,6 +517,7 @@ class CaseSearchEndpointQueryBuilder:
             elif operator == 'phonetic':
                 return sounds_like_text_query(field, value)
         return None
+
 
 @time_function()
 def get_and_tag_related_cases(helper, app_id, case_types, cases,

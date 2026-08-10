@@ -344,6 +344,7 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         with patch('corehq.apps.case_search.endpoint_views.get_primary_case_search_endpoint_results',
                    return_value=[]):
             response = self.client.post(self._test_url(), {
+                'target_type': CaseSearchEndpoint.TargetType.PROJECT_DB,
                 'case_type': 'my_case_type',
                 'query': json.dumps(EMPTY_QUERY),
             })
@@ -358,6 +359,7 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         for query, expected_text in cases:
             with self.subTest(query=query):
                 response = self.client.post(self._test_url(), {
+                    'target_type': CaseSearchEndpoint.TargetType.PROJECT_DB,
                     'case_type': 'my_case_type',
                     'query': query,
                 })
@@ -368,6 +370,7 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
 
     def test_unknown_case_type_returns_error(self):
         response = self.client.post(self._test_url(), {
+            'target_type': CaseSearchEndpoint.TargetType.PROJECT_DB,
             'case_type': 'nonexistent_type',
             'query': json.dumps(EMPTY_QUERY),
         })
@@ -378,10 +381,35 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
 
     def test_missing_case_type_returns_error(self):
         response = self.client.post(self._test_url(), {
+            'target_type': CaseSearchEndpoint.TargetType.PROJECT_DB,
             'query': json.dumps(EMPTY_QUERY),
         })
         assert response.status_code == 200
         assert 'alert-danger' in response.content.decode()
+
+    def test_missing_target_type_returns_error(self):
+        response = self.client.post(self._test_url(), {
+            'case_type': 'my_case_type',
+            'query': json.dumps(EMPTY_QUERY),
+        })
+        assert response.status_code == 200
+        assert 'alert-danger' in response.content.decode()
+
+    def test_name_not_required(self):
+        # Domain-scoped test view has no endpoint pk to exclude, so name
+        # uniqueness must not be enforced (it would false-positive on the
+        # edit page, where the form already carries the endpoint's own name).
+        self._make_endpoint(name='an-endpoint', case_type='my_case_type')
+        with patch('corehq.apps.case_search.endpoint_views.get_primary_case_search_endpoint_results',
+                   return_value=[]):
+            response = self.client.post(self._test_url(), {
+                'name': 'an-endpoint',
+                'target_type': CaseSearchEndpoint.TargetType.PROJECT_DB,
+                'case_type': 'my_case_type',
+                'query': json.dumps(EMPTY_QUERY),
+            })
+        assert response.status_code == 200
+        assert 'alert-danger' not in response.content.decode()
 
     def test_requires_post(self):
         response = self.client.get(self._test_url())
