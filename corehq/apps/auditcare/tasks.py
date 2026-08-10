@@ -1,11 +1,3 @@
-"""Prune auditcare tables outside of retention window defined in
-``settings.AUDITCARE_RETENTION_YEARS``
-
-``NavigationEventAudit`` and ``AccessAudit`` are partitioned by month on
-``event_date``, and each monthly table carries a ``CHECK`` constraint
-bounding it to that month. Therefore the month in a partition's name is
-enough to prove every row it holds predates the retention cutoff.
-"""
 import logging
 import re
 from datetime import UTC, date, datetime
