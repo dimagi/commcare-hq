@@ -72,10 +72,11 @@ class PublicWebformTable(BaseHtmxTable, tables.Table):
         verbose_name=_("Actions"),
     )
 
-    def __init__(self, domain, timezone, **kwargs):
+    def __init__(self, domain, timezone, is_filtered=False, **kwargs):
         super().__init__(**kwargs)
         self.domain = domain
         self.timezone = timezone
+        self.is_filtered = is_filtered
 
     @property
     @memoized

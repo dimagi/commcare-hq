@@ -16,7 +16,10 @@ from corehq.apps.hqwebapp.tables.pagination import (
     HtmxInvalidPageRedirectMixin,
     SelectablePaginatedTableView,
 )
-from corehq.apps.public_webforms.forms import CreatePublicWebformForm
+from corehq.apps.public_webforms.forms import (
+    CreatePublicWebformForm,
+    PublicWebformFilterForm,
+)
 from corehq.apps.public_webforms.models import PublicWebform
 from corehq.apps.public_webforms.tables import PublicWebformTable
 from corehq.apps.settings.views import get_qrcode
@@ -54,6 +57,14 @@ class ManagePublicWebformsView(BasePublicWebformsView):
     template_name = 'public_webforms/manage.html'
     page_title = _("Manage Public Webforms")
 
+    @property
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'filter_form': PublicWebformFilterForm(self.request.GET),
+        })
+        return context
+
 
 @method_decorator(PUBLIC_WEBFORMS_ACCESS, name='dispatch')
 class PublicWebformTableView(
@@ -71,21 +82,40 @@ class PublicWebformTableView(
         # a page that goes out of range is re-rendered against the dashboard
         return reverse(ManagePublicWebformsView.urlname, args=[self.domain])
 
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        if 'HX-Push-Url' not in response:
+            # point the browser at the dashboard carrying the filters, rather
+            # than at this partial, so a refresh keeps them
+            query = request.GET.urlencode()
+            response['HX-Replace-Url'] = (
+                f'{self.get_host_url()}?{query}' if query else self.get_host_url()
+            )
+        return response
+
     def get_queryset(self):
-        return PublicWebform.objects.filter(
+        queryset = PublicWebform.objects.filter(
             domain=self.domain
         ).with_status().annotate(
             submissions=Count(
                 'publicformsession',
                 filter=Q(publicformsession__submitted_at__isnull=False),
             ),
-        ).order_by('-expires_at')
+        )
+        return self.filter_form.filter(queryset).order_by('-expires_at')
 
     def get_table_kwargs(self):
         return {
             'domain': self.domain,
             'timezone': self.domain_object.get_default_timezone(),
+            # an empty list reads differently when the filters are what match nothing
+            'is_filtered': self.filter_form.is_filtering,
         }
+
+    @property
+    @memoized
+    def filter_form(self):
+        return PublicWebformFilterForm(self.request.GET)
 
 
 class CreatePublicWebformView(BasePublicWebformsView):

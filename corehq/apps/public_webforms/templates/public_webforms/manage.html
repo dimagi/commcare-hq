@@ -32,7 +32,47 @@
 
   <div class="card">
     <h4 class="card-header">{% trans "Webforms" %}</h4>
-    <div class="card-body p-0">
+    <form
+      class="row g-2 p-3 pb-0"
+      hx-get="{% url 'public_webforms_table' domain %}"
+      hx-target="#PublicWebformTable"
+      hx-swap="outerHTML"
+      hx-trigger="change, input delay:300ms from:find input[type=search]"
+    >
+      <div class="col-sm-6 col-lg-4">
+        <label
+          class="visually-hidden"
+          for="{{ filter_form.search.id_for_label }}"
+        >
+          {{ filter_form.search.label }}
+        </label>
+        <div class="input-group">
+          {{ filter_form.search }}
+          <span class="input-group-text">
+            <i class="fa fa-search"></i>
+          </span>
+        </div>
+      </div>
+      <div class="col-sm-3 col-lg-2">
+        <label
+          class="visually-hidden"
+          for="{{ filter_form.session_type.id_for_label }}"
+        >
+          {{ filter_form.session_type.label }}
+        </label>
+        {{ filter_form.session_type }}
+      </div>
+      <div class="col-sm-3 col-lg-2">
+        <label
+          class="visually-hidden"
+          for="{{ filter_form.status.id_for_label }}"
+        >
+          {{ filter_form.status.label }}
+        </label>
+        {{ filter_form.status }}
+      </div>
+    </form>
+    <div class="card-body">
       <div
         hx-trigger="load"
         hx-get="{% url 'public_webforms_table' domain %}{% querystring %}"
