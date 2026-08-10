@@ -50,8 +50,8 @@ Locations can be filtered by the following attributes as request parameters:
      - Description
      - Example
    * - ``format``
-     - Data format returned, defaults to xml
-     - ```?format=json``
+     - Data format returned, defaults to json
+     - ``?format=json``
    * - ``site_code``
      - Site code for the location
      - ``?site_code=boston``
