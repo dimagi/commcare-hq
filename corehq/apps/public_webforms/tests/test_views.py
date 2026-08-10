@@ -185,3 +185,59 @@ class TestSetPublicWebformStatus(PublicWebformViewTestMixin, TestCase):
         response = self.client.get(url)
 
         assert response.status_code == 405
+
+@flag_enabled('PUBLIC_WEBFORMS')
+@privilege_enabled(PUBLIC_WEBFORMS)
+class TestEditPublicWebformView(PublicWebformViewTestMixin, TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.webform = create_webform(is_disabled=False)
+
+    def url(self, webform=None, domain=DOMAIN):
+        return reverse(
+            'edit_public_webform', args=[domain, (webform or self.webform).id])
+
+    def post(self, webform=None, domain=DOMAIN, **fields):
+        return self.client.post(self.url(webform, domain), {
+            'label': 'Antenatal visit',
+            'expires_at': '2026-09-01 17:00:00',
+            'link_choices': ['allow_email'],
+            'open_to_requests': 'on',
+            **fields,
+        })
+
+    def test_the_webform_is_offered_for_editing(self):
+        response = self.client.get(self.url())
+
+        assert response.status_code == 200
+        assert response.context['form'].initial['label'] == 'Antenatal visit'
+
+    def test_changes_are_saved_and_the_dashboard_is_returned_to(self):
+        response = self.post(label='Antenatal visit, round two')
+
+        assert response.url == reverse('manage_public_webforms', args=[DOMAIN])
+        self.webform.refresh_from_db()
+        assert self.webform.label == 'Antenatal visit, round two'
+        assert self.webform.expires_at == datetime.datetime(2026, 9, 1, 21, 0)
+
+    def test_a_rejected_change_is_not_saved(self):
+        response = self.post(label='')
+
+        assert response.status_code == 200
+        self.webform.refresh_from_db()
+        assert self.webform.label == 'Antenatal visit'
+
+    def test_another_projects_webform_is_not_found(self):
+        other = create_webform(domain=OTHER_DOMAIN, label='Not yours')
+
+        assert self.client.get(self.url(other)).status_code == 404
+        assert self.post(webform=other).status_code == 404
+
+    def test_a_webform_cannot_be_edited_without_the_permission(self):
+        self.sign_in(NORMAL_USER)
+
+        assert self.client.get(self.url()).status_code != 200
+        self.post(label='Renamed by a non-admin useur')
+        self.webform.refresh_from_db()
+        assert self.webform.label == 'Antenatal visit'

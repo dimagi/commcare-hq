@@ -4,11 +4,11 @@ from unittest.mock import Mock, patch
 
 import pytest
 import pytz
+from django.db import DatabaseError
 from unmagic import use
 
-from django.db import DatabaseError
-
 from corehq.apps.public_webforms import forms
+from corehq.apps.public_webforms.form_paths import FormPathSegment
 from corehq.apps.public_webforms.models import (
     PublicWebform,
     PublicWebformStatus,
@@ -203,3 +203,127 @@ def test_create_maps_link_choices_to_delivery_options(link_choices, allow_email,
 
     assert webform.allow_email == allow_email
     assert webform.allow_sms == allow_sms
+
+
+EDIT_PATH = [
+    FormPathSegment('Frontline Program', '/app/', False),
+    FormPathSegment('Registration', '/menu/', False),
+    FormPathSegment('Cohort Registration', '/form/', False),
+]
+
+
+def _webform(**kwargs):
+    return PublicWebform(**{
+        'id': 1,
+        'domain': DOMAIN,
+        'label': 'Antenatal visit',
+        'expires_at': datetime(2026, 9, 1, 21, 0),
+        'allow_email': True,
+        'allow_sms': False,
+        'is_disabled': False,
+        **kwargs,
+    })
+
+
+def _edit_form(webform, data=None, has_sms_privilege=False):
+    """Stubs the build read that names the app, menu, and form."""
+    args = [data] if data is not None else []
+    with patch.multiple(
+        forms,
+        domain_has_privilege=Mock(return_value=has_sms_privilege),
+        get_public_webform_form_paths=Mock(return_value={webform.id: EDIT_PATH}),
+    ):
+        form = forms.EditPublicWebformForm(
+            webform.domain, TIMEZONE, webform, *args)
+        form.is_valid()
+    return form
+
+
+def _edit_data(**kwargs):
+    return {
+        'label': 'Antenatal visit',
+        'expires_at': '2026-09-01 17:00:00',
+        'link_choices': ['allow_email'],
+        **kwargs,
+    }
+
+
+def test_edit_prefills():
+    form = _edit_form(_webform())
+
+    assert form.initial['app_name'] == 'Frontline Program'
+    assert form.initial['menu_name'] == 'Registration'
+    assert form.initial['form_name'] == 'Cohort Registration'
+    assert form.initial['label'] == 'Antenatal visit'
+    # stored as UTC, offered back in the project's timezone
+    assert form.fields['expires_at'].initial == '2026-09-01 17:00:00'
+    assert form.initial['link_choices'] == ['allow_email']
+    assert form.initial['open_to_requests'] is True
+
+
+def test_edit_drops_a_delivery_option_the_project_can_no_longer_use():
+    form = _edit_form(_webform(allow_sms=True), has_sms_privilege=False)
+
+    assert form.initial['link_choices'] == ['allow_email']
+
+
+@use('db')
+@pytest.mark.parametrize('link_choices, allow_email, allow_sms', [
+    (['allow_email'], True, False),
+    (['allow_sms'], False, True),
+    (['allow_email', 'allow_sms'], True, True),
+])
+def test_edit_saves_the_delivery_options(link_choices, allow_email, allow_sms):
+    webform = create_webform()
+    form = _edit_form(webform, _edit_data(link_choices=link_choices),
+                      has_sms_privilege=True)
+    assert form.is_valid(), form.errors
+
+    updated = form.update_public_webform()
+
+    assert updated.allow_email == allow_email
+    assert updated.allow_sms == allow_sms
+
+
+@use('db')
+def test_edit_saves_the_label_and_closing_time():
+    webform = create_webform()
+    form = _edit_form(webform, _edit_data(
+        label='Antenatal visit, round two', expires_at='2026-12-01 17:00:00'))
+    assert form.is_valid(), form.errors
+
+    updated = form.update_public_webform()
+    updated.refresh_from_db()
+
+    assert updated.label == 'Antenatal visit, round two'
+    assert updated.expires_at == datetime(2026, 12, 1, 22, 0)
+
+
+@use('db')
+def test_moving_the_closing_time_out_reopens_an_expired_webform():
+    """Status is derived, so a new expiry is all it takes."""
+    webform = create_webform(
+        expires_at=datetime(2020, 1, 1), is_disabled=False)
+    form = _edit_form(webform, _edit_data(
+        expires_at='2099-09-01 17:00:00', open_to_requests='on'))
+    assert form.is_valid(), form.errors
+
+    form.update_public_webform()
+
+    reread = PublicWebform.objects.with_status().get(pk=webform.pk)
+    assert reread.status == PublicWebformStatus.OPEN
+
+
+@use('db')
+@pytest.mark.parametrize('open_to_requests, is_disabled', [
+    ('on', False),
+    ('', True),
+], ids=['open', 'closed'])
+def test_edit_opens_and_closes_the_webform(open_to_requests, is_disabled):
+    webform = create_webform(is_disabled=True)
+    form = _edit_form(webform, _edit_data(open_to_requests=open_to_requests))
+    assert form.is_valid(), form.errors
+
+    updated = form.update_public_webform()
+
+    assert updated.is_disabled == is_disabled

@@ -1,6 +1,8 @@
 import json
 from datetime import datetime, timedelta
 
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
 from django import forms
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -8,9 +10,6 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
-
-from crispy_forms import bootstrap as twbscrispy
-from crispy_forms import layout as crispy
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -24,6 +23,9 @@ from corehq.apps.public_webforms.form_choices import (
     get_public_webform_choices,
     get_public_webform_eligible_form,
     get_public_webform_type,
+)
+from corehq.apps.public_webforms.form_paths import (
+    get_public_webform_form_paths,
 )
 from corehq.apps.public_webforms.models import (
     PublicWebform,
@@ -107,6 +109,15 @@ class BasePublicWebformForm(forms.Form):
         initial=['allow_email'],
         widget=forms.CheckboxSelectMultiple,
     )
+    open_to_requests = forms.BooleanField(
+        required=False,
+        label=gettext_lazy("Open to Requests"),
+        widget=BootstrapSwitchInput(
+            inline_label=gettext_lazy(
+                "Immediately open this public webform to one-time link requests."
+            ),
+        ),
+    )
 
     def __init__(self, domain, timezone, *args, **kwargs):
         self.domain = domain
@@ -186,6 +197,7 @@ class BasePublicWebformForm(forms.Form):
                 x_data=json.dumps(alpine_data_model),
             ),
             crispy.Field('link_choices'),
+            twbscrispy.PrependedText('open_to_requests', ''),
         ]
 
     def clean_expires_at(self):
@@ -200,15 +212,6 @@ class CreatePublicWebformForm(BasePublicWebformForm):
     submit_name = 'create_public_webform'
     submit_label = gettext_lazy("Create Public Webform")
 
-    open_to_requests = forms.BooleanField(
-        required=False,
-        label=gettext_lazy("Open to Requests"),
-        widget=BootstrapSwitchInput(
-            inline_label=gettext_lazy(
-                "Immediately open this public webform to one-time link requests."
-            ),
-        ),
-    )
     app_id = forms.CharField(required=False, widget=forms.HiddenInput)
     form_unique_id = forms.CharField(required=False, widget=forms.HiddenInput)
 
@@ -225,7 +228,6 @@ class CreatePublicWebformForm(BasePublicWebformForm):
                 context={'form_choices': json.dumps(get_public_webform_choices(self.domain))},
             )),
             *super().fieldset_fields(),
-            twbscrispy.PrependedText('open_to_requests', ''),
         ]
 
     def clean(self):
@@ -269,3 +271,56 @@ class CreatePublicWebformForm(BasePublicWebformForm):
             # delete the build on webform create failure.
             delete_public_webform_build(self.domain, app_build_id)
             raise
+
+
+class EditPublicWebformForm(BasePublicWebformForm):
+
+    fieldset_title = gettext_lazy("Edit Public Webform")
+    submit_name = 'edit_public_webform'
+    submit_label = gettext_lazy("Save Changes")
+
+    app_name = forms.CharField(
+        label=gettext_lazy("Application"), disabled=True, required=False)
+    menu_name = forms.CharField(
+        label=gettext_lazy("Menu"), disabled=True, required=False)
+    form_name = forms.CharField(
+        label=gettext_lazy("Form"), disabled=True, required=False)
+
+    def __init__(self, domain, timezone, webform, *args, **kwargs):
+        self.webform = webform
+        super().__init__(domain, timezone, *args, **kwargs)
+        app_name, menu_name, form_name = get_public_webform_form_paths(
+            domain, [webform])[webform.id]
+        self.initial.update({
+            'label': webform.label,
+            'open_to_requests': not webform.is_disabled,
+            'app_name': app_name.name,
+            'menu_name': menu_name.name,
+            'form_name': form_name.name,
+            # a delivery option the project can no longer use is dropped, not kept
+            'link_choices': [
+                choice for choice, __ in self.fields['link_choices'].choices
+                if getattr(webform, choice)
+            ],
+        })
+
+    def initial_expires_at(self):
+        return ServerTime(self.webform.expires_at).user_time(self.timezone).done()
+
+    def fieldset_fields(self):
+        return [
+            crispy.Field('app_name'),
+            crispy.Field('menu_name'),
+            crispy.Field('form_name'),
+            *super().fieldset_fields(),
+        ]
+
+    def update_public_webform(self):
+        link_choices = self.cleaned_data['link_choices']
+        self.webform.label = self.cleaned_data['label']
+        self.webform.expires_at = self.cleaned_data['expires_at']
+        self.webform.allow_email = 'allow_email' in link_choices
+        self.webform.allow_sms = 'allow_sms' in link_choices
+        self.webform.is_disabled = not self.cleaned_data['open_to_requests']
+        self.webform.save()
+        return self.webform

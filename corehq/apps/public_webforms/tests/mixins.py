@@ -7,6 +7,8 @@ from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 PASSWORD = 'Passw0rd!'
 ADMIN_USER = 'webform-admin@example.com'
 NORMAL_USER = 'normal-user@example.com'
+TIMEZONE = 'America/New_York'
+
 
 
 class PublicWebformViewTestMixin:
@@ -21,6 +23,10 @@ class PublicWebformViewTestMixin:
         super().setUpClass()
         for domain in (DOMAIN, OTHER_DOMAIN):
             domain_obj = create_domain(domain)
+            # not UTC, so that anything reading it can be told apart from
+            # anything defaulting to server time
+            domain_obj.default_timezone = TIMEZONE
+            domain_obj.save()
             # the couch doc is all that outlives a test's transaction
             cls.addClassCleanup(domain_obj.get_db().delete_doc, domain_obj.get_id)
         cls.make_user(ADMIN_USER, HqPermissions(edit_public_webforms=True))
