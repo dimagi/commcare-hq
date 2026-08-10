@@ -1181,6 +1181,14 @@ DATA_RETENTION_WINDOW = 90  # days
 AI_CHATBOT_ID = None
 AI_CHATBOT_TOKEN = None
 
+# Platform-wide defaults for AI app translations, used where no
+# AITranslationConfig row overrides them. Override in localsettings.py.
+AI_TRANSLATION_DEFAULTS = {
+    'provider': 'openai',
+    'model': 'gpt-4.1',
+    'monthly_word_limit': 1_000_000,
+}
+
 #  Credentials for Orange Cameroon API. Override in localsettings.py
 ORANGE_CAMEROON_API_CREDS = {
     'x-auth-token': '',
