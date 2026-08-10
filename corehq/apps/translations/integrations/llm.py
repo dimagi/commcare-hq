@@ -204,6 +204,23 @@ class OpenaiTranslator(LLMTranslator):
 
         self.api_base = "https://api.openai.com/v1"
 
+    def _response_format(self):
+        # json_schema constrains output to a flat string map; models that
+        # don't support it raise a 400, caught below with a json_object
+        # fallback. strict=False because additionalProperties-only schemas
+        # are not accepted by strict mode.
+        return {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "translations",
+                "strict": False,
+                "schema": {
+                    "type": "object",
+                    "additionalProperties": {"type": "string"},
+                },
+            },
+        }
+
     def _call_llm(self, system_prompt, user_message):
 
         if self.client is None:
@@ -214,15 +231,22 @@ class OpenaiTranslator(LLMTranslator):
         )
         def _call_openai_client(backup_model=None):
             model = backup_model or self.model
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message}
-                ],
-                temperature=0.2,
-                response_format={"type": "json_object"}
-            )
+
+            def create(response_format):
+                return self.client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_message},
+                    ],
+                    temperature=0.2,
+                    response_format=response_format,
+                )
+
+            try:
+                response = create(self._response_format())
+            except self.openai.BadRequestError:
+                response = create({"type": "json_object"})
             return response.choices[0].message.content
 
         try:
@@ -231,8 +255,6 @@ class OpenaiTranslator(LLMTranslator):
             raise Exception("OpenAI API call failed") from e
 
     def _call_llm_http(self, system_prompt, user_message):
-        # We might not use this method at all, but it was useful in testing other LLM clients
-        # without installing their package, so I am keeping it here for now.
         try:
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
@@ -246,14 +268,18 @@ class OpenaiTranslator(LLMTranslator):
                     {"role": "user", "content": user_message}
                 ],
                 "temperature": 0.2,
-                "response_format": {"type": "json_object"}
             }
 
-            response = requests.post(
-                f"{self.api_base}/chat/completions",
-                headers=headers,
-                json=payload
-            )
+            def post(response_format):
+                return requests.post(
+                    f"{self.api_base}/chat/completions",
+                    headers=headers,
+                    json={**payload, "response_format": response_format},
+                )
+
+            response = post(self._response_format())
+            if response.status_code == 400:
+                response = post({"type": "json_object"})
             response.raise_for_status()
 
             result = response.json()
