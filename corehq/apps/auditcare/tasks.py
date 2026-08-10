@@ -7,6 +7,7 @@ from django.db import connections, router
 
 from celery.schedules import crontab
 from dateutil.relativedelta import relativedelta
+from psycopg2 import sql
 
 from dimagi.utils.logging import notify_error, notify_exception
 
@@ -90,7 +91,11 @@ def _drop_expired_partitions(model, cutoff):
             )
             continue
         with connections[db].cursor() as cursor:
-            cursor.execute(f'DROP TABLE IF EXISTS "{table_name}"')
+            cursor.execute(
+                sql.SQL('DROP TABLE IF EXISTS {}').format(
+                    sql.Identifier(table_name)
+                )
+            )
         log.info(
             'Dropped expired auditcare partition %s (retention cutoff %s)',
             table_name,
@@ -103,5 +108,9 @@ def _drop_expired_partitions(model, cutoff):
 def _get_newest_event_date(db, table_name):
     """Return the newest ``event_date`` in the partition, or None if it is empty"""
     with connections[db].cursor() as cursor:
-        cursor.execute(f'SELECT MAX(event_date) FROM "{table_name}"')
+        cursor.execute(
+            sql.SQL('SELECT MAX(event_date) FROM {}').format(
+                sql.Identifier(table_name)
+            )
+        )
         return cursor.fetchone()[0]
