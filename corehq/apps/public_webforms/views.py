@@ -18,6 +18,7 @@ from corehq.apps.hqwebapp.tables.pagination import (
 )
 from corehq.apps.public_webforms.forms import (
     CreatePublicWebformForm,
+    EditPublicWebformForm,
     PublicWebformFilterForm,
 )
 from corehq.apps.public_webforms.models import PublicWebform
@@ -140,6 +141,49 @@ class CreatePublicWebformView(BasePublicWebformsView):
         data = [self.request.POST] if self.request.method == 'POST' else []
         return CreatePublicWebformForm(
             self.domain, self.domain_object.get_default_timezone(), *data)
+
+
+class EditPublicWebformView(BasePublicWebformsView):
+    urlname = 'edit_public_webform'
+    template_name = 'public_webforms/edit.html'
+    page_title = _("Edit Public Webform")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.webform.id])
+
+    def post(self, request, *args, **kwargs):
+        if not self.form.is_valid():
+            return self.get(request, *args, **kwargs)
+        self.form.update_public_webform()
+        messages.success(request, _("Public webform updated."))
+        return HttpResponseRedirect(
+            reverse(ManagePublicWebformsView.urlname, args=[self.domain]))
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'form': self.form,
+        })
+        return context
+
+    @property
+    @memoized
+    def webform(self):
+        return get_object_or_404(
+            PublicWebform, domain=self.domain, id=self.kwargs['webform_id'])
+
+    @property
+    @memoized
+    def form(self):
+        data = [self.request.POST] if self.request.method == 'POST' else []
+        return EditPublicWebformForm(
+            self.domain,
+            self.domain_object.get_default_timezone(),
+            self.webform,
+            *data,
+        )
 
 
 @public_webforms_access
