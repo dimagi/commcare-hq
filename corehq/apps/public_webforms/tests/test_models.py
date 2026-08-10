@@ -23,25 +23,8 @@ from corehq.apps.public_webforms.models import (
     PublicWebform,
     PublicWebformStatus,
 )
+from corehq.apps.public_webforms.tests.utils import create_webform
 from corehq.apps.users.util import PUBLIC_USER_ID
-
-DOMAIN = 'public-forms-domain'
-
-
-def _create_webform(expires_at=timezone.now() + datetime.timedelta(days=30), **kwargs):
-    return PublicWebform.objects.create(
-        domain=DOMAIN,
-        label='Antenatal visit',
-        app_id='app',
-        app_build_id='build',
-        form_unique_id='form',
-        endpoint_id='endpoint',
-        session_type='survey',
-        allow_sms=False,
-        allow_email=True,
-        expires_at=expires_at,
-        **kwargs,
-    )
 
 
 def test_public_url_is_absolute_and_keyed_on_the_public_id():
@@ -71,7 +54,7 @@ def test_is_expired(offset, expected):
 def test_with_status_derives_status_from_expiry_and_the_open_setting(
     expires_in, is_disabled, expected
 ):
-    webform = _create_webform(
+    webform = create_webform(
         expires_at=timezone.now() + expires_in, is_disabled=is_disabled)
 
     annotated = PublicWebform.objects.with_status().get(pk=webform.pk)
