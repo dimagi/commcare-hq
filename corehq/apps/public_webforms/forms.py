@@ -25,8 +25,61 @@ from corehq.apps.public_webforms.form_choices import (
     get_public_webform_eligible_form,
     get_public_webform_type,
 )
-from corehq.apps.public_webforms.models import PublicWebform
+from corehq.apps.public_webforms.models import (
+    PublicWebform,
+    PublicWebformStatus,
+    PublicWebformType,
+)
 from corehq.util.timezones.conversions import ServerTime, UserTime
+
+
+class PublicWebformFilterForm(forms.Form):
+    """Narrows the dashboard's list of public webforms.
+
+    Bound to the query string, so a filtered list can be linked to or
+    refreshed. A value that isn't offered is dropped rather than reported,
+    since the query string is not something a respondent edits by hand.
+    """
+
+    search = forms.CharField(
+        required=False,
+        label=gettext_lazy("Search labels"),
+        widget=forms.TextInput(attrs={
+            'type': 'search',
+            'class': 'form-control',
+            'placeholder': gettext_lazy("Search labels"),
+        }),
+    )
+    status = forms.ChoiceField(
+        required=False,
+        label=gettext_lazy("Status"),
+        choices=[('', gettext_lazy("Any status"))] + PublicWebformStatus.choices,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    session_type = forms.ChoiceField(
+        required=False,
+        label=gettext_lazy("Type"),
+        choices=[('', gettext_lazy("Any type"))] + PublicWebformType.choices,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+
+    lookups = {
+        'search': 'label__icontains',
+        'status': 'status',
+        'session_type': 'session_type',
+    }
+
+    def filter(self, queryset):
+        self.is_valid()  # populates cleaned_data, dropping any invalid field
+        for field, lookup in self.lookups.items():
+            if value := self.cleaned_data.get(field):
+                queryset = queryset.filter(**{lookup: value})
+        return queryset
+
+    @property
+    def is_filtering(self):
+        self.is_valid()
+        return any(self.cleaned_data.get(field) for field in self.lookups)
 
 
 class CreatePublicWebformForm(forms.Form):

@@ -3,7 +3,11 @@
 
 {% block no_results_table %}
   <p class="text-muted p-3 mb-0">
-    {% trans "No public webforms have been created yet." %}
+    {% if table.is_filtered %}
+      {% trans "No public webforms match these filters." %}
+    {% else %}
+      {% trans "No public webforms have been created yet." %}
+    {% endif %}
   </p>
 {% endblock no_results_table %}
 
