@@ -60,9 +60,6 @@ class CaseSearchEndpointSqlQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
     def _parse_component_node(self, node):
         operator = node.operator
         column = self.table.columns[property_column(node.field, node.field_type)]
-        value = self._input_value(node.inputs['value'])
-        if value is None:
-            return None  # ignore component if value is not given
 
         if node.field_type == FIELD_TYPE_GPS:
             if operator == 'within_distance':
@@ -73,12 +70,19 @@ class CaseSearchEndpointSqlQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
                     return None
                 if unit not in queries.DISTANCE_UNITS:
                     return None
+                try:
+                    distance = to_distance_in_meters(distance, unit)
+                except ValueError:
+                    return None
                 earth_point = cast(literal(point), Earth)
-                distance = to_distance_in_meters(distance, unit)
                 return func.earth_distance(column, earth_point) <= distance
             return None
 
-        elif node.field_type in (FIELD_TYPE_DATE, FIELD_TYPE_DATETIME):
+        value = self._input_value(node.inputs['value'])
+        if value is None:
+            return None  # ignore component if value is not given
+
+        if node.field_type in (FIELD_TYPE_DATE, FIELD_TYPE_DATETIME):
             date_value = coerce_to_date(value)
             if date_value is None:
                 return None
