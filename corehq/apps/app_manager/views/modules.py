@@ -110,6 +110,7 @@ from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     case_search_enabled_for_domain,
 )
+from corehq.apps.project_db.endpoints import STATIC_ENDPOINTS
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
     track_domain_request,
@@ -221,6 +222,20 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
 
     fixture_column_options = _get_fixture_columns_options(app.domain)
 
+    case_search_endpoints = []
+    if toggles.CASE_SEARCH_ENDPOINTS.enabled(app.domain):
+        case_search_endpoints = list(
+            CaseSearchEndpoint.objects
+            .filter(domain=app.domain, is_active=True)
+            .order_by('name')
+            .values('id', 'name')
+        )
+        # Experimental ProjectDB proof-of-concept endpoints (see corehq.apps.project_db)
+        case_search_endpoints += [
+            {'id': endpoint_id, 'name': f'{name} (ProjectDB)'}
+            for endpoint_id, (name, _) in STATIC_ENDPOINTS.items()
+        ]
+
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
         'case_list_form_options': _case_list_form_options(app, module, lang),
@@ -231,12 +246,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(app.domain),
         'data_registry_enabled': app.supports_data_registry,
         'data_registries': get_data_registry_dropdown_options(app.domain, required_case_types=case_types),
-        'case_search_endpoints': list(
-            CaseSearchEndpoint.objects
-            .filter(domain=app.domain, is_active=True)
-            .order_by('name')
-            .values('id', 'name')
-        ) if toggles.CASE_SEARCH_ENDPOINTS.enabled(app.domain) else [],
+        'case_search_endpoints': case_search_endpoints,
         'data_registry_workflow_choices': (
             (REGISTRY_WORKFLOW_LOAD_CASE, _("Load external case into form")),
             (REGISTRY_WORKFLOW_SMART_LINK, _("Smart link to external domain")),
