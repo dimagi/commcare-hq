@@ -71,8 +71,11 @@ from corehq.apps.es.case_search import (
     wrap_case_search_hit,
 )
 from corehq.apps.es.profiling import ESQueryProfiler
-from corehq.apps.project_db.table_ddl import CaseTable, get_project_db_engine, property_column
+
+from corehq.apps.project_db.populate import coerce_to_select
 from corehq.apps.project_db.query import rows_to_cases
+from corehq.apps.project_db.table_ddl import CaseTable, get_project_db_engine, property_column
+
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
@@ -645,6 +648,30 @@ class CaseSearchEndpointSqlQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
                 return column >= date_value
             elif operator == 'fuzzy_date':
                 return column.in_([date.fromisoformat(p) for p in date_permutations(value)])
+            return None
+        elif node.field_type == FIELD_TYPE_NUMBER:
+            if operator == 'equals':
+                return column == value
+            elif operator == 'not_equals':
+                return column != value
+            elif operator == 'lt':
+                return column < value
+            elif operator == 'gt':
+                return column > value
+            elif operator == 'lte':
+                return column <= value
+            elif operator == 'gte':
+                return column >= value
+            return None
+        elif node.field_type == FIELD_TYPE_SELECT:
+            arr_value = coerce_to_select(value)
+            print(arr_value)
+            if operator == 'selected_any':
+                return column.overlap(arr_value)
+            elif operator == 'selected_all':
+                return column.contains(arr_value)
+            elif operator == 'is_empty':
+                return func.cardinality(column) == 0
             return None
         else:
             if operator == 'equals':
