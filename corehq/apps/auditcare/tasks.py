@@ -30,6 +30,9 @@ MINIMUM_RETENTION_YEARS = 6
 def prune_auditcare_tables():
     """Drop partitions older than the retention window."""
     cutoff = _get_cutoff_date()
+    if cutoff is None:
+        log.info('Auditcare pruning is disabled by AUDITCARE_RETENTION_YEARS')
+        return
     for model in MODELS_TO_PRUNE:
         try:
             dropped = _drop_expired_partitions(model, cutoff)
@@ -50,14 +53,19 @@ def prune_auditcare_tables():
 
 
 def _get_cutoff_date():
-    """Return the date before which audit records may be pruned
+    """Return the date before which audit records may be pruned, or
+    ``None`` if pruning is disabled
 
-    ``settings.AUDITCARE_RETENTION_YEARS`` can only lengthen the
-    retention window, never shorten it below
-    ``MINIMUM_RETENTION_YEARS``.
+    Setting ``AUDITCARE_RETENTION_YEARS`` to ``None`` turns pruning off.
+    Any other value can only lengthen the retention window, never
+    shorten it below ``MINIMUM_RETENTION_YEARS``.
     """
-    years = max(MINIMUM_RETENTION_YEARS, settings.AUDITCARE_RETENTION_YEARS)
-    return datetime.now(UTC).date() - relativedelta(years=years)
+    years = settings.AUDITCARE_RETENTION_YEARS
+    if years is None:
+        return None
+    return datetime.now(UTC).date() - relativedelta(
+        years=max(MINIMUM_RETENTION_YEARS, years)
+    )
 
 
 def _get_partitions_for_base_table(db, base_table):
@@ -87,7 +95,10 @@ def _get_partitions_to_drop(existing_table_names, base_table, cutoff_date):
 
 
 def _drop_expired_partitions(model, cutoff):
-    if cutoff > _get_cutoff_date():
+    latest_allowed_cutoff = _get_cutoff_date()
+    if latest_allowed_cutoff is None:
+        raise ValueError('Refusing to prune auditcare: pruning is disabled')
+    if cutoff > latest_allowed_cutoff:
         raise ValueError(
             f'Refusing to prune auditcare with cutoff {cutoff}: it is inside '
             f'the retention window'

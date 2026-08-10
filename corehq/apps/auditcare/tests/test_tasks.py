@@ -39,6 +39,17 @@ def test_setting_can_only_lengthen_the_retention_window(retention_years, expecte
     assert cutoff == expected
 
 
+def test_setting_of_none_disables_pruning():
+    with override_settings(AUDITCARE_RETENTION_YEARS=None):
+        assert _get_cutoff_date() is None
+
+
+def test_refuses_to_drop_partitions_when_pruning_is_disabled():
+    with override_settings(AUDITCARE_RETENTION_YEARS=None):
+        with pytest.raises(ValueError, match='pruning is disabled'):
+            _drop_expired_partitions(AccessAudit, date(2015, 3, 1))
+
+
 def test_no_partitions_means_nothing_to_drop():
     partitions_to_drop = _get_partitions_to_drop([], BASE_TABLE, date(2030, 1, 1))
     assert partitions_to_drop == []
@@ -179,6 +190,15 @@ class TestPruneAuditcarePartitions(AuditcareTest):
         self.insert_row(table_name, datetime.utcnow())
 
         prune_auditcare_tables()
+
+        assert table_name in self.get_partition_tables(AccessAudit)
+
+    def test_keeps_an_expired_partition_when_pruning_is_disabled(self):
+        table_name = f'{BASE_TABLE}_y2015m03'
+        self.create_partition_without_check_constraint(table_name)
+
+        with override_settings(AUDITCARE_RETENTION_YEARS=None):
+            prune_auditcare_tables()
 
         assert table_name in self.get_partition_tables(AccessAudit)
 
