@@ -234,8 +234,7 @@ def _ending_reminder_context(subscription, days_left):
         'base_url': get_site_domain(),
         'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         'sales_email': settings.SALES_EMAIL,
-        'plan_info_url': ('https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/'
-                          'CommCare+Pricing+Overview#Detailed-Software-Plan-%26-Feature-Comparisons')
+        'plan_info_url': 'https://commcare.dimagi.com/pricing/#plans'
     }
 
     subject = _(
