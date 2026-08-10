@@ -20,16 +20,16 @@ log = logging.getLogger(__name__)
 
 MODELS_TO_PRUNE = [NavigationEventAudit, AccessAudit]
 
+MINIMUM_RETENTION_YEARS = 6
+
 
 @periodic_task(
     run_every=crontab(hour=2, minute=0, day_of_month='1'),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
 def prune_auditcare_tables():
-    """Drop partitions older than ``AUDITCARE_RETENTION_YEARS``."""
-    cutoff = datetime.now(UTC).date() - relativedelta(
-        years=settings.AUDITCARE_RETENTION_YEARS
-    )
+    """Drop partitions older than the retention window."""
+    cutoff = _get_cutoff_date()
     for model in MODELS_TO_PRUNE:
         try:
             dropped = _drop_expired_partitions(model, cutoff)
@@ -47,6 +47,17 @@ def prune_auditcare_tables():
                 dropped,
                 tags={'model': model.__name__},
             )
+
+
+def _get_cutoff_date():
+    """Return the date before which audit records may be pruned
+
+    ``settings.AUDITCARE_RETENTION_YEARS`` can only lengthen the
+    retention window, never shorten it below
+    ``MINIMUM_RETENTION_YEARS``.
+    """
+    years = max(MINIMUM_RETENTION_YEARS, settings.AUDITCARE_RETENTION_YEARS)
+    return datetime.now(UTC).date() - relativedelta(years=years)
 
 
 def _get_partitions_for_base_table(db, base_table):
@@ -76,6 +87,11 @@ def _get_partitions_to_drop(existing_table_names, base_table, cutoff_date):
 
 
 def _drop_expired_partitions(model, cutoff):
+    if cutoff > _get_cutoff_date():
+        raise ValueError(
+            f'Refusing to prune auditcare with cutoff {cutoff}: it is inside '
+            f'the retention window'
+        )
     db = router.db_for_write(model)
     base_table = model._meta.db_table
     partitioned_tables = _get_partitions_for_base_table(db, base_table)

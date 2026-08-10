@@ -1,21 +1,42 @@
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 
 import pytest
 from dateutil.relativedelta import relativedelta
-from django.conf import settings
 from django.db import connections, router
+from django.test import override_settings
 
 from corehq.util.metrics.tests.utils import capture_metrics
 
 from ..models import AccessAudit
 from ..tasks import (
+    MINIMUM_RETENTION_YEARS,
     MODELS_TO_PRUNE,
+    _drop_expired_partitions,
+    _get_cutoff_date,
     _get_partitions_to_drop,
     prune_auditcare_tables,
 )
 from .testutils import AuditcareTest
 
 BASE_TABLE = 'auditcare_accessaudit'
+
+
+@pytest.mark.parametrize(
+    'retention_years, expected_years',
+    [
+        (0, MINIMUM_RETENTION_YEARS),
+        (-1, MINIMUM_RETENTION_YEARS),
+        (MINIMUM_RETENTION_YEARS - 1, MINIMUM_RETENTION_YEARS),
+        (MINIMUM_RETENTION_YEARS, MINIMUM_RETENTION_YEARS),
+        (MINIMUM_RETENTION_YEARS + 1, MINIMUM_RETENTION_YEARS + 1),
+        (25, 25),
+    ],
+)
+def test_setting_can_only_lengthen_the_retention_window(retention_years, expected_years):
+    with override_settings(AUDITCARE_RETENTION_YEARS=retention_years):
+        cutoff = _get_cutoff_date()
+    expected = datetime.now(UTC).date() - relativedelta(years=expected_years)
+    assert cutoff == expected
 
 
 def test_no_partitions_means_nothing_to_drop():
@@ -105,9 +126,7 @@ def test_matches_partitions_of_the_model_it_was_given():
 
 class TestPruneAuditcarePartitions(AuditcareTest):
     def test_drops_only_partitions_older_than_the_retention_period(self):
-        cutoff = date.today() - relativedelta(
-            years=settings.AUDITCARE_RETENTION_YEARS
-        )
+        cutoff = _get_cutoff_date()
         # two expired dates, so the task has to drop more than one partition
         expired_dates = [
             datetime(cutoff.year - 3, 1, 15),
@@ -160,6 +179,16 @@ class TestPruneAuditcarePartitions(AuditcareTest):
         self.insert_row(table_name, datetime.utcnow())
 
         prune_auditcare_tables()
+
+        assert table_name in self.get_partition_tables(AccessAudit)
+
+    def test_refuses_a_cutoff_inside_the_retention_window(self):
+        table_name = f'{BASE_TABLE}_y2015m03'
+        self.create_partition_without_check_constraint(table_name)
+        cutoff_one_day_too_recent = _get_cutoff_date() + relativedelta(days=1)
+
+        with pytest.raises(ValueError, match='inside the retention window'):
+            _drop_expired_partitions(AccessAudit, cutoff_one_day_too_recent)
 
         assert table_name in self.get_partition_tables(AccessAudit)
 

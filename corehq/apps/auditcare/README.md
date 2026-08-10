@@ -84,9 +84,10 @@ additional events in that minute are not displayed.
 ## Retention
 
 Audit records are kept for `AUDITCARE_RETENTION_YEARS` (default 6, overridable
-per environment in `localsettings`). A monthly Celery task,
-`prune_auditcare_tables`, drops whole monthly partitions once every record in
-them is older than that cutoff.
+per environment in `localsettings`). The pruning task enforces a floor of
+`MINIMUM_RETENTION_YEARS` (6), so the setting can lengthen the retention window
+but never shorten it. A monthly Celery task, `prune_auditcare_tables`, drops
+whole monthly partitions once every record in them is older than that cutoff.
 
 Searches beyond the retention window therefore return no results even for
 periods when activity did occur.
