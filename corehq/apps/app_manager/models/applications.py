@@ -20,8 +20,11 @@ from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS, models
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.translation import gettext as _
-from django.utils.translation import override
+# FIXME(gettext_lazy): many of the gettext calls in this file can likely be
+# changed to _ (gettext_lazy), but gettext is necessary for any value being
+# used with jsonobject (which checks isinstance(value, str) at assignment).
+from django.utils.translation import gettext, override
+from django.utils.translation import gettext_lazy as _
 
 from couchdbkit import ResourceNotFound
 from looseversion import LooseVersion
@@ -1600,7 +1603,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         if rename:
             for lang, name in copy_source['name'].items():
                 with override(lang):
-                    copy_source['name'][lang] = _('Copy of {name}').format(name=name)
+                    copy_source['name'][lang] = gettext('Copy of {name}').format(name=name)
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         to_app = to_module.get_app()
