@@ -30,7 +30,7 @@ DISTANCE_UNITS_TO_METER = {
     "inch": 0.0254,
     "nauticalmiles": 1852,
 }
-DISTANCE_UNITS = DISTANCE_UNITS_TO_METER.keys()
+DISTANCE_UNITS = list(DISTANCE_UNITS_TO_METER.keys())
 
 
 def BOOL_CLAUSE(query, **kwargs):

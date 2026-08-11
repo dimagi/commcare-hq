@@ -1,4 +1,25 @@
+from corehq.apps.case_search.endpoint_capability import (
+    _OPERATOR_BY_TYPE,
+    FIELD_TYPE_DATE,
+    FIELD_TYPE_DATETIME,
+    FIELD_TYPE_GPS,
+    FIELD_TYPE_NUMBER,
+    FIELD_TYPE_SELECT,
+    FIELD_TYPE_TEXT,
+)
 from corehq.apps.case_search.endpoint_query_spec import ParameterInput
+
+
+def build_operator_handlers(field_type_methods):
+    """Build a {(field_type, operator): method_name} dispatch table from the
+    declared _OPERATOR_BY_TYPE capability data, routing every declared
+    operator to its field type's handler method.
+    """
+    return {
+        (field_type, operator): field_type_methods[field_type]
+        for field_type, operators in _OPERATOR_BY_TYPE.items()
+        for operator, _label in operators
+    }
 
 
 class BaseCaseSearchEndpointQueryBuilder:
@@ -6,7 +27,20 @@ class BaseCaseSearchEndpointQueryBuilder:
     resolves parameter references, deferring backend-specific leaf
     translation and boolean combination to subclasses (e.g. Elasticsearch,
     SQL).
+
+    Subclasses must implement _parse_gps/_parse_date/_parse_number/
+    _parse_select/_parse_text, each taking (node, operator).
     """
+    _FIELD_TYPE_METHODS = {
+        FIELD_TYPE_GPS: '_parse_gps',
+        FIELD_TYPE_DATE: '_parse_date',
+        FIELD_TYPE_DATETIME: '_parse_date',
+        FIELD_TYPE_NUMBER: '_parse_number',
+        FIELD_TYPE_SELECT: '_parse_select',
+        FIELD_TYPE_TEXT: '_parse_text',
+    }
+    OPERATOR_HANDLERS = build_operator_handlers(_FIELD_TYPE_METHODS)
+
     def __init__(self, query_root):
         self.query_root = query_root
 
@@ -53,4 +87,7 @@ class BaseCaseSearchEndpointQueryBuilder:
         raise NotImplementedError
 
     def _parse_component_node(self, node):
-        raise NotImplementedError
+        handler_name = self.OPERATOR_HANDLERS.get((node.field_type, node.operator))
+        if handler_name is None:
+            return None
+        return getattr(self, handler_name)(node, node.operator)

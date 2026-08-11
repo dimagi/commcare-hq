@@ -4,18 +4,16 @@ from collections import defaultdict
 from dataclasses import dataclass
 from functools import wraps
 
-from django.conf import settings
-from django.utils.functional import cached_property
-from django.utils.translation import gettext as _
-
-from couchforms.geopoint import GeoPoint
-from jsonobject.exceptions import BadValueError
-
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.phone.data_providers.case.livequery import (
     get_all_related_live_cases,
 )
+from couchforms.geopoint import GeoPoint
 from dimagi.utils.logging import notify_exception
+from django.conf import settings
+from django.utils.functional import cached_property
+from django.utils.translation import gettext as _
+from jsonobject.exceptions import BadValueError
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_cached
@@ -25,13 +23,13 @@ from corehq.apps.case_search.const import (
     COMMCARE_PROJECT,
     IS_RELATED_CASE,
 )
-from corehq.apps.case_search.endpoint_capability import (
-    FIELD_TYPE_DATE,
-    FIELD_TYPE_DATETIME,
-    FIELD_TYPE_GPS,
-    FIELD_TYPE_NUMBER,
-    FIELD_TYPE_SELECT,
-    get_capability,
+from corehq.apps.case_search.endpoint_capability import get_capability
+from corehq.apps.case_search.endpoint_query_spec import (
+    parse_parameter_spec,
+    parse_query_spec,
+)
+from corehq.apps.case_search.endpoint_sql_query_builder import (
+    get_sql_endpoint_results,
 )
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
@@ -50,13 +48,13 @@ from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     extract_search_request_config,
 )
-from corehq.apps.case_search.endpoint_query_spec import parse_parameter_spec, parse_query_spec
-from corehq.apps.case_search.endpoint_sql_query_builder import get_sql_endpoint_results
 from corehq.apps.case_search.query_builder_base import BaseCaseSearchEndpointQueryBuilder
-from corehq.apps.case_search.xpath_functions.query_functions import date_permutations, validate_date
-from corehq.apps.es import HQESQuery, case_search
+from corehq.apps.case_search.xpath_functions.query_functions import (
+    date_permutations,
+    validate_date,
+)
+from corehq.apps.es import HQESQuery, case_search, filters, queries
 from corehq.apps.es import cases as case_es
-from corehq.apps.es import filters, queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_date_range,
@@ -70,7 +68,6 @@ from corehq.apps.es.case_search import (
     wrap_case_search_hit,
 )
 from corehq.apps.es.profiling import ESQueryProfiler
-
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
@@ -453,65 +450,79 @@ class CaseSearchEndpointQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
     def _combine_none(self, children):
         return filters.NOT(filters.OR(*children))
 
-    def _parse_component_node(self, node):
-        operator = node.operator
-
-        if node.field_type == FIELD_TYPE_GPS:
-            if operator == 'within_distance':
-                point = self._input_value(node.inputs.get('point'))
-                distance = self._input_value(node.inputs.get('distance'))
-                unit = self._input_value(node.inputs.get('unit'))
-                if None in (point, distance, unit):
-                    return None
-                try:
-                    geo_point = GeoPoint.from_string(point, flexible=True)
-                    distance = float(distance)
-                except (BadValueError, ValueError):
-                    return None
-                if unit not in queries.DISTANCE_UNITS:
-                    return None
-                return case_property_geo_distance(node.field, geo_point, **{unit: distance})
+    def _parse_gps(self, node, operator):
+        if operator != 'within_distance':
             return None
+        point = self._input_value(node.inputs.get('point'))
+        distance = self._input_value(node.inputs.get('distance'))
+        unit = self._input_value(node.inputs.get('unit'))
+        if None in (point, distance, unit):
+            return None
+        try:
+            geo_point = GeoPoint.from_string(point, flexible=True)
+            distance = float(distance)
+        except (BadValueError, ValueError):
+            return None
+        if unit not in queries.DISTANCE_UNITS:
+            return None
+        return case_property_geo_distance(node.field, geo_point, **{unit: distance})
 
+    def _parse_date(self, node, operator):
         field = node.field
         value = self._input_value(node.inputs['value'])
         if value is None:
             return None  # ignore component if value is not given
+        if operator == 'equals':
+            return case_property_query(field, value)
+        elif operator in ('lt', 'gt', 'lte', 'gte'):
+            return case_property_date_range(field, **{operator: value})
+        elif operator == 'fuzzy_date':
+            if not validate_date(value):
+                return None
+            return case_property_query(field, date_permutations(value), boost_first=True)
+        return None
 
-        if node.field_type in (FIELD_TYPE_DATE, FIELD_TYPE_DATETIME):
-            if operator == 'equals':
-                return case_property_query(field, value)
-            elif operator in ('lt', 'gt', 'lte', 'gte'):
-                return case_property_date_range(field, **{operator: value})
-            elif operator == 'fuzzy_date':
-                if not validate_date(value):
-                    return None
-                return case_property_query(field, date_permutations(value), boost_first=True)
-        elif node.field_type == FIELD_TYPE_NUMBER:
-            if operator == 'equals':
-                return case_property_query(field, value)
-            elif operator == 'not_equals':
-                return filters.NOT(case_property_query(field, value))
-            elif operator in ('lt', 'gt', 'lte', 'gte'):
-                return case_property_numeric_range(field, **{operator: value})
-        elif node.field_type == FIELD_TYPE_SELECT:
-            if operator == 'selected_any':
-                return case_property_query(field, value, multivalue_mode='or')
-            elif operator == 'selected_all':
-                return case_property_query(field, value, multivalue_mode='and')
-            elif operator == 'is_empty':
-                return case_property_missing(field)
-        else:
-            if operator == 'equals':
-                return case_property_query(field, value)
-            elif operator == 'not_equals':
-                return filters.NOT(case_property_query(field, value))
-            elif operator == 'starts_with':
-                return case_property_starts_with(field, value)
-            elif operator == 'fuzzy':
-                return case_property_query(field, value, fuzzy=True)
-            elif operator == 'phonetic':
-                return sounds_like_text_query(field, value)
+    def _parse_number(self, node, operator):
+        field = node.field
+        value = self._input_value(node.inputs['value'])
+        if value is None:
+            return None  # ignore component if value is not given
+        if operator == 'equals':
+            return case_property_query(field, value)
+        elif operator == 'not_equals':
+            return filters.NOT(case_property_query(field, value))
+        elif operator in ('lt', 'gt', 'lte', 'gte'):
+            return case_property_numeric_range(field, **{operator: value})
+        return None
+
+    def _parse_select(self, node, operator):
+        field = node.field
+        value = self._input_value(node.inputs['value'])
+        if value is None:
+            return None  # ignore component if value is not given
+        if operator == 'selected_any':
+            return case_property_query(field, value, multivalue_mode='or')
+        elif operator == 'selected_all':
+            return case_property_query(field, value, multivalue_mode='and')
+        elif operator == 'is_empty':
+            return case_property_missing(field)
+        return None
+
+    def _parse_text(self, node, operator):
+        field = node.field
+        value = self._input_value(node.inputs['value'])
+        if value is None:
+            return None  # ignore component if value is not given
+        if operator == 'equals':
+            return case_property_query(field, value)
+        elif operator == 'not_equals':
+            return filters.NOT(case_property_query(field, value))
+        elif operator == 'starts_with':
+            return case_property_starts_with(field, value)
+        elif operator == 'fuzzy':
+            return case_property_query(field, value, fuzzy=True)
+        elif operator == 'phonetic':
+            return sounds_like_text_query(field, value)
         return None
 
 
