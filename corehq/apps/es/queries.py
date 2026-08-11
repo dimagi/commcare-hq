@@ -19,8 +19,18 @@ MUST_NOT = "must_not"
 SHOULD = "should"
 BOOL = "bool"
 
-DISTANCE_UNITS = ["miles", "yards", "feet", "inch", "kilometers", "meters",
-                  "centimeters", "millimeters", "nauticalmiles"]
+DISTANCE_UNITS_TO_METER = {
+    "meters": 1,
+    "kilometers": 1000,
+    "centimeters": 0.01,
+    "millimeters": 0.001,
+    "miles": 1609.344,
+    "yards": 0.9144,
+    "feet": 0.3048,
+    "inch": 0.0254,
+    "nauticalmiles": 1852,
+}
+DISTANCE_UNITS = DISTANCE_UNITS_TO_METER.keys()
 
 
 def BOOL_CLAUSE(query, **kwargs):

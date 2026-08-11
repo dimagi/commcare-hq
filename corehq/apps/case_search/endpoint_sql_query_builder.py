@@ -18,7 +18,7 @@ from corehq.apps.case_search.query_builder_base import BaseCaseSearchEndpointQue
 from corehq.apps.case_search.xpath_functions.query_functions import date_permutations
 from corehq.apps.es import queries
 from corehq.apps.project_db.populate import coerce_to_date, coerce_to_gps, coerce_to_number, coerce_to_select
-from corehq.apps.project_db.query import rows_to_cases, to_distance_in_meters
+from corehq.apps.project_db.query import rows_to_cases
 from corehq.apps.project_db.table_ddl import CaseTable, Earth, get_project_db_engine, property_column
 
 
@@ -80,7 +80,7 @@ class CaseSearchEndpointSqlQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
                 if unit not in queries.DISTANCE_UNITS:
                     return None
                 try:
-                    distance = to_distance_in_meters(distance, unit)
+                    distance = float(distance) * queries.DISTANCE_UNITS_TO_METER.get(unit, 1)
                 except ValueError:
                     return None
                 earth_point = cast(literal(point), Earth)
