@@ -23,6 +23,7 @@ from corehq.apps.case_search.endpoint_query_spec import (
     ParameterInput,
 )
 from corehq.apps.case_search.endpoint_sql_query_builder import CaseSearchEndpointSqlQueryBuilder
+from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.es.queries import DISTANCE_UNITS
 from corehq.apps.project_db.populate import send_to_project_db
 from corehq.apps.project_db.table_ddl import get_project_db_engine, property_column
@@ -371,3 +372,12 @@ def test_build_query_no_matches_returns_empty():
         rows = conn.execute(query).fetchall()
 
     assert rows == []
+
+
+@use('db')
+def test_missing_project_db_table_raises_user_error():
+    domain = 'test-sql-query-builder-no-table'
+    query_root = GroupNode(type='all', children=[])
+
+    with pytest.raises(CaseSearchUserError):
+        CaseSearchEndpointSqlQueryBuilder(_FakeHelper(domain), 'patient', query_root)

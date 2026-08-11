@@ -1,5 +1,7 @@
 from datetime import date
 
+from django.utils.translation import gettext as _
+
 from sqlalchemy import and_, cast, func, literal, not_, or_, select
 
 from corehq import toggles
@@ -11,6 +13,7 @@ from corehq.apps.case_search.endpoint_capability import (
     FIELD_TYPE_NUMBER,
     FIELD_TYPE_SELECT,
 )
+from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.query_builder_base import BaseCaseSearchEndpointQueryBuilder
 from corehq.apps.case_search.xpath_functions.query_functions import date_permutations
 from corehq.apps.es import queries
@@ -31,6 +34,12 @@ class CaseSearchEndpointSqlQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
         self.helper = helper
         self.config = helper.config
         self.table = CaseTable(self.request_domain, self.case_type).reflect()
+        if self.table is None:
+            raise CaseSearchUserError(
+                _("No search table found for case type '{case_type}' in domain '{domain}'").format(
+                    case_type=self.case_type, domain=self.request_domain
+                )
+            )
 
     def build_query(self, search_criteria):
         query = self._get_initial_query()
