@@ -8,11 +8,11 @@ parsed and validated against this metadata in :mod:`.endpoint_query_spec`.
 from django.db.models import Prefetch
 from django.utils.translation import gettext_lazy as _
 
+from corehq.apps.case_search.const import DISTANCE_UNITS
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CaseType,
 )
-from corehq.apps.es.queries import DISTANCE_UNITS
 
 FIELD_TYPE_TEXT = 'text'
 FIELD_TYPE_NUMBER = 'number'

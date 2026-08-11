@@ -1,3 +1,5 @@
+from corehq import toggles
+from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
 from corehq.apps.case_search.endpoint_capability import (
     _OPERATOR_BY_TYPE,
     FIELD_TYPE_DATE,
@@ -20,6 +22,12 @@ def build_operator_handlers(field_type_methods):
         for field_type, operators in _OPERATOR_BY_TYPE.items()
         for operator, _label in operators
     }
+
+
+def resolve_max_results(domain):
+    if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(domain):
+        return 1500
+    return CASE_SEARCH_MAX_RESULTS
 
 
 class BaseCaseSearchEndpointQueryBuilder:

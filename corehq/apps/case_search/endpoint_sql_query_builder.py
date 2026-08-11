@@ -3,14 +3,15 @@ from datetime import date
 from django.utils.translation import gettext as _
 from sqlalchemy import and_, cast, func, literal, not_, or_, select
 
-from corehq import toggles
-from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
+from corehq.apps.case_search.const import DISTANCE_UNITS, DISTANCE_UNITS_TO_METER
 from corehq.apps.case_search.exceptions import CaseSearchUserError
-from corehq.apps.case_search.query_builder_base import BaseCaseSearchEndpointQueryBuilder
+from corehq.apps.case_search.query_builder_base import (
+    BaseCaseSearchEndpointQueryBuilder,
+    resolve_max_results,
+)
 from corehq.apps.case_search.xpath_functions.query_functions import (
     date_permutations,
 )
-from corehq.apps.es import queries
 from corehq.apps.project_db.populate import (
     coerce_to_date,
     coerce_to_gps,
@@ -55,10 +56,7 @@ class CaseSearchEndpointSqlQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
         return query.where(where_clause)
 
     def _get_initial_query(self):
-        max_results = CASE_SEARCH_MAX_RESULTS
-        if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
-            max_results = 1500
-
+        max_results = resolve_max_results(self.request_domain)
         return select(self.table.columns).limit(max_results)
 
     def _combine_and(self, children):
@@ -82,10 +80,10 @@ class CaseSearchEndpointSqlQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
         unit = self._input_value(node.inputs.get('unit'))
         if None in (point, distance, unit):
             return None
-        if unit not in queries.DISTANCE_UNITS:
+        if unit not in DISTANCE_UNITS:
             return None
         try:
-            distance = float(distance) * queries.DISTANCE_UNITS_TO_METER.get(unit, 1)
+            distance = float(distance) * DISTANCE_UNITS_TO_METER.get(unit, 1)
         except ValueError:
             return None
         earth_point = cast(literal(point), Earth)

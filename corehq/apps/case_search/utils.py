@@ -19,8 +19,8 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.case_search.const import (
-    CASE_SEARCH_MAX_RESULTS,
     COMMCARE_PROJECT,
+    DISTANCE_UNITS,
     IS_RELATED_CASE,
 )
 from corehq.apps.case_search.endpoint_capability import get_capability
@@ -48,7 +48,10 @@ from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     extract_search_request_config,
 )
-from corehq.apps.case_search.query_builder_base import BaseCaseSearchEndpointQueryBuilder
+from corehq.apps.case_search.query_builder_base import (
+    BaseCaseSearchEndpointQueryBuilder,
+    resolve_max_results,
+)
 from corehq.apps.case_search.xpath_functions.query_functions import (
     date_permutations,
     validate_date,
@@ -289,10 +292,7 @@ class CaseSearchQueryBuilder:
         return search_es
 
     def _get_initial_search_es(self):
-        max_results = CASE_SEARCH_MAX_RESULTS
-        if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
-            max_results = 1500
-
+        max_results = resolve_max_results(self.request_domain)
         return (self.helper.get_base_queryset('main')
                 .case_type(self.case_types)
                 .is_closed(False)
@@ -432,10 +432,7 @@ class CaseSearchEndpointQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
         return search_es.add_query(query, queries.MUST)
 
     def _get_initial_search_es(self):
-        max_results = CASE_SEARCH_MAX_RESULTS
-        if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
-            max_results = 1500
-
+        max_results = resolve_max_results(self.request_domain)
         return (self.helper.get_base_queryset('main')
                 .case_type(self.case_types)
                 .is_closed(False)
@@ -463,7 +460,7 @@ class CaseSearchEndpointQueryBuilder(BaseCaseSearchEndpointQueryBuilder):
             distance = float(distance)
         except (BadValueError, ValueError):
             return None
-        if unit not in queries.DISTANCE_UNITS:
+        if unit not in DISTANCE_UNITS:
             return None
         return case_property_geo_distance(node.field, geo_point, **{unit: distance})
 
