@@ -5,7 +5,7 @@ import pytest
 from corehq.apps.case_search.endpoint_capability import (
     OPERATOR_INPUT_SCHEMAS,
     FIELD_TYPE_DATE,
-    FIELD_TYPE_GEOPOINT,
+    FIELD_TYPE_GPS,
     FIELD_TYPE_NUMBER,
     FIELD_TYPE_TEXT,
     get_operations_for_field_type,
@@ -43,9 +43,9 @@ def sample_capability():
                 },
                 'location': {
                     'name': 'location',
-                    'type': FIELD_TYPE_GEOPOINT,
+                    'type': FIELD_TYPE_GPS,
                     'operations': get_operations_for_field_type(
-                        FIELD_TYPE_GEOPOINT
+                        FIELD_TYPE_GPS
                     ),
                 },
             },

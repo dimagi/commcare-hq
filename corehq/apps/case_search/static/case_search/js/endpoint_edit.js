@@ -73,7 +73,7 @@ Alpine.data("endpointForm", () => {
                     date: "fa-solid fa-calendar-days",
                     datetime: "fa-solid fa-calendar-days",
                     select: "fa-solid fa-list",
-                    geopoint: "fa-solid fa-location-dot",
+                    gps: "fa-solid fa-location-dot",
                 }[type] || "fa-solid fa-circle"
             );
         },
