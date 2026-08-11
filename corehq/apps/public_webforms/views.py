@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.db.models import Count, Q
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
@@ -18,6 +19,7 @@ from corehq.apps.hqwebapp.tables.pagination import (
 from corehq.apps.public_webforms.forms import CreatePublicWebformForm
 from corehq.apps.public_webforms.models import PublicWebform
 from corehq.apps.public_webforms.tables import PublicWebformTable
+from corehq.apps.settings.views import get_qrcode
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 
@@ -28,6 +30,13 @@ PUBLIC_WEBFORMS_ACCESS = [
     requires_privilege_with_fallback(privileges.PUBLIC_WEBFORMS),
     toggles.PUBLIC_WEBFORMS.required_decorator(),
 ]
+
+
+def public_webforms_access(view):
+    """Apply PUBLIC_WEBFORMS_ACCESS to a function view."""
+    for decorator in reversed(PUBLIC_WEBFORMS_ACCESS):
+        view = decorator(view)
+    return view
 
 
 @method_decorator(PUBLIC_WEBFORMS_ACCESS, name='dispatch')
@@ -106,3 +115,11 @@ class CreatePublicWebformView(BasePublicWebformsView):
         data = [self.request.POST] if self.request.method == 'POST' else []
         return CreatePublicWebformForm(
             self.domain, self.domain_object.get_default_timezone(), *data)
+
+
+@public_webforms_access
+def public_webform_qr_code(request, domain, webform_id):
+    """Serve the public URL as a QR code PNG, as ``odk_qr_code`` does for app
+    installs, so the dashboard can show one without embedding image data."""
+    webform = get_object_or_404(PublicWebform, domain=domain, id=webform_id)
+    return HttpResponse(get_qrcode(webform.public_url), content_type='image/png')
