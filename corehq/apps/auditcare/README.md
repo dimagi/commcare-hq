@@ -81,6 +81,20 @@ If all 5,001 rows fall within the same minute (making minute-boundary trimming
 impossible), the report shows the first 5,000 rows with a warning that
 additional events in that minute are not displayed.
 
+## Retention
+
+Audit records are kept for `AUDITCARE_RETENTION_YEARS` (default 6, overridable
+per environment in `localsettings`). A monthly Celery task,
+`prune_auditcare_tables`, drops whole monthly partitions once every record in
+them is older than that cutoff.
+
+The task enforces a floor of `MINIMUM_RETENTION_YEARS` (6), so the setting can
+lengthen the retention window but never shorten it. Setting it to `None`
+disables pruning entirely, and audit data is kept indefinitely.
+
+Searches beyond the retention window therefore return no results even for
+periods when activity did occur.
+
 ## Underlying models
 
 **`NavigationEventAudit`** — Records HTTP requests. Key fields: `user`,
