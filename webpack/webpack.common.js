@@ -9,11 +9,6 @@ const aliases = {
         'commcarehq'),
     "jquery": require.resolve('jquery'),
     "langcodes/js/langcodes": path.resolve("submodules/langcodes/static/langcodes/js/langcodes"),
-
-    // todo after completing requirejs migration,
-    //  remove this file and the yarn modernizr post-install step
-    "modernizr": "hqwebapp/js/lib/modernizr",
-
     "nvd3/nv.d3.latest.min": "nvd3-1.8.6/build/nv.d3.min",
     "popper": "@popperjs/core/dist/cjs/popper.js",
     "sentry_browser": path.resolve(utils.getStaticFolderForApp('hqwebapp'),
@@ -79,19 +74,6 @@ module.exports = {
                     {
                         test: /\.png/,
                         type: 'asset/resource',
-                    },
-
-                    {
-                        test: /modernizr\.js$/,
-                        loader: "webpack-modernizr-loader",
-                        options: {
-                            "options": [
-                                "setClasses",
-                            ],
-                            "feature-detects": [
-                                "test/svg/smil",
-                            ],
-                        },
                     },
 
                     {
