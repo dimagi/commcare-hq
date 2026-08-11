@@ -18,4 +18,13 @@
   >
     <i :class="copied ? 'fa fa-check' : 'fa-regular fa-copy'"></i>
   </button>
+  <button
+    type="button"
+    class="btn btn-sm btn-outline-secondary"
+    title="{% trans_html_attr "Show QR code" %}"
+    data-bs-toggle="modal"
+    data-bs-target="#qr-code-{{ record.id }}"
+  >
+    <i class="fa fa-qrcode"></i>
+  </button>
 </div>
