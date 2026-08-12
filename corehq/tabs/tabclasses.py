@@ -1214,6 +1214,7 @@ class ApplicationsTab(UITab):
     def public_webforms_urls(self):
         from corehq.apps.public_webforms.views import (
             CreatePublicWebformView,
+            EditPublicWebformView,
             ManagePublicWebformsView,
         )
         if not (
@@ -1233,6 +1234,10 @@ class ApplicationsTab(UITab):
                 {
                     'title': _(CreatePublicWebformView.page_title),
                     'urlname': CreatePublicWebformView.urlname,
+                },
+                {
+                    'title': _(EditPublicWebformView.page_title),
+                    'urlname': EditPublicWebformView.urlname,
                 },
             ],
         }]
