@@ -110,3 +110,64 @@ class TestPublicWebformQrCode(PublicWebformViewTestCase):
         self.sign_in(NORMAL_USER)
 
         assert self.get(webform).status_code != 200
+
+
+@flag_enabled('PUBLIC_WEBFORMS')
+@privilege_enabled(PUBLIC_WEBFORMS)
+class TestSetPublicWebformStatus(PublicWebformViewTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.webform = create_webform(is_disabled=True)
+
+    def post(self, is_disabled, webform=None, domain=DOMAIN, query=''):
+        webform = webform or self.webform
+        url = reverse('set_public_webform_status', args=[domain, webform.id])
+        return self.client.post(f'{url}{query}', {'is_disabled': is_disabled})
+
+    def test_a_closed_webform_can_be_opened(self):
+        self.post(is_disabled='false')
+
+        self.webform.refresh_from_db()
+        assert not self.webform.is_disabled
+
+    def test_an_open_webform_can_be_closed(self):
+        self.webform.is_disabled = False
+        self.webform.save()
+
+        self.post(is_disabled='true')
+
+        self.webform.refresh_from_db()
+        assert self.webform.is_disabled
+
+    def test_the_dashboard_is_returned_to_as_it_was_left(self):
+        """Closing a webform from a filtered page shouldn't reset the filters."""
+        response = self.post(is_disabled='true', query='?status=0&page=2')
+
+        dashboard = reverse('manage_public_webforms', args=[DOMAIN])
+        assert response.url == f'{dashboard}?status=0&page=2'
+
+    def test_another_projects_webform_is_not_found(self):
+        other = create_webform(domain='public-forms-other-domain')
+
+        response = self.post(is_disabled='false', webform=other)
+
+        assert response.status_code == 404
+        other.refresh_from_db()
+        assert other.is_disabled
+
+    def test_status_cannot_be_changed_without_the_permission(self):
+        self.sign_in(NORMAL_USER)
+
+        response = self.post(is_disabled='false')
+
+        assert response.status_code != 302
+        self.webform.refresh_from_db()
+        assert self.webform.is_disabled
+
+    def test_status_cannot_be_changed_by_a_get(self):
+        url = reverse('set_public_webform_status', args=[DOMAIN, self.webform.id])
+
+        response = self.client.get(url)
+
+        assert response.status_code == 405
