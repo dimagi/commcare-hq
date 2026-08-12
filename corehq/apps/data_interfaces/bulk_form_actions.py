@@ -7,7 +7,6 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Optional
 
 from dimagi.utils.logging import notify_exception
 
@@ -28,7 +27,7 @@ class FormActionResult:
     """Outcome of a bulk form action for a single requested form id."""
     form_id: str
     status: str  # SUCCEEDED | SKIPPED
-    reason: Optional[str] = None  # not_found | unexpected_error
+    reason: str | None  = None  # not_found | unexpected_error
 
 
 def create_bulk_form_job(domain, action, requested_by, form_ids):
