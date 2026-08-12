@@ -30,35 +30,6 @@ class FormActionResult:
     reason: str | None  = None  # not_found | unexpected_error
 
 
-def create_bulk_form_job(domain, action, requested_by, form_ids):
-    """Use ``AtomicBlobs`` to prevent an orphaned requested ids blob"""
-    with AtomicBlobs(get_blob_db()) as db:
-        job = BulkAsyncJob(
-            domain=domain,
-            model=XFormInstance,
-            action=action,
-            requested_by=requested_by,
-        )
-        stored_ids = job.set_requested_ids(form_ids, db=db)
-        job.requested_count = len(stored_ids)
-        job.save()
-    return job
-
-
-def build_form_action(job, user_id):
-    """Return the per-form action callable for ``job.action``."""
-    if job.action == BulkAsyncJob.Action.ARCHIVE:
-        return lambda f: f.archive(user_id=user_id)
-    if job.action == BulkAsyncJob.Action.UNARCHIVE:
-        return lambda f: f.unarchive(user_id=user_id)
-    raise ValueError(f'unknown bulk action: {job.action}')
-
-
-def _save_interval(requested_count):
-    """Every 5% or 100 forms, whichever is lower"""
-    return max(1, min(100, requested_count // 20))
-
-
 def run_bulk_form_action(job):
     """Execute ``job`` start to finish, updating counts and status on the row."""
     job.status = BulkAsyncJob.Status.RUNNING
@@ -95,6 +66,43 @@ def run_bulk_form_action(job):
     job.save()
 
 
+def create_bulk_form_job(domain, action, requested_by, form_ids):
+    """Use ``AtomicBlobs`` to prevent an orphaned requested ids blob"""
+    with AtomicBlobs(get_blob_db()) as db:
+        job = BulkAsyncJob(
+            domain=domain,
+            model=XFormInstance,
+            action=action,
+            requested_by=requested_by,
+        )
+        stored_ids = job.set_requested_ids(form_ids, db=db)
+        job.requested_count = len(stored_ids)
+        job.save()
+    return job
+
+
+def build_form_action(job, user_id):
+    """Return the per-form action callable for ``job.action``."""
+    if job.action == BulkAsyncJob.Action.ARCHIVE:
+        return lambda f: f.archive(user_id=user_id)
+    if job.action == BulkAsyncJob.Action.UNARCHIVE:
+        return lambda f: f.unarchive(user_id=user_id)
+    raise ValueError(f'unknown bulk action: {job.action}')
+
+
+def mark_job_failed(job_id):
+    """Mark a job ``failed`` unless it already reached a terminal state."""
+    try:
+        job = BulkAsyncJob.objects.get(id=job_id)
+    except BulkAsyncJob.DoesNotExist:
+        return
+    if job.is_done:
+        return
+    job.status = BulkAsyncJob.Status.FAILED
+    job.completed_at = datetime.now(tz=UTC)
+    job.save()
+
+
 def _apply_form_action(domain, form_ids, action_fn):
     """Apply ``action_fn`` to each form and yield a ``FormActionResult`` per id."""
     unresolved_ids = set(form_ids)
@@ -117,17 +125,9 @@ def _apply_form_action(domain, form_ids, action_fn):
         yield FormActionResult(form_id, SKIPPED, 'not_found')
 
 
-def mark_job_failed(job_id):
-    """Mark a job ``failed`` unless it already reached a terminal state."""
-    try:
-        job = BulkAsyncJob.objects.get(id=job_id)
-    except BulkAsyncJob.DoesNotExist:
-        return
-    if job.is_done:
-        return
-    job.status = BulkAsyncJob.Status.FAILED
-    job.completed_at = datetime.now(tz=UTC)
-    job.save()
+def _save_interval(requested_count):
+    """Every 5% or 100 forms, whichever is lower"""
+    return max(1, min(100, requested_count // 20))
 
 
 def _resolve_user_id(username):
