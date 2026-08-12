@@ -8203,7 +8203,8 @@ msgstr "Traduzioni applicazione in blocco"
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
-#: corehq/apps/app_manager/views/modules.py corehq/apps/reminders/forms.py
+#: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py corehq/apps/reminders/forms.py
 #: corehq/apps/sms/filters.py
 msgid "Survey"
 msgstr "Sondaggio"
@@ -14384,6 +14385,7 @@ msgid "Followup Form"
 msgstr "Modulo di Follow-up"
 
 #: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py
 msgid "Registration"
 msgstr "Registrazione"
 
@@ -16255,8 +16257,9 @@ msgid "No endpoints configured."
 msgstr "Nessun endpoint configurato."
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-msgid "-- Field --"
-msgstr "-- Campo --"
+#| msgid "Fields"
+msgid "Field"
+msgstr "Campo"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Operation --"
@@ -16269,6 +16272,11 @@ msgstr "Parametro"
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Parameter --"
 msgstr "-- Parametro --"
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+#| msgid "Close Condition"
+msgid "Copy condition"
+msgstr "Copia condizione"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "Remove condition"
@@ -16299,6 +16307,11 @@ msgid "match none of the following"
 msgstr "non corrisponde a nessuna delle seguenti"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#| msgid "No Group"
+msgid "Copy group"
+msgstr "Copia gruppo"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
 msgid "Remove group"
 msgstr "Rimuovi gruppo"
 
@@ -16310,6 +16323,21 @@ msgstr ""
 #: corehq/apps/case_search/templates/case_search/partials/group_node.html
 msgid "Add Condition"
 msgstr "Aggiungi condizione"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+#| msgid "Case Conditions"
+msgid "Paste Condition"
+msgstr "Incolla condizione"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+#| msgid "Case Group"
+msgid "Paste Group"
+msgstr "Incolla gruppo"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Copied group is nested too deeply to paste here"
+msgstr ""
+"Il gruppo copiato è annidato troppo in profondità per essere incollato qui"
 
 #: corehq/apps/case_search/templates/case_search/partials/query_builder.html
 msgid "Show query JSON"
@@ -24806,15 +24834,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#| msgid ""
-#| "\n"
-#| "    For more information about CommCare software plans, visit\n"
-#| "    <a\n"
-#| "      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
-#| "      target=\"_blank\"\n"
-#| "      >our help site</a\n"
-#| "    >.\n"
-#| "  "
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
@@ -40789,6 +40808,11 @@ msgstr "Clicca per selezionare ripetitori"
 #: corehq/apps/reports/filters/select.py
 msgid "Record Status"
 msgstr "Stato del record"
+
+#: corehq/apps/reports/filters/select.py
+#| msgid "Payload"
+msgid "Payload Error"
+msgstr "Errore nel payload"
 
 #: corehq/apps/reports/filters/select.py
 msgid "Rebuild restriction feature flag status"
@@ -57912,6 +57936,16 @@ msgstr "Tipo di case sconosciuto"
 msgid "Unknown user"
 msgstr "Utente sconosciuto"
 
+#: corehq/motech/repeaters/models.py
+#| msgid "Filter {} not found!"
+msgid "Form {} is not found"
+msgstr "Modulo {} non trovato"
+
+#: corehq/motech/repeaters/models.py
+#| msgid "{} not found"
+msgid "Case {} is not found"
+msgstr "Caso {} non trovato"
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Forms"
 msgstr "Inoltra Form"
@@ -58233,9 +58267,13 @@ msgid "Delivery Attempts"
 msgstr "Tentativi di consegna"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-#| msgid "Preview Data"
 msgid "Preview Payloads"
 msgstr "Anteprima Payloads"
+
+#: corehq/motech/repeaters/views/repeat_records.py
+#| msgid "Gateway could not be found."
+msgid "The payload could not be found."
+msgstr "Impossibile trovare il payload."
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -59644,6 +59682,9 @@ msgstr "Le colonne obbligatorie sono {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Inserisci un JSON valido"
+
+#~ msgid "-- Field --"
+#~ msgstr "-- Campo --"
 
 #~ msgid "View Responses"
 #~ msgstr "Visualizza risposte"
