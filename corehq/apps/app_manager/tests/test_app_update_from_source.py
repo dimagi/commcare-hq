@@ -227,18 +227,16 @@ class OverwriteAppFromSourceDbTest(TestCase):
     def _make_app(self, app_name, module_name):
         app = Application.new_app(self.domain, app_name)
         app.add_module(Module.new_module(module_name, 'en'))
+        app.save()
+        self.addCleanup(app.delete)
         return app
 
     def test_update_persists_in_place(self):
         target = self._make_app('Target App', 'OriginalModule')
-        target.save()
-        self.addCleanup(target.delete)
         target_id = target._id
         original_version = target.version
 
         source_app = self._make_app('Source App', 'UpdatedModule')
-        source_app.save()
-        self.addCleanup(source_app.delete)
         source = source_app.export_json(dump_json=False)
         # An entry in the source's map must NOT leak onto the updated app;
         # the existing (empty) map is preserved instead.
@@ -258,12 +256,8 @@ class OverwriteAppFromSourceDbTest(TestCase):
 
     def test_update_can_rename_via_extra_properties(self):
         target = self._make_app('Original Name', 'OriginalModule')
-        target.save()
-        self.addCleanup(target.delete)
 
         source_app = self._make_app('Source App', 'UpdatedModule')
-        source_app.save()
-        self.addCleanup(source_app.delete)
         source = source_app.export_json(dump_json=False)
 
         overwrite_app_from_source(self.domain, target._id, source, {'name': 'Renamed'})
