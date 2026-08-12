@@ -65,6 +65,7 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
+    get_app_doc,
     get_app_languages,
     get_apps_in_domain,
     get_build_ids,
@@ -2070,12 +2071,12 @@ def overwrite_app_from_source(domain, app_id, source, extra_properties=None, req
     ``ResourceNotFound`` if the app does not exist in ``domain`` and
     ``AppEditingError`` if the source's app type is incompatible.
     """
-    app = get_app(domain, app_id)
+    app = get_app_doc(domain, app_id)
 
     attachments = _get_attachments(source)
     source['_attachments'] = {}
 
-    merged = _merge_source_into_app(app.to_json(), source, extra_properties)
+    merged = _merge_source_into_app(app, source, extra_properties)
     app = wrap_app(merged)
 
     report_map = get_static_report_mapping(source.get('domain'), domain)

@@ -81,13 +81,11 @@ def test_merge_allows_source_without_doc_type():
 @patch(f'{APP_MODULE}._update_report_config_ids')
 @patch(f'{APP_MODULE}.get_static_report_mapping', return_value={})
 @patch(f'{APP_MODULE}.wrap_app')
-@patch(f'{APP_MODULE}.get_app')
+@patch(f'{APP_MODULE}.get_app_doc')
 def test_overwrite_app_from_source_orchestration(
-    mock_get_app, mock_wrap_app, mock_report_map, mock_update_reports, mock_valid_domains
+    mock_get_app_doc, mock_wrap_app, mock_report_map, mock_update_reports, mock_valid_domains
 ):
-    existing = MagicMock()
-    existing.to_json.return_value = _existing()
-    mock_get_app.return_value = existing
+    mock_get_app_doc.return_value = _existing()
 
     wrapped = MagicMock()
     mock_wrap_app.return_value = wrapped
@@ -112,8 +110,8 @@ def test_overwrite_app_from_source_orchestration(
     assert result is wrapped
 
 
-@patch(f'{APP_MODULE}.get_app', side_effect=ResourceNotFound())
-def test_overwrite_app_from_source_app_not_found(_mock_get_app):
+@patch(f'{APP_MODULE}.get_app_doc', side_effect=ResourceNotFound())
+def test_overwrite_app_from_source_app_not_found(_mock_get_app_doc):
     with pytest.raises(ResourceNotFound):
         overwrite_app_from_source('target-domain', 'missing-id', _source())
 
@@ -122,13 +120,11 @@ def test_overwrite_app_from_source_app_not_found(_mock_get_app):
 @patch(f'{APP_MODULE}._update_report_config_ids')
 @patch(f'{APP_MODULE}.get_static_report_mapping', return_value={})
 @patch(f'{APP_MODULE}.wrap_app')
-@patch(f'{APP_MODULE}.get_app')
+@patch(f'{APP_MODULE}.get_app_doc')
 def test_overwrite_app_from_source_passes_through_attachments(
-    mock_get_app, mock_wrap_app, mock_report_map, mock_update_reports, mock_valid_domains
+    mock_get_app_doc, mock_wrap_app, mock_report_map, mock_update_reports, mock_valid_domains
 ):
-    existing = MagicMock()
-    existing.to_json.return_value = _existing()
-    mock_get_app.return_value = existing
+    mock_get_app_doc.return_value = _existing()
 
     wrapped = MagicMock()
     mock_wrap_app.return_value = wrapped
@@ -147,13 +143,11 @@ def test_overwrite_app_from_source_passes_through_attachments(
 @patch(f'{APP_MODULE}._update_report_config_ids')
 @patch(f'{APP_MODULE}.get_static_report_mapping', return_value={})
 @patch(f'{APP_MODULE}.wrap_app')
-@patch(f'{APP_MODULE}.get_app')
+@patch(f'{APP_MODULE}.get_app_doc')
 def test_overwrite_app_from_source_warns_on_missing_multimedia(
-    mock_get_app, mock_wrap_app, mock_report_map, mock_update_reports, mock_valid_domains, mock_messages
+    mock_get_app_doc, mock_wrap_app, mock_report_map, mock_update_reports, mock_valid_domains, mock_messages
 ):
-    existing = MagicMock()
-    existing.to_json.return_value = _existing()
-    mock_get_app.return_value = existing
+    mock_get_app_doc.return_value = _existing()
 
     wrapped = MagicMock()
     mock_wrap_app.return_value = wrapped
@@ -170,13 +164,11 @@ def test_overwrite_app_from_source_warns_on_missing_multimedia(
 @patch(f'{APP_MODULE}._update_report_config_ids')
 @patch(f'{APP_MODULE}.get_static_report_mapping', return_value={})
 @patch(f'{APP_MODULE}.wrap_app')
-@patch(f'{APP_MODULE}.get_app')
+@patch(f'{APP_MODULE}.get_app_doc')
 def test_overwrite_app_from_source_warns_on_missing_ucr_with_request(
-    mock_get_app, mock_wrap_app, mock_report_map, mock_update_reports, mock_valid_domains, mock_messages
+    mock_get_app_doc, mock_wrap_app, mock_report_map, mock_update_reports, mock_valid_domains, mock_messages
 ):
-    existing = MagicMock()
-    existing.to_json.return_value = _existing()
-    mock_get_app.return_value = existing
+    mock_get_app_doc.return_value = _existing()
 
     wrapped = MagicMock()
     mock_wrap_app.return_value = wrapped
@@ -193,13 +185,11 @@ def test_overwrite_app_from_source_warns_on_missing_ucr_with_request(
 @patch(f'{APP_MODULE}._update_report_config_ids')
 @patch(f'{APP_MODULE}.get_static_report_mapping', return_value={})
 @patch(f'{APP_MODULE}.wrap_app')
-@patch(f'{APP_MODULE}.get_app')
+@patch(f'{APP_MODULE}.get_app_doc')
 def test_overwrite_app_from_source_swallows_missing_ucr_without_request(
-    mock_get_app, mock_wrap_app, mock_report_map, mock_update_reports, mock_valid_domains, mock_messages
+    mock_get_app_doc, mock_wrap_app, mock_report_map, mock_update_reports, mock_valid_domains, mock_messages
 ):
-    existing = MagicMock()
-    existing.to_json.return_value = _existing()
-    mock_get_app.return_value = existing
+    mock_get_app_doc.return_value = _existing()
 
     wrapped = MagicMock()
     mock_wrap_app.return_value = wrapped
