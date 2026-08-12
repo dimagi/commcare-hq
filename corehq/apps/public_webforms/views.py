@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_POST
 from memoized import memoized
 
 from corehq import privileges, toggles
@@ -153,3 +154,23 @@ def public_webform_qr_code(request, domain, webform_id):
     installs, so the dashboard can show one without embedding image data."""
     webform = get_object_or_404(PublicWebform, domain=domain, id=webform_id)
     return HttpResponse(get_qrcode(webform.public_url), content_type='image/png')
+
+
+@require_POST
+@public_webforms_access
+def set_public_webform_status(request, domain, webform_id):
+    """Open or close a webform to requests for a one-time link."""
+    webform = get_object_or_404(PublicWebform, domain=domain, id=webform_id)
+    webform.is_disabled = request.POST.get('is_disabled') == 'true'
+    webform.save()
+    messages.success(request, _("Public webform closed to new requests.")
+                     if webform.is_disabled
+                     else _("Public webform opened to new requests."))
+    return HttpResponseRedirect(_dashboard_url(request, domain))
+
+
+def _dashboard_url(request, domain):
+    """The dashboard as the admin left it, filters and page included."""
+    url = reverse(ManagePublicWebformsView.urlname, args=[domain])
+    query = request.GET.urlencode()
+    return f'{url}?{query}' if query else url
