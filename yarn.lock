@@ -3256,9 +3256,10 @@ datatables-bootstrap3@Jowin/Datatables-Bootstrap3:
   version "0.0.0"
   resolved "https://codeload.github.com/Jowin/Datatables-Bootstrap3/tar.gz/45802ec4d337bdba6750f03b6472ddbb1d34608c"
 
-datatables-fixedcolumns@DataTables/FixedColumns#3.2.0:
+datatables-fixedcolumns@DataTables/FixedColumns#6.0.0:
   version "0.0.0"
-  resolved "https://codeload.github.com/DataTables/FixedColumns/tar.gz/a87428accba62d881e14fa2710bcc035a6efbbb6"
+  uid "8049aa7a424619cd089c370ea54bf8e892c03407"
+  resolved "https://codeload.github.com/DataTables/FixedColumns/tar.gz/8049aa7a424619cd089c370ea54bf8e892c03407"
 
 datatables.net-bs5@1.13.8, datatables.net-bs5@>=1.13.4:
   version "1.13.8"
