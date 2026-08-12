@@ -347,6 +347,12 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     short_odk_media_url = StringProperty()
     _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version',
                     'short_odk_url', 'short_odk_media_url']
+    _update_excluded_fields = _meta_fields + [
+        'date_created', 'name', 'comment', 'doc_type',
+        'multimedia_map', 'family_id', 'copy_history',
+        'build_profiles', 'custom_base_url', 'practice_mobile_worker_id',
+        '_LAZY_ATTACHMENTS', 'copy_of'
+    ]
 
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
@@ -2031,33 +2037,15 @@ def _update_valid_domains_for_media(app, domain_to_add):
                 media.save()
 
 
-# Fields preserved from the existing app when updating from an uploaded source,
-# rather than being copied from the source. Modeled on overwrite_app's
-# excluded_fields, without the linked-app fields (upstream tracking, report and
-# resource overrides).
-UPDATE_EXCLUDED_FIELDS = frozenset(Application._meta_fields).union([
-    'date_created', 'name', 'comment', 'doc_type', '_attachments',
-    'multimedia_map', 'family_id', 'build_spec', 'copy_history',
-    'build_profiles', 'custom_base_url', 'practice_mobile_worker_id',
-])
-
-
 def _merge_source_into_app(existing_app_json, source, extra_properties=None):
     """Return a new app JSON built from ``existing_app_json`` with content
     fields replaced from ``source``.
 
-    Fields in ``UPDATE_EXCLUDED_FIELDS`` (identity, name, multimedia map,
-    version metadata) are preserved from the existing app. ``extra_properties``
-    are applied last, so an explicit ``name`` override wins. Raises
-    ``AppEditingError`` if ``source`` declares a ``doc_type`` incompatible with
-    the existing app.
-
     This overlays ``source`` onto a copy of the existing app rather than
     performing a strict replace: a non-excluded content field present on the
-    existing app but absent from ``source`` is retained, not cleared. Callers
-    passing a partial ``source`` therefore keep the existing app's values for
-    any keys the source omits.
+    existing app but absent from ``source`` is retained, not cleared.
     """
+    excluded_fields = set(Application._update_excluded_fields + ['build_spec', '_attachments'])
     source_doc_type = source.get('doc_type')
     if source_doc_type and source_doc_type != existing_app_json.get('doc_type'):
         raise AppEditingError(
@@ -2067,7 +2055,7 @@ def _merge_source_into_app(existing_app_json, source, extra_properties=None):
         )
     merged = dict(existing_app_json)
     for key, value in source.items():
-        if key not in UPDATE_EXCLUDED_FIELDS:
+        if key not in excluded_fields:
             merged[key] = value
     if extra_properties:
         merged.update(extra_properties)
