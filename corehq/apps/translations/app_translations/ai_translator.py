@@ -26,9 +26,9 @@ MAX_STRING_KEY_LENGTH = 512  # AITranslation.string_key max_length
 
 
 def run_app_translation(app, target_lang, mode, provider=None, model=None,
-                        chunk_size=None, translation_format=None,
-                        translator=None, translator_factory=None,
-                        progress_callback=None):
+                        chunk_size=AI_TRANSLATION_CHUNK_SIZE,
+                        translation_format=None, translator=None,
+                        translator_factory=None, progress_callback=None):
     """Batches that raise are recorded as failed and the run continues;
     whatever succeeded is applied in one write at the end.
     ``progress_callback(batches_done, batches_total)`` is optional.
@@ -120,10 +120,9 @@ class AppTranslationFormat(TranslationFormat):
                 index += 1
         return self.units_by_id
 
-    def create_batches(self, chunk_size=None):
+    def create_batches(self, chunk_size=AI_TRANSLATION_CHUNK_SIZE):
         # a batch never mixes sheets: each request gets one context
         # header, and contamination cannot cross modules/forms
-        chunk_size = chunk_size or AI_TRANSLATION_CHUNK_SIZE
         batches = []
         for sheet_name, unit_ids in self.units_by_sheet.items():
             for i in range(0, len(unit_ids), chunk_size):
