@@ -68,8 +68,11 @@ class PublicWebformTable(BaseHtmxTable, tables.Table):
         template_name='public_webforms/columns/public_url.html',
         verbose_name=_("Public URL"),
     )
-    actions = columns.Column(
+    actions = columns.TemplateColumn(
+        template_name='public_webforms/columns/actions.html',
         verbose_name=_("Actions"),
+        attrs={'td': {'class': 'text-nowrap'}},
+        empty_values=(),
     )
 
     def __init__(self, domain, timezone, is_filtered=False, **kwargs):

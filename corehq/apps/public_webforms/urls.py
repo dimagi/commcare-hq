@@ -5,6 +5,7 @@ from corehq.apps.public_webforms.views import (
     ManagePublicWebformsView,
     PublicWebformTableView,
     public_webform_qr_code,
+    set_public_webform_status,
 )
 
 urlpatterns = [
@@ -13,4 +14,6 @@ urlpatterns = [
     url(r'^table/$', PublicWebformTableView.as_view(), name=PublicWebformTableView.urlname),
     url(r'^(?P<webform_id>\d+)/qr_code/$', public_webform_qr_code,
         name='public_webform_qr_code'),
+    url(r'^(?P<webform_id>\d+)/status/$', set_public_webform_status,
+        name='set_public_webform_status'),
 ]
