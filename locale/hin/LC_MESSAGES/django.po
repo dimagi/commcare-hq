@@ -15607,7 +15607,6 @@ msgid "after"
 msgstr "के बाद"
 
 #: corehq/apps/case_search/endpoint_capability.py
-#| msgid "on or after"
 msgid "on or before"
 msgstr "या उससे पहले"
 
@@ -15968,7 +15967,6 @@ msgid "date"
 msgstr "तारीख"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "gps_point"
 msgid "geopoint"
 msgstr "जियोपॉइंट"
 
@@ -20369,8 +20367,8 @@ msgstr "'{}' पहचानकर्ता वाला केस इस सम
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "XForm {form_id} does not belong to domain {domain}"
-msgstr "XForm {form_id} डोमेन {domain} से संबंधित नहीं है"
+msgid "Could not find XForm {form_id}"
+msgstr "XForm {form_id} नहीं मिला"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -20389,13 +20387,13 @@ msgstr "{form} को सफलतापूर्वक अनआर्काइ
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not archive {form}: {error}"
-msgstr "{form} को आर्काइव नहीं किया जा सका: {error}"
+msgid "Could not archive {form}"
+msgstr "{form} को आर्काइव नहीं किया जा सका"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not find XForm {form_id}"
-msgstr "XForm {form_id} नहीं मिला"
+msgid "Could not unarchive {form}"
+msgstr "{form} को अनआर्काइव नहीं किया जा सका"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -24405,19 +24403,32 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#, python-format
+#| msgid ""
+#| "\n"
+#| "    For more information about CommCare software plans, visit\n"
+#| "    <a\n"
+#| "      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+#| "      target=\"_blank\"\n"
+#| "      >our help site</a\n"
+#| "    >.\n"
+#| "  "
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >our help site</a\n"
+"      >our pricing page</a\n"
 "    >.\n"
 "  "
 msgstr ""
 "\n"
-"    CommCare सॉफ़्टवेयर प्लान के बारे में अधिक जानकारी के लिए, <a href=\\\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\\\" target=\\\"_blank\\\">हमारी सहायता साइट</a> देखें।\n"
+"    CommCare सॉफ़्टवेयर प्लान के बारे में अधिक जानकारी के लिए,\n"
+"    <a\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
+"      target=\"_blank\"\n"
+"      >हमारे मूल्य निर्धारण पृष्ठ</a\n"
+"    > पर जाएँ।\n"
 "  "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
@@ -57376,8 +57387,9 @@ msgid "Delivery Attempts"
 msgstr "डिलीवरी प्रयास"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "View Responses"
-msgstr "प्रतिक्रियाएँ देखें"
+#| msgid "Preview Data"
+msgid "Preview Payloads"
+msgstr "प्रीव्यू पेलोड्स"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -58775,6 +58787,13 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid "View Responses"
+#~ msgstr "प्रतिक्रियाएँ देखें"
+
+#, python-brace-format
+#~ msgid "XForm {form_id} does not belong to domain {domain}"
+#~ msgstr "XForm {form_id} डोमेन {domain} से संबंधित नहीं है"
 
 #~ msgid ""
 #~ "\n"

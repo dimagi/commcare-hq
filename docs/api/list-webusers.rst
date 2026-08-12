@@ -36,9 +36,9 @@ Request & Response Details
    * - Name
      - Description
      - Example
-   * - ``username``
+   * - ``web_username``
      - Filter list by username
-     - ``username=bob@example.com``
+     - ``web_username=bob@example.com``
 
 **Output Parameters**
 

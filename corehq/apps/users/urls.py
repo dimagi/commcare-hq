@@ -75,6 +75,7 @@ from .views.mobile.users import (
     update_user_groups,
     web_user_download_job_poll,
 )
+from .views.my_role import my_role
 from .views.role import (
     EditRoleView,
     ListRolesView,
@@ -152,6 +153,7 @@ urlpatterns = [
     ),
     url(r'^enterprise/json/$', paginate_enterprise_users, name='paginate_enterprise_users'),
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
+    url(r'^my_role/$', my_role, name='my_role'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
     url(r'^roles/create/$', create_user_role, name='create_user_role'),
     url(r'^roles/update/(?P<role_id>[ \w-]+)/$', update_user_role, name='update_user_role'),

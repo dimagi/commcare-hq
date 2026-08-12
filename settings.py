@@ -290,6 +290,7 @@ HQ_APPS = (
     'corehq.apps.products',
     'corehq.apps.programs',
     'corehq.apps.project_db',
+    'corehq.apps.public_webforms',
     'corehq.apps.registry.app_config.RegistryAppConfig',
     'corehq.project_limits',
     'corehq.apps.commtrack',
@@ -787,6 +788,7 @@ AUDIT_ALL_VIEWS = False
 AUDIT_VIEWS = []
 AUDIT_MODULES = []
 AUDIT_ADMIN_VIEWS = False
+AUDITCARE_RETENTION_YEARS = 6
 
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
@@ -967,7 +969,6 @@ STRIPE_PRIVATE_KEY = ''
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
-    'project_db': 'default',
 }
 
 PL_PROXY_CLUSTER_NAME = 'commcarehq'

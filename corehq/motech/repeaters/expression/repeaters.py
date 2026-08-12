@@ -13,11 +13,7 @@ from corehq.apps.hqcase.utils import REPEATER_RESPONSE_XMLNS
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.form_processor.models import (
-    CaseTransaction,
-    CommCareCase,
-    XFormInstance,
-)
+from corehq.form_processor.models import CaseTransaction
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.repeaters.expression.repeater_generators import (
     ArcGISFormExpressionPayloadGenerator,
@@ -26,6 +22,8 @@ from corehq.motech.repeaters.expression.repeater_generators import (
 from corehq.motech.repeaters.models import (
     OptionValue,
     Repeater,
+    get_case_payload_doc,
+    get_form_payload_doc,
     is_response,
     is_success_response,
 )
@@ -160,7 +158,7 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain)
+        return get_case_payload_doc(repeat_record)
 
     def allowed_to_forward(self, payload):
         allowed = super().allowed_to_forward(payload)
@@ -198,10 +196,7 @@ class FormExpressionRepeater(BaseExpressionRepeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return XFormInstance.objects.get_form(
-            repeat_record.payload_id,
-            repeat_record.domain,
-        )
+        return get_form_payload_doc(repeat_record)
 
 
 class ArcGISFormExpressionRepeater(FormExpressionRepeater):

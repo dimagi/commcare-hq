@@ -5,6 +5,9 @@ preload_app = True
 worker_class = 'gevent'
 keepalive = 60
 timeout = 900
+# In the standard production setup, max_requests, max_requests_jitter, and
+# graceful_timeout are overridden by command-line arguments in the supervisor
+# conf (managed by commcare-cloud), which take precedence over this file.
 max_requests = 240
 max_requests_jitter = int(max_requests * 0.5)
 # defaults to 30 sec, setting to 5 minutes to fight `GreenletExit`s

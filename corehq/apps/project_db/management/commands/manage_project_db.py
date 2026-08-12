@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 import dateutil.parser
@@ -9,6 +10,7 @@ from corehq.apps.project_db.populate import send_to_project_db
 from corehq.apps.project_db.table_ddl import (
     DomainSchema,
     create_or_update_project_db,
+    create_project_db_extensions,
     get_project_db_engine,
     preview_drop,
 )
@@ -60,6 +62,8 @@ class Command(BaseCommand):
             raise CommandError("--since is only used in conjunction with --populate.")
 
         if sync:
+            if settings.DEBUG:
+                create_project_db_extensions()
             create_or_update_project_db(domain)
             self.stdout.write("Synced ProjectDB table definition")
         if populate:

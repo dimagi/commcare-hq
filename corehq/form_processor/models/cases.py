@@ -982,7 +982,7 @@ class CommCareCaseIndexManager(RequireDBManager):
         query = self.partitioned_query(case_id)
         return list(query.filter(case_id=case_id, domain=domain))
 
-    def get_related_indices(self, domain, case_ids, exclude_indices):
+    def get_related_indices(self, domain, case_ids, exclude_indices=None):
         """Get indices (forward and reverse) for the given set of case ids.
 
         :param case_ids: A list of case ids.
@@ -993,6 +993,11 @@ class CommCareCaseIndexManager(RequireDBManager):
         assert isinstance(case_ids, list), case_ids
         if not case_ids:
             return []
+        if not exclude_indices:
+            return list(self.plproxy_raw(
+                'SELECT * FROM get_related_indices(%s, %s)',
+                [domain, case_ids],
+            ))
         return list(self.plproxy_raw(
             'SELECT * FROM get_related_indices(%s, %s, %s)',
             [domain, case_ids, list(exclude_indices)],

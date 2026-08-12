@@ -22880,8 +22880,8 @@ msgstr "تمت إضافة الحالة بالمعرف '{}' إلى هذه الم�
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "XForm {form_id} does not belong to domain {domain}"
-msgstr "النموذج XForm {form_id} لا ينتمي إلى النطاق {domain}"
+msgid "Could not find XForm {form_id}"
+msgstr "تعذر العثور على النموذج XForm {form_id}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -22899,14 +22899,16 @@ msgid "Successfully unarchived {form}"
 msgstr "تم إلغاء أرشفة {form} بنجاح"
 
 #: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not archive {form}: {error}"
+#, fuzzy, python-brace-format
+#| msgid "Could not archive {form}: {error}"
+msgid "Could not archive {form}"
 msgstr "تعذر أرشفة {form}: {error}"
 
 #: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not find XForm {form_id}"
-msgstr "تعذر العثور على النموذج XForm {form_id}"
+#, fuzzy, python-brace-format
+#| msgid "Could not archive {form}: {error}"
+msgid "Could not unarchive {form}"
+msgstr "تعذر أرشفة {form}: {error}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -27476,7 +27478,7 @@ msgstr ""
 "          "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#, fuzzy, python-format
+#, fuzzy
 #| msgid ""
 #| "\n"
 #| "                Learn more about exports on our <a\n"
@@ -27488,11 +27490,9 @@ msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-"
-"Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >our help site</a\n"
+"      >our pricing page</a\n"
 "    >.\n"
 "  "
 msgstr ""
@@ -62593,8 +62593,10 @@ msgid "Delivery Attempts"
 msgstr "محاولات التسليم"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "View Responses"
-msgstr "عرض الردود"
+#, fuzzy
+#| msgid "Preview Data"
+msgid "Preview Payloads"
+msgstr "معاينة البيانات"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -63995,6 +63997,13 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid "View Responses"
+#~ msgstr "عرض الردود"
+
+#, python-brace-format
+#~ msgid "XForm {form_id} does not belong to domain {domain}"
+#~ msgstr "النموذج XForm {form_id} لا ينتمي إلى النطاق {domain}"
 
 #, fuzzy
 #~| msgid ""

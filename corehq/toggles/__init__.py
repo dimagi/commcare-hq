@@ -923,6 +923,20 @@ PUBLIC_WEBFORMS = FeatureRelease(
     """
 )
 
+OCS_CHATBOT_PAGE_CONTEXT = FeatureRelease(
+    'ocs_chatbot_page_context',
+    'Collect page context for the CommCare Companion AI support bot',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    owner='Jing Cheng',
+    description="""
+        Gates client-side collection of page context (URL, app structure, form designer
+        state, and the requesting user's role/permissions) that is sent to the OCS chat
+        widget. Requires the CommCare Companion AI Support Bot (OCS_CHATBOT) preview to be
+        enabled for the widget to be present.
+    """,
+)
+
 WEB_APPS_PERMISSIONS_VIA_GROUPS = StaticToggle(
     'web_apps_permissions_via_groups',
     "USH: Allow users to control access to specific web apps via mobile worker groups.",
@@ -1092,14 +1106,6 @@ def _ensure_search_index_is_enabled(domain, enabled):
     if enabled and not has_case_search_cases:
         reindex_case_search_for_domain.delay(domain)
 
-
-FORMBUILDER_SAVE_TO_CASE = StaticToggle(
-    'saas_formbuilder_save_to_case',
-    'Form Builder - Save Questions to Case Properties',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Allows users to save questions to case properties within the Form Builder'
-)
 
 ACTION_TIMES_API = StaticToggle(
     'action_times_api',
@@ -2537,4 +2543,12 @@ BULK_FORM_ACTIONS_API = FeatureRelease(
     tag=TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     owner="Graham Herceg",
+)
+
+CHUNKED_LIVEQUERY = FeatureRelease(
+    slug='chunked_livequery',
+    label='LiveQuery variant: fetch case indexes in chunks rather than all at once. More but smaller queries.',
+    tag=TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Daniel Miller',
 )

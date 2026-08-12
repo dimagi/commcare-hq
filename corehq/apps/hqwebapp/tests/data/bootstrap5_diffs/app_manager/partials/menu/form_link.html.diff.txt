@@ -32,7 +32,7 @@
 +            data-bs-html="true"
              >
          </i>
-         <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
+         <span data-ocs-form-name {% if form == selected_form %}class="variable-form_name"{% endif %}>
 @@ -67,12 +67,17 @@
        <div class="modal-dialog" role="document">
          <div class="modal-content">

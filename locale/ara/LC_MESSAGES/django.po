@@ -15533,7 +15533,6 @@ msgid "after"
 msgstr "بعد"
 
 #: corehq/apps/case_search/endpoint_capability.py
-#| msgid "on or after"
 msgid "on or before"
 msgstr "في أو قبل"
 
@@ -15892,7 +15891,6 @@ msgid "date"
 msgstr "التاريخ"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "gps_point"
 msgid "geopoint"
 msgstr "نقطة جغرافية"
 
@@ -20278,8 +20276,8 @@ msgstr "تمت إضافة الحالة بالمعرف '{}' إلى هذه الم�
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "XForm {form_id} does not belong to domain {domain}"
-msgstr "النموذج XForm {form_id} لا ينتمي إلى النطاق {domain}"
+msgid "Could not find XForm {form_id}"
+msgstr "تعذر العثور على النموذج XForm {form_id}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -20298,13 +20296,13 @@ msgstr "تم إلغاء أرشفة {form} بنجاح"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not archive {form}: {error}"
-msgstr "تعذر أرشفة {form}: {error}"
+msgid "Could not archive {form}"
+msgstr "تعذر أرشفة {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not find XForm {form_id}"
-msgstr "تعذر العثور على النموذج XForm {form_id}"
+msgid "Could not unarchive {form}"
+msgstr "تعذر إلغاء أرشفة {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -24324,23 +24322,31 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#, python-format
+#| msgid ""
+#| "\n"
+#| "    For more information about CommCare software plans, visit\n"
+#| "    <a\n"
+#| "      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+#| "      target=\"_blank\"\n"
+#| "      >our help site</a\n"
+#| "    >.\n"
+#| "  "
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >our help site</a\n"
+"      >our pricing page</a\n"
 "    >.\n"
 "  "
 msgstr ""
 "\n"
 "    لمزيد من المعلومات حول خطط برمجيات CommCare، يرجى زيارة\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >موقع المساعدة الخاص بنا</a\n"
+"      >صفحة الأسعار الخاصة بنا</a\n"
 "    >.\n"
 "  "
 
@@ -56961,8 +56967,9 @@ msgid "Delivery Attempts"
 msgstr "محاولات التسليم"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "View Responses"
-msgstr "عرض الردود"
+#| msgid "Preview Data"
+msgid "Preview Payloads"
+msgstr "معاينة الحمولات"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -58352,6 +58359,13 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid "View Responses"
+#~ msgstr "عرض الردود"
+
+#, python-brace-format
+#~ msgid "XForm {form_id} does not belong to domain {domain}"
+#~ msgstr "النموذج XForm {form_id} لا ينتمي إلى النطاق {domain}"
 
 #~ msgid ""
 #~ "\n"

@@ -806,3 +806,84 @@ class TestDomainsInLineItemForCustomerInvoicing(TestCase):
         )
         line_item_factory = LineItemFactory(new_subscription, None, self.mock_customer_invoice)
         self.assertEqual(line_item_factory.subscribed_domains, [self.domain.name])
+
+
+class TestCustomerInvoiceGenerationIsAtomic(BaseCustomerInvoiceCase):
+
+    def setUp(self):
+        super().setUp()
+        from corehq.apps.accounting.models import Feature, FeatureRate
+        web_user_feature, __ = Feature.objects.get_or_create(
+            name="Web User", defaults={"feature_type": FeatureType.WEB_USER})
+        self.web_user_rate = FeatureRate.objects.create(
+            feature=web_user_feature,
+            monthly_fee=Decimal('0.00'),
+            monthly_limit=1,
+            per_excess_fee=Decimal('10.00'),
+        )
+        self.main_subscription.plan_version.feature_rates.add(self.web_user_rate)
+        self.account.bill_web_user = True
+        self.account.save()
+        self.invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 5)
+        # The default ADVANCED test plan also carries a USER feature rate, so
+        # invoice generation needs a DomainUserHistory snapshot to succeed at
+        # all (independent of the web-user feature under test).
+        calculate_users_in_all_domains(self.invoice_date)
+
+    def test_missing_web_user_snapshot_rolls_back_partial_invoice(self):
+        """WebUserLineItemFactory.total_users_for_date raises DoesNotExist
+        when the account's BillingAccountWebUserHistory for a month is
+        missing. Invoice generation must be atomic: the whole invoice rolls
+        back rather than leaving a partial CustomerInvoice row. The task
+        catches per-account exceptions, so assert on DB state rather than on
+        a raised error."""
+        # Deliberately no BillingAccountWebUserHistory snapshot created.
+        tasks.generate_invoices_based_on_date(self.invoice_date)
+
+        self.assertEqual(CustomerInvoice.objects.count(), 0)
+
+
+class TestBillingAccountDomainHistory(BaseCustomerInvoiceCase):
+
+    def test_unique_per_account_and_date(self):
+        from django.db import IntegrityError, transaction
+        from corehq.apps.accounting.models import BillingAccountDomainHistory
+        record_date = date(2016, 5, 31)
+        BillingAccountDomainHistory.objects.create(
+            billing_account=self.account, record_date=record_date, num_domains=3)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            BillingAccountDomainHistory.objects.create(
+                billing_account=self.account, record_date=record_date, num_domains=4)
+
+
+class TestCalculateDomainsInCustomerBillingAccounts(BaseCustomerInvoiceCase):
+
+    def setUp(self):
+        super().setUp()
+        # get_domains() filters on is_active=True, which is wall-clock state.
+        # The generator creates subscriptions with is_active=False (its
+        # default), so activate them to simulate live subscriptions.
+        Subscription.visible_and_suppressed_objects.filter(account=self.account).update(is_active=True)
+
+    def test_snapshots_active_domain_count_for_customer_account(self):
+        from corehq.apps.accounting.models import BillingAccountDomainHistory
+        from corehq.apps.accounting.tasks import calculate_domains_in_customer_billing_accounts
+
+        # BaseCustomerInvoiceCase sets up 3 subscriptions (main + 2 non-main)
+        # on a single customer account.
+        today = date(2016, 6, 1)
+        calculate_domains_in_customer_billing_accounts(today)
+
+        history = BillingAccountDomainHistory.objects.get(
+            billing_account=self.account, record_date=date(2016, 5, 31))
+        self.assertEqual(history.num_domains, 3)
+
+    def test_skips_non_customer_accounts(self):
+        from corehq.apps.accounting.models import BillingAccountDomainHistory
+        from corehq.apps.accounting.tasks import calculate_domains_in_customer_billing_accounts
+
+        self.account.is_customer_billing_account = False
+        self.account.save()
+        calculate_domains_in_customer_billing_accounts(date(2016, 6, 1))
+
+        self.assertEqual(BillingAccountDomainHistory.objects.count(), 0)

@@ -103,6 +103,11 @@ class PublicFormUser:
     def is_authenticated(self):
         return True
 
+    @property
+    def language(self):
+        # Set None to fall back to Django's cookie-based language resolution
+        return None
+
     def is_web_user(self):
         return False
 

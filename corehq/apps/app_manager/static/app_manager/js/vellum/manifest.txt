@@ -238,7 +238,8 @@
 ├─ dom-serializer@0.2.2
 │  ├─ domelementtype@^2.0.1
 │  ├─ domelementtype@2.1.0
-│  └─ entities@^2.0.0
+│  ├─ entities@^2.0.0
+│  └─ entities@2.1.0
 ├─ domelementtype@1.3.1
 ├─ domhandler@2.3.0
 │  └─ domelementtype@1
@@ -252,7 +253,7 @@
 ├─ enhanced-resolve@5.18.1
 │  ├─ graceful-fs@^4.2.4
 │  └─ tapable@^2.2.0
-├─ entities@2.1.0
+├─ entities@4.5.0
 ├─ envinfo@7.14.0
 ├─ equivalent-xml-js@0.1.0
 │  └─ underscore@^1.13.1
@@ -549,8 +550,8 @@
 │  ├─ rechoir@0.7.1
 │  │  └─ resolve@^1.9.0
 │  └─ resolve@^1.19.0
-├─ linkify-it@3.0.2
-│  └─ uc.micro@^1.0.1
+├─ linkify-it@5.0.2
+│  └─ uc.micro@^2.0.0
 ├─ loader-runner@4.3.0
 ├─ locate-path@6.0.0
 │  └─ p-locate@^5.0.0
@@ -565,14 +566,15 @@
 ├─ make-iterator@1.0.1
 │  └─ kind-of@^6.0.2
 ├─ map-cache@0.2.2
-├─ markdown-it@12.3.2
+├─ markdown-it@14.2.0
 │  ├─ argparse@^2.0.1
-│  ├─ entities@~2.1.0
-│  ├─ linkify-it@^3.0.1
-│  ├─ mdurl@^1.0.1
-│  └─ uc.micro@^1.0.5
+│  ├─ entities@^4.4.0
+│  ├─ linkify-it@^5.0.1
+│  ├─ mdurl@^2.0.0
+│  ├─ punycode.js@^2.3.1
+│  └─ uc.micro@^2.1.0
 ├─ mdn-data@2.0.14
-├─ mdurl@1.0.1
+├─ mdurl@2.0.0
 ├─ merge-stream@2.0.0
 ├─ micromatch@4.0.8
 │  ├─ braces@^3.0.3
@@ -713,6 +715,7 @@
 ├─ pump@3.0.0
 │  ├─ end-of-stream@^1.1.0
 │  └─ once@^1.3.1
+├─ punycode.js@2.3.1
 ├─ punycode@2.1.1
 ├─ puppeteer@13.7.0
 │  ├─ cross-fetch@3.1.5
@@ -841,7 +844,7 @@
 │  └─ is-number@^7.0.0
 ├─ tr46@0.0.3
 ├─ type-detect@4.0.8
-├─ uc.micro@1.0.6
+├─ uc.micro@2.1.0
 ├─ unbzip2-stream@1.4.3
 │  ├─ buffer@^5.2.1
 │  └─ through@^2.3.8
@@ -955,4 +958,4 @@
 │  ├─ buffer-crc32@~0.2.3
 │  └─ fd-slicer@~1.1.0
 └─ yocto-queue@0.1.0
-Done in 0.12s.
+Done in 0.16s.
