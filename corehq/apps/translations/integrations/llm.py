@@ -99,8 +99,8 @@ def retry_with_exponential_backoff(
 
 class LLMTranslator(abc.ABC):
     """
-    Abstract class for different LLM translators. This class can be extended to support different LLM clients.
-    In this case, we will be implementing a class for OpenAI.
+    Abstract class for LLM provider clients. Concrete subclasses are
+    registered in ``PROVIDERS``.
     """
 
     def __init__(self, api_key, model, lang, translation_format, backup_model=''):
@@ -156,11 +156,10 @@ class LLMTranslator(abc.ABC):
 
 class TranslationFormat(abc.ABC):
     """
-    Abstract class for different translation formats.
-    The idea is to have a class for each format and have input prompt and output prompt for each format.
-    Defined in the subclasses. It also has methods to load input, format input, parse output, save output.
-    An example can be we can have a class for Simple text file, JSON file etc.
-    We have implemented a class for PO file translation.
+    Abstract class for translation formats. Each format adapts one kind
+    of content source to the flat JSON batch protocol: loading and
+    formatting model input, parsing model output and saving it back,
+    plus the input/output format descriptions used in the prompt.
     """
     @abc.abstractmethod
     def load_input(self, input_source=None):
@@ -208,8 +207,11 @@ class OpenaiTranslator(LLMTranslator):
     def _response_format(self):
         # json_schema constrains output to a flat string map; models that
         # don't support it raise a 400, caught below with a json_object
-        # fallback. strict=False because additionalProperties-only schemas
-        # are not accepted by strict mode.
+        # fallback. Both modes yield the flat JSON map the prompt asks
+        # for — json_object just loses the server-side shape guarantee,
+        # and parse_output validates the shape either way. strict=False
+        # because additionalProperties-only schemas are not accepted by
+        # strict mode.
         return {
             "type": "json_schema",
             "json_schema": {
