@@ -8130,7 +8130,8 @@ msgstr "Масові переклади додатку"
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
-#: corehq/apps/app_manager/views/modules.py corehq/apps/reminders/forms.py
+#: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py corehq/apps/reminders/forms.py
 #: corehq/apps/sms/filters.py
 msgid "Survey"
 msgstr "Опитування"
@@ -14318,6 +14319,7 @@ msgid "Followup Form"
 msgstr "Форма подальших дій"
 
 #: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py
 msgid "Registration"
 msgstr "Реєстрація"
 
@@ -16172,8 +16174,9 @@ msgid "No endpoints configured."
 msgstr "Жодної кінцевої точки не налаштовано."
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-msgid "-- Field --"
-msgstr "-- Поле --"
+#| msgid "Fields"
+msgid "Field"
+msgstr "Поле"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Operation --"
@@ -16186,6 +16189,11 @@ msgstr "Параметр"
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Parameter --"
 msgstr "-- Параметр --"
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+#| msgid "Close Condition"
+msgid "Copy condition"
+msgstr "Копіювати умову"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "Remove condition"
@@ -16216,6 +16224,11 @@ msgid "match none of the following"
 msgstr "не відповідає жодному з наступних"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#| msgid "No Group"
+msgid "Copy group"
+msgstr "Копіювати групу"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
 msgid "Remove group"
 msgstr "Видалити групу"
 
@@ -16226,6 +16239,20 @@ msgstr "Ще немає умов. Додайте умову або групу н
 #: corehq/apps/case_search/templates/case_search/partials/group_node.html
 msgid "Add Condition"
 msgstr "Додати умову"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+#| msgid "Case Conditions"
+msgid "Paste Condition"
+msgstr "Вставити умову"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+#| msgid "Case Group"
+msgid "Paste Group"
+msgstr "Вставити групу"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Copied group is nested too deeply to paste here"
+msgstr "Скопійована група вкладена занадто глибоко, щоб вставити її тут"
 
 #: corehq/apps/case_search/templates/case_search/partials/query_builder.html
 msgid "Show query JSON"
@@ -24697,15 +24724,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#| msgid ""
-#| "\n"
-#| "    For more information about CommCare software plans, visit\n"
-#| "    <a\n"
-#| "      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
-#| "      target=\"_blank\"\n"
-#| "      >our help site</a\n"
-#| "    >.\n"
-#| "  "
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
@@ -40588,6 +40606,11 @@ msgstr "Натисніть, щоб вибрати повторювачі"
 #: corehq/apps/reports/filters/select.py
 msgid "Record Status"
 msgstr "Статус запису"
+
+#: corehq/apps/reports/filters/select.py
+#| msgid "Payload"
+msgid "Payload Error"
+msgstr "Помилка корисного навантаження"
 
 #: corehq/apps/reports/filters/select.py
 msgid "Rebuild restriction feature flag status"
@@ -57613,6 +57636,16 @@ msgstr "Невідомий тип кейсу"
 msgid "Unknown user"
 msgstr "Невідомий користувач"
 
+#: corehq/motech/repeaters/models.py
+#| msgid "Filter {} not found!"
+msgid "Form {} is not found"
+msgstr "Форму {} не знайдено"
+
+#: corehq/motech/repeaters/models.py
+#| msgid "{} not found"
+msgid "Case {} is not found"
+msgstr "Справу {} не знайдено"
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Forms"
 msgstr "Пересилати форми"
@@ -57934,9 +57967,13 @@ msgid "Delivery Attempts"
 msgstr "Спроби доставки"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-#| msgid "Preview Data"
 msgid "Preview Payloads"
 msgstr "Перегляд корисного навантаження"
+
+#: corehq/motech/repeaters/views/repeat_records.py
+#| msgid "Gateway could not be found."
+msgid "The payload could not be found."
+msgstr "Корисне навантаження не знайдено."
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -59341,6 +59378,9 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "-- Field --"
+#~ msgstr "-- Поле --"
 
 #~ msgid "View Responses"
 #~ msgstr "Переглянути відповіді"

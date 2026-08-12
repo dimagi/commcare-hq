@@ -8060,7 +8060,8 @@ msgstr "बल्क ऐप्लिकेशन अनुवाद"
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
-#: corehq/apps/app_manager/views/modules.py corehq/apps/reminders/forms.py
+#: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py corehq/apps/reminders/forms.py
 #: corehq/apps/sms/filters.py
 msgid "Survey"
 msgstr "सर्वेक्षण"
@@ -14163,6 +14164,7 @@ msgid "Followup Form"
 msgstr "फॉलोअप फॉर्म"
 
 #: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py
 msgid "Registration"
 msgstr "पंजीकरण"
 
@@ -16016,8 +16018,9 @@ msgid "No endpoints configured."
 msgstr "कोई एंडपॉइंट कॉन्फ़िगर नहीं किया गया है।"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-msgid "-- Field --"
-msgstr "-- फ़ील्ड --"
+#| msgid "Fields"
+msgid "Field"
+msgstr "फ़ील्ड"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Operation --"
@@ -16030,6 +16033,11 @@ msgstr "पैरामीटर"
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Parameter --"
 msgstr "-- पैरामीटर --"
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+#| msgid "Close Condition"
+msgid "Copy condition"
+msgstr "शर्त कॉपी करें"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "Remove condition"
@@ -16060,6 +16068,11 @@ msgid "match none of the following"
 msgstr "निम्न में से किसी से भी मेल नहीं खाता है"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#| msgid "No Group"
+msgid "Copy group"
+msgstr "समूह कॉपी करें"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
 msgid "Remove group"
 msgstr "समूह हटाएँ"
 
@@ -16070,6 +16083,20 @@ msgstr "अभी तक कोई शर्त नहीं है। नीच
 #: corehq/apps/case_search/templates/case_search/partials/group_node.html
 msgid "Add Condition"
 msgstr "शर्त जोड़ें"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+#| msgid "Case Conditions"
+msgid "Paste Condition"
+msgstr "शर्त पेस्ट करें"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+#| msgid "Case Group"
+msgid "Paste Group"
+msgstr "समूह पेस्ट करें"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Copied group is nested too deeply to paste here"
+msgstr "कॉपी किया गया समूह यहाँ चिपकाने के लिए बहुत गहराई में नेस्टेड है"
 
 #: corehq/apps/case_search/templates/case_search/partials/query_builder.html
 msgid "Show query JSON"
@@ -24403,15 +24430,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#| msgid ""
-#| "\n"
-#| "    For more information about CommCare software plans, visit\n"
-#| "    <a\n"
-#| "      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
-#| "      target=\"_blank\"\n"
-#| "      >our help site</a\n"
-#| "    >.\n"
-#| "  "
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
@@ -40147,6 +40165,11 @@ msgstr "रीपीटर चुनने के लिए क्लिक क�
 #: corehq/apps/reports/filters/select.py
 msgid "Record Status"
 msgstr "रिकॉर्ड स्थिति"
+
+#: corehq/apps/reports/filters/select.py
+#| msgid "Payload"
+msgid "Payload Error"
+msgstr "पेलोड त्रुटि"
 
 #: corehq/apps/reports/filters/select.py
 msgid "Rebuild restriction feature flag status"
@@ -57071,6 +57094,16 @@ msgstr "अज्ञात केस-प्रकार"
 msgid "Unknown user"
 msgstr "अनजान उपयोगकर्ता"
 
+#: corehq/motech/repeaters/models.py
+#| msgid "Filter {} not found!"
+msgid "Form {} is not found"
+msgstr "फ़ॉर्म {} नहीं मिला"
+
+#: corehq/motech/repeaters/models.py
+#| msgid "{} not found"
+msgid "Case {} is not found"
+msgstr "केस {} नहीं मिला"
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Forms"
 msgstr "फ़ॉर्म फॉरवर्ड करें"
@@ -57387,9 +57420,13 @@ msgid "Delivery Attempts"
 msgstr "डिलीवरी प्रयास"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-#| msgid "Preview Data"
 msgid "Preview Payloads"
 msgstr "प्रीव्यू पेलोड्स"
+
+#: corehq/motech/repeaters/views/repeat_records.py
+#| msgid "Gateway could not be found."
+msgid "The payload could not be found."
+msgstr "पेलोड नहीं मिल सका।"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -58787,6 +58824,9 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid "-- Field --"
+#~ msgstr "-- फ़ील्ड --"
 
 #~ msgid "View Responses"
 #~ msgstr "प्रतिक्रियाएँ देखें"

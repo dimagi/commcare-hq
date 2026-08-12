@@ -6977,7 +6977,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
-#: corehq/apps/app_manager/views/modules.py corehq/apps/reminders/forms.py
+#: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py corehq/apps/reminders/forms.py
 #: corehq/apps/sms/filters.py
 msgid "Survey"
 msgstr ""
@@ -12376,6 +12377,7 @@ msgid "Followup Form"
 msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py
 msgid "Registration"
 msgstr ""
 
@@ -14030,7 +14032,7 @@ msgid "No endpoints configured."
 msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-msgid "-- Field --"
+msgid "Field"
 msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
@@ -14043,6 +14045,10 @@ msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Parameter --"
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+msgid "Copy condition"
 msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
@@ -14074,6 +14080,10 @@ msgid "match none of the following"
 msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
+msgid "Copy group"
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
 msgid "Remove group"
 msgstr ""
 
@@ -14083,6 +14093,18 @@ msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/partials/group_node.html
 msgid "Add Condition"
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Paste Condition"
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Paste Group"
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Copied group is nested too deeply to paste here"
 msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/partials/query_builder.html
@@ -35298,6 +35320,10 @@ msgid "Record Status"
 msgstr ""
 
 #: corehq/apps/reports/filters/select.py
+msgid "Payload Error"
+msgstr ""
+
+#: corehq/apps/reports/filters/select.py
 msgid "Rebuild restriction feature flag status"
 msgstr ""
 
@@ -50376,6 +50402,14 @@ msgstr ""
 msgid "Unknown user"
 msgstr ""
 
+#: corehq/motech/repeaters/models.py
+msgid "Form {} is not found"
+msgstr ""
+
+#: corehq/motech/repeaters/models.py
+msgid "Case {} is not found"
+msgstr ""
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Forms"
 msgstr ""
@@ -50651,6 +50685,10 @@ msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "Preview Payloads"
+msgstr ""
+
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "The payload could not be found."
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeat_records.py
