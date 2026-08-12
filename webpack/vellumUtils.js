@@ -1,4 +1,3 @@
-/* eslint-env node */
 const fs = require('fs');
 const path = require('path');
 const utils = require('./utils');
