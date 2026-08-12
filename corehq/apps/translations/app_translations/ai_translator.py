@@ -334,7 +334,10 @@ def _string_key(parts):
 
 
 HTML_TAG_PATTERN = r'<[/!]?\w+(?:\s+[^>]*)?/?>'
-URL_PATTERN = r'https?://[^\s<>"]+|www\.[^\s<>"]+'
+# the final character must not be sentence punctuation (a trailing
+# period, or the closing paren of a markdown link), so punctuation
+# right after a URL is never captured as part of it
+URL_PATTERN = r'(?:https?://|www\.)[^\s<>"]*[^\s<>".,;:!?\'\\)]'
 MARKDOWN_BULLET_PATTERN = r'^\s{0,3}[-*+] '
 MARKDOWN_NUMBERED_PATTERN = r'^\s{0,3}\d+[.)] '
 MARKDOWN_HEADING_PATTERN = r'^\s{0,3}#{1,6} '
@@ -367,11 +370,7 @@ def is_valid_app_translation(source, translated):
 
     source_urls = re.findall(URL_PATTERN, source)
     if source_urls:
-        # trailing punctuation is context, not URL — the regex swallows
-        # e.g. the closing paren of a markdown link or a sentence period
-        strip = '.\\),;:!?\'"'
-        if ({u.rstrip(strip) for u in source_urls}
-                != {u.rstrip(strip) for u in re.findall(URL_PATTERN, translated)}):
+        if set(source_urls) != set(re.findall(URL_PATTERN, translated)):
             return False
 
     if _markdown_signature(source) != _markdown_signature(translated):

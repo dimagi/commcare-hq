@@ -49,7 +49,7 @@ from corehq.apps.translations.const import MODE_FILL_MISSING, MODE_RETRANSLATE
     # link syntax survives with the label translated
     ("See [help](https://example.com)", "Voir [aide](https://example.com)", True),
     ("See [help](https://example.com)", "Voir aide : https://example.com", False),
-    # trailing punctuation swallowed by the URL regex must not fail it
+    # punctuation right after a URL is not part of it and must not fail it
     ("Go to (https://example.com/help)", "Aller à https://example.com/help !", True),
     # natural-language asterisks/hyphens that are not markdown never trip it
     ("Required *", "Requis", True),
