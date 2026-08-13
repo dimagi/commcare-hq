@@ -7,7 +7,15 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
+      # Audit-only: records egress from the runner, never fails the build.
+      # Tighten to egress-policy: block once audit logs confirm the endpoint list.
+      - name: Harden runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
+
         with:
           submodules: recursive
 
