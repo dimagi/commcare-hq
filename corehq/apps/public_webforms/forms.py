@@ -35,7 +35,7 @@ class CreatePublicWebformForm(forms.Form):
         help_text=gettext_lazy("Identifies this public webform. Respondents will see the form's name.")
     )
     expires_at = forms.DateTimeField(
-        label=gettext_lazy("Close Requests On"),
+        label=gettext_lazy("Close Requests At"),
         help_text=gettext_lazy(
             "The public request page closes at this time. "
             "One-time links already sent can be used until they expire."
