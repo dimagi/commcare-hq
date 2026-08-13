@@ -16,8 +16,8 @@ from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapSwitchInput
-from corehq.apps.public_webforms.endpoints import (
-    create_public_webform_endpoint,
+from corehq.apps.public_webforms.app_builds import (
+    create_public_webform_build,
     delete_public_webform_build,
 )
 from corehq.apps.public_webforms.form_choices import (
@@ -162,7 +162,7 @@ class CreatePublicWebformForm(forms.Form):
     def create_public_webform(self):
         app_id = self.cleaned_data['app_id']
         form_unique_id = self.cleaned_data['form_unique_id']
-        app_build_id, endpoint_id = create_public_webform_endpoint(
+        app_build_id, endpoint_id = create_public_webform_build(
             self.domain, app_id, form_unique_id)
         link_choices = self.cleaned_data['link_choices']
         try:

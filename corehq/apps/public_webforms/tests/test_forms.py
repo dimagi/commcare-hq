@@ -103,7 +103,7 @@ def _create_webform(**post_data):
     form = _form(_post_data(**post_data), has_sms_privilege=True)
     assert form.is_valid(), form.errors
     with patch.object(
-        forms, 'create_public_webform_endpoint',
+        forms, 'create_public_webform_build',
         return_value=('build-1', 'endpoint-1'),
     ):
         return form.create_public_webform()
@@ -115,7 +115,7 @@ def test_create_deletes_the_generated_build_if_the_webform_is_not_saved():
     assert form.is_valid(), form.errors
     with (
         patch.object(
-            forms, 'create_public_webform_endpoint',
+            forms, 'create_public_webform_build',
             return_value=('build-1', 'endpoint-1'),
         ),
         patch.object(

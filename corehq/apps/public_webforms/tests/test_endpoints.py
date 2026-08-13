@@ -12,8 +12,8 @@ from corehq.apps.app_manager.tests.util import (
     patch_validate_xform,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.public_webforms.endpoints import (
-    create_public_webform_endpoint,
+from corehq.apps.public_webforms.app_builds import (
+    create_public_webform_build,
     delete_public_webform_build,
 )
 from corehq.blobs import get_blob_db
@@ -54,7 +54,7 @@ class TestCreatePublicWebformEndpoint:
 
     def test_generates_detached_build_emitting_the_endpoint(self):
         app = released_app()
-        build_id, endpoint_id = create_public_webform_endpoint(
+        build_id, endpoint_id = create_public_webform_build(
             app.domain, app.app_id, app.form_unique_id)
 
         assert build_id != app.build_id
@@ -68,14 +68,14 @@ class TestCreatePublicWebformEndpoint:
     def test_canonical_is_never_written(self):
         app = released_app()
         version_before = get_app(app.domain, app.app_id).version
-        create_public_webform_endpoint(app.domain, app.app_id, app.form_unique_id)
+        create_public_webform_build(app.domain, app.app_id, app.form_unique_id)
         canonical = get_app(app.domain, app.app_id)
         assert canonical.version == version_before
         assert canonical.get_form(app.form_unique_id).session_endpoint_id is None
 
     def test_detached_build_stays_out_of_the_lineage(self):
         app = released_app()
-        create_public_webform_endpoint(app.domain, app.app_id, app.form_unique_id)
+        create_public_webform_build(app.domain, app.app_id, app.form_unique_id)
         # the generated build must not become the app's latest build
         assert get_latest_build_id(app.domain, app.app_id) == app.build_id
 
@@ -88,7 +88,7 @@ class TestCreatePublicWebformEndpoint:
         assert get_app(app.domain, app.build_id).get_form(
             app.form_unique_id).session_endpoint_id == 'existing-endpoint'
 
-        build_id, endpoint_id = create_public_webform_endpoint(
+        build_id, endpoint_id = create_public_webform_build(
             app.domain, app.app_id, app.form_unique_id)
 
         assert build_id != app.build_id
@@ -100,7 +100,7 @@ class TestDeletePublicWebformBuild:
 
     def test_deletes_the_build_doc_and_its_build_files(self):
         app = released_app()
-        build_id, __ = create_public_webform_endpoint(
+        build_id, __ = create_public_webform_build(
             app.domain, app.app_id, app.form_unique_id)
         assert get_blob_db().metadb.get_for_parent(build_id)
 

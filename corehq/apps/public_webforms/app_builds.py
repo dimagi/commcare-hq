@@ -1,6 +1,4 @@
-"""Create the session endpoint a public webform navigates to.
-
-Public webforms deep-link into a form via a session endpoint in a build's
+"""Public webforms deep-link into a form via a session endpoint in a build's
 suite. Each webform gets its own build, generated from the app's latest
 released build with an endpoint added to the target form.
 
@@ -19,7 +17,7 @@ BUILD_COMMENT = "Automatically created for a public webform"
 PUBLIC_WEBFORM_COPY_OF_SUFFIX = "__public_webform"
 
 
-def create_public_webform_endpoint(domain, app_id, form_unique_id):
+def create_public_webform_build(domain, app_id, form_unique_id):
     """Return ``(app_build_id, endpoint_id)`` for the target form.
 
     An endpoint is generated rather than reusing one the form may already
