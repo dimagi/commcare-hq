@@ -2,8 +2,10 @@ from memoized import memoized
 
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.public_webforms.models import PublicWebform
 
@@ -24,3 +26,9 @@ class BasePublicWebformView(BasePageView):
         context = super().main_context
         context['section'] = {'page_name': _("One-Time Link Request")}
         return context
+
+
+@method_decorator(use_bootstrap5, name='dispatch')
+class PublicWebformRequestView(BasePublicWebformView):
+    urlname = 'public_webform_request'
+    template_name = 'public_webforms/public/base.html'
