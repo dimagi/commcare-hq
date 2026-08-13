@@ -1,5 +1,6 @@
 import os
 
+from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
 from django.http import HttpResponse
 from django.test import SimpleTestCase, TestCase
@@ -13,7 +14,11 @@ from corehq import privileges
 from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.hqadmin.views.users import AdminRestoreView, DisableUserView
+from corehq.apps.hqadmin.views.users import (
+    AdminRestoreView,
+    DisableUserView,
+    augmented_superusers,
+)
 from corehq.apps.users.models import WebUser
 from corehq.toggles import TAG_RELEASE, TAG_GA_PATH
 from corehq.toggles.sql_models import ToggleEditPermission
@@ -176,6 +181,19 @@ def _make_accounting_admin(django_user):
     UserRole.objects.create(user=django_user, role=user_privs)
     Grant.objects.create(from_role=user_privs, to_role=ops_role)
     Role.update_cache()
+
+
+class TestAugmentedSuperusers(TestCase):
+
+    def test_includes_non_superuser_accounting_admin(self):
+        django_user = User.objects.create(username='acct-admin@dimagi.com')
+        _make_accounting_admin(django_user)
+
+        users = augmented_superusers(include_accounting_admin=True)
+
+        matches = [user for user in users if user.username == django_user.username]
+        assert matches, "non-superuser accounting admin missing from offboarding list"
+        assert matches[0].is_accounting_admin
 
 
 class TestOffboardStaffUser(TestCase):
