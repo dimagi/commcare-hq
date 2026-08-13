@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from django import forms
 from django.template.loader import render_to_string
@@ -84,10 +84,11 @@ class CreatePublicWebformForm(forms.Form):
         self.fields['link_choices'].choices = link_choices
 
         default_expires_at = (
-            ServerTime(datetime.now()).user_time(self.timezone).done()
-            + timedelta(days=30)
+            ServerTime(datetime.now(UTC).replace(tzinfo=None) + timedelta(days=30))
+            .user_time(self.timezone)
+            .ui_string(fmt='%Y-%m-%d %H:%M:%S')
         )
-        self.fields['expires_at'].initial = default_expires_at.strftime('%Y-%m-%d %H:%M:%S')
+        self.fields['expires_at'].initial = default_expires_at
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_method = 'POST'
