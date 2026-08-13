@@ -470,6 +470,7 @@ domain
  0020_delete_transferdomainrequest
  0021_delete_smsaccountconfirmationsettings
  0022_domainauditrecordentry_cp_n_enterprise_console_exports_and_more
+ 0023_domainauditrecordentry_cp_n_questions_locked
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration

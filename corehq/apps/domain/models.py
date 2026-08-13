@@ -906,12 +906,13 @@ class DomainAuditRecordEntry(models.Model):
     cp_n_saved_app_changes = models.BigIntegerField(default=0)
     cp_n_enterprise_console_exports = models.BigIntegerField(default=0)
     cp_n_enterprise_settings_edits = models.BigIntegerField(default=0)
+    cp_n_questions_locked = models.BigIntegerField(default=0)
 
     @classmethod
     @atomic
-    def update_calculations(cls, domain, property_to_update):
-        obj, is_new = cls.objects.get_or_create(domain=domain)
-        setattr(obj, property_to_update, F(property_to_update) + 1)
+    def update_calculations(cls, domain, property_to_update, count=1):
+        obj, __ = cls.objects.get_or_create(domain=domain)
+        setattr(obj, property_to_update, F(property_to_update) + count)
         # update_fields prevents the possibility of a race condition
         # https://stackoverflow.com/a/1599090
         obj.save(update_fields=[property_to_update])
