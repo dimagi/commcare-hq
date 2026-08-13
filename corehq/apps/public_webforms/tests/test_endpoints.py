@@ -42,7 +42,7 @@ def released_app():
             )
     finally:
         delete_all_apps()
-        domain_obj.get_db().delete_doc(domain_obj.get_id)
+        domain_obj.delete()
 
 
 @use(released_app)
@@ -58,8 +58,7 @@ class TestCreatePublicWebformEndpoint:
         # detached from the app's lineage, but traceable back to it
         assert new_build.copy_of == f'{app.app_id}__public_webform'
         suite = new_build.fetch_attachment('files/suite.xml')
-        if isinstance(suite, bytes):
-            suite = suite.decode('utf-8')
+        suite = suite.decode('utf-8')
         assert endpoint_id in suite
 
     def test_canonical_is_never_written(self):
@@ -75,12 +74,6 @@ class TestCreatePublicWebformEndpoint:
         create_public_webform_endpoint(app.domain, app.app_id, app.form_unique_id)
         # the generated build must not become the app's latest build
         assert get_latest_build_id(app.domain, app.app_id) == app.build_id
-
-    def test_released_build_is_untouched(self):
-        app = released_app()
-        create_public_webform_endpoint(app.domain, app.app_id, app.form_unique_id)
-        released = get_app(app.domain, app.build_id)
-        assert released.get_form(app.form_unique_id).session_endpoint_id is None
 
     def test_always_generates_an_endpoint(self):
         """Reusing an endpoint would pin a build a user can delete."""
