@@ -1,0 +1,29 @@
+{% load hq_shared_tags %}
+
+<div class="me-2 dropdown d-inline-block">
+  <button
+    class="dropdown-toggle btn btn-outline-primary"
+    data-bs-toggle="dropdown"
+    aria-haspopup="true"
+    aria-expanded="false"
+  >
+    {{ LANGUAGE_CODE|language_name_local }}
+  </button>
+  <ul class="dropdown-menu">
+    {% for lang_code, name in LANGUAGES %}
+      <li>
+        <form action="{% url 'set_language' %}" method="post">
+          {% csrf_token %}
+          <button
+            class="dropdown-item"
+            type="submit"
+            name="language"
+            value="{{ lang_code }}"
+          >
+            {{ lang_code|language_name_local }}
+          </button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+</div>

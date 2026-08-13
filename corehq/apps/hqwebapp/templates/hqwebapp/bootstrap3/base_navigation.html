@@ -40,33 +40,7 @@
       {% if not request.user.is_authenticated %}
         <nav class="navbar-menus navbar-signin" role="navigation">
           <div class="nav-settings-bar pull-right">
-            <div class="navbar-btn dropdown" style="display: inline-block;">
-              <button
-                class="dropdown-toggle btn btn-default"
-                data-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                {{ LANGUAGE_CODE|language_name_local }}
-                <span class="caret"></span>
-              </button>
-              <ul class="dropdown-menu">
-                {% for lang_code, name in LANGUAGES %}
-                  <li>
-                    <form action="{% url 'set_language' %}" method="post">
-                      {% csrf_token %}
-                      <button
-                        type="submit"
-                        name="language"
-                        value="{{ lang_code }}"
-                      >
-                        {{ lang_code|language_name_local }}
-                      </button>
-                    </form>
-                  </li>
-                {% endfor %}
-              </ul>
-            </div>
+            {% include "hqwebapp/partials/bootstrap3/language_dropdown.html" %}
             <a href="{% url "login" %}" class="btn btn-primary navbar-btn"
               >{% trans 'Sign In' %}</a
             >
