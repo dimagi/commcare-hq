@@ -8,11 +8,8 @@ from corehq.apps.public_webforms.models import PublicWebformType
 
 def get_public_webform_choices(domain):
     """Return the drilldown tree of applications, menus, and eligible forms
-    from latest released app builds.
-
-    The structure is ``[{'id', 'name', 'version', 'menus': [{'id', 'name',
-    'forms': [{'id', 'name'}]}]}]``. Menus and applications
-    with no eligible forms are omitted.
+    from latest released app builds. Menus and applications with no eligible
+    forms are omitted.
     """
     options = []
     for app_id in get_latest_released_app_versions_by_app_id(domain):
