@@ -108,6 +108,7 @@ urlpatterns = [
     url(r'^analytics/', include('corehq.apps.analytics.urls')),
     url(r'^api/', include(user_api_urlpatterns)),
     url(r'^register/', include('corehq.apps.registration.urls')),
+    url(r'^webforms/', include('corehq.apps.public_webforms.public.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
     url(r'', include('corehq.apps.hqwebapp.urls')),

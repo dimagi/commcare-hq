@@ -77,7 +77,7 @@ class PublicWebform(models.Model):
         relative URL is meaningless.
         """
         # TODO: point at the real public route once it exists
-        return f'{get_url_base()}/placeholder/url/{self.public_id.hex}'
+        return f'{get_url_base()}/webforms/{self.public_id.hex}/'
 
     @property
     def is_expired(self):
