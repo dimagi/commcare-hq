@@ -378,18 +378,16 @@ def _check_locked_questions_unmodified(request, domain, form, new_xml):
             raise LockedQuestionError
 
 
-def _count_newly_locked_questions(domain, form, new_xml):
+def _count_newly_locked_questions(form, new_xml):
     """Number of questions ``new_xml`` locks that are not locked in the
-    form's current source, or 0 if the feature is off.
+    form's current source.
 
     Must be called before ``save_xform`` replaces the form's source.
     """
-    if not domain_has_privilege(domain, "locked_admin_questions"):
-        return 0
     try:
         new_locked = XForm(new_xml).locked_question_paths
     except (XFormException, DangerousXmlException):
-        # unparseable XML; the save itself will fail
+        # unreadable XML; nothing to count
         return 0
     if not new_locked:
         return 0
@@ -728,7 +726,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
     except LockedQuestionError:
         return HttpResponseForbidden()
 
-    num_newly_locked = _count_newly_locked_questions(domain, form, new_xml)
+    num_newly_locked = _count_newly_locked_questions(form, new_xml)
     try:
         xml = save_xform(app, form, new_xml, case_mapping_diff)
     except XFormException:

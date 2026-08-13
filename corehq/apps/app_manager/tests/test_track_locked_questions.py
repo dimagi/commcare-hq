@@ -1,9 +1,6 @@
 """Tests for counting the questions a form builder save newly locks,
 used for the ``cp_n_questions_locked`` domain metric."""
-from unittest.mock import patch
-
 from corehq.apps.app_manager.tests.test_get_questions import AppFormTestCase
-from corehq.apps.app_manager.views import forms as forms_views
 from corehq.apps.app_manager.views.forms import _count_newly_locked_questions
 
 QUESTION2_LOCKED_BIND = '<bind nodeset="/data/question2" type="xsd:string" vellum:lock="all" />'
@@ -23,9 +20,8 @@ class CountNewlyLockedQuestionsTest(AppFormTestCase):
         super().setUp()
         self.form = self.app.get_form(self.add_form('case_in_form', "Form").unique_id)
 
-    def count(self, new_xml, has_privilege=True):
-        with patch.object(forms_views, 'domain_has_privilege', return_value=has_privilege):
-            return _count_newly_locked_questions(self.domain, self.form, new_xml.encode('utf-8'))
+    def count(self, new_xml):
+        return _count_newly_locked_questions(self.form, new_xml.encode('utf-8'))
 
     def modified_source(self, old, new):
         modified = self.form.source.replace(old, new)
@@ -52,10 +48,6 @@ class CountNewlyLockedQuestionsTest(AppFormTestCase):
     def test_unlocking_is_not_counted(self):
         new_xml = self.modified_source(QUESTION2_LOCKED_BIND, QUESTION2_UNLOCKED_BIND)
         assert self.count(new_xml) == 0
-
-    def test_zero_without_privilege(self):
-        new_xml = self.modified_source(QUESTION3_UNLOCKED_BIND, QUESTION3_LOCKED_BIND)
-        assert self.count(new_xml, has_privilege=False) == 0
 
     def test_zero_for_unparseable_xml(self):
         assert self.count('<data><unclosed>') == 0
