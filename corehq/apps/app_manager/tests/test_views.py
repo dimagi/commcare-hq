@@ -928,9 +928,9 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         cls.addClassCleanup(cls.app.delete)
 
         # Set up the cls.web_user: set password and give access to the cls.domain.
-        old_web_user = WebUser.get_by_username("test_user")
-        if old_web_user:
-            old_web_user.delete(cls.domain.name, deleted_by=None)
+        # old_web_user = WebUser.get_by_username("test_user")
+        # if old_web_user:
+        #     old_web_user.delete(cls.domain.name, deleted_by=None)
         cls.web_user = WebUser.create(
             cls.domain.name, "test_user", "my_password", None, None, is_active=True
         )

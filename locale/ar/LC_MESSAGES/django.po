@@ -8854,7 +8854,8 @@ msgstr "ترجمات التطبيق بالجملة"
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
-#: corehq/apps/app_manager/views/modules.py corehq/apps/reminders/forms.py
+#: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py corehq/apps/reminders/forms.py
 #: corehq/apps/sms/filters.py
 msgid "Survey"
 msgstr "استبيان"
@@ -16065,6 +16066,7 @@ msgid "Followup Form"
 msgstr "نموذج المتابعة"
 
 #: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py
 msgid "Registration"
 msgstr "تسجيل"
 
@@ -18003,9 +18005,9 @@ msgstr "سر نقطة نهاية SNS"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 #, fuzzy
-#| msgid "Add Field"
-msgid "-- Field --"
-msgstr "إضافة حقل"
+#| msgid "Fields"
+msgid "Field"
+msgstr "الحقول"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Operation --"
@@ -18022,6 +18024,12 @@ msgstr "إضافة معلمة"
 #| msgid "Add Parameter"
 msgid "-- Parameter --"
 msgstr "إضافة معلمة"
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+#, fuzzy
+#| msgid "Close Condition"
+msgid "Copy condition"
+msgstr "شرط الإغلاق"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 #, fuzzy
@@ -18063,6 +18071,12 @@ msgstr "يجب أن يكون التنسيق أحد الخيارات التالي
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
 #, fuzzy
+#| msgid "No Group"
+msgid "Copy group"
+msgstr "بدون مجموعة"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#, fuzzy
 #| msgid "Remove User"
 msgid "Remove group"
 msgstr "إزالة المستخدم"
@@ -18076,6 +18090,22 @@ msgstr ""
 #| msgid "Conditions"
 msgid "Add Condition"
 msgstr "الشروط"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+#, fuzzy
+#| msgid "Case Conditions"
+msgid "Paste Condition"
+msgstr "شروط الحالة"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+#, fuzzy
+#| msgid "Case Group"
+msgid "Paste Group"
+msgstr "مجموعة الحالات"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Copied group is nested too deeply to paste here"
+msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/partials/query_builder.html
 msgid "Show query JSON"
@@ -44323,6 +44353,12 @@ msgid "Record Status"
 msgstr "حالة السجل"
 
 #: corehq/apps/reports/filters/select.py
+#, fuzzy
+#| msgid "Payload"
+msgid "Payload Error"
+msgstr "الحمولة"
+
+#: corehq/apps/reports/filters/select.py
 msgid "Rebuild restriction feature flag status"
 msgstr "حالة ميزة تقييد إعادة البناء"
 
@@ -62238,6 +62274,18 @@ msgstr "نوع حالة غير معروف"
 msgid "Unknown user"
 msgstr "مستخدم غير معروف"
 
+#: corehq/motech/repeaters/models.py
+#, fuzzy
+#| msgid "Filter {} not found!"
+msgid "Form {} is not found"
+msgstr "لم يتم العثور على عامل التصفية {}!"
+
+#: corehq/motech/repeaters/models.py
+#, fuzzy
+#| msgid "{} not found"
+msgid "Case {} is not found"
+msgstr "{} غير موجود"
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Forms"
 msgstr "توجيه النماذج"
@@ -62597,6 +62645,12 @@ msgstr "محاولات التسليم"
 #| msgid "Preview Data"
 msgid "Preview Payloads"
 msgstr "معاينة البيانات"
+
+#: corehq/motech/repeaters/views/repeat_records.py
+#, fuzzy
+#| msgid "Gateway could not be found."
+msgid "The payload could not be found."
+msgstr "تعذر العثور على البوابة."
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -63997,6 +64051,11 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#, fuzzy
+#~| msgid "Add Field"
+#~ msgid "-- Field --"
+#~ msgstr "إضافة حقل"
 
 #~ msgid "View Responses"
 #~ msgstr "عرض الردود"

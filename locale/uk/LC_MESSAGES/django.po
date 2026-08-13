@@ -9006,7 +9006,8 @@ msgstr "Масові переклади додатку"
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
-#: corehq/apps/app_manager/views/modules.py corehq/apps/reminders/forms.py
+#: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py corehq/apps/reminders/forms.py
 #: corehq/apps/sms/filters.py
 msgid "Survey"
 msgstr "Опитування"
@@ -16340,6 +16341,7 @@ msgid "Followup Form"
 msgstr "Форма подальших дій"
 
 #: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py
 msgid "Registration"
 msgstr "Реєстрація"
 
@@ -18319,9 +18321,9 @@ msgstr "Секрет кінцевої точки SNS"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 #, fuzzy
-#| msgid "Add Field"
-msgid "-- Field --"
-msgstr "Додати поле"
+#| msgid "Fields"
+msgid "Field"
+msgstr "Поля"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Operation --"
@@ -18338,6 +18340,12 @@ msgstr "Додати параметр"
 #| msgid "Add Parameter"
 msgid "-- Parameter --"
 msgstr "Додати параметр"
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+#, fuzzy
+#| msgid "Close Condition"
+msgid "Copy condition"
+msgstr "Умова закриття"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 #, fuzzy
@@ -18379,6 +18387,12 @@ msgstr "формат має бути одним із наступних: {}"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
 #, fuzzy
+#| msgid "No Group"
+msgid "Copy group"
+msgstr "Без групи"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#, fuzzy
 #| msgid "Remove User"
 msgid "Remove group"
 msgstr "Видалити користувача"
@@ -18392,6 +18406,22 @@ msgstr ""
 #| msgid "Conditions"
 msgid "Add Condition"
 msgstr "Умови"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+#, fuzzy
+#| msgid "Case Conditions"
+msgid "Paste Condition"
+msgstr "Умови справи"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+#, fuzzy
+#| msgid "Case Group"
+msgid "Paste Group"
+msgstr "Група кейсів"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Copied group is nested too deeply to paste here"
+msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/partials/query_builder.html
 msgid "Show query JSON"
@@ -45065,6 +45095,12 @@ msgid "Record Status"
 msgstr "Статус запису"
 
 #: corehq/apps/reports/filters/select.py
+#, fuzzy
+#| msgid "Payload"
+msgid "Payload Error"
+msgstr "Навантаження"
+
+#: corehq/apps/reports/filters/select.py
 msgid "Rebuild restriction feature flag status"
 msgstr "Статус функції обмеження перебудови"
 
@@ -63343,6 +63379,18 @@ msgstr "Невідомий тип кейсу"
 msgid "Unknown user"
 msgstr "Невідомий користувач"
 
+#: corehq/motech/repeaters/models.py
+#, fuzzy
+#| msgid "Filter {} not found!"
+msgid "Form {} is not found"
+msgstr "Фільтр {} не знайдено!"
+
+#: corehq/motech/repeaters/models.py
+#, fuzzy
+#| msgid "{} not found"
+msgid "Case {} is not found"
+msgstr "{} не знайдено"
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Forms"
 msgstr "Пересилати форми"
@@ -63704,6 +63752,12 @@ msgstr "Спроби доставки"
 #| msgid "Preview Data"
 msgid "Preview Payloads"
 msgstr "Попередній перегляд даних"
+
+#: corehq/motech/repeaters/views/repeat_records.py
+#, fuzzy
+#| msgid "Gateway could not be found."
+msgid "The payload could not be found."
+msgstr "Шлюз не знайдено."
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -65115,6 +65169,11 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#, fuzzy
+#~| msgid "Add Field"
+#~ msgid "-- Field --"
+#~ msgstr "Додати поле"
 
 #~ msgid "View Responses"
 #~ msgstr "Переглянути відповіді"
