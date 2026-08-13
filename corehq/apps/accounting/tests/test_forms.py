@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from dateutil.relativedelta import relativedelta
 from django_prbac.models import Grant, Role
@@ -527,3 +527,25 @@ class TestCreateAdminForm(TestCase):
         assert form.is_valid()
         with self.assertRaises(CreateAccountingAdminError):
             form.add_admin_user()
+
+    @override_settings(IS_DIMAGI_ENVIRONMENT=True)
+    def test_rejects_non_dimagi_email_on_dimagi_environment(self):
+        user = WebUser.create(None, 'outsider@example.com', 'password', None, None)
+        self.addCleanup(user.delete, None, None)
+
+        form = CreateAdminForm({'username': user.username})
+        assert form.is_valid()
+        with self.assertRaises(CreateAccountingAdminError):
+            form.add_admin_user()
+
+    @override_settings(IS_DIMAGI_ENVIRONMENT=False)
+    def test_allows_non_dimagi_email_off_dimagi_environment(self):
+        user = WebUser.create(None, 'partner@example.com', 'password', None, None)
+        self.addCleanup(user.delete, None, None)
+
+        form = CreateAdminForm({'username': user.username})
+        assert form.is_valid()
+        django_user = form.add_admin_user()
+
+        Role.update_cache()
+        assert is_accounting_admin(django_user)
