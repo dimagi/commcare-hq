@@ -10,6 +10,7 @@ from django.db.models import Q
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
+from corehq.apps.accounting.utils import get_accounting_admin_users
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import FieldWithHelpBubble, FormActions
 from corehq.apps.users.util import is_dimagi_email
@@ -154,7 +155,8 @@ def clean_data(cleaned_data, offboarding_list=False):
     csv_email_list = cleaned_data.get('csv_email_list', '')
     all_users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)
                                     | (Q(is_active=True) & Q(username__endswith='@dimagi.com'))
-                                    | Q(username__in=IS_CONTRACTOR.get_enabled_users()))
+                                    | Q(username__in=IS_CONTRACTOR.get_enabled_users())
+                                    | Q(id__in=[user.id for user in get_accounting_admin_users()]))
     if offboarding_list and not csv_email_list:
         cleaned_data['csv_email_list'] = all_users
         return cleaned_data

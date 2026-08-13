@@ -14,6 +14,7 @@ from corehq import privileges
 from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqadmin.forms import OffboardingUserListForm
 from corehq.apps.hqadmin.views.users import (
     AdminRestoreView,
     DisableUserView,
@@ -194,6 +195,23 @@ class TestAugmentedSuperusers(TestCase):
         matches = [user for user in users if user.username == django_user.username]
         assert matches, "non-superuser accounting admin missing from offboarding list"
         assert matches[0].is_accounting_admin
+
+
+class TestOffboardingUserListForm(TestCase):
+
+    def test_pool_includes_non_superuser_accounting_admin(self):
+        # a non-dimagi email keeps the @dimagi.com clause from masking the
+        # accounting admin's absence from the pool
+        admin = User.objects.create(username='acct-admin@example.com', is_active=True)
+        _make_accounting_admin(admin)
+        keeper = User.objects.create(username='keeper@dimagi.com', is_superuser=True)
+
+        form = OffboardingUserListForm({'csv_email_list': keeper.username})
+        assert form.is_valid(), form.errors
+
+        offboard_users = form.cleaned_data['csv_email_list']
+        assert admin in offboard_users
+        assert keeper not in offboard_users
 
 
 class TestOffboardStaffUser(TestCase):
