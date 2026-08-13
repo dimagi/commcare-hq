@@ -77,6 +77,7 @@ domain_specific = [
     url(r'^microplanning/', include('corehq.apps.geospatial.urls')),
     url(r'^kyc/', include('corehq.apps.integration.kyc.urls')),
     url(r'^payments/', include('corehq.apps.integration.payments.urls')),
+    url(r'^public_webforms/', include('corehq.apps.public_webforms.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
