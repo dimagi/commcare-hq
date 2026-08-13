@@ -40,7 +40,10 @@ from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
 
 from corehq import privileges
-from corehq.apps.accounting.utils import is_accounting_admin
+from corehq.apps.accounting.utils import (
+    get_accounting_admin_users,
+    is_accounting_admin,
+)
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import (
@@ -274,6 +277,9 @@ def augmented_superusers(
         user_query = (Q(is_superuser=True) | Q(is_staff=True))
         if include_contractor:
             user_query = (user_query | Q(username__in=IS_CONTRACTOR.get_enabled_users()))
+        if include_accounting_admin:
+            accounting_admin_ids = [user.id for user in get_accounting_admin_users()]
+            user_query = (user_query | Q(id__in=accounting_admin_ids))
         users = User.objects.filter(user_query).order_by("username")
 
     augmented_users = _augment_users_with_two_factor_enabled(users)
@@ -905,7 +911,10 @@ class OffboardingUserList(UserAdministration):
         return {
             'form': OffboardingUserListForm(data=form_data),
             'users': self.users,
-            'table_title': _('All superusers and staff users') if not self.table_title else self.table_title,
+            'table_title': (
+                _('All superusers, staff users, and accounting admins')
+                if not self.table_title else self.table_title
+            ),
             'validation_errors': self.validation_errors,
         }
 
