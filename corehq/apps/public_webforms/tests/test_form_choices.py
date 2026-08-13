@@ -54,7 +54,6 @@ def test_choices_include_only_eligible_forms():
         for form in menu['forms']
     }
     assert set(forms_by_id) == {data.survey_form_id, data.registration_form_id}
-    assert forms_by_id[data.survey_form_id]['session_type'] == PublicWebformType.SURVEY.value
 
 
 def test_choices_omit_app_with_no_eligible_forms():

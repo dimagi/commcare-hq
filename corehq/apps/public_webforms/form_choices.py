@@ -11,7 +11,7 @@ def get_public_webform_choices(domain):
     from latest released app builds.
 
     The structure is ``[{'id', 'name', 'version', 'menus': [{'id', 'name',
-    'forms': [{'id', 'name', 'session_type'}]}]}]``. Menus and applications
+    'forms': [{'id', 'name'}]}]}]``. Menus and applications
     with no eligible forms are omitted.
     """
     options = []
@@ -27,7 +27,6 @@ def get_public_webform_choices(domain):
                 {
                     'id': form.unique_id,
                     'name': form.default_name(),
-                    'session_type': get_public_webform_type(form).value,
                 }
                 for form in module.get_forms()
                 if not form.requires_case()
@@ -66,4 +65,4 @@ def get_public_webform_type(form):
         PublicWebformType.REGISTRATION
         if form.is_registration_form()
         else PublicWebformType.SURVEY
-    )
+    ).value

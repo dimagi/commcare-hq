@@ -150,7 +150,7 @@ class CreatePublicWebformForm(forms.Form):
                 "The selected form can't be used for a public webform."
             ))
 
-        cleaned_data['session_type'] = get_public_webform_type(form).value
+        cleaned_data['session_type'] = get_public_webform_type(form)
         return cleaned_data
 
     def clean_expires_at(self):
