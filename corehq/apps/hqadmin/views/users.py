@@ -10,7 +10,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.mail import mail_admins
-from django.db.models import Q
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -40,10 +39,7 @@ from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
 
 from corehq import privileges
-from corehq.apps.accounting.utils import (
-    get_accounting_admin_users,
-    is_accounting_admin,
-)
+from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import (
@@ -58,7 +54,7 @@ from corehq.apps.hqadmin.forms import (
     OffboardingUserListForm,
     SuperuserManagementForm,
 )
-from corehq.apps.hqadmin.utils import unset_password
+from corehq.apps.hqadmin.utils import privileged_users_query, unset_password
 from corehq.apps.hqadmin.views.utils import (
     BaseAdminSectionView,
     get_breadcrumbs,
@@ -274,12 +270,10 @@ def augmented_superusers(
     include_contractor=False,
 ):
     if not users:
-        user_query = (Q(is_superuser=True) | Q(is_staff=True))
-        if include_contractor:
-            user_query = (user_query | Q(username__in=IS_CONTRACTOR.get_enabled_users()))
-        if include_accounting_admin:
-            accounting_admin_ids = [user.id for user in get_accounting_admin_users()]
-            user_query = (user_query | Q(id__in=accounting_admin_ids))
+        user_query = privileged_users_query(
+            include_contractor=include_contractor,
+            include_accounting_admin=include_accounting_admin,
+        )
         users = User.objects.filter(user_query).order_by("username")
 
     augmented_users = _augment_users_with_two_factor_enabled(users)
