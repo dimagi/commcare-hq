@@ -2,18 +2,26 @@ import datetime
 import random
 from unittest.mock import patch
 
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from dateutil.relativedelta import relativedelta
+from django_prbac.models import Grant, Role
 
-from corehq.apps.accounting.exceptions import InvoiceError
+from corehq import privileges
+from corehq.apps.accounting.exceptions import (
+    CreateAccountingAdminError,
+    InvoiceError,
+)
 from corehq.apps.accounting.forms import (
     AdjustBalanceForm,
+    CreateAdminForm,
     PlanContactForm,
     SubscriptionForm,
     TriggerInvoiceForm,
 )
+from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditAdjustmentReason,
@@ -481,3 +489,41 @@ class TestPlanContactForm(TestCase):
         expected_subject = f'[{request_type}] {self.domain.name}'
         self.assertEqual(subject, expected_subject)
         self.assertTrue(all(value in text_content for value in data.values()))
+
+
+class TestCreateAdminForm(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        ops_role, _ = Role.objects.get_or_create(
+            slug=privileges.OPERATIONS_TEAM, defaults={'name': 'Ops'}
+        )
+        accounting_role, _ = Role.objects.get_or_create(
+            slug=privileges.ACCOUNTING_ADMIN, defaults={'name': 'Accounting'}
+        )
+        Grant.objects.get_or_create(from_role=ops_role, to_role=accounting_role)
+        Role.update_cache()
+
+    def test_can_grant_accounting_admin_to_non_superuser(self):
+        user = WebUser.create(None, 'new-admin@dimagi.com', 'password', None, None)
+        self.addCleanup(user.delete, None, None)
+
+        form = CreateAdminForm({'username': user.username})
+        assert form.is_valid()
+        django_user = form.add_admin_user()
+
+        Role.update_cache()
+        assert is_accounting_admin(django_user)
+
+    def test_rejects_nonexistent_user(self):
+        form = CreateAdminForm({'username': 'nobody@dimagi.com'})
+        assert form.is_valid()
+        with self.assertRaises(CreateAccountingAdminError):
+            form.add_admin_user()
+
+    def test_rejects_user_without_web_user(self):
+        User.objects.create(username='django-only@dimagi.com')
+        form = CreateAdminForm({'username': 'django-only@dimagi.com'})
+        assert form.is_valid()
+        with self.assertRaises(CreateAccountingAdminError):
+            form.add_admin_user()
