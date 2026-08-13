@@ -45,7 +45,7 @@ Tests
 - ``tests/test_endpoint_views.py`` — view-level tests (create, edit, deactivate,
   query tester)
 - ``tests/test_utils.py`` — ``CaseSearchEndpointQueryBuilder`` operator dispatch,
-  including geopoint ``within_distance``
+  including gps ``within_distance``
 
 Feature Flag
 ------------
@@ -58,7 +58,7 @@ Parameters
 ----------
 
 Endpoints can declare named, typed parameters (``text``, ``number``, ``date``,
-``geopoint``). Parameters are stored as a JSON array on the
+``gps``). Parameters are stored as a JSON array on the
 ``CaseSearchEndpointVersion`` and validated against ``FIELD_TYPES`` from
 ``endpoint_capability``.
 
