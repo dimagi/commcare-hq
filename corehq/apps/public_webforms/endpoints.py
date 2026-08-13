@@ -11,13 +11,10 @@ build lineage (version history, latest build, releases, revert).
 from copy import deepcopy
 from uuid import uuid4
 
+from corehq.apps.app_manager.const import NON_BUILD_APP_KEYS
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
 
 BUILD_COMMENT = "Automatically created for a public webform"
-STRIPPED_BUILD_KEYS = (
-    '_id', '_rev', '_attachments', 'external_blobs',
-    'short_odk_url', 'short_odk_media_url', 'recipients',
-)
 
 
 def create_public_webform_endpoint(domain, app_id, form_unique_id):
@@ -58,6 +55,6 @@ def _public_webform_copy_of(app_id):
 
 def _copy_for_build(released_build):
     doc = deepcopy(released_build.to_json())
-    for key in STRIPPED_BUILD_KEYS:
+    for key in NON_BUILD_APP_KEYS:
         doc.pop(key, None)
     return type(released_build).wrap(doc)
