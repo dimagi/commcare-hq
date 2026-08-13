@@ -1,8 +1,10 @@
 from types import SimpleNamespace
 
+import pytest
 from unmagic import fixture, use
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_id
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     delete_all_apps,
@@ -12,7 +14,9 @@ from corehq.apps.app_manager.tests.util import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.public_webforms.endpoints import (
     create_public_webform_endpoint,
+    delete_public_webform_build,
 )
+from corehq.blobs import get_blob_db
 
 DOMAIN = 'public-webform-endpoints'
 
@@ -89,3 +93,26 @@ class TestCreatePublicWebformEndpoint:
 
         assert build_id != app.build_id
         assert endpoint_id != 'existing-endpoint'
+
+
+@use(released_app)
+class TestDeletePublicWebformBuild:
+
+    def test_deletes_the_build_doc_and_its_build_files(self):
+        app = released_app()
+        build_id, __ = create_public_webform_endpoint(
+            app.domain, app.app_id, app.form_unique_id)
+        assert get_blob_db().metadb.get_for_parent(build_id)
+
+        delete_public_webform_build(app.domain, build_id)
+
+        # a hard delete: no soft-deleted doc, no orphaned build files
+        assert not Application.get_db().doc_exist(build_id)
+        assert get_blob_db().metadb.get_for_parent(build_id) == []
+
+    def test_leaves_a_build_it_did_not_generate_alone(self):
+        app = released_app()
+        with pytest.raises(AssertionError):
+            delete_public_webform_build(app.domain, app.build_id)
+        assert Application.get_db().doc_exist(app.build_id)
+        assert get_blob_db().metadb.get_for_parent(app.build_id)

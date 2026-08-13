@@ -13,8 +13,10 @@ from uuid import uuid4
 
 from corehq.apps.app_manager.const import NON_BUILD_APP_KEYS
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
+from corehq.blobs import get_blob_db
 
 BUILD_COMMENT = "Automatically created for a public webform"
+PUBLIC_WEBFORM_COPY_OF_SUFFIX = "__public_webform"
 
 
 def create_public_webform_endpoint(domain, app_id, form_unique_id):
@@ -41,16 +43,24 @@ def create_public_webform_endpoint(domain, app_id, form_unique_id):
 
 
 def delete_public_webform_build(domain, app_build_id):
-    """Delete a build that was generated explicitly for a public webform."""
+    """Hard-delete a build that was generated explicitly for a public webform.
+    """
     build = get_app(domain, app_build_id)
-    build.delete_app()
-    build.save(increment_version=False)
+    assert _is_public_webform_build(build)
+    blob_db = get_blob_db()
+    build_files = blob_db.metadb.get_for_parent(build.get_id)
+    build.delete()
+    blob_db.bulk_delete(metas=build_files)
+
+
+def _is_public_webform_build(build):
+    return build.copy_of.endswith(PUBLIC_WEBFORM_COPY_OF_SUFFIX)
 
 
 def _public_webform_copy_of(app_id):
     """A traceable, non-canonical ``copy_of``: keeps the doc a build (``copy_of``
     stays truthy) and out of the app's lineage, while recording its origin."""
-    return f'{app_id}__public_webform'
+    return f'{app_id}{PUBLIC_WEBFORM_COPY_OF_SUFFIX}'
 
 
 def _copy_for_build(released_build):
