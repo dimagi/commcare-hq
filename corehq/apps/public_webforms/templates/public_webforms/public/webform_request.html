@@ -1,1 +1,26 @@
 {% extends "public_webforms/public/base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% js_entry "public_webforms/js/request" %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  <link
+    rel="stylesheet"
+    href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}"
+  />
+{% endblock stylesheets %}
+
+{% block page_content %}
+    {{ block.super }}
+    <div class="lead mb-4">
+      {% blocktrans %}
+        We'll send a private, single-use link to complete the form using the
+        contact information you provide below.
+      {% endblocktrans %}
+    </div>
+
+    <div class="row">
+      {% include "public_webforms/public/partials/link_request_form.html" %}
+    </div>
+{% endblock page_content %}
