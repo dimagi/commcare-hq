@@ -1,0 +1,20 @@
+{% extends "hqwebapp/tables/bootstrap5_htmx.html" %}
+{% load i18n %}
+
+{% block no_results_table %}
+  <p class="text-muted p-3 mb-0">
+    {% if table.is_filtered %}
+      {% trans "No public webforms match these filters." %}
+    {% else %}
+      {% trans "No public webforms have been created yet." %}
+    {% endif %}
+  </p>
+{% endblock no_results_table %}
+
+{% block after_table %}
+  {{ block.super }}
+  {# outside the table, so a modal doesn't inherit a cell's styling #}
+  {% for row in table.paginated_rows %}
+    {% include "public_webforms/partials/qr_modal.html" with webform=row.record domain=table.domain %}
+  {% endfor %}
+{% endblock after_table %}
