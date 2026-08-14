@@ -1,5 +1,7 @@
 from memoized import memoized
 
+from django.contrib import messages
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -46,8 +48,21 @@ class PublicWebformRequestView(BasePageView):
         context['section'] = {'page_name': _("One-Time Link Request")}
         return context
 
+    def post(self, request, *args, **kwargs):
+        if not self.form.is_valid():
+            return self.get(request, *args, **kwargs)
+        self.form.create_session()
+        messages.success(request, _("Your one-time link is on its way."))
+        return HttpResponseRedirect(self.page_url)
+
     @property
     def page_context(self):
         context = super().page_context
-        context['form'] = PublicWebformLinkRequestForm(self.webform)
+        context['form'] = self.form
         return context
+
+    @property
+    @memoized
+    def form(self):
+        data = [self.request.POST] if self.request.method == 'POST' else []
+        return PublicWebformLinkRequestForm(self.webform, *data)
