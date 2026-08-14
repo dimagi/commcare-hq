@@ -334,6 +334,11 @@ elif [ "$CMD" == "rebuild" ]; then
     fi
 else
     docker compose $CMD "$@"
+    # Remember this before anything else runs, and exit with it at the end.
+    # Without that, the trailing `if` below becomes the last command evaluated and
+    # its status (0, when TEARDOWN is unset) is what the script returns, hiding
+    # every docker compose failure from callers and from CI.
+    compose_status=$?
     if [ "$TEARDOWN" == "yes" ]; then
         if [ "$COMPOSE_PROJECT_NAME" == "hqservice" ]; then
             echo "THIS WILL DELETE ALL SERVICE DATA"
@@ -341,7 +346,7 @@ else
             echo
             if [[ ! $REPLY =~ ^[Yy]$ ]]; then
                 echo "Volumes not deleted."
-                exit
+                exit $compose_status
             fi
         fi
         docker volume rm \
@@ -355,4 +360,5 @@ else
             ${VOLUME_PREFIX}minio-data \
             ${VOLUME_PREFIX}zookeeper
     fi
+    exit $compose_status
 fi
