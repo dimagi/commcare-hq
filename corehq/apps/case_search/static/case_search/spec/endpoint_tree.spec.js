@@ -3,6 +3,7 @@ import {
     cloneWithNewIds,
     normalizeRoot,
     removeChild,
+    resetQuery,
 } from "case_search/js/endpoint_tree";
 
 const component = (extra = {}) => ({ type: "component", ...extra });
@@ -113,6 +114,23 @@ describe("endpoint_tree", function () {
             const result = normalizeRoot({ type: "legacy", children });
             assert.equal(result.type, "all");
             assert.deepEqual(result.children, children);
+        });
+    });
+
+    describe("resetQuery", function () {
+        it("resets type and children", function () {
+            const query = group("any", [component({ field: "a" })]);
+            resetQuery(query);
+            assert.equal(query.type, "all");
+            assert.deepEqual(query.children, []);
+        });
+
+        it("is visible through any other reference to the same object", function () {
+            const query = group("all", [component()]);
+            const node = query;
+            resetQuery(query);
+            assert.equal(node.type, "all");
+            assert.deepEqual(node.children, []);
         });
     });
 
