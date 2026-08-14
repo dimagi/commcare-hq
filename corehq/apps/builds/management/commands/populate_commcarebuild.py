@@ -4,9 +4,6 @@ from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model
 
 
 class Command(PopulateSQLCommand):
-    @classmethod
-    def couch_db_slug(cls):
-        return None
 
     @classmethod
     def couch_doc_type(self):
