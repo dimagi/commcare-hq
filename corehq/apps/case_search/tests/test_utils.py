@@ -6,7 +6,7 @@ from corehq.apps.case_search.endpoint_capability import (
     _OPERATOR_BY_TYPE,
     FIELD_TYPE_DATE,
     FIELD_TYPE_DATETIME,
-    FIELD_TYPE_GEOPOINT,
+    FIELD_TYPE_GPS,
     FIELD_TYPE_NUMBER,
     FIELD_TYPE_SELECT,
     FIELD_TYPE_TEXT,
@@ -63,7 +63,7 @@ def _make_geopoint_node(point='12.5 13.5', distance='10', unit='kilometers'):
     return ComponentNode(
         operator='within_distance',
         field='gps_field',
-        field_type=FIELD_TYPE_GEOPOINT,
+        field_type=FIELD_TYPE_GPS,
         inputs=inputs,
     )
 
@@ -103,7 +103,7 @@ def test_parse_component_node_geopoint_parameter_input():
     node = ComponentNode(
         operator='within_distance',
         field='gps_field',
-        field_type=FIELD_TYPE_GEOPOINT,
+        field_type=FIELD_TYPE_GPS,
         inputs={
             'point': ParameterInput(value='my_point'),
             'distance': ConstantInput(value='5'),
@@ -120,7 +120,7 @@ def test_parse_component_node_geopoint_missing_parameter_value_returns_none():
     node = ComponentNode(
         operator='within_distance',
         field='gps_field',
-        field_type=FIELD_TYPE_GEOPOINT,
+        field_type=FIELD_TYPE_GPS,
         inputs={
             'point': ParameterInput(value='my_point'),
             'distance': ConstantInput(value='5'),
