@@ -97,7 +97,7 @@ def import_build(request):
             }
         }, status_code=400)
 
-    build = CommCareMobileBuild.objects.create(version=version, build_number=None)
+    CommCareMobileBuild.objects.create(version=version, build_number=None)
 
     return json_response({
         'message': 'New CommCare build added',
