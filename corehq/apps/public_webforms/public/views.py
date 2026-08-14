@@ -3,8 +3,10 @@ from memoized import memoized
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import get_language, gettext_lazy as _
 
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.public_webforms.models import PublicWebform
@@ -31,4 +33,15 @@ class BasePublicWebformView(BasePageView):
 @method_decorator(use_bootstrap5, name='dispatch')
 class PublicWebformRequestView(BasePublicWebformView):
     urlname = 'public_webform_request'
-    template_name = 'public_webforms/public/base.html'
+    template_name = 'public_webforms/public/webform_request.html'
+
+    @property
+    @memoized
+    def form_name(self):
+        app = get_app(self.webform.domain, self.webform.app_build_id)
+        form = app.get_form(self.webform.form_unique_id) if app else None
+        return clean_trans(form.name, [get_language()] + app.langs) if form else None
+
+    @property
+    def page_title(self):
+        return self.form_name
