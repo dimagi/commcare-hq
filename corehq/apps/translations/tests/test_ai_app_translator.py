@@ -1,8 +1,9 @@
 import json
-
-import pytest
+from collections import defaultdict
 
 from django.test import TestCase
+
+import pytest
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
@@ -141,7 +142,9 @@ def test_load_input_skips_manually_edited_keys():
     a_key = next(iter(all_units.values())).string_key
     fmt2 = AppTranslationFormat(
         app, 'fra', mode=MODE_RETRANSLATE, manually_edited_keys={a_key})
-    assert len(fmt2.load_input()) == len(all_units) - 1
+    units = fmt2.load_input()
+    assert a_key not in {u.string_key for u in units.values()}
+    assert len(units) == len(all_units) - 1
 
 
 def test_create_batches_are_sheet_scoped_with_context_header():
@@ -161,21 +164,29 @@ def test_create_batches_are_sheet_scoped_with_context_header():
     assert all(isinstance(v, str) and v for v in payload.values())
 
 
-def test_chunks_of_one_sheet_share_the_context_header():
+def test_chunks_within_each_sheet_share_the_context_header():
     app = _make_app()
     fmt = AppTranslationFormat(app, 'fra')
-    fmt.load_input()
+    units = fmt.load_input()
     batches = fmt.create_batches(chunk_size=1)  # force chunking everywhere
-    headers_by_sheet = {}
+    assert len(batches) == len(units)  # one batch per unit
+    headers_by_sheet = defaultdict(set)
     for batch in batches:
         sheet = next(iter(batch.values())).sheet_name
-        header = fmt.format_input(batch).partition('\n')[0]
-        assert headers_by_sheet.setdefault(sheet, header) == header
+        headers_by_sheet[sheet].add(fmt.format_input(batch).partition('\n')[0])
+    assert len(headers_by_sheet) == 3  # Menus_and_forms + module + form
+    for headers in headers_by_sheet.values():
+        assert len(headers) == 1
 
 
 def test_treat_default_copies_as_missing():
+    """A "default copy" is a target-language cell holding a verbatim
+    copy of the default-language text, so it looks translated but isn't.
+    Sheet generation manufactures these for form sheets: untranslated
+    question labels fall back to the first non-empty language's text
+    (download.get_form_question_label_name_media), and re-uploading a
+    downloaded sheet persists the copies into the app."""
     app = _make_app()
-    # source text copied into the target column — common in real apps
     app.get_module(0).name['fra'] = 'register module'
     fmt = AppTranslationFormat(app, 'fra')  # default: counts as translated
     assert 'register module' not in {u.source_text for u in fmt.load_input().values()}
