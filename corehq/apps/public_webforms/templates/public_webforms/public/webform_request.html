@@ -1,6 +1,15 @@
 {% extends "hqwebapp/bootstrap5/base_page.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% js_entry "public_webforms/js/request" %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  <link
+    rel="stylesheet"
+    href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}"
+  />
+{% endblock stylesheets %}
 
 {% block navigation %}
   <nav
@@ -25,3 +34,19 @@
     </div>
   </nav>
 {% endblock navigation %}
+
+{% block page_content %}
+  {{ block.super }}
+  <div class="lead">
+    {% blocktrans %}
+      We'll send a private, single-use link to complete the form using the
+      contact information you provide below.
+    {% endblocktrans %}
+  </div>
+
+  <div class="row">
+    <div class="col-sm-9 col-md-8 col-lg-6 mt-4">
+      {% include "public_webforms/public/partials/link_request_form.html" %}
+    </div>
+  </div>
+{% endblock page_content %}

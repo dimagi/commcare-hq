@@ -1,0 +1,86 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<form method="post" x-data="{ delivery: '{{ form.delivery.value }}' }">
+  {% csrf_token %}
+
+  {% if form.can_choose_delivery %}
+    <fieldset class="mb-4">
+      <legend class="form-label fs-6 border-0">
+        {{ form.delivery.label }}
+      </legend>
+      <div class="btn-group w-100" role="group">
+        {% for option in form.delivery %}
+          <input
+            type="radio"
+            class="btn-check"
+            name="{{ form.delivery.html_name }}"
+            id="{{ option.id_for_label }}"
+            value="{{ option.data.value }}"
+            x-model="delivery"
+          />
+          <label
+            class="btn btn-lg btn-outline-primary"
+            for="{{ option.id_for_label }}"
+          >
+            {% if option.data.value == 'email' %}
+              <i class="fa-regular fa-envelope pe-2"></i>
+            {% else %}
+              <i class="fa-regular fa-comment pe-2"></i>
+            {% endif %}
+            {{ option.data.label }}
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+  {% else %}
+    <input
+      type="hidden"
+      name="{{ form.delivery.html_name }}"
+      value="{{ form.delivery.initial }}"
+    />
+  {% endif %}
+
+  <div class="mb-4" x-show="delivery === 'email'" x-cloak>
+    <label class="form-label" for="{{ form.email.id_for_label }}">
+      {{ form.email.label }}
+    </label>
+    <div class="input-group input-group-lg">
+      <span class="input-group-text">
+        <i class="fa-regular fa-envelope"></i>
+      </span>
+      {{ form.email }}
+    </div>
+    {{ form.email.errors }}
+  </div>
+
+  <div class="mb-4" x-show="delivery === 'sms'" x-cloak>
+    <label class="form-label" for="{{ form.phone_number.id_for_label }}">
+      {{ form.phone_number.label }}
+    </label>
+    {{ form.phone_number }}
+    {{ form.phone_number.errors }}
+  </div>
+
+  <div class="alert alert-light mb-4">
+    {% blocktrans %}
+      Information you submit will be used in accordance with Dimagi's
+      <a href="http://www.dimagi.com/terms/latest/privacy/" target="_blank"
+        >Privacy Policy</a
+      >,
+      <a href="http://www.dimagi.com/terms/latest/tos/" target="_blank"
+        >Terms of Service</a
+      >, and
+      <a href="http://www.dimagi.com/terms/latest/ba/" target="_blank"
+        >Business Agreement</a
+      >.
+    {% endblocktrans %}
+    <span x-show="delivery === 'sms'"
+      >{% trans "Message and data rates may apply." %}</span
+    >
+  </div>
+  <button type="submit" class="btn btn-primary btn-lg icon-link">
+    {% trans "Send my link" %}
+    <i class="fa fa-arrow-right"></i>
+  </button>
+</form>
