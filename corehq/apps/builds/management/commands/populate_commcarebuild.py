@@ -33,4 +33,4 @@ class Command(PopulateSQLCommand):
             diff = cls.diff_attr(attr, couch, sql)
             if diff:
                 diffs.append(diff)
-        return '\n'.join(diffs) if diffs else None
+        return diffs
