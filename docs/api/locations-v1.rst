@@ -84,6 +84,6 @@ Location Details
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[domain]/api/location/v1/[location_id]
+    GET https://www.commcarehq.org/a/[domain]/api/location/v1/[location_id]/
 
 This will output the same information displayed above, but for a single location

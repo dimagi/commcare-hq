@@ -11,7 +11,7 @@ Overview
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/application/v1/[app_id]
+    https://www.commcarehq.org/a/[domain]/api/application/v1/[app_id]/
 
 *Omit* ``app_id`` *in the URL to retrieve a list of applications.*
 

@@ -78,4 +78,14 @@ module.exports = [
             "strict": ["warn", "global"],
         },
     },
+
+    {
+        // Build tooling runs in node, not the browser.
+        files: ['webpack/**/*.js'],
+        languageOptions: {
+            globals: {
+                ...globals.node,
+            },
+        },
+    },
 ];

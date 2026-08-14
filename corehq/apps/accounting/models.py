@@ -118,17 +118,6 @@ class BillingAccountType(object):
     )
 
 
-class InvoicingPlan(object):
-    MONTHLY = "MONTHLY"
-    QUARTERLY = "QUARTERLY"
-    YEARLY = "YEARLY"
-    CHOICES = (
-        (MONTHLY, "Monthly"),
-        (QUARTERLY, "Quarterly"),
-        (YEARLY, "Yearly")
-    )
-
-
 class FeatureType(object):
     USER = "User"
     SMS = "SMS"
@@ -412,11 +401,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
     is_sms_billable_report_visible = models.BooleanField(default=False)
     enterprise_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
     enterprise_restricted_signup_domains = ArrayField(models.CharField(max_length=128), default=list, blank=True)
-    invoicing_plan = models.CharField(
-        max_length=25,
-        default=InvoicingPlan.MONTHLY,
-        choices=InvoicingPlan.CHOICES
-    )
     entry_point = models.CharField(
         max_length=25,
         default=EntryPoint.NOT_SET,
@@ -3132,18 +3116,14 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
                 line_items = LineItem.objects.filter(subscription_invoice=invoice)
             for line_item in line_items:
                 is_unit = line_item.unit_description is not None
-                is_quarterly = line_item.invoice.is_customer_invoice and \
-                    line_item.invoice.account.invoicing_plan != InvoicingPlan.MONTHLY
                 unit_cost = line_item.subtotal
                 if is_unit:
                     unit_cost = line_item.unit_cost
-                if is_quarterly and line_item.base_description is not None:
-                    unit_cost = line_item.product_rate.monthly_fee
                 description = line_item.base_description or line_item.unit_description
                 if line_item.quantity > 0:
                     template.add_item(
                         description,
-                        line_item.quantity if is_unit or is_quarterly else 1,
+                        line_item.quantity if is_unit else 1,
                         unit_cost,
                         line_item.subtotal,
                         line_item.applied_credit,
@@ -3233,9 +3213,6 @@ class LineItem(models.Model):
 
     @property
     def subtotal(self):
-        if self.customer_invoice and self.customer_invoice.account.invoicing_plan != InvoicingPlan.MONTHLY:
-            return self.base_cost * self.quantity + self.unit_cost * self.quantity
-
         return self.base_cost + self.unit_cost * self.quantity
 
     @property

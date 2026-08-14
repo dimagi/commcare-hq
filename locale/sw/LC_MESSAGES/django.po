@@ -8150,7 +8150,8 @@ msgstr "Tafsiri za Programu kwa Wingi"
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
-#: corehq/apps/app_manager/views/modules.py corehq/apps/reminders/forms.py
+#: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py corehq/apps/reminders/forms.py
 #: corehq/apps/sms/filters.py
 msgid "Survey"
 msgstr "Utafiti"
@@ -14332,6 +14333,7 @@ msgid "Followup Form"
 msgstr "Fomu ya Ufuatiliaji"
 
 #: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py
 msgid "Registration"
 msgstr "Usajili"
 
@@ -16195,8 +16197,9 @@ msgid "No endpoints configured."
 msgstr "Hakuna vituo vilivyosanidiwa."
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-msgid "-- Field --"
-msgstr "-- Sehemu --"
+#| msgid "Fields"
+msgid "Field"
+msgstr "Sehemu"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Operation --"
@@ -16209,6 +16212,11 @@ msgstr "Kigezo"
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Parameter --"
 msgstr "-- Kigezo --"
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+#| msgid "Close Condition"
+msgid "Copy condition"
+msgstr "Nakili sharti"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "Remove condition"
@@ -16239,6 +16247,11 @@ msgid "match none of the following"
 msgstr "usilinganishe yoyote kati ya yafuatayo"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
+#| msgid "No Group"
+msgid "Copy group"
+msgstr "Nakili kundi"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
 msgid "Remove group"
 msgstr "Ondoa kundi"
 
@@ -16249,6 +16262,20 @@ msgstr "Bado hakuna masharti. Ongeza sharti au kundi hapa chini."
 #: corehq/apps/case_search/templates/case_search/partials/group_node.html
 msgid "Add Condition"
 msgstr "Ongeza Sharti"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+#| msgid "Case Conditions"
+msgid "Paste Condition"
+msgstr "Bandika Sharti"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+#| msgid "Case Group"
+msgid "Paste Group"
+msgstr "Bandika Kundi"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Copied group is nested too deeply to paste here"
+msgstr "Kundi lililonakiliwa limezama sana ili kubandikwa hapa"
 
 #: corehq/apps/case_search/templates/case_search/partials/query_builder.html
 msgid "Show query JSON"
@@ -24702,15 +24729,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#| msgid ""
-#| "\n"
-#| "    For more information about CommCare software plans, visit\n"
-#| "    <a\n"
-#| "      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
-#| "      target=\"_blank\"\n"
-#| "      >our help site</a\n"
-#| "    >.\n"
-#| "  "
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
@@ -40570,6 +40588,11 @@ msgstr "Bofya kuchagua repeaters"
 #: corehq/apps/reports/filters/select.py
 msgid "Record Status"
 msgstr "Hali ya Rekodi"
+
+#: corehq/apps/reports/filters/select.py
+#| msgid "Payload"
+msgid "Payload Error"
+msgstr "Hitilafu ya Payload"
 
 #: corehq/apps/reports/filters/select.py
 msgid "Rebuild restriction feature flag status"
@@ -57603,6 +57626,16 @@ msgstr "Aina ya kesi haijulikani"
 msgid "Unknown user"
 msgstr "Mtumiaji hajulikani"
 
+#: corehq/motech/repeaters/models.py
+#| msgid "Filter {} not found!"
+msgid "Form {} is not found"
+msgstr "Fomu {} haijapatikana"
+
+#: corehq/motech/repeaters/models.py
+#| msgid "{} not found"
+msgid "Case {} is not found"
+msgstr "Kesi {} haijapatikana"
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Forms"
 msgstr "Sambaza Fomu"
@@ -57923,9 +57956,13 @@ msgid "Delivery Attempts"
 msgstr "Majaribio ya Uwasilishaji"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-#| msgid "Preview Data"
 msgid "Preview Payloads"
 msgstr "Onyesha Payloads"
+
+#: corehq/motech/repeaters/views/repeat_records.py
+#| msgid "Gateway could not be found."
+msgid "The payload could not be found."
+msgstr "Payload haikuweza kupatikana."
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -59331,6 +59368,9 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#~ msgid "-- Field --"
+#~ msgstr "-- Sehemu --"
 
 #~ msgid "View Responses"
 #~ msgstr "Tazama Majibu"
