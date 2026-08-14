@@ -202,6 +202,22 @@ class TestLookupTableResource(APIResourceTest):
         self.assertEqual(response.status_code, 204, response.content)
         self.assertEqual(1, LookupTable.objects.by_domain(self.domain.name).count())
 
+    def test_cant_delete_lookup_table_in_another_domain(self):
+        not_my_domain = 'not-my-project'
+        not_my_data_type = LookupTable(
+            domain=not_my_domain,
+            tag="lookup_table",
+            fields=[TypeField("fixture_property", ["lang", "name"])],
+            item_attributes=[]
+        )
+        not_my_data_type.save()
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(not_my_data_type.id), '', method='DELETE')
+
+        assert response.status_code == 404, response.content
+        assert LookupTable.objects.filter(id=not_my_data_type.id).exists()
+
     def test_create(self):
         lookup_table = {
             "tag": "table_name",
@@ -454,6 +470,30 @@ class TestLookupTableItemResourceV05(TestLookupTableItemResourceV06):
         response = self._assert_auth_post_resource(self.single_endpoint(data_item.id.hex), '', method='DELETE')
         self.assertEqual(response.status_code, 204, response.content)
         self.assertEqual(0, LookupTableRow.objects.filter(domain=self.domain.name).count())
+
+    def test_cant_delete_lookup_table_item_in_another_domain(self):
+        not_my_domain = 'not-my-project'
+        not_my_data_type = LookupTable(
+            domain=not_my_domain,
+            tag="lookup_table",
+            fields=[TypeField("fixture_property", ["lang", "name"])],
+            item_attributes=[]
+        )
+        not_my_data_type.save()
+        not_my_data_item = LookupTableRow(
+            domain=not_my_domain,
+            table_id=not_my_data_type.id,
+            fields={"state_name": [Field(value="Tennessee", properties={"lang": "en"})]},
+            item_attributes={},
+            sort_key=1
+        )
+        not_my_data_item.save()
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(not_my_data_item.id.hex), '', method='DELETE')
+
+        assert response.status_code == 404, response.content
+        assert LookupTableRow.objects.filter(id=not_my_data_item.id).exists()
 
     def test_create(self):
         data_item_json = self._get_data_item_create()
