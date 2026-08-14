@@ -5,8 +5,13 @@ import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 
+from django.contrib import messages
+
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
+)
+from corehq.apps.translations.app_translations.upload_app import (
+    process_sheet_rows,
 )
 from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
@@ -19,7 +24,10 @@ from corehq.apps.translations.const import (
     MODE_RETRANSLATE,
     MODULES_AND_FORMS_SHEET_NAME,
 )
-from corehq.apps.translations.integrations.llm import TranslationFormat
+from corehq.apps.translations.integrations.llm import (
+    TranslationFormat,
+    get_llm_translator,
+)
 
 MODULES_AND_FORMS_KEY_PREFIX = 'menus_and_forms'
 MAX_STRING_KEY_LENGTH = 512  # AITranslation.string_key max_length
@@ -33,8 +41,6 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
     whatever succeeded is applied in one write at the end.
     ``progress_callback(batches_done, batches_total)`` is optional.
     """
-    from corehq.apps.translations.integrations.llm import get_llm_translator
-
     fmt = translation_format or AppTranslationFormat(app, target_lang, mode=mode)
     units = fmt.load_input()
     if not units:
@@ -169,12 +175,6 @@ class AppTranslationFormat(TranslationFormat):
         """Rows without buffered results are omitted and left untouched
         (partial-upload semantics); the app is saved once. Returns
         error messages, [] on success."""
-        from django.contrib import messages
-
-        from corehq.apps.translations.app_translations.upload_app import (
-            process_sheet_rows,
-        )
-
         if not self.results:
             return []
 
