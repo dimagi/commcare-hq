@@ -355,6 +355,8 @@ def is_valid_app_translation(source, translated):
     if len(source_tags) != len(translated_tags):
         return False
     if source_tags:
+        # tags must keep their names, order and open/close structure;
+        # attributes are not compared here
         def tag_info(tags):
             return [re.match(r'<(/?)(\w+)', tag).groups()
                     for tag in tags if re.match(r'<(/?)(\w+)', tag)]
@@ -385,8 +387,10 @@ def _markdown_signature(text):
     """
     return (
         text.count('**'),
-        # a run of 2+ underscores is a fill-in-the-blank line that may
-        # be resized in translation, not __emphasis__ pairs
+        # a run of 2+ underscores is a fill-in-the-blank line, not
+        # __emphasis__ pairs; counting runs rather than characters lets
+        # a translation resize a blank to fit its sentence, while still
+        # rejecting dropped or added blanks
         len(re.findall(r'_{2,}', text)),
         len(re.findall(MARKDOWN_BULLET_PATTERN, text, re.MULTILINE)),
         len(re.findall(MARKDOWN_NUMBERED_PATTERN, text, re.MULTILINE)),
