@@ -10,6 +10,9 @@ from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.public_webforms.models import PublicWebform
+from corehq.apps.public_webforms.public.forms import (
+    PublicWebformLinkRequestForm,
+)
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -46,5 +49,5 @@ class PublicWebformRequestView(BasePageView):
     @property
     def page_context(self):
         context = super().page_context
-        context['webform'] = self.webform
+        context['form'] = PublicWebformLinkRequestForm(self.webform)
         return context
