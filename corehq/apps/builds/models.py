@@ -160,12 +160,11 @@ class CommCareMobileBuild(SyncSQLToCouchMixin, models.Model):
                 return build
             return cls.objects.get(version=version, build_number=build_number)
         except cls.DoesNotExist:
+            label = BuildSpec(version=version, build_number=build_number)
             raise KeyError(
-                "Can't find build {label}. For instructions on how to add it, see "
+                f"Can't find build {label}. For instructions on how to add it, see "
                 "https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/"
-                "README.rst#adding-commcare-builds-to-commcare-hq".format(
-                    label=BuildSpec(version=version, build_number=build_number)
-                )
+                "README.rst#adding-commcare-builds-to-commcare-hq"
             )
 
     @classmethod
