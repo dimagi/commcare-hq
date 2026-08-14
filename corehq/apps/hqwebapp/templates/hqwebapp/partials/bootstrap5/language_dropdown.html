@@ -9,7 +9,7 @@
   >
     {{ LANGUAGE_CODE|language_name_local }}
   </button>
-  <ul class="dropdown-menu">
+  <ul class="dropdown-menu dropdown-menu-end">
     {% for lang_code, name in LANGUAGES %}
       <li>
         <form action="{% url 'set_language' %}" method="post">
