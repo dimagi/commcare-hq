@@ -45,7 +45,11 @@ SERVICES="postgres couch redis elasticsearch6 zookeeper kafka minio"
 
 VENV_PY="$REPO_ROOT/.venv/bin/python"
 TMP_BASE="${TMPDIR:-/tmp}"
-LOG_FILE="${TMP_BASE%/}/hq-setup-dev.log"
+# Created per run by mktemp once we know we are acting. A fixed name here would be
+# predictable in a world-writable /tmp when TMPDIR is unset (as it is under
+# `sudo -i`), where a symlink planted at that path would redirect this run's
+# output into whatever it points at.
+LOG_FILE=''
 
 FORMPLAYER_JAR_URL=https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar
 FORMPLAYER_PROPS_URL=https://raw.githubusercontent.com/dimagi/formplayer/master/config/application.example.properties
@@ -197,14 +201,17 @@ if [ "$(uname -s)" != Darwin ]; then
     exit 1
 fi
 
-# Only a real run owns the log. --check must not truncate it, or inspecting an
-# environment destroys the evidence from the run you are trying to diagnose.
-acting && : >"$LOG_FILE"
+# Only a real run gets a log, and it gets a fresh one. --check writes nothing at
+# all, so inspecting an environment cannot destroy the evidence from the run you
+# are trying to diagnose.
+if acting; then
+    LOG_FILE=$(mktemp "${TMP_BASE%/}/hq-setup-dev.XXXXXX")
+fi
 
 printf '\n  %sCommCare HQ dev setup%s  %s· macOS %s · %s%s\n' \
     "$BOLD" "$RESET" "$DIM" "$(sw_vers -productVersion)" "$(uname -m)" "$RESET"
 $CHECK_ONLY && printf '  %schecking only, nothing will be changed%s\n' "$DIM" "$RESET"
-printf '  %slog: %s%s\n' "$DIM" "$LOG_FILE" "$RESET"
+[ -n "$LOG_FILE" ] && printf '  %slog: %s%s\n' "$DIM" "$LOG_FILE" "$RESET"
 
 # --- inspect: prerequisites --------------------------------------------------
 
@@ -308,7 +315,10 @@ if have sass; then
     ok sass "$(sass --version 2>/dev/null | head -1 | awk '{print $1}')"
 else
     bad sass 'not found'
-    plan_add sass 'npm install -g sass'
+    # --ignore-scripts matches the intent of .yarnrc's `ignore-scripts true`: a
+    # compromised release should not get to run install hooks as the developer.
+    # A repo .npmrc would not cover this, since npm drops project config for -g.
+    plan_add sass 'npm install -g --ignore-scripts sass'
 fi
 
 if have yarn; then
@@ -424,6 +434,10 @@ if os.path.exists(path):
 dirs = cfg.setdefault('cliPluginsExtraDirs', [])
 if sys.argv[1] not in dirs:
     dirs.append(sys.argv[1])
+# This file holds registry credentials, and docker creates it 0600. Creating it
+# at the ambient umask (0644 typically) would leave those readable. An existing
+# file keeps whatever mode its owner chose.
+os.umask(0o077)
 with open(path, 'w') as f:
     json.dump(cfg, f, indent=2)
     f.write('\n')
