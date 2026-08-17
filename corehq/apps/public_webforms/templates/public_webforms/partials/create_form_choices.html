@@ -1,0 +1,78 @@
+{% load i18n %}
+<div
+  x-data="formChoices({
+      apps: {{ form_choices }} || [],
+  })"
+>
+  <div class="row mb-3">
+    <label class="field-label" for="id_application"
+      >{% trans "Application" %}<span class="asteriskField">*</span></label
+    >
+    <div class="field-control">
+      <select
+        id="id_application"
+        name="app_id"
+        class="form-select"
+        required
+        x-model="appId"
+        @change="menuId = ''; formId = ''"
+      >
+        <option value="">{% trans "Select Application" %}</option>
+        <template x-for="app in apps" :key="app.id">
+          <option
+            :value="app.id"
+            x-text="`${app.name} (v${app.version})`"
+          ></option>
+        </template>
+      </select>
+    </div>
+  </div>
+  <div class="row mb-3">
+    <label class="field-label" for="id_public_webform_menu"
+      >{% trans "Menu" %}<span class="asteriskField">*</span></label
+    >
+    <div class="field-control">
+      <select
+        id="id_public_webform_menu"
+        class="form-select"
+        required
+        disabled
+        x-model="menuId"
+        :disabled="!appId"
+        @change="formId = ''"
+      >
+        <option value="">{% trans "Select Menu" %}</option>
+        <template x-for="menu in menus" :key="menu.id">
+          <option :value="menu.id" x-text="menu.name"></option>
+        </template>
+      </select>
+    </div>
+  </div>
+  <div class="row mb-3">
+    <label class="field-label" for="id_form"
+      >{% trans "Form" %}<span class="asteriskField">*</span></label
+    >
+    <div class="field-control">
+      <select
+        id="id_form"
+        name="form_unique_id"
+        class="form-select"
+        required
+        disabled
+        x-model="formId"
+        :disabled="!menuId"
+      >
+        <option value="">{% trans "Select Form" %}</option>
+        <template x-for="form in forms" :key="form.id">
+          <option :value="form.id" x-text="form.name"></option>
+        </template>
+      </select>
+      <div class="form-text">
+        {% blocktrans %}
+          Only <strong>registration</strong> and <strong>survey</strong> forms
+          are eligible. Forms that update existing cases can't be made public.
+        {% endblocktrans %}
+      </div>
+    </div>
+  </div>
+</div>
