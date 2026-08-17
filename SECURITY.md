@@ -1,5 +1,11 @@
 # Security Policy
 
+## About
+
+Dimagi, the maker of CommCare, takes the security of our software products and services seriously. 
+
+For more information about CommCare’s security policies, please visit the Dimagi Trust Center.
+
 ## Reporting a vulnerability
 
 Please report suspected security vulnerabilities **privately**. Do not open a
