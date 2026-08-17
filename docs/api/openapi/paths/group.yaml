@@ -37,13 +37,32 @@ List:
             $ref: "../components/schemas/group.yaml#/GroupWrite"
     responses:
       "201":
-        description: The group was created.
+        description: >-
+          The group was created. Note that this endpoint returns only the new
+          group's id, not the full group object -- fetch the detail endpoint if
+          you need the rest.
         content:
           application/json:
             schema:
-              $ref: "../components/schemas/group.yaml#/Group"
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: UUID of the newly created group.
+                  example: 1eb59d6938fc7e510254d8c2f63d944f
       "400":
-        $ref: "../components/responses.yaml#/BadRequest"
+        description: The request payload was invalid.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                error_message:
+                  type: string
+                  description: >-
+                    Validation failure detail. Note this endpoint uses
+                    `error_message`, not the `error` key used elsewhere.
+                  example: "Group name is required"
       "401":
         $ref: "../components/responses.yaml#/Unauthorized"
       "403":
@@ -70,7 +89,21 @@ List:
       "202":
         description: The bulk update was accepted.
       "400":
-        $ref: "../components/responses.yaml#/BadRequest"
+        description: >-
+          At least one group in the batch failed. `v0_5.GroupResource.serialize`
+          skips its usual error-body rewrite for bulk PATCH requests, so the
+          body is a flat array with one entry per submitted group, in order: the
+          new group's id on success, or the raw validation error text on failure
+          -- not an `error`/`error_message` object.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+              example:
+                - 1eb59d6938fc7e510254d8c2f63d944f
+                - Name is required
       "401":
         $ref: "../components/responses.yaml#/Unauthorized"
 Detail:
@@ -114,7 +147,18 @@ Detail:
             schema:
               $ref: "../components/schemas/group.yaml#/Group"
       "400":
-        $ref: "../components/responses.yaml#/BadRequest"
+        description: The request payload was invalid.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                error_message:
+                  type: string
+                  description: >-
+                    Validation failure detail. Note this endpoint uses
+                    `error_message`, not the `error` key used elsewhere.
+                  example: "A group with name Wozzle already exists"
       "404":
         $ref: "../components/responses.yaml#/NotFound"
   delete:
