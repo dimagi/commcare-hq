@@ -64,3 +64,13 @@ paths:
     $ref: "./paths/group.yaml#/List"
   /a/{domain}/api/group/v1/{group_id}/:
     $ref: "./paths/group.yaml#/Detail"
+  /a/{domain}/api/form/v1/:
+    $ref: "./paths/form.yaml#/List"
+  /a/{domain}/api/form/v1/{form_id}/:
+    $ref: "./paths/form.yaml#/Detail"
+  /a/{domain}/api/form_attachment/v1/{instance_id}/{attachment_id}:
+    $ref: "./paths/form.yaml#/FormAttachment"
+  /a/{domain}/receiver/api/:
+    $ref: "./paths/submission.yaml#/Submit"
+  /a/{domain}/receiver/{app_id}/:
+    $ref: "./paths/submission.yaml#/SubmitForApp"

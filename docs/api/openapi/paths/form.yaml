@@ -1,0 +1,383 @@
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listForms
+    summary: List form submissions
+    description: >-
+      Returns form submissions the authenticated user is permitted to see.
+      Requires the Edit Data permission. Backed by Elasticsearch
+      (`v0_4.XFormInstanceResource.obj_get_list`,
+      `corehq/apps/api/resources/v0_4.py:146-157`); unrecognized query
+      parameters (e.g. `appVersion`, `app_id`) are still applied as raw,
+      lowercased term filters against the Elasticsearch form document
+      (`es_query_from_get_params`, `corehq/apps/api/es.py:402-447`).
+    tags: [Data]
+    parameters:
+      - name: xmlns
+        in: query
+        required: false
+        description: >-
+          Restrict results to forms with this exact XML namespace. Matched
+          against the unanalyzed `xmlns.exact` field (`TermParam('xmlns',
+          'xmlns.exact')`, `corehq/apps/api/es.py:347`), so the value is
+          case-sensitive.
+        example: http://openrosa.org/formdesigner/dd3190c7dd7e9e7d469a9705709f2f6b4e27f1d8
+        schema:
+          type: string
+      - $ref: "../components/parameters.yaml#/Limit"
+      - $ref: "../components/parameters.yaml#/Offset"
+      - name: indexed_on_start
+        in: query
+        required: false
+        description: >-
+          Only return forms indexed into Elasticsearch on or after this date.
+          Parsed by `validate_date` against a fixed list of naive formats
+          (`corehq/apps/api/es.py:269-285`): `YYYY-MM-DD`,
+          `YYYY-MM-DDTHH:MM:SS`, `YYYY-MM-DDTHH:MM:SS.ffffff`, or the legacy
+          `YYYY-MM-DDTHH:MMZ`. None of these accept a real UTC offset -- the
+          trailing `Z` on the last form is a literal parse-format character, not
+          a timezone marker, and a value with a genuine offset (e.g. `+00:00`)
+          fails to parse and results in a 400 (`corehq/apps/api/es.py:431-435`,
+          raising `Http400` -> tastypie `BadRequest`). `format: date-time` is
+          deliberately not used here since it implies RFC3339, which this
+          parameter does not accept.
+        example: "2021-01-01T06:05:42"
+        schema:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$'
+      - name: indexed_on_end
+        in: query
+        required: false
+        description: >-
+          Only return forms indexed into Elasticsearch before this date. Same
+          accepted formats as `indexed_on_start`.
+        example: "2021-01-01T06:05:42"
+        schema:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$'
+      - name: received_on_start
+        in: query
+        required: false
+        description: >-
+          Only return forms received by the server on or after this date. Same
+          accepted formats as `indexed_on_start`
+          (`DateRangeParams('received_on')`, `corehq/apps/api/es.py:350`).
+        example: "2012-01-01T06:05:42"
+        schema:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$'
+      - name: received_on_end
+        in: query
+        required: false
+        description: >-
+          Only return forms received by the server before this date. Same
+          accepted formats as `indexed_on_start`.
+        example: "2013-11-25T06:05:42"
+        schema:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$'
+      - name: appVersion
+        in: query
+        required: false
+        description: >-
+          Restrict results to forms submitted by this exact application version
+          string. Not consumed by any of the resource's declared filters
+          (`xform_param_consumers`, `corehq/apps/api/es.py:346-354`), so it
+          falls through to the raw, unconsumed-filter branch
+          (`corehq/apps/api/es.py:440-445`), which lowercases the value before
+          matching -- making this filter case-insensitive, unlike `xmlns` and
+          `case_id`.
+        example: v2.6.1%20(3b8ee4...)
+        schema:
+          type: string
+      - name: include_archived
+        in: query
+        required: false
+        description: >-
+          When present, archived forms are included alongside active ones
+          (`corehq/apps/api/es.py:411-417`). The check is presence, not value --
+          `query_params.pop('include_archived', None) is not None` is true for
+          *any* supplied value, including `include_archived=false`. The
+          documented example (`include_archived=true`) happens to work, but the
+          parameter cannot actually be turned off by value; see the discrepancy
+          file.
+        example: "true"
+        schema:
+          type: string
+      - name: app_id
+        in: query
+        required: false
+        description: >-
+          Restrict results to forms submitted against this application UUID.
+          Like `appVersion`, this is an unconsumed filter and is matched
+          case-insensitively (`corehq/apps/api/es.py:440-445`).
+        example: 02bf50ab803a89ea4963799362874f0c
+        schema:
+          type: string
+      - name: case_id
+        in: query
+        required: false
+        description: >-
+          Restrict results to forms that updated this case UUID. Matched against
+          the unanalyzed `__retrieved_case_ids` field (`TermParam('case_id',
+          '__retrieved_case_ids')`, `corehq/apps/api/es.py:349`), so the value
+          is case-sensitive.
+        example: 4cf7736e-2cc7-4d46-88e3-4b288b403362
+        schema:
+          type: string
+      - name: order_by
+        in: query
+        required: false
+        description: >-
+          Sort forms by one of `indexed_on`, `server_modified_on`, or
+          `received_on` -- the fields declared sortable by
+          `v0_4.XFormInstanceResource.Meta.ordering`
+          (`corehq/apps/api/resources/v0_4.py:170`). Prefix with `-` for
+          descending order (`SimpleSortableResourceMixin.apply_sorting`,
+          `corehq/apps/api/resources/__init__.py:224-253`). Defaults to
+          descending `received_on` (`v0_4.XFormInstanceResource.obj_get_list`,
+          `corehq/apps/api/resources/v0_4.py:157`). `list-forms.rst:65-73`
+          documents these three values as if they were separate parameter names
+          rather than values of `order_by` -- see the discrepancy file.
+        example: indexed_on
+        schema:
+          type: string
+          enum:
+            [
+              indexed_on,
+              server_modified_on,
+              received_on,
+              -indexed_on,
+              -server_modified_on,
+              -received_on,
+            ]
+      - name: cases__full
+        in: query
+        required: false
+        description: >-
+          Include the `cases` field (full representations of cases this form
+          updated) on every returned form. Accepts a case-insensitive `true`;
+          any other value (including omitting the parameter) behaves as false
+          (`UseIfRequested.use_in`, `corehq/apps/api/fields.py:46-48`).
+          Undocumented in `list-forms.rst`; see the discrepancy file.
+        example: true
+        schema:
+          type: boolean
+      - name: format
+        in: query
+        required: false
+        description: >-
+          Response serialization format. Unlike most other list endpoints, this
+          resource's serializer only supports `json`
+          (`XFormInstanceSerializer(formats=['json'])`,
+          `corehq/apps/api/resources/v0_4.py:171`), so the shared `Format`
+          parameter's `xml` option does not apply here. Requesting any other
+          value is not rejected -- tastypie's `determine_format`
+          (`tastypie/utils/mime.py:6-44`) simply falls through to the `Accept`
+          header and then to the default format (JSON) when the requested value
+          isn't in the serializer's supported list.
+        example: json
+        schema:
+          type: string
+          enum: [json]
+          default: json
+    responses:
+      "200":
+        description: A page of form submissions.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/form.yaml#/FormList"
+      "400":
+        $ref: "../components/responses.yaml#/BadRequest"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Deliberately not the shared ref: `RequirePermissionAuthentication
+        # .is_authenticated` (`corehq/apps/api/resources/auth.py:152-163`)
+        # delegates to `LoginAndDomainAuthentication._auth_test`
+        # (`corehq/apps/api/resources/auth.py:114-135`), which catches the
+        # `PermissionDenied` raised by a failed permission check
+        # (`require_api_permission`/`require_permission_raw`,
+        # `corehq/apps/users/decorators.py:34-54,74-110`) and returns a bare
+        # `HttpResponseForbidden()` -- unlike an auth failure, which is
+        # caught by `wrap_4xx_errors_for_apis` and does produce the shared
+        # `{"error": "not authorized"}` 401 body. The response body here is
+        # empty.
+        description:
+          The authenticated user lacks the Edit Data permission. The response
+          body is empty.
+      "429":
+        # Deliberately not the shared ref: tastypie's `throttle_check`
+        # (tastypie/resources.py:574-592) returns a bare `http.HttpTooManyRequests()`
+        # when `CustomResourceMeta.throttle` (`HQThrottle.should_be_throttled`,
+        # `corehq/apps/api/resources/meta.py:40-49`) reports throttling -- no
+        # JSON body, and no `Retry-After` header since that method returns a
+        # plain `bool`, which `throttle_check` explicitly excludes from the
+        # header logic (`isinstance(throttle, int) and not isinstance(throttle, bool)`).
+        description:
+          The request was rate limited. Back off and retry. The response body is
+          empty.
+Detail:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: form_id
+      in: path
+      required: true
+      description: Form instance UUID.
+      example: f959449c-8776-42ac-b776-3f564fafc331
+      schema:
+        type: string
+  get:
+    operationId: getForm
+    summary: Retrieve a single form submission
+    description: >-
+      Requires the Edit Data permission. The `cases__full` flag works
+      identically to the list operation, since it is a per-object dehydration
+      switch applied the same way regardless of whether the form came from a
+      list or detail fetch.
+    tags: [Data]
+    parameters:
+      - name: cases__full
+        in: query
+        required: false
+        description: >-
+          Include the `cases` field in the response. Accepts a case-insensitive
+          `true`; any other value (including omitting the parameter) behaves as
+          false.
+        example: true
+        schema:
+          type: boolean
+      - name: format
+        in: query
+        required: false
+        description: >-
+          Response serialization format. Only `json` is actually supported; see
+          the list operation's `format` parameter for why.
+        example: json
+        schema:
+          type: string
+          enum: [json]
+          default: json
+    responses:
+      "200":
+        description: The form submission.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/form.yaml#/Form"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Deliberately not the shared ref: `RequirePermissionAuthentication
+        # .is_authenticated` (`corehq/apps/api/resources/auth.py:152-163`)
+        # delegates to `LoginAndDomainAuthentication._auth_test`
+        # (`corehq/apps/api/resources/auth.py:114-135`), which catches the
+        # `PermissionDenied` raised by a failed permission check
+        # (`require_api_permission`/`require_permission_raw`,
+        # `corehq/apps/users/decorators.py:34-54,74-110`) and returns a bare
+        # `HttpResponseForbidden()` -- unlike an auth failure, which is
+        # caught by `wrap_4xx_errors_for_apis` and does produce the shared
+        # `{"error": "not authorized"}` 401 body. The response body here is
+        # empty.
+        description:
+          The authenticated user lacks the Edit Data permission. The response
+          body is empty.
+      "404":
+        # Deliberately not the shared NotFound ref: `v0_4.XFormInstanceResource
+        # .obj_get` (corehq/apps/api/resources/v0_4.py:138-141) fetches the
+        # form via `ESView.get_document` (corehq/apps/api/es.py:43-52), which
+        # raises Django's `ObjectDoesNotExist` on a miss or a domain
+        # mismatch (`object_does_not_exist`, `corehq/apps/api/util.py:42-48`).
+        # Tastypie's `get_detail` (tastypie/resources.py:1362-1383) catches
+        # `ObjectDoesNotExist` directly and returns a bare
+        # `http.HttpNotFound()` -- a plain HttpResponse built without going
+        # through the serializer. The real response body is empty, the same
+        # shape as `getCase`'s 404 in `paths/case-v1.yaml`.
+        description:
+          The requested form does not exist. The response body is empty.
+      "429":
+        # See the same note on the list operation's 429: bare
+        # `http.HttpTooManyRequests()`, no JSON body.
+        description:
+          The request was rate limited. Back off and retry. The response body is
+          empty.
+FormAttachment:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: instance_id
+      in: path
+      required: true
+      description: Form instance UUID.
+      example: 2150db25-a1e0-496c-9340-c232be866ec6
+      schema:
+        type: string
+    - name: attachment_id
+      in: path
+      required: true
+      description: Attachment name, as recorded on the form (e.g. `form.xml`).
+      example: waytogo.mp3
+      schema:
+        type: string
+  get:
+    operationId: getFormAttachment
+    summary: Retrieve a form attachment
+    description: >-
+      Returns an attachment (image, audio, `form.xml`, or any other file type)
+      submitted with a form, in its original format (`view_form_attachment`,
+      `corehq/apps/api/object_fetch_api.py:131-134`, dispatching to
+      `get_form_attachment_response`, `corehq/apps/reports/views.py:1514-1529`).
+      This is a plain Django view, not a tastypie resource, so none of the JSON
+      error envelopes used by `listForms`/`getForm` apply here.
+
+      Access is gated by `can_view_form_attachment`
+      (`corehq/apps/reports/views.py:156-172`): when the `VIEW_FORM_ATTACHMENT`
+      toggle is enabled for the domain, any authenticated user may fetch the
+      attachment; otherwise the Submission History report permission is
+      required, and a `PermissionDenied` is converted to a bare
+      `HttpResponseForbidden()` (empty body).
+    tags: [Data]
+    responses:
+      "200":
+        description: >-
+          The attachment content, streamed with its original content type
+          (`StreamingHttpResponse`/`get_download_response`,
+          `corehq/apps/reports/views.py:1522-1529`).
+        content:
+          "*/*":
+            schema:
+              type: string
+              format: binary
+      "401":
+        description: >-
+          Authentication credentials were missing or invalid (`api_auth()`,
+          `corehq/apps/domain/decorators.py:444-450`). The response is produced
+          by the underlying auth backend (digest by default), not by a JSON
+          error envelope.
+      "403":
+        description: >-
+          The authenticated user lacks the Submission History report permission
+          and the `VIEW_FORM_ATTACHMENT` toggle is not enabled for this domain.
+          The response body is empty (`HttpResponseForbidden()`,
+          `corehq/apps/reports/views.py:165`).
+      "404":
+        # Deliberately not the shared NotFound ref: `get_form_attachment_response`
+        # (corehq/apps/reports/views.py:1517-1520) raises a bare Django
+        # `Http404` on `AttachmentNotFound`, which Django's default
+        # `page_not_found` handler renders as an HTML page (`handler404`,
+        # `urls.py:47`), not the JSON `{"error": ...}` shape the other form
+        # operations use. A third distinct 404 shape on this resource group;
+        # see the discrepancy file.
+        description: >-
+          The instance or attachment does not exist. The response is an HTML
+          "not found" page, not JSON.
+      "429":
+        # Not the shared ref: this is a plain Django view with no throttle
+        # decorator anywhere in `object_fetch_api.py` or
+        # `can_view_form_attachment` (`corehq/apps/reports/views.py:156-172`).
+        # Unlike the other four form/submission operations, no code path here
+        # was found that returns 429 -- this response documents only the
+        # possibility of infrastructure-level rate limiting, not verified
+        # application behavior. See the discrepancy file.
+        description: The request was rate limited. Back off and retry.

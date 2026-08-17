@@ -1381,6 +1381,377 @@ paths:
                 $ref: '#/components/schemas/GroupErrorMessage'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /a/{domain}/api/form/v1/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    get:
+      operationId: listForms
+      summary: List form submissions
+      description: Returns form submissions the authenticated user is permitted to see. Requires the Edit Data permission. Backed by Elasticsearch (`v0_4.XFormInstanceResource.obj_get_list`, `corehq/apps/api/resources/v0_4.py:146-157`); unrecognized query parameters (e.g. `appVersion`, `app_id`) are still applied as raw, lowercased term filters against the Elasticsearch form document (`es_query_from_get_params`, `corehq/apps/api/es.py:402-447`).
+      tags:
+        - Data
+      parameters:
+        - name: xmlns
+          in: query
+          required: false
+          description: Restrict results to forms with this exact XML namespace. Matched against the unanalyzed `xmlns.exact` field (`TermParam('xmlns', 'xmlns.exact')`, `corehq/apps/api/es.py:347`), so the value is case-sensitive.
+          example: http://openrosa.org/formdesigner/dd3190c7dd7e9e7d469a9705709f2f6b4e27f1d8
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - name: indexed_on_start
+          in: query
+          required: false
+          description: 'Only return forms indexed into Elasticsearch on or after this date. Parsed by `validate_date` against a fixed list of naive formats (`corehq/apps/api/es.py:269-285`): `YYYY-MM-DD`, `YYYY-MM-DDTHH:MM:SS`, `YYYY-MM-DDTHH:MM:SS.ffffff`, or the legacy `YYYY-MM-DDTHH:MMZ`. None of these accept a real UTC offset -- the trailing `Z` on the last form is a literal parse-format character, not a timezone marker, and a value with a genuine offset (e.g. `+00:00`) fails to parse and results in a 400 (`corehq/apps/api/es.py:431-435`, raising `Http400` -> tastypie `BadRequest`). `format: date-time` is deliberately not used here since it implies RFC3339, which this parameter does not accept.'
+          example: '2021-01-01T06:05:42'
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$
+        - name: indexed_on_end
+          in: query
+          required: false
+          description: Only return forms indexed into Elasticsearch before this date. Same accepted formats as `indexed_on_start`.
+          example: '2021-01-01T06:05:42'
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$
+        - name: received_on_start
+          in: query
+          required: false
+          description: Only return forms received by the server on or after this date. Same accepted formats as `indexed_on_start` (`DateRangeParams('received_on')`, `corehq/apps/api/es.py:350`).
+          example: '2012-01-01T06:05:42'
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$
+        - name: received_on_end
+          in: query
+          required: false
+          description: Only return forms received by the server before this date. Same accepted formats as `indexed_on_start`.
+          example: '2013-11-25T06:05:42'
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$
+        - name: appVersion
+          in: query
+          required: false
+          description: Restrict results to forms submitted by this exact application version string. Not consumed by any of the resource's declared filters (`xform_param_consumers`, `corehq/apps/api/es.py:346-354`), so it falls through to the raw, unconsumed-filter branch (`corehq/apps/api/es.py:440-445`), which lowercases the value before matching -- making this filter case-insensitive, unlike `xmlns` and `case_id`.
+          example: v2.6.1%20(3b8ee4...)
+          schema:
+            type: string
+        - name: include_archived
+          in: query
+          required: false
+          description: When present, archived forms are included alongside active ones (`corehq/apps/api/es.py:411-417`). The check is presence, not value -- `query_params.pop('include_archived', None) is not None` is true for *any* supplied value, including `include_archived=false`. The documented example (`include_archived=true`) happens to work, but the parameter cannot actually be turned off by value; see the discrepancy file.
+          example: 'true'
+          schema:
+            type: string
+        - name: app_id
+          in: query
+          required: false
+          description: Restrict results to forms submitted against this application UUID. Like `appVersion`, this is an unconsumed filter and is matched case-insensitively (`corehq/apps/api/es.py:440-445`).
+          example: 02bf50ab803a89ea4963799362874f0c
+          schema:
+            type: string
+        - name: case_id
+          in: query
+          required: false
+          description: Restrict results to forms that updated this case UUID. Matched against the unanalyzed `__retrieved_case_ids` field (`TermParam('case_id', '__retrieved_case_ids')`, `corehq/apps/api/es.py:349`), so the value is case-sensitive.
+          example: 4cf7736e-2cc7-4d46-88e3-4b288b403362
+          schema:
+            type: string
+        - name: order_by
+          in: query
+          required: false
+          description: Sort forms by one of `indexed_on`, `server_modified_on`, or `received_on` -- the fields declared sortable by `v0_4.XFormInstanceResource.Meta.ordering` (`corehq/apps/api/resources/v0_4.py:170`). Prefix with `-` for descending order (`SimpleSortableResourceMixin.apply_sorting`, `corehq/apps/api/resources/__init__.py:224-253`). Defaults to descending `received_on` (`v0_4.XFormInstanceResource.obj_get_list`, `corehq/apps/api/resources/v0_4.py:157`). `list-forms.rst:65-73` documents these three values as if they were separate parameter names rather than values of `order_by` -- see the discrepancy file.
+          example: indexed_on
+          schema:
+            type: string
+            enum:
+              - indexed_on
+              - server_modified_on
+              - received_on
+              - -indexed_on
+              - -server_modified_on
+              - -received_on
+        - name: cases__full
+          in: query
+          required: false
+          description: Include the `cases` field (full representations of cases this form updated) on every returned form. Accepts a case-insensitive `true`; any other value (including omitting the parameter) behaves as false (`UseIfRequested.use_in`, `corehq/apps/api/fields.py:46-48`). Undocumented in `list-forms.rst`; see the discrepancy file.
+          example: true
+          schema:
+            type: boolean
+        - name: format
+          in: query
+          required: false
+          description: Response serialization format. Unlike most other list endpoints, this resource's serializer only supports `json` (`XFormInstanceSerializer(formats=['json'])`, `corehq/apps/api/resources/v0_4.py:171`), so the shared `Format` parameter's `xml` option does not apply here. Requesting any other value is not rejected -- tastypie's `determine_format` (`tastypie/utils/mime.py:6-44`) simply falls through to the `Accept` header and then to the default format (JSON) when the requested value isn't in the serializer's supported list.
+          example: json
+          schema:
+            type: string
+            enum:
+              - json
+            default: json
+      responses:
+        '200':
+          description: A page of form submissions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the Edit Data permission. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty.
+  /a/{domain}/api/form/v1/{form_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: form_id
+        in: path
+        required: true
+        description: Form instance UUID.
+        example: f959449c-8776-42ac-b776-3f564fafc331
+        schema:
+          type: string
+    get:
+      operationId: getForm
+      summary: Retrieve a single form submission
+      description: Requires the Edit Data permission. The `cases__full` flag works identically to the list operation, since it is a per-object dehydration switch applied the same way regardless of whether the form came from a list or detail fetch.
+      tags:
+        - Data
+      parameters:
+        - name: cases__full
+          in: query
+          required: false
+          description: Include the `cases` field in the response. Accepts a case-insensitive `true`; any other value (including omitting the parameter) behaves as false.
+          example: true
+          schema:
+            type: boolean
+        - name: format
+          in: query
+          required: false
+          description: Response serialization format. Only `json` is actually supported; see the list operation's `format` parameter for why.
+          example: json
+          schema:
+            type: string
+            enum:
+              - json
+            default: json
+      responses:
+        '200':
+          description: The form submission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Form'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the Edit Data permission. The response body is empty.
+        '404':
+          description: The requested form does not exist. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty.
+  /a/{domain}/api/form_attachment/v1/{instance_id}/{attachment_id}:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: instance_id
+        in: path
+        required: true
+        description: Form instance UUID.
+        example: 2150db25-a1e0-496c-9340-c232be866ec6
+        schema:
+          type: string
+      - name: attachment_id
+        in: path
+        required: true
+        description: Attachment name, as recorded on the form (e.g. `form.xml`).
+        example: waytogo.mp3
+        schema:
+          type: string
+    get:
+      operationId: getFormAttachment
+      summary: Retrieve a form attachment
+      description: |-
+        Returns an attachment (image, audio, `form.xml`, or any other file type) submitted with a form, in its original format (`view_form_attachment`, `corehq/apps/api/object_fetch_api.py:131-134`, dispatching to `get_form_attachment_response`, `corehq/apps/reports/views.py:1514-1529`). This is a plain Django view, not a tastypie resource, so none of the JSON error envelopes used by `listForms`/`getForm` apply here.
+        Access is gated by `can_view_form_attachment` (`corehq/apps/reports/views.py:156-172`): when the `VIEW_FORM_ATTACHMENT` toggle is enabled for the domain, any authenticated user may fetch the attachment; otherwise the Submission History report permission is required, and a `PermissionDenied` is converted to a bare `HttpResponseForbidden()` (empty body).
+      tags:
+        - Data
+      responses:
+        '200':
+          description: The attachment content, streamed with its original content type (`StreamingHttpResponse`/`get_download_response`, `corehq/apps/reports/views.py:1522-1529`).
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Authentication credentials were missing or invalid (`api_auth()`, `corehq/apps/domain/decorators.py:444-450`). The response is produced by the underlying auth backend (digest by default), not by a JSON error envelope.
+        '403':
+          description: The authenticated user lacks the Submission History report permission and the `VIEW_FORM_ATTACHMENT` toggle is not enabled for this domain. The response body is empty (`HttpResponseForbidden()`, `corehq/apps/reports/views.py:165`).
+        '404':
+          description: The instance or attachment does not exist. The response is an HTML "not found" page, not JSON.
+        '429':
+          description: The request was rate limited. Back off and retry.
+  /a/{domain}/receiver/api/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: X-OpenRosa-Version
+        in: header
+        required: false
+        description: Selects the OpenRosa response contract. `SubmissionPost.__init__` (`corehq/form_processor/submission_post.py:102`) treats the header as version 3.0 behavior only when it is exactly `"3.0"` (`is_openrosa_version3`); any other value, or its absence, falls back to version 2.0 behavior (`_get_open_rosa_response`, `corehq/form_processor/submission_post.py:572-585`). Every HTTP response from CommCare HQ (not just submission responses) also carries an outbound `X-OpenRosa-Version` header, but that header is always the fixed value `1.0` (`OPENROSA_DEFAULT_VERSION`, `corehq/const.py:20`, applied by `OpenRosaMiddleware.process_response`, `corehq/middleware.py:55-57`) -- it does not echo this request header or reflect which response contract was actually used.
+        example: '3.0'
+        schema:
+          type: string
+          enum:
+            - '2.0'
+            - '3.0'
+    post:
+      operationId: submitForm
+      summary: Submit an XForm
+      description: Implements the OpenRosa Form Submission API (https://bitbucket.org/javarosa/javarosa/wiki/FormSubmissionAPI) for submitting XForms over HTTP/S. Requires the Edit Data and Access APIs permissions (`post_api`, `corehq/apps/receiverwrapper/views.py:278-294`, decorated with `@require_permission(HqPermissions.edit_data)` and `@require_permission(HqPermissions.access_api)`). This endpoint's body is treated as opaque, application-defined XForm XML -- see `form-submission.rst` for the expected `data`/`meta`/`case` structure; it is not modelled as a schema here.
+      tags:
+        - Submission
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - xml_submission_file
+              properties:
+                xml_submission_file:
+                  type: string
+                  format: binary
+                  description: The XForm submission XML as a file part. Used by CommCare for J2ME (`form-submission.rst:17-35`).
+            examples:
+              multipartSubmission:
+                summary: Submission as multipart/form-data
+                value:
+                  xml_submission_file: (binary XForm XML content)
+          application/xml:
+            schema:
+              type: string
+              description: The raw XForm submission XML as the entire request body. Used by CommCare on Android (`form-submission.rst:37-46`).
+            examples:
+              rawSubmission:
+                summary: Submission as the body of a POST request
+                value: |
+                  <?xml version="1.0" ?>
+                  <data name="Enregistrer un cas COVID-19" uiVersion="1" version="41"
+                        xmlns="http://openrosa.org/formdesigner/9baceb4c25a5">
+                    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+                      <n1:deviceID>commcare_37478fd5-2730-4a14-a847-84e8848a1ff5</n1:deviceID>
+                      <n1:timeStart>2020-06-08T18:38:13.855Z</n1:timeStart>
+                      <n1:timeEnd>2020-06-08T18:41:33.207Z</n1:timeEnd>
+                      <n1:username>exampleuser</n1:username>
+                      <n1:userID>de8cc5191f9b4e2a846069f0659fa35e</n1:userID>
+                      <n1:instanceID>dca03509-4446-41dc-8352-2bb6f8516c7b</n1:instanceID>
+                    </n1:meta>
+                  </data>
+      responses:
+        '201':
+          description: Form was received. The `nature` attribute distinguishes success (`submit_success`) from processing failure under OpenRosa V2.0 behavior (`submit_error`, still HTTP 201) -- `form-submission.rst:265-313`. Although the body is XML, none of the code paths that build this response (`couchforms.openrosa_response.OpenRosaResponse.response`, `corehq/ex-submodules/couchforms/openrosa_response.py:58-59`) pass a `content_type` to Django's `HttpResponse`, so the actual `Content-Type` header is the Django default, `text/html; charset=utf-8` (`settings.DEFAULT_CONTENT_TYPE`, unset in this codebase), not `text/xml`. See the discrepancy file.
+          content:
+            text/xml:
+              schema:
+                type: string
+                description: 'OpenRosa response XML: `<OpenRosaResponse xmlns="http://openrosa.org/http/response"> <message nature="...">...</message></OpenRosaResponse>`. See https://bitbucket.org/javarosa/javarosa/wiki/FormSubmissionAPI.'
+              examples:
+                submitSuccess:
+                  summary: Example success response
+                  value: <OpenRosaResponse xmlns="http://openrosa.org/http/response"><message nature="submit_success">   &#8730; </message></OpenRosaResponse>
+        '400':
+          description: The submission could not be parsed (e.g. corrupt multipart data or another malformed request) -- `_submission_error` (`corehq/apps/receiverwrapper/views.py:228-250`). Plain text body, not the OpenRosa XML envelope.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Authentication credentials were missing or invalid.
+        '403':
+          description: The authenticated user lacks the Edit Data or Access APIs permission. The response is an HTML page, not JSON.
+        '422':
+          description: 'Form received but an error occurred during processing (OpenRosa V3.0 behavior, selected via the `X-OpenRosa-Version: 3.0` request header). Re-submission is likely to result in the same error; mobile clients quarantine the form (`form-submission.rst:317-341`).'
+          content:
+            text/xml:
+              schema:
+                type: string
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty.
+  /a/{domain}/receiver/{app_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: app_id
+        in: path
+        required: true
+        description: Application UUID to tag the submission with, found in the application's edit URL (`form-submission.rst:48-63`).
+        example: 952a0b480c7c10dde777b2485375d2237
+        schema:
+          type: string
+      - name: X-OpenRosa-Version
+        in: header
+        required: false
+        description: Selects the OpenRosa response contract. See `submitForm`'s `X-OpenRosa-Version` parameter for the exact rule.
+        example: '3.0'
+        schema:
+          type: string
+          enum:
+            - '2.0'
+            - '3.0'
+    post:
+      operationId: submitFormForApp
+      summary: Submit an XForm tagged with a specific application
+      description: Identical submission mechanics to `submitForm`, tagging the resulting form with `app_id` so reporting can attribute it to a specific application (`post`, `corehq/apps/receiverwrapper/views.py:297-320`). Unlike `submitForm`, this endpoint does not require the Edit Data or Access APIs permissions in code -- if the domain has secure submissions enabled (`domain_requires_auth`, `corehq/apps/receiverwrapper/views.py:306-309`), the request is delegated to `secure_post`, which requires one of digest, basic, API-key, or OAuth2 authentication (`corehq/apps/receiverwrapper/views.py:391-450`) but no specific permission beyond a valid mobile worker or web user login; if the domain does not require auth, the form is processed unauthenticated (`authenticated=False`, `corehq/apps/receiverwrapper/views.py:314-320`). Most production domains have secure submissions enabled, so this endpoint behaves as authenticated in practice; see the discrepancy file.
+      tags:
+        - Submission
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - xml_submission_file
+              properties:
+                xml_submission_file:
+                  type: string
+                  format: binary
+                  description: The XForm submission XML as a file part.
+          application/xml:
+            schema:
+              type: string
+              description: The raw XForm submission XML as the entire request body.
+      responses:
+        '201':
+          description: Form was received. Same response shape, `nature` values, and actual `Content-Type` caveat as `submitForm`'s 201 response.
+          content:
+            text/xml:
+              schema:
+                type: string
+                description: OpenRosa response XML. See https://bitbucket.org/javarosa/javarosa/wiki/FormSubmissionAPI.
+        '400':
+          description: The submission could not be parsed. Plain text body, not the OpenRosa XML envelope.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Authentication credentials were missing or invalid.
+        '403':
+          description: The authenticated user does not have mobile access to this domain (`_has_mobile_access`, `corehq/apps/receiverwrapper/views.py:79-89`), or the domain requires auth and the credentials are valid but not permitted. Response body is empty (`HttpResponseForbidden()`, `corehq/apps/receiverwrapper/views.py:88-89`).
+        '422':
+          description: Form received but an error occurred during processing (OpenRosa V3.0 behavior). See `submitForm`'s 422 response.
+          content:
+            text/xml:
+              schema:
+                type: string
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty.
 components:
   securitySchemes:
     ApiKey:
@@ -2156,6 +2527,176 @@ components:
         error_message:
           type: string
           example: Name is required
+    Form:
+      type: object
+      description: A single form submission, as returned by the form data API (JSON format). Backed by `ESXFormInstance`, an Elasticsearch-wrapped view of the form (`v0_4.XFormInstanceResource`, `corehq/apps/api/resources/v0_4.py:64-171`). No type conversion is done -- dates are plain strings and some fields are named differently than on the underlying Python model.
+      properties:
+        id:
+          type: string
+          description: Form instance UUID.
+          example: f959449c-8776-42ac-b776-3f564fafc331
+        domain:
+          type: string
+          description: Project space the form belongs to.
+          example: my-project
+        app_id:
+          type: string
+          nullable: true
+          description: UUID of the application the form was submitted against.
+          example: effb341b
+        build_id:
+          type: string
+          nullable: true
+          description: UUID of the specific application build used to submit the form.
+          example: e0a6125
+        type:
+          type: string
+          description: The XForm's root element tag, e.g. `data`.
+          example: data
+        version:
+          type: string
+          description: Version of the application form definition.
+          example: '18'
+        uiversion:
+          type: string
+          nullable: true
+          description: UI version of the application form definition.
+          example: '1'
+        submit_ip:
+          type: string
+          nullable: true
+          description: IP address the form was submitted from.
+          example: 192.168.1.1
+        archived:
+          type: boolean
+          description: Whether the form is archived. Derived from `is_archived` (`v0_4.XFormInstanceResource.dehydrate_archived`, `corehq/apps/api/resources/v0_4.py:93-94`), not a stored field.
+          example: false
+        problem:
+          type: string
+          nullable: true
+          description: Error message recorded against the form, if any.
+          example: null
+        initial_processing_complete:
+          type: boolean
+          nullable: true
+          description: Whether initial form processing (e.g. case updates) has completed.
+          example: true
+        is_phone_submission:
+          type: boolean
+          description: Whether the submission carried an `X-OpenRosa-Version` header (`v0_4.XFormInstanceResource.dehydrate_is_phone_submission`, `corehq/apps/api/resources/v0_4.py:126-130`).
+          example: false
+        edited_on:
+          type: string
+          nullable: true
+          description: Date and time the form was last edited, if it has been. Naive -- carries no timezone marker (source field `edited_on`, serialized with a plain `str()`, no format applied).
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?$
+          example: null
+        edited_by_user_id:
+          type: string
+          nullable: true
+          description: UUID of the user who last edited the form, only populated when `edited_on` is set (`dehydrate_edited_by_user_id`, `corehq/apps/api/resources/v0_4.py:134-136`).
+          example: e7ad965c70802884a7a67add763939e8
+        received_on:
+          type: string
+          description: 'Date and time the form was received by the server. Naive -- the field is a `CharField(attribute="received_on")` on the ES-backed resource (`corehq/apps/api/resources/v0_4.py:80`) that passes through whatever string Elasticsearch stored, which in practice already carries a literal `Z` (see the sample below) but is not validated or reformatted by the resource itself. No `format: date-time` is declared because the resource makes no format guarantee.'
+          example: '2016-11-29T14:50:42.530616Z'
+        server_modified_on:
+          type: string
+          description: Date and time the form was last modified on the server. Same pass-through behavior as `received_on`.
+          example: '2016-11-29T14:50:42.530616Z'
+        indexed_on:
+          type: string
+          description: 'Date and time this revision of the form was indexed into Elasticsearch (source field `inserted_at`). This is the recommended field to page through results on. Written by `json_format_datetime` (`corehq/ex-submodules/dimagi/utils/parsing.py:48-60`, called from `corehq/apps/es/forms.py`), which always appends a literal `Z`, but -- as with `received_on` -- the resource field itself is an untyped `CharField` with no format guarantee, so `format: date-time` is not declared.'
+          example: '2016-11-29T14:50:42.530616Z'
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: The form's `meta` block (device ID, timestamps, username, app version, etc.), as submitted. Structure varies by client.
+          example:
+            appVersion: 'CommCare Android, version "2.31.0"(423345). App v18. CommCare Version 2.31. Build 423345, built on: 2016-11-02'
+            app_build_version: 18
+            commcare_version: 2.31.0
+            deviceID: '358001070684648'
+            deprecatedID: null
+            doc_type: Metadata
+            geo_point: null
+            instanceID: f959449c-8776-42ac-b776-3f564fafc331
+            location: null
+            timeEnd: '2016-11-29T14:50:41.156000'
+            timeStart: '2016-11-29T14:50:36.155000'
+            userID: e7ad965c70802884a7a67add763939e8
+            username: testuser
+        form:
+          type: object
+          additionalProperties: true
+          description: The arbitrary, application-defined XForm instance data, as JSON. Its shape depends entirely on the application's form definition -- field names below are simply the questions of one sample form (`list-forms.rst:84-140`) and are not part of any schema. Always includes a `meta` sub-object and, when the form updates a case, a `case` sub-object describing the case transaction.
+          example:
+            '#type': data
+            '@name': Case Update
+            '@uiVersion': '1'
+            '@version': '18'
+            '@xmlns': http://openrosa.org/formdesigner/4281EB62-46E6-49AD-A08C
+            case:
+              '@case_id': b6996b7b-6b3f-476a-9006
+              '@date_modified': '2016-11-29T14:50:41.156000Z'
+              '@user_id': e7ad965c
+              '@xmlns': http://commcarehq.org/case/transaction/v2
+              update:
+                data_node: '55'
+                dateval: '2012-09-26'
+                geodata: 5.0 5.0 5.0 5.0
+                intval: '5'
+                multiselect: b
+                singleselect: b
+                text: TEST
+            meta:
+              '@xmlns': http://openrosa.org/jr/xforms
+              appVersion: 'CommCare Android, version "2.31.0"(423345). App v18. CommCare Version 2.31. Build 423345, built on: 2016-11-02'
+              instanceID: f959449c-8776-42ac-b776-3f564fafc331
+              timeEnd: '2016-11-29T14:50:41.156000Z'
+              timeStart: '2016-11-29T14:50:36.155000Z'
+              userID: e7ad965c70802884a7a67add763939e8
+              username: testuser
+        attachments:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              content_type:
+                type: string
+                example: text/xml
+              length:
+                type: integer
+                example: 1103
+              url:
+                type: string
+                description: Relative URL of the `getFormAttachment` operation for this attachment (`dehydrate_attachments`, `corehq/apps/api/resources/v0_4.py:105-122`). Undocumented in `list-forms.rst`'s sample output; see the discrepancy file.
+                example: /a/my-project/api/form_attachment/v1/f959449c-8776-42ac-b776-3f564fafc331/form.xml
+          description: Attachments submitted with the form (e.g. `form.xml`, and any media files), keyed by attachment name.
+          example:
+            form.xml:
+              content_type: text/xml
+              length: 1103
+        resource_uri:
+          type: string
+          description: Always the empty string in practice. Tastypie auto-adds this field to every resource and dehydrates it via `get_resource_uri` (`tastypie/resources.py:810-829`), which reverses the `api_dispatch_detail` URL using only `resource_name`, `api_name`, and `pk` (`resource_uri_kwargs`, `tastypie/resources.py:787-808`) -- it never includes `domain`, so the reverse lookup always raises `NoReverseMatch` against this domain-scoped urlconf and the caught exception falls back to `''`.
+          example: ''
+        cases:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: Cases referenced by this form's case blocks, each a full case representation. Included only when the `cases__full=true` query parameter is passed (`UseIfRequested`, `corehq/apps/api/fields.py`).
+    FormList:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            objects:
+              type: array
+              items:
+                $ref: '#/components/schemas/Form'
   responses:
     BadRequest:
       description: The request was malformed or a parameter value was invalid.

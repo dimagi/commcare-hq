@@ -1,0 +1,268 @@
+Submit:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: X-OpenRosa-Version
+      in: header
+      required: false
+      description: >-
+        Selects the OpenRosa response contract. `SubmissionPost.__init__`
+        (`corehq/form_processor/submission_post.py:102`) treats the header as
+        version 3.0 behavior only when it is exactly `"3.0"`
+        (`is_openrosa_version3`); any other value, or its absence, falls back to
+        version 2.0 behavior (`_get_open_rosa_response`,
+        `corehq/form_processor/submission_post.py:572-585`). Every HTTP response
+        from CommCare HQ (not just submission responses) also carries an
+        outbound `X-OpenRosa-Version` header, but that header is always the
+        fixed value `1.0` (`OPENROSA_DEFAULT_VERSION`, `corehq/const.py:20`,
+        applied by `OpenRosaMiddleware.process_response`,
+        `corehq/middleware.py:55-57`) -- it does not echo this request header or
+        reflect which response contract was actually used.
+      example: "3.0"
+      schema:
+        type: string
+        enum: ["2.0", "3.0"]
+  post:
+    operationId: submitForm
+    summary: Submit an XForm
+    description: >-
+      Implements the OpenRosa Form Submission API
+      (https://bitbucket.org/javarosa/javarosa/wiki/FormSubmissionAPI) for
+      submitting XForms over HTTP/S. Requires the Edit Data and Access APIs
+      permissions (`post_api`, `corehq/apps/receiverwrapper/views.py:278-294`,
+      decorated with `@require_permission(HqPermissions.edit_data)` and
+      `@require_permission(HqPermissions.access_api)`). This endpoint's body is
+      treated as opaque, application-defined XForm XML -- see
+      `form-submission.rst` for the expected `data`/`meta`/`case` structure; it
+      is not modelled as a schema here.
+    tags: [Submission]
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [xml_submission_file]
+            properties:
+              xml_submission_file:
+                type: string
+                format: binary
+                description: >-
+                  The XForm submission XML as a file part. Used by CommCare for
+                  J2ME (`form-submission.rst:17-35`).
+          examples:
+            multipartSubmission:
+              summary: Submission as multipart/form-data
+              value:
+                xml_submission_file: (binary XForm XML content)
+        application/xml:
+          schema:
+            type: string
+            description: >-
+              The raw XForm submission XML as the entire request body. Used by
+              CommCare on Android (`form-submission.rst:37-46`).
+          examples:
+            rawSubmission:
+              summary: Submission as the body of a POST request
+              value: |
+                <?xml version="1.0" ?>
+                <data name="Enregistrer un cas COVID-19" uiVersion="1" version="41"
+                      xmlns="http://openrosa.org/formdesigner/9baceb4c25a5">
+                  <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+                    <n1:deviceID>commcare_37478fd5-2730-4a14-a847-84e8848a1ff5</n1:deviceID>
+                    <n1:timeStart>2020-06-08T18:38:13.855Z</n1:timeStart>
+                    <n1:timeEnd>2020-06-08T18:41:33.207Z</n1:timeEnd>
+                    <n1:username>exampleuser</n1:username>
+                    <n1:userID>de8cc5191f9b4e2a846069f0659fa35e</n1:userID>
+                    <n1:instanceID>dca03509-4446-41dc-8352-2bb6f8516c7b</n1:instanceID>
+                  </n1:meta>
+                </data>
+    responses:
+      "201":
+        description: >-
+          Form was received. The `nature` attribute distinguishes success
+          (`submit_success`) from processing failure under OpenRosa V2.0
+          behavior (`submit_error`, still HTTP 201) --
+          `form-submission.rst:265-313`. Although the body is XML, none of the
+          code paths that build this response
+          (`couchforms.openrosa_response.OpenRosaResponse.response`,
+          `corehq/ex-submodules/couchforms/openrosa_response.py:58-59`) pass a
+          `content_type` to Django's `HttpResponse`, so the actual
+          `Content-Type` header is the Django default, `text/html;
+          charset=utf-8` (`settings.DEFAULT_CONTENT_TYPE`, unset in this
+          codebase), not `text/xml`. See the discrepancy file.
+        content:
+          text/xml:
+            schema:
+              type: string
+              description: >-
+                OpenRosa response XML: `<OpenRosaResponse
+                xmlns="http://openrosa.org/http/response"> <message
+                nature="...">...</message></OpenRosaResponse>`. See
+                https://bitbucket.org/javarosa/javarosa/wiki/FormSubmissionAPI.
+            examples:
+              submitSuccess:
+                summary: Example success response
+                value: >-
+                  <OpenRosaResponse
+                  xmlns="http://openrosa.org/http/response"><message
+                  nature="submit_success">   &#8730;
+                  </message></OpenRosaResponse>
+      "400":
+        description: >-
+          The submission could not be parsed (e.g. corrupt multipart data or
+          another malformed request) -- `_submission_error`
+          (`corehq/apps/receiverwrapper/views.py:228-250`). Plain text body, not
+          the OpenRosa XML envelope.
+        content:
+          text/plain:
+            schema:
+              type: string
+      "401":
+        # Not the shared ref: `post_api` (`corehq/apps/receiverwrapper/views.py:278-294`)
+        # is a plain Django view decorated with `api_auth()`, not a tastypie
+        # resource -- there is no `HqBaseResource.dispatch` JSON envelope
+        # here. An auth failure is produced by the underlying HTTP auth
+        # backend (digest by default), typically a `WWW-Authenticate`
+        # challenge with an empty or plain-text body, not JSON.
+        description: Authentication credentials were missing or invalid.
+      "403":
+        # Not the shared ref: `@require_permission(HqPermissions.edit_data)`
+        # and `@require_permission(HqPermissions.access_api)`
+        # (`corehq/apps/receiverwrapper/views.py:281-282`) raise Django's
+        # `PermissionDenied` on failure (`require_permission_raw`,
+        # `corehq/apps/users/decorators.py:34-54`), which this project's
+        # `handler403 = no_permissions` (`urls.py:47`) renders as an HTML
+        # page (`HttpResponseForbidden(_no_permissions_message(...))`,
+        # `corehq/apps/hqwebapp/views.py:362-373`) -- not JSON.
+        description: >-
+          The authenticated user lacks the Edit Data or Access APIs permission.
+          The response is an HTML page, not JSON.
+      "422":
+        description: >-
+          Form received but an error occurred during processing (OpenRosa V3.0
+          behavior, selected via the `X-OpenRosa-Version: 3.0` request header).
+          Re-submission is likely to result in the same error; mobile clients
+          quarantine the form (`form-submission.rst:317-341`).
+        content:
+          text/xml:
+            schema:
+              type: string
+      "429":
+        # Not the shared ref: `_process_form` returns a bare
+        # `tastypie.http.HttpTooManyRequests()` when `rate_limit_submission`
+        # (`corehq/apps/receiverwrapper/views.py:91-92`, backed by
+        # `corehq/apps/receiverwrapper/rate_limiter.py:111-121`) reports the
+        # domain over its submission or case-write quota -- no JSON body.
+        description:
+          The request was rate limited. Back off and retry. The response body is
+          empty.
+SubmitForApp:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: app_id
+      in: path
+      required: true
+      description: >-
+        Application UUID to tag the submission with, found in the application's
+        edit URL (`form-submission.rst:48-63`).
+      example: 952a0b480c7c10dde777b2485375d2237
+      schema:
+        type: string
+    - name: X-OpenRosa-Version
+      in: header
+      required: false
+      description: >-
+        Selects the OpenRosa response contract. See `submitForm`'s
+        `X-OpenRosa-Version` parameter for the exact rule.
+      example: "3.0"
+      schema:
+        type: string
+        enum: ["2.0", "3.0"]
+  post:
+    operationId: submitFormForApp
+    summary: Submit an XForm tagged with a specific application
+    description: >-
+      Identical submission mechanics to `submitForm`, tagging the resulting form
+      with `app_id` so reporting can attribute it to a specific application
+      (`post`, `corehq/apps/receiverwrapper/views.py:297-320`). Unlike
+      `submitForm`, this endpoint does not require the Edit Data or Access APIs
+      permissions in code -- if the domain has secure submissions enabled
+      (`domain_requires_auth`, `corehq/apps/receiverwrapper/views.py:306-309`),
+      the request is delegated to `secure_post`, which requires one of digest,
+      basic, API-key, or OAuth2 authentication
+      (`corehq/apps/receiverwrapper/views.py:391-450`) but no specific
+      permission beyond a valid mobile worker or web user login; if the domain
+      does not require auth, the form is processed unauthenticated
+      (`authenticated=False`, `corehq/apps/receiverwrapper/views.py:314-320`).
+      Most production domains have secure submissions enabled, so this endpoint
+      behaves as authenticated in practice; see the discrepancy file.
+    tags: [Submission]
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [xml_submission_file]
+            properties:
+              xml_submission_file:
+                type: string
+                format: binary
+                description: The XForm submission XML as a file part.
+        application/xml:
+          schema:
+            type: string
+            description:
+              The raw XForm submission XML as the entire request body.
+    responses:
+      "201":
+        description: >-
+          Form was received. Same response shape, `nature` values, and actual
+          `Content-Type` caveat as `submitForm`'s 201 response.
+        content:
+          text/xml:
+            schema:
+              type: string
+              description: >-
+                OpenRosa response XML. See
+                https://bitbucket.org/javarosa/javarosa/wiki/FormSubmissionAPI.
+      "400":
+        description: >-
+          The submission could not be parsed. Plain text body, not the OpenRosa
+          XML envelope.
+        content:
+          text/plain:
+            schema:
+              type: string
+      "401":
+        # Not the shared ref: when the domain requires auth, this delegates
+        # to `secure_post`, whose per-authtype view functions
+        # (`_secure_post_digest`/`_secure_post_basic`/`_secure_post_oauth2`,
+        # `corehq/apps/receiverwrapper/views.py:392-433`) produce a
+        # challenge/response straight from the underlying auth backend
+        # (digest, basic, or OAuth2), not a JSON error envelope.
+        description: Authentication credentials were missing or invalid.
+      "403":
+        description: >-
+          The authenticated user does not have mobile access to this domain
+          (`_has_mobile_access`, `corehq/apps/receiverwrapper/views.py:79-89`),
+          or the domain requires auth and the credentials are valid but not
+          permitted. Response body is empty (`HttpResponseForbidden()`,
+          `corehq/apps/receiverwrapper/views.py:88-89`).
+      "422":
+        description: >-
+          Form received but an error occurred during processing (OpenRosa V3.0
+          behavior). See `submitForm`'s 422 response.
+        content:
+          text/xml:
+            schema:
+              type: string
+      "429":
+        # Not the shared ref: `_process_form` returns a bare
+        # `tastypie.http.HttpTooManyRequests()` when `rate_limit_submission`
+        # (`corehq/apps/receiverwrapper/views.py:91-92`, backed by
+        # `corehq/apps/receiverwrapper/rate_limiter.py:111-121`) reports the
+        # domain over its submission or case-write quota -- no JSON body.
+        description:
+          The request was rate limited. Back off and retry. The response body is
+          empty.
