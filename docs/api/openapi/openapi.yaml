@@ -35,8 +35,4 @@ tags:
   - name: SMS
     description: >-
       Messaging event history.
-security:
-  - ApiKey: []
-  - Basic: []
-  - OAuth2: []
 paths: {}

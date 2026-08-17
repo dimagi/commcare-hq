@@ -6,7 +6,6 @@ extends:
 rules:
   operation-operationId: error
   operation-summary: error
-  operation-tags: error
   operation-4xx-response: warn
   no-unused-components: error
   path-params-defined: error

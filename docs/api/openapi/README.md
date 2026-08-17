@@ -10,6 +10,12 @@ reST pages remain the prose narrative; this spec is the reference.
 - `components/` — shared security schemes, parameters, responses, schemas
 - `dist/` — **generated, committed** artifacts
 
+## Requirements
+
+`@redocly/cli` requires Node 24 (the version this repo's CI uses — see
+`.github/workflows/lint.yml`). Node 20 cannot run it. If `yarn openapi:lint`
+fails to start, check your Node version first.
+
 ## Working on the spec
 
     yarn openapi:lint     # validate
