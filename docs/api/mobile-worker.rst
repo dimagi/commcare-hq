@@ -1,7 +1,6 @@
 Mobile Worker
 =============
 
-.. openapi:: spec/user-v1.json
-   :examples:
-   :include:
-      /a/\{domain\}/api/user/v1/\{pk\}/
+Create, fetch, edit, and delete an individual CommCare (mobile-worker) user.
+These operations, along with the list endpoint, are documented together in
+:doc:`list-mobile-workers`.
