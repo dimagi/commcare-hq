@@ -9,6 +9,11 @@ reST pages remain the prose narrative; this spec is the reference.
 - `paths/` — one file per resource
 - `components/` — shared security schemes, parameters, responses, schemas
 - `dist/` — **generated, committed** artifacts
+  ```
+  dist/
+    openapi.bundled.yaml   # generated, committed
+    openapi/index.html     # generated, committed (Redoc page)
+  ```
 
 ## Requirements
 
@@ -20,7 +25,7 @@ fails to start, check your Node version first.
 
     yarn openapi:lint     # validate
     yarn openapi:bundle   # regenerate dist/openapi.bundled.yaml
-    yarn openapi:docs     # regenerate dist/index.html
+    yarn openapi:docs     # regenerate dist/openapi/index.html
     yarn openapi:check    # verify dist/ matches source (what CI runs)
 
 Always regenerate `dist/` in the same commit as a source change — CI fails
