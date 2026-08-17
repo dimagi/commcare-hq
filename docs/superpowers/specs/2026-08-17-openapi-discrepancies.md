@@ -300,3 +300,152 @@ triage. Nothing here has been changed in the reST docs.
   genuinely constrained to two values, not free text. The spec's `Case` schema's
   `indices` sub-object now includes `relationship` as an
   `enum: [child, extension]`.
+
+## case/v2 (`cases-v2.rst`)
+
+Unlike every other resource cross-checked so far, case/v2 is not a tastypie
+resource. It is two plain Django views, `case_api` and `case_api_bulk_fetch`
+(`corehq/apps/hqcase/views.py:87-127`), so "allowed methods" means "branches of
+the view's own `if` chain", and anything that falls through returns a 405
+`{"error": "Request method not allowed"}` (`views.py:110`).
+
+- **The create/update response field is `form_id`, not `xform_id`.**
+  `cases-v2.rst:552-557`, `:583-588` and `:604-609` all name the returned field
+  `xform_id`, in three separate tables. Both response branches of
+  `_handle_case_update` (`corehq/apps/hqcase/views.py:281-289`) build
+  `{'form_id': xform.form_id, ...}`; there is no `xform_id` key anywhere in the
+  view. `corehq/apps/hqcase/tests/test_case_update_api.py:112` asserts the
+  response keys are exactly `{'case', 'form_id'}`, and `:899-900` re-asserts
+  `'form_id' in res`. An integrator following the reST tables would read
+  `xform_id` and get `None`. The spec's `CaseV2WriteResponse` and
+  `CaseV2BulkWriteResponse` use `form_id`.
+- **Bulk upsert requires `create` to be present and set to `null`; the docs say
+  to omit it.** `cases-v2.rst:611-619` says "the 'create' field may be omitted,
+  and the API will upsert the case based on the value of 'external_id'".
+  `_get_bulk_updates` (`corehq/apps/hqcase/api/updates.py:245-253`) does the
+  opposite: `if 'create' not in data: raise UserError("A 'create' flag is
+  required for each update.")` comes first, and only then does
+  `create_flag = data.pop('create')` / `if create_flag is None:` select the
+  upsert path. Omitting the key fails the whole request with a 400; the upsert
+  is reached by sending `"create": null`. The spec's `CaseV2BulkChange` marks
+  `create` required and documents the three-way `true`/`false`/`null` meaning.
+- **The over-limit error is not "Payload too large".** `cases-v2.rst:639-643`
+  says "If more than 100 cases are submitted, the server will return a 400
+  'Payload too large' response". The real message is
+  `f"You cannot submit more than {CASEBLOCK_CHUNKSIZE} updates in a single
+  request"` (`corehq/apps/hqcase/api/updates.py:240-241`, with
+  `CASEBLOCK_CHUNKSIZE = 100` at `corehq/apps/hqcase/utils.py:28`), delivered
+  in the standard `{"error": ...}` body. The 400 status and the 100-case limit
+  are both correct; only the message text is wrong. A client matching on the
+  string will not match.
+- **A non-unique `external_id` is a 400, not a silently-picked case.**
+  `cases-v2.rst:395-398` warns: "If the case is identified by its external ID,
+  and that ID is not unique, only one case will be returned." Both by-external-id
+  operations go through `_get_by_external_id`
+  (`corehq/apps/hqcase/views.py:188-200`), which calls
+  `get_case_by_external_id(..., raise_multiple=True)`
+  (`corehq/form_processor/models/cases.py:102-125`) and converts the resulting
+  `MultipleObjectsReturned` into `UserError("Multiple cases found with
+  external_id '<id>': <case_ids>")` -> a 400.
+  `corehq/apps/hqcase/tests/test_case_update_api.py:851-888` asserts exactly
+  this. The warning describes behaviour the code no longer has. Note the
+  *bulk-fetch* endpoint is different again: it resolves external ids through
+  Elasticsearch (`_get_cases_by_external_id`,
+  `corehq/apps/hqcase/api/get_bulk.py:61-70`) with no uniqueness check, so
+  there the reST warning is accurate.
+- **`PUT /a/<domain>/api/case/v2/` with a single object is an update, not an
+  upsert.** `cases-v2.rst:38` lists it as "Upsert case by external ID". With an
+  object body the view routes to `_handle_case_put_post(is_creation=False)`
+  (`corehq/apps/hqcase/views.py:108-109`) and thence to `JsonCaseUpdate`, whose
+  `get_case_id` resolves `external_id` via
+  `CaseIDLookerUpper.get_by_external_id`
+  (`corehq/apps/hqcase/api/updates.py:157-163,287-291`) and raises
+  `UserError("Could not find a case with external_id '<id>'")` when there is no
+  match -- a 400, with no case created.
+  `corehq/apps/hqcase/tests/test_case_update_api.py:541-551` asserts that 400
+  explicitly. Upsert on this path exists only per-entry in an *array* body, via
+  `create: null`. The spec's `updateCasesV2` says so in its description.
+- **`PUT /a/<domain>/api/case/v2/<case_id>` with an array body returns a 500.**
+  Undocumented in the reST page, which only ever shows an object body for the
+  detail PUT. `_handle_case_put_post`
+  (`corehq/apps/hqcase/views.py:257-258`) runs
+  `if not is_creation and case_id and 'case_id' not in data: data['case_id'] =
+  case_id` before `handle_case_update` gets a chance to notice the body is a
+  list. `'case_id' not in data` is true for a list of dicts, so the next line
+  performs `list['case_id'] = ...` and raises `TypeError: list indices must be
+  integers or slices, not str`. The view only catches `UserError`
+  (`views.py:111-112`), so this surfaces as an unhandled 500. Contrast
+  `_handle_ext_put` (`views.py:229-230`), which rejects an array body cleanly
+  with a 400. The spec types this operation's request body as a single object
+  only and notes the 500.
+- **`POST /a/<domain>/api/case/v2/ext/<external_id>/` silently creates an
+  unrelated new case.** Neither `cases-v2.rst`'s endpoint table (`:26-39`) nor
+  its usage section mentions POST on the by-external-id path, but Django routes
+  it (`corehq/apps/api/urls.py:153` maps every method on that path to
+  `case_api`). Inside the view the branches are ordered so that
+  `request.method == 'POST' and not case_id` (`views.py:104`) matches first --
+  `case_id` is empty on this URL, and the `external_id` kwarg is never
+  consulted -- so the request is handled as a plain creation and the external id
+  in the URL is discarded. A caller who reasonably expects POST-to-ext to behave
+  like PUT-to-ext gets a duplicate case with no external id instead. The spec
+  deliberately does **not** publish this as an operation; there is an inline
+  comment in `paths/case-v2.yaml` saying why, so a later pass does not "fix" it
+  back in.
+- **`case_api_bulk_fetch` never checks the request method.**
+  `corehq/apps/hqcase/views.py:123-127` calls `_handle_bulk_fetch(request)`
+  unconditionally. `@allow_cors(['OPTIONS', 'GET', 'POST'])` (`:117`) only sets
+  CORS headers; it does not gate dispatch. The consequences: a `GET
+  /a/<domain>/api/case/v2/bulk-fetch/` has no body, so it always fails with a
+  400 `"Payload must be valid JSON"` even though CORS advertises GET as allowed;
+  and a `PUT` to that path, which CORS does not advertise, works exactly like
+  `POST`. The spec documents only `POST`, with an inline comment recording this.
+- **Three list-endpoint filters are missing from the reST filter table.** The
+  table at `cases-v2.rst:245-292` omits `query`, `include_deprecated` and
+  `cursor`. `query` takes a case-search XPath expression and is applied as an
+  extra filter (`_get_filter`/`_get_query_filter`,
+  `corehq/apps/hqcase/api/get_list.py:154-172`); `include_deprecated` is in
+  `SIMPLE_FILTERS` (`:62-69`) and, when absent or false, silently *excludes*
+  cases whose type is deprecated in the data dictionary
+  (`_include_deprecated_filter`, `:51-55`) -- so the default result set is
+  already narrower than the documented filters imply; `cursor` is consumed at
+  the top of `get_list` (`:85-91`) and is how the documented `next` link works.
+  The reST page also does not say that an unrecognised parameter is rejected:
+  `_get_filter` (`:164-165`) raises `UserError("'<key>' is not a valid
+  parameter.")`, a 400 -- a real behaviour change from case/v1, which turns
+  unknown parameters into raw Elasticsearch term filters. All four points are
+  in the spec's `listCasesV2`.
+- **`indices` is always present on a read, not "not included by default".**
+  `cases-v2.rst:122-124` annotates the `indices` row of the read-serialization
+  table with "(not included by default)". Both serializers build the key
+  unconditionally -- `serialize_case`
+  (`corehq/apps/hqcase/api/core.py:24-31`) and `serialize_es_case`
+  (`:59-66`) each end with an `"indices": {...}` dict comprehension, which
+  yields `{}` for a case with no indices rather than omitting the key. The
+  sample payload at `:65-71` shows `indices` present, contradicting the table on
+  the same page. The spec documents it as always present.
+- **`temporary_id` is a creation-only field, not a "bulk create/update" field.**
+  `cases-v2.rst:188-192` describes the top-level `temporary_id` as "Bulk
+  create/update only". It is declared on `JsonCaseCreation`
+  (`corehq/apps/hqcase/api/updates.py:128-129`) and on neither
+  `JsonCaseUpdate` nor `JsonCaseUpsert`, and `BaseJsonCaseChange.wrap`
+  (`:87-94`) rejects any key that is not a declared property. So it is rejected
+  with `"'temporary_id' is not a valid field."` on every update, bulk or not,
+  and it is *accepted* (though it can do nothing useful) on a non-bulk single
+  create. The nested `indices.<name>.temporary_id`, described the same way at
+  `:216-220`, is different: it lives on `JsonIndex` (`:46`) and is accepted on
+  every payload shape, bulk or not. The spec places `temporary_id` on
+  `CaseV2Create` and `CaseV2BulkChange` only, and the index-level
+  `temporary_id` on the shared `CaseV2WriteIndexEntry`.
+- **Creates return 200, not 201.** Not stated either way in the reST page. Both
+  write branches return a plain `JsonResponse` (`views.py:281-289`), whose
+  default status is 200, including for a creation. This differs from the
+  group resource, whose create is a 201. Worth knowing for a client that
+  branches on the status code.
+- **The rate-limit response has an empty body, unlike the rest of the API.**
+  Not covered by the reST page. This resource is throttled by `api_throttle`
+  (`corehq/apps/api/decorators.py:51-61`), which returns
+  `HttpResponse(status=429, headers={'Retry-After': ...})` -- no content and no
+  serializer. The spec's shared `TooManyRequests` response documents an
+  `{"error": ...}` JSON body, so every case/v2 operation declares its own 429
+  with a `Retry-After` header and no `content`, rather than pointing at the
+  shared ref.

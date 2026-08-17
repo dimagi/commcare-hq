@@ -52,6 +52,14 @@ paths:
     $ref: "./paths/case-v1.yaml#/List"
   /a/{domain}/api/case/v1/{case_id}/:
     $ref: "./paths/case-v1.yaml#/Detail"
+  /a/{domain}/api/case/v2/:
+    $ref: "./paths/case-v2.yaml#/List"
+  /a/{domain}/api/case/v2/{case_id}:
+    $ref: "./paths/case-v2.yaml#/Detail"
+  /a/{domain}/api/case/v2/ext/{external_id}/:
+    $ref: "./paths/case-v2.yaml#/DetailByExternalId"
+  /a/{domain}/api/case/v2/bulk-fetch/:
+    $ref: "./paths/case-v2.yaml#/BulkFetch"
   /a/{domain}/api/group/v1/:
     $ref: "./paths/group.yaml#/List"
   /a/{domain}/api/group/v1/{group_id}/:

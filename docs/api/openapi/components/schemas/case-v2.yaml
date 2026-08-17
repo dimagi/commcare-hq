@@ -1,0 +1,672 @@
+# Schemas for the Case Data API v2 (`docs/api/cases-v2.rst`).
+#
+# This resource is NOT a tastypie resource. It is a pair of plain Django views,
+# `case_api` and `case_api_bulk_fetch` (`corehq/apps/hqcase/views.py:87-127`),
+# with its own serializers in `corehq/apps/hqcase/api/core.py`. Nothing here is
+# shared with the v1 case resource: v1's field names (`date_modified`,
+# `server_date_modified`, `xform_ids`, ...) and its `properties` contents
+# (which fold `case_name`/`case_type`/`date_opened`/`external_id`/`owner_id`
+# back in) are different enough that `components/schemas/case.yaml#/Case` does
+# not describe any part of a v2 payload. See the discrepancy file.
+CaseV2:
+  type: object
+  description: >-
+    A single case, as returned by every read endpoint of the Case Data API v2.
+    Two serializers produce this shape and they are kept deliberately
+    equivalent: `serialize_es_case` (`corehq/apps/hqcase/api/core.py:39-67`),
+    used by the list, single-`case_id` and bulk endpoints, reads the case-search
+    Elasticsearch document; `serialize_case`
+    (`corehq/apps/hqcase/api/core.py:6-32`), used by the by-external-id read and
+    by every create/update response, reads the SQL model directly. A test
+    asserts the two agree field for field
+    (`corehq/apps/hqcase/tests/test_serialization.py:110-121`). Note that,
+    unlike case/v1, the identifying fields (`case_type`, `case_name`,
+    `external_id`, `owner_id`, `date_opened`) are top-level here and are NOT
+    repeated inside `properties`.
+  properties:
+    domain:
+      type: string
+      description: Project space the case belongs to.
+      example: queens-gambit
+    case_id:
+      type: string
+      description: Case UUID, assigned by the server when the case is created.
+      example: 79e25a30-8db5-4a5a-827b-0297b254e87f
+    case_type:
+      type: string
+      description: The case type.
+      example: patient
+    case_name:
+      type: string
+      description: The case name.
+      example: Elizabeth Harmon
+    external_id:
+      type: string
+      nullable: true
+      description: >-
+        Caller-assigned identifier. Not constrained to be unique -- CommCare
+        will happily hold several cases with the same `external_id`, and the
+        by-external-id endpoints return a 400 when that happens.
+      example: "1"
+    owner_id:
+      type: string
+      nullable: true
+      description: >-
+        UUID of the case owner -- a mobile worker, a case-sharing group, or a
+        location. Not validated server-side on write.
+      example: 20cc9dda-b90a-4af3-aa3d-fc67184e73ef
+    date_opened:
+      type: string
+      format: date-time
+      nullable: true
+      description: >-
+        Date and time the case was opened (`opened_on`). Unlike case/v1's date
+        fields, v2's really are RFC3339: both serializers emit
+        `%Y-%m-%dT%H:%M:%S.%fZ` -- a literal `Z` and always-six-digit
+        microseconds. On the SQL path that comes from `json_format_datetime`
+        (`corehq/apps/hqcase/api/core.py:35-36`,
+        `corehq/ex-submodules/dimagi/utils/parsing.py:44,48-60`); on the
+        Elasticsearch path the stored value was written by
+        `CommCareCase.to_json` (`corehq/form_processor/models/cases.py:426-434`)
+        through DRF's `DateTimeField`, which formats with
+        `REST_FRAMEWORK['DATETIME_FORMAT'] = '%Y-%m-%dT%H:%M:%S.%fZ'`
+        (`settings.py:2083-2085`) -- the same string. The value is UTC.
+      example: "2020-03-19T14:31:34.133000Z"
+    last_modified:
+      type: string
+      format: date-time
+      description: >-
+        Date and time the case was last modified as reported by the submitting
+        device's clock (`modified_on`). Same always-`Z` format as `date_opened`.
+      example: "2020-03-19T14:31:34.133000Z"
+    server_last_modified:
+      type: string
+      format: date-time
+      description: >-
+        Date and time the case was last modified as recorded by the server's
+        clock (`server_modified_on`). Same always-`Z` format as `date_opened`.
+      example: "2020-03-19T14:31:34.133000Z"
+    indexed_on:
+      type: string
+      format: date-time
+      description: >-
+        Date and time this revision of the case was indexed into the case-search
+        Elasticsearch index. This is the field the cursor pagination of the list
+        endpoint sorts and pages on, and it changes without notice during
+        routine maintenance operations. On responses served from Elasticsearch
+        it is the real index time; on create/update responses, and on the
+        by-external-id read, the case has not been indexed yet, so
+        `serialize_case` substitutes the current server time
+        (`corehq/apps/hqcase/api/core.py:20`) -- the value is a timestamp of
+        when the response was built, not of an indexing event.
+      example: "2020-03-19T14:31:34.133000Z"
+    closed:
+      type: boolean
+      description: Whether the case is closed. Always present.
+      example: false
+    date_closed:
+      type: string
+      format: date-time
+      nullable: true
+      description: >-
+        Date and time the case was closed (`closed_on`). Always present, and
+        `null` for open cases. Same always-`Z` format as `date_opened`.
+      example: null
+    properties:
+      type: object
+      additionalProperties:
+        type: string
+      description: >-
+        User-defined case properties only. Values are strings -- writes reject
+        any non-string value (`valid_properties_dict`,
+        `corehq/apps/hqcase/api/updates.py:23-33`). Unlike case/v1, the case's
+        metadata (`case_name`, `case_type`, `date_opened`, `external_id`,
+        `owner_id`) is NOT repeated in here: the Elasticsearch serializer strips
+        every key in `INDEXED_METADATA_BY_KEY`
+        (`corehq/apps/hqcase/api/core.py:54-58`,
+        `corehq/apps/case_search/const.py:53-102`) and the SQL serializer reads
+        only `dynamic_case_properties()`. Because these properties are
+        application-defined, their names cannot be enumerated here.
+      example:
+        dob: "1948-11-02"
+    indices:
+      type: object
+      additionalProperties:
+        $ref: "#/CaseV2IndexEntry"
+      description: >-
+        References from this case to other cases, keyed by index identifier
+        (conventionally `parent` or `host`, but any valid XML element name is
+        allowed). An empty object when the case has no indices. Deleted indices
+        are omitted (`corehq/apps/hqcase/api/core.py:30`). To find the cases
+        that point AT this case, use the list endpoint's `indices.<name>` filter
+        instead -- reverse indices are never included here.
+      example:
+        parent:
+          case_id: eb1a8c23-6d6d-4b61-894c-ae1c437d8dac
+          case_type: household
+          relationship: child
+CaseV2IndexEntry:
+  type: object
+  description: >-
+    One entry of a case's `indices` map, as returned by the read endpoints.
+    Every entry always carries all three keys.
+  properties:
+    case_id:
+      type: string
+      description: UUID of the referenced case.
+      example: eb1a8c23-6d6d-4b61-894c-ae1c437d8dac
+    case_type:
+      type: string
+      description: Case type of the referenced case.
+      example: household
+    relationship:
+      type: string
+      enum: [child, extension]
+      description: This index's relationship to the referenced case.
+      example: child
+CaseV2List:
+  type: object
+  description: >-
+    The list endpoint's envelope. Note that this API does NOT use the
+    `meta`/`objects` envelope the rest of CommCare's list endpoints use -- it
+    has its own three keys, built in `get_list`
+    (`corehq/apps/hqcase/api/get_list.py:102-118`).
+  required: [matching_records, cases]
+  properties:
+    matching_records:
+      type: integer
+      description: >-
+        Total number of cases matching the query, across all pages -- not the
+        number returned in this page. Taken from the Elasticsearch hit total
+        (`corehq/apps/hqcase/api/get_list.py:103`).
+      example: 1
+    cases:
+      type: array
+      description: This page of cases, oldest `indexed_on` first.
+      items:
+        $ref: "#/CaseV2"
+    next:
+      type: string
+      description: >-
+        Absolute URL of the next page. **Present only when another page exists**
+        -- the key is absent, not null, on the last page
+        (`corehq/apps/hqcase/api/get_list.py:109-116`). The URL carries a single
+        opaque `cursor` parameter that encodes the original query plus the
+        position to resume from; follow it verbatim and do not attempt to
+        construct or decode it. Any query parameters sent alongside a `cursor`
+        are discarded in favour of the ones encoded inside it
+        (`corehq/apps/hqcase/api/get_list.py:85-91`), which is how `fields` /
+        `exclude` filtering survives across pages.
+      example: https://www.commcarehq.org/a/demo/api/case/v2/?cursor=Y2FzZV90eXBlPXBhdGllbnQ%3D
+CaseV2BulkResult:
+  type: object
+  description: >-
+    The envelope returned by the bulk-fetch endpoint AND by a comma-separated
+    multi-id GET. Both call `_get_bulk_cases`
+    (`corehq/apps/hqcase/views.py:136-143`), so the shape is identical. Note it
+    is a different envelope from the list endpoint's: there is no `next` (bulk
+    fetches are never paginated) and there is an extra `missing_records`.
+  required: [cases, matching_records, missing_records]
+  properties:
+    cases:
+      type: array
+      description: >-
+        One entry per requested id, in the order the ids were supplied. When
+        both `case_ids` and `external_ids` are supplied, the results for
+        `case_ids` come first. An id that matched no case in this project space
+        yields a stub object instead of a case -- see `CaseV2MissingStub`.
+      items:
+        oneOf:
+          - $ref: "#/CaseV2"
+          - $ref: "#/CaseV2MissingStub"
+    matching_records:
+      type: integer
+      description: Number of requested ids that resolved to a case.
+      example: 2
+    missing_records:
+      type: integer
+      description: Number of requested ids that did not resolve to a case.
+      example: 2
+CaseV2MissingStub:
+  type: object
+  description: >-
+    Placeholder returned in `cases` for an id that matched no case in this
+    project space (`_prepare_result`,
+    `corehq/apps/hqcase/api/get_bulk.py:84-106`). It holds exactly two keys: the
+    id that was requested, under `case_id` or `external_id` depending on which
+    list it came from, and `error`. Field filtering (`fields` / `exclude`) is
+    deliberately not applied to stubs (`corehq/apps/hqcase/views.py:139-142`),
+    so `error` cannot be filtered away. Detect a stub by testing for the
+    presence of `error`, not by testing for missing case fields -- `fields` can
+    strip a real case down to very little.
+  required: [error]
+  properties:
+    case_id:
+      type: string
+      description: >-
+        The requested case UUID. Present when the id came from `case_ids` (or
+        from the comma-separated path segment).
+      example: d5e5962a-c5f1-483c-a58a-590167d594a9
+    external_id:
+      type: string
+      description:
+        The requested external id. Present when the id came from `external_ids`.
+      example: id1
+    error:
+      type: string
+      enum: [not found]
+      description: >-
+        Always the literal string `not found`
+        (`corehq/apps/hqcase/api/get_bulk.py:86-87`).
+      example: not found
+CaseV2BulkFetchRequest:
+  type: object
+  description: >-
+    Body of the bulk-fetch endpoint. At least one of `case_ids` or
+    `external_ids` must be present and non-empty, or the request fails with a
+    400 (`corehq/apps/hqcase/views.py:209-212`). The combined length of the two
+    lists may not exceed 5000 (`MAX_PAGE_SIZE`,
+    `corehq/apps/hqcase/api/get_bulk.py:36-37`,
+    `corehq/apps/hqcase/api/get_list.py:21`).
+  properties:
+    case_ids:
+      type: array
+      items:
+        type: string
+      description: Case UUIDs to fetch.
+      example:
+        - 30ad22bd-f828-4e3f-8287-a67a180cff4f
+        - d5e5962a-c5f1-483c-a58a-590167d594a9
+    external_ids:
+      type: array
+      items:
+        type: string
+      description: External ids to fetch.
+      example:
+        - id1
+        - id2
+CaseV2WriteIndexEntry:
+  type: object
+  description: >-
+    One entry of the `indices` map on a write payload (`JsonIndex`,
+    `corehq/apps/hqcase/api/updates.py:43-66`). Identify the referenced case
+    with exactly one of `case_id`, `external_id`, or `temporary_id`; supplying
+    more than one is a 400. When one of them is supplied, `case_type` and
+    `relationship` both become required. Supplying none of the three deletes the
+    index.
+  properties:
+    case_id:
+      type: string
+      description: UUID of an existing case to point at.
+      example: eb1a8c23-6d6d-4b61-894c-ae1c437d8dac
+    external_id:
+      type: string
+      description: >-
+        External id of the case to point at. Resolved against cases created
+        earlier in the same request first, then against the database; an
+        external id that resolves to nothing is a 400.
+      example: beth
+    temporary_id:
+      type: string
+      description: >-
+        `temporary_id` of another case in the same bulk payload. Lets a case and
+        its parent be created in one request.
+      example: "1"
+    case_type:
+      type: string
+      description:
+        Case type of the referenced case. Required unless the index is being
+        deleted.
+      example: household
+    relationship:
+      type: string
+      enum: [child, extension]
+      description: >-
+        Relationship to the referenced case. Required unless the index is being
+        deleted. `extension` requires the Extension Cases feature flag.
+      example: child
+CaseV2Create:
+  type: object
+  description: >-
+    Body for creating one case (`JsonCaseCreation`,
+    `corehq/apps/hqcase/api/updates.py:128-146`). `case_id` is rejected -- the
+    server assigns it. Any field not listed here is rejected with `"'<field>' is
+    not a valid field."`; in particular `create` is a bulk-only field and is
+    rejected on a single-case payload.
+  required: [case_type, case_name, owner_id]
+  properties:
+    case_type:
+      type: string
+      maxLength: 255
+      description: Required.
+      example: patient
+    case_name:
+      type: string
+      maxLength: 255
+      description: Required.
+      example: Elizabeth Harmon
+    owner_id:
+      type: string
+      maxLength: 255
+      description:
+        Required. UUID of the owning mobile worker, group, or location. Not
+        validated.
+      example: 20cc9dda-b90a-4af3-aa3d-fc67184e73ef
+    external_id:
+      type: string
+      maxLength: 255
+      description: >-
+        Optional caller-assigned identifier. **Not** deduplicated: posting a
+        payload whose `external_id` already exists creates a second case with
+        the same `external_id`. Use `PUT
+        /a/{domain}/api/case/v2/ext/{external_id}/` if you want upsert
+        semantics.
+      example: "1"
+    temporary_id:
+      type: string
+      description: >-
+        Only meaningful inside a bulk payload, where other entries can reference
+        this case by it. Accepted and ignored on a single-case create. Never
+        stored.
+      example: "1"
+    properties:
+      type: object
+      additionalProperties:
+        type: string
+      description: >-
+        User-defined case properties. Every value must be a string. Every name
+        must be a valid XML element name (not blank, letters and digits only,
+        not starting with a digit or with `xml`) and must not collide with a
+        top-level field name such as `case_name`
+        (`corehq/apps/hqcase/api/updates.py:23-33`).
+      example:
+        dob: "1948-11-02"
+    indices:
+      type: object
+      additionalProperties:
+        $ref: "#/CaseV2WriteIndexEntry"
+      description: >-
+        Indices to set, keyed by index identifier. Identifiers must be valid XML
+        element names.
+      example:
+        parent:
+          case_id: eb1a8c23-6d6d-4b61-894c-ae1c437d8dac
+          case_type: household
+          relationship: child
+    close:
+      type: boolean
+      default: false
+      description: Close the case as part of this request.
+      example: false
+CaseV2Update:
+  type: object
+  description: >-
+    Body for updating one existing case (`JsonCaseUpdate`,
+    `corehq/apps/hqcase/api/updates.py:149-163`). Every field is optional;
+    omitted fields are left untouched (omitting `external_id` does not clear
+    it). The case must already exist -- there is no upsert on this payload. Any
+    field not listed here is rejected with `"'<field>' is not a valid field."`,
+    `create` included.
+  properties:
+    case_id:
+      type: string
+      description: >-
+        Identifies the case to update. On `PUT
+        /a/{domain}/api/case/v2/{case_id}` the path value is used and this may
+        be omitted -- but if it IS supplied it takes precedence over the path
+        (`corehq/apps/hqcase/views.py:257-258`), so a mismatched value silently
+        updates a different case. On `PUT /a/{domain}/api/case/v2/` one of
+        `case_id` or `external_id` is required.
+      example: 5160d95d-efdc-4fbb-ba11-5f5bccdde950
+    external_id:
+      type: string
+      maxLength: 255
+      description: >-
+        Sets the case's external id. Doubles as the case selector when `case_id`
+        is absent, in which case it must resolve to exactly one existing case or
+        the request is a 400.
+      example: "1"
+    case_type:
+      type: string
+      maxLength: 255
+      example: patient
+    case_name:
+      type: string
+      maxLength: 255
+      example: Elizabeth Harmon
+    owner_id:
+      type: string
+      maxLength: 255
+      description: Reassigns the case. Not validated server-side.
+      example: 20cc9dda-b90a-4af3-aa3d-fc67184e73ef
+    properties:
+      type: object
+      additionalProperties:
+        type: string
+      description: >-
+        Case properties to set. Merged into the case's existing properties;
+        properties not mentioned are left alone. Same string-value and
+        XML-element-name rules as on create.
+      example:
+        dob: "1948-11-02"
+    indices:
+      type: object
+      additionalProperties:
+        $ref: "#/CaseV2WriteIndexEntry"
+      description: >-
+        Indices to set. An entry with none of `case_id`/`external_id`/
+        `temporary_id` deletes that index.
+      example:
+        parent:
+          case_id: eb1a8c23-6d6d-4b61-894c-ae1c437d8dac
+          case_type: household
+          relationship: child
+    close:
+      type: boolean
+      default: false
+      description: Close the case as part of this request.
+      example: false
+CaseV2Upsert:
+  type: object
+  description: >-
+    Body for `PUT /a/{domain}/api/case/v2/ext/{external_id}/`. The view fills in
+    `external_id` from the path when the body omits it, looks the case up, and
+    then routes the payload to the create path if no case was found or the
+    update path if one was (`_handle_ext_put`,
+    `corehq/apps/hqcase/views.py:224-248`). So `case_type`, `case_name` and
+    `owner_id` are required whenever the case might not exist yet, and optional
+    otherwise -- send them always unless you know the case exists. `create` is
+    not a valid field here.
+  properties:
+    case_id:
+      type: string
+      description: >-
+        Optional, and only useful as an assertion: if supplied it must equal the
+        `case_id` of the case the external id resolves to, otherwise the request
+        is a 400 (`corehq/apps/hqcase/views.py:241-246`).
+      example: 5160d95d-efdc-4fbb-ba11-5f5bccdde950
+    external_id:
+      type: string
+      maxLength: 255
+      description: >-
+        Defaults to the value in the path. Supplying a different value here
+        changes the case's external id while still selecting the case by the
+        path value.
+      example: "1"
+    case_type:
+      type: string
+      maxLength: 255
+      description: Required if the case does not already exist.
+      example: patient
+    case_name:
+      type: string
+      maxLength: 255
+      description: Required if the case does not already exist.
+      example: Elizabeth Harmon
+    owner_id:
+      type: string
+      maxLength: 255
+      description: Required if the case does not already exist.
+      example: 20cc9dda-b90a-4af3-aa3d-fc67184e73ef
+    properties:
+      type: object
+      additionalProperties:
+        type: string
+      description: User-defined case properties. Same rules as on create.
+      example:
+        dob: "1948-11-02"
+    indices:
+      type: object
+      additionalProperties:
+        $ref: "#/CaseV2WriteIndexEntry"
+      description: Indices to set, keyed by index identifier.
+      example:
+        parent:
+          case_id: eb1a8c23-6d6d-4b61-894c-ae1c437d8dac
+          case_type: household
+          relationship: child
+    close:
+      type: boolean
+      default: false
+      description: Close the case as part of this request.
+      example: false
+CaseV2BulkChange:
+  type: object
+  description: >-
+    One entry of a bulk payload. `create` is **required on every entry** and
+    selects which of the three payload shapes above applies
+    (`_get_bulk_updates`, `corehq/apps/hqcase/api/updates.py:239-260`). All
+    other constraints are those of the selected shape.
+  required: [create]
+  properties:
+    create:
+      type: boolean
+      nullable: true
+      description: >-
+        `true` -- treat this entry as a creation (`CaseV2Create` rules;
+        `case_id` is rejected). `false` -- treat it as an update (`CaseV2Update`
+        rules; `case_id` or `external_id` required, and the case must already
+        exist). `null` -- upsert on `external_id` (`CaseV2Upsert` rules;
+        `external_id` required, `case_id` rejected). The key itself may never be
+        omitted: doing so fails the whole request with `"A 'create' flag is
+        required for each update."`
+      example: true
+    case_id:
+      type: string
+      description:
+        Rejected when `create` is `true` or `null`; the selector when `create`
+        is `false`.
+      example: 5160d95d-efdc-4fbb-ba11-5f5bccdde950
+    case_type:
+      type: string
+      maxLength: 255
+      example: mother
+    case_name:
+      type: string
+      maxLength: 255
+      example: Cersei Lannister
+    owner_id:
+      type: string
+      maxLength: 255
+      example: 20cc9dda-b90a-4af3-aa3d-fc67184e73ef
+    external_id:
+      type: string
+      maxLength: 255
+      example: beth
+    temporary_id:
+      type: string
+      description: >-
+        Request-scoped alias for this case, so other entries in the same payload
+        can point their indices at it before it has a `case_id`. Must be unique
+        within the request. Never stored. Only valid when `create` is `true`.
+      example: "1"
+    properties:
+      type: object
+      additionalProperties:
+        type: string
+      description: User-defined case properties. All values must be strings.
+      example:
+        dob: "1988-11-02"
+    indices:
+      type: object
+      additionalProperties:
+        $ref: "#/CaseV2WriteIndexEntry"
+      description: Indices to set, keyed by index identifier.
+      example:
+        parent:
+          temporary_id: "1"
+          case_type: mother
+          relationship: child
+    close:
+      type: boolean
+      default: false
+      example: false
+CaseV2BulkChangeList:
+  type: array
+  description: >-
+    A bulk payload: a JSON array of case changes. At most 100 entries
+    (`CASEBLOCK_CHUNKSIZE`, `corehq/apps/hqcase/utils.py:28`); more is a 400 and
+    nothing is saved. All entries are applied by a single generated form
+    submission, so the whole batch succeeds or fails together.
+  maxItems: 100
+  items:
+    $ref: "#/CaseV2BulkChange"
+CaseV2WriteResponse:
+  type: object
+  description: >-
+    Response to a create or update whose request body was a single JSON object
+    (`corehq/apps/hqcase/views.py:286-289`).
+  required: [form_id, case]
+  properties:
+    form_id:
+      type: string
+      description: >-
+        UUID of the form generated on the server to make this change. Note the
+        key is `form_id`; `cases-v2.rst` calls it `xform_id` -- see the
+        discrepancy file.
+      example: 1de6ee6b-3f3e-4a5e-9d80-71e2ce1b1e9f
+    case:
+      allOf:
+        - $ref: "#/CaseV2"
+      description: >-
+        The case as it stands after the change. `fields` / `exclude` query
+        parameters apply to this object but not to `form_id`.
+CaseV2BulkWriteResponse:
+  type: object
+  description: >-
+    Response to a create or update whose request body was a JSON array
+    (`corehq/apps/hqcase/views.py:281-285`). Note the key is `cases`, not
+    `case`, and there is still exactly one `form_id` for the whole batch.
+  required: [form_id, cases]
+  properties:
+    form_id:
+      type: string
+      description: >-
+        UUID of the single form generated to apply every change in the batch.
+        `cases-v2.rst` calls it `xform_id` -- see the discrepancy file.
+      example: 1de6ee6b-3f3e-4a5e-9d80-71e2ce1b1e9f
+    cases:
+      type: array
+      description: >-
+        The cases after the change, in the order they were submitted. `fields` /
+        `exclude` query parameters apply to each element.
+      items:
+        $ref: "#/CaseV2"
+CaseV2SubmissionError:
+  type: object
+  description: >-
+    Error body used when a write got as far as being submitted as a form and
+    then failed during form processing (`SubmissionError`,
+    `corehq/apps/hqcase/views.py:275-279`). No case changes were made. It
+    differs from the shared `Error` schema by carrying the extra `form_id` of
+    the recorded `XFormError`.
+  required: [error, form_id]
+  properties:
+    error:
+      type: string
+      description: Human-readable description of the failure.
+      example: "IllegalCaseId: Case is not in the domain"
+    form_id:
+      type: string
+      description: UUID of the `XFormError` recorded for the failed submission.
+      example: 1de6ee6b-3f3e-4a5e-9d80-71e2ce1b1e9f
