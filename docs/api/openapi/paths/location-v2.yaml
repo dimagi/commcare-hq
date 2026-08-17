@@ -1,0 +1,358 @@
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listLocationsV2
+    summary: List locations (v2)
+    description: >-
+      Returns locations the authenticated user is permitted to see. Requires the
+      Edit Locations permission and the Locations privilege on the domain --
+      `BaseLocationsResource.dispatch`
+      (`corehq/apps/locations/resources/v0_5.py:19-23`) rejects the whole
+      request with a bare 403 if the domain lacks the Locations privilege,
+      before authentication is even checked.
+    tags: [Data]
+    parameters:
+      - name: site_code
+        in: query
+        required: false
+        description: Restrict to locations with this exact site code.
+        example: fairfax_county
+        schema:
+          type: string
+      - name: name
+        in: query
+        required: false
+        description:
+          Restrict to locations with this exact (case-sensitive) name.
+        example: Fairfax County
+        schema:
+          type: string
+      - name: location_type_code
+        in: query
+        required: false
+        description: >-
+          Restrict to locations of this type code. Handled specially by
+          `build_filters` (`v0_6.py:56-69`), mapped to the ORM lookup
+          `location_type__code`.
+        example: city
+        schema:
+          type: string
+      - name: parent_location_id
+        in: query
+        required: false
+        description: >-
+          UUID of the location's direct parent. Handled specially by
+          `build_filters`, mapped to the ORM lookup `parent__location_id`.
+        example: 5ce87caa-a739-4a61-a0cb-559f84a9b4b7
+        schema:
+          type: string
+      - name: "last_modified.gte"
+        in: query
+        required: false
+        description: >-
+          Locations last modified on or after this date or datetime. This is a
+          real Django ORM filter against `SQLLocation.last_modified` (a
+          `DateTimeField`), not a hand-parsed value like cases/v1's
+          `*_start`/`*_end`: `build_filters` (`v0_6.py:56-69`) rewrites the
+          dotted key to `last_modified__gte` and passes the raw string straight
+          to the queryset. Django's `DateTimeField.get_prep_value`
+          (`django/db/models/fields/__init__.py:1186-1190`) calls `to_python`,
+          which tries `django.utils.dateparse.parse_datetime` first
+          (`django/db/models/fields/__init__.py:1621-1630`) -- this accepts a
+          bare date, a naive datetime, **or** one with a UTC offset or literal
+          `Z` (`parse_datetime` handles all of RFC3339). Because
+          `settings.USE_TZ = False` (`settings.py:57`), the naive-vs-aware
+          reconciliation branch in `get_prep_value`
+          (`django/db/models/fields/__init__.py:1198-1200`, `if ...
+          settings.USE_TZ and timezone.is_naive(value)`) never fires either way,
+          so an aware value is passed through unconverted to
+          `adapt_datetimefield_value`
+          (`django/db/backends/postgresql/operations.py:350-351`, a no-op) and
+          compared by Postgres using the session's own timezone rules --
+          **unlike case/v1's `validate_date`, an offset here is accepted, not
+          rejected with a 400.** This is the opposite of case/v1 and was traced
+          directly (not copied from either precedent), per the task brief; it
+          was not re-verified against a live database in this environment (no
+          Postgres/Elasticsearch service was reachable here -- see the
+          discrepancy file), only against Django's own ORM source.
+        example: "2024-01-01"
+        schema:
+          type: string
+      - name: "last_modified.gt"
+        in: query
+        required: false
+        description: >-
+          Locations last modified strictly after this date or datetime. Same
+          parsing as `last_modified.gte`.
+        example: "2024-01-01"
+        schema:
+          type: string
+      - name: "last_modified.lt"
+        in: query
+        required: false
+        description: >-
+          Locations last modified strictly before this date or datetime. Same
+          parsing as `last_modified.gte`.
+        example: "2024-01-01"
+        schema:
+          type: string
+      - name: "last_modified.lte"
+        in: query
+        required: false
+        description: >-
+          Locations last modified on or before this date or datetime. Same
+          parsing as `last_modified.gte`.
+        example: "2024-01-01"
+        schema:
+          type: string
+      - name: order_by
+        in: query
+        required: false
+        description: >-
+          Sort by `last_modified`, oldest first. Prefix with `-` for newest
+          first. The only sortable field (`v0_6.LocationResource.Meta.ordering`,
+          `v0_6.py:33`). Useful in conjunction with `last_modified.gte` to page
+          through locations modified since a previous pull.
+        example: last_modified
+        schema:
+          type: string
+          enum: [last_modified, -last_modified]
+      - name: limit
+        in: query
+        required: false
+        description: >-
+          Maximum number of records to return. Default 20. Capped at 5000 by
+          `v0_6.LocationResource.Meta.max_limit` (`v0_6.py:30`) -- higher than
+          the 1000 most other list endpoints enforce, so this is a
+          resource-specific parameter rather than the shared `Limit` component.
+        example: 100
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5000
+          default: 20
+      - $ref: "../components/parameters.yaml#/Offset"
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: A page of locations.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/location.yaml#/LocationV2List"
+      "400":
+        $ref: "../components/responses.yaml#/BadRequest"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # See listLocationsV1's 403 in location-v1.yaml for the full trace;
+        # same RequirePermissionAuthentication + domain-privilege mechanism.
+        description: >-
+          The authenticated user lacks the Edit Locations permission, or the
+          domain lacks the Locations privilege. The response body is empty.
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
+  post:
+    operationId: createLocationV2
+    summary: Create a single location (v2)
+    tags: [Data]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/location.yaml#/LocationCreate"
+    responses:
+      "201":
+        description: >-
+          The location was created. `Meta.always_return_data = True`
+          (`v0_6.py:37`), so the full new location is returned, unlike the group
+          resource's `{id}`-only POST.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/location.yaml#/LocationV2"
+      "400":
+        description: >-
+          The payload was invalid (missing `name`/`location_type_code`, an
+          unrecognized field, a parent that cannot have children, a duplicate
+          sibling name, an invalid site code, etc.) -- every validation path
+          raises `LocationAPIError`, a `tastypie.exceptions.BadRequest` subclass
+          (`v0_6.py:18-22`), converted by `wrap_view`
+          (`tastypie/resources.py:244-246`) to the standard `{"error": ...}`
+          shape. Confirmed by
+          `corehq/apps/locations/tests/test_api_resources.py:302-304,313-316,327-329`.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks the Edit Locations permission, or the
+          domain lacks the Locations privilege. The response body is empty.
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
+  patch:
+    operationId: bulkCreateOrUpdateLocationsV2
+    summary: Bulk create or update locations
+    description: >-
+      Accepts a list of location payloads under `objects`
+      (`v0_6.LocationResource.patch_list`, `v0_6.py:164-173`, calling the shared
+      `patch_list_replica`, `corehq/apps/api/resources/__init__.py:172-205`).
+      Each item is a create (no `location_id`) or an update (`location_id`
+      present) -- create uses the same validation as `createLocationV2`, update
+      the same as `replaceLocationV2`. Limited to 100 objects per request
+      (`v0_6.LocationResource.patch_limit`, `v0_6.py:27`); exceeding it raises
+      `BadRequest("Object count exceeds limit for PATCH method.")` before any
+      object is processed. The whole batch is atomic (`@atomic` on `patch_list`,
+      `v0_6.py:164`): if any single item fails validation, nothing in the batch
+      is created or updated. **Unlike the group resource's bulk PATCH, a
+      partial-failure response here is never a positionally-aligned array of
+      ids/errors** -- `patch_list_replica`'s per-item `except AssertionError`
+      (`corehq/apps/api/resources/__init__.py :199-201`) is unreachable for this
+      resource, since every validation failure here raises `LocationAPIError` (a
+      `BadRequest`, not an `AssertionError`). A `BadRequest` propagates straight
+      past `patch_list_replica`'s loop, uncaught, to `wrap_view`
+      (`tastypie/resources.py:244-246`), which converts it to a single
+      `{"error": ...}` object -- the array-of-strings shape is therefore only
+      ever seen on full success. Confirmed by
+      `corehq/apps/locations/tests/test_api_resources.py:401-430`
+      (`response.json() == {'error': "Could not update: ..."}`, not an array).
+    tags: [Data]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [objects]
+            properties:
+              objects:
+                type: array
+                items:
+                  anyOf:
+                    - $ref: "../components/schemas/location.yaml#/LocationCreate"
+                    - $ref: "../components/schemas/location.yaml#/LocationBulkUpdate"
+    responses:
+      "202":
+        description: >-
+          Every location in the batch was created or updated. The body is a flat
+          array of the resulting `location_id`s, in the same order as the
+          submitted `objects` (`patch_list_replica`,
+          `corehq/apps/api/resources/__init__.py:204`, and `create_or_update`'s
+          `bundle.data['_id'] = bundle.obj.location_id`, `v0_6.py:171`).
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                description: Location ID of a created or updated location.
+              example:
+                - eea759ae08044807be749f665a1fd39a
+      "400":
+        description: >-
+          Either the batch exceeded the 100-object limit, or a single item
+          failed validation -- the whole batch is rolled back either way. The
+          body is a single `{"error": ...}` object, not an array (see the
+          operation description).
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks the Edit Locations permission, or the
+          domain lacks the Locations privilege. The response body is empty.
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
+Detail:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: location_id
+      in: path
+      required: true
+      description: Location UUID.
+      example: 68e65fbc2dc840ff8bf03849e57aca88
+      schema:
+        type: string
+  get:
+    operationId: getLocationV2
+    summary: Retrieve a single location (v2)
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: The location.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/location.yaml#/LocationV2"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks the Edit Locations permission, or the
+          domain lacks the Locations privilege. The response body is empty.
+      "404":
+        # Deliberately not the shared NotFound ref: GET is not overridden by
+        # v0_6.LocationResource, so tastypie's default ModelResource.get_detail
+        # (tastypie/resources.py:1362-1383) catches SQLLocation.DoesNotExist
+        # and returns a bare http.HttpNotFound() -- no body.
+        description:
+          The requested location does not exist. The response body is empty.
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
+  put:
+    operationId: replaceLocationV2
+    summary: Update a single location (v2)
+    # No 404 here -- deliberately, not an oversight. obj_update
+    # (v0_6.py:90-99) looks up the location with a plain
+    # `SQLLocation.objects.get(location_id=..., domain=...)` and converts a
+    # miss to `LocationAPIError` (a BadRequest), never tastypie's own
+    # `NotFound` -- the only exception `put_detail`
+    # (tastypie/resources.py:1502) catches to fall back to `obj_create`. So a
+    # nonexistent `location_id` in the URL reaches the standard `BadRequest`
+    # -> `{"error": ...}` 400 path instead of ever producing a 404. Confirmed
+    # by corehq/apps/locations/tests/test_api_resources.py:401-430 (same
+    # message and code path as the bulk-PATCH update branch, which shares
+    # `obj_update`). See the discrepancy file.
+    tags: [Data]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/location.yaml#/LocationUpdate"
+    responses:
+      "200":
+        description: >-
+          The updated location. `Meta.always_return_data = True`, so the full
+          object is returned.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/location.yaml#/LocationV2"
+      "400":
+        description: >-
+          The payload was invalid, included an unrecognized field (including
+          `location_id` -- see `LocationUpdate`'s description), or named a
+          `location_id` that does not exist on this domain.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks the Edit Locations permission, or the
+          domain lacks the Locations privilege. The response body is empty.
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"

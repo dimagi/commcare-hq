@@ -96,6 +96,18 @@ paths:
     $ref: "./paths/web-user.yaml#/Invitation"
   /api/identity/v1/:
     $ref: "./paths/web-user.yaml#/Identity"
+  /a/{domain}/api/location/v1/:
+    $ref: "./paths/location-v1.yaml#/List"
+  /a/{domain}/api/location/v1/{location_id}/:
+    $ref: "./paths/location-v1.yaml#/Detail"
+  /a/{domain}/api/location/v2/:
+    $ref: "./paths/location-v2.yaml#/List"
+  /a/{domain}/api/location/v2/{location_id}/:
+    $ref: "./paths/location-v2.yaml#/Detail"
+  /a/{domain}/api/location_type/v1/:
+    $ref: "./paths/location-type.yaml#/List"
+  /a/{domain}/api/location_type/v1/{id}/:
+    $ref: "./paths/location-type.yaml#/Detail"
   /a/{domain}/api/bulk-user/v1/:
     $ref: "./paths/bulk-user.yaml#/List"
   /a/{domain}/api/sso/v1/:

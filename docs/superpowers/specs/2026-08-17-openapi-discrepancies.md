@@ -983,3 +983,248 @@ the view's own `if` chain", and anything that falls through returns a 405
   `BaseThrottle.should_be_throttled` (`tastypie/throttle.py:51-61`) always
   returns `False`. Same situation, and same treatment, as `getIdentity`'s
   `429` in `paths/web-user.yaml`.
+
+## location/v1, location/v2, location_type/v1 (`locations-v1.rst`, `locations-v2.rst`, `location-types.rst`)
+
+- **`location_type/v1` is not actually method-restricted at all -- its
+  effective GET-only behavior comes from a different mechanism than
+  `location/v1`'s, and one write attempt reaches a different status than
+  either method_check (405) or the shared PermissionDenied path (bare 403).**
+  Confirmed by direct introspection
+  (`v0_5.LocationTypeResource()._meta.list_allowed_methods` /
+  `.detail_allowed_methods` both evaluate to
+  `['get', 'post', 'put', 'delete', 'patch']` -- tastypie's full default,
+  since `LocationTypeResource.Meta` (`v0_5.py:29-46`) never sets
+  `allowed_methods`/`list_allowed_methods`/`detail_allowed_methods` at all).
+  Contrast `v0_5.LocationResource.Meta`, which explicitly sets
+  `allowed_methods = ['get']` (`v0_5.py:77`), confirmed to actually produce
+  `list_allowed_methods = detail_allowed_methods = ['get']`. So a non-GET
+  request to `location_type/v1/` passes tastypie's `method_check`
+  (`tastypie/resources.py:521-555`) and reaches the normal
+  create/update/delete flow, unlike `location/v1`, which 405s before that
+  point. What actually stops the write is `Meta.authorization`, which neither
+  `LocationTypeResource` nor any ancestor overrides, so it defaults to
+  `tastypie.authorization.ReadOnlyAuthorization()` (confirmed by
+  introspection: `type(lt._meta.authorization)` is
+  `ReadOnlyAuthorization`). `ReadOnlyAuthorization.create_detail`/
+  `update_detail`/`delete_detail` (`tastypie/authorization.py:107-120`) each
+  raise `tastypie.exceptions.Unauthorized`. The default
+  `ModelResource.obj_create`/`obj_update`/`obj_delete` (which
+  `LocationTypeResource` does not override) route through `save()`
+  (`tastypie/resources.py:2392-2410`), which calls
+  `authorized_create_detail`/`authorized_update_detail`
+  (`tastypie/resources.py:651-663, 677-689`); those catch `Unauthorized` and
+  call `unauthorized_result` (`tastypie/resources.py:610-611`), which raises
+  `ImmediateHttpResponse(response=http.HttpUnauthorized())` -- a bare, empty
+  **401**. This propagates to `wrap_view`'s generic exception handler
+  (`tastypie/resources.py:250-254`), which special-cases any exception with an
+  `HttpResponse`-typed `.response` attribute and returns it directly. Net
+  effect: a POST/PUT/PATCH/DELETE to `location_type/v1/` reaches a bare empty
+  401, not the 405 `location/v1` produces for the same verbs, not the bare 403
+  a permission failure produces elsewhere in this API, and not a 500. Neither
+  `location-types.rst` nor the task brief's method table describes this
+  correctly (the brief assumed `location_type` was method-restricted the same
+  way `location/v1` is); the spec documents only the real, working GET
+  operations for `location_type/v1`, matching the reST docs, and omits any
+  write operations rather than documenting ones that only ever fail.
+- **v2's `PUT` on a nonexistent `location_id` is a 400, never a 404,** and the
+  detail `GET`/bulk-`PATCH`-update code paths reach three different outcomes
+  for "location not found" despite sharing the same lookup helper.
+  `v0_6.LocationResource.obj_update` (`v0_6.py:90-99`) fetches with a plain
+  `SQLLocation.objects.get(location_id=..., domain=...)` and converts a miss
+  directly to `LocationAPIError` (`v0_6.py:18-22`, a
+  `tastypie.exceptions.BadRequest` subclass) -- never tastypie's own
+  `NotFound`, the only exception `put_detail`
+  (`tastypie/resources.py:1502`) catches to fall back to `obj_create`. So the
+  miss reaches `wrap_view`'s `except (BadRequest, fields.ApiFieldError)`
+  (`tastypie/resources.py:244-246`) and becomes a 400 with the standard
+  `{"error": "Could not update: could not find location with given ID <id> on
+  the domain."}` body -- confirmed verbatim by
+  `corehq/apps/locations/tests/test_api_resources.py:401-430`
+  (`test_patch_list_missing_location_id`, which exercises the identical
+  `obj_update` call from the bulk-PATCH path and asserts exactly this message
+  and a 400 status). `replaceLocationV2`'s GET sibling
+  (`getLocationV2`) does 404 correctly, since GET is not overridden and goes
+  through tastypie's default `get_detail`
+  (`tastypie/resources.py:1362-1383`), which catches
+  `SQLLocation.DoesNotExist` (a real `ObjectDoesNotExist`) and returns a bare
+  `http.HttpNotFound()`. `locations-v2.rst` never states what happens for a
+  missing `location_id` on either endpoint. The spec's `replaceLocationV2`
+  omits `404` entirely (with an inline comment in `paths/location-v2.yaml`)
+  and documents the 400 instead; `getLocationV2` keeps its genuine, bare-body
+  404.
+- **v2's detail `PUT` will 400 if the client includes `location_id` in the
+  request body, undocumented by `locations-v2.rst`.** `obj_update`
+  (`v0_6.py:90-99`) resolves the target id with
+  `location_id = kwargs.get('location_id') or bundle.data.pop('location_id')`.
+  For the URL-based detail PUT, `kwargs['location_id']` (from the URL) is
+  always truthy, so Python's `or` short-circuits and
+  `bundle.data.pop('location_id')` is never evaluated -- any `location_id` key
+  in the body is never removed from `data`. `_update`'s end-of-method leftover
+  check (`v0_6.py:134-136`, `if len(data): raise LocationAPIError(...
+  "Invalid fields were included in request: [...]")`) then fires, since
+  `location_id` is not among the fields `_update` recognizes. (The bulk-PATCH
+  path is different: there, `kwargs.get('location_id')` is falsy because the
+  list endpoint's URL kwargs never include a `location_id`, so the `or`
+  falls through to `bundle.data.pop('location_id')`, which is exactly how a
+  bulk item signals "this is an update" -- `location_id` in the body is
+  required and expected there, not rejected.) `locations-v2.rst`'s "Editable
+  Fields" table for PUT (`:175-196`) simply omits `location_id` without
+  warning that including it is actively rejected. The spec's `LocationUpdate`
+  schema documents this in its description and does not list `location_id` as
+  a property.
+- **v2's bulk `PATCH` never produces the group resource's
+  ids-and-errors-mixed-positionally array -- a batch either fully succeeds
+  (array of ids) or fully fails (single `{"error": ...}` object), never
+  both.** The task brief suggested this resource's bulk PATCH "returns
+  surprising shapes" the way the group resource's does and pointed at
+  `patch_list_replica`'s `obj_limit` handling as the mechanism to trace;
+  tracing it shows the two resources diverge. `patch_list_replica`
+  (`corehq/apps/api/resources/__init__.py:172-205`) only ever substitutes an
+  error string into the per-item array slot inside its `except AssertionError`
+  handler (`:199-201`) -- for the group resource this fires because its
+  `obj_create`/`obj_update` raise bare `assert` statements
+  (`corehq/apps/api/resources/v0_5.py:753,759`). `v0_6.LocationResource`'s
+  entire write path (`_update`, `_validate_new_parent`,
+  `_validate_unique_among_siblings`, `_get_parent_location`, `obj_create`,
+  `obj_update`) raises only `LocationAPIError` (a `BadRequest`, not an
+  `AssertionError`) for every validation failure; there is no bare `assert`
+  anywhere in `v0_6.py`. A `LocationAPIError` from any item is never caught by
+  `patch_list_replica`'s per-item `try/except AssertionError`
+  (`v0_6.py:166-171` calls `create_or_update`, wrapped by
+  `patch_list_replica` at `:197-198`) -- it propagates straight out of the
+  loop, past the `@atomic` decorator on `patch_list` (`v0_6.py:164`, which
+  rolls back on the way out), to `wrap_view`'s `except (BadRequest, ...)`,
+  which converts it to a single `{"error": ...}` 400 object. Confirmed by
+  `corehq/apps/locations/tests/test_api_resources.py:377-430`
+  (`test_patch_list_is_atomic` asserts 400 and that nothing was created;
+  `test_patch_list_missing_location_id` asserts
+  `response.json() == {'error': "Could not update: ..."}"`, not an array).
+  The `obj_limit` check itself (`patch_list_replica:191-192`,
+  `v0_6.LocationResource.patch_limit = 100`, `v0_6.py:27`) also raises a plain
+  `BadRequest` before any item is processed, for the same single-object 400
+  shape. The array shape (`patch_list_replica:204`,
+  `[bundle.data['_id'] for bundle in bundles_seen]`) is therefore reachable
+  **only on full success** for this resource -- the ambiguous
+  id-or-error-string array documented for `bulkUpdateGroups` in
+  `paths/group.yaml` cannot occur here. The spec's
+  `bulkCreateOrUpdateLocationsV2` documents a clean array-of-ids `202` and a
+  single-object `{"error": ...}` `400`, explicitly noting the contrast with
+  the group resource.
+- **v2's `parent_location_id` is an empty string when a location has no
+  parent, not null -- inconsistent with v1's `parent`, which is null in the
+  same situation.** `v0_6.LocationResource.dehydrate`
+  (`v0_6.py:71-75`) sets `bundle.data['parent_location_id'] = ''` in the
+  no-parent branch. Confirmed by
+  `corehq/apps/locations/tests/test_api_resources.py:167`
+  (`"parent_location_id": ""` for `location1`, which has no parent).
+  `locations-v2.rst:64-66` describes the field only as "The UUID of the
+  location's direct parent," with no mention of the no-parent case.
+  `LocationV2`'s `parent_location_id` in the spec is typed as a plain
+  (non-nullable) string with this behavior called out explicitly.
+- **v1's `location_type` and `parent` fields, and v2's absence of them, were
+  verified by direct introspection, not assumed from the `Meta.fields`
+  declaration alone.** `v0_6.LocationResource.Meta.fields`
+  (`v0_6.py:39-48`) is a fresh set literal on a `class Meta:` with no base
+  class, so it does not inherit `v0_5.LocationResource.Meta`'s `fields` list
+  -- but `location_data`, `location_type`, and `parent` are also declared as
+  manually-attached `fields.X(...)` class attributes on `v0_5.LocationResource`
+  (`v0_5.py:68-70`), which Python inheritance *does* carry onto
+  `v0_6.LocationResource` regardless of `Meta`. Introspecting
+  `v0_6.LocationResource().fields.keys()` directly resolves the ambiguity:
+  the result is exactly the 8 keys in `v0_6.py`'s `Meta.fields` (`domain,
+  last_modified, latitude, location_data, location_id, longitude, name,
+  site_code`) -- `location_type` and `parent` are genuinely absent, meaning
+  `Meta.fields` does filter out inherited manually-declared fields too, not
+  just introspected model fields. `location_type_code`/`location_type_name`/
+  `parent_location_id` reach the response only via the `dehydrate` override
+  writing directly into `bundle.data`, confirmed against
+  `test_api_resources.py:157-213`'s exact-dict assertions. Not a
+  discrepancy against the reST docs (v2's sample matches), but recorded since
+  it contradicts what the `Meta.fields` docstring convention might suggest to
+  a future task about how `Meta.fields` and inherited manual fields interact.
+- **The v2 `last_modified.gte`/`.gt`/`.lt`/`.lte` filters accept a timezone
+  offset or literal `Z`, unlike case/v1's `*_start`/`*_end` filters, which
+  reject one with a 400 (`validate_date`).** Traced directly per the task
+  brief's instruction not to copy either existing precedent.
+  `v0_6.LocationResource.build_filters` (`v0_6.py:56-69`) does no date parsing
+  of its own -- it only rewrites the dotted key to a double-underscore ORM
+  lookup (`last_modified__gte`) and hands the raw query-string value straight
+  to `SQLLocation.objects.filter(...)`, a real Django ORM filter against
+  `last_modified`, a genuine `models.DateTimeField(auto_now=True)`
+  (`corehq/apps/locations/models.py:372`). Django's
+  `DateTimeField.get_prep_value` (`django/db/models/fields/__init__.py:
+  1186-1190`) calls `to_python`, which tries
+  `django.utils.dateparse.parse_datetime` first
+  (`django/db/models/fields/__init__.py:1621-1630`) -- this parses a bare
+  date, a naive datetime, or one with a UTC offset or trailing `Z`
+  indifferently, raising nothing for any of them. The
+  naive-vs-aware reconciliation branch that would otherwise matter
+  (`get_prep_value`, `django/db/models/fields/__init__.py:1198-1200`, guarded
+  by `settings.USE_TZ and timezone.is_naive(value)`) never fires either way
+  because `settings.USE_TZ = False` (`settings.py:57`) -- so an
+  offset-bearing value is passed straight through, unconverted, to
+  `adapt_datetimefield_value` (`django/db/backends/postgresql/operations.py:
+  350-351`, a no-op), and Postgres compares it against the naive
+  `timestamp without time zone` column using its own session timezone rules.
+  No exception is ever raised for an offset value on this code path -- a
+  materially different outcome from case/v1's `validate_date`
+  (`corehq/apps/api/es.py:277-285`), which checks the string against four
+  fixed `strptime` formats, none with `%z`, and explicitly rejects an offset
+  with a 400. **Caveat: this was traced entirely from Django/tastypie source,
+  not confirmed with a live request in this environment** -- no Postgres or
+  Elasticsearch service was reachable here (`docker ps` showed no running
+  containers, and the project's own Postgres was listening on a port the
+  configured `localsettings.py` `DATABASES` setting doesn't point at), so
+  `corehq/apps/locations/tests/test_api_resources.py`'s existing
+  `test_api_filters` cases (none of which include an offset) could not be
+  extended and re-run to double-check this conclusion empirically. A human
+  should confirm with a live database before treating this as settled.
+- **`location/v1` and `location_type/v1`'s 403 body is empty, not the shared
+  `{"error": ...}` shape `paths/group.yaml` and `paths/case-v1.yaml` point at
+  for the identical `RequirePermissionAuthentication` class.** Both
+  `GroupResource` (`corehq/apps/api/resources/v0_4.py:253`) and all three
+  location resources use `RequirePermissionAuthentication`, which delegates to
+  `LoginAndDomainAuthentication._auth_test` (`corehq/apps/api/resources/auth.py
+  :114-135`): a failed permission check raises Django's `PermissionDenied`
+  (`require_permission_raw`, `corehq/apps/users/decorators.py:34-54`), caught
+  directly by `_auth_test` and converted to a bare `HttpResponseForbidden()` --
+  no body, no JSON. This exact mechanism and finding were already established
+  for `getForm`/`listForms` earlier in this file (see the form/v1 section);
+  this resource shares the identical authentication class and code path, so
+  the same conclusion applies here rather than being re-derived from scratch.
+  `paths/group.yaml`'s and `paths/case-v1.yaml`'s `403` responses, by
+  contrast, point at the shared `Forbidden` ref (a JSON `{"error": ...}`
+  body) despite using the same `RequirePermissionAuthentication` class --
+  those two do not appear to have been verified against the body, only
+  against the status code. Out of scope for this task to fix (both are
+  earlier tasks' committed files), but flagged here since a reviewer
+  comparing this task's location paths against those precedents will
+  otherwise wonder why they disagree. This task's `location-v1.yaml`,
+  `location-v2.yaml`, and `location-type.yaml` all document the bare-empty
+  403 instead.
+- **Three additional 401/403-shaped gates exist ahead of the standard
+  tastypie auth flow, applicable to every location (and every other
+  `HqBaseResource`-based) operation, and were not modeled as separate
+  responses since their JSON shape does not differ from the documented 401.**
+  `BaseLocationsResource.dispatch` (`v0_5.py:19-23`) checks
+  `domain_has_privilege(request.domain, privileges.LOCATIONS)` before calling
+  `super().dispatch()`, raising a bare `HttpResponseForbidden()` if the domain
+  lacks the Locations privilege -- this is the second cause of the bare-403
+  described above, alongside the permission-check failure, and both are
+  documented together in the spec since they're bodily identical.
+  `HqBaseResource.dispatch` (`corehq/apps/api/resources/__init__.py:132-151`),
+  a base class of every location resource, additionally short-circuits with a
+  401 JSON body of `{"error": "API access has been temporarily cut off due to
+  too many requests. To re-enable, please contact support."}` if the
+  `API_BLACKLIST` feature toggle is enabled for the request (`:133-139`), and
+  a different 401 JSON body,
+  `{"error": "Your current subscription does not have access to this
+  feature"}`, if the domain lacks the `API_ACCESS` privilege (`:140,147-151`).
+  Both are structurally compatible with the shared `Unauthorized` response's
+  `{"error": ...}` schema (just different message text), so the spec's shared
+  `401` ref already covers them without a resource-specific override; noted
+  here only because the first of the two is semantically a rate-limit
+  response (its message talks about "too many requests") but is a 401, not
+  the 429 the shared `TooManyRequests` response would suggest -- a client
+  branching on status code alone would miss it.

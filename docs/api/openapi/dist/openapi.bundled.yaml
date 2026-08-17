@@ -2357,6 +2357,410 @@ paths:
           description: The authenticated user is a mobile worker, not a web user. The response body is empty.
         '429':
           description: The request was rate limited. Back off and retry.
+  /a/{domain}/api/location/v1/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    get:
+      operationId: listLocationsV1
+      summary: List locations (v1)
+      description: 'Returns locations the authenticated user is permitted to see. Requires the Edit Locations permission and the Locations privilege on the domain -- `BaseLocationsResource.dispatch` (`corehq/apps/locations/resources/v0_5.py:19-23`) rejects the whole request with a bare 403 if the domain lacks the Locations privilege, before authentication is even checked. Read-only: `v0_5.LocationResource.Meta.allowed_methods = [''get'']` (`corehq/apps/locations/resources/v0_5.py:77`). See `/api/locations-v2` (`location-v2.yaml`) for a newer version that also supports create and update.'
+      tags:
+        - Data
+      parameters:
+        - name: site_code
+          in: query
+          required: false
+          description: Restrict to locations with this exact site code.
+          example: namibia
+          schema:
+            type: string
+        - name: external_id
+          in: query
+          required: false
+          description: Restrict to locations with this exact external identifier.
+          example: 123abc
+          schema:
+            type: string
+        - name: created_at
+          in: query
+          required: false
+          description: Restrict to locations created at this exact naive timestamp. `Meta.filtering` declares `ALL` lookups for this field (`v0_5.py:94`), so Django ORM lookup suffixes such as `created_at__gt` also work, undocumented by `locations-v1.rst`.
+          example: '2023-05-09T16:10:47.225938'
+          schema:
+            type: string
+        - name: last_modified
+          in: query
+          required: false
+          description: Restrict to locations last modified at this exact naive timestamp. Same `ALL`-lookup caveat as `created_at`.
+          example: '2023-05-09T16:10:47.225947'
+          schema:
+            type: string
+        - name: latitude
+          in: query
+          required: false
+          description: Restrict to locations at this exact latitude.
+          example: '31.4100000000'
+          schema:
+            type: string
+        - name: longitude
+          in: query
+          required: false
+          description: Restrict to locations at this exact longitude.
+          example: '-97.4100000000'
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: A page of locations.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the Edit Locations permission, or the domain lacks the Locations privilege. The response body is empty.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /a/{domain}/api/location/v1/{location_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: location_id
+        in: path
+        required: true
+        description: Location UUID.
+        example: f373a6837c1243938abfc56618cce88b
+        schema:
+          type: string
+    get:
+      operationId: getLocationV1
+      summary: Retrieve a single location (v1)
+      description: Requires the Edit Locations permission and the Locations privilege. Same serialization as the list operation.
+      tags:
+        - Data
+      parameters:
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: The location.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the Edit Locations permission, or the domain lacks the Locations privilege. The response body is empty. Same mechanism as `listLocationsV1`'s 403.
+        '404':
+          description: The requested location does not exist. The response body is empty.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /a/{domain}/api/location/v2/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    get:
+      operationId: listLocationsV2
+      summary: List locations (v2)
+      description: Returns locations the authenticated user is permitted to see. Requires the Edit Locations permission and the Locations privilege on the domain -- `BaseLocationsResource.dispatch` (`corehq/apps/locations/resources/v0_5.py:19-23`) rejects the whole request with a bare 403 if the domain lacks the Locations privilege, before authentication is even checked.
+      tags:
+        - Data
+      parameters:
+        - name: site_code
+          in: query
+          required: false
+          description: Restrict to locations with this exact site code.
+          example: fairfax_county
+          schema:
+            type: string
+        - name: name
+          in: query
+          required: false
+          description: Restrict to locations with this exact (case-sensitive) name.
+          example: Fairfax County
+          schema:
+            type: string
+        - name: location_type_code
+          in: query
+          required: false
+          description: Restrict to locations of this type code. Handled specially by `build_filters` (`v0_6.py:56-69`), mapped to the ORM lookup `location_type__code`.
+          example: city
+          schema:
+            type: string
+        - name: parent_location_id
+          in: query
+          required: false
+          description: UUID of the location's direct parent. Handled specially by `build_filters`, mapped to the ORM lookup `parent__location_id`.
+          example: 5ce87caa-a739-4a61-a0cb-559f84a9b4b7
+          schema:
+            type: string
+        - name: last_modified.gte
+          in: query
+          required: false
+          description: 'Locations last modified on or after this date or datetime. This is a real Django ORM filter against `SQLLocation.last_modified` (a `DateTimeField`), not a hand-parsed value like cases/v1''s `*_start`/`*_end`: `build_filters` (`v0_6.py:56-69`) rewrites the dotted key to `last_modified__gte` and passes the raw string straight to the queryset. Django''s `DateTimeField.get_prep_value` (`django/db/models/fields/__init__.py:1186-1190`) calls `to_python`, which tries `django.utils.dateparse.parse_datetime` first (`django/db/models/fields/__init__.py:1621-1630`) -- this accepts a bare date, a naive datetime, **or** one with a UTC offset or literal `Z` (`parse_datetime` handles all of RFC3339). Because `settings.USE_TZ = False` (`settings.py:57`), the naive-vs-aware reconciliation branch in `get_prep_value` (`django/db/models/fields/__init__.py:1198-1200`, `if ... settings.USE_TZ and timezone.is_naive(value)`) never fires either way, so an aware value is passed through unconverted to `adapt_datetimefield_value` (`django/db/backends/postgresql/operations.py:350-351`, a no-op) and compared by Postgres using the session''s own timezone rules -- **unlike case/v1''s `validate_date`, an offset here is accepted, not rejected with a 400.** This is the opposite of case/v1 and was traced directly (not copied from either precedent), per the task brief; it was not re-verified against a live database in this environment (no Postgres/Elasticsearch service was reachable here -- see the discrepancy file), only against Django''s own ORM source.'
+          example: '2024-01-01'
+          schema:
+            type: string
+        - name: last_modified.gt
+          in: query
+          required: false
+          description: Locations last modified strictly after this date or datetime. Same parsing as `last_modified.gte`.
+          example: '2024-01-01'
+          schema:
+            type: string
+        - name: last_modified.lt
+          in: query
+          required: false
+          description: Locations last modified strictly before this date or datetime. Same parsing as `last_modified.gte`.
+          example: '2024-01-01'
+          schema:
+            type: string
+        - name: last_modified.lte
+          in: query
+          required: false
+          description: Locations last modified on or before this date or datetime. Same parsing as `last_modified.gte`.
+          example: '2024-01-01'
+          schema:
+            type: string
+        - name: order_by
+          in: query
+          required: false
+          description: Sort by `last_modified`, oldest first. Prefix with `-` for newest first. The only sortable field (`v0_6.LocationResource.Meta.ordering`, `v0_6.py:33`). Useful in conjunction with `last_modified.gte` to page through locations modified since a previous pull.
+          example: last_modified
+          schema:
+            type: string
+            enum:
+              - last_modified
+              - -last_modified
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of records to return. Default 20. Capped at 5000 by `v0_6.LocationResource.Meta.max_limit` (`v0_6.py:30`) -- higher than the 1000 most other list endpoints enforce, so this is a resource-specific parameter rather than the shared `Limit` component.
+          example: 100
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5000
+            default: 20
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: A page of locations.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationV2List'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the Edit Locations permission, or the domain lacks the Locations privilege. The response body is empty.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createLocationV2
+      summary: Create a single location (v2)
+      tags:
+        - Data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationCreate'
+      responses:
+        '201':
+          description: The location was created. `Meta.always_return_data = True` (`v0_6.py:37`), so the full new location is returned, unlike the group resource's `{id}`-only POST.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationV2'
+        '400':
+          description: 'The payload was invalid (missing `name`/`location_type_code`, an unrecognized field, a parent that cannot have children, a duplicate sibling name, an invalid site code, etc.) -- every validation path raises `LocationAPIError`, a `tastypie.exceptions.BadRequest` subclass (`v0_6.py:18-22`), converted by `wrap_view` (`tastypie/resources.py:244-246`) to the standard `{"error": ...}` shape. Confirmed by `corehq/apps/locations/tests/test_api_resources.py:302-304,313-316,327-329`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the Edit Locations permission, or the domain lacks the Locations privilege. The response body is empty.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: bulkCreateOrUpdateLocationsV2
+      summary: Bulk create or update locations
+      description: 'Accepts a list of location payloads under `objects` (`v0_6.LocationResource.patch_list`, `v0_6.py:164-173`, calling the shared `patch_list_replica`, `corehq/apps/api/resources/__init__.py:172-205`). Each item is a create (no `location_id`) or an update (`location_id` present) -- create uses the same validation as `createLocationV2`, update the same as `replaceLocationV2`. Limited to 100 objects per request (`v0_6.LocationResource.patch_limit`, `v0_6.py:27`); exceeding it raises `BadRequest("Object count exceeds limit for PATCH method.")` before any object is processed. The whole batch is atomic (`@atomic` on `patch_list`, `v0_6.py:164`): if any single item fails validation, nothing in the batch is created or updated. **Unlike the group resource''s bulk PATCH, a partial-failure response here is never a positionally-aligned array of ids/errors** -- `patch_list_replica`''s per-item `except AssertionError` (`corehq/apps/api/resources/__init__.py :199-201`) is unreachable for this resource, since every validation failure here raises `LocationAPIError` (a `BadRequest`, not an `AssertionError`). A `BadRequest` propagates straight past `patch_list_replica`''s loop, uncaught, to `wrap_view` (`tastypie/resources.py:244-246`), which converts it to a single `{"error": ...}` object -- the array-of-strings shape is therefore only ever seen on full success. Confirmed by `corehq/apps/locations/tests/test_api_resources.py:401-430` (`response.json() == {''error'': "Could not update: ..."}`, not an array).'
+      tags:
+        - Data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - objects
+              properties:
+                objects:
+                  type: array
+                  items:
+                    anyOf:
+                      - $ref: '#/components/schemas/LocationCreate'
+                      - $ref: '#/components/schemas/LocationBulkUpdate'
+      responses:
+        '202':
+          description: Every location in the batch was created or updated. The body is a flat array of the resulting `location_id`s, in the same order as the submitted `objects` (`patch_list_replica`, `corehq/apps/api/resources/__init__.py:204`, and `create_or_update`'s `bundle.data['_id'] = bundle.obj.location_id`, `v0_6.py:171`).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  description: Location ID of a created or updated location.
+                example:
+                  - eea759ae08044807be749f665a1fd39a
+        '400':
+          description: 'Either the batch exceeded the 100-object limit, or a single item failed validation -- the whole batch is rolled back either way. The body is a single `{"error": ...}` object, not an array (see the operation description).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the Edit Locations permission, or the domain lacks the Locations privilege. The response body is empty.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /a/{domain}/api/location/v2/{location_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: location_id
+        in: path
+        required: true
+        description: Location UUID.
+        example: 68e65fbc2dc840ff8bf03849e57aca88
+        schema:
+          type: string
+    get:
+      operationId: getLocationV2
+      summary: Retrieve a single location (v2)
+      tags:
+        - Data
+      parameters:
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: The location.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationV2'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the Edit Locations permission, or the domain lacks the Locations privilege. The response body is empty.
+        '404':
+          description: The requested location does not exist. The response body is empty.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    put:
+      operationId: replaceLocationV2
+      summary: Update a single location (v2)
+      tags:
+        - Data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationUpdate'
+      responses:
+        '200':
+          description: The updated location. `Meta.always_return_data = True`, so the full object is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationV2'
+        '400':
+          description: The payload was invalid, included an unrecognized field (including `location_id` -- see `LocationUpdate`'s description), or named a `location_id` that does not exist on this domain.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the Edit Locations permission, or the domain lacks the Locations privilege. The response body is empty.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /a/{domain}/api/location_type/v1/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    get:
+      operationId: listLocationTypes
+      summary: List location types
+      description: Returns location types the authenticated user is permitted to see. Requires the Edit Locations permission and the Locations privilege on the domain -- `BaseLocationsResource.dispatch` (`corehq/apps/locations/resources/v0_5.py:19-23`) rejects the whole request with a bare 403 if the domain lacks the Locations privilege, before authentication is even checked. Only GET is documented here, matching `location-types.rst`; see the discrepancy file for how this resource actually enforces (or fails to enforce) that.
+      tags:
+        - Data
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: A page of location types.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationTypeList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the Edit Locations permission, or the domain lacks the Locations privilege. The response body is empty. Same mechanism as `listLocationsV1`'s 403 in `location-v1.yaml`.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /a/{domain}/api/location_type/v1/{id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: id
+        in: path
+        required: true
+        description: Integer primary key of the location type -- unlike most ids in this API, this one is a plain integer, not a UUID string.
+        example: 1
+        schema:
+          type: integer
+    get:
+      operationId: getLocationType
+      summary: Retrieve a single location type
+      description: Requires the Edit Locations permission and the Locations privilege.
+      tags:
+        - Data
+      parameters:
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: The location type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationType'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the Edit Locations permission, or the domain lacks the Locations privilege. The response body is empty.
+        '404':
+          description: The requested location type does not exist. The response body is empty.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /a/{domain}/api/bulk-user/v1/:
     parameters:
       - $ref: '#/components/parameters/Domain'
@@ -3852,6 +4256,279 @@ components:
         email:
           type: string
           example: demo@dimagi.com
+    Location:
+      type: object
+      description: A single location, as returned by the v1 location API (`v0_5.LocationResource`, `corehq/apps/locations/resources/v0_5.py:67-127`). Read-only -- this resource declares `allowed_methods = ['get']` (`corehq/apps/locations/resources/v0_5.py:77`). See `LocationV2` for the newer serialization used by v2, which adds create/update.
+      properties:
+        id:
+          type: integer
+          description: '`SQLLocation`''s internal integer primary key. Distinct from `location_id`, the UUID-like string used in URLs and by the v2 API.'
+          example: 1
+        name:
+          type: string
+          example: Namibia
+        domain:
+          type: string
+          description: Project space the location belongs to.
+          example: demo
+        location_id:
+          type: string
+          description: UUID-like identifier used in URLs and by the v2 API.
+          example: f373a6837c1243938abfc56618cce88b
+        site_code:
+          type: string
+          example: namibia
+        external_id:
+          type: string
+          nullable: true
+          example: null
+        created_at:
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?$
+          description: 'Naive timestamp, no timezone offset (`format: date-time` is deliberately not used, since it implies RFC3339). This is a tastypie resource, not DRF -- serialized by `Serializer.format_datetime` (`tastypie/serializers.py:198-214`), whose default `datetime_formatting = ''iso-8601''` calls `data.isoformat()` after `make_naive(data)`. That `make_naive` is tastypie''s own (`tastypie/utils/timezone.py:13-17`), which only strips tzinfo when `settings.USE_TZ` is true; with `USE_TZ = False` (`settings.py:57`) it is a no-op on the already-naive value from `SQLLocation.created_at` (`models.DateTimeField(auto_now_add=True)`, `corehq/apps/locations/models.py:371`), so `isoformat()` never adds a `Z`. Confirmed by `corehq/apps/locations/tests/test_api_resources.py:75` (`somerville.created_at.isoformat()`).'
+          example: '2023-05-09T16:10:47.225938'
+        last_modified:
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?$
+          description: Naive timestamp, same reasoning as `created_at`; source field `SQLLocation.last_modified` (`models.DateTimeField(auto_now=True)`, `corehq/apps/locations/models.py:372`).
+          example: '2023-05-09T16:10:47.225947'
+        latitude:
+          type: string
+          nullable: true
+          description: Decimal latitude. `SQLLocation.latitude` is a Django `DecimalField` (`corehq/apps/locations/models.py:375`); tastypie's `fields.DecimalField.convert` (`tastypie/fields.py:277-281`) produces a `decimal.Decimal`, which the JSON encoder renders as a string.
+          example: null
+        longitude:
+          type: string
+          nullable: true
+          description: Decimal longitude. Same serialization as `latitude`.
+          example: null
+        location_data:
+          type: object
+          additionalProperties: true
+          description: Arbitrary key/value metadata attached to the location.
+          example: {}
+        location_type:
+          type: string
+          description: Absolute URI of the location's type (`v0_5.LocationResource.dehydrate_location_type`, `corehq/apps/locations/resources/v0_5.py:115-122`). See `paths/location-type.yaml`.
+          example: https://www.commcarehq.org/a/demo/api/location_type/v1/1/
+        parent:
+          type: string
+          nullable: true
+          description: Absolute URI of the parent location, or null if there is none.
+          example: null
+        resource_uri:
+          type: string
+          example: https://www.commcarehq.org/a/demo/api/location/v1/f373a6837c1243938abfc56618cce88b/
+    LocationList:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            objects:
+              type: array
+              items:
+                $ref: '#/components/schemas/Location'
+    LocationV2:
+      type: object
+      description: A single location, as returned by the v2 location API (`v0_6.LocationResource`, `corehq/apps/locations/resources/v0_6.py:25-79`). Only 8 fields are declared on `Meta.fields` (`corehq/apps/locations/resources/v0_6.py:39-48`) -- `location_type` and `parent`, which v1 exposes as fields, are dropped entirely for v2; `location_type_code`, `location_type_name`, and `parent_location_id` are added directly onto `bundle.data` by the `dehydrate` override (`v0_6.py:71-79`), not through the field mechanism. Verified against `corehq/apps/locations/tests/test_api_resources.py:157-213`.
+      properties:
+        domain:
+          type: string
+          example: dimagi-test
+        location_id:
+          type: string
+          example: 68e65fbc2dc840ff8bf03849e57aca88
+        name:
+          type: string
+          example: Fairfax County
+        site_code:
+          type: string
+          example: fairfax_county
+        last_modified:
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?$
+          description: Naive timestamp, no timezone offset -- same reasoning as `Location`'s `last_modified`.
+          example: '2024-03-11T19:29:16.845849'
+        latitude:
+          type: string
+          nullable: true
+          example: '31.4100000000'
+        longitude:
+          type: string
+          nullable: true
+          example: null
+        location_data:
+          type: object
+          additionalProperties: true
+          example:
+            pop: '1001'
+        location_type_code:
+          type: string
+          example: county
+        location_type_name:
+          type: string
+          example: County
+        parent_location_id:
+          type: string
+          description: 'UUID of the direct parent, or an empty string if the location has no parent -- not null. `v0_6.LocationResource.dehydrate` (`corehq/apps/locations/resources/v0_6.py:71-75`) sets `bundle.data[''parent_location_id''] = ''''` in the no-parent branch, unlike v1''s `parent`, which is null when absent. Confirmed by `corehq/apps/locations/tests/test_api_resources.py:167` (`"parent_location_id": ""`).'
+          example: 41b0bdfbae20428e9435ae8c3dcd22e7
+    LocationV2List:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            objects:
+              type: array
+              items:
+                $ref: '#/components/schemas/LocationV2'
+    LocationCreate:
+      type: object
+      description: 'Payload for creating a single v2 location (`v0_6.LocationResource .obj_create`, `corehq/apps/locations/resources/v0_6.py:81-88`), and for a bulk-PATCH item with no `location_id`. Any key not listed here (including `location_id`) is rejected with a 400 once all recognized keys are consumed (`_update`, `v0_6.py:134-136`, `"Invalid fields were included in request: [...]"`).'
+      required:
+        - name
+        - location_type_code
+      properties:
+        name:
+          type: string
+          example: Greenville
+        location_type_code:
+          type: string
+          example: city
+        site_code:
+          type: string
+          description: Generated automatically if omitted. Must be unique on the domain.
+          example: greenville
+        latitude:
+          description: Accepts a number or a decimal string.
+          oneOf:
+            - type: number
+            - type: string
+          example: '31.41'
+        longitude:
+          description: Accepts a number or a decimal string.
+          oneOf:
+            - type: number
+            - type: string
+          example: '-97.41'
+        location_data:
+          type: object
+          additionalProperties: true
+          example:
+            pop: '1000'
+        parent_location_id:
+          type: string
+          description: UUID of the direct parent. Validated to exist, to support child locations, and to have no duplicate-named sibling (`_validate_new_parent`, `v0_6.py:154-162`).
+          example: 46329a9e1bad47158739d56f6f667165
+    LocationBulkUpdate:
+      type: object
+      description: A bulk-PATCH item that updates an existing location -- same editable fields as `LocationUpdate`, plus the required `location_id` that tells `v0_6.LocationResource.patch_list`'s `create_or_update` closure (`v0_6.py:166-171`) to call `obj_update` rather than `obj_create`.
+      required:
+        - location_id
+      properties:
+        location_id:
+          type: string
+          example: eea759ae08044807be749f665a1fd39a
+        name:
+          type: string
+          example: Springfield
+        site_code:
+          type: string
+        latitude:
+          oneOf:
+            - type: number
+            - type: string
+          example: '32.42'
+        longitude:
+          oneOf:
+            - type: number
+            - type: string
+        location_data:
+          type: object
+          additionalProperties: true
+          example:
+            pop: '1004'
+        location_type_code:
+          type: string
+        parent_location_id:
+          type: string
+    LocationUpdate:
+      type: object
+      description: 'Payload for `PUT /a/{domain}/api/location/v2/{location_id}/` (`v0_6.LocationResource.obj_update`, `v0_6.py:90-99`). No field is required -- only the fields present are changed. Do **not** include `location_id` in this body: the detail PUT resolves the target location from the URL alone (`kwargs.get(''location_id'')` is always truthy here, so `bundle.data.pop(''location_id'')` at `v0_6.py:91` never runs), so a `location_id` key in the body survives to the end-of-`_update` leftover check (`v0_6.py:134-136`) and triggers a 400 ("Invalid fields were included in request: [''location_id'']."). Undocumented by `locations-v2.rst`; see the discrepancy file. Any other unrecognized key is rejected the same way.'
+      properties:
+        name:
+          type: string
+          description: Must be unique among siblings.
+          example: New Denver
+        site_code:
+          type: string
+          description: Must be unique on the domain.
+          example: new_denver
+        latitude:
+          description: Accepts a number or a decimal string.
+          oneOf:
+            - type: number
+            - type: string
+          example: 33.9012
+        longitude:
+          description: Accepts a number or a decimal string.
+          oneOf:
+            - type: number
+            - type: string
+          example: -97.41
+        location_data:
+          type: object
+          additionalProperties: true
+        location_type_code:
+          type: string
+          description: If the location has a parent, the new type must be a valid child type of that parent.
+          example: county
+        parent_location_id:
+          type: string
+          description: The parent must exist, support child locations, and not already have a same-named child.
+          example: 46329a9e1bad47158739d56f6f667165
+    LocationType:
+      type: object
+      description: A location type (`v0_5.LocationTypeResource`, `corehq/apps/locations/resources/v0_5.py:26-64`). Read-only in practice (see `paths/location-type.yaml` for the write-method discrepancy).
+      properties:
+        id:
+          type: integer
+          description: '`LocationType`''s internal integer primary key -- unlike most ids in this API, this one is a plain integer, not a UUID string.'
+          example: 1
+        domain:
+          type: string
+          example: demo
+        name:
+          type: string
+          example: Country
+        code:
+          type: string
+          example: country
+        parent:
+          type: string
+          nullable: true
+          description: Absolute URI of the parent location type, or null.
+          example: null
+        administrative:
+          type: boolean
+          example: true
+        shares_cases:
+          type: boolean
+          example: false
+        view_descendants:
+          type: boolean
+          example: false
+        resource_uri:
+          type: string
+          example: https://www.commcarehq.org/a/demo/api/location_type/v1/1/
+    LocationTypeList:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            objects:
+              type: array
+              items:
+                $ref: '#/components/schemas/LocationType'
     BulkUser:
       type: object
       description: A basic user record, as returned by `v0_5.BulkUserResource` (`corehq/apps/api/resources/v0_5.py:172-238`). Backed by Elasticsearch, not the couch `CommCareUser`/`WebUser` models -- only the fields declared below exist; this resource returns both mobile workers and web users indifferently (it queries `UserES` with no user-type filter).
