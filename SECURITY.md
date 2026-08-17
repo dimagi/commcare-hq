@@ -4,7 +4,7 @@
 
 Dimagi, the maker of CommCare, takes the security of our software products and services seriously. 
 
-For more information about CommCare’s security policies, please visit the Dimagi Trust Center.
+For more information about CommCare’s security policies, please visit the [Dimagi Trust Center](https://dimagi.safebase.us/).
 
 ## Reporting a vulnerability
 
