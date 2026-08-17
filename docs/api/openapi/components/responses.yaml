@@ -19,6 +19,13 @@ Forbidden:
     application/json:
       schema:
         $ref: "./schemas/error.yaml#/Error"
+# This response's JSON `{"error": ...}` body only holds where a resource
+# actually renders one. Several tastypie code paths return a 404 without
+# going through the serializer at all (a bare `http.HttpNotFound()`, empty
+# body) or through a generic exception handler with a different body shape
+# entirely (see group/v1's getGroup and deleteGroup, and the discrepancy
+# file). Verify each resource's actual 404 body before pointing it at this
+# ref -- do not assume it applies by default.
 NotFound:
   description: The requested resource does not exist in this project space.
   content:

@@ -95,4 +95,37 @@ triage. Nothing here has been changed in the reST docs.
   response the code cannot produce. A human should decide whether to fix
   `obj_update` to raise something tastypie's `put_detail`/`_handle_500`
   recognizes as "not found."
+- **`getGroup`'s and `deleteGroup`'s 404s both reach status 404, by two
+  different mechanisms, with two different bodies -- neither matches the
+  shared `NotFound` response's `{"error": ...}` shape (fix round 4, in
+  response to a concern raised while fixing the `replaceGroup` finding
+  above).** Neither reST page documents a 404 body shape at all.
+  - `getGroup` (`GET`) uses tastypie's own `get_detail`
+    (`tastypie/resources.py:1362-1383`), which catches `ObjectDoesNotExist`
+    directly and returns a bare `http.HttpNotFound()` -- a plain
+    `HttpResponse` built without going through `serialize`/`error_response`
+    at all. **The body is empty.** The spec's `getGroup` `404` no longer
+    points at the shared `NotFound` ref; it documents an empty body instead.
+  - `deleteGroup` (`DELETE`) uses `delete_detail`
+    (`tastypie/resources.py:1525-1541`), which only catches tastypie's own
+    `NotFound` exception -- but `obj_delete` -> `obj_get`
+    (`v0_4.py:246-247`, `get_object_or_not_exist`,
+    `corehq/apps/api/util.py:15-39`) raises Django's `ObjectDoesNotExist`
+    instead, which `delete_detail` does not catch. It propagates to
+    `wrap_view`'s generic exception handler, `_handle_500`
+    (`tastypie/resources.py:265-292`), which maps `ObjectDoesNotExist` to a
+    404 status via `get_response_class_for_exception` but builds the body
+    itself: `{"error_message": "Sorry, this request could not be processed.
+    Please try again later."}` in production (a canned message, not
+    resource-specific; `settings.TASTYPIE_CANNED_ERROR` is not overridden
+    anywhere in this codebase) or `{"error_message": "<real message>",
+    "traceback": ...}` under `DEBUG`. **The body is JSON, but keyed
+    `error_message`, not `error`, and the message is generic.** The spec's
+    `deleteGroup` `404` now uses the `GroupErrorMessage` schema instead of
+    the shared `NotFound` ref.
+  - A general comment was added to `components/responses.yaml`'s `NotFound`
+    entry warning that its `{"error": ...}` body only holds where a resource
+    actually renders one, and that later resource tasks must verify each
+    detail operation's real 404 shape rather than reach for this ref by
+    default.
 - *(append further findings here as they are confirmed)*

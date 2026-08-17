@@ -146,7 +146,13 @@ Detail:
       "403":
         $ref: "../components/responses.yaml#/Forbidden"
       "404":
-        $ref: "../components/responses.yaml#/NotFound"
+        # Deliberately not the shared NotFound ref: tastypie's get_detail
+        # (tastypie/resources.py:1362-1383) catches ObjectDoesNotExist and
+        # returns a bare `http.HttpNotFound()` -- a plain HttpResponse with
+        # no content set, not something built through the serializer. The
+        # real response body is empty. See the discrepancy file.
+        description:
+          The requested group does not exist. The response body is empty.
       "429":
         $ref: "../components/responses.yaml#/TooManyRequests"
   put:
@@ -194,6 +200,21 @@ Detail:
       "403":
         $ref: "../components/responses.yaml#/Forbidden"
       "404":
-        $ref: "../components/responses.yaml#/NotFound"
+        # Deliberately not the shared NotFound ref. `delete_detail`
+        # (tastypie/resources.py:1525-1541) only catches tastypie's own
+        # `NotFound`, but `obj_delete` -> `obj_get` raises Django's
+        # `ObjectDoesNotExist` (via get_object_or_not_exist), which isn't
+        # caught there. It propagates to wrap_view's generic exception
+        # handler (_handle_500), which maps ObjectDoesNotExist to a 404
+        # status but builds the body from its own canned-error path -- keyed
+        # `error_message`, not `error`, and not resource-specific. See the
+        # discrepancy file.
+        description: >-
+          The requested group does not exist. Reached via tastypie's generic
+          exception handler rather than a resource-specific not-found path.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/group.yaml#/GroupErrorMessage"
       "429":
         $ref: "../components/responses.yaml#/TooManyRequests"

@@ -67,9 +67,12 @@ GroupWrite:
 GroupErrorMessage:
   type: object
   description: >-
-    Validation-failure body used only by `createGroup`. Note the key is
-    `error_message`, not the `error` key used by every other resource's `400`
-    response.
+    Error body keyed `error_message` rather than the `error` key used by every
+    other resource's error responses. `createGroup` uses this shape for
+    validation failures (the real message, e.g. "Name is required");
+    `deleteGroup` uses it for its 404 (a generic canned message, since that path
+    is actually tastypie's uncaught-exception handler, not a resource-specific
+    not-found response -- see the discrepancy file).
   properties:
     error_message:
       type: string
