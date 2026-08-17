@@ -1,0 +1,706 @@
+{
+  "components": {
+    "schemas": {
+      "PaginationMeta": {
+        "description": "Pagination metadata for a page of records.",
+        "properties": {
+          "limit": {
+            "type": "integer"
+          },
+          "next": {
+            "nullable": true,
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "previous": {
+            "nullable": true,
+            "type": "string"
+          },
+          "total_count": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "description": "Send the header `Authorization: ApiKey <username>:<api_key>`. Generate an API key from your CommCare HQ account settings.",
+        "in": "header",
+        "name": "Authorization",
+        "type": "apiKey"
+      },
+      "BasicAuth": {
+        "description": "HTTP Basic authentication with a CommCare HQ username and password.",
+        "scheme": "basic",
+        "type": "http"
+      },
+      "DigestAuth": {
+        "description": "HTTP Digest authentication with a CommCare HQ username and password.",
+        "scheme": "digest",
+        "type": "http"
+      },
+      "OAuth2": {
+        "description": "OAuth2 with the `access_apis` scope.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "/oauth/authorize/",
+            "scopes": {
+              "access_apis": "Access the CommCare APIs"
+            },
+            "tokenUrl": "/oauth/token/"
+          }
+        },
+        "type": "oauth2"
+      }
+    }
+  },
+  "info": {
+    "description": "CommCare data API.",
+    "title": "User V1",
+    "version": "1.0.0"
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/a/{domain}/api/user/v1/": {
+      "get": {
+        "description": "Requires the `edit_commcare_users` permission.",
+        "operationId": "user_v1_list_get",
+        "parameters": [
+          {
+            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of records to skip.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Response format.",
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "json",
+              "enum": [
+                "json",
+                "xml"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationMeta"
+                    },
+                    "objects": {
+                      "items": {
+                        "properties": {
+                          "default_phone_number": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "eulas": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "first_name": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "groups": {
+                            "items": {},
+                            "type": "array"
+                          },
+                          "id": {
+                            "readOnly": true,
+                            "type": "string"
+                          },
+                          "last_name": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "locations": {
+                            "items": {},
+                            "type": "array"
+                          },
+                          "phone_numbers": {
+                            "items": {},
+                            "type": "array"
+                          },
+                          "primary_location": {
+                            "type": "string"
+                          },
+                          "require_account_confirmation": {
+                            "default": false,
+                            "type": "boolean"
+                          },
+                          "resource_uri": {
+                            "readOnly": true,
+                            "type": "string"
+                          },
+                          "send_confirmation_email_now": {
+                            "default": false,
+                            "type": "boolean"
+                          },
+                          "user_data": {
+                            "additionalProperties": true,
+                            "type": "object"
+                          },
+                          "username": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "A page of records."
+          }
+        },
+        "summary": "User",
+        "tags": [
+          "user"
+        ]
+      },
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "description": "Requires the `edit_commcare_users` permission.",
+        "operationId": "user_v1_list_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "default_phone_number": {
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "eulas": {
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "first_name": {
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "groups": {
+                    "items": {},
+                    "type": "array"
+                  },
+                  "last_name": {
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "locations": {
+                    "items": {},
+                    "type": "array"
+                  },
+                  "phone_numbers": {
+                    "items": {},
+                    "type": "array"
+                  },
+                  "primary_location": {
+                    "type": "string"
+                  },
+                  "require_account_confirmation": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "send_confirmation_email_now": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "user_data": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "username": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationMeta"
+                    },
+                    "objects": {
+                      "items": {
+                        "properties": {
+                          "default_phone_number": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "eulas": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "first_name": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "groups": {
+                            "items": {},
+                            "type": "array"
+                          },
+                          "id": {
+                            "readOnly": true,
+                            "type": "string"
+                          },
+                          "last_name": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "locations": {
+                            "items": {},
+                            "type": "array"
+                          },
+                          "phone_numbers": {
+                            "items": {},
+                            "type": "array"
+                          },
+                          "primary_location": {
+                            "type": "string"
+                          },
+                          "require_account_confirmation": {
+                            "default": false,
+                            "type": "boolean"
+                          },
+                          "resource_uri": {
+                            "readOnly": true,
+                            "type": "string"
+                          },
+                          "send_confirmation_email_now": {
+                            "default": false,
+                            "type": "boolean"
+                          },
+                          "user_data": {
+                            "additionalProperties": true,
+                            "type": "object"
+                          },
+                          "username": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "A page of records."
+          }
+        },
+        "summary": "User",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/a/{domain}/api/user/v1/{pk}/": {
+      "delete": {
+        "description": "Requires the `edit_commcare_users` permission.",
+        "operationId": "user_v1_detail_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "default_phone_number": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "eulas": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "first_name": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "groups": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "id": {
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "last_name": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "locations": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "phone_numbers": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "primary_location": {
+                      "type": "string"
+                    },
+                    "require_account_confirmation": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "resource_uri": {
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "send_confirmation_email_now": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "user_data": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "username": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The requested record."
+          }
+        },
+        "summary": "User",
+        "tags": [
+          "user"
+        ]
+      },
+      "get": {
+        "description": "Requires the `edit_commcare_users` permission.",
+        "operationId": "user_v1_detail_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "default_phone_number": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "eulas": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "first_name": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "groups": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "id": {
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "last_name": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "locations": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "phone_numbers": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "primary_location": {
+                      "type": "string"
+                    },
+                    "require_account_confirmation": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "resource_uri": {
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "send_confirmation_email_now": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "user_data": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "username": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The requested record."
+          }
+        },
+        "summary": "User",
+        "tags": [
+          "user"
+        ]
+      },
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Unique identifier of the record.",
+          "in": "path",
+          "name": "pk",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "put": {
+        "description": "Requires the `edit_commcare_users` permission.",
+        "operationId": "user_v1_detail_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "default_phone_number": {
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "eulas": {
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "first_name": {
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "groups": {
+                    "items": {},
+                    "type": "array"
+                  },
+                  "last_name": {
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "locations": {
+                    "items": {},
+                    "type": "array"
+                  },
+                  "phone_numbers": {
+                    "items": {},
+                    "type": "array"
+                  },
+                  "primary_location": {
+                    "type": "string"
+                  },
+                  "require_account_confirmation": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "send_confirmation_email_now": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "user_data": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "username": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "default_phone_number": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "eulas": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "first_name": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "groups": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "id": {
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "last_name": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "locations": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "phone_numbers": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "primary_location": {
+                      "type": "string"
+                    },
+                    "require_account_confirmation": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "resource_uri": {
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "send_confirmation_email_now": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "user_data": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "username": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The requested record."
+          }
+        },
+        "summary": "User",
+        "tags": [
+          "user"
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    },
+    {
+      "BasicAuth": []
+    },
+    {
+      "DigestAuth": []
+    },
+    {
+      "OAuth2": [
+        "access_apis"
+      ]
+    }
+  ],
+  "servers": [
+    {
+      "description": "A CommCare HQ instance.",
+      "url": "https://{host}",
+      "variables": {
+        "host": {
+          "default": "www.commcarehq.org",
+          "description": "Hostname of the CommCare HQ instance."
+        }
+      }
+    }
+  ]
+}
