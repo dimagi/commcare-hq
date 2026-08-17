@@ -2,6 +2,8 @@
 their project spaces; the granted authorization then carries a
 ``domain:<name>`` scope that the token inherits.
 """
+import re
+
 from oauth2_provider.models import Grant, get_application_model
 
 from corehq.apps.mcp.tests.utils import McpTestCase
@@ -68,3 +70,41 @@ class TestDomainChoiceOnConsentScreen(McpTestCase):
         response = self._post_consent('someone-elses-domain')
         assert not Grant.objects.filter(application=self.oauth_client).exists()
         assert response.status_code != 302
+
+
+class TestRequestedDomainScopePreselection(TestDomainChoiceOnConsentScreen):
+
+    def _get_consent_screen(self, scope):
+        params = {**self._authorize_params(), 'scope': scope}
+        return self.client.get(AUTHORIZE, params).content.decode()
+
+    def test_requested_member_domain_is_preselected(self):
+        content = self._get_consent_screen('access_apis domain:mcp-test-domain')
+        assert re.search(
+            r'<option value="mcp-test-domain"[^>]* selected', content)
+
+    def test_requested_non_member_domain_is_not_preselected(self):
+        content = self._get_consent_screen('access_apis domain:not-mine')
+        assert not re.search(r'<option value="[^"]+"[^>]* selected', content)
+
+    def test_picker_choice_overrides_requested_domain_scope(self):
+        params = self._authorize_params()
+        response = self.client.post(AUTHORIZE, data={
+            **params,
+            'scope': 'access_apis domain:mcp-test-domain',
+            'domain': '',  # user chose "All my project spaces"
+            'allow': 'Authorize',
+        })
+        assert response.status_code == 302
+        assert self._granted_scope() == 'access_apis'
+
+    def test_requested_and_picked_domain_do_not_duplicate(self):
+        params = self._authorize_params()
+        response = self.client.post(AUTHORIZE, data={
+            **params,
+            'scope': 'access_apis domain:mcp-test-domain',
+            'domain': 'mcp-test-domain',
+            'allow': 'Authorize',
+        })
+        assert response.status_code == 302
+        assert self._granted_scope() == 'access_apis domain:mcp-test-domain'
