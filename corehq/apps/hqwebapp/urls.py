@@ -32,6 +32,7 @@ from corehq.apps.hqwebapp.views import (
     login_new_window,
     logout,
     no_permissions,
+    oauth_authorization_server_metadata,
     osdd,
     password_change,
     ping_response,
@@ -117,6 +118,9 @@ urlpatterns = [
         name=OauthApplicationRegistration.urlname
     ),
     url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    url(r'^\.well-known/oauth-authorization-server$',
+        oauth_authorization_server_metadata,
+        name='oauth_authorization_server_metadata'),
     url(r'^check_sso_login_status/', check_sso_login_status, name='check_sso_login_status'),
 ]
 
