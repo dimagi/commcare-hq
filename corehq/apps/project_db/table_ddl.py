@@ -1,4 +1,5 @@
 import hashlib
+from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -44,18 +45,14 @@ def get_project_db_engine():
     return engine
 
 
-def create_project_db_extensions():
-    """Create the Postgres extensions project DB depends on, if absent."""
-    # Production envs install extensions via commcare-cloud
+SETUP_SQL_PATH = Path(__file__).parent / 'project_db_setup.sql'
+
+
+def setup_project_db():
+    """Apply project_db_setup.sql, which production applies via commcare-cloud"""
     engine = get_project_db_engine()
     with engine.begin() as conn:
-        for ext in [
-            'cube',  # Provides `cube` type needed by earthdistance
-            'earthdistance',  # `earth` column type and associated geopoint distance calculations
-            'pg_trgm',  # trigram-based similarity() function for fuzzy search
-            'fuzzystrmatch',  # phonetic match dmetaphone() function, also soundex and levenshtein
-        ]:
-            conn.execute(sqlalchemy.text(f'CREATE EXTENSION IF NOT EXISTS {ext}'))
+        conn.execute(sqlalchemy.text(SETUP_SQL_PATH.read_text()))
 
 
 class DomainSchema:
