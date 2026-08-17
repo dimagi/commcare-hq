@@ -4,3 +4,9 @@
 # lets these files be committed exactly as redocly produces them, which the
 # staleness check depends on.
 docs/api/openapi/dist/** -whitespace
+
+# Mark these as generated so GitHub collapses them in PR diffs by default.
+# No merge driver is set here (e.g. merge=union): that could synthesize a
+# bundle matching no real regeneration and silently defeat the staleness
+# check above.
+docs/api/openapi/dist/** linguist-generated=true
