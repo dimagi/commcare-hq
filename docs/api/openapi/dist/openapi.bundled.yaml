@@ -2357,6 +2357,154 @@ paths:
           description: The authenticated user is a mobile worker, not a web user. The response body is empty.
         '429':
           description: The request was rate limited. Back off and retry.
+  /a/{domain}/api/bulk-user/v1/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    get:
+      operationId: listUsersBulk
+      summary: List basic user data in bulk
+      description: Fast, Elasticsearch-backed lookup of a small set of fields for every user in the domain (`v0_5.BulkUserResource`, `corehq/apps/api/resources/v0_5.py:172-238`). Returns both mobile workers and web users indifferently -- the underlying `UserES` query applies no user-type filter. Requires the Edit Mobile Workers permission.
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - name: offset
+          in: query
+          required: false
+          description: 'Use with `limit` to paginate results. **Only safe at `offset=0`.** `obj_get_list` (`corehq/apps/api/resources/v0_5.py:211-233`) already applies `offset`/`limit` itself when querying Elasticsearch (`user_es_call`, `v0_5.py:161-169`, `size=limit, start_at=offset`), returning a single already-offset page. Tastypie''s own paginator then runs on top of that page and reads the *same* `offset` GET parameter again (`Paginator.get_slice`, `tastypie/paginator.py:109-116`: `self.objects[offset:offset + limit]`) -- `BulkUserResource.Meta` never sets `paginator_class`, so it gets tastypie''s real, slicing `Paginator` (`tastypie/resources.py:80`), not a no-op one. For any `offset > 0` this second slice starts past the end of the (already short) page, so `objects` comes back empty even though matching records exist. See the discrepancy file.'
+          example: 0
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - $ref: '#/components/parameters/Format'
+        - name: q
+          in: query
+          required: false
+          description: Elasticsearch query string, passed verbatim as a `query_string` query (`user_es_call`, `corehq/apps/api/resources/v0_5.py:161-169`).
+          example: foo
+          schema:
+            type: string
+        - name: fields
+          in: query
+          required: false
+          description: Restrict the returned fields to this set; repeat the parameter for multiple fields (`?fields=username&fields=first_name`). Each value must name a real field on this resource (`id`, `email`, `username`, `first_name`, `last_name`, `phone_numbers`, or `resource_uri`) or the request fails with a 400 (`obj_get_list`, `corehq/apps/api/resources/v0_5.py:212-215`). Filtering happens at serialization time (`BulkUserResource.dehydrate`, `v0_5.py:201-209`) -- every field is still fetched from Elasticsearch regardless of this parameter.
+          example:
+            - username
+            - first_name
+            - last_name
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: A page of users. See the `offset` parameter and the `BulkUserList` schema's `total_count` note for two related pagination discrepancies.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkUserList'
+        '400':
+          description: 'An entry in `fields` is not a real field on this resource, or `limit`/`offset` is not a valid integer (`Paginator.get_limit`/ `get_offset`, `tastypie/paginator.py:70-76,99-107`). Both raise tastypie''s `BadRequest`, converted by `wrap_view` to the shared `{"error": ...}` shape.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the Edit Mobile Workers permission, or is not a member of this project space. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty.
+  /a/{domain}/api/sso/v1/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    post:
+      operationId: authenticateUser
+      summary: Validate credentials and fetch the authenticated user's profile
+      description: Exchanges a username and password (in the request body) for the user's profile, without requiring any header-based credential (`v0_4.SingleSignOnResource.post_list`, `corehq/apps/api/resources/v0_4.py:260-309`). This is a list-only operation -- `Meta.detail_allowed_methods = []` (`v0_4.py:308`), and `get_list`/`get_detail` both unconditionally return a bare 403 (`v0_4.py:299-303`).
+      tags:
+        - Users
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SsoCredentials'
+            examples:
+              login:
+                value:
+                  username: MY_USERNAME
+                  password: MY_PASSWORD
+      responses:
+        '200':
+          description: 'The credentials were valid. The body is the authenticated user''s profile -- shaped differently depending on whether the username belongs to a mobile worker or a web user. `sso.rst:26` claims this is "identical" to the List Mobile Worker or List Web User response; it is not -- see `SsoMobileWorker`, `SsoWebUser`, and the discrepancy file. Modelled with `anyOf`, not `oneOf`: both schemas are permissive (no `required`, no `additionalProperties: false`), so either genuine response would validate against both branches under `oneOf` and fail a strict validator.'
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/SsoMobileWorker'
+                  - $ref: '#/components/schemas/SsoWebUser'
+        '400':
+          description: '`username` or `password` was missing from the POST body (`v0_4.py:274-278`). The body is plain text, not JSON: Django''s `HttpResponseBadRequest(''Missing required parameter: username'')` (or `password`), served with Django''s default `text/html` content type even though the content itself is a bare string.'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 'Missing required parameter: username'
+        '401':
+          description: Not a real response for this operation -- see the description above.
+        '403':
+          description: The username does not exist, is not a member of this project space, the password is incorrect, or the user is neither a mobile worker nor a web user. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty.
+  /api/user_domains/v1/:
+    get:
+      operationId: listUserDomains
+      summary: List the authenticated web user's project spaces
+      description: Root-mounted, unlike every other operation in this spec except `getIdentity` -- no `{domain}` path segment. Registered directly under `/api/` (`v0_5.UserDomainsResource.get_urlpattern('v1')`, included via `user_urlpatterns` at `corehq/apps/api/urls.py:246` and mounted at root by `urls.py:108`). Only requires login, not domain membership or any specific permission (`LoginAuthentication`, `corehq/apps/api/resources/v0_5.py:1097`). If the request authenticated with an API key scoped to a single domain, the result is restricted to that one domain instead of every domain the user belongs to (`get_object_list`, `corehq/apps/api/resources/v0_5.py:1119-1141`).
+      tags:
+        - Users
+      parameters:
+        - name: feature_flag
+          in: query
+          required: false
+          description: Restrict results to domains where this feature flag slug is enabled for the requesting user. An unrecognized slug (not in `toggles.all_toggle_slugs()`) is rejected with a 400 (`get_object_list`, `corehq/apps/api/resources/v0_5.py:1120-1122`).
+          example: API_THROTTLE_WHITELIST
+          schema:
+            type: string
+        - name: can_view_reports
+          in: query
+          required: false
+          description: Restrict results to domains where the user can view reports. Not parsed as a boolean -- `get_object_list` (`corehq/apps/api/resources/v0_5.py:1123,1136`) checks the raw query string value's Python truthiness, so *any* non-empty value, including the literal string `false`, is treated as true; only an absent or empty parameter is treated as false.
+          example: 'true'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Every (or, with an API key, the single) project space the user belongs to. Not the shared pagination envelope, and does not respect `limit`/`offset` -- see `UserDomainList`'s description and the discrepancy file. This spec therefore declares no `limit`/ `offset` query parameters on this operation, unlike every other list endpoint.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDomainList'
+        '400':
+          description: '`feature_flag` does not name a real feature flag. Uses the shared `{"error": ...}` shape (tastypie''s `BadRequest`, converted by `wrap_view`).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication credentials were missing or invalid. The response body is the plain-text string `Username or API Key is incorrect, expired or deactivated` (`content_type='text/plain'`).
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Username or API Key is incorrect, expired or deactivated
+        '403':
+          description: Not a real response for this operation -- every authentication failure surfaces as 401 instead. See the description above.
+        '429':
+          description: The request was rate limited. Back off and retry.
 components:
   securitySchemes:
     ApiKey:
@@ -3704,6 +3852,220 @@ components:
         email:
           type: string
           example: demo@dimagi.com
+    BulkUser:
+      type: object
+      description: A basic user record, as returned by `v0_5.BulkUserResource` (`corehq/apps/api/resources/v0_5.py:172-238`). Backed by Elasticsearch, not the couch `CommCareUser`/`WebUser` models -- only the fields declared below exist; this resource returns both mobile workers and web users indifferently (it queries `UserES` with no user-type filter).
+      properties:
+        id:
+          type: string
+          description: User UUID (`_id` in the underlying Elasticsearch document).
+          example: 0e478e1f5430c8efad06a2c88f1f5d80
+        email:
+          type: string
+          example: user1@gmail.com
+        username:
+          type: string
+          example: user1@gmail.com
+        first_name:
+          type: string
+          nullable: true
+          example: User1
+        last_name:
+          type: string
+          nullable: true
+          example: ''
+        phone_numbers:
+          type: array
+          nullable: true
+          items:
+            type: string
+          example: []
+        resource_uri:
+          type: string
+          description: Always the empty string. `include_resource_uri` defaults to `True` and is never overridden, so the field is present, but neither `BulkUserResource` nor its `Meta` overrides `get_resource_uri`; the base `resource_uri_kwargs` (`tastypie/resources.py:787-807`) omits `domain`, so reversing `api_dispatch_detail` fails with `NoReverseMatch`, which `get_resource_uri` (`tastypie/resources.py:810-829`) catches and turns into `''`. Matches `bulk-user.rst`'s own sample output (`:53`, `:62`).
+          example: ''
+    BulkUserList:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            meta:
+              allOf:
+                - $ref: '#/components/schemas/PaginationMeta'
+                - type: object
+                  properties:
+                    total_count:
+                      type: integer
+                      description: Not the true count of matching users in the domain -- `total_count` comes from `Paginator.get_count()` (`tastypie/paginator.py:118-126`), which falls back to `len(self.objects)` because the object list here is a plain Python list of namedtuples, not a queryset with a `.count()` method. `self.objects` is already the single Elasticsearch page `obj_get_list` fetched (at most `limit` items), so `total_count` reports the size of the *current page*, not the domain's real user count. See the discrepancy file.
+                      example: 20
+            objects:
+              type: array
+              items:
+                $ref: '#/components/schemas/BulkUser'
+    SsoCredentials:
+      type: object
+      description: Request body for `authenticateUser` (`v0_4.SingleSignOnResource.post_list`, `corehq/apps/api/resources/v0_4.py:268-297`).
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: A bare username is qualified as `<username>@<domain>.commcarehq.org` (`format_username`, `v0_4.py:280-281`) unless it already contains `@`.
+          example: jdoe
+        password:
+          type: string
+          format: password
+          example: qwer1234
+    SsoMobileWorker:
+      type: object
+      description: Returned when the authenticated username belongs to a mobile worker. **Not** the same shape as `MobileWorker` (`components/schemas/user.yaml#/MobileWorker`), despite `sso.rst:25` claiming the output is "identical to the List User API" -- see the discrepancy file. `post_list` dehydrates with a plain `v0_1.CommCareUserResource()` (`v0_4.py:289,295-296`), not the `v0_5` subclass that backs `listMobileWorkers`/`getMobileWorker`, so several `v0_5`-only fields (`primary_location`, `locations`, `require_account_confirmation`, `send_confirmation_email_now`) are absent.
+      properties:
+        id:
+          type: string
+          example: 3c5a623af057e23a32ae4000cf291339
+        username:
+          type: string
+          example: jdoe@example.commcarehq.org
+        first_name:
+          type: string
+          nullable: true
+          example: John
+        last_name:
+          type: string
+          nullable: true
+          example: Doe
+        default_phone_number:
+          type: string
+          nullable: true
+          example: '+50253311399'
+        email:
+          type: string
+          example: jdoe@example.org
+        phone_numbers:
+          type: array
+          items:
+            type: string
+          example:
+            - '+50253311399'
+        groups:
+          type: array
+          items:
+            type: string
+          description: Group UUIDs the user belongs to (`get_group_ids`).
+          example:
+            - 9a0accdba29e01a61ea099394737c4fb
+        user_data:
+          type: object
+          additionalProperties: true
+          example:
+            chw_id: 13/43/DFA
+        eulas:
+          type: string
+          description: A Python `repr` of a list of `LicenseAgreement` objects, not structured JSON -- same shape as `MobileWorker.eulas`. See the discrepancy file.
+          example: '[]'
+        resource_uri:
+          type: string
+          description: Always the empty string here, unlike `MobileWorker.resource_uri`. `v0_1.CommCareUserResource` (used by SSO) does not override `get_resource_uri`; `v0_5.CommCareUserResource` (used by `listMobileWorkers`/`getMobileWorker`) does (`corehq/apps/api/resources/v0_5.py:257-268`). The base `resource_uri_kwargs` omits `domain`, so reversing the detail URL raises `NoReverseMatch`, caught by `get_resource_uri` (`tastypie/resources.py:810-829`) and turned into `''`. See the discrepancy file.
+          example: ''
+        extras:
+          type: object
+          description: Present only if the request URL includes a truthy `extras` query parameter (`CommCareUserResource.dehydrate`, `v0_1.py:76-109`) -- unusual on a `POST`, but the check reads `bundle.request.GET` regardless of method.
+          properties:
+            submitted_last_30:
+              type: integer
+              example: 4
+            completed_last_30:
+              type: integer
+              example: 3
+            submitted_last_month:
+              type: integer
+              example: 5
+            completed_last_month:
+              type: integer
+              example: 4
+    SsoWebUser:
+      type: object
+      description: Returned when the authenticated username belongs to a web user. **Not** the same shape as `WebUser` (`components/schemas/user.yaml#/WebUser`), despite `sso.rst:25`'s "identical to ... the List Web User API" claim -- see the discrepancy file. `post_list` dehydrates with a plain `v0_1.WebUserResource()` (`v0_4.py:291,295-296`), not the `v0_5` subclass that backs `listWebUsers`/`getWebUser`, so several `v0_5`-only fields (`user_data`, `primary_location_id`, `assigned_location_ids`, `profile`, `tableau_role`, `tableau_groups`, `is_active_in_domain`) are absent.
+      properties:
+        id:
+          type: string
+          example: 8f9756be9b1c7f28057d707b405d18f6
+        username:
+          type: string
+          example: jdoe@example.com
+        first_name:
+          type: string
+          nullable: true
+          example: John
+        last_name:
+          type: string
+          nullable: true
+          example: Doe
+        default_phone_number:
+          type: string
+          nullable: true
+          example: '+50253311399'
+        email:
+          type: string
+          example: john.doe@example.org
+        phone_numbers:
+          type: array
+          items:
+            type: string
+          example: []
+        role:
+          type: string
+          description: Role name in this domain, or `""` if the user has no role.
+          example: App Editor
+        permissions:
+          type: object
+          additionalProperties: true
+          example:
+            edit_web_users: true
+            edit_commcare_users: true
+        is_admin:
+          type: boolean
+          example: false
+        eulas:
+          type: string
+          description: Same `repr`-of-a-list shape as `SsoMobileWorker.eulas`.
+          example: '[]'
+        resource_uri:
+          type: string
+          description: Always the empty string here, unlike `WebUser.resource_uri` -- same mechanism as `SsoMobileWorker.resource_uri`. See the discrepancy file.
+          example: ''
+    UserDomain:
+      type: object
+      description: A project space the authenticated web user belongs to, as returned by `v0_5.UserDomainsResource` (`corehq/apps/api/resources/v0_5.py:1091-1142`).
+      properties:
+        domain_name:
+          type: string
+          example: dimagi
+        project_name:
+          type: string
+          description: The project space's human-readable name (`Domain.hr_name`).
+          example: dimagi
+    UserDomainList:
+      type: object
+      description: 'Not the shared pagination envelope -- see the discrepancy file. `UserDomainsResource.Meta.paginator_class = DoesNothingPaginator` (`corehq/apps/api/resources/v0_5.py:1100`), whose `page()` (`corehq/apps/api/resources/pagination.py:42-47`) returns only `{"objects": self.objects, "meta": {"total_count": ...}}` -- no `limit`, `offset`, `next`, or `previous` keys at all, and `self.objects` is never sliced, so every request returns the full, unpaginated list. `user-domain-list.rst`''s sample response (`:29-36`) shows a full `limit`/`offset`/`next`/`previous`/`total_count` meta object that the code cannot produce.'
+      required:
+        - meta
+        - objects
+      properties:
+        meta:
+          type: object
+          required:
+            - total_count
+          properties:
+            total_count:
+              type: integer
+              description: The real count of matching domains (`len(results)`).
+              example: 16
+        objects:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDomain'
   responses:
     BadRequest:
       description: The request was malformed or a parameter value was invalid.

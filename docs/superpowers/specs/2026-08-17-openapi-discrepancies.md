@@ -814,3 +814,172 @@ the view's own `if` chain", and anything that falls through returns a 405
   (`corehq/apps/api/tests/test_user_resources.py:90-122,125-157`) assert the
   exact response dict for a created user and neither includes a `type` key.
   The spec's `MobileWorker` schema has no `type` property.
+
+## bulk-user/v1 (`bulk-user.rst`)
+
+- **`offset` is double-applied and returns empty results for any value greater
+  than 0.** `bulk-user.rst:75-83` documents `offset` as an ordinary
+  paginate-with-`limit` parameter and gives a worked example
+  (`offset=200`, third page of 100). `BulkUserResource.obj_get_list`
+  (`corehq/apps/api/resources/v0_5.py:211-233`) reads `offset`/`limit` from
+  `bundle.request.GET` and passes them straight to `user_es_call`
+  (`v0_5.py:161-169`) as `start_at`/`size`, so Elasticsearch already returns a
+  single, correctly-offset page. `BulkUserResource.Meta`
+  (`v0_5.py:194-199`) inherits `CustomResourceMeta`, which never sets
+  `paginator_class` (`corehq/apps/api/resources/meta.py:76-82`), so tastypie
+  falls back to its real, default `Paginator`
+  (`tastypie/resources.py:80,1349`). That paginator reads the *same* `offset`
+  GET parameter again and re-slices the already-short page
+  (`Paginator.get_slice`, `tastypie/paginator.py:109-116`:
+  `self.objects[offset:offset+limit]`). For `offset=0` this is harmless (the
+  page is already `<= limit` items, so `[0:limit]` is a no-op), but for any
+  `offset > 0` the second slice starts past the end of the (already-short)
+  page, so `objects` comes back empty even though matching records genuinely
+  exist at that position. Neither `TestBulkUserAPI`
+  (`corehq/apps/api/tests/test_user_resources.py:1002-1032`, which mocks
+  `user_es_call` entirely) nor any other test exercises a non-zero `offset`
+  against the real pagination path. The spec's `listUsersBulk` `offset`
+  parameter documents this; a human should decide whether to fix it (for
+  example, by setting `paginator_class = DoesNothingPaginator`, as
+  `UserDomainsResource` and several other resources in this codebase already
+  do).
+- **`total_count` in the response `meta` is not the domain's real user count
+  -- it is capped at the size of the current page.** `bulk-user.rst`'s sample
+  output (`:39-45`) shows `"total_count": 304` alongside `"limit": 20`,
+  implying `total_count` reflects the full matching set. `Paginator.get_count`
+  (`tastypie/paginator.py:118-126`) tries `self.objects.count()` and falls
+  back to `len(self.objects)` on `AttributeError`/`TypeError`; `self.objects`
+  here is a plain Python list of `namedtuple`s (`BulkUserResource.to_obj`,
+  `v0_5.py:185-192`), which has no `.count()`, so `get_count` returns
+  `len(self.objects)` -- the length of the single Elasticsearch page already
+  fetched (at most `limit` items), not a true domain-wide count. The spec's
+  `BulkUserList` schema documents the real, page-capped meaning of
+  `total_count`.
+- **The `q` query-string filter was previously broken but is fixed in the
+  current code -- checked per the task brief's instruction, nothing to flag.**
+  `UserES.set_query()` returns a new, cloned query rather than mutating in
+  place; an earlier version of `obj_get_list` discarded that return value
+  (`query.set_query(...)` with no assignment), so every `q` value was silently
+  ignored and the unfiltered result set was returned regardless. Current code
+  (`v0_5.py:168`) correctly assigns the result: `query =
+  query.set_query({"query_string": {"query": q}})`.
+  `TestBulkUserESCall.test_q_filters_to_matching_user`/`test_q_none_returns_all_users`
+  (`corehq/apps/api/tests/test_user_resources.py:1125,1136`) cover this
+  directly against real Elasticsearch. **Negative finding, included for
+  completeness.**
+- **A GET on `/a/{domain}/api/bulk-user/v1/{id}/` is nominally allowed
+  (`Meta.detail_allowed_methods = ['get']`, `v0_5.py:197`) but is not actually
+  implemented, and would return an uncaught 500.** `BulkUserResource` never
+  overrides `obj_get`; the base `tastypie.resources.Resource.obj_get`
+  (`tastypie/resources.py:1172-1182`) unconditionally `raise
+  NotImplementedError()`. `get_detail`'s exception handling only special-cases
+  `ObjectDoesNotExist`/`MultipleObjectsReturned`
+  (`tastypie/resources.py:1362-1383`); `NotImplementedError` falls through to
+  `wrap_view`'s generic `except Exception` -> `_handle_500`
+  (`tastypie/resources.py:250-265,291-315`). `bulk-user.rst` never documents a
+  detail endpoint at all. Not modelled in the spec (the task brief scopes this
+  resource to the list operation only); recorded here so a later task does not
+  assume a working detail GET exists.
+
+## sso/v1 (`sso.rst`)
+
+- **The response is not "identical to the List User API or List Web User
+  API," as `sso.rst:26` claims.** `SingleSignOnResource.post_list`
+  (`corehq/apps/api/resources/v0_4.py:260-297`) dehydrates the authenticated
+  user with a freshly-constructed `v0_1.CommCareUserResource()` or
+  `v0_1.WebUserResource()` (`v0_4.py:288-291,295-296`) -- the *base* classes
+  in `v0_1.py`, not the `v0_5` subclasses (`v0_5.CommCareUserResource`,
+  `v0_5.WebUserResource`) that actually back `listMobileWorkers`/
+  `getMobileWorker` and `listWebUsers`/`getWebUser`. Concretely absent from
+  the mobile-worker-shaped response: `primary_location`, `locations`,
+  `require_account_confirmation`, `send_confirmation_email_now` (all declared
+  only on `v0_5.CommCareUserResource`, `v0_5.py:242-245`). Absent from the
+  web-user-shaped response: `user_data`, `primary_location_id`,
+  `assigned_location_ids`, `profile`, `tableau_role`, `tableau_groups`,
+  `is_active_in_domain` (all declared only on `v0_5.WebUserResource`,
+  `v0_5.py:473-481`). Additionally, `resource_uri` is always the empty string
+  in both SSO shapes -- `v0_1.CommCareUserResource`/`v0_1.WebUserResource`
+  never override `get_resource_uri`, unlike their `v0_5` counterparts
+  (`v0_5.py:257-268,524-532`), which always compute a real URL. The spec's
+  `SsoMobileWorker`/`SsoWebUser` schemas (`components/schemas/sso.yaml`)
+  document the real, narrower shape instead of reusing `MobileWorker`/
+  `WebUser` wholesale.
+- **The 400 for a missing `username`/`password` is plain text, not the shared
+  JSON `{"error": ...}` shape used by every other 400 in this spec.**
+  `v0_4.py:274-278` returns Django's own `HttpResponseBadRequest('Missing
+  required parameter: username')` (or `password`) directly -- a bare Django
+  `HttpResponse` subclass, not anything built through tastypie's
+  `error_response`/`wrap_view` machinery, so it carries Django's default
+  `text/html` content type over a literal, unwrapped string body.
+  `sso.rst` documents no error responses at all. The spec's `authenticateUser`
+  `400` documents this exact shape.
+- **No 401 is reachable for this operation at all.** `SSOAuthentication`
+  (`corehq/apps/api/resources/auth.py:63-64`) is a bare `pass`, so it inherits
+  tastypie's base `Authentication.is_authenticated`
+  (`tastypie/authentication.py:54-60`), which unconditionally returns `True`
+  -- tastypie's own auth layer (`tastypie/resources.py:557-572`) can therefore
+  never reject a request to this endpoint. Every credential check happens by
+  hand inside `post_list` and resolves to 400 (missing field) or 403 (bad
+  credentials/wrong user type) instead. The spec's `authenticateUser` `401`
+  response documents this explicitly rather than pretending a real 401 body
+  exists, since the shared test `test_every_operation_declares_401_and_403`
+  requires the key regardless.
+- **No credential is echoed back in the response.** Checked specifically per
+  the task brief's instruction. `v0_1.CommCareUserResource` and
+  `v0_1.WebUserResource` (`corehq/apps/api/resources/v0_1.py:25-158`) declare
+  the identical field set already checked for their `v0_5` counterparts in
+  the `user/v1 and web-user/v1` section above -- no `password` field on
+  either. **Nothing to flag; negative finding, included for completeness.**
+
+## user_domains/v1 (`user-domain-list.rst`)
+
+- **The response `meta` shape does not match the documented sample at
+  all -- only `total_count` is real.**
+  `user-domain-list.rst:29-36`'s sample response shows a full
+  `limit`/`offset`/`next`/`previous`/`total_count` pagination object.
+  `UserDomainsResource.Meta.paginator_class = DoesNothingPaginator`
+  (`corehq/apps/api/resources/v0_5.py:1100`); `DoesNothingPaginator.page()`
+  (`corehq/apps/api/resources/pagination.py:42-47`) returns only
+  `{"objects": self.objects, "meta": {"total_count": self.get_count()}}` --
+  no `limit`, `offset`, `next`, or `previous` keys are ever present, and
+  `self.objects` (the full result of `get_object_list`,
+  `v0_5.py:1119-1141`) is never sliced by the paginator. In other words,
+  **this endpoint returns every matching domain in a single, unpaginated
+  response**, regardless of any `limit`/`offset` query parameter a client
+  might send (both are silently ignored -- `DoesNothingPaginator.page()`
+  never reads `self.request_data`). The spec's `UserDomainList` schema
+  documents the real, `total_count`-only meta shape, and `listUserDomains`
+  declares no `limit`/`offset` parameters.
+- **No 403 is reachable for this operation at all.**
+  `LoginAuthentication.is_authenticated`
+  (`corehq/apps/api/resources/auth.py:75-79`) delegates to `_auth_test`
+  (`auth.py:81-95`), which always collapses its result to a plain Python
+  `bool` (`return response is PASSED_AUTH`) -- unlike
+  `LoginAndDomainAuthentication._auth_test` (`auth.py:114-135`, used by every
+  permission-gated resource in this spec), it never returns the actual
+  `HttpResponse` a failed auth decorator produced. Tastypie's own
+  `is_authenticated` (`tastypie/resources.py:557-572`) only preserves a
+  non-401 status when the authentication backend's return value is itself an
+  `HttpResponse` instance; a plain `False` always becomes a 401
+  (`http.HttpUnauthorized()`). `get_object_list`
+  (`corehq/apps/api/resources/v0_5.py:1116-1141`) enforces no permission or
+  domain-membership check of its own either -- the only non-200 outcomes are
+  401 (auth failure) and 400 (invalid `feature_flag`). The spec's
+  `listUserDomains` `403` response documents this explicitly rather than
+  claiming a real 403 body exists, since `test_every_operation_declares_401_and_403`
+  requires the key regardless. This same mechanism (a `LoginAuthentication`
+  instance whose `_auth_test` discards the real response) is shared by
+  `getIdentity` in `paths/web-user.yaml`, whose already-committed `403`
+  response describes a genuine-looking forbidden path from the
+  `require_domain=False` decorator branch
+  (`corehq/apps/domain/decorators.py:308-329`) -- by the same trace, that
+  decorator's `HttpResponseForbidden()` return value would also be discarded
+  by `LoginAuthentication._auth_test`'s boolean coercion and surface as a 401,
+  not a 403. Not corrected here (`web-user.yaml` is Task 11's file, out of
+  this task's scope) -- flagged for a human to verify.
+- **No 429 is reachable for this operation at all.**
+  `UserDomainsResource.Meta` (`v0_5.py:1095-1100`) is a plain `object`, not
+  `CustomResourceMeta`, so it never sets `throttle`; tastypie's default
+  `BaseThrottle.should_be_throttled` (`tastypie/throttle.py:51-61`) always
+  returns `False`. Same situation, and same treatment, as `getIdentity`'s
+  `429` in `paths/web-user.yaml`.

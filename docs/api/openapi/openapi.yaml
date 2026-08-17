@@ -96,3 +96,9 @@ paths:
     $ref: "./paths/web-user.yaml#/Invitation"
   /api/identity/v1/:
     $ref: "./paths/web-user.yaml#/Identity"
+  /a/{domain}/api/bulk-user/v1/:
+    $ref: "./paths/bulk-user.yaml#/List"
+  /a/{domain}/api/sso/v1/:
+    $ref: "./paths/sso.yaml#/List"
+  /api/user_domains/v1/:
+    $ref: "./paths/user-domains.yaml#/List"

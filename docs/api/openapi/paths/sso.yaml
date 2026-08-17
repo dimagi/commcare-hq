@@ -1,0 +1,90 @@
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  post:
+    operationId: authenticateUser
+    summary: Validate credentials and fetch the authenticated user's profile
+    description: >-
+      Exchanges a username and password (in the request body) for the user's
+      profile, without requiring any header-based credential
+      (`v0_4.SingleSignOnResource.post_list`,
+      `corehq/apps/api/resources/v0_4.py:260-309`). This is a list-only
+      operation -- `Meta.detail_allowed_methods = []` (`v0_4.py:308`), and
+      `get_list`/`get_detail` both unconditionally return a bare 403
+      (`v0_4.py:299-303`).
+    tags: [Users]
+    # Overrides the document-level security requirement. Credentials travel
+    # in the request body, not an `Authorization` header --
+    # `SSOAuthentication` (`corehq/apps/api/resources/auth.py:63-64`) is a
+    # bare `pass`, inheriting tastypie's base `Authentication.is_authenticated`
+    # (always `True`, `tastypie/authentication.py:54-60`), so no header-based
+    # scheme applies to this endpoint at all.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            $ref: "../components/schemas/sso.yaml#/SsoCredentials"
+          examples:
+            login:
+              value:
+                username: MY_USERNAME
+                password: MY_PASSWORD
+    responses:
+      "200":
+        description: >-
+          The credentials were valid. The body is the authenticated user's
+          profile -- shaped differently depending on whether the username
+          belongs to a mobile worker or a web user. `sso.rst:26` claims this is
+          "identical" to the List Mobile Worker or List Web User response; it is
+          not -- see `SsoMobileWorker`, `SsoWebUser`, and the discrepancy file.
+          Modelled with `anyOf`, not `oneOf`: both schemas are permissive (no
+          `required`, no `additionalProperties: false`), so either genuine
+          response would validate against both branches under `oneOf` and fail a
+          strict validator.
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - $ref: "../components/schemas/sso.yaml#/SsoMobileWorker"
+                - $ref: "../components/schemas/sso.yaml#/SsoWebUser"
+      "400":
+        description: >-
+          `username` or `password` was missing from the POST body
+          (`v0_4.py:274-278`). The body is plain text, not JSON: Django's
+          `HttpResponseBadRequest('Missing required parameter: username')` (or
+          `password`), served with Django's default `text/html` content type
+          even though the content itself is a bare string.
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: "Missing required parameter: username"
+      "401":
+        # No code path produces this. `SSOAuthentication`
+        # (`corehq/apps/api/resources/auth.py:63-64`) always reports
+        # authenticated, so tastypie's own `is_authenticated`
+        # (`tastypie/resources.py:557-572`) never rejects the request; every
+        # credential check happens by hand inside `post_list`, which returns
+        # 400 or 403 instead (see those responses). Included only to satisfy
+        # this spec's coverage requirement. See the discrepancy file.
+        description: >-
+          Not a real response for this operation -- see the description above.
+      "403":
+        # Deliberately not the shared ref: bad credentials, a username with
+        # no membership in this domain, or a username belonging to neither a
+        # mobile worker nor a web user, all reach a bare Django
+        # `HttpResponseForbidden()` (`v0_4.py:286,293,300,303`) -- empty body.
+        description: >-
+          The username does not exist, is not a member of this project space,
+          the password is incorrect, or the user is neither a mobile worker nor
+          a web user. The response body is empty.
+      "429":
+        # Deliberately not the shared ref: `SingleSignOnResource.Meta`
+        # inherits `CustomResourceMeta`'s real `HQThrottle`
+        # (`corehq/apps/api/resources/meta.py:76-81`) -- a throttled request
+        # gets tastypie's bare `http.HttpTooManyRequests()`, no JSON body.
+        description:
+          The request was rate limited. Back off and retry. The response body is
+          empty.

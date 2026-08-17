@@ -1,0 +1,102 @@
+List:
+  get:
+    operationId: listUserDomains
+    summary: List the authenticated web user's project spaces
+    description: >-
+      Root-mounted, unlike every other operation in this spec except
+      `getIdentity` -- no `{domain}` path segment. Registered directly under
+      `/api/` (`v0_5.UserDomainsResource.get_urlpattern('v1')`, included via
+      `user_urlpatterns` at `corehq/apps/api/urls.py:246` and mounted at root by
+      `urls.py:108`). Only requires login, not domain membership or any specific
+      permission (`LoginAuthentication`,
+      `corehq/apps/api/resources/v0_5.py:1097`). If the request authenticated
+      with an API key scoped to a single domain, the result is restricted to
+      that one domain instead of every domain the user belongs to
+      (`get_object_list`, `corehq/apps/api/resources/v0_5.py:1119-1141`).
+    tags: [Users]
+    parameters:
+      - name: feature_flag
+        in: query
+        required: false
+        description: >-
+          Restrict results to domains where this feature flag slug is enabled
+          for the requesting user. An unrecognized slug (not in
+          `toggles.all_toggle_slugs()`) is rejected with a 400
+          (`get_object_list`, `corehq/apps/api/resources/v0_5.py:1120-1122`).
+        example: API_THROTTLE_WHITELIST
+        schema:
+          type: string
+      - name: can_view_reports
+        in: query
+        required: false
+        description: >-
+          Restrict results to domains where the user can view reports. Not
+          parsed as a boolean -- `get_object_list`
+          (`corehq/apps/api/resources/v0_5.py:1123,1136`) checks the raw query
+          string value's Python truthiness, so *any* non-empty value, including
+          the literal string `false`, is treated as true; only an absent or
+          empty parameter is treated as false.
+        example: "true"
+        schema:
+          type: string
+    responses:
+      "200":
+        description: >-
+          Every (or, with an API key, the single) project space the user belongs
+          to. Not the shared pagination envelope, and does not respect
+          `limit`/`offset` -- see `UserDomainList`'s description and the
+          discrepancy file. This spec therefore declares no `limit`/ `offset`
+          query parameters on this operation, unlike every other list endpoint.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/user-domains.yaml#/UserDomainList"
+      "400":
+        description: >-
+          `feature_flag` does not name a real feature flag. Uses the shared
+          `{"error": ...}` shape (tastypie's `BadRequest`, converted by
+          `wrap_view`).
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        # Deliberately not the shared ref: UserDomainsResource.dispatch_list
+        # (corehq/apps/api/resources/v0_5.py:1102-1114) explicitly catches an
+        # ImmediateHttpResponse wrapping tastypie's HttpUnauthorized and
+        # replaces its content with a plain-text message -- never JSON.
+        description: >-
+          Authentication credentials were missing or invalid. The response body
+          is the plain-text string `Username or API Key is incorrect, expired or
+          deactivated` (`content_type='text/plain'`).
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: Username or API Key is incorrect, expired or deactivated
+      "403":
+        # No code path produces this. LoginAuthentication.is_authenticated
+        # (corehq/apps/api/resources/auth.py:75-79) delegates to _auth_test
+        # (auth.py:81-95), which always collapses its result to a plain
+        # Python bool -- unlike LoginAndDomainAuthentication._auth_test
+        # (auth.py:114-135), it never returns the actual HttpResponse a
+        # failed decorator produced. Tastypie's own is_authenticated
+        # (tastypie/resources.py:557-572) only preserves a non-401 status when
+        # the authentication backend's return value is itself an HttpResponse
+        # instance; a plain False always becomes a 401. get_object_list
+        # (v0_5.py:1116-1141) enforces no permission or domain-membership
+        # check of its own either. Included only to satisfy this spec's
+        # coverage requirement. See the discrepancy file.
+        description: >-
+          Not a real response for this operation -- every authentication failure
+          surfaces as 401 instead. See the description above.
+      "429":
+        # Not the shared ref: UserDomainsResource.Meta (v0_5.py:1095-1100) is
+        # a plain `object`, not CustomResourceMeta -- it never sets throttle,
+        # so tastypie's default BaseThrottle.should_be_throttled
+        # (tastypie/throttle.py:51-61) applies, which always returns False. No
+        # code path was found that rate-limits this endpoint; this response
+        # documents only the possibility of infrastructure-level rate
+        # limiting, not verified application behavior. See the discrepancy
+        # file.
+        description: The request was rate limited. Back off and retry.
