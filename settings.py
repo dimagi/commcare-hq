@@ -287,6 +287,7 @@ HQ_APPS = (
     'corehq.apps.ip_access',
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
+    'corehq.apps.mcp',
     'corehq.apps.products',
     'corehq.apps.programs',
     'corehq.apps.project_db',
