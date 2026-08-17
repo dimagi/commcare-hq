@@ -1,0 +1,421 @@
+openapi: 3.0.3
+info:
+  title: CommCare HQ APIs
+  version: '1.0'
+  description: |-
+    APIs for CommCare HQ, covering case and form data, user and location management, reports, form submission, and messaging events.
+    Requires a CommCare Software Plan (Standard or above).
+  contact:
+    name: Dimagi Support
+    url: https://dimagi.atlassian.net/wiki/spaces/commcarepublic/overview
+servers:
+  - url: https://{environment}
+    description: CommCare HQ environment
+    variables:
+      environment:
+        default: www.commcarehq.org
+        enum:
+          - www.commcarehq.org
+          - india.commcarehq.org
+          - swiss.commcarehq.org
+        description: The CommCare HQ cloud environment hosting the project space.
+security:
+  - ApiKey: []
+  - Basic: []
+  - OAuth2: []
+tags:
+  - name: Data
+    description: APIs for building project-specific applications and integrations.
+  - name: Users
+    description: Managing mobile workers, web users, groups, and identity.
+  - name: Submission
+    description: OpenRosa-standard XForm submission.
+  - name: SMS
+    description: Messaging event history.
+paths:
+  /a/{domain}/api/group/v1/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    get:
+      operationId: listGroups
+      summary: List user groups
+      description: Returns groups the authenticated user is permitted to see. Requires the Edit Mobile Workers permission.
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: A page of groups.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createGroup
+      summary: Create a user group
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupWrite'
+      responses:
+        '201':
+          description: The group was created. Note that this endpoint returns only the new group's id, not the full group object -- fetch the detail endpoint if you need the rest.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: UUID of the newly created group.
+                    example: 1eb59d6938fc7e510254d8c2f63d944f
+        '400':
+          description: The request payload was invalid. Note this endpoint's error body uses `error_message`, not the `error` key used elsewhere.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupErrorMessage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: bulkUpdateGroups
+      summary: Bulk create or update groups
+      description: Accepts a list of group payloads. Declared by `v0_5.GroupResource.patch_list`.
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                objects:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/GroupWrite'
+      responses:
+        '202':
+          description: All groups were created or updated. The body is an array of the new group ids, in the same order as the submitted `objects`.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  description: UUID of a created or updated group.
+                example:
+                  - 1eb59d6938fc7e510254d8c2f63d944f
+        '400':
+          description: 'At least one group in the batch failed. The body is an array the same length and order as the submitted `objects`: each element is either the new group''s id (that object succeeded) or the raw validation error text (that object failed) -- not an `error`/`error_message` object, and there is no separate flag indicating which elements are which. A client must shape-guess (for example, checking whether an element looks like a group UUID) to tell success from failure.'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                example:
+                  - 1eb59d6938fc7e510254d8c2f63d944f
+                  - Name is required
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /a/{domain}/api/group/v1/{group_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: group_id
+        in: path
+        required: true
+        description: Group UUID.
+        example: 1eb59d6938fc7e510254d8c2f63d944f
+        schema:
+          type: string
+    get:
+      operationId: getGroup
+      summary: Retrieve a single user group
+      tags:
+        - Users
+      responses:
+        '200':
+          description: The group.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: The requested group does not exist. The response body is empty.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    put:
+      operationId: replaceGroup
+      summary: Replace a user group
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupWrite'
+      responses:
+        '200':
+          description: The updated group.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteGroup
+      summary: Delete a user group
+      tags:
+        - Users
+      responses:
+        '204':
+          description: The group was deleted.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: The requested group does not exist. Reached via tastypie's generic exception handler rather than a resource-specific not-found path.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupErrorMessage'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+components:
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: |-
+        API key authentication. Send the header as `Authorization: ApiKey <email>:<api_key>`.
+        This is not a registered HTTP authentication scheme, so it is described here as an apiKey header rather than as `type: http`. Generate a key under Account Settings in CommCare HQ.
+    Basic:
+      type: http
+      scheme: basic
+      description: HTTP Basic authentication with a CommCare username and password. For mobile workers the username is `<username>@<domain>.commcarehq.org`.
+    OAuth2:
+      type: http
+      scheme: bearer
+      description: 'OAuth2 bearer token, sent as `Authorization: Bearer <token>`.'
+  parameters:
+    Domain:
+      name: domain
+      in: path
+      required: true
+      description: The project space name.
+      example: demo
+      schema:
+        type: string
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: 'Maximum number of records to return. Default: 20. Maximum: 1000.'
+      example: 100
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 20
+    Offset:
+      name: offset
+      in: query
+      required: false
+      description: 'Number of records to skip. Default: 0.'
+      example: 100
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    Format:
+      name: format
+      in: query
+      required: false
+      description: Response serialization format.
+      example: json
+      schema:
+        type: string
+        enum:
+          - json
+          - xml
+        default: json
+  schemas:
+    PaginationMeta:
+      type: object
+      description: Offset-based pagination metadata returned by most list endpoints.
+      properties:
+        limit:
+          type: integer
+          example: 20
+        offset:
+          type: integer
+          example: 0
+        next:
+          type: string
+          nullable: true
+          description: Relative URL of the next page, or null on the last page.
+          example: /a/demo/api/form/v1/?limit=20&offset=20
+        previous:
+          type: string
+          nullable: true
+          description: Relative URL of the previous page, or null on the first page.
+          example: null
+        total_count:
+          type: integer
+          description: Total number of matching records.
+          example: 6909
+    PaginatedResponse:
+      type: object
+      description: Standard list envelope. Resource-specific responses narrow `objects` using allOf.
+      required:
+        - meta
+        - objects
+      properties:
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+        objects:
+          type: array
+          items:
+            type: object
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Group UUID.
+          example: 1eb59d6938fc7e510254d8c2f63d944f
+        name:
+          type: string
+          description: Group name, for example a health district.
+          example: Wozzle
+        domain:
+          type: string
+          description: Project space the group belongs to.
+          example: demo
+        case_sharing:
+          type: boolean
+          description: Whether members share cases owned by the group.
+          example: false
+        reporting:
+          type: boolean
+          description: Whether the group is used for reporting rollups.
+          example: true
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Arbitrary key/value metadata attached to the group.
+        users:
+          type: array
+          items:
+            type: string
+          description: User UUIDs of group members.
+          example:
+            - 91da6b1c78699adfb8679b741caf9f00
+    GroupList:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            objects:
+              type: array
+              items:
+                $ref: '#/components/schemas/Group'
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Human-readable description of the failure.
+          example: not authorized
+    GroupWrite:
+      type: object
+      description: Payload for creating or replacing a group.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: Wozzle
+        case_sharing:
+          type: boolean
+          example: false
+        reporting:
+          type: boolean
+          example: true
+        metadata:
+          type: object
+          additionalProperties: true
+        users:
+          type: array
+          items:
+            type: string
+          example:
+            - 91da6b1c78699adfb8679b741caf9f00
+    GroupErrorMessage:
+      type: object
+      description: Error body keyed `error_message` rather than the `error` key used by every other resource's error responses. `createGroup` uses this shape for validation failures (the real message, e.g. "Name is required"); `deleteGroup` uses it for its 404 (a generic canned message, since that path is actually tastypie's uncaught-exception handler, not a resource-specific not-found response -- see the discrepancy file).
+      properties:
+        error_message:
+          type: string
+          example: Name is required
+  responses:
+    Unauthorized:
+      description: 'Authentication credentials were missing or invalid. Note that CommCare also returns 401 with `{"error": "not authorized"}` for some permission failures.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: The authenticated user lacks the permission required for this endpoint.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: The request was rate limited. Back off and retry. Rate limits are applied per user and project space.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: The request was malformed or a parameter value was invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

@@ -1,0 +1,6 @@
+# Generated artifacts, not source. These are produced by `redocly` and
+# committed only because readthedocs' Python-only build environment cannot
+# run the Node bundler; scripts/check-openapi-dist.sh compares them
+# byte-for-byte against a fresh redocly build, so they must not be
+# reformatted by prettier.
+docs/api/openapi/dist/

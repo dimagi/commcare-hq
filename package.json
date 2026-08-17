@@ -138,7 +138,10 @@
         "dev": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js --watch",
         "test": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js",
         "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js",
-        "openapi:lint": "redocly lint --config docs/api/openapi/redocly.yaml"
+        "openapi:lint": "redocly lint --config docs/api/openapi/redocly.yaml",
+        "openapi:bundle": "redocly bundle --config docs/api/openapi/redocly.yaml commcare -o docs/api/openapi/dist/openapi.bundled.yaml",
+        "openapi:docs": "redocly build-docs --config docs/api/openapi/redocly.yaml commcare -o docs/api/openapi/dist/openapi/index.html",
+        "openapi:check": "./scripts/check-openapi-dist.sh"
     },
     "prettier": {
         "plugins": [
