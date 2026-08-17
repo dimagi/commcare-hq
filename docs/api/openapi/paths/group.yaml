@@ -51,22 +51,19 @@ List:
                   description: UUID of the newly created group.
                   example: 1eb59d6938fc7e510254d8c2f63d944f
       "400":
-        description: The request payload was invalid.
+        description: >-
+          The request payload was invalid. Note this endpoint's error body uses
+          `error_message`, not the `error` key used elsewhere.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                error_message:
-                  type: string
-                  description: >-
-                    Validation failure detail. Note this endpoint uses
-                    `error_message`, not the `error` key used elsewhere.
-                  example: "Group name is required"
+              $ref: "../components/schemas/group.yaml#/GroupErrorMessage"
       "401":
         $ref: "../components/responses.yaml#/Unauthorized"
       "403":
         $ref: "../components/responses.yaml#/Forbidden"
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
   patch:
     operationId: bulkUpdateGroups
     summary: Bulk create or update groups
@@ -119,6 +116,10 @@ List:
                 - Name is required
       "401":
         $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        $ref: "../components/responses.yaml#/Forbidden"
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
 Detail:
   parameters:
     - $ref: "../components/parameters.yaml#/Domain"
@@ -140,11 +141,25 @@ Detail:
           application/json:
             schema:
               $ref: "../components/schemas/group.yaml#/Group"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        $ref: "../components/responses.yaml#/Forbidden"
       "404":
         $ref: "../components/responses.yaml#/NotFound"
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
   put:
     operationId: replaceGroup
     summary: Replace a user group
+    # No 404 here -- this is a deliberate exception to the "404 on every
+    # detail operation" convention, not an oversight. `obj_update`
+    # (v0_5.py:762-763) fetches the group with `Group.get(pk)`, which raises
+    # couchdbkit's `ResourceNotFound`. That exception is neither tastypie's
+    # `NotFound` (the only thing `put_detail` catches) nor Django's
+    # `ObjectDoesNotExist`, so it is never converted to a 404 -- it propagates
+    # to a generic 500. Documenting a 404 the code cannot return would
+    # mislead clients; see the discrepancy file for the underlying bug.
     tags: [Users]
     requestBody:
       required: true
@@ -160,20 +175,13 @@ Detail:
             schema:
               $ref: "../components/schemas/group.yaml#/Group"
       "400":
-        description: The request payload was invalid.
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                error_message:
-                  type: string
-                  description: >-
-                    Validation failure detail. Note this endpoint uses
-                    `error_message`, not the `error` key used elsewhere.
-                  example: "A group with name Wozzle already exists"
-      "404":
-        $ref: "../components/responses.yaml#/NotFound"
+        $ref: "../components/responses.yaml#/BadRequest"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        $ref: "../components/responses.yaml#/Forbidden"
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
   delete:
     operationId: deleteGroup
     summary: Delete a user group
@@ -181,5 +189,11 @@ Detail:
     responses:
       "204":
         description: The group was deleted.
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        $ref: "../components/responses.yaml#/Forbidden"
       "404":
         $ref: "../components/responses.yaml#/NotFound"
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"

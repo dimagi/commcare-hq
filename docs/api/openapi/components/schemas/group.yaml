@@ -25,11 +25,6 @@ Group:
       type: object
       additionalProperties: true
       description: Arbitrary key/value metadata attached to the group.
-    path:
-      type: array
-      items:
-        type: string
-      description: Legacy hierarchy path. Normally empty.
     users:
       type: array
       items:
@@ -69,3 +64,13 @@ GroupWrite:
         type: string
       example:
         - 91da6b1c78699adfb8679b741caf9f00
+GroupErrorMessage:
+  type: object
+  description: >-
+    Validation-failure body used only by `createGroup`. Note the key is
+    `error_message`, not the `error` key used by every other resource's `400`
+    response.
+  properties:
+    error_message:
+      type: string
+      example: Name is required

@@ -1,10 +1,13 @@
 """Structural tests for the OpenAPI specification in docs/api/openapi/."""
 import os
+import re
 from collections.abc import Iterator
 
 import yaml
 from django.conf import settings
 from unmagic import fixture, use
+
+OPERATION_ID_RE = re.compile(r'[a-z][a-zA-Z0-9]*')
 
 SPEC_ROOT = os.path.join(settings.FILEPATH, 'docs', 'api', 'openapi')
 SPEC_PATH = os.path.join(SPEC_ROOT, 'openapi.yaml')
@@ -112,3 +115,23 @@ def test_every_path_parameter_has_an_example():
                     f'path parameter {parameter["name"]!r} on {path} '
                     'has no example'
                 )
+
+
+@use(spec)
+def test_every_operation_declares_401_and_403():
+    """Standard error-response coverage every resource task must match."""
+    for path, method, operation in _iter_operations(spec()):
+        where = f'{method.upper()} {path}'
+        responses = operation.get('responses', {})
+        assert '401' in responses, f'{where} has no 401 response'
+        assert '403' in responses, f'{where} has no 403 response'
+
+
+@use(spec)
+def test_operation_ids_are_lower_camel_case():
+    for path, method, operation in _iter_operations(spec()):
+        operation_id = operation['operationId']
+        assert OPERATION_ID_RE.fullmatch(operation_id), (
+            f'operationId {operation_id!r} on {method.upper()} {path} is not '
+            'lowerCamelCase'
+        )
