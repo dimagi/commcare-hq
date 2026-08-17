@@ -239,10 +239,57 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
 
 class CommCareUserResource(v0_1.CommCareUserResource):
-    primary_location = fields.CharField()
-    locations = fields.ListField()
-    require_account_confirmation = fields.BooleanField(default=False)
-    send_confirmation_email_now = fields.BooleanField(default=False)
+    primary_location = fields.CharField(
+        help_text='The location ID of the primary location of the user.',
+    )
+    locations = fields.ListField(
+        help_text='A list of location IDs that the user is assigned to.',
+    )
+    require_account_confirmation = fields.BooleanField(
+        default=False,
+        help_text='If True, creates an unconfirmed account (similar to a '
+                  'deactivated account). False by default. Write-only: '
+                  'not returned in the response.',
+    )
+    send_confirmation_email_now = fields.BooleanField(
+        default=False,
+        help_text='If True, immediately sends an account confirmation '
+                  'email. False by default. Write-only: not returned in '
+                  'the response.',
+    )
+
+    class Docs:
+        summary = 'Mobile Workers'
+        description = (
+            'List mobile workers in a project space, or fetch a single '
+            'mobile worker by identifier. Mobile workers are the users '
+            'who submit forms from CommCare mobile or web apps.'
+        )
+        examples = {'list_response': 'user/v1/list_response.json'}
+        field_schemas = {
+            'phone_numbers': {
+                'items': {'type': 'string'},
+                'description': 'All phone numbers registered for the user.',
+            },
+            'groups': {
+                'items': {'type': 'string'},
+                'description': 'Identifiers of the groups the user '
+                               'belongs to.',
+            },
+            'locations': {
+                'items': {'type': 'string'},
+                'description': 'Identifiers of the locations the user is '
+                               'assigned to.',
+            },
+            'user_data': {
+                'additionalProperties': {'type': 'string'},
+                'description': 'Custom user data fields defined for the '
+                               'project space.',
+            },
+            'resource_uri': {
+                'description': 'URI of this record in the API.',
+            },
+        }
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']

@@ -122,21 +122,26 @@
                             "type": "array"
                           },
                           "default_phone_number": {
+                            "description": "Primary phone number of user.",
                             "nullable": true,
                             "type": "string"
                           },
                           "email": {
+                            "description": "Email address of user.",
                             "type": "string"
                           },
                           "eulas": {
+                            "description": "End user license agreements the user has accepted.",
                             "nullable": true,
                             "type": "string"
                           },
                           "first_name": {
+                            "description": "First name of user.",
                             "nullable": true,
                             "type": "string"
                           },
                           "id": {
+                            "description": "User UUID.",
                             "readOnly": true,
                             "type": "string"
                           },
@@ -147,6 +152,7 @@
                             "type": "boolean"
                           },
                           "last_name": {
+                            "description": "Last name of user.",
                             "nullable": true,
                             "type": "string"
                           },
@@ -155,6 +161,7 @@
                             "type": "object"
                           },
                           "phone_numbers": {
+                            "description": "List of all phone numbers of the user.",
                             "items": {},
                             "type": "array"
                           },
@@ -186,6 +193,7 @@
                             "type": "object"
                           },
                           "username": {
+                            "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
                             "type": "string"
                           }
                         },
@@ -234,21 +242,26 @@
                       "type": "array"
                     },
                     "default_phone_number": {
+                      "description": "Primary phone number of user.",
                       "nullable": true,
                       "type": "string"
                     },
                     "email": {
+                      "description": "Email address of user.",
                       "type": "string"
                     },
                     "eulas": {
+                      "description": "End user license agreements the user has accepted.",
                       "nullable": true,
                       "type": "string"
                     },
                     "first_name": {
+                      "description": "First name of user.",
                       "nullable": true,
                       "type": "string"
                     },
                     "id": {
+                      "description": "User UUID.",
                       "readOnly": true,
                       "type": "string"
                     },
@@ -259,6 +272,7 @@
                       "type": "boolean"
                     },
                     "last_name": {
+                      "description": "Last name of user.",
                       "nullable": true,
                       "type": "string"
                     },
@@ -267,6 +281,7 @@
                       "type": "object"
                     },
                     "phone_numbers": {
+                      "description": "List of all phone numbers of the user.",
                       "items": {},
                       "type": "array"
                     },
@@ -298,6 +313,7 @@
                       "type": "object"
                     },
                     "username": {
+                      "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
                       "type": "string"
                     }
                   },
@@ -347,17 +363,21 @@
                     "type": "array"
                   },
                   "default_phone_number": {
+                    "description": "Primary phone number of user.",
                     "nullable": true,
                     "type": "string"
                   },
                   "email": {
+                    "description": "Email address of user.",
                     "type": "string"
                   },
                   "eulas": {
+                    "description": "End user license agreements the user has accepted.",
                     "nullable": true,
                     "type": "string"
                   },
                   "first_name": {
+                    "description": "First name of user.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -368,6 +388,7 @@
                     "type": "boolean"
                   },
                   "last_name": {
+                    "description": "Last name of user.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -376,6 +397,7 @@
                     "type": "object"
                   },
                   "phone_numbers": {
+                    "description": "List of all phone numbers of the user.",
                     "items": {},
                     "type": "array"
                   },
@@ -403,6 +425,7 @@
                     "type": "object"
                   },
                   "username": {
+                    "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
                     "type": "string"
                   }
                 },
@@ -424,21 +447,26 @@
                       "type": "array"
                     },
                     "default_phone_number": {
+                      "description": "Primary phone number of user.",
                       "nullable": true,
                       "type": "string"
                     },
                     "email": {
+                      "description": "Email address of user.",
                       "type": "string"
                     },
                     "eulas": {
+                      "description": "End user license agreements the user has accepted.",
                       "nullable": true,
                       "type": "string"
                     },
                     "first_name": {
+                      "description": "First name of user.",
                       "nullable": true,
                       "type": "string"
                     },
                     "id": {
+                      "description": "User UUID.",
                       "readOnly": true,
                       "type": "string"
                     },
@@ -449,6 +477,7 @@
                       "type": "boolean"
                     },
                     "last_name": {
+                      "description": "Last name of user.",
                       "nullable": true,
                       "type": "string"
                     },
@@ -457,6 +486,7 @@
                       "type": "object"
                     },
                     "phone_numbers": {
+                      "description": "List of all phone numbers of the user.",
                       "items": {},
                       "type": "array"
                     },
@@ -488,6 +518,7 @@
                       "type": "object"
                     },
                     "username": {
+                      "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
                       "type": "string"
                     }
                   },

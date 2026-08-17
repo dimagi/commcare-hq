@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "limit": 2,
+    "next": null,
+    "offset": 0,
+    "previous": null,
+    "total_count": 29
+  },
+  "objects": [
+    {
+      "type": "user",
+      "id": "3c5a623af057e23a32ae4000cf291339",
+      "username": "jdoe@example.commcarehq.org",
+      "first_name": "John",
+      "last_name": "Doe",
+      "default_phone_number": "+50253311399",
+      "email": "jdoe@example.org",
+      "phone_numbers": ["+50253311399", "+50253314588"],
+      "groups": ["9a0accdba29e01a61ea099394737c4fb"],
+      "locations": ["26fc44e2792b4f2fa8ef86178f0a958e"],
+      "primary_location": "26fc44e2792b4f2fa8ef86178f0a958e",
+      "user_data": { "chw_id": "13/43/DFA" }
+    }
+  ]
+}

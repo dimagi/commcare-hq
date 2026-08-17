@@ -130,6 +130,13 @@ def test_delete_has_no_request_body():
     assert 'requestBody' not in delete
 
 
+def test_declared_list_example_is_attached():
+    entry = ApiEntry(v0_5.CommCareUserResource, 'v1', 'user-v1')
+    operation = resource_paths(entry)['/a/{domain}/api/user/v1/']['get']
+    content = operation['responses']['200']['content']['application/json']
+    assert content['example']['objects'][0]['username']
+
+
 @pytest.mark.parametrize(
     'resource_cls, version',
     [

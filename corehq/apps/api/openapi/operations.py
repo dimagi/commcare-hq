@@ -1,11 +1,21 @@
 """Generation of OpenAPI paths, operations and parameters for a resource."""
 
+import json
+from pathlib import Path
+
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
 
 from corehq.apps.api.openapi.catalogue import USER
 from corehq.apps.api.openapi.docs import collect_docs
 from corehq.apps.api.openapi.schema import field_to_schema
 from corehq.apps.api.openapi.security import required_permission
+
+EXAMPLES_DIR = Path(__file__).parent / 'examples'
+
+
+def load_example(relative_path):
+    return json.loads((EXAMPLES_DIR / relative_path).read_text())
+
 
 DOMAIN_PARAMETER = {
     'name': 'domain',
@@ -144,11 +154,17 @@ def resource_paths(entry):
     if list_methods:
         item = {'parameters': list(path_parameters)}
         for method in list_methods:
+            responses = _list_responses(schema)
+            example = docs.get('examples', {}).get('list_response')
+            if example:
+                responses['200']['content']['application/json']['example'] = (
+                    load_example(example)
+                )
             operation = {
                 'summary': summary,
                 'operationId': f'{name}_{entry.version}_list_{method}',
                 'tags': [name],
-                'responses': _list_responses(schema),
+                'responses': responses,
             }
             if description:
                 operation['description'] = description
