@@ -148,7 +148,13 @@ def _concrete_url(path, path_item):
     for parameter in parameters:
         if parameter.get('in') == 'path':
             examples[parameter['name']] = str(parameter['example'])
-    return path.format(**examples)
+    try:
+        return path.format(**examples)
+    except KeyError as missing:
+        raise AssertionError(
+            f'{path} has a placeholder {missing} with no matching path '
+            f'parameter declared; declared parameters: {sorted(examples)}'
+        ) from None
 
 
 @use(spec)
