@@ -53,66 +53,71 @@ List:
         required: false
         description: >-
           Only return cases indexed into Elasticsearch on or after this date.
-          Naive date or date-time (no timezone offset); accepts `YYYY-MM-DD` or
-          `YYYY-MM-DDTHH:MM:SS` (`corehq/apps/api/es.py:269-285`). This is the
-          recommended field for paginating through results, since it handles
-          edge cases `server_date_modified` does not.
+          Parsed by `validate_date` against a fixed list of naive formats
+          (`corehq/apps/api/es.py:269-285`): `YYYY-MM-DD`,
+          `YYYY-MM-DDTHH:MM:SS`, `YYYY-MM-DDTHH:MM:SS.ffffff`, or the legacy
+          `YYYY-MM-DDTHH:MMZ`. None of these include a real UTC offset -- the
+          trailing `Z` on the last form is a literal character in the parse
+          format, not a timezone marker, and a value with a genuine offset (e.g.
+          `+00:00`) fails to parse and returns a 400. `format: date-time` is
+          deliberately not used here since it implies RFC3339, which this
+          parameter does not actually accept. This is the recommended field for
+          paginating through results, since it handles edge cases
+          `server_date_modified` does not.
         example: "2021-01-01T06:05:42"
         schema:
           type: string
-          format: date-time
+          pattern: '^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$'
       - name: indexed_on_end
         in: query
         required: false
         description: >-
-          Only return cases indexed into Elasticsearch before this date. Naive
-          date or date-time (no timezone offset).
+          Only return cases indexed into Elasticsearch before this date. Same
+          accepted formats as `indexed_on_start`.
         example: "2021-01-01T06:05:42"
         schema:
           type: string
-          format: date-time
+          pattern: '^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$'
       - name: date_modified_start
         in: query
         required: false
         description: >-
           Only return cases modified on or after this date, as reported by the
-          submitting phone's clock. Naive date or date-time (no timezone
-          offset).
+          submitting phone's clock. Same accepted formats as `indexed_on_start`.
         example: "2012-05-20"
         schema:
           type: string
-          format: date-time
+          pattern: '^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$'
       - name: date_modified_end
         in: query
         required: false
         description: >-
           Only return cases modified before this date, as reported by the
-          submitting phone's clock. Naive date or date-time (no timezone
-          offset).
+          submitting phone's clock. Same accepted formats as `indexed_on_start`.
         example: "2012-05-27"
         schema:
           type: string
-          format: date-time
+          pattern: '^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$'
       - name: server_date_modified_start
         in: query
         required: false
         description: >-
           Only return cases modified on or after this date, as reported by the
-          server's clock. Naive date or date-time (no timezone offset).
+          server's clock. Same accepted formats as `indexed_on_start`.
         example: "2012-05-20"
         schema:
           type: string
-          format: date-time
+          pattern: '^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$'
       - name: server_date_modified_end
         in: query
         required: false
         description: >-
           Only return cases modified before this date, as reported by the
-          server's clock. Naive date or date-time (no timezone offset).
+          server's clock. Same accepted formats as `indexed_on_start`.
         example: "2012-05-27"
         schema:
           type: string
-          format: date-time
+          pattern: '^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$'
       - name: name
         in: query
         required: false

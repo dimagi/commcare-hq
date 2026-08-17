@@ -74,51 +74,51 @@ paths:
         - name: indexed_on_start
           in: query
           required: false
-          description: Only return cases indexed into Elasticsearch on or after this date. Naive date or date-time (no timezone offset); accepts `YYYY-MM-DD` or `YYYY-MM-DDTHH:MM:SS` (`corehq/apps/api/es.py:269-285`). This is the recommended field for paginating through results, since it handles edge cases `server_date_modified` does not.
+          description: 'Only return cases indexed into Elasticsearch on or after this date. Parsed by `validate_date` against a fixed list of naive formats (`corehq/apps/api/es.py:269-285`): `YYYY-MM-DD`, `YYYY-MM-DDTHH:MM:SS`, `YYYY-MM-DDTHH:MM:SS.ffffff`, or the legacy `YYYY-MM-DDTHH:MMZ`. None of these include a real UTC offset -- the trailing `Z` on the last form is a literal character in the parse format, not a timezone marker, and a value with a genuine offset (e.g. `+00:00`) fails to parse and returns a 400. `format: date-time` is deliberately not used here since it implies RFC3339, which this parameter does not actually accept. This is the recommended field for paginating through results, since it handles edge cases `server_date_modified` does not.'
           example: '2021-01-01T06:05:42'
           schema:
             type: string
-            format: date-time
+            pattern: ^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$
         - name: indexed_on_end
           in: query
           required: false
-          description: Only return cases indexed into Elasticsearch before this date. Naive date or date-time (no timezone offset).
+          description: Only return cases indexed into Elasticsearch before this date. Same accepted formats as `indexed_on_start`.
           example: '2021-01-01T06:05:42'
           schema:
             type: string
-            format: date-time
+            pattern: ^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$
         - name: date_modified_start
           in: query
           required: false
-          description: Only return cases modified on or after this date, as reported by the submitting phone's clock. Naive date or date-time (no timezone offset).
+          description: Only return cases modified on or after this date, as reported by the submitting phone's clock. Same accepted formats as `indexed_on_start`.
           example: '2012-05-20'
           schema:
             type: string
-            format: date-time
+            pattern: ^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$
         - name: date_modified_end
           in: query
           required: false
-          description: Only return cases modified before this date, as reported by the submitting phone's clock. Naive date or date-time (no timezone offset).
+          description: Only return cases modified before this date, as reported by the submitting phone's clock. Same accepted formats as `indexed_on_start`.
           example: '2012-05-27'
           schema:
             type: string
-            format: date-time
+            pattern: ^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$
         - name: server_date_modified_start
           in: query
           required: false
-          description: Only return cases modified on or after this date, as reported by the server's clock. Naive date or date-time (no timezone offset).
+          description: Only return cases modified on or after this date, as reported by the server's clock. Same accepted formats as `indexed_on_start`.
           example: '2012-05-20'
           schema:
             type: string
-            format: date-time
+            pattern: ^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$
         - name: server_date_modified_end
           in: query
           required: false
-          description: Only return cases modified before this date, as reported by the server's clock. Naive date or date-time (no timezone offset).
+          description: Only return cases modified before this date, as reported by the server's clock. Same accepted formats as `indexed_on_start`.
           example: '2012-05-27'
           schema:
             type: string
-            format: date-time
+            pattern: ^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}Z|T\d{2}:\d{2}:\d{2}(\.\d{1,6})?)?$
         - name: name
           in: query
           required: false
@@ -559,8 +559,8 @@ components:
           example: 3c5a623af057e23a32ae4000cf291339
         date_modified:
           type: string
-          format: date-time
-          description: Date and time the case was last modified, from the submitting phone's clock. Naive -- no timezone offset is applied or assumed.
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{6})?$
+          description: 'Date and time the case was last modified, from the submitting phone''s clock. Naive ISO-8601 with no timezone offset and no `Z` suffix -- `settings.USE_TZ = False` (`settings.py:57`), so the underlying `modified_on` Django `DateTimeField` is naive, and DRF''s default `DateTimeField.to_representation` (used by `CommCareCaseSerializer` inside `CommCareCase.to_json`, `corehq/form_processor/models/cases.py: 426-434,172-180`) only appends a `Z`/offset when the value is timezone-aware. `format: date-time` is deliberately not used here -- it implies RFC3339, which requires an offset this field never has.'
           example: '2011-12-13T15:09:47'
         closed:
           type: boolean
@@ -568,26 +568,26 @@ components:
           example: false
         date_closed:
           type: string
-          format: date-time
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{6})?$
           nullable: true
-          description: Date and time the case was closed, naive (no timezone offset).
+          description: Date and time the case was closed, naive ISO-8601 with no timezone offset (same reasoning as `date_modified`; source field `closed_on`).
           example: '2011-12-20T15:09:47'
         server_date_modified:
           type: string
-          format: date-time
-          description: Date and time the case was last modified, from the server's clock. Naive (no timezone offset).
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{6})?$
+          description: Date and time the case was last modified, from the server's clock. Naive ISO-8601 with no timezone offset (same reasoning as `date_modified`; source field `server_modified_on`).
           example: '2012-04-05T23:56:41'
         server_date_opened:
           type: string
-          format: date-time
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{6})?$
           nullable: true
-          description: Date and time the case was opened, from the server's clock. Naive (no timezone offset).
+          description: Date and time the case was opened, from the server's clock. Naive ISO-8601 with no timezone offset (same reasoning as `date_modified`; source field `server_opened_on`).
           example: '2012-04-05T23:56:41'
         indexed_on:
           type: string
           format: date-time
-          description: Date and time this revision of the case was indexed into Elasticsearch. This is the recommended field to page through results on (see `indexed_on_start`/`indexed_on_end` on the list operation) -- it handles edge cases `server_date_modified` does not. Naive (no timezone offset).
-          example: '2012-04-05T23:56:41'
+          description: 'Date and time this revision of the case was indexed into Elasticsearch. This is the recommended field to page through results on (see `indexed_on_start`/`indexed_on_end` on the list operation) -- it handles edge cases `server_date_modified` does not. Unlike the other date fields on this schema, this one really is `format: date-time`-conformant: `ElasticCase._from_dict` sets it to `json_format_datetime(datetime.utcnow())` (`corehq/apps/es/cases.py:84`), and `json_format_datetime` (`corehq/ex-submodules/dimagi/utils/parsing.py:48-60`) always strftimes with `%Y-%m-%dT%H:%M:%S.%fZ` -- a literal `Z` and always-six-digit microseconds, both present on every value.'
+          example: '2012-04-05T23:56:41.000000Z'
         opened_by:
           type: string
           nullable: true

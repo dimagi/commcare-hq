@@ -250,6 +250,38 @@ triage. Nothing here has been changed in the reST docs.
   with no body, never reaching the serializer. The spec's `getCase` `404`
   documents an empty body rather than pointing at the shared `NotFound`
   ref, matching the note already on that ref about verifying per-resource.
+- **The sample JSON output's `date_modified`/`server_date_modified`/
+  `server_date_opened` values end in `Z`, but the code that actually
+  produces those fields cannot emit a `Z` or any offset.** `cases-v1.rst:
+  184,197-198` shows `"2012-03-13T18:21:52Z"` /
+  `"2012-04-05T23:56:41Z"` (twice). `settings.USE_TZ = False`
+  (`settings.py:57`), so `modified_on`/`server_modified_on`/
+  `server_opened_on` (Django `DateTimeField`s,
+  `corehq/form_processor/models/cases.py:318-327`) hold naive datetimes.
+  `CommCareCase.to_json()` (`corehq/form_processor/models/cases.py:
+  426-434`) serializes them via `CommCareCaseSerializer`
+  (`corehq/form_processor/serializers.py:172-180`, a plain DRF
+  `ModelSerializer` with no override for these fields), whose default
+  `DateTimeField.to_representation` only appends a `Z`/offset when the
+  value is timezone-aware (DRF's `enforce_timezone`, which is a no-op
+  here since `USE_TZ` is off and the value is already naive). The
+  resulting string has no `Z` and no offset -- confirmed indirectly (no
+  test asserts the literal string), but the naive-datetime chain from the
+  DB field through DRF's own documented default behavior leaves no path
+  to a `Z` for these three fields. Contrast `indexed_on` (`inserted_at`),
+  which genuinely does always end in `Z`:
+  `ElasticCase._from_dict` (`corehq/apps/es/cases.py:84`) sets it via
+  `json_format_datetime(datetime.utcnow())`
+  (`corehq/ex-submodules/dimagi/utils/parsing.py:48-60`), which always
+  strftimes with a literal `%Z` suffix in the format string regardless of
+  the input's actual tzinfo. The spec's `Case` schema types
+  `date_modified`/`date_closed`/`server_date_modified`/
+  `server_date_opened` as naive strings (no `format: date-time`, a
+  `pattern` instead) and keeps `format: date-time` only on `indexed_on`,
+  whose example now reflects the real always-`Z` shape
+  (`"2012-04-05T23:56:41.000000Z"`). This is a genuine trap for an
+  integrator who copies the rst sample literally and expects every
+  date field to carry the same shape.
 - **`listCases` can return the shared `{"error": ...}` `400` shape from
   several real code paths, undocumented in the reST page.** `v0_3.
   CommCareCaseResource.obj_get_list` (`corehq/apps/api/resources/v0_3.py:
