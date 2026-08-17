@@ -459,37 +459,36 @@ the view's own `if` chain", and anything that falls through returns a 405
 - **`order_by` values are documented as separate parameters.** The table at
   `list-forms.rst:65-73` lists `indexed_on`, `server_modified_on`, and
   `received_on` as if they were parameter names in their own right ("Name"
-  column), but their "Example" column shows `order_by=indexed_on`, etc. --
-  they are **values** of the single `order_by` parameter, not parameters
-  themselves. The three values do match
-  `v0_4.XFormInstanceResource.Meta.ordering`
+  column), but their "Example" column shows `order_by=indexed_on`, etc. -- they
+  are **values** of the single `order_by` parameter, not parameters themselves.
+  The three values do match `v0_4.XFormInstanceResource.Meta.ordering`
   (`corehq/apps/api/resources/v0_4.py:170`) exactly (as a set; the doc lists
   them in a different order than the code), so there is no discrepancy in
-  *which* fields are sortable, only in how the table presents them. The spec
+  _which_ fields are sortable, only in how the table presents them. The spec
   models `order_by` as a single enum parameter on `listForms`.
 - **`include_archived` is checked for presence, not for the value `"true"`.**
   `list-forms.rst:59-61` says "When set to 'true' archived forms will be
   included". The actual check,
   `if query_params.pop('include_archived', None) is not None:`
-  (`corehq/apps/api/es.py:411`), is true for *any* supplied value --
+  (`corehq/apps/api/es.py:411`), is true for _any_ supplied value --
   `include_archived=false`, `include_archived=0`, or `include_archived=anything`
   all include archived forms; only omitting the parameter entirely excludes
   them.
 - **`appVersion` and `app_id` are matched case-insensitively; `xmlns` and
-  `case_id` are not.** Neither `appVersion` nor `app_id` has a dedicated
-  entry in `xform_param_consumers` (`corehq/apps/api/es.py:346-354`), so both
-  fall through to the "unconsumed filters" branch
-  (`corehq/apps/api/es.py:440-445`), which unconditionally lowercases the
-  value before filtering. `xmlns` (`TermParam('xmlns', 'xmlns.exact')`) and
-  `case_id` (`TermParam('case_id', '__retrieved_case_ids')`) are both
-  `TermParam` instances with the default `analyzed=False`, so their values
-  are matched as-is. None of this is mentioned in `list-forms.rst`.
+  `case_id` are not.** Neither `appVersion` nor `app_id` has a dedicated entry
+  in `xform_param_consumers` (`corehq/apps/api/es.py:346-354`), so both fall
+  through to the "unconsumed filters" branch (`corehq/apps/api/es.py:440-445`),
+  which unconditionally lowercases the value before filtering. `xmlns`
+  (`TermParam('xmlns', 'xmlns.exact')`) and `case_id`
+  (`TermParam('case_id', '__retrieved_case_ids')`) are both `TermParam`
+  instances with the default `analyzed=False`, so their values are matched
+  as-is. None of this is mentioned in `list-forms.rst`.
 - **The attachment `url` field in the sample output is undocumented.** The
   sample at `list-forms.rst:97-105` shows an `attachments` entry with only
-  `content_type` and `length`. In practice each attachment also carries a
-  `url` key pointing at the `getFormAttachment` operation
-  (`dehydrate_attachments`, `corehq/apps/api/resources/v0_4.py:113-118`,
-  using `absolute_reverse('api_form_attachment', ...)`).
+  `content_type` and `length`. In practice each attachment also carries a `url`
+  key pointing at the `getFormAttachment` operation (`dehydrate_attachments`,
+  `corehq/apps/api/resources/v0_4.py:113-118`, using
+  `absolute_reverse('api_form_attachment', ...)`).
 - **The `cases`/`cases__full` field is entirely undocumented.**
   `v0_4.XFormInstanceResource.cases`
   (`corehq/apps/api/resources/v0_4.py:96-101`) is a real, working
@@ -500,68 +499,92 @@ the view's own `if` chain", and anything that falls through returns a 405
 - **Two additional working date-range filters exist in code but are
   undocumented, matching a precedent already accepted for cases/v1.**
   `xform_param_consumers` (`corehq/apps/api/es.py:346-354`) also registers
-  `DateRangeParams('server_modified_on')` -- i.e. `server_modified_on_start`
-  / `server_modified_on_end` -- alongside the aliased
+  `DateRangeParams('server_modified_on')` -- i.e. `server_modified_on_start` /
+  `server_modified_on_end` -- alongside the aliased
   `DateRangeParams('server_date_modified', 'server_modified_on')` that
   `list-forms.rst` likewise never documents. (The analogous case is
-  `case_param_consumers`, `corehq/apps/api/es.py:356-367`, where
-  `cases-v1.rst` documents only `server_date_modified_start`/`_end` and
-  `case-v1.yaml` does not model the raw `server_modified_on_start`/`_end`
-  duplicate either.) Left undocumented in the spec for consistency with that
-  precedent; noted here for visibility.
+  `case_param_consumers`, `corehq/apps/api/es.py:356-367`, where `cases-v1.rst`
+  documents only `server_date_modified_start`/`_end` and `case-v1.yaml` does not
+  model the raw `server_modified_on_start`/`_end` duplicate either.) Left
+  undocumented in the spec for consistency with that precedent; noted here for
+  visibility.
 - **A third, distinct 404 shape appears within this same resource group.**
   `getForm`'s 404 (tastypie catching `ObjectDoesNotExist`, bare
   `http.HttpNotFound()`, empty body -- same as `getCase`) is different from
   `getFormAttachment`'s 404: `get_form_attachment_response`
-  (`corehq/apps/reports/views.py:1517-1520`) raises a bare Django `Http404`
-  on `AttachmentNotFound`, which is handled by Django's own
-  `page_not_found` (`handler404 = not_found`, `urls.py:47`) and rendered as
-  an HTML page, not JSON. Neither reST page discusses this.
+  (`corehq/apps/reports/views.py:1517-1520`) raises a bare Django `Http404` on
+  `AttachmentNotFound`, which is handled by Django's own `page_not_found`
+  (`handler404 = not_found`, `urls.py:47`) and rendered as an HTML page, not
+  JSON. Neither reST page discusses this.
 - **`getForm`/`listForms`'s 403 body is empty, not the shared `{"error": ...}`
   shape.** Traced through `RequirePermissionAuthentication.is_authenticated`
   (`corehq/apps/api/resources/auth.py:152-163`) ->
   `LoginAndDomainAuthentication._auth_test`
   (`corehq/apps/api/resources/auth.py:114-135`): a failed permission check
   raises `PermissionDenied` (`require_permission_raw`,
-  `corehq/apps/users/decorators.py:34-54`), which `_auth_test` catches
-  directly and converts to a bare `HttpResponseForbidden()`. Only an *auth*
-  failure (not a permission failure) passes through `wrap_4xx_errors_for_apis`
+  `corehq/apps/users/decorators.py:34-54`), which `_auth_test` catches directly
+  and converts to a bare `HttpResponseForbidden()`. Only an _auth_ failure (not
+  a permission failure) passes through `wrap_4xx_errors_for_apis`
   (`corehq/apps/api/resources/auth.py:23-34`) and gets the JSON
   `{"error": "not authorized"}` 401 body the shared `Unauthorized` component
-  documents -- that part of the shared ref is correct for these two
-  operations, but `Forbidden` is not.
+  documents -- that part of the shared ref is correct for these two operations,
+  but `Forbidden` is not.
 - **`submitForm`/`submitFormForApp`'s 401 and 403 bodies are HTML or
   backend-specific, not the shared JSON shape.** Both are plain Django views
   (`post_api`/`post`, `corehq/apps/receiverwrapper/views.py:278-320`), not
-  tastypie resources, so `HqBaseResource`'s JSON error handling never
-  applies. `post_api`'s `@require_permission(HqPermissions.edit_data)` /
-  `@require_permission(HqPermissions.access_api)` raise `PermissionDenied`
-  on failure, rendered by this project's `handler403 = no_permissions`
+  tastypie resources, so `HqBaseResource`'s JSON error handling never applies.
+  `post_api`'s `@require_permission(HqPermissions.edit_data)` /
+  `@require_permission(HqPermissions.access_api)` raise `PermissionDenied` on
+  failure, rendered by this project's `handler403 = no_permissions`
   (`urls.py:47`) as `HttpResponseForbidden(_no_permissions_message(...))`
   (`corehq/apps/hqwebapp/views.py:362-373`) -- an HTML page. `post`
-  (`submitFormForApp`) returns a bare, empty-body `HttpResponseForbidden()`
-  for a mobile-access failure (`corehq/apps/receiverwrapper/views.py:88-89`).
-  401s on both come from whichever HTTP auth backend is in play (digest by
-  default), not from a JSON envelope.
-- **The submission success/error response `Content-Type` is `text/html`, not
-  `text/xml`.** `OpenRosaResponse.response`
+  (`submitFormForApp`) returns a bare, empty-body `HttpResponseForbidden()` for
+  a mobile-access failure (`corehq/apps/receiverwrapper/views.py:88-89`). 401s
+  on both come from whichever HTTP auth backend is in play (digest by default),
+  not from a JSON envelope.
+- **The submission success/error response `Content-Type` header contradicts the
+  OpenRosa standard the endpoint claims to implement.**
+  `OpenRosaResponse.response`
   (`corehq/ex-submodules/couchforms/openrosa_response.py:58-59`) calls
   `HttpResponse(self.xml(), status=self.status)` without a `content_type`
   argument, and no caller in `submission_post.py` or `receiverwrapper/views.py`
   sets one either. `settings.py` never overrides `DEFAULT_CONTENT_TYPE`, so
   Django's default (`text/html; charset=utf-8`) applies to every OpenRosa
-  response body, even though that body is XML. The spec models the response
-  as `text/xml` per the OpenRosa spec's documented contract (and because that
-  is what a client should actually treat the body as), but the real
-  `Content-Type` header does not say so.
+  response body, even though the body is genuinely XML per
+  https://bitbucket.org/javarosa/javarosa/wiki/FormSubmissionAPI. This is a real
+  bug, not a documentation gap: a client that content-negotiates or branches on
+  the response media type will not recognize it as XML. The spec declares the
+  response content type as `text/html` (what the code actually sends) and puts
+  the "it's really XML" explanation in the schema description, per the project's
+  binding rule that the spec records what the code does.
 - **`submitFormForApp` has a materially different auth/permission model than
   `submitForm`, undocumented by `form-submission.rst`.** `submitForm`
-  (`post_api`) always requires authentication plus the Edit Data and Access
-  APIs permissions. `submitFormForApp` (`post`,
+  (`post_api`) always requires authentication plus the Edit Data and Access APIs
+  permissions. `submitFormForApp` (`post`,
   `corehq/apps/receiverwrapper/views.py:297-320`) checks
   `domain_requires_auth(domain)`: if true, it delegates to `secure_post`
-  (requiring digest, basic, API-key, or OAuth2 auth, but no explicit
-  permission beyond a valid login); if false, the form is processed fully
-  unauthenticated (`authenticated=False`, `user_id=None`). Most production
-  domains enable secure submissions, so this is rarely reachable in practice,
-  but the code path exists and neither reST page mentions it.
+  (requiring digest, basic, API-key, or OAuth2 auth, but no explicit permission
+  beyond a valid login); if false, the form is processed fully unauthenticated
+  (`authenticated=False`, `user_id=None`). Most production domains enable secure
+  submissions, so this is rarely reachable in practice, but the code path exists
+  and neither reST page mentions it.
+- **The outbound OpenRosa version response header is literally named
+  `HTTP_X_OPENROSA_VERSION`, not `X-OpenRosa-Version`.** This is a real
+  interoperability bug, not a documentation nit: an OpenRosa client looking for
+  the standard header name will not find it.
+  `OPENROSA_VERSION_HEADER = "HTTP_X_OPENROSA_VERSION"`
+  (`corehq/middleware.py:35`) is the WSGI `META` key used to read the _request_
+  header, but `OpenRosaMiddleware.process_response`
+  (`corehq/middleware.py:55-57`) reuses that same string as the _response_
+  header name: `response[OPENROSA_VERSION_HEADER] = OPENROSA_DEFAULT_VERSION`.
+  Django's `HttpResponse` sends whatever string is used as the response mapping
+  key verbatim, with no `HTTP_`-prefix translation (that convention only applies
+  to WSGI's `request.META`), so the actual outbound header on every CommCare HQ
+  response -- not just submission responses -- is named
+  `HTTP_X_OPENROSA_VERSION`. A second reference confirms the same literal key is
+  used on the response side elsewhere: `del response['HTTP_X_OPENROSA_VERSION']`
+  (`corehq/middleware.py:258`). The spec's `X-OpenRosa-Version` header parameter
+  models the _request_ header apps must send (which is read from
+  `request.META['HTTP_X_OPENROSA_VERSION']`, the correct WSGI convention for an
+  incoming `X-OpenRosa-Version` header), and its description separately notes
+  that the outbound response header name does not match the standard.

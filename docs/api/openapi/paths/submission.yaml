@@ -12,11 +12,21 @@ Submit:
         version 2.0 behavior (`_get_open_rosa_response`,
         `corehq/form_processor/submission_post.py:572-585`). Every HTTP response
         from CommCare HQ (not just submission responses) also carries an
-        outbound `X-OpenRosa-Version` header, but that header is always the
-        fixed value `1.0` (`OPENROSA_DEFAULT_VERSION`, `corehq/const.py:20`,
-        applied by `OpenRosaMiddleware.process_response`,
-        `corehq/middleware.py:55-57`) -- it does not echo this request header or
-        reflect which response contract was actually used.
+        outbound version header, always the fixed value `1.0`
+        (`OPENROSA_DEFAULT_VERSION`, `corehq/const.py:20`, applied by
+        `OpenRosaMiddleware.process_response`, `corehq/middleware.py:55-57`) --
+        it does not echo this request header or reflect which response contract
+        was actually used. That outbound header's literal name is also not the
+        standard `X-OpenRosa-Version`: `process_response` does
+        `response[OPENROSA_VERSION_HEADER] = OPENROSA_DEFAULT_VERSION`
+        (`corehq/middleware.py:56`) where `OPENROSA_VERSION_HEADER =
+        "HTTP_X_OPENROSA_VERSION"` (`corehq/middleware.py:35`) -- the WSGI
+        `META` key, used verbatim as the response header name instead of being
+        translated to `X-OpenRosa-Version`. Django sends whatever string is used
+        as the response mapping key, so the actual outbound header is named
+        `HTTP_X_OPENROSA_VERSION`. A second reference deletes the same literal
+        key (`del response['HTTP_X_OPENROSA_VERSION']`,
+        `corehq/middleware.py:258`). See the discrepancy file.
       example: "3.0"
       schema:
         type: string
@@ -82,20 +92,23 @@ Submit:
           Form was received. The `nature` attribute distinguishes success
           (`submit_success`) from processing failure under OpenRosa V2.0
           behavior (`submit_error`, still HTTP 201) --
-          `form-submission.rst:265-313`. Although the body is XML, none of the
-          code paths that build this response
+          `form-submission.rst:265-313`. The actual `Content-Type` header is
+          `text/html; charset=utf-8`, not `text/xml`: none of the code paths
+          that build this response
           (`couchforms.openrosa_response.OpenRosaResponse.response`,
           `corehq/ex-submodules/couchforms/openrosa_response.py:58-59`) pass a
-          `content_type` to Django's `HttpResponse`, so the actual
-          `Content-Type` header is the Django default, `text/html;
-          charset=utf-8` (`settings.DEFAULT_CONTENT_TYPE`, unset in this
-          codebase), not `text/xml`. See the discrepancy file.
+          `content_type` to Django's `HttpResponse`, so Django's default applies
+          (`settings.DEFAULT_CONTENT_TYPE`, unset in this codebase). The body
+          itself is genuinely OpenRosa XML despite the header; this mismatch is
+          a real interoperability bug in the endpoint, not a documentation
+          choice -- see the discrepancy file.
         content:
-          text/xml:
+          text/html:
             schema:
               type: string
               description: >-
-                OpenRosa response XML: `<OpenRosaResponse
+                Despite the `text/html` `Content-Type`, the body is OpenRosa
+                response XML: `<OpenRosaResponse
                 xmlns="http://openrosa.org/http/response"> <message
                 nature="...">...</message></OpenRosaResponse>`. See
                 https://bitbucket.org/javarosa/javarosa/wiki/FormSubmissionAPI.
@@ -142,9 +155,10 @@ Submit:
           Form received but an error occurred during processing (OpenRosa V3.0
           behavior, selected via the `X-OpenRosa-Version: 3.0` request header).
           Re-submission is likely to result in the same error; mobile clients
-          quarantine the form (`form-submission.rst:317-341`).
+          quarantine the form (`form-submission.rst:317-341`). Same
+          `text/html`-vs-XML-body `Content-Type` caveat as the 201 response.
         content:
-          text/xml:
+          text/html:
             schema:
               type: string
       "429":
@@ -220,11 +234,12 @@ SubmitForApp:
           Form was received. Same response shape, `nature` values, and actual
           `Content-Type` caveat as `submitForm`'s 201 response.
         content:
-          text/xml:
+          text/html:
             schema:
               type: string
               description: >-
-                OpenRosa response XML. See
+                Despite the `text/html` `Content-Type`, the body is OpenRosa
+                response XML. See
                 https://bitbucket.org/javarosa/javarosa/wiki/FormSubmissionAPI.
       "400":
         description: >-
@@ -254,7 +269,7 @@ SubmitForApp:
           Form received but an error occurred during processing (OpenRosa V3.0
           behavior). See `submitForm`'s 422 response.
         content:
-          text/xml:
+          text/html:
             schema:
               type: string
       "429":
