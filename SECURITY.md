@@ -24,7 +24,7 @@ When you report, please include as much of the following as you can:
 
 ## What to expect
 
-- We aim to acknowledge your report within **5 business days**.
+- We aim to acknowledge your report as fast as reasonably possible.
 - We follow **coordinated disclosure**: we ask that you give us a reasonable
   opportunity to release a fix before any public disclosure. With your
   permission, we are glad to credit you in the resulting advisory.
