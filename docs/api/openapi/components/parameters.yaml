@@ -1,0 +1,40 @@
+Domain:
+  name: domain
+  in: path
+  required: true
+  description: The project space name.
+  example: demo
+  schema:
+    type: string
+Limit:
+  name: limit
+  in: query
+  required: false
+  description:
+    "Maximum number of records to return. Default: 20. Maximum: 1000."
+  example: 100
+  schema:
+    type: integer
+    minimum: 1
+    maximum: 1000
+    default: 20
+Offset:
+  name: offset
+  in: query
+  required: false
+  description: "Number of records to skip. Default: 0."
+  example: 100
+  schema:
+    type: integer
+    minimum: 0
+    default: 0
+Format:
+  name: format
+  in: query
+  required: false
+  description: Response serialization format.
+  example: json
+  schema:
+    type: string
+    enum: [json, xml]
+    default: json

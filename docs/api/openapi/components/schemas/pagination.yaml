@@ -1,0 +1,55 @@
+PaginationMeta:
+  type: object
+  description: >-
+    Offset-based pagination metadata returned by most list endpoints.
+  properties:
+    limit:
+      type: integer
+      example: 20
+    offset:
+      type: integer
+      example: 0
+    next:
+      type: string
+      nullable: true
+      description: >-
+        Relative URL of the next page, or null on the last page.
+      example: /a/demo/api/form/v1/?limit=20&offset=20
+    previous:
+      type: string
+      nullable: true
+      description: Relative URL of the previous page, or null on the first page.
+      example: null
+    total_count:
+      type: integer
+      description: Total number of matching records.
+      example: 6909
+CursorMeta:
+  type: object
+  description: >-
+    Cursor-based pagination metadata. Used only by the messaging events
+    endpoint. The cursor is opaque and must not be constructed by clients.
+  properties:
+    limit:
+      type: integer
+      example: 20
+    next:
+      type: string
+      nullable: true
+      description: >-
+        Relative URL of the next page including an opaque `cursor` parameter, or
+        null when no further records exist.
+      example: /a/demo/api/messaging-event/v1/?cursor=ZGF0ZS5ndGU9MjAyMC0wNS0xN1Q
+PaginatedResponse:
+  type: object
+  description: >-
+    Standard list envelope. Resource-specific responses narrow `objects` using
+    allOf.
+  required: [meta, objects]
+  properties:
+    meta:
+      $ref: "#/PaginationMeta"
+    objects:
+      type: array
+      items:
+        type: object

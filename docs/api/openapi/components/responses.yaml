@@ -1,0 +1,41 @@
+BadRequest:
+  description: The request was malformed or a parameter value was invalid.
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/Error"
+Unauthorized:
+  description: >-
+    Authentication credentials were missing or invalid. Note that CommCare also
+    returns 401 with `{"error": "not authorized"}` for some permission failures.
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/Error"
+Forbidden:
+  description: >-
+    The authenticated user lacks the permission required for this endpoint.
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/Error"
+NotFound:
+  description: The requested resource does not exist in this project space.
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/Error"
+TooManyRequests:
+  description: >-
+    The request was rate limited. Back off and retry. Rate limits are applied
+    per user and project space.
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/Error"
+ServerError:
+  description: An unexpected error occurred.
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/Error"

@@ -35,4 +35,16 @@ tags:
   - name: SMS
     description: >-
       Messaging event history.
+components:
+  securitySchemes:
+    ApiKey:
+      $ref: "./components/securitySchemes.yaml#/ApiKey"
+    Basic:
+      $ref: "./components/securitySchemes.yaml#/Basic"
+    OAuth2:
+      $ref: "./components/securitySchemes.yaml#/OAuth2"
+security:
+  - ApiKey: []
+  - Basic: []
+  - OAuth2: []
 paths: {}
