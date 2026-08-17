@@ -11,3 +11,7 @@ rules:
   path-params-defined: error
   tag-description: off
   info-license: off
+  # CommCare HQ's real API URLs always end in a trailing slash (Django/tastypie
+  # convention, confirmed in docs/api/*.rst and the resource code); the spec
+  # must record the actual URLs, so this rule does not apply here.
+  no-path-trailing-slash: off

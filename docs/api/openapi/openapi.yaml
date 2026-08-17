@@ -47,4 +47,8 @@ security:
   - ApiKey: []
   - Basic: []
   - OAuth2: []
-paths: {}
+paths:
+  /a/{domain}/api/group/v1/:
+    $ref: "./paths/group.yaml#/List"
+  /a/{domain}/api/group/v1/{group_id}/:
+    $ref: "./paths/group.yaml#/Detail"

@@ -1,0 +1,128 @@
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listGroups
+    summary: List user groups
+    description: >-
+      Returns groups the authenticated user is permitted to see. Requires the
+      Edit Mobile Workers permission.
+    tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Limit"
+      - $ref: "../components/parameters.yaml#/Offset"
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: A page of groups.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/group.yaml#/GroupList"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        $ref: "../components/responses.yaml#/Forbidden"
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
+  post:
+    operationId: createGroup
+    summary: Create a user group
+    tags: [Users]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/group.yaml#/GroupWrite"
+    responses:
+      "201":
+        description: The group was created.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/group.yaml#/Group"
+      "400":
+        $ref: "../components/responses.yaml#/BadRequest"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        $ref: "../components/responses.yaml#/Forbidden"
+  patch:
+    operationId: bulkUpdateGroups
+    summary: Bulk create or update groups
+    description: >-
+      Accepts a list of group payloads. Declared by
+      `v0_5.GroupResource.patch_list`.
+    tags: [Users]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              objects:
+                type: array
+                items:
+                  $ref: "../components/schemas/group.yaml#/GroupWrite"
+    responses:
+      "202":
+        description: The bulk update was accepted.
+      "400":
+        $ref: "../components/responses.yaml#/BadRequest"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+Detail:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: group_id
+      in: path
+      required: true
+      description: Group UUID.
+      example: 1eb59d6938fc7e510254d8c2f63d944f
+      schema:
+        type: string
+  get:
+    operationId: getGroup
+    summary: Retrieve a single user group
+    tags: [Users]
+    responses:
+      "200":
+        description: The group.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/group.yaml#/Group"
+      "404":
+        $ref: "../components/responses.yaml#/NotFound"
+  put:
+    operationId: replaceGroup
+    summary: Replace a user group
+    tags: [Users]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/group.yaml#/GroupWrite"
+    responses:
+      "200":
+        description: The updated group.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/group.yaml#/Group"
+      "400":
+        $ref: "../components/responses.yaml#/BadRequest"
+      "404":
+        $ref: "../components/responses.yaml#/NotFound"
+  delete:
+    operationId: deleteGroup
+    summary: Delete a user group
+    tags: [Users]
+    responses:
+      "204":
+        description: The group was deleted.
+      "404":
+        $ref: "../components/responses.yaml#/NotFound"

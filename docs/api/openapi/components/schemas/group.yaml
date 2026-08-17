@@ -1,0 +1,71 @@
+Group:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Group UUID.
+      example: 1eb59d6938fc7e510254d8c2f63d944f
+    name:
+      type: string
+      description: Group name, for example a health district.
+      example: Wozzle
+    domain:
+      type: string
+      description: Project space the group belongs to.
+      example: demo
+    case_sharing:
+      type: boolean
+      description: Whether members share cases owned by the group.
+      example: false
+    reporting:
+      type: boolean
+      description: Whether the group is used for reporting rollups.
+      example: true
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Arbitrary key/value metadata attached to the group.
+    path:
+      type: array
+      items:
+        type: string
+      description: Legacy hierarchy path. Normally empty.
+    users:
+      type: array
+      items:
+        type: string
+      description: User UUIDs of group members.
+      example:
+        - 91da6b1c78699adfb8679b741caf9f00
+GroupList:
+  allOf:
+    - $ref: "./pagination.yaml#/PaginatedResponse"
+    - type: object
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: "#/Group"
+GroupWrite:
+  type: object
+  description: Payload for creating or replacing a group.
+  required: [name]
+  properties:
+    name:
+      type: string
+      example: Wozzle
+    case_sharing:
+      type: boolean
+      example: false
+    reporting:
+      type: boolean
+      example: true
+    metadata:
+      type: object
+      additionalProperties: true
+    users:
+      type: array
+      items:
+        type: string
+      example:
+        - 91da6b1c78699adfb8679b741caf9f00
