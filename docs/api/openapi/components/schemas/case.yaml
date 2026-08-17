@@ -29,47 +29,54 @@ Case:
       example: 3c5a623af057e23a32ae4000cf291339
     date_modified:
       type: string
-      pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{6})?$'
+      format: date-time
       description: >-
         Date and time the case was last modified, from the submitting phone's
-        clock. Naive ISO-8601 with no timezone offset and no `Z` suffix --
-        `settings.USE_TZ = False` (`settings.py:57`), so the underlying
-        `modified_on` Django `DateTimeField` is naive, and DRF's default
-        `DateTimeField.to_representation` (used by `CommCareCaseSerializer`
-        inside `CommCareCase.to_json`, `corehq/form_processor/models/cases.py:
-        426-434,172-180`) only appends a `Z`/offset when the value is
-        timezone-aware. `format: date-time` is deliberately not used here -- it
-        implies RFC3339, which requires an offset this field never has.
-      example: "2011-12-13T15:09:47"
+        clock. Genuinely `Z`-suffixed RFC3339, regardless of the underlying
+        `modified_on` Django `DateTimeField` being naive (`settings.USE_TZ =
+        False`, `settings.py:57`): `CommCareCase.to_json`
+        (`corehq/form_processor/models/cases.py:426-434`) serializes it via
+        `CommCareCaseSerializer` (`corehq/form_processor/serializers.py:
+        172-180`, a plain DRF `ModelSerializer` with no per-field override),
+        whose default `DateTimeField.to_representation`
+        (`rest_framework/fields.py:1198-1214`) uses `output_format =
+        getattr(self, 'format', api_settings.DATETIME_FORMAT)`. This project
+        sets `REST_FRAMEWORK = {'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'}`
+        (`settings.py:2083-2085`), so DRF takes the
+        `value.strftime(output_format)` branch and appends a literal `Z`
+        unconditionally -- timezone-awareness never enters into it, since that
+        branch is not the ISO-8601 one that would otherwise gate the suffix on
+        the value being aware-and-UTC.
+      example: "2016-11-29T14:50:41.156000Z"
     closed:
       type: boolean
       description: Whether the case is closed.
       example: false
     date_closed:
       type: string
-      pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{6})?$'
+      format: date-time
       nullable: true
       description: >-
-        Date and time the case was closed, naive ISO-8601 with no timezone
-        offset (same reasoning as `date_modified`; source field `closed_on`).
-      example: "2011-12-20T15:09:47"
+        Date and time the case was closed, `Z`-suffixed RFC3339 (same reasoning
+        as `date_modified`; source field `closed_on`).
+      example: "2011-12-20T15:09:47.000000Z"
     server_date_modified:
       type: string
-      pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{6})?$'
+      format: date-time
       description: >-
-        Date and time the case was last modified, from the server's clock. Naive
-        ISO-8601 with no timezone offset (same reasoning as `date_modified`;
-        source field `server_modified_on`).
-      example: "2012-04-05T23:56:41"
+        Date and time the case was last modified, from the server's clock.
+        `Z`-suffixed RFC3339 (same reasoning as `date_modified`; source field
+        `server_modified_on`).
+      example: "2012-04-05T23:56:41.000000Z"
     server_date_opened:
       type: string
-      pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{6})?$'
+      format: date-time
       nullable: true
       description: >-
-        Date and time the case was opened, from the server's clock. Naive
-        ISO-8601 with no timezone offset (same reasoning as `date_modified`;
-        source field `server_opened_on`).
-      example: "2012-04-05T23:56:41"
+        Date and time the case was opened, from the server's clock. `Z`-suffixed
+        RFC3339 (same reasoning as `date_modified`; source field
+        `server_opened_on`).
+      example: "2012-04-05T23:56:41.000000Z"
     indexed_on:
       type: string
       format: date-time
@@ -77,14 +84,14 @@ Case:
         Date and time this revision of the case was indexed into Elasticsearch.
         This is the recommended field to page through results on (see
         `indexed_on_start`/`indexed_on_end` on the list operation) -- it handles
-        edge cases `server_date_modified` does not. Unlike the other date fields
-        on this schema, this one really is `format: date-time`-conformant:
+        edge cases `server_date_modified` does not. Also `Z`-suffixed RFC3339,
+        by a different mechanism than the other date fields:
         `ElasticCase._from_dict` sets it to
         `json_format_datetime(datetime.utcnow())`
         (`corehq/apps/es/cases.py:84`), and `json_format_datetime`
         (`corehq/ex-submodules/dimagi/utils/parsing.py:48-60`) always strftimes
-        with `%Y-%m-%dT%H:%M:%S.%fZ` -- a literal `Z` and always-six-digit
-        microseconds, both present on every value.
+        with the literal format `%Y-%m-%dT%H:%M:%S.%fZ` -- a `Z` and
+        always-six-digit microseconds on every value, independent of DRF.
       example: "2012-04-05T23:56:41.000000Z"
     opened_by:
       type: string
