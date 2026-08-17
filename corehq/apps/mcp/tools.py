@@ -33,6 +33,24 @@ def whoami(context, arguments):
     }
 
 
+def list_apis(context, arguments):
+    # Imported here to avoid dragging the API urlconf in at import time
+    from corehq.apps.api.urls import _OLD_API_LIST
+    apis = []
+    for version, resources in _OLD_API_LIST:
+        if version != (0, 5):
+            continue
+        for resource_class in resources:
+            meta = resource_class._meta
+            apis.append({
+                'name': meta.resource_name,
+                'path': f'/a/{{domain}}/api/v0.5/{meta.resource_name}/',
+                'list_methods': list(meta.list_allowed_methods),
+                'detail_methods': list(meta.detail_allowed_methods),
+            })
+    return {'apis': apis}
+
+
 def list_lookup_tables(context, arguments):
     domain = arguments.get('domain')
     _require_member_of(context.couch_user, domain)
@@ -61,6 +79,21 @@ class Tool:
 
 
 TOOLS = {tool.name: tool for tool in [
+    Tool(
+        name='list_apis',
+        description=(
+            'List the REST API resources available on CommCare HQ: each '
+            'entry gives the resource name, its URL path template, and the '
+            'HTTP methods allowed on the list and detail endpoints. Use '
+            'this to discover what call_api_read and call_api_write can do.'
+        ),
+        input_schema={
+            'type': 'object',
+            'properties': {},
+            'additionalProperties': False,
+        },
+        handler=list_apis,
+    ),
     Tool(
         name='whoami',
         description=(
