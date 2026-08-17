@@ -9,7 +9,9 @@ from django.utils.translation import gettext as _
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
-from dimagi.utils.couch import CriticalSection
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch import CriticalSection, get_redis_lock, acquire_lock, release_lock
+
 from soil import DownloadBase
 from soil.progress import set_task_progress
 
@@ -46,6 +48,10 @@ from .utils import (
 )
 
 logger = get_task_logger('data_interfaces')
+
+logger.info("here")
+logger.info("Changed string")
+logger.info("New string")
 ONE_HOUR = 60 * 60
 
 
@@ -59,9 +65,16 @@ def _get_upload_progress_tracker(upload_id):
     return _progress_tracker
 
 
+logger.info("1")
+
+
+logger.info("2")
+
+
 @no_result_task(queue='case_rule_queue', acks_late=True,
                 soft_time_limit=15 * settings.CELERY_TASK_SOFT_TIME_LIMIT)
 def reset_and_backfill_deduplicate_rule_task(domain, rule_id):
+    logger.info("Enters reset and backfill function")
     try:
         rule = AutomaticUpdateRule.objects.get(
             id=rule_id,
@@ -135,14 +148,28 @@ def run_case_update_rules(now=None):
                 run_case_update_rules_for_domain.delay(domain, now)
 
 
+REDIS_TOTAL_UPDATES_KEY = "total_case_updates"
+LOCK_TIMEOUT = 60 * 60
+
+
 @task(serializer='pickle', queue='case_rule_queue')
 def run_case_update_rules_for_domain(domain, now=None):
+    # logger.info(f"Starting run_case_update_rules_for_domain for domain: {domain}")
     now = now or datetime.utcnow()
 
     domain_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
     all_rule_case_types = set(domain_rules.values_list('case_type', flat=True))
 
+    domain_obj = Domain.get_by_name(domain)
+    max_allowed_updates = domain_obj.auto_case_update_limit or settings.MAX_RULE_UPDATES_IN_ONE_RUN
+
+    redis_client = get_redis_client()
+    redis_lock_key = f"update_lock_{domain}"
+    redis_client.set(REDIS_TOTAL_UPDATES_KEY, 0)
+    # logger.info(f"Initialized total updates in Redis for domain {domain}")
+
     for case_type in all_rule_case_types:
+        # logger.info(f"Processing case type: {case_type}")
         run_record = DomainCaseRuleRun.objects.create(
             domain=domain,
             started_on=datetime.utcnow(),
@@ -151,8 +178,27 @@ def run_case_update_rules_for_domain(domain, now=None):
             workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
 
+        total_updates = 0
         for db in get_db_aliases_for_partitioned_query():
-            run_case_update_rules_for_domain_and_db.delay(domain, now, run_record.pk, case_type, db=db)
+            # logger.info(f"Starting subtask for case type: {case_type}, db: {db}")
+            # raise Exception(f"Starting run for domain and db {domain}")
+            run_case_update_rules_for_domain_and_db.delay(domain,
+                                        now, run_record.pk, case_type, db=db)
+            lock = get_redis_lock(redis_lock_key, LOCK_TIMEOUT, name="case_update_lock")
+            logger.info("Attempting to acquire lock")
+            lock = acquire_lock(lock, degrade_gracefully=True, blocking=True)
+            try:
+                total_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY))
+                logger.info(f"Total updates so far: {total_updates}")
+            finally:
+                release_lock(lock, degrade_gracefully=True)
+                logger.info("Released lock")
+            if total_updates >= max_allowed_updates:
+                logger.info(f"Reached max allowed updates inside db loop: {max_allowed_updates}")
+                break
+        if total_updates >= max_allowed_updates:
+            logger.info(f"Reached max allowed updates: {max_allowed_updates}")
+            break
 
 
 @serial_task(
@@ -163,18 +209,51 @@ def run_case_update_rules_for_domain(domain, now=None):
     serializer='pickle',
 )
 def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=None):
+    raise Exception(f"Starting run for domain and db {domain}")
+    logger.info(f"Starting run_case_update_rules_for_domain_and_db for domain: {domain}, \
+                case type: {case_type}, db: {db}")
     rules = list(
         AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE).filter(case_type=case_type)
     )
 
     modified_before = AutomaticUpdateRule.get_boundary_date(rules, now)
     iterator = AutomaticUpdateRule.iter_cases(domain, case_type, db=db, modified_lte=modified_before)
-    run = iter_cases_and_run_rules(domain, iterator, rules, now, run_id, case_type, db)
+
+    redis_client = get_redis_client()
+    redis_lock_key = f"update_lock_{domain}"
+
+    lock = get_redis_lock(redis_lock_key, LOCK_TIMEOUT, name="case_update_lock")
+    logger.info("Attempting to acquire lock in subtask")
+    lock = acquire_lock(lock, degrade_gracefully=True, blocking=True)
+
+    try:
+        curr_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY))
+        logger.info(f"Current updates before processing: {curr_updates}")
+    finally:
+        release_lock(lock, degrade_gracefully=True)
+        logger.info("Released lock in subtask")
+
+    run = iter_cases_and_run_rules(domain, iterator, rules, now, run_id, case_type, db,
+                                   curr_updates=curr_updates)
 
     if run.status == DomainCaseRuleRun.STATUS_FINISHED:
         for rule in rules:
             rule.last_run = now
             rule.save(update_fields=['last_run'])
+        logger.info(f"Finished processing rules for domain: {domain}, case type: {case_type}, db: {db}")
+
+    lock = acquire_lock(lock, degrade_gracefully=True, blocking=True)
+    try:
+        curr_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY)) \
+            + run.case_update_result.total_updates
+        redis_client.set(REDIS_TOTAL_UPDATES_KEY, curr_updates)
+        logger.info(f"Updated total updates in Redis: {curr_updates}")
+    finally:
+        release_lock(lock, degrade_gracefully=True)
+        logger.info("Released lock after updating total updates")
+
+
+print("8")
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
@@ -196,6 +275,9 @@ def run_case_update_rules_on_save(case):
                 AutomaticUpdateRule.WORKFLOW_CASE_UPDATE).filter(case_type=case.type)
             now = datetime.utcnow()
             run_rules_for_case(case, rules, now)
+
+
+print("9")
 
 
 @periodic_task(run_every=crontab(hour=0, minute=0), queue='case_rule_queue', ignore_result=True)
