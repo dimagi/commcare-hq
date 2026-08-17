@@ -47,4 +47,20 @@ triage. Nothing here has been changed in the reST docs.
   `400` responses now use `error_message`; `bulkUpdateGroups`'s `400` uses a
   string-array schema instead, since copying the `error_message` object shape
   onto it would itself be inaccurate.
+- **Bulk `PATCH`'s response array mixes ids and error messages
+  positionally, with no marker telling them apart.** Undocumented in both
+  reST pages (`user-group.rst`'s Bulk API section shows only sample
+  *inputs*, no sample output for `PATCH`). `patch_list_replica`
+  (`corehq/apps/api/resources/__init__.py:172-205`): for each submitted
+  object, on success nothing marks the entry as a ok; on failure
+  (`AssertionError`), line 199-201 overwrites that same slot with the error
+  text (`bundle.data['_id'] = str(e)`); on success the slot keeps whatever
+  id `obj_create`/`obj_update` produced. Line 204 then serializes
+  `[bundle.data['_id'] for bundle in bundles_seen]` — one array, same order
+  as the request's `objects`, where each element is *either* a new group id
+  *or* an error message, and `status` (202 vs. 400) only reports whether
+  the batch had zero or at least one failure, not which elements failed. A
+  client cannot distinguish success from failure elements except by
+  shape-guessing (e.g. does this string look like a group UUID). The spec's
+  `bulkUpdateGroups` `202`/`400` responses now describe this explicitly.
 - *(append further findings here as they are confirmed)*

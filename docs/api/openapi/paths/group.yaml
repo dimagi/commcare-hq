@@ -87,14 +87,27 @@ List:
                   $ref: "../components/schemas/group.yaml#/GroupWrite"
     responses:
       "202":
-        description: The bulk update was accepted.
+        description: >-
+          All groups were created or updated. The body is an array of the new
+          group ids, in the same order as the submitted `objects`.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                description: UUID of a created or updated group.
+              example:
+                - 1eb59d6938fc7e510254d8c2f63d944f
       "400":
         description: >-
-          At least one group in the batch failed. `v0_5.GroupResource.serialize`
-          skips its usual error-body rewrite for bulk PATCH requests, so the
-          body is a flat array with one entry per submitted group, in order: the
-          new group's id on success, or the raw validation error text on failure
-          -- not an `error`/`error_message` object.
+          At least one group in the batch failed. The body is an array the same
+          length and order as the submitted `objects`: each element is either
+          the new group's id (that object succeeded) or the raw validation error
+          text (that object failed) -- not an `error`/`error_message` object,
+          and there is no separate flag indicating which elements are which. A
+          client must shape-guess (for example, checking whether an element
+          looks like a group UUID) to tell success from failure.
         content:
           application/json:
             schema:
