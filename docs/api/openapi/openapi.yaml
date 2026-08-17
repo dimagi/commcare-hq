@@ -74,3 +74,25 @@ paths:
     $ref: "./paths/submission.yaml#/Submit"
   /a/{domain}/receiver/{app_id}/:
     $ref: "./paths/submission.yaml#/SubmitForApp"
+  /a/{domain}/api/user/v1/:
+    $ref: "./paths/user.yaml#/List"
+  /a/{domain}/api/user/v1/{user_id}/:
+    $ref: "./paths/user.yaml#/Detail"
+  /a/{domain}/api/user/v1/{user_id}/email_password_reset/:
+    $ref: "./paths/user.yaml#/PasswordReset"
+  /a/{domain}/api/user/v1/{user_id}/activate/:
+    $ref: "./paths/user.yaml#/Activate"
+  /a/{domain}/api/user/v1/{user_id}/deactivate/:
+    $ref: "./paths/user.yaml#/Deactivate"
+  /a/{domain}/api/web-user/v1/:
+    $ref: "./paths/web-user.yaml#/List"
+  /a/{domain}/api/web-user/v1/{user_id}/:
+    $ref: "./paths/web-user.yaml#/Detail"
+  /a/{domain}/api/web-user/v1/{user_id}/activate/:
+    $ref: "./paths/web-user.yaml#/Activate"
+  /a/{domain}/api/web-user/v1/{user_id}/deactivate/:
+    $ref: "./paths/web-user.yaml#/Deactivate"
+  /a/{domain}/api/invitation/v1/:
+    $ref: "./paths/web-user.yaml#/Invitation"
+  /api/identity/v1/:
+    $ref: "./paths/web-user.yaml#/Identity"

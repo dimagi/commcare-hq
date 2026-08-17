@@ -588,3 +588,216 @@ the view's own `if` chain", and anything that falls through returns a 405
   `request.META['HTTP_X_OPENROSA_VERSION']`, the correct WSGI convention for an
   incoming `X-OpenRosa-Version` header), and its description separately notes
   that the outbound response header name does not match the standard.
+
+## user/v1 and web-user/v1 (`list-mobile-workers.rst`, `mobile-worker.rst`, `list-webusers.rst`, `webuser.rst`)
+
+- **`webuser.rst` documents `.../activate/` and `.../deactivate/` at
+  `/api/web-user/v1/{id}/...`, and they are real** -- resolved, not a
+  documentation error. `WebUserResource.prepend_urls`
+  (`corehq/apps/api/resources/v0_5.py:600-605`) registers exactly those two
+  URLs, wrapping `enable_user`/`disable_user` ->
+  `_modify_user_status` (`v0_5.py:607-633`), which flips
+  `domain_membership.is_active` and returns 202 with an empty `{}` body. The
+  spec documents both as real operations (`activateWebUser`,
+  `deactivateWebUser`). **The one part of the brief's framing that does not
+  hold up: `webuser.rst` never actually documents a `POST
+  /api/web-user/v1/` "create web user" endpoint.** Its "Web User Invitation
+  Creation" section (which is the only `POST` in the file) is a `POST
+  /api/invitation/v1/`, a different resource entirely
+  (`v1_0.InvitationResource`) that creates an `Invitation`, not a `WebUser` --
+  the `WebUser` itself is only created once the invitation is accepted.
+  `v0_5.WebUserResource.Meta` really does decline `post` everywhere
+  (`detail_allowed_methods = ['get', 'patch']`, inherited
+  `list_allowed_methods = ['get']`), so there is no discrepancy to record
+  there; the reST docs simply never claimed it.
+- **Mobile workers have the identical activate/deactivate machinery, entirely
+  undocumented in either mobile-worker reST page.**
+  `CommCareUserResource.prepend_urls` (`v0_5.py:412-418`) registers
+  `.../activate/`, `.../deactivate/`, and `.../email_password_reset/`
+  (the last of which *is* documented, at `mobile-worker.rst:297-313`); the
+  first two are not mentioned in `mobile-worker.rst` at all, despite being
+  real, tested (`corehq/apps/api/tests/test_user_resources.py:582-628`)
+  endpoints with a location-based permission check
+  (`verify_modify_user_conditions`) that the web user equivalent lacks. The
+  spec documents both as real operations (`activateMobileWorker`,
+  `deactivateMobileWorker`).
+- **`createMobileWorker` silently discards field-update errors that
+  `updateMobileWorker` rejects with a 400.** `obj_create`
+  (`corehq/apps/api/resources/v0_5.py:321`) calls `self._update(bundle)` and
+  ignores its return value; `obj_update` (`v0_5.py:356-359`) calls the exact
+  same helper and raises `BadRequest` if the returned `errors` list is
+  non-empty. `_update` returns a list of per-field validation failures
+  (`v0_5.py:396-410`, via `CommcareUserUpdates.update`, which raises
+  `UpdateUserException` per bad field and is caught and collected). The
+  practical effect: submitting an invalid `primary_location`, `locations`
+  entry, or other updater-rejected field on `POST` creates the user anyway,
+  with that field silently unset, instead of failing with a 400 the way the
+  same payload would on `PUT`. Neither `mobile-worker.rst` nor
+  `list-mobile-workers.rst` mentions this asymmetry.
+- **`getMobileWorker`/`getWebUser` return a 500, not a 404, for a missing or
+  wrong-domain `user_id`.** `UserResource.obj_get`
+  (`corehq/apps/api/resources/v0_1.py:36-43`) calls
+  `self.Meta.object_class.get_by_user_id(pk, domain)`
+  (`corehq/apps/users/models.py:1529-1544`), which returns `None` -- it never
+  raises, on a miss or a domain mismatch (the `except KeyError` in `obj_get`
+  is dead code; `get_by_user_id` cannot raise `KeyError`). Tastypie's
+  `get_detail` (`tastypie/resources.py:1362-1383`) only converts
+  `ObjectDoesNotExist`/`MultipleObjectsReturned` to a 404; a bare `None`
+  passed into `full_dehydrate` (`tastypie/resources.py:877-902`) triggers
+  `getattr(None, ...)` for every declared field, an uncaught `AttributeError`
+  that `wrap_view`'s generic handler maps to a 500
+  (`get_response_class_for_exception`,
+  `tastypie/resources.py:274-289`, does not recognize `AttributeError`).
+  `updateWebUser` (`PATCH`) hits the identical crash, since `patch_detail`
+  (`tastypie/resources.py:1680-1688`) calls `cached_obj_get` and
+  `full_dehydrate` before `obj_update` ever runs. Neither reST page states
+  what happens for a nonexistent id. The spec omits `404` on all three
+  operations, each with an inline comment, rather than document a response
+  the code cannot produce.
+- **`updateMobileWorker` (`PUT`) also has no working 404 -- the analogous bug
+  to `replaceGroup`'s in `paths/group.yaml`.** `obj_update`
+  (`corehq/apps/api/resources/v0_5.py:352-353`) fetches with
+  `CommCareUser.get(kwargs['pk'])` (couchdbkit's plain `.get()`, raising
+  `ResourceNotFound` on a miss) and then asserts
+  `bundle.obj.domain == kwargs['domain']` with a bare `assert`. Neither
+  exception is tastypie's `NotFound`/`MultipleObjectsReturned` (the only pair
+  `put_detail` catches, `tastypie/resources.py:1502`), so both become
+  uncaught 500s. The spec omits `404` on `updateMobileWorker`, with an inline
+  comment.
+- **`deleteMobileWorker`'s 404 does work, and is empty-bodied.** Contrast the
+  above: `obj_delete` (`corehq/apps/api/resources/v0_5.py:375-381`) explicitly
+  raises tastypie's own `NotFound(...)` when the lookup fails, and
+  `delete_detail` (`tastypie/resources.py:1525-1541`) does catch that
+  exception type, returning a bare `http.HttpNotFound()`. This is the one
+  detail operation across both resources whose 404 is genuine.
+  `test_cant_delete_user_in_another_domain`
+  (`corehq/apps/api/tests/test_user_resources.py:569-580`) confirms the 404
+  status for a cross-domain id.
+- **A fourth 404 shape, distinct from all previously catalogued ones:**
+  `email_password_reset`, `activate_user`/`deactivate_user`, and
+  `enable_user`/`disable_user` all raise a bare, argument-less tastypie
+  `NotFound()` (`v0_5.py:435,456,622`) from inside a custom `prepend_urls`
+  view. Because these views are reached through `wrap_view` directly, not
+  through `dispatch_detail`/`delete_detail`'s own `except NotFound` handling,
+  the exception falls to `wrap_view`'s generic `except Exception` ->
+  `_handle_500` (`tastypie/resources.py:250-265,291-315`), which does
+  recognize `NotFound` and maps it to a 404 status, but always builds the
+  body from the canned-error path (`{"error_message": "Sorry, this request
+  could not be processed. Please try again later."}` outside `DEBUG`) --
+  never the (here, empty) exception text, and never anything
+  resource-specific. This is the same underlying mechanism as `deleteGroup`'s
+  404 in `paths/group.yaml`, just reached from a different kind of view.
+- **`updateWebUser` and `inviteWebUser` share a `400` body shape keyed
+  `errors` (plural, a list), found nowhere else in this spec.**
+  `WebUserValidationException.__init__`
+  (`corehq/apps/api/validation.py:31-33`) always normalizes its message to a
+  list; both call sites
+  (`WebUserResource.obj_update`, `v0_5.py:563-564`; `InvitationResource
+  .obj_create`, `v1_0.py:124-125`) wrap it as
+  `ImmediateHttpResponse(JsonResponse({"errors": e.message}, status=400))`,
+  bypassing tastypie's usual `BadRequest` -> `{"error": ...}` conversion
+  entirely. `inviteWebUser` additionally has a *third* 400 shape for a
+  location id that passes `WebUserResourceSpec` validation but does not
+  resolve to a real `SQLLocation`: `{"error": "Could not find location ids:
+  ..."}` (`v1_0.py:139-141`) -- singular `error`, matching the shared shape,
+  from a different code path than either of the other two. Neither reST page
+  documents any error-body shape. The spec's `WebUserErrors` schema covers
+  the `errors` shape; the shared `Error` schema covers the singular one.
+- **`inviteWebUser`'s reST documentation contradicts itself about whether
+  `id` is returned, and neither version matches the code.**
+  `webuser.rst`'s "Output Parameters" table (lines 68-79) says the response
+  contains only `id`. Its own "Sample output (JSON)" three sections later
+  (lines 101-120) shows every field *except* `id`. `InvitationResource`
+  declares `id = fields.CharField(attribute='uuid', readonly=True,
+  unique=True)` (`v1_0.py:77`) and `always_return_data = True`
+  (`v1_0.py:91`), so `full_dehydrate` includes `id` alongside every other
+  declared field on every response -- neither reST claim is correct. The
+  spec's `Invitation` schema documents the real (everything-including-`id`)
+  shape.
+- **`list-webusers.rst`'s Output Parameters table is missing six of the
+  thirteen fields `WebUserResource` actually serializes.**
+  `list-webusers.rst:43-80` lists only `id`, `username`, `first_name`,
+  `last_name`, `default_phone_number`, `email`, `phone_numbers`, `role`,
+  `permissions`, `is_admin`. `v0_5.WebUserResource` additionally declares
+  `primary_location_id`, `assigned_location_ids`, `profile`, `user_data`,
+  `tableau_role`, and `is_active_in_domain` (`v0_5.py:474-479`) with no
+  `use_in` restriction, so all six appear on *every* list and detail
+  response, not just detail. (`tableau_groups`, the seventh extra field, is
+  the one exception -- see the next entry.) All six do appear, undocumented,
+  in `webuser.rst`'s PATCH sample response (lines 210-292), so they are not
+  unknown to the docs generally, just missing from the list endpoint's own
+  Output Parameters table. The spec's `WebUser` schema includes all six, each
+  flagged as undocumented there.
+- **`tableau_groups` is real but genuinely list/detail-asymmetric, and
+  undocumented on both endpoints' Output Parameters tables.**
+  `tableau_groups = fields.ListField(null=True, use_in='detail')`
+  (`v0_5.py:481`) is the only field on either user resource with a
+  non-default `use_in`; the inline code comment explains why (computing it
+  makes one request per user, too slow for a list). It appears on
+  `getWebUser` but never on `listWebUsers`. The spec's `WebUser` schema
+  documents this list/detail difference explicitly rather than modelling one
+  shape for both operations.
+- **Both resources emit an `eulas` field that is a Python `repr` string, not
+  structured data, undocumented on both list endpoints.**
+  `UserResource.eulas = fields.CharField(attribute='eulas', null=True)`
+  (`v0_1.py:34`, inherited by both `CommCareUserResource` and
+  `WebUserResource`) combined with `tastypie.fields.CharField.convert`
+  calling `str()` unconditionally
+  (`tastypie/fields.py:211-215`) means the field's value is literally
+  `str()` of a list of `LicenseAgreement` objects. `webuser.rst`'s PATCH
+  sample response (line 216) shows this exact shape
+  (`"eulas": "[LicenseAgreement(date=datetime.datetime(...), ...)]"`), but
+  neither `list-mobile-workers.rst` nor `list-webusers.rst` mentions the
+  field at all. The spec's `MobileWorker`/`WebUser` schemas document `eulas`
+  as a plain string with a description explaining the repr shape.
+- **`resource_uri` is a real field on every response from both resources,
+  documented incorrectly or not at all.** `include_resource_uri` is never
+  set to `False` anywhere in the inheritance chain
+  (`CustomResourceMeta`, `corehq/apps/api/resources/meta.py:76-81`), and both
+  `CommCareUserResource.get_resource_uri` (`v0_5.py:257-268`) and
+  `WebUserResource.get_resource_uri` (`v0_5.py:524-532`) are overridden to
+  always compute a real detail URL. `list-mobile-workers.rst`'s Output Values
+  table and sample JSON omit the field entirely.
+  `list-webusers.rst`'s sample JSON (lines 118, 139) does include it, but
+  shows it as an always-empty string (`"resource_uri":""`) -- stale, not the
+  real behavior. The spec's `MobileWorker`/`WebUser` schemas document the
+  field as a real, always-populated URL.
+- **`default_phone_number` is a genuine, separately recognized write field on
+  the mobile worker resource, missing from `mobile-worker.rst`'s Input
+  Parameters table.** `CommcareUserUpdates.update`
+  (`corehq/apps/api/user_updates.py:148`) maps `'default_phone_number'` to
+  `_update_default_phone_number` (`user_updates.py:204-214`), which adds the
+  number to `phone_numbers` if new and marks it default -- independent of, and
+  in addition to, the "first entry of `phone_numbers` becomes default"
+  behavior the table does document. The reST page's own sample input (line
+  107) includes the field redundantly, without it ever appearing in the
+  Input Parameters table above. The spec's `MobileWorkerWrite` schema
+  documents it as a real property.
+- **`connect_username` is a real, undocumented create-only field, gated by a
+  feature toggle.** `obj_create`
+  (`corehq/apps/api/resources/v0_5.py:278,280-281,334-338`) reads
+  `connect_username` from the request body, rejects it with a 400 unless the
+  `COMMCARE_CONNECT` toggle is enabled for the domain, and otherwise links
+  the new user to a `ConnectIDUserLink` instead of requiring a password.
+  Absent from `mobile-worker.rst`'s Input Parameters table entirely. The
+  spec's `MobileWorkerWrite` schema documents it, with the toggle
+  requirement noted.
+- **No credential is ever returned in any response body.** Checked
+  specifically per the task brief's instruction to flag this prominently if
+  found: neither `UserResource` (`v0_1.py:25-34`) nor either subclass
+  declares a `password` field at all, so tastypie's `full_dehydrate` -- which
+  only serializes explicitly declared `fields.*` attributes -- can never
+  include one, regardless of what was submitted on create/update.
+  `CommCareUserResource.obj_create` additionally pops `password` from
+  `bundle.data` immediately after use (`v0_5.py:317-318`), before any
+  dehydration happens. **Nothing to flag; this is a negative finding,
+  included for completeness.**
+- **`type: "user"` (shown in `list-mobile-workers.rst`'s sample JSON, lines
+  119 and 144) is never actually serialized.** `UserResource.type = "user"`
+  (`v0_1.py:26`) is a plain class attribute, not a `tastypie.fields.*`
+  instance -- tastypie's field-discovery metaclass only picks up declared
+  `ApiField` instances, so this attribute is inert.
+  `test_get_list`/`test_get_single`
+  (`corehq/apps/api/tests/test_user_resources.py:90-122,125-157`) assert the
+  exact response dict for a created user and neither includes a `type` key.
+  The spec's `MobileWorker` schema has no `type` property.
