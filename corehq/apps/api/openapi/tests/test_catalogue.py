@@ -40,6 +40,29 @@ def test_user_scoped_entries():
     assert names == [('identity', 'v1'), ('user_domains', 'v1')]
 
 
+def test_operation_ids_are_unique_across_the_catalogue():
+    """``operationId`` is built from ``(resource_name, version)``.
+
+    ``openapi-spec-validator`` does not reject duplicate ``operationId``
+    values, but they are invalid OpenAPI and silently break code
+    generators, so the catalogue must not contain two entries that would
+    produce the same one.
+    """
+    seen = {}
+    duplicates = []
+    for entry in CATALOGUE:
+        resource_name = entry.resource(
+            api_name=entry.version
+        )._meta.resource_name
+        key = (resource_name, entry.version)
+        if key in seen:
+            duplicates.append(key)
+        seen[key] = entry
+    assert not duplicates, (
+        f'duplicate (resource_name, version) pairs: {duplicates}'
+    )
+
+
 def test_every_catalogued_resource_can_build_a_schema():
     """The generator depends on this for every resource in the catalogue.
 

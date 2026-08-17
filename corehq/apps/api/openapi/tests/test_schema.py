@@ -77,6 +77,28 @@ def test_callable_default_is_omitted():
     assert 'default' not in schema
 
 
+def test_not_provided_instance_default_is_omitted():
+    """Tastypie's ``ApiField.default`` calls a callable ``_default``.
+
+    Since ``NOT_PROVIDED`` is itself a class (and therefore callable),
+    calling it produces an *instance* of ``NOT_PROVIDED`` rather than the
+    class itself, which a plain ``is not NOT_PROVIDED`` check would miss.
+    """
+    schema = field_to_schema(field_info(default=NOT_PROVIDED()))
+    assert 'default' not in schema
+
+
+def test_default_that_does_not_match_the_field_type_is_omitted():
+    """Some ORM-derived defaults do not match their own declared type.
+
+    e.g. an integer primary key field with ``blank=True`` gets a
+    Tastypie/Django default of ``''`` even though its dehydrated type is
+    ``integer``. Such a default is invalid OpenAPI and must be dropped.
+    """
+    schema = field_to_schema(field_info(type='integer', default=''))
+    assert 'default' not in schema
+
+
 def test_override_replaces_generated_keys():
     schema = field_to_schema(
         field_info(type='list'),
