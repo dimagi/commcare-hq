@@ -13,6 +13,7 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.hqwebapp.session_details_endpoint.views import (
     SessionDetailsView,
 )
+from corehq.apps.hqwebapp.oauth_authorize import HQAuthorizationView
 from corehq.apps.hqwebapp.views import (
     BugReportView,
     MaintenanceAlertsView,
@@ -32,6 +33,7 @@ from corehq.apps.hqwebapp.views import (
     login_new_window,
     logout,
     no_permissions,
+    oauth_authorization_server_metadata,
     osdd,
     password_change,
     ping_response,
@@ -116,7 +118,13 @@ urlpatterns = [
         waf_allow('EC2MetaDataSSRF_BODY')(OauthApplicationRegistration.as_view()),
         name=OauthApplicationRegistration.urlname
     ),
+    # Shadows oauth2_provider's authorize view (must precede the include)
+    # to add the project-space picker to the consent screen
+    url(r'^oauth/authorize/$', HQAuthorizationView.as_view(), name='oauth_authorize'),
     url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    url(r'^\.well-known/oauth-authorization-server$',
+        oauth_authorization_server_metadata,
+        name='oauth_authorization_server_metadata'),
     url(r'^check_sso_login_status/', check_sso_login_status, name='check_sso_login_status'),
 ]
 
