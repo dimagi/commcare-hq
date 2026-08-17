@@ -239,6 +239,22 @@ def _api_key(allow_creds_in_data=True):
     return real_decorator
 
 
+def get_oauth_token_domains(access_token):
+    """The domains a ``domain:<name>``-scoped token is restricted to,
+    or None for tokens without domain scopes (unrestricted)."""
+    domains = frozenset(
+        scope[len('domain:'):]
+        for scope in access_token.scope.split()
+        if scope.startswith('domain:')
+    )
+    return domains or None
+
+
+def _oauth_token_permits_domain(request, domain):
+    token_domains = getattr(request, 'oauth_token_domains', None)
+    return token_domains is None or domain in token_domains
+
+
 def _oauth2_check(scopes):
     def auth_check(request):
         oauthlib_core = get_oauthlib_core()
@@ -247,6 +263,7 @@ def _oauth2_check(scopes):
         if valid:
             request.user = r.user
             request._auth_method_restricts_superuser_access = True
+            request.oauth_token_domains = get_oauth_token_domains(r.access_token)
             return True
 
     def real_decorator(view):
@@ -296,6 +313,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False,
                             couch_user
                             and (allow_cc_users or couch_user.is_web_user())
                             and couch_user.is_member_of(domain, allow_enterprise=True)
+                            and _oauth_token_permits_domain(request, domain)
                         ):
                             clear_login_attempts(couch_user)
                             return fn(request, domain, *args, **kwargs)
