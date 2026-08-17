@@ -303,6 +303,46 @@ class _AuthTestsBothBackends(object):
             expected_status=401
         )
 
+    def test_oauth2_token_scoped_to_this_project_space(self):
+        client = Client(HTTP_AUTHORIZATION="bearer scopedtoken")
+        token_model = get_access_token_model()
+        one_hour = datetime.now() + timedelta(hours=1)
+        token_model.objects.create(
+            user=self.user.get_django_user(),
+            token='scopedtoken',
+            scope=f'sync domain:{self.domain}',
+            expires=one_hour
+        )
+        expected_auth_context = {
+            'doc_type': 'AuthContext',
+            'domain': self.domain,
+            'authenticated': True,
+            'user_id': self.user.get_id,
+        }
+        self._test_post(
+            file_path=self.bare_form,
+            client=client,
+            authtype='oauth2',
+            expected_auth_context=expected_auth_context
+        )
+
+    def test_oauth2_token_scoped_to_another_project_space(self):
+        client = Client(HTTP_AUTHORIZATION="bearer othertoken")
+        token_model = get_access_token_model()
+        one_hour = datetime.now() + timedelta(hours=1)
+        token_model.objects.create(
+            user=self.user.get_django_user(),
+            token='othertoken',
+            scope='sync domain:some-other-domain',
+            expires=one_hour
+        )
+        self._test_post(
+            file_path=self.bare_form,
+            client=client,
+            authtype='oauth2',
+            expected_status=403
+        )
+
 
 class AuthCouchOnlyTest(TestCase, AuthTestMixin, _AuthTestsCouchOnly):
 
