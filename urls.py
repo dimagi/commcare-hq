@@ -110,6 +110,7 @@ urlpatterns = [
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
+    url(r'', include('corehq.apps.mcp.urls')),
     url(r'', include('corehq.apps.domain.urls')),
     url(r'^hq/accounting/', include('corehq.apps.accounting.urls')),
     url(r'^hq/sms/', include(sms_admin_interface_urls)),
