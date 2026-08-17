@@ -623,6 +623,7 @@ docs = [
     { name = "sphinx" },
     { name = "sphinx-rtd-theme" },
     { name = "sphinxcontrib-django" },
+    { name = "sphinxcontrib-openapi" },
     { name = "urllib3" },
 ]
 prod = [
@@ -787,6 +788,7 @@ docs = [
     { name = "sphinx" },
     { name = "sphinx-rtd-theme" },
     { name = "sphinxcontrib-django" },
+    { name = "sphinxcontrib-openapi", specifier = ">=0.9.0" },
     { name = "urllib3", specifier = "<=2.7.0" },
 ]
 prod = [
@@ -959,6 +961,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/66/0c/8d907af351aa16b42caae42f9d6aa37b900c67308052d10fdce809f8d952/decorator-5.1.1.tar.gz", hash = "sha256:637996211036b6385ef91435e4fae22989472f9d571faba8927ba8253acbc330", size = 35016, upload-time = "2022-01-07T08:20:05.666Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d5/50/83c593b07763e1161326b3b8c6686f0f4b0f24d5526546bee538c89837d6/decorator-5.1.1-py3-none-any.whl", hash = "sha256:b8c3f85900b9dc423225913c5aace94729fe1fa9763b38939a95226f02d37186", size = 9073, upload-time = "2022-01-07T08:20:03.734Z" },
+]
+
+[[package]]
+name = "deepmerge"
+version = "3.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b7/6c/9f4577a36d5f463a3a3f8322bd65d33e1a1a6b6ba1d692a5ebc3cba19015/deepmerge-3.0.tar.gz", hash = "sha256:14ed69f063de64b7743985c732ccff5d6c34ff4560946e7fbfd99086b853b9ce", size = 22279, upload-time = "2026-08-17T05:50:53.161Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a8/d7/7f19bedd30b90b72865aeec3a29127bed6dee6c9ef0324bb5b4d424bb0e3/deepmerge-3.0-py3-none-any.whl", hash = "sha256:c8541c3e186dc88d19a5513ad3a0b2d0b22beaa780969fc0c13b995a64265365", size = 14855, upload-time = "2026-08-17T05:50:52.218Z" },
 ]
 
 [[package]]
@@ -2124,6 +2135,15 @@ wheels = [
 ]
 
 [[package]]
+name = "mistune"
+version = "3.3.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/7b/92/328a294a6de83bacb95bed01f04e0eaff4e3616ee359fc821a5dfc539b02/mistune-3.3.4.tar.gz", hash = "sha256:58b5c96d6fcb61190dfe5fae498d2b2065f99cf61e9649418fd54cf1ada86dfe", size = 121426, upload-time = "2026-07-22T05:22:30.89Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/77/e4/288365afae98953bc01de09f686f40d8ee84578135aa7767d5d4e60b5278/mistune-3.3.4-py3-none-any.whl", hash = "sha256:ee015381e955e370962968befe1d729ab60fafb6a715ac6751763fbce38c8d4a", size = 66862, upload-time = "2026-07-22T05:22:29.419Z" },
+]
+
+[[package]]
 name = "msal"
 version = "1.37.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2295,6 +2315,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f5/14/d8820aaf74275183b207c5cdd6f248ce0adb80fc688f3566602fa423dc94/phonenumberslite-9.0.29.tar.gz", hash = "sha256:9804ecca39a0b8aa735b1797c6dda11ab3e78da1b280e3defdee1a3ea94667b2", size = 288716, upload-time = "2026-04-25T05:35:17.195Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ee/3d/6faf80eab5640aafb5dcc8d1b398a338677f238e5c0b7ae46655a19a524d/phonenumberslite-9.0.29-py2.py3-none-any.whl", hash = "sha256:572760601cc45ae6578cb7493973b479d5a68ec90ca6e7db2fbce899e4ee393e", size = 473337, upload-time = "2026-04-25T05:35:15.243Z" },
+]
+
+[[package]]
+name = "picobox"
+version = "4.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0f/b1/830714dd6778c1cb45826722b4e9bd21c94b33cca5df9ef2cc0b80c81b25/picobox-4.0.0.tar.gz", hash = "sha256:114da1b5606b2f615e8b0eb68d04198ad9de75af5adbcf5b36fe4f664ab927b6", size = 22666, upload-time = "2023-11-20T00:36:54.951Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2d/c6/fd64ffd75d47c4fcf6c65808cc5c5c75e5d4357c197d3741ee1339e91257/picobox-4.0.0-py3-none-any.whl", hash = "sha256:4c27eb689fe45dabd9e64c382e04418147d0b746d155b4e80057dbb7ff82027e", size = 11641, upload-time = "2023-11-20T00:36:53.312Z" },
 ]
 
 [[package]]
@@ -3224,6 +3253,21 @@ wheels = [
 ]
 
 [[package]]
+name = "sphinx-mdinclude"
+version = "0.6.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "docutils" },
+    { name = "mistune" },
+    { name = "pygments" },
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b6/a7/c9a7888bb2187fdb06955d71e75f6f266b7e179b356ac76138d160a5b7eb/sphinx_mdinclude-0.6.2.tar.gz", hash = "sha256:447462e82cb8be61404a2204227f920769eb923d2f57608e3325f3bb88286b4c", size = 65257, upload-time = "2024-08-03T19:07:37.643Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/42/3d/6b41fe1637cd53c4b10d56e0e6f396546f837973dabf9c4b2a1de44620ac/sphinx_mdinclude-0.6.2-py3-none-any.whl", hash = "sha256:648e78edb067c0e4bffc22943278d49d54a0714494743592032fa3ad82a86984", size = 16911, upload-time = "2024-08-03T19:07:30.406Z" },
+]
+
+[[package]]
 name = "sphinx-rtd-theme"
 version = "3.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -3279,6 +3323,18 @@ wheels = [
 ]
 
 [[package]]
+name = "sphinxcontrib-httpdomain"
+version = "2.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/76/a2/b9b96904f691a0b4ccb8277a72b4ec351590286b44a433d0cefe78703c2b/sphinxcontrib_httpdomain-2.0.0.tar.gz", hash = "sha256:9e4e8733bf41ee4d9d5f9eb4dbf3cc2c22a665221ba42c5c3ae181b98af8855d", size = 17155, upload-time = "2026-02-04T21:23:56.422Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/44/48/9524b2a8cd11a3802a266aa4631ae7842cd764cf9bf3701bbde547b040b5/sphinxcontrib_httpdomain-2.0.0-py3-none-any.whl", hash = "sha256:e968775c9994f8139cb6ff91e1f6a8557396a2cc08073997eed10d9b39f96df3", size = 26137, upload-time = "2026-02-04T21:23:55.444Z" },
+]
+
+[[package]]
 name = "sphinxcontrib-jquery"
 version = "4.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3297,6 +3353,24 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b2/e8/9ed3830aeed71f17c026a07a5097edcf44b692850ef215b161b8ad875729/sphinxcontrib-jsmath-1.0.1.tar.gz", hash = "sha256:a9925e4a4587247ed2191a22df5f6970656cb8ca2bd6284309578f2153e0c4b8", size = 5787, upload-time = "2019-01-21T16:10:16.347Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c2/42/4c8646762ee83602e3fb3fbe774c2fac12f317deb0b5dbeeedd2d3ba4b77/sphinxcontrib_jsmath-1.0.1-py2.py3-none-any.whl", hash = "sha256:2ec2eaebfb78f3f2078e73666b1415417a116cc848b72e5172e596c871103178", size = 5071, upload-time = "2019-01-21T16:10:14.333Z" },
+]
+
+[[package]]
+name = "sphinxcontrib-openapi"
+version = "0.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "deepmerge" },
+    { name = "jsonschema" },
+    { name = "picobox" },
+    { name = "pyyaml" },
+    { name = "sphinx" },
+    { name = "sphinx-mdinclude" },
+    { name = "sphinxcontrib-httpdomain" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9c/d6/bec7b89e981cc5ee18ccc5dd966257203bae8ceb893bfa7cc7e44f0df2e0/sphinxcontrib_openapi-0.9.0.tar.gz", hash = "sha256:c3c445a13c99706d8837b21b78e1caa8be5eb16b8f83a297a1fdf19f1c31d487", size = 95302, upload-time = "2026-02-10T18:41:24.543Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/3a/7c5ec79cee2d9505ef9079fc55cdc866e38aa68241982bf103604013f5c0/sphinxcontrib_openapi-0.9.0-py3-none-any.whl", hash = "sha256:19037dc091e741b2f84e9c17ff201f70f2ac5c192c883e055bb2d96e9facfbdf", size = 34626, upload-time = "2026-02-10T18:41:23.234Z" },
 ]
 
 [[package]]

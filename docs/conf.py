@@ -45,6 +45,7 @@ extensions = [
     'myst_parser',
     'sphinx.ext.viewcode',
     'sphinxcontrib_django',
+    'sphinxcontrib.openapi',
     'sphinx_rtd_theme',
 ]
 
