@@ -6,6 +6,12 @@ from django.utils import timezone
 
 from oauth2_provider.models import AccessToken, get_application_model
 
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.mcp.tools import ToolContext
 from corehq.apps.users.models import WebUser
@@ -19,7 +25,15 @@ class McpTestCase(TestCase):
     def setUpTestData(cls):
         cls.domain_obj = create_domain(cls.domain)
         cls.addClassCleanup(cls.domain_obj.delete)
-        cls.user = WebUser.create(cls.domain, 'mcp-user@example.com', 'secret', None, None)
+        cls.addClassCleanup(Subscription.clear_caches, cls.domain)
+        account = BillingAccount.get_or_create_account_by_domain(
+            cls.domain, created_by='mcp-tests')[0]
+        plan = DefaultProductPlan.get_default_plan_version(
+            edition=SoftwarePlanEdition.ADVANCED)
+        subscription = Subscription.new_domain_subscription(account, cls.domain, plan)
+        subscription.is_active = True
+        subscription.save()
+        cls.user = WebUser.create(cls.domain, 'mcp-user@example.com', 'secret', None, None, is_admin=True)
         cls.addClassCleanup(cls.user.delete, cls.domain, deleted_by=None)
         cls.application = get_application_model().objects.create(
             name='test-mcp-client',

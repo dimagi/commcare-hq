@@ -38,7 +38,9 @@ class TestMcpToolsList(McpTestCase):
     def test_tools_list_returns_registered_tools_with_schemas(self):
         result = self.rpc('tools/list')['result']
         tools = {tool['name']: tool for tool in result['tools']}
-        assert set(tools) == {'whoami', 'list_lookup_tables', 'list_apis'}
+        assert set(tools) == {
+            'whoami', 'list_lookup_tables', 'list_apis',
+            'call_api_read', 'call_api_write'}
         for tool in tools.values():
             assert tool['description']
             assert tool['inputSchema']['type'] == 'object'

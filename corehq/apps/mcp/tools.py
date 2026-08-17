@@ -51,6 +51,40 @@ def list_apis(context, arguments):
     return {'apis': apis}
 
 
+def call_api_read(context, arguments):
+    # Imported here: api_bridge imports ToolError from this module
+    from corehq.apps.mcp.api_bridge import call_domain_api
+    domain = arguments.get('domain')
+    _require_member_of(context.couch_user, domain)
+    return call_domain_api(
+        context.authorization,
+        domain,
+        arguments.get('path'),
+        params=arguments.get('query_params'),
+    )
+
+
+WRITE_METHODS = ('POST', 'PUT', 'PATCH', 'DELETE')
+
+
+def call_api_write(context, arguments):
+    # Imported here: api_bridge imports ToolError from this module
+    from corehq.apps.mcp.api_bridge import call_domain_api
+    domain = arguments.get('domain')
+    _require_member_of(context.couch_user, domain)
+    method = (arguments.get('method') or '').upper()
+    if method not in WRITE_METHODS:
+        raise ToolError(
+            f"Method must be one of {', '.join(WRITE_METHODS)}; got '{method}'")
+    return call_domain_api(
+        context.authorization,
+        domain,
+        arguments.get('path'),
+        method=method,
+        body=arguments.get('body'),
+    )
+
+
 def list_lookup_tables(context, arguments):
     domain = arguments.get('domain')
     _require_member_of(context.couch_user, domain)
@@ -93,6 +127,54 @@ TOOLS = {tool.name: tool for tool in [
             'additionalProperties': False,
         },
         handler=list_apis,
+    ),
+    Tool(
+        name='call_api_read',
+        description=(
+            'Perform a read (GET) against a CommCare HQ REST API in a '
+            'project space. path is relative to /a/{domain}/api/, e.g. '
+            "'v0.5/case/' or 'v0.5/lookup_table/'. Discover available "
+            'paths with list_apis. Returns the HTTP status and response '
+            'body. The call runs with your own permissions.'
+        ),
+        input_schema={
+            'type': 'object',
+            'properties': {
+                'domain': {'type': 'string', 'description': 'The project space name'},
+                'path': {'type': 'string', 'description': "API path, e.g. 'v0.5/case/'"},
+                'query_params': {
+                    'type': 'object',
+                    'description': 'Optional query string parameters',
+                    'additionalProperties': {'type': 'string'},
+                },
+            },
+            'required': ['domain', 'path'],
+            'additionalProperties': False,
+        },
+        handler=call_api_read,
+    ),
+    Tool(
+        name='call_api_write',
+        description=(
+            'Perform a write (POST, PUT, PATCH or DELETE) against a '
+            'CommCare HQ REST API in a project space, with a JSON body. '
+            'path is relative to /a/{domain}/api/. Discover available '
+            'paths and allowed methods with list_apis. This modifies real '
+            'project data and runs with your own permissions - be sure '
+            'the user wants the change before calling it.'
+        ),
+        input_schema={
+            'type': 'object',
+            'properties': {
+                'domain': {'type': 'string', 'description': 'The project space name'},
+                'path': {'type': 'string', 'description': "API path, e.g. 'v0.5/lookup_table/'"},
+                'method': {'type': 'string', 'enum': list(WRITE_METHODS)},
+                'body': {'type': 'object', 'description': 'JSON request body'},
+            },
+            'required': ['domain', 'path', 'method'],
+            'additionalProperties': False,
+        },
+        handler=call_api_write,
     ),
     Tool(
         name='whoami',
