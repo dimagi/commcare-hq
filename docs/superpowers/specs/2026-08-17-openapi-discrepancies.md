@@ -634,28 +634,41 @@ the view's own `if` chain", and anything that falls through returns a 405
   with that field silently unset, instead of failing with a 400 the way the
   same payload would on `PUT`. Neither `mobile-worker.rst` nor
   `list-mobile-workers.rst` mentions this asymmetry.
-- **`getMobileWorker`/`getWebUser` return a 500, not a 404, for a missing or
-  wrong-domain `user_id`.** `UserResource.obj_get`
+- **`getMobileWorker`, `getWebUser`, and `updateWebUser` return a 400, not a
+  404, for a missing or wrong-domain `user_id`.** (Corrected in fix round 1:
+  an earlier version of this entry claimed all three return an uncaught 500.
+  That was wrong about the response status/shape, though right that the code
+  has no working 404 for any of them.) `UserResource.obj_get`
   (`corehq/apps/api/resources/v0_1.py:36-43`) calls
   `self.Meta.object_class.get_by_user_id(pk, domain)`
   (`corehq/apps/users/models.py:1529-1544`), which returns `None` -- it never
   raises, on a miss or a domain mismatch (the `except KeyError` in `obj_get`
   is dead code; `get_by_user_id` cannot raise `KeyError`). Tastypie's
-  `get_detail` (`tastypie/resources.py:1362-1383`) only converts
-  `ObjectDoesNotExist`/`MultipleObjectsReturned` to a 404; a bare `None`
-  passed into `full_dehydrate` (`tastypie/resources.py:877-902`) triggers
-  `getattr(None, ...)` for every declared field, an uncaught `AttributeError`
-  that `wrap_view`'s generic handler maps to a 500
-  (`get_response_class_for_exception`,
-  `tastypie/resources.py:274-289`, does not recognize `AttributeError`).
-  `updateWebUser` (`PATCH`) hits the identical crash, since `patch_detail`
-  (`tastypie/resources.py:1680-1688`) calls `cached_obj_get` and
-  `full_dehydrate` before `obj_update` ever runs. Neither reST page states
-  what happens for a nonexistent id. The spec omits `404` on all three
-  operations, each with an inline comment, rather than document a response
-  the code cannot produce.
-- **`updateMobileWorker` (`PUT`) also has no working 404 -- the analogous bug
-  to `replaceGroup`'s in `paths/group.yaml`.** `obj_update`
+  `get_detail`/`patch_detail` (`tastypie/resources.py:1362-1383,1680-1688`)
+  only convert `ObjectDoesNotExist`/`MultipleObjectsReturned` to a 404, so the
+  bare `None` reaches `full_dehydrate`
+  (`tastypie/resources.py:877-902`). There, `ApiField.dehydrate`
+  (`tastypie/fields.py:116-136`) does `getattr(None, attr, None)`; since
+  `id`/`username`/`email` are declared without `null=True` and without a
+  default (`v0_1.py:27-32`), it raises `tastypie.fields.ApiFieldError`
+  (`"The object 'None' has an empty attribute 'get_id' and doesn't allow a
+  default or null value."`). `wrap_view`'s `except (BadRequest,
+  fields.ApiFieldError)` (`tastypie/resources.py:244-246`) catches this
+  **explicitly, before** the generic `except Exception` -> `_handle_500`
+  path, and converts it to a 400 with the shared `{"error": "..."}` shape --
+  the same shape the shared `Error` schema already documents. `updateWebUser`
+  (`PATCH`) hits the identical path, since `patch_detail` calls
+  `cached_obj_get` and `full_dehydrate` before `obj_update` ever runs.
+  Neither reST page states what happens for a nonexistent id. The spec
+  points all three operations' `400` at the shared `Error` schema and omits
+  `404`, each with an inline comment tracing this path.
+- **`updateMobileWorker` (`PUT`) also has no working 404 -- but unlike the
+  three operations above, this one really is an uncaught 500, the analogous
+  bug to `replaceGroup`'s in `paths/group.yaml`.** Its crash happens inside
+  the resource's own `obj_update` override, before tastypie's
+  dehydration/`ApiFieldError` machinery is ever reached, so `wrap_view`'s
+  `ApiFieldError`/`BadRequest` catch (see the entry above) does not apply
+  here. `obj_update`
   (`corehq/apps/api/resources/v0_5.py:352-353`) fetches with
   `CommCareUser.get(kwargs['pk'])` (couchdbkit's plain `.get()`, raising
   `ResourceNotFound` on a miss) and then asserts

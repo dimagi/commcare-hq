@@ -180,22 +180,35 @@ Detail:
               $ref: "../components/schemas/user.yaml#/MobileWorker"
       "401":
         $ref: "../components/responses.yaml#/Unauthorized"
+      "400":
+        # Deliberately not a 404. `UserResource.obj_get`
+        # (`corehq/apps/api/resources/v0_1.py:36-43`) returns `None` on a miss
+        # or a domain mismatch (`CouchUser.get_by_user_id`,
+        # `corehq/apps/users/models.py:1529-1544`, itself never raises -- it
+        # returns `None`). Tastypie's `get_detail`
+        # (`tastypie/resources.py:1362-1383`) only converts
+        # `ObjectDoesNotExist`/`MultipleObjectsReturned` to a 404, so the bare
+        # `None` is passed straight into `full_dehydrate`. There,
+        # `ApiField.dehydrate` (`tastypie/fields.py:116-136`) does
+        # `getattr(None, attr, None)`, sees the result is `None`, and --
+        # because `id`/`username`/`email` are declared without `null=True`
+        # or a default (`v0_1.py:27-32`) -- raises `tastypie.fields
+        # .ApiFieldError`. `wrap_view` catches `ApiFieldError` *explicitly*,
+        # before the generic `except Exception` -> `_handle_500` path
+        # (`tastypie/resources.py:244-246`), and converts it to a 400 with
+        # the shared `{"error": ...}` shape. See the discrepancy file (this
+        # corrects an earlier, wrong "500" claim).
+        description:
+          The mobile worker does not exist, or belongs to a different project
+          space.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
       "403":
         description:
           The authenticated user lacks the Edit Mobile Workers permission, or is
           not a member of this project space. The response body is empty.
-      # No 404 here -- deliberately omitted. `UserResource.obj_get`
-      # (`corehq/apps/api/resources/v0_1.py:36-43`) returns `None` on a miss
-      # or a domain mismatch (`CouchUser.get_by_user_id`,
-      # `corehq/apps/users/models.py:1529-1544`, itself never raises -- it
-      # returns `None`). Tastypie's `get_detail`
-      # (`tastypie/resources.py:1362-1383`) only converts `ObjectDoesNotExist`
-      # / `MultipleObjectsReturned` to a 404; a bare `None` object is passed
-      # straight into `full_dehydrate`, which calls `getattr(None, ...)` for
-      # every declared field and raises `AttributeError` -- an uncaught
-      # exception, mapped by `_handle_500` to a 500, not a 404. Documenting a
-      # 404 the code cannot produce would mislead clients; see the
-      # discrepancy file.
       "429":
         description:
           The request was rate limited. Back off and retry. The response body is

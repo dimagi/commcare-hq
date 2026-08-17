@@ -68,18 +68,30 @@ Detail:
               $ref: "../components/schemas/user.yaml#/WebUser"
       "401":
         $ref: "../components/responses.yaml#/Unauthorized"
+      "400":
+        # Deliberately not a 404 -- same mechanism as `getMobileWorker`.
+        # `WebUserResource` does not override `UserResource.obj_get`
+        # (`corehq/apps/api/resources/v0_1.py:36-43`), which returns `None`
+        # (never raises) on a miss or a domain mismatch. Tastypie's
+        # `get_detail` only converts `ObjectDoesNotExist`/
+        # `MultipleObjectsReturned` to a 404, so the bare `None` reaches
+        # `full_dehydrate`, where `ApiField.dehydrate`
+        # (`tastypie/fields.py:116-136`) raises `tastypie.fields
+        # .ApiFieldError` for the first non-nullable, no-default field
+        # (`id`, `v0_1.py:27`). `wrap_view` catches `ApiFieldError`
+        # explicitly and converts it to a 400 with the shared `{"error":
+        # ...}` shape, before the generic 500 path is ever reached. See the
+        # discrepancy file (this corrects an earlier, wrong "500" claim).
+        description:
+          The web user does not exist, or belongs to a different project space.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
       "403":
         description:
           The authenticated user lacks the Edit Web Users permission, or is not
           a member of this project space. The response body is empty.
-      # No 404 here -- deliberately omitted, for the same reason as
-      # `getMobileWorker`. `WebUserResource` does not override
-      # `UserResource.obj_get` (`corehq/apps/api/resources/v0_1.py:36-43`),
-      # which returns `None` (never raises) on a miss or a domain mismatch.
-      # Tastypie's `get_detail` only converts `ObjectDoesNotExist` /
-      # `MultipleObjectsReturned` to a 404; a `None` object reaching
-      # `full_dehydrate` raises an uncaught `AttributeError`, mapped to a 500.
-      # See the discrepancy file.
       "429":
         description:
           The request was rate limited. Back off and retry. The response body is
@@ -128,20 +140,30 @@ Detail:
               $ref: "../components/schemas/user.yaml#/WebUser"
       "400":
         description: >-
-          Two distinct shapes exist. `WebUserResourceSpec` validation failures
-          (invalid `role`, `profile`, or location ids) raise
+          Three distinct causes share this status. `WebUserResourceSpec`
+          validation failures (invalid `role`, `profile`, or location ids) raise
           `WebUserValidationException`, caught in `obj_update`
           (`corehq/apps/api/resources/v0_5.py:548-564`) and turned into
           `ImmediateHttpResponse(JsonResponse({"errors": e.message},
           status=400))` -- the `errors` (plural) shape. Field-updater failures
-          instead raise tastypie's own `BadRequest` (`v0_5.py:567-570`), which
-          `wrap_view` converts to the shared `{"error": ...}` shape. The two are
-          genuinely distinct bodies with no overlapping required key, so `oneOf`
-          is used rather than `anyOf`.
+          instead raise tastypie's own `BadRequest` (`v0_5.py:567-570`),
+          converted by `wrap_view` to the shared `{"error": ...}` shape. A
+          missing or wrong-domain `user_id` hits the same
+          `ApiFieldError`-during-`full_dehydrate` path described on
+          `getWebUser`'s 400 -- `patch_detail`
+          (`tastypie/resources.py:1680-1688`) calls `cached_obj_get` (->
+          `obj_get`) *before* `obj_update` ever runs, so this is reached well
+          before `WebUserResource.obj_update`'s own re-fetch logic
+          (`v0_5.py:534-536`) -- and produces the same shared `{"error": ...}`
+          shape as the second cause. Modelled with `anyOf`, not `oneOf`: the
+          shared `Error` schema has no `required` and no `additionalProperties:
+          false`, so an `{"errors": [...]}` body would validate against *both*
+          branches under `oneOf` and fail a strict validator even though it is a
+          genuine response.
         content:
           application/json:
             schema:
-              oneOf:
+              anyOf:
                 - $ref: "../components/schemas/user.yaml#/WebUserErrors"
                 - $ref: "../components/schemas/error.yaml#/Error"
       "401":
@@ -150,13 +172,6 @@ Detail:
         description:
           The authenticated user lacks the Edit Web Users permission, or is not
           a member of this project space. The response body is empty.
-      # No 404 here -- deliberately omitted. `patch_detail`
-      # (`tastypie/resources.py:1680-1688`) calls `cached_obj_get` (->
-      # `obj_get`) *before* `obj_update` ever runs, exactly as `get_detail`
-      # does, so a missing/wrong-domain user hits the same uncaught
-      # `AttributeError` in `full_dehydrate` described on `getWebUser`'s
-      # 404, well before `WebUserResource.obj_update`'s own re-fetch logic
-      # (`v0_5.py:534-536`) is reached. See the discrepancy file.
       "429":
         description:
           The request was rate limited. Back off and retry. The response body is
@@ -321,11 +336,15 @@ Invitation:
           later, when resolving `SQLLocation` objects, and raises
           `ImmediateHttpResponse(JsonResponse({"error": "Could not find location
           ids: ..."}, status=400))` -- the shared singular-`error` shape
-          (`v1_0.py:139-141`).
+          (`v1_0.py:139-141`). Modelled with `anyOf`, not `oneOf`: the shared
+          `Error` schema has no `required` and no `additionalProperties: false`,
+          so an `{"errors": [...]}` body would validate against both branches
+          under `oneOf` and fail a strict validator even though it is a genuine
+          response.
         content:
           application/json:
             schema:
-              oneOf:
+              anyOf:
                 - $ref: "../components/schemas/user.yaml#/WebUserErrors"
                 - $ref: "../components/schemas/error.yaml#/Error"
       "401":
@@ -346,10 +365,11 @@ Identity:
       Root-mounted, unlike every other operation in this spec -- no `{domain}`
       path segment. Registered directly under `/api/`
       (`v0_5.IdentityResource.get_urlpattern('v1')`, included via
-      `user_urlpatterns` at `corehq/apps/api/urls.py:230-235` and mounted at
-      `urls.py:55`, `url(r'^api/', include(user_api_urlpatterns))`). Only
-      requires login, not domain membership or any specific permission
-      (`LoginAuthentication`, `v0_5.py:1157`).
+      `user_urlpatterns` at `corehq/apps/api/urls.py:246` and mounted at root
+      (not the domain-scoped module at `urls.py:55`) by `urls.py:108`, `url(
+      r'^api/', include(user_api_urlpatterns))`). Only requires login, not
+      domain membership or any specific permission (`LoginAuthentication`,
+      `v0_5.py:1157`).
     tags: [Users]
     responses:
       "200":

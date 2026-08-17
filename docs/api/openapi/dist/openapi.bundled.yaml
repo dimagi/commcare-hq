@@ -1888,6 +1888,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MobileWorker'
+        '400':
+          description: The mobile worker does not exist, or belongs to a different project space.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2142,6 +2148,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WebUser'
+        '400':
+          description: The web user does not exist, or belongs to a different project space.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2185,11 +2197,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/WebUser'
         '400':
-          description: 'Two distinct shapes exist. `WebUserResourceSpec` validation failures (invalid `role`, `profile`, or location ids) raise `WebUserValidationException`, caught in `obj_update` (`corehq/apps/api/resources/v0_5.py:548-564`) and turned into `ImmediateHttpResponse(JsonResponse({"errors": e.message}, status=400))` -- the `errors` (plural) shape. Field-updater failures instead raise tastypie''s own `BadRequest` (`v0_5.py:567-570`), which `wrap_view` converts to the shared `{"error": ...}` shape. The two are genuinely distinct bodies with no overlapping required key, so `oneOf` is used rather than `anyOf`.'
+          description: 'Three distinct causes share this status. `WebUserResourceSpec` validation failures (invalid `role`, `profile`, or location ids) raise `WebUserValidationException`, caught in `obj_update` (`corehq/apps/api/resources/v0_5.py:548-564`) and turned into `ImmediateHttpResponse(JsonResponse({"errors": e.message}, status=400))` -- the `errors` (plural) shape. Field-updater failures instead raise tastypie''s own `BadRequest` (`v0_5.py:567-570`), converted by `wrap_view` to the shared `{"error": ...}` shape. A missing or wrong-domain `user_id` hits the same `ApiFieldError`-during-`full_dehydrate` path described on `getWebUser`''s 400 -- `patch_detail` (`tastypie/resources.py:1680-1688`) calls `cached_obj_get` (-> `obj_get`) *before* `obj_update` ever runs, so this is reached well before `WebUserResource.obj_update`''s own re-fetch logic (`v0_5.py:534-536`) -- and produces the same shared `{"error": ...}` shape as the second cause. Modelled with `anyOf`, not `oneOf`: the shared `Error` schema has no `required` and no `additionalProperties: false`, so an `{"errors": [...]}` body would validate against *both* branches under `oneOf` and fail a strict validator even though it is a genuine response.'
           content:
             application/json:
               schema:
-                oneOf:
+                anyOf:
                   - $ref: '#/components/schemas/WebUserErrors'
                   - $ref: '#/components/schemas/Error'
         '401':
@@ -2312,11 +2324,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Invitation'
         '400':
-          description: 'Two distinct shapes exist. `WebUserResourceSpec` validation failures (invalid `role`, `profile`, or an unrecognized `primary_location_id`/`assigned_location_ids` entry that `WebUserResourceSpec` itself rejects) raise `WebUserValidationException` -> `{"errors": [...]}` (`corehq/apps/api/resources/v1_0.py:107-125`). A *recognized-looking but nonexistent* location id that passes that check is instead caught later, when resolving `SQLLocation` objects, and raises `ImmediateHttpResponse(JsonResponse({"error": "Could not find location ids: ..."}, status=400))` -- the shared singular-`error` shape (`v1_0.py:139-141`).'
+          description: 'Two distinct shapes exist. `WebUserResourceSpec` validation failures (invalid `role`, `profile`, or an unrecognized `primary_location_id`/`assigned_location_ids` entry that `WebUserResourceSpec` itself rejects) raise `WebUserValidationException` -> `{"errors": [...]}` (`corehq/apps/api/resources/v1_0.py:107-125`). A *recognized-looking but nonexistent* location id that passes that check is instead caught later, when resolving `SQLLocation` objects, and raises `ImmediateHttpResponse(JsonResponse({"error": "Could not find location ids: ..."}, status=400))` -- the shared singular-`error` shape (`v1_0.py:139-141`). Modelled with `anyOf`, not `oneOf`: the shared `Error` schema has no `required` and no `additionalProperties: false`, so an `{"errors": [...]}` body would validate against both branches under `oneOf` and fail a strict validator even though it is a genuine response.'
           content:
             application/json:
               schema:
-                oneOf:
+                anyOf:
                   - $ref: '#/components/schemas/WebUserErrors'
                   - $ref: '#/components/schemas/Error'
         '401':
@@ -2329,7 +2341,7 @@ paths:
     get:
       operationId: getIdentity
       summary: Look up the authenticated web user's own identity
-      description: Root-mounted, unlike every other operation in this spec -- no `{domain}` path segment. Registered directly under `/api/` (`v0_5.IdentityResource.get_urlpattern('v1')`, included via `user_urlpatterns` at `corehq/apps/api/urls.py:230-235` and mounted at `urls.py:55`, `url(r'^api/', include(user_api_urlpatterns))`). Only requires login, not domain membership or any specific permission (`LoginAuthentication`, `v0_5.py:1157`).
+      description: Root-mounted, unlike every other operation in this spec -- no `{domain}` path segment. Registered directly under `/api/` (`v0_5.IdentityResource.get_urlpattern('v1')`, included via `user_urlpatterns` at `corehq/apps/api/urls.py:246` and mounted at root (not the domain-scoped module at `urls.py:55`) by `urls.py:108`, `url( r'^api/', include(user_api_urlpatterns))`). Only requires login, not domain membership or any specific permission (`LoginAuthentication`, `v0_5.py:1157`).
       tags:
         - Users
       responses:
