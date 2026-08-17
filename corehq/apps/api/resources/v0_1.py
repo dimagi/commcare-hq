@@ -33,8 +33,7 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
     username = fields.CharField(
         attribute='username',
         unique=True,
-        help_text='User name of user, including domain, for example '
-                  '"jdoe@example.commcarehq.org".',
+        help_text='User name of the user.',
     )
     first_name = fields.CharField(
         attribute='first_name',
@@ -97,6 +96,12 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
 
 
 class CommCareUserResource(UserResource):
+    username = fields.CharField(
+        attribute='username',
+        unique=True,
+        help_text='User name of user, including domain, for example '
+                  '"jdoe@example.commcarehq.org".',
+    )
     groups = fields.ListField(
         attribute='get_group_ids',
         help_text='List of all group IDs belonging to the user.',
@@ -174,6 +179,13 @@ class CommCareUserResource(UserResource):
 
 
 class WebUserResource(UserResource):
+    username = fields.CharField(
+        attribute='username',
+        unique=True,
+        help_text='User name of user, including domain, for example '
+                  '"jdoe@example.com". Web user usernames are plain '
+                  'email addresses, unlike mobile worker usernames.',
+    )
     role = fields.CharField()
     is_admin = fields.BooleanField()
     permissions = fields.DictField()

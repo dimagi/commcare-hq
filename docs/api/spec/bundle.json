@@ -5656,7 +5656,7 @@
                             "type": "string"
                           },
                           "groups": {
-                            "description": "Identifiers of the groups the user belongs to.",
+                            "description": "List of all group IDs belonging to the user.",
                             "items": {
                               "type": "string"
                             },
@@ -5673,14 +5673,14 @@
                             "type": "string"
                           },
                           "locations": {
-                            "description": "Identifiers of the locations the user is assigned to.",
+                            "description": "A list of location IDs that the user is assigned to.",
                             "items": {
                               "type": "string"
                             },
                             "type": "array"
                           },
                           "phone_numbers": {
-                            "description": "All phone numbers registered for the user.",
+                            "description": "List of all phone numbers of the user.",
                             "items": {
                               "type": "string"
                             },
@@ -5709,7 +5709,7 @@
                             "additionalProperties": {
                               "type": "string"
                             },
-                            "description": "Custom user data fields defined for the project space.",
+                            "description": "Any additional custom data associated with the user.",
                             "type": "object"
                           },
                           "username": {
@@ -5773,7 +5773,7 @@
                     "type": "string"
                   },
                   "groups": {
-                    "description": "Identifiers of the groups the user belongs to.",
+                    "description": "List of all group IDs belonging to the user.",
                     "items": {
                       "type": "string"
                     },
@@ -5785,14 +5785,14 @@
                     "type": "string"
                   },
                   "locations": {
-                    "description": "Identifiers of the locations the user is assigned to.",
+                    "description": "A list of location IDs that the user is assigned to.",
                     "items": {
                       "type": "string"
                     },
                     "type": "array"
                   },
                   "phone_numbers": {
-                    "description": "All phone numbers registered for the user.",
+                    "description": "List of all phone numbers of the user.",
                     "items": {
                       "type": "string"
                     },
@@ -5816,7 +5816,7 @@
                     "additionalProperties": {
                       "type": "string"
                     },
-                    "description": "Custom user data fields defined for the project space.",
+                    "description": "Any additional custom data associated with the user.",
                     "type": "object"
                   },
                   "username": {
@@ -5896,7 +5896,7 @@
                             "type": "string"
                           },
                           "groups": {
-                            "description": "Identifiers of the groups the user belongs to.",
+                            "description": "List of all group IDs belonging to the user.",
                             "items": {
                               "type": "string"
                             },
@@ -5913,14 +5913,14 @@
                             "type": "string"
                           },
                           "locations": {
-                            "description": "Identifiers of the locations the user is assigned to.",
+                            "description": "A list of location IDs that the user is assigned to.",
                             "items": {
                               "type": "string"
                             },
                             "type": "array"
                           },
                           "phone_numbers": {
-                            "description": "All phone numbers registered for the user.",
+                            "description": "List of all phone numbers of the user.",
                             "items": {
                               "type": "string"
                             },
@@ -5949,7 +5949,7 @@
                             "additionalProperties": {
                               "type": "string"
                             },
-                            "description": "Custom user data fields defined for the project space.",
+                            "description": "Any additional custom data associated with the user.",
                             "type": "object"
                           },
                           "username": {
@@ -6005,7 +6005,7 @@
                       "type": "string"
                     },
                     "groups": {
-                      "description": "Identifiers of the groups the user belongs to.",
+                      "description": "List of all group IDs belonging to the user.",
                       "items": {
                         "type": "string"
                       },
@@ -6022,14 +6022,14 @@
                       "type": "string"
                     },
                     "locations": {
-                      "description": "Identifiers of the locations the user is assigned to.",
+                      "description": "A list of location IDs that the user is assigned to.",
                       "items": {
                         "type": "string"
                       },
                       "type": "array"
                     },
                     "phone_numbers": {
-                      "description": "All phone numbers registered for the user.",
+                      "description": "List of all phone numbers of the user.",
                       "items": {
                         "type": "string"
                       },
@@ -6058,7 +6058,7 @@
                       "additionalProperties": {
                         "type": "string"
                       },
-                      "description": "Custom user data fields defined for the project space.",
+                      "description": "Any additional custom data associated with the user.",
                       "type": "object"
                     },
                     "username": {
@@ -6107,7 +6107,7 @@
                       "type": "string"
                     },
                     "groups": {
-                      "description": "Identifiers of the groups the user belongs to.",
+                      "description": "List of all group IDs belonging to the user.",
                       "items": {
                         "type": "string"
                       },
@@ -6124,14 +6124,14 @@
                       "type": "string"
                     },
                     "locations": {
-                      "description": "Identifiers of the locations the user is assigned to.",
+                      "description": "A list of location IDs that the user is assigned to.",
                       "items": {
                         "type": "string"
                       },
                       "type": "array"
                     },
                     "phone_numbers": {
-                      "description": "All phone numbers registered for the user.",
+                      "description": "List of all phone numbers of the user.",
                       "items": {
                         "type": "string"
                       },
@@ -6160,7 +6160,7 @@
                       "additionalProperties": {
                         "type": "string"
                       },
-                      "description": "Custom user data fields defined for the project space.",
+                      "description": "Any additional custom data associated with the user.",
                       "type": "object"
                     },
                     "username": {
@@ -6228,7 +6228,7 @@
                     "type": "string"
                   },
                   "groups": {
-                    "description": "Identifiers of the groups the user belongs to.",
+                    "description": "List of all group IDs belonging to the user.",
                     "items": {
                       "type": "string"
                     },
@@ -6240,14 +6240,14 @@
                     "type": "string"
                   },
                   "locations": {
-                    "description": "Identifiers of the locations the user is assigned to.",
+                    "description": "A list of location IDs that the user is assigned to.",
                     "items": {
                       "type": "string"
                     },
                     "type": "array"
                   },
                   "phone_numbers": {
-                    "description": "All phone numbers registered for the user.",
+                    "description": "List of all phone numbers of the user.",
                     "items": {
                       "type": "string"
                     },
@@ -6271,7 +6271,7 @@
                     "additionalProperties": {
                       "type": "string"
                     },
-                    "description": "Custom user data fields defined for the project space.",
+                    "description": "Any additional custom data associated with the user.",
                     "type": "object"
                   },
                   "username": {
@@ -6311,7 +6311,7 @@
                       "type": "string"
                     },
                     "groups": {
-                      "description": "Identifiers of the groups the user belongs to.",
+                      "description": "List of all group IDs belonging to the user.",
                       "items": {
                         "type": "string"
                       },
@@ -6328,14 +6328,14 @@
                       "type": "string"
                     },
                     "locations": {
-                      "description": "Identifiers of the locations the user is assigned to.",
+                      "description": "A list of location IDs that the user is assigned to.",
                       "items": {
                         "type": "string"
                       },
                       "type": "array"
                     },
                     "phone_numbers": {
-                      "description": "All phone numbers registered for the user.",
+                      "description": "List of all phone numbers of the user.",
                       "items": {
                         "type": "string"
                       },
@@ -6364,7 +6364,7 @@
                       "additionalProperties": {
                         "type": "string"
                       },
-                      "description": "Custom user data fields defined for the project space.",
+                      "description": "Any additional custom data associated with the user.",
                       "type": "object"
                     },
                     "username": {
@@ -6514,7 +6514,7 @@
                             "type": "object"
                           },
                           "username": {
-                            "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
+                            "description": "User name of user, including domain, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
                             "type": "string"
                           }
                         },
@@ -6634,7 +6634,7 @@
                       "type": "object"
                     },
                     "username": {
-                      "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
+                      "description": "User name of user, including domain, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
                       "type": "string"
                     }
                   },
@@ -6746,7 +6746,7 @@
                     "type": "object"
                   },
                   "username": {
-                    "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
+                    "description": "User name of user, including domain, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
                     "type": "string"
                   }
                 },
@@ -6839,7 +6839,7 @@
                       "type": "object"
                     },
                     "username": {
-                      "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
+                      "description": "User name of user, including domain, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
                       "type": "string"
                     }
                   },

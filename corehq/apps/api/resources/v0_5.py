@@ -269,22 +269,15 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         field_schemas = {
             'phone_numbers': {
                 'items': {'type': 'string'},
-                'description': 'All phone numbers registered for the user.',
             },
             'groups': {
                 'items': {'type': 'string'},
-                'description': 'Identifiers of the groups the user '
-                               'belongs to.',
             },
             'locations': {
                 'items': {'type': 'string'},
-                'description': 'Identifiers of the locations the user is '
-                               'assigned to.',
             },
             'user_data': {
                 'additionalProperties': {'type': 'string'},
-                'description': 'Custom user data fields defined for the '
-                               'project space.',
             },
             'resource_uri': {
                 'description': 'URI of this record in the API.',
