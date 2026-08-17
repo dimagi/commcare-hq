@@ -214,10 +214,22 @@ CaseV2BulkResult:
         One entry per requested id, in the order the ids were supplied. When
         both `case_ids` and `external_ids` are supplied, the results for
         `case_ids` come first. An id that matched no case in this project space
-        yields a stub object instead of a case -- see `CaseV2MissingStub`.
+        yields a stub object instead of a case -- see `CaseV2MissingStub`. Tell
+        the two apart by the presence of `error`, which a real case never
+        carries at the top level.
       items:
+        # A real discriminated union, keyed on `error`, so `oneOf` is right --
+        # but `CaseV2` declares no `required` (a `fields=` filter can reduce a
+        # case to a single key, or to `{}`), so a stub would otherwise match
+        # BOTH branches and fail `oneOf`'s exactly-one rule. The `not` makes
+        # the case branch reject stubs; since `CaseV2MissingStub` requires
+        # `error`, this is exactly the discriminator the descriptions above
+        # and below tell clients to use.
         oneOf:
-          - $ref: "#/CaseV2"
+          - allOf:
+              - $ref: "#/CaseV2"
+              - not:
+                  $ref: "#/CaseV2MissingStub"
           - $ref: "#/CaseV2MissingStub"
     matching_records:
       type: integer

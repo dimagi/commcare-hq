@@ -270,6 +270,8 @@ paths:
         **Unrecognised parameters are rejected**, unlike case/v1 which silently turns them into raw Elasticsearch term filters: any name that is not one of those below fails the request with a 400 `"'<name>' is not a valid parameter."` (`_get_filter`, `corehq/apps/hqcase/api/get_list.py:154-165`).
 
         **Repeating a parameter ORs its values.** `?owner_id=a&owner_id=b` returns cases owned by either (`corehq/apps/hqcase/api/get_list.py:135-143`). Different parameters are ANDed.
+
+        **Four parameters below are name templates, not literal names.** OpenAPI cannot express "any parameter whose name begins with `properties.`", so `properties.<property_name>`, `indices.<index_name>`, `fields.<parent_field>` and `exclude.<parent_field>` are listed with an angle-bracket placeholder that you must replace with a real name before sending. Send `?properties.state=bihar`, not `?properties.<property_name>=bihar`; likewise `?indices.parent=<case_id>`, `?fields.properties=edd,age` and `?exclude.properties=husband_name`. You may send as many of each family as you need, and each is parsed by splitting the parameter name on `.` (`corehq/apps/hqcase/api/get_list.py: 161-163`, `corehq/apps/hqcase/api/field_filters.py:37-43`). Every other parameter below is a literal name.
       tags:
         - Data
       parameters:
@@ -655,7 +657,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
+                anyOf:
                   - $ref: '#/components/schemas/Error'
                   - $ref: '#/components/schemas/CaseV2SubmissionError'
         '401':
@@ -746,7 +748,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
+                anyOf:
                   - $ref: '#/components/schemas/Error'
                   - $ref: '#/components/schemas/CaseV2SubmissionError'
         '401':
@@ -823,7 +825,10 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: '#/components/schemas/CaseV2'
+                  - allOf:
+                      - $ref: '#/components/schemas/CaseV2'
+                      - not:
+                          $ref: '#/components/schemas/CaseV2BulkResult'
                   - $ref: '#/components/schemas/CaseV2BulkResult'
         '400':
           description: '`fields` and `exclude` were both supplied, or more than 5000 ids were listed in the path segment.'
@@ -922,7 +927,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
+                anyOf:
                   - $ref: '#/components/schemas/Error'
                   - $ref: '#/components/schemas/CaseV2SubmissionError'
         '401':
@@ -1090,7 +1095,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
+                anyOf:
                   - $ref: '#/components/schemas/Error'
                   - $ref: '#/components/schemas/CaseV2SubmissionError'
         '401':
@@ -1991,10 +1996,13 @@ components:
       properties:
         cases:
           type: array
-          description: One entry per requested id, in the order the ids were supplied. When both `case_ids` and `external_ids` are supplied, the results for `case_ids` come first. An id that matched no case in this project space yields a stub object instead of a case -- see `CaseV2MissingStub`.
+          description: One entry per requested id, in the order the ids were supplied. When both `case_ids` and `external_ids` are supplied, the results for `case_ids` come first. An id that matched no case in this project space yields a stub object instead of a case -- see `CaseV2MissingStub`. Tell the two apart by the presence of `error`, which a real case never carries at the top level.
           items:
             oneOf:
-              - $ref: '#/components/schemas/CaseV2'
+              - allOf:
+                  - $ref: '#/components/schemas/CaseV2'
+                  - not:
+                      $ref: '#/components/schemas/CaseV2MissingStub'
               - $ref: '#/components/schemas/CaseV2MissingStub'
         matching_records:
           type: integer

@@ -48,6 +48,20 @@ List:
       **Repeating a parameter ORs its values.** `?owner_id=a&owner_id=b` returns
       cases owned by either (`corehq/apps/hqcase/api/get_list.py:135-143`).
       Different parameters are ANDed.
+
+
+      **Four parameters below are name templates, not literal names.** OpenAPI
+      cannot express "any parameter whose name begins with `properties.`", so
+      `properties.<property_name>`, `indices.<index_name>`,
+      `fields.<parent_field>` and `exclude.<parent_field>` are listed with an
+      angle-bracket placeholder that you must replace with a real name before
+      sending. Send `?properties.state=bihar`, not
+      `?properties.<property_name>=bihar`; likewise `?indices.parent=<case_id>`,
+      `?fields.properties=edd,age` and `?exclude.properties=husband_name`. You
+      may send as many of each family as you need, and each is parsed by
+      splitting the parameter name on `.` (`corehq/apps/hqcase/api/get_list.py:
+      161-163`, `corehq/apps/hqcase/api/field_filters.py:37-43`). Every other
+      parameter below is a literal name.
     tags: [Data]
     parameters:
       - name: limit
@@ -560,7 +574,12 @@ List:
         content:
           application/json:
             schema:
-              oneOf:
+              # `anyOf`, not `oneOf`: these are not alternative contracts but
+              # one contract with an optional extra field. The body always
+              # carries `error`; a failure raised during form processing adds
+              # `form_id`. That body legitimately satisfies both branches, so
+              # `oneOf` would reject it.
+              anyOf:
                 - $ref: "../components/schemas/error.yaml#/Error"
                 - $ref: "../components/schemas/case-v2.yaml#/CaseV2SubmissionError"
       "401":
@@ -683,7 +702,12 @@ List:
         content:
           application/json:
             schema:
-              oneOf:
+              # `anyOf`, not `oneOf`: these are not alternative contracts but
+              # one contract with an optional extra field. The body always
+              # carries `error`; a failure raised during form processing adds
+              # `form_id`. That body legitimately satisfies both branches, so
+              # `oneOf` would reject it.
+              anyOf:
                 - $ref: "../components/schemas/error.yaml#/Error"
                 - $ref: "../components/schemas/case-v2.yaml#/CaseV2SubmissionError"
       "401":
@@ -802,8 +826,17 @@ Detail:
         content:
           application/json:
             schema:
+              # A real discriminated union -- the request decides which shape
+              # comes back -- so `oneOf` is right. The `not` is load-bearing:
+              # `CaseV2` declares no `required` (a `fields=` filter can reduce
+              # a case to one key, or to `{}`), so without it the envelope
+              # would match both branches and fail `oneOf`'s exactly-one rule.
+              # Reading: "a case, and not the multi-case envelope".
               oneOf:
-                - $ref: "../components/schemas/case-v2.yaml#/CaseV2"
+                - allOf:
+                    - $ref: "../components/schemas/case-v2.yaml#/CaseV2"
+                    - not:
+                        $ref: "../components/schemas/case-v2.yaml#/CaseV2BulkResult"
                 - $ref: "../components/schemas/case-v2.yaml#/CaseV2BulkResult"
       "400":
         description: >-
@@ -939,7 +972,12 @@ Detail:
         content:
           application/json:
             schema:
-              oneOf:
+              # `anyOf`, not `oneOf`: these are not alternative contracts but
+              # one contract with an optional extra field. The body always
+              # carries `error`; a failure raised during form processing adds
+              # `form_id`. That body legitimately satisfies both branches, so
+              # `oneOf` would reject it.
+              anyOf:
                 - $ref: "../components/schemas/error.yaml#/Error"
                 - $ref: "../components/schemas/case-v2.yaml#/CaseV2SubmissionError"
       "401":
@@ -1179,7 +1217,12 @@ DetailByExternalId:
         content:
           application/json:
             schema:
-              oneOf:
+              # `anyOf`, not `oneOf`: these are not alternative contracts but
+              # one contract with an optional extra field. The body always
+              # carries `error`; a failure raised during form processing adds
+              # `form_id`. That body legitimately satisfies both branches, so
+              # `oneOf` would reject it.
+              anyOf:
                 - $ref: "../components/schemas/error.yaml#/Error"
                 - $ref: "../components/schemas/case-v2.yaml#/CaseV2SubmissionError"
       "401":
