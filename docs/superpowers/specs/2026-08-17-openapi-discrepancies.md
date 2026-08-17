@@ -129,3 +129,140 @@ triage. Nothing here has been changed in the reST docs.
     detail operation's real 404 shape rather than reach for this ref by
     default.
 - *(append further findings here as they are confirmed)*
+
+## case/v1 (`cases-v1.rst`)
+
+- **The "Output Values" table for the list endpoint documents the wrong
+  shape for JSON responses -- it actually describes the custom XML
+  serialization.** `cases-v1.rst:108-146` lists `case_id`, `username`,
+  `user_id`, `owner_id`, `case_name`, `external_id`, `case_type`,
+  `date_opened`, `date_modified`, `closed`, `date_closed` as if all were
+  top-level response fields. `v0_3.CommCareCaseResource` and
+  `v0_4.CommCareCaseResource` (`corehq/apps/api/resources/v0_3.py:19-41`,
+  `corehq/apps/api/resources/v0_4.py:186-218`) are plain `tastypie.
+  resources.Resource` subclasses, so (as with the group resource) only
+  explicitly declared class attributes are ever serialized. Of that list,
+  only `case_id`/`id`, `user_id`, `date_modified`, `closed`, and
+  `date_closed` are declared as top-level fields. `owner_id`, `case_name`,
+  `case_type`, `date_opened`, and `external_id` are never top-level --
+  they only exist nested inside the `properties` dict, produced by
+  `ESCase.get_properties_in_api_format` (`corehq/apps/api/models.py:
+  201-212`), which the JSON sample two sections later
+  (`cases-v1.rst:179-204`) actually shows correctly. `username` is not
+  declared as a field anywhere on either class and never appears in JSON
+  output at all -- it only exists in the custom XML output built by
+  `CaseToXMLMixin.to_xml` (`corehq/form_processor/models/mixin.py:19-29`),
+  which is what the Output Values table is really describing (it matches
+  the "Sample XML Output" at `cases-v1.rst:158-171`, not the "Sample JSON
+  Output" a few lines later). The spec's `Case` schema follows the real
+  JSON shape: `owner_id`/`case_name`/`case_type`/`date_opened`/
+  `external_id` are documented as members of `properties`, and `username`
+  is omitted entirely.
+- **The sample JSON output includes a `version` field the case resource
+  never emits.** `cases-v1.rst:181-201` shows `"version": "1.0"` at the
+  top level of a case object. Neither `v0_3.CommCareCaseResource` nor
+  `v0_4.CommCareCaseResource` declares a `version` field -- the only
+  `version` field in `corehq/apps/api/resources/v0_4.py` belongs to
+  `XFormInstanceResource` (line 76), an unrelated resource. The spec's
+  `Case` schema has no `version` property.
+- **`indexed_on`, `opened_by`, and `closed_by` are real top-level fields
+  the docs never mention.** Declared at `corehq/apps/api/resources/
+  v0_4.py:213-218` (`indexed_on` is also the field the docs recommend for
+  pagination, via `indexed_on_start`/`indexed_on_end` -- so it is doubly
+  strange it is absent from the Output Values table). The spec's `Case`
+  schema includes all three, with a note that they are undocumented.
+- **The `properties=all`/`indices=all` "Proposed" flags do nothing --
+  `properties` and `indices` are always present, unconditionally.**
+  `cases-v1.rst:244-253` lists `properties` and `indices` as detail-
+  endpoint query parameters with values `all`/`none` and status
+  "Proposed" (not "Supported", unlike the adjacent `xforms_by_name__full`
+  etc. rows). `v0_3.CommCareCaseResource` declares `properties =
+  fields.DictField()` and `indices = fields.DictField()`
+  (`corehq/apps/api/resources/v0_3.py:33,38`) with no `UseIfRequested`
+  wrapper and no code anywhere that reads a `properties` or `indices` GET
+  parameter -- contrast the four `__full` fields on
+  `v0_4.CommCareCaseResource` (lines 187-209), which really are wrapped in
+  `UseIfRequested` and really do gate on a query parameter
+  (`corehq/apps/api/fields.py:35-48`). Both fields are dehydrated on every
+  request regardless of what (if anything) is passed. The spec does not
+  declare `properties`/`indices` as query parameters on either operation;
+  `Case`'s `properties`/`indices` properties are documented as always
+  present.
+- **The four `__full` flags (`xforms_by_name__full`, `xforms_by_xmlns__full`,
+  `child_cases__full`, `parent_cases__full`) work identically on the list
+  endpoint, though the docs only mention them under "Case Data Details."**
+  `cases-v1.rst`'s list-endpoint Input Parameters table
+  (`cases-v1.rst:29-103`) does not mention any of the four; they appear
+  only in the detail endpoint's table (`cases-v1.rst:254-273`). But the
+  fields are declared directly on `v0_4.CommCareCaseResource`
+  (`corehq/apps/api/resources/v0_4.py:187-209`), and `DomainSpecificResourceMixin
+  .get_list` (`corehq/apps/api/resources/__init__.py:258-285`) calls
+  `full_dehydrate` on every object in a list result exactly as
+  `get_detail` does for a single object -- there is no code path that
+  treats list-context dehydration differently from detail-context
+  dehydration. A request to the list endpoint with, say,
+  `child_cases__full=true` includes `child_cases` on every returned case,
+  identically to the detail endpoint. The spec declares all four
+  parameters on both `listCases` and `getCase`.
+- **The list endpoint's `type` and `name` query parameters are not the
+  parameter names the code's non-generic filter path expects, but they
+  work anyway through a different path.** `case_param_consumers`
+  (`corehq/apps/api/es.py:356-367`) declares `TermParam('case_type',
+  'type', analyzed=True)` and `TermParam('case_name', 'name',
+  analyzed=True)` -- meaning the *specific* consumers only pop
+  `case_type`/`case_name` from the query string, not the documented
+  `type`/`name` (`cases-v1.rst:44-47,80-83`). However, `es_query_from_get_
+  params`'s fallback loop (`corehq/apps/api/es.py:441-445`) filters any
+  unconsumed query parameter as a lowercased term match against the
+  Elasticsearch field of the same name -- and the underlying field for
+  case type/name is itself named `type`/`name` (the second argument to
+  each `TermParam` above). So passing the documented `type=...` or
+  `name=...` produces the same filter, by a different code path, as the
+  undocumented `case_type=.../case_name=...`. Not a behavioral
+  discrepancy, but worth recording since it means two different parameter
+  names filter the same field with no code path officially "owning"
+  `type`/`name`. The spec documents `type` and `name` as the code
+  actually behaves (functioning, via the fallback path); it does not
+  document the undocumented `case_type`/`case_name` alternate names.
+- **The list endpoint's Input Parameters table lists `order_by`'s *values*
+  (`indexed_on`, `server_date_modified`) as if they were separate query
+  parameters.** `cases-v1.rst:96-103` has two rows named `indexed_on` and
+  `server_date_modified`, each with an example of `order_by=indexed_on`/
+  `order_by=server_date_modified` -- the same pattern the plan's brief
+  warned about from the forms API. `order_by` is handled by
+  `SimpleSortableResourceMixin.apply_sorting`
+  (`corehq/apps/api/resources/__init__.py:224-253`), which accepts any
+  field in `self._meta.ordering`; `v0_4.CommCareCaseResource.Meta.ordering`
+  (`corehq/apps/api/resources/v0_4.py:230`) is
+  `['server_date_modified', 'date_modified', 'indexed_on']` -- three
+  values, not two, and each may be prefixed with `-` for descending order
+  (lines 234-239). `date_modified` is a valid `order_by` value in code but
+  is absent from the docs' two rows entirely. The spec declares a single
+  `order_by` query parameter (not two fake ones) describing all three
+  valid values and the `-` prefix.
+- **`getCase`'s 404 has an empty body, like `getGroup`'s.** `v0_4.
+  CommCareCaseResource.obj_get` (`corehq/apps/api/resources/v0_4.py:
+  220-225`) fetches the case via `ESView.get_document`
+  (`corehq/apps/api/es.py:43-52`), which raises Django's
+  `ObjectDoesNotExist` on a lookup miss or a domain mismatch. Tastypie's
+  `get_detail` (`tastypie/resources.py:1362-1383`) catches
+  `ObjectDoesNotExist` directly and returns a bare `http.HttpNotFound()`
+  with no body, never reaching the serializer. The spec's `getCase` `404`
+  documents an empty body rather than pointing at the shared `NotFound`
+  ref, matching the note already on that ref about verifying per-resource.
+- **`listCases` can return the shared `{"error": ...}` `400` shape from
+  several real code paths, undocumented in the reST page.** `v0_3.
+  CommCareCaseResource.obj_get_list` (`corehq/apps/api/resources/v0_3.py:
+  59-63`) catches `Http400` (raised for a malformed `_search` payload or
+  an unparsable date in a `*_start`/`*_end` parameter, via
+  `DateRangeParams.consume_params` -> `validate_date`,
+  `corehq/apps/api/es.py:277-308`) and re-raises tastypie's `BadRequest`;
+  an invalid `order_by` field raises `InvalidSortError`
+  (`SimpleSortableResourceMixin.apply_sorting`,
+  `corehq/apps/api/resources/__init__.py:242-246`), itself a `BadRequest`
+  subclass (`tastypie/exceptions.py:94`). Tastypie's `wrap_view`
+  (`tastypie/resources.py:244-246`) converts any `BadRequest` to the
+  standard `{"error": ...}` 400 shape -- the same shape the shared
+  `BadRequest` response already documents, so no resource-specific schema
+  is needed. The spec's `listCases` declares a `400` using the shared
+  `BadRequest` ref; `getCase` has no such code path and declares no `400`.

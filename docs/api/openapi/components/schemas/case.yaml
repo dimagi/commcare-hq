@@ -1,0 +1,159 @@
+Case:
+  type: object
+  description: >-
+    A single case, as returned by the case data API (JSON format). Most of a
+    case's identifying and business data lives in the nested `properties` object
+    rather than at the top level -- see that property's description. Fields
+    declared by `v0_3.CommCareCaseResource`
+    (`corehq/apps/api/resources/v0_3.py:19-76`) and `v0_4.CommCareCaseResource`
+    (`corehq/apps/api/resources/v0_4.py:186-233`).
+  properties:
+    id:
+      type: string
+      description:
+        Case UUID. Identical to `case_id` -- both are aliases of the same
+        attribute.
+      example: 0X9OCW3JMV98EYOVN32SGN4II
+    case_id:
+      type: string
+      description: Case UUID.
+      example: 0X9OCW3JMV98EYOVN32SGN4II
+    domain:
+      type: string
+      description: Project space the case belongs to.
+      example: demo
+    user_id:
+      type: string
+      nullable: true
+      description: UUID of the user that last modified the case.
+      example: 3c5a623af057e23a32ae4000cf291339
+    date_modified:
+      type: string
+      format: date-time
+      description: >-
+        Date and time the case was last modified, from the submitting phone's
+        clock. Naive -- no timezone offset is applied or assumed.
+      example: "2011-12-13T15:09:47"
+    closed:
+      type: boolean
+      description: Whether the case is closed.
+      example: false
+    date_closed:
+      type: string
+      format: date-time
+      nullable: true
+      description:
+        Date and time the case was closed, naive (no timezone offset).
+      example: "2011-12-20T15:09:47"
+    server_date_modified:
+      type: string
+      format: date-time
+      description: >-
+        Date and time the case was last modified, from the server's clock. Naive
+        (no timezone offset).
+      example: "2012-04-05T23:56:41"
+    server_date_opened:
+      type: string
+      format: date-time
+      nullable: true
+      description: >-
+        Date and time the case was opened, from the server's clock. Naive (no
+        timezone offset).
+      example: "2012-04-05T23:56:41"
+    indexed_on:
+      type: string
+      format: date-time
+      description: >-
+        Date and time this revision of the case was indexed into Elasticsearch.
+        This is the recommended field to page through results on (see
+        `indexed_on_start`/`indexed_on_end` on the list operation) -- it handles
+        edge cases `server_date_modified` does not. Naive (no timezone offset).
+      example: "2012-04-05T23:56:41"
+    opened_by:
+      type: string
+      nullable: true
+      description: >-
+        UUID of the user that opened the case. Undocumented in `cases-v1.rst`;
+        see the discrepancy file.
+      example: 3c5a623af057e23a32ae4000cf291339
+    closed_by:
+      type: string
+      nullable: true
+      description: >-
+        UUID of the user that closed the case. Undocumented in `cases-v1.rst`;
+        see the discrepancy file.
+      example: 3c5a623af057e23a32ae4000cf291339
+    xform_ids:
+      type: array
+      items:
+        type: string
+      description: UUIDs of forms that have touched this case.
+      example:
+        - 3HQEXR2S0GIRFY2GF40HAR7ZE
+    properties:
+      type: object
+      additionalProperties: true
+      description: >-
+        Case property values -- arbitrary, application-defined case data. Always
+        includes the special properties `case_name`, `case_type`, `date_opened`,
+        `external_id`, and `owner_id` (`corehq/apps/api/models.py:201-212`),
+        plus every dynamic case property the application defines. Because
+        dynamic properties are application-defined, their names and types cannot
+        be enumerated here.
+      example:
+        case_name: ryan
+        case_type: programmer
+        date_opened: "2012-03-13T18:21:52"
+        external_id: "45WKYXQRFFU3AT4Y022EX7HF2"
+        owner_id: null
+        role: artisan
+    indices:
+      type: object
+      additionalProperties:
+        type: object
+        properties:
+          case_type:
+            type: string
+          case_id:
+            type: string
+      description: >-
+        References to other cases, keyed by index identifier. An empty object
+        when the case has no indices.
+      example: {}
+    xforms_by_name:
+      type: object
+      additionalProperties: true
+      description: >-
+        Forms that have touched this case, keyed by form name, each value a list
+        of full form representations. Included only when the
+        `xforms_by_name__full=true` query parameter is passed.
+    xforms_by_xmlns:
+      type: object
+      additionalProperties: true
+      description: >-
+        Forms that have touched this case, keyed by XMLNS, each value a list of
+        full form representations. Included only when the
+        `xforms_by_xmlns__full=true` query parameter is passed.
+    child_cases:
+      type: object
+      additionalProperties: true
+      description: >-
+        Child cases, keyed by case id, each value a full case representation.
+        Included only when the `child_cases__full=true` query parameter is
+        passed.
+    parent_cases:
+      type: object
+      additionalProperties: true
+      description: >-
+        Parent cases, keyed by case id, each value a full case representation.
+        Included only when the `parent_cases__full=true` query parameter is
+        passed.
+CaseList:
+  allOf:
+    - $ref: "./pagination.yaml#/PaginatedResponse"
+    - type: object
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: "#/Case"

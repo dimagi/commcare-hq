@@ -48,6 +48,10 @@ security:
   - Basic: []
   - OAuth2: []
 paths:
+  /a/{domain}/api/case/v1/:
+    $ref: "./paths/case-v1.yaml#/List"
+  /a/{domain}/api/case/v1/{case_id}/:
+    $ref: "./paths/case-v1.yaml#/Detail"
   /a/{domain}/api/group/v1/:
     $ref: "./paths/group.yaml#/List"
   /a/{domain}/api/group/v1/{group_id}/:

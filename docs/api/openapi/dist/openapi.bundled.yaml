@@ -33,6 +33,229 @@ tags:
   - name: SMS
     description: Messaging event history.
 paths:
+  /a/{domain}/api/case/v1/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    get:
+      operationId: listCases
+      summary: List cases
+      description: Returns cases the authenticated user is permitted to see. Requires the Edit Data permission. Backed by Elasticsearch (`v0_3.CommCareCaseResource.obj_get_list`, `corehq/apps/api/resources/v0_3.py:59-69`); unrecognized query parameters are still applied as raw term filters against the Elasticsearch case document (`es_query_from_get_params`, `corehq/apps/api/es.py:402-447`), so `type` and `name` below match the code's actual behavior even though the underlying document fields they filter on are named `type` and `name`, not `case_type`/`case_name`.
+      tags:
+        - Data
+      parameters:
+        - name: owner_id
+          in: query
+          required: false
+          description: Restrict results to cases owned by this user or group UUID. Should not be combined with `user_id`.
+          example: ac9d34ff59cf6388e4f5804b12276d8a
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          required: false
+          description: Restrict results to cases last modified by this user UUID.
+          example: 3c5a623af057e23a32ae4000cf291339
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          description: Restrict results to cases of this case type.
+          example: pregnant_mother
+          schema:
+            type: string
+        - name: closed
+          in: query
+          required: false
+          description: Restrict results by case status. Omit to return both open and closed cases.
+          example: true
+          schema:
+            type: boolean
+        - name: indexed_on_start
+          in: query
+          required: false
+          description: Only return cases indexed into Elasticsearch on or after this date. Naive date or date-time (no timezone offset); accepts `YYYY-MM-DD` or `YYYY-MM-DDTHH:MM:SS` (`corehq/apps/api/es.py:269-285`). This is the recommended field for paginating through results, since it handles edge cases `server_date_modified` does not.
+          example: '2021-01-01T06:05:42'
+          schema:
+            type: string
+            format: date-time
+        - name: indexed_on_end
+          in: query
+          required: false
+          description: Only return cases indexed into Elasticsearch before this date. Naive date or date-time (no timezone offset).
+          example: '2021-01-01T06:05:42'
+          schema:
+            type: string
+            format: date-time
+        - name: date_modified_start
+          in: query
+          required: false
+          description: Only return cases modified on or after this date, as reported by the submitting phone's clock. Naive date or date-time (no timezone offset).
+          example: '2012-05-20'
+          schema:
+            type: string
+            format: date-time
+        - name: date_modified_end
+          in: query
+          required: false
+          description: Only return cases modified before this date, as reported by the submitting phone's clock. Naive date or date-time (no timezone offset).
+          example: '2012-05-27'
+          schema:
+            type: string
+            format: date-time
+        - name: server_date_modified_start
+          in: query
+          required: false
+          description: Only return cases modified on or after this date, as reported by the server's clock. Naive date or date-time (no timezone offset).
+          example: '2012-05-20'
+          schema:
+            type: string
+            format: date-time
+        - name: server_date_modified_end
+          in: query
+          required: false
+          description: Only return cases modified before this date, as reported by the server's clock. Naive date or date-time (no timezone offset).
+          example: '2012-05-27'
+          schema:
+            type: string
+            format: date-time
+        - name: name
+          in: query
+          required: false
+          description: Restrict results to cases with this case name.
+          example: NEAL
+          schema:
+            type: string
+        - name: external_id
+          in: query
+          required: false
+          description: Restrict results to cases with this `external_id` property value.
+          example: 123abc
+          schema:
+            type: string
+        - name: order_by
+          in: query
+          required: false
+          description: Sort cases by one of `indexed_on`, `date_modified`, or `server_date_modified` -- the fields declared sortable by `v0_4.CommCareCaseResource.Meta.ordering` (`corehq/apps/api/resources/v0_4.py:230`). Prefix with `-` for descending order, e.g. `order_by=-indexed_on` (`SimpleSortableResourceMixin.apply_sorting`, `corehq/apps/api/resources/__init__.py:224-253`). Defaults to ascending `server_date_modified` (`corehq/apps/api/resources/v0_3.py:69`).
+          example: indexed_on
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of records to return. Default 20. Capped at 5000 by `v0_4.CommCareCaseResource.Meta.max_limit` (`corehq/apps/api/resources/v0_4.py:228`) -- higher than the 1000 most other list endpoints enforce, so this is a resource-specific parameter rather than the shared `Limit` component.
+          example: 100
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5000
+            default: 20
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Format'
+        - name: xforms_by_name__full
+          in: query
+          required: false
+          description: Include the `xforms_by_name` field on every returned case. Accepts a case-insensitive `true`; any other value (including omitting the parameter) behaves as false (`UseIfRequested.use_in`, `corehq/apps/api/fields.py:46-48`).
+          example: true
+          schema:
+            type: boolean
+        - name: xforms_by_xmlns__full
+          in: query
+          required: false
+          description: Include the `xforms_by_xmlns` field on every returned case. Accepts a case-insensitive `true`; any other value (including omitting the parameter) behaves as false.
+          example: true
+          schema:
+            type: boolean
+        - name: child_cases__full
+          in: query
+          required: false
+          description: Include the `child_cases` field on every returned case. Accepts a case-insensitive `true`; any other value (including omitting the parameter) behaves as false.
+          example: true
+          schema:
+            type: boolean
+        - name: parent_cases__full
+          in: query
+          required: false
+          description: Include the `parent_cases` field on every returned case. Accepts a case-insensitive `true`; any other value (including omitting the parameter) behaves as false.
+          example: true
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: A page of cases.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /a/{domain}/api/case/v1/{case_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: case_id
+        in: path
+        required: true
+        description: Case UUID.
+        example: 0X9OCW3JMV98EYOVN32SGN4II
+        schema:
+          type: string
+    get:
+      operationId: getCase
+      summary: Retrieve a single case
+      description: Requires the Edit Data permission. The `xforms_by_name__full`, `xforms_by_xmlns__full`, `child_cases__full`, and `parent_cases__full` flags below work identically to the list operation, since they are per-object dehydration switches applied the same way regardless of whether the case came from a list or detail fetch.
+      tags:
+        - Data
+      parameters:
+        - $ref: '#/components/parameters/Format'
+        - name: xforms_by_name__full
+          in: query
+          required: false
+          description: Include the `xforms_by_name` field in the response. Accepts a case-insensitive `true`; any other value (including omitting the parameter) behaves as false.
+          example: true
+          schema:
+            type: boolean
+        - name: xforms_by_xmlns__full
+          in: query
+          required: false
+          description: Include the `xforms_by_xmlns` field in the response. Accepts a case-insensitive `true`; any other value (including omitting the parameter) behaves as false.
+          example: true
+          schema:
+            type: boolean
+        - name: child_cases__full
+          in: query
+          required: false
+          description: Include the `child_cases` field in the response. Accepts a case-insensitive `true`; any other value (including omitting the parameter) behaves as false.
+          example: true
+          schema:
+            type: boolean
+        - name: parent_cases__full
+          in: query
+          required: false
+          description: Include the `parent_cases` field in the response. Accepts a case-insensitive `true`; any other value (including omitting the parameter) behaves as false.
+          example: true
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: The case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: The requested case does not exist. The response body is empty.
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /a/{domain}/api/group/v1/:
     parameters:
       - $ref: '#/components/parameters/Domain'
@@ -242,17 +465,6 @@ components:
       example: demo
       schema:
         type: string
-    Limit:
-      name: limit
-      in: query
-      required: false
-      description: 'Maximum number of records to return. Default: 20. Maximum: 1000.'
-      example: 100
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 1000
-        default: 20
     Offset:
       name: offset
       in: query
@@ -275,6 +487,17 @@ components:
           - json
           - xml
         default: json
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: 'Maximum number of records to return. Default: 20. Maximum: 1000.'
+      example: 100
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 20
   schemas:
     PaginationMeta:
       type: object
@@ -313,6 +536,129 @@ components:
           type: array
           items:
             type: object
+    Case:
+      type: object
+      description: A single case, as returned by the case data API (JSON format). Most of a case's identifying and business data lives in the nested `properties` object rather than at the top level -- see that property's description. Fields declared by `v0_3.CommCareCaseResource` (`corehq/apps/api/resources/v0_3.py:19-76`) and `v0_4.CommCareCaseResource` (`corehq/apps/api/resources/v0_4.py:186-233`).
+      properties:
+        id:
+          type: string
+          description: Case UUID. Identical to `case_id` -- both are aliases of the same attribute.
+          example: 0X9OCW3JMV98EYOVN32SGN4II
+        case_id:
+          type: string
+          description: Case UUID.
+          example: 0X9OCW3JMV98EYOVN32SGN4II
+        domain:
+          type: string
+          description: Project space the case belongs to.
+          example: demo
+        user_id:
+          type: string
+          nullable: true
+          description: UUID of the user that last modified the case.
+          example: 3c5a623af057e23a32ae4000cf291339
+        date_modified:
+          type: string
+          format: date-time
+          description: Date and time the case was last modified, from the submitting phone's clock. Naive -- no timezone offset is applied or assumed.
+          example: '2011-12-13T15:09:47'
+        closed:
+          type: boolean
+          description: Whether the case is closed.
+          example: false
+        date_closed:
+          type: string
+          format: date-time
+          nullable: true
+          description: Date and time the case was closed, naive (no timezone offset).
+          example: '2011-12-20T15:09:47'
+        server_date_modified:
+          type: string
+          format: date-time
+          description: Date and time the case was last modified, from the server's clock. Naive (no timezone offset).
+          example: '2012-04-05T23:56:41'
+        server_date_opened:
+          type: string
+          format: date-time
+          nullable: true
+          description: Date and time the case was opened, from the server's clock. Naive (no timezone offset).
+          example: '2012-04-05T23:56:41'
+        indexed_on:
+          type: string
+          format: date-time
+          description: Date and time this revision of the case was indexed into Elasticsearch. This is the recommended field to page through results on (see `indexed_on_start`/`indexed_on_end` on the list operation) -- it handles edge cases `server_date_modified` does not. Naive (no timezone offset).
+          example: '2012-04-05T23:56:41'
+        opened_by:
+          type: string
+          nullable: true
+          description: UUID of the user that opened the case. Undocumented in `cases-v1.rst`; see the discrepancy file.
+          example: 3c5a623af057e23a32ae4000cf291339
+        closed_by:
+          type: string
+          nullable: true
+          description: UUID of the user that closed the case. Undocumented in `cases-v1.rst`; see the discrepancy file.
+          example: 3c5a623af057e23a32ae4000cf291339
+        xform_ids:
+          type: array
+          items:
+            type: string
+          description: UUIDs of forms that have touched this case.
+          example:
+            - 3HQEXR2S0GIRFY2GF40HAR7ZE
+        properties:
+          type: object
+          additionalProperties: true
+          description: Case property values -- arbitrary, application-defined case data. Always includes the special properties `case_name`, `case_type`, `date_opened`, `external_id`, and `owner_id` (`corehq/apps/api/models.py:201-212`), plus every dynamic case property the application defines. Because dynamic properties are application-defined, their names and types cannot be enumerated here.
+          example:
+            case_name: ryan
+            case_type: programmer
+            date_opened: '2012-03-13T18:21:52'
+            external_id: 45WKYXQRFFU3AT4Y022EX7HF2
+            owner_id: null
+            role: artisan
+        indices:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              case_type:
+                type: string
+              case_id:
+                type: string
+          description: References to other cases, keyed by index identifier. An empty object when the case has no indices.
+          example: {}
+        xforms_by_name:
+          type: object
+          additionalProperties: true
+          description: Forms that have touched this case, keyed by form name, each value a list of full form representations. Included only when the `xforms_by_name__full=true` query parameter is passed.
+        xforms_by_xmlns:
+          type: object
+          additionalProperties: true
+          description: Forms that have touched this case, keyed by XMLNS, each value a list of full form representations. Included only when the `xforms_by_xmlns__full=true` query parameter is passed.
+        child_cases:
+          type: object
+          additionalProperties: true
+          description: Child cases, keyed by case id, each value a full case representation. Included only when the `child_cases__full=true` query parameter is passed.
+        parent_cases:
+          type: object
+          additionalProperties: true
+          description: Parent cases, keyed by case id, each value a full case representation. Included only when the `parent_cases__full=true` query parameter is passed.
+    CaseList:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            objects:
+              type: array
+              items:
+                $ref: '#/components/schemas/Case'
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Human-readable description of the failure.
+          example: not authorized
     Group:
       type: object
       properties:
@@ -356,13 +702,6 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Group'
-    Error:
-      type: object
-      properties:
-        error:
-          type: string
-          description: Human-readable description of the failure.
-          example: not authorized
     GroupWrite:
       type: object
       description: Payload for creating or replacing a group.
@@ -395,6 +734,12 @@ components:
           type: string
           example: Name is required
   responses:
+    BadRequest:
+      description: The request was malformed or a parameter value was invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     Unauthorized:
       description: 'Authentication credentials were missing or invalid. Note that CommCare also returns 401 with `{"error": "not authorized"}` for some permission failures.'
       content:
@@ -409,12 +754,6 @@ components:
             $ref: '#/components/schemas/Error'
     TooManyRequests:
       description: The request was rate limited. Back off and retry. Rate limits are applied per user and project space.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: The request was malformed or a parameter value was invalid.
       content:
         application/json:
           schema:
