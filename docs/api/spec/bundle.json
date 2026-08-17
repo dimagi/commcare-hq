@@ -6514,7 +6514,7 @@
                             "type": "object"
                           },
                           "username": {
-                            "description": "User name of user, including domain, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
+                            "description": "User name of the user, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
                             "type": "string"
                           }
                         },
@@ -6634,7 +6634,7 @@
                       "type": "object"
                     },
                     "username": {
-                      "description": "User name of user, including domain, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
+                      "description": "User name of the user, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
                       "type": "string"
                     }
                   },
@@ -6746,7 +6746,7 @@
                     "type": "object"
                   },
                   "username": {
-                    "description": "User name of user, including domain, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
+                    "description": "User name of the user, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
                     "type": "string"
                   }
                 },
@@ -6839,7 +6839,7 @@
                       "type": "object"
                     },
                     "username": {
-                      "description": "User name of user, including domain, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
+                      "description": "User name of the user, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
                       "type": "string"
                     }
                   },

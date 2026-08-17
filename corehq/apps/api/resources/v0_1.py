@@ -182,9 +182,9 @@ class WebUserResource(UserResource):
     username = fields.CharField(
         attribute='username',
         unique=True,
-        help_text='User name of user, including domain, for example '
-                  '"jdoe@example.com". Web user usernames are plain '
-                  'email addresses, unlike mobile worker usernames.',
+        help_text='User name of the user, for example "jdoe@example.com". '
+                  'Web user usernames are plain email addresses, unlike '
+                  'mobile worker usernames.',
     )
     role = fields.CharField()
     is_admin = fields.BooleanField()
