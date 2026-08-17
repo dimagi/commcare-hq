@@ -126,3 +126,27 @@ class TestMcpProtocolErrors(McpTestCase):
         response = self.client.get(
             '/mcp', HTTP_AUTHORIZATION='Bearer test-mcp-access-token')
         assert response.status_code == 405
+
+
+class TestDomainScopedTokenOnEndpoint(McpTestCase):
+
+    def test_domain_scoped_token_cannot_call_tools_in_other_domains(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+        from oauth2_provider.models import AccessToken
+        AccessToken.objects.create(
+            user=self.user.get_django_user(),
+            token='domain-scoped-token',
+            application=self.application,
+            scope='access_apis domain:some-other-domain',
+            expires=timezone.now() + timedelta(hours=1),
+        )
+        response = self.mcp_post({
+            'jsonrpc': '2.0', 'id': 1, 'method': 'tools/call',
+            'params': {'name': 'list_lookup_tables',
+                       'arguments': {'domain': self.domain}},
+        }, token='domain-scoped-token')
+        result = response.json()['result']
+        assert result['isError'] is True
+        assert 'not scoped' in result['content'][0]['text']

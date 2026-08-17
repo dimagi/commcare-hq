@@ -2,6 +2,7 @@ import pytest
 
 from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.mcp.tools import (
+    ToolContext,
     ToolError,
     call_api_read,
     call_api_write,
@@ -136,3 +137,24 @@ class TestApiBridgeGuardrails(McpTestCase):
         result = call_api_read(context, {
             'domain': self.domain, 'path': 'v0.5/lookup_table/'})
         assert result['status'] in (401, 403), result
+
+
+class TestDomainScopedTokensOnTools(McpTestCase):
+
+    def test_tool_rejects_domain_outside_token_scope_even_for_a_member(self):
+        context = ToolContext(
+            couch_user=self.user,
+            authorization='Bearer test-mcp-access-token',
+            token_domains=frozenset({'some-other-domain'}),
+        )
+        with pytest.raises(ToolError, match='token is not scoped'):
+            list_lookup_tables(context, {'domain': self.domain})
+
+    def test_tool_allows_domain_inside_token_scope(self):
+        context = ToolContext(
+            couch_user=self.user,
+            authorization='Bearer test-mcp-access-token',
+            token_domains=frozenset({self.domain}),
+        )
+        result = list_lookup_tables(context, {'domain': self.domain})
+        assert result['domain'] == self.domain

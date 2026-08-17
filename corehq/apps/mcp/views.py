@@ -13,6 +13,7 @@ from django.views.decorators.http import require_GET
 
 from oauth2_provider.oauth2_backends import get_oauthlib_core
 
+from corehq.apps.domain.decorators import get_oauth_token_domains
 from corehq.apps.mcp.tools import TOOLS, ToolContext, ToolError
 from corehq.apps.users.models import CouchUser
 
@@ -79,6 +80,7 @@ def mcp_endpoint(request):
     context = ToolContext(
         couch_user=CouchUser.from_django_user(request.user),
         authorization=request.META.get('HTTP_AUTHORIZATION', ''),
+        token_domains=get_oauth_token_domains(oauth_request.access_token),
     )
     return _dispatch(message, context)
 

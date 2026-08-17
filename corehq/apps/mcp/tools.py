@@ -19,11 +19,17 @@ class ToolContext:
     """What a tool handler knows about the calling request."""
     couch_user: object
     authorization: str  # the caller's Authorization header, for API forwarding
+    # Domains a domain:<name>-scoped token is limited to; None = unrestricted
+    token_domains: frozenset = None
 
 
-def _require_member_of(couch_user, domain):
-    if not domain or not couch_user.is_member_of(domain):
+def _require_domain_access(context, domain):
+    if not domain or not context.couch_user.is_member_of(domain):
         raise ToolError(f"You are not a member of domain '{domain}'")
+    if context.token_domains is not None and domain not in context.token_domains:
+        raise ToolError(
+            f"Your access token is not scoped to domain '{domain}'. "
+            'Re-authorize with access to that project space.')
 
 
 def whoami(context, arguments):
@@ -55,7 +61,7 @@ def call_api_read(context, arguments):
     # Imported here: api_bridge imports ToolError from this module
     from corehq.apps.mcp.api_bridge import call_domain_api
     domain = arguments.get('domain')
-    _require_member_of(context.couch_user, domain)
+    _require_domain_access(context, domain)
     return call_domain_api(
         context.authorization,
         domain,
@@ -71,7 +77,7 @@ def call_api_write(context, arguments):
     # Imported here: api_bridge imports ToolError from this module
     from corehq.apps.mcp.api_bridge import call_domain_api
     domain = arguments.get('domain')
-    _require_member_of(context.couch_user, domain)
+    _require_domain_access(context, domain)
     method = (arguments.get('method') or '').upper()
     if method not in WRITE_METHODS:
         raise ToolError(
@@ -87,7 +93,7 @@ def call_api_write(context, arguments):
 
 def list_lookup_tables(context, arguments):
     domain = arguments.get('domain')
-    _require_member_of(context.couch_user, domain)
+    _require_domain_access(context, domain)
     return {
         'domain': domain,
         'lookup_tables': [
