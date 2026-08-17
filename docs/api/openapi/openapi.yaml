@@ -1,0 +1,42 @@
+openapi: 3.0.3
+info:
+  title: CommCare HQ APIs
+  version: "1.0"
+  description: >-
+    APIs for CommCare HQ, covering case and form data, user and location
+    management, reports, form submission, and messaging events.
+
+    Requires a CommCare Software Plan (Standard or above).
+  contact:
+    name: Dimagi Support
+    url: https://dimagi.atlassian.net/wiki/spaces/commcarepublic/overview
+servers:
+  - url: https://{environment}
+    description: CommCare HQ environment
+    variables:
+      environment:
+        default: www.commcarehq.org
+        enum:
+          - www.commcarehq.org
+          - india.commcarehq.org
+          - swiss.commcarehq.org
+        description: >-
+          The CommCare HQ cloud environment hosting the project space.
+tags:
+  - name: Data
+    description: >-
+      APIs for building project-specific applications and integrations.
+  - name: Users
+    description: >-
+      Managing mobile workers, web users, groups, and identity.
+  - name: Submission
+    description: >-
+      OpenRosa-standard XForm submission.
+  - name: SMS
+    description: >-
+      Messaging event history.
+security:
+  - ApiKey: []
+  - Basic: []
+  - OAuth2: []
+paths: {}
