@@ -131,11 +131,29 @@ Case:
         properties:
           case_type:
             type: string
+            description: Case type of the referenced case.
+            example: mother
           case_id:
             type: string
+            description: UUID of the referenced case.
+            example: 8GPM05TVPIUH0Q4XLXVIURRTA
+          relationship:
+            type: string
+            enum: [child, extension]
+            description: >-
+              The index's relationship to the referenced case. Unconditional on
+              every index entry, and undocumented in `cases-v1.rst`; see the
+              discrepancy file. Backed by `CommCareCaseIndex.relationship_id`, a
+              `PositiveSmallIntegerField` restricted to exactly two `choices`
+              (`corehq/form_processor/models/cases.py:1090-1097`), mapped to the
+              string constants `CASE_INDEX_CHILD`/`CASE_INDEX_EXTENSION`
+              (`corehq/ex-submodules/casexml/apps/case/const.py:50-51`).
+            example: child
       description: >-
         References to other cases, keyed by index identifier. An empty object
-        when the case has no indices.
+        when the case has no indices. Each entry always has `case_type`,
+        `case_id`, and `relationship` (`get_index_map`,
+        `corehq/form_processor/models/cases.py:839-846`).
       example: {}
     xforms_by_name:
       type: object
