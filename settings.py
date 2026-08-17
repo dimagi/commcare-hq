@@ -899,6 +899,8 @@ OAUTH2_PROVIDER = {
         'sync': '(Deprecated, do not use) Allow access to mobile endpoints',
     },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
+    # supports dynamic domain:<name> scopes on top of the static SCOPES
+    'SCOPES_BACKEND_CLASS': 'corehq.apps.hqwebapp.oauth_scopes.HQScopes',
 }
 
 
