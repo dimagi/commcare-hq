@@ -17,9 +17,11 @@ reST pages remain the prose narrative; this spec is the reference.
 
 ## Requirements
 
-`@redocly/cli` requires Node 24 (the version this repo's CI uses — see
-`.github/workflows/lint.yml`). Node 20 cannot run it. If `yarn openapi:lint`
-fails to start, check your Node version first.
+`@redocly/cli`'s declared supported range is `>=22.12.0 || >=20.19.0 <21.0.0`.
+CI pins Node 24 (see `.github/workflows/lint.yml`). Older 20.x releases
+(below 20.19.0, e.g. 20.7.0) emit an engine-mismatch warning from `yarn`/`npm`
+but the tool still runs correctly — `yarn openapi:lint` and friends exit 0.
+Node 18 and earlier are genuinely unsupported.
 
 ## Working on the spec
 
