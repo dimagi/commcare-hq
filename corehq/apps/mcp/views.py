@@ -13,7 +13,7 @@ from django.views.decorators.http import require_GET
 
 from oauth2_provider.oauth2_backends import get_oauthlib_core
 
-from corehq.apps.mcp.tools import TOOLS, ToolError
+from corehq.apps.mcp.tools import TOOLS, ToolContext, ToolError
 from corehq.apps.users.models import CouchUser
 
 REQUIRED_SCOPES = ['access_apis']
@@ -76,7 +76,11 @@ def mcp_endpoint(request):
     if message.get('id') is None:
         # JSON-RPC notification (e.g. notifications/initialized): no response body
         return HttpResponse(status=202)
-    return _dispatch(message, CouchUser.from_django_user(request.user))
+    context = ToolContext(
+        couch_user=CouchUser.from_django_user(request.user),
+        authorization=request.META.get('HTTP_AUTHORIZATION', ''),
+    )
+    return _dispatch(message, context)
 
 
 def _tool_result(req_id, payload, is_error=False):
@@ -86,7 +90,7 @@ def _tool_result(req_id, payload, is_error=False):
     })
 
 
-def _dispatch(message, couch_user):
+def _dispatch(message, context):
     req_id = message['id']
     params = message.get('params') or {}
     if message.get('method') == 'initialize':
@@ -104,7 +108,7 @@ def _dispatch(message, couch_user):
         if tool is None:
             return _rpc_error(req_id, -32602, f"Unknown tool: {params.get('name')}")
         try:
-            result = tool.handler(couch_user, params.get('arguments') or {})
+            result = tool.handler(context, params.get('arguments') or {})
         except ToolError as err:
             return _tool_result(req_id, {'error': str(err)}, is_error=True)
         return _tool_result(req_id, result)

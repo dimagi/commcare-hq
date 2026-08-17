@@ -14,21 +14,28 @@ class ToolError(Exception):
     """An error the calling model should see as a tool result."""
 
 
+@dataclass(frozen=True)
+class ToolContext:
+    """What a tool handler knows about the calling request."""
+    couch_user: object
+    authorization: str  # the caller's Authorization header, for API forwarding
+
+
 def _require_member_of(couch_user, domain):
     if not domain or not couch_user.is_member_of(domain):
         raise ToolError(f"You are not a member of domain '{domain}'")
 
 
-def whoami(couch_user, arguments):
+def whoami(context, arguments):
     return {
-        'username': couch_user.username,
-        'domains': couch_user.domains,
+        'username': context.couch_user.username,
+        'domains': context.couch_user.domains,
     }
 
 
-def list_lookup_tables(couch_user, arguments):
+def list_lookup_tables(context, arguments):
     domain = arguments.get('domain')
-    _require_member_of(couch_user, domain)
+    _require_member_of(context.couch_user, domain)
     return {
         'domain': domain,
         'lookup_tables': [

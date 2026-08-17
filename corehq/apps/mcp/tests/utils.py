@@ -7,6 +7,7 @@ from django.utils import timezone
 from oauth2_provider.models import AccessToken, get_application_model
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.mcp.tools import ToolContext
 from corehq.apps.users.models import WebUser
 
 
@@ -31,6 +32,13 @@ class McpTestCase(TestCase):
             application=cls.application,
             scope='access_apis',
             expires=timezone.now() + timedelta(hours=1),
+        )
+
+    @property
+    def context(self):
+        return ToolContext(
+            couch_user=self.user,
+            authorization='Bearer test-mcp-access-token',
         )
 
     def mcp_post(self, body, token='test-mcp-access-token'):
