@@ -5,6 +5,7 @@ from collections.abc import Iterator
 
 import yaml
 from django.conf import settings
+from django.urls import Resolver404, resolve
 from unmagic import fixture, use
 
 OPERATION_ID_RE = re.compile(r'[a-z][a-zA-Z0-9]*')
@@ -135,3 +136,32 @@ def test_operation_ids_are_lower_camel_case():
             f'operationId {operation_id!r} on {method.upper()} {path} is not '
             'lowerCamelCase'
         )
+
+
+def _concrete_url(path, path_item):
+    """Substitute each path parameter's ``example`` to build a resolvable URL."""
+    examples = {}
+    parameters = list(path_item.get('parameters', []))
+    for method, operation in path_item.items():
+        if method in HTTP_METHODS:
+            parameters.extend(operation.get('parameters', []))
+    for parameter in parameters:
+        if parameter.get('in') == 'path':
+            examples[parameter['name']] = str(parameter['example'])
+    return path.format(**examples)
+
+
+@use(spec)
+def test_all_paths_resolve():
+    """Every path in the spec must map to a real Django URL pattern."""
+    unresolvable = []
+    for path, path_item in spec()['paths'].items():
+        url = _concrete_url(path, path_item)
+        try:
+            resolve(url)
+        except Resolver404:
+            unresolvable.append(f'{path} (tried {url})')
+    assert not unresolvable, (
+        'spec paths that do not resolve against Django URLconf:\n  '
+        + '\n  '.join(unresolvable)
+    )
