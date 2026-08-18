@@ -243,10 +243,22 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     locations = fields.ListField()
     require_account_confirmation = fields.BooleanField(default=False)
     send_confirmation_email_now = fields.BooleanField(default=False)
+    password = fields.CharField(
+        null=True,
+        help_text="Sets the user's password. Required on create unless "
+                  "`connect_username` is given.",
+    )
+    connect_username = fields.CharField(
+        null=True,
+        help_text="Links the user to a ConnectID account. Requires the "
+                  "COMMCARE_CONNECT feature flag.",
+    )
 
     WRITE_ONLY_FIELDS = (
         'require_account_confirmation',
         'send_confirmation_email_now',
+        'password',
+        'connect_username',
     )
 
     class Meta(v0_1.CommCareUserResource.Meta):
