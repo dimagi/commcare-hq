@@ -253,6 +253,15 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         help_text="Links the user to a ConnectID account. Requires the "
                   "COMMCARE_CONNECT feature flag.",
     )
+    language = fields.CharField(
+        attribute='language',
+        null=True,
+        help_text="The user's preferred language code, e.g. `en`.",
+    )
+    role = fields.CharField(
+        null=True,
+        help_text="Name of an existing user role in the project space.",
+    )
 
     WRITE_ONLY_FIELDS = (
         'require_account_confirmation',
@@ -403,6 +412,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
     def dehydrate_locations(self, bundle):
         return bundle.obj.get_location_ids(bundle.obj.domain)
+
+    def dehydrate_role(self, bundle):
+        role = bundle.obj.get_role(bundle.obj.domain)
+        return role.name if role else ''
 
     def dehydrate(self, bundle):
         for field_name in self.WRITE_ONLY_FIELDS:
