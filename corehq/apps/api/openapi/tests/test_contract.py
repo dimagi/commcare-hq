@@ -22,7 +22,10 @@ response against the spec, in both directions:
 import json
 
 from corehq.apps.api.openapi.builder import build_all
-from corehq.apps.api.openapi.tests.oas_validation import assert_matches_schema
+from corehq.apps.api.openapi.tests.oas_validation import (
+    assert_matches_schema,
+    declared_response_fields,
+)
 from corehq.apps.api.resources import v0_5
 from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.es.groups import group_adapter
@@ -85,10 +88,9 @@ def _assert_response_and_spec_agree(
     assert_matches_schema(
         document, item_schema, instance, context='real response'
     )
-    declared = item_schema['properties']
-    should_appear = {
-        name for name, prop in declared.items() if not prop.get('writeOnly')
-    } - set(optional)
+    should_appear = declared_response_fields(item_schema['properties']) - set(
+        optional
+    )
     missing = should_appear - set(instance)
     assert not missing, (
         f'spec properties never appear in the real response: {sorted(missing)}'

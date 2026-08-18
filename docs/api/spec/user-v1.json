@@ -120,6 +120,7 @@
                     {
                       "default_phone_number": "+50253311399",
                       "email": "jdoe@example.org",
+                      "eulas": "[]",
                       "first_name": "John",
                       "groups": [
                         "9a0accdba29e01a61ea099394737c4fb"
@@ -134,7 +135,7 @@
                         "+50253314588"
                       ],
                       "primary_location": "26fc44e2792b4f2fa8ef86178f0a958e",
-                      "type": "user",
+                      "resource_uri": "/a/example/api/user/v1/3c5a623af057e23a32ae4000cf291339/",
                       "user_data": {
                         "chw_id": "13/43/DFA"
                       },
@@ -366,6 +367,7 @@
                     {
                       "default_phone_number": "+50253311399",
                       "email": "jdoe@example.org",
+                      "eulas": "[]",
                       "first_name": "John",
                       "groups": [
                         "9a0accdba29e01a61ea099394737c4fb"
@@ -380,7 +382,7 @@
                         "+50253314588"
                       ],
                       "primary_location": "26fc44e2792b4f2fa8ef86178f0a958e",
-                      "type": "user",
+                      "resource_uri": "/a/example/api/user/v1/3c5a623af057e23a32ae4000cf291339/",
                       "user_data": {
                         "chw_id": "13/43/DFA"
                       },
