@@ -214,6 +214,14 @@ def view_paths(docs):
             # is never a real operation on a detail path.
             if method == 'post' and is_detail:
                 continue
+            response_schema = docs.response_schemas.get(
+                (path, method), docs.response_schemas.get(method)
+            )
+            response = {'description': 'Success.'}
+            if response_schema:
+                response['content'] = {
+                    'application/json': {'schema': response_schema},
+                }
             operation = {
                 'summary': docs.summary,
                 'description': docs.description,
@@ -222,9 +230,7 @@ def view_paths(docs):
                     f'_{method}'
                 ),
                 'tags': [docs.doc_slug],
-                'responses': {
-                    '200': {'description': 'Success.'},
-                },
+                'responses': {'200': response},
             }
             if method == 'get' and not is_detail:
                 operation['parameters'] = docs.parameters

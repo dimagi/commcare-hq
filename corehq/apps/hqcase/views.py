@@ -264,6 +264,112 @@ _BULK_FETCH_SCHEMA = {
     ],
 }
 
+# Read from ``core.serialize_case()``/``serialize_es_case()``, which are
+# the two functions that actually build a case dict for this API --
+# GET, bulk-fetch and the create/update responses below all go through
+# one or the other. ``properties`` and ``indices`` are declared as
+# generic string-keyed maps because their keys are project-defined case
+# properties and index identifiers, not fixed field names. Nothing here
+# is marked ``required``: ``get_fields_filter_fn`` (the ``properties=``
+# query parameter) can drop any subset of these keys from the actual
+# response.
+_CASE_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'domain': {'type': 'string'},
+        'case_id': {'type': 'string'},
+        'case_type': {'type': 'string'},
+        'case_name': {'type': 'string'},
+        'external_id': {'type': 'string', 'nullable': True},
+        'owner_id': {'type': 'string'},
+        'date_opened': {'type': 'string', 'format': 'date-time'},
+        'last_modified': {'type': 'string', 'format': 'date-time'},
+        'server_last_modified': {'type': 'string', 'format': 'date-time'},
+        'indexed_on': {'type': 'string', 'format': 'date-time'},
+        'closed': {'type': 'boolean'},
+        'date_closed': {
+            'type': 'string',
+            'format': 'date-time',
+            'nullable': True,
+        },
+        'properties': {
+            'type': 'object',
+            'additionalProperties': {'type': 'string'},
+        },
+        'indices': {
+            'type': 'object',
+            'additionalProperties': {
+                'type': 'object',
+                'properties': {
+                    'case_id': {'type': 'string'},
+                    'case_type': {'type': 'string'},
+                    'relationship': {'type': 'string'},
+                },
+            },
+        },
+    },
+}
+
+# ``get_bulk()``/``get_list()`` include an error stub, not a case, for
+# any ID that couldn't be resolved (not found, wrong domain, or no
+# permission) -- see their docstrings/callers in get_bulk.py and
+# get_list.py.
+_CASE_OR_ERROR_SCHEMA = {
+    'anyOf': [_CASE_SCHEMA, {'type': 'object', 'properties': {
+        'error': {'type': 'string'},
+    }}],
+}
+
+_LIST_RESPONSE_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'matching_records': {'type': 'integer'},
+        'cases': {'type': 'array', 'items': _CASE_OR_ERROR_SCHEMA},
+        'next': {
+            'type': 'object',
+            'description': 'Present only when more records match than '
+                          'were returned; pass its "cursor" value back '
+                          'as a query parameter to fetch the next page.',
+            'properties': {'cursor': {'type': 'string'}},
+        },
+    },
+    'required': ['matching_records', 'cases'],
+}
+
+_BULK_FETCH_RESPONSE_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'cases': {'type': 'array', 'items': _CASE_OR_ERROR_SCHEMA},
+    },
+    'required': ['cases'],
+}
+
+# handle_case_update() returns one case for a single create/update, or a
+# list for a bulk one (see its ``is_bulk`` branch) -- so the create/
+# update endpoints' response is genuinely one shape or the other, not a
+# single fixed schema.
+_UPDATE_RESPONSE_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'form_id': {'type': 'string'},
+        'case': _CASE_SCHEMA,
+    },
+    'required': ['form_id', 'case'],
+}
+
+_BULK_UPDATE_RESPONSE_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'form_id': {'type': 'string'},
+        'cases': {'type': 'array', 'items': _CASE_SCHEMA},
+    },
+    'required': ['form_id', 'cases'],
+}
+
+_SINGLE_OR_BULK_UPDATE_RESPONSE_SCHEMA = {
+    'anyOf': [_UPDATE_RESPONSE_SCHEMA, _BULK_UPDATE_RESPONSE_SCHEMA],
+}
+
 
 @api_docs(
     summary='Cases',
@@ -313,6 +419,26 @@ _BULK_FETCH_SCHEMA = {
         (CASE_EXT_PATH, 'put_request'): 'case/v2/put_ext_request.json',
         (CASE_LIST_PATH, 'post_request'): 'case/v2/bulk_post_request.json',
     },
+    # 'get'/'post'/'put' (no path) are the single-case shapes, for the
+    # same introspection reason as request_schemas above; the list
+    # path's GET returns the paginated envelope, and its POST/PUT
+    # return either the single- or bulk-update shape depending on
+    # whether the request body was an object or a list (see
+    # handle_case_update()'s ``is_bulk`` branch).
+    response_schemas={
+        'get': _CASE_SCHEMA,
+        (CASE_LIST_PATH, 'get'): _LIST_RESPONSE_SCHEMA,
+        # A comma-separated case_id list on the detail path returns the
+        # bulk-fetch shape instead of a single case -- see
+        # ``_handle_get()``.
+        (CASE_DETAIL_PATH, 'get'): {
+            'anyOf': [_CASE_SCHEMA, _BULK_FETCH_RESPONSE_SCHEMA],
+        },
+        'post': _UPDATE_RESPONSE_SCHEMA,
+        (CASE_LIST_PATH, 'post'): _SINGLE_OR_BULK_UPDATE_RESPONSE_SCHEMA,
+        'put': _UPDATE_RESPONSE_SCHEMA,
+        (CASE_LIST_PATH, 'put'): _SINGLE_OR_BULK_UPDATE_RESPONSE_SCHEMA,
+    },
 )
 @waf_allow('XSS_BODY')
 @csrf_exempt
@@ -355,6 +481,7 @@ def case_api(request, domain, case_id=None, external_id=None):
     paths=[CASE_BULK_FETCH_PATH],
     methods=['post'],
     request_schemas={'post': _BULK_FETCH_SCHEMA},
+    response_schemas={'post': _BULK_FETCH_RESPONSE_SCHEMA},
     examples={'post_request': 'case/v2/bulk_fetch_request.json'},
 )
 @waf_allow('XSS_BODY')

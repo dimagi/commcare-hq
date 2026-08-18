@@ -165,6 +165,117 @@
         ],
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "cases": {
+                      "items": {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "case_id": {
+                                "type": "string"
+                              },
+                              "case_name": {
+                                "type": "string"
+                              },
+                              "case_type": {
+                                "type": "string"
+                              },
+                              "closed": {
+                                "type": "boolean"
+                              },
+                              "date_closed": {
+                                "format": "date-time",
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "date_opened": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "domain": {
+                                "type": "string"
+                              },
+                              "external_id": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "indexed_on": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "indices": {
+                                "additionalProperties": {
+                                  "properties": {
+                                    "case_id": {
+                                      "type": "string"
+                                    },
+                                    "case_type": {
+                                      "type": "string"
+                                    },
+                                    "relationship": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "type": "object"
+                                },
+                                "type": "object"
+                              },
+                              "last_modified": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "owner_id": {
+                                "type": "string"
+                              },
+                              "properties": {
+                                "additionalProperties": {
+                                  "type": "string"
+                                },
+                                "type": "object"
+                              },
+                              "server_last_modified": {
+                                "format": "date-time",
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "error": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      "type": "array"
+                    },
+                    "matching_records": {
+                      "type": "integer"
+                    },
+                    "next": {
+                      "description": "Present only when more records match than were returned; pass its \"cursor\" value back as a query parameter to fetch the next page.",
+                      "properties": {
+                        "cursor": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "matching_records",
+                    "cases"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
             "description": "Success."
           }
         },
@@ -492,6 +603,183 @@
         },
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "case": {
+                          "properties": {
+                            "case_id": {
+                              "type": "string"
+                            },
+                            "case_name": {
+                              "type": "string"
+                            },
+                            "case_type": {
+                              "type": "string"
+                            },
+                            "closed": {
+                              "type": "boolean"
+                            },
+                            "date_closed": {
+                              "format": "date-time",
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "date_opened": {
+                              "format": "date-time",
+                              "type": "string"
+                            },
+                            "domain": {
+                              "type": "string"
+                            },
+                            "external_id": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "indexed_on": {
+                              "format": "date-time",
+                              "type": "string"
+                            },
+                            "indices": {
+                              "additionalProperties": {
+                                "properties": {
+                                  "case_id": {
+                                    "type": "string"
+                                  },
+                                  "case_type": {
+                                    "type": "string"
+                                  },
+                                  "relationship": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "type": "object"
+                            },
+                            "last_modified": {
+                              "format": "date-time",
+                              "type": "string"
+                            },
+                            "owner_id": {
+                              "type": "string"
+                            },
+                            "properties": {
+                              "additionalProperties": {
+                                "type": "string"
+                              },
+                              "type": "object"
+                            },
+                            "server_last_modified": {
+                              "format": "date-time",
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "form_id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "form_id",
+                        "case"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "cases": {
+                          "items": {
+                            "properties": {
+                              "case_id": {
+                                "type": "string"
+                              },
+                              "case_name": {
+                                "type": "string"
+                              },
+                              "case_type": {
+                                "type": "string"
+                              },
+                              "closed": {
+                                "type": "boolean"
+                              },
+                              "date_closed": {
+                                "format": "date-time",
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "date_opened": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "domain": {
+                                "type": "string"
+                              },
+                              "external_id": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "indexed_on": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "indices": {
+                                "additionalProperties": {
+                                  "properties": {
+                                    "case_id": {
+                                      "type": "string"
+                                    },
+                                    "case_type": {
+                                      "type": "string"
+                                    },
+                                    "relationship": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "type": "object"
+                                },
+                                "type": "object"
+                              },
+                              "last_modified": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "owner_id": {
+                                "type": "string"
+                              },
+                              "properties": {
+                                "additionalProperties": {
+                                  "type": "string"
+                                },
+                                "type": "object"
+                              },
+                              "server_last_modified": {
+                                "format": "date-time",
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "form_id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "form_id",
+                        "cases"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
             "description": "Success."
           }
         },
@@ -794,6 +1082,183 @@
         },
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "case": {
+                          "properties": {
+                            "case_id": {
+                              "type": "string"
+                            },
+                            "case_name": {
+                              "type": "string"
+                            },
+                            "case_type": {
+                              "type": "string"
+                            },
+                            "closed": {
+                              "type": "boolean"
+                            },
+                            "date_closed": {
+                              "format": "date-time",
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "date_opened": {
+                              "format": "date-time",
+                              "type": "string"
+                            },
+                            "domain": {
+                              "type": "string"
+                            },
+                            "external_id": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "indexed_on": {
+                              "format": "date-time",
+                              "type": "string"
+                            },
+                            "indices": {
+                              "additionalProperties": {
+                                "properties": {
+                                  "case_id": {
+                                    "type": "string"
+                                  },
+                                  "case_type": {
+                                    "type": "string"
+                                  },
+                                  "relationship": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "type": "object"
+                            },
+                            "last_modified": {
+                              "format": "date-time",
+                              "type": "string"
+                            },
+                            "owner_id": {
+                              "type": "string"
+                            },
+                            "properties": {
+                              "additionalProperties": {
+                                "type": "string"
+                              },
+                              "type": "object"
+                            },
+                            "server_last_modified": {
+                              "format": "date-time",
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "form_id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "form_id",
+                        "case"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "cases": {
+                          "items": {
+                            "properties": {
+                              "case_id": {
+                                "type": "string"
+                              },
+                              "case_name": {
+                                "type": "string"
+                              },
+                              "case_type": {
+                                "type": "string"
+                              },
+                              "closed": {
+                                "type": "boolean"
+                              },
+                              "date_closed": {
+                                "format": "date-time",
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "date_opened": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "domain": {
+                                "type": "string"
+                              },
+                              "external_id": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "indexed_on": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "indices": {
+                                "additionalProperties": {
+                                  "properties": {
+                                    "case_id": {
+                                      "type": "string"
+                                    },
+                                    "case_type": {
+                                      "type": "string"
+                                    },
+                                    "relationship": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "type": "object"
+                                },
+                                "type": "object"
+                              },
+                              "last_modified": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "owner_id": {
+                                "type": "string"
+                              },
+                              "properties": {
+                                "additionalProperties": {
+                                  "type": "string"
+                                },
+                                "type": "object"
+                              },
+                              "server_last_modified": {
+                                "format": "date-time",
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "form_id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "form_id",
+                        "cases"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
             "description": "Success."
           }
         },
@@ -866,6 +1331,104 @@
         },
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "cases": {
+                      "items": {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "case_id": {
+                                "type": "string"
+                              },
+                              "case_name": {
+                                "type": "string"
+                              },
+                              "case_type": {
+                                "type": "string"
+                              },
+                              "closed": {
+                                "type": "boolean"
+                              },
+                              "date_closed": {
+                                "format": "date-time",
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "date_opened": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "domain": {
+                                "type": "string"
+                              },
+                              "external_id": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "indexed_on": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "indices": {
+                                "additionalProperties": {
+                                  "properties": {
+                                    "case_id": {
+                                      "type": "string"
+                                    },
+                                    "case_type": {
+                                      "type": "string"
+                                    },
+                                    "relationship": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "type": "object"
+                                },
+                                "type": "object"
+                              },
+                              "last_modified": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "owner_id": {
+                                "type": "string"
+                              },
+                              "properties": {
+                                "additionalProperties": {
+                                  "type": "string"
+                                },
+                                "type": "object"
+                              },
+                              "server_last_modified": {
+                                "format": "date-time",
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "error": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "cases"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
             "description": "Success."
           }
         },
@@ -881,6 +1444,81 @@
         "operationId": "case-v2_ext_external_id_get",
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "case_id": {
+                      "type": "string"
+                    },
+                    "case_name": {
+                      "type": "string"
+                    },
+                    "case_type": {
+                      "type": "string"
+                    },
+                    "closed": {
+                      "type": "boolean"
+                    },
+                    "date_closed": {
+                      "format": "date-time",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "date_opened": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "domain": {
+                      "type": "string"
+                    },
+                    "external_id": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "indexed_on": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "indices": {
+                      "additionalProperties": {
+                        "properties": {
+                          "case_id": {
+                            "type": "string"
+                          },
+                          "case_type": {
+                            "type": "string"
+                          },
+                          "relationship": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "object"
+                    },
+                    "last_modified": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "owner_id": {
+                      "type": "string"
+                    },
+                    "properties": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    "server_last_modified": {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
             "description": "Success."
           }
         },
@@ -1049,6 +1687,93 @@
         },
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "case": {
+                      "properties": {
+                        "case_id": {
+                          "type": "string"
+                        },
+                        "case_name": {
+                          "type": "string"
+                        },
+                        "case_type": {
+                          "type": "string"
+                        },
+                        "closed": {
+                          "type": "boolean"
+                        },
+                        "date_closed": {
+                          "format": "date-time",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "date_opened": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "domain": {
+                          "type": "string"
+                        },
+                        "external_id": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "indexed_on": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "indices": {
+                          "additionalProperties": {
+                            "properties": {
+                              "case_id": {
+                                "type": "string"
+                              },
+                              "case_type": {
+                                "type": "string"
+                              },
+                              "relationship": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "object"
+                        },
+                        "last_modified": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "owner_id": {
+                          "type": "string"
+                        },
+                        "properties": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "server_last_modified": {
+                          "format": "date-time",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "form_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "form_id",
+                    "case"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
             "description": "Success."
           }
         },
@@ -1064,6 +1789,179 @@
         "operationId": "case-v2_case_id_get",
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "case_id": {
+                          "type": "string"
+                        },
+                        "case_name": {
+                          "type": "string"
+                        },
+                        "case_type": {
+                          "type": "string"
+                        },
+                        "closed": {
+                          "type": "boolean"
+                        },
+                        "date_closed": {
+                          "format": "date-time",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "date_opened": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "domain": {
+                          "type": "string"
+                        },
+                        "external_id": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "indexed_on": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "indices": {
+                          "additionalProperties": {
+                            "properties": {
+                              "case_id": {
+                                "type": "string"
+                              },
+                              "case_type": {
+                                "type": "string"
+                              },
+                              "relationship": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "object"
+                        },
+                        "last_modified": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "owner_id": {
+                          "type": "string"
+                        },
+                        "properties": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "server_last_modified": {
+                          "format": "date-time",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "cases": {
+                          "items": {
+                            "anyOf": [
+                              {
+                                "properties": {
+                                  "case_id": {
+                                    "type": "string"
+                                  },
+                                  "case_name": {
+                                    "type": "string"
+                                  },
+                                  "case_type": {
+                                    "type": "string"
+                                  },
+                                  "closed": {
+                                    "type": "boolean"
+                                  },
+                                  "date_closed": {
+                                    "format": "date-time",
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "date_opened": {
+                                    "format": "date-time",
+                                    "type": "string"
+                                  },
+                                  "domain": {
+                                    "type": "string"
+                                  },
+                                  "external_id": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "indexed_on": {
+                                    "format": "date-time",
+                                    "type": "string"
+                                  },
+                                  "indices": {
+                                    "additionalProperties": {
+                                      "properties": {
+                                        "case_id": {
+                                          "type": "string"
+                                        },
+                                        "case_type": {
+                                          "type": "string"
+                                        },
+                                        "relationship": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "type": "object"
+                                    },
+                                    "type": "object"
+                                  },
+                                  "last_modified": {
+                                    "format": "date-time",
+                                    "type": "string"
+                                  },
+                                  "owner_id": {
+                                    "type": "string"
+                                  },
+                                  "properties": {
+                                    "additionalProperties": {
+                                      "type": "string"
+                                    },
+                                    "type": "object"
+                                  },
+                                  "server_last_modified": {
+                                    "format": "date-time",
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              {
+                                "properties": {
+                                  "error": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "cases"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
             "description": "Success."
           }
         },
@@ -1165,6 +2063,93 @@
         },
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "case": {
+                      "properties": {
+                        "case_id": {
+                          "type": "string"
+                        },
+                        "case_name": {
+                          "type": "string"
+                        },
+                        "case_type": {
+                          "type": "string"
+                        },
+                        "closed": {
+                          "type": "boolean"
+                        },
+                        "date_closed": {
+                          "format": "date-time",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "date_opened": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "domain": {
+                          "type": "string"
+                        },
+                        "external_id": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "indexed_on": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "indices": {
+                          "additionalProperties": {
+                            "properties": {
+                              "case_id": {
+                                "type": "string"
+                              },
+                              "case_type": {
+                                "type": "string"
+                              },
+                              "relationship": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "object"
+                        },
+                        "last_modified": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "owner_id": {
+                          "type": "string"
+                        },
+                        "properties": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "server_last_modified": {
+                          "format": "date-time",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "form_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "form_id",
+                    "case"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
             "description": "Success."
           }
         },
