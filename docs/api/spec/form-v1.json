@@ -179,7 +179,7 @@
             }
           },
           {
-            "description": "Exact version of the CommCare application used to submit the form.",
+            "description": "Not supported: accepted but always returns zero results. The generic unconsumed-query-parameter fallback in es_query_from_get_params() filters on a top-level \"appVersion\" field, but appVersion is only mapped under \"form.meta.appVersion\" (corehq/apps/es/mappings/xform_mapping.py), so the filter never matches. Documented here only because the legacy RST page claimed it worked.",
             "in": "query",
             "name": "appVersion",
             "required": false,
