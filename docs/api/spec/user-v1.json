@@ -379,160 +379,7 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "meta": {
-                    "limit": 2,
-                    "next": null,
-                    "offset": 0,
-                    "previous": null,
-                    "total_count": 29
-                  },
-                  "objects": [
-                    {
-                      "default_phone_number": "+50253311399",
-                      "email": "jdoe@example.org",
-                      "eulas": "[]",
-                      "first_name": "John",
-                      "groups": [
-                        "9a0accdba29e01a61ea099394737c4fb"
-                      ],
-                      "id": "3c5a623af057e23a32ae4000cf291339",
-                      "last_name": "Doe",
-                      "locations": [
-                        "26fc44e2792b4f2fa8ef86178f0a958e"
-                      ],
-                      "phone_numbers": [
-                        "+50253311399",
-                        "+50253314588"
-                      ],
-                      "primary_location": "26fc44e2792b4f2fa8ef86178f0a958e",
-                      "resource_uri": "/a/example/api/user/v1/3c5a623af057e23a32ae4000cf291339/",
-                      "user_data": {
-                        "chw_id": "13/43/DFA"
-                      },
-                      "username": "jdoe@example.commcarehq.org"
-                    }
-                  ]
-                },
-                "schema": {
-                  "properties": {
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginationMeta"
-                    },
-                    "objects": {
-                      "items": {
-                        "properties": {
-                          "default_phone_number": {
-                            "description": "Primary phone number of user.",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "email": {
-                            "description": "Email address of user.",
-                            "type": "string"
-                          },
-                          "eulas": {
-                            "description": "End user license agreements the user has accepted.",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "first_name": {
-                            "description": "First name of user.",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "groups": {
-                            "description": "List of all group IDs belonging to the user.",
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          "id": {
-                            "description": "User UUID.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "last_name": {
-                            "description": "Last name of user.",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "locations": {
-                            "description": "A list of location IDs that the user is assigned to.",
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          "phone_numbers": {
-                            "description": "List of all phone numbers of the user.",
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          "primary_location": {
-                            "description": "The location ID of the primary location of the user.",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "require_account_confirmation": {
-                            "default": false,
-                            "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                            "type": "boolean",
-                            "writeOnly": true
-                          },
-                          "resource_uri": {
-                            "description": "URI of this record in the API.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "send_confirmation_email_now": {
-                            "default": false,
-                            "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                            "type": "boolean",
-                            "writeOnly": true
-                          },
-                          "user_data": {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "description": "Any additional custom data associated with the user.",
-                            "type": "object"
-                          },
-                          "username": {
-                            "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "A page of records."
-          }
-        },
-        "summary": "Mobile Workers",
-        "tags": [
-          "user"
-        ]
-      }
-    },
-    "/a/{domain}/api/user/v1/{pk}/": {
-      "delete": {
-        "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nRequires the `edit_commcare_users` permission.",
-        "operationId": "user_v1_detail_delete",
-        "responses": {
-          "200": {
+          "201": {
             "content": {
               "application/json": {
                 "schema": {
@@ -625,7 +472,22 @@
                 }
               }
             },
-            "description": "The requested record."
+            "description": "The created record."
+          }
+        },
+        "summary": "Mobile Workers",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/a/{domain}/api/user/v1/{pk}/": {
+      "delete": {
+        "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nRequires the `edit_commcare_users` permission.",
+        "operationId": "user_v1_detail_delete",
+        "responses": {
+          "204": {
+            "description": "The record was deleted."
           }
         },
         "summary": "Mobile Workers",
@@ -940,7 +802,102 @@
                 }
               }
             },
-            "description": "The requested record."
+            "description": "The record was updated."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "default_phone_number": {
+                      "description": "Primary phone number of user.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "email": {
+                      "description": "Email address of user.",
+                      "type": "string"
+                    },
+                    "eulas": {
+                      "description": "End user license agreements the user has accepted.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "first_name": {
+                      "description": "First name of user.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "groups": {
+                      "description": "List of all group IDs belonging to the user.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "id": {
+                      "description": "User UUID.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "last_name": {
+                      "description": "Last name of user.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "locations": {
+                      "description": "A list of location IDs that the user is assigned to.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "phone_numbers": {
+                      "description": "List of all phone numbers of the user.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "primary_location": {
+                      "description": "The location ID of the primary location of the user.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "require_account_confirmation": {
+                      "default": false,
+                      "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
+                      "type": "boolean",
+                      "writeOnly": true
+                    },
+                    "resource_uri": {
+                      "description": "URI of this record in the API.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "send_confirmation_email_now": {
+                      "default": false,
+                      "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
+                      "type": "boolean",
+                      "writeOnly": true
+                    },
+                    "user_data": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Any additional custom data associated with the user.",
+                      "type": "object"
+                    },
+                    "username": {
+                      "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record was created."
           }
         },
         "summary": "Mobile Workers",

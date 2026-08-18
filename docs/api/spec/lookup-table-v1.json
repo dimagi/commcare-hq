@@ -267,101 +267,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "meta": {
-                    "limit": 20,
-                    "next": null,
-                    "offset": 0,
-                    "previous": null,
-                    "total_count": 1
-                  },
-                  "objects": [
-                    {
-                      "fields": [
-                        {
-                          "field_name": "name",
-                          "properties": [
-                            "lang"
-                          ]
-                        },
-                        {
-                          "field_name": "price",
-                          "properties": []
-                        }
-                      ],
-                      "id": "bcf49791f7f04f09bd46262097e107f2",
-                      "is_global": true,
-                      "item_attributes": [],
-                      "resource_uri": "https://www.commcarehq.org/a/demo/api/lookup_table/v1/bcf49791f7f04f09bd46262097e107f2/",
-                      "tag": "vaccines"
-                    }
-                  ]
-                },
-                "schema": {
-                  "properties": {
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginationMeta"
-                    },
-                    "objects": {
-                      "items": {
-                        "properties": {
-                          "fields": {
-                            "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
-                            "items": {
-                              "properties": {
-                                "field_name": {
-                                  "type": "string"
-                                },
-                                "properties": {
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "type": "array"
-                          },
-                          "id": {
-                            "description": "Unique identifier of the lookup table.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "is_global": {
-                            "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
-                            "type": "boolean"
-                          },
-                          "item_attributes": {
-                            "description": "Names of the item attributes available on rows of this lookup table.",
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          "resource_uri": {
-                            "description": "URI of this record in the API.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "tag": {
-                            "description": "Name of the lookup table, unique within the domain.",
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "A page of records."
+          "201": {
+            "description": "The created record."
           }
         },
         "summary": "Lookup Tables",
@@ -375,60 +282,8 @@
         "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
         "operationId": "lookup_table_v1_detail_delete",
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "fields": {
-                      "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
-                      "items": {
-                        "properties": {
-                          "field_name": {
-                            "type": "string"
-                          },
-                          "properties": {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    "id": {
-                      "description": "Unique identifier of the lookup table.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "is_global": {
-                      "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
-                      "type": "boolean"
-                    },
-                    "item_attributes": {
-                      "description": "Names of the item attributes available on rows of this lookup table.",
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "resource_uri": {
-                      "description": "URI of this record in the API.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "tag": {
-                      "description": "Name of the lookup table, unique within the domain.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "The requested record."
+          "204": {
+            "description": "The record was deleted."
           }
         },
         "summary": "Lookup Tables",
@@ -570,60 +425,11 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "fields": {
-                      "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
-                      "items": {
-                        "properties": {
-                          "field_name": {
-                            "type": "string"
-                          },
-                          "properties": {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    "id": {
-                      "description": "Unique identifier of the lookup table.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "is_global": {
-                      "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
-                      "type": "boolean"
-                    },
-                    "item_attributes": {
-                      "description": "Names of the item attributes available on rows of this lookup table.",
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "resource_uri": {
-                      "description": "URI of this record in the API.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "tag": {
-                      "description": "Name of the lookup table, unique within the domain.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "The requested record."
+          "201": {
+            "description": "The record was created."
+          },
+          "204": {
+            "description": "The record was updated."
           }
         },
         "summary": "Lookup Tables",

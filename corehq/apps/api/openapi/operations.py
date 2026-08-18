@@ -192,15 +192,27 @@ def resource_paths(entry):
 
     paths = {}
 
+    always_return_data = resource._meta.always_return_data
+    collection_name = resource._meta.collection_name
+
     list_methods = resource_schema['allowed_list_http_methods']
     if list_methods:
         item = {'parameters': list(path_parameters)}
         for method in list_methods:
-            responses = _list_responses(schema)
-            example = docs.get('examples', {}).get('list_response')
-            if example:
-                responses['200']['content']['application/json']['example'] = (
-                    load_example(example)
+            if method == 'get':
+                responses = _list_responses(schema)
+                example = docs.get('examples', {}).get('list_response')
+                if example:
+                    responses['200']['content']['application/json'][
+                        'example'
+                    ] = load_example(example)
+            else:
+                responses = _write_responses(
+                    method,
+                    schema,
+                    always_return_data=always_return_data,
+                    is_list=True,
+                    collection_name=collection_name,
                 )
             operation = {
                 'summary': summary,
@@ -245,16 +257,28 @@ def resource_paths(entry):
             # agreement.
             if method == 'post':
                 continue
+            if method == 'get':
+                responses = {
+                    '200': {
+                        'description': 'The requested record.',
+                        'content': {
+                            'application/json': {'schema': schema}
+                        },
+                    },
+                }
+            else:
+                responses = _write_responses(
+                    method,
+                    schema,
+                    always_return_data=always_return_data,
+                    is_list=False,
+                    collection_name=collection_name,
+                )
             operation = {
                 'summary': summary,
                 'operationId': f'{name}_{entry.version}_detail_{method}',
                 'tags': [name],
-                'responses': {
-                    '200': {
-                        'description': 'The requested record.',
-                        'content': {'application/json': {'schema': schema}},
-                    },
-                },
+                'responses': responses,
             }
             if description:
                 operation['description'] = description
@@ -272,6 +296,77 @@ def _request_body(schema):
         'required': True,
         'content': {'application/json': {'schema': schema}},
     }
+
+
+def _write_responses(
+    method, schema, *, always_return_data, is_list, collection_name
+):
+    """The response(s) Tastypie actually returns for a write method.
+
+    Read from ``tastypie.resources.Resource``'s ``post_list``,
+    ``put_list``, ``put_detail``, ``patch_list``/``patch_detail`` and
+    ``delete_list``/``delete_detail``:
+
+    - POST (list only; never a real operation on a detail path -- see
+      the caller) creates a record and returns 201, with a body (the
+      created record) only when ``Meta.always_return_data`` is set;
+      otherwise the body is empty and the record's URI comes back in a
+      ``Location`` header instead.
+    - PUT normally updates: 204 with no body by default, or 200 with the
+      updated record (or records, for the list path) when
+      ``always_return_data`` is set. On a detail path, if the identified
+      record does not exist, Tastypie falls back to creating it instead,
+      which returns 201 -- with a body only when ``always_return_data``
+      is set -- regardless of the flag's effect on the update case. Both
+      outcomes are documented as alternate responses for PUT detail.
+    - PATCH returns 202, with a body only when ``always_return_data`` is
+      set.
+    - DELETE always returns 204 with no body -- never a body, regardless
+      of ``always_return_data``, which Tastypie's delete methods do not
+      consult at all.
+    """
+    collection_schema = {
+        'type': 'object',
+        'properties': {collection_name: {'type': 'array', 'items': schema}},
+    }
+
+    def body_response(status, description, body_schema):
+        response = {'description': description}
+        if body_schema is not None:
+            response['content'] = {
+                'application/json': {'schema': body_schema}
+            }
+        return {status: response}
+
+    if method == 'post':
+        body = schema if always_return_data else None
+        return body_response('201', 'The created record.', body)
+
+    if method == 'delete':
+        return body_response('204', 'The record was deleted.', None)
+
+    if method == 'patch':
+        body = schema if always_return_data else None
+        return body_response('202', 'The update was accepted.', body)
+
+    if method == 'put':
+        updated_schema = collection_schema if is_list else schema
+        update_body = updated_schema if always_return_data else None
+        responses = body_response(
+            '200' if always_return_data else '204',
+            'The record was updated.',
+            update_body,
+        )
+        if not is_list:
+            # The identified record did not exist, so it was created
+            # instead.
+            create_body = schema if always_return_data else None
+            responses.update(
+                body_response('201', 'The record was created.', create_body)
+            )
+        return responses
+
+    raise AssertionError(f'unhandled write method: {method}')
 
 
 def _list_responses(schema):

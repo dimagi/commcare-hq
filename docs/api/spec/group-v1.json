@@ -257,84 +257,49 @@
           "required": true
         },
         "responses": {
-          "200": {
+          "202": {
             "content": {
               "application/json": {
-                "example": {
-                  "meta": {
-                    "limit": 20,
-                    "next": null,
-                    "offset": 0,
-                    "previous": null,
-                    "total_count": 1
-                  },
-                  "objects": [
-                    {
-                      "case_sharing": false,
-                      "domain": "cloudcaredemo",
-                      "id": "1eb59d6938fc7e510254d8c2f63d944f",
-                      "metadata": {},
-                      "name": "Wozzle",
-                      "reporting": true,
-                      "resource_uri": "/a/cloudcaredemo/api/group/v1/1eb59d6938fc7e510254d8c2f63d944f/",
-                      "users": [
-                        "91da6b1c78699adfb8679b741caf9f00",
-                        "8a642f722c9e617eeed29290e409fcd5"
-                      ]
-                    }
-                  ]
-                },
                 "schema": {
                   "properties": {
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginationMeta"
+                    "case_sharing": {
+                      "default": false,
+                      "description": "Whether members of this group share cases with each other.",
+                      "type": "boolean"
                     },
-                    "objects": {
+                    "domain": {
+                      "description": "Domain (project space) that owns the group.",
+                      "type": "string"
+                    },
+                    "id": {
+                      "description": "Group UUID.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "additionalProperties": true,
+                      "description": "Custom metadata associated with the group.",
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "name": {
+                      "description": "Name of the group.",
+                      "type": "string"
+                    },
+                    "reporting": {
+                      "default": true,
+                      "description": "Whether this group appears in the group filter list for reports.",
+                      "type": "boolean"
+                    },
+                    "resource_uri": {
+                      "description": "URI of this record in the API.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "users": {
+                      "description": "UUIDs of the users in this group.",
                       "items": {
-                        "properties": {
-                          "case_sharing": {
-                            "default": false,
-                            "description": "Whether members of this group share cases with each other.",
-                            "type": "boolean"
-                          },
-                          "domain": {
-                            "description": "Domain (project space) that owns the group.",
-                            "type": "string"
-                          },
-                          "id": {
-                            "description": "Group UUID.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "metadata": {
-                            "additionalProperties": true,
-                            "description": "Custom metadata associated with the group.",
-                            "nullable": true,
-                            "type": "object"
-                          },
-                          "name": {
-                            "description": "Name of the group.",
-                            "type": "string"
-                          },
-                          "reporting": {
-                            "default": true,
-                            "description": "Whether this group appears in the group filter list for reports.",
-                            "type": "boolean"
-                          },
-                          "resource_uri": {
-                            "description": "URI of this record in the API.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "users": {
-                            "description": "UUIDs of the users in this group.",
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        },
-                        "type": "object"
+                        "type": "string"
                       },
                       "type": "array"
                     }
@@ -343,7 +308,7 @@
                 }
               }
             },
-            "description": "A page of records."
+            "description": "The update was accepted."
           }
         },
         "summary": "Groups",
@@ -398,107 +363,7 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "meta": {
-                    "limit": 20,
-                    "next": null,
-                    "offset": 0,
-                    "previous": null,
-                    "total_count": 1
-                  },
-                  "objects": [
-                    {
-                      "case_sharing": false,
-                      "domain": "cloudcaredemo",
-                      "id": "1eb59d6938fc7e510254d8c2f63d944f",
-                      "metadata": {},
-                      "name": "Wozzle",
-                      "reporting": true,
-                      "resource_uri": "/a/cloudcaredemo/api/group/v1/1eb59d6938fc7e510254d8c2f63d944f/",
-                      "users": [
-                        "91da6b1c78699adfb8679b741caf9f00",
-                        "8a642f722c9e617eeed29290e409fcd5"
-                      ]
-                    }
-                  ]
-                },
-                "schema": {
-                  "properties": {
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginationMeta"
-                    },
-                    "objects": {
-                      "items": {
-                        "properties": {
-                          "case_sharing": {
-                            "default": false,
-                            "description": "Whether members of this group share cases with each other.",
-                            "type": "boolean"
-                          },
-                          "domain": {
-                            "description": "Domain (project space) that owns the group.",
-                            "type": "string"
-                          },
-                          "id": {
-                            "description": "Group UUID.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "metadata": {
-                            "additionalProperties": true,
-                            "description": "Custom metadata associated with the group.",
-                            "nullable": true,
-                            "type": "object"
-                          },
-                          "name": {
-                            "description": "Name of the group.",
-                            "type": "string"
-                          },
-                          "reporting": {
-                            "default": true,
-                            "description": "Whether this group appears in the group filter list for reports.",
-                            "type": "boolean"
-                          },
-                          "resource_uri": {
-                            "description": "URI of this record in the API.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "users": {
-                            "description": "UUIDs of the users in this group.",
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "A page of records."
-          }
-        },
-        "summary": "Groups",
-        "tags": [
-          "group"
-        ]
-      }
-    },
-    "/a/{domain}/api/group/v1/{pk}/": {
-      "delete": {
-        "description": "List the groups in a project space, or fetch a single group by identifier. Groups collect mobile workers for case sharing and reporting.\n\nRequires the `edit_commcare_users` permission.",
-        "operationId": "group_v1_detail_delete",
-        "responses": {
-          "200": {
+          "201": {
             "content": {
               "application/json": {
                 "schema": {
@@ -549,7 +414,22 @@
                 }
               }
             },
-            "description": "The requested record."
+            "description": "The created record."
+          }
+        },
+        "summary": "Groups",
+        "tags": [
+          "group"
+        ]
+      }
+    },
+    "/a/{domain}/api/group/v1/{pk}/": {
+      "delete": {
+        "description": "List the groups in a project space, or fetch a single group by identifier. Groups collect mobile workers for case sharing and reporting.\n\nRequires the `edit_commcare_users` permission.",
+        "operationId": "group_v1_detail_delete",
+        "responses": {
+          "204": {
+            "description": "The record was deleted."
           }
         },
         "summary": "Groups",
@@ -738,7 +618,60 @@
                 }
               }
             },
-            "description": "The requested record."
+            "description": "The record was updated."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "case_sharing": {
+                      "default": false,
+                      "description": "Whether members of this group share cases with each other.",
+                      "type": "boolean"
+                    },
+                    "domain": {
+                      "description": "Domain (project space) that owns the group.",
+                      "type": "string"
+                    },
+                    "id": {
+                      "description": "Group UUID.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "additionalProperties": true,
+                      "description": "Custom metadata associated with the group.",
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "name": {
+                      "description": "Name of the group.",
+                      "type": "string"
+                    },
+                    "reporting": {
+                      "default": true,
+                      "description": "Whether this group appears in the group filter list for reports.",
+                      "type": "boolean"
+                    },
+                    "resource_uri": {
+                      "description": "URI of this record in the API.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "users": {
+                      "description": "UUIDs of the users in this group.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record was created."
           }
         },
         "summary": "Groups",

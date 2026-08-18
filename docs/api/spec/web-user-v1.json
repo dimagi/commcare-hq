@@ -436,7 +436,7 @@
           "required": true
         },
         "responses": {
-          "200": {
+          "202": {
             "content": {
               "application/json": {
                 "schema": {
@@ -526,7 +526,7 @@
                 }
               }
             },
-            "description": "The requested record."
+            "description": "The update was accepted."
           }
         },
         "summary": "Web-User",

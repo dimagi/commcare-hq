@@ -3317,84 +3317,49 @@
           "required": true
         },
         "responses": {
-          "200": {
+          "202": {
             "content": {
               "application/json": {
-                "example": {
-                  "meta": {
-                    "limit": 20,
-                    "next": null,
-                    "offset": 0,
-                    "previous": null,
-                    "total_count": 1
-                  },
-                  "objects": [
-                    {
-                      "case_sharing": false,
-                      "domain": "cloudcaredemo",
-                      "id": "1eb59d6938fc7e510254d8c2f63d944f",
-                      "metadata": {},
-                      "name": "Wozzle",
-                      "reporting": true,
-                      "resource_uri": "/a/cloudcaredemo/api/group/v1/1eb59d6938fc7e510254d8c2f63d944f/",
-                      "users": [
-                        "91da6b1c78699adfb8679b741caf9f00",
-                        "8a642f722c9e617eeed29290e409fcd5"
-                      ]
-                    }
-                  ]
-                },
                 "schema": {
                   "properties": {
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginationMeta"
+                    "case_sharing": {
+                      "default": false,
+                      "description": "Whether members of this group share cases with each other.",
+                      "type": "boolean"
                     },
-                    "objects": {
+                    "domain": {
+                      "description": "Domain (project space) that owns the group.",
+                      "type": "string"
+                    },
+                    "id": {
+                      "description": "Group UUID.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "additionalProperties": true,
+                      "description": "Custom metadata associated with the group.",
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "name": {
+                      "description": "Name of the group.",
+                      "type": "string"
+                    },
+                    "reporting": {
+                      "default": true,
+                      "description": "Whether this group appears in the group filter list for reports.",
+                      "type": "boolean"
+                    },
+                    "resource_uri": {
+                      "description": "URI of this record in the API.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "users": {
+                      "description": "UUIDs of the users in this group.",
                       "items": {
-                        "properties": {
-                          "case_sharing": {
-                            "default": false,
-                            "description": "Whether members of this group share cases with each other.",
-                            "type": "boolean"
-                          },
-                          "domain": {
-                            "description": "Domain (project space) that owns the group.",
-                            "type": "string"
-                          },
-                          "id": {
-                            "description": "Group UUID.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "metadata": {
-                            "additionalProperties": true,
-                            "description": "Custom metadata associated with the group.",
-                            "nullable": true,
-                            "type": "object"
-                          },
-                          "name": {
-                            "description": "Name of the group.",
-                            "type": "string"
-                          },
-                          "reporting": {
-                            "default": true,
-                            "description": "Whether this group appears in the group filter list for reports.",
-                            "type": "boolean"
-                          },
-                          "resource_uri": {
-                            "description": "URI of this record in the API.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "users": {
-                            "description": "UUIDs of the users in this group.",
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        },
-                        "type": "object"
+                        "type": "string"
                       },
                       "type": "array"
                     }
@@ -3403,7 +3368,7 @@
                 }
               }
             },
-            "description": "A page of records."
+            "description": "The update was accepted."
           }
         },
         "summary": "Groups",
@@ -3458,107 +3423,7 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "meta": {
-                    "limit": 20,
-                    "next": null,
-                    "offset": 0,
-                    "previous": null,
-                    "total_count": 1
-                  },
-                  "objects": [
-                    {
-                      "case_sharing": false,
-                      "domain": "cloudcaredemo",
-                      "id": "1eb59d6938fc7e510254d8c2f63d944f",
-                      "metadata": {},
-                      "name": "Wozzle",
-                      "reporting": true,
-                      "resource_uri": "/a/cloudcaredemo/api/group/v1/1eb59d6938fc7e510254d8c2f63d944f/",
-                      "users": [
-                        "91da6b1c78699adfb8679b741caf9f00",
-                        "8a642f722c9e617eeed29290e409fcd5"
-                      ]
-                    }
-                  ]
-                },
-                "schema": {
-                  "properties": {
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginationMeta"
-                    },
-                    "objects": {
-                      "items": {
-                        "properties": {
-                          "case_sharing": {
-                            "default": false,
-                            "description": "Whether members of this group share cases with each other.",
-                            "type": "boolean"
-                          },
-                          "domain": {
-                            "description": "Domain (project space) that owns the group.",
-                            "type": "string"
-                          },
-                          "id": {
-                            "description": "Group UUID.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "metadata": {
-                            "additionalProperties": true,
-                            "description": "Custom metadata associated with the group.",
-                            "nullable": true,
-                            "type": "object"
-                          },
-                          "name": {
-                            "description": "Name of the group.",
-                            "type": "string"
-                          },
-                          "reporting": {
-                            "default": true,
-                            "description": "Whether this group appears in the group filter list for reports.",
-                            "type": "boolean"
-                          },
-                          "resource_uri": {
-                            "description": "URI of this record in the API.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "users": {
-                            "description": "UUIDs of the users in this group.",
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "A page of records."
-          }
-        },
-        "summary": "Groups",
-        "tags": [
-          "group"
-        ]
-      }
-    },
-    "/a/{domain}/api/group/v1/{pk}/": {
-      "delete": {
-        "description": "List the groups in a project space, or fetch a single group by identifier. Groups collect mobile workers for case sharing and reporting.\n\nRequires the `edit_commcare_users` permission.",
-        "operationId": "group_v1_detail_delete",
-        "responses": {
-          "200": {
+          "201": {
             "content": {
               "application/json": {
                 "schema": {
@@ -3609,7 +3474,22 @@
                 }
               }
             },
-            "description": "The requested record."
+            "description": "The created record."
+          }
+        },
+        "summary": "Groups",
+        "tags": [
+          "group"
+        ]
+      }
+    },
+    "/a/{domain}/api/group/v1/{pk}/": {
+      "delete": {
+        "description": "List the groups in a project space, or fetch a single group by identifier. Groups collect mobile workers for case sharing and reporting.\n\nRequires the `edit_commcare_users` permission.",
+        "operationId": "group_v1_detail_delete",
+        "responses": {
+          "204": {
+            "description": "The record was deleted."
           }
         },
         "summary": "Groups",
@@ -3798,7 +3678,60 @@
                 }
               }
             },
-            "description": "The requested record."
+            "description": "The record was updated."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "case_sharing": {
+                      "default": false,
+                      "description": "Whether members of this group share cases with each other.",
+                      "type": "boolean"
+                    },
+                    "domain": {
+                      "description": "Domain (project space) that owns the group.",
+                      "type": "string"
+                    },
+                    "id": {
+                      "description": "Group UUID.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "additionalProperties": true,
+                      "description": "Custom metadata associated with the group.",
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "name": {
+                      "description": "Name of the group.",
+                      "type": "string"
+                    },
+                    "reporting": {
+                      "default": true,
+                      "description": "Whether this group appears in the group filter list for reports.",
+                      "type": "boolean"
+                    },
+                    "resource_uri": {
+                      "description": "URI of this record in the API.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "users": {
+                      "description": "UUIDs of the users in this group.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record was created."
           }
         },
         "summary": "Groups",
@@ -4438,105 +4371,68 @@
           "required": true
         },
         "responses": {
-          "200": {
+          "202": {
             "content": {
               "application/json": {
-                "example": {
-                  "meta": {
-                    "limit": 20,
-                    "next": null,
-                    "offset": 0,
-                    "previous": null,
-                    "total_count": 1
-                  },
-                  "objects": [
-                    {
-                      "domain": "dimagi-test",
-                      "last_modified": "2024-03-11T19:29:16.845849",
-                      "latitude": "31.4100000000",
-                      "location_data": {
-                        "pop": "1001"
-                      },
-                      "location_id": "68e65fbc2dc840ff8bf03849e57aca88",
-                      "location_type_code": "county",
-                      "location_type_name": "County",
-                      "longitude": null,
-                      "name": "Fairfax County",
-                      "parent_location_id": "41b0bdfbae20428e9435ae8c3dcd22e7",
-                      "site_code": "fairfax_county"
-                    }
-                  ]
-                },
                 "schema": {
                   "properties": {
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginationMeta"
+                    "domain": {
+                      "description": "Domain (project space) that owns the location.",
+                      "type": "string"
                     },
-                    "objects": {
-                      "items": {
-                        "properties": {
-                          "domain": {
-                            "description": "Domain (project space) that owns the location.",
-                            "type": "string"
-                          },
-                          "last_modified": {
-                            "description": "Date and time the location was last modified.",
-                            "format": "date-time",
-                            "type": "string"
-                          },
-                          "latitude": {
-                            "description": "Latitude coordinate of the location.",
-                            "format": "decimal",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "location_data": {
-                            "additionalProperties": true,
-                            "description": "Custom data associated with the location, keyed by field name.",
-                            "type": "object"
-                          },
-                          "location_id": {
-                            "description": "UUID of the location.",
-                            "type": "string"
-                          },
-                          "location_type_code": {
-                            "description": "Code of the location type of this location.",
-                            "type": "string"
-                          },
-                          "location_type_name": {
-                            "description": "Name of the location type of this location.",
-                            "type": "string"
-                          },
-                          "longitude": {
-                            "description": "Longitude coordinate of the location.",
-                            "format": "decimal",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "name": {
-                            "description": "Name of the location.",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "parent_location_id": {
-                            "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
-                            "type": "string"
-                          },
-                          "site_code": {
-                            "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
+                    "last_modified": {
+                      "description": "Date and time the location was last modified.",
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "latitude": {
+                      "description": "Latitude coordinate of the location.",
+                      "format": "decimal",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "location_data": {
+                      "additionalProperties": true,
+                      "description": "Custom data associated with the location, keyed by field name.",
+                      "type": "object"
+                    },
+                    "location_id": {
+                      "description": "UUID of the location.",
+                      "type": "string"
+                    },
+                    "location_type_code": {
+                      "description": "Code of the location type of this location.",
+                      "type": "string"
+                    },
+                    "location_type_name": {
+                      "description": "Name of the location type of this location.",
+                      "type": "string"
+                    },
+                    "longitude": {
+                      "description": "Longitude coordinate of the location.",
+                      "format": "decimal",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "name": {
+                      "description": "Name of the location.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "parent_location_id": {
+                      "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
+                      "type": "string"
+                    },
+                    "site_code": {
+                      "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
+                      "type": "string"
                     }
                   },
                   "type": "object"
                 }
               }
             },
-            "description": "A page of records."
+            "description": "The update was accepted."
           }
         },
         "summary": "Locations (v2)",
@@ -4599,105 +4495,68 @@
           "required": true
         },
         "responses": {
-          "200": {
+          "201": {
             "content": {
               "application/json": {
-                "example": {
-                  "meta": {
-                    "limit": 20,
-                    "next": null,
-                    "offset": 0,
-                    "previous": null,
-                    "total_count": 1
-                  },
-                  "objects": [
-                    {
-                      "domain": "dimagi-test",
-                      "last_modified": "2024-03-11T19:29:16.845849",
-                      "latitude": "31.4100000000",
-                      "location_data": {
-                        "pop": "1001"
-                      },
-                      "location_id": "68e65fbc2dc840ff8bf03849e57aca88",
-                      "location_type_code": "county",
-                      "location_type_name": "County",
-                      "longitude": null,
-                      "name": "Fairfax County",
-                      "parent_location_id": "41b0bdfbae20428e9435ae8c3dcd22e7",
-                      "site_code": "fairfax_county"
-                    }
-                  ]
-                },
                 "schema": {
                   "properties": {
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginationMeta"
+                    "domain": {
+                      "description": "Domain (project space) that owns the location.",
+                      "type": "string"
                     },
-                    "objects": {
-                      "items": {
-                        "properties": {
-                          "domain": {
-                            "description": "Domain (project space) that owns the location.",
-                            "type": "string"
-                          },
-                          "last_modified": {
-                            "description": "Date and time the location was last modified.",
-                            "format": "date-time",
-                            "type": "string"
-                          },
-                          "latitude": {
-                            "description": "Latitude coordinate of the location.",
-                            "format": "decimal",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "location_data": {
-                            "additionalProperties": true,
-                            "description": "Custom data associated with the location, keyed by field name.",
-                            "type": "object"
-                          },
-                          "location_id": {
-                            "description": "UUID of the location.",
-                            "type": "string"
-                          },
-                          "location_type_code": {
-                            "description": "Code of the location type of this location.",
-                            "type": "string"
-                          },
-                          "location_type_name": {
-                            "description": "Name of the location type of this location.",
-                            "type": "string"
-                          },
-                          "longitude": {
-                            "description": "Longitude coordinate of the location.",
-                            "format": "decimal",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "name": {
-                            "description": "Name of the location.",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "parent_location_id": {
-                            "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
-                            "type": "string"
-                          },
-                          "site_code": {
-                            "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
+                    "last_modified": {
+                      "description": "Date and time the location was last modified.",
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "latitude": {
+                      "description": "Latitude coordinate of the location.",
+                      "format": "decimal",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "location_data": {
+                      "additionalProperties": true,
+                      "description": "Custom data associated with the location, keyed by field name.",
+                      "type": "object"
+                    },
+                    "location_id": {
+                      "description": "UUID of the location.",
+                      "type": "string"
+                    },
+                    "location_type_code": {
+                      "description": "Code of the location type of this location.",
+                      "type": "string"
+                    },
+                    "location_type_name": {
+                      "description": "Name of the location type of this location.",
+                      "type": "string"
+                    },
+                    "longitude": {
+                      "description": "Longitude coordinate of the location.",
+                      "format": "decimal",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "name": {
+                      "description": "Name of the location.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "parent_location_id": {
+                      "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
+                      "type": "string"
+                    },
+                    "site_code": {
+                      "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
+                      "type": "string"
                     }
                   },
                   "type": "object"
                 }
               }
             },
-            "description": "A page of records."
+            "description": "The created record."
           }
         },
         "summary": "Locations (v2)",
@@ -4916,7 +4775,70 @@
                 }
               }
             },
-            "description": "The requested record."
+            "description": "The record was updated."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "domain": {
+                      "description": "Domain (project space) that owns the location.",
+                      "type": "string"
+                    },
+                    "last_modified": {
+                      "description": "Date and time the location was last modified.",
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "latitude": {
+                      "description": "Latitude coordinate of the location.",
+                      "format": "decimal",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "location_data": {
+                      "additionalProperties": true,
+                      "description": "Custom data associated with the location, keyed by field name.",
+                      "type": "object"
+                    },
+                    "location_id": {
+                      "description": "UUID of the location.",
+                      "type": "string"
+                    },
+                    "location_type_code": {
+                      "description": "Code of the location type of this location.",
+                      "type": "string"
+                    },
+                    "location_type_name": {
+                      "description": "Name of the location type of this location.",
+                      "type": "string"
+                    },
+                    "longitude": {
+                      "description": "Longitude coordinate of the location.",
+                      "format": "decimal",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "name": {
+                      "description": "Name of the location.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "parent_location_id": {
+                      "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
+                      "type": "string"
+                    },
+                    "site_code": {
+                      "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record was created."
           }
         },
         "summary": "Locations (v2)",
@@ -5344,101 +5266,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "meta": {
-                    "limit": 20,
-                    "next": null,
-                    "offset": 0,
-                    "previous": null,
-                    "total_count": 1
-                  },
-                  "objects": [
-                    {
-                      "fields": [
-                        {
-                          "field_name": "name",
-                          "properties": [
-                            "lang"
-                          ]
-                        },
-                        {
-                          "field_name": "price",
-                          "properties": []
-                        }
-                      ],
-                      "id": "bcf49791f7f04f09bd46262097e107f2",
-                      "is_global": true,
-                      "item_attributes": [],
-                      "resource_uri": "https://www.commcarehq.org/a/demo/api/lookup_table/v1/bcf49791f7f04f09bd46262097e107f2/",
-                      "tag": "vaccines"
-                    }
-                  ]
-                },
-                "schema": {
-                  "properties": {
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginationMeta"
-                    },
-                    "objects": {
-                      "items": {
-                        "properties": {
-                          "fields": {
-                            "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
-                            "items": {
-                              "properties": {
-                                "field_name": {
-                                  "type": "string"
-                                },
-                                "properties": {
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "type": "array"
-                          },
-                          "id": {
-                            "description": "Unique identifier of the lookup table.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "is_global": {
-                            "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
-                            "type": "boolean"
-                          },
-                          "item_attributes": {
-                            "description": "Names of the item attributes available on rows of this lookup table.",
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          "resource_uri": {
-                            "description": "URI of this record in the API.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "tag": {
-                            "description": "Name of the lookup table, unique within the domain.",
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "A page of records."
+          "201": {
+            "description": "The created record."
           }
         },
         "summary": "Lookup Tables",
@@ -5452,60 +5281,8 @@
         "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
         "operationId": "lookup_table_v1_detail_delete",
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "fields": {
-                      "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
-                      "items": {
-                        "properties": {
-                          "field_name": {
-                            "type": "string"
-                          },
-                          "properties": {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    "id": {
-                      "description": "Unique identifier of the lookup table.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "is_global": {
-                      "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
-                      "type": "boolean"
-                    },
-                    "item_attributes": {
-                      "description": "Names of the item attributes available on rows of this lookup table.",
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "resource_uri": {
-                      "description": "URI of this record in the API.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "tag": {
-                      "description": "Name of the lookup table, unique within the domain.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "The requested record."
+          "204": {
+            "description": "The record was deleted."
           }
         },
         "summary": "Lookup Tables",
@@ -5647,60 +5424,11 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "fields": {
-                      "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
-                      "items": {
-                        "properties": {
-                          "field_name": {
-                            "type": "string"
-                          },
-                          "properties": {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    "id": {
-                      "description": "Unique identifier of the lookup table.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "is_global": {
-                      "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
-                      "type": "boolean"
-                    },
-                    "item_attributes": {
-                      "description": "Names of the item attributes available on rows of this lookup table.",
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "resource_uri": {
-                      "description": "URI of this record in the API.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "tag": {
-                      "description": "Name of the lookup table, unique within the domain.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "The requested record."
+          "201": {
+            "description": "The record was created."
+          },
+          "204": {
+            "description": "The record was updated."
           }
         },
         "summary": "Lookup Tables",
@@ -5898,79 +5626,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginationMeta"
-                    },
-                    "objects": {
-                      "items": {
-                        "properties": {
-                          "data_type_id": {
-                            "description": "Identifier of the lookup table this item belongs to.",
-                            "type": "string"
-                          },
-                          "fields": {
-                            "additionalProperties": {
-                              "properties": {
-                                "field_list": {
-                                  "items": {
-                                    "properties": {
-                                      "field_value": {
-                                        "type": "string"
-                                      },
-                                      "properties": {
-                                        "additionalProperties": {
-                                          "type": "string"
-                                        },
-                                        "type": "object"
-                                      }
-                                    },
-                                    "type": "object"
-                                  },
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
-                            "type": "object"
-                          },
-                          "id": {
-                            "description": "Unique identifier of the lookup table item.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "item_attributes": {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "description": "Attribute values for the row, keyed by attribute name.",
-                            "type": "object"
-                          },
-                          "resource_uri": {
-                            "description": "URI of this record in the API.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "sort_key": {
-                            "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
-                            "type": "integer"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "A page of records."
+          "201": {
+            "description": "The created record."
           }
         },
         "summary": "Lookup Table Items",
@@ -5984,68 +5641,8 @@
         "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
         "operationId": "lookup_table_item_v1_detail_delete",
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data_type_id": {
-                      "description": "Identifier of the lookup table this item belongs to.",
-                      "type": "string"
-                    },
-                    "fields": {
-                      "additionalProperties": {
-                        "properties": {
-                          "field_list": {
-                            "items": {
-                              "properties": {
-                                "field_value": {
-                                  "type": "string"
-                                },
-                                "properties": {
-                                  "additionalProperties": {
-                                    "type": "string"
-                                  },
-                                  "type": "object"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "type": "array"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
-                      "type": "object"
-                    },
-                    "id": {
-                      "description": "Unique identifier of the lookup table item.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "item_attributes": {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "description": "Attribute values for the row, keyed by attribute name.",
-                      "type": "object"
-                    },
-                    "resource_uri": {
-                      "description": "URI of this record in the API.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "sort_key": {
-                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
-                      "type": "integer"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "The requested record."
+          "204": {
+            "description": "The record was deleted."
           }
         },
         "summary": "Lookup Table Items",
@@ -6203,68 +5800,11 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data_type_id": {
-                      "description": "Identifier of the lookup table this item belongs to.",
-                      "type": "string"
-                    },
-                    "fields": {
-                      "additionalProperties": {
-                        "properties": {
-                          "field_list": {
-                            "items": {
-                              "properties": {
-                                "field_value": {
-                                  "type": "string"
-                                },
-                                "properties": {
-                                  "additionalProperties": {
-                                    "type": "string"
-                                  },
-                                  "type": "object"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "type": "array"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
-                      "type": "object"
-                    },
-                    "id": {
-                      "description": "Unique identifier of the lookup table item.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "item_attributes": {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "description": "Attribute values for the row, keyed by attribute name.",
-                      "type": "object"
-                    },
-                    "resource_uri": {
-                      "description": "URI of this record in the API.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "sort_key": {
-                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
-                      "type": "integer"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "The requested record."
+          "201": {
+            "description": "The record was created."
+          },
+          "204": {
+            "description": "The record was updated."
           }
         },
         "summary": "Lookup Table Items",
@@ -6462,93 +6002,7 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginationMeta"
-                    },
-                    "objects": {
-                      "items": {
-                        "properties": {
-                          "data_type_id": {
-                            "description": "Identifier of the lookup table this item belongs to.",
-                            "type": "string"
-                          },
-                          "fields": {
-                            "additionalProperties": {
-                              "properties": {
-                                "field_list": {
-                                  "items": {
-                                    "properties": {
-                                      "field_value": {
-                                        "type": "string"
-                                      },
-                                      "properties": {
-                                        "additionalProperties": {
-                                          "type": "string"
-                                        },
-                                        "type": "object"
-                                      }
-                                    },
-                                    "type": "object"
-                                  },
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            },
-                            "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
-                            "type": "object"
-                          },
-                          "id": {
-                            "description": "Unique identifier of the lookup table item.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "item_attributes": {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "description": "Attribute values for the row, keyed by attribute name.",
-                            "type": "object"
-                          },
-                          "resource_uri": {
-                            "description": "URI of this record in the API.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "sort_key": {
-                            "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
-                            "type": "integer"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "A page of records."
-          }
-        },
-        "summary": "Lookup Table Items (v2)",
-        "tags": [
-          "lookup_table_item"
-        ]
-      }
-    },
-    "/a/{domain}/api/lookup_table_item/v2/{pk}/": {
-      "delete": {
-        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests.",
-        "operationId": "lookup_table_item_v2_detail_delete",
-        "responses": {
-          "200": {
+          "201": {
             "content": {
               "application/json": {
                 "schema": {
@@ -6609,7 +6063,22 @@
                 }
               }
             },
-            "description": "The requested record."
+            "description": "The created record."
+          }
+        },
+        "summary": "Lookup Table Items (v2)",
+        "tags": [
+          "lookup_table_item"
+        ]
+      }
+    },
+    "/a/{domain}/api/lookup_table_item/v2/{pk}/": {
+      "delete": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests.",
+        "operationId": "lookup_table_item_v2_detail_delete",
+        "responses": {
+          "204": {
+            "description": "The record was deleted."
           }
         },
         "summary": "Lookup Table Items (v2)",
@@ -6828,7 +6297,70 @@
                 }
               }
             },
-            "description": "The requested record."
+            "description": "The record was updated."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data_type_id": {
+                      "description": "Identifier of the lookup table this item belongs to.",
+                      "type": "string"
+                    },
+                    "fields": {
+                      "additionalProperties": {
+                        "properties": {
+                          "field_list": {
+                            "items": {
+                              "properties": {
+                                "field_value": {
+                                  "type": "string"
+                                },
+                                "properties": {
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "type": "object"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
+                      "type": "object"
+                    },
+                    "id": {
+                      "description": "Unique identifier of the lookup table item.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "item_attributes": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Attribute values for the row, keyed by attribute name.",
+                      "type": "object"
+                    },
+                    "resource_uri": {
+                      "description": "URI of this record in the API.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "sort_key": {
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record was created."
           }
         },
         "summary": "Lookup Table Items (v2)",
@@ -7033,32 +6565,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginationMeta"
-                    },
-                    "objects": {
-                      "items": {
-                        "properties": {
-                          "resource_uri": {
-                            "readOnly": true,
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "A page of records."
+          "201": {
+            "description": "The created record."
           }
         },
         "summary": "Sso",
@@ -7382,160 +6890,7 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "meta": {
-                    "limit": 2,
-                    "next": null,
-                    "offset": 0,
-                    "previous": null,
-                    "total_count": 29
-                  },
-                  "objects": [
-                    {
-                      "default_phone_number": "+50253311399",
-                      "email": "jdoe@example.org",
-                      "eulas": "[]",
-                      "first_name": "John",
-                      "groups": [
-                        "9a0accdba29e01a61ea099394737c4fb"
-                      ],
-                      "id": "3c5a623af057e23a32ae4000cf291339",
-                      "last_name": "Doe",
-                      "locations": [
-                        "26fc44e2792b4f2fa8ef86178f0a958e"
-                      ],
-                      "phone_numbers": [
-                        "+50253311399",
-                        "+50253314588"
-                      ],
-                      "primary_location": "26fc44e2792b4f2fa8ef86178f0a958e",
-                      "resource_uri": "/a/example/api/user/v1/3c5a623af057e23a32ae4000cf291339/",
-                      "user_data": {
-                        "chw_id": "13/43/DFA"
-                      },
-                      "username": "jdoe@example.commcarehq.org"
-                    }
-                  ]
-                },
-                "schema": {
-                  "properties": {
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginationMeta"
-                    },
-                    "objects": {
-                      "items": {
-                        "properties": {
-                          "default_phone_number": {
-                            "description": "Primary phone number of user.",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "email": {
-                            "description": "Email address of user.",
-                            "type": "string"
-                          },
-                          "eulas": {
-                            "description": "End user license agreements the user has accepted.",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "first_name": {
-                            "description": "First name of user.",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "groups": {
-                            "description": "List of all group IDs belonging to the user.",
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          "id": {
-                            "description": "User UUID.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "last_name": {
-                            "description": "Last name of user.",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "locations": {
-                            "description": "A list of location IDs that the user is assigned to.",
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          "phone_numbers": {
-                            "description": "List of all phone numbers of the user.",
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          },
-                          "primary_location": {
-                            "description": "The location ID of the primary location of the user.",
-                            "nullable": true,
-                            "type": "string"
-                          },
-                          "require_account_confirmation": {
-                            "default": false,
-                            "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                            "type": "boolean",
-                            "writeOnly": true
-                          },
-                          "resource_uri": {
-                            "description": "URI of this record in the API.",
-                            "readOnly": true,
-                            "type": "string"
-                          },
-                          "send_confirmation_email_now": {
-                            "default": false,
-                            "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                            "type": "boolean",
-                            "writeOnly": true
-                          },
-                          "user_data": {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "description": "Any additional custom data associated with the user.",
-                            "type": "object"
-                          },
-                          "username": {
-                            "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "A page of records."
-          }
-        },
-        "summary": "Mobile Workers",
-        "tags": [
-          "user"
-        ]
-      }
-    },
-    "/a/{domain}/api/user/v1/{pk}/": {
-      "delete": {
-        "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nRequires the `edit_commcare_users` permission.",
-        "operationId": "user_v1_detail_delete",
-        "responses": {
-          "200": {
+          "201": {
             "content": {
               "application/json": {
                 "schema": {
@@ -7628,7 +6983,22 @@
                 }
               }
             },
-            "description": "The requested record."
+            "description": "The created record."
+          }
+        },
+        "summary": "Mobile Workers",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/a/{domain}/api/user/v1/{pk}/": {
+      "delete": {
+        "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nRequires the `edit_commcare_users` permission.",
+        "operationId": "user_v1_detail_delete",
+        "responses": {
+          "204": {
+            "description": "The record was deleted."
           }
         },
         "summary": "Mobile Workers",
@@ -7943,7 +7313,102 @@
                 }
               }
             },
-            "description": "The requested record."
+            "description": "The record was updated."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "default_phone_number": {
+                      "description": "Primary phone number of user.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "email": {
+                      "description": "Email address of user.",
+                      "type": "string"
+                    },
+                    "eulas": {
+                      "description": "End user license agreements the user has accepted.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "first_name": {
+                      "description": "First name of user.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "groups": {
+                      "description": "List of all group IDs belonging to the user.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "id": {
+                      "description": "User UUID.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "last_name": {
+                      "description": "Last name of user.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "locations": {
+                      "description": "A list of location IDs that the user is assigned to.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "phone_numbers": {
+                      "description": "List of all phone numbers of the user.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "primary_location": {
+                      "description": "The location ID of the primary location of the user.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "require_account_confirmation": {
+                      "default": false,
+                      "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
+                      "type": "boolean",
+                      "writeOnly": true
+                    },
+                    "resource_uri": {
+                      "description": "URI of this record in the API.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "send_confirmation_email_now": {
+                      "default": false,
+                      "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
+                      "type": "boolean",
+                      "writeOnly": true
+                    },
+                    "user_data": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Any additional custom data associated with the user.",
+                      "type": "object"
+                    },
+                    "username": {
+                      "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record was created."
           }
         },
         "summary": "Mobile Workers",
@@ -8324,7 +7789,7 @@
           "required": true
         },
         "responses": {
-          "200": {
+          "202": {
             "content": {
               "application/json": {
                 "schema": {
@@ -8414,7 +7879,7 @@
                 }
               }
             },
-            "description": "The requested record."
+            "description": "The update was accepted."
           }
         },
         "summary": "Web-User",
