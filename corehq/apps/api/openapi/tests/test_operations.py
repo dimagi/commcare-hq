@@ -4,10 +4,12 @@ from tastypie.constants import ALL
 from corehq.apps.api.openapi.catalogue import ApiEntry, USER
 from corehq.apps.api.openapi.operations import (
     filter_parameters,
+    object_schema,
     resource_paths,
     standard_list_parameters,
 )
 from corehq.apps.api.resources import v0_5
+from corehq.apps.locations.resources import v0_6
 
 
 def names(parameters):
@@ -128,6 +130,84 @@ def test_delete_has_no_request_body():
     paths = resource_paths(entry)
     delete = paths['/a/{domain}/api/user/v1/{pk}/']['delete']
     assert 'requestBody' not in delete
+
+
+def test_field_schemas_entry_for_an_undeclared_field_is_added():
+    resource_schema = {'fields': {'name': {'type': 'string'}}}
+    docs = {
+        'field_schemas': {
+            'extra_field': {
+                'type': 'string',
+                'description': 'A field the resource adds outside of '
+                              'Tastypie field machinery.',
+            },
+        },
+    }
+    schema = object_schema(resource_schema, docs)
+    assert schema['properties']['extra_field'] == {
+        'type': 'string',
+        'description': 'A field the resource adds outside of Tastypie '
+                       'field machinery.',
+    }
+    # A declared field with no override is unaffected.
+    assert schema['properties']['name'] == {'type': 'string'}
+
+
+def test_field_schemas_entry_for_a_declared_field_still_overrides():
+    resource_schema = {'fields': {'name': {'type': 'string'}}}
+    docs = {'field_schemas': {'name': {'type': 'integer'}}}
+    schema = object_schema(resource_schema, docs)
+    assert schema['properties']['name'] == {'type': 'integer'}
+
+
+def test_location_v2_response_schema_includes_its_ad_hoc_fields():
+    """location v2's dehydrate() adds fields outside of Tastypie's field
+    machinery; Docs.field_schemas documents them as additions, and they
+    must show up in the generated response schema (not just the example),
+    or the example and schema contradict each other."""
+    entry = ApiEntry(v0_6.LocationResource, 'v2', 'location-v2')
+    operation = resource_paths(entry)['/a/{domain}/api/location/v2/']['get']
+    item_schema = operation['responses']['200']['content'][
+        'application/json'
+    ]['schema']['properties']['objects']['items']
+    for name in (
+        'parent_location_id',
+        'location_type_name',
+        'location_type_code',
+    ):
+        assert name in item_schema['properties'], (
+            f'{name} is missing from the location-v2 response schema'
+        )
+        assert item_schema['properties'][name]['type'] == 'string'
+
+
+def test_write_only_fields_are_flagged_but_still_writable():
+    entry = ApiEntry(v0_5.CommCareUserResource, 'v1', 'user-v1')
+    paths = resource_paths(entry)
+
+    get_item_schema = paths['/a/{domain}/api/user/v1/']['get'][
+        'responses'
+    ]['200']['content']['application/json']['schema']['properties'][
+        'objects'
+    ]['items']
+    for name in (
+        'require_account_confirmation',
+        'send_confirmation_email_now',
+    ):
+        assert get_item_schema['properties'][name]['writeOnly'] is True
+
+    request_body_schema = paths['/a/{domain}/api/user/v1/']['post'][
+        'requestBody'
+    ]['content']['application/json']['schema']
+    assert 'require_account_confirmation' in request_body_schema[
+        'properties'
+    ]
+    assert 'send_confirmation_email_now' in request_body_schema[
+        'properties'
+    ]
+    assert 'id' not in request_body_schema['properties'], (
+        'read-only fields must still be excluded from request bodies'
+    )
 
 
 def test_declared_list_example_is_attached():

@@ -35,6 +35,24 @@ class LocationResource(v0_5.LocationResource):
             'last modified date.'
         )
         examples = {'list_response': 'location/v2/list_response.json'}
+        field_schemas = {
+            'parent_location_id': {
+                'type': 'string',
+                'description': 'Location ID of the parent location, or '
+                              'an empty string if this is a root-level '
+                              'location.',
+            },
+            'location_type_name': {
+                'type': 'string',
+                'description': 'Name of the location type of this '
+                              'location.',
+            },
+            'location_type_code': {
+                'type': 'string',
+                'description': 'Code of the location type of this '
+                              'location.',
+            },
+        }
 
     class Meta:
         max_limit = 5000

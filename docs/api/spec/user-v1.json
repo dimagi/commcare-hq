@@ -207,7 +207,8 @@
                           "require_account_confirmation": {
                             "default": false,
                             "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                            "type": "boolean"
+                            "type": "boolean",
+                            "writeOnly": true
                           },
                           "resource_uri": {
                             "description": "URI of this record in the API.",
@@ -217,7 +218,8 @@
                           "send_confirmation_email_now": {
                             "default": false,
                             "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                            "type": "boolean"
+                            "type": "boolean",
+                            "writeOnly": true
                           },
                           "user_data": {
                             "additionalProperties": {
@@ -319,12 +321,14 @@
                   "require_account_confirmation": {
                     "default": false,
                     "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "writeOnly": true
                   },
                   "send_confirmation_email_now": {
                     "default": false,
                     "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "writeOnly": true
                   },
                   "user_data": {
                     "additionalProperties": {
@@ -447,7 +451,8 @@
                           "require_account_confirmation": {
                             "default": false,
                             "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                            "type": "boolean"
+                            "type": "boolean",
+                            "writeOnly": true
                           },
                           "resource_uri": {
                             "description": "URI of this record in the API.",
@@ -457,7 +462,8 @@
                           "send_confirmation_email_now": {
                             "default": false,
                             "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                            "type": "boolean"
+                            "type": "boolean",
+                            "writeOnly": true
                           },
                           "user_data": {
                             "additionalProperties": {
@@ -556,7 +562,8 @@
                     "require_account_confirmation": {
                       "default": false,
                       "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                      "type": "boolean"
+                      "type": "boolean",
+                      "writeOnly": true
                     },
                     "resource_uri": {
                       "description": "URI of this record in the API.",
@@ -566,7 +573,8 @@
                     "send_confirmation_email_now": {
                       "default": false,
                       "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                      "type": "boolean"
+                      "type": "boolean",
+                      "writeOnly": true
                     },
                     "user_data": {
                       "additionalProperties": {
@@ -658,7 +666,8 @@
                     "require_account_confirmation": {
                       "default": false,
                       "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                      "type": "boolean"
+                      "type": "boolean",
+                      "writeOnly": true
                     },
                     "resource_uri": {
                       "description": "URI of this record in the API.",
@@ -668,7 +677,8 @@
                     "send_confirmation_email_now": {
                       "default": false,
                       "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                      "type": "boolean"
+                      "type": "boolean",
+                      "writeOnly": true
                     },
                     "user_data": {
                       "additionalProperties": {
@@ -774,12 +784,14 @@
                   "require_account_confirmation": {
                     "default": false,
                     "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "writeOnly": true
                   },
                   "send_confirmation_email_now": {
                     "default": false,
                     "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "writeOnly": true
                   },
                   "user_data": {
                     "additionalProperties": {
@@ -862,7 +874,8 @@
                     "require_account_confirmation": {
                       "default": false,
                       "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                      "type": "boolean"
+                      "type": "boolean",
+                      "writeOnly": true
                     },
                     "resource_uri": {
                       "description": "URI of this record in the API.",
@@ -872,7 +885,8 @@
                     "send_confirmation_email_now": {
                       "default": false,
                       "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                      "type": "boolean"
+                      "type": "boolean",
+                      "writeOnly": true
                     },
                     "user_data": {
                       "additionalProperties": {

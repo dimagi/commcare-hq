@@ -279,6 +279,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             'user_data': {
                 'additionalProperties': {'type': 'string'},
             },
+            'require_account_confirmation': {'writeOnly': True},
+            'send_confirmation_email_now': {'writeOnly': True},
             'resource_uri': {
                 'description': 'URI of this record in the API.',
             },

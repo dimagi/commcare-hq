@@ -3379,6 +3379,14 @@
                             "description": "UUID of the location.",
                             "type": "string"
                           },
+                          "location_type_code": {
+                            "description": "Code of the location type of this location.",
+                            "type": "string"
+                          },
+                          "location_type_name": {
+                            "description": "Name of the location type of this location.",
+                            "type": "string"
+                          },
                           "longitude": {
                             "description": "Longitude coordinate of the location.",
                             "format": "decimal",
@@ -3388,6 +3396,10 @@
                           "name": {
                             "description": "Name of the location.",
                             "nullable": true,
+                            "type": "string"
+                          },
+                          "parent_location_id": {
+                            "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
                             "type": "string"
                           },
                           "site_code": {
@@ -3539,6 +3551,14 @@
                             "description": "UUID of the location.",
                             "type": "string"
                           },
+                          "location_type_code": {
+                            "description": "Code of the location type of this location.",
+                            "type": "string"
+                          },
+                          "location_type_name": {
+                            "description": "Name of the location type of this location.",
+                            "type": "string"
+                          },
                           "longitude": {
                             "description": "Longitude coordinate of the location.",
                             "format": "decimal",
@@ -3548,6 +3568,10 @@
                           "name": {
                             "description": "Name of the location.",
                             "nullable": true,
+                            "type": "string"
+                          },
+                          "parent_location_id": {
+                            "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
                             "type": "string"
                           },
                           "site_code": {
@@ -3688,6 +3712,14 @@
                             "description": "UUID of the location.",
                             "type": "string"
                           },
+                          "location_type_code": {
+                            "description": "Code of the location type of this location.",
+                            "type": "string"
+                          },
+                          "location_type_name": {
+                            "description": "Name of the location type of this location.",
+                            "type": "string"
+                          },
                           "longitude": {
                             "description": "Longitude coordinate of the location.",
                             "format": "decimal",
@@ -3697,6 +3729,10 @@
                           "name": {
                             "description": "Name of the location.",
                             "nullable": true,
+                            "type": "string"
+                          },
+                          "parent_location_id": {
+                            "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
                             "type": "string"
                           },
                           "site_code": {
@@ -3756,6 +3792,14 @@
                       "description": "UUID of the location.",
                       "type": "string"
                     },
+                    "location_type_code": {
+                      "description": "Code of the location type of this location.",
+                      "type": "string"
+                    },
+                    "location_type_name": {
+                      "description": "Name of the location type of this location.",
+                      "type": "string"
+                    },
                     "longitude": {
                       "description": "Longitude coordinate of the location.",
                       "format": "decimal",
@@ -3765,6 +3809,10 @@
                     "name": {
                       "description": "Name of the location.",
                       "nullable": true,
+                      "type": "string"
+                    },
+                    "parent_location_id": {
+                      "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
                       "type": "string"
                     },
                     "site_code": {
@@ -3888,6 +3936,14 @@
                       "description": "UUID of the location.",
                       "type": "string"
                     },
+                    "location_type_code": {
+                      "description": "Code of the location type of this location.",
+                      "type": "string"
+                    },
+                    "location_type_name": {
+                      "description": "Name of the location type of this location.",
+                      "type": "string"
+                    },
                     "longitude": {
                       "description": "Longitude coordinate of the location.",
                       "format": "decimal",
@@ -3897,6 +3953,10 @@
                     "name": {
                       "description": "Name of the location.",
                       "nullable": true,
+                      "type": "string"
+                    },
+                    "parent_location_id": {
+                      "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
                       "type": "string"
                     },
                     "site_code": {
@@ -7008,7 +7068,8 @@
                           "require_account_confirmation": {
                             "default": false,
                             "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                            "type": "boolean"
+                            "type": "boolean",
+                            "writeOnly": true
                           },
                           "resource_uri": {
                             "description": "URI of this record in the API.",
@@ -7018,7 +7079,8 @@
                           "send_confirmation_email_now": {
                             "default": false,
                             "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                            "type": "boolean"
+                            "type": "boolean",
+                            "writeOnly": true
                           },
                           "user_data": {
                             "additionalProperties": {
@@ -7120,12 +7182,14 @@
                   "require_account_confirmation": {
                     "default": false,
                     "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "writeOnly": true
                   },
                   "send_confirmation_email_now": {
                     "default": false,
                     "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "writeOnly": true
                   },
                   "user_data": {
                     "additionalProperties": {
@@ -7248,7 +7312,8 @@
                           "require_account_confirmation": {
                             "default": false,
                             "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                            "type": "boolean"
+                            "type": "boolean",
+                            "writeOnly": true
                           },
                           "resource_uri": {
                             "description": "URI of this record in the API.",
@@ -7258,7 +7323,8 @@
                           "send_confirmation_email_now": {
                             "default": false,
                             "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                            "type": "boolean"
+                            "type": "boolean",
+                            "writeOnly": true
                           },
                           "user_data": {
                             "additionalProperties": {
@@ -7357,7 +7423,8 @@
                     "require_account_confirmation": {
                       "default": false,
                       "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                      "type": "boolean"
+                      "type": "boolean",
+                      "writeOnly": true
                     },
                     "resource_uri": {
                       "description": "URI of this record in the API.",
@@ -7367,7 +7434,8 @@
                     "send_confirmation_email_now": {
                       "default": false,
                       "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                      "type": "boolean"
+                      "type": "boolean",
+                      "writeOnly": true
                     },
                     "user_data": {
                       "additionalProperties": {
@@ -7459,7 +7527,8 @@
                     "require_account_confirmation": {
                       "default": false,
                       "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                      "type": "boolean"
+                      "type": "boolean",
+                      "writeOnly": true
                     },
                     "resource_uri": {
                       "description": "URI of this record in the API.",
@@ -7469,7 +7538,8 @@
                     "send_confirmation_email_now": {
                       "default": false,
                       "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                      "type": "boolean"
+                      "type": "boolean",
+                      "writeOnly": true
                     },
                     "user_data": {
                       "additionalProperties": {
@@ -7575,12 +7645,14 @@
                   "require_account_confirmation": {
                     "default": false,
                     "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "writeOnly": true
                   },
                   "send_confirmation_email_now": {
                     "default": false,
                     "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "writeOnly": true
                   },
                   "user_data": {
                     "additionalProperties": {
@@ -7663,7 +7735,8 @@
                     "require_account_confirmation": {
                       "default": false,
                       "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
-                      "type": "boolean"
+                      "type": "boolean",
+                      "writeOnly": true
                     },
                     "resource_uri": {
                       "description": "URI of this record in the API.",
@@ -7673,7 +7746,8 @@
                     "send_confirmation_email_now": {
                       "default": false,
                       "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
-                      "type": "boolean"
+                      "type": "boolean",
+                      "writeOnly": true
                     },
                     "user_data": {
                       "additionalProperties": {

@@ -100,12 +100,36 @@ def standard_list_parameters(resource_schema):
 
 
 def object_schema(resource_schema, docs):
-    """The schema for a single object returned by the resource."""
+    """The schema for a single object returned by the resource.
+
+    A ``Docs.field_schemas`` entry normally overrides a declared Tastypie
+    field's generated schema. If its key does not match any declared
+    field *and* it declares a ``type``, it is instead treated as an
+    *addition*: the resource adds this key to ``bundle.data`` outside of
+    Tastypie's field machinery (for example in a ``dehydrate()``
+    override), so there is no generated schema to override and the
+    entry's value is used as the property's schema outright. Such an
+    entry may carry a ``description``, the same exception already
+    granted to ``resource_uri``, for the same reason: there is no
+    ``help_text`` to hang it on.
+
+    An unmatched entry with no ``type`` is not treated as an addition —
+    for example, ``resource_uri``'s description-only override is
+    inherited by every subclass's ``Docs``, including ones (like
+    ``Meta.include_resource_uri = False``) that do not actually have a
+    ``resource_uri`` field. Requiring ``type`` for additions keeps that
+    inherited, no-longer-applicable override from being invented as a
+    phantom property.
+    """
     field_schemas = docs.get('field_schemas', {})
+    declared_fields = resource_schema['fields']
     properties = {
         name: field_to_schema(info, override=field_schemas.get(name))
-        for name, info in resource_schema['fields'].items()
+        for name, info in declared_fields.items()
     }
+    for name, schema in field_schemas.items():
+        if name not in declared_fields and 'type' in schema:
+            properties[name] = dict(schema)
     return {'type': 'object', 'properties': properties}
 
 

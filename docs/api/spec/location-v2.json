@@ -235,6 +235,14 @@
                             "description": "UUID of the location.",
                             "type": "string"
                           },
+                          "location_type_code": {
+                            "description": "Code of the location type of this location.",
+                            "type": "string"
+                          },
+                          "location_type_name": {
+                            "description": "Name of the location type of this location.",
+                            "type": "string"
+                          },
                           "longitude": {
                             "description": "Longitude coordinate of the location.",
                             "format": "decimal",
@@ -244,6 +252,10 @@
                           "name": {
                             "description": "Name of the location.",
                             "nullable": true,
+                            "type": "string"
+                          },
+                          "parent_location_id": {
+                            "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
                             "type": "string"
                           },
                           "site_code": {
@@ -395,6 +407,14 @@
                             "description": "UUID of the location.",
                             "type": "string"
                           },
+                          "location_type_code": {
+                            "description": "Code of the location type of this location.",
+                            "type": "string"
+                          },
+                          "location_type_name": {
+                            "description": "Name of the location type of this location.",
+                            "type": "string"
+                          },
                           "longitude": {
                             "description": "Longitude coordinate of the location.",
                             "format": "decimal",
@@ -404,6 +424,10 @@
                           "name": {
                             "description": "Name of the location.",
                             "nullable": true,
+                            "type": "string"
+                          },
+                          "parent_location_id": {
+                            "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
                             "type": "string"
                           },
                           "site_code": {
@@ -544,6 +568,14 @@
                             "description": "UUID of the location.",
                             "type": "string"
                           },
+                          "location_type_code": {
+                            "description": "Code of the location type of this location.",
+                            "type": "string"
+                          },
+                          "location_type_name": {
+                            "description": "Name of the location type of this location.",
+                            "type": "string"
+                          },
                           "longitude": {
                             "description": "Longitude coordinate of the location.",
                             "format": "decimal",
@@ -553,6 +585,10 @@
                           "name": {
                             "description": "Name of the location.",
                             "nullable": true,
+                            "type": "string"
+                          },
+                          "parent_location_id": {
+                            "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
                             "type": "string"
                           },
                           "site_code": {
@@ -612,6 +648,14 @@
                       "description": "UUID of the location.",
                       "type": "string"
                     },
+                    "location_type_code": {
+                      "description": "Code of the location type of this location.",
+                      "type": "string"
+                    },
+                    "location_type_name": {
+                      "description": "Name of the location type of this location.",
+                      "type": "string"
+                    },
                     "longitude": {
                       "description": "Longitude coordinate of the location.",
                       "format": "decimal",
@@ -621,6 +665,10 @@
                     "name": {
                       "description": "Name of the location.",
                       "nullable": true,
+                      "type": "string"
+                    },
+                    "parent_location_id": {
+                      "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
                       "type": "string"
                     },
                     "site_code": {
@@ -744,6 +792,14 @@
                       "description": "UUID of the location.",
                       "type": "string"
                     },
+                    "location_type_code": {
+                      "description": "Code of the location type of this location.",
+                      "type": "string"
+                    },
+                    "location_type_name": {
+                      "description": "Name of the location type of this location.",
+                      "type": "string"
+                    },
                     "longitude": {
                       "description": "Longitude coordinate of the location.",
                       "format": "decimal",
@@ -753,6 +809,10 @@
                     "name": {
                       "description": "Name of the location.",
                       "nullable": true,
+                      "type": "string"
+                    },
+                    "parent_location_id": {
+                      "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
                       "type": "string"
                     },
                     "site_code": {
