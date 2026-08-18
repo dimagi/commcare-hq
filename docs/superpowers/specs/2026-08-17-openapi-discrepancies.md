@@ -207,9 +207,12 @@ were confirmed in the Task 17 sweep after three separate resource tasks (10,
 - **The sample JSON output includes a `version` field the case resource never
   emits.** `cases-v1.rst:181-201` shows `"version": "1.0"` at the top level of a
   case object. Neither `v0_3.CommCareCaseResource` nor
-  `v0_4.CommCareCaseResource` declares a `version` field -- the only `version`
-  field in `corehq/apps/api/resources/v0_4.py` belongs to
-  `XFormInstanceResource` (line 76), an unrelated resource. The spec's `Case`
+  `v0_4.CommCareCaseResource` declares a `version` field. (Corrected in the Task
+  17 audit: an earlier version of this entry said the _only_ `version` field in
+  `corehq/apps/api/resources/v0_4.py` was `XFormInstanceResource`'s at line 76.
+  There are two -- `XFormInstanceResource.version` at `v0_4.py:76` and
+  `ApplicationResource.version` at `v0_4.py:336` -- and neither belongs to a
+  case resource, which is the point that actually matters.) The spec's `Case`
   schema has no `version` property.
 - **`indexed_on`, `opened_by`, and `closed_by` are real top-level fields the
   docs never mention.** Declared at `corehq/apps/api/resources/ v0_4.py:213-218`
@@ -623,7 +626,7 @@ the view's own `if` chain", and anything that falls through returns a 405
   `getFormAttachment`'s 404: `get_form_attachment_response`
   (`corehq/apps/reports/views.py:1517-1520`) raises a bare Django `Http404` on
   `AttachmentNotFound`, which is handled by Django's own `page_not_found`
-  (`handler404 = not_found`, `urls.py:47`) and rendered as an HTML page, not
+  (`handler404 = not_found`, `urls.py:48`) and rendered as an HTML page, not
   JSON. Neither reST page discusses this.
 - **`getForm`/`listForms`'s 403 body is empty, not the shared `{"error": ...}`
   shape.** Traced through `RequirePermissionAuthentication.is_authenticated`
@@ -645,7 +648,8 @@ the view's own `if` chain", and anything that falls through returns a 405
   `post_api`'s `@require_permission(HqPermissions.edit_data)` /
   `@require_permission(HqPermissions.access_api)` raise `PermissionDenied` on
   failure, rendered by this project's `handler403 = no_permissions`
-  (`urls.py:47`) as `HttpResponseForbidden(_no_permissions_message(...))`
+  (`urls.py:49` -- line 47 is `handler500 = server_error`, corrected in the Task
+  17 audit) as `HttpResponseForbidden(_no_permissions_message(...))`
   (`corehq/apps/hqwebapp/views.py:362-373`) -- an HTML page. `post`
   (`submitFormForApp`) returns a bare, empty-body `HttpResponseForbidden()` for
   a mobile-access failure (`corehq/apps/receiverwrapper/views.py:88-89`). 401s
@@ -654,11 +658,16 @@ the view's own `if` chain", and anything that falls through returns a 405
 - **The submission success/error response `Content-Type` header contradicts the
   OpenRosa standard the endpoint claims to implement.**
   `OpenRosaResponse.response`
-  (`corehq/ex-submodules/couchforms/openrosa_response.py:58-59`) calls
-  `HttpResponse(self.xml(), status=self.status)` without a `content_type`
-  argument, and no caller in `submission_post.py` or `receiverwrapper/views.py`
-  sets one either. `settings.py` never overrides `DEFAULT_CONTENT_TYPE`, so
-  Django's default (`text/html; charset=utf-8`) applies to every OpenRosa
+  (`corehq/ex-submodules/couchforms/openrosa_response.py:61-62`; lines 58-59 are
+  the separate `xml()` helper it calls -- citation corrected in the Task 17
+  audit) calls `HttpResponse(self.xml(), status=self.status)` without a
+  `content_type` argument, and no caller that builds one of these responses
+  passes a `content_type` either -- see `receiverwrapper/views.py:118-120`, the
+  submission error path. (`receiverwrapper/views.py:247-248` _does_ set
+  `content_type="text/plain"`, but that is `_submission_error`'s
+  `HttpResponseBadRequest`, a different response class on a different path, not
+  an OpenRosa response.) `settings.py` never overrides `DEFAULT_CONTENT_TYPE`,
+  so Django's default (`text/html; charset=utf-8`) applies to every OpenRosa
   response body, even though the body is genuinely XML per
   https://bitbucket.org/javarosa/javarosa/wiki/FormSubmissionAPI. This is a real
   bug, not a documentation gap: a client that content-negotiates or branches on
@@ -863,17 +872,22 @@ the view's own `if` chain", and anything that falls through returns a 405
   at all. The spec's `MobileWorker`/`WebUser` schemas document `eulas` as a
   plain string with a description explaining the repr shape.
 - **`resource_uri` is a real field on every response from both resources,
-  documented incorrectly or not at all.** `include_resource_uri` is never set to
-  `False` anywhere in the inheritance chain (`CustomResourceMeta`,
-  `corehq/apps/api/resources/meta.py:76-81`), and both
-  `CommCareUserResource.get_resource_uri` (`v0_5.py:257-268`) and
-  `WebUserResource.get_resource_uri` (`v0_5.py:524-532`) are overridden to
-  always compute a real detail URL. `list-mobile-workers.rst`'s Output Values
-  table and sample JSON omit the field entirely. `list-webusers.rst`'s sample
-  JSON (lines 118, 139) does include it, but shows it as an always-empty string
-  (`"resource_uri":""`) -- stale, not the real behavior. The spec's
-  `MobileWorker`/`WebUser` schemas document the field as a real,
-  always-populated URL.
+  documented incorrectly or not at all.** `include_resource_uri` defaults to
+  `True` (`tastypie/resources.py:96,161`) and is not set to `False` anywhere in
+  either resource's `Meta` chain -- checked individually in the Task 17 audit:
+  `CustomResourceMeta` (`corehq/apps/api/resources/meta.py:76-81`),
+  `UserResource.Meta` (`corehq/apps/api/resources/v0_1.py:62-64`),
+  `v0_5.CommCareUserResource.Meta` and `v0_5.WebUserResource.Meta`. (The nine
+  places in `corehq/` that do set it to `False` -- e.g.
+  `corehq/apps/api/resources/v0_5.py:1099`, `UserDomainsResource` -- are all
+  unrelated resources.) Both `CommCareUserResource.get_resource_uri`
+  (`v0_5.py:257-268`) and `WebUserResource.get_resource_uri` (`v0_5.py:524-532`)
+  are overridden to always compute a real detail URL.
+  `list-mobile-workers.rst`'s Output Values table and sample JSON omit the field
+  entirely. `list-webusers.rst`'s sample JSON (lines 118, 139) does include it,
+  but shows it as an always-empty string (`"resource_uri":""`) -- stale, not the
+  real behavior. The spec's `MobileWorker`/`WebUser` schemas document the field
+  as a real, always-populated URL.
 - **`default_phone_number` is a genuine, separately recognized write field on
   the mobile worker resource, missing from `mobile-worker.rst`'s Input
   Parameters table.** `CommcareUserUpdates.update`
@@ -1006,17 +1020,31 @@ the view's own `if` chain", and anything that falls through returns a 405
   Django's default `text/html` content type over a literal, unwrapped string
   body. `sso.rst` documents no error responses at all. The spec's
   `authenticateUser` `400` documents this exact shape.
-- **No 401 is reachable for this operation at all.** `SSOAuthentication`
+- **Tastypie's own authentication layer can never reject a request to this
+  operation -- but a 401 IS reachable, from `HqBaseResource.dispatch`.**
+  (Corrected in the Task 17 audit: an earlier version of this entry claimed "no
+  401 is reachable for this operation at all", which is wrong.
+  `SingleSignOnResource` is an `HqBaseResource`
+  (`corehq/apps/api/resources/v0_4.py:260`), and `HqBaseResource.dispatch`
+  (`corehq/apps/api/resources/__init__.py:132-151`) short-circuits with a JSON
+  401 -- `{"error": "API access has been temporarily cut off ..."}` under the
+  `API_BLACKLIST` toggle, or
+  `{"error": "Your current subscription does not have access to this feature"}`
+  when the domain lacks the API*ACCESS privilege -- before `is_authenticated` is
+  ever consulted. Both bodies match the shared `Unauthorized` schema. The
+  narrower claim below is the one that holds.) `SSOAuthentication`
   (`corehq/apps/api/resources/auth.py:63-64`) is a bare `pass`, so it inherits
   tastypie's base `Authentication.is_authenticated`
-  (`tastypie/authentication.py:54-60`), which unconditionally returns `True` --
-  tastypie's own auth layer (`tastypie/resources.py:557-572`) can therefore
-  never reject a request to this endpoint. Every credential check happens by
-  hand inside `post_list` and resolves to 400 (missing field) or 403 (bad
-  credentials/wrong user type) instead. The spec's `authenticateUser` `401`
-  response documents this explicitly rather than pretending a real 401 body
-  exists, since the shared test `test_every_operation_declares_401_and_403`
-  requires the key regardless.
+  (`tastypie/authentication.py:87-94`; `:54-60` is the class docstring and
+  `auth_type` attribute -- citation corrected in the Task 17 audit), which
+  unconditionally returns `True` -- tastypie's own auth layer
+  (`tastypie/resources.py:557-572`) can therefore never reject a request to this
+  endpoint. Every credential check happens by hand inside `post_list` and
+  resolves to 400 (missing field) or 403 (bad credentials/wrong user type)
+  instead -- so a \_bad password* is a 403 here, never the 401 an integrator
+  would expect. The only 401s are the two `HqBaseResource.dispatch` cases
+  described above, which are about API entitlement rather than about these
+  credentials.
 - **No credential is echoed back in the response.** Checked specifically per the
   task brief's instruction. `v0_1.CommCareUserResource` and
   `v0_1.WebUserResource` (`corehq/apps/api/resources/v0_1.py:25-158`) declare
@@ -1237,16 +1265,20 @@ the view's own `if` chain", and anything that falls through returns a 405
   `last_modified`, a genuine `models.DateTimeField(auto_now=True)`
   (`corehq/apps/locations/models.py:372`). Django's
   `DateTimeField.get_prep_value`
-  (`django/db/models/fields/__init__.py: 1186-1190`) calls `to_python`, which
-  tries `django.utils.dateparse.parse_datetime` first
+  (`django/db/models/fields/__init__.py:1660-1662`; `:1186-1190` is
+  `DateField.get_prep_value`, the wrong class -- citation corrected in the Task
+  17 audit) calls `to_python`, which tries
+  `django.utils.dateparse.parse_datetime` first
   (`django/db/models/fields/__init__.py:1621-1630`) -- this parses a bare date,
   a naive datetime, or one with a UTC offset or trailing `Z` indifferently,
   raising nothing for any of them. The naive-vs-aware reconciliation branch that
   would otherwise matter (`get_prep_value`,
-  `django/db/models/fields/__init__.py:1198-1200`, guarded by
-  `settings.USE_TZ and timezone.is_naive(value)`) never fires either way because
-  `settings.USE_TZ = False` (`settings.py:57`) -- so an offset-bearing value is
-  passed straight through, unconverted, to `adapt_datetimefield_value`
+  `django/db/models/fields/__init__.py:1663-1665`; `:1198-1200` is an unrelated
+  comment about HTML checkboxes -- citation corrected in the Task 17 audit,
+  guarded by `settings.USE_TZ and timezone.is_naive(value)`) never fires either
+  way because `settings.USE_TZ = False` (`settings.py:57`) -- so an
+  offset-bearing value is passed straight through, unconverted, to
+  `adapt_datetimefield_value`
   (`django/db/backends/postgresql/operations.py: 350-351`, a no-op), and
   Postgres compares it against the naive `timestamp without time zone` column
   using its own session timezone rules. No exception is ever raised for an
@@ -1278,11 +1310,10 @@ the view's own `if` chain", and anything that falls through returns a 405
   here rather than being re-derived from scratch. `paths/group.yaml`'s and
   `paths/case-v1.yaml`'s `403` responses, by contrast, point at the shared
   `Forbidden` ref (a JSON `{"error": ...}` body) despite using the same
-  `RequirePermissionAuthentication` class -- those two do not appear to have
-  been verified against the body, only against the status code. Out of scope for
-  this task to fix (both are earlier tasks' committed files), but flagged here
-  since a reviewer comparing this task's location paths against those precedents
-  will otherwise wonder why they disagree. This task's `location-v1.yaml`,
+  `RequirePermissionAuthentication` class -- those two had not been verified
+  against the body, only against the status code. **Fixed in Task 17**: both
+  files' `403` responses now describe the empty body inline (see the entries in
+  the group/v1 and case/v1 sections above). This task's `location-v1.yaml`,
   `location-v2.yaml`, and `location-type.yaml` all document the bare-empty 403
   instead.
 - **Three additional 401/403-shaped gates exist ahead of the standard tastypie
@@ -1526,7 +1557,10 @@ the view's own `if` chain", and anything that falls through returns a 405
   `HqPermissions` field.** `download-report-data.rst:21-23` says "Permission
   Required: View Data, Access All Reports". Neither `"View Data"` nor
   `"Access All Reports"` corresponds to an actual field on `HqPermissions`
-  (`corehq/apps/users/models.py:190-221`) -- the closest matches are
+  (`corehq/apps/users/models.py:180-413`, the whole class; the Task 17 audit
+  re-checked this exhaustively rather than against the narrower `:190-221`
+  excerpt originally cited, and `grep` finds no `view_data` or
+  `access_all_reports` property anywhere in the file) -- the closest matches are
   `view_data_dict` (an unrelated "data dictionary" permission) and
   `access_all_locations` (unrelated to reports). The resource's real
   authentication is
@@ -1566,7 +1600,8 @@ the view's own `if` chain", and anything that falls through returns a 405
 - **A real detail (`GET .../{id}/`) operation exists, entirely undocumented by
   `det-exports.rst`, which only describes the list endpoint.**
   `DETExportInstanceResource.Meta.detail_allowed_methods = ['get']`
-  (`corehq/apps/api/resources/v1_0.py:201`) and `obj_get` (`v1_0.py:262-288`) is
+  (`corehq/apps/api/resources/v1_0.py:202`; `:201` is `list_allowed_methods` --
+  citation corrected in the Task 17 audit) and `obj_get` (`v1_0.py:262-288`) is
   fully implemented (it even handles both `FormExportInstance` and
   `CaseExportInstance` lookups, and a domain/type mismatch). Per the
   resource-task conventions ("a missing operation for a method the code allows"
@@ -1669,7 +1704,8 @@ the view's own `if` chain", and anything that falls through returns a 405
 - **`bulkUploadCases` has no throttle at all, unlike every comparable upload
   endpoint in this API.** `corehq/apps/case_importer/views.py` never imports or
   applies `api_throttle` (`corehq/apps/api/decorators.py:51-61`) on
-  `bulk_case_upload_api` (`views.py:461-467`), unlike
+  `bulk_case_upload_api` (`views.py:465-482`; `:461-467` landed on the tail of
+  the preceding view -- citation corrected in the Task 17 audit), unlike
   `import_app_api`/`upload_multimedia_api`/ `multimedia_status_api`
   (`app_import_api.py:31,86,132`, each decorated with `@api_throttle`) and
   `FixtureResource`'s tastypie-level `HQThrottle`. The spec omits a `429`
@@ -1694,7 +1730,7 @@ the view's own `if` chain", and anything that falls through returns a 405
 
 - **An unrecognized `content_type` or `source` filter value crashes with an
   uncaught 500, not a 400.** `_make_slug_filter_consumer`'s inner `_consumer`
-  (`corehq/apps/api/resources/messaging_event/filters.py:100-113`) computes
+  (`corehq/apps/api/resources/messaging_event/filters.py:100-109`) computes
   `vals = [slug_values[val] for val in values if val in slug_values]` and, when
   `vals` is empty (no comma-separated value matched a known slug), falls through
   with no `return` statement at all -- an implicit `return None`. `filter_query`
@@ -1715,14 +1751,15 @@ the view's own `if` chain", and anything that falls through returns a 405
 - **`date_last_activity.gte`/`.gt`/`.lte`/`.lt` are real, working filters that
   `messaging-events.rst`'s filter table (`:31-95`) never mentions.**
   `COMPOUND_FILTERS = [_get_date_filter_consumer("date"), _get_date_filter_consumer("date_last_activity")]`
-  (`corehq/apps/api/resources/messaging_event/filters.py:169-172`) applies the
-  identical dotted-range machinery to both fields; the rST page only documents
-  the `date.*` family. Added to the spec as first-class parameters since the
-  code supports them.
+  (`corehq/apps/api/resources/messaging_event/filters.py:166-169`; `:169-172`
+  landed on `SIMPLE_FILTERS` instead -- citation corrected in the Task 17 audit)
+  applies the identical dotted-range machinery to both fields; the rST page only
+  documents the `date.*` family. Added to the spec as first-class parameters
+  since the code supports them.
 - **`CursorMeta.next` (`docs/api/openapi/components/schemas/pagination.yaml`,
   written speculatively in Task 2 before any consumer existed) described the
   value as a "Relative URL"; it is actually absolute.** `_get_cursor`
-  (`corehq/apps/api/resources/messaging_event/pagination.py:49-70`) builds it
+  (`corehq/apps/api/resources/messaging_event/pagination.py:49-74`) builds it
   with `reverse('api_messaging_event_list', ..., absolute=True)`, and
   `reverse`'s `absolute=True` branch (`corehq/util/view_utils.py:119-129`)
   prefixes the path with `get_url_base()` -- scheme and host included.
@@ -1748,12 +1785,16 @@ the view's own `if` chain", and anything that falls through returns a 405
   `corehq/apps/users/decorators.py:44-54`), handled by this project's own
   registered `handler403 = no_permissions` (`urls.py:49`), which renders the
   `403.html` template via `_no_permissions_message`
-  (`corehq/apps/hqwebapp/views.py:348-357`) inside an `HttpResponseForbidden`
-  (`views.py:361-373`) -- an HTML page, not JSON. (The submission-views entry
-  above, `urls.py:47`/`views.py:362-373`, already established this same
-  mechanism; an earlier draft of this entry incorrectly asserted no `handler403`
-  was registered at all -- corrected.) Neither the empty nor the HTML shape is
-  JSON. This was not verified against a live server (no reachable
-  Postgres/service in this environment) -- it is a static trace of the decorator
-  source, flagged here rather than silently copying `case-v2.yaml`'s precedent,
-  which appears to make the same untested assumption.
+  (`corehq/apps/hqwebapp/views.py:349-358`) inside an `HttpResponseForbidden`
+  (`views.py:362-373`) -- an HTML page, not JSON. (Both line ranges corrected in
+  the Task 17 audit: the function body closes on 358, and 361 is the
+  `@use_bootstrap5` decorator.) (The submission-views entry above,
+  `urls.py:49`/`views.py:362-373`, already established this same mechanism; an
+  earlier draft of this entry incorrectly asserted no `handler403` was
+  registered at all -- corrected.) Neither the empty nor the HTML shape is JSON.
+  This was not verified against a live server (no reachable Postgres/service in
+  this environment) -- it is a static trace of the decorator source, flagged
+  here rather than silently copying `case-v2.yaml`'s precedent, which made the
+  same untested assumption. **Fixed in Task 17**: `case-v2.yaml`'s 401s and 403s
+  no longer point at the shared JSON refs -- see the entry in the case/v2
+  section above.
