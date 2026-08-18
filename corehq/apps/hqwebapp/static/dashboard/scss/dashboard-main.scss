@@ -34,6 +34,15 @@ $dashboard-icon-size: 100px;
   .card-header {
     text-align: center;
     font-size: $font-size-base * 1.5;
+    position: relative;
+
+    .dashboard-quick-action {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: $font-size-base;
+    }
   }
 }
 

@@ -13,7 +13,9 @@ class Tile(object):
 
     def __init__(self, request, title, slug, icon, paginator_class=None,
                  url=None, urlname=None, visibility_check=None,
-                 url_generator=None, help_text=None):
+                 url_generator=None, help_text=None,
+                 quick_action_icon=None, quick_action_urlname=None,
+                 quick_action_label=None, quick_action_visibility_check=None):
         """
         :param request: Request object for the page
         :param title: The title of the tile
@@ -28,6 +30,14 @@ class Tile(object):
         :param url_generator: a lambda that accepts a request and returns
         a string that is the url the tile will take the user to if it's clicked
         :param help_text: (optional) text that will appear on hover of tile
+        :param quick_action_icon: (optional) the class of the icon for a
+        quick-action button in the tile's header
+        :param quick_action_urlname: (optional) the urlname the quick-action
+        button links to; the button is only shown when this is set
+        :param quick_action_label: (optional) accessible label (aria-label /
+        tooltip) for the quick-action button
+        :param quick_action_visibility_check: (optional) a lambda that accepts
+        a request and returns whether the quick-action button is shown
         """
         self.request = request
         self.paginator_class = paginator_class
@@ -39,6 +49,11 @@ class Tile(object):
         self.visibility_check = (visibility_check or self._default_visibility_check)
         self.url_generator = url_generator or self._default_url_generator
         self.help_text = help_text
+        self.quick_action_icon = quick_action_icon
+        self.quick_action_urlname = quick_action_urlname
+        self.quick_action_label = quick_action_label
+        self.quick_action_visibility_check = (
+            quick_action_visibility_check or self._default_visibility_check)
 
     @property
     def is_visible(self):
@@ -65,6 +80,16 @@ class Tile(object):
         if self.urlname is not None:
             return self.url_generator(self.urlname, request)
         return self.url
+
+    def get_quick_action_url(self, request):
+        if self.quick_action_urlname is None:
+            return None
+        if not self.quick_action_visibility_check(request):
+            return None
+        url = reverse(self.quick_action_urlname, args=[request.domain])
+        if not request.can_access_all_locations and not url_is_location_safe(url):
+            return None
+        return url
 
     @staticmethod
     def _default_url_generator(urlname, request):
