@@ -59,14 +59,14 @@
   },
   "info": {
     "description": "CommCare data API.",
-    "title": "Location V2",
+    "title": "Locations (v2)",
     "version": "1.0.0"
   },
   "openapi": "3.0.3",
   "paths": {
     "/a/{domain}/api/location/v2/": {
       "get": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List locations in a project space, create locations, or fetch and update a single location. Version 2 returns location data as a nested object and supports filtering by last modified date.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_v2_list_get",
         "parameters": [
           {
@@ -177,6 +177,32 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "meta": {
+                    "limit": 20,
+                    "next": null,
+                    "offset": 0,
+                    "previous": null,
+                    "total_count": 1
+                  },
+                  "objects": [
+                    {
+                      "domain": "dimagi-test",
+                      "last_modified": "2024-03-11T19:29:16.845849",
+                      "latitude": "31.4100000000",
+                      "location_data": {
+                        "pop": "1001"
+                      },
+                      "location_id": "68e65fbc2dc840ff8bf03849e57aca88",
+                      "location_type_code": "county",
+                      "location_type_name": "County",
+                      "longitude": null,
+                      "name": "Fairfax County",
+                      "parent_location_id": "41b0bdfbae20428e9435ae8c3dcd22e7",
+                      "site_code": "fairfax_county"
+                    }
+                  ]
+                },
                 "schema": {
                   "properties": {
                     "meta": {
@@ -186,34 +212,42 @@
                       "items": {
                         "properties": {
                           "domain": {
+                            "description": "Domain (project space) that owns the location.",
                             "type": "string"
                           },
                           "last_modified": {
+                            "description": "Date and time the location was last modified.",
                             "format": "date-time",
                             "type": "string"
                           },
                           "latitude": {
+                            "description": "Latitude coordinate of the location.",
                             "format": "decimal",
                             "nullable": true,
                             "type": "string"
                           },
                           "location_data": {
                             "additionalProperties": true,
+                            "description": "Custom data associated with the location, keyed by field name.",
                             "type": "object"
                           },
                           "location_id": {
+                            "description": "UUID of the location.",
                             "type": "string"
                           },
                           "longitude": {
+                            "description": "Longitude coordinate of the location.",
                             "format": "decimal",
                             "nullable": true,
                             "type": "string"
                           },
                           "name": {
+                            "description": "Name of the location.",
                             "nullable": true,
                             "type": "string"
                           },
                           "site_code": {
+                            "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                             "type": "string"
                           }
                         },
@@ -229,7 +263,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Location",
+        "summary": "Locations (v2)",
         "tags": [
           "location"
         ]
@@ -246,7 +280,7 @@
         }
       ],
       "patch": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List locations in a project space, create locations, or fetch and update a single location. Version 2 returns location data as a nested object and supports filtering by last modified date.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_v2_list_patch",
         "requestBody": {
           "content": {
@@ -254,34 +288,42 @@
               "schema": {
                 "properties": {
                   "domain": {
+                    "description": "Domain (project space) that owns the location.",
                     "type": "string"
                   },
                   "last_modified": {
+                    "description": "Date and time the location was last modified.",
                     "format": "date-time",
                     "type": "string"
                   },
                   "latitude": {
+                    "description": "Latitude coordinate of the location.",
                     "format": "decimal",
                     "nullable": true,
                     "type": "string"
                   },
                   "location_data": {
                     "additionalProperties": true,
+                    "description": "Custom data associated with the location, keyed by field name.",
                     "type": "object"
                   },
                   "location_id": {
+                    "description": "UUID of the location.",
                     "type": "string"
                   },
                   "longitude": {
+                    "description": "Longitude coordinate of the location.",
                     "format": "decimal",
                     "nullable": true,
                     "type": "string"
                   },
                   "name": {
+                    "description": "Name of the location.",
                     "nullable": true,
                     "type": "string"
                   },
                   "site_code": {
+                    "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                     "type": "string"
                   }
                 },
@@ -295,6 +337,32 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "meta": {
+                    "limit": 20,
+                    "next": null,
+                    "offset": 0,
+                    "previous": null,
+                    "total_count": 1
+                  },
+                  "objects": [
+                    {
+                      "domain": "dimagi-test",
+                      "last_modified": "2024-03-11T19:29:16.845849",
+                      "latitude": "31.4100000000",
+                      "location_data": {
+                        "pop": "1001"
+                      },
+                      "location_id": "68e65fbc2dc840ff8bf03849e57aca88",
+                      "location_type_code": "county",
+                      "location_type_name": "County",
+                      "longitude": null,
+                      "name": "Fairfax County",
+                      "parent_location_id": "41b0bdfbae20428e9435ae8c3dcd22e7",
+                      "site_code": "fairfax_county"
+                    }
+                  ]
+                },
                 "schema": {
                   "properties": {
                     "meta": {
@@ -304,34 +372,42 @@
                       "items": {
                         "properties": {
                           "domain": {
+                            "description": "Domain (project space) that owns the location.",
                             "type": "string"
                           },
                           "last_modified": {
+                            "description": "Date and time the location was last modified.",
                             "format": "date-time",
                             "type": "string"
                           },
                           "latitude": {
+                            "description": "Latitude coordinate of the location.",
                             "format": "decimal",
                             "nullable": true,
                             "type": "string"
                           },
                           "location_data": {
                             "additionalProperties": true,
+                            "description": "Custom data associated with the location, keyed by field name.",
                             "type": "object"
                           },
                           "location_id": {
+                            "description": "UUID of the location.",
                             "type": "string"
                           },
                           "longitude": {
+                            "description": "Longitude coordinate of the location.",
                             "format": "decimal",
                             "nullable": true,
                             "type": "string"
                           },
                           "name": {
+                            "description": "Name of the location.",
                             "nullable": true,
                             "type": "string"
                           },
                           "site_code": {
+                            "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                             "type": "string"
                           }
                         },
@@ -347,13 +423,13 @@
             "description": "A page of records."
           }
         },
-        "summary": "Location",
+        "summary": "Locations (v2)",
         "tags": [
           "location"
         ]
       },
       "post": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List locations in a project space, create locations, or fetch and update a single location. Version 2 returns location data as a nested object and supports filtering by last modified date.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_v2_list_post",
         "requestBody": {
           "content": {
@@ -361,34 +437,42 @@
               "schema": {
                 "properties": {
                   "domain": {
+                    "description": "Domain (project space) that owns the location.",
                     "type": "string"
                   },
                   "last_modified": {
+                    "description": "Date and time the location was last modified.",
                     "format": "date-time",
                     "type": "string"
                   },
                   "latitude": {
+                    "description": "Latitude coordinate of the location.",
                     "format": "decimal",
                     "nullable": true,
                     "type": "string"
                   },
                   "location_data": {
                     "additionalProperties": true,
+                    "description": "Custom data associated with the location, keyed by field name.",
                     "type": "object"
                   },
                   "location_id": {
+                    "description": "UUID of the location.",
                     "type": "string"
                   },
                   "longitude": {
+                    "description": "Longitude coordinate of the location.",
                     "format": "decimal",
                     "nullable": true,
                     "type": "string"
                   },
                   "name": {
+                    "description": "Name of the location.",
                     "nullable": true,
                     "type": "string"
                   },
                   "site_code": {
+                    "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                     "type": "string"
                   }
                 },
@@ -402,6 +486,32 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "meta": {
+                    "limit": 20,
+                    "next": null,
+                    "offset": 0,
+                    "previous": null,
+                    "total_count": 1
+                  },
+                  "objects": [
+                    {
+                      "domain": "dimagi-test",
+                      "last_modified": "2024-03-11T19:29:16.845849",
+                      "latitude": "31.4100000000",
+                      "location_data": {
+                        "pop": "1001"
+                      },
+                      "location_id": "68e65fbc2dc840ff8bf03849e57aca88",
+                      "location_type_code": "county",
+                      "location_type_name": "County",
+                      "longitude": null,
+                      "name": "Fairfax County",
+                      "parent_location_id": "41b0bdfbae20428e9435ae8c3dcd22e7",
+                      "site_code": "fairfax_county"
+                    }
+                  ]
+                },
                 "schema": {
                   "properties": {
                     "meta": {
@@ -411,34 +521,42 @@
                       "items": {
                         "properties": {
                           "domain": {
+                            "description": "Domain (project space) that owns the location.",
                             "type": "string"
                           },
                           "last_modified": {
+                            "description": "Date and time the location was last modified.",
                             "format": "date-time",
                             "type": "string"
                           },
                           "latitude": {
+                            "description": "Latitude coordinate of the location.",
                             "format": "decimal",
                             "nullable": true,
                             "type": "string"
                           },
                           "location_data": {
                             "additionalProperties": true,
+                            "description": "Custom data associated with the location, keyed by field name.",
                             "type": "object"
                           },
                           "location_id": {
+                            "description": "UUID of the location.",
                             "type": "string"
                           },
                           "longitude": {
+                            "description": "Longitude coordinate of the location.",
                             "format": "decimal",
                             "nullable": true,
                             "type": "string"
                           },
                           "name": {
+                            "description": "Name of the location.",
                             "nullable": true,
                             "type": "string"
                           },
                           "site_code": {
+                            "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                             "type": "string"
                           }
                         },
@@ -454,7 +572,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Location",
+        "summary": "Locations (v2)",
         "tags": [
           "location"
         ]
@@ -462,7 +580,7 @@
     },
     "/a/{domain}/api/location/v2/{location_id}/": {
       "get": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List locations in a project space, create locations, or fetch and update a single location. Version 2 returns location data as a nested object and supports filtering by last modified date.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_v2_detail_get",
         "responses": {
           "200": {
@@ -471,34 +589,42 @@
                 "schema": {
                   "properties": {
                     "domain": {
+                      "description": "Domain (project space) that owns the location.",
                       "type": "string"
                     },
                     "last_modified": {
+                      "description": "Date and time the location was last modified.",
                       "format": "date-time",
                       "type": "string"
                     },
                     "latitude": {
+                      "description": "Latitude coordinate of the location.",
                       "format": "decimal",
                       "nullable": true,
                       "type": "string"
                     },
                     "location_data": {
                       "additionalProperties": true,
+                      "description": "Custom data associated with the location, keyed by field name.",
                       "type": "object"
                     },
                     "location_id": {
+                      "description": "UUID of the location.",
                       "type": "string"
                     },
                     "longitude": {
+                      "description": "Longitude coordinate of the location.",
                       "format": "decimal",
                       "nullable": true,
                       "type": "string"
                     },
                     "name": {
+                      "description": "Name of the location.",
                       "nullable": true,
                       "type": "string"
                     },
                     "site_code": {
+                      "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                       "type": "string"
                     }
                   },
@@ -509,7 +635,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Location",
+        "summary": "Locations (v2)",
         "tags": [
           "location"
         ]
@@ -535,7 +661,7 @@
         }
       ],
       "put": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List locations in a project space, create locations, or fetch and update a single location. Version 2 returns location data as a nested object and supports filtering by last modified date.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_v2_detail_put",
         "requestBody": {
           "content": {
@@ -543,34 +669,42 @@
               "schema": {
                 "properties": {
                   "domain": {
+                    "description": "Domain (project space) that owns the location.",
                     "type": "string"
                   },
                   "last_modified": {
+                    "description": "Date and time the location was last modified.",
                     "format": "date-time",
                     "type": "string"
                   },
                   "latitude": {
+                    "description": "Latitude coordinate of the location.",
                     "format": "decimal",
                     "nullable": true,
                     "type": "string"
                   },
                   "location_data": {
                     "additionalProperties": true,
+                    "description": "Custom data associated with the location, keyed by field name.",
                     "type": "object"
                   },
                   "location_id": {
+                    "description": "UUID of the location.",
                     "type": "string"
                   },
                   "longitude": {
+                    "description": "Longitude coordinate of the location.",
                     "format": "decimal",
                     "nullable": true,
                     "type": "string"
                   },
                   "name": {
+                    "description": "Name of the location.",
                     "nullable": true,
                     "type": "string"
                   },
                   "site_code": {
+                    "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                     "type": "string"
                   }
                 },
@@ -587,34 +721,42 @@
                 "schema": {
                   "properties": {
                     "domain": {
+                      "description": "Domain (project space) that owns the location.",
                       "type": "string"
                     },
                     "last_modified": {
+                      "description": "Date and time the location was last modified.",
                       "format": "date-time",
                       "type": "string"
                     },
                     "latitude": {
+                      "description": "Latitude coordinate of the location.",
                       "format": "decimal",
                       "nullable": true,
                       "type": "string"
                     },
                     "location_data": {
                       "additionalProperties": true,
+                      "description": "Custom data associated with the location, keyed by field name.",
                       "type": "object"
                     },
                     "location_id": {
+                      "description": "UUID of the location.",
                       "type": "string"
                     },
                     "longitude": {
+                      "description": "Longitude coordinate of the location.",
                       "format": "decimal",
                       "nullable": true,
                       "type": "string"
                     },
                     "name": {
+                      "description": "Name of the location.",
                       "nullable": true,
                       "type": "string"
                     },
                     "site_code": {
+                      "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                       "type": "string"
                     }
                   },
@@ -625,7 +767,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Location",
+        "summary": "Locations (v2)",
         "tags": [
           "location"
         ]

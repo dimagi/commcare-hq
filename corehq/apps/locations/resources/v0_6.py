@@ -26,6 +26,16 @@ class LocationResource(v0_5.LocationResource):
     resource_name = 'location'
     patch_limit = 100
 
+    class Docs:
+        summary = 'Locations (v2)'
+        description = (
+            'List locations in a project space, create locations, or '
+            'fetch and update a single location. Version 2 returns '
+            'location data as a nested object and supports filtering by '
+            'last modified date.'
+        )
+        examples = {'list_response': 'location/v2/list_response.json'}
+
     class Meta:
         max_limit = 5000
         queryset = SQLLocation.active_objects.all()

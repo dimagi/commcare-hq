@@ -59,13 +59,14 @@
   },
   "info": {
     "description": "CommCare data API.",
-    "title": "Lookup Table Item V1",
+    "title": "Lookup Table Items",
     "version": "1.0.0"
   },
   "openapi": "3.0.3",
   "paths": {
     "/a/{domain}/api/lookup_table_item/v1/": {
       "get": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
         "operationId": "lookup_table_item_v1_list_get",
         "parameters": [
           {
@@ -116,25 +117,54 @@
                       "items": {
                         "properties": {
                           "data_type_id": {
+                            "description": "Identifier of the lookup table this item belongs to.",
                             "type": "string"
                           },
                           "fields": {
-                            "additionalProperties": true,
+                            "additionalProperties": {
+                              "properties": {
+                                "field_list": {
+                                  "items": {
+                                    "properties": {
+                                      "field_value": {
+                                        "type": "string"
+                                      },
+                                      "properties": {
+                                        "additionalProperties": {
+                                          "type": "string"
+                                        },
+                                        "type": "object"
+                                      }
+                                    },
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                             "type": "object"
                           },
                           "id": {
+                            "description": "Unique identifier of the lookup table item.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "item_attributes": {
-                            "additionalProperties": true,
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "description": "Attribute values for the row, keyed by attribute name.",
                             "type": "object"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "sort_key": {
+                            "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                             "type": "integer"
                           }
                         },
@@ -150,7 +180,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items",
         "tags": [
           "lookup_table_item"
         ]
@@ -167,6 +197,7 @@
         }
       ],
       "post": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
         "operationId": "lookup_table_item_v1_list_post",
         "requestBody": {
           "content": {
@@ -174,17 +205,44 @@
               "schema": {
                 "properties": {
                   "data_type_id": {
+                    "description": "Identifier of the lookup table this item belongs to.",
                     "type": "string"
                   },
                   "fields": {
-                    "additionalProperties": true,
+                    "additionalProperties": {
+                      "properties": {
+                        "field_list": {
+                          "items": {
+                            "properties": {
+                              "field_value": {
+                                "type": "string"
+                              },
+                              "properties": {
+                                "additionalProperties": {
+                                  "type": "string"
+                                },
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                     "type": "object"
                   },
                   "item_attributes": {
-                    "additionalProperties": true,
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Attribute values for the row, keyed by attribute name.",
                     "type": "object"
                   },
                   "sort_key": {
+                    "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                     "type": "integer"
                   }
                 },
@@ -207,25 +265,54 @@
                       "items": {
                         "properties": {
                           "data_type_id": {
+                            "description": "Identifier of the lookup table this item belongs to.",
                             "type": "string"
                           },
                           "fields": {
-                            "additionalProperties": true,
+                            "additionalProperties": {
+                              "properties": {
+                                "field_list": {
+                                  "items": {
+                                    "properties": {
+                                      "field_value": {
+                                        "type": "string"
+                                      },
+                                      "properties": {
+                                        "additionalProperties": {
+                                          "type": "string"
+                                        },
+                                        "type": "object"
+                                      }
+                                    },
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                             "type": "object"
                           },
                           "id": {
+                            "description": "Unique identifier of the lookup table item.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "item_attributes": {
-                            "additionalProperties": true,
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "description": "Attribute values for the row, keyed by attribute name.",
                             "type": "object"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "sort_key": {
+                            "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                             "type": "integer"
                           }
                         },
@@ -241,7 +328,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items",
         "tags": [
           "lookup_table_item"
         ]
@@ -249,6 +336,7 @@
     },
     "/a/{domain}/api/lookup_table_item/v1/{pk}/": {
       "delete": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
         "operationId": "lookup_table_item_v1_detail_delete",
         "responses": {
           "200": {
@@ -257,25 +345,54 @@
                 "schema": {
                   "properties": {
                     "data_type_id": {
+                      "description": "Identifier of the lookup table this item belongs to.",
                       "type": "string"
                     },
                     "fields": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "properties": {
+                          "field_list": {
+                            "items": {
+                              "properties": {
+                                "field_value": {
+                                  "type": "string"
+                                },
+                                "properties": {
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "type": "object"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                       "type": "object"
                     },
                     "id": {
+                      "description": "Unique identifier of the lookup table item.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "item_attributes": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Attribute values for the row, keyed by attribute name.",
                       "type": "object"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "sort_key": {
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                       "type": "integer"
                     }
                   },
@@ -286,12 +403,13 @@
             "description": "The requested record."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items",
         "tags": [
           "lookup_table_item"
         ]
       },
       "get": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
         "operationId": "lookup_table_item_v1_detail_get",
         "responses": {
           "200": {
@@ -300,25 +418,54 @@
                 "schema": {
                   "properties": {
                     "data_type_id": {
+                      "description": "Identifier of the lookup table this item belongs to.",
                       "type": "string"
                     },
                     "fields": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "properties": {
+                          "field_list": {
+                            "items": {
+                              "properties": {
+                                "field_value": {
+                                  "type": "string"
+                                },
+                                "properties": {
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "type": "object"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                       "type": "object"
                     },
                     "id": {
+                      "description": "Unique identifier of the lookup table item.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "item_attributes": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Attribute values for the row, keyed by attribute name.",
                       "type": "object"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "sort_key": {
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                       "type": "integer"
                     }
                   },
@@ -329,7 +476,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items",
         "tags": [
           "lookup_table_item"
         ]
@@ -355,6 +502,7 @@
         }
       ],
       "put": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
         "operationId": "lookup_table_item_v1_detail_put",
         "requestBody": {
           "content": {
@@ -362,17 +510,44 @@
               "schema": {
                 "properties": {
                   "data_type_id": {
+                    "description": "Identifier of the lookup table this item belongs to.",
                     "type": "string"
                   },
                   "fields": {
-                    "additionalProperties": true,
+                    "additionalProperties": {
+                      "properties": {
+                        "field_list": {
+                          "items": {
+                            "properties": {
+                              "field_value": {
+                                "type": "string"
+                              },
+                              "properties": {
+                                "additionalProperties": {
+                                  "type": "string"
+                                },
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                     "type": "object"
                   },
                   "item_attributes": {
-                    "additionalProperties": true,
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Attribute values for the row, keyed by attribute name.",
                     "type": "object"
                   },
                   "sort_key": {
+                    "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                     "type": "integer"
                   }
                 },
@@ -389,25 +564,54 @@
                 "schema": {
                   "properties": {
                     "data_type_id": {
+                      "description": "Identifier of the lookup table this item belongs to.",
                       "type": "string"
                     },
                     "fields": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "properties": {
+                          "field_list": {
+                            "items": {
+                              "properties": {
+                                "field_value": {
+                                  "type": "string"
+                                },
+                                "properties": {
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "type": "object"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                       "type": "object"
                     },
                     "id": {
+                      "description": "Unique identifier of the lookup table item.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "item_attributes": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Attribute values for the row, keyed by attribute name.",
                       "type": "object"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "sort_key": {
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                       "type": "integer"
                     }
                   },
@@ -418,7 +622,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items",
         "tags": [
           "lookup_table_item"
         ]

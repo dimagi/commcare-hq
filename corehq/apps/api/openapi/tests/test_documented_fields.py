@@ -8,6 +8,12 @@ DOCUMENTED_SLUGS = frozenset({
     'case-v1',
     'form-v1',
     'group-v1',
+    'location-v1',
+    'location-v2',
+    'location-type-v1',
+    'lookup-table-v1',
+    'lookup-table-item-v1',
+    'lookup-table-item-v2',
 })
 
 
