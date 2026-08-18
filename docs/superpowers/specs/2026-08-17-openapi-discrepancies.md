@@ -11,7 +11,9 @@ triage. Nothing here has been changed in the reST docs.
 - **Documented but not served, or contradicted by the code:** 22
 - **Field or parameter mismatches:** 35
 - **Error-response and status-code shapes:** 42
-- **Likely code bugs, for human triage rather than doc edits:** 6
+- **Likely code bugs, for human triage rather than doc edits:** 11
+  (listed individually in the next section — the count was 6 until the final
+  review enumerated them and found five more already written up in the body)
 - **Checked and clear, or recorded only for visibility:** 7
 
 Findings are grouped by resource below. Each states what the docs say, what the
@@ -38,6 +40,28 @@ finding had to be withdrawn outright. Entries that could not be verified against
 a live server (no Postgres or Elasticsearch was reachable in the authoring
 environment) say so explicitly rather than implying more confidence than the
 trace supports.
+
+## Likely product bugs — read this first
+
+Everything else in this file is a documentation problem. These eleven are
+defects in the **code**, and nothing about them was changed: the spec records
+the broken behaviour and this table is the triage list. Ordered worst first —
+the top four lose or corrupt data without the caller being told. Each row names
+the section heading to jump to and a phrase to search for inside it.
+
+| #  | Bug | Full entry |
+| -- | --- | ---------- |
+| 1  | `PUT` to a `lookup_table` / `lookup_table_item` id that does not exist **creates a brand-new object at a different, server-generated id** and returns 201, instead of 404. The caller believes it updated the record it named. | `## fixture/v1, lookup_table/v1, …` — "silently creates an unrelated new object" |
+| 2  | `POST /a/<domain>/api/case/v2/ext/<external_id>/` ignores the `external_id` in the URL and creates **a plain new case with no external id** — a duplicate, not the upsert the caller meant. | `## case/v2` — "POST /a/<domain>/api/case/v2/ext/" |
+| 3  | `createMobileWorker` **discards** the field-level validation errors that `updateMobileWorker` rejects with a 400, so the same payload creates a user with those fields silently unset. | `## user/v1 and web-user/v1` — "silently discards field-update errors" |
+| 4  | `BulkUserResource` applies `offset` twice (ES slice, then tastypie's default paginator), so **any `offset > 0` returns an empty page** while matching records exist at that position. | `## bulk-user/v1` — "double-applied" |
+| 5  | The outbound OpenRosa version header is literally named `HTTP_X_OPENROSA_VERSION`, not `X-OpenRosa-Version`, on **every** HQ response — a conforming OpenRosa client never finds it. | `## form/v1 and submission` — "outbound OpenRosa version response header" |
+| 6  | `getFixtureUploadStatus` reports "in progress" **indefinitely** for a mistyped or expired `download_id`; there is no id for which it returns an error. | `## fixture/v1, lookup_table/v1, …` — "no reachable 404 for any `download_id`" |
+| 7  | An unrecognised `content_type` or `source` messaging filter raises an **uncaught 500** where a 400 belongs (the `status` filter on the same endpoint does validate). | `## messaging-event/v1` — "uncaught 500, not a 400" |
+| 8  | `downloadReportData` turns an unparsable filter value (e.g. a bad date on a `-start`/`-end` pair) into an **uncaught 500** rather than a 400. | `## simplereportconfiguration/v1, configurablereportdata/v1` — "malformed `filter_name` value" |
+| 9  | `PUT /a/<domain>/api/case/v2/<case_id>` with an array body raises `TypeError` → **500**. The by-external-id path rejects the identical body cleanly with a 400. | `## case/v2` — "with an array body returns a 500" |
+| 10 | `PUT` to a nonexistent group id is an **uncaught 500**, not a 404: `Group.get` raises couchdbkit's `ResourceNotFound`, which tastypie's `put_detail` does not recognise. | `## group/v1` — "returns a 500, not a 404" |
+| 11 | `case_api_bulk_fetch` never checks the request method: `PUT` behaves exactly like `POST`, and the `GET` its own CORS header advertises always fails with a 400. | `## case/v2` — "never checks the request method" |
 
 ## Cross-cutting: the shared 401 and 403 responses
 
