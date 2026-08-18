@@ -596,10 +596,23 @@ the view's own `if` chain", and anything that falls through returns a 405
   covered by the reST page. This resource is throttled by `api_throttle`
   (`corehq/apps/api/decorators.py:51-61`), which returns
   `HttpResponse(status=429, headers={'Retry-After': ...})` -- no content and no
-  serializer. The spec's shared `TooManyRequests` response documents an
-  `{"error": ...}` JSON body, so every case/v2 operation declares its own 429
-  with a `Retry-After` header and no `content`, rather than pointing at the
-  shared ref.
+  serializer. Every case/v2 operation declares its own 429 with a `Retry-After`
+  header and no `content`, rather than pointing at the shared ref. **Resolved in
+  the spec (final review):** the shared `TooManyRequests` response used to
+  declare an `{"error": ...}` JSON body, which was wrong for _all_ of its users
+  too -- tastypie's `throttle_check` raises
+  `ImmediateHttpResponse(http.HttpTooManyRequests())`
+  (`tastypie/resources.py:575-598`), and `HttpTooManyRequests` is an
+  `HttpResponse` subclass constructed with no content
+  (`tastypie/http.py:81-82`), so the serializer never runs. The shared component
+  now declares no `content`, which corrects all 17 operations referencing it
+  (`group.yaml` x6, `location-v2.yaml` x5, `case-v1.yaml` x2,
+  `location-v1.yaml` x2, `location-type.yaml` x2 -- every one a tastypie
+  resource inheriting `CustomResourceMeta.throttle`). case/v2 still declares its
+  own because `api_throttle` additionally sends `Retry-After`, which the
+  tastypie path does not: `HQThrottle.should_be_throttled`
+  (`corehq/apps/api/resources/meta.py:42-47`) returns a plain `bool`, and
+  `throttle_check` sets the header only for a non-`bool` `int` or a `datetime`.
 
 ## form/v1 and submission (`list-forms.rst`, `form-data.rst`, `form-submission.rst`)
 

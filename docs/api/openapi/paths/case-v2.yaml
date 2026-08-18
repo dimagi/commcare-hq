@@ -458,8 +458,8 @@ List:
         # Deliberately not the shared TooManyRequests ref: this resource is
         # throttled by `api_throttle` (corehq/apps/api/decorators.py:51-61),
         # which returns `HttpResponse(status=429, headers={'Retry-After': ...})`
-        # -- no content at all, rather than the `{"error": ...}` body the shared
-        # response documents. See the discrepancy file.
+        # -- no content, but *with* a `Retry-After` header, which the shared
+        # tastypie response does not carry. See the discrepancy file.
         description: >-
           The request was rate limited. The response body is empty; the
           `Retry-After` header carries the number of seconds to wait.

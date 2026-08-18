@@ -70,14 +70,27 @@ NotFound:
     application/json:
       schema:
         $ref: "./schemas/error.yaml#/Error"
+# This response has NO body, and that is not an omission. Every operation
+# pointing at this ref is served by a tastypie resource, and tastypie's
+# `throttle_check` raises `ImmediateHttpResponse(http.HttpTooManyRequests())`
+# (tastypie/resources.py:575-598) -- an `HttpResponse` subclass constructed with
+# no content (tastypie/http.py:81-82), so nothing is ever run through the
+# serializer. Do not add a `content:` block back.
+#
+# No `Retry-After` header either: tastypie only sets one when
+# `should_be_throttled` returns an `int` (excluding `bool`) or a `datetime`,
+# and `HQThrottle.should_be_throttled` returns a plain bool
+# (corehq/apps/api/resources/meta.py:42-47).
+#
+# Other operations declare their 429 inline rather than using this ref, because
+# theirs differ in other ways -- the plain-Django-view endpoints throttled by
+# `api_throttle` (corehq/apps/api/decorators.py:51-61) do send a `Retry-After`
+# header. No 429 anywhere in this API has been found to carry a body.
 TooManyRequests:
   description: >-
     The request was rate limited. Back off and retry. Rate limits are applied
-    per user and project space.
-  content:
-    application/json:
-      schema:
-        $ref: "./schemas/error.yaml#/Error"
+    per user and project space. The response body is **empty** and no
+    `Retry-After` header is sent.
 ServerError:
   description: An unexpected error occurred.
   content:

@@ -7047,8 +7047,4 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
     TooManyRequests:
-      description: The request was rate limited. Back off and retry. Rate limits are applied per user and project space.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+      description: The request was rate limited. Back off and retry. Rate limits are applied per user and project space. The response body is **empty** and no `Retry-After` header is sent.
