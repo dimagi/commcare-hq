@@ -411,9 +411,49 @@ List:
             schema:
               $ref: "../components/schemas/error.yaml#/Error"
       "401":
-        $ref: "../components/responses.yaml#/Unauthorized"
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
       "403":
-        $ref: "../components/responses.yaml#/Forbidden"
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Two causes, both
+        # non-JSON:
+        #  - Authenticated but not a member of this project space:
+        #    `_login_or_challenge`'s inner `_inner` returns a bare
+        #    `HttpResponseForbidden()`
+        #    (corehq/apps/domain/decorators.py:303,329) -- empty body.
+        #  - A member lacking Edit Data or API access: `require_permission`
+        #    raises `django.core.exceptions.PermissionDenied`
+        #    (corehq/apps/users/decorators.py:51-54); the view catches only
+        #    `UserError` (corehq/apps/hqcase/views.py:111-112), so it reaches
+        #    this project's `handler403 = no_permissions` (urls.py:49), which
+        #    renders the `403.html` template
+        #    (`_no_permissions_message`, corehq/apps/hqwebapp/views.py:349-358)
+        #    inside an `HttpResponseForbidden`
+        #    (corehq/apps/hqwebapp/views.py:362-373) -- an HTML page.
+        # Traced from source, not verified against a live server.
+        description: >-
+          The caller is authenticated but is not a member of this project
+          space (empty body), or is a member lacking the Edit Data or API
+          access permission (a Django HTML error page). **Neither shape is
+          JSON.**
       "429":
         # Deliberately not the shared TooManyRequests ref: this resource is
         # throttled by `api_throttle` (corehq/apps/api/decorators.py:51-61),
@@ -583,12 +623,36 @@ List:
                 - $ref: "../components/schemas/error.yaml#/Error"
                 - $ref: "../components/schemas/case-v2.yaml#/CaseV2SubmissionError"
       "401":
-        $ref: "../components/responses.yaml#/Unauthorized"
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
       "403":
         description: >-
-          The authenticated user lacks the Edit Data or API access permission,
-          or -- for a location-restricted user -- the payload touches an owner
-          or an indexed case outside their accessible locations
+          Returned as JSON only for the location-restriction check below. A
+          plain Edit Data / API access permission failure, or non-membership of
+          the project space, also yields a 403 but with a **non-JSON** body --
+          see `listCasesV2`'s 403 for that trace.
+
+
+          A location-restricted user submitted a payload touching an owner or
+          an indexed case outside their accessible locations
           (`validate_update_permission`,
           `corehq/apps/hqcase/api/updates.py:383-431`, rendered at
           `corehq/apps/hqcase/views.py:273-274`).
@@ -711,12 +775,39 @@ List:
                 - $ref: "../components/schemas/error.yaml#/Error"
                 - $ref: "../components/schemas/case-v2.yaml#/CaseV2SubmissionError"
       "401":
-        $ref: "../components/responses.yaml#/Unauthorized"
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
       "403":
         description: >-
-          The authenticated user lacks the Edit Data or API access permission,
-          or the payload touches owners or indexed cases outside a
-          location-restricted user's accessible locations.
+          Returned as JSON only for the location-restriction check below. A
+          plain Edit Data / API access permission failure, or non-membership of
+          the project space, also yields a 403 but with a **non-JSON** body --
+          see `listCasesV2`'s 403 for that trace.
+
+
+          The payload touches owners or indexed cases outside a
+          location-restricted user's accessible locations
+          (`validate_update_permission`,
+          `corehq/apps/hqcase/api/updates.py:383-431`, rendered at
+          `corehq/apps/hqcase/views.py:273-274`).
         content:
           application/json:
             schema:
@@ -847,14 +938,38 @@ Detail:
             schema:
               $ref: "../components/schemas/error.yaml#/Error"
       "401":
-        $ref: "../components/responses.yaml#/Unauthorized"
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
       "403":
         description: >-
-          The authenticated user lacks the Edit Data or API access permission,
-          or is location-restricted and the case is outside their accessible
-          locations (`corehq/apps/hqcase/views.py:151-156`). The single-id form
-          only -- in the multi-id form inaccessible cases are filtered out of
-          the query and come back as not-found stubs instead.
+          Returned as JSON only for the location-restriction check below. A
+          plain Edit Data / API access permission failure, or non-membership of
+          the project space, also yields a 403 but with a **non-JSON** body --
+          see `listCasesV2`'s 403 for that trace.
+
+
+          The caller is location-restricted and the case is outside their
+          accessible locations (`corehq/apps/hqcase/views.py:151-156`). The
+          single-id form only -- in the multi-id form inaccessible cases are
+          filtered out of the query and come back as not-found stubs instead.
         content:
           application/json:
             schema:
@@ -981,12 +1096,39 @@ Detail:
                 - $ref: "../components/schemas/error.yaml#/Error"
                 - $ref: "../components/schemas/case-v2.yaml#/CaseV2SubmissionError"
       "401":
-        $ref: "../components/responses.yaml#/Unauthorized"
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
       "403":
         description: >-
-          The authenticated user lacks the Edit Data or API access permission,
-          or the payload touches owners or indexed cases outside a
-          location-restricted user's accessible locations.
+          Returned as JSON only for the location-restriction check below. A
+          plain Edit Data / API access permission failure, or non-membership of
+          the project space, also yields a 403 but with a **non-JSON** body --
+          see `listCasesV2`'s 403 for that trace.
+
+
+          The payload touches owners or indexed cases outside a
+          location-restricted user's accessible locations
+          (`validate_update_permission`,
+          `corehq/apps/hqcase/api/updates.py:383-431`, rendered at
+          `corehq/apps/hqcase/views.py:273-274`).
         content:
           application/json:
             schema:
@@ -1092,12 +1234,36 @@ DetailByExternalId:
             schema:
               $ref: "../components/schemas/error.yaml#/Error"
       "401":
-        $ref: "../components/responses.yaml#/Unauthorized"
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
       "403":
         description: >-
-          The authenticated user lacks the Edit Data or API access permission,
-          or is location-restricted and the case is outside their accessible
-          locations (`corehq/apps/hqcase/views.py:179-183`).
+          Returned as JSON only for the location-restriction check below. A
+          plain Edit Data / API access permission failure, or non-membership of
+          the project space, also yields a 403 but with a **non-JSON** body --
+          see `listCasesV2`'s 403 for that trace.
+
+
+          The caller is location-restricted and the case is outside their
+          accessible locations (`corehq/apps/hqcase/views.py:179-183`).
         content:
           application/json:
             schema:
@@ -1226,12 +1392,39 @@ DetailByExternalId:
                 - $ref: "../components/schemas/error.yaml#/Error"
                 - $ref: "../components/schemas/case-v2.yaml#/CaseV2SubmissionError"
       "401":
-        $ref: "../components/responses.yaml#/Unauthorized"
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
       "403":
         description: >-
-          The authenticated user lacks the Edit Data or API access permission,
-          or the payload touches owners or indexed cases outside a
-          location-restricted user's accessible locations.
+          Returned as JSON only for the location-restriction check below. A
+          plain Edit Data / API access permission failure, or non-membership of
+          the project space, also yields a 403 but with a **non-JSON** body --
+          see `listCasesV2`'s 403 for that trace.
+
+
+          The payload touches owners or indexed cases outside a
+          location-restricted user's accessible locations
+          (`validate_update_permission`,
+          `corehq/apps/hqcase/api/updates.py:383-431`, rendered at
+          `corehq/apps/hqcase/views.py:273-274`).
         content:
           application/json:
             schema:
@@ -1354,9 +1547,49 @@ BulkFetch:
             schema:
               $ref: "../components/schemas/error.yaml#/Error"
       "401":
-        $ref: "../components/responses.yaml#/Unauthorized"
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
       "403":
-        $ref: "../components/responses.yaml#/Forbidden"
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Two causes, both
+        # non-JSON:
+        #  - Authenticated but not a member of this project space:
+        #    `_login_or_challenge`'s inner `_inner` returns a bare
+        #    `HttpResponseForbidden()`
+        #    (corehq/apps/domain/decorators.py:303,329) -- empty body.
+        #  - A member lacking Edit Data or API access: `require_permission`
+        #    raises `django.core.exceptions.PermissionDenied`
+        #    (corehq/apps/users/decorators.py:51-54); the view catches only
+        #    `UserError` (corehq/apps/hqcase/views.py:111-112), so it reaches
+        #    this project's `handler403 = no_permissions` (urls.py:49), which
+        #    renders the `403.html` template
+        #    (`_no_permissions_message`, corehq/apps/hqwebapp/views.py:349-358)
+        #    inside an `HttpResponseForbidden`
+        #    (corehq/apps/hqwebapp/views.py:362-373) -- an HTML page.
+        # Traced from source, not verified against a live server.
+        description: >-
+          The caller is authenticated but is not a member of this project
+          space (empty body), or is a member lacking the Edit Data or API
+          access permission (a Django HTML error page). **Neither shape is
+          JSON.**
       "429":
         # See the note on listCasesV2's 429: api_throttle returns an empty body.
         description: >-

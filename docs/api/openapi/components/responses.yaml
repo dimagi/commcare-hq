@@ -4,14 +4,52 @@ BadRequest:
     application/json:
       schema:
         $ref: "./schemas/error.yaml#/Error"
+# A 401 from this API has TWO distinct body shapes, and only one of them is
+# the JSON declared below. Verify which one applies before pointing an
+# operation at this ref:
+#   * EMPTY body -- the common case. A missing or invalid credential never
+#     reaches CommCare's own code: the scheme's challenge decorator answers
+#     first, e.g. `basicauth` returns `HttpResponse(status=401)` with only a
+#     `WWW-Authenticate` header and no content
+#     (corehq/apps/domain/auth.py:150-152), reached via `_login_or_challenge`
+#     (corehq/apps/domain/decorators.py:281-305). Digest and API-key auth
+#     behave the same way.
+#   * The JSON `{"error": ...}` body below -- reached only after a successful
+#     login, from `wrap_4xx_errors_for_apis`
+#     (corehq/apps/api/resources/auth.py:28-33), which turns a message-less
+#     `Http404` (raised for a session-authenticated non-member at
+#     corehq/apps/domain/decorators.py:149) into
+#     `{"error": "not authorized"}`; and from `HqBaseResource.dispatch`
+#     (corehq/apps/api/resources/__init__.py:133-139,147-151), which returns
+#     `{"error": "API access has been temporarily cut off due to too many
+#     requests. ..."}` under the `API_BLACKLIST` toggle and
+#     `{"error": "Your current subscription does not have access to this
+#     feature"}` when the domain lacks the API_ACCESS privilege.
+# The JSON shape is declared here because it is the only one with a body worth
+# documenting; the description says plainly that an empty 401 is the norm.
 Unauthorized:
   description: >-
-    Authentication credentials were missing or invalid. Note that CommCare also
-    returns 401 with `{"error": "not authorized"}` for some permission failures.
+    Authentication failed, or the caller is authenticated but not entitled to
+    use the API at all. **Two body shapes are possible.** A missing or invalid
+    credential returns an *empty* body with a `WWW-Authenticate` challenge
+    header -- the scheme's challenge decorator answers before CommCare's own
+    code runs. The JSON `{"error": ...}` body below is returned only after a
+    successful login: `{"error": "not authorized"}` when the user is not a
+    member of the project space, and a subscription/rate-limit message when the
+    project space lacks API access or is blacklisted (the latter is
+    semantically a rate limit but is served as 401, not 429).
   content:
     application/json:
       schema:
         $ref: "./schemas/error.yaml#/Error"
+# Like `NotFound` below, this response's JSON body is NOT universal. Several
+# resources return a bare, empty-bodied `HttpResponseForbidden()` (every
+# tastypie resource using `RequirePermissionAuthentication` --
+# corehq/apps/api/resources/auth.py:129-130), and the plain-Django-view
+# endpoints (case/v2, messaging-event, form submission) render Django's
+# `403.html` template through `handler403 = no_permissions` (urls.py:49,
+# corehq/apps/hqwebapp/views.py:362-373) -- an HTML page. Verify each
+# operation's real 403 body before pointing it at this ref.
 Forbidden:
   description: >-
     The authenticated user lacks the permission required for this endpoint.

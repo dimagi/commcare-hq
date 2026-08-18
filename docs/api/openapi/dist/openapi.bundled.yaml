@@ -192,7 +192,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: 'The authenticated user lacks the Edit Data permission, or the generic API access permission, for this project space. **The response body is empty** -- not the `{"error": ...}` JSON shape most other errors in this spec use.'
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /a/{domain}/api/case/v1/{case_id}/:
@@ -251,7 +251,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: 'The authenticated user lacks the Edit Data permission, or the generic API access permission, for this project space. **The response body is empty** -- not the `{"error": ...}` JSON shape most other errors in this spec use.'
         '404':
           description: The requested case does not exist. The response body is empty.
         '429':
@@ -537,9 +537,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: 'Authentication failed. The response is scheme-dependent and carries **no JSON body** -- typically a bare challenge response with a `WWW-Authenticate` header -- rather than the `{"error": ...}` shape the tastypie-backed resources in this spec return.'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: The caller is authenticated but is not a member of this project space (empty body), or is a member lacking the Edit Data or API access permission (a Django HTML error page). **Neither shape is JSON.**
         '429':
           description: The request was rate limited. The response body is empty; the `Retry-After` header carries the number of seconds to wait.
           headers:
@@ -661,9 +661,12 @@ paths:
                   - $ref: '#/components/schemas/Error'
                   - $ref: '#/components/schemas/CaseV2SubmissionError'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: 'Authentication failed. The response is scheme-dependent and carries **no JSON body** -- typically a bare challenge response with a `WWW-Authenticate` header -- rather than the `{"error": ...}` shape the tastypie-backed resources in this spec return.'
         '403':
-          description: The authenticated user lacks the Edit Data or API access permission, or -- for a location-restricted user -- the payload touches an owner or an indexed case outside their accessible locations (`validate_update_permission`, `corehq/apps/hqcase/api/updates.py:383-431`, rendered at `corehq/apps/hqcase/views.py:273-274`).
+          description: |-
+            Returned as JSON only for the location-restriction check below. A plain Edit Data / API access permission failure, or non-membership of the project space, also yields a 403 but with a **non-JSON** body -- see `listCasesV2`'s 403 for that trace.
+
+            A location-restricted user submitted a payload touching an owner or an indexed case outside their accessible locations (`validate_update_permission`, `corehq/apps/hqcase/api/updates.py:383-431`, rendered at `corehq/apps/hqcase/views.py:273-274`).
           content:
             application/json:
               schema:
@@ -752,9 +755,12 @@ paths:
                   - $ref: '#/components/schemas/Error'
                   - $ref: '#/components/schemas/CaseV2SubmissionError'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: 'Authentication failed. The response is scheme-dependent and carries **no JSON body** -- typically a bare challenge response with a `WWW-Authenticate` header -- rather than the `{"error": ...}` shape the tastypie-backed resources in this spec return.'
         '403':
-          description: The authenticated user lacks the Edit Data or API access permission, or the payload touches owners or indexed cases outside a location-restricted user's accessible locations.
+          description: |-
+            Returned as JSON only for the location-restriction check below. A plain Edit Data / API access permission failure, or non-membership of the project space, also yields a 403 but with a **non-JSON** body -- see `listCasesV2`'s 403 for that trace.
+
+            The payload touches owners or indexed cases outside a location-restricted user's accessible locations (`validate_update_permission`, `corehq/apps/hqcase/api/updates.py:383-431`, rendered at `corehq/apps/hqcase/views.py:273-274`).
           content:
             application/json:
               schema:
@@ -837,9 +843,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: 'Authentication failed. The response is scheme-dependent and carries **no JSON body** -- typically a bare challenge response with a `WWW-Authenticate` header -- rather than the `{"error": ...}` shape the tastypie-backed resources in this spec return.'
         '403':
-          description: The authenticated user lacks the Edit Data or API access permission, or is location-restricted and the case is outside their accessible locations (`corehq/apps/hqcase/views.py:151-156`). The single-id form only -- in the multi-id form inaccessible cases are filtered out of the query and come back as not-found stubs instead.
+          description: |-
+            Returned as JSON only for the location-restriction check below. A plain Edit Data / API access permission failure, or non-membership of the project space, also yields a 403 but with a **non-JSON** body -- see `listCasesV2`'s 403 for that trace.
+
+            The caller is location-restricted and the case is outside their accessible locations (`corehq/apps/hqcase/views.py:151-156`). The single-id form only -- in the multi-id form inaccessible cases are filtered out of the query and come back as not-found stubs instead.
           content:
             application/json:
               schema:
@@ -931,9 +940,12 @@ paths:
                   - $ref: '#/components/schemas/Error'
                   - $ref: '#/components/schemas/CaseV2SubmissionError'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: 'Authentication failed. The response is scheme-dependent and carries **no JSON body** -- typically a bare challenge response with a `WWW-Authenticate` header -- rather than the `{"error": ...}` shape the tastypie-backed resources in this spec return.'
         '403':
-          description: The authenticated user lacks the Edit Data or API access permission, or the payload touches owners or indexed cases outside a location-restricted user's accessible locations.
+          description: |-
+            Returned as JSON only for the location-restriction check below. A plain Edit Data / API access permission failure, or non-membership of the project space, also yields a 403 but with a **non-JSON** body -- see `listCasesV2`'s 403 for that trace.
+
+            The payload touches owners or indexed cases outside a location-restricted user's accessible locations (`validate_update_permission`, `corehq/apps/hqcase/api/updates.py:383-431`, rendered at `corehq/apps/hqcase/views.py:273-274`).
           content:
             application/json:
               schema:
@@ -1007,9 +1019,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: 'Authentication failed. The response is scheme-dependent and carries **no JSON body** -- typically a bare challenge response with a `WWW-Authenticate` header -- rather than the `{"error": ...}` shape the tastypie-backed resources in this spec return.'
         '403':
-          description: The authenticated user lacks the Edit Data or API access permission, or is location-restricted and the case is outside their accessible locations (`corehq/apps/hqcase/views.py:179-183`).
+          description: |-
+            Returned as JSON only for the location-restriction check below. A plain Edit Data / API access permission failure, or non-membership of the project space, also yields a 403 but with a **non-JSON** body -- see `listCasesV2`'s 403 for that trace.
+
+            The caller is location-restricted and the case is outside their accessible locations (`corehq/apps/hqcase/views.py:179-183`).
           content:
             application/json:
               schema:
@@ -1099,9 +1114,12 @@ paths:
                   - $ref: '#/components/schemas/Error'
                   - $ref: '#/components/schemas/CaseV2SubmissionError'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: 'Authentication failed. The response is scheme-dependent and carries **no JSON body** -- typically a bare challenge response with a `WWW-Authenticate` header -- rather than the `{"error": ...}` shape the tastypie-backed resources in this spec return.'
         '403':
-          description: The authenticated user lacks the Edit Data or API access permission, or the payload touches owners or indexed cases outside a location-restricted user's accessible locations.
+          description: |-
+            Returned as JSON only for the location-restriction check below. A plain Edit Data / API access permission failure, or non-membership of the project space, also yields a 403 but with a **non-JSON** body -- see `listCasesV2`'s 403 for that trace.
+
+            The payload touches owners or indexed cases outside a location-restricted user's accessible locations (`validate_update_permission`, `corehq/apps/hqcase/api/updates.py:383-431`, rendered at `corehq/apps/hqcase/views.py:273-274`).
           content:
             application/json:
               schema:
@@ -1188,9 +1206,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: 'Authentication failed. The response is scheme-dependent and carries **no JSON body** -- typically a bare challenge response with a `WWW-Authenticate` header -- rather than the `{"error": ...}` shape the tastypie-backed resources in this spec return.'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: The caller is authenticated but is not a member of this project space (empty body), or is a member lacking the Edit Data or API access permission (a Django HTML error page). **Neither shape is JSON.**
         '429':
           description: The request was rate limited. The response body is empty; the `Retry-After` header carries the number of seconds to wait.
           headers:
@@ -1221,7 +1239,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: 'The authenticated user lacks the Edit Mobile Workers permission, or the generic API access permission, for this project space. **The response body is empty** -- not the `{"error": ...}` JSON shape most other errors in this spec use.'
         '429':
           $ref: '#/components/responses/TooManyRequests'
     post:
@@ -1256,7 +1274,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: 'The authenticated user lacks the Edit Mobile Workers permission, or the generic API access permission, for this project space. **The response body is empty** -- not the `{"error": ...}` JSON shape most other errors in this spec use.'
         '429':
           $ref: '#/components/responses/TooManyRequests'
     patch:
@@ -1302,7 +1320,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: 'The authenticated user lacks the Edit Mobile Workers permission, or the generic API access permission, for this project space. **The response body is empty** -- not the `{"error": ...}` JSON shape most other errors in this spec use.'
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /a/{domain}/api/group/v1/{group_id}/:
@@ -1330,7 +1348,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: 'The authenticated user lacks the Edit Mobile Workers permission, or the generic API access permission, for this project space. **The response body is empty** -- not the `{"error": ...}` JSON shape most other errors in this spec use.'
         '404':
           description: The requested group does not exist. The response body is empty.
         '429':
@@ -1358,7 +1376,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: 'The authenticated user lacks the Edit Mobile Workers permission, or the generic API access permission, for this project space. **The response body is empty** -- not the `{"error": ...}` JSON shape most other errors in this spec use.'
         '429':
           $ref: '#/components/responses/TooManyRequests'
     delete:
@@ -1372,7 +1390,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: 'The authenticated user lacks the Edit Mobile Workers permission, or the generic API access permission, for this project space. **The response body is empty** -- not the `{"error": ...}` JSON shape most other errors in this spec use.'
         '404':
           description: The requested group does not exist. Reached via tastypie's generic exception handler rather than a resource-specific not-found path.
           content:
@@ -7023,13 +7041,7 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
     Unauthorized:
-      description: 'Authentication credentials were missing or invalid. Note that CommCare also returns 401 with `{"error": "not authorized"}` for some permission failures.'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: The authenticated user lacks the permission required for this endpoint.
+      description: 'Authentication failed, or the caller is authenticated but not entitled to use the API at all. **Two body shapes are possible.** A missing or invalid credential returns an *empty* body with a `WWW-Authenticate` challenge header -- the scheme''s challenge decorator answers before CommCare''s own code runs. The JSON `{"error": ...}` body below is returned only after a successful login: `{"error": "not authorized"}` when the user is not a member of the project space, and a subscription/rate-limit message when the project space lacks API access or is blacklisted (the latter is semantically a rate limit but is served as 401, not 429).'
       content:
         application/json:
           schema:

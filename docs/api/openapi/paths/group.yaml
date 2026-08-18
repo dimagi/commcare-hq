@@ -22,7 +22,23 @@ List:
       "401":
         $ref: "../components/responses.yaml#/Unauthorized"
       "403":
-        $ref: "../components/responses.yaml#/Forbidden"
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Verified
+        # against the source: `RequirePermissionAuthentication`
+        # (corehq/apps/api/resources/auth.py:152-163) delegates to
+        # `LoginAndDomainAuthentication._auth_test` (auth.py:114-135), whose
+        # `except PermissionDenied: response = HttpResponseForbidden()`
+        # (auth.py:129-130) builds a bare, empty-bodied 403. The
+        # `PermissionDenied` comes from `require_api_permission`'s
+        # `permission_check_v2` branch in `require_permission_raw`
+        # (corehq/apps/users/decorators.py:39-43), which raises
+        # unconditionally -- it never reaches the `is_ajax` branch at
+        # decorators.py:52-53 that would return a text body.
+        description: >-
+          The authenticated user lacks the Edit Mobile Workers permission, or the generic
+          API access permission, for this project space. **The response body is
+          empty** -- not the `{"error": ...}` JSON shape most other errors in
+          this spec use.
       "429":
         $ref: "../components/responses.yaml#/TooManyRequests"
   post:
@@ -61,7 +77,23 @@ List:
       "401":
         $ref: "../components/responses.yaml#/Unauthorized"
       "403":
-        $ref: "../components/responses.yaml#/Forbidden"
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Verified
+        # against the source: `RequirePermissionAuthentication`
+        # (corehq/apps/api/resources/auth.py:152-163) delegates to
+        # `LoginAndDomainAuthentication._auth_test` (auth.py:114-135), whose
+        # `except PermissionDenied: response = HttpResponseForbidden()`
+        # (auth.py:129-130) builds a bare, empty-bodied 403. The
+        # `PermissionDenied` comes from `require_api_permission`'s
+        # `permission_check_v2` branch in `require_permission_raw`
+        # (corehq/apps/users/decorators.py:39-43), which raises
+        # unconditionally -- it never reaches the `is_ajax` branch at
+        # decorators.py:52-53 that would return a text body.
+        description: >-
+          The authenticated user lacks the Edit Mobile Workers permission, or the generic
+          API access permission, for this project space. **The response body is
+          empty** -- not the `{"error": ...}` JSON shape most other errors in
+          this spec use.
       "429":
         $ref: "../components/responses.yaml#/TooManyRequests"
   patch:
@@ -117,7 +149,23 @@ List:
       "401":
         $ref: "../components/responses.yaml#/Unauthorized"
       "403":
-        $ref: "../components/responses.yaml#/Forbidden"
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Verified
+        # against the source: `RequirePermissionAuthentication`
+        # (corehq/apps/api/resources/auth.py:152-163) delegates to
+        # `LoginAndDomainAuthentication._auth_test` (auth.py:114-135), whose
+        # `except PermissionDenied: response = HttpResponseForbidden()`
+        # (auth.py:129-130) builds a bare, empty-bodied 403. The
+        # `PermissionDenied` comes from `require_api_permission`'s
+        # `permission_check_v2` branch in `require_permission_raw`
+        # (corehq/apps/users/decorators.py:39-43), which raises
+        # unconditionally -- it never reaches the `is_ajax` branch at
+        # decorators.py:52-53 that would return a text body.
+        description: >-
+          The authenticated user lacks the Edit Mobile Workers permission, or the generic
+          API access permission, for this project space. **The response body is
+          empty** -- not the `{"error": ...}` JSON shape most other errors in
+          this spec use.
       "429":
         $ref: "../components/responses.yaml#/TooManyRequests"
 Detail:
@@ -144,7 +192,23 @@ Detail:
       "401":
         $ref: "../components/responses.yaml#/Unauthorized"
       "403":
-        $ref: "../components/responses.yaml#/Forbidden"
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Verified
+        # against the source: `RequirePermissionAuthentication`
+        # (corehq/apps/api/resources/auth.py:152-163) delegates to
+        # `LoginAndDomainAuthentication._auth_test` (auth.py:114-135), whose
+        # `except PermissionDenied: response = HttpResponseForbidden()`
+        # (auth.py:129-130) builds a bare, empty-bodied 403. The
+        # `PermissionDenied` comes from `require_api_permission`'s
+        # `permission_check_v2` branch in `require_permission_raw`
+        # (corehq/apps/users/decorators.py:39-43), which raises
+        # unconditionally -- it never reaches the `is_ajax` branch at
+        # decorators.py:52-53 that would return a text body.
+        description: >-
+          The authenticated user lacks the Edit Mobile Workers permission, or the generic
+          API access permission, for this project space. **The response body is
+          empty** -- not the `{"error": ...}` JSON shape most other errors in
+          this spec use.
       "404":
         # Deliberately not the shared NotFound ref: tastypie's get_detail
         # (tastypie/resources.py:1362-1383) catches ObjectDoesNotExist and
@@ -185,7 +249,23 @@ Detail:
       "401":
         $ref: "../components/responses.yaml#/Unauthorized"
       "403":
-        $ref: "../components/responses.yaml#/Forbidden"
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Verified
+        # against the source: `RequirePermissionAuthentication`
+        # (corehq/apps/api/resources/auth.py:152-163) delegates to
+        # `LoginAndDomainAuthentication._auth_test` (auth.py:114-135), whose
+        # `except PermissionDenied: response = HttpResponseForbidden()`
+        # (auth.py:129-130) builds a bare, empty-bodied 403. The
+        # `PermissionDenied` comes from `require_api_permission`'s
+        # `permission_check_v2` branch in `require_permission_raw`
+        # (corehq/apps/users/decorators.py:39-43), which raises
+        # unconditionally -- it never reaches the `is_ajax` branch at
+        # decorators.py:52-53 that would return a text body.
+        description: >-
+          The authenticated user lacks the Edit Mobile Workers permission, or the generic
+          API access permission, for this project space. **The response body is
+          empty** -- not the `{"error": ...}` JSON shape most other errors in
+          this spec use.
       "429":
         $ref: "../components/responses.yaml#/TooManyRequests"
   delete:
@@ -198,7 +278,23 @@ Detail:
       "401":
         $ref: "../components/responses.yaml#/Unauthorized"
       "403":
-        $ref: "../components/responses.yaml#/Forbidden"
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Verified
+        # against the source: `RequirePermissionAuthentication`
+        # (corehq/apps/api/resources/auth.py:152-163) delegates to
+        # `LoginAndDomainAuthentication._auth_test` (auth.py:114-135), whose
+        # `except PermissionDenied: response = HttpResponseForbidden()`
+        # (auth.py:129-130) builds a bare, empty-bodied 403. The
+        # `PermissionDenied` comes from `require_api_permission`'s
+        # `permission_check_v2` branch in `require_permission_raw`
+        # (corehq/apps/users/decorators.py:39-43), which raises
+        # unconditionally -- it never reaches the `is_ajax` branch at
+        # decorators.py:52-53 that would return a text body.
+        description: >-
+          The authenticated user lacks the Edit Mobile Workers permission, or the generic
+          API access permission, for this project space. **The response body is
+          empty** -- not the `{"error": ...}` JSON shape most other errors in
+          this spec use.
       "404":
         # Deliberately not the shared NotFound ref. `delete_detail`
         # (tastypie/resources.py:1525-1541) only catches tastypie's own

@@ -4,6 +4,37 @@ Generated while writing the OpenAPI spec. The spec records what the **code**
 does. Each item below is a place where `docs/api/*.rst` disagrees, for human
 triage. Nothing here has been changed in the reST docs.
 
+## Cross-cutting: the shared 401 and 403 responses
+
+These two findings are about the shared components in
+`docs/api/openapi/components/responses.yaml`, not about any one resource. They
+were confirmed in the Task 17 sweep after three separate resource tasks (10,
+12, 13) independently traced the same mechanism.
+
+- **A 401 from this API has two body shapes, and the common one is empty.** The
+  shared `Unauthorized` response declared a JSON `{"error": ...}` body flatly.
+  That body is real but is reached only _after_ a successful login. A missing or
+  invalid credential -- by far the more common 401 -- never reaches CommCare's
+  own code at all: the scheme's challenge decorator answers first. `basicauth`
+  returns `HttpResponse(status=401)` with only a `WWW-Authenticate` header and
+  no content (`corehq/apps/domain/auth.py:150-152`), reached through
+  `_login_or_challenge` (`corehq/apps/domain/decorators.py:281-305`); digest and
+  API-key auth behave the same way. The JSON shape comes from two other places:
+  `wrap_4xx_errors_for_apis` (`corehq/apps/api/resources/auth.py:28-33`), which
+  turns the message-less `Http404` raised for a session-authenticated non-member
+  (`corehq/apps/domain/decorators.py:149`) into `{"error": "not authorized"}`;
+  and `HqBaseResource.dispatch`
+  (`corehq/apps/api/resources/__init__.py:133-139,147-151`), which returns a
+  subscription or blacklist message. The shared response's `description` now
+  states both shapes plainly, with a comment recording the trace. Note the
+  blacklist 401 is semantically a rate limit ("too many requests") served under
+  a 401 status, so a client branching on status code alone will miss it.
+- **The shared `Forbidden` response's JSON body is not universal either, and
+  three resources were pointing at it without having checked.** See the
+  per-resource entries for group/v1, case/v1 and case/v2 below; the shared
+  component now carries a warning comment of the same kind `NotFound` already
+  had.
+
 ## group/v1 (`list-groups.rst`, `user-group.rst`)
 
 - **Sample output includes a `path` field the code never produces.** Both
@@ -11,8 +42,10 @@ triage. Nothing here has been changed in the reST docs.
   sample JSON. `v0_4.GroupResource`
   (`corehq/apps/api/resources/v0_4.py:234-258`) declares no `path` field, and
   the underlying `Group` couch model (`corehq/apps/groups/models.py:38-57`) has
-  no `path` property either — `Group` is a plain `tastypie.resources.Resource`
-  subclass, so only explicitly declared fields are ever serialized. Current code
+  no `path` property either — `GroupResource` is a plain
+  `tastypie.resources.Resource` subclass (via `HqBaseResource`,
+  `corehq/apps/api/resources/__init__.py:127`), not a `ModelResource`, so only
+  explicitly declared `fields.*` attributes are ever serialized. Current code
   cannot emit `path` under any circumstance, so the spec's `Group` schema does
   not include a `path` property, even though both reST samples show one; a human
   should confirm whether the field was removed from the API without updating the
@@ -123,6 +156,25 @@ triage. Nothing here has been changed in the reST docs.
     entry warning that its `{"error": ...}` body only holds where a resource
     actually renders one, and that later resource tasks must verify each detail
     operation's real 404 shape rather than reach for this ref by default.
+- **Every group operation's 403 has an empty body, not the shared
+  `{"error": ...}` JSON shape (found and corrected in Task 17).** Neither reST
+  page documents a 403 body. `GroupResource.Meta.authentication` is
+  `RequirePermissionAuthentication(HqPermissions.edit_commcare_users)`
+  (`corehq/apps/api/resources/v0_4.py:253`), which inherits
+  `LoginAndDomainAuthentication._auth_test`
+  (`corehq/apps/api/resources/auth.py:114-135`). A permission failure raises
+  Django's `PermissionDenied` -- from `require_api_permission`'s
+  `permission_check_v2` branch inside `require_permission_raw`
+  (`corehq/apps/users/decorators.py:39-43`), which raises unconditionally and
+  never reaches the `is_ajax` branch at `decorators.py:52-53` that would return
+  a text body. `_auth_test` catches it at `auth.py:129-130` and returns a bare
+  `HttpResponseForbidden()`: **no body at all.** All six operations in
+  `paths/group.yaml` originally pointed at the shared `Forbidden` ref, which
+  declares JSON; they now describe the empty body inline. This is the same
+  mechanism already recorded for `getForm`/`listForms` and for the location
+  resources further down this file -- three tasks reached it independently
+  before it was fixed here.
+
 - _(append further findings here as they are confirmed)_
 
 ## case/v1 (`cases-v1.rst`)
@@ -285,6 +337,18 @@ triage. Nothing here has been changed in the reST docs.
   already documents, so no resource-specific schema is needed. The spec's
   `listCases` declares a `400` using the shared `BadRequest` ref; `getCase` has
   no such code path and declares no `400`.
+- **`listCases`'s and `getCase`'s 403 has an empty body, not the shared
+  `{"error": ...}` JSON shape (found and corrected in Task 17).** `cases-v1.rst`
+  documents no 403 body. `v0_3.CommCareCaseResource.Meta.authentication` is
+  `RequirePermissionAuthentication(HqPermissions.edit_data)`
+  (`corehq/apps/api/resources/v0_3.py:72`), the identical class the group
+  resource uses, so the trace is identical: `PermissionDenied` from
+  `require_permission_raw` (`corehq/apps/users/decorators.py:39-43`) is caught
+  by `LoginAndDomainAuthentication._auth_test`
+  (`corehq/apps/api/resources/auth.py:114-135`) and converted to a bare
+  `HttpResponseForbidden()` at `auth.py:129-130`. Both operations originally
+  pointed at the shared `Forbidden` ref; they now describe the empty body
+  inline.
 - **Every entry in `indices` has a third key, `relationship`, that
   `cases-v1.rst` never mentions.** `cases-v1.rst:381-387`'s sample XML shows
   each index entry with only `<case_type>`/`<case_id>`, and the Output Values
@@ -445,6 +509,51 @@ the view's own `if` chain", and anything that falls through returns a 405
   default status is 200, including for a creation. This differs from the group
   resource, whose create is a 201. Worth knowing for a client that branches on
   the status code.
+- **Neither the 401 nor the permission-failure 403 is JSON, despite both
+  originally pointing at the shared JSON refs (found and corrected in Task
+  17).** `case_api` and `case_api_bulk_fetch` are plain Django views
+  (`corehq/apps/hqcase/views.py:87-127`), so neither `wrap_4xx_errors_for_apis`
+  (`corehq/apps/api/resources/auth.py:23-34`) nor `HqBaseResource.dispatch`
+  (`corehq/apps/api/resources/__init__.py:132-151`) -- the two paths that
+  produce the shared `Unauthorized` ref's JSON body -- applies. The decorator
+  stack (`views.py:88-94`) is byte-for-byte the one `messaging_events` uses
+  (`corehq/apps/api/resources/messaging_event/view.py:23-28`), whose entry at
+  the end of this file traced the same conclusion and explicitly flagged
+  `case-v2.yaml` as making the untested assumption. Concretely:
+
+  - **401**: `api_auth()` (`corehq/apps/domain/decorators.py:444-450`)
+    dispatches to a scheme-specific challenge decorator via
+    `get_auth_decorator_map`/`_login_or_challenge`
+    (`decorators.py:264-334,463-492`); the decorator answers before the view
+    runs -- e.g. `basicauth` returns `HttpResponse(status=401)` carrying only a
+    `WWW-Authenticate` header (`corehq/apps/domain/auth.py:150-152`).
+  - **403, cause 1**: authenticated but not a member of this project space --
+    `_login_or_challenge`'s inner `_inner` returns a bare
+    `HttpResponseForbidden()` (`decorators.py:303,329`), empty body.
+  - **403, cause 2**: a member lacking Edit Data or API access --
+    `require_permission` raises `django.core.exceptions.PermissionDenied`
+    (`corehq/apps/users/decorators.py:51-54`); the view catches only `UserError`
+    (`views.py:111-112`), so it reaches this project's
+    `handler403 = no_permissions` (`urls.py:49`), which renders the `403.html`
+    template (`_no_permissions_message`,
+    `corehq/apps/hqwebapp/views.py:349-358`) inside an `HttpResponseForbidden`
+    (`views.py:362-373`) -- an HTML page.
+
+  The one genuinely-JSON 403 on this resource is narrower than the six write and
+  read operations claimed: it is the location-restriction check only, raised as
+  `PermissionDenied` inside `handle_case_update` and caught at
+  `views.py:273-274` (`validate_update_permission`,
+  `corehq/apps/hqcase/api/updates.py:383-431`), plus the equivalent per-case
+  check on reads (`views.py:151-156` for the single-id GET, `:179-183` for the
+  by-external-id GET). Those six operations' `403` descriptions previously
+  folded "lacks the Edit Data or API access permission" into the same JSON
+  response; they now say the permission-failure shape is non-JSON and point at
+  `listCasesV2`'s 403 for the trace. `listCasesV2` and `bulkFetchCasesV2`, which
+  had no location check to describe, pointed at the shared `Forbidden` ref
+  outright and are now inline. All eight operations' 401s were the shared ref
+  and are now inline. **Traced from source; not verified against a live server
+  (no reachable Postgres in this environment).**
+
 - **The rate-limit response has an empty body, unlike the rest of the API.** Not
   covered by the reST page. This resource is throttled by `api_throttle`
   (`corehq/apps/api/decorators.py:51-61`), which returns
@@ -595,32 +704,30 @@ the view's own `if` chain", and anything that falls through returns a 405
   `/api/web-user/v1/{id}/...`, and they are real** -- resolved, not a
   documentation error. `WebUserResource.prepend_urls`
   (`corehq/apps/api/resources/v0_5.py:600-605`) registers exactly those two
-  URLs, wrapping `enable_user`/`disable_user` ->
-  `_modify_user_status` (`v0_5.py:607-633`), which flips
-  `domain_membership.is_active` and returns 202 with an empty `{}` body. The
-  spec documents both as real operations (`activateWebUser`,
-  `deactivateWebUser`). **The one part of the brief's framing that does not
-  hold up: `webuser.rst` never actually documents a `POST
-  /api/web-user/v1/` "create web user" endpoint.** Its "Web User Invitation
-  Creation" section (which is the only `POST` in the file) is a `POST
-  /api/invitation/v1/`, a different resource entirely
+  URLs, wrapping `enable_user`/`disable_user` -> `_modify_user_status`
+  (`v0_5.py:607-633`), which flips `domain_membership.is_active` and returns 202
+  with an empty `{}` body. The spec documents both as real operations
+  (`activateWebUser`, `deactivateWebUser`). **The one part of the brief's
+  framing that does not hold up: `webuser.rst` never actually documents a
+  `POST /api/web-user/v1/` "create web user" endpoint.** Its "Web User
+  Invitation Creation" section (which is the only `POST` in the file) is a
+  `POST /api/invitation/v1/`, a different resource entirely
   (`v1_0.InvitationResource`) that creates an `Invitation`, not a `WebUser` --
   the `WebUser` itself is only created once the invitation is accepted.
   `v0_5.WebUserResource.Meta` really does decline `post` everywhere
   (`detail_allowed_methods = ['get', 'patch']`, inherited
-  `list_allowed_methods = ['get']`), so there is no discrepancy to record
-  there; the reST docs simply never claimed it.
+  `list_allowed_methods = ['get']`), so there is no discrepancy to record there;
+  the reST docs simply never claimed it.
 - **Mobile workers have the identical activate/deactivate machinery, entirely
   undocumented in either mobile-worker reST page.**
   `CommCareUserResource.prepend_urls` (`v0_5.py:412-418`) registers
-  `.../activate/`, `.../deactivate/`, and `.../email_password_reset/`
-  (the last of which *is* documented, at `mobile-worker.rst:297-313`); the
-  first two are not mentioned in `mobile-worker.rst` at all, despite being
-  real, tested (`corehq/apps/api/tests/test_user_resources.py:582-628`)
-  endpoints with a location-based permission check
-  (`verify_modify_user_conditions`) that the web user equivalent lacks. The
-  spec documents both as real operations (`activateMobileWorker`,
-  `deactivateMobileWorker`).
+  `.../activate/`, `.../deactivate/`, and `.../email_password_reset/` (the last
+  of which _is_ documented, at `mobile-worker.rst:297-313`); the first two are
+  not mentioned in `mobile-worker.rst` at all, despite being real, tested
+  (`corehq/apps/api/tests/test_user_resources.py:582-628`) endpoints with a
+  location-based permission check (`verify_modify_user_conditions`) that the web
+  user equivalent lacks. The spec documents both as real operations
+  (`activateMobileWorker`, `deactivateMobileWorker`).
 - **`createMobileWorker` silently discards field-update errors that
   `updateMobileWorker` rejects with a 400.** `obj_create`
   (`corehq/apps/api/resources/v0_5.py:321`) calls `self._update(bundle)` and
@@ -629,213 +736,200 @@ the view's own `if` chain", and anything that falls through returns a 405
   non-empty. `_update` returns a list of per-field validation failures
   (`v0_5.py:396-410`, via `CommcareUserUpdates.update`, which raises
   `UpdateUserException` per bad field and is caught and collected). The
-  practical effect: submitting an invalid `primary_location`, `locations`
-  entry, or other updater-rejected field on `POST` creates the user anyway,
-  with that field silently unset, instead of failing with a 400 the way the
-  same payload would on `PUT`. Neither `mobile-worker.rst` nor
-  `list-mobile-workers.rst` mentions this asymmetry.
+  practical effect: submitting an invalid `primary_location`, `locations` entry,
+  or other updater-rejected field on `POST` creates the user anyway, with that
+  field silently unset, instead of failing with a 400 the way the same payload
+  would on `PUT`. Neither `mobile-worker.rst` nor `list-mobile-workers.rst`
+  mentions this asymmetry.
 - **`getMobileWorker`, `getWebUser`, and `updateWebUser` return a 400, not a
-  404, for a missing or wrong-domain `user_id`.** (Corrected in fix round 1:
-  an earlier version of this entry claimed all three return an uncaught 500.
-  That was wrong about the response status/shape, though right that the code
-  has no working 404 for any of them.) `UserResource.obj_get`
+  404, for a missing or wrong-domain `user_id`.** (Corrected in fix round 1: an
+  earlier version of this entry claimed all three return an uncaught 500. That
+  was wrong about the response status/shape, though right that the code has no
+  working 404 for any of them.) `UserResource.obj_get`
   (`corehq/apps/api/resources/v0_1.py:36-43`) calls
   `self.Meta.object_class.get_by_user_id(pk, domain)`
   (`corehq/apps/users/models.py:1529-1544`), which returns `None` -- it never
-  raises, on a miss or a domain mismatch (the `except KeyError` in `obj_get`
-  is dead code; `get_by_user_id` cannot raise `KeyError`). Tastypie's
-  `get_detail`/`patch_detail` (`tastypie/resources.py:1362-1383,1680-1688`)
-  only convert `ObjectDoesNotExist`/`MultipleObjectsReturned` to a 404, so the
-  bare `None` reaches `full_dehydrate`
-  (`tastypie/resources.py:877-902`). There, `ApiField.dehydrate`
-  (`tastypie/fields.py:116-136`) does `getattr(None, attr, None)`; since
-  `id`/`username`/`email` are declared without `null=True` and without a
-  default (`v0_1.py:27-32`), it raises `tastypie.fields.ApiFieldError`
-  (`"The object 'None' has an empty attribute 'get_id' and doesn't allow a
-  default or null value."`). `wrap_view`'s `except (BadRequest,
-  fields.ApiFieldError)` (`tastypie/resources.py:244-246`) catches this
-  **explicitly, before** the generic `except Exception` -> `_handle_500`
-  path, and converts it to a 400 with the shared `{"error": "..."}` shape --
-  the same shape the shared `Error` schema already documents. `updateWebUser`
-  (`PATCH`) hits the identical path, since `patch_detail` calls
-  `cached_obj_get` and `full_dehydrate` before `obj_update` ever runs.
-  Neither reST page states what happens for a nonexistent id. The spec
-  points all three operations' `400` at the shared `Error` schema and omits
-  `404`, each with an inline comment tracing this path.
-- **`updateMobileWorker` (`PUT`) also has no working 404 -- but unlike the
-  three operations above, this one really is an uncaught 500, the analogous
-  bug to `replaceGroup`'s in `paths/group.yaml`.** Its crash happens inside
-  the resource's own `obj_update` override, before tastypie's
+  raises, on a miss or a domain mismatch (the `except KeyError` in `obj_get` is
+  dead code; `get_by_user_id` cannot raise `KeyError`). Tastypie's
+  `get_detail`/`patch_detail` (`tastypie/resources.py:1362-1383,1680-1688`) only
+  convert `ObjectDoesNotExist`/`MultipleObjectsReturned` to a 404, so the bare
+  `None` reaches `full_dehydrate` (`tastypie/resources.py:877-902`). There,
+  `ApiField.dehydrate` (`tastypie/fields.py:116-136`) does
+  `getattr(None, attr, None)`; since `id`/`username`/`email` are declared
+  without `null=True` and without a default (`v0_1.py:27-32`), it raises
+  `tastypie.fields.ApiFieldError`
+  (`"The object 'None' has an empty attribute 'get_id' and doesn't allow a default or null value."`).
+  `wrap_view`'s `except (BadRequest, fields.ApiFieldError)`
+  (`tastypie/resources.py:244-246`) catches this **explicitly, before** the
+  generic `except Exception` -> `_handle_500` path, and converts it to a 400
+  with the shared `{"error": "..."}` shape -- the same shape the shared `Error`
+  schema already documents. `updateWebUser` (`PATCH`) hits the identical path,
+  since `patch_detail` calls `cached_obj_get` and `full_dehydrate` before
+  `obj_update` ever runs. Neither reST page states what happens for a
+  nonexistent id. The spec points all three operations' `400` at the shared
+  `Error` schema and omits `404`, each with an inline comment tracing this path.
+- **`updateMobileWorker` (`PUT`) also has no working 404 -- but unlike the three
+  operations above, this one really is an uncaught 500, the analogous bug to
+  `replaceGroup`'s in `paths/group.yaml`.** Its crash happens inside the
+  resource's own `obj_update` override, before tastypie's
   dehydration/`ApiFieldError` machinery is ever reached, so `wrap_view`'s
-  `ApiFieldError`/`BadRequest` catch (see the entry above) does not apply
-  here. `obj_update`
-  (`corehq/apps/api/resources/v0_5.py:352-353`) fetches with
+  `ApiFieldError`/`BadRequest` catch (see the entry above) does not apply here.
+  `obj_update` (`corehq/apps/api/resources/v0_5.py:352-353`) fetches with
   `CommCareUser.get(kwargs['pk'])` (couchdbkit's plain `.get()`, raising
   `ResourceNotFound` on a miss) and then asserts
   `bundle.obj.domain == kwargs['domain']` with a bare `assert`. Neither
   exception is tastypie's `NotFound`/`MultipleObjectsReturned` (the only pair
-  `put_detail` catches, `tastypie/resources.py:1502`), so both become
-  uncaught 500s. The spec omits `404` on `updateMobileWorker`, with an inline
-  comment.
+  `put_detail` catches, `tastypie/resources.py:1502`), so both become uncaught
+  500s. The spec omits `404` on `updateMobileWorker`, with an inline comment.
 - **`deleteMobileWorker`'s 404 does work, and is empty-bodied.** Contrast the
   above: `obj_delete` (`corehq/apps/api/resources/v0_5.py:375-381`) explicitly
   raises tastypie's own `NotFound(...)` when the lookup fails, and
-  `delete_detail` (`tastypie/resources.py:1525-1541`) does catch that
-  exception type, returning a bare `http.HttpNotFound()`. This is the one
-  detail operation across both resources whose 404 is genuine.
+  `delete_detail` (`tastypie/resources.py:1525-1541`) does catch that exception
+  type, returning a bare `http.HttpNotFound()`. This is the one detail operation
+  across both resources whose 404 is genuine.
   `test_cant_delete_user_in_another_domain`
   (`corehq/apps/api/tests/test_user_resources.py:569-580`) confirms the 404
   status for a cross-domain id.
 - **A fourth 404 shape, distinct from all previously catalogued ones:**
   `email_password_reset`, `activate_user`/`deactivate_user`, and
   `enable_user`/`disable_user` all raise a bare, argument-less tastypie
-  `NotFound()` (`v0_5.py:435,456,622`) from inside a custom `prepend_urls`
-  view. Because these views are reached through `wrap_view` directly, not
-  through `dispatch_detail`/`delete_detail`'s own `except NotFound` handling,
-  the exception falls to `wrap_view`'s generic `except Exception` ->
-  `_handle_500` (`tastypie/resources.py:250-265,291-315`), which does
-  recognize `NotFound` and maps it to a 404 status, but always builds the
-  body from the canned-error path (`{"error_message": "Sorry, this request
-  could not be processed. Please try again later."}` outside `DEBUG`) --
-  never the (here, empty) exception text, and never anything
+  `NotFound()` (`v0_5.py:435,456,622`) from inside a custom `prepend_urls` view.
+  Because these views are reached through `wrap_view` directly, not through
+  `dispatch_detail`/`delete_detail`'s own `except NotFound` handling, the
+  exception falls to `wrap_view`'s generic `except Exception` -> `_handle_500`
+  (`tastypie/resources.py:250-265,291-315`), which does recognize `NotFound` and
+  maps it to a 404 status, but always builds the body from the canned-error path
+  (`{"error_message": "Sorry, this request could not be processed. Please try again later."}`
+  outside `DEBUG`) -- never the (here, empty) exception text, and never anything
   resource-specific. This is the same underlying mechanism as `deleteGroup`'s
   404 in `paths/group.yaml`, just reached from a different kind of view.
-- **`updateWebUser` and `inviteWebUser` share a `400` body shape keyed
-  `errors` (plural, a list), found nowhere else in this spec.**
-  `WebUserValidationException.__init__`
-  (`corehq/apps/api/validation.py:31-33`) always normalizes its message to a
-  list; both call sites
-  (`WebUserResource.obj_update`, `v0_5.py:563-564`; `InvitationResource
-  .obj_create`, `v1_0.py:124-125`) wrap it as
+- **`updateWebUser` and `inviteWebUser` share a `400` body shape keyed `errors`
+  (plural, a list), found nowhere else in this spec.**
+  `WebUserValidationException.__init__` (`corehq/apps/api/validation.py:31-33`)
+  always normalizes its message to a list; both call sites
+  (`WebUserResource.obj_update`, `v0_5.py:563-564`;
+  `InvitationResource .obj_create`, `v1_0.py:124-125`) wrap it as
   `ImmediateHttpResponse(JsonResponse({"errors": e.message}, status=400))`,
   bypassing tastypie's usual `BadRequest` -> `{"error": ...}` conversion
-  entirely. `inviteWebUser` additionally has a *third* 400 shape for a
-  location id that passes `WebUserResourceSpec` validation but does not
-  resolve to a real `SQLLocation`: `{"error": "Could not find location ids:
-  ..."}` (`v1_0.py:139-141`) -- singular `error`, matching the shared shape,
-  from a different code path than either of the other two. Neither reST page
-  documents any error-body shape. The spec's `WebUserErrors` schema covers
-  the `errors` shape; the shared `Error` schema covers the singular one.
-- **`inviteWebUser`'s reST documentation contradicts itself about whether
-  `id` is returned, and neither version matches the code.**
-  `webuser.rst`'s "Output Parameters" table (lines 68-79) says the response
-  contains only `id`. Its own "Sample output (JSON)" three sections later
-  (lines 101-120) shows every field *except* `id`. `InvitationResource`
-  declares `id = fields.CharField(attribute='uuid', readonly=True,
-  unique=True)` (`v1_0.py:77`) and `always_return_data = True`
-  (`v1_0.py:91`), so `full_dehydrate` includes `id` alongside every other
-  declared field on every response -- neither reST claim is correct. The
-  spec's `Invitation` schema documents the real (everything-including-`id`)
-  shape.
-- **`list-webusers.rst`'s Output Parameters table is missing six of the
-  thirteen fields `WebUserResource` actually serializes.**
-  `list-webusers.rst:43-80` lists only `id`, `username`, `first_name`,
-  `last_name`, `default_phone_number`, `email`, `phone_numbers`, `role`,
-  `permissions`, `is_admin`. `v0_5.WebUserResource` additionally declares
+  entirely. `inviteWebUser` additionally has a _third_ 400 shape for a location
+  id that passes `WebUserResourceSpec` validation but does not resolve to a real
+  `SQLLocation`: `{"error": "Could not find location ids: ..."}`
+  (`v1_0.py:139-141`) -- singular `error`, matching the shared shape, from a
+  different code path than either of the other two. Neither reST page documents
+  any error-body shape. The spec's `WebUserErrors` schema covers the `errors`
+  shape; the shared `Error` schema covers the singular one.
+- **`inviteWebUser`'s reST documentation contradicts itself about whether `id`
+  is returned, and neither version matches the code.** `webuser.rst`'s "Output
+  Parameters" table (lines 68-79) says the response contains only `id`. Its own
+  "Sample output (JSON)" three sections later (lines 101-120) shows every field
+  _except_ `id`. `InvitationResource` declares
+  `id = fields.CharField(attribute='uuid', readonly=True, unique=True)`
+  (`v1_0.py:77`) and `always_return_data = True` (`v1_0.py:91`), so
+  `full_dehydrate` includes `id` alongside every other declared field on every
+  response -- neither reST claim is correct. The spec's `Invitation` schema
+  documents the real (everything-including-`id`) shape.
+- **`list-webusers.rst`'s Output Parameters table is missing six of the thirteen
+  fields `WebUserResource` actually serializes.** `list-webusers.rst:43-80`
+  lists only `id`, `username`, `first_name`, `last_name`,
+  `default_phone_number`, `email`, `phone_numbers`, `role`, `permissions`,
+  `is_admin`. `v0_5.WebUserResource` additionally declares
   `primary_location_id`, `assigned_location_ids`, `profile`, `user_data`,
-  `tableau_role`, and `is_active_in_domain` (`v0_5.py:474-479`) with no
-  `use_in` restriction, so all six appear on *every* list and detail
-  response, not just detail. (`tableau_groups`, the seventh extra field, is
-  the one exception -- see the next entry.) All six do appear, undocumented,
-  in `webuser.rst`'s PATCH sample response (lines 210-292), so they are not
-  unknown to the docs generally, just missing from the list endpoint's own
-  Output Parameters table. The spec's `WebUser` schema includes all six, each
-  flagged as undocumented there.
+  `tableau_role`, and `is_active_in_domain` (`v0_5.py:474-479`) with no `use_in`
+  restriction, so all six appear on _every_ list and detail response, not just
+  detail. (`tableau_groups`, the seventh extra field, is the one exception --
+  see the next entry.) All six do appear, undocumented, in `webuser.rst`'s PATCH
+  sample response (lines 210-292), so they are not unknown to the docs
+  generally, just missing from the list endpoint's own Output Parameters table.
+  The spec's `WebUser` schema includes all six, each flagged as undocumented
+  there.
 - **`tableau_groups` is real but genuinely list/detail-asymmetric, and
   undocumented on both endpoints' Output Parameters tables.**
   `tableau_groups = fields.ListField(null=True, use_in='detail')`
-  (`v0_5.py:481`) is the only field on either user resource with a
-  non-default `use_in`; the inline code comment explains why (computing it
-  makes one request per user, too slow for a list). It appears on
-  `getWebUser` but never on `listWebUsers`. The spec's `WebUser` schema
-  documents this list/detail difference explicitly rather than modelling one
-  shape for both operations.
+  (`v0_5.py:481`) is the only field on either user resource with a non-default
+  `use_in`; the inline code comment explains why (computing it makes one request
+  per user, too slow for a list). It appears on `getWebUser` but never on
+  `listWebUsers`. The spec's `WebUser` schema documents this list/detail
+  difference explicitly rather than modelling one shape for both operations.
 - **Both resources emit an `eulas` field that is a Python `repr` string, not
   structured data, undocumented on both list endpoints.**
   `UserResource.eulas = fields.CharField(attribute='eulas', null=True)`
-  (`v0_1.py:34`, inherited by both `CommCareUserResource` and
-  `WebUserResource`) combined with `tastypie.fields.CharField.convert`
-  calling `str()` unconditionally
-  (`tastypie/fields.py:211-215`) means the field's value is literally
-  `str()` of a list of `LicenseAgreement` objects. `webuser.rst`'s PATCH
-  sample response (line 216) shows this exact shape
+  (`v0_1.py:34`, inherited by both `CommCareUserResource` and `WebUserResource`)
+  combined with `tastypie.fields.CharField.convert` calling `str()`
+  unconditionally (`tastypie/fields.py:211-215`) means the field's value is
+  literally `str()` of a list of `LicenseAgreement` objects. `webuser.rst`'s
+  PATCH sample response (line 216) shows this exact shape
   (`"eulas": "[LicenseAgreement(date=datetime.datetime(...), ...)]"`), but
-  neither `list-mobile-workers.rst` nor `list-webusers.rst` mentions the
-  field at all. The spec's `MobileWorker`/`WebUser` schemas document `eulas`
-  as a plain string with a description explaining the repr shape.
+  neither `list-mobile-workers.rst` nor `list-webusers.rst` mentions the field
+  at all. The spec's `MobileWorker`/`WebUser` schemas document `eulas` as a
+  plain string with a description explaining the repr shape.
 - **`resource_uri` is a real field on every response from both resources,
-  documented incorrectly or not at all.** `include_resource_uri` is never
-  set to `False` anywhere in the inheritance chain
-  (`CustomResourceMeta`, `corehq/apps/api/resources/meta.py:76-81`), and both
+  documented incorrectly or not at all.** `include_resource_uri` is never set to
+  `False` anywhere in the inheritance chain (`CustomResourceMeta`,
+  `corehq/apps/api/resources/meta.py:76-81`), and both
   `CommCareUserResource.get_resource_uri` (`v0_5.py:257-268`) and
   `WebUserResource.get_resource_uri` (`v0_5.py:524-532`) are overridden to
   always compute a real detail URL. `list-mobile-workers.rst`'s Output Values
-  table and sample JSON omit the field entirely.
-  `list-webusers.rst`'s sample JSON (lines 118, 139) does include it, but
-  shows it as an always-empty string (`"resource_uri":""`) -- stale, not the
-  real behavior. The spec's `MobileWorker`/`WebUser` schemas document the
-  field as a real, always-populated URL.
+  table and sample JSON omit the field entirely. `list-webusers.rst`'s sample
+  JSON (lines 118, 139) does include it, but shows it as an always-empty string
+  (`"resource_uri":""`) -- stale, not the real behavior. The spec's
+  `MobileWorker`/`WebUser` schemas document the field as a real,
+  always-populated URL.
 - **`default_phone_number` is a genuine, separately recognized write field on
   the mobile worker resource, missing from `mobile-worker.rst`'s Input
   Parameters table.** `CommcareUserUpdates.update`
   (`corehq/apps/api/user_updates.py:148`) maps `'default_phone_number'` to
   `_update_default_phone_number` (`user_updates.py:204-214`), which adds the
   number to `phone_numbers` if new and marks it default -- independent of, and
-  in addition to, the "first entry of `phone_numbers` becomes default"
-  behavior the table does document. The reST page's own sample input (line
-  107) includes the field redundantly, without it ever appearing in the
-  Input Parameters table above. The spec's `MobileWorkerWrite` schema
-  documents it as a real property.
+  in addition to, the "first entry of `phone_numbers` becomes default" behavior
+  the table does document. The reST page's own sample input (line 107) includes
+  the field redundantly, without it ever appearing in the Input Parameters table
+  above. The spec's `MobileWorkerWrite` schema documents it as a real property.
 - **`connect_username` is a real, undocumented create-only field, gated by a
   feature toggle.** `obj_create`
   (`corehq/apps/api/resources/v0_5.py:278,280-281,334-338`) reads
   `connect_username` from the request body, rejects it with a 400 unless the
-  `COMMCARE_CONNECT` toggle is enabled for the domain, and otherwise links
-  the new user to a `ConnectIDUserLink` instead of requiring a password.
-  Absent from `mobile-worker.rst`'s Input Parameters table entirely. The
-  spec's `MobileWorkerWrite` schema documents it, with the toggle
-  requirement noted.
-- **No credential is ever returned in any response body.** Checked
-  specifically per the task brief's instruction to flag this prominently if
-  found: neither `UserResource` (`v0_1.py:25-34`) nor either subclass
-  declares a `password` field at all, so tastypie's `full_dehydrate` -- which
-  only serializes explicitly declared `fields.*` attributes -- can never
-  include one, regardless of what was submitted on create/update.
-  `CommCareUserResource.obj_create` additionally pops `password` from
-  `bundle.data` immediately after use (`v0_5.py:317-318`), before any
-  dehydration happens. **Nothing to flag; this is a negative finding,
-  included for completeness.**
-- **`type: "user"` (shown in `list-mobile-workers.rst`'s sample JSON, lines
-  119 and 144) is never actually serialized.** `UserResource.type = "user"`
-  (`v0_1.py:26`) is a plain class attribute, not a `tastypie.fields.*`
-  instance -- tastypie's field-discovery metaclass only picks up declared
-  `ApiField` instances, so this attribute is inert.
-  `test_get_list`/`test_get_single`
+  `COMMCARE_CONNECT` toggle is enabled for the domain, and otherwise links the
+  new user to a `ConnectIDUserLink` instead of requiring a password. Absent from
+  `mobile-worker.rst`'s Input Parameters table entirely. The spec's
+  `MobileWorkerWrite` schema documents it, with the toggle requirement noted.
+- **No credential is ever returned in any response body.** Checked specifically
+  per the task brief's instruction to flag this prominently if found: neither
+  `UserResource` (`v0_1.py:25-34`) nor either subclass declares a `password`
+  field at all, so tastypie's `full_dehydrate` -- which only serializes
+  explicitly declared `fields.*` attributes -- can never include one, regardless
+  of what was submitted on create/update. `CommCareUserResource.obj_create`
+  additionally pops `password` from `bundle.data` immediately after use
+  (`v0_5.py:317-318`), before any dehydration happens. **Nothing to flag; this
+  is a negative finding, included for completeness.**
+- **`type: "user"` (shown in `list-mobile-workers.rst`'s sample JSON, lines 119
+  and 144) is never actually serialized.** `UserResource.type = "user"`
+  (`v0_1.py:26`) is a plain class attribute, not a `tastypie.fields.*` instance
+  -- tastypie's field-discovery metaclass only picks up declared `ApiField`
+  instances, so this attribute is inert. `test_get_list`/`test_get_single`
   (`corehq/apps/api/tests/test_user_resources.py:90-122,125-157`) assert the
-  exact response dict for a created user and neither includes a `type` key.
-  The spec's `MobileWorker` schema has no `type` property.
+  exact response dict for a created user and neither includes a `type` key. The
+  spec's `MobileWorker` schema has no `type` property.
 
 ## bulk-user/v1 (`bulk-user.rst`)
 
 - **`offset` is double-applied and returns empty results for any value greater
   than 0.** `bulk-user.rst:75-83` documents `offset` as an ordinary
-  paginate-with-`limit` parameter and gives a worked example
-  (`offset=200`, third page of 100). `BulkUserResource.obj_get_list`
+  paginate-with-`limit` parameter and gives a worked example (`offset=200`,
+  third page of 100). `BulkUserResource.obj_get_list`
   (`corehq/apps/api/resources/v0_5.py:211-233`) reads `offset`/`limit` from
   `bundle.request.GET` and passes them straight to `user_es_call`
   (`v0_5.py:161-169`) as `start_at`/`size`, so Elasticsearch already returns a
-  single, correctly-offset page. `BulkUserResource.Meta`
-  (`v0_5.py:194-199`) inherits `CustomResourceMeta`, which never sets
-  `paginator_class` (`corehq/apps/api/resources/meta.py:76-82`), so tastypie
-  falls back to its real, default `Paginator`
-  (`tastypie/resources.py:80,1349`). That paginator reads the *same* `offset`
-  GET parameter again and re-slices the already-short page
-  (`Paginator.get_slice`, `tastypie/paginator.py:109-116`:
+  single, correctly-offset page. `BulkUserResource.Meta` (`v0_5.py:194-199`)
+  inherits `CustomResourceMeta`, which never sets `paginator_class`
+  (`corehq/apps/api/resources/meta.py:76-82`), so tastypie falls back to its
+  real, default `Paginator` (`tastypie/resources.py:80,1349`). That paginator
+  reads the _same_ `offset` GET parameter again and re-slices the already-short
+  page (`Paginator.get_slice`, `tastypie/paginator.py:109-116`:
   `self.objects[offset:offset+limit]`). For `offset=0` this is harmless (the
   page is already `<= limit` items, so `[0:limit]` is a no-op), but for any
-  `offset > 0` the second slice starts past the end of the (already-short)
-  page, so `objects` comes back empty even though matching records genuinely
-  exist at that position. Neither `TestBulkUserAPI`
+  `offset > 0` the second slice starts past the end of the (already-short) page,
+  so `objects` comes back empty even though matching records genuinely exist at
+  that position. Neither `TestBulkUserAPI`
   (`corehq/apps/api/tests/test_user_resources.py:1002-1032`, which mocks
   `user_es_call` entirely) nor any other test exercises a non-zero `offset`
   against the real pagination path. The spec's `listUsersBulk` `offset`
@@ -843,13 +937,13 @@ the view's own `if` chain", and anything that falls through returns a 405
   example, by setting `paginator_class = DoesNothingPaginator`, as
   `UserDomainsResource` and several other resources in this codebase already
   do).
-- **`total_count` in the response `meta` is not the domain's real user count
-  -- it is capped at the size of the current page.** `bulk-user.rst`'s sample
-  output (`:39-45`) shows `"total_count": 304` alongside `"limit": 20`,
-  implying `total_count` reflects the full matching set. `Paginator.get_count`
-  (`tastypie/paginator.py:118-126`) tries `self.objects.count()` and falls
-  back to `len(self.objects)` on `AttributeError`/`TypeError`; `self.objects`
-  here is a plain Python list of `namedtuple`s (`BulkUserResource.to_obj`,
+- **`total_count` in the response `meta` is not the domain's real user count --
+  it is capped at the size of the current page.** `bulk-user.rst`'s sample
+  output (`:39-45`) shows `"total_count": 304` alongside `"limit": 20`, implying
+  `total_count` reflects the full matching set. `Paginator.get_count`
+  (`tastypie/paginator.py:118-126`) tries `self.objects.count()` and falls back
+  to `len(self.objects)` on `AttributeError`/`TypeError`; `self.objects` here is
+  a plain Python list of `namedtuple`s (`BulkUserResource.to_obj`,
   `v0_5.py:185-192`), which has no `.count()`, so `get_count` returns
   `len(self.objects)` -- the length of the single Elasticsearch page already
   fetched (at most `limit` items), not a true domain-wide count. The spec's
@@ -861,19 +955,18 @@ the view's own `if` chain", and anything that falls through returns a 405
   place; an earlier version of `obj_get_list` discarded that return value
   (`query.set_query(...)` with no assignment), so every `q` value was silently
   ignored and the unfiltered result set was returned regardless. Current code
-  (`v0_5.py:168`) correctly assigns the result: `query =
-  query.set_query({"query_string": {"query": q}})`.
+  (`v0_5.py:168`) correctly assigns the result:
+  `query = query.set_query({"query_string": {"query": q}})`.
   `TestBulkUserESCall.test_q_filters_to_matching_user`/`test_q_none_returns_all_users`
-  (`corehq/apps/api/tests/test_user_resources.py:1125,1136`) cover this
-  directly against real Elasticsearch. **Negative finding, included for
-  completeness.**
+  (`corehq/apps/api/tests/test_user_resources.py:1125,1136`) cover this directly
+  against real Elasticsearch. **Negative finding, included for completeness.**
 - **A GET on `/a/{domain}/api/bulk-user/v1/{id}/` is nominally allowed
   (`Meta.detail_allowed_methods = ['get']`, `v0_5.py:197`) but is not actually
   implemented, and would return an uncaught 500.** `BulkUserResource` never
   overrides `obj_get`; the base `tastypie.resources.Resource.obj_get`
-  (`tastypie/resources.py:1172-1182`) unconditionally `raise
-  NotImplementedError()`. `get_detail`'s exception handling only special-cases
-  `ObjectDoesNotExist`/`MultipleObjectsReturned`
+  (`tastypie/resources.py:1172-1182`) unconditionally
+  `raise NotImplementedError()`. `get_detail`'s exception handling only
+  special-cases `ObjectDoesNotExist`/`MultipleObjectsReturned`
   (`tastypie/resources.py:1362-1383`); `NotImplementedError` falls through to
   `wrap_view`'s generic `except Exception` -> `_handle_500`
   (`tastypie/resources.py:250-265,291-315`). `bulk-user.rst` never documents a
@@ -883,132 +976,127 @@ the view's own `if` chain", and anything that falls through returns a 405
 
 ## sso/v1 (`sso.rst`)
 
-- **The response is not "identical to the List User API or List Web User
-  API," as `sso.rst:26` claims.** `SingleSignOnResource.post_list`
+- **The response is not "identical to the List User API or List Web User API,"
+  as `sso.rst:26` claims.** `SingleSignOnResource.post_list`
   (`corehq/apps/api/resources/v0_4.py:260-297`) dehydrates the authenticated
   user with a freshly-constructed `v0_1.CommCareUserResource()` or
-  `v0_1.WebUserResource()` (`v0_4.py:288-291,295-296`) -- the *base* classes
-  in `v0_1.py`, not the `v0_5` subclasses (`v0_5.CommCareUserResource`,
+  `v0_1.WebUserResource()` (`v0_4.py:288-291,295-296`) -- the _base_ classes in
+  `v0_1.py`, not the `v0_5` subclasses (`v0_5.CommCareUserResource`,
   `v0_5.WebUserResource`) that actually back `listMobileWorkers`/
-  `getMobileWorker` and `listWebUsers`/`getWebUser`. Concretely absent from
-  the mobile-worker-shaped response: `primary_location`, `locations`,
+  `getMobileWorker` and `listWebUsers`/`getWebUser`. Concretely absent from the
+  mobile-worker-shaped response: `primary_location`, `locations`,
   `require_account_confirmation`, `send_confirmation_email_now` (all declared
   only on `v0_5.CommCareUserResource`, `v0_5.py:242-245`). Absent from the
   web-user-shaped response: `user_data`, `primary_location_id`,
   `assigned_location_ids`, `profile`, `tableau_role`, `tableau_groups`,
   `is_active_in_domain` (all declared only on `v0_5.WebUserResource`,
-  `v0_5.py:473-481`). Additionally, `resource_uri` is always the empty string
-  in both SSO shapes -- `v0_1.CommCareUserResource`/`v0_1.WebUserResource`
-  never override `get_resource_uri`, unlike their `v0_5` counterparts
+  `v0_5.py:473-481`). Additionally, `resource_uri` is always the empty string in
+  both SSO shapes -- `v0_1.CommCareUserResource`/`v0_1.WebUserResource` never
+  override `get_resource_uri`, unlike their `v0_5` counterparts
   (`v0_5.py:257-268,524-532`), which always compute a real URL. The spec's
   `SsoMobileWorker`/`SsoWebUser` schemas (`components/schemas/sso.yaml`)
-  document the real, narrower shape instead of reusing `MobileWorker`/
-  `WebUser` wholesale.
+  document the real, narrower shape instead of reusing `MobileWorker`/ `WebUser`
+  wholesale.
 - **The 400 for a missing `username`/`password` is plain text, not the shared
   JSON `{"error": ...}` shape used by every other 400 in this spec.**
-  `v0_4.py:274-278` returns Django's own `HttpResponseBadRequest('Missing
-  required parameter: username')` (or `password`) directly -- a bare Django
-  `HttpResponse` subclass, not anything built through tastypie's
-  `error_response`/`wrap_view` machinery, so it carries Django's default
-  `text/html` content type over a literal, unwrapped string body.
-  `sso.rst` documents no error responses at all. The spec's `authenticateUser`
-  `400` documents this exact shape.
+  `v0_4.py:274-278` returns Django's own
+  `HttpResponseBadRequest('Missing required parameter: username')` (or
+  `password`) directly -- a bare Django `HttpResponse` subclass, not anything
+  built through tastypie's `error_response`/`wrap_view` machinery, so it carries
+  Django's default `text/html` content type over a literal, unwrapped string
+  body. `sso.rst` documents no error responses at all. The spec's
+  `authenticateUser` `400` documents this exact shape.
 - **No 401 is reachable for this operation at all.** `SSOAuthentication`
   (`corehq/apps/api/resources/auth.py:63-64`) is a bare `pass`, so it inherits
   tastypie's base `Authentication.is_authenticated`
-  (`tastypie/authentication.py:54-60`), which unconditionally returns `True`
-  -- tastypie's own auth layer (`tastypie/resources.py:557-572`) can therefore
+  (`tastypie/authentication.py:54-60`), which unconditionally returns `True` --
+  tastypie's own auth layer (`tastypie/resources.py:557-572`) can therefore
   never reject a request to this endpoint. Every credential check happens by
   hand inside `post_list` and resolves to 400 (missing field) or 403 (bad
   credentials/wrong user type) instead. The spec's `authenticateUser` `401`
   response documents this explicitly rather than pretending a real 401 body
   exists, since the shared test `test_every_operation_declares_401_and_403`
   requires the key regardless.
-- **No credential is echoed back in the response.** Checked specifically per
-  the task brief's instruction. `v0_1.CommCareUserResource` and
+- **No credential is echoed back in the response.** Checked specifically per the
+  task brief's instruction. `v0_1.CommCareUserResource` and
   `v0_1.WebUserResource` (`corehq/apps/api/resources/v0_1.py:25-158`) declare
-  the identical field set already checked for their `v0_5` counterparts in
-  the `user/v1 and web-user/v1` section above -- no `password` field on
-  either. **Nothing to flag; negative finding, included for completeness.**
+  the identical field set already checked for their `v0_5` counterparts in the
+  `user/v1 and web-user/v1` section above -- no `password` field on either.
+  **Nothing to flag; negative finding, included for completeness.**
 
 ## user_domains/v1 (`user-domain-list.rst`)
 
-- **The response `meta` shape does not match the documented sample at
-  all -- only `total_count` is real.**
-  `user-domain-list.rst:29-36`'s sample response shows a full
-  `limit`/`offset`/`next`/`previous`/`total_count` pagination object.
-  `UserDomainsResource.Meta.paginator_class = DoesNothingPaginator`
+- **The response `meta` shape does not match the documented sample at all --
+  only `total_count` is real.** `user-domain-list.rst:29-36`'s sample response
+  shows a full `limit`/`offset`/`next`/`previous`/`total_count` pagination
+  object. `UserDomainsResource.Meta.paginator_class = DoesNothingPaginator`
   (`corehq/apps/api/resources/v0_5.py:1100`); `DoesNothingPaginator.page()`
   (`corehq/apps/api/resources/pagination.py:42-47`) returns only
-  `{"objects": self.objects, "meta": {"total_count": self.get_count()}}` --
-  no `limit`, `offset`, `next`, or `previous` keys are ever present, and
-  `self.objects` (the full result of `get_object_list`,
-  `v0_5.py:1119-1141`) is never sliced by the paginator. In other words,
-  **this endpoint returns every matching domain in a single, unpaginated
-  response**, regardless of any `limit`/`offset` query parameter a client
-  might send (both are silently ignored -- `DoesNothingPaginator.page()`
-  never reads `self.request_data`). The spec's `UserDomainList` schema
-  documents the real, `total_count`-only meta shape, and `listUserDomains`
-  declares no `limit`/`offset` parameters.
+  `{"objects": self.objects, "meta": {"total_count": self.get_count()}}` -- no
+  `limit`, `offset`, `next`, or `previous` keys are ever present, and
+  `self.objects` (the full result of `get_object_list`, `v0_5.py:1119-1141`) is
+  never sliced by the paginator. In other words, **this endpoint returns every
+  matching domain in a single, unpaginated response**, regardless of any
+  `limit`/`offset` query parameter a client might send (both are silently
+  ignored -- `DoesNothingPaginator.page()` never reads `self.request_data`). The
+  spec's `UserDomainList` schema documents the real, `total_count`-only meta
+  shape, and `listUserDomains` declares no `limit`/`offset` parameters.
 - **No 403 is reachable for this operation at all.**
   `LoginAuthentication.is_authenticated`
   (`corehq/apps/api/resources/auth.py:75-79`) delegates to `_auth_test`
-  (`auth.py:81-95`), which always collapses its result to a plain Python
-  `bool` (`return response is PASSED_AUTH`) -- unlike
+  (`auth.py:81-95`), which always collapses its result to a plain Python `bool`
+  (`return response is PASSED_AUTH`) -- unlike
   `LoginAndDomainAuthentication._auth_test` (`auth.py:114-135`, used by every
   permission-gated resource in this spec), it never returns the actual
   `HttpResponse` a failed auth decorator produced. Tastypie's own
-  `is_authenticated` (`tastypie/resources.py:557-572`) only preserves a
-  non-401 status when the authentication backend's return value is itself an
+  `is_authenticated` (`tastypie/resources.py:557-572`) only preserves a non-401
+  status when the authentication backend's return value is itself an
   `HttpResponse` instance; a plain `False` always becomes a 401
   (`http.HttpUnauthorized()`). `get_object_list`
   (`corehq/apps/api/resources/v0_5.py:1116-1141`) enforces no permission or
-  domain-membership check of its own either -- the only non-200 outcomes are
-  401 (auth failure) and 400 (invalid `feature_flag`). The spec's
-  `listUserDomains` `403` response documents this explicitly rather than
-  claiming a real 403 body exists, since `test_every_operation_declares_401_and_403`
-  requires the key regardless. This same mechanism (a `LoginAuthentication`
-  instance whose `_auth_test` discards the real response) is shared by
-  `getIdentity` in `paths/web-user.yaml`, whose already-committed `403`
-  response describes a genuine-looking forbidden path from the
-  `require_domain=False` decorator branch
-  (`corehq/apps/domain/decorators.py:308-329`) -- by the same trace, that
-  decorator's `HttpResponseForbidden()` return value would also be discarded
-  by `LoginAuthentication._auth_test`'s boolean coercion and surface as a 401,
-  not a 403. Not corrected here (`web-user.yaml` is Task 11's file, out of
-  this task's scope) -- flagged for a human to verify.
-- **No 429 is reachable for this operation at all.**
-  `UserDomainsResource.Meta` (`v0_5.py:1095-1100`) is a plain `object`, not
-  `CustomResourceMeta`, so it never sets `throttle`; tastypie's default
-  `BaseThrottle.should_be_throttled` (`tastypie/throttle.py:51-61`) always
-  returns `False`. Same situation, and same treatment, as `getIdentity`'s
-  `429` in `paths/web-user.yaml`.
+  domain-membership check of its own either -- the only non-200 outcomes are 401
+  (auth failure) and 400 (invalid `feature_flag`). The spec's `listUserDomains`
+  `403` response documents this explicitly rather than claiming a real 403 body
+  exists, since `test_every_operation_declares_401_and_403` requires the key
+  regardless. This same mechanism (a `LoginAuthentication` instance whose
+  `_auth_test` discards the real response) is shared by `getIdentity` in
+  `paths/web-user.yaml`, whose already-committed `403` response describes a
+  genuine-looking forbidden path from the `require_domain=False` decorator
+  branch (`corehq/apps/domain/decorators.py:308-329`) -- by the same trace, that
+  decorator's `HttpResponseForbidden()` return value would also be discarded by
+  `LoginAuthentication._auth_test`'s boolean coercion and surface as a 401, not
+  a 403. Not corrected here (`web-user.yaml` is Task 11's file, out of this
+  task's scope) -- flagged for a human to verify.
+- **No 429 is reachable for this operation at all.** `UserDomainsResource.Meta`
+  (`v0_5.py:1095-1100`) is a plain `object`, not `CustomResourceMeta`, so it
+  never sets `throttle`; tastypie's default `BaseThrottle.should_be_throttled`
+  (`tastypie/throttle.py:51-61`) always returns `False`. Same situation, and
+  same treatment, as `getIdentity`'s `429` in `paths/web-user.yaml`.
 
 ## location/v1, location/v2, location_type/v1 (`locations-v1.rst`, `locations-v2.rst`, `location-types.rst`)
 
-- **`location_type/v1` is not actually method-restricted at all -- its
-  effective GET-only behavior comes from a different mechanism than
-  `location/v1`'s, and one write attempt reaches a different status than
-  either method_check (405) or the shared PermissionDenied path (bare 403).**
-  Confirmed by direct introspection
-  (`v0_5.LocationTypeResource()._meta.list_allowed_methods` /
+- **`location_type/v1` is not actually method-restricted at all -- its effective
+  GET-only behavior comes from a different mechanism than `location/v1`'s, and
+  one write attempt reaches a different status than either method_check (405) or
+  the shared PermissionDenied path (bare 403).** Confirmed by direct
+  introspection (`v0_5.LocationTypeResource()._meta.list_allowed_methods` /
   `.detail_allowed_methods` both evaluate to
-  `['get', 'post', 'put', 'delete', 'patch']` -- tastypie's full default,
-  since `LocationTypeResource.Meta` (`v0_5.py:29-46`) never sets
+  `['get', 'post', 'put', 'delete', 'patch']` -- tastypie's full default, since
+  `LocationTypeResource.Meta` (`v0_5.py:29-46`) never sets
   `allowed_methods`/`list_allowed_methods`/`detail_allowed_methods` at all).
   Contrast `v0_5.LocationResource.Meta`, which explicitly sets
   `allowed_methods = ['get']` (`v0_5.py:77`), confirmed to actually produce
   `list_allowed_methods = detail_allowed_methods = ['get']`. So a non-GET
   request to `location_type/v1/` passes tastypie's `method_check`
-  (`tastypie/resources.py:521-555`) and reaches the normal
-  create/update/delete flow, unlike `location/v1`, which 405s before that
-  point. What actually stops the write is `Meta.authorization`, which neither
-  `LocationTypeResource` nor any ancestor overrides, so it defaults to
-  `tastypie.authorization.ReadOnlyAuthorization()` (confirmed by
-  introspection: `type(lt._meta.authorization)` is
-  `ReadOnlyAuthorization`). `ReadOnlyAuthorization.create_detail`/
-  `update_detail`/`delete_detail` (`tastypie/authorization.py:107-120`) each
-  raise `tastypie.exceptions.Unauthorized`. The default
+  (`tastypie/resources.py:521-555`) and reaches the normal create/update/delete
+  flow, unlike `location/v1`, which 405s before that point. What actually stops
+  the write is `Meta.authorization`, which neither `LocationTypeResource` nor
+  any ancestor overrides, so it defaults to
+  `tastypie.authorization.ReadOnlyAuthorization()` (confirmed by introspection:
+  `type(lt._meta.authorization)` is `ReadOnlyAuthorization`).
+  `ReadOnlyAuthorization.create_detail`/ `update_detail`/`delete_detail`
+  (`tastypie/authorization.py:107-120`) each raise
+  `tastypie.exceptions.Unauthorized`. The default
   `ModelResource.obj_create`/`obj_update`/`obj_delete` (which
   `LocationTypeResource` does not override) route through `save()`
   (`tastypie/resources.py:2392-2410`), which calls
@@ -1020,66 +1108,63 @@ the view's own `if` chain", and anything that falls through returns a 405
   (`tastypie/resources.py:250-254`), which special-cases any exception with an
   `HttpResponse`-typed `.response` attribute and returns it directly. Net
   effect: a POST/PUT/PATCH/DELETE to `location_type/v1/` reaches a bare empty
-  401, not the 405 `location/v1` produces for the same verbs, not the bare 403
-  a permission failure produces elsewhere in this API, and not a 500. Neither
+  401, not the 405 `location/v1` produces for the same verbs, not the bare 403 a
+  permission failure produces elsewhere in this API, and not a 500. Neither
   `location-types.rst` nor the task brief's method table describes this
   correctly (the brief assumed `location_type` was method-restricted the same
   way `location/v1` is); the spec documents only the real, working GET
-  operations for `location_type/v1`, matching the reST docs, and omits any
-  write operations rather than documenting ones that only ever fail.
+  operations for `location_type/v1`, matching the reST docs, and omits any write
+  operations rather than documenting ones that only ever fail.
 - **v2's `PUT` on a nonexistent `location_id` is a 400, never a 404,** and the
-  detail `GET`/bulk-`PATCH`-update code paths reach three different outcomes
-  for "location not found" despite sharing the same lookup helper.
+  detail `GET`/bulk-`PATCH`-update code paths reach three different outcomes for
+  "location not found" despite sharing the same lookup helper.
   `v0_6.LocationResource.obj_update` (`v0_6.py:90-99`) fetches with a plain
   `SQLLocation.objects.get(location_id=..., domain=...)` and converts a miss
   directly to `LocationAPIError` (`v0_6.py:18-22`, a
-  `tastypie.exceptions.BadRequest` subclass) -- never tastypie's own
-  `NotFound`, the only exception `put_detail`
-  (`tastypie/resources.py:1502`) catches to fall back to `obj_create`. So the
-  miss reaches `wrap_view`'s `except (BadRequest, fields.ApiFieldError)`
-  (`tastypie/resources.py:244-246`) and becomes a 400 with the standard
-  `{"error": "Could not update: could not find location with given ID <id> on
-  the domain."}` body -- confirmed verbatim by
+  `tastypie.exceptions.BadRequest` subclass) -- never tastypie's own `NotFound`,
+  the only exception `put_detail` (`tastypie/resources.py:1502`) catches to fall
+  back to `obj_create`. So the miss reaches `wrap_view`'s
+  `except (BadRequest, fields.ApiFieldError)` (`tastypie/resources.py:244-246`)
+  and becomes a 400 with the standard
+  `{"error": "Could not update: could not find location with given ID <id> on the domain."}`
+  body -- confirmed verbatim by
   `corehq/apps/locations/tests/test_api_resources.py:401-430`
   (`test_patch_list_missing_location_id`, which exercises the identical
   `obj_update` call from the bulk-PATCH path and asserts exactly this message
-  and a 400 status). `replaceLocationV2`'s GET sibling
-  (`getLocationV2`) does 404 correctly, since GET is not overridden and goes
-  through tastypie's default `get_detail`
-  (`tastypie/resources.py:1362-1383`), which catches
+  and a 400 status). `replaceLocationV2`'s GET sibling (`getLocationV2`) does
+  404 correctly, since GET is not overridden and goes through tastypie's default
+  `get_detail` (`tastypie/resources.py:1362-1383`), which catches
   `SQLLocation.DoesNotExist` (a real `ObjectDoesNotExist`) and returns a bare
   `http.HttpNotFound()`. `locations-v2.rst` never states what happens for a
-  missing `location_id` on either endpoint. The spec's `replaceLocationV2`
-  omits `404` entirely (with an inline comment in `paths/location-v2.yaml`)
-  and documents the 400 instead; `getLocationV2` keeps its genuine, bare-body
-  404.
+  missing `location_id` on either endpoint. The spec's `replaceLocationV2` omits
+  `404` entirely (with an inline comment in `paths/location-v2.yaml`) and
+  documents the 400 instead; `getLocationV2` keeps its genuine, bare-body 404.
 - **v2's detail `PUT` will 400 if the client includes `location_id` in the
   request body, undocumented by `locations-v2.rst`.** `obj_update`
   (`v0_6.py:90-99`) resolves the target id with
   `location_id = kwargs.get('location_id') or bundle.data.pop('location_id')`.
-  For the URL-based detail PUT, `kwargs['location_id']` (from the URL) is
-  always truthy, so Python's `or` short-circuits and
-  `bundle.data.pop('location_id')` is never evaluated -- any `location_id` key
-  in the body is never removed from `data`. `_update`'s end-of-method leftover
-  check (`v0_6.py:134-136`, `if len(data): raise LocationAPIError(...
-  "Invalid fields were included in request: [...]")`) then fires, since
-  `location_id` is not among the fields `_update` recognizes. (The bulk-PATCH
-  path is different: there, `kwargs.get('location_id')` is falsy because the
-  list endpoint's URL kwargs never include a `location_id`, so the `or`
-  falls through to `bundle.data.pop('location_id')`, which is exactly how a
-  bulk item signals "this is an update" -- `location_id` in the body is
-  required and expected there, not rejected.) `locations-v2.rst`'s "Editable
-  Fields" table for PUT (`:175-196`) simply omits `location_id` without
-  warning that including it is actively rejected. The spec's `LocationUpdate`
-  schema documents this in its description and does not list `location_id` as
-  a property.
+  For the URL-based detail PUT, `kwargs['location_id']` (from the URL) is always
+  truthy, so Python's `or` short-circuits and `bundle.data.pop('location_id')`
+  is never evaluated -- any `location_id` key in the body is never removed from
+  `data`. `_update`'s end-of-method leftover check (`v0_6.py:134-136`,
+  `if len(data): raise LocationAPIError(... "Invalid fields were included in request: [...]")`)
+  then fires, since `location_id` is not among the fields `_update` recognizes.
+  (The bulk-PATCH path is different: there, `kwargs.get('location_id')` is falsy
+  because the list endpoint's URL kwargs never include a `location_id`, so the
+  `or` falls through to `bundle.data.pop('location_id')`, which is exactly how a
+  bulk item signals "this is an update" -- `location_id` in the body is required
+  and expected there, not rejected.) `locations-v2.rst`'s "Editable Fields"
+  table for PUT (`:175-196`) simply omits `location_id` without warning that
+  including it is actively rejected. The spec's `LocationUpdate` schema
+  documents this in its description and does not list `location_id` as a
+  property.
 - **v2's bulk `PATCH` never produces the group resource's
   ids-and-errors-mixed-positionally array -- a batch either fully succeeds
-  (array of ids) or fully fails (single `{"error": ...}` object), never
-  both.** The task brief suggested this resource's bulk PATCH "returns
-  surprising shapes" the way the group resource's does and pointed at
-  `patch_list_replica`'s `obj_limit` handling as the mechanism to trace;
-  tracing it shows the two resources diverge. `patch_list_replica`
+  (array of ids) or fully fails (single `{"error": ...}` object), never both.**
+  The task brief suggested this resource's bulk PATCH "returns surprising
+  shapes" the way the group resource's does and pointed at
+  `patch_list_replica`'s `obj_limit` handling as the mechanism to trace; tracing
+  it shows the two resources diverge. `patch_list_replica`
   (`corehq/apps/api/resources/__init__.py:172-205`) only ever substitutes an
   error string into the per-item array slot inside its `except AssertionError`
   handler (`:199-201`) -- for the group resource this fires because its
@@ -1090,32 +1175,30 @@ the view's own `if` chain", and anything that falls through returns a 405
   `obj_update`) raises only `LocationAPIError` (a `BadRequest`, not an
   `AssertionError`) for every validation failure; there is no bare `assert`
   anywhere in `v0_6.py`. A `LocationAPIError` from any item is never caught by
-  `patch_list_replica`'s per-item `try/except AssertionError`
-  (`v0_6.py:166-171` calls `create_or_update`, wrapped by
-  `patch_list_replica` at `:197-198`) -- it propagates straight out of the
-  loop, past the `@atomic` decorator on `patch_list` (`v0_6.py:164`, which
-  rolls back on the way out), to `wrap_view`'s `except (BadRequest, ...)`,
-  which converts it to a single `{"error": ...}` 400 object. Confirmed by
+  `patch_list_replica`'s per-item `try/except AssertionError` (`v0_6.py:166-171`
+  calls `create_or_update`, wrapped by `patch_list_replica` at `:197-198`) -- it
+  propagates straight out of the loop, past the `@atomic` decorator on
+  `patch_list` (`v0_6.py:164`, which rolls back on the way out), to
+  `wrap_view`'s `except (BadRequest, ...)`, which converts it to a single
+  `{"error": ...}` 400 object. Confirmed by
   `corehq/apps/locations/tests/test_api_resources.py:377-430`
   (`test_patch_list_is_atomic` asserts 400 and that nothing was created;
   `test_patch_list_missing_location_id` asserts
-  `response.json() == {'error': "Could not update: ..."}"`, not an array).
-  The `obj_limit` check itself (`patch_list_replica:191-192`,
+  `response.json() == {'error': "Could not update: ..."}"`, not an array). The
+  `obj_limit` check itself (`patch_list_replica:191-192`,
   `v0_6.LocationResource.patch_limit = 100`, `v0_6.py:27`) also raises a plain
   `BadRequest` before any item is processed, for the same single-object 400
   shape. The array shape (`patch_list_replica:204`,
   `[bundle.data['_id'] for bundle in bundles_seen]`) is therefore reachable
-  **only on full success** for this resource -- the ambiguous
-  id-or-error-string array documented for `bulkUpdateGroups` in
-  `paths/group.yaml` cannot occur here. The spec's
-  `bulkCreateOrUpdateLocationsV2` documents a clean array-of-ids `202` and a
-  single-object `{"error": ...}` `400`, explicitly noting the contrast with
-  the group resource.
-- **v2's `parent_location_id` is an empty string when a location has no
-  parent, not null -- inconsistent with v1's `parent`, which is null in the
-  same situation.** `v0_6.LocationResource.dehydrate`
-  (`v0_6.py:71-75`) sets `bundle.data['parent_location_id'] = ''` in the
-  no-parent branch. Confirmed by
+  **only on full success** for this resource -- the ambiguous id-or-error-string
+  array documented for `bulkUpdateGroups` in `paths/group.yaml` cannot occur
+  here. The spec's `bulkCreateOrUpdateLocationsV2` documents a clean
+  array-of-ids `202` and a single-object `{"error": ...}` `400`, explicitly
+  noting the contrast with the group resource.
+- **v2's `parent_location_id` is an empty string when a location has no parent,
+  not null -- inconsistent with v1's `parent`, which is null in the same
+  situation.** `v0_6.LocationResource.dehydrate` (`v0_6.py:71-75`) sets
+  `bundle.data['parent_location_id'] = ''` in the no-parent branch. Confirmed by
   `corehq/apps/locations/tests/test_api_resources.py:167`
   (`"parent_location_id": ""` for `location1`, which has no parent).
   `locations-v2.rst:64-66` describes the field only as "The UUID of the
@@ -1124,525 +1207,518 @@ the view's own `if` chain", and anything that falls through returns a 405
   (non-nullable) string with this behavior called out explicitly.
 - **v1's `location_type` and `parent` fields, and v2's absence of them, were
   verified by direct introspection, not assumed from the `Meta.fields`
-  declaration alone.** `v0_6.LocationResource.Meta.fields`
-  (`v0_6.py:39-48`) is a fresh set literal on a `class Meta:` with no base
-  class, so it does not inherit `v0_5.LocationResource.Meta`'s `fields` list
-  -- but `location_data`, `location_type`, and `parent` are also declared as
-  manually-attached `fields.X(...)` class attributes on `v0_5.LocationResource`
-  (`v0_5.py:68-70`), which Python inheritance *does* carry onto
-  `v0_6.LocationResource` regardless of `Meta`. Introspecting
-  `v0_6.LocationResource().fields.keys()` directly resolves the ambiguity:
-  the result is exactly the 8 keys in `v0_6.py`'s `Meta.fields` (`domain,
-  last_modified, latitude, location_data, location_id, longitude, name,
-  site_code`) -- `location_type` and `parent` are genuinely absent, meaning
-  `Meta.fields` does filter out inherited manually-declared fields too, not
-  just introspected model fields. `location_type_code`/`location_type_name`/
-  `parent_location_id` reach the response only via the `dehydrate` override
-  writing directly into `bundle.data`, confirmed against
-  `test_api_resources.py:157-213`'s exact-dict assertions. Not a
-  discrepancy against the reST docs (v2's sample matches), but recorded since
-  it contradicts what the `Meta.fields` docstring convention might suggest to
-  a future task about how `Meta.fields` and inherited manual fields interact.
+  declaration alone.** `v0_6.LocationResource.Meta.fields` (`v0_6.py:39-48`) is
+  a fresh set literal on a `class Meta:` with no base class, so it does not
+  inherit `v0_5.LocationResource.Meta`'s `fields` list -- but `location_data`,
+  `location_type`, and `parent` are also declared as manually-attached
+  `fields.X(...)` class attributes on `v0_5.LocationResource` (`v0_5.py:68-70`),
+  which Python inheritance _does_ carry onto `v0_6.LocationResource` regardless
+  of `Meta`. Introspecting `v0_6.LocationResource().fields.keys()` directly
+  resolves the ambiguity: the result is exactly the 8 keys in `v0_6.py`'s
+  `Meta.fields`
+  (`domain, last_modified, latitude, location_data, location_id, longitude, name, site_code`)
+  -- `location_type` and `parent` are genuinely absent, meaning `Meta.fields`
+  does filter out inherited manually-declared fields too, not just introspected
+  model fields. `location_type_code`/`location_type_name`/ `parent_location_id`
+  reach the response only via the `dehydrate` override writing directly into
+  `bundle.data`, confirmed against `test_api_resources.py:157-213`'s exact-dict
+  assertions. Not a discrepancy against the reST docs (v2's sample matches), but
+  recorded since it contradicts what the `Meta.fields` docstring convention
+  might suggest to a future task about how `Meta.fields` and inherited manual
+  fields interact.
 - **The v2 `last_modified.gte`/`.gt`/`.lt`/`.lte` filters accept a timezone
   offset or literal `Z`, unlike case/v1's `*_start`/`*_end` filters, which
   reject one with a 400 (`validate_date`).** Traced directly per the task
   brief's instruction not to copy either existing precedent.
   `v0_6.LocationResource.build_filters` (`v0_6.py:56-69`) does no date parsing
   of its own -- it only rewrites the dotted key to a double-underscore ORM
-  lookup (`last_modified__gte`) and hands the raw query-string value straight
-  to `SQLLocation.objects.filter(...)`, a real Django ORM filter against
+  lookup (`last_modified__gte`) and hands the raw query-string value straight to
+  `SQLLocation.objects.filter(...)`, a real Django ORM filter against
   `last_modified`, a genuine `models.DateTimeField(auto_now=True)`
   (`corehq/apps/locations/models.py:372`). Django's
-  `DateTimeField.get_prep_value` (`django/db/models/fields/__init__.py:
-  1186-1190`) calls `to_python`, which tries
-  `django.utils.dateparse.parse_datetime` first
-  (`django/db/models/fields/__init__.py:1621-1630`) -- this parses a bare
-  date, a naive datetime, or one with a UTC offset or trailing `Z`
-  indifferently, raising nothing for any of them. The
-  naive-vs-aware reconciliation branch that would otherwise matter
-  (`get_prep_value`, `django/db/models/fields/__init__.py:1198-1200`, guarded
-  by `settings.USE_TZ and timezone.is_naive(value)`) never fires either way
-  because `settings.USE_TZ = False` (`settings.py:57`) -- so an
-  offset-bearing value is passed straight through, unconverted, to
-  `adapt_datetimefield_value` (`django/db/backends/postgresql/operations.py:
-  350-351`, a no-op), and Postgres compares it against the naive
-  `timestamp without time zone` column using its own session timezone rules.
-  No exception is ever raised for an offset value on this code path -- a
-  materially different outcome from case/v1's `validate_date`
-  (`corehq/apps/api/es.py:277-285`), which checks the string against four
-  fixed `strptime` formats, none with `%z`, and explicitly rejects an offset
-  with a 400. **Caveat: this was traced entirely from Django/tastypie source,
-  not confirmed with a live request in this environment** -- no Postgres or
-  Elasticsearch service was reachable here (`docker ps` showed no running
-  containers, and the project's own Postgres was listening on a port the
-  configured `localsettings.py` `DATABASES` setting doesn't point at), so
-  `corehq/apps/locations/tests/test_api_resources.py`'s existing
-  `test_api_filters` cases (none of which include an offset) could not be
-  extended and re-run to double-check this conclusion empirically. A human
+  `DateTimeField.get_prep_value`
+  (`django/db/models/fields/__init__.py: 1186-1190`) calls `to_python`, which
+  tries `django.utils.dateparse.parse_datetime` first
+  (`django/db/models/fields/__init__.py:1621-1630`) -- this parses a bare date,
+  a naive datetime, or one with a UTC offset or trailing `Z` indifferently,
+  raising nothing for any of them. The naive-vs-aware reconciliation branch that
+  would otherwise matter (`get_prep_value`,
+  `django/db/models/fields/__init__.py:1198-1200`, guarded by
+  `settings.USE_TZ and timezone.is_naive(value)`) never fires either way because
+  `settings.USE_TZ = False` (`settings.py:57`) -- so an offset-bearing value is
+  passed straight through, unconverted, to `adapt_datetimefield_value`
+  (`django/db/backends/postgresql/operations.py: 350-351`, a no-op), and
+  Postgres compares it against the naive `timestamp without time zone` column
+  using its own session timezone rules. No exception is ever raised for an
+  offset value on this code path -- a materially different outcome from
+  case/v1's `validate_date` (`corehq/apps/api/es.py:277-285`), which checks the
+  string against four fixed `strptime` formats, none with `%z`, and explicitly
+  rejects an offset with a 400. **Caveat: this was traced entirely from
+  Django/tastypie source, not confirmed with a live request in this
+  environment** -- no Postgres or Elasticsearch service was reachable here
+  (`docker ps` showed no running containers, and the project's own Postgres was
+  listening on a port the configured `localsettings.py` `DATABASES` setting
+  doesn't point at), so `corehq/apps/locations/tests/test_api_resources.py`'s
+  existing `test_api_filters` cases (none of which include an offset) could not
+  be extended and re-run to double-check this conclusion empirically. A human
   should confirm with a live database before treating this as settled.
 - **`location/v1` and `location_type/v1`'s 403 body is empty, not the shared
   `{"error": ...}` shape `paths/group.yaml` and `paths/case-v1.yaml` point at
   for the identical `RequirePermissionAuthentication` class.** Both
   `GroupResource` (`corehq/apps/api/resources/v0_4.py:253`) and all three
   location resources use `RequirePermissionAuthentication`, which delegates to
-  `LoginAndDomainAuthentication._auth_test` (`corehq/apps/api/resources/auth.py
-  :114-135`): a failed permission check raises Django's `PermissionDenied`
-  (`require_permission_raw`, `corehq/apps/users/decorators.py:34-54`), caught
-  directly by `_auth_test` and converted to a bare `HttpResponseForbidden()` --
-  no body, no JSON. This exact mechanism and finding were already established
-  for `getForm`/`listForms` earlier in this file (see the form/v1 section);
-  this resource shares the identical authentication class and code path, so
-  the same conclusion applies here rather than being re-derived from scratch.
-  `paths/group.yaml`'s and `paths/case-v1.yaml`'s `403` responses, by
-  contrast, point at the shared `Forbidden` ref (a JSON `{"error": ...}`
-  body) despite using the same `RequirePermissionAuthentication` class --
-  those two do not appear to have been verified against the body, only
-  against the status code. Out of scope for this task to fix (both are
-  earlier tasks' committed files), but flagged here since a reviewer
-  comparing this task's location paths against those precedents will
-  otherwise wonder why they disagree. This task's `location-v1.yaml`,
-  `location-v2.yaml`, and `location-type.yaml` all document the bare-empty
-  403 instead.
-- **Three additional 401/403-shaped gates exist ahead of the standard
-  tastypie auth flow, applicable to every location (and every other
-  `HqBaseResource`-based) operation, and were not modeled as separate
-  responses since their JSON shape does not differ from the documented 401.**
+  `LoginAndDomainAuthentication._auth_test`
+  (`corehq/apps/api/resources/auth.py :114-135`): a failed permission check
+  raises Django's `PermissionDenied` (`require_permission_raw`,
+  `corehq/apps/users/decorators.py:34-54`), caught directly by `_auth_test` and
+  converted to a bare `HttpResponseForbidden()` -- no body, no JSON. This exact
+  mechanism and finding were already established for `getForm`/`listForms`
+  earlier in this file (see the form/v1 section); this resource shares the
+  identical authentication class and code path, so the same conclusion applies
+  here rather than being re-derived from scratch. `paths/group.yaml`'s and
+  `paths/case-v1.yaml`'s `403` responses, by contrast, point at the shared
+  `Forbidden` ref (a JSON `{"error": ...}` body) despite using the same
+  `RequirePermissionAuthentication` class -- those two do not appear to have
+  been verified against the body, only against the status code. Out of scope for
+  this task to fix (both are earlier tasks' committed files), but flagged here
+  since a reviewer comparing this task's location paths against those precedents
+  will otherwise wonder why they disagree. This task's `location-v1.yaml`,
+  `location-v2.yaml`, and `location-type.yaml` all document the bare-empty 403
+  instead.
+- **Three additional 401/403-shaped gates exist ahead of the standard tastypie
+  auth flow, applicable to every location (and every other
+  `HqBaseResource`-based) operation, and were not modeled as separate responses
+  since their JSON shape does not differ from the documented 401.**
   `BaseLocationsResource.dispatch` (`v0_5.py:19-23`) checks
   `domain_has_privilege(request.domain, privileges.LOCATIONS)` before calling
   `super().dispatch()`, raising a bare `HttpResponseForbidden()` if the domain
   lacks the Locations privilege -- this is the second cause of the bare-403
   described above, alongside the permission-check failure, and both are
   documented together in the spec since they're bodily identical.
-  `HqBaseResource.dispatch` (`corehq/apps/api/resources/__init__.py:132-151`),
-  a base class of every location resource, additionally short-circuits with a
-  401 JSON body of `{"error": "API access has been temporarily cut off due to
-  too many requests. To re-enable, please contact support."}` if the
-  `API_BLACKLIST` feature toggle is enabled for the request (`:133-139`), and
-  a different 401 JSON body,
-  `{"error": "Your current subscription does not have access to this
-  feature"}`, if the domain lacks the `API_ACCESS` privilege (`:140,147-151`).
-  Both are structurally compatible with the shared `Unauthorized` response's
+  `HqBaseResource.dispatch` (`corehq/apps/api/resources/__init__.py:132-151`), a
+  base class of every location resource, additionally short-circuits with a 401
+  JSON body of
+  `{"error": "API access has been temporarily cut off due to too many requests. To re-enable, please contact support."}`
+  if the `API_BLACKLIST` feature toggle is enabled for the request (`:133-139`),
+  and a different 401 JSON body,
+  `{"error": "Your current subscription does not have access to this feature"}`,
+  if the domain lacks the `API_ACCESS` privilege (`:140,147-151`). Both are
+  structurally compatible with the shared `Unauthorized` response's
   `{"error": ...}` schema (just different message text), so the spec's shared
-  `401` ref already covers them without a resource-specific override; noted
-  here only because the first of the two is semantically a rate-limit
-  response (its message talks about "too many requests") but is a 401, not
-  the 429 the shared `TooManyRequests` response would suggest -- a client
-  branching on status code alone would miss it.
+  `401` ref already covers them without a resource-specific override; noted here
+  only because the first of the two is semantically a rate-limit response (its
+  message talks about "too many requests") but is a 401, not the 429 the shared
+  `TooManyRequests` response would suggest -- a client branching on status code
+  alone would miss it.
 
 ## fixture/v1, lookup_table/v1, lookup_table_item/v1 (`fixture.rst`)
 
-- **`fixture/v1` is not method-restricted at all, but its writes are broken
-  by a different mechanism than `location_type/v1`'s.** Confirmed by direct
+- **`fixture/v1` is not method-restricted at all, but its writes are broken by a
+  different mechanism than `location_type/v1`'s.** Confirmed by direct
   introspection: `FixtureResource()._meta.list_allowed_methods` and
-  `.detail_allowed_methods` both evaluate to `['get', 'post', 'put', 'delete',
-  'patch']` (tastypie's full default), because `FixtureResource.Meta`
-  (`corehq/apps/fixtures/resources/v0_1.py:91-95`) sets `authentication`,
-  `object_class`, `resource_name`, and `limit`, but never
+  `.detail_allowed_methods` both evaluate to
+  `['get', 'post', 'put', 'delete', 'patch']` (tastypie's full default), because
+  `FixtureResource.Meta` (`corehq/apps/fixtures/resources/v0_1.py:91-95`) sets
+  `authentication`, `object_class`, `resource_name`, and `limit`, but never
   `allowed_methods`/`list_allowed_methods`/`detail_allowed_methods`. So a
-  non-`GET` request passes `method_check` (`tastypie/resources.py:521-555`)
-  and reaches the normal create/update/delete flow. Unlike
-  `location_type/v1`, `FixtureResource` is a plain `tastypie.resources.
-  Resource` subclass (via `HqBaseResource`), not a `ModelResource`, and it
-  overrides only `obj_get`/`obj_get_list`/`detail_uri_kwargs`
-  (`v0_1.py:59-89`) -- it never overrides `obj_create`/`obj_update`/
-  `obj_delete`, so those fall through to the base `Resource`'s versions
-  (`tastypie/resources.py:1198-1247`), which unconditionally `raise
-  NotImplementedError()`. Because this is a plain `Resource`, not a
-  `ModelResource`, `Meta.authorization` (`ReadOnlyAuthorization`, inherited
-  from `CustomResourceMeta`, confirmed by introspection) is never consulted at
-  all -- `ReadOnlyAuthorization.create_detail`/`update_detail`/`delete_detail`
-  are only ever called from `ModelResource.obj_create`/`obj_update`/
-  `obj_delete` (`tastypie/resources.py:2232-2387`), which `FixtureResource`
-  does not use. `NotImplementedError` has no `.response` attribute, so
-  `wrap_view`'s generic exception handler (`tastypie/resources.py:250-270`)
-  falls through to `_handle_500` (`:291-315`), and
-  `get_response_class_for_exception` (`:274-289`) does not special-case
-  `NotImplementedError`, so it returns `http.HttpApplicationError` -- a genuine
-  **500**, not the bare 401 `location_type/v1` produces for the same verbs
-  and not a 405. The spec documents only the real, working `GET` operations
-  for `fixture/v1`, matching `fixture.rst`, and omits any write operations
-  rather than documenting ones that only ever crash.
-- **`lookup_table/v1` and `lookup_table_item/v1`'s `Meta.authorization =
-  ReadOnlyAuthorization()` (inherited, unmodified) is likewise never
-  consulted, for the same "plain `Resource`, custom `obj_create`/`obj_update`/
-  `obj_delete`" reason -- but unlike `fixture/v1`, these two resources DO
-  implement working custom versions of all three
+  non-`GET` request passes `method_check` (`tastypie/resources.py:521-555`) and
+  reaches the normal create/update/delete flow. Unlike `location_type/v1`,
+  `FixtureResource` is a plain `tastypie.resources. Resource` subclass (via
+  `HqBaseResource`), not a `ModelResource`, and it overrides only
+  `obj_get`/`obj_get_list`/`detail_uri_kwargs` (`v0_1.py:59-89`) -- it never
+  overrides `obj_create`/`obj_update`/ `obj_delete`, so those fall through to
+  the base `Resource`'s versions (`tastypie/resources.py:1198-1247`), which
+  unconditionally `raise NotImplementedError()`. Because this is a plain
+  `Resource`, not a `ModelResource`, `Meta.authorization`
+  (`ReadOnlyAuthorization`, inherited from `CustomResourceMeta`, confirmed by
+  introspection) is never consulted at all --
+  `ReadOnlyAuthorization.create_detail`/`update_detail`/`delete_detail` are only
+  ever called from `ModelResource.obj_create`/`obj_update`/ `obj_delete`
+  (`tastypie/resources.py:2232-2387`), which `FixtureResource` does not use.
+  `NotImplementedError` has no `.response` attribute, so `wrap_view`'s generic
+  exception handler (`tastypie/resources.py:250-270`) falls through to
+  `_handle_500` (`:291-315`), and `get_response_class_for_exception`
+  (`:274-289`) does not special-case `NotImplementedError`, so it returns
+  `http.HttpApplicationError` -- a genuine **500**, not the bare 401
+  `location_type/v1` produces for the same verbs and not a 405. The spec
+  documents only the real, working `GET` operations for `fixture/v1`, matching
+  `fixture.rst`, and omits any write operations rather than documenting ones
+  that only ever crash.
+- \*\*`lookup_table/v1` and `lookup_table_item/v1`'s
+  `Meta.authorization = ReadOnlyAuthorization()` (inherited, unmodified) is
+  likewise never consulted, for the same "plain `Resource`, custom
+  `obj_create`/`obj_update`/ `obj_delete`" reason -- but unlike `fixture/v1`,
+  these two resources DO implement working custom versions of all three
   (`v0_1.py:193-236,360-368,370-409`), so their declared
   `list_allowed_methods = ['get', 'post']` /
-  `detail_allowed_methods = ['get', 'put', 'delete']` (`v0_1.py:243-244,
-  416-417`, confirmed by introspection) are the real, enforced method set.
-  Noted only so a reader does not assume `ReadOnlyAuthorization` on these two
-  classes means anything -- it is dead configuration.
-- **`fixture.rst:122-123` states "Permission Required: Edit Apps" for the
-  Excel upload API, but the code requires Edit Data, not Edit Apps.**
+  `detail_allowed_methods = ['get', 'put', 'delete']`
+  (`v0_1.py:243-244, 416-417`, confirmed by introspection) are the real,
+  enforced method set. Noted only so a reader does not assume
+  `ReadOnlyAuthorization` on these two classes means anything -- it is dead
+  configuration.
+- **`fixture.rst:122-123` states "Permission Required: Edit Apps" for the Excel
+  upload API, but the code requires Edit Data, not Edit Apps.**
   `upload_fixture_api`/`fixture_api_upload_status` are both gated by
-  `require_can_edit_fixtures` (`corehq/apps/fixtures/dispatcher.py:9-13`),
-  which composes `require_permission(HqPermissions.edit_data)` with
+  `require_can_edit_fixtures` (`corehq/apps/fixtures/dispatcher.py:9-13`), which
+  composes `require_permission(HqPermissions.edit_data)` with
   `requires_privilege_with_fallback(privileges.LOOKUP_TABLES)` -- there is no
   `edit_apps` check anywhere in this path.
-  `_get_fixture_upload_args_from_request` (`corehq/apps/fixtures/views.py
-  :553-556`) additionally re-checks `HqPermissions.edit_data.name` explicitly,
-  reinforcing that Edit Data, not Edit Apps, is the real requirement.
-- **`uploadFixtureExcel`'s and `getFixtureUploadStatus`'s HTTP status is
-  always 200, regardless of outcome.** `upload_fixture_api`
-  (`corehq/apps/fixtures/views.py:417-426`) does `return
-  JsonResponse(upload_fixture_api_response.get_response())` with no `status=`
-  argument, so the response's real status (Django defaults `JsonResponse` to
-  200) never reflects `UploadFixtureAPIResponse.code`'s 402/405 values
-  (`views.py:377-393`); those exist only inside the body. Likewise
-  `fixture_api_upload_status` (`views.py:429-464`) calls `json_response(...)`
-  (`dimagi/utils/web.py:76-84`) without a `status_code` argument on every one
-  of its branches, including the `TaskFailedError` branch, so a failed queued
-  upload is still reported as HTTP 200 with `{"error": true, ...}` in the
-  body. `fixture.rst:156-176`'s "Response" table documents `code` values of
-  200/402/405 in a way that reads as if they were the transport status, with
-  no statement that the transport status is always 200 regardless.
+  `_get_fixture_upload_args_from_request`
+  (`corehq/apps/fixtures/views.py :553-556`) additionally re-checks
+  `HqPermissions.edit_data.name` explicitly, reinforcing that Edit Data, not
+  Edit Apps, is the real requirement.
+- **`uploadFixtureExcel`'s and `getFixtureUploadStatus`'s HTTP status is always
+  200, regardless of outcome.** `upload_fixture_api`
+  (`corehq/apps/fixtures/views.py:417-426`) does
+  `return JsonResponse(upload_fixture_api_response.get_response())` with no
+  `status=` argument, so the response's real status (Django defaults
+  `JsonResponse` to 200) never reflects `UploadFixtureAPIResponse.code`'s
+  402/405 values (`views.py:377-393`); those exist only inside the body.
+  Likewise `fixture_api_upload_status` (`views.py:429-464`) calls
+  `json_response(...)` (`dimagi/utils/web.py:76-84`) without a `status_code`
+  argument on every one of its branches, including the `TaskFailedError` branch,
+  so a failed queued upload is still reported as HTTP 200 with
+  `{"error": true, ...}` in the body. `fixture.rst:156-176`'s "Response" table
+  documents `code` values of 200/402/405 in a way that reads as if they were the
+  transport status, with no statement that the transport status is always 200
+  regardless.
 - **`getFixtureUploadStatus` has no reachable 404 for any `download_id`,
   including one that was never issued.** `get_download_context`
-  (`corehq/ex-submodules/soil/util.py:73-107`) calls `DownloadBase.get
-  (download_id)`; if that returns `None` (unknown id), it falls back to a
-  fresh, task-less `DownloadBase(download_id=download_id)` rather than
-  raising. `get_task_status(None, ...)` (`corehq/ex-submodules/soil/progress.
-  py:144-154`) then takes the `if not task:` branch, which reports
-  `is_ready=False`/`failed=False` -- indistinguishable from a real task still
-  running. A caller polling a mistyped or expired `download_id` gets an
-  indefinite "in progress" response, never an error.
-- **`createLookupTableItem`'s and `replaceLookupTableItem`'s 404 (for an
-  unknown `data_type_id`) is tastypie's generic-exception-handler canned
-  body, not a resource-specific message, even though the exception raised
-  ("Lookup table not found") suggests one.** `LookupTableItemResource.
-  obj_create` (`v0_1.py:370-388`) raises tastypie's own `NotFound('Lookup
-  table not found')` at `v0_1.py:377` when the referenced lookup table does
-  not exist. On `POST` (`createLookupTableItem`), `post_list`
-  (`tastypie/resources.py:1385-1407`) has no `try`/`except` around its call
-  to `obj_create`, so the exception propagates uncaught into `wrap_view`'s
-  generic handler, which maps `NotFound` to a 404
+  (`corehq/ex-submodules/soil/util.py:73-107`) calls
+  `DownloadBase.get (download_id)`; if that returns `None` (unknown id), it
+  falls back to a fresh, task-less `DownloadBase(download_id=download_id)`
+  rather than raising. `get_task_status(None, ...)`
+  (`corehq/ex-submodules/soil/progress. py:144-154`) then takes the
+  `if not task:` branch, which reports `is_ready=False`/`failed=False` --
+  indistinguishable from a real task still running. A caller polling a mistyped
+  or expired `download_id` gets an indefinite "in progress" response, never an
+  error.
+- **`createLookupTableItem`'s and `replaceLookupTableItem`'s 404 (for an unknown
+  `data_type_id`) is tastypie's generic-exception-handler canned body, not a
+  resource-specific message, even though the exception raised ("Lookup table not
+  found") suggests one.** `LookupTableItemResource. obj_create`
+  (`v0_1.py:370-388`) raises tastypie's own `NotFound('Lookup table not found')`
+  at `v0_1.py:377` when the referenced lookup table does not exist. On `POST`
+  (`createLookupTableItem`), `post_list` (`tastypie/resources.py:1385-1407`) has
+  no `try`/`except` around its call to `obj_create`, so the exception propagates
+  uncaught into `wrap_view`'s generic handler, which maps `NotFound` to a 404
   (`get_response_class_for_exception`, `:274-289`) via `_handle_500`
-  (`:291-315`) -- producing the same canned `{"error_message": "Sorry, this
-  request could not be processed. Please try again later."}` body used for
-  any uncaught exception in production, discarding the resource's own message
-  text entirely. On `PUT` (`replaceLookupTableItem`) against an unknown
-  `lookup_table_item_id`, the same thing happens one level deeper: `obj_update`
-  (`v0_1.py:390-409`) raises `NotFound` for the missing row, which `put_detail`
-  (`tastypie/resources.py:1467-1511`) correctly catches and retries via
-  `obj_create` -- but if *that* also raises `NotFound` (because `data_type_id`
-  is also invalid), nothing catches the second exception, since `put_detail`'s
-  `except` only wraps the first `obj_update` call. Net effect: two operations
-  on this resource can 404, and both do so through the same canned,
-  non-resource-specific path -- never through a clean, resource-owned
+  (`:291-315`) -- producing the same canned
+  `{"error_message": "Sorry, this request could not be processed. Please try again later."}`
+  body used for any uncaught exception in production, discarding the resource's
+  own message text entirely. On `PUT` (`replaceLookupTableItem`) against an
+  unknown `lookup_table_item_id`, the same thing happens one level deeper:
+  `obj_update` (`v0_1.py:390-409`) raises `NotFound` for the missing row, which
+  `put_detail` (`tastypie/resources.py:1467-1511`) correctly catches and retries
+  via `obj_create` -- but if _that_ also raises `NotFound` (because
+  `data_type_id` is also invalid), nothing catches the second exception, since
+  `put_detail`'s `except` only wraps the first `obj_update` call. Net effect:
+  two operations on this resource can 404, and both do so through the same
+  canned, non-resource-specific path -- never through a clean, resource-owned
   not-found response the way `deleteLookupTableItem`'s 404 does.
 - **`replaceLookupTable`'s and `replaceLookupTableItem`'s `PUT` against a
   nonexistent id does not 404 -- it silently creates an unrelated new object
   under a different, server-generated id.** Both resources' `obj_update`
-  (`v0_1.py:205-218,390-409`) raise tastypie's `NotFound` for an unknown
-  `pk`; `put_detail` (`tastypie/resources.py:1467-1511`) catches exactly that
-  exception and falls back to calling `obj_create` with the *same submitted
-  body*. Neither resource's `obj_create` (`v0_1.py:193-203,370-388`) makes any
-  use of the URL's `pk` -- `LookupTableResource.obj_create` only checks
-  whether the submitted `tag` is already taken, and
-  `LookupTableItemResource.obj_create` only checks that `data_type_id`
-  references an existing table. So a `PUT` to
+  (`v0_1.py:205-218,390-409`) raise tastypie's `NotFound` for an unknown `pk`;
+  `put_detail` (`tastypie/resources.py:1467-1511`) catches exactly that
+  exception and falls back to calling `obj_create` with the _same submitted
+  body_. Neither resource's `obj_create` (`v0_1.py:193-203,370-388`) makes any
+  use of the URL's `pk` -- `LookupTableResource.obj_create` only checks whether
+  the submitted `tag` is already taken, and `LookupTableItemResource.obj_create`
+  only checks that `data_type_id` references an existing table. So a `PUT` to
   `/api/lookup_table/v1/{nonexistent_id}/` (or the equivalent for
-  `lookup_table_item`) with an otherwise-valid body succeeds, returning 201,
-  and creates a brand-new object at a new id that has nothing to do with the
-  id in the URL. This is the same tastypie fallback mechanism already
-  documented for `replaceGroup` in `paths/group.yaml`, but unlike that case
-  (which falls through to an uncaught 500 because `Group.obj_create` uses
-  Couch and hits a different failure mode), this fallback actually succeeds
-  here, silently masking what looks like a "the id you asked for doesn't
-  exist" error as a success.
+  `lookup_table_item`) with an otherwise-valid body succeeds, returning 201, and
+  creates a brand-new object at a new id that has nothing to do with the id in
+  the URL. This is the same tastypie fallback mechanism already documented for
+  `replaceGroup` in `paths/group.yaml`, but unlike that case (which falls
+  through to an uncaught 500 because `Group.obj_create` uses Couch and hits a
+  different failure mode), this fallback actually succeeds here, silently
+  masking what looks like a "the id you asked for doesn't exist" error as a
+  success.
 - **`createLookupTable`'s, `replaceLookupTable`'s, `createLookupTableItem`'s,
-  and `replaceLookupTableItem`'s validation-failure 400 is a bare JSON array
-  of strings, not an object at all -- a third distinct 400 shape alongside
-  the `{"error": ...}` and `{"error_message": ...}` shapes already documented
+  and `replaceLookupTableItem`'s validation-failure 400 is a bare JSON array of
+  strings, not an object at all -- a third distinct 400 shape alongside the
+  `{"error": ...}` and `{"error_message": ...}` shapes already documented
   elsewhere in this file.** Both resources declare a
   `validate_deserialized_data` attribute (a `JSONSchemaValidator` instance,
   `v0_1.py:133-159,300-336`). `HqBaseResource.alter_deserialized_detail_data`
   (`corehq/apps/api/resources/__init__.py:153-167`) calls it and, on a Django
-  `ValidationError`, does `raise ImmediateHttpResponse(self.error_response
-  (request, error.messages))` -- passing the validator's `error.messages`
-  (already a plain list of strings; `JSONSchemaValidator.__call__`,
-  `corehq/util/validation.py:51-67`, raises `ValidationError(django_errors)`
-  where `django_errors` is a list of single-message `ValidationError`s)
-  directly as the "errors" argument. `error_response`
-  (`tastypie/resources.py:1264-1299`) serializes that argument as-is with no
-  wrapping object of any kind, defaulting to a 400 status. A client that
-  branches on `body.error` or `body.error_message` to extract a validation
-  message will get neither key -- the message is `body[0]`, `body[1]`, etc.
+  `ValidationError`, does
+  `raise ImmediateHttpResponse(self.error_response (request, error.messages))`
+  -- passing the validator's `error.messages` (already a plain list of strings;
+  `JSONSchemaValidator.__call__`, `corehq/util/validation.py:51-67`, raises
+  `ValidationError(django_errors)` where `django_errors` is a list of
+  single-message `ValidationError`s) directly as the "errors" argument.
+  `error_response` (`tastypie/resources.py:1264-1299`) serializes that argument
+  as-is with no wrapping object of any kind, defaulting to a 400 status. A
+  client that branches on `body.error` or `body.error_message` to extract a
+  validation message will get neither key -- the message is `body[0]`,
+  `body[1]`, etc.
 - **`deleteLookupTable`'s and `deleteLookupTableItem`'s successful delete
   returns 202 Accepted, not the 204 No Content tastypie's own `delete_detail`
   docstring and `paths/group.yaml`'s `deleteGroup` both describe as the
-  default.** Both resources' `obj_delete` (`v0_1.py:176-184,360-368`) end
-  with `return ImmediateHttpResponse(response=HttpAccepted())`
+  default.** Both resources' `obj_delete` (`v0_1.py:176-184,360-368`) end with
+  `return ImmediateHttpResponse(response=HttpAccepted())`
   (`tastypie/http.py:17-18`: `HttpAccepted.status_code = 202`), raised as an
   exception rather than returned normally. `delete_detail`
-  (`tastypie/resources.py:1525-1542`) only ever reaches its own `return
-  http.HttpNoContent()` if `obj_delete` returns normally without raising;
-  since both `obj_delete` implementations always raise
-  `ImmediateHttpResponse` on the success path, that line is dead code for
-  these two resources, and the 202 (caught by `wrap_view`'s generic
+  (`tastypie/resources.py:1525-1542`) only ever reaches its own
+  `return http.HttpNoContent()` if `obj_delete` returns normally without
+  raising; since both `obj_delete` implementations always raise
+  `ImmediateHttpResponse` on the success path, that line is dead code for these
+  two resources, and the 202 (caught by `wrap_view`'s generic
   `hasattr(e, 'response')` check, `tastypie/resources.py:250-254`) is what
   callers actually see.
 - **`lookup_table/v1` and `lookup_table_item/v1` require only the generic
   `access_api` permission, not a specific one, even though `fixture.rst`'s
-  read-only fixture API (documented as requiring Edit Apps) and its Excel
-  upload API (documented as requiring Edit Apps, actually Edit Data) both
-  gate on something specific.** `LookupTableResource.Meta` and
+  read-only fixture API (documented as requiring Edit Apps) and its Excel upload
+  API (documented as requiring Edit Apps, actually Edit Data) both gate on
+  something specific.** `LookupTableResource.Meta` and
   `LookupTableItemResource.Meta` (`v0_1.py:241-245,414-418`) never set
-  `authentication`, so both inherit `CustomResourceMeta.authentication =
-  LoginAndDomainAuthentication()` (`corehq/apps/api/resources/meta.py:76-78`),
-  which only requires the generic `access_api` permission
-  (`corehq/apps/api/resources/auth.py:108-112`) plus domain membership --
-  not `edit_apps`, not `edit_data`, and not any lookup-table-specific
-  permission. Neither of `fixture.rst`'s "Lookup Table Individual API" or
-  "Lookup Table Rows API" sections states a permission requirement at all
-  (confirmed: no "Permission Required" field appears in either section), so
-  this is not a docs/code disagreement, but it means any domain member with
-  API access can create, edit, and delete lookup tables and their rows via
-  this API, which is easy to miss without reading the code.
+  `authentication`, so both inherit
+  `CustomResourceMeta.authentication = LoginAndDomainAuthentication()`
+  (`corehq/apps/api/resources/meta.py:76-78`), which only requires the generic
+  `access_api` permission (`corehq/apps/api/resources/auth.py:108-112`) plus
+  domain membership -- not `edit_apps`, not `edit_data`, and not any
+  lookup-table-specific permission. Neither of `fixture.rst`'s "Lookup Table
+  Individual API" or "Lookup Table Rows API" sections states a permission
+  requirement at all (confirmed: no "Permission Required" field appears in
+  either section), so this is not a docs/code disagreement, but it means any
+  domain member with API access can create, edit, and delete lookup tables and
+  their rows via this API, which is easy to miss without reading the code.
 - **`fixtures.v0_6.LookupTableItemResource` is registered at
-  `lookup_table_item/v2` but is entirely undocumented by `fixture.rst`, and
-  is out of scope for this spec.** `corehq/apps/api/urls.py:191`
-  (`fixtures.v0_6.LookupTableItemResource.get_urlpattern('v2')`) registers
-  it alongside the `v1` resources this task documents (`urls.py:189-190`).
+  `lookup_table_item/v2` but is entirely undocumented by `fixture.rst`, and is
+  out of scope for this spec.** `corehq/apps/api/urls.py:191`
+  (`fixtures.v0_6.LookupTableItemResource.get_urlpattern('v2')`) registers it
+  alongside the `v1` resources this task documents (`urls.py:189-190`).
   `v0_6.LookupTableItemResource` (`corehq/apps/fixtures/resources/v0_6.py`)
   subclasses `v0_1.LookupTableItemResource` and changes exactly one thing:
   `Meta.always_return_data = True`, meaning its `POST`/`PUT` return the full
   serialized row (200/201 with a body) instead of the empty-bodied responses
-  `v1` returns. Per the plan, the spec covers what `fixture.rst` covers, so
-  `v2` is intentionally left out of `paths/lookup-table.yaml`; flagged here
-  rather than silently dropped.
-  branching on status code alone would miss it.
+  `v1` returns. Per the plan, the spec covers what `fixture.rst` covers, so `v2`
+  is intentionally left out of `paths/lookup-table.yaml`; flagged here rather
+  than silently dropped. branching on status code alone would miss it.
 
 ## simplereportconfiguration/v1, configurablereportdata/v1 (`list-reports.rst`, `download-report-data.rst`)
 
-- **`listReports`'s and `getReport`'s sample filter objects omit a real
-  `type` field.** `dehydrate_filters` (`corehq/apps/api/resources/
-  v0_5.py:963-969`) unconditionally emits `type`/`datatype`/`slug` for every
-  filter, but both sample objects in `list-reports.rst` (`:65-74,97-114`)
-  show only `datatype`/`slug`. The spec's `ReportFilter` schema includes
-  `type` as always present.
+- **`listReports`'s and `getReport`'s sample filter objects omit a real `type`
+  field.** `dehydrate_filters` (`corehq/apps/api/resources/ v0_5.py:963-969`)
+  unconditionally emits `type`/`datatype`/`slug` for every filter, but both
+  sample objects in `list-reports.rst` (`:65-74,97-114`) show only
+  `datatype`/`slug`. The spec's `ReportFilter` schema includes `type` as always
+  present.
 - **`list-reports.rst`'s own prose and its own sample disagree about valid
-  `datatype` values.** `list-reports.rst:37` states a filter's `datatype` is
-  one of `"string"`/`"integer"`/`"decimal"`, but the page's second sample
-  object (`:110-113`) shows `"datatype": "date"` for a filter named
-  `form_date`. The code does not constrain `datatype` at all
-  (`dehydrate_filters` copies the value verbatim), so this is not a
-  code/docs disagreement so much as the reST page contradicting itself; the
-  spec's `ReportFilter.datatype` is not modeled as an `enum` for this reason.
+  `datatype` values.** `list-reports.rst:37` states a filter's `datatype` is one
+  of `"string"`/`"integer"`/`"decimal"`, but the page's second sample object
+  (`:110-113`) shows `"datatype": "date"` for a filter named `form_date`. The
+  code does not constrain `datatype` at all (`dehydrate_filters` copies the
+  value verbatim), so this is not a code/docs disagreement so much as the reST
+  page contradicting itself; the spec's `ReportFilter.datatype` is not modeled
+  as an `enum` for this reason.
 - **`listReports`/`getReport` require no report-specific permission, despite
   neither reST page claiming one.** `SimpleReportConfigurationResource.Meta`
-  (`v0_5.py:998-1001`) declares no `authentication` override, so it falls
-  back to `CustomResourceMeta.authentication = LoginAndDomainAuthentication()`
-  (`corehq/apps/api/resources/meta.py:76-78`) -- login, domain membership,
-  and the generic `access_api` permission only. Not a docs/code
-  disagreement (neither page states a requirement), but easy to miss when
-  comparing against `downloadReportData`'s much narrower access, so noted
-  for visibility.
-- **`downloadReportData`'s stated permission requirement does not match any
-  real `HqPermissions` field.** `download-report-data.rst:21-23` says
-  "Permission Required: View Data, Access All Reports". Neither `"View
-  Data"` nor `"Access All Reports"` corresponds to an actual field on
-  `HqPermissions` (`corehq/apps/users/models.py:190-221`) -- the closest
-  matches are `view_data_dict` (an unrelated "data dictionary" permission)
-  and `access_all_locations` (unrelated to reports). The resource's real
-  authentication is `RequirePermissionAuthentication(HqPermissions.
-  view_reports, allow_session_auth=True)` (`v0_5.py:952`) -- a single
-  permission, `view_reports` ("View Reports" in the UI), with no
-  "access all reports" component at all. The spec's `downloadReportData`
-  documents `view_reports` as the real requirement.
+  (`v0_5.py:998-1001`) declares no `authentication` override, so it falls back
+  to `CustomResourceMeta.authentication = LoginAndDomainAuthentication()`
+  (`corehq/apps/api/resources/meta.py:76-78`) -- login, domain membership, and
+  the generic `access_api` permission only. Not a docs/code disagreement
+  (neither page states a requirement), but easy to miss when comparing against
+  `downloadReportData`'s much narrower access, so noted for visibility.
+- **`downloadReportData`'s stated permission requirement does not match any real
+  `HqPermissions` field.** `download-report-data.rst:21-23` says "Permission
+  Required: View Data, Access All Reports". Neither `"View Data"` nor
+  `"Access All Reports"` corresponds to an actual field on `HqPermissions`
+  (`corehq/apps/users/models.py:190-221`) -- the closest matches are
+  `view_data_dict` (an unrelated "data dictionary" permission) and
+  `access_all_locations` (unrelated to reports). The resource's real
+  authentication is
+  `RequirePermissionAuthentication(HqPermissions. view_reports, allow_session_auth=True)`
+  (`v0_5.py:952`) -- a single permission, `view_reports` ("View Reports" in the
+  UI), with no "access all reports" component at all. The spec's
+  `downloadReportData` documents `view_reports` as the real requirement.
 - **A malformed `filter_name` value can produce an uncaught 500, not the
   documented behaviour.** Neither reST page discusses filter-value error
-  handling. `ConfigurableReportDataResource.obj_get`
-  (`v0_5.py:892-917`) calls `_get_report_data` -> `get_filter_values`
+  handling. `ConfigurableReportDataResource.obj_get` (`v0_5.py:892-917`) calls
+  `_get_report_data` -> `get_filter_values`
   (`corehq/apps/userreports/reports/view.py:82-96`), which re-raises any
   `FilterException` (e.g. an unparsable date on a `-start`/`-end` pair) as
-  `UserReportsFilterError`. That exception is not caught anywhere in
-  `obj_get`, is not tastypie's `BadRequest`/`NotFound`/`ObjectDoesNotExist`,
-  and so reaches `wrap_view`'s generic exception handler
-  (`tastypie/resources.py:250-265`), whose
-  `get_response_class_for_exception` (`:273-284`) does not recognize it
+  `UserReportsFilterError`. That exception is not caught anywhere in `obj_get`,
+  is not tastypie's `BadRequest`/`NotFound`/`ObjectDoesNotExist`, and so reaches
+  `wrap_view`'s generic exception handler (`tastypie/resources.py:250-265`),
+  whose `get_response_class_for_exception` (`:273-284`) does not recognize it
   either -- the default `http.HttpApplicationError` (500) applies. A client
   sending a bad filter value gets an uncaught 500, not a 400. The spec's
   `downloadReportData` operation description states this; no formal `500`
-  response was added (following the precedent of omitting responses the
-  spec cannot usefully constrain, e.g. `replaceGroup`'s omitted 404).
+  response was added (following the precedent of omitting responses the spec
+  cannot usefully constrain, e.g. `replaceGroup`'s omitted 404).
 - **`ConfigurableReportData`'s `resource_uri` field is real and undocumented.**
   Every tastypie resource adds a `resource_uri` field by default
   (`include_resource_uri`, `tastypie/resources.py:96,161`), not excluded by
-  `ConfigurableReportDataResource.Meta` (`v0_5.py:951-954`); this resource's
-  own `get_resource_uri` override (`v0_5.py:940-949`) appends the effective
-  `offset`/`limit` to it. `download-report-data.rst`'s sample output
-  (`:61-98`) has no `resource_uri` key.
+  `ConfigurableReportDataResource.Meta` (`v0_5.py:951-954`); this resource's own
+  `get_resource_uri` override (`v0_5.py:940-949`) appends the effective
+  `offset`/`limit` to it. `download-report-data.rst`'s sample output (`:61-98`)
+  has no `resource_uri` key.
 - **`ConfigurableReportData.next_page` is an empty string, not `null`, when
   there is no further page.** `_get_next_page`'s `else` branch
-  (`v0_5.py:859-860`) `return ""`. `download-report-data.rst` never shows
-  the last-page case, so this is undocumented, not contradicted.
+  (`v0_5.py:859-860`) `return ""`. `download-report-data.rst` never shows the
+  last-page case, so this is undocumented, not contradicted.
 
 ## det_export_instance/v1 (`det-exports.rst`)
 
-- **A real detail (`GET .../{id}/`) operation exists, entirely undocumented
-  by `det-exports.rst`, which only describes the list endpoint.**
+- **A real detail (`GET .../{id}/`) operation exists, entirely undocumented by
+  `det-exports.rst`, which only describes the list endpoint.**
   `DETExportInstanceResource.Meta.detail_allowed_methods = ['get']`
-  (`corehq/apps/api/resources/v1_0.py:201`) and `obj_get`
-  (`v1_0.py:262-288`) is fully implemented (it even handles both
-  `FormExportInstance` and `CaseExportInstance` lookups, and a domain/type
-  mismatch). Per the resource-task conventions ("a missing operation for a
-  method the code allows" is a defect), the spec documents this as
-  `getDETExport`, beyond the task brief's ten listed paths.
+  (`corehq/apps/api/resources/v1_0.py:201`) and `obj_get` (`v1_0.py:262-288`) is
+  fully implemented (it even handles both `FormExportInstance` and
+  `CaseExportInstance` lookups, and a domain/type mismatch). Per the
+  resource-task conventions ("a missing operation for a method the code allows"
+  is a defect), the spec documents this as `getDETExport`, beyond the task
+  brief's ten listed paths.
 - **`resource_uri` is real and undocumented.** Same mechanism as the report
-  resources above (`tastypie/resources.py:96,161`); `det-exports.rst`'s
-  sample output (`:61-84`) has no `resource_uri` key.
+  resources above (`tastypie/resources.py:96,161`); `det-exports.rst`'s sample
+  output (`:61-84`) has no `resource_uri` key.
 - **`listDETExports`'s response `meta` is undocumented but real, with full
   pagination.** `DETExportInstanceResource.Meta` sets no `paginator_class`
-  override (`v1_0.py:198-202`), so it uses tastypie's own default
-  `Paginator` (`tastypie/resources.py:80`), not one of the "does nothing"
-  paginators the report/application resources use. `limit`/`offset` are
-  real and a bad value raises tastypie's `BadRequest` -> the shared
-  `{"error": ...}` 400 shape. `det-exports.rst`'s sample output (`:61-84`)
-  omits `meta` entirely.
+  override (`v1_0.py:198-202`), so it uses tastypie's own default `Paginator`
+  (`tastypie/resources.py:80`), not one of the "does nothing" paginators the
+  report/application resources use. `limit`/`offset` are real and a bad value
+  raises tastypie's `BadRequest` -> the shared `{"error": ...}` 400 shape.
+  `det-exports.rst`'s sample output (`:61-84`) omits `meta` entirely.
 
 ## application/v1, import_app, multimedia upload/status (`application-structure.rst`, `import-app.rst`)
 
 - **`application-structure.rst`'s sample output nests `versions` inside each
-  module; the code returns it as a single top-level field of the
-  application, not one list per module.** The sample (`:73-105`) shows
+  module; the code returns it as a single top-level field of the application,
+  not one list per module.** The sample (`:73-105`) shows
   `"modules": [{"case_type": ..., "forms": [...], "versions": [...]}]`.
-  `ApplicationResource.versions` (`corehq/apps/api/resources/
-  v0_4.py:342,344-359`) is declared directly on the resource and dehydrated
-  from `bundle.obj` (the application), never per-module; `dehydrate_module`
-  (`v0_4.py:365-404`) builds `name`/`case_type`/`case_properties`/
-  `unique_id`/`forms` for a module and never touches `versions`. A client
-  following the sample would look for build history in the wrong place
-  entirely.
-- **`application-structure.rst`'s sample output includes a `case_types` key
-  the code cannot produce.** The sample (`:66-72`) shows a top-level
+  `ApplicationResource.versions`
+  (`corehq/apps/api/resources/ v0_4.py:342,344-359`) is declared directly on the
+  resource and dehydrated from `bundle.obj` (the application), never per-module;
+  `dehydrate_module` (`v0_4.py:365-404`) builds
+  `name`/`case_type`/`case_properties`/ `unique_id`/`forms` for a module and
+  never touches `versions`. A client following the sample would look for build
+  history in the wrong place entirely.
+- **`application-structure.rst`'s sample output includes a `case_types` key the
+  code cannot produce.** The sample (`:66-72`) shows a top-level
   `"case_types": {"type_of_case...": ["case_prop1", ...]}`.
   `ApplicationResource` declares no `case_types` field anywhere
   (`v0_4.py:332-422`), and `dehydrate` (`:415-422`) only ever returns the
-  standard dehydrated fields, or (with `extras=true`) those merged with the
-  raw internal doc -- neither path adds a `case_types` key under that name
-  at the top level. Following the precedent set for the group resource's
-  undocumentable `path` field, the spec's `Application` schema does not
-  include `case_types` at all.
+  standard dehydrated fields, or (with `extras=true`) those merged with the raw
+  internal doc -- neither path adds a `case_types` key under that name at the
+  top level. Following the precedent set for the group resource's undocumentable
+  `path` field, the spec's `Application` schema does not include `case_types` at
+  all.
 - **`resource_uri` is real and undocumented**, same mechanism as the other
   resources in this file (`tastypie/resources.py:96,161`);
   `application-structure.rst`'s sample has no `resource_uri` key.
-- **Two real fields per module/form entry are undocumented.** The sample
-  module (`:73-105`) has no `unique_id` key, though `dehydrate_module`
-  always sets one (`v0_4.py:382`); the sample form (`:77-92`) has no
-  `xmlns` or `unique_id` key, though both are always set
-  (`v0_4.py:388,397`).
+- **Two real fields per module/form entry are undocumented.** The sample module
+  (`:73-105`) has no `unique_id` key, though `dehydrate_module` always sets one
+  (`v0_4.py:382`); the sample form (`:77-92`) has no `xmlns` or `unique_id` key,
+  though both are always set (`v0_4.py:388,397`).
 - **`listApplications`/`getApplication` require no application-specific
   permission, contradicting the stated requirement.**
   `application-structure.rst:18-19` says "Permission Required: Edit Apps".
-  `BaseApplicationResource.Meta.authentication =
-  LoginAndDomainAuthentication(allow_session_auth=True)` (`v0_4.py:324`) --
-  login, domain membership, and the generic `access_api` permission only,
-  with no `edit_apps` check anywhere in the class. Contrast
+  `BaseApplicationResource.Meta.authentication = LoginAndDomainAuthentication(allow_session_auth=True)`
+  (`v0_4.py:324`) -- login, domain membership, and the generic `access_api`
+  permission only, with no `edit_apps` check anywhere in the class. Contrast
   `importApplication`/`uploadApplicationMultimedia`/
-  `getMultimediaUploadStatus`, which really do require
-  `HqPermissions.edit_apps` (`app_import_api.py:30,85,131`), matching
-  `import-app.rst:26`.
+  `getMultimediaUploadStatus`, which really do require `HqPermissions.edit_apps`
+  (`app_import_api.py:30,85,131`), matching `import-app.rst:26`.
 - **`ApplicationList`'s `meta.limit` can never be the value
   `application-structure.rst`'s sample shows.**
   `BaseApplicationResource.Meta.paginator_class = DoesNothingPaginatorCompat`
-  (`v0_4.py:329`; `corehq/apps/api/resources/pagination.py:50-68`)
-  hardcodes `meta.limit` to `null` and `meta.offset` to `0` on every
-  response, ignoring the real `limit`/`offset` query parameters entirely.
-  `application-structure.rst:51` shows `"limit": 20` in its sample --
-  the code cannot produce that value under any query.
+  (`v0_4.py:329`; `corehq/apps/api/resources/pagination.py:50-68`) hardcodes
+  `meta.limit` to `null` and `meta.offset` to `0` on every response, ignoring
+  the real `limit`/`offset` query parameters entirely.
+  `application-structure.rst:51` shows `"limit": 20` in its sample -- the code
+  cannot produce that value under any query.
 - **Two fields on `getMultimediaUploadStatus`'s response are real but
   undocumented by either sample in `import-app.rst`.**
-  `BaseMultimediaStatusCache.get_response` (`corehq/apps/hqmedia/
-  cache.py:45-56`) always includes `type` (`"zip"` for this endpoint,
-  from `BulkMultimediaStatusCache.upload_type`, `cache.py:71`) and
-  `is_ready` (a mirror of `complete`). Neither key appears in either the
-  "In Progress" (`import-app.rst:235-248`) or "Complete"
-  (`:255-284`) sample.
-- **`getMultimediaUploadStatus` does not actually have two response shapes
-  -- it has one, with values that are zero/empty/null before processing
-  finishes.** `import-app.rst` presents "In Progress" and "Complete" as
-  distinct shapes (the task brief likewise called for a `oneOf` over them),
-  but `BulkMultimediaStatusCache.__init__` (`cache.py:73-79`) initializes
+  `BaseMultimediaStatusCache.get_response`
+  (`corehq/apps/hqmedia/ cache.py:45-56`) always includes `type` (`"zip"` for
+  this endpoint, from `BulkMultimediaStatusCache.upload_type`, `cache.py:71`)
+  and `is_ready` (a mirror of `complete`). Neither key appears in either the "In
+  Progress" (`import-app.rst:235-248`) or "Complete" (`:255-284`) sample.
+- **`getMultimediaUploadStatus` does not actually have two response shapes -- it
+  has one, with values that are zero/empty/null before processing finishes.**
+  `import-app.rst` presents "In Progress" and "Complete" as distinct shapes (the
+  task brief likewise called for a `oneOf` over them), but
+  `BulkMultimediaStatusCache.__init__` (`cache.py:73-79`) initializes
   `total_files`/`processed_files` to `None` and every count/list field to
-  `0`/`[]`/empty dicts, and `get_response` (`cache.py:85-99`) always
-  includes every one of `matched_count`/`unmatched_count`/`matched_files`/
+  `0`/`[]`/empty dicts, and `get_response` (`cache.py:85-99`) always includes
+  every one of `matched_count`/`unmatched_count`/`matched_files`/
   `total_files`/`processed_files`/`image_count`/`audio_count`/`video_count`/
-  `skipped_files` regardless of `complete`. There is no code branch that
-  omits any of these fields while in progress; the "In Progress" sample is
-  simply an incomplete excerpt, not a distinct schema. Per the project's
-  `oneOf`-means-disjoint-branches convention, the spec models this as a
-  single `MultimediaUploadStatus` schema (all fields always required), not
-  a `oneOf` -- the two would not be disjoint (every "in progress" value also
-  satisfies the "complete" branch's required-field list, just with
-  placeholder values), which is exactly the "using `oneOf` to express
-  uncertainty" anti-pattern the conventions warn against.
+  `skipped_files` regardless of `complete`. There is no code branch that omits
+  any of these fields while in progress; the "In Progress" sample is simply an
+  incomplete excerpt, not a distinct schema. Per the project's
+  `oneOf`-means-disjoint-branches convention, the spec models this as a single
+  `MultimediaUploadStatus` schema (all fields always required), not a `oneOf` --
+  the two would not be disjoint (every "in progress" value also satisfies the
+  "complete" branch's required-field list, just with placeholder values), which
+  is exactly the "using `oneOf` to express uncertainty" anti-pattern the
+  conventions warn against.
 - **`getMultimediaUploadStatus` genuinely has a 404 and a 500 with real JSON
-  bodies**, unlike `getFixtureUploadStatus` (documented in `fixture.yaml`
-  as always-200). `_handle_multimedia_status`
-  (`app_import_api.py:138-163`) explicitly returns
-  `JsonResponse({'success': False, 'error': ...}, status=404)` for a
-  missing app or an unknown/expired `processing_id`
-  (`ResourceNotFound`/`BulkMultimediaStatusCache.get() is None`,
-  `:140-159`), and `JsonResponse(..., status=500)` when
-  `get_download_context` raises `TaskFailedError` (`:146-152`). The 500
-  path requires a Celery worker to actually process and fail the task to
-  exercise; not verified by the offline checks run for this task.
-- **`bulkUploadCases` has no throttle at all, unlike every comparable
-  upload endpoint in this API.** `corehq/apps/case_importer/views.py` never
-  imports or applies `api_throttle`
-  (`corehq/apps/api/decorators.py:51-61`) on `bulk_case_upload_api`
-  (`views.py:461-467`), unlike `import_app_api`/`upload_multimedia_api`/
-  `multimedia_status_api` (`app_import_api.py:31,86,132`, each decorated
-  with `@api_throttle`) and `FixtureResource`'s tastypie-level `HQThrottle`.
-  The spec omits a `429` response for `bulkUploadCases`, with an inline
-  comment explaining why, rather than documenting one the code cannot
-  produce.
-- **`bulk_case_upload_api`'s failure response really does use HTTP 500 as
-  its transport status, matching its own body's `code: 500`** -- worth
-  flagging because several other upload endpoints in this API (documented
-  in `fixture.yaml`) return `code`/outcome fields that diverge from an
-  always-200 transport status. Here `json_response(..., status_code=500)`
-  (`views.py:482`) genuinely sets the HTTP status to match.
+  bodies**, unlike `getFixtureUploadStatus` (documented in `fixture.yaml` as
+  always-200). `_handle_multimedia_status` (`app_import_api.py:138-163`)
+  explicitly returns
+  `JsonResponse({'success': False, 'error': ...}, status=404)` for a missing app
+  or an unknown/expired `processing_id`
+  (`ResourceNotFound`/`BulkMultimediaStatusCache.get() is None`, `:140-159`),
+  and `JsonResponse(..., status=500)` when `get_download_context` raises
+  `TaskFailedError` (`:146-152`). The 500 path requires a Celery worker to
+  actually process and fail the task to exercise; not verified by the offline
+  checks run for this task.
+- **`bulkUploadCases` has no throttle at all, unlike every comparable upload
+  endpoint in this API.** `corehq/apps/case_importer/views.py` never imports or
+  applies `api_throttle` (`corehq/apps/api/decorators.py:51-61`) on
+  `bulk_case_upload_api` (`views.py:461-467`), unlike
+  `import_app_api`/`upload_multimedia_api`/ `multimedia_status_api`
+  (`app_import_api.py:31,86,132`, each decorated with `@api_throttle`) and
+  `FixtureResource`'s tastypie-level `HQThrottle`. The spec omits a `429`
+  response for `bulkUploadCases`, with an inline comment explaining why, rather
+  than documenting one the code cannot produce.
+- **`bulk_case_upload_api`'s failure response really does use HTTP 500 as its
+  transport status, matching its own body's `code: 500`** -- worth flagging
+  because several other upload endpoints in this API (documented in
+  `fixture.yaml`) return `code`/outcome fields that diverge from an always-200
+  transport status. Here `json_response(..., status_code=500)` (`views.py:482`)
+  genuinely sets the HTTP status to match.
 - **A file/`case_type`-missing request is a `code: 500`, not a `400`, and
   `bulk-upload-cases.rst` does not claim otherwise.** `_bulk_case_upload_api`
   (`views.py:486-493`) raises `ImporterError` for a missing `file` or
-  `case_type`, which the outer `bulk_case_upload_api` catches and turns into
-  the same `code: 500` JSON body as any other importer error
-  (`views.py:474-482`). Not a discrepancy (the reST page's response table,
-  `:91-99`, only ever documents `200`/`500`), but easy to assume a REST API
-  would use `400` for a missing required parameter -- it does not, here.
+  `case_type`, which the outer `bulk_case_upload_api` catches and turns into the
+  same `code: 500` JSON body as any other importer error (`views.py:474-482`).
+  Not a discrepancy (the reST page's response table, `:91-99`, only ever
+  documents `200`/`500`), but easy to assume a REST API would use `400` for a
+  missing required parameter -- it does not, here.
 
 ## messaging-event/v1 (`messaging-events.rst`)
 
 - **An unrecognized `content_type` or `source` filter value crashes with an
   uncaught 500, not a 400.** `_make_slug_filter_consumer`'s inner `_consumer`
   (`corehq/apps/api/resources/messaging_event/filters.py:100-113`) computes
-  `vals = [slug_values[val] for val in values if val in slug_values]` and,
-  when `vals` is empty (no comma-separated value matched a known slug), falls
-  through with no `return` statement at all -- an implicit `return None`.
-  `filter_query` (`.../filters.py:19-22`) then does
+  `vals = [slug_values[val] for val in values if val in slug_values]` and, when
+  `vals` is empty (no comma-separated value matched a known slug), falls through
+  with no `return` statement at all -- an implicit `return None`. `filter_query`
+  (`.../filters.py:19-22`) then does
   `filters.update(SIMPLE_FILTERS[key](key, value))`, i.e.
-  `filters.update(None)`, which raises `TypeError: 'NoneType' object is not
-  iterable`. `TypeError` is not a `tastypie.exceptions.BadRequest`, so the
-  view's own `except BadRequest` (`view.py:34,40-41`) does not catch it; it
-  propagates uncaught to Django's default 500 handling. This is unlike the
-  `status` filter (`_status_filter_consumer`, `.../filters.py:116-136`),
-  which validates and raises a real `BadRequest` for an unrecognized value.
-  `messaging-events.rst` documents no error behavior for filters at all, so
-  there is no rST claim being contradicted, but an agent would reasonably
-  expect a 400 here by analogy with `status`/`email_address`/`phone_number`
-  -- the spec's `content_type`/`source` parameter descriptions call this out
-  explicitly instead of pointing at the 400 response.
-- **`date_last_activity.gte`/`.gt`/`.lte`/`.lt` are real, working filters
-  that `messaging-events.rst`'s filter table (`:31-95`) never mentions.**
-  `COMPOUND_FILTERS = [_get_date_filter_consumer("date"),
-  _get_date_filter_consumer("date_last_activity")]`
-  (`corehq/apps/api/resources/messaging_event/filters.py:169-172`) applies
-  the identical dotted-range machinery to both fields; the rST page only
-  documents the `date.*` family. Added to the spec as first-class parameters
-  since the code supports them.
+  `filters.update(None)`, which raises
+  `TypeError: 'NoneType' object is not iterable`. `TypeError` is not a
+  `tastypie.exceptions.BadRequest`, so the view's own `except BadRequest`
+  (`view.py:34,40-41`) does not catch it; it propagates uncaught to Django's
+  default 500 handling. This is unlike the `status` filter
+  (`_status_filter_consumer`, `.../filters.py:116-136`), which validates and
+  raises a real `BadRequest` for an unrecognized value. `messaging-events.rst`
+  documents no error behavior for filters at all, so there is no rST claim being
+  contradicted, but an agent would reasonably expect a 400 here by analogy with
+  `status`/`email_address`/`phone_number` -- the spec's `content_type`/`source`
+  parameter descriptions call this out explicitly instead of pointing at the 400
+  response.
+- **`date_last_activity.gte`/`.gt`/`.lte`/`.lt` are real, working filters that
+  `messaging-events.rst`'s filter table (`:31-95`) never mentions.**
+  `COMPOUND_FILTERS = [_get_date_filter_consumer("date"), _get_date_filter_consumer("date_last_activity")]`
+  (`corehq/apps/api/resources/messaging_event/filters.py:169-172`) applies the
+  identical dotted-range machinery to both fields; the rST page only documents
+  the `date.*` family. Added to the spec as first-class parameters since the
+  code supports them.
 - **`CursorMeta.next` (`docs/api/openapi/components/schemas/pagination.yaml`,
   written speculatively in Task 2 before any consumer existed) described the
   value as a "Relative URL"; it is actually absolute.** `_get_cursor`
@@ -1652,33 +1728,32 @@ the view's own `if` chain", and anything that falls through returns a 405
   prefixes the path with `get_url_base()` -- scheme and host included.
   `messaging-events.rst:126`'s own sample shows the same absolute form
   (`"https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/?cursor=..."`).
-  Corrected in `pagination.yaml` in this task, since this is the schema's
-  first real consumer.
-- **401 and 403 on this endpoint are not the shared JSON `{"error": ...}`
-  bodies the rest of this spec's non-tastypie plain views (case/v2) were
-  documented with, despite using the exact same decorator stack.**
-  `messaging_events` (`view.py:23-28`) is decorated with `api_auth()`,
-  `require_can_edit_data` (`= require_permission(HqPermissions.edit_data)`),
+  Corrected in `pagination.yaml` in this task, since this is the schema's first
+  real consumer.
+- **401 and 403 on this endpoint are not the shared JSON `{"error": ...}` bodies
+  the rest of this spec's non-tastypie plain views (case/v2) were documented
+  with, despite using the exact same decorator stack.** `messaging_events`
+  (`view.py:23-28`) is decorated with `api_auth()`, `require_can_edit_data`
+  (`= require_permission(HqPermissions.edit_data)`),
   `requires_privilege_with_fallback`, and `api_throttle` -- byte-for-byte the
   same stack `case_api` uses (`corehq/apps/hqcase/views.py:88-94`). Traced
   directly here (not copied from `case-v2.yaml`, which points 401/403 at the
   shared `Unauthorized`/`Forbidden` refs for this identical stack without
   further comment): `_login_or_challenge`'s challenge decorators
-  (`corehq/apps/domain/decorators.py:264-334`) issue their own
-  scheme-dependent 401 challenge before the view is ever reached, and a
-  domain-non-member hits a bare `HttpResponseForbidden()`
-  (`decorators.py:303,329`) while a domain member lacking `edit_data`
-  triggers an uncaught `django.core.exceptions.PermissionDenied`
-  (`require_permission_raw`, `corehq/apps/users/decorators.py:44-54`),
-  handled by this project's own registered `handler403 = no_permissions`
-  (`urls.py:49`), which renders the `403.html` template via
-  `_no_permissions_message` (`corehq/apps/hqwebapp/views.py:348-357`) inside
-  an `HttpResponseForbidden` (`views.py:361-373`) -- an HTML page, not
-  JSON. (The submission-views entry above, `urls.py:47`/`views.py:362-373`,
-  already established this same mechanism; an earlier draft of this entry
-  incorrectly asserted no `handler403` was registered at all -- corrected.)
-  Neither the empty nor the HTML shape is JSON. This was not verified
-  against a live server (no reachable Postgres/service in this environment)
-  -- it is a static trace of the decorator source, flagged here rather than
-  silently copying `case-v2.yaml`'s precedent, which appears to make the
-  same untested assumption.
+  (`corehq/apps/domain/decorators.py:264-334`) issue their own scheme-dependent
+  401 challenge before the view is ever reached, and a domain-non-member hits a
+  bare `HttpResponseForbidden()` (`decorators.py:303,329`) while a domain member
+  lacking `edit_data` triggers an uncaught
+  `django.core.exceptions.PermissionDenied` (`require_permission_raw`,
+  `corehq/apps/users/decorators.py:44-54`), handled by this project's own
+  registered `handler403 = no_permissions` (`urls.py:49`), which renders the
+  `403.html` template via `_no_permissions_message`
+  (`corehq/apps/hqwebapp/views.py:348-357`) inside an `HttpResponseForbidden`
+  (`views.py:361-373`) -- an HTML page, not JSON. (The submission-views entry
+  above, `urls.py:47`/`views.py:362-373`, already established this same
+  mechanism; an earlier draft of this entry incorrectly asserted no `handler403`
+  was registered at all -- corrected.) Neither the empty nor the HTML shape is
+  JSON. This was not verified against a live server (no reachable
+  Postgres/service in this environment) -- it is a static trace of the decorator
+  source, flagged here rather than silently copying `case-v2.yaml`'s precedent,
+  which appears to make the same untested assumption.
