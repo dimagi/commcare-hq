@@ -16,6 +16,8 @@ DOCS_KEYS = (
     'field_schemas',
     'parameters',
     'extra_operations',
+    'list_write_responses',
+    'detail_write_responses',
 )
 
 

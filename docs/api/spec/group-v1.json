@@ -261,54 +261,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "case_sharing": {
-                      "default": false,
-                      "description": "Whether members of this group share cases with each other.",
-                      "type": "boolean"
-                    },
-                    "domain": {
-                      "description": "Domain (project space) that owns the group.",
-                      "type": "string"
-                    },
-                    "id": {
-                      "description": "Group UUID.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "metadata": {
-                      "additionalProperties": true,
-                      "description": "Custom metadata associated with the group.",
-                      "nullable": true,
-                      "type": "object"
-                    },
-                    "name": {
-                      "description": "Name of the group.",
-                      "type": "string"
-                    },
-                    "reporting": {
-                      "default": true,
-                      "description": "Whether this group appears in the group filter list for reports.",
-                      "type": "boolean"
-                    },
-                    "resource_uri": {
-                      "description": "URI of this record in the API.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "users": {
-                      "description": "UUIDs of the users in this group.",
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    }
+                  "items": {
+                    "type": "string"
                   },
-                  "type": "object"
+                  "type": "array"
                 }
               }
             },
-            "description": "The update was accepted."
+            "description": "The IDs of the created or updated groups, in the same order as the request."
           }
         },
         "summary": "Groups",
@@ -368,53 +328,18 @@
               "application/json": {
                 "schema": {
                   "properties": {
-                    "case_sharing": {
-                      "default": false,
-                      "description": "Whether members of this group share cases with each other.",
-                      "type": "boolean"
-                    },
-                    "domain": {
-                      "description": "Domain (project space) that owns the group.",
-                      "type": "string"
-                    },
                     "id": {
-                      "description": "Group UUID.",
-                      "readOnly": true,
                       "type": "string"
-                    },
-                    "metadata": {
-                      "additionalProperties": true,
-                      "description": "Custom metadata associated with the group.",
-                      "nullable": true,
-                      "type": "object"
-                    },
-                    "name": {
-                      "description": "Name of the group.",
-                      "type": "string"
-                    },
-                    "reporting": {
-                      "default": true,
-                      "description": "Whether this group appears in the group filter list for reports.",
-                      "type": "boolean"
-                    },
-                    "resource_uri": {
-                      "description": "URI of this record in the API.",
-                      "readOnly": true,
-                      "type": "string"
-                    },
-                    "users": {
-                      "description": "UUIDs of the users in this group.",
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
                     }
                   },
+                  "required": [
+                    "id"
+                  ],
                   "type": "object"
                 }
               }
             },
-            "description": "The created record."
+            "description": "The created group."
           }
         },
         "summary": "Groups",

@@ -66,8 +66,8 @@
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "The created record."
+          "200": {
+            "description": "The authenticated user, serialized as a mobile worker or web user record depending on the account type."
           }
         },
         "summary": "Sso",

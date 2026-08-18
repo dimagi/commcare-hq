@@ -355,6 +355,26 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                               "reset email.",
             },
         ]
+        list_write_responses = {
+            # serialize() below overrides always_return_data's full
+            # record with just the new user's ID for a POST response.
+            'post': {
+                '201': {
+                    'description': 'The created mobile worker.',
+                    'content': {
+                        'application/json': {
+                            'schema': {
+                                'type': 'object',
+                                'properties': {
+                                    'id': {'type': 'string'},
+                                },
+                                'required': ['id'],
+                            },
+                        },
+                    },
+                },
+            },
+        }
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -786,6 +806,47 @@ class AdminWebUserResource(v0_1.UserResource):
 
 
 class GroupResource(v0_4.GroupResource):
+
+    class Docs:
+        list_write_responses = {
+            # serialize() below overrides always_return_data's full
+            # record with just the new group's ID for a POST response.
+            'post': {
+                '201': {
+                    'description': 'The created group.',
+                    'content': {
+                        'application/json': {
+                            'schema': {
+                                'type': 'object',
+                                'properties': {
+                                    'id': {'type': 'string'},
+                                },
+                                'required': ['id'],
+                            },
+                        },
+                    },
+                },
+            },
+            # patch_list() (via patch_list_replica() in
+            # corehq/apps/api/resources/__init__.py) returns a bare
+            # array of group IDs, not an object -- see serialize()'s
+            # _is_list() branch below.
+            'patch': {
+                '202': {
+                    'description': 'The IDs of the created or updated '
+                                  'groups, in the same order as the '
+                                  'request.',
+                    'content': {
+                        'application/json': {
+                            'schema': {
+                                'type': 'array',
+                                'items': {'type': 'string'},
+                            },
+                        },
+                    },
+                },
+            },
+        }
 
     class Meta(v0_4.GroupResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']

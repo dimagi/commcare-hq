@@ -275,6 +275,8 @@ def resource_paths(entry):
 
     always_return_data = resource._meta.always_return_data
     collection_name = resource._meta.collection_name
+    list_write_overrides = docs.get('list_write_responses', {})
+    detail_write_overrides = docs.get('detail_write_responses', {})
 
     list_methods = resource_schema['allowed_list_http_methods']
     if list_methods:
@@ -287,6 +289,8 @@ def resource_paths(entry):
                     responses['200']['content']['application/json'][
                         'example'
                     ] = load_example(example)
+            elif method in list_write_overrides:
+                responses = list_write_overrides[method]
             else:
                 responses = _write_responses(
                     method,
@@ -347,6 +351,8 @@ def resource_paths(entry):
                         },
                     },
                 }
+            elif method in detail_write_overrides:
+                responses = detail_write_overrides[method]
             else:
                 responses = _write_responses(
                     method,
@@ -464,6 +470,15 @@ def _write_responses(
     - DELETE always returns 204 with no body -- never a body, regardless
       of ``always_return_data``, which Tastypie's delete methods do not
       consult at all.
+
+    This is the *generic* rule. A resource that overrides ``serialize()``,
+    ``patch_list``/``patch_list_replica``, or ``post_list`` itself (e.g.
+    ``CommCareUserResource``/``GroupResource``'s ``serialize()`` swapping
+    a POST's full record for ``{"id": ...}``, ``patch_list_replica``'s
+    bare array of ID strings, or ``SingleSignOnResource.post_list``'s own
+    200-with-a-user-object) does not follow this rule for that method, and
+    ``resource_paths()`` looks for a ``Docs.list_write_responses``/
+    ``detail_write_responses`` override before falling back to it.
     """
     collection_schema = {
         'type': 'object',

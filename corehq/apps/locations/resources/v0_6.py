@@ -55,6 +55,26 @@ class LocationResource(v0_5.LocationResource):
                               'location.',
             },
         }
+        list_write_responses = {
+            # patch_list() below calls patch_list_replica() (defined in
+            # corehq/apps/api/resources/__init__.py), which returns a
+            # bare array of location IDs, not an object.
+            'patch': {
+                '202': {
+                    'description': 'The IDs of the created or updated '
+                                  'locations, in the same order as the '
+                                  'request.',
+                    'content': {
+                        'application/json': {
+                            'schema': {
+                                'type': 'array',
+                                'items': {'type': 'string'},
+                            },
+                        },
+                    },
+                },
+            },
+        }
 
     class Meta:
         max_limit = 5000

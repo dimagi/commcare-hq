@@ -772,6 +772,24 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
     def get_detail(self, bundle, **kwargs):
         return HttpResponseForbidden()
 
+    class Docs:
+        list_write_responses = {
+            # post_list() is a complete override, not the generic
+            # create/return-data path: it returns 200 (not 201) with the
+            # authenticated user's full record, dehydrated by whichever
+            # of CommCareUserResource/WebUserResource matches -- there
+            # is no single fixed shape to publish, so the body is left
+            # undeclared rather than picking one arbitrarily.
+            'post': {
+                '200': {
+                    'description': 'The authenticated user, serialized '
+                                  'as a mobile worker or web user '
+                                  'record depending on the account '
+                                  'type.',
+                },
+            },
+        }
+
     class Meta(CustomResourceMeta):
         authentication = SSOAuthentication()
         resource_name = 'sso'
