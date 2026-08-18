@@ -1151,7 +1151,10 @@ class ProjectDataTab(UITab):
 class ApplicationsTab(UITab):
     view = "default_new_app"
 
-    url_prefix_formats = ('/a/{domain}/apps/',)
+    url_prefix_formats = (
+        '/a/{domain}/apps/',
+        '/a/{domain}/public_webforms/',
+    )
 
     @property
     def title(self):
@@ -1199,6 +1202,40 @@ class ApplicationsTab(UITab):
                 url=(reverse('default_new_app', args=[self.domain])),
             ))
         return submenu_context
+
+    @property
+    def sidebar_items(self):
+        items = []
+        if self.public_webforms_urls:
+            items.append((_("Public Webforms"), self.public_webforms_urls))
+        return items
+
+    @property
+    def public_webforms_urls(self):
+        from corehq.apps.public_webforms.views import (
+            CreatePublicWebformView,
+            ManagePublicWebformsView,
+        )
+        if not (
+            domain_has_privilege(self.domain, privileges.PUBLIC_WEBFORMS)
+            and self.couch_user.has_permission(self.domain, HqPermissions.edit_public_webforms)
+            and toggles.PUBLIC_WEBFORMS.enabled_for_request(self._request)
+        ):
+            return []
+
+        return [{
+            'title': _(ManagePublicWebformsView.page_title),
+            'url': reverse(
+                ManagePublicWebformsView.urlname, args=[self.domain]
+            ),
+            'description': _('Create and manage public webforms.'),
+            'subpages': [
+                {
+                    'title': _(CreatePublicWebformView.page_title),
+                    'urlname': CreatePublicWebformView.urlname,
+                },
+            ],
+        }]
 
     @property
     def _is_viewable(self):
