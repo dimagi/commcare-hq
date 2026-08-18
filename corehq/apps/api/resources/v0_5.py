@@ -244,6 +244,11 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     require_account_confirmation = fields.BooleanField(default=False)
     send_confirmation_email_now = fields.BooleanField(default=False)
 
+    WRITE_ONLY_FIELDS = (
+        'require_account_confirmation',
+        'send_confirmation_email_now',
+    )
+
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
@@ -388,8 +393,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         return bundle.obj.get_location_ids(bundle.obj.domain)
 
     def dehydrate(self, bundle):
-        bundle.data.pop('require_account_confirmation', None)
-        bundle.data.pop('send_confirmation_email_now', None)
+        for field_name in self.WRITE_ONLY_FIELDS:
+            bundle.data.pop(field_name, None)
         return super(v0_1.CommCareUserResource, self).dehydrate(bundle)
 
     @classmethod
