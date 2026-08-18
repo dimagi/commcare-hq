@@ -1,0 +1,8 @@
+extends: ["spectral:oas"]
+rules:
+  # The bundle intentionally has no top-level tags declaration.
+  openapi-tags: off
+  # Contact and licence live on the docs site, not in each spec.
+  info-contact: off
+  info-license: off
+  license-url: off
