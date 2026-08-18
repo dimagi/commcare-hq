@@ -1,7 +1,12 @@
 import pytest
 from tastypie.constants import ALL
 
-from corehq.apps.api.openapi.catalogue import ApiEntry, USER
+from corehq.apps.api.openapi.catalogue import (
+    ApiEntry,
+    USER,
+    documented_entries,
+)
+from corehq.apps.api.openapi.docs import collect_docs
 from corehq.apps.api.openapi.operations import (
     filter_parameters,
     object_schema,
@@ -230,3 +235,32 @@ def test_paths_generate_without_error_for_other_resources(
 ):
     paths = resource_paths(ApiEntry(resource_cls, version, 'slug'))
     assert paths
+
+
+def test_field_schemas_additions_all_declare_a_type():
+    """``object_schema()`` only treats a ``field_schemas`` entry naming a
+    field the resource does not declare as an *addition* -- a key added to
+    the response outside of Tastypie's field machinery -- when the entry
+    carries a ``type`` (see its docstring). Without ``type`` the entry is
+    silently ignored, which is correct for the one documented exception
+    (an inherited, description-only ``resource_uri`` override on a
+    resource that has no ``resource_uri`` field) but would otherwise be a
+    genuine addition vanishing from the generated schema. Assert every
+    documented resource's ``field_schemas`` obeys the rule, so violating it
+    fails a test instead of silently dropping a field.
+    """
+    for entry in documented_entries():
+        resource = entry.resource(api_name=entry.version)
+        resource_schema = resource.build_schema()
+        docs = collect_docs(entry.resource)
+        declared_fields = resource_schema['fields']
+        field_schemas = docs.get('field_schemas', {})
+        for name, schema in field_schemas.items():
+            if name in declared_fields or name == 'resource_uri':
+                continue
+            assert 'type' in schema, (
+                f'{entry.doc_slug}: field_schemas["{name}"] names a field '
+                f'{entry.resource.__name__} does not declare and has no '
+                "'type', so it will be silently dropped instead of "
+                'treated as an addition to the schema'
+            )

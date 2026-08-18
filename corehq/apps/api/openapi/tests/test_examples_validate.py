@@ -10,7 +10,9 @@ values, and so on).
 
 import pytest
 
+from corehq.apps.api.fields import UseIfRequested
 from corehq.apps.api.openapi.builder import build_all
+from corehq.apps.api.openapi.catalogue import CATALOGUE, USER
 from corehq.apps.api.openapi.tests.oas_validation import (
     declared_response_fields,
     response_record_schema_and_instances,
@@ -81,20 +83,30 @@ def _examples():
     return list(_iter_examples(documents))
 
 
-def _response_examples():
+# Computed once at import time. ``build_all()`` regenerates every document
+# from the resource classes, which is not free -- ``_examples()`` used to be
+# called twice at collection (once for ``parametrize``, once for ``ids``),
+# running it twice for no reason.
+ALL_EXAMPLES = _examples()
+
+
+def _response_examples(examples):
     # Request examples are excluded: a request legitimately sends only a
     # subset of the writable fields (e.g. a PATCH updating one field), so
     # "every declared field must be present" does not apply to them --
     # only to responses, which the API always populates in full.
-    return [example for example in _examples() if example[3] != 'requestBody']
+    return [example for example in examples if example[3] != 'requestBody']
+
+
+RESPONSE_EXAMPLES = _response_examples(ALL_EXAMPLES)
 
 
 @pytest.mark.parametrize(
     'spec, path, method, kind, schema, example, document',
-    _examples(),
+    ALL_EXAMPLES,
     ids=[
         f'{spec}:{path}:{method}:{kind}'
-        for spec, path, method, kind, *_ in _examples()
+        for spec, path, method, kind, *_ in ALL_EXAMPLES
     ],
 )
 def test_example_validates_against_its_own_schema(
@@ -116,10 +128,10 @@ def test_example_validates_against_its_own_schema(
 
 @pytest.mark.parametrize(
     'spec, path, method, kind, schema, example, document',
-    _response_examples(),
+    RESPONSE_EXAMPLES,
     ids=[
         f'{spec}:{path}:{method}:{kind}'
-        for spec, path, method, kind, *_ in _response_examples()
+        for spec, path, method, kind, *_ in RESPONSE_EXAMPLES
     ],
 )
 def test_response_example_has_every_declared_field_and_no_others(
@@ -172,4 +184,40 @@ def test_at_least_one_example_is_covered():
     # silently empty (e.g. because build_all() stopped producing
     # examples) -- a test with zero cases "passes" without checking
     # anything.
-    assert len(_examples()) >= 5
+    assert len(ALL_EXAMPLES) >= 5
+
+
+def _resource_for_path(path):
+    """The catalogue's resource class for a generated path, using the same
+    ``{prefix}/{resource_name}/{version}/`` formula as
+    ``operations.resource_paths()``."""
+    for entry in CATALOGUE:
+        resource = entry.resource(api_name=entry.version)
+        prefix = '/api' if entry.scope == USER else '/a/{domain}/api'
+        base = f'{prefix}/{resource._meta.resource_name}/{entry.version}/'
+        if base == path:
+            return entry.resource
+    raise LookupError(f'no catalogue entry produces path {path!r}')
+
+
+@pytest.mark.parametrize('path', sorted(CONDITIONALLY_ABSENT_FIELDS))
+def test_conditionally_absent_fields_are_actually_conditional(path):
+    """``CONDITIONALLY_ABSENT_FIELDS`` allowlists fields a plain example
+    legitimately omits because they are Tastypie ``UseIfRequested`` fields,
+    only returned when ``<field>__full=true`` is passed. If a field's
+    conditionality were ever removed (its resource stopped wrapping it in
+    ``UseIfRequested``), this allowlist entry would rot quietly and start
+    masking a real, unconditional omission. Assert every allowlisted field
+    really is wrapped in ``UseIfRequested`` on its resource, so a stale
+    entry fails loudly instead of silently.
+    """
+    resource_cls = _resource_for_path(path)
+    for name in CONDITIONALLY_ABSENT_FIELDS[path]:
+        field = resource_cls.base_fields.get(name)
+        assert isinstance(field, UseIfRequested), (
+            f'{path}: {name!r} is listed in CONDITIONALLY_ABSENT_FIELDS as '
+            'conditional, but is not a UseIfRequested field on '
+            f'{resource_cls.__name__} -- if it is no longer conditional, '
+            'remove it from the allowlist instead of leaving an example '
+            'that silently omits a field the API now always returns'
+        )
