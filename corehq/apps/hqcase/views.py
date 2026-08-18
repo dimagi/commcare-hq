@@ -120,10 +120,80 @@ def _strip_internal_fields(schema, fields):
     return schema
 
 
-def _bulk_schema(single_schema):
-    """A schema accepting either one object or a list of them."""
+def _with_create_flag(schema, create_property, description):
+    """A copy of ``schema`` with a required, wire-only ``create`` field.
+
+    ``create`` is popped from the payload by ``_get_bulk_updates()``
+    before a jsonobject is ever built (see ``updates.py``), so it has no
+    corresponding jsonobject property and ``jsonobject_to_schema()``
+    never produces it -- it has to be added by hand for every bulk item
+    variant.
+    """
+    schema = dict(schema)
+    schema['description'] = description
+    schema['properties'] = {**schema['properties'], 'create': create_property}
+    schema['required'] = ['create', *schema.get('required', [])]
+    return schema
+
+
+def _bulk_item_schema():
+    """The schema for one item of a bulk (list-body) create/update.
+
+    ``_get_bulk_updates()`` requires every item to carry a ``create``
+    field and dispatches on its value: ``true`` builds a
+    ``JsonCaseCreation``, ``false`` a ``JsonCaseUpdate``, and ``null`` a
+    ``JsonCaseUpsert`` (``updates.py:239-258``). These three branches
+    have different required fields, so a single flat schema (e.g. just
+    reusing the single-object creation schema) cannot represent a bulk
+    item honestly -- it would wrongly require creation-only fields on
+    update/upsert items, and never mention ``create`` at all.
+    """
+    create_item = _with_create_flag(
+        _POST_SINGLE_SCHEMA,
+        {'type': 'boolean', 'enum': [True]},
+        'Creates a new case. Requires case_name, case_type and '
+        'owner_id, like a single-object POST.',
+    )
+    update_item = _with_create_flag(
+        _PUT_SINGLE_SCHEMA,
+        {'type': 'boolean', 'enum': [False]},
+        'Updates an existing case. Must include either "case_id" or '
+        '"external_id" to identify the case (JsonCaseUpdate.validate() '
+        'enforces this at runtime, though neither is individually '
+        'required by this schema, since either satisfies it).',
+    )
+    # Unlike the ext-ID PUT endpoint, there is no URL to supply
+    # external_id from here, so it is genuinely required in the body.
+    upsert_base = _strip_internal_fields(
+        jsonobject_to_schema(JsonCaseUpsert),
+        ('case_id', 'user_id', 'is_new_case'),
+    )
+    upsert_item = _with_create_flag(
+        upsert_base,
+        {'nullable': True, 'enum': [None]},
+        'Upserts a case by external_id: updates it if a case with that '
+        'external_id already exists, or creates it otherwise.',
+    )
+    return {'oneOf': [create_item, update_item, upsert_item]}
+
+
+def _single_or_bulk_schema(single_schema):
+    """A schema accepting either one object, or a list of bulk items.
+
+    The list branch is capped at CASEBLOCK_CHUNKSIZE (100): see
+    ``_get_bulk_updates()``'s own check in ``updates.py``, which rejects
+    a bigger list outright with "You cannot submit more than 100
+    updates in a single request".
+    """
     return {
-        'oneOf': [single_schema, {'type': 'array', 'items': single_schema}]
+        'oneOf': [
+            single_schema,
+            {
+                'type': 'array',
+                'items': _bulk_item_schema(),
+                'maxItems': 100,
+            },
+        ]
     }
 
 
@@ -156,18 +226,23 @@ _PUT_LIST_SINGLE_SCHEMA = {
     'anyOf': [{'required': ['case_id']}, {'required': ['external_id']}],
 }
 
-# case_id is excluded because JsonCaseUpsert.wrap() rejects it outright
-# ("UPSERT does not allow case_id to be specified"); user_id and
-# is_new_case for the same reasons as _POST_SINGLE_SCHEMA.
-_PUT_EXT_SCHEMA = _strip_internal_fields(
-    jsonobject_to_schema(JsonCaseUpsert),
-    ('case_id', 'user_id', 'is_new_case'),
-)
-# external_id is required on JsonCaseUpsert itself, but _handle_ext_put()
-# injects it from the URL when the body omits it, so it is not actually
-# required in the body for this endpoint.
-_PUT_EXT_SCHEMA = _strip_internal_fields(_PUT_EXT_SCHEMA, ('external_id',))
-_PUT_EXT_SCHEMA['properties']['external_id'] = {'type': 'string'}
+# The runtime never actually builds a JsonCaseUpsert for this endpoint:
+# _handle_ext_put() looks the case up first, then picks JsonCaseCreation
+# (case absent) or JsonCaseUpdate (case present). Those two have
+# different required fields (creation requires case_name/case_type/
+# owner_id; update doesn't), so publishing one flat "optional
+# everything" schema -- as a previous revision of this file did --
+# accepted payloads the API would reject with a 400 when the case
+# doesn't exist. oneOf the two real branches instead.
+_PUT_EXT_SCHEMA = {
+    'description': (
+        'Upsert by external ID. If no case with this external ID '
+        'exists, the case-creation branch applies (case_name, '
+        'case_type and owner_id are required); if one does, the '
+        'case-update branch applies (neither is required).'
+    ),
+    'oneOf': [_POST_SINGLE_SCHEMA, _PUT_SINGLE_SCHEMA],
+}
 
 _BULK_FETCH_SCHEMA = {
     'type': 'object',
@@ -217,8 +292,10 @@ _BULK_FETCH_SCHEMA = {
     # override -- the bulk (single-or-list) version.
     request_schemas={
         'post': _POST_SINGLE_SCHEMA,
-        (CASE_LIST_PATH, 'post'): _bulk_schema(_POST_SINGLE_SCHEMA),
-        (CASE_LIST_PATH, 'put'): _bulk_schema(_PUT_LIST_SINGLE_SCHEMA),
+        (CASE_LIST_PATH, 'post'): _single_or_bulk_schema(_POST_SINGLE_SCHEMA),
+        (CASE_LIST_PATH, 'put'): _single_or_bulk_schema(
+            _PUT_LIST_SINGLE_SCHEMA
+        ),
         (CASE_DETAIL_PATH, 'put'): _PUT_SINGLE_SCHEMA,
         (CASE_EXT_PATH, 'put'): _PUT_EXT_SCHEMA,
     },
@@ -226,6 +303,7 @@ _BULK_FETCH_SCHEMA = {
         'post_request': 'case/v2/post_request.json',
         'put_request': 'case/v2/put_request.json',
         (CASE_EXT_PATH, 'put_request'): 'case/v2/put_ext_request.json',
+        (CASE_LIST_PATH, 'post_request'): 'case/v2/bulk_post_request.json',
     },
 )
 @waf_allow('XSS_BODY')

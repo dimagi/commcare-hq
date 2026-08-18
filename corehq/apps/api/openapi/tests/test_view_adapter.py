@@ -46,3 +46,58 @@ def test_every_case_api_filter_has_a_description():
         'undocumented Case API filters: '
         f'{sorted(filters - set(FILTER_DESCRIPTIONS))}'
     )
+
+
+def _case_v2_schema(method, path=None):
+    from corehq.apps.hqcase.views import case_api
+
+    schemas = case_api._openapi_docs.request_schemas
+    return schemas[(path, method)] if path else schemas[method]
+
+
+def test_bulk_list_item_schema_has_three_create_branches():
+    from corehq.apps.hqcase.views import CASE_LIST_PATH
+
+    schema = _case_v2_schema('post', CASE_LIST_PATH)
+    array_branch = schema['oneOf'][1]
+    assert array_branch['type'] == 'array'
+    assert array_branch['maxItems'] == 100
+
+    item_branches = array_branch['items']['oneOf']
+    assert len(item_branches) == 3
+    by_create_enum = {
+        tuple(branch['properties']['create']['enum']): branch
+        for branch in item_branches
+    }
+    assert set(by_create_enum) == {(True,), (False,), (None,)}
+
+    create_branch = by_create_enum[(True,)]
+    assert set(create_branch['required']) == {
+        'create',
+        'case_name',
+        'case_type',
+        'owner_id',
+    }
+
+    update_branch = by_create_enum[(False,)]
+    assert update_branch['required'] == ['create']
+    assert 'case_id' not in update_branch['required']
+    assert 'external_id' not in update_branch['required']
+
+    upsert_branch = by_create_enum[(None,)]
+    assert set(upsert_branch['required']) == {'create', 'external_id'}
+    assert 'case_id' not in upsert_branch['properties']
+
+
+def test_ext_put_is_a_oneof_of_creation_and_update_schemas():
+    from corehq.apps.hqcase.views import CASE_EXT_PATH
+
+    schema = _case_v2_schema('put', CASE_EXT_PATH)
+    assert 'oneOf' in schema
+    creation_schema, update_schema = schema['oneOf']
+    assert set(creation_schema['required']) == {
+        'case_name',
+        'case_type',
+        'owner_id',
+    }
+    assert not update_schema.get('required')

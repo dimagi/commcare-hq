@@ -1005,22 +1005,33 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "example": {
-                "case_name": "Elizabeth Harmon",
-                "case_type": "patient",
-                "external_id": "1",
-                "indices": {
-                  "parent": {
-                    "case_id": "eb1a8c23-6d6d-4b61-894c-ae1c437d8dac",
-                    "case_type": "household",
-                    "relationship": "child"
+              "example": [
+                {
+                  "case_name": "Cersei Lannister",
+                  "case_type": "mother",
+                  "create": true,
+                  "owner_id": "20cc9dda-b90a-4af3-aa3d-fc67184e73ef",
+                  "properties": {
+                    "dob": "1988-11-02"
+                  },
+                  "temporary_id": "1"
+                },
+                {
+                  "case_id": "eb1a8c23-6d6d-4b61-894c-ae1c437d8dac",
+                  "create": false,
+                  "properties": {
+                    "dob": "1988-11-02"
                   }
                 },
-                "owner_id": "20cc9dda-b90a-4af3-aa3d-fc67184e73ef",
-                "properties": {
-                  "dob": "1948-11-02"
+                {
+                  "case_name": "Tommen Baratheon",
+                  "create": null,
+                  "external_id": "id1",
+                  "properties": {
+                    "dob": "2008-03-01"
+                  }
                 }
-              },
+              ],
               "schema": {
                 "oneOf": [
                   {
@@ -1085,65 +1096,206 @@
                   },
                   {
                     "items": {
-                      "properties": {
-                        "case_name": {
-                          "type": "string"
-                        },
-                        "case_type": {
-                          "type": "string"
-                        },
-                        "close": {
-                          "default": false,
-                          "type": "boolean"
-                        },
-                        "external_id": {
-                          "type": "string"
-                        },
-                        "indices": {
-                          "additionalProperties": {
-                            "properties": {
-                              "case_id": {
-                                "type": "string"
-                              },
-                              "case_type": {
-                                "type": "string"
-                              },
-                              "external_id": {
-                                "type": "string"
-                              },
-                              "relationship": {
-                                "enum": [
-                                  "child",
-                                  "extension"
-                                ],
-                                "type": "string"
-                              },
-                              "temporary_id": {
-                                "type": "string"
-                              }
+                      "oneOf": [
+                        {
+                          "description": "Creates a new case. Requires case_name, case_type and owner_id, like a single-object POST.",
+                          "properties": {
+                            "case_name": {
+                              "type": "string"
                             },
-                            "type": "object"
+                            "case_type": {
+                              "type": "string"
+                            },
+                            "close": {
+                              "default": false,
+                              "type": "boolean"
+                            },
+                            "create": {
+                              "enum": [
+                                true
+                              ],
+                              "type": "boolean"
+                            },
+                            "external_id": {
+                              "type": "string"
+                            },
+                            "indices": {
+                              "additionalProperties": {
+                                "properties": {
+                                  "case_id": {
+                                    "type": "string"
+                                  },
+                                  "case_type": {
+                                    "type": "string"
+                                  },
+                                  "external_id": {
+                                    "type": "string"
+                                  },
+                                  "relationship": {
+                                    "enum": [
+                                      "child",
+                                      "extension"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "temporary_id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "type": "object"
+                            },
+                            "owner_id": {
+                              "type": "string"
+                            },
+                            "properties": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            },
+                            "temporary_id": {
+                              "type": "string"
+                            }
                           },
+                          "required": [
+                            "create",
+                            "case_name",
+                            "case_type",
+                            "owner_id"
+                          ],
                           "type": "object"
                         },
-                        "owner_id": {
-                          "type": "string"
-                        },
-                        "properties": {
-                          "additionalProperties": true,
+                        {
+                          "description": "Updates an existing case. Must include either \"case_id\" or \"external_id\" to identify the case (JsonCaseUpdate.validate() enforces this at runtime, though neither is individually required by this schema, since either satisfies it).",
+                          "properties": {
+                            "case_id": {
+                              "type": "string"
+                            },
+                            "case_name": {
+                              "type": "string"
+                            },
+                            "case_type": {
+                              "type": "string"
+                            },
+                            "close": {
+                              "default": false,
+                              "type": "boolean"
+                            },
+                            "create": {
+                              "enum": [
+                                false
+                              ],
+                              "type": "boolean"
+                            },
+                            "external_id": {
+                              "type": "string"
+                            },
+                            "indices": {
+                              "additionalProperties": {
+                                "properties": {
+                                  "case_id": {
+                                    "type": "string"
+                                  },
+                                  "case_type": {
+                                    "type": "string"
+                                  },
+                                  "external_id": {
+                                    "type": "string"
+                                  },
+                                  "relationship": {
+                                    "enum": [
+                                      "child",
+                                      "extension"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "temporary_id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "type": "object"
+                            },
+                            "owner_id": {
+                              "type": "string"
+                            },
+                            "properties": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "create"
+                          ],
                           "type": "object"
                         },
-                        "temporary_id": {
-                          "type": "string"
+                        {
+                          "description": "Upserts a case by external_id: updates it if a case with that external_id already exists, or creates it otherwise.",
+                          "properties": {
+                            "case_name": {
+                              "type": "string"
+                            },
+                            "case_type": {
+                              "type": "string"
+                            },
+                            "close": {
+                              "default": false,
+                              "type": "boolean"
+                            },
+                            "create": {
+                              "enum": [
+                                null
+                              ],
+                              "nullable": true
+                            },
+                            "external_id": {
+                              "type": "string"
+                            },
+                            "indices": {
+                              "additionalProperties": {
+                                "properties": {
+                                  "case_id": {
+                                    "type": "string"
+                                  },
+                                  "case_type": {
+                                    "type": "string"
+                                  },
+                                  "external_id": {
+                                    "type": "string"
+                                  },
+                                  "relationship": {
+                                    "enum": [
+                                      "child",
+                                      "extension"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "temporary_id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "type": "object"
+                            },
+                            "owner_id": {
+                              "type": "string"
+                            },
+                            "properties": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "create",
+                            "external_id"
+                          ],
+                          "type": "object"
                         }
-                      },
-                      "required": [
-                        "case_name",
-                        "case_type",
-                        "owner_id"
-                      ],
-                      "type": "object"
+                      ]
                     },
+                    "maxItems": 100,
                     "type": "array"
                   }
                 ]
@@ -1245,72 +1397,206 @@
                   },
                   {
                     "items": {
-                      "anyOf": [
+                      "oneOf": [
                         {
-                          "required": [
-                            "case_id"
-                          ]
-                        },
-                        {
-                          "required": [
-                            "external_id"
-                          ]
-                        }
-                      ],
-                      "properties": {
-                        "case_id": {
-                          "type": "string"
-                        },
-                        "case_name": {
-                          "type": "string"
-                        },
-                        "case_type": {
-                          "type": "string"
-                        },
-                        "close": {
-                          "default": false,
-                          "type": "boolean"
-                        },
-                        "external_id": {
-                          "type": "string"
-                        },
-                        "indices": {
-                          "additionalProperties": {
-                            "properties": {
-                              "case_id": {
-                                "type": "string"
-                              },
-                              "case_type": {
-                                "type": "string"
-                              },
-                              "external_id": {
-                                "type": "string"
-                              },
-                              "relationship": {
-                                "enum": [
-                                  "child",
-                                  "extension"
-                                ],
-                                "type": "string"
-                              },
-                              "temporary_id": {
-                                "type": "string"
-                              }
+                          "description": "Creates a new case. Requires case_name, case_type and owner_id, like a single-object POST.",
+                          "properties": {
+                            "case_name": {
+                              "type": "string"
                             },
-                            "type": "object"
+                            "case_type": {
+                              "type": "string"
+                            },
+                            "close": {
+                              "default": false,
+                              "type": "boolean"
+                            },
+                            "create": {
+                              "enum": [
+                                true
+                              ],
+                              "type": "boolean"
+                            },
+                            "external_id": {
+                              "type": "string"
+                            },
+                            "indices": {
+                              "additionalProperties": {
+                                "properties": {
+                                  "case_id": {
+                                    "type": "string"
+                                  },
+                                  "case_type": {
+                                    "type": "string"
+                                  },
+                                  "external_id": {
+                                    "type": "string"
+                                  },
+                                  "relationship": {
+                                    "enum": [
+                                      "child",
+                                      "extension"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "temporary_id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "type": "object"
+                            },
+                            "owner_id": {
+                              "type": "string"
+                            },
+                            "properties": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            },
+                            "temporary_id": {
+                              "type": "string"
+                            }
                           },
+                          "required": [
+                            "create",
+                            "case_name",
+                            "case_type",
+                            "owner_id"
+                          ],
                           "type": "object"
                         },
-                        "owner_id": {
-                          "type": "string"
+                        {
+                          "description": "Updates an existing case. Must include either \"case_id\" or \"external_id\" to identify the case (JsonCaseUpdate.validate() enforces this at runtime, though neither is individually required by this schema, since either satisfies it).",
+                          "properties": {
+                            "case_id": {
+                              "type": "string"
+                            },
+                            "case_name": {
+                              "type": "string"
+                            },
+                            "case_type": {
+                              "type": "string"
+                            },
+                            "close": {
+                              "default": false,
+                              "type": "boolean"
+                            },
+                            "create": {
+                              "enum": [
+                                false
+                              ],
+                              "type": "boolean"
+                            },
+                            "external_id": {
+                              "type": "string"
+                            },
+                            "indices": {
+                              "additionalProperties": {
+                                "properties": {
+                                  "case_id": {
+                                    "type": "string"
+                                  },
+                                  "case_type": {
+                                    "type": "string"
+                                  },
+                                  "external_id": {
+                                    "type": "string"
+                                  },
+                                  "relationship": {
+                                    "enum": [
+                                      "child",
+                                      "extension"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "temporary_id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "type": "object"
+                            },
+                            "owner_id": {
+                              "type": "string"
+                            },
+                            "properties": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "create"
+                          ],
+                          "type": "object"
                         },
-                        "properties": {
-                          "additionalProperties": true,
+                        {
+                          "description": "Upserts a case by external_id: updates it if a case with that external_id already exists, or creates it otherwise.",
+                          "properties": {
+                            "case_name": {
+                              "type": "string"
+                            },
+                            "case_type": {
+                              "type": "string"
+                            },
+                            "close": {
+                              "default": false,
+                              "type": "boolean"
+                            },
+                            "create": {
+                              "enum": [
+                                null
+                              ],
+                              "nullable": true
+                            },
+                            "external_id": {
+                              "type": "string"
+                            },
+                            "indices": {
+                              "additionalProperties": {
+                                "properties": {
+                                  "case_id": {
+                                    "type": "string"
+                                  },
+                                  "case_type": {
+                                    "type": "string"
+                                  },
+                                  "external_id": {
+                                    "type": "string"
+                                  },
+                                  "relationship": {
+                                    "enum": [
+                                      "child",
+                                      "extension"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "temporary_id": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "type": "object"
+                            },
+                            "owner_id": {
+                              "type": "string"
+                            },
+                            "properties": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "create",
+                            "external_id"
+                          ],
                           "type": "object"
                         }
-                      },
-                      "type": "object"
+                      ]
                     },
+                    "maxItems": 100,
                     "type": "array"
                   }
                 ]
@@ -1451,56 +1737,124 @@
                 }
               },
               "schema": {
-                "properties": {
-                  "case_name": {
-                    "type": "string"
-                  },
-                  "case_type": {
-                    "type": "string"
-                  },
-                  "close": {
-                    "default": false,
-                    "type": "boolean"
-                  },
-                  "external_id": {
-                    "type": "string"
-                  },
-                  "indices": {
-                    "additionalProperties": {
-                      "properties": {
-                        "case_id": {
-                          "type": "string"
-                        },
-                        "case_type": {
-                          "type": "string"
-                        },
-                        "external_id": {
-                          "type": "string"
-                        },
-                        "relationship": {
-                          "enum": [
-                            "child",
-                            "extension"
-                          ],
-                          "type": "string"
-                        },
-                        "temporary_id": {
-                          "type": "string"
-                        }
+                "description": "Upsert by external ID. If no case with this external ID exists, the case-creation branch applies (case_name, case_type and owner_id are required); if one does, the case-update branch applies (neither is required).",
+                "oneOf": [
+                  {
+                    "properties": {
+                      "case_name": {
+                        "type": "string"
                       },
-                      "type": "object"
+                      "case_type": {
+                        "type": "string"
+                      },
+                      "close": {
+                        "default": false,
+                        "type": "boolean"
+                      },
+                      "external_id": {
+                        "type": "string"
+                      },
+                      "indices": {
+                        "additionalProperties": {
+                          "properties": {
+                            "case_id": {
+                              "type": "string"
+                            },
+                            "case_type": {
+                              "type": "string"
+                            },
+                            "external_id": {
+                              "type": "string"
+                            },
+                            "relationship": {
+                              "enum": [
+                                "child",
+                                "extension"
+                              ],
+                              "type": "string"
+                            },
+                            "temporary_id": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      "owner_id": {
+                        "type": "string"
+                      },
+                      "properties": {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      "temporary_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "case_name",
+                      "case_type",
+                      "owner_id"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "case_id": {
+                        "type": "string"
+                      },
+                      "case_name": {
+                        "type": "string"
+                      },
+                      "case_type": {
+                        "type": "string"
+                      },
+                      "close": {
+                        "default": false,
+                        "type": "boolean"
+                      },
+                      "external_id": {
+                        "type": "string"
+                      },
+                      "indices": {
+                        "additionalProperties": {
+                          "properties": {
+                            "case_id": {
+                              "type": "string"
+                            },
+                            "case_type": {
+                              "type": "string"
+                            },
+                            "external_id": {
+                              "type": "string"
+                            },
+                            "relationship": {
+                              "enum": [
+                                "child",
+                                "extension"
+                              ],
+                              "type": "string"
+                            },
+                            "temporary_id": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      "owner_id": {
+                        "type": "string"
+                      },
+                      "properties": {
+                        "additionalProperties": true,
+                        "type": "object"
+                      }
                     },
                     "type": "object"
-                  },
-                  "owner_id": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "additionalProperties": true,
-                    "type": "object"
                   }
-                },
-                "type": "object"
+                ]
               }
             }
           },

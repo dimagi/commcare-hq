@@ -182,23 +182,30 @@ def build_all():
     }
     bundle = build_document(entries, title='CommCare Data APIs')
 
-    # Deferred import to avoid a cycle: ``hqcase.views`` registers its
-    # ``VIEW_DOCS`` entries as a decorator side effect at import time, and
-    # ``corehq.apps.api.urls`` already imports this module.
+    # Deferred, not because of an import cycle -- hoisting this to module
+    # scope works fine, ``corehq.apps.api.urls`` never imports
+    # ``builder.py`` -- but so that importing this module (e.g. for
+    # ``documented_entries()`` alone) doesn't always also pull in
+    # ``hqcase.views`` and, transitively, all of its Django view
+    # decorators (auth, permissions, CSRF, throttling).
     from corehq.apps.hqcase import views  # noqa: F401
     from corehq.apps.api.openapi.view_adapter import VIEW_DOCS
 
     # More than one decorated view can share a doc_slug (e.g. Case API v2
     # is both `case_api` and the separate `case_api_bulk_fetch` view), so
     # their paths are merged into one document rather than the later view
-    # overwriting the earlier one's.
+    # overwriting the earlier one's. The merged document's title is
+    # derived from the shared doc_slug rather than from whichever view's
+    # `summary` happened to register first, so it doesn't depend on --
+    # or misrepresent -- registration order.
     view_documents = {}
     for docs in VIEW_DOCS:
         paths = view_paths(docs)
         if docs.doc_slug in view_documents:
             view_documents[docs.doc_slug]['paths'].update(paths)
         else:
-            document = build_document([], title=docs.summary)
+            title = docs.doc_slug.replace('-', ' ').title()
+            document = build_document([], title=title)
             document['paths'] = paths
             view_documents[docs.doc_slug] = document
         bundle['paths'].update(paths)

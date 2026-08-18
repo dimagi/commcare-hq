@@ -76,3 +76,38 @@ def test_case_api_v2_is_in_the_generated_documents():
     paths = documents['case-v2']['paths']
     assert '/a/{domain}/api/case/v2/' in paths
     assert 'requestBody' in paths['/a/{domain}/api/case/v2/']['post']
+
+
+def test_case_api_v2_covers_all_four_routed_endpoints_with_unique_operation_ids():
+    documents = build_all()
+    paths = documents['case-v2']['paths']
+    assert set(paths) == {
+        '/a/{domain}/api/case/v2/',
+        '/a/{domain}/api/case/v2/{case_id}/',
+        '/a/{domain}/api/case/v2/ext/{external_id}/',
+        '/a/{domain}/api/case/v2/bulk-fetch/',
+    }
+    operation_ids = [
+        op['operationId']
+        for item in paths.values()
+        for method, op in item.items()
+        if method != 'parameters'
+    ]
+    assert len(operation_ids) == len(set(operation_ids))
+    # Every GET is body-less; every POST/PUT declares one.
+    for path, item in paths.items():
+        for method, op in item.items():
+            if method == 'parameters':
+                continue
+            if method == 'get':
+                assert 'requestBody' not in op
+            else:
+                assert 'requestBody' in op, f'{method} {path} has no body'
+
+
+def test_case_api_bulk_fetch_document_has_its_own_title_from_the_slug():
+    documents = build_all()
+    # The merged document's title is derived from the shared doc_slug,
+    # not from whichever view registered first (`case_api`'s own
+    # summary is 'Cases', not 'Case V2').
+    assert documents['case-v2']['info']['title'] == 'Case V2'
