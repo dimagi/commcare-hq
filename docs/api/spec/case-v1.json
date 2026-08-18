@@ -503,5 +503,11 @@
         }
       }
     }
+  ],
+  "tags": [
+    {
+      "description": "List cases in a project space, or fetch a single case by identifier. Cases track structured data about a person, place or thing, collected and updated by CommCare mobile or web app forms.",
+      "name": "case"
+    }
   ]
 }

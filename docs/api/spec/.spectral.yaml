@@ -1,8 +1,12 @@
 extends: ["spectral:oas"]
 rules:
-  # The bundle intentionally has no top-level tags declaration.
-  openapi-tags: off
   # Contact and licence live on the docs site, not in each spec.
   info-contact: off
   info-license: off
   license-url: off
+  # CommCare's API URLs genuinely end in a slash -- that is how the
+  # Django and Tastypie routing works, it is what every documented URL
+  # in the existing docs shows, and it is not something this project may
+  # change. The rule does not apply to this API rather than being
+  # violated by it.
+  path-keys-no-trailing-slash: off

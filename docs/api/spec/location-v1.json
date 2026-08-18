@@ -441,5 +441,11 @@
         }
       }
     }
+  ],
+  "tags": [
+    {
+      "description": "List locations in a project space, or fetch a single location by identifier. Locations represent the places, facilities or administrative areas where a project operates, arranged in a hierarchy of location types.",
+      "name": "location"
+    }
   ]
 }

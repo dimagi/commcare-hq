@@ -1,5 +1,6 @@
 """Assembly of complete OpenAPI documents for the CommCare data APIs."""
 
+import json
 import re
 
 from corehq.apps.api.openapi.catalogue import documented_entries
@@ -37,11 +38,27 @@ PAGINATION_META_SCHEMA = {
 }
 
 
-def build_document(entries, *, title):
+def _references_pagination_meta(paths):
+    """Whether any operation in ``paths`` ``$ref``s ``PaginationMeta``.
+
+    Only a resource with a list endpoint gets the paginated-list response
+    that refs it (see ``operations._list_responses()``); a document made
+    up entirely of detail-only or function-based-view paths never does,
+    and declaring the schema there anyway is what Spectral's
+    ``oas3-unused-component`` rule is catching.
+    """
+    needle = '#/components/schemas/PaginationMeta'
+    return needle in json.dumps(paths)
+
+
+def build_document(entries, *, title, tags=()):
     paths = {}
     for entry in entries:
         paths.update(resource_paths(entry))
-    return {
+    schemas = {}
+    if _references_pagination_meta(paths):
+        schemas['PaginationMeta'] = PAGINATION_META_SCHEMA
+    document = {
         'openapi': OPENAPI_VERSION,
         'info': {
             'title': title,
@@ -51,11 +68,63 @@ def build_document(entries, *, title):
         'servers': SERVERS,
         'paths': paths,
         'components': {
-            'schemas': {'PaginationMeta': PAGINATION_META_SCHEMA},
+            'schemas': schemas,
             'securitySchemes': SECURITY_SCHEMES,
         },
         'security': SECURITY_REQUIREMENT,
     }
+    if tags:
+        document['tags'] = list(tags)
+    return document
+
+
+def _resource_tag(entry):
+    """The (name, description) tag pair for a catalogue entry's resource.
+
+    ``name`` matches the tag ``operations.resource_paths()`` attaches to
+    every operation for this resource (its Tastypie ``resource_name``), so
+    declaring it globally here satisfies Spectral's
+    ``operation-tag-defined`` rule without inventing anything -- the
+    description, when there is one, comes straight from the resource's own
+    ``Docs``.
+    """
+    from corehq.apps.api.openapi.docs import collect_docs
+
+    resource = entry.resource(api_name=entry.version)
+    name = resource._meta.resource_name
+    docs = collect_docs(entry.resource)
+    description = docs.get('description') or docs.get('summary')
+    return name, description
+
+
+def _view_tag(docs):
+    """The (name, description) tag pair for a documented function-based
+    view, matching the tag ``view_paths()`` attaches to its operations."""
+    return docs.doc_slug, (docs.description or docs.summary)
+
+
+def _merge_tags(pairs):
+    """Deduplicate ``(name, description)`` pairs into an OpenAPI ``tags``
+    list, preserving first-seen order.
+
+    The first non-empty description seen for a name wins; a later
+    occurrence with no description does not blank one out (this matters
+    for the bundle, where the same tag name can recur once per
+    version of a resource).
+    """
+    tags = {}
+    for name, description in pairs:
+        if description and not tags.get(name):
+            tags[name] = description
+        else:
+            tags.setdefault(name, description)
+    result = []
+    for name, description in tags.items():
+        tag = {'name': name}
+        if description:
+            tag['description'] = description
+        result.append(tag)
+    return result
 
 
 def _title(entry):
@@ -177,10 +246,17 @@ def build_all():
     """Every documented spec, keyed by ``doc_slug``, plus ``'bundle'``."""
     entries = documented_entries()
     documents = {
-        entry.doc_slug: build_document([entry], title=_title(entry))
+        entry.doc_slug: build_document(
+            [entry],
+            title=_title(entry),
+            tags=_merge_tags([_resource_tag(entry)]),
+        )
         for entry in entries
     }
-    bundle = build_document(entries, title='CommCare Data APIs')
+    resource_tags = [_resource_tag(entry) for entry in entries]
+    bundle = build_document(
+        entries, title='CommCare Data APIs', tags=_merge_tags(resource_tags)
+    )
 
     # Deferred, not because of an import cycle -- hoisting this to module
     # scope works fine, ``corehq.apps.api.urls`` never imports
@@ -199,16 +275,23 @@ def build_all():
     # `summary` happened to register first, so it doesn't depend on --
     # or misrepresent -- registration order.
     view_documents = {}
+    view_tags = []
     for docs in VIEW_DOCS:
         paths = view_paths(docs)
+        view_tags.append(_view_tag(docs))
         if docs.doc_slug in view_documents:
             view_documents[docs.doc_slug]['paths'].update(paths)
         else:
             title = docs.doc_slug.replace('-', ' ').title()
-            document = build_document([], title=title)
+            document = build_document(
+                [], title=title, tags=_merge_tags([_view_tag(docs)])
+            )
             document['paths'] = paths
             view_documents[docs.doc_slug] = document
         bundle['paths'].update(paths)
+
+    if view_tags:
+        bundle['tags'] = _merge_tags(resource_tags + view_tags)
 
     documents.update(view_documents)
     documents['bundle'] = bundle

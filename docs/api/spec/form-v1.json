@@ -553,5 +553,11 @@
         }
       }
     }
+  ],
+  "tags": [
+    {
+      "description": "List form submissions in a project space, or fetch a single form by identifier. Forms are individual data submissions made from CommCare mobile or web apps.",
+      "name": "form"
+    }
   ]
 }

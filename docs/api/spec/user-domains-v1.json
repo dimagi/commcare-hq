@@ -577,5 +577,10 @@
         }
       }
     }
+  ],
+  "tags": [
+    {
+      "name": "user_domains"
+    }
   ]
 }

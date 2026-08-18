@@ -950,5 +950,11 @@
         }
       }
     }
+  ],
+  "tags": [
+    {
+      "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.",
+      "name": "user"
+    }
   ]
 }

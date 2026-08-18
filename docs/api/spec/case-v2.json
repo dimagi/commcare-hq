@@ -1,30 +1,6 @@
 {
   "components": {
-    "schemas": {
-      "PaginationMeta": {
-        "description": "Pagination metadata for a page of records.",
-        "properties": {
-          "limit": {
-            "type": "integer"
-          },
-          "next": {
-            "nullable": true,
-            "type": "string"
-          },
-          "offset": {
-            "type": "integer"
-          },
-          "previous": {
-            "nullable": true,
-            "type": "string"
-          },
-          "total_count": {
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      }
-    },
+    "schemas": {},
     "securitySchemes": {
       "ApiKeyAuth": {
         "description": "Send the header `Authorization: ApiKey <username>:<api_key>`. Generate an API key from your CommCare HQ account settings.",
@@ -1225,6 +1201,12 @@
           "description": "Hostname of the CommCare HQ instance."
         }
       }
+    }
+  ],
+  "tags": [
+    {
+      "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
+      "name": "case-v2"
     }
   ]
 }

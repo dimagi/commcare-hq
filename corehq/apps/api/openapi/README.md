@@ -40,8 +40,18 @@ description or `operationId`:
         docs/api/spec/*.json
 
 It should report no errors. See `docs/api/spec/.spectral.yaml` for the rules
-disabled and why (a missing top-level `tags` declaration, and contact/license
-metadata, which live on the docs site rather than in each spec).
+disabled and why (contact/license metadata, which lives on the docs site rather
+than in each spec, and trailing-slash paths, which are how CommCare's API
+routing actually works).
+
+It should currently report around **30 warnings**, all `operation-description`,
+and no other rule. Every one is on an operation belonging to one of the nine
+undocumented specs listed below — that count is a real, expected-to-shrink
+signal of remaining documentation work, not noise: it should fall as each of
+those nine specs gets a real `Docs.description`, and it should reach zero only
+once all nine are done. If a warning for a _different_ rule appears, or the
+count grows without a corresponding change to those nine specs, something
+regressed — investigate rather than assuming it's part of the same baseline.
 
 ## Known limitations
 

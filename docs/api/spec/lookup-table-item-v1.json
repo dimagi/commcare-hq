@@ -656,5 +656,11 @@
         }
       }
     }
+  ],
+  "tags": [
+    {
+      "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
+      "name": "lookup_table_item"
+    }
   ]
 }

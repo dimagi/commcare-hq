@@ -292,5 +292,10 @@
         }
       }
     }
+  ],
+  "tags": [
+    {
+      "name": "application"
+    }
   ]
 }

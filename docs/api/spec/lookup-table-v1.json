@@ -660,5 +660,11 @@
         }
       }
     }
+  ],
+  "tags": [
+    {
+      "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
+      "name": "lookup_table"
+    }
   ]
 }

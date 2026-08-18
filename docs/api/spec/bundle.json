@@ -9901,5 +9901,70 @@
         }
       }
     }
+  ],
+  "tags": [
+    {
+      "name": "application"
+    },
+    {
+      "description": "List cases in a project space, or fetch a single case by identifier. Cases track structured data about a person, place or thing, collected and updated by CommCare mobile or web app forms.",
+      "name": "case"
+    },
+    {
+      "description": "List form submissions in a project space, or fetch a single form by identifier. Forms are individual data submissions made from CommCare mobile or web apps.",
+      "name": "form"
+    },
+    {
+      "name": "sso"
+    },
+    {
+      "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.",
+      "name": "user"
+    },
+    {
+      "name": "web-user"
+    },
+    {
+      "description": "List the groups in a project space, or fetch a single group by identifier. Groups collect mobile workers for case sharing and reporting.",
+      "name": "group"
+    },
+    {
+      "name": "bulk-user"
+    },
+    {
+      "name": "fixture"
+    },
+    {
+      "description": "List locations in a project space, or fetch a single location by identifier. Locations represent the places, facilities or administrative areas where a project operates, arranged in a hierarchy of location types.",
+      "name": "location"
+    },
+    {
+      "description": "List the location types configured in a project space, or fetch a single location type by identifier. Location types define the organizational hierarchy (for example state, district, or facility) that locations belong to.",
+      "name": "location_type"
+    },
+    {
+      "name": "simplereportconfiguration"
+    },
+    {
+      "name": "configurablereportdata"
+    },
+    {
+      "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
+      "name": "lookup_table"
+    },
+    {
+      "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
+      "name": "lookup_table_item"
+    },
+    {
+      "name": "det_export_instance"
+    },
+    {
+      "name": "user_domains"
+    },
+    {
+      "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
+      "name": "case-v2"
+    }
   ]
 }

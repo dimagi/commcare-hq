@@ -861,5 +861,11 @@
         }
       }
     }
+  ],
+  "tags": [
+    {
+      "description": "List locations in a project space, create locations, or fetch and update a single location. Version 2 returns location data as a nested object and supports filtering by last modified date.",
+      "name": "location"
+    }
   ]
 }

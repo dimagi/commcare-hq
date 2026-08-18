@@ -1114,5 +1114,11 @@
         }
       }
     }
+  ],
+  "tags": [
+    {
+      "description": "List the location types configured in a project space, or fetch a single location type by identifier. Location types define the organizational hierarchy (for example state, district, or facility) that locations belong to.",
+      "name": "location_type"
+    }
   ]
 }

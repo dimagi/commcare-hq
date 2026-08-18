@@ -294,5 +294,10 @@
         }
       }
     }
+  ],
+  "tags": [
+    {
+      "name": "det_export_instance"
+    }
   ]
 }

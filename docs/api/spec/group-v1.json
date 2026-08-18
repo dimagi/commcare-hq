@@ -775,5 +775,11 @@
         }
       }
     }
+  ],
+  "tags": [
+    {
+      "description": "List the groups in a project space, or fetch a single group by identifier. Groups collect mobile workers for case sharing and reporting.",
+      "name": "group"
+    }
   ]
 }
