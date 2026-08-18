@@ -20,16 +20,17 @@ When you report, please include as much of the following as you can:
 - Steps to reproduce, or a proof of concept.
 - The affected component(s), endpoint(s), or file(s), and the commit or
   deployment you tested against.
-- Any suggested remediation, if you have one.
 
 ## What to expect
 
 - We aim to acknowledge your report as fast as reasonably possible.
-- We follow **coordinated disclosure**: we ask that you give us a reasonable
-  opportunity to release a fix before any public disclosure. With your
-  permission, we are glad to credit you in the resulting advisory.
+- We follow **coordinated disclosure**. Accordingly we request that 
+  you provide us a reasonable opportunity to release a fix and protect
+  covered surfaces before any public disclosure, and notify us of intent
+  to publish. With your permission, we are glad to credit individuals who
+  have discovered vulnerabilities.
 
-For confirmed vulnerabilities we publish a fix and, where appropriate, a
+Where appropriate for confirmed vulnerabilities, we publish a 
 [GitHub Security Advisory](https://github.com/dimagi/commcare-hq/security/advisories).
 
 ## Supported versions
