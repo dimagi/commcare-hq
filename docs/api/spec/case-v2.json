@@ -456,7 +456,8 @@
                               "enum": [
                                 null
                               ],
-                              "nullable": true
+                              "nullable": true,
+                              "type": "boolean"
                             },
                             "external_id": {
                               "type": "string"
@@ -757,7 +758,8 @@
                               "enum": [
                                 null
                               ],
-                              "nullable": true
+                              "nullable": true,
+                              "type": "boolean"
                             },
                             "external_id": {
                               "type": "string"

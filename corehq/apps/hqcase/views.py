@@ -170,7 +170,7 @@ def _bulk_item_schema():
     )
     upsert_item = _with_create_flag(
         upsert_base,
-        {'nullable': True, 'enum': [None]},
+        {'type': 'boolean', 'nullable': True, 'enum': [None]},
         'Upserts a case by external_id: updates it if a case with that '
         'external_id already exists, or creates it otherwise.',
     )
