@@ -66,7 +66,7 @@
   "paths": {
     "/a/{domain}/api/case/v2/": {
       "get": {
-        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT updates the case identified by the case ID or external ID in the URL.",
+        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
         "operationId": "case-v2_list_get",
         "parameters": [
           {
@@ -209,7 +209,7 @@
         }
       ],
       "post": {
-        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT updates the case identified by the case ID or external ID in the URL.",
+        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
         "operationId": "case-v2_list_post",
         "requestBody": {
           "content": {
@@ -372,8 +372,162 @@
         ]
       },
       "put": {
-        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT updates the case identified by the case ID or external ID in the URL.",
+        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
         "operationId": "case-v2_list_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "case_id": "5160d95d-efdc-4fbb-ba11-5f5bccdde950",
+                "properties": {
+                  "dob": "1948-11-02"
+                }
+              },
+              "schema": {
+                "oneOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "case_id"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "external_id"
+                        ]
+                      }
+                    ],
+                    "properties": {
+                      "case_id": {
+                        "type": "string"
+                      },
+                      "case_name": {
+                        "type": "string"
+                      },
+                      "case_type": {
+                        "type": "string"
+                      },
+                      "close": {
+                        "default": false,
+                        "type": "boolean"
+                      },
+                      "external_id": {
+                        "type": "string"
+                      },
+                      "indices": {
+                        "additionalProperties": {
+                          "properties": {
+                            "case_id": {
+                              "type": "string"
+                            },
+                            "case_type": {
+                              "type": "string"
+                            },
+                            "external_id": {
+                              "type": "string"
+                            },
+                            "relationship": {
+                              "enum": [
+                                "child",
+                                "extension"
+                              ],
+                              "type": "string"
+                            },
+                            "temporary_id": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      "owner_id": {
+                        "type": "string"
+                      },
+                      "properties": {
+                        "additionalProperties": true,
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "case_id"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "external_id"
+                          ]
+                        }
+                      ],
+                      "properties": {
+                        "case_id": {
+                          "type": "string"
+                        },
+                        "case_name": {
+                          "type": "string"
+                        },
+                        "case_type": {
+                          "type": "string"
+                        },
+                        "close": {
+                          "default": false,
+                          "type": "boolean"
+                        },
+                        "external_id": {
+                          "type": "string"
+                        },
+                        "indices": {
+                          "additionalProperties": {
+                            "properties": {
+                              "case_id": {
+                                "type": "string"
+                              },
+                              "case_type": {
+                                "type": "string"
+                              },
+                              "external_id": {
+                                "type": "string"
+                              },
+                              "relationship": {
+                                "enum": [
+                                  "child",
+                                  "extension"
+                                ],
+                                "type": "string"
+                              },
+                              "temporary_id": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "object"
+                        },
+                        "owner_id": {
+                          "type": "string"
+                        },
+                        "properties": {
+                          "additionalProperties": true,
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Success."
@@ -385,10 +539,82 @@
         ]
       }
     },
-    "/a/{domain}/api/case/v2/{case_id}/": {
+    "/a/{domain}/api/case/v2/bulk-fetch/": {
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "description": "Fetch multiple cases by case ID and/or external ID in a single request. The body must include \"case_ids\" and/or \"external_ids\" (both may be given together). Unlike GET /a/{domain}/api/case/v2/<case_id>,<case_id>,..., this has no practical limit on how many cases can be requested at once.",
+        "operationId": "case-v2_bulk_fetch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "case_ids": [
+                  "30ad22bd-f828-4e3f-8287-a67a180cff4f",
+                  "d5e5962a-c5f1-483c-a58a-590167d594a9"
+                ],
+                "external_ids": [
+                  "id1",
+                  "id2"
+                ]
+              },
+              "schema": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "case_ids"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "external_ids"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "case_ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "external_ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success."
+          }
+        },
+        "summary": "Bulk fetch cases",
+        "tags": [
+          "case-v2"
+        ]
+      }
+    },
+    "/a/{domain}/api/case/v2/ext/{external_id}/": {
       "get": {
-        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT updates the case identified by the case ID or external ID in the URL.",
-        "operationId": "case-v2_detail_get",
+        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
+        "operationId": "case-v2_ext_external_id_get",
         "responses": {
           "200": {
             "description": "Success."
@@ -410,6 +636,122 @@
           }
         },
         {
+          "description": "The case's external ID.",
+          "in": "path",
+          "name": "external_id",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "put": {
+        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
+        "operationId": "case-v2_ext_external_id_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "case_name": "Elizabeth Harmon",
+                "case_type": "patient",
+                "owner_id": "20cc9dda-b90a-4af3-aa3d-fc67184e73ef",
+                "properties": {
+                  "dob": "1948-11-02"
+                }
+              },
+              "schema": {
+                "properties": {
+                  "case_name": {
+                    "type": "string"
+                  },
+                  "case_type": {
+                    "type": "string"
+                  },
+                  "close": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "external_id": {
+                    "type": "string"
+                  },
+                  "indices": {
+                    "additionalProperties": {
+                      "properties": {
+                        "case_id": {
+                          "type": "string"
+                        },
+                        "case_type": {
+                          "type": "string"
+                        },
+                        "external_id": {
+                          "type": "string"
+                        },
+                        "relationship": {
+                          "enum": [
+                            "child",
+                            "extension"
+                          ],
+                          "type": "string"
+                        },
+                        "temporary_id": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  "owner_id": {
+                    "type": "string"
+                  },
+                  "properties": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success."
+          }
+        },
+        "summary": "Cases",
+        "tags": [
+          "case-v2"
+        ]
+      }
+    },
+    "/a/{domain}/api/case/v2/{case_id}/": {
+      "get": {
+        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
+        "operationId": "case-v2_case_id_get",
+        "responses": {
+          "200": {
+            "description": "Success."
+          }
+        },
+        "summary": "Cases",
+        "tags": [
+          "case-v2"
+        ]
+      },
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The case ID. For GET, multiple IDs may be given as a comma-separated list, e.g. \"id1,id2,id3\", to fetch several cases at once.",
           "in": "path",
           "name": "case_id",
           "required": true,
@@ -419,8 +761,76 @@
         }
       ],
       "put": {
-        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT updates the case identified by the case ID or external ID in the URL.",
-        "operationId": "case-v2_detail_put",
+        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
+        "operationId": "case-v2_case_id_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "case_id": "5160d95d-efdc-4fbb-ba11-5f5bccdde950",
+                "properties": {
+                  "dob": "1948-11-02"
+                }
+              },
+              "schema": {
+                "properties": {
+                  "case_id": {
+                    "type": "string"
+                  },
+                  "case_name": {
+                    "type": "string"
+                  },
+                  "case_type": {
+                    "type": "string"
+                  },
+                  "close": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "external_id": {
+                    "type": "string"
+                  },
+                  "indices": {
+                    "additionalProperties": {
+                      "properties": {
+                        "case_id": {
+                          "type": "string"
+                        },
+                        "case_type": {
+                          "type": "string"
+                        },
+                        "external_id": {
+                          "type": "string"
+                        },
+                        "relationship": {
+                          "enum": [
+                            "child",
+                            "extension"
+                          ],
+                          "type": "string"
+                        },
+                        "temporary_id": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  "owner_id": {
+                    "type": "string"
+                  },
+                  "properties": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Success."

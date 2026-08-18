@@ -67,18 +67,59 @@ def _title(entry):
     return entry.doc_slug.replace('-', ' ').title()
 
 
-def _path_parameters(path):
+def _path_parameters(path, descriptions):
     """Path parameters for a path template, other than ``{domain}``."""
-    return [
-        {
+    parameters = []
+    for name in re.findall(r'{(\w+)}', path):
+        if name == 'domain':
+            continue
+        parameter = {
             'name': name,
             'in': 'path',
             'required': True,
             'schema': {'type': 'string'},
         }
-        for name in re.findall(r'{(\w+)}', path)
-        if name != 'domain'
-    ]
+        if name in descriptions:
+            parameter['description'] = descriptions[name]
+        parameters.append(parameter)
+    return parameters
+
+
+def _operation_id_tail(doc_slug, path):
+    """A short, unique-per-path token to build an ``operationId`` from.
+
+    ``doc_slug`` is ``<resource>-<version>``, and every path this view
+    serves is expected to share the ``/a/{domain}/api/<resource>/
+    <version>`` prefix that implies; stripping it keeps operationIds
+    short while still being unique across every path of the view (unlike
+    a generic "list"/"detail" label, which collides once a view serves
+    more than one non-detail path, e.g. a bulk-fetch endpoint alongside
+    the plain list path).
+    """
+    prefix = f'/a/{{domain}}/api/{doc_slug.replace("-", "/")}'
+    tail = path[len(prefix) :] if path.startswith(prefix) else path
+    tail = tail.strip('/').replace('{', '').replace('}', '')
+    tail = re.sub(r'[^a-zA-Z0-9]+', '_', tail).strip('_')
+    return tail or 'list'
+
+
+def _request_schema_and_example(docs, path, method):
+    """The requestBody schema and example for one path's operation.
+
+    A ``request_schemas``/``examples`` key may be a plain method name,
+    applied to every path, or a ``(path, key)`` tuple overriding that for
+    one specific path -- e.g. a create/update endpoint whose list path
+    accepts a single object or a bulk list, but whose detail path (the
+    item is already identified by the URL) only ever accepts one object.
+    """
+    schema = docs.request_schemas.get(
+        (path, method), docs.request_schemas.get(method)
+    )
+    example_key = f'{method}_request'
+    example = docs.examples.get(
+        (path, example_key), docs.examples.get(example_key)
+    )
+    return schema, example
 
 
 def view_paths(docs):
@@ -90,7 +131,13 @@ def view_paths(docs):
 
     paths = {}
     for path in docs.paths:
-        item = {'parameters': [DOMAIN_PARAMETER, *_path_parameters(path)]}
+        descriptions = docs.path_parameter_descriptions
+        item = {
+            'parameters': [
+                DOMAIN_PARAMETER,
+                *_path_parameters(path, descriptions),
+            ]
+        }
         is_detail = path.rstrip('/').endswith('}')
         for method in docs.methods:
             # POST targets the collection (creating a new item, or a bulk
@@ -102,7 +149,7 @@ def view_paths(docs):
                 'summary': docs.summary,
                 'description': docs.description,
                 'operationId': (
-                    f'{docs.doc_slug}_{"detail" if is_detail else "list"}'
+                    f'{docs.doc_slug}_{_operation_id_tail(docs.doc_slug, path)}'
                     f'_{method}'
                 ),
                 'tags': [docs.doc_slug],
@@ -112,17 +159,9 @@ def view_paths(docs):
             }
             if method == 'get' and not is_detail:
                 operation['parameters'] = docs.parameters
-            schema = docs.request_schemas.get(method)
+            schema, example = _request_schema_and_example(docs, path, method)
             if schema:
-                # POST accepts either a single object or a list of them
-                # for bulk changes, so publish both shapes rather than
-                # only the single-object one.
-                if method == 'post':
-                    schema = {
-                        'oneOf': [schema, {'type': 'array', 'items': schema}]
-                    }
                 body = {'schema': schema}
-                example = docs.examples.get(f'{method}_request')
                 if example:
                     body['example'] = load_example(example)
                 operation['requestBody'] = {
@@ -144,17 +183,26 @@ def build_all():
     bundle = build_document(entries, title='CommCare Data APIs')
 
     # Deferred import to avoid a cycle: ``hqcase.views`` registers its
-    # ``VIEW_DOCS`` entry as a decorator side effect at import time, and
+    # ``VIEW_DOCS`` entries as a decorator side effect at import time, and
     # ``corehq.apps.api.urls`` already imports this module.
     from corehq.apps.hqcase import views  # noqa: F401
     from corehq.apps.api.openapi.view_adapter import VIEW_DOCS
 
+    # More than one decorated view can share a doc_slug (e.g. Case API v2
+    # is both `case_api` and the separate `case_api_bulk_fetch` view), so
+    # their paths are merged into one document rather than the later view
+    # overwriting the earlier one's.
+    view_documents = {}
     for docs in VIEW_DOCS:
         paths = view_paths(docs)
-        document = build_document([], title=docs.summary)
-        document['paths'] = paths
-        documents[docs.doc_slug] = document
+        if docs.doc_slug in view_documents:
+            view_documents[docs.doc_slug]['paths'].update(paths)
+        else:
+            document = build_document([], title=docs.summary)
+            document['paths'] = paths
+            view_documents[docs.doc_slug] = document
         bundle['paths'].update(paths)
 
+    documents.update(view_documents)
     documents['bundle'] = bundle
     return documents

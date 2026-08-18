@@ -19,9 +19,15 @@ class ApiViewDocs:
     doc_slug: str
     methods: list = field(default_factory=lambda: ['get'])
     parameters: list = field(default_factory=list)
+    # A key may be a plain method name (``'put'``), applied to every path
+    # this view serves, or a ``(path, method)`` tuple to override that for
+    # one specific path -- e.g. a bulk update endpoint whose list path
+    # accepts a list but whose detail path never does.
     request_schemas: dict = field(default_factory=dict)
     response_schemas: dict = field(default_factory=dict)
     examples: dict = field(default_factory=dict)
+    # Path parameter name -> description, e.g. {'case_id': '...'}.
+    path_parameter_descriptions: dict = field(default_factory=dict)
 
 
 def api_docs(**kwargs):

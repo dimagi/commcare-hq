@@ -42,10 +42,14 @@ PUT /                       Update existing case, identified by
                             matching case is found.
 =========================== ======================================
 
-The reference below covers ``GET`` and ``POST /`` on the list endpoint, and
-``GET`` and ``PUT`` on the individual-case endpoint (``/<case_id>``). The
-other endpoints in the table above -- bulk fetch, and the ``ext/<ext_id>/``
-variants -- are documented in prose further down this page.
+The reference below covers all four routed Case API v2 endpoints: the list
+endpoint (``GET``/``POST``/``PUT`` on ``/``), the individual-case endpoint
+(``GET``/``PUT`` on ``/<case_id>``), the external-ID endpoint
+(``GET``/``PUT`` on ``/ext/<ext_id>/``), and the bulk-fetch endpoint
+(``POST`` on ``/bulk-fetch/``). The multi-ID GET (``/<case_id>,<case_id>...``)
+is not separately listed there, since it is the same route and operation as
+the individual-case ``GET`` -- see "`Get cases in bulk`_" below for its
+comma-separated-ID behaviour.
 
 .. openapi:: spec/case-v2.json
 
