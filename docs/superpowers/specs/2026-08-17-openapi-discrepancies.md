@@ -1669,10 +1669,16 @@ the view's own `if` chain", and anything that falls through returns a 405
   domain-non-member hits a bare `HttpResponseForbidden()`
   (`decorators.py:303,329`) while a domain member lacking `edit_data`
   triggers an uncaught `django.core.exceptions.PermissionDenied`
-  (`require_permission_raw`, `corehq/apps/users/decorators.py:44-54`)
-  rendered by Django's own default (HTML) `permission_denied` view, since no
-  custom `handler403` is registered anywhere in this codebase. Neither shape
-  is JSON. This was not verified against a live server (no reachable
-  Postgres/service in this environment) -- it is a static trace of the
-  decorator source, flagged here rather than silently copying `case-v2.yaml`'s
-  precedent, which appears to make the same untested assumption.
+  (`require_permission_raw`, `corehq/apps/users/decorators.py:44-54`),
+  handled by this project's own registered `handler403 = no_permissions`
+  (`urls.py:49`), which renders the `403.html` template via
+  `_no_permissions_message` (`corehq/apps/hqwebapp/views.py:348-357`) inside
+  an `HttpResponseForbidden` (`views.py:361-373`) -- an HTML page, not
+  JSON. (The submission-views entry above, `urls.py:47`/`views.py:362-373`,
+  already established this same mechanism; an earlier draft of this entry
+  incorrectly asserted no `handler403` was registered at all -- corrected.)
+  Neither the empty nor the HTML shape is JSON. This was not verified
+  against a live server (no reachable Postgres/service in this environment)
+  -- it is a static trace of the decorator source, flagged here rather than
+  silently copying `case-v2.yaml`'s precedent, which appears to make the
+  same untested assumption.

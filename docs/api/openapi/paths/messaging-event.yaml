@@ -300,14 +300,17 @@ List:
         #    body.
         #  - A domain member who lacks the `edit_data` permission:
         #    `require_permission_raw` (`corehq/apps/users/decorators.py:44-54`)
-        #    raises an uncaught `django.core.exceptions.PermissionDenied`;
-        #    with no custom `handler403` registered in this codebase, Django's
-        #    own `permission_denied` view renders the default (HTML, not
-        #    JSON) 403 page.
+        #    raises an uncaught `django.core.exceptions.PermissionDenied`,
+        #    handled by the project's own registered `handler403 = no_permissions`
+        #    (`urls.py:49`, `corehq/apps/hqwebapp/views.py:361-373`), which
+        #    renders the `403.html` template (via `_no_permissions_message`,
+        #    `views.py:348-357`) inside an `HttpResponseForbidden` -- an HTML
+        #    page, not JSON.
         description: >-
           The authenticated user is not a member of this domain, or lacks the
           Edit Data permission. Either way the body is not the shared `{"error":
-          ...}` shape -- either empty, or Django's default HTML 403 page.
+          ...}` shape -- either an empty `HttpResponseForbidden`, or the
+          project's custom HTML 403 page rendered by `handler403`.
       "429":
         # Matches case/v2's already-documented finding for the identical
         # `api_throttle` decorator.

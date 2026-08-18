@@ -4153,7 +4153,7 @@ paths:
         '401':
           description: 'Authentication failed. The response is scheme-dependent and typically has no JSON body (a bare challenge response, e.g. a `WWW-Authenticate` header for digest auth) rather than the `{"error": ...}` shape most other resources in this spec use.'
         '403':
-          description: 'The authenticated user is not a member of this domain, or lacks the Edit Data permission. Either way the body is not the shared `{"error": ...}` shape -- either empty, or Django''s default HTML 403 page.'
+          description: 'The authenticated user is not a member of this domain, or lacks the Edit Data permission. Either way the body is not the shared `{"error": ...}` shape -- either an empty `HttpResponseForbidden`, or the project''s custom HTML 403 page rendered by `handler403`.'
         '429':
           description: The request was rate limited. The response body is empty; the `Retry-After` header carries the number of seconds to wait.
           headers:
