@@ -152,3 +152,7 @@ paths:
     $ref: "./paths/application.yaml#/MultimediaStatus"
   /a/{domain}/importer/excel/bulk_upload_api/:
     $ref: "./paths/bulk-upload-cases.yaml#/Upload"
+  /a/{domain}/api/messaging-event/v1/:
+    $ref: "./paths/messaging-event.yaml#/List"
+  /a/{domain}/api/messaging-event/v1/{event_id}/:
+    $ref: "./paths/messaging-event.yaml#/Detail"

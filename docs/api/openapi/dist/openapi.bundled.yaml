@@ -3999,6 +3999,205 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkUploadCasesResponse'
+  /a/{domain}/api/messaging-event/v1/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    get:
+      operationId: listMessagingEvents
+      summary: List messaging events
+      description: |-
+        Returns a cursor-paginated page of messaging events (technically `MessagingSubEvent` rows -- see the schema description) for the domain. Requires the Edit Data permission and API access (`@require_can_edit_data`, `@requires_privilege_with_fallback`, `view.py:26-27`).
+
+        **Pagination is cursor-based, not offset-based.** There is no `offset` parameter; follow `meta.next` until it is null. Results are always ordered by `date_last_activity` then `id` (`sort_query`, `corehq/apps/api/resources/messaging_event/utils.py:27-32`) unless `order_by` requests descending order.
+
+        **Filters are combined with AND.** Every parameter below except `limit` and `cursor` narrows the result set further when combined with another.
+      tags:
+        - SMS
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - name: cursor
+          in: query
+          required: false
+          description: 'Opaque pagination token. **Always copy this verbatim from a previous response''s `meta.next` URL -- never construct or edit it yourself.** When present, every other query parameter on the request is ignored: the cursor itself re-encodes the original filters plus the id of the last object already seen (`get_request_params`, `corehq/apps/api/resources/messaging_event/utils.py:55-63`, and `_get_cursor`, `.../pagination.py:49-70`).'
+          example: ZGF0ZS5ndGU9MjAyMC0wNS0xN1QyMCUzQTM3JTNBMTEuNzU3OTQwJmxhc3Rfb2JqZWN0X2lkPTEwMjUwOTYw
+          schema:
+            type: string
+        - name: date.gte
+          in: query
+          required: false
+          description: 'Only events with `event.date` on or after this moment. Parsed by `parse_str_to_date` (`corehq/apps/api/util.py:96-105`) -- a bare `YYYY-MM-DD` date, or anything `dateutil.parser.parse` accepts, **which includes a `Z` or a `+HH:MM` offset**. The parsed value is applied as a plain Django ORM filter (`django_date_filter`, `corehq/apps/api/util.py:108-129`, via `MessagingSubEvent.objects...filter(**filters)`, `view.py:56,63`); because `settings.USE_TZ = False` (`settings.py:57`), `DateTimeField.get_prep_value` (`django/db/models/fields/__init__.py:1663-1677`) never rewrites an aware value, so an offset is accepted and passed through to Postgres unconverted -- the same mechanism traced for `last_modified.gte` on locations/v2, and the same acceptance as cases/v2''s date filters (both reuse this same `parse_str_to_date` helper). Unlike case/v1''s `*_start`/`*_end`, an offset here is **not** rejected. An unparsable value raises `InvalidFilterError` (a `BadRequest` subclass, `filters.py:44-48`), returned as the standard `{"error": ...}` 400 body. `format: date-time` is deliberately not declared since the bare-date form is not itself an RFC3339 date-time, and response values are naive (see the `MessagingEvent.date` schema description).'
+          example: '2020-07-13T06:30:21.109409'
+          schema:
+            type: string
+        - name: date.gt
+          in: query
+          required: false
+          description: Only events with `event.date` strictly after this moment. Same parsing as `date.gte`.
+          example: '2020-07-13T06:30:21.109409'
+          schema:
+            type: string
+        - name: date.lte
+          in: query
+          required: false
+          description: Only events with `event.date` on or before this moment. Same parsing as `date.gte`.
+          example: '2021-05-01'
+          schema:
+            type: string
+        - name: date.lt
+          in: query
+          required: false
+          description: Only events with `event.date` strictly before this moment. Same parsing as `date.gte`.
+          example: '2021-05-01'
+          schema:
+            type: string
+        - name: date_last_activity.gte
+          in: query
+          required: false
+          description: Only events with `event.date_last_activity` on or after this moment. Same parsing and offset acceptance as `date.gte` (`COMPOUND_FILTERS`, `filters.py:169-172`, applies the identical `_get_date_filter_consumer` machinery to this field). **Not listed in `messaging-events.rst`'s filter table** (`:31-95`), which documents only the `date.*` family -- see the discrepancy file.
+          example: '2020-07-13T06:30:21.109409'
+          schema:
+            type: string
+        - name: date_last_activity.gt
+          in: query
+          required: false
+          description: Only events with `event.date_last_activity` strictly after this moment. Undocumented in `messaging-events.rst`; see `date_last_activity.gte`.
+          example: '2020-07-13T06:30:21.109409'
+          schema:
+            type: string
+        - name: date_last_activity.lte
+          in: query
+          required: false
+          description: Only events with `event.date_last_activity` on or before this moment. Undocumented in `messaging-events.rst`; see `date_last_activity.gte`.
+          example: '2021-05-01'
+          schema:
+            type: string
+        - name: date_last_activity.lt
+          in: query
+          required: false
+          description: Only events with `event.date_last_activity` strictly before this moment. Undocumented in `messaging-events.rst`; see `date_last_activity.gte`.
+          example: '2021-05-01'
+          schema:
+            type: string
+        - name: content_type
+          in: query
+          required: false
+          description: Filter on the event's content type, e.g. `sms`, `sms-survey`, `email`, `manual-sms`, `api-sms`, `chat-sms`. Comma-separate several values to OR them; some values additionally expand to related types (e.g. `sms-survey` also matches `ivr-survey`) (`_get_content_type_filter_consumer`, `filters.py:76-91`). **If not one comma-separated value matches a known slug, the request raises an uncaught `TypeError` and returns an unhandled 500, not a 400** -- `_make_slug_filter_consumer`'s inner function (`filters.py:100-113`) falls through to an implicit `None` return when nothing matches, and `filter_query` (`.../filters.py:19-22`) does `filters.update(None)`. See the discrepancy file; this is unlike `status`, which validates and raises a proper `BadRequest`.
+          example: sms
+          schema:
+            type: string
+        - name: source
+          in: query
+          required: false
+          description: Filter on the event's source, e.g. `broadcast` (also matches `scheduled-broadcast`/`immediate-broadcast`), `scheduled-broadcast`, `immediate-broadcast`, `keyword`, `reminder` (also matches the internal case-rule source), `conditional-alert` (`_get_source_filter_consumer`, `filters.py:61-74`). Comma-separate several values to OR them. Same all-unrecognized-values 500 caveat as `content_type` -- see the discrepancy file.
+          example: broadcast
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: 'Filter on the event''s status: `error`, `completed`, `in-progress`, or `not-completed` (unlike the response field, this filter does not accept `unknown`). Applied to the event and, for `error` and `in-progress`, to related messages/XForm sessions too (`_status_filter_consumer`, `filters.py:116-136`, matching `MessagingEventsReport.get_filters`). An unrecognized value raises a proper `BadRequest` -- `''<value>'' is not a valid value for the ''status'' filter` -- returned as the standard 400 body.'
+          example: error
+          schema:
+            type: string
+        - name: error_code
+          in: query
+          required: false
+          description: Exact match on the event's error code, e.g. `NO_PHONE_NUMBER`, `NO_RECIPIENT`, `NO_MESSAGE`. Not validated against a known list of codes.
+          example: NO_MESSAGE
+          schema:
+            type: string
+        - name: phone_number
+          in: query
+          required: false
+          description: Substring match (`__contains`, not exact) against the phone number of any SMS linked to the event (`SIMPLE_FILTERS["phone_number"]`, `filters.py:161-163`). Must be a value `validate_phone_number` (`corehq/apps/sms/util.py`) accepts, or the request fails with a 400.
+          example: '1234567'
+          schema:
+            type: string
+        - name: email_address
+          in: query
+          required: false
+          description: Exact match against the recipient email address of any email linked to the event. Must be a value Django's `validate_email` accepts, or the request fails with a 400.
+          example: user@example.com
+          schema:
+            type: string
+        - name: case_id
+          in: query
+          required: false
+          description: Exact match on the event's related case ID.
+          example: 523132e0-a562-4be1-bbc8-a634423c5c0c
+          schema:
+            type: string
+        - name: order_by
+          in: query
+          required: false
+          description: Sort order. `date_last_activity` (default, ascending) or `-date_last_activity` (descending) -- the only two accepted values (`get_order_by_field`, `corehq/apps/api/resources/messaging_event/utils.py:35-45`); a note in that function records that sorting by `date` was removed because it would require too large an index. Any other value raises a 400 `"No matching '<field_name>' field for ordering"`. Sorting by `date_last_activity` also determines whether the next cursor's synthetic filter is `date.gte` (ascending) or `date.lte` (descending) (`_get_cursor`, `.../pagination.py:58-61`).
+          example: date_last_activity
+          schema:
+            type: string
+            enum:
+              - date_last_activity
+              - -date_last_activity
+      responses:
+        '200':
+          description: A cursor-paginated page of messaging events.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessagingEventList'
+        '400':
+          description: 'An invalid `limit`, an unparsable date filter value, an unrecognized `order_by` or `status` value, or a `phone_number` / `email_address` that fails validation. Every one of these is a `tastypie.exceptions.BadRequest` (or subclass) caught by the view''s own `try`/`except` (`view.py:34,40-41`) and rendered as `{"error": ...}`. **Not** raised for an unrecognized `content_type` or `source` value -- see that parameter''s description and the discrepancy file.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 'Authentication failed. The response is scheme-dependent and typically has no JSON body (a bare challenge response, e.g. a `WWW-Authenticate` header for digest auth) rather than the `{"error": ...}` shape most other resources in this spec use.'
+        '403':
+          description: 'The authenticated user is not a member of this domain, or lacks the Edit Data permission. Either way the body is not the shared `{"error": ...}` shape -- either empty, or Django''s default HTML 403 page.'
+        '429':
+          description: The request was rate limited. The response body is empty; the `Retry-After` header carries the number of seconds to wait.
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying.
+              schema:
+                type: integer
+  /a/{domain}/api/messaging-event/v1/{event_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: event_id
+        in: path
+        required: true
+        description: Numeric `MessagingSubEvent` ID. The urlconf pattern is `\d+` (`corehq/apps/api/urls.py:140`), so non-digit values do not resolve to this operation at all.
+        example: '10215869'
+        schema:
+          type: string
+          pattern: ^\d+$
+    get:
+      operationId: getMessagingEvent
+      summary: Retrieve a single messaging event
+      description: Requires the Edit Data permission and API access, same as the list operation. Looks the event up scoped to this domain (`_get_base_query(request.domain).get(id=event_id)`, `view.py:46,62-63`) -- an id that exists but belongs to another domain is reported as not found, the same as one that does not exist at all.
+      tags:
+        - SMS
+      responses:
+        '200':
+          description: The messaging event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessagingEvent'
+        '401':
+          description: Authentication failed. Same scheme-dependent, typically non-JSON response as `listMessagingEvents`'s 401 -- see that operation's description for the full trace.
+        '403':
+          description: The authenticated user is not a member of this domain, or lacks the Edit Data permission. Same two non-JSON shapes as `listMessagingEvents`'s 403 -- see that operation's description.
+        '404':
+          description: No event with this id exists in this project space. The response body is empty.
+        '429':
+          description: The request was rate limited. The response body is empty; the `Retry-After` header carries the number of seconds to wait.
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying.
+              schema:
+                type: integer
 components:
   securitySchemes:
     ApiKey:
@@ -6622,6 +6821,200 @@ components:
           type: string
           description: Present only on success. URL to poll for the status of the queued import job. That status endpoint (`case_importer_upload_status`) is a separate view, out of scope for this spec.
           example: /a/demo/importer/case_importer/status/dl-2998e6834a654ab5ba74f372246caa75/
+    CursorMeta:
+      type: object
+      description: Cursor-based pagination metadata. Used only by the messaging events endpoint. The cursor is opaque and must not be constructed by clients.
+      properties:
+        limit:
+          type: integer
+          example: 20
+        next:
+          type: string
+          nullable: true
+          description: '**Absolute** URL (scheme and host included) of the next page, carrying an opaque `cursor` parameter, or null when no further records exist. This is a correction of this schema''s original description -- `_get_cursor` (`corehq/apps/api/resources/messaging_event/pagination.py:49-70`) builds it with `reverse(..., absolute=True)` (`corehq/util/view_utils.py:119-129`), which prefixes the URL with `get_url_base()`, not a bare path. `messaging-events.rst:126` shows the same absolute form (`"https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/?cursor=..."`). See the discrepancy file.'
+          example: https://www.commcarehq.org/a/demo/api/messaging-event/v1/?cursor=ZGF0ZS5ndGU9MjAyMC0wNS0xN1Q
+    MessagingEventError:
+      type: object
+      nullable: true
+      description: Event-level error detail, present only when `error_code` is set on the underlying model; null otherwise (`_serialize_event_error`, `serializers.py:88-94`). Distinct from an individual message's own `error_message`.
+      properties:
+        code:
+          type: string
+          description: Error code slug, e.g. `NO_PHONE_NUMBER`, `NO_RECIPIENT`, `NO_MESSAGE`.
+          example: NO_PHONE_NUMBER
+        message:
+          type: string
+          nullable: true
+          description: Display text for the error code (`MessagingEvent.ERROR_MESSAGES`), or null if the code is not recognized.
+          example: Contact has no phone number.
+        message_detail:
+          type: string
+          nullable: true
+          description: Additional free-text detail about the error, if any.
+          example: null
+    MessagingEventForm:
+      type: object
+      nullable: true
+      description: Present only when `content_type` is `sms-survey` or `ivr-survey`; null otherwise (`_serialize_event_form`, `serializers.py:96-105`).
+      properties:
+        app_id:
+          type: string
+          nullable: true
+          example: 4d6a2b1e8f7c4a3e9b2d1c0f5a6b7c8d
+        form_definition_id:
+          type: string
+          nullable: true
+          description: Form unique ID (XMLNS-adjacent identifier), not the app build id.
+          example: e1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6
+        form_name:
+          type: string
+          nullable: true
+          example: Welcome Survey
+        form_submission_id:
+          type: string
+          nullable: true
+          description: ID of the submitted XForm instance, only set once the survey session has produced a submission.
+          example: 7f8e9d0c1b2a3948576645362718293a
+    MessagingEventMessage:
+      type: object
+      description: 'One actual message sent or received as part of the event. The shape varies by `type` -- built by one of three helpers depending on the parent event''s `content_type` (`_serialize_event_messages`, `serializers.py:47-56`): `_get_messages_for_email`, `_get_messages_for_sms`, or `_get_messages_for_survey`. `phone_number` is present only on `sms`/`ivr` messages, `email_address` only on `email` messages, and `error_message` is included only when the message actually errored (it is omitted from the dict entirely otherwise, not sent as `null`) -- see `_get_message_dicts_for_sms`, `serializers.py:127-149`.'
+      properties:
+        message_id:
+          type: integer
+          description: Numeric ID of the underlying `SMS` or `Email` row (not the event id).
+          example: 153444
+        type:
+          type: string
+          description: '`sms`, `ivr`, or `email`.'
+          example: sms
+        direction:
+          type: string
+          description: '`outgoing`, `incoming`, or `unknown`. Always `outgoing` for `email` messages.'
+          example: outgoing
+        content:
+          type: string
+          description: The actual message body that was sent or received.
+          example: Welcome to CommCare
+        date:
+          type: string
+          description: 'Message date. Naive (no UTC offset or `Z`) -- `USE_TZ = False` (`settings.py:57`). For `email` messages this is an explicit `.isoformat()` call (`serializers.py:118`) and keeps full microsecond precision, e.g. `2020-05-15T04:11:27.482899`. For `sms`/`ivr` messages the raw `datetime` is passed straight through (`serializers.py:141`, `"date": sms.date`) and serialized by `JsonResponse`''s default `DjangoJSONEncoder`, which truncates to millisecond precision, e.g. `2021-04-13T21:25:26.989` -- both forms are visible side by side in `messaging-events.rst`''s own sample response (`:154` vs `:163`). `format: date-time` is deliberately not declared since the value carries no timezone.'
+          example: '2021-04-13T21:25:26.989'
+        date_modified:
+          type: string
+          nullable: true
+          description: Date of the last modification to the message, or null if never modified. Same naive, no-`Z` format as `date`.
+          example: null
+        status:
+          type: string
+          description: 'Message status. For `email`: the parent event''s status slug. For `sms`/`ivr`: one of `error`, `queued`, `received`, `forwarded`, `delivered`, `sent`, `unknown` (`get_sms_status_display_raw`, `corehq/apps/reports/standard/message_event_display.py:89-111`).'
+          example: sent
+        backend:
+          type: string
+          description: Messaging backend/gateway name, e.g. `MOBILE_BACKEND_TWILIO`. Always the literal string `email` for `email` messages.
+          example: MOBILE_BACKEND_TWILIO
+        phone_number:
+          type: string
+          description: Recipient/sender phone number. Present only on `sms`/`ivr` messages.
+          example: '+15555993494'
+        email_address:
+          type: string
+          description: Recipient email address. Present only on `email` messages.
+          example: patient@example.com
+        error_message:
+          type: string
+          description: Human-readable error detail. Present only when the message actually errored -- omitted from the response entirely otherwise (not sent as `null`).
+          example: Gateway error.
+    MessagingEventRecipient:
+      type: object
+      description: The intended recipient of the event (`_serialize_event_recipient`, `serializers.py:66-75`).
+      properties:
+        recipient_id:
+          type: string
+          nullable: true
+          description: Case ID or user ID. Null if the event has no recipient.
+          example: 523132e0-a562-4be1-bbc8-a634423c5c0c
+        type:
+          type: string
+          description: '`case`, `mobile-worker`, `web-user`, or `unknown` (`MessagingSubEvent.RECIPIENT_SLUGS`, `sms/models.py:1648-1652`).'
+          example: case
+        name:
+          type: string
+          description: Case or user name, or the literal string `unknown` if it could not be resolved or there is no recipient.
+          example: Mary Little
+    MessagingEventSource:
+      type: object
+      description: The trigger for the event, e.g. a broadcast or conditional alert (`_serialize_event_source`, `serializers.py:78-84`).
+      properties:
+        source_id:
+          type: string
+          description: ID of the source (e.g. the broadcast or keyword id).
+          example: '4654'
+        type:
+          type: string
+          description: Source type slug. One of `broadcast`, `scheduled-broadcast`, `immediate-broadcast`, `keyword`, `reminder`, `conditional-alert`, `forwarded-message`, `other`, or `unknown` if the underlying model value has no slug (`MessagingEvent.SOURCE_SLUGS`, `sms/models.py:1003-1013`).
+          example: conditional-alert
+        name:
+          type: string
+          description: Display name of the keyword, broadcast, etc. (`get_event_display_api`, `corehq/apps/reports/standard/message_event_display.py:297-312`).
+          example: Email - Welcome Packet
+    MessagingEvent:
+      type: object
+      description: A single messaging event and all of its constituent messages (`serialize_event`, `serializers.py:6-19`). Despite the resource's name this is backed by the `MessagingSubEvent` model, which has the more direct relationship to an individual recipient (`corehq/apps/api/resources/messaging_event/view.py:30-32`).
+      properties:
+        id:
+          type: integer
+          description: MessagingSubEvent numeric ID.
+          example: 10215869
+        content_type:
+          type: string
+          description: Content type slug, e.g. `sms`, `sms-survey`, `ivr-survey`, `email`, `manual-sms`, `api-sms`, `chat-sms`, or `unknown` (`MessagingEvent.CONTENT_TYPE_SLUGS`, `sms/models.py:1045-1059`).
+          example: email
+        date:
+          type: string
+          description: 'Event creation date. Naive (no `Z`/offset) -- an explicit `.isoformat()` call on a `USE_TZ = False` value (`serializers.py:10`), keeping full microsecond precision. `format: date-time` is deliberately not declared.'
+          example: '2020-05-15T04:11:27.482899'
+        date_last_activity:
+          type: string
+          description: Date of the last message activity for this event. Useful for exports since `date` is the creation date. Same naive, no-`Z` format as `date`.
+          example: '2020-05-15T04:11:27.482899'
+        case_id:
+          type: string
+          nullable: true
+          description: ID of the related case, if this event is related to one.
+          example: 523132e0-a562-4be1-bbc8-a634423c5c0c
+        domain:
+          type: string
+          description: The project space this event belongs to -- read from the parent `MessagingEvent.domain`, not the subevent's own `domain` field (`serializers.py:14`).
+          example: ny-dev-cdcms
+        error:
+          $ref: '#/components/schemas/MessagingEventError'
+        form:
+          $ref: '#/components/schemas/MessagingEventForm'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessagingEventMessage'
+        recipient:
+          $ref: '#/components/schemas/MessagingEventRecipient'
+        source:
+          $ref: '#/components/schemas/MessagingEventSource'
+        status:
+          type: string
+          description: Event status. Usually one of `error`, `completed`, `in-progress`, `not-completed`, `unknown` (`MessagingEvent.STATUS_SLUGS`), but for a completed survey event this is instead the `XFormsSession` status slug, and a nominally `completed` event is reported as `error` if any of its messages errored (`_serialize_event_status`, `serializers.py:22-33`).
+          example: completed
+    MessagingEventList:
+      type: object
+      description: List envelope for `listMessagingEvents`. Deliberately **not** built from `pagination.yaml#/PaginatedResponse`, whose `meta` is fixed to the offset-based `PaginationMeta` -- this is the only cursor-paginated resource in the spec, so `meta` references `CursorMeta` instead (`get_paged_data`, `corehq/apps/api/resources/messaging_event/pagination.py:14-22`).
+      required:
+        - meta
+        - objects
+      properties:
+        meta:
+          $ref: '#/components/schemas/CursorMeta'
+        objects:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessagingEvent'
   responses:
     BadRequest:
       description: The request was malformed or a parameter value was invalid.

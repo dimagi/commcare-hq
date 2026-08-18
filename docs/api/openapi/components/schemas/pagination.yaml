@@ -37,9 +37,18 @@ CursorMeta:
       type: string
       nullable: true
       description: >-
-        Relative URL of the next page including an opaque `cursor` parameter, or
-        null when no further records exist.
-      example: /a/demo/api/messaging-event/v1/?cursor=ZGF0ZS5ndGU9MjAyMC0wNS0xN1Q
+        **Absolute** URL (scheme and host included) of the next page, carrying
+        an opaque `cursor` parameter, or null when no further records exist.
+        This is a correction of this schema's original description --
+        `_get_cursor`
+        (`corehq/apps/api/resources/messaging_event/pagination.py:49-70`) builds
+        it with `reverse(..., absolute=True)`
+        (`corehq/util/view_utils.py:119-129`), which prefixes the URL with
+        `get_url_base()`, not a bare path. `messaging-events.rst:126` shows the
+        same absolute form
+        (`"https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/?cursor=..."`).
+        See the discrepancy file.
+      example: https://www.commcarehq.org/a/demo/api/messaging-event/v1/?cursor=ZGF0ZS5ndGU9MjAyMC0wNS0xN1Q
 PaginatedResponse:
   type: object
   description: >-

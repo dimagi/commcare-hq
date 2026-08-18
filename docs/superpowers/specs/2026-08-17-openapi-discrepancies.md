@@ -1613,3 +1613,66 @@ the view's own `if` chain", and anything that falls through returns a 405
   (`views.py:474-482`). Not a discrepancy (the reST page's response table,
   `:91-99`, only ever documents `200`/`500`), but easy to assume a REST API
   would use `400` for a missing required parameter -- it does not, here.
+
+## messaging-event/v1 (`messaging-events.rst`)
+
+- **An unrecognized `content_type` or `source` filter value crashes with an
+  uncaught 500, not a 400.** `_make_slug_filter_consumer`'s inner `_consumer`
+  (`corehq/apps/api/resources/messaging_event/filters.py:100-113`) computes
+  `vals = [slug_values[val] for val in values if val in slug_values]` and,
+  when `vals` is empty (no comma-separated value matched a known slug), falls
+  through with no `return` statement at all -- an implicit `return None`.
+  `filter_query` (`.../filters.py:19-22`) then does
+  `filters.update(SIMPLE_FILTERS[key](key, value))`, i.e.
+  `filters.update(None)`, which raises `TypeError: 'NoneType' object is not
+  iterable`. `TypeError` is not a `tastypie.exceptions.BadRequest`, so the
+  view's own `except BadRequest` (`view.py:34,40-41`) does not catch it; it
+  propagates uncaught to Django's default 500 handling. This is unlike the
+  `status` filter (`_status_filter_consumer`, `.../filters.py:116-136`),
+  which validates and raises a real `BadRequest` for an unrecognized value.
+  `messaging-events.rst` documents no error behavior for filters at all, so
+  there is no rST claim being contradicted, but an agent would reasonably
+  expect a 400 here by analogy with `status`/`email_address`/`phone_number`
+  -- the spec's `content_type`/`source` parameter descriptions call this out
+  explicitly instead of pointing at the 400 response.
+- **`date_last_activity.gte`/`.gt`/`.lte`/`.lt` are real, working filters
+  that `messaging-events.rst`'s filter table (`:31-95`) never mentions.**
+  `COMPOUND_FILTERS = [_get_date_filter_consumer("date"),
+  _get_date_filter_consumer("date_last_activity")]`
+  (`corehq/apps/api/resources/messaging_event/filters.py:169-172`) applies
+  the identical dotted-range machinery to both fields; the rST page only
+  documents the `date.*` family. Added to the spec as first-class parameters
+  since the code supports them.
+- **`CursorMeta.next` (`docs/api/openapi/components/schemas/pagination.yaml`,
+  written speculatively in Task 2 before any consumer existed) described the
+  value as a "Relative URL"; it is actually absolute.** `_get_cursor`
+  (`corehq/apps/api/resources/messaging_event/pagination.py:49-70`) builds it
+  with `reverse('api_messaging_event_list', ..., absolute=True)`, and
+  `reverse`'s `absolute=True` branch (`corehq/util/view_utils.py:119-129`)
+  prefixes the path with `get_url_base()` -- scheme and host included.
+  `messaging-events.rst:126`'s own sample shows the same absolute form
+  (`"https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/?cursor=..."`).
+  Corrected in `pagination.yaml` in this task, since this is the schema's
+  first real consumer.
+- **401 and 403 on this endpoint are not the shared JSON `{"error": ...}`
+  bodies the rest of this spec's non-tastypie plain views (case/v2) were
+  documented with, despite using the exact same decorator stack.**
+  `messaging_events` (`view.py:23-28`) is decorated with `api_auth()`,
+  `require_can_edit_data` (`= require_permission(HqPermissions.edit_data)`),
+  `requires_privilege_with_fallback`, and `api_throttle` -- byte-for-byte the
+  same stack `case_api` uses (`corehq/apps/hqcase/views.py:88-94`). Traced
+  directly here (not copied from `case-v2.yaml`, which points 401/403 at the
+  shared `Unauthorized`/`Forbidden` refs for this identical stack without
+  further comment): `_login_or_challenge`'s challenge decorators
+  (`corehq/apps/domain/decorators.py:264-334`) issue their own
+  scheme-dependent 401 challenge before the view is ever reached, and a
+  domain-non-member hits a bare `HttpResponseForbidden()`
+  (`decorators.py:303,329`) while a domain member lacking `edit_data`
+  triggers an uncaught `django.core.exceptions.PermissionDenied`
+  (`require_permission_raw`, `corehq/apps/users/decorators.py:44-54`)
+  rendered by Django's own default (HTML) `permission_denied` view, since no
+  custom `handler403` is registered anywhere in this codebase. Neither shape
+  is JSON. This was not verified against a live server (no reachable
+  Postgres/service in this environment) -- it is a static trace of the
+  decorator source, flagged here rather than silently copying `case-v2.yaml`'s
+  precedent, which appears to make the same untested assumption.
