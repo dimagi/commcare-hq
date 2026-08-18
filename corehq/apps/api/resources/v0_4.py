@@ -274,6 +274,92 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
                 'description': 'URI of this record in the API.',
             },
         }
+        parameters = [
+            {
+                'name': 'xmlns',
+                'in': 'query',
+                'required': False,
+                'description': 'Form XML namespace.',
+                'schema': {'type': 'string'},
+            },
+            {
+                'name': 'app_id',
+                'in': 'query',
+                'required': False,
+                'description': 'Limit to forms submitted from this '
+                              'application.',
+                'schema': {'type': 'string'},
+            },
+            {
+                'name': 'received_on_start',
+                'in': 'query',
+                'required': False,
+                'description': 'Only return forms received on or after '
+                              'this date (and time).',
+                'schema': {'type': 'string', 'format': 'date-time'},
+            },
+            {
+                'name': 'received_on_end',
+                'in': 'query',
+                'required': False,
+                'description': 'Only return forms received on or before '
+                              'this date (and time).',
+                'schema': {'type': 'string', 'format': 'date-time'},
+            },
+            {
+                'name': 'indexed_on_start',
+                'in': 'query',
+                'required': False,
+                'description': 'Only return forms indexed into '
+                              'CommCare HQ on or after this date (and '
+                              'time). Recommended for pagination, as it '
+                              'handles edge cases better than '
+                              'received_on.',
+                'schema': {'type': 'string', 'format': 'date-time'},
+            },
+            {
+                'name': 'indexed_on_end',
+                'in': 'query',
+                'required': False,
+                'description': 'Only return forms indexed into '
+                              'CommCare HQ on or before this date (and '
+                              'time).',
+                'schema': {'type': 'string', 'format': 'date-time'},
+            },
+            {
+                'name': 'appVersion',
+                'in': 'query',
+                'required': False,
+                'description': 'Exact version of the CommCare '
+                              'application used to submit the form.',
+                'schema': {'type': 'string'},
+            },
+            {
+                'name': 'include_archived',
+                'in': 'query',
+                'required': False,
+                'description': 'When true, archived forms are included '
+                              'in the response.',
+                'schema': {'type': 'boolean'},
+            },
+            {
+                'name': 'case_id',
+                'in': 'query',
+                'required': False,
+                'description': 'Only return forms that updated the '
+                              'case with this UUID.',
+                'schema': {'type': 'string'},
+            },
+            {
+                'name': 'cases__full',
+                'in': 'query',
+                'required': False,
+                'description': 'When true, include the full case '
+                              'objects referenced by this form in the '
+                              '"cases" field.',
+                'schema': {'type': 'boolean'},
+            },
+        ]
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(HqPermissions.edit_data)
@@ -421,6 +507,146 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
                 'description': 'URI of this record in the API.',
             },
         }
+        parameters = [
+            {
+                'name': 'owner_id',
+                'in': 'query',
+                'required': False,
+                'description': 'User or group UUID. Returns all cases '
+                              'owned by that entity (should not be '
+                              'used together with user_id).',
+                'schema': {'type': 'string'},
+            },
+            {
+                'name': 'user_id',
+                'in': 'query',
+                'required': False,
+                'description': 'User UUID. Returns all cases last '
+                              'modified by that user.',
+                'schema': {'type': 'string'},
+            },
+            {
+                'name': 'type',
+                'in': 'query',
+                'required': False,
+                'description': 'Return only cases matching this case '
+                              'type.',
+                'schema': {'type': 'string'},
+            },
+            {
+                'name': 'closed',
+                'in': 'query',
+                'required': False,
+                'description': 'Filter by case status: true for closed '
+                              'cases, false for open cases. Omit to '
+                              'return both.',
+                'schema': {'type': 'boolean'},
+            },
+            {
+                'name': 'indexed_on_start',
+                'in': 'query',
+                'required': False,
+                'description': 'Only return cases that have had data '
+                              'modified on or after this date (and '
+                              'time). Recommended for pagination, as it '
+                              'handles edge cases better than '
+                              'server_date_modified.',
+                'schema': {'type': 'string', 'format': 'date-time'},
+            },
+            {
+                'name': 'indexed_on_end',
+                'in': 'query',
+                'required': False,
+                'description': 'Only return cases that have had data '
+                              'modified on or before this date (and '
+                              'time).',
+                'schema': {'type': 'string', 'format': 'date-time'},
+            },
+            {
+                'name': 'date_modified_start',
+                'in': 'query',
+                'required': False,
+                'description': 'Only return cases modified on or after '
+                              'this date (phone-reported date). '
+                              'Defaults to the first submission date.',
+                'schema': {'type': 'string', 'format': 'date-time'},
+            },
+            {
+                'name': 'date_modified_end',
+                'in': 'query',
+                'required': False,
+                'description': 'Only return cases modified on or before '
+                              'this date (phone-reported date). '
+                              'Defaults to the current date.',
+                'schema': {'type': 'string', 'format': 'date-time'},
+            },
+            {
+                'name': 'server_date_modified_start',
+                'in': 'query',
+                'required': False,
+                'description': 'Only return cases modified on or after '
+                              'this date (server date). Defaults to '
+                              'the first submission date.',
+                'schema': {'type': 'string', 'format': 'date-time'},
+            },
+            {
+                'name': 'server_date_modified_end',
+                'in': 'query',
+                'required': False,
+                'description': 'Only return cases modified on or '
+                              'before this date (server date). '
+                              'Defaults to the current date.',
+                'schema': {'type': 'string', 'format': 'date-time'},
+            },
+            {
+                'name': 'name',
+                'in': 'query',
+                'required': False,
+                'description': 'Filter cases by case name.',
+                'schema': {'type': 'string'},
+            },
+            {
+                'name': 'external_id',
+                'in': 'query',
+                'required': False,
+                'description': "Filter cases by the case's external_id "
+                              'property.',
+                'schema': {'type': 'string'},
+            },
+            {
+                'name': 'child_cases__full',
+                'in': 'query',
+                'required': False,
+                'description': 'When true, include the full child '
+                              'case objects in the "child_cases" field.',
+                'schema': {'type': 'boolean'},
+            },
+            {
+                'name': 'parent_cases__full',
+                'in': 'query',
+                'required': False,
+                'description': 'When true, include the full parent '
+                              'case objects in the "parent_cases" '
+                              'field.',
+                'schema': {'type': 'boolean'},
+            },
+            {
+                'name': 'xforms_by_name__full',
+                'in': 'query',
+                'required': False,
+                'description': 'When true, include the full form '
+                              'objects in the "xforms_by_name" field.',
+                'schema': {'type': 'boolean'},
+            },
+            {
+                'name': 'xforms_by_xmlns__full',
+                'in': 'query',
+                'required': False,
+                'description': 'When true, include the full form '
+                              'objects in the "xforms_by_xmlns" field.',
+                'schema': {'type': 'boolean'},
+            },
+        ]
 
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 5000

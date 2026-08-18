@@ -119,6 +119,156 @@
               ],
               "type": "string"
             }
+          },
+          {
+            "description": "User or group UUID. Returns all cases owned by that entity (should not be used together with user_id).",
+            "in": "query",
+            "name": "owner_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "User UUID. Returns all cases last modified by that user.",
+            "in": "query",
+            "name": "user_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Return only cases matching this case type.",
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by case status: true for closed cases, false for open cases. Omit to return both.",
+            "in": "query",
+            "name": "closed",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Only return cases that have had data modified on or after this date (and time). Recommended for pagination, as it handles edge cases better than server_date_modified.",
+            "in": "query",
+            "name": "indexed_on_start",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only return cases that have had data modified on or before this date (and time).",
+            "in": "query",
+            "name": "indexed_on_end",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only return cases modified on or after this date (phone-reported date). Defaults to the first submission date.",
+            "in": "query",
+            "name": "date_modified_start",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only return cases modified on or before this date (phone-reported date). Defaults to the current date.",
+            "in": "query",
+            "name": "date_modified_end",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only return cases modified on or after this date (server date). Defaults to the first submission date.",
+            "in": "query",
+            "name": "server_date_modified_start",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only return cases modified on or before this date (server date). Defaults to the current date.",
+            "in": "query",
+            "name": "server_date_modified_end",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter cases by case name.",
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter cases by the case's external_id property.",
+            "in": "query",
+            "name": "external_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "When true, include the full child case objects in the \"child_cases\" field.",
+            "in": "query",
+            "name": "child_cases__full",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "When true, include the full parent case objects in the \"parent_cases\" field.",
+            "in": "query",
+            "name": "parent_cases__full",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "When true, include the full form objects in the \"xforms_by_name\" field.",
+            "in": "query",
+            "name": "xforms_by_name__full",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "When true, include the full form objects in the \"xforms_by_xmlns\" field.",
+            "in": "query",
+            "name": "xforms_by_xmlns__full",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {

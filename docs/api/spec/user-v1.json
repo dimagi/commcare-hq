@@ -102,6 +102,33 @@
               ],
               "type": "string"
             }
+          },
+          {
+            "description": "Group UUID. Returns only mobile workers belonging to that group.",
+            "in": "query",
+            "name": "group",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "When true, list archived (deactivated) users instead of active ones.",
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "When true, add extra data fields for recent user activity. May slow down the response.",
+            "in": "query",
+            "name": "extras",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {

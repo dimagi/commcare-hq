@@ -119,6 +119,100 @@
               ],
               "type": "string"
             }
+          },
+          {
+            "description": "Form XML namespace.",
+            "in": "query",
+            "name": "xmlns",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Limit to forms submitted from this application.",
+            "in": "query",
+            "name": "app_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only return forms received on or after this date (and time).",
+            "in": "query",
+            "name": "received_on_start",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only return forms received on or before this date (and time).",
+            "in": "query",
+            "name": "received_on_end",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only return forms indexed into CommCare HQ on or after this date (and time). Recommended for pagination, as it handles edge cases better than received_on.",
+            "in": "query",
+            "name": "indexed_on_start",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only return forms indexed into CommCare HQ on or before this date (and time).",
+            "in": "query",
+            "name": "indexed_on_end",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Exact version of the CommCare application used to submit the form.",
+            "in": "query",
+            "name": "appVersion",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "When true, archived forms are included in the response.",
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Only return forms that updated the case with this UUID.",
+            "in": "query",
+            "name": "case_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "When true, include the full case objects referenced by this form in the \"cases\" field.",
+            "in": "query",
+            "name": "cases__full",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {

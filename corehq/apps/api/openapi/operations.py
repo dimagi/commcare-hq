@@ -26,6 +26,24 @@ DOMAIN_PARAMETER = {
 }
 
 
+def merge_declared_parameters(parameters, declared):
+    """Merge hand-declared query parameters into a derived list.
+
+    A declared parameter whose ``name`` matches a derived one wins (it
+    carries better prose); otherwise it is appended.
+    """
+    if not declared:
+        return parameters
+    by_name = {p['name']: dict(p) for p in parameters}
+    order = [p['name'] for p in parameters]
+    for param in declared:
+        name = param['name']
+        if name not in by_name:
+            order.append(name)
+        by_name[name] = param
+    return [by_name[name] for name in order]
+
+
 def filter_parameters(filtering):
     """Query parameters for a resource's ``Meta.filtering`` declaration."""
     parameters = []
@@ -193,9 +211,12 @@ def resource_paths(entry):
             if description:
                 operation['description'] = description
             if method == 'get':
-                operation['parameters'] = standard_list_parameters(
+                derived = standard_list_parameters(
                     resource_schema
                 ) + filter_parameters(resource_schema.get('filtering', {}))
+                operation['parameters'] = merge_declared_parameters(
+                    derived, docs.get('parameters', [])
+                )
             else:
                 operation['requestBody'] = _request_body(write_schema)
             item[method] = operation

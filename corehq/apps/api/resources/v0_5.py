@@ -292,6 +292,33 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 'description': 'URI of this record in the API.',
             },
         }
+        parameters = [
+            {
+                'name': 'group',
+                'in': 'query',
+                'required': False,
+                'description': 'Group UUID. Returns only mobile workers '
+                              'belonging to that group.',
+                'schema': {'type': 'string'},
+            },
+            {
+                'name': 'archived',
+                'in': 'query',
+                'required': False,
+                'description': 'When true, list archived (deactivated) '
+                              'users instead of active ones.',
+                'schema': {'type': 'boolean'},
+            },
+            {
+                'name': 'extras',
+                'in': 'query',
+                'required': False,
+                'description': 'When true, add extra data fields for '
+                              'recent user activity. May slow down the '
+                              'response.',
+                'schema': {'type': 'boolean'},
+            },
+        ]
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
