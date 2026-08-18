@@ -1,4 +1,5 @@
 import hashlib
+from functools import lru_cache
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -13,7 +14,11 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.types import UserDefinedType
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
-from corehq.sql_db.connections import PROJECT_DB_ENGINE_ID, connection_manager
+from corehq.sql_db.connections import (
+    PROJECT_DB_ENGINE_ID,
+    connection_manager,
+    create_engine,
+)
 
 MAX_IDENTIFIER_LENGTH = 63
 _HASH_LENGTH = 8
@@ -38,13 +43,30 @@ def property_column(name, data_type=None):
 
 def get_project_db_engine():
     """Return a SQLAlchemy engine for project DB tables"""
+    _assert_project_db_configured()
+    engine = connection_manager.get_engine(PROJECT_DB_ENGINE_ID)
+    _register_earth_type(engine.dialect)
+    return engine
+
+
+@lru_cache(maxsize=64)
+def get_domain_query_engine(domain):
+    """Return an engine that connects as the domain's read-only role"""
+    _assert_project_db_configured()
+    schema = DomainSchema(domain)
+    engine = create_engine(
+        connection_manager.get_connection_string(PROJECT_DB_ENGINE_ID),
+        connect_args={'user': schema.role_name, 'password': schema._get_password()},
+    )
+    _register_earth_type(engine.dialect)
+    return engine
+
+
+def _assert_project_db_configured():
     if not connection_manager.engine_id_is_available(PROJECT_DB_ENGINE_ID):
         raise ImproperlyConfigured(
             f"'{PROJECT_DB_ENGINE_ID}' database not defined in REPORTING_DATABASES"
         )
-    engine = connection_manager.get_engine(PROJECT_DB_ENGINE_ID)
-    _register_earth_type(engine.dialect)
-    return engine
 
 
 SETUP_SQL_PATH = Path(__file__).parent / 'project_db_setup.sql'

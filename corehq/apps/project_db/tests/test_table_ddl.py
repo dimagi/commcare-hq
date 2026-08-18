@@ -12,12 +12,17 @@ from corehq.apps.project_db.table_ddl import (
     DomainSchema,
     Earth,
     create_or_update_project_db,
+    get_domain_query_engine,
     get_project_db_engine,
     preview_drop,
     truncate_identifier,
     update_table,
 )
-from corehq.sql_db.connections import ConnectionManager
+from corehq.sql_db.connections import (
+    PROJECT_DB_ENGINE_ID,
+    ConnectionManager,
+    connection_manager,
+)
 
 from .util import project_db_table
 
@@ -181,6 +186,55 @@ def _has_privilege(conn, function, role, target, privilege):
         sqlalchemy.text(f'SELECT {function}(:role, :target, :privilege)'),
         {'role': role, 'target': target, 'privilege': privilege},
     ).scalar()
+
+
+@use('db', project_db_table('projectdbtest-mine', 'patient', {'nickname': 'plain'}),
+     project_db_table('projectdbtest-yours', 'patient', {'nickname': 'plain'}))
+def test_domain_query_engine_reads_only_its_own_schema():
+    mine = DomainSchema('projectdbtest-mine')
+    yours = DomainSchema('projectdbtest-yours')
+    engine = get_domain_query_engine('projectdbtest-mine')
+    with engine.connect() as conn:
+        assert conn.execute(sqlalchemy.text('SELECT current_user')).scalar() == mine.role_name
+
+        count = conn.execute(sqlalchemy.text(
+            f'SELECT count(*) FROM {mine._quoted_name}.patient'
+        )).scalar()
+        assert count == 0
+
+        # Fail when attempting to access another schema
+        with pytest.raises(sqlalchemy.exc.ProgrammingError, match='permission denied'):
+            conn.execute(sqlalchemy.text(
+                f'SELECT count(*) FROM {yours._quoted_name}.patient'
+            ))
+
+
+@use('db', project_db_table('projectdbtest-readonly', 'patient', {'nickname': 'plain'}))
+def test_domain_query_engine_cannot_write():
+    schema = DomainSchema('projectdbtest-readonly')
+    engine = get_domain_query_engine('projectdbtest-readonly')
+    with engine.connect() as conn:
+        with pytest.raises(sqlalchemy.exc.ProgrammingError, match='permission denied'):
+            conn.execute(sqlalchemy.text(
+                f"INSERT INTO {schema._quoted_name}.patient (case_id) VALUES ('abc')"
+            ))
+
+
+@use('db')
+def test_domain_query_engine_is_cached_per_domain():
+    engine = get_domain_query_engine('projectdbtest-cached')
+    assert get_domain_query_engine('projectdbtest-cached') is engine
+    assert get_domain_query_engine('projectdbtest-other') is not engine
+    # Not ConnectionManager's engine, whose cache is unbounded
+    assert connection_manager.get_engine(PROJECT_DB_ENGINE_ID) is not engine
+
+
+# DEBUG/UNIT_TESTING off so the dev/test fallback doesn't supply project_db
+@override_settings(REPORTING_DATABASES={'default': 'default'}, DEBUG=False, UNIT_TESTING=False)
+def test_domain_query_engine_not_configured():
+    with patch('corehq.apps.project_db.table_ddl.connection_manager', ConnectionManager()):
+        with pytest.raises(ImproperlyConfigured, match='project_db'):
+            get_domain_query_engine('projectdbtest-not-configured')
 
 
 def test_case_table_basics():
