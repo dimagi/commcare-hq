@@ -3673,7 +3673,7 @@ paths:
         in: path
         required: true
         description: Export instance UUID.
-        example: a1b2c3
+        example: 9aab0eeb88555a7b4568676883e7379a
         schema:
           type: string
     get:

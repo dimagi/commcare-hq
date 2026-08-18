@@ -46,3 +46,46 @@ run `yarn openapi:bundle && yarn openapi:docs` and commit the result.
 
 The OTA restore API is intentionally excluded: it returns opaque,
 application-specific CaseXML. Admin and internal APIs are also excluded.
+
+## Coverage
+
+Covers the API pages under `docs/api/` except `ota-api-restore.rst` (opaque,
+application-specific CaseXML). Admin and internal APIs (`ADMIN_API_LIST` in
+`corehq/apps/api/urls.py`) are out of scope.
+
+That is 25 of the 26 content pages, across 10 path files and 54 paths — more
+paths than reST pages, because several resources serve detail endpoints or
+sub-actions the prose docs never mention. Those extras are documented because
+the code allows them, and each is recorded as a finding: mobile-worker and
+web-user `activate`/`deactivate`, the DET export detail endpoint, and the detail
+endpoints of `location/v1`, `location/v2`, `location_type/v1`, `fixture/v1`,
+`lookup_table/v1`, `lookup_table_item/v1` and `simplereportconfiguration/v1`.
+
+Some request and response bodies are intentionally opaque — form submission, app
+import, and Excel upload payloads are typed as strings with descriptions,
+because OpenAPI models XML and binary spreadsheet formats poorly and the
+contents are application-specific.
+
+Where the reST docs and the serving code disagreed, this spec follows the code.
+See `docs/superpowers/specs/2026-08-17-openapi-discrepancies.md`.
+
+## Known gaps
+
+- **Operations the code rejects are not published.** Where a method resolves but
+  can only ever fail — `POST` to the by-external-id case path, writes to
+  `location_type/v1` and `fixture/v1` — the operation is omitted and an inline
+  YAML comment says why, so a later pass does not "fix" it back in.
+- **Responses the code cannot produce are not declared.** Several detail
+  operations omit `404` because the underlying lookup raises an exception
+  tastypie does not map to one (`replaceGroup`, `updateMobileWorker`,
+  `replaceLocationV2`). Each carries an inline comment.
+- **Error bodies vary far more than the shared components suggest.** The shared
+  `Unauthorized`, `Forbidden` and `NotFound` responses each carry a warning
+  comment: their JSON body is real but not universal, and several resources
+  return an empty body or a Django HTML error page instead. Verify the actual
+  shape before pointing a new operation at a shared ref.
+- **Not exercised against a running server.** The spec is a static trace of the
+  source. Findings that would need a live Postgres, Elasticsearch or Celery
+  worker to confirm are flagged as such in the discrepancy file.
+- **`lookup_table_item/v2` is registered but undocumented** by `fixture.rst`, so
+  it is out of scope here; see the discrepancy file.

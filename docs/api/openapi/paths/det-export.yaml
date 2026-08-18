@@ -56,7 +56,7 @@ List:
 Detail:
   # Not part of the task brief's ten paths -- added because
   # DETExportInstanceResource.Meta declares detail_allowed_methods = ['get']
-  # (v1_0.py:201) and obj_get is fully implemented (v1_0.py:262-288); per the
+  # (v1_0.py:202) and obj_get is fully implemented (v1_0.py:262-288); per the
   # resource-task conventions, "a missing operation for a method the code
   # allows" is a defect, so this detail operation is documented even though
   # neither the task brief nor det-exports.rst mentions it.
@@ -66,7 +66,13 @@ Detail:
       in: path
       required: true
       description: Export instance UUID.
-      example: a1b2c3
+      # det-exports.rst's own sample shows `"id": "a1b2c3"` (det-exports.rst:64),
+      # but the real value is a Couch document id: `obj_get` passes it straight
+      # to `FormExportInstance.get`/`CaseExportInstance.get`
+      # (corehq/apps/api/resources/v1_0.py:262-288). Using a realistic 32-char
+      # hex id here, consistent with every other Couch-backed id example in
+      # this spec.
+      example: 9aab0eeb88555a7b4568676883e7379a
       schema:
         type: string
   get:

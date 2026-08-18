@@ -4,6 +4,41 @@ Generated while writing the OpenAPI spec. The spec records what the **code**
 does. Each item below is a place where `docs/api/*.rst` disagrees, for human
 triage. Nothing here has been changed in the reST docs.
 
+## Summary
+
+- **Total findings:** 121
+- **Undocumented endpoints or methods:** 9
+- **Documented but not served, or contradicted by the code:** 22
+- **Field or parameter mismatches:** 35
+- **Error-response and status-code shapes:** 42
+- **Likely code bugs, for human triage rather than doc edits:** 6
+- **Checked and clear, or recorded only for visibility:** 7
+
+Findings are grouped by resource below. Each states what the docs say, what the
+code does, and which the spec followed (always the code).
+
+Two things about these numbers are worth knowing before you read on.
+
+**The biggest category is one the plan did not anticipate.** A third of the
+findings are about _error_ responses, not about the documented success shapes.
+This API has at least four distinct 404 bodies, three distinct 403 bodies, two
+distinct 401 bodies, and three distinct 400 bodies (`{"error": ...}`,
+`{"error_message": ...}`, and a bare JSON array of strings), reached through
+different tastypie and Django code paths on resources that otherwise look
+identical. The reST pages document almost none of this. If one theme deserves
+follow-up, it is that.
+
+**Every citation here has been re-read against the source.** The Task 17 audit
+resolved all 351 file:line references, read the cited lines, and re-derived each
+claim -- particularly the ones asserting that something does _not_ exist, which
+need an exhaustive search rather than one example. Sixteen citations pointed at
+the wrong lines and two entries stated conclusions their evidence did not
+support; all are corrected in place and the correction is noted inline. No
+finding had to be withdrawn outright. Entries that could not be verified against
+a live server (no Postgres or Elasticsearch was reachable in the authoring
+environment) say so explicitly rather than implying more confidence than the
+trace supports.
+
 ## Cross-cutting: the shared 401 and 403 responses
 
 These two findings are about the shared components in
