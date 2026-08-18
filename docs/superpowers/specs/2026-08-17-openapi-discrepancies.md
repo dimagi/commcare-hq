@@ -1413,3 +1413,203 @@ the view's own `if` chain", and anything that falls through returns a 405
   `v2` is intentionally left out of `paths/lookup-table.yaml`; flagged here
   rather than silently dropped.
   branching on status code alone would miss it.
+
+## simplereportconfiguration/v1, configurablereportdata/v1 (`list-reports.rst`, `download-report-data.rst`)
+
+- **`listReports`'s and `getReport`'s sample filter objects omit a real
+  `type` field.** `dehydrate_filters` (`corehq/apps/api/resources/
+  v0_5.py:963-969`) unconditionally emits `type`/`datatype`/`slug` for every
+  filter, but both sample objects in `list-reports.rst` (`:65-74,97-114`)
+  show only `datatype`/`slug`. The spec's `ReportFilter` schema includes
+  `type` as always present.
+- **`list-reports.rst`'s own prose and its own sample disagree about valid
+  `datatype` values.** `list-reports.rst:37` states a filter's `datatype` is
+  one of `"string"`/`"integer"`/`"decimal"`, but the page's second sample
+  object (`:110-113`) shows `"datatype": "date"` for a filter named
+  `form_date`. The code does not constrain `datatype` at all
+  (`dehydrate_filters` copies the value verbatim), so this is not a
+  code/docs disagreement so much as the reST page contradicting itself; the
+  spec's `ReportFilter.datatype` is not modeled as an `enum` for this reason.
+- **`listReports`/`getReport` require no report-specific permission, despite
+  neither reST page claiming one.** `SimpleReportConfigurationResource.Meta`
+  (`v0_5.py:998-1001`) declares no `authentication` override, so it falls
+  back to `CustomResourceMeta.authentication = LoginAndDomainAuthentication()`
+  (`corehq/apps/api/resources/meta.py:76-78`) -- login, domain membership,
+  and the generic `access_api` permission only. Not a docs/code
+  disagreement (neither page states a requirement), but easy to miss when
+  comparing against `downloadReportData`'s much narrower access, so noted
+  for visibility.
+- **`downloadReportData`'s stated permission requirement does not match any
+  real `HqPermissions` field.** `download-report-data.rst:21-23` says
+  "Permission Required: View Data, Access All Reports". Neither `"View
+  Data"` nor `"Access All Reports"` corresponds to an actual field on
+  `HqPermissions` (`corehq/apps/users/models.py:190-221`) -- the closest
+  matches are `view_data_dict` (an unrelated "data dictionary" permission)
+  and `access_all_locations` (unrelated to reports). The resource's real
+  authentication is `RequirePermissionAuthentication(HqPermissions.
+  view_reports, allow_session_auth=True)` (`v0_5.py:952`) -- a single
+  permission, `view_reports` ("View Reports" in the UI), with no
+  "access all reports" component at all. The spec's `downloadReportData`
+  documents `view_reports` as the real requirement.
+- **A malformed `filter_name` value can produce an uncaught 500, not the
+  documented behaviour.** Neither reST page discusses filter-value error
+  handling. `ConfigurableReportDataResource.obj_get`
+  (`v0_5.py:892-917`) calls `_get_report_data` -> `get_filter_values`
+  (`corehq/apps/userreports/reports/view.py:82-96`), which re-raises any
+  `FilterException` (e.g. an unparsable date on a `-start`/`-end` pair) as
+  `UserReportsFilterError`. That exception is not caught anywhere in
+  `obj_get`, is not tastypie's `BadRequest`/`NotFound`/`ObjectDoesNotExist`,
+  and so reaches `wrap_view`'s generic exception handler
+  (`tastypie/resources.py:250-265`), whose
+  `get_response_class_for_exception` (`:273-284`) does not recognize it
+  either -- the default `http.HttpApplicationError` (500) applies. A client
+  sending a bad filter value gets an uncaught 500, not a 400. The spec's
+  `downloadReportData` operation description states this; no formal `500`
+  response was added (following the precedent of omitting responses the
+  spec cannot usefully constrain, e.g. `replaceGroup`'s omitted 404).
+- **`ConfigurableReportData`'s `resource_uri` field is real and undocumented.**
+  Every tastypie resource adds a `resource_uri` field by default
+  (`include_resource_uri`, `tastypie/resources.py:96,161`), not excluded by
+  `ConfigurableReportDataResource.Meta` (`v0_5.py:951-954`); this resource's
+  own `get_resource_uri` override (`v0_5.py:940-949`) appends the effective
+  `offset`/`limit` to it. `download-report-data.rst`'s sample output
+  (`:61-98`) has no `resource_uri` key.
+- **`ConfigurableReportData.next_page` is an empty string, not `null`, when
+  there is no further page.** `_get_next_page`'s `else` branch
+  (`v0_5.py:859-860`) `return ""`. `download-report-data.rst` never shows
+  the last-page case, so this is undocumented, not contradicted.
+
+## det_export_instance/v1 (`det-exports.rst`)
+
+- **A real detail (`GET .../{id}/`) operation exists, entirely undocumented
+  by `det-exports.rst`, which only describes the list endpoint.**
+  `DETExportInstanceResource.Meta.detail_allowed_methods = ['get']`
+  (`corehq/apps/api/resources/v1_0.py:201`) and `obj_get`
+  (`v1_0.py:262-288`) is fully implemented (it even handles both
+  `FormExportInstance` and `CaseExportInstance` lookups, and a domain/type
+  mismatch). Per the resource-task conventions ("a missing operation for a
+  method the code allows" is a defect), the spec documents this as
+  `getDETExport`, beyond the task brief's ten listed paths.
+- **`resource_uri` is real and undocumented.** Same mechanism as the report
+  resources above (`tastypie/resources.py:96,161`); `det-exports.rst`'s
+  sample output (`:61-84`) has no `resource_uri` key.
+- **`listDETExports`'s response `meta` is undocumented but real, with full
+  pagination.** `DETExportInstanceResource.Meta` sets no `paginator_class`
+  override (`v1_0.py:198-202`), so it uses tastypie's own default
+  `Paginator` (`tastypie/resources.py:80`), not one of the "does nothing"
+  paginators the report/application resources use. `limit`/`offset` are
+  real and a bad value raises tastypie's `BadRequest` -> the shared
+  `{"error": ...}` 400 shape. `det-exports.rst`'s sample output (`:61-84`)
+  omits `meta` entirely.
+
+## application/v1, import_app, multimedia upload/status (`application-structure.rst`, `import-app.rst`)
+
+- **`application-structure.rst`'s sample output nests `versions` inside each
+  module; the code returns it as a single top-level field of the
+  application, not one list per module.** The sample (`:73-105`) shows
+  `"modules": [{"case_type": ..., "forms": [...], "versions": [...]}]`.
+  `ApplicationResource.versions` (`corehq/apps/api/resources/
+  v0_4.py:342,344-359`) is declared directly on the resource and dehydrated
+  from `bundle.obj` (the application), never per-module; `dehydrate_module`
+  (`v0_4.py:365-404`) builds `name`/`case_type`/`case_properties`/
+  `unique_id`/`forms` for a module and never touches `versions`. A client
+  following the sample would look for build history in the wrong place
+  entirely.
+- **`application-structure.rst`'s sample output includes a `case_types` key
+  the code cannot produce.** The sample (`:66-72`) shows a top-level
+  `"case_types": {"type_of_case...": ["case_prop1", ...]}`.
+  `ApplicationResource` declares no `case_types` field anywhere
+  (`v0_4.py:332-422`), and `dehydrate` (`:415-422`) only ever returns the
+  standard dehydrated fields, or (with `extras=true`) those merged with the
+  raw internal doc -- neither path adds a `case_types` key under that name
+  at the top level. Following the precedent set for the group resource's
+  undocumentable `path` field, the spec's `Application` schema does not
+  include `case_types` at all.
+- **`resource_uri` is real and undocumented**, same mechanism as the other
+  resources in this file (`tastypie/resources.py:96,161`);
+  `application-structure.rst`'s sample has no `resource_uri` key.
+- **Two real fields per module/form entry are undocumented.** The sample
+  module (`:73-105`) has no `unique_id` key, though `dehydrate_module`
+  always sets one (`v0_4.py:382`); the sample form (`:77-92`) has no
+  `xmlns` or `unique_id` key, though both are always set
+  (`v0_4.py:388,397`).
+- **`listApplications`/`getApplication` require no application-specific
+  permission, contradicting the stated requirement.**
+  `application-structure.rst:18-19` says "Permission Required: Edit Apps".
+  `BaseApplicationResource.Meta.authentication =
+  LoginAndDomainAuthentication(allow_session_auth=True)` (`v0_4.py:324`) --
+  login, domain membership, and the generic `access_api` permission only,
+  with no `edit_apps` check anywhere in the class. Contrast
+  `importApplication`/`uploadApplicationMultimedia`/
+  `getMultimediaUploadStatus`, which really do require
+  `HqPermissions.edit_apps` (`app_import_api.py:30,85,131`), matching
+  `import-app.rst:26`.
+- **`ApplicationList`'s `meta.limit` can never be the value
+  `application-structure.rst`'s sample shows.**
+  `BaseApplicationResource.Meta.paginator_class = DoesNothingPaginatorCompat`
+  (`v0_4.py:329`; `corehq/apps/api/resources/pagination.py:50-68`)
+  hardcodes `meta.limit` to `null` and `meta.offset` to `0` on every
+  response, ignoring the real `limit`/`offset` query parameters entirely.
+  `application-structure.rst:51` shows `"limit": 20` in its sample --
+  the code cannot produce that value under any query.
+- **Two fields on `getMultimediaUploadStatus`'s response are real but
+  undocumented by either sample in `import-app.rst`.**
+  `BaseMultimediaStatusCache.get_response` (`corehq/apps/hqmedia/
+  cache.py:45-56`) always includes `type` (`"zip"` for this endpoint,
+  from `BulkMultimediaStatusCache.upload_type`, `cache.py:71`) and
+  `is_ready` (a mirror of `complete`). Neither key appears in either the
+  "In Progress" (`import-app.rst:235-248`) or "Complete"
+  (`:255-284`) sample.
+- **`getMultimediaUploadStatus` does not actually have two response shapes
+  -- it has one, with values that are zero/empty/null before processing
+  finishes.** `import-app.rst` presents "In Progress" and "Complete" as
+  distinct shapes (the task brief likewise called for a `oneOf` over them),
+  but `BulkMultimediaStatusCache.__init__` (`cache.py:73-79`) initializes
+  `total_files`/`processed_files` to `None` and every count/list field to
+  `0`/`[]`/empty dicts, and `get_response` (`cache.py:85-99`) always
+  includes every one of `matched_count`/`unmatched_count`/`matched_files`/
+  `total_files`/`processed_files`/`image_count`/`audio_count`/`video_count`/
+  `skipped_files` regardless of `complete`. There is no code branch that
+  omits any of these fields while in progress; the "In Progress" sample is
+  simply an incomplete excerpt, not a distinct schema. Per the project's
+  `oneOf`-means-disjoint-branches convention, the spec models this as a
+  single `MultimediaUploadStatus` schema (all fields always required), not
+  a `oneOf` -- the two would not be disjoint (every "in progress" value also
+  satisfies the "complete" branch's required-field list, just with
+  placeholder values), which is exactly the "using `oneOf` to express
+  uncertainty" anti-pattern the conventions warn against.
+- **`getMultimediaUploadStatus` genuinely has a 404 and a 500 with real JSON
+  bodies**, unlike `getFixtureUploadStatus` (documented in `fixture.yaml`
+  as always-200). `_handle_multimedia_status`
+  (`app_import_api.py:138-163`) explicitly returns
+  `JsonResponse({'success': False, 'error': ...}, status=404)` for a
+  missing app or an unknown/expired `processing_id`
+  (`ResourceNotFound`/`BulkMultimediaStatusCache.get() is None`,
+  `:140-159`), and `JsonResponse(..., status=500)` when
+  `get_download_context` raises `TaskFailedError` (`:146-152`). The 500
+  path requires a Celery worker to actually process and fail the task to
+  exercise; not verified by the offline checks run for this task.
+- **`bulkUploadCases` has no throttle at all, unlike every comparable
+  upload endpoint in this API.** `corehq/apps/case_importer/views.py` never
+  imports or applies `api_throttle`
+  (`corehq/apps/api/decorators.py:51-61`) on `bulk_case_upload_api`
+  (`views.py:461-467`), unlike `import_app_api`/`upload_multimedia_api`/
+  `multimedia_status_api` (`app_import_api.py:31,86,132`, each decorated
+  with `@api_throttle`) and `FixtureResource`'s tastypie-level `HQThrottle`.
+  The spec omits a `429` response for `bulkUploadCases`, with an inline
+  comment explaining why, rather than documenting one the code cannot
+  produce.
+- **`bulk_case_upload_api`'s failure response really does use HTTP 500 as
+  its transport status, matching its own body's `code: 500`** -- worth
+  flagging because several other upload endpoints in this API (documented
+  in `fixture.yaml`) return `code`/outcome fields that diverge from an
+  always-200 transport status. Here `json_response(..., status_code=500)`
+  (`views.py:482`) genuinely sets the HTTP status to match.
+- **A file/`case_type`-missing request is a `code: 500`, not a `400`, and
+  `bulk-upload-cases.rst` does not claim otherwise.** `_bulk_case_upload_api`
+  (`views.py:486-493`) raises `ImporterError` for a missing `file` or
+  `case_type`, which the outer `bulk_case_upload_api` catches and turns into
+  the same `code: 500` JSON body as any other importer error
+  (`views.py:474-482`). Not a discrepancy (the reST page's response table,
+  `:91-99`, only ever documents `200`/`500`), but easy to assume a REST API
+  would use `400` for a missing required parameter -- it does not, here.

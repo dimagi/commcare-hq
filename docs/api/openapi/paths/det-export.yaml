@@ -1,0 +1,109 @@
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listDETExports
+    summary: List case and form exports available to the Data Export Tool
+    description: >-
+      Lists `FormExportInstance` and `CaseExportInstance` objects with
+      `show_det_config_download` set (`DETExportInstanceResource.obj_get_list`,
+      `corehq/apps/api/resources/v1_0.py:228-260`), for CommCare Data Pipeline
+      (commcare-export) to discover exports and download their DET config files.
+      Requires the `View Reports` permission
+      (`RequirePermissionAuthentication(HqPermissions.view_reports)`,
+      `v1_0.py:200`), matching `det-exports.rst`'s stated requirement.
+
+      Uses tastypie's standard `Paginator` (no override in
+      `DETExportInstanceResource.Meta`, `v1_0.py:198-202`, so the
+      `CustomResourceMeta`/tastypie default applies) -- `limit`/`offset` are
+      real and the response's `meta` carries the full
+      `limit`/`offset`/`next`/`previous`/`total_count` set, unlike
+      `listReports`/`listApplications`. `det-exports.rst`'s sample output
+      (`:61-84`) omits `meta` entirely; it is present on every real response.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Limit"
+      - $ref: "../components/parameters.yaml#/Offset"
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: A page of case/form exports available to the DET.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/det-export.yaml#/DETExportList"
+      "400":
+        description: >-
+          `limit` or `offset` is not a valid integer
+          (`Paginator.get_limit`/`get_offset`, `tastypie/paginator.py:53-81,
+          85-107`), converted by `wrap_view` to the shared `{"error": ...}`
+          shape.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Same mechanism as listFixtures'/listReports's 403.
+        description: >-
+          The authenticated user lacks the View Reports permission, or is not a
+          member of this project space. The response body is empty.
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listFixtures`'s 429.
+Detail:
+  # Not part of the task brief's ten paths -- added because
+  # DETExportInstanceResource.Meta declares detail_allowed_methods = ['get']
+  # (v1_0.py:201) and obj_get is fully implemented (v1_0.py:262-288); per the
+  # resource-task conventions, "a missing operation for a method the code
+  # allows" is a defect, so this detail operation is documented even though
+  # neither the task brief nor det-exports.rst mentions it.
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: det_export_instance_id
+      in: path
+      required: true
+      description: Export instance UUID.
+      example: a1b2c3
+      schema:
+        type: string
+  get:
+    operationId: getDETExport
+    summary:
+      Retrieve a single case or form export available to the Data Export Tool
+    description: >-
+      Undocumented in `det-exports.rst`, which only describes the list
+      operation. Same permission requirement as `listDETExports`.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: The export instance.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/det-export.yaml#/DETExport"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks the View Reports permission, or is not a
+          member of this project space. The response body is empty. Same
+          mechanism as `listDETExports`'s 403.
+      "404":
+        # obj_get (v1_0.py:262-288) raises ImmediateHttpResponse(HttpNotFound())
+        # directly on a miss/type-mismatch/wrong-domain/undownloadable export.
+        # wrap_view's generic exception handler recognizes ImmediateHttpResponse
+        # via its `.response` attribute (tastypie/exceptions.py:102-117) and
+        # returns that bare HttpResponse verbatim -- empty body.
+        description: >-
+          The export instance does not exist in this project space, is not a
+          case or form export, or is not flagged for DET config download. The
+          response body is empty.
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listDETExports`'s 429.

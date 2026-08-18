@@ -1,0 +1,427 @@
+Application:
+  type: object
+  description: >-
+    A CommCare application, served by `ApplicationResource`
+    (`corehq/apps/api/resources/v0_4.py:312-405`). Also returned by
+    `importApplication`'s create/update flow (a different resource entirely --
+    see `ImportAppSuccess`).
+  required: [id, name, version, modules, versions]
+  properties:
+    id:
+      type: string
+      description: Application UUID.
+      example: 6c9c5c1c1b8e4b6e9e6f6b6e9e6f6b6e
+    resource_uri:
+      type: string
+      description: >-
+        Every tastypie resource adds this field by default
+        (`include_resource_uri`, `tastypie/resources.py:96,161`); undocumented
+        in `application-structure.rst`'s sample output, but present on every
+        response. See the discrepancy file.
+      example: /a/demo/api/application/v1/6c9c5c1c1b8e4b6e9e6f6b6e9e6f6b6e/
+    name:
+      type: string
+      example: My application
+    version:
+      type: integer
+      description: The application version (build number).
+      example: 16
+    is_released:
+      type: boolean
+      nullable: true
+      example: false
+    built_on:
+      type: string
+      nullable: true
+      pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$'
+      description: >-
+        When this build was created. `null` for a non-build application (the
+        working copy). This field is serialized by tastypie's own
+        `DateTimeField.convert`/the default `iso-8601` serializer
+        (`tastypie/fields.py:376-396`, `tastypie/serializers.py:198-214`), which
+        calls plain `datetime.isoformat()` on the naive datetime stored by
+        `Application.built_on` (`DateTimeProperty(required=False)`,
+        `corehq/apps/app_manager/models/applications.py:365`, set from
+        `datetime.datetime.utcnow()`, `:730-732`) -- **no trailing `Z`, no
+        offset.** Contrast `ApplicationVersion.built_on` below, which carries
+        the same underlying value through a different path that *does* add a
+        `Z`. `format: date-time` is deliberately not used here since it implies
+        RFC3339, which this field does not satisfy.
+      example: "2017-01-30T19:53:20"
+    build_comment:
+      type: string
+      nullable: true
+      example: ""
+    built_from_app_id:
+      type: string
+      nullable: true
+      description:
+        The id of the application this build was copied from (`copy_of`).
+      example: null
+    modules:
+      type: array
+      description: >-
+        One entry per module in the application (`dehydrate_modules`,
+        `v0_4.py:406-413`). Empty for a `RemoteApp`. Each entry is either the
+        module shape below, or (if dehydrating the module raised) an object with
+        only an `error` key (`dehydrate_module`'s `except Exception`,
+        `v0_4.py:401-404`).
+      items:
+        anyOf:
+          - $ref: "#/ApplicationModule"
+          - type: object
+            required: [error]
+            properties:
+              error:
+                type: string
+    versions:
+      type: array
+      description: >-
+        All built versions (builds) of this application, empty for a build
+        itself (`dehydrate_versions`, `v0_4.py:344-359`). **Documented in
+        `application-structure.rst:94-103` as if nested inside each module -- it
+        is not; it is a top-level field of the application, exactly one list per
+        app, not one per module.** See the discrepancy file.
+      items:
+        $ref: "#/ApplicationVersion"
+ApplicationModule:
+  type: object
+  required: [name, case_type, case_properties, unique_id, forms]
+  description: >-
+    Not a tastypie field -- a plain dict built by `dehydrate_module`
+    (`v0_4.py:365-404`), one per module returned in `Application.modules`.
+  properties:
+    name:
+      type: string
+      description: Module name.
+      example: Visit Module
+    case_type:
+      type: string
+      example: type_of_case_from_app_builder
+    case_properties:
+      type: array
+      items:
+        type: string
+      description: All case properties for this module's case type.
+      example: [case_prop1, case_prop2]
+    unique_id:
+      type: string
+      description: >-
+        Real field, undocumented -- `application-structure.rst`'s sample module
+        (`:73-105`) has no `unique_id` key. See the discrepancy file.
+      example: a1b2c3d4e5f6
+    forms:
+      type: array
+      items:
+        $ref: "#/ApplicationForm"
+ApplicationForm:
+  type: object
+  required: [xmlns, name, questions, unique_id]
+  properties:
+    xmlns:
+      type: string
+      nullable: true
+      description: >-
+        Real field, undocumented -- `application-structure.rst`'s sample form
+        (`:77-92`) has no `xmlns` key. See the discrepancy file.
+      example: http://openrosa.org/formdesigner/12345
+    name:
+      type: object
+      additionalProperties:
+        type: string
+      description: Form name, keyed by language code.
+      example:
+        en: Name in English
+        es: Nombre en Español
+    questions:
+      type: array
+      description: >-
+        One entry per question in the form, from `form.get_questions(...,
+        include_triggers=True, include_groups=True, include_translations=True,
+        include_fixtures=True)` (`v0_4.py:390-396`). This is a large,
+        recursively-structured object not modeled field-by-field here; the
+        sample shows the commonly-present `label`/`repeat`/`tag`/`value` keys,
+        but others (e.g. translations, options) can appear depending on the
+        question type.
+      items:
+        type: object
+        additionalProperties: true
+    unique_id:
+      type: string
+      description: >-
+        Real field, undocumented -- `application-structure.rst`'s sample form
+        has no `unique_id` key. See the discrepancy file.
+      example: f6e5d4c3b2a1
+ApplicationVersion:
+  type: object
+  required: [id, built_on, build_comment, is_released, version]
+  description: >-
+    One built version of an application, from a raw CouchDB view row
+    (`get_all_built_app_results`, `corehq/apps/app_manager/dbaccessors.py:
+    474-485`; `app_manager/saved_app/map.js:1-32`), not re-wrapped into a Python
+    object -- so its `built_on` follows a different serialization path than the
+    application-level field of the same name (see below).
+  properties:
+    id:
+      type: string
+      example: 3f2504e04f8911d39a0c0305e82c3301
+    built_on:
+      type: string
+      format: date-time
+      description: >-
+        Unlike `Application.built_on`, this value is the raw string stored in
+        the CouchDB document, produced by `jsonobject`'s
+        `DateTimeProperty._unwrap`
+        (`.venv/.../jsonobject/properties.pyx:96-102`), which unconditionally
+        appends a literal `Z` -- `value.isoformat() + padding + 'Z'` -- even
+        though the underlying datetime is naive (`utcnow()`). Genuinely
+        RFC3339-shaped, so `format: date-time` is correct here even though it is
+        not for the application-level field.
+      example: "2017-01-30T19:53:20.000000Z"
+    build_comment:
+      type: string
+      example: ""
+    is_released:
+      type: boolean
+      example: true
+    version:
+      type: integer
+      example: 16
+ApplicationList:
+  allOf:
+    - $ref: "./pagination.yaml#/PaginatedResponse"
+    - type: object
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: "#/Application"
+      description: >-
+        `BaseApplicationResource.Meta.paginator_class` is
+        `DoesNothingPaginatorCompat` (`v0_4.py:329`;
+        `corehq/apps/api/resources/pagination.py:50-68`), which returns the full
+        unfiltered list regardless of `limit`/`offset`, and hardcodes
+        `meta.limit` to `null` and `meta.offset` to `0` on every response --
+        **`application-structure.rst:51`'s sample shows `"limit": 20`, which the
+        code can never actually produce.** See the discrepancy file.
+ApplicationExtras:
+  type: object
+  additionalProperties: true
+  description: >-
+    Returned instead of `Application` when the `extras` query parameter is
+    `true` (`_safe_bool(bundle, "extras")`, `v0_4.py:415-422`): the standard
+    dehydrated fields merged on top of the application's entire raw internal
+    CouchDB document (`bundle.obj._doc`). This is a large, undocumented,
+    implementation-specific blob -- not modeled field-by-field.
+ImportAppSuccess:
+  type: object
+  required: [success, app_id]
+  description: >-
+    Response of `importApplication` (`_handle_import_app`,
+    `corehq/apps/app_manager/views/app_import_api.py:37-79`). The same shape for
+    both create (`201`) and update (`200`); `version` and `warnings` are present
+    only in the situations described below.
+  properties:
+    success:
+      type: boolean
+      enum: [true]
+    app_id:
+      type: string
+      example: abc123def456
+    version:
+      type: integer
+      description: >-
+        Present only when updating an existing application (`app_id` was
+        supplied in the request) -- the application's new version number after
+        the update (`:74-75`). Never present on a create.
+      example: 8
+    warnings:
+      type: array
+      description: >-
+        Present only if the import succeeded but encountered non-fatal issues
+        (missing multimedia references, or a Mobile Report Module referencing a
+        UCR unavailable in this project space) -- `django.contrib.messages`
+        collected during the request (`:76-78`). Present on both create and
+        update when applicable.
+      items:
+        type: string
+      example:
+        - Copying the application succeeded, but the application is missing
+          multimedia file(s).
+ImportAppError:
+  type: object
+  required: [success, error]
+  description: >-
+    Error body shared by `importApplication`, `uploadApplicationMultimedia`, and
+    `getMultimediaUploadStatus` -- keyed `success`/`error`, not the `error` key
+    alone used by the shared `Error` schema.
+  properties:
+    success:
+      type: boolean
+      enum: [false]
+    error:
+      type: string
+      example: app_name is required
+MultimediaUploadAccepted:
+  type: object
+  required: [success, processing_id]
+  description: >-
+    Response of `uploadApplicationMultimedia` (`_handle_upload_multimedia`,
+    `app_import_api.py:92-125`). The ZIP is queued for asynchronous processing
+    (`process_bulk_upload_zip.delay`, `:121-123`); this response only confirms
+    the ZIP itself parsed, not that processing succeeded.
+  properties:
+    success:
+      type: boolean
+      enum: [true]
+    processing_id:
+      type: string
+      description: Poll `getMultimediaUploadStatus` with this id.
+      example: dl-abc123def456
+MultimediaUploadStatus:
+  type: object
+  description: >-
+    Response of `getMultimediaUploadStatus` (`_handle_multimedia_status`,
+    `app_import_api.py:138-163`; body built by
+    `BaseMultimediaStatusCache.get_response`/`BulkMultimediaStatusCache.
+    get_response`, `corehq/apps/hqmedia/cache.py:45-99`). **`import-app.rst`
+    documents this as two distinct shapes ("In Progress" at `:235-248` and
+    "Complete" at `:255-284`), modeled with `oneOf` per the task brief -- but
+    the code always returns every one of these keys, with values that are
+    zero/empty/null until processing finishes; there is exactly one shape, not
+    two.** `oneOf` was deliberately not used for that reason (per the project's
+    `oneOf`-means-disjoint convention: this would not be a disjoint union, it
+    would be the same schema matching itself twice). See the discrepancy file.
+    Also undocumented by either sample: `type` (always `"zip"` for this
+    endpoint) and `is_ready` (mirrors `complete`).
+  required:
+    - success
+    - type
+    - in_celery
+    - is_ready
+    - complete
+    - progress
+    - errors
+    - processing_id
+    - matched_count
+    - unmatched_count
+    - matched_files
+    - unmatched_files
+    - total_files
+    - processed_files
+    - image_count
+    - audio_count
+    - video_count
+    - skipped_files
+  properties:
+    success:
+      type: boolean
+      enum: [true]
+    type:
+      type: string
+      enum: [zip]
+      description: >-
+        `BulkMultimediaStatusCache.upload_type` (`cache.py:71`). Undocumented in
+        `import-app.rst`.
+    in_celery:
+      type: boolean
+      description:
+        Whether the upload is currently being processed by a Celery worker.
+    is_ready:
+      type: boolean
+      description: >-
+        Mirrors `complete` (`BaseMultimediaStatusCache.get_response`,
+        `cache.py:45-56`). Undocumented in `import-app.rst`.
+    complete:
+      type: boolean
+      description:
+        Whether processing has finished (successfully or with errors).
+    progress:
+      type: object
+      required: [percent, current, total]
+      properties:
+        percent:
+          type: integer
+          example: 50
+        current:
+          type: integer
+          example: 5
+        total:
+          type: integer
+          example: 10
+    errors:
+      type: array
+      items:
+        type: string
+      description: >-
+        Populated only if the task called `mark_with_error` (`cache.py:39-42`);
+        empty otherwise.
+    processing_id:
+      type: string
+      example: dl-abc123def456
+    matched_count:
+      type: integer
+      description: >-
+        Total across all matched-file categories. `0` until matching completes.
+      example: 8
+    unmatched_count:
+      type: integer
+      example: 2
+    matched_files:
+      type: object
+      description: >-
+        Keyed by multimedia class name; each value is a list of matched file
+        identifiers (opaque strings, not modeled further).
+      properties:
+        CommCareImage:
+          type: array
+          items:
+            type: string
+        CommCareAudio:
+          type: array
+          items:
+            type: string
+        CommCareVideo:
+          type: array
+          items:
+            type: string
+    unmatched_files:
+      type: array
+      items:
+        type: object
+        required: [path, reason]
+        properties:
+          path:
+            type: string
+            example: images/extra.png
+          reason:
+            type: string
+    total_files:
+      type: integer
+      nullable: true
+      description: >-
+        `null` until the ZIP has been scanned.
+      example: 10
+    processed_files:
+      type: integer
+      nullable: true
+      example: 10
+    image_count:
+      type: integer
+      example: 6
+    audio_count:
+      type: integer
+      example: 2
+    video_count:
+      type: integer
+      example: 0
+    skipped_files:
+      type: array
+      items:
+        type: object
+        required: [path, mimetype]
+        properties:
+          path:
+            type: string
+          mimetype:
+            type: string

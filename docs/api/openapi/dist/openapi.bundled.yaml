@@ -3452,6 +3452,553 @@ paths:
           description: The requested lookup table row does not exist. The response body is empty.
         '429':
           description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listLookupTables`'s 429.
+  /a/{domain}/api/simplereportconfiguration/v1/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    get:
+      operationId: listReports
+      summary: List configurable ("UCR") report definitions
+      description: |-
+        Returns every report configuration in the project space (`SimpleReportConfigurationResource.obj_get_list`, `corehq/apps/api/resources/v0_5.py:988-990`), including static reports. Use `getReport`'s `id` (or this list's `resource_uri`) to run `downloadReportData`.
+        **No specific permission is required beyond the generic API-access check.** `SimpleReportConfigurationResource.Meta` (`v0_5.py:998-1001`) declares no `authentication` override, so it inherits `CustomResourceMeta.authentication = LoginAndDomainAuthentication()` (`corehq/apps/api/resources/meta.py:76-78`) -- login, domain membership, and the generic `access_api` permission only. Contrast `downloadReportData`, which does require a specific permission. Neither `list-reports.rst` nor `download-report-data.rst` documents a permission requirement for this operation; see the discrepancy file for how `downloadReportData`'s stated requirement compares to its code.
+        `Meta.paginator_class = DoesNothingPaginator` (`corehq/apps/api/resources/pagination.py:42-47`) returns every report unconditionally; `limit`/`offset` query parameters have no effect and are not declared here.
+      tags:
+        - Data
+      responses:
+        '200':
+          description: Every report configuration in the project space.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user is not a member of this project space, or lacks the generic API-access permission. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty.
+  /a/{domain}/api/simplereportconfiguration/v1/{report_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: report_id
+        in: path
+        required: true
+        description: Report configuration UUID.
+        example: 9aab0eeb88555a7b3bc8676883e7379a
+        schema:
+          type: string
+    get:
+      operationId: getReport
+      summary: Retrieve a single report definition
+      description: Same permission requirements as `listReports` -- generic API access only, no report-specific permission.
+      tags:
+        - Data
+      responses:
+        '200':
+          description: The report configuration.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user is not a member of this project space, or lacks the generic API-access permission. The response body is empty. Same mechanism as `listReports`'s 403.
+        '404':
+          description: The report configuration does not exist in this project space.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportErrorMessage'
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listReports`'s 429.
+  /a/{domain}/api/configurablereportdata/v1/{report_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: report_id
+        in: path
+        required: true
+        description: Report configuration UUID, from `listReports`.
+        example: 9aab0eeb88555a7b4568676883e7379a
+        schema:
+          type: string
+    get:
+      operationId: downloadReportData
+      summary: Run a report and download its result data
+      description: |-
+        Runs the named report with the given filters and returns a page of result rows (`ConfigurableReportDataResource`, `corehq/apps/api/resources/v0_5.py:812-954`). **Detail only -- `Meta.list_allowed_methods = []`** (`v0_5.py:953`), so there is no list operation for this resource; every report is run by its own id.
+        Requires the `View Reports` permission (`RequirePermissionAuthentication(HqPermissions.view_reports, allow_session_auth=True)`, `v0_5.py:952`). `download-report-data.rst` states "Permission Required: View Data, Access All Reports" -- neither name is an actual `HqPermissions` field (`corehq/apps/users/models.py:190-221`); the real check is `view_reports` alone. See the discrepancy file.
+        **`filter_name` query parameters are user-defined, not literal.** OpenAPI cannot express "any query parameter matching a report's own filter slugs", so the four parameters below (`<filter_name>`, `<filter_name>-start`, `<filter_name>-end`, `<filter_name>-operator`/`<filter_name>-operand`) are listed with an angle-bracket placeholder that you must replace with a real filter slug from that report's `listReports`/`getReport` `filters[].slug` before sending -- e.g. `?owner_name=someone`, not `?<filter_name>=someone`. Send one member of the family per filter you want to apply: a plain value for a simple filter, `-start`/`-end` for a date-range filter (both required together), or `-operator`/`-operand` together for a numeric comparison filter (`download-report-data.rst: 44-49`). To match multiple values for one filter, join them with the `%1F` (unit separator) character in a single value, e.g. `?state=vermont%1Fnewyork`. Any filter value that fails to parse (for example, an invalid date for a `-start`/`-end` pair) raises `UserReportsFilterError` uncaught by `obj_get` (`corehq/apps/userreports/reports/view.py:82-96`), which is neither tastypie's `NotFound` nor `BadRequest` and so surfaces as an uncaught 500, not a 400 -- undocumented in `download-report-data.rst`; see the discrepancy file.
+      tags:
+        - Data
+      parameters:
+        - name: offset
+          in: query
+          required: false
+          description: The record number to start at.
+          example: 20
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: limit
+          in: query
+          required: false
+          description: The maximum number of records to return. `_get_limit_param` (`v0_5.py:834-844`) rejects a value above 50 with a 400.
+          example: 10
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 50
+            default: 50
+        - name: <filter_name>
+          in: query
+          required: false
+          description: Substitute a report filter's `slug` for `<filter_name>`, e.g. `?owner_name=someone`. Value for a simple (string/choice) filter.
+          example: someone
+          schema:
+            type: string
+        - name: <filter_name>-start
+          in: query
+          required: false
+          description: For a date-range filter, the start of the range, e.g. `?form_date-start=2015-01-01`. Required together with the matching `-end` parameter.
+          example: '2015-01-01'
+          schema:
+            type: string
+        - name: <filter_name>-end
+          in: query
+          required: false
+          description: For a date-range filter, the end of the range, e.g. `?form_date-end=2015-02-01`. Required together with the matching `-start` parameter.
+          example: '2015-02-01'
+          schema:
+            type: string
+        - name: <filter_name>-operator
+          in: query
+          required: false
+          description: 'For a numeric filter, a comparison operator: one of `>= <= = != < >`, e.g. `?age-operator=>`. Required together with the matching `-operand` parameter.'
+          example: '>'
+          schema:
+            type: string
+            enum:
+              - '>='
+              - <=
+              - '='
+              - '!='
+              - <
+              - '>'
+        - name: <filter_name>-operand
+          in: query
+          required: false
+          description: For a numeric filter, the value to compare against, e.g. `?age-operand=10`.
+          example: '10'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A page of report result rows.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurableReportData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the View Reports permission, or is not a member of this project space. The response body is empty. Same mechanism as `listReports`'s 403.
+        '404':
+          description: The report configuration does not exist in this project space.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportErrorMessage'
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listReports`'s 429.
+  /a/{domain}/api/det_export_instance/v1/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    get:
+      operationId: listDETExports
+      summary: List case and form exports available to the Data Export Tool
+      description: |-
+        Lists `FormExportInstance` and `CaseExportInstance` objects with `show_det_config_download` set (`DETExportInstanceResource.obj_get_list`, `corehq/apps/api/resources/v1_0.py:228-260`), for CommCare Data Pipeline (commcare-export) to discover exports and download their DET config files. Requires the `View Reports` permission (`RequirePermissionAuthentication(HqPermissions.view_reports)`, `v1_0.py:200`), matching `det-exports.rst`'s stated requirement.
+        Uses tastypie's standard `Paginator` (no override in `DETExportInstanceResource.Meta`, `v1_0.py:198-202`, so the `CustomResourceMeta`/tastypie default applies) -- `limit`/`offset` are real and the response's `meta` carries the full `limit`/`offset`/`next`/`previous`/`total_count` set, unlike `listReports`/`listApplications`. `det-exports.rst`'s sample output (`:61-84`) omits `meta` entirely; it is present on every real response.
+      tags:
+        - Data
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: A page of case/form exports available to the DET.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DETExportList'
+        '400':
+          description: '`limit` or `offset` is not a valid integer (`Paginator.get_limit`/`get_offset`, `tastypie/paginator.py:53-81, 85-107`), converted by `wrap_view` to the shared `{"error": ...}` shape.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the View Reports permission, or is not a member of this project space. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listFixtures`'s 429.
+  /a/{domain}/api/det_export_instance/v1/{det_export_instance_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: det_export_instance_id
+        in: path
+        required: true
+        description: Export instance UUID.
+        example: a1b2c3
+        schema:
+          type: string
+    get:
+      operationId: getDETExport
+      summary: Retrieve a single case or form export available to the Data Export Tool
+      description: Undocumented in `det-exports.rst`, which only describes the list operation. Same permission requirement as `listDETExports`.
+      tags:
+        - Data
+      parameters:
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: The export instance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DETExport'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the View Reports permission, or is not a member of this project space. The response body is empty. Same mechanism as `listDETExports`'s 403.
+        '404':
+          description: The export instance does not exist in this project space, is not a case or form export, or is not flagged for DET config download. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listDETExports`'s 429.
+  /a/{domain}/api/application/v1/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    get:
+      operationId: listApplications
+      summary: List applications in a project space
+      description: |-
+        Returns every application in the project space, including linked applications (`BaseApplicationResource.obj_get_list`, `corehq/apps/api/resources/v0_4.py:314-316`), sorted by creation date.
+        **No application-specific permission is required.** `BaseApplicationResource.Meta.authentication = LoginAndDomainAuthentication(allow_session_auth=True)` (`v0_4.py:324`) -- login, domain membership, and the generic `access_api` permission only. `application-structure.rst:18-19` states "Permission Required: Edit Apps"; the code enforces no such check. See the discrepancy file.
+        `Meta.paginator_class = DoesNothingPaginatorCompat` (`corehq/apps/api/resources/pagination.py:50-68`, `v0_4.py:329`) returns every application unconditionally regardless of `limit`/ `offset`; the response's `meta.limit` is always `null` and `meta.offset` is always `0`.
+      tags:
+        - Data
+      parameters:
+        - name: extras
+          in: query
+          required: false
+          description: If `true`, each application object includes its entire raw internal document merged on top of the standard fields (`ApplicationExtras`), instead of the standard `Application` shape (`_safe_bool(bundle, "extras")` -> `dehydrate`, `v0_4.py:415-422`).
+          example: 'false'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Every application in the project space.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/ApplicationList'
+                  - type: object
+                    required:
+                      - meta
+                      - objects
+                    properties:
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+                      objects:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ApplicationExtras'
+                    description: Shape when `extras=true`.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user is not a member of this project space, or lacks the generic API-access permission. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listFixtures`'s 429.
+  /a/{domain}/api/application/v1/{app_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: app_id
+        in: path
+        required: true
+        description: Application UUID.
+        example: 6c9c5c1c1b8e4b6e9e6f6b6e9e6f6b6e
+        schema:
+          type: string
+    get:
+      operationId: getApplication
+      summary: Retrieve a single application's structure
+      description: Also returns linked applications (`BaseApplicationResource.obj_get`, `v0_4.py:318-321`). Same permission requirement as `listApplications` -- no application-specific check despite `application-structure.rst`'s stated "Edit Apps" requirement.
+      tags:
+        - Data
+      parameters:
+        - name: extras
+          in: query
+          required: false
+          description: If `true`, the response includes the application's entire raw internal document merged on top of the standard fields, instead of the standard `Application` shape.
+          example: 'false'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The application.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Application'
+                  - $ref: '#/components/schemas/ApplicationExtras'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user is not a member of this project space, or lacks the generic API-access permission. The response body is empty. Same mechanism as `listApplications`'s 403.
+        '404':
+          description: The application does not exist in this project space. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listApplications`'s 429.
+  /a/{domain}/apps/api/import_app/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    post:
+      operationId: importApplication
+      summary: Create or update an application from a JSON source file
+      description: Uploads an application source JSON file (`import_app_api`/`_handle_import_app`, `corehq/apps/app_manager/views/app_import_api.py:33-79`). Creates a new application (`201`), or -- when `app_id` is supplied -- updates an existing application in place and bumps its version (`200`) (`overwrite_app_from_source`, `corehq/apps/app_manager/models/applications.py:2066-2101`). Requires the Edit Apps permission (`require_permission(HqPermissions.edit_apps, login_decorator=api_auth())`, `app_import_api.py:30`), matching `import-app.rst:26`.
+      tags:
+        - Data
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - app_file
+              properties:
+                app_file:
+                  type: string
+                  format: binary
+                  description: The application source JSON file. Its internal structure is not modeled here -- it is opaque application-export JSON, parsed with a plain `json.load` (`app_import_api.py:50`).
+                app_name:
+                  type: string
+                  description: Required when creating a new application (no `app_id`). When updating, renames the application if given; otherwise the existing name is kept.
+                  example: My Imported App
+                app_id:
+                  type: string
+                  description: ID of an existing application to update in place. When omitted, a new application is created.
+                  example: abc123def456
+      responses:
+        '200':
+          description: An existing application (`app_id` supplied) was updated in place.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportAppSuccess'
+        '201':
+          description: A new application was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportAppSuccess'
+        '400':
+          description: Missing `app_file`; missing `app_name` when creating; the uploaded file is not valid JSON; or (on update) the uploaded source's app type is incompatible with the existing app (`_handle_import_app`, `app_import_api.py:42-67`; `overwrite_app_from_source` raising `AppEditingError`, `applications.py:2072`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportAppError'
+        '401':
+          description: Authentication credentials were missing or invalid. The response body is empty or plain text, not JSON.
+        '403':
+          description: The authenticated user lacks the Edit Apps permission, or the domain lacks the required privilege. The response is an HTML error page, not JSON.
+        '404':
+          description: '`app_id` was supplied but no matching application exists in the domain (`ResourceNotFound`, caught at `app_import_api.py:64-65`). Unlike most other 404s in this API, this one really is a real JSON body, not empty and not the shared `Error`/`NotFound` shape.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportAppError'
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty.
+  /a/{domain}/apps/api/{app_id}/multimedia/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: app_id
+        in: path
+        required: true
+        description: Application UUID to attach the multimedia to.
+        example: 6c9c5c1c1b8e4b6e9e6f6b6e9e6f6b6e
+        schema:
+          type: string
+    post:
+      operationId: uploadApplicationMultimedia
+      summary: Upload a ZIP of multimedia files for an application
+      description: Uploads a ZIP archive of multimedia files (`upload_multimedia_api`/`_handle_upload_multimedia`, `app_import_api.py:88-125`). The ZIP is validated synchronously (that it opens and is not corrupt) and then queued for asynchronous processing (`process_bulk_upload_zip.delay`, `:121-123`) -- poll `getMultimediaUploadStatus` with the returned `processing_id` to see whether individual files matched. Requires the Edit Apps permission, same mechanism as `importApplication`.
+      tags:
+        - Data
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - bulk_upload_file
+              properties:
+                bulk_upload_file:
+                  type: string
+                  format: binary
+                  description: A ZIP archive containing multimedia files (images, audio, video).
+      responses:
+        '200':
+          description: The ZIP was accepted and queued for processing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultimediaUploadAccepted'
+        '400':
+          description: 'Missing `bulk_upload_file`, the file is not a valid ZIP, or the ZIP is corrupt (`_handle_upload_multimedia`, `app_import_api.py: 100-115`).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportAppError'
+        '401':
+          description: Authentication credentials were missing or invalid. The response body is empty or plain text, not JSON. Same mechanism as `importApplication`'s 401.
+        '403':
+          description: The authenticated user lacks the Edit Apps permission. The response is an HTML error page, not JSON. Same mechanism as `importApplication`'s 403.
+        '404':
+          description: The application does not exist in this domain (`ResourceNotFound`, caught at `app_import_api.py:93-98`). Real JSON body, not empty.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportAppError'
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `importApplication`'s 429.
+  /a/{domain}/apps/api/{app_id}/multimedia/status/{processing_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: app_id
+        in: path
+        required: true
+        description: Application UUID.
+        example: 6c9c5c1c1b8e4b6e9e6f6b6e9e6f6b6e
+        schema:
+          type: string
+      - name: processing_id
+        in: path
+        required: true
+        description: Opaque id returned by `uploadApplicationMultimedia`.
+        example: dl-abc123def456
+        schema:
+          type: string
+    get:
+      operationId: getMultimediaUploadStatus
+      summary: Poll the status of a queued multimedia upload
+      description: |-
+        Polls the background job started by `uploadApplicationMultimedia` (`multimedia_status_api`/`_handle_multimedia_status`, `app_import_api.py:134-163`). Requires the Edit Apps permission, same mechanism as `importApplication`.
+        Unlike several other status-polling endpoints in this API (compare `getFixtureUploadStatus`), **this one has genuine 404 and 500 responses with real JSON bodies**, not an always-200 contract.
+      tags:
+        - Data
+      responses:
+        '200':
+          description: Current status. See `MultimediaUploadStatus`'s description for why this is a single shape, not the two the task brief and `import-app.rst` describe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultimediaUploadStatus'
+        '401':
+          description: Authentication credentials were missing or invalid. The response body is empty or plain text, not JSON. Same mechanism as `importApplication`'s 401.
+        '403':
+          description: The authenticated user lacks the Edit Apps permission. The response is an HTML error page, not JSON. Same mechanism as `importApplication`'s 403.
+        '404':
+          description: The application does not exist in this domain (`ResourceNotFound`, `app_import_api.py:140-144`), or the `processing_id` is not found or has expired from cache (`BulkMultimediaStatusCache.get` returning `None`, `app_import_api.py:154-159`). Both cases share this body shape.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportAppError'
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `importApplication`'s 429.
+        '500':
+          description: The queued Celery task failed (`get_download_context` raising `TaskFailedError`, `soil/util.py:73-91`, caught at `app_import_api.py:146-152`). This is a real, code-verified path, reachable only when a Celery worker actually processes and fails the task -- not exercised by the offline checks in this task.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportAppError'
+  /a/{domain}/importer/excel/bulk_upload_api/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    post:
+      operationId: bulkUploadCases
+      summary: Bulk-create or update cases from an Excel file
+      description: |-
+        Uploads an Excel file of case data to create or update cases, via the same importer used by the Excel Case Data Importer UI (`bulk_case_upload_api`/`_bulk_case_upload_api`, `corehq/apps/case_importer/views.py:461-550`). Uploads are subject to the same restrictions as the UI importer but with much more limited feedback (`bulk-upload-cases.rst:83-85`); test uploads there first. Requires the Edit Data permission (`require_can_edit_data = require_permission(HqPermissions.edit_data)`, `case_importer/views.py:72`, applied at `:467`).
+        A success `code` means the upload was *processed*, not that every row imported without error -- business-level failures (e.g. an invalid location) surface later, via the `status_url`, whose own response shape is out of scope for this spec.
+      tags:
+        - Data
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - case_type
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The `.xlsx`/`.xls` file containing case data. Its internal structure is not modeled here.
+                case_type:
+                  type: string
+                  description: The case type to assign to created cases.
+                  example: household
+                search_field:
+                  type: string
+                  description: Whether to match existing cases against CommCare HQ's internal `case_id` or an external `external_id` (`_bulk_case_upload_api`, `views.py:495-503`). Any other value is rejected with a 500 (see the `500` response).
+                  enum:
+                    - case_id
+                    - external_id
+                  default: case_id
+                  example: external_id
+                search_column:
+                  type: string
+                  description: The spreadsheet column to match against `search_field`. Defaults to `case_id` or `external_id` matching `search_field`.
+                  example: household_id
+                create_new_cases:
+                  type: string
+                  description: '`"on"` to create new cases when no existing case matches `search_field` -- compared literally against the string `"on"` (`views.py:496`); any other value (including omission) means false.'
+                  example: 'on'
+                name_column:
+                  type: string
+                  description: The spreadsheet column to interpret as the case name.
+                  example: household_name
+      responses:
+        '200':
+          description: The upload was processed (successfully or not -- see `code`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkUploadCasesResponse'
+        '401':
+          description: Authentication credentials were missing or invalid. The response body is empty or plain text, not JSON.
+        '403':
+          description: The authenticated user lacks the Edit Data permission. The response is an HTML error page, not JSON.
+        '500':
+          description: A caught `ImporterError` (e.g. missing `file`/`case_type`, an invalid `search_field` value, or a bulk-import config error), `SpreadsheetFileExtError` (wrong file extension), or `SpreadsheetFileInvalidError` (unreadable spreadsheet) (`bulk_case_upload_api`, `views.py:470-482`). **The HTTP transport status genuinely is 500 here** (`json_response(..., status_code=500)`), unlike several other upload endpoints in this API where the body's `code` diverges from the real transport status. Any other exception type is not caught and produces Django's own unhandled-error response instead (HTML, not this shape) -- see the discrepancy file.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkUploadCasesResponse'
 components:
   securitySchemes:
     ApiKey:
@@ -5515,6 +6062,566 @@ components:
         error_message:
           type: string
           example: Sorry, this request could not be processed. Please try again later.
+    ReportColumn:
+      type: object
+      required:
+        - column_id
+        - display
+        - type
+      properties:
+        column_id:
+          type: string
+          example: gender
+        display:
+          type: string
+          example: Gender
+        type:
+          type: string
+          description: '`list-reports.rst:30-31` documents exactly two values, `"field"` (a single result column) and `"expanded"` (expands into multiple result columns when downloading report data). The underlying UCR column config is not restricted to these two by the code (`dehydrate_columns` copies `c["type"]` verbatim, `v0_5.py:971-977`), so other UCR column types could in principle appear; not modeled as an `enum` for that reason.'
+          example: expanded
+    ReportFilter:
+      type: object
+      required:
+        - datatype
+        - slug
+      properties:
+        type:
+          type: string
+          description: '`list-reports.rst:38` documents `"date"`, `"choice_list"`, and `"dynamic_choice_list"` as the filter `type` values, but the code does not constrain this (`dehydrate_filters` copies `f["type"]` verbatim, `v0_5.py:963-969`). **Present on every real response, but absent from both sample objects in `list-reports.rst:65-74,97-114`** -- the field is real, the samples are incomplete. See the discrepancy file.'
+          example: choice_list
+        datatype:
+          type: string
+          description: '`list-reports.rst:37` documents `"string"`, `"integer"`, or `"decimal"` as the only `datatype` values, but the page''s own second sample object (`:110-113`) shows `"datatype": "date"` for a filter named `form_date` -- contradicting its own prose. The code does not constrain this value at all. Not modeled as an `enum`.'
+          example: string
+        slug:
+          type: string
+          description: The filter's identifier, used as a `filter_name` query parameter on `downloadReportData`.
+          example: owner_name
+    Report:
+      type: object
+      description: A configurable ("UCR") report definition, as served by `SimpleReportConfigurationResource` (`corehq/apps/api/resources/ v0_5.py:957-1001`).
+      properties:
+        id:
+          type: string
+          description: Report configuration UUID.
+          example: 9aab0eeb88555a7b3bc8676883e7379a
+        resource_uri:
+          type: string
+          description: Relative URL of this report's detail operation. Every tastypie resource adds this field by default (`include_resource_uri`, `tastypie/resources.py:96,161`), and `list-reports.rst`'s sample output (`:76-77,116-117`) does show it.
+          example: /a/demo/api/simplereportconfiguration/v1/9aab0eeb88555a7b3bc8676883e7379a/
+        title:
+          type: string
+          nullable: true
+          description: Report title, as set in the report builder.
+          example: Test Report 1
+        columns:
+          type: array
+          description: The columns in the report (`dehydrate_columns`, `v0_5.py:971-977`).
+          items:
+            $ref: '#/components/schemas/ReportColumn'
+        filters:
+          type: array
+          description: The filters that can be used for the report (`dehydrate_filters`, `v0_5.py:963-969`).
+          items:
+            $ref: '#/components/schemas/ReportFilter'
+    ReportList:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            objects:
+              type: array
+              items:
+                $ref: '#/components/schemas/Report'
+          description: '`SimpleReportConfigurationResource.Meta.paginator_class` is `DoesNothingPaginator` (`v0_5.py:1001`; `corehq/apps/api/resources/ pagination.py:42-47`), which returns the full unfiltered list and a `meta` containing only `total_count` -- `limit`/`offset`/`next`/ `previous` are never present, and `limit`/`offset` query parameters have no effect. `PaginationMeta`''s properties are all optional, so this narrower shape still validates.'
+    ReportErrorMessage:
+      type: object
+      description: 'Error body keyed `error_message`, not the `error` key used by the shared `Error` schema. Both `getReport`''s and `downloadReportData`''s 404s reach it via tastypie''s generic uncaught-exception handler (`wrap_view`''s `except Exception` -> `_handle_500`, `tastypie/resources.py:250-265,291-315`, which maps a raised `NotFound` to a 404 status but always builds a canned message, never the raised exception''s own text): `SimpleReportConfigurationResource.obj_get` (`v0_5.py:979-986`) raises `NotFound(str(e))` from a caught `Http404`, and `ConfigurableReportDataResource._get_report_configuration` (`v0_5.py:919-932`) raises bare `NotFound()`. Neither is tastypie''s `ObjectDoesNotExist` (the only exception `get_detail` itself catches, `tastypie/resources.py:1362-1383`), so both reach the generic handler instead of a clean 404. See the discrepancy file.'
+      properties:
+        error_message:
+          type: string
+          example: Sorry, this request could not be processed. Please try again later.
+    ReportColumnData:
+      type: object
+      required:
+        - header
+        - slug
+      properties:
+        header:
+          type: string
+          example: Gender-male
+        slug:
+          type: string
+          example: gender-male
+        expand_column_value:
+          type: string
+          description: Present only for a sub-column produced by expanding an `"expanded"` report column (`UCRExpandDatabaseSubcolumn`, `v0_5.py:885-886`); the distinct value of the source column this sub-column represents.
+          example: male
+    ConfigurableReportData:
+      type: object
+      description: The result of running a single report, served by `ConfigurableReportDataResource` (`v0_5.py:812-954`). Detail-only -- see `downloadReportData`'s operation description.
+      required:
+        - columns
+        - data
+        - total_records
+        - next_page
+      properties:
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportColumnData'
+        data:
+          type: array
+          description: One object per result row, keyed by each column's `slug` (`_get_report_data`, `v0_5.py:862-890`). The set of keys depends entirely on the report's own column configuration, so this is modeled as an opaque object per row rather than named properties.
+          items:
+            type: object
+            additionalProperties: true
+        total_records:
+          type: integer
+          example: 30
+        next_page:
+          type: string
+          description: Relative URL (via Django's `reverse`, not `get_resource_uri`) for the next page of results, repeating every current query parameter with `offset` advanced by `limit`. **Empty string, not `null`, when there is no further page** (`_get_next_page`, `v0_5.py:846-860`, `else` branch returns `""`) -- `download-report-data.rst` has no example of the last page, so this is undocumented.
+          example: /a/demo/api/configurablereportdata/v1/9aab0eeb88555a7b4568676883e7379a/?offset=3&limit=3&state=vermont
+        resource_uri:
+          type: string
+          description: Every tastypie resource adds this field by default (`include_resource_uri`, `tastypie/resources.py:96,161`), and this resource's own `get_resource_uri` override (`v0_5.py:940-949`) appends the effective `offset`/`limit` query parameters to it. Undocumented -- `download-report-data.rst`'s sample output (`:61-98`) has no `resource_uri` key. See the discrepancy file.
+          example: /a/demo/api/configurablereportdata/v1/9aab0eeb88555a7b4568676883e7379a/?offset=20&limit=10
+    DETExport:
+      type: object
+      description: A case or form export instance flagged for Data Export Tool (DET) config download (`DETExportInstanceResource`, `corehq/apps/api/resources/v1_0.py:177-226`).
+      required:
+        - id
+        - name
+        - type
+        - export_format
+        - is_deidentified
+        - case_type
+        - xmlns
+        - det_config_url
+      properties:
+        id:
+          type: string
+          description: Export instance UUID.
+          example: a1b2c3
+        resource_uri:
+          type: string
+          description: Every tastypie resource adds this field by default (`include_resource_uri`, `tastypie/resources.py:96,161`); undocumented in `det-exports.rst`'s sample output (`:59-84`), but present on every response. See the discrepancy file.
+          example: /a/demo/api/det_export_instance/v1/a1b2c3/
+        name:
+          type: string
+          description: The name given by the user who created the export. For case exports, defaults to the case type and the export's creation date.
+          example: My Case Export
+        type:
+          type: string
+          enum:
+            - case
+            - form
+          description: '`dehydrate_type` (`v1_0.py:210-214`) asserts the underlying object is a `CaseExportInstance` or `FormExportInstance` and returns its own `.type` attribute, which is one of these two values.'
+          example: case
+        export_format:
+          type: string
+          description: The file format the user chose to export data in.
+          example: csv
+        is_deidentified:
+          type: boolean
+          description: Whether personal identifiers are excluded from the export data.
+          example: false
+        case_type:
+          type: string
+          nullable: true
+          description: The case type of exported cases. `null` for form exports (`dehydrate_case_type`, `v1_0.py:216-220`).
+          example: stock
+        xmlns:
+          type: string
+          nullable: true
+          description: The XMLNS of exported forms. `null` for case exports (`dehydrate_xmlns`, `v1_0.py:222-226`).
+          example: null
+        det_config_url:
+          type: string
+          description: Absolute URL where the DET config file can be downloaded. Accepts API Key authentication.
+          example: https://www.commcarehq.org/a/demo/data/export/custom/schema/det/download/a1b2c3/
+    DETExportList:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            objects:
+              type: array
+              items:
+                $ref: '#/components/schemas/DETExport'
+    ApplicationForm:
+      type: object
+      required:
+        - xmlns
+        - name
+        - questions
+        - unique_id
+      properties:
+        xmlns:
+          type: string
+          nullable: true
+          description: Real field, undocumented -- `application-structure.rst`'s sample form (`:77-92`) has no `xmlns` key. See the discrepancy file.
+          example: http://openrosa.org/formdesigner/12345
+        name:
+          type: object
+          additionalProperties:
+            type: string
+          description: Form name, keyed by language code.
+          example:
+            en: Name in English
+            es: Nombre en Español
+        questions:
+          type: array
+          description: One entry per question in the form, from `form.get_questions(..., include_triggers=True, include_groups=True, include_translations=True, include_fixtures=True)` (`v0_4.py:390-396`). This is a large, recursively-structured object not modeled field-by-field here; the sample shows the commonly-present `label`/`repeat`/`tag`/`value` keys, but others (e.g. translations, options) can appear depending on the question type.
+          items:
+            type: object
+            additionalProperties: true
+        unique_id:
+          type: string
+          description: Real field, undocumented -- `application-structure.rst`'s sample form has no `unique_id` key. See the discrepancy file.
+          example: f6e5d4c3b2a1
+    ApplicationModule:
+      type: object
+      required:
+        - name
+        - case_type
+        - case_properties
+        - unique_id
+        - forms
+      description: Not a tastypie field -- a plain dict built by `dehydrate_module` (`v0_4.py:365-404`), one per module returned in `Application.modules`.
+      properties:
+        name:
+          type: string
+          description: Module name.
+          example: Visit Module
+        case_type:
+          type: string
+          example: type_of_case_from_app_builder
+        case_properties:
+          type: array
+          items:
+            type: string
+          description: All case properties for this module's case type.
+          example:
+            - case_prop1
+            - case_prop2
+        unique_id:
+          type: string
+          description: Real field, undocumented -- `application-structure.rst`'s sample module (`:73-105`) has no `unique_id` key. See the discrepancy file.
+          example: a1b2c3d4e5f6
+        forms:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationForm'
+    ApplicationVersion:
+      type: object
+      required:
+        - id
+        - built_on
+        - build_comment
+        - is_released
+        - version
+      description: 'One built version of an application, from a raw CouchDB view row (`get_all_built_app_results`, `corehq/apps/app_manager/dbaccessors.py: 474-485`; `app_manager/saved_app/map.js:1-32`), not re-wrapped into a Python object -- so its `built_on` follows a different serialization path than the application-level field of the same name (see below).'
+      properties:
+        id:
+          type: string
+          example: 3f2504e04f8911d39a0c0305e82c3301
+        built_on:
+          type: string
+          format: date-time
+          description: 'Unlike `Application.built_on`, this value is the raw string stored in the CouchDB document, produced by `jsonobject`''s `DateTimeProperty._unwrap` (`.venv/.../jsonobject/properties.pyx:96-102`), which unconditionally appends a literal `Z` -- `value.isoformat() + padding + ''Z''` -- even though the underlying datetime is naive (`utcnow()`). Genuinely RFC3339-shaped, so `format: date-time` is correct here even though it is not for the application-level field.'
+          example: '2017-01-30T19:53:20.000000Z'
+        build_comment:
+          type: string
+          example: ''
+        is_released:
+          type: boolean
+          example: true
+        version:
+          type: integer
+          example: 16
+    Application:
+      type: object
+      description: A CommCare application, served by `ApplicationResource` (`corehq/apps/api/resources/v0_4.py:312-405`). Also returned by `importApplication`'s create/update flow (a different resource entirely -- see `ImportAppSuccess`).
+      required:
+        - id
+        - name
+        - version
+        - modules
+        - versions
+      properties:
+        id:
+          type: string
+          description: Application UUID.
+          example: 6c9c5c1c1b8e4b6e9e6f6b6e9e6f6b6e
+        resource_uri:
+          type: string
+          description: Every tastypie resource adds this field by default (`include_resource_uri`, `tastypie/resources.py:96,161`); undocumented in `application-structure.rst`'s sample output, but present on every response. See the discrepancy file.
+          example: /a/demo/api/application/v1/6c9c5c1c1b8e4b6e9e6f6b6e9e6f6b6e/
+        name:
+          type: string
+          example: My application
+        version:
+          type: integer
+          description: The application version (build number).
+          example: 16
+        is_released:
+          type: boolean
+          nullable: true
+          example: false
+        built_on:
+          type: string
+          nullable: true
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$
+          description: 'When this build was created. `null` for a non-build application (the working copy). This field is serialized by tastypie''s own `DateTimeField.convert`/the default `iso-8601` serializer (`tastypie/fields.py:376-396`, `tastypie/serializers.py:198-214`), which calls plain `datetime.isoformat()` on the naive datetime stored by `Application.built_on` (`DateTimeProperty(required=False)`, `corehq/apps/app_manager/models/applications.py:365`, set from `datetime.datetime.utcnow()`, `:730-732`) -- **no trailing `Z`, no offset.** Contrast `ApplicationVersion.built_on` below, which carries the same underlying value through a different path that *does* add a `Z`. `format: date-time` is deliberately not used here since it implies RFC3339, which this field does not satisfy.'
+          example: '2017-01-30T19:53:20'
+        build_comment:
+          type: string
+          nullable: true
+          example: ''
+        built_from_app_id:
+          type: string
+          nullable: true
+          description: The id of the application this build was copied from (`copy_of`).
+          example: null
+        modules:
+          type: array
+          description: One entry per module in the application (`dehydrate_modules`, `v0_4.py:406-413`). Empty for a `RemoteApp`. Each entry is either the module shape below, or (if dehydrating the module raised) an object with only an `error` key (`dehydrate_module`'s `except Exception`, `v0_4.py:401-404`).
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/ApplicationModule'
+              - type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+        versions:
+          type: array
+          description: All built versions (builds) of this application, empty for a build itself (`dehydrate_versions`, `v0_4.py:344-359`). **Documented in `application-structure.rst:94-103` as if nested inside each module -- it is not; it is a top-level field of the application, exactly one list per app, not one per module.** See the discrepancy file.
+          items:
+            $ref: '#/components/schemas/ApplicationVersion'
+    ApplicationList:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            objects:
+              type: array
+              items:
+                $ref: '#/components/schemas/Application'
+          description: '`BaseApplicationResource.Meta.paginator_class` is `DoesNothingPaginatorCompat` (`v0_4.py:329`; `corehq/apps/api/resources/pagination.py:50-68`), which returns the full unfiltered list regardless of `limit`/`offset`, and hardcodes `meta.limit` to `null` and `meta.offset` to `0` on every response -- **`application-structure.rst:51`''s sample shows `"limit": 20`, which the code can never actually produce.** See the discrepancy file.'
+    ApplicationExtras:
+      type: object
+      additionalProperties: true
+      description: 'Returned instead of `Application` when the `extras` query parameter is `true` (`_safe_bool(bundle, "extras")`, `v0_4.py:415-422`): the standard dehydrated fields merged on top of the application''s entire raw internal CouchDB document (`bundle.obj._doc`). This is a large, undocumented, implementation-specific blob -- not modeled field-by-field.'
+    ImportAppSuccess:
+      type: object
+      required:
+        - success
+        - app_id
+      description: Response of `importApplication` (`_handle_import_app`, `corehq/apps/app_manager/views/app_import_api.py:37-79`). The same shape for both create (`201`) and update (`200`); `version` and `warnings` are present only in the situations described below.
+      properties:
+        success:
+          type: boolean
+          enum:
+            - true
+        app_id:
+          type: string
+          example: abc123def456
+        version:
+          type: integer
+          description: Present only when updating an existing application (`app_id` was supplied in the request) -- the application's new version number after the update (`:74-75`). Never present on a create.
+          example: 8
+        warnings:
+          type: array
+          description: Present only if the import succeeded but encountered non-fatal issues (missing multimedia references, or a Mobile Report Module referencing a UCR unavailable in this project space) -- `django.contrib.messages` collected during the request (`:76-78`). Present on both create and update when applicable.
+          items:
+            type: string
+          example:
+            - Copying the application succeeded, but the application is missing multimedia file(s).
+    ImportAppError:
+      type: object
+      required:
+        - success
+        - error
+      description: Error body shared by `importApplication`, `uploadApplicationMultimedia`, and `getMultimediaUploadStatus` -- keyed `success`/`error`, not the `error` key alone used by the shared `Error` schema.
+      properties:
+        success:
+          type: boolean
+          enum:
+            - false
+        error:
+          type: string
+          example: app_name is required
+    MultimediaUploadAccepted:
+      type: object
+      required:
+        - success
+        - processing_id
+      description: Response of `uploadApplicationMultimedia` (`_handle_upload_multimedia`, `app_import_api.py:92-125`). The ZIP is queued for asynchronous processing (`process_bulk_upload_zip.delay`, `:121-123`); this response only confirms the ZIP itself parsed, not that processing succeeded.
+      properties:
+        success:
+          type: boolean
+          enum:
+            - true
+        processing_id:
+          type: string
+          description: Poll `getMultimediaUploadStatus` with this id.
+          example: dl-abc123def456
+    MultimediaUploadStatus:
+      type: object
+      description: 'Response of `getMultimediaUploadStatus` (`_handle_multimedia_status`, `app_import_api.py:138-163`; body built by `BaseMultimediaStatusCache.get_response`/`BulkMultimediaStatusCache. get_response`, `corehq/apps/hqmedia/cache.py:45-99`). **`import-app.rst` documents this as two distinct shapes ("In Progress" at `:235-248` and "Complete" at `:255-284`), modeled with `oneOf` per the task brief -- but the code always returns every one of these keys, with values that are zero/empty/null until processing finishes; there is exactly one shape, not two.** `oneOf` was deliberately not used for that reason (per the project''s `oneOf`-means-disjoint convention: this would not be a disjoint union, it would be the same schema matching itself twice). See the discrepancy file. Also undocumented by either sample: `type` (always `"zip"` for this endpoint) and `is_ready` (mirrors `complete`).'
+      required:
+        - success
+        - type
+        - in_celery
+        - is_ready
+        - complete
+        - progress
+        - errors
+        - processing_id
+        - matched_count
+        - unmatched_count
+        - matched_files
+        - unmatched_files
+        - total_files
+        - processed_files
+        - image_count
+        - audio_count
+        - video_count
+        - skipped_files
+      properties:
+        success:
+          type: boolean
+          enum:
+            - true
+        type:
+          type: string
+          enum:
+            - zip
+          description: '`BulkMultimediaStatusCache.upload_type` (`cache.py:71`). Undocumented in `import-app.rst`.'
+        in_celery:
+          type: boolean
+          description: Whether the upload is currently being processed by a Celery worker.
+        is_ready:
+          type: boolean
+          description: Mirrors `complete` (`BaseMultimediaStatusCache.get_response`, `cache.py:45-56`). Undocumented in `import-app.rst`.
+        complete:
+          type: boolean
+          description: Whether processing has finished (successfully or with errors).
+        progress:
+          type: object
+          required:
+            - percent
+            - current
+            - total
+          properties:
+            percent:
+              type: integer
+              example: 50
+            current:
+              type: integer
+              example: 5
+            total:
+              type: integer
+              example: 10
+        errors:
+          type: array
+          items:
+            type: string
+          description: Populated only if the task called `mark_with_error` (`cache.py:39-42`); empty otherwise.
+        processing_id:
+          type: string
+          example: dl-abc123def456
+        matched_count:
+          type: integer
+          description: Total across all matched-file categories. `0` until matching completes.
+          example: 8
+        unmatched_count:
+          type: integer
+          example: 2
+        matched_files:
+          type: object
+          description: Keyed by multimedia class name; each value is a list of matched file identifiers (opaque strings, not modeled further).
+          properties:
+            CommCareImage:
+              type: array
+              items:
+                type: string
+            CommCareAudio:
+              type: array
+              items:
+                type: string
+            CommCareVideo:
+              type: array
+              items:
+                type: string
+        unmatched_files:
+          type: array
+          items:
+            type: object
+            required:
+              - path
+              - reason
+            properties:
+              path:
+                type: string
+                example: images/extra.png
+              reason:
+                type: string
+        total_files:
+          type: integer
+          nullable: true
+          description: '`null` until the ZIP has been scanned.'
+          example: 10
+        processed_files:
+          type: integer
+          nullable: true
+          example: 10
+        image_count:
+          type: integer
+          example: 6
+        audio_count:
+          type: integer
+          example: 2
+        video_count:
+          type: integer
+          example: 0
+        skipped_files:
+          type: array
+          items:
+            type: object
+            required:
+              - path
+              - mimetype
+            properties:
+              path:
+                type: string
+              mimetype:
+                type: string
+    BulkUploadCasesResponse:
+      type: object
+      required:
+        - code
+        - message
+      description: Response of `bulkUploadCases` (`bulk_case_upload_api`/ `_bulk_case_upload_api`, `corehq/apps/case_importer/views.py:470-550`). A success code indicates the upload was *processed*, not that every row imported cleanly -- `bulk-upload-cases.rst:89` warns business-level failures (e.g. an invalid location) only surface later, via `status_url`.
+      properties:
+        code:
+          type: integer
+          enum:
+            - 200
+            - 500
+          description: '`200` on success (`views.py:550`, HTTP status is also 200). `500` on a caught `ImporterError`/`SpreadsheetFileExtError`/ `SpreadsheetFileInvalidError` (`views.py:474-482`) -- **and here the HTTP transport status genuinely is 500 too** (`json_response(..., status_code=500)`, `views.py:482`), unlike several other endpoints in this API where a `code`/`status` field in the body diverges from the real transport status. Any other exception type is not caught here and produces Django''s own unhandled-error response (HTML, not this JSON shape) -- see the discrepancy file.'
+          example: 200
+        message:
+          type: string
+          example: success
+        status_url:
+          type: string
+          description: Present only on success. URL to poll for the status of the queued import job. That status endpoint (`case_importer_upload_status`) is a separate view, out of scope for this spec.
+          example: /a/demo/importer/case_importer/status/dl-2998e6834a654ab5ba74f372246caa75/
   responses:
     BadRequest:
       description: The request was malformed or a parameter value was invalid.

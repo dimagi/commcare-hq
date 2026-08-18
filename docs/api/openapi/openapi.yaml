@@ -130,3 +130,25 @@ paths:
     $ref: "./paths/lookup-table.yaml#/ItemList"
   /a/{domain}/api/lookup_table_item/v1/{lookup_table_item_id}/:
     $ref: "./paths/lookup-table.yaml#/ItemDetail"
+  /a/{domain}/api/simplereportconfiguration/v1/:
+    $ref: "./paths/report.yaml#/List"
+  /a/{domain}/api/simplereportconfiguration/v1/{report_id}/:
+    $ref: "./paths/report.yaml#/Detail"
+  /a/{domain}/api/configurablereportdata/v1/{report_id}/:
+    $ref: "./paths/report.yaml#/Download"
+  /a/{domain}/api/det_export_instance/v1/:
+    $ref: "./paths/det-export.yaml#/List"
+  /a/{domain}/api/det_export_instance/v1/{det_export_instance_id}/:
+    $ref: "./paths/det-export.yaml#/Detail"
+  /a/{domain}/api/application/v1/:
+    $ref: "./paths/application.yaml#/List"
+  /a/{domain}/api/application/v1/{app_id}/:
+    $ref: "./paths/application.yaml#/Detail"
+  /a/{domain}/apps/api/import_app/:
+    $ref: "./paths/application.yaml#/Import"
+  /a/{domain}/apps/api/{app_id}/multimedia/:
+    $ref: "./paths/application.yaml#/UploadMultimedia"
+  /a/{domain}/apps/api/{app_id}/multimedia/status/{processing_id}/:
+    $ref: "./paths/application.yaml#/MultimediaStatus"
+  /a/{domain}/importer/excel/bulk_upload_api/:
+    $ref: "./paths/bulk-upload-cases.yaml#/Upload"
