@@ -100,6 +100,13 @@ class LocationTypeResource(BaseLocationsResource):
         filtering = {
             "domain": ('exact',),
         }
+        # This resource implements no obj_create/obj_update/obj_delete,
+        # and relies on the default ReadOnlyAuthorization, which rejects
+        # any write with 401. Without these, Tastypie's own default
+        # ``allowed_methods`` would still publish POST/PUT/PATCH/DELETE
+        # as if they worked.
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_list'):
         if isinstance(bundle_or_obj, Bundle):

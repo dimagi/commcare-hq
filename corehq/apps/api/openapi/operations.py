@@ -237,6 +237,14 @@ def resource_paths(entry):
             ],
         }
         for method in detail_methods:
+            # POST targets a single identified item, never the
+            # collection, so it is never a real Tastypie operation on a
+            # detail path -- Tastypie's default ``allowed_methods`` lists
+            # it anyway. ``builder.view_paths()`` makes the equivalent
+            # skip for function-based views; this keeps the two paths in
+            # agreement.
+            if method == 'post':
+                continue
             operation = {
                 'summary': summary,
                 'operationId': f'{name}_{entry.version}_detail_{method}',
@@ -253,7 +261,8 @@ def resource_paths(entry):
             if method in ('put', 'patch'):
                 operation['requestBody'] = _request_body(write_schema)
             item[method] = operation
-        paths[detail] = item
+        if len(item) > 1:  # more than just 'parameters'
+            paths[detail] = item
 
     return paths
 

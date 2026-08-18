@@ -93,6 +93,12 @@ class FixtureResource(HqBaseResource):
         object_class = LookupTableRow
         resource_name = 'fixture'
         limit = 0
+        # This is a plain Resource with no obj_create/obj_update/
+        # obj_delete, so a write raises NotImplementedError (500).
+        # Without these, Tastypie's default ``allowed_methods`` would
+        # still publish POST/PUT/PATCH/DELETE as if they worked.
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
 
 
 class InternalFixtureResource(FixtureResource):
