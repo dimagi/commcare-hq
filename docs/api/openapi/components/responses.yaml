@@ -1,3 +1,18 @@
+# WHICH OF THESE ARE ACTUALLY USED
+#
+# `BadRequest`, `Unauthorized` and `TooManyRequests` are referenced by real
+# operations. `Forbidden` and `NotFound` are **templates, referenced by zero
+# operations on purpose** -- see their own comments below. There is deliberately
+# no `ServerError`: it was removed in the final review because no operation
+# referenced it, nothing in this API documents a 500 as a contract, and unlike
+# the two templates below nothing else in the spec refers to it either.
+#
+# The two templates are kept rather than deleted because roughly thirty inline
+# comments across `paths/` cite them by name -- "deliberately NOT the shared
+# `Forbidden` ref, which declares a JSON body this operation never produces" --
+# and that reasoning only reads if the thing being contrasted against still
+# exists. They document the shape a reader might *expect*, next to the reason it
+# is usually wrong.
 BadRequest:
   description: The request was malformed or a parameter value was invalid.
   content:
@@ -42,14 +57,16 @@ Unauthorized:
     application/json:
       schema:
         $ref: "./schemas/error.yaml#/Error"
-# Like `NotFound` below, this response's JSON body is NOT universal. Several
-# resources return a bare, empty-bodied `HttpResponseForbidden()` (every
-# tastypie resource using `RequirePermissionAuthentication` --
-# corehq/apps/api/resources/auth.py:129-130), and the plain-Django-view
-# endpoints (case/v2, messaging-event, form submission) render Django's
-# `403.html` template through `handler403 = no_permissions` (urls.py:49,
-# corehq/apps/hqwebapp/views.py:362-373) -- an HTML page. Verify each
-# operation's real 403 body before pointing it at this ref.
+# TEMPLATE -- referenced by no operation, and that is deliberate. This JSON body
+# is NOT universal: at least three distinct 403 shapes exist. Every tastypie
+# resource using `RequirePermissionAuthentication` returns a bare, empty-bodied
+# `HttpResponseForbidden()` (corehq/apps/api/resources/auth.py:129-130), and the
+# plain-Django-view endpoints (case/v2, messaging-event, form submission) render
+# Django's `403.html` template through `handler403 = no_permissions`
+# (urls.py:49, corehq/apps/hqwebapp/views.py:362-373) -- an HTML page. Every
+# operation in this spec was checked and every one of them models its 403
+# inline. Do not point a new operation at this ref: verify the real body against
+# the code and write it inline, as the existing operations do.
 Forbidden:
   description: >-
     The authenticated user lacks the permission required for this endpoint.
@@ -57,13 +74,18 @@ Forbidden:
     application/json:
       schema:
         $ref: "./schemas/error.yaml#/Error"
-# This response's JSON `{"error": ...}` body only holds where a resource
-# actually renders one. Several tastypie code paths return a 404 without
-# going through the serializer at all (a bare `http.HttpNotFound()`, empty
-# body) or through a generic exception handler with a different body shape
-# entirely (see group/v1's getGroup and deleteGroup, and the discrepancy
-# file). Verify each resource's actual 404 body before pointing it at this
-# ref -- do not assume it applies by default.
+# TEMPLATE -- referenced by no operation, and that is deliberate. This JSON
+# `{"error": ...}` body only holds where a resource actually renders one, and at
+# least four distinct 404 shapes exist: a bare `http.HttpNotFound()` with an
+# empty body (tastypie's own `get_detail`); a canned
+# `{"error_message": ...}` built by tastypie's generic `_handle_500`; a
+# resource-specific JSON object; and a Django HTML error page
+# (`getFormAttachment`). Several operations return no 404 at all -- a miss
+# surfaces as a 400 (`getMobileWorker`, `replaceLocationV2`), an uncaught 500
+# (`replaceGroup`), or a silent create (`replaceLookupTable`). See group/v1's
+# `getGroup` and `deleteGroup` for two different shapes on one resource, and the
+# discrepancy file for the full evidence. Do not point a new operation at this
+# ref: verify the real body and write it inline.
 NotFound:
   description: The requested resource does not exist in this project space.
   content:
@@ -91,9 +113,3 @@ TooManyRequests:
     The request was rate limited. Back off and retry. Rate limits are applied
     per user and project space. The response body is **empty** and no
     `Retry-After` header is sent.
-ServerError:
-  description: An unexpected error occurred.
-  content:
-    application/json:
-      schema:
-        $ref: "./schemas/error.yaml#/Error"
