@@ -27,6 +27,8 @@ List:
       unconditionally; `limit`/`offset` query parameters have no effect and are
       not declared here.
     tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
     responses:
       "200":
         description: Every report configuration in the project space.
@@ -71,6 +73,8 @@ Detail:
       Same permission requirements as `listReports` -- generic API access only,
       no report-specific permission.
     tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
     responses:
       "200":
         description: The report configuration.
@@ -155,6 +159,7 @@ Download:
       discrepancy file.
     tags: [Data]
     parameters:
+      - $ref: "../components/parameters.yaml#/Format"
       - name: offset
         in: query
         required: false

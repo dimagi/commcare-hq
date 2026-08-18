@@ -126,6 +126,28 @@ Detail:
   get:
     operationId: getLookupTable
     summary: Retrieve a single lookup table
+    description: >-
+      **No resource-specific permission is required.**
+      `LookupTableResource.Meta` (`corehq/apps/fixtures/resources/v0_1.py:241-245`)
+      inherits `CustomResourceMeta`'s plain
+      `LoginAndDomainAuthentication` (`corehq/apps/api/resources/meta.py:76-81`)
+      and never overrides `authentication` -- login, membership of this project
+      space, and the project space's generic API-access privilege are the whole
+      check. Note this is *weaker* than the `fixture/v1` resource over the same
+      underlying data, which does require Edit Apps
+      (`RequirePermissionAuthentication(HqPermissions.edit_apps)`,
+      `v0_1.py:91-92`).
+
+
+      Returns the table definition -- its `tag`, `fields` and `item_attributes`
+      -- not its rows; rows are served by the `lookup_table_item` resource.
+
+
+      An unknown `lookup_table_id`, or one belonging to another project space,
+      returns **404 with an empty body**: `obj_get` (`v0_1.py:170-171`) raises
+      Django's `ObjectDoesNotExist` through `get_sql_object_or_not_exist`
+      (`v0_1.py:421-433`), and tastypie's `get_detail` answers with a bare
+      `http.HttpNotFound()`. The 403 body is likewise empty, not JSON.
     tags: [Data]
     parameters:
       - $ref: "../components/parameters.yaml#/Format"
@@ -385,6 +407,28 @@ ItemDetail:
   get:
     operationId: getLookupTableItem
     summary: Retrieve a single lookup table row
+    description: >-
+      **No resource-specific permission is required** --
+      `LookupTableItemResource.Meta`
+      (`corehq/apps/fixtures/resources/v0_1.py:414-418`) inherits
+      `CustomResourceMeta`'s `LoginAndDomainAuthentication`
+      (`corehq/apps/api/resources/meta.py:76-81`) without overriding it, so
+      login, project-space membership and the generic API-access privilege are
+      the whole check. Same caveat as `getLookupTable`: the `fixture/v1`
+      resource over the same rows requires Edit Apps.
+
+
+      The row's `data_type_id` is the id of the lookup table it belongs to. Its
+      `fields` use the nested field-list shape documented on the
+      `LookupTableItem` schema, not the flat shape used by the table's own
+      `fields`.
+
+
+      An unknown `lookup_table_item_id`, or one belonging to another project
+      space, returns **404 with an empty body**: `obj_get` (`v0_1.py:354-355`)
+      raises Django's `ObjectDoesNotExist` through
+      `get_sql_object_or_not_exist`, and tastypie's `get_detail` answers with a
+      bare `http.HttpNotFound()`. The 403 body is likewise empty, not JSON.
     tags: [Data]
     parameters:
       - $ref: "../components/parameters.yaml#/Format"

@@ -156,7 +156,28 @@ List:
   post:
     operationId: createLocationV2
     summary: Create a single location (v2)
+    description: >-
+      Requires the Edit Locations permission
+      (`RequirePermissionAuthentication(HqPermissions.edit_locations)`,
+      `corehq/apps/locations/resources/v0_6.py:34`) **and** the project space
+      must hold the Locations privilege -- `BaseLocationsResource.dispatch`
+      (`corehq/apps/locations/resources/v0_5.py:20-23`) short-circuits with a
+      bare `HttpResponseForbidden()` before authentication runs otherwise.
+
+
+      `Meta.always_return_data = True` (`v0_6.py:37`), so the 201 body is the
+      full new location -- unlike the group resource's POST, which returns only
+      `{id}`. `site_code` is generated from `name` when omitted
+      (`generate_site_code`).
+
+
+      **Every validation failure is a 400 with the shared `{"error": ...}`
+      body**, because all of them raise `LocationAPIError`, a
+      `tastypie.exceptions.BadRequest` subclass (`v0_6.py:18-22`). There is no
+      field-level error object. The 403 body is empty, not JSON.
     tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
     requestBody:
       required: true
       content:
@@ -222,6 +243,8 @@ List:
       `corehq/apps/locations/tests/test_api_resources.py:401-430`
       (`response.json() == {'error': "Could not update: ..."}`, not an array).
     tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
     requestBody:
       required: true
       content:
@@ -284,6 +307,23 @@ Detail:
   get:
     operationId: getLocationV2
     summary: Retrieve a single location (v2)
+    description: >-
+      Requires the Edit Locations permission (`v0_6.py:34`) -- there is no
+      read-only permission for this resource -- and the project space must hold
+      the Locations privilege, checked first by `BaseLocationsResource.dispatch`
+      (`corehq/apps/locations/resources/v0_5.py:20-23`).
+
+
+      The `location_id` in the path is the resource's `detail_uri_name`
+      (`v0_6.py:32`), not the database primary key. Only active locations are
+      visible: `Meta.queryset` is `SQLLocation.active_objects.all()`
+      (`v0_6.py:31`), so an archived location returns 404.
+
+
+      A missing location returns **404 with an empty body** (tastypie's default
+      `get_detail` answers with a bare `http.HttpNotFound()`), whereas
+      `replaceLocationV2` returns a **400** for the same unknown id. The 403
+      body is empty, not JSON.
     tags: [Data]
     parameters:
       - $ref: "../components/parameters.yaml#/Format"
@@ -323,7 +363,26 @@ Detail:
     # by corehq/apps/locations/tests/test_api_resources.py:401-430 (same
     # message and code path as the bulk-PATCH update branch, which shares
     # `obj_update`). See the discrepancy file.
+    description: >-
+      Requires the Edit Locations permission (`v0_6.py:34`) and the project
+      space's Locations privilege (`v0_5.py:20-23`). `Meta.always_return_data =
+      True` (`v0_6.py:37`), so the 200 body is the full updated location.
+
+
+      **An unknown `location_id` returns 400, not 404.** `obj_update`
+      (`v0_6.py:90-99`) looks the location up with
+      `SQLLocation.objects.get(location_id=..., domain=...)` and converts a miss
+      to `LocationAPIError` -- a `BadRequest`, not tastypie's `NotFound`, which
+      is the only exception `put_detail` (`tastypie/resources.py:1502`) treats
+      as "create instead". Contrast `getLocationV2`, whose 404 for the same id
+      is real and has an empty body.
+
+
+      Sending `location_id` in the request body is itself a 400: it is not an
+      updatable field (see `LocationUpdate`'s description).
     tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
     requestBody:
       required: true
       content:

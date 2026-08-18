@@ -20,6 +20,11 @@ List:
     # (always `True`, `tastypie/authentication.py:54-60`), so no header-based
     # scheme applies to this endpoint at all.
     security: []
+    parameters:
+      # The response is built by `v0_1.CommCareUserResource`/`WebUserResource`'s
+      # `create_response` (`v0_4.py:297`), so the format is chosen by that
+      # resource's `CustomXMLSerializer`, not by this one's.
+      - $ref: "../components/parameters.yaml#/Format"
     requestBody:
       required: true
       content:

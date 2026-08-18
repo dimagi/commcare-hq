@@ -44,7 +44,34 @@ List:
   post:
     operationId: createGroup
     summary: Create a user group
+    description: >-
+      Requires the Edit Mobile Workers permission
+      (`GroupResource.Meta.authentication =
+      RequirePermissionAuthentication(HqPermissions.edit_commcare_users)`,
+      `corehq/apps/api/resources/v0_4.py:253`).
+
+
+      **The 201 body is `{"id": "<uuid>"}` and nothing else** -- not the created
+      group. `v0_5.GroupResource.serialize`
+      (`corehq/apps/api/resources/v0_5.py:662-668`) rewrites the response
+      whenever `request.method == 'POST'`, so the full representation is never
+      returned here. Fetch the detail endpoint if you need the rest of the
+      object.
+
+
+      **The 400 body is keyed `error_message`, not `error`.** `post_list`
+      (`v0_5.py:676-698`) catches the `AssertionError` raised by `obj_create`
+      (for example "Name is required", `v0_5.py:753,759`) and puts its text in
+      `bundle.data['error_message']`, which `serialize` then rewrites into
+      `{"error_message": "..."}`. This is the only 400 in this resource that
+      uses that key: `replaceGroup` uses the shared `{"error": ...}` envelope
+      and `bulkUpdateGroups` returns a bare array of strings.
+
+
+      The 403 body is empty, not JSON.
     tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
     requestBody:
       required: true
       content:
@@ -101,8 +128,11 @@ List:
     summary: Bulk create or update groups
     description: >-
       Accepts a list of group payloads. Declared by
-      `v0_5.GroupResource.patch_list`.
+      `v0_5.GroupResource.patch_list`. Requires the Edit Mobile Workers
+      permission.
     tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
     requestBody:
       required: true
       content:
@@ -181,7 +211,27 @@ Detail:
   get:
     operationId: getGroup
     summary: Retrieve a single user group
+    description: >-
+      Requires the Edit Mobile Workers permission
+      (`corehq/apps/api/resources/v0_4.py:253`). Returns the full group,
+      including its `users` list.
+
+
+      **An unknown `group_id` returns a 404 with an empty body.** `obj_get`
+      (`v0_4.py:246-247`) uses `get_object_or_not_exist`
+      (`corehq/apps/api/util.py:15-39`), which raises Django's
+      `ObjectDoesNotExist`; tastypie's `get_detail`
+      (`tastypie/resources.py:1362-1383`) catches it and answers with a bare
+      `http.HttpNotFound()` that never runs through the serializer. Note that
+      `deleteGroup` returns a *different*, JSON-bodied 404 for the same missing
+      id, and `replaceGroup` returns a 500 -- three shapes for one condition on
+      one resource.
+
+
+      The 403 body is empty, not JSON.
     tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
     responses:
       "200":
         description: The group.
@@ -230,7 +280,29 @@ Detail:
     # `ObjectDoesNotExist`, so it is never converted to a 404 -- it propagates
     # to a generic 500. Documenting a 404 the code cannot return would
     # mislead clients; see the discrepancy file for the underlying bug.
+    description: >-
+      Replaces the group in full. Requires the Edit Mobile Workers permission
+      (`corehq/apps/api/resources/v0_4.py:253`). Unlike `createGroup`, the
+      response *is* the complete updated group: `serialize`
+      (`corehq/apps/api/resources/v0_5.py:662-668`) special-cases `POST` only.
+
+
+      **There is no 404 -- a `PUT` to an id that does not exist returns a 500.**
+      `obj_update` (`v0_5.py:762-763`) fetches with `Group.get(pk)`, which
+      raises couchdbkit's `ResourceNotFound`. That is neither tastypie's
+      `NotFound` (all `put_detail` catches, `tastypie/resources.py:1467-1502`)
+      nor Django's `ObjectDoesNotExist`, so it falls through to the generic
+      `except Exception` handler and becomes `HttpApplicationError`. Do not use
+      a `PUT` to probe whether a group exists; see the discrepancy file.
+
+
+      The 400 here uses the shared `{"error": ...}` envelope -- not
+      `createGroup`'s `error_message` key -- because it comes from `_update`
+      (`v0_5.py:706,710`) raising tastypie's `BadRequest`. The 403 body is
+      empty, not JSON.
     tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
     requestBody:
       required: true
       content:
@@ -271,6 +343,25 @@ Detail:
   delete:
     operationId: deleteGroup
     summary: Delete a user group
+    description: >-
+      Requires the Edit Mobile Workers permission
+      (`corehq/apps/api/resources/v0_4.py:253`). On success returns 204 with an
+      empty body. The `format` parameter is not offered here because no
+      successful response carries a body.
+
+
+      **The 404 body is not the same as `getGroup`'s.** `obj_delete` ->
+      `obj_get` raises Django's `ObjectDoesNotExist`, which `delete_detail`
+      (`tastypie/resources.py:1525-1541`) does not catch -- it only catches
+      tastypie's own `NotFound`. The exception reaches tastypie's generic
+      `_handle_500` (`tastypie/resources.py:265-292`), which maps it to a 404
+      status but builds the body itself: in production a canned
+      `{"error_message": "Sorry, this request could not be processed. Please try
+      again later."}`, keyed `error_message` rather than `error` and carrying no
+      resource-specific detail.
+
+
+      The 403 body is empty, not JSON.
     tags: [Users]
     responses:
       "204":

@@ -1245,8 +1245,18 @@ paths:
     post:
       operationId: createGroup
       summary: Create a user group
+      description: |-
+        Requires the Edit Mobile Workers permission (`GroupResource.Meta.authentication = RequirePermissionAuthentication(HqPermissions.edit_commcare_users)`, `corehq/apps/api/resources/v0_4.py:253`).
+
+        **The 201 body is `{"id": "<uuid>"}` and nothing else** -- not the created group. `v0_5.GroupResource.serialize` (`corehq/apps/api/resources/v0_5.py:662-668`) rewrites the response whenever `request.method == 'POST'`, so the full representation is never returned here. Fetch the detail endpoint if you need the rest of the object.
+
+        **The 400 body is keyed `error_message`, not `error`.** `post_list` (`v0_5.py:676-698`) catches the `AssertionError` raised by `obj_create` (for example "Name is required", `v0_5.py:753,759`) and puts its text in `bundle.data['error_message']`, which `serialize` then rewrites into `{"error_message": "..."}`. This is the only 400 in this resource that uses that key: `replaceGroup` uses the shared `{"error": ...}` envelope and `bulkUpdateGroups` returns a bare array of strings.
+
+        The 403 body is empty, not JSON.
       tags:
         - Users
+      parameters:
+        - $ref: '#/components/parameters/Format'
       requestBody:
         required: true
         content:
@@ -1280,9 +1290,11 @@ paths:
     patch:
       operationId: bulkUpdateGroups
       summary: Bulk create or update groups
-      description: Accepts a list of group payloads. Declared by `v0_5.GroupResource.patch_list`.
+      description: Accepts a list of group payloads. Declared by `v0_5.GroupResource.patch_list`. Requires the Edit Mobile Workers permission.
       tags:
         - Users
+      parameters:
+        - $ref: '#/components/parameters/Format'
       requestBody:
         required: true
         content:
@@ -1336,8 +1348,16 @@ paths:
     get:
       operationId: getGroup
       summary: Retrieve a single user group
+      description: |-
+        Requires the Edit Mobile Workers permission (`corehq/apps/api/resources/v0_4.py:253`). Returns the full group, including its `users` list.
+
+        **An unknown `group_id` returns a 404 with an empty body.** `obj_get` (`v0_4.py:246-247`) uses `get_object_or_not_exist` (`corehq/apps/api/util.py:15-39`), which raises Django's `ObjectDoesNotExist`; tastypie's `get_detail` (`tastypie/resources.py:1362-1383`) catches it and answers with a bare `http.HttpNotFound()` that never runs through the serializer. Note that `deleteGroup` returns a *different*, JSON-bodied 404 for the same missing id, and `replaceGroup` returns a 500 -- three shapes for one condition on one resource.
+
+        The 403 body is empty, not JSON.
       tags:
         - Users
+      parameters:
+        - $ref: '#/components/parameters/Format'
       responses:
         '200':
           description: The group.
@@ -1356,8 +1376,16 @@ paths:
     put:
       operationId: replaceGroup
       summary: Replace a user group
+      description: |-
+        Replaces the group in full. Requires the Edit Mobile Workers permission (`corehq/apps/api/resources/v0_4.py:253`). Unlike `createGroup`, the response *is* the complete updated group: `serialize` (`corehq/apps/api/resources/v0_5.py:662-668`) special-cases `POST` only.
+
+        **There is no 404 -- a `PUT` to an id that does not exist returns a 500.** `obj_update` (`v0_5.py:762-763`) fetches with `Group.get(pk)`, which raises couchdbkit's `ResourceNotFound`. That is neither tastypie's `NotFound` (all `put_detail` catches, `tastypie/resources.py:1467-1502`) nor Django's `ObjectDoesNotExist`, so it falls through to the generic `except Exception` handler and becomes `HttpApplicationError`. Do not use a `PUT` to probe whether a group exists; see the discrepancy file.
+
+        The 400 here uses the shared `{"error": ...}` envelope -- not `createGroup`'s `error_message` key -- because it comes from `_update` (`v0_5.py:706,710`) raising tastypie's `BadRequest`. The 403 body is empty, not JSON.
       tags:
         - Users
+      parameters:
+        - $ref: '#/components/parameters/Format'
       requestBody:
         required: true
         content:
@@ -1382,6 +1410,12 @@ paths:
     delete:
       operationId: deleteGroup
       summary: Delete a user group
+      description: |-
+        Requires the Edit Mobile Workers permission (`corehq/apps/api/resources/v0_4.py:253`). On success returns 204 with an empty body. The `format` parameter is not offered here because no successful response carries a body.
+
+        **The 404 body is not the same as `getGroup`'s.** `obj_delete` -> `obj_get` raises Django's `ObjectDoesNotExist`, which `delete_detail` (`tastypie/resources.py:1525-1541`) does not catch -- it only catches tastypie's own `NotFound`. The exception reaches tastypie's generic `_handle_500` (`tastypie/resources.py:265-292`), which maps it to a 404 status but builds the body itself: in production a canned `{"error_message": "Sorry, this request could not be processed. Please try again later."}`, keyed `error_message` rather than `error` and carrying no resource-specific detail.
+
+        The 403 body is empty, not JSON.
       tags:
         - Users
       responses:
@@ -1825,6 +1859,8 @@ paths:
       description: Requires the Edit Mobile Workers and Edit Access APIs permissions. `obj_create` (`corehq/apps/api/resources/v0_5.py:270-340`) calls `self._update(bundle)` to apply the remaining fields but discards its return value -- unlike `updateMobileWorker`, a field-level update error during creation (for example an unrecognized `primary_location`) is silently swallowed rather than rejected with a 400. See the discrepancy file.
       tags:
         - Users
+      parameters:
+        - $ref: '#/components/parameters/Format'
       requestBody:
         required: true
         content:
@@ -1897,8 +1933,16 @@ paths:
     get:
       operationId: getMobileWorker
       summary: Retrieve a single mobile worker
+      description: |-
+        Requires the Edit Mobile Workers permission (`CommCareUserResource.Meta.authentication = RequirePermissionAuthentication(HqPermissions.edit_commcare_users)`, `corehq/apps/api/resources/v0_1.py:71-72`).
+
+        **An unknown `user_id`, or one belonging to another project space, returns 400 -- not 404.** `UserResource.obj_get` (`corehq/apps/api/resources/v0_1.py:36-43`) returns `None` rather than raising, so tastypie never converts the miss to a 404; the `None` reaches `full_dehydrate`, where the non-nullable `id`/`username`/`email` fields raise `ApiFieldError`, which `wrap_view` turns into a 400 with the shared `{"error": ...}` body (`tastypie/resources.py:244-246`). Do not treat a 400 here as "malformed request".
+
+        The 403 body is empty, not JSON.
       tags:
         - Users
+      parameters:
+        - $ref: '#/components/parameters/Format'
       responses:
         '200':
           description: The mobile worker.
@@ -1924,6 +1968,8 @@ paths:
       description: Requires the Edit Mobile Workers and Edit Access APIs permissions. Fields not included in the request body are left unchanged, except where noted on `MobileWorkerWrite` (`phone_numbers`, `groups`, and `user_data` are wholesale replacements, not merges).
       tags:
         - Users
+      parameters:
+        - $ref: '#/components/parameters/Format'
       requestBody:
         required: true
         content:
@@ -2124,6 +2170,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Format'
         - name: web_username
           in: query
           required: false
@@ -2157,8 +2204,16 @@ paths:
     get:
       operationId: getWebUser
       summary: Retrieve a single web user
+      description: |-
+        Requires the Edit Web Users permission (`WebUserResource.Meta.authentication = RequirePermissionAuthentication(HqPermissions.edit_web_users)`, `corehq/apps/api/resources/v0_1.py:155-156`). The `role`, `is_admin` and `permissions` fields are resolved against *this* project space's domain membership, not the account globally (`dehydrate_role`, `dehydrate_is_admin`, `dehydrate_permissions`, `v0_1.py:144-153`).
+
+        **An unknown `user_id`, or one belonging to another project space, returns 400 -- not 404.** Same mechanism as `getMobileWorker`: `obj_get` (`v0_1.py:36-43`) returns `None` instead of raising, and the resulting `ApiFieldError` in `full_dehydrate` is converted by `wrap_view` into a 400 with the shared `{"error": ...}` body.
+
+        The 403 body is empty, not JSON.
       tags:
         - Users
+      parameters:
+        - $ref: '#/components/parameters/Format'
       responses:
         '200':
           description: The web user.
@@ -2184,6 +2239,8 @@ paths:
       description: Requires the Edit Web Users and Edit Access APIs permissions. `user_data` is merged onto the existing value; every other field is a wholesale replacement. Validated through `WebUserResourceSpec` (`corehq/apps/api/validation.py:37-49`) before any field is applied.
       tags:
         - Users
+      parameters:
+        - $ref: '#/components/parameters/Format'
       requestBody:
         required: true
         content:
@@ -2311,6 +2368,8 @@ paths:
       description: Requires the Edit Web Users and Edit Access APIs permissions. Creates an `Invitation` record and emails the invitee; it does not create the `WebUser` itself, which is only created once the invitation is accepted. `v1_0.InvitationResource.Meta.allowed_methods = ['post']` (`corehq/apps/api/resources/v1_0.py:87-91`) -- this resource has no list or detail GET.
       tags:
         - Users
+      parameters:
+        - $ref: '#/components/parameters/Format'
       requestBody:
         required: true
         content:
@@ -2362,6 +2421,8 @@ paths:
       description: Root-mounted, unlike every other operation in this spec -- no `{domain}` path segment. Registered directly under `/api/` (`v0_5.IdentityResource.get_urlpattern('v1')`, included via `user_urlpatterns` at `corehq/apps/api/urls.py:246` and mounted at root (not the domain-scoped module at `urls.py:55`) by `urls.py:108`, `url( r'^api/', include(user_api_urlpatterns))`). Only requires login, not domain membership or any specific permission (`LoginAuthentication`, `v0_5.py:1157`).
       tags:
         - Users
+      parameters:
+        - $ref: '#/components/parameters/Format'
       responses:
         '200':
           description: The authenticated user's identity. Unlike every other list operation, the body is the bare object, not a `meta`/`objects` envelope -- see `Identity`'s schema description.
@@ -2584,8 +2645,16 @@ paths:
     post:
       operationId: createLocationV2
       summary: Create a single location (v2)
+      description: |-
+        Requires the Edit Locations permission (`RequirePermissionAuthentication(HqPermissions.edit_locations)`, `corehq/apps/locations/resources/v0_6.py:34`) **and** the project space must hold the Locations privilege -- `BaseLocationsResource.dispatch` (`corehq/apps/locations/resources/v0_5.py:20-23`) short-circuits with a bare `HttpResponseForbidden()` before authentication runs otherwise.
+
+        `Meta.always_return_data = True` (`v0_6.py:37`), so the 201 body is the full new location -- unlike the group resource's POST, which returns only `{id}`. `site_code` is generated from `name` when omitted (`generate_site_code`).
+
+        **Every validation failure is a 400 with the shared `{"error": ...}` body**, because all of them raise `LocationAPIError`, a `tastypie.exceptions.BadRequest` subclass (`v0_6.py:18-22`). There is no field-level error object. The 403 body is empty, not JSON.
       tags:
         - Data
+      parameters:
+        - $ref: '#/components/parameters/Format'
       requestBody:
         required: true
         content:
@@ -2617,6 +2686,8 @@ paths:
       description: 'Accepts a list of location payloads under `objects` (`v0_6.LocationResource.patch_list`, `v0_6.py:164-173`, calling the shared `patch_list_replica`, `corehq/apps/api/resources/__init__.py:172-205`). Each item is a create (no `location_id`) or an update (`location_id` present) -- create uses the same validation as `createLocationV2`, update the same as `replaceLocationV2`. Limited to 100 objects per request (`v0_6.LocationResource.patch_limit`, `v0_6.py:27`); exceeding it raises `BadRequest("Object count exceeds limit for PATCH method.")` before any object is processed. The whole batch is atomic (`@atomic` on `patch_list`, `v0_6.py:164`): if any single item fails validation, nothing in the batch is created or updated. **Unlike the group resource''s bulk PATCH, a partial-failure response here is never a positionally-aligned array of ids/errors** -- `patch_list_replica`''s per-item `except AssertionError` (`corehq/apps/api/resources/__init__.py :199-201`) is unreachable for this resource, since every validation failure here raises `LocationAPIError` (a `BadRequest`, not an `AssertionError`). A `BadRequest` propagates straight past `patch_list_replica`''s loop, uncaught, to `wrap_view` (`tastypie/resources.py:244-246`), which converts it to a single `{"error": ...}` object -- the array-of-strings shape is therefore only ever seen on full success. Confirmed by `corehq/apps/locations/tests/test_api_resources.py:401-430` (`response.json() == {''error'': "Could not update: ..."}`, not an array).'
       tags:
         - Data
+      parameters:
+        - $ref: '#/components/parameters/Format'
       requestBody:
         required: true
         content:
@@ -2669,6 +2740,12 @@ paths:
     get:
       operationId: getLocationV2
       summary: Retrieve a single location (v2)
+      description: |-
+        Requires the Edit Locations permission (`v0_6.py:34`) -- there is no read-only permission for this resource -- and the project space must hold the Locations privilege, checked first by `BaseLocationsResource.dispatch` (`corehq/apps/locations/resources/v0_5.py:20-23`).
+
+        The `location_id` in the path is the resource's `detail_uri_name` (`v0_6.py:32`), not the database primary key. Only active locations are visible: `Meta.queryset` is `SQLLocation.active_objects.all()` (`v0_6.py:31`), so an archived location returns 404.
+
+        A missing location returns **404 with an empty body** (tastypie's default `get_detail` answers with a bare `http.HttpNotFound()`), whereas `replaceLocationV2` returns a **400** for the same unknown id. The 403 body is empty, not JSON.
       tags:
         - Data
       parameters:
@@ -2691,8 +2768,16 @@ paths:
     put:
       operationId: replaceLocationV2
       summary: Update a single location (v2)
+      description: |-
+        Requires the Edit Locations permission (`v0_6.py:34`) and the project space's Locations privilege (`v0_5.py:20-23`). `Meta.always_return_data = True` (`v0_6.py:37`), so the 200 body is the full updated location.
+
+        **An unknown `location_id` returns 400, not 404.** `obj_update` (`v0_6.py:90-99`) looks the location up with `SQLLocation.objects.get(location_id=..., domain=...)` and converts a miss to `LocationAPIError` -- a `BadRequest`, not tastypie's `NotFound`, which is the only exception `put_detail` (`tastypie/resources.py:1502`) treats as "create instead". Contrast `getLocationV2`, whose 404 for the same id is real and has an empty body.
+
+        Sending `location_id` in the request body is itself a 400: it is not an updatable field (see `LocationUpdate`'s description).
       tags:
         - Data
+      parameters:
+        - $ref: '#/components/parameters/Format'
       requestBody:
         required: true
         content:
@@ -2848,6 +2933,8 @@ paths:
       tags:
         - Users
       security: []
+      parameters:
+        - $ref: '#/components/parameters/Format'
       requestBody:
         required: true
         content:
@@ -2889,6 +2976,7 @@ paths:
       tags:
         - Users
       parameters:
+        - $ref: '#/components/parameters/Format'
         - name: feature_flag
           in: query
           required: false
@@ -3234,6 +3322,12 @@ paths:
     get:
       operationId: getLookupTable
       summary: Retrieve a single lookup table
+      description: |-
+        **No resource-specific permission is required.** `LookupTableResource.Meta` (`corehq/apps/fixtures/resources/v0_1.py:241-245`) inherits `CustomResourceMeta`'s plain `LoginAndDomainAuthentication` (`corehq/apps/api/resources/meta.py:76-81`) and never overrides `authentication` -- login, membership of this project space, and the project space's generic API-access privilege are the whole check. Note this is *weaker* than the `fixture/v1` resource over the same underlying data, which does require Edit Apps (`RequirePermissionAuthentication(HqPermissions.edit_apps)`, `v0_1.py:91-92`).
+
+        Returns the table definition -- its `tag`, `fields` and `item_attributes` -- not its rows; rows are served by the `lookup_table_item` resource.
+
+        An unknown `lookup_table_id`, or one belonging to another project space, returns **404 with an empty body**: `obj_get` (`v0_1.py:170-171`) raises Django's `ObjectDoesNotExist` through `get_sql_object_or_not_exist` (`v0_1.py:421-433`), and tastypie's `get_detail` answers with a bare `http.HttpNotFound()`. The 403 body is likewise empty, not JSON.
       tags:
         - Data
       parameters:
@@ -3393,6 +3487,12 @@ paths:
     get:
       operationId: getLookupTableItem
       summary: Retrieve a single lookup table row
+      description: |-
+        **No resource-specific permission is required** -- `LookupTableItemResource.Meta` (`corehq/apps/fixtures/resources/v0_1.py:414-418`) inherits `CustomResourceMeta`'s `LoginAndDomainAuthentication` (`corehq/apps/api/resources/meta.py:76-81`) without overriding it, so login, project-space membership and the generic API-access privilege are the whole check. Same caveat as `getLookupTable`: the `fixture/v1` resource over the same rows requires Edit Apps.
+
+        The row's `data_type_id` is the id of the lookup table it belongs to. Its `fields` use the nested field-list shape documented on the `LookupTableItem` schema, not the flat shape used by the table's own `fields`.
+
+        An unknown `lookup_table_item_id`, or one belonging to another project space, returns **404 with an empty body**: `obj_get` (`v0_1.py:354-355`) raises Django's `ObjectDoesNotExist` through `get_sql_object_or_not_exist`, and tastypie's `get_detail` answers with a bare `http.HttpNotFound()`. The 403 body is likewise empty, not JSON.
       tags:
         - Data
       parameters:
@@ -3482,6 +3582,8 @@ paths:
         `Meta.paginator_class = DoesNothingPaginator` (`corehq/apps/api/resources/pagination.py:42-47`) returns every report unconditionally; `limit`/`offset` query parameters have no effect and are not declared here.
       tags:
         - Data
+      parameters:
+        - $ref: '#/components/parameters/Format'
       responses:
         '200':
           description: Every report configuration in the project space.
@@ -3511,6 +3613,8 @@ paths:
       description: Same permission requirements as `listReports` -- generic API access only, no report-specific permission.
       tags:
         - Data
+      parameters:
+        - $ref: '#/components/parameters/Format'
       responses:
         '200':
           description: The report configuration.
@@ -3550,6 +3654,7 @@ paths:
       tags:
         - Data
       parameters:
+        - $ref: '#/components/parameters/Format'
         - name: offset
           in: query
           required: false
@@ -3712,6 +3817,7 @@ paths:
       tags:
         - Data
       parameters:
+        - $ref: '#/components/parameters/Format'
         - name: extras
           in: query
           required: false
@@ -3762,6 +3868,7 @@ paths:
       tags:
         - Data
       parameters:
+        - $ref: '#/components/parameters/Format'
         - name: extras
           in: query
           required: false
@@ -4256,13 +4363,14 @@ components:
       name: format
       in: query
       required: false
-      description: Response serialization format.
+      description: Response serialization format. `yaml` is accepted by every tastypie-served endpoint but is not mentioned in the reST documentation; treat it as undocumented rather than guaranteed. An unrecognised value is ignored and JSON is returned.
       example: json
       schema:
         type: string
         enum:
           - json
           - xml
+          - yaml
         default: json
     Limit:
       name: limit

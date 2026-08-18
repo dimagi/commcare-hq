@@ -91,6 +91,8 @@ List:
       silently swallowed rather than rejected with a 400. See the discrepancy
       file.
     tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
     requestBody:
       required: true
       content:
@@ -170,7 +172,27 @@ Detail:
   get:
     operationId: getMobileWorker
     summary: Retrieve a single mobile worker
+    description: >-
+      Requires the Edit Mobile Workers permission
+      (`CommCareUserResource.Meta.authentication =
+      RequirePermissionAuthentication(HqPermissions.edit_commcare_users)`,
+      `corehq/apps/api/resources/v0_1.py:71-72`).
+
+
+      **An unknown `user_id`, or one belonging to another project space, returns
+      400 -- not 404.** `UserResource.obj_get`
+      (`corehq/apps/api/resources/v0_1.py:36-43`) returns `None` rather than
+      raising, so tastypie never converts the miss to a 404; the `None` reaches
+      `full_dehydrate`, where the non-nullable `id`/`username`/`email` fields
+      raise `ApiFieldError`, which `wrap_view` turns into a 400 with the shared
+      `{"error": ...}` body (`tastypie/resources.py:244-246`). Do not treat a
+      400 here as "malformed request".
+
+
+      The 403 body is empty, not JSON.
     tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
     responses:
       "200":
         description: The mobile worker.
@@ -222,6 +244,8 @@ Detail:
       `MobileWorkerWrite` (`phone_numbers`, `groups`, and `user_data` are
       wholesale replacements, not merges).
     tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
     requestBody:
       required: true
       content:

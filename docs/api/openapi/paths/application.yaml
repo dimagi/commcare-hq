@@ -22,6 +22,7 @@ List:
       response's `meta.limit` is always `null` and `meta.offset` is always `0`.
     tags: [Data]
     parameters:
+      - $ref: "../components/parameters.yaml#/Format"
       - name: extras
         in: query
         required: false
@@ -82,6 +83,7 @@ Detail:
       "Edit Apps" requirement.
     tags: [Data]
     parameters:
+      - $ref: "../components/parameters.yaml#/Format"
       - name: extras
         in: query
         required: false

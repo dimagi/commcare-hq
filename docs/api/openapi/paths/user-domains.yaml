@@ -15,6 +15,7 @@ List:
       (`get_object_list`, `corehq/apps/api/resources/v0_5.py:1119-1141`).
     tags: [Users]
     parameters:
+      - $ref: "../components/parameters.yaml#/Format"
       - name: feature_flag
         in: query
         required: false
