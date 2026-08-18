@@ -20,7 +20,10 @@ The same check runs as a test
 3. Add a `Docs` inner class with `summary`, `description`, and optionally
    `examples` and `field_schemas`. `Docs` is merged across the class hierarchy,
    so put shared documentation on the base resource and override only what
-   changes in a later version.
+   changes in a later version. A `field_schemas` entry for a field the
+   resource does not declare (an *addition* -- see `operations.object_schema`)
+   is only picked up if it carries a `type`; without one it is silently
+   dropped instead of appearing in the generated schema.
 4. Put JSON examples under `examples/<resource>/<version>/` and reference them
    by relative path.
 5. Add the slug to `DOCUMENTED_SLUGS` in `tests/test_documented_fields.py`.
