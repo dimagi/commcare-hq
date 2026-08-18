@@ -86,7 +86,7 @@ class Tile(object):
             return None
         if not self.quick_action_visibility_check(request):
             return None
-        url = reverse(self.quick_action_urlname, args=[request.domain])
+        url = self._default_url_generator(self.quick_action_urlname, request)
         if not request.can_access_all_locations and not url_is_location_safe(url):
             return None
         return url

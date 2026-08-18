@@ -33,7 +33,7 @@
       <div class="row" data-bind="foreach: tiles">
         <div class="col-lg-3">
           <div class="card card-dashboard card-dashboard-medium mb-3">
-            <div class="card-header">
+            <div class="card-header position-relative">
               <a data-bind="
                                visible: url,
                                text: title,
@@ -47,12 +47,14 @@
                            "></a>
               <span data-bind="text: title, visible: !url"></span>
               <!-- ko if: quickAction -->
-              <a class="btn btn-outline-primary btn-sm dashboard-quick-action"
-                 data-bind="attr: {
-                                href: quickAction.url,
-                                'aria-label': quickAction.label,
-                                title: quickAction.label,
-                            }">
+              <a
+                class="btn btn-outline-primary btn-sm dashboard-quick-action position-absolute top-50 end-0 translate-middle-y me-2"
+                data-bind="
+                  attr: {
+                      href: quickAction.url,
+                      'aria-label': quickAction.label,
+                      title: quickAction.label,
+                  }">
                 <i aria-hidden="true" data-bind="css: quickAction.icon"></i>
               </a>
               <!-- /ko -->
