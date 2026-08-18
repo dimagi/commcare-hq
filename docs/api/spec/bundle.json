@@ -446,7 +446,7 @@
     },
     "/a/{domain}/api/case/v1/": {
       "get": {
-        "description": "Requires the `edit_data` permission.",
+        "description": "List cases in a project space, or fetch a single case by identifier. Cases track structured data about a person, place or thing, collected and updated by CommCare mobile or web app forms.\n\nRequires the `edit_data` permission.",
         "operationId": "case_v1_list_get",
         "parameters": [
           {
@@ -505,6 +505,46 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "meta": {
+                    "limit": 20,
+                    "next": null,
+                    "offset": 0,
+                    "previous": null,
+                    "total_count": 1
+                  },
+                  "objects": [
+                    {
+                      "case_id": "45WKYXQRFFU3AT4Y022EX7HF2",
+                      "closed": false,
+                      "closed_by": null,
+                      "date_closed": null,
+                      "date_modified": "2012-03-13T18:21:52Z",
+                      "domain": "demo",
+                      "id": "45WKYXQRFFU3AT4Y022EX7HF2",
+                      "indexed_on": "2012-04-05T23:56:41Z",
+                      "indices": {},
+                      "opened_by": "06414101dc45bcfdc963b8cb1a1ebdfd",
+                      "properties": {
+                        "case_name": "ryan",
+                        "case_type": "programmer",
+                        "date_opened": "2012-03-13T18:21:52Z",
+                        "external_id": "45WKYXQRFFU3AT4Y022EX7HF2",
+                        "gender": "m",
+                        "languages": "python java javascript c php erlang love",
+                        "owner_id": null,
+                        "role": "artisan"
+                      },
+                      "resource_uri": "/a/demo/api/case/v1/45WKYXQRFFU3AT4Y022EX7HF2/",
+                      "server_date_modified": "2012-04-05T23:56:41Z",
+                      "server_date_opened": "2012-04-05T23:56:41Z",
+                      "user_id": "06414101dc45bcfdc963b8cb1a1ebdfd",
+                      "xform_ids": [
+                        "3HQEXR2S0GIRFY2GF40HAR7ZE"
+                      ]
+                    }
+                  ]
+                },
                 "schema": {
                   "properties": {
                     "meta": {
@@ -514,78 +554,118 @@
                       "items": {
                         "properties": {
                           "case_id": {
+                            "description": "Case UUID.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "child_cases": {
-                            "type": "string"
+                            "additionalProperties": {
+                              "type": "object"
+                            },
+                            "description": "Child cases of this case, keyed by index identifier. Returned only when child_cases__full=true is passed.",
+                            "type": "object"
                           },
                           "closed": {
+                            "description": "Whether the case is closed.",
                             "type": "boolean"
                           },
                           "closed_by": {
+                            "description": "UUID of the user who closed the case, or null if the case is open.",
                             "nullable": true,
                             "type": "string"
                           },
                           "date_closed": {
+                            "description": "Date and time the case was closed, or null if the case is open.",
                             "nullable": true,
                             "type": "string"
                           },
                           "date_modified": {
                             "default": "1900-01-01",
+                            "description": "Date and time the case was last modified, as reported by the submitting phone.",
                             "type": "string"
                           },
                           "domain": {
+                            "description": "Domain (project space) that owns the case.",
                             "type": "string"
                           },
                           "id": {
+                            "description": "Case UUID.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "indexed_on": {
                             "default": "1900-01-01",
+                            "description": "Date and time the case was indexed into Elasticsearch. Useful for pagination since it always increases, unlike phone-reported dates.",
                             "type": "string"
                           },
                           "indices": {
                             "additionalProperties": true,
+                            "description": "References to other cases linked to this case, keyed by index identifier, each giving the related case_type and case_id.",
                             "type": "object"
                           },
                           "opened_by": {
+                            "description": "UUID of the user who opened the case.",
                             "nullable": true,
                             "type": "string"
                           },
                           "parent_cases": {
-                            "type": "string"
+                            "additionalProperties": {
+                              "type": "object"
+                            },
+                            "description": "Parent cases of this case, keyed by index identifier. Returned only when parent_cases__full=true is passed.",
+                            "type": "object"
                           },
                           "properties": {
                             "additionalProperties": true,
+                            "description": "Case property values, including special predefined properties (case_name, case_type, external_id, owner_id, date_opened) and any user-defined dynamic properties.",
                             "type": "object"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "server_date_modified": {
                             "default": "1900-01-01",
+                            "description": "Date and time the case was last modified on the server.",
                             "type": "string"
                           },
                           "server_date_opened": {
                             "default": "1900-01-01",
+                            "description": "Date and time the case was opened on the server.",
                             "type": "string"
                           },
                           "user_id": {
+                            "description": "UUID of the user that last modified the case.",
                             "nullable": true,
                             "type": "string"
                           },
                           "xform_ids": {
-                            "items": {},
+                            "description": "UUIDs of the forms that have updated this case.",
+                            "items": {
+                              "type": "string"
+                            },
                             "type": "array"
                           },
                           "xforms_by_name": {
-                            "type": "string"
+                            "additionalProperties": {
+                              "items": {
+                                "type": "object"
+                              },
+                              "type": "array"
+                            },
+                            "description": "Forms that have updated this case, grouped by form name. Returned only when xforms_by_name__full=true is passed.",
+                            "type": "object"
                           },
                           "xforms_by_xmlns": {
-                            "type": "string"
+                            "additionalProperties": {
+                              "items": {
+                                "type": "object"
+                              },
+                              "type": "array"
+                            },
+                            "description": "Forms that have updated this case, grouped by form XMLNS. Returned only when xforms_by_xmlns__full=true is passed.",
+                            "type": "object"
                           }
                         },
                         "type": "object"
@@ -600,7 +680,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Case",
+        "summary": "Cases",
         "tags": [
           "case"
         ]
@@ -619,7 +699,7 @@
     },
     "/a/{domain}/api/case/v1/{pk}/": {
       "get": {
-        "description": "Requires the `edit_data` permission.",
+        "description": "List cases in a project space, or fetch a single case by identifier. Cases track structured data about a person, place or thing, collected and updated by CommCare mobile or web app forms.\n\nRequires the `edit_data` permission.",
         "operationId": "case_v1_detail_get",
         "responses": {
           "200": {
@@ -628,78 +708,118 @@
                 "schema": {
                   "properties": {
                     "case_id": {
+                      "description": "Case UUID.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "child_cases": {
-                      "type": "string"
+                      "additionalProperties": {
+                        "type": "object"
+                      },
+                      "description": "Child cases of this case, keyed by index identifier. Returned only when child_cases__full=true is passed.",
+                      "type": "object"
                     },
                     "closed": {
+                      "description": "Whether the case is closed.",
                       "type": "boolean"
                     },
                     "closed_by": {
+                      "description": "UUID of the user who closed the case, or null if the case is open.",
                       "nullable": true,
                       "type": "string"
                     },
                     "date_closed": {
+                      "description": "Date and time the case was closed, or null if the case is open.",
                       "nullable": true,
                       "type": "string"
                     },
                     "date_modified": {
                       "default": "1900-01-01",
+                      "description": "Date and time the case was last modified, as reported by the submitting phone.",
                       "type": "string"
                     },
                     "domain": {
+                      "description": "Domain (project space) that owns the case.",
                       "type": "string"
                     },
                     "id": {
+                      "description": "Case UUID.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "indexed_on": {
                       "default": "1900-01-01",
+                      "description": "Date and time the case was indexed into Elasticsearch. Useful for pagination since it always increases, unlike phone-reported dates.",
                       "type": "string"
                     },
                     "indices": {
                       "additionalProperties": true,
+                      "description": "References to other cases linked to this case, keyed by index identifier, each giving the related case_type and case_id.",
                       "type": "object"
                     },
                     "opened_by": {
+                      "description": "UUID of the user who opened the case.",
                       "nullable": true,
                       "type": "string"
                     },
                     "parent_cases": {
-                      "type": "string"
+                      "additionalProperties": {
+                        "type": "object"
+                      },
+                      "description": "Parent cases of this case, keyed by index identifier. Returned only when parent_cases__full=true is passed.",
+                      "type": "object"
                     },
                     "properties": {
                       "additionalProperties": true,
+                      "description": "Case property values, including special predefined properties (case_name, case_type, external_id, owner_id, date_opened) and any user-defined dynamic properties.",
                       "type": "object"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "server_date_modified": {
                       "default": "1900-01-01",
+                      "description": "Date and time the case was last modified on the server.",
                       "type": "string"
                     },
                     "server_date_opened": {
                       "default": "1900-01-01",
+                      "description": "Date and time the case was opened on the server.",
                       "type": "string"
                     },
                     "user_id": {
+                      "description": "UUID of the user that last modified the case.",
                       "nullable": true,
                       "type": "string"
                     },
                     "xform_ids": {
-                      "items": {},
+                      "description": "UUIDs of the forms that have updated this case.",
+                      "items": {
+                        "type": "string"
+                      },
                       "type": "array"
                     },
                     "xforms_by_name": {
-                      "type": "string"
+                      "additionalProperties": {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "description": "Forms that have updated this case, grouped by form name. Returned only when xforms_by_name__full=true is passed.",
+                      "type": "object"
                     },
                     "xforms_by_xmlns": {
-                      "type": "string"
+                      "additionalProperties": {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "description": "Forms that have updated this case, grouped by form XMLNS. Returned only when xforms_by_xmlns__full=true is passed.",
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -709,7 +829,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Case",
+        "summary": "Cases",
         "tags": [
           "case"
         ]
@@ -1597,7 +1717,7 @@
     },
     "/a/{domain}/api/form/v1/": {
       "get": {
-        "description": "Requires the `edit_data` permission.",
+        "description": "List form submissions in a project space, or fetch a single form by identifier. Forms are individual data submissions made from CommCare mobile or web apps.\n\nRequires the `edit_data` permission.",
         "operationId": "form_v1_list_get",
         "parameters": [
           {
@@ -1656,6 +1776,104 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "meta": {
+                    "limit": 20,
+                    "next": "/a/corpora/api/form/v1/?limit=20&offset=20",
+                    "offset": 0,
+                    "previous": null,
+                    "total_count": 6909
+                  },
+                  "objects": [
+                    {
+                      "app_id": "effb341b",
+                      "archived": false,
+                      "attachments": {
+                        "form.xml": {
+                          "content_type": "text/xml",
+                          "length": 1103,
+                          "url": "/a/corpora/api/form/attachment/f959449c-8776-42ac-b776-3f564fafc331/form.xml"
+                        }
+                      },
+                      "build_id": "e0a6125",
+                      "domain": "corpora",
+                      "edited_by_user_id": null,
+                      "edited_on": null,
+                      "form": {
+                        "#type": "data",
+                        "@name": "Case Update",
+                        "@uiVersion": "1",
+                        "@version": "18",
+                        "@xmlns": "http://openrosa.org/formdesigner/4281EB62-46E6-49AD-A08C",
+                        "case": {
+                          "@case_id": "b6996b7b-6b3f-476a-9006",
+                          "@date_modified": "2016-11-29T14:50:41.156000Z",
+                          "@user_id": "e7ad965c",
+                          "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                          "update": {
+                            "data_node": "55",
+                            "dateval": "2012-09-26",
+                            "geodata": "5.0 5.0 5.0 5.0",
+                            "intval": "5",
+                            "multiselect": "b",
+                            "singleselect": "b",
+                            "text": "TEST"
+                          }
+                        },
+                        "data_node": "55",
+                        "geodata": "5.0 5.0 5.0 5.0",
+                        "meta": {
+                          "@xmlns": "http://openrosa.org/jr/xforms",
+                          "appVersion": "CommCare Android, version \"2.31.0\"(423345). App v18. CommCare Version 2.31. Build 423345, built on: 2016-11-02",
+                          "app_build_version": 18,
+                          "commcare_version": "2.31.0",
+                          "deviceID": "358001070684648",
+                          "geo_point": null,
+                          "instanceID": "f959449c-8776-42ac-b776-3f564fafc331",
+                          "timeEnd": "2016-11-29T14:50:41.156000Z",
+                          "timeStart": "2016-11-29T14:50:36.155000Z",
+                          "userID": "e7ad965c70802884a7a67add763939e8",
+                          "username": "testuser"
+                        },
+                        "old_data_node": "",
+                        "question1": "OK",
+                        "question11": "5",
+                        "question12": "2012-09-26",
+                        "question14": "OK",
+                        "question3": "b",
+                        "question7": "b",
+                        "text": "TEST"
+                      },
+                      "id": "f959449c-8776-42ac-b776-3f564fafc331",
+                      "indexed_on": "2016-11-29T14:50:43.100000Z",
+                      "initial_processing_complete": true,
+                      "is_phone_submission": false,
+                      "metadata": {
+                        "appVersion": "CommCare Android, version \"2.31.0\"(423345). App v18. CommCare Version 2.31. Build 423345, built on: 2016-11-02",
+                        "app_build_version": 18,
+                        "commcare_version": "2.31.0",
+                        "deprecatedID": null,
+                        "deviceID": "358001070684648",
+                        "doc_type": "Metadata",
+                        "geo_point": null,
+                        "instanceID": "f959449c-8776-42ac-b776-3f564fafc331",
+                        "location": null,
+                        "timeEnd": "2016-11-29T14:50:41.156000",
+                        "timeStart": "2016-11-29T14:50:36.155000",
+                        "userID": "e7ad965c70802884a7a67add763939e8",
+                        "username": "simon"
+                      },
+                      "problem": null,
+                      "received_on": "2016-11-29T14:50:42.530616Z",
+                      "resource_uri": "/a/corpora/api/form/v1/f959449c-8776-42ac-b776-3f564fafc331/",
+                      "server_modified_on": "2016-11-29T14:50:42.530616Z",
+                      "submit_ip": "10.0.0.1",
+                      "type": "data",
+                      "uiversion": "1",
+                      "version": "18"
+                    }
+                  ]
+                },
                 "schema": {
                   "properties": {
                     "meta": {
@@ -1665,88 +1883,113 @@
                       "items": {
                         "properties": {
                           "app_id": {
+                            "description": "UUID of the application the form was submitted from.",
                             "nullable": true,
                             "type": "string"
                           },
                           "archived": {
+                            "description": "Whether the form has been archived.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "attachments": {
                             "additionalProperties": true,
+                            "description": "Metadata for files attached to the form submission (e.g. images, audio), keyed by attachment name, each giving content_type, length and a download url.",
                             "nullable": true,
                             "readOnly": true,
                             "type": "object"
                           },
                           "build_id": {
+                            "description": "UUID of the application build the form was submitted from.",
                             "nullable": true,
                             "type": "string"
                           },
                           "cases": {
-                            "type": "string"
+                            "description": "Cases referenced by this form, not including cases referenced only in stock transactions. Returned only when cases__full=true is passed.",
+                            "items": {
+                              "type": "object"
+                            },
+                            "type": "array"
                           },
                           "domain": {
+                            "description": "Domain (project space) the form was submitted to.",
                             "type": "string"
                           },
                           "edited_by_user_id": {
+                            "description": "UUID of the user who last edited the form, or null if it has not been edited.",
                             "nullable": true,
                             "readOnly": true,
                             "type": "string"
                           },
                           "edited_on": {
+                            "description": "Date and time the form was last edited, or null if it has not been edited.",
                             "nullable": true,
                             "type": "string"
                           },
                           "form": {
                             "additionalProperties": true,
+                            "description": "The submitted form data, converted from XML to JSON, keyed by question path.",
                             "type": "object"
                           },
                           "id": {
+                            "description": "Form UUID.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "indexed_on": {
+                            "description": "Date and time the form was indexed into Elasticsearch. Useful for pagination since it always increases.",
                             "type": "string"
                           },
                           "initial_processing_complete": {
+                            "description": "Whether initial processing of the form (such as case updates) has completed.",
                             "nullable": true,
                             "type": "boolean"
                           },
                           "is_phone_submission": {
+                            "description": "Whether the form was submitted using the OpenRosa protocol (e.g. from CommCare mobile), as opposed to the web.",
                             "readOnly": true,
                             "type": "boolean"
                           },
                           "metadata": {
                             "additionalProperties": true,
+                            "description": "Form metadata reported by the submitting device, such as device ID, username, and start/end timestamps.",
                             "nullable": true,
                             "type": "object"
                           },
                           "problem": {
+                            "description": "Description of a processing error encountered for this form, or null if there was none.",
                             "nullable": true,
                             "type": "string"
                           },
                           "received_on": {
+                            "description": "Date and time the form was received by the server.",
                             "type": "string"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "server_modified_on": {
+                            "description": "Date and time the form was last modified on the server.",
                             "type": "string"
                           },
                           "submit_ip": {
+                            "description": "IP address the form was submitted from.",
                             "nullable": true,
                             "type": "string"
                           },
                           "type": {
+                            "description": "Root data node type of the submitted form, typically \"data\".",
                             "type": "string"
                           },
                           "uiversion": {
+                            "description": "UI version of the form definition used for this submission.",
                             "nullable": true,
                             "type": "string"
                           },
                           "version": {
+                            "description": "Version number of the form definition used for this submission.",
                             "type": "string"
                           }
                         },
@@ -1762,7 +2005,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Form",
+        "summary": "Forms",
         "tags": [
           "form"
         ]
@@ -1781,7 +2024,7 @@
     },
     "/a/{domain}/api/form/v1/{pk}/": {
       "get": {
-        "description": "Requires the `edit_data` permission.",
+        "description": "List form submissions in a project space, or fetch a single form by identifier. Forms are individual data submissions made from CommCare mobile or web apps.\n\nRequires the `edit_data` permission.",
         "operationId": "form_v1_detail_get",
         "responses": {
           "200": {
@@ -1790,88 +2033,113 @@
                 "schema": {
                   "properties": {
                     "app_id": {
+                      "description": "UUID of the application the form was submitted from.",
                       "nullable": true,
                       "type": "string"
                     },
                     "archived": {
+                      "description": "Whether the form has been archived.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "attachments": {
                       "additionalProperties": true,
+                      "description": "Metadata for files attached to the form submission (e.g. images, audio), keyed by attachment name, each giving content_type, length and a download url.",
                       "nullable": true,
                       "readOnly": true,
                       "type": "object"
                     },
                     "build_id": {
+                      "description": "UUID of the application build the form was submitted from.",
                       "nullable": true,
                       "type": "string"
                     },
                     "cases": {
-                      "type": "string"
+                      "description": "Cases referenced by this form, not including cases referenced only in stock transactions. Returned only when cases__full=true is passed.",
+                      "items": {
+                        "type": "object"
+                      },
+                      "type": "array"
                     },
                     "domain": {
+                      "description": "Domain (project space) the form was submitted to.",
                       "type": "string"
                     },
                     "edited_by_user_id": {
+                      "description": "UUID of the user who last edited the form, or null if it has not been edited.",
                       "nullable": true,
                       "readOnly": true,
                       "type": "string"
                     },
                     "edited_on": {
+                      "description": "Date and time the form was last edited, or null if it has not been edited.",
                       "nullable": true,
                       "type": "string"
                     },
                     "form": {
                       "additionalProperties": true,
+                      "description": "The submitted form data, converted from XML to JSON, keyed by question path.",
                       "type": "object"
                     },
                     "id": {
+                      "description": "Form UUID.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "indexed_on": {
+                      "description": "Date and time the form was indexed into Elasticsearch. Useful for pagination since it always increases.",
                       "type": "string"
                     },
                     "initial_processing_complete": {
+                      "description": "Whether initial processing of the form (such as case updates) has completed.",
                       "nullable": true,
                       "type": "boolean"
                     },
                     "is_phone_submission": {
+                      "description": "Whether the form was submitted using the OpenRosa protocol (e.g. from CommCare mobile), as opposed to the web.",
                       "readOnly": true,
                       "type": "boolean"
                     },
                     "metadata": {
                       "additionalProperties": true,
+                      "description": "Form metadata reported by the submitting device, such as device ID, username, and start/end timestamps.",
                       "nullable": true,
                       "type": "object"
                     },
                     "problem": {
+                      "description": "Description of a processing error encountered for this form, or null if there was none.",
                       "nullable": true,
                       "type": "string"
                     },
                     "received_on": {
+                      "description": "Date and time the form was received by the server.",
                       "type": "string"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "server_modified_on": {
+                      "description": "Date and time the form was last modified on the server.",
                       "type": "string"
                     },
                     "submit_ip": {
+                      "description": "IP address the form was submitted from.",
                       "nullable": true,
                       "type": "string"
                     },
                     "type": {
+                      "description": "Root data node type of the submitted form, typically \"data\".",
                       "type": "string"
                     },
                     "uiversion": {
+                      "description": "UI version of the form definition used for this submission.",
                       "nullable": true,
                       "type": "string"
                     },
                     "version": {
+                      "description": "Version number of the form definition used for this submission.",
                       "type": "string"
                     }
                   },
@@ -1882,7 +2150,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Form",
+        "summary": "Forms",
         "tags": [
           "form"
         ]
@@ -1910,7 +2178,7 @@
     },
     "/a/{domain}/api/group/v1/": {
       "get": {
-        "description": "Requires the `edit_commcare_users` permission.",
+        "description": "List the groups in a project space, or fetch a single group by identifier. Groups collect mobile workers for case sharing and reporting.\n\nRequires the `edit_commcare_users` permission.",
         "operationId": "group_v1_list_get",
         "parameters": [
           {
@@ -1952,6 +2220,30 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "meta": {
+                    "limit": 20,
+                    "next": null,
+                    "offset": 0,
+                    "previous": null,
+                    "total_count": 1
+                  },
+                  "objects": [
+                    {
+                      "case_sharing": false,
+                      "domain": "cloudcaredemo",
+                      "id": "1eb59d6938fc7e510254d8c2f63d944f",
+                      "metadata": {},
+                      "name": "Wozzle",
+                      "reporting": true,
+                      "resource_uri": "/a/cloudcaredemo/api/group/v1/1eb59d6938fc7e510254d8c2f63d944f/",
+                      "users": [
+                        "91da6b1c78699adfb8679b741caf9f00",
+                        "8a642f722c9e617eeed29290e409fcd5"
+                      ]
+                    }
+                  ]
+                },
                 "schema": {
                   "properties": {
                     "meta": {
@@ -1962,33 +2254,43 @@
                         "properties": {
                           "case_sharing": {
                             "default": false,
+                            "description": "Whether members of this group share cases with each other.",
                             "type": "boolean"
                           },
                           "domain": {
+                            "description": "Domain (project space) that owns the group.",
                             "type": "string"
                           },
                           "id": {
+                            "description": "Group UUID.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "metadata": {
                             "additionalProperties": true,
+                            "description": "Custom metadata associated with the group.",
                             "nullable": true,
                             "type": "object"
                           },
                           "name": {
+                            "description": "Name of the group.",
                             "type": "string"
                           },
                           "reporting": {
                             "default": true,
+                            "description": "Whether this group appears in the group filter list for reports.",
                             "type": "boolean"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "users": {
-                            "items": {},
+                            "description": "UUIDs of the users in this group.",
+                            "items": {
+                              "type": "string"
+                            },
                             "type": "array"
                           }
                         },
@@ -2004,7 +2306,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Group",
+        "summary": "Groups",
         "tags": [
           "group"
         ]
@@ -2021,7 +2323,7 @@
         }
       ],
       "patch": {
-        "description": "Requires the `edit_commcare_users` permission.",
+        "description": "List the groups in a project space, or fetch a single group by identifier. Groups collect mobile workers for case sharing and reporting.\n\nRequires the `edit_commcare_users` permission.",
         "operationId": "group_v1_list_patch",
         "requestBody": {
           "content": {
@@ -2030,25 +2332,33 @@
                 "properties": {
                   "case_sharing": {
                     "default": false,
+                    "description": "Whether members of this group share cases with each other.",
                     "type": "boolean"
                   },
                   "domain": {
+                    "description": "Domain (project space) that owns the group.",
                     "type": "string"
                   },
                   "metadata": {
                     "additionalProperties": true,
+                    "description": "Custom metadata associated with the group.",
                     "nullable": true,
                     "type": "object"
                   },
                   "name": {
+                    "description": "Name of the group.",
                     "type": "string"
                   },
                   "reporting": {
                     "default": true,
+                    "description": "Whether this group appears in the group filter list for reports.",
                     "type": "boolean"
                   },
                   "users": {
-                    "items": {},
+                    "description": "UUIDs of the users in this group.",
+                    "items": {
+                      "type": "string"
+                    },
                     "type": "array"
                   }
                 },
@@ -2062,6 +2372,30 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "meta": {
+                    "limit": 20,
+                    "next": null,
+                    "offset": 0,
+                    "previous": null,
+                    "total_count": 1
+                  },
+                  "objects": [
+                    {
+                      "case_sharing": false,
+                      "domain": "cloudcaredemo",
+                      "id": "1eb59d6938fc7e510254d8c2f63d944f",
+                      "metadata": {},
+                      "name": "Wozzle",
+                      "reporting": true,
+                      "resource_uri": "/a/cloudcaredemo/api/group/v1/1eb59d6938fc7e510254d8c2f63d944f/",
+                      "users": [
+                        "91da6b1c78699adfb8679b741caf9f00",
+                        "8a642f722c9e617eeed29290e409fcd5"
+                      ]
+                    }
+                  ]
+                },
                 "schema": {
                   "properties": {
                     "meta": {
@@ -2072,33 +2406,43 @@
                         "properties": {
                           "case_sharing": {
                             "default": false,
+                            "description": "Whether members of this group share cases with each other.",
                             "type": "boolean"
                           },
                           "domain": {
+                            "description": "Domain (project space) that owns the group.",
                             "type": "string"
                           },
                           "id": {
+                            "description": "Group UUID.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "metadata": {
                             "additionalProperties": true,
+                            "description": "Custom metadata associated with the group.",
                             "nullable": true,
                             "type": "object"
                           },
                           "name": {
+                            "description": "Name of the group.",
                             "type": "string"
                           },
                           "reporting": {
                             "default": true,
+                            "description": "Whether this group appears in the group filter list for reports.",
                             "type": "boolean"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "users": {
-                            "items": {},
+                            "description": "UUIDs of the users in this group.",
+                            "items": {
+                              "type": "string"
+                            },
                             "type": "array"
                           }
                         },
@@ -2114,13 +2458,13 @@
             "description": "A page of records."
           }
         },
-        "summary": "Group",
+        "summary": "Groups",
         "tags": [
           "group"
         ]
       },
       "post": {
-        "description": "Requires the `edit_commcare_users` permission.",
+        "description": "List the groups in a project space, or fetch a single group by identifier. Groups collect mobile workers for case sharing and reporting.\n\nRequires the `edit_commcare_users` permission.",
         "operationId": "group_v1_list_post",
         "requestBody": {
           "content": {
@@ -2129,25 +2473,33 @@
                 "properties": {
                   "case_sharing": {
                     "default": false,
+                    "description": "Whether members of this group share cases with each other.",
                     "type": "boolean"
                   },
                   "domain": {
+                    "description": "Domain (project space) that owns the group.",
                     "type": "string"
                   },
                   "metadata": {
                     "additionalProperties": true,
+                    "description": "Custom metadata associated with the group.",
                     "nullable": true,
                     "type": "object"
                   },
                   "name": {
+                    "description": "Name of the group.",
                     "type": "string"
                   },
                   "reporting": {
                     "default": true,
+                    "description": "Whether this group appears in the group filter list for reports.",
                     "type": "boolean"
                   },
                   "users": {
-                    "items": {},
+                    "description": "UUIDs of the users in this group.",
+                    "items": {
+                      "type": "string"
+                    },
                     "type": "array"
                   }
                 },
@@ -2161,6 +2513,30 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "meta": {
+                    "limit": 20,
+                    "next": null,
+                    "offset": 0,
+                    "previous": null,
+                    "total_count": 1
+                  },
+                  "objects": [
+                    {
+                      "case_sharing": false,
+                      "domain": "cloudcaredemo",
+                      "id": "1eb59d6938fc7e510254d8c2f63d944f",
+                      "metadata": {},
+                      "name": "Wozzle",
+                      "reporting": true,
+                      "resource_uri": "/a/cloudcaredemo/api/group/v1/1eb59d6938fc7e510254d8c2f63d944f/",
+                      "users": [
+                        "91da6b1c78699adfb8679b741caf9f00",
+                        "8a642f722c9e617eeed29290e409fcd5"
+                      ]
+                    }
+                  ]
+                },
                 "schema": {
                   "properties": {
                     "meta": {
@@ -2171,33 +2547,43 @@
                         "properties": {
                           "case_sharing": {
                             "default": false,
+                            "description": "Whether members of this group share cases with each other.",
                             "type": "boolean"
                           },
                           "domain": {
+                            "description": "Domain (project space) that owns the group.",
                             "type": "string"
                           },
                           "id": {
+                            "description": "Group UUID.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "metadata": {
                             "additionalProperties": true,
+                            "description": "Custom metadata associated with the group.",
                             "nullable": true,
                             "type": "object"
                           },
                           "name": {
+                            "description": "Name of the group.",
                             "type": "string"
                           },
                           "reporting": {
                             "default": true,
+                            "description": "Whether this group appears in the group filter list for reports.",
                             "type": "boolean"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "users": {
-                            "items": {},
+                            "description": "UUIDs of the users in this group.",
+                            "items": {
+                              "type": "string"
+                            },
                             "type": "array"
                           }
                         },
@@ -2213,7 +2599,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Group",
+        "summary": "Groups",
         "tags": [
           "group"
         ]
@@ -2221,7 +2607,7 @@
     },
     "/a/{domain}/api/group/v1/{pk}/": {
       "delete": {
-        "description": "Requires the `edit_commcare_users` permission.",
+        "description": "List the groups in a project space, or fetch a single group by identifier. Groups collect mobile workers for case sharing and reporting.\n\nRequires the `edit_commcare_users` permission.",
         "operationId": "group_v1_detail_delete",
         "responses": {
           "200": {
@@ -2231,33 +2617,43 @@
                   "properties": {
                     "case_sharing": {
                       "default": false,
+                      "description": "Whether members of this group share cases with each other.",
                       "type": "boolean"
                     },
                     "domain": {
+                      "description": "Domain (project space) that owns the group.",
                       "type": "string"
                     },
                     "id": {
+                      "description": "Group UUID.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "metadata": {
                       "additionalProperties": true,
+                      "description": "Custom metadata associated with the group.",
                       "nullable": true,
                       "type": "object"
                     },
                     "name": {
+                      "description": "Name of the group.",
                       "type": "string"
                     },
                     "reporting": {
                       "default": true,
+                      "description": "Whether this group appears in the group filter list for reports.",
                       "type": "boolean"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "users": {
-                      "items": {},
+                      "description": "UUIDs of the users in this group.",
+                      "items": {
+                        "type": "string"
+                      },
                       "type": "array"
                     }
                   },
@@ -2268,13 +2664,13 @@
             "description": "The requested record."
           }
         },
-        "summary": "Group",
+        "summary": "Groups",
         "tags": [
           "group"
         ]
       },
       "get": {
-        "description": "Requires the `edit_commcare_users` permission.",
+        "description": "List the groups in a project space, or fetch a single group by identifier. Groups collect mobile workers for case sharing and reporting.\n\nRequires the `edit_commcare_users` permission.",
         "operationId": "group_v1_detail_get",
         "responses": {
           "200": {
@@ -2284,33 +2680,43 @@
                   "properties": {
                     "case_sharing": {
                       "default": false,
+                      "description": "Whether members of this group share cases with each other.",
                       "type": "boolean"
                     },
                     "domain": {
+                      "description": "Domain (project space) that owns the group.",
                       "type": "string"
                     },
                     "id": {
+                      "description": "Group UUID.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "metadata": {
                       "additionalProperties": true,
+                      "description": "Custom metadata associated with the group.",
                       "nullable": true,
                       "type": "object"
                     },
                     "name": {
+                      "description": "Name of the group.",
                       "type": "string"
                     },
                     "reporting": {
                       "default": true,
+                      "description": "Whether this group appears in the group filter list for reports.",
                       "type": "boolean"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "users": {
-                      "items": {},
+                      "description": "UUIDs of the users in this group.",
+                      "items": {
+                        "type": "string"
+                      },
                       "type": "array"
                     }
                   },
@@ -2321,7 +2727,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Group",
+        "summary": "Groups",
         "tags": [
           "group"
         ]
@@ -2347,7 +2753,7 @@
         }
       ],
       "put": {
-        "description": "Requires the `edit_commcare_users` permission.",
+        "description": "List the groups in a project space, or fetch a single group by identifier. Groups collect mobile workers for case sharing and reporting.\n\nRequires the `edit_commcare_users` permission.",
         "operationId": "group_v1_detail_put",
         "requestBody": {
           "content": {
@@ -2356,25 +2762,33 @@
                 "properties": {
                   "case_sharing": {
                     "default": false,
+                    "description": "Whether members of this group share cases with each other.",
                     "type": "boolean"
                   },
                   "domain": {
+                    "description": "Domain (project space) that owns the group.",
                     "type": "string"
                   },
                   "metadata": {
                     "additionalProperties": true,
+                    "description": "Custom metadata associated with the group.",
                     "nullable": true,
                     "type": "object"
                   },
                   "name": {
+                    "description": "Name of the group.",
                     "type": "string"
                   },
                   "reporting": {
                     "default": true,
+                    "description": "Whether this group appears in the group filter list for reports.",
                     "type": "boolean"
                   },
                   "users": {
-                    "items": {},
+                    "description": "UUIDs of the users in this group.",
+                    "items": {
+                      "type": "string"
+                    },
                     "type": "array"
                   }
                 },
@@ -2392,33 +2806,43 @@
                   "properties": {
                     "case_sharing": {
                       "default": false,
+                      "description": "Whether members of this group share cases with each other.",
                       "type": "boolean"
                     },
                     "domain": {
+                      "description": "Domain (project space) that owns the group.",
                       "type": "string"
                     },
                     "id": {
+                      "description": "Group UUID.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "metadata": {
                       "additionalProperties": true,
+                      "description": "Custom metadata associated with the group.",
                       "nullable": true,
                       "type": "object"
                     },
                     "name": {
+                      "description": "Name of the group.",
                       "type": "string"
                     },
                     "reporting": {
                       "default": true,
+                      "description": "Whether this group appears in the group filter list for reports.",
                       "type": "boolean"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "users": {
-                      "items": {},
+                      "description": "UUIDs of the users in this group.",
+                      "items": {
+                        "type": "string"
+                      },
                       "type": "array"
                     }
                   },
@@ -2429,7 +2853,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Group",
+        "summary": "Groups",
         "tags": [
           "group"
         ]

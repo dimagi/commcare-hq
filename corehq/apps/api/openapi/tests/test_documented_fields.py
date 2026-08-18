@@ -3,7 +3,12 @@ from corehq.apps.api.openapi.docs import collect_docs, field_description
 
 # Slugs whose fields must all carry a real description. Add a slug here when
 # its documentation is written; do not remove one.
-DOCUMENTED_SLUGS = frozenset({'user-v1'})
+DOCUMENTED_SLUGS = frozenset({
+    'user-v1',
+    'case-v1',
+    'form-v1',
+    'group-v1',
+})
 
 
 def _undocumented_fields(entry):
