@@ -2,10 +2,12 @@ import hashlib
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.crypto import salted_hmac
 
 import sqlalchemy
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
+from psycopg2 import errorcodes
 from sqlalchemy import ARRAY, Boolean, Column, Date, DateTime, Numeric, Table, Text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.types import UserDefinedType
@@ -77,6 +79,38 @@ class DomainSchema:
             sqlalchemy.text(f'COMMENT ON SCHEMA {self._quoted_name} IS :comment'),
             {'comment': self.domain},
         )
+        self._create_role(conn)
+
+    role_name = name
+    _quoted_role_name = _quoted_name
+
+    def _create_role(self, conn):
+        try:
+            with conn.begin_nested():
+                conn.execute(
+                    sqlalchemy.text('SELECT public.projectdb_provision_role(:name, :password)'),
+                    {'name': self.role_name, 'password': self._get_password()},
+                )
+        except sqlalchemy.exc.ProgrammingError as err:
+            if err.orig.pgcode != errorcodes.DUPLICATE_OBJECT:
+                raise
+
+    def grant_role_read_access(self, conn):
+        # Must be reapplied after every new table is added
+        conn.execute(sqlalchemy.text(
+            f'GRANT USAGE ON SCHEMA {self._quoted_name} TO {self._quoted_role_name}'
+        ))
+        conn.execute(sqlalchemy.text(
+            f'GRANT SELECT ON ALL TABLES IN SCHEMA {self._quoted_name} '
+            f'TO {self._quoted_role_name}'
+        ))
+
+    def _get_password(self):
+        return salted_hmac(
+            key_salt='corehq.apps.project_db.role_password',
+            value=self.domain,
+            algorithm='sha256',
+        ).hexdigest()
 
     def get_comment(self, conn):
         """Return the raw domain stored as this schema's Postgres comment"""
@@ -95,6 +129,10 @@ class DomainSchema:
         ))
 
     def drop(self, conn):
+        conn.execute(
+            sqlalchemy.text('SELECT public.projectdb_drop_role(:name)'),
+            {'name': self.role_name},
+        )
         conn.execute(sqlalchemy.text(
             f'DROP SCHEMA IF EXISTS {self._quoted_name} CASCADE'
         ))
@@ -208,10 +246,12 @@ def create_or_update_project_db(domain):
 
     engine = get_project_db_engine()
     with engine.begin() as conn:
-        DomainSchema(domain).create(conn)
+        schema = DomainSchema(domain)
+        schema.create(conn)
         metadata.create_all(bind=conn, checkfirst=True)
         for table in case_tables:
             update_table(conn, table)
+        schema.grant_role_read_access(conn)
 
 
 def preview_drop(domain):
