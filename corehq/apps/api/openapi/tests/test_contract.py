@@ -41,18 +41,18 @@ def _find_path(document, *, detail):
     Rather than hard-coding the detail URL's path-parameter name (which
     is an implementation detail of each resource's ``Meta`` and not worth
     duplicating here), find it by shape: a detail path is the one whose
-    last URL segment is a ``{param}``.
+    last URL segment is a ``{param}``. A resource's ``prepend_urls``
+    endpoints (e.g. ``{pk}/activate/``) also route under the detail path
+    but are longer than either the plain list or plain detail path, so
+    the shortest match among same-shaped candidates is the real one.
     """
     matches = [
         path
         for path in document['paths']
         if path.rstrip('/').endswith('}') == detail
     ]
-    assert len(matches) == 1, (
-        f'expected exactly one {"detail" if detail else "list"} path, '
-        f'found {matches}'
-    )
-    return matches[0]
+    assert matches, f'expected a {"detail" if detail else "list"} path'
+    return min(matches, key=len)
 
 
 def _list_item_schema(document):

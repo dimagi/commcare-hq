@@ -70,6 +70,9 @@ def test_domain_resource_paths():
     assert set(paths) == {
         '/a/{domain}/api/user/v1/',
         '/a/{domain}/api/user/v1/{pk}/',
+        '/a/{domain}/api/user/v1/{pk}/activate/',
+        '/a/{domain}/api/user/v1/{pk}/deactivate/',
+        '/a/{domain}/api/user/v1/{pk}/email_password_reset/',
     }
     assert set(paths['/a/{domain}/api/user/v1/']) == {
         'get',

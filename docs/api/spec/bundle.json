@@ -4265,7 +4265,8 @@
                             "type": "string"
                           },
                           "location_type_name": {
-                            "description": "Name of the location type of this location.",
+                            "description": "Name of the location type of this location. Derived from location_type_code and not itself writable.",
+                            "readOnly": true,
                             "type": "string"
                           },
                           "longitude": {
@@ -4348,6 +4349,10 @@
                     "description": "UUID of the location.",
                     "type": "string"
                   },
+                  "location_type_code": {
+                    "description": "Code of the location type of this location.",
+                    "type": "string"
+                  },
                   "longitude": {
                     "description": "Longitude coordinate of the location.",
                     "format": "decimal",
@@ -4357,6 +4362,10 @@
                   "name": {
                     "description": "Name of the location.",
                     "nullable": true,
+                    "type": "string"
+                  },
+                  "parent_location_id": {
+                    "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
                     "type": "string"
                   },
                   "site_code": {
@@ -4405,7 +4414,8 @@
                       "type": "string"
                     },
                     "location_type_name": {
-                      "description": "Name of the location type of this location.",
+                      "description": "Name of the location type of this location. Derived from location_type_code and not itself writable.",
+                      "readOnly": true,
                       "type": "string"
                     },
                     "longitude": {
@@ -4472,6 +4482,10 @@
                     "description": "UUID of the location.",
                     "type": "string"
                   },
+                  "location_type_code": {
+                    "description": "Code of the location type of this location.",
+                    "type": "string"
+                  },
                   "longitude": {
                     "description": "Longitude coordinate of the location.",
                     "format": "decimal",
@@ -4481,6 +4495,10 @@
                   "name": {
                     "description": "Name of the location.",
                     "nullable": true,
+                    "type": "string"
+                  },
+                  "parent_location_id": {
+                    "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
                     "type": "string"
                   },
                   "site_code": {
@@ -4529,7 +4547,8 @@
                       "type": "string"
                     },
                     "location_type_name": {
-                      "description": "Name of the location type of this location.",
+                      "description": "Name of the location type of this location. Derived from location_type_code and not itself writable.",
+                      "readOnly": true,
                       "type": "string"
                     },
                     "longitude": {
@@ -4604,7 +4623,8 @@
                       "type": "string"
                     },
                     "location_type_name": {
-                      "description": "Name of the location type of this location.",
+                      "description": "Name of the location type of this location. Derived from location_type_code and not itself writable.",
+                      "readOnly": true,
                       "type": "string"
                     },
                     "longitude": {
@@ -4691,6 +4711,10 @@
                     "description": "UUID of the location.",
                     "type": "string"
                   },
+                  "location_type_code": {
+                    "description": "Code of the location type of this location.",
+                    "type": "string"
+                  },
                   "longitude": {
                     "description": "Longitude coordinate of the location.",
                     "format": "decimal",
@@ -4700,6 +4724,10 @@
                   "name": {
                     "description": "Name of the location.",
                     "nullable": true,
+                    "type": "string"
+                  },
+                  "parent_location_id": {
+                    "description": "Location ID of the parent location, or an empty string if this is a root-level location.",
                     "type": "string"
                   },
                   "site_code": {
@@ -4748,7 +4776,8 @@
                       "type": "string"
                     },
                     "location_type_name": {
-                      "description": "Name of the location type of this location.",
+                      "description": "Name of the location type of this location. Derived from location_type_code and not itself writable.",
+                      "readOnly": true,
                       "type": "string"
                     },
                     "longitude": {
@@ -4811,7 +4840,8 @@
                       "type": "string"
                     },
                     "location_type_name": {
-                      "description": "Name of the location type of this location.",
+                      "description": "Name of the location type of this location. Derived from location_type_code and not itself writable.",
+                      "readOnly": true,
                       "type": "string"
                     },
                     "longitude": {
@@ -6732,6 +6762,11 @@
                             },
                             "type": "array"
                           },
+                          "password": {
+                            "description": "The user's password. Required unless connect_username is provided, or unless require_account_confirmation is set (in which case the user sets their own password on confirmation). Not returned in the response.",
+                            "type": "string",
+                            "writeOnly": true
+                          },
                           "phone_numbers": {
                             "description": "List of all phone numbers of the user.",
                             "items": {
@@ -6847,6 +6882,11 @@
                     },
                     "type": "array"
                   },
+                  "password": {
+                    "description": "The user's password. Required unless connect_username is provided, or unless require_account_confirmation is set (in which case the user sets their own password on confirmation). Not returned in the response.",
+                    "type": "string",
+                    "writeOnly": true
+                  },
                   "phone_numbers": {
                     "description": "List of all phone numbers of the user.",
                     "items": {
@@ -6937,6 +6977,11 @@
                         "type": "string"
                       },
                       "type": "array"
+                    },
+                    "password": {
+                      "description": "The user's password. Required unless connect_username is provided, or unless require_account_confirmation is set (in which case the user sets their own password on confirmation). Not returned in the response.",
+                      "type": "string",
+                      "writeOnly": true
                     },
                     "phone_numbers": {
                       "description": "List of all phone numbers of the user.",
@@ -7058,6 +7103,11 @@
                       },
                       "type": "array"
                     },
+                    "password": {
+                      "description": "The user's password. Required unless connect_username is provided, or unless require_account_confirmation is set (in which case the user sets their own password on confirmation). Not returned in the response.",
+                      "type": "string",
+                      "writeOnly": true
+                    },
                     "phone_numbers": {
                       "description": "List of all phone numbers of the user.",
                       "items": {
@@ -7177,6 +7227,11 @@
                     },
                     "type": "array"
                   },
+                  "password": {
+                    "description": "The user's password. Required unless connect_username is provided, or unless require_account_confirmation is set (in which case the user sets their own password on confirmation). Not returned in the response.",
+                    "type": "string",
+                    "writeOnly": true
+                  },
                   "phone_numbers": {
                     "description": "List of all phone numbers of the user.",
                     "items": {
@@ -7267,6 +7322,11 @@
                         "type": "string"
                       },
                       "type": "array"
+                    },
+                    "password": {
+                      "description": "The user's password. Required unless connect_username is provided, or unless require_account_confirmation is set (in which case the user sets their own password on confirmation). Not returned in the response.",
+                      "type": "string",
+                      "writeOnly": true
                     },
                     "phone_numbers": {
                       "description": "List of all phone numbers of the user.",
@@ -7363,6 +7423,11 @@
                       },
                       "type": "array"
                     },
+                    "password": {
+                      "description": "The user's password. Required unless connect_username is provided, or unless require_account_confirmation is set (in which case the user sets their own password on confirmation). Not returned in the response.",
+                      "type": "string",
+                      "writeOnly": true
+                    },
                     "phone_numbers": {
                       "description": "List of all phone numbers of the user.",
                       "items": {
@@ -7412,6 +7477,132 @@
           }
         },
         "summary": "Mobile Workers",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/a/{domain}/api/user/v1/{pk}/activate/": {
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Unique identifier of the record.",
+          "in": "path",
+          "name": "pk",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "description": "Reactivate a deactivated mobile worker.",
+        "operationId": "user_v1_activate",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The request was accepted."
+          }
+        },
+        "summary": "Activate Mobile Worker",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/a/{domain}/api/user/v1/{pk}/deactivate/": {
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Unique identifier of the record.",
+          "in": "path",
+          "name": "pk",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "description": "Deactivate a mobile worker, preventing them from logging in or submitting forms.",
+        "operationId": "user_v1_deactivate",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The request was accepted."
+          }
+        },
+        "summary": "Deactivate Mobile Worker",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/a/{domain}/api/user/v1/{pk}/email_password_reset/": {
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Unique identifier of the record.",
+          "in": "path",
+          "name": "pk",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "description": "Send the mobile worker a password reset email.",
+        "operationId": "user_v1_email_password_reset",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The request was accepted."
+          }
+        },
+        "summary": "Email Password Reset",
         "tags": [
           "user"
         ]
@@ -7883,6 +8074,90 @@
           }
         },
         "summary": "Web-User",
+        "tags": [
+          "web-user"
+        ]
+      }
+    },
+    "/a/{domain}/api/web-user/v1/{pk}/activate/": {
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Unique identifier of the record.",
+          "in": "path",
+          "name": "pk",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "description": "Re-enable a web user's membership in this project space.",
+        "operationId": "web-user_v1_activate",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The request was accepted."
+          }
+        },
+        "summary": "Activate Web User",
+        "tags": [
+          "web-user"
+        ]
+      }
+    },
+    "/a/{domain}/api/web-user/v1/{pk}/deactivate/": {
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Unique identifier of the record.",
+          "in": "path",
+          "name": "pk",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "description": "Disable a web user's membership in this project space, without removing them from it.",
+        "operationId": "web-user_v1_deactivate",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The request was accepted."
+          }
+        },
+        "summary": "Deactivate Web User",
         "tags": [
           "web-user"
         ]

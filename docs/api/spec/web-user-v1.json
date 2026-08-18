@@ -534,6 +534,90 @@
           "web-user"
         ]
       }
+    },
+    "/a/{domain}/api/web-user/v1/{pk}/activate/": {
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Unique identifier of the record.",
+          "in": "path",
+          "name": "pk",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "description": "Re-enable a web user's membership in this project space.",
+        "operationId": "web-user_v1_activate",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The request was accepted."
+          }
+        },
+        "summary": "Activate Web User",
+        "tags": [
+          "web-user"
+        ]
+      }
+    },
+    "/a/{domain}/api/web-user/v1/{pk}/deactivate/": {
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Unique identifier of the record.",
+          "in": "path",
+          "name": "pk",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "description": "Disable a web user's membership in this project space, without removing them from it.",
+        "operationId": "web-user_v1_deactivate",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The request was accepted."
+          }
+        },
+        "summary": "Deactivate Web User",
+        "tags": [
+          "web-user"
+        ]
+      }
     }
   },
   "security": [

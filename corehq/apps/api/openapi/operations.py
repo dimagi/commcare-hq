@@ -145,20 +145,70 @@ def object_schema(resource_schema, docs):
         name: field_to_schema(info, override=field_schemas.get(name))
         for name, info in declared_fields.items()
     }
-    for name, schema in field_schemas.items():
-        if name not in declared_fields and 'type' in schema:
-            properties[name] = dict(schema)
+    properties.update(_field_schema_additions(field_schemas, declared_fields))
     return {'type': 'object', 'properties': properties}
 
 
+def _field_schema_additions(field_schemas, declared_fields, *, writable=None):
+    """``Docs.field_schemas`` entries that add a property outside of
+    Tastypie's declared fields (see ``object_schema()``'s docstring for
+    the ``type``-required rule that distinguishes an addition from a
+    stale override).
+
+    ``writable=True`` additionally excludes an addition explicitly
+    marked ``readOnly`` -- e.g. location-v2's ``location_type_name``,
+    which is derived in ``dehydrate()`` from ``location_type_code`` and
+    never read back out of a write request -- so that ``request_schema``
+    does not invent a writable property nothing in the resource's
+    ``obj_create``/``obj_update`` actually consumes.
+    """
+    additions = {
+        name: dict(schema)
+        for name, schema in field_schemas.items()
+        if name not in declared_fields and 'type' in schema
+    }
+    if writable:
+        additions = {
+            name: schema
+            for name, schema in additions.items()
+            if not schema.get('readOnly')
+        }
+    return additions
+
+
 def request_schema(resource_schema, docs):
-    """The schema a write request accepts: the writable fields only."""
+    """The schema a write request accepts: the writable fields only.
+
+    A ``field_schemas`` addition (see ``object_schema()``) is applied
+    here too, so a request-only field -- one a resource's ``obj_create``/
+    ``obj_update`` reads from ``bundle.data`` without it being a declared
+    Tastypie field, such as ``CommCareUserResource``'s ``password`` --
+    can be documented at all. Without this, the convention could declare
+    additions for responses but had no way to express one for requests.
+    """
+    # NOTE: Tastypie's per-field ``blank`` metadata is *not* used here to
+    # derive ``required``, even though it looks like the obvious source.
+    # ``blank`` defaults to ``False`` on every field unless a resource
+    # explicitly opts in to ``blank=True`` -- and none of the documented
+    # resources with a custom ``obj_create``/``obj_update`` (which is
+    # all of them; none use Tastypie's generic hydrate/validation path)
+    # do. Trying it here produced e.g. ``email``, ``phone_numbers`` and
+    # ``user_data`` as "required" for ``CommCareUserResource`` POST,
+    # which is simply wrong -- only ``username`` and ``password`` are.
+    # Getting this right would mean reading each resource's hand-written
+    # ``obj_create``, which is out of scope for this pass; see the
+    # openapi generation report for case-v2, where ``required`` *is*
+    # reliably derived, via ``jsonobject``'s own ``required=True``.
     field_schemas = docs.get('field_schemas', {})
+    declared_fields = resource_schema['fields']
     properties = {
         name: field_to_schema(info, override=field_schemas.get(name))
-        for name, info in resource_schema['fields'].items()
+        for name, info in declared_fields.items()
         if not info.get('readonly')
     }
+    properties.update(
+        _field_schema_additions(field_schemas, declared_fields, writable=True)
+    )
     return {'type': 'object', 'properties': properties}
 
 
@@ -288,6 +338,65 @@ def resource_paths(entry):
         if len(item) > 1:  # more than just 'parameters'
             paths[detail] = item
 
+    paths.update(_extra_operation_paths(entry, docs, base, detail_key,
+                                        path_parameters, name, description))
+
+    return paths
+
+
+def _extra_operation_paths(
+    entry, docs, base, detail_key, path_parameters, name, description
+):
+    """Path items for a resource's ``prepend_urls`` endpoints.
+
+    These are extra views a resource routes alongside its standard list
+    and detail paths (e.g. ``CommCareUserResource.activate_user``) --
+    Tastypie has no introspectable metadata for them the way it does for
+    ``allowed_*_methods``, so a resource declares them explicitly in
+    ``Docs.extra_operations`` as
+    ``{'path': '<pk>/activate/', 'method': 'post', 'summary': ..., 'operation_id': ...}``.
+    """
+    paths = {}
+    for extra in docs.get('extra_operations', []):
+        full_path = f'{base}{extra["path"]}'
+        method = extra['method']
+        item = {
+            'parameters': list(path_parameters)
+            + [
+                {
+                    'name': detail_key,
+                    'in': 'path',
+                    'required': True,
+                    'description': 'Unique identifier of the record.',
+                    'schema': {'type': 'string'},
+                }
+            ],
+        }
+        operation = {
+            'summary': extra['summary'],
+            'operationId': (
+                f'{name}_{entry.version}_{extra["operation_id"]}'
+            ),
+            'tags': [name],
+            'responses': extra.get(
+                'responses',
+                {
+                    '202': {
+                        'description': 'The request was accepted.',
+                        'content': {
+                            'application/json': {
+                                'schema': {'type': 'object'},
+                            },
+                        },
+                    },
+                },
+            ),
+        }
+        op_description = extra.get('description') or description
+        if op_description:
+            operation['description'] = op_description
+        item[method] = operation
+        paths[full_path] = item
     return paths
 
 

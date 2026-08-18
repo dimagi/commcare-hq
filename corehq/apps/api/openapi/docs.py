@@ -15,6 +15,7 @@ DOCS_KEYS = (
     'examples',
     'field_schemas',
     'parameters',
+    'extra_operations',
 )
 
 

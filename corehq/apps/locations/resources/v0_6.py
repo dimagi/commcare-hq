@@ -44,8 +44,10 @@ class LocationResource(v0_5.LocationResource):
             },
             'location_type_name': {
                 'type': 'string',
+                'readOnly': True,
                 'description': 'Name of the location type of this '
-                              'location.',
+                              'location. Derived from location_type_code '
+                              'and not itself writable.',
             },
             'location_type_code': {
                 'type': 'string',

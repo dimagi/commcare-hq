@@ -288,6 +288,16 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             },
             'require_account_confirmation': {'writeOnly': True},
             'send_confirmation_email_now': {'writeOnly': True},
+            'password': {
+                'type': 'string',
+                'writeOnly': True,
+                'description': "The user's password. Required unless "
+                              'connect_username is provided, or unless '
+                              'require_account_confirmation is set (in '
+                              'which case the user sets their own '
+                              'password on confirmation). Not returned '
+                              'in the response.',
+            },
             'resource_uri': {
                 'description': 'URI of this record in the API.',
             },
@@ -317,6 +327,32 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                               'recent user activity. May slow down the '
                               'response.',
                 'schema': {'type': 'boolean'},
+            },
+        ]
+        extra_operations = [
+            {
+                'path': '{pk}/activate/',
+                'method': 'post',
+                'operation_id': 'activate',
+                'summary': 'Activate Mobile Worker',
+                'description': 'Reactivate a deactivated mobile worker.',
+            },
+            {
+                'path': '{pk}/deactivate/',
+                'method': 'post',
+                'operation_id': 'deactivate',
+                'summary': 'Deactivate Mobile Worker',
+                'description': 'Deactivate a mobile worker, preventing '
+                              'them from logging in or submitting '
+                              'forms.',
+            },
+            {
+                'path': '{pk}/email_password_reset/',
+                'method': 'post',
+                'operation_id': 'email_password_reset',
+                'summary': 'Email Password Reset',
+                'description': "Send the mobile worker a password "
+                              "reset email.",
             },
         ]
 
@@ -555,6 +591,27 @@ class WebUserResource(v0_1.WebUserResource):
     is_active_in_domain = fields.BooleanField()
     # Don't use in list for performance - it currently makes a request for each user in the response
     tableau_groups = fields.ListField(null=True, use_in='detail')
+
+    class Docs:
+        extra_operations = [
+            {
+                'path': '{pk}/activate/',
+                'method': 'post',
+                'operation_id': 'activate',
+                'summary': 'Activate Web User',
+                'description': "Re-enable a web user's membership in "
+                              'this project space.',
+            },
+            {
+                'path': '{pk}/deactivate/',
+                'method': 'post',
+                'operation_id': 'deactivate',
+                'summary': 'Deactivate Web User',
+                'description': "Disable a web user's membership in "
+                              'this project space, without removing '
+                              'them from it.',
+            },
+        ]
 
     class Meta(v0_1.WebUserResource.Meta):
         detail_allowed_methods = ['get', 'patch']
