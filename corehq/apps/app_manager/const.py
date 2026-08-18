@@ -125,3 +125,13 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
 
 LATEST_APK_VALUE = 'latest'
 LATEST_APP_VALUE = 0
+
+NON_BUILD_APP_KEYS = (
+    '_id',
+    '_rev',
+    '_attachments',
+    'external_blobs',
+    'short_odk_url',
+    'short_odk_media_url',
+    'recipients',
+)

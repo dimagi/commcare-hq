@@ -1,0 +1,24 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load i18n %}
+
+{% block page_content %}
+  <h1 class="page-title">{% trans "Public Webforms" %}</h1>
+  <p class="lead">
+    {% blocktrans %}
+      Publish a registration or survey form to a public URL. Respondents request
+      a one-time link, pass a bot check, and complete the form once — no
+      CommCare account needed. Manage which forms are open, when they close, and
+      revoke access at any time.
+    {% endblocktrans %}
+  </p>
+
+  <div class="mb-3">
+    <a
+      class="btn btn-primary icon-link"
+      href="{% url 'create_public_webform' domain %}"
+    >
+      <i class="fa fa-plus"></i>
+      {% trans "New Public Webform" %}
+    </a>
+  </div>
+{% endblock %}

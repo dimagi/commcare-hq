@@ -1,0 +1,8 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% js_entry 'public_webforms/js/create' %}
+
+{% block page_content %}
+  {% crispy form %}
+{% endblock %}
