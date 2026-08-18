@@ -233,7 +233,15 @@ _PUT_LIST_SINGLE_SCHEMA = {
 # owner_id; update doesn't), so publishing one flat "optional
 # everything" schema -- as a previous revision of this file did --
 # accepted payloads the API would reject with a 400 when the case
-# doesn't exist. oneOf the two real branches instead.
+# doesn't exist.
+#
+# This must be anyOf, not oneOf: the client cannot know in advance
+# whether the case exists, so either shape is an acceptable thing to
+# send. A creation payload (case_name/case_type/owner_id all present)
+# legitimately satisfies *both* branches -- nothing forbids an update
+# payload from also having those fields -- so oneOf's "exactly one
+# branch matches" rule would wrongly reject it. anyOf's "at least one
+# branch matches" is the real contract.
 _PUT_EXT_SCHEMA = {
     'description': (
         'Upsert by external ID. If no case with this external ID '
@@ -241,7 +249,7 @@ _PUT_EXT_SCHEMA = {
         'case_type and owner_id are required); if one does, the '
         'case-update branch applies (neither is required).'
     ),
-    'oneOf': [_POST_SINGLE_SCHEMA, _PUT_SINGLE_SCHEMA],
+    'anyOf': [_POST_SINGLE_SCHEMA, _PUT_SINGLE_SCHEMA],
 }
 
 _BULK_FETCH_SCHEMA = {

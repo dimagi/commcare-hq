@@ -89,12 +89,18 @@ def test_bulk_list_item_schema_has_three_create_branches():
     assert 'case_id' not in upsert_branch['properties']
 
 
-def test_ext_put_is_a_oneof_of_creation_and_update_schemas():
+def test_ext_put_is_an_anyof_of_creation_and_update_schemas():
     from corehq.apps.hqcase.views import CASE_EXT_PATH
 
     schema = _case_v2_schema('put', CASE_EXT_PATH)
-    assert 'oneOf' in schema
-    creation_schema, update_schema = schema['oneOf']
+    # Must be anyOf, not oneOf: the client doesn't know in advance
+    # whether the case exists, and a creation payload (which has
+    # case_name/case_type/owner_id) also legitimately satisfies the
+    # update branch (which requires nothing) -- oneOf's "exactly one"
+    # rule would wrongly reject that payload as ambiguous.
+    assert 'oneOf' not in schema
+    assert 'anyOf' in schema
+    creation_schema, update_schema = schema['anyOf']
     assert set(creation_schema['required']) == {
         'case_name',
         'case_type',

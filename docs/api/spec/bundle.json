@@ -1737,8 +1737,7 @@
                 }
               },
               "schema": {
-                "description": "Upsert by external ID. If no case with this external ID exists, the case-creation branch applies (case_name, case_type and owner_id are required); if one does, the case-update branch applies (neither is required).",
-                "oneOf": [
+                "anyOf": [
                   {
                     "properties": {
                       "case_name": {
@@ -1854,7 +1853,8 @@
                     },
                     "type": "object"
                   }
-                ]
+                ],
+                "description": "Upsert by external ID. If no case with this external ID exists, the case-creation branch applies (case_name, case_type and owner_id are required); if one does, the case-update branch applies (neither is required)."
               }
             }
           },
