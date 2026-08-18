@@ -1890,7 +1890,7 @@
                           "archived": {
                             "description": "Whether the form has been archived.",
                             "readOnly": true,
-                            "type": "string"
+                            "type": "boolean"
                           },
                           "attachments": {
                             "additionalProperties": true,
@@ -2040,7 +2040,7 @@
                     "archived": {
                       "description": "Whether the form has been archived.",
                       "readOnly": true,
-                      "type": "string"
+                      "type": "boolean"
                     },
                     "attachments": {
                       "additionalProperties": true,
@@ -2861,7 +2861,7 @@
     },
     "/a/{domain}/api/location/v1/": {
       "get": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List locations in a project space, or fetch a single location by identifier. Locations represent the places, facilities or administrative areas where a project operates, arranged in a hierarchy of location types.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_v1_list_get",
         "parameters": [
           {
@@ -2959,6 +2959,33 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "meta": {
+                    "limit": 20,
+                    "next": null,
+                    "offset": 0,
+                    "previous": null,
+                    "total_count": 1
+                  },
+                  "objects": [
+                    {
+                      "created_at": "2023-05-09T16:10:47.225938",
+                      "domain": "demo",
+                      "external_id": null,
+                      "id": 1,
+                      "last_modified": "2023-05-09T16:10:47.225947",
+                      "latitude": null,
+                      "location_data": {},
+                      "location_id": "f373a6837c1243938abfc56618cce88b",
+                      "location_type": "https://www.commcarehq.org/a/demo/api/location_type/v1/1/",
+                      "longitude": null,
+                      "name": "Namibia",
+                      "parent": null,
+                      "resource_uri": "https://www.commcarehq.org/a/demo/api/location/v1/f373a6837c1243938abfc56618cce88b/",
+                      "site_code": "namibia"
+                    }
+                  ]
+                },
                 "schema": {
                   "properties": {
                     "meta": {
@@ -2968,58 +2995,73 @@
                       "items": {
                         "properties": {
                           "created_at": {
+                            "description": "Date and time the location was created.",
                             "format": "date-time",
                             "type": "string"
                           },
                           "domain": {
+                            "description": "Domain (project space) that owns the location.",
                             "type": "string"
                           },
                           "external_id": {
+                            "description": "Identifier of the location in an external system, if any.",
                             "nullable": true,
                             "type": "string"
                           },
                           "id": {
+                            "description": "Numeric identifier of the location.",
+                            "readOnly": true,
                             "type": "integer"
                           },
                           "last_modified": {
+                            "description": "Date and time the location was last modified.",
                             "format": "date-time",
                             "type": "string"
                           },
                           "latitude": {
+                            "description": "Latitude coordinate of the location.",
                             "format": "decimal",
                             "nullable": true,
                             "type": "string"
                           },
                           "location_data": {
                             "additionalProperties": true,
+                            "description": "Custom data associated with the location, keyed by field name.",
                             "type": "object"
                           },
                           "location_id": {
+                            "description": "UUID of the location.",
                             "type": "string"
                           },
                           "location_type": {
+                            "description": "URI of the location type of this location.",
                             "format": "uri",
                             "type": "string"
                           },
                           "longitude": {
+                            "description": "Longitude coordinate of the location.",
                             "format": "decimal",
                             "nullable": true,
                             "type": "string"
                           },
                           "name": {
+                            "description": "Name of the location.",
                             "nullable": true,
                             "type": "string"
                           },
                           "parent": {
+                            "description": "URI of the parent location, or null if this is a root-level location.",
                             "format": "uri",
                             "nullable": true,
                             "type": "string"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "site_code": {
+                            "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                             "type": "string"
                           }
                         },
@@ -3035,7 +3077,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Location",
+        "summary": "Locations",
         "tags": [
           "location"
         ]
@@ -3054,7 +3096,7 @@
     },
     "/a/{domain}/api/location/v1/{location_id}/": {
       "get": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List locations in a project space, or fetch a single location by identifier. Locations represent the places, facilities or administrative areas where a project operates, arranged in a hierarchy of location types.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_v1_detail_get",
         "responses": {
           "200": {
@@ -3063,58 +3105,73 @@
                 "schema": {
                   "properties": {
                     "created_at": {
+                      "description": "Date and time the location was created.",
                       "format": "date-time",
                       "type": "string"
                     },
                     "domain": {
+                      "description": "Domain (project space) that owns the location.",
                       "type": "string"
                     },
                     "external_id": {
+                      "description": "Identifier of the location in an external system, if any.",
                       "nullable": true,
                       "type": "string"
                     },
                     "id": {
+                      "description": "Numeric identifier of the location.",
+                      "readOnly": true,
                       "type": "integer"
                     },
                     "last_modified": {
+                      "description": "Date and time the location was last modified.",
                       "format": "date-time",
                       "type": "string"
                     },
                     "latitude": {
+                      "description": "Latitude coordinate of the location.",
                       "format": "decimal",
                       "nullable": true,
                       "type": "string"
                     },
                     "location_data": {
                       "additionalProperties": true,
+                      "description": "Custom data associated with the location, keyed by field name.",
                       "type": "object"
                     },
                     "location_id": {
+                      "description": "UUID of the location.",
                       "type": "string"
                     },
                     "location_type": {
+                      "description": "URI of the location type of this location.",
                       "format": "uri",
                       "type": "string"
                     },
                     "longitude": {
+                      "description": "Longitude coordinate of the location.",
                       "format": "decimal",
                       "nullable": true,
                       "type": "string"
                     },
                     "name": {
+                      "description": "Name of the location.",
                       "nullable": true,
                       "type": "string"
                     },
                     "parent": {
+                      "description": "URI of the parent location, or null if this is a root-level location.",
                       "format": "uri",
                       "nullable": true,
                       "type": "string"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "site_code": {
+                      "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                       "type": "string"
                     }
                   },
@@ -3125,7 +3182,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Location",
+        "summary": "Locations",
         "tags": [
           "location"
         ]
@@ -3153,7 +3210,7 @@
     },
     "/a/{domain}/api/location/v2/": {
       "get": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List locations in a project space, create locations, or fetch and update a single location. Version 2 returns location data as a nested object and supports filtering by last modified date.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_v2_list_get",
         "parameters": [
           {
@@ -3264,6 +3321,32 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "meta": {
+                    "limit": 20,
+                    "next": null,
+                    "offset": 0,
+                    "previous": null,
+                    "total_count": 1
+                  },
+                  "objects": [
+                    {
+                      "domain": "dimagi-test",
+                      "last_modified": "2024-03-11T19:29:16.845849",
+                      "latitude": "31.4100000000",
+                      "location_data": {
+                        "pop": "1001"
+                      },
+                      "location_id": "68e65fbc2dc840ff8bf03849e57aca88",
+                      "location_type_code": "county",
+                      "location_type_name": "County",
+                      "longitude": null,
+                      "name": "Fairfax County",
+                      "parent_location_id": "41b0bdfbae20428e9435ae8c3dcd22e7",
+                      "site_code": "fairfax_county"
+                    }
+                  ]
+                },
                 "schema": {
                   "properties": {
                     "meta": {
@@ -3273,34 +3356,42 @@
                       "items": {
                         "properties": {
                           "domain": {
+                            "description": "Domain (project space) that owns the location.",
                             "type": "string"
                           },
                           "last_modified": {
+                            "description": "Date and time the location was last modified.",
                             "format": "date-time",
                             "type": "string"
                           },
                           "latitude": {
+                            "description": "Latitude coordinate of the location.",
                             "format": "decimal",
                             "nullable": true,
                             "type": "string"
                           },
                           "location_data": {
                             "additionalProperties": true,
+                            "description": "Custom data associated with the location, keyed by field name.",
                             "type": "object"
                           },
                           "location_id": {
+                            "description": "UUID of the location.",
                             "type": "string"
                           },
                           "longitude": {
+                            "description": "Longitude coordinate of the location.",
                             "format": "decimal",
                             "nullable": true,
                             "type": "string"
                           },
                           "name": {
+                            "description": "Name of the location.",
                             "nullable": true,
                             "type": "string"
                           },
                           "site_code": {
+                            "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                             "type": "string"
                           }
                         },
@@ -3316,7 +3407,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Location",
+        "summary": "Locations (v2)",
         "tags": [
           "location"
         ]
@@ -3333,7 +3424,7 @@
         }
       ],
       "patch": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List locations in a project space, create locations, or fetch and update a single location. Version 2 returns location data as a nested object and supports filtering by last modified date.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_v2_list_patch",
         "requestBody": {
           "content": {
@@ -3341,34 +3432,42 @@
               "schema": {
                 "properties": {
                   "domain": {
+                    "description": "Domain (project space) that owns the location.",
                     "type": "string"
                   },
                   "last_modified": {
+                    "description": "Date and time the location was last modified.",
                     "format": "date-time",
                     "type": "string"
                   },
                   "latitude": {
+                    "description": "Latitude coordinate of the location.",
                     "format": "decimal",
                     "nullable": true,
                     "type": "string"
                   },
                   "location_data": {
                     "additionalProperties": true,
+                    "description": "Custom data associated with the location, keyed by field name.",
                     "type": "object"
                   },
                   "location_id": {
+                    "description": "UUID of the location.",
                     "type": "string"
                   },
                   "longitude": {
+                    "description": "Longitude coordinate of the location.",
                     "format": "decimal",
                     "nullable": true,
                     "type": "string"
                   },
                   "name": {
+                    "description": "Name of the location.",
                     "nullable": true,
                     "type": "string"
                   },
                   "site_code": {
+                    "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                     "type": "string"
                   }
                 },
@@ -3382,6 +3481,32 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "meta": {
+                    "limit": 20,
+                    "next": null,
+                    "offset": 0,
+                    "previous": null,
+                    "total_count": 1
+                  },
+                  "objects": [
+                    {
+                      "domain": "dimagi-test",
+                      "last_modified": "2024-03-11T19:29:16.845849",
+                      "latitude": "31.4100000000",
+                      "location_data": {
+                        "pop": "1001"
+                      },
+                      "location_id": "68e65fbc2dc840ff8bf03849e57aca88",
+                      "location_type_code": "county",
+                      "location_type_name": "County",
+                      "longitude": null,
+                      "name": "Fairfax County",
+                      "parent_location_id": "41b0bdfbae20428e9435ae8c3dcd22e7",
+                      "site_code": "fairfax_county"
+                    }
+                  ]
+                },
                 "schema": {
                   "properties": {
                     "meta": {
@@ -3391,34 +3516,42 @@
                       "items": {
                         "properties": {
                           "domain": {
+                            "description": "Domain (project space) that owns the location.",
                             "type": "string"
                           },
                           "last_modified": {
+                            "description": "Date and time the location was last modified.",
                             "format": "date-time",
                             "type": "string"
                           },
                           "latitude": {
+                            "description": "Latitude coordinate of the location.",
                             "format": "decimal",
                             "nullable": true,
                             "type": "string"
                           },
                           "location_data": {
                             "additionalProperties": true,
+                            "description": "Custom data associated with the location, keyed by field name.",
                             "type": "object"
                           },
                           "location_id": {
+                            "description": "UUID of the location.",
                             "type": "string"
                           },
                           "longitude": {
+                            "description": "Longitude coordinate of the location.",
                             "format": "decimal",
                             "nullable": true,
                             "type": "string"
                           },
                           "name": {
+                            "description": "Name of the location.",
                             "nullable": true,
                             "type": "string"
                           },
                           "site_code": {
+                            "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                             "type": "string"
                           }
                         },
@@ -3434,13 +3567,13 @@
             "description": "A page of records."
           }
         },
-        "summary": "Location",
+        "summary": "Locations (v2)",
         "tags": [
           "location"
         ]
       },
       "post": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List locations in a project space, create locations, or fetch and update a single location. Version 2 returns location data as a nested object and supports filtering by last modified date.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_v2_list_post",
         "requestBody": {
           "content": {
@@ -3448,34 +3581,42 @@
               "schema": {
                 "properties": {
                   "domain": {
+                    "description": "Domain (project space) that owns the location.",
                     "type": "string"
                   },
                   "last_modified": {
+                    "description": "Date and time the location was last modified.",
                     "format": "date-time",
                     "type": "string"
                   },
                   "latitude": {
+                    "description": "Latitude coordinate of the location.",
                     "format": "decimal",
                     "nullable": true,
                     "type": "string"
                   },
                   "location_data": {
                     "additionalProperties": true,
+                    "description": "Custom data associated with the location, keyed by field name.",
                     "type": "object"
                   },
                   "location_id": {
+                    "description": "UUID of the location.",
                     "type": "string"
                   },
                   "longitude": {
+                    "description": "Longitude coordinate of the location.",
                     "format": "decimal",
                     "nullable": true,
                     "type": "string"
                   },
                   "name": {
+                    "description": "Name of the location.",
                     "nullable": true,
                     "type": "string"
                   },
                   "site_code": {
+                    "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                     "type": "string"
                   }
                 },
@@ -3489,6 +3630,32 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "meta": {
+                    "limit": 20,
+                    "next": null,
+                    "offset": 0,
+                    "previous": null,
+                    "total_count": 1
+                  },
+                  "objects": [
+                    {
+                      "domain": "dimagi-test",
+                      "last_modified": "2024-03-11T19:29:16.845849",
+                      "latitude": "31.4100000000",
+                      "location_data": {
+                        "pop": "1001"
+                      },
+                      "location_id": "68e65fbc2dc840ff8bf03849e57aca88",
+                      "location_type_code": "county",
+                      "location_type_name": "County",
+                      "longitude": null,
+                      "name": "Fairfax County",
+                      "parent_location_id": "41b0bdfbae20428e9435ae8c3dcd22e7",
+                      "site_code": "fairfax_county"
+                    }
+                  ]
+                },
                 "schema": {
                   "properties": {
                     "meta": {
@@ -3498,34 +3665,42 @@
                       "items": {
                         "properties": {
                           "domain": {
+                            "description": "Domain (project space) that owns the location.",
                             "type": "string"
                           },
                           "last_modified": {
+                            "description": "Date and time the location was last modified.",
                             "format": "date-time",
                             "type": "string"
                           },
                           "latitude": {
+                            "description": "Latitude coordinate of the location.",
                             "format": "decimal",
                             "nullable": true,
                             "type": "string"
                           },
                           "location_data": {
                             "additionalProperties": true,
+                            "description": "Custom data associated with the location, keyed by field name.",
                             "type": "object"
                           },
                           "location_id": {
+                            "description": "UUID of the location.",
                             "type": "string"
                           },
                           "longitude": {
+                            "description": "Longitude coordinate of the location.",
                             "format": "decimal",
                             "nullable": true,
                             "type": "string"
                           },
                           "name": {
+                            "description": "Name of the location.",
                             "nullable": true,
                             "type": "string"
                           },
                           "site_code": {
+                            "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                             "type": "string"
                           }
                         },
@@ -3541,7 +3716,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Location",
+        "summary": "Locations (v2)",
         "tags": [
           "location"
         ]
@@ -3549,7 +3724,7 @@
     },
     "/a/{domain}/api/location/v2/{location_id}/": {
       "get": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List locations in a project space, create locations, or fetch and update a single location. Version 2 returns location data as a nested object and supports filtering by last modified date.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_v2_detail_get",
         "responses": {
           "200": {
@@ -3558,34 +3733,42 @@
                 "schema": {
                   "properties": {
                     "domain": {
+                      "description": "Domain (project space) that owns the location.",
                       "type": "string"
                     },
                     "last_modified": {
+                      "description": "Date and time the location was last modified.",
                       "format": "date-time",
                       "type": "string"
                     },
                     "latitude": {
+                      "description": "Latitude coordinate of the location.",
                       "format": "decimal",
                       "nullable": true,
                       "type": "string"
                     },
                     "location_data": {
                       "additionalProperties": true,
+                      "description": "Custom data associated with the location, keyed by field name.",
                       "type": "object"
                     },
                     "location_id": {
+                      "description": "UUID of the location.",
                       "type": "string"
                     },
                     "longitude": {
+                      "description": "Longitude coordinate of the location.",
                       "format": "decimal",
                       "nullable": true,
                       "type": "string"
                     },
                     "name": {
+                      "description": "Name of the location.",
                       "nullable": true,
                       "type": "string"
                     },
                     "site_code": {
+                      "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                       "type": "string"
                     }
                   },
@@ -3596,7 +3779,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Location",
+        "summary": "Locations (v2)",
         "tags": [
           "location"
         ]
@@ -3622,7 +3805,7 @@
         }
       ],
       "put": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List locations in a project space, create locations, or fetch and update a single location. Version 2 returns location data as a nested object and supports filtering by last modified date.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_v2_detail_put",
         "requestBody": {
           "content": {
@@ -3630,34 +3813,42 @@
               "schema": {
                 "properties": {
                   "domain": {
+                    "description": "Domain (project space) that owns the location.",
                     "type": "string"
                   },
                   "last_modified": {
+                    "description": "Date and time the location was last modified.",
                     "format": "date-time",
                     "type": "string"
                   },
                   "latitude": {
+                    "description": "Latitude coordinate of the location.",
                     "format": "decimal",
                     "nullable": true,
                     "type": "string"
                   },
                   "location_data": {
                     "additionalProperties": true,
+                    "description": "Custom data associated with the location, keyed by field name.",
                     "type": "object"
                   },
                   "location_id": {
+                    "description": "UUID of the location.",
                     "type": "string"
                   },
                   "longitude": {
+                    "description": "Longitude coordinate of the location.",
                     "format": "decimal",
                     "nullable": true,
                     "type": "string"
                   },
                   "name": {
+                    "description": "Name of the location.",
                     "nullable": true,
                     "type": "string"
                   },
                   "site_code": {
+                    "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                     "type": "string"
                   }
                 },
@@ -3674,34 +3865,42 @@
                 "schema": {
                   "properties": {
                     "domain": {
+                      "description": "Domain (project space) that owns the location.",
                       "type": "string"
                     },
                     "last_modified": {
+                      "description": "Date and time the location was last modified.",
                       "format": "date-time",
                       "type": "string"
                     },
                     "latitude": {
+                      "description": "Latitude coordinate of the location.",
                       "format": "decimal",
                       "nullable": true,
                       "type": "string"
                     },
                     "location_data": {
                       "additionalProperties": true,
+                      "description": "Custom data associated with the location, keyed by field name.",
                       "type": "object"
                     },
                     "location_id": {
+                      "description": "UUID of the location.",
                       "type": "string"
                     },
                     "longitude": {
+                      "description": "Longitude coordinate of the location.",
                       "format": "decimal",
                       "nullable": true,
                       "type": "string"
                     },
                     "name": {
+                      "description": "Name of the location.",
                       "nullable": true,
                       "type": "string"
                     },
                     "site_code": {
+                      "description": "Unique (within the domain) code identifying the location, used in case sharing and bulk data.",
                       "type": "string"
                     }
                   },
@@ -3712,7 +3911,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Location",
+        "summary": "Locations (v2)",
         "tags": [
           "location"
         ]
@@ -3720,7 +3919,7 @@
     },
     "/a/{domain}/api/location_type/v1/": {
       "delete": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List the location types configured in a project space, or fetch a single location type by identifier. Location types define the organizational hierarchy (for example state, district, or facility) that locations belong to.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_type_v1_list_delete",
         "requestBody": {
           "content": {
@@ -3728,33 +3927,34 @@
               "schema": {
                 "properties": {
                   "administrative": {
-                    "default": false,
+                    "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                     "type": "boolean"
                   },
                   "code": {
+                    "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                     "nullable": true,
                     "type": "string"
                   },
                   "domain": {
+                    "description": "Domain (project space) that owns the location type.",
                     "type": "string"
                   },
-                  "id": {
-                    "type": "integer"
-                  },
                   "name": {
+                    "description": "Name of the location type.",
                     "type": "string"
                   },
                   "parent": {
+                    "description": "URI of the parent location type, or null if this is a root-level type.",
                     "format": "uri",
                     "nullable": true,
                     "type": "string"
                   },
                   "shares_cases": {
-                    "default": false,
+                    "description": "Whether users assigned to a location of this type share cases owned by that location.",
                     "type": "boolean"
                   },
                   "view_descendants": {
-                    "default": false,
+                    "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                     "type": "boolean"
                   }
                 },
@@ -3777,37 +3977,44 @@
                       "items": {
                         "properties": {
                           "administrative": {
-                            "default": false,
+                            "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                             "type": "boolean"
                           },
                           "code": {
+                            "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                             "nullable": true,
                             "type": "string"
                           },
                           "domain": {
+                            "description": "Domain (project space) that owns the location type.",
                             "type": "string"
                           },
                           "id": {
+                            "description": "Numeric identifier of the location type.",
+                            "readOnly": true,
                             "type": "integer"
                           },
                           "name": {
+                            "description": "Name of the location type.",
                             "type": "string"
                           },
                           "parent": {
+                            "description": "URI of the parent location type, or null if this is a root-level type.",
                             "format": "uri",
                             "nullable": true,
                             "type": "string"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "shares_cases": {
-                            "default": false,
+                            "description": "Whether users assigned to a location of this type share cases owned by that location.",
                             "type": "boolean"
                           },
                           "view_descendants": {
-                            "default": false,
+                            "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                             "type": "boolean"
                           }
                         },
@@ -3823,13 +4030,13 @@
             "description": "A page of records."
           }
         },
-        "summary": "Location Type",
+        "summary": "Location Types",
         "tags": [
           "location_type"
         ]
       },
       "get": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List the location types configured in a project space, or fetch a single location type by identifier. Location types define the organizational hierarchy (for example state, district, or facility) that locations belong to.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_type_v1_list_get",
         "parameters": [
           {
@@ -3888,37 +4095,44 @@
                       "items": {
                         "properties": {
                           "administrative": {
-                            "default": false,
+                            "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                             "type": "boolean"
                           },
                           "code": {
+                            "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                             "nullable": true,
                             "type": "string"
                           },
                           "domain": {
+                            "description": "Domain (project space) that owns the location type.",
                             "type": "string"
                           },
                           "id": {
+                            "description": "Numeric identifier of the location type.",
+                            "readOnly": true,
                             "type": "integer"
                           },
                           "name": {
+                            "description": "Name of the location type.",
                             "type": "string"
                           },
                           "parent": {
+                            "description": "URI of the parent location type, or null if this is a root-level type.",
                             "format": "uri",
                             "nullable": true,
                             "type": "string"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "shares_cases": {
-                            "default": false,
+                            "description": "Whether users assigned to a location of this type share cases owned by that location.",
                             "type": "boolean"
                           },
                           "view_descendants": {
-                            "default": false,
+                            "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                             "type": "boolean"
                           }
                         },
@@ -3934,7 +4148,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Location Type",
+        "summary": "Location Types",
         "tags": [
           "location_type"
         ]
@@ -3951,7 +4165,7 @@
         }
       ],
       "patch": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List the location types configured in a project space, or fetch a single location type by identifier. Location types define the organizational hierarchy (for example state, district, or facility) that locations belong to.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_type_v1_list_patch",
         "requestBody": {
           "content": {
@@ -3959,33 +4173,34 @@
               "schema": {
                 "properties": {
                   "administrative": {
-                    "default": false,
+                    "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                     "type": "boolean"
                   },
                   "code": {
+                    "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                     "nullable": true,
                     "type": "string"
                   },
                   "domain": {
+                    "description": "Domain (project space) that owns the location type.",
                     "type": "string"
                   },
-                  "id": {
-                    "type": "integer"
-                  },
                   "name": {
+                    "description": "Name of the location type.",
                     "type": "string"
                   },
                   "parent": {
+                    "description": "URI of the parent location type, or null if this is a root-level type.",
                     "format": "uri",
                     "nullable": true,
                     "type": "string"
                   },
                   "shares_cases": {
-                    "default": false,
+                    "description": "Whether users assigned to a location of this type share cases owned by that location.",
                     "type": "boolean"
                   },
                   "view_descendants": {
-                    "default": false,
+                    "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                     "type": "boolean"
                   }
                 },
@@ -4008,37 +4223,44 @@
                       "items": {
                         "properties": {
                           "administrative": {
-                            "default": false,
+                            "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                             "type": "boolean"
                           },
                           "code": {
+                            "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                             "nullable": true,
                             "type": "string"
                           },
                           "domain": {
+                            "description": "Domain (project space) that owns the location type.",
                             "type": "string"
                           },
                           "id": {
+                            "description": "Numeric identifier of the location type.",
+                            "readOnly": true,
                             "type": "integer"
                           },
                           "name": {
+                            "description": "Name of the location type.",
                             "type": "string"
                           },
                           "parent": {
+                            "description": "URI of the parent location type, or null if this is a root-level type.",
                             "format": "uri",
                             "nullable": true,
                             "type": "string"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "shares_cases": {
-                            "default": false,
+                            "description": "Whether users assigned to a location of this type share cases owned by that location.",
                             "type": "boolean"
                           },
                           "view_descendants": {
-                            "default": false,
+                            "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                             "type": "boolean"
                           }
                         },
@@ -4054,13 +4276,13 @@
             "description": "A page of records."
           }
         },
-        "summary": "Location Type",
+        "summary": "Location Types",
         "tags": [
           "location_type"
         ]
       },
       "post": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List the location types configured in a project space, or fetch a single location type by identifier. Location types define the organizational hierarchy (for example state, district, or facility) that locations belong to.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_type_v1_list_post",
         "requestBody": {
           "content": {
@@ -4068,33 +4290,34 @@
               "schema": {
                 "properties": {
                   "administrative": {
-                    "default": false,
+                    "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                     "type": "boolean"
                   },
                   "code": {
+                    "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                     "nullable": true,
                     "type": "string"
                   },
                   "domain": {
+                    "description": "Domain (project space) that owns the location type.",
                     "type": "string"
                   },
-                  "id": {
-                    "type": "integer"
-                  },
                   "name": {
+                    "description": "Name of the location type.",
                     "type": "string"
                   },
                   "parent": {
+                    "description": "URI of the parent location type, or null if this is a root-level type.",
                     "format": "uri",
                     "nullable": true,
                     "type": "string"
                   },
                   "shares_cases": {
-                    "default": false,
+                    "description": "Whether users assigned to a location of this type share cases owned by that location.",
                     "type": "boolean"
                   },
                   "view_descendants": {
-                    "default": false,
+                    "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                     "type": "boolean"
                   }
                 },
@@ -4117,37 +4340,44 @@
                       "items": {
                         "properties": {
                           "administrative": {
-                            "default": false,
+                            "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                             "type": "boolean"
                           },
                           "code": {
+                            "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                             "nullable": true,
                             "type": "string"
                           },
                           "domain": {
+                            "description": "Domain (project space) that owns the location type.",
                             "type": "string"
                           },
                           "id": {
+                            "description": "Numeric identifier of the location type.",
+                            "readOnly": true,
                             "type": "integer"
                           },
                           "name": {
+                            "description": "Name of the location type.",
                             "type": "string"
                           },
                           "parent": {
+                            "description": "URI of the parent location type, or null if this is a root-level type.",
                             "format": "uri",
                             "nullable": true,
                             "type": "string"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "shares_cases": {
-                            "default": false,
+                            "description": "Whether users assigned to a location of this type share cases owned by that location.",
                             "type": "boolean"
                           },
                           "view_descendants": {
-                            "default": false,
+                            "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                             "type": "boolean"
                           }
                         },
@@ -4163,13 +4393,13 @@
             "description": "A page of records."
           }
         },
-        "summary": "Location Type",
+        "summary": "Location Types",
         "tags": [
           "location_type"
         ]
       },
       "put": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List the location types configured in a project space, or fetch a single location type by identifier. Location types define the organizational hierarchy (for example state, district, or facility) that locations belong to.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_type_v1_list_put",
         "requestBody": {
           "content": {
@@ -4177,33 +4407,34 @@
               "schema": {
                 "properties": {
                   "administrative": {
-                    "default": false,
+                    "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                     "type": "boolean"
                   },
                   "code": {
+                    "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                     "nullable": true,
                     "type": "string"
                   },
                   "domain": {
+                    "description": "Domain (project space) that owns the location type.",
                     "type": "string"
                   },
-                  "id": {
-                    "type": "integer"
-                  },
                   "name": {
+                    "description": "Name of the location type.",
                     "type": "string"
                   },
                   "parent": {
+                    "description": "URI of the parent location type, or null if this is a root-level type.",
                     "format": "uri",
                     "nullable": true,
                     "type": "string"
                   },
                   "shares_cases": {
-                    "default": false,
+                    "description": "Whether users assigned to a location of this type share cases owned by that location.",
                     "type": "boolean"
                   },
                   "view_descendants": {
-                    "default": false,
+                    "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                     "type": "boolean"
                   }
                 },
@@ -4226,37 +4457,44 @@
                       "items": {
                         "properties": {
                           "administrative": {
-                            "default": false,
+                            "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                             "type": "boolean"
                           },
                           "code": {
+                            "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                             "nullable": true,
                             "type": "string"
                           },
                           "domain": {
+                            "description": "Domain (project space) that owns the location type.",
                             "type": "string"
                           },
                           "id": {
+                            "description": "Numeric identifier of the location type.",
+                            "readOnly": true,
                             "type": "integer"
                           },
                           "name": {
+                            "description": "Name of the location type.",
                             "type": "string"
                           },
                           "parent": {
+                            "description": "URI of the parent location type, or null if this is a root-level type.",
                             "format": "uri",
                             "nullable": true,
                             "type": "string"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "shares_cases": {
-                            "default": false,
+                            "description": "Whether users assigned to a location of this type share cases owned by that location.",
                             "type": "boolean"
                           },
                           "view_descendants": {
-                            "default": false,
+                            "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                             "type": "boolean"
                           }
                         },
@@ -4272,7 +4510,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Location Type",
+        "summary": "Location Types",
         "tags": [
           "location_type"
         ]
@@ -4280,7 +4518,7 @@
     },
     "/a/{domain}/api/location_type/v1/{pk}/": {
       "delete": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List the location types configured in a project space, or fetch a single location type by identifier. Location types define the organizational hierarchy (for example state, district, or facility) that locations belong to.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_type_v1_detail_delete",
         "responses": {
           "200": {
@@ -4289,37 +4527,44 @@
                 "schema": {
                   "properties": {
                     "administrative": {
-                      "default": false,
+                      "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                       "type": "boolean"
                     },
                     "code": {
+                      "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                       "nullable": true,
                       "type": "string"
                     },
                     "domain": {
+                      "description": "Domain (project space) that owns the location type.",
                       "type": "string"
                     },
                     "id": {
+                      "description": "Numeric identifier of the location type.",
+                      "readOnly": true,
                       "type": "integer"
                     },
                     "name": {
+                      "description": "Name of the location type.",
                       "type": "string"
                     },
                     "parent": {
+                      "description": "URI of the parent location type, or null if this is a root-level type.",
                       "format": "uri",
                       "nullable": true,
                       "type": "string"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "shares_cases": {
-                      "default": false,
+                      "description": "Whether users assigned to a location of this type share cases owned by that location.",
                       "type": "boolean"
                     },
                     "view_descendants": {
-                      "default": false,
+                      "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                       "type": "boolean"
                     }
                   },
@@ -4330,13 +4575,13 @@
             "description": "The requested record."
           }
         },
-        "summary": "Location Type",
+        "summary": "Location Types",
         "tags": [
           "location_type"
         ]
       },
       "get": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List the location types configured in a project space, or fetch a single location type by identifier. Location types define the organizational hierarchy (for example state, district, or facility) that locations belong to.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_type_v1_detail_get",
         "responses": {
           "200": {
@@ -4345,37 +4590,44 @@
                 "schema": {
                   "properties": {
                     "administrative": {
-                      "default": false,
+                      "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                       "type": "boolean"
                     },
                     "code": {
+                      "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                       "nullable": true,
                       "type": "string"
                     },
                     "domain": {
+                      "description": "Domain (project space) that owns the location type.",
                       "type": "string"
                     },
                     "id": {
+                      "description": "Numeric identifier of the location type.",
+                      "readOnly": true,
                       "type": "integer"
                     },
                     "name": {
+                      "description": "Name of the location type.",
                       "type": "string"
                     },
                     "parent": {
+                      "description": "URI of the parent location type, or null if this is a root-level type.",
                       "format": "uri",
                       "nullable": true,
                       "type": "string"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "shares_cases": {
-                      "default": false,
+                      "description": "Whether users assigned to a location of this type share cases owned by that location.",
                       "type": "boolean"
                     },
                     "view_descendants": {
-                      "default": false,
+                      "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                       "type": "boolean"
                     }
                   },
@@ -4386,7 +4638,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Location Type",
+        "summary": "Location Types",
         "tags": [
           "location_type"
         ]
@@ -4412,7 +4664,7 @@
         }
       ],
       "patch": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List the location types configured in a project space, or fetch a single location type by identifier. Location types define the organizational hierarchy (for example state, district, or facility) that locations belong to.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_type_v1_detail_patch",
         "requestBody": {
           "content": {
@@ -4420,33 +4672,34 @@
               "schema": {
                 "properties": {
                   "administrative": {
-                    "default": false,
+                    "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                     "type": "boolean"
                   },
                   "code": {
+                    "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                     "nullable": true,
                     "type": "string"
                   },
                   "domain": {
+                    "description": "Domain (project space) that owns the location type.",
                     "type": "string"
                   },
-                  "id": {
-                    "type": "integer"
-                  },
                   "name": {
+                    "description": "Name of the location type.",
                     "type": "string"
                   },
                   "parent": {
+                    "description": "URI of the parent location type, or null if this is a root-level type.",
                     "format": "uri",
                     "nullable": true,
                     "type": "string"
                   },
                   "shares_cases": {
-                    "default": false,
+                    "description": "Whether users assigned to a location of this type share cases owned by that location.",
                     "type": "boolean"
                   },
                   "view_descendants": {
-                    "default": false,
+                    "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                     "type": "boolean"
                   }
                 },
@@ -4463,37 +4716,44 @@
                 "schema": {
                   "properties": {
                     "administrative": {
-                      "default": false,
+                      "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                       "type": "boolean"
                     },
                     "code": {
+                      "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                       "nullable": true,
                       "type": "string"
                     },
                     "domain": {
+                      "description": "Domain (project space) that owns the location type.",
                       "type": "string"
                     },
                     "id": {
+                      "description": "Numeric identifier of the location type.",
+                      "readOnly": true,
                       "type": "integer"
                     },
                     "name": {
+                      "description": "Name of the location type.",
                       "type": "string"
                     },
                     "parent": {
+                      "description": "URI of the parent location type, or null if this is a root-level type.",
                       "format": "uri",
                       "nullable": true,
                       "type": "string"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "shares_cases": {
-                      "default": false,
+                      "description": "Whether users assigned to a location of this type share cases owned by that location.",
                       "type": "boolean"
                     },
                     "view_descendants": {
-                      "default": false,
+                      "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                       "type": "boolean"
                     }
                   },
@@ -4504,13 +4764,13 @@
             "description": "The requested record."
           }
         },
-        "summary": "Location Type",
+        "summary": "Location Types",
         "tags": [
           "location_type"
         ]
       },
       "post": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List the location types configured in a project space, or fetch a single location type by identifier. Location types define the organizational hierarchy (for example state, district, or facility) that locations belong to.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_type_v1_detail_post",
         "responses": {
           "200": {
@@ -4519,37 +4779,44 @@
                 "schema": {
                   "properties": {
                     "administrative": {
-                      "default": false,
+                      "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                       "type": "boolean"
                     },
                     "code": {
+                      "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                       "nullable": true,
                       "type": "string"
                     },
                     "domain": {
+                      "description": "Domain (project space) that owns the location type.",
                       "type": "string"
                     },
                     "id": {
+                      "description": "Numeric identifier of the location type.",
+                      "readOnly": true,
                       "type": "integer"
                     },
                     "name": {
+                      "description": "Name of the location type.",
                       "type": "string"
                     },
                     "parent": {
+                      "description": "URI of the parent location type, or null if this is a root-level type.",
                       "format": "uri",
                       "nullable": true,
                       "type": "string"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "shares_cases": {
-                      "default": false,
+                      "description": "Whether users assigned to a location of this type share cases owned by that location.",
                       "type": "boolean"
                     },
                     "view_descendants": {
-                      "default": false,
+                      "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                       "type": "boolean"
                     }
                   },
@@ -4560,13 +4827,13 @@
             "description": "The requested record."
           }
         },
-        "summary": "Location Type",
+        "summary": "Location Types",
         "tags": [
           "location_type"
         ]
       },
       "put": {
-        "description": "Requires the `edit_locations` permission.",
+        "description": "List the location types configured in a project space, or fetch a single location type by identifier. Location types define the organizational hierarchy (for example state, district, or facility) that locations belong to.\n\nRequires the `edit_locations` permission.",
         "operationId": "location_type_v1_detail_put",
         "requestBody": {
           "content": {
@@ -4574,33 +4841,34 @@
               "schema": {
                 "properties": {
                   "administrative": {
-                    "default": false,
+                    "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                     "type": "boolean"
                   },
                   "code": {
+                    "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                     "nullable": true,
                     "type": "string"
                   },
                   "domain": {
+                    "description": "Domain (project space) that owns the location type.",
                     "type": "string"
                   },
-                  "id": {
-                    "type": "integer"
-                  },
                   "name": {
+                    "description": "Name of the location type.",
                     "type": "string"
                   },
                   "parent": {
+                    "description": "URI of the parent location type, or null if this is a root-level type.",
                     "format": "uri",
                     "nullable": true,
                     "type": "string"
                   },
                   "shares_cases": {
-                    "default": false,
+                    "description": "Whether users assigned to a location of this type share cases owned by that location.",
                     "type": "boolean"
                   },
                   "view_descendants": {
-                    "default": false,
+                    "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                     "type": "boolean"
                   }
                 },
@@ -4617,37 +4885,44 @@
                 "schema": {
                   "properties": {
                     "administrative": {
-                      "default": false,
+                      "description": "Whether this is an administrative location type (a fixed geographic boundary, e.g. state or district) as opposed to an inventory-management type (e.g. facility).",
                       "type": "boolean"
                     },
                     "code": {
+                      "description": "Slug identifying the location type, used to filter locations and in bulk data imports.",
                       "nullable": true,
                       "type": "string"
                     },
                     "domain": {
+                      "description": "Domain (project space) that owns the location type.",
                       "type": "string"
                     },
                     "id": {
+                      "description": "Numeric identifier of the location type.",
+                      "readOnly": true,
                       "type": "integer"
                     },
                     "name": {
+                      "description": "Name of the location type.",
                       "type": "string"
                     },
                     "parent": {
+                      "description": "URI of the parent location type, or null if this is a root-level type.",
                       "format": "uri",
                       "nullable": true,
                       "type": "string"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "shares_cases": {
-                      "default": false,
+                      "description": "Whether users assigned to a location of this type share cases owned by that location.",
                       "type": "boolean"
                     },
                     "view_descendants": {
-                      "default": false,
+                      "description": "Whether users assigned to a location of this type can view data belonging to descendant locations.",
                       "type": "boolean"
                     }
                   },
@@ -4658,7 +4933,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Location Type",
+        "summary": "Location Types",
         "tags": [
           "location_type"
         ]
@@ -4666,6 +4941,7 @@
     },
     "/a/{domain}/api/lookup_table/v1/": {
       "get": {
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
         "operationId": "lookup_table_v1_list_get",
         "parameters": [
           {
@@ -4707,6 +4983,36 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "meta": {
+                    "limit": 20,
+                    "next": null,
+                    "offset": 0,
+                    "previous": null,
+                    "total_count": 1
+                  },
+                  "objects": [
+                    {
+                      "fields": [
+                        {
+                          "field_name": "name",
+                          "properties": [
+                            "lang"
+                          ]
+                        },
+                        {
+                          "field_name": "price",
+                          "properties": []
+                        }
+                      ],
+                      "id": "bcf49791f7f04f09bd46262097e107f2",
+                      "is_global": true,
+                      "item_attributes": [],
+                      "resource_uri": "https://www.commcarehq.org/a/demo/api/lookup_table/v1/bcf49791f7f04f09bd46262097e107f2/",
+                      "tag": "vaccines"
+                    }
+                  ]
+                },
                 "schema": {
                   "properties": {
                     "meta": {
@@ -4716,25 +5022,46 @@
                       "items": {
                         "properties": {
                           "fields": {
-                            "items": {},
+                            "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                            "items": {
+                              "properties": {
+                                "field_name": {
+                                  "type": "string"
+                                },
+                                "properties": {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              },
+                              "type": "object"
+                            },
                             "type": "array"
                           },
                           "id": {
+                            "description": "Unique identifier of the lookup table.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "is_global": {
+                            "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
                             "type": "boolean"
                           },
                           "item_attributes": {
-                            "items": {},
+                            "description": "Names of the item attributes available on rows of this lookup table.",
+                            "items": {
+                              "type": "string"
+                            },
                             "type": "array"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "tag": {
+                            "description": "Name of the lookup table, unique within the domain.",
                             "type": "string"
                           }
                         },
@@ -4750,7 +5077,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Lookup Table",
+        "summary": "Lookup Tables",
         "tags": [
           "lookup_table"
         ]
@@ -4767,6 +5094,7 @@
         }
       ],
       "post": {
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
         "operationId": "lookup_table_v1_list_post",
         "requestBody": {
           "content": {
@@ -4774,17 +5102,36 @@
               "schema": {
                 "properties": {
                   "fields": {
-                    "items": {},
+                    "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                    "items": {
+                      "properties": {
+                        "field_name": {
+                          "type": "string"
+                        },
+                        "properties": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "type": "array"
                   },
                   "is_global": {
+                    "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
                     "type": "boolean"
                   },
                   "item_attributes": {
-                    "items": {},
+                    "description": "Names of the item attributes available on rows of this lookup table.",
+                    "items": {
+                      "type": "string"
+                    },
                     "type": "array"
                   },
                   "tag": {
+                    "description": "Name of the lookup table, unique within the domain.",
                     "type": "string"
                   }
                 },
@@ -4798,6 +5145,36 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "meta": {
+                    "limit": 20,
+                    "next": null,
+                    "offset": 0,
+                    "previous": null,
+                    "total_count": 1
+                  },
+                  "objects": [
+                    {
+                      "fields": [
+                        {
+                          "field_name": "name",
+                          "properties": [
+                            "lang"
+                          ]
+                        },
+                        {
+                          "field_name": "price",
+                          "properties": []
+                        }
+                      ],
+                      "id": "bcf49791f7f04f09bd46262097e107f2",
+                      "is_global": true,
+                      "item_attributes": [],
+                      "resource_uri": "https://www.commcarehq.org/a/demo/api/lookup_table/v1/bcf49791f7f04f09bd46262097e107f2/",
+                      "tag": "vaccines"
+                    }
+                  ]
+                },
                 "schema": {
                   "properties": {
                     "meta": {
@@ -4807,25 +5184,46 @@
                       "items": {
                         "properties": {
                           "fields": {
-                            "items": {},
+                            "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                            "items": {
+                              "properties": {
+                                "field_name": {
+                                  "type": "string"
+                                },
+                                "properties": {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              },
+                              "type": "object"
+                            },
                             "type": "array"
                           },
                           "id": {
+                            "description": "Unique identifier of the lookup table.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "is_global": {
+                            "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
                             "type": "boolean"
                           },
                           "item_attributes": {
-                            "items": {},
+                            "description": "Names of the item attributes available on rows of this lookup table.",
+                            "items": {
+                              "type": "string"
+                            },
                             "type": "array"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "tag": {
+                            "description": "Name of the lookup table, unique within the domain.",
                             "type": "string"
                           }
                         },
@@ -4841,7 +5239,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Lookup Table",
+        "summary": "Lookup Tables",
         "tags": [
           "lookup_table"
         ]
@@ -4849,6 +5247,7 @@
     },
     "/a/{domain}/api/lookup_table/v1/{pk}/": {
       "delete": {
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
         "operationId": "lookup_table_v1_detail_delete",
         "responses": {
           "200": {
@@ -4857,25 +5256,46 @@
                 "schema": {
                   "properties": {
                     "fields": {
-                      "items": {},
+                      "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                      "items": {
+                        "properties": {
+                          "field_name": {
+                            "type": "string"
+                          },
+                          "properties": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
                       "type": "array"
                     },
                     "id": {
+                      "description": "Unique identifier of the lookup table.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "is_global": {
+                      "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
                       "type": "boolean"
                     },
                     "item_attributes": {
-                      "items": {},
+                      "description": "Names of the item attributes available on rows of this lookup table.",
+                      "items": {
+                        "type": "string"
+                      },
                       "type": "array"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "tag": {
+                      "description": "Name of the lookup table, unique within the domain.",
                       "type": "string"
                     }
                   },
@@ -4886,12 +5306,13 @@
             "description": "The requested record."
           }
         },
-        "summary": "Lookup Table",
+        "summary": "Lookup Tables",
         "tags": [
           "lookup_table"
         ]
       },
       "get": {
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
         "operationId": "lookup_table_v1_detail_get",
         "responses": {
           "200": {
@@ -4900,25 +5321,46 @@
                 "schema": {
                   "properties": {
                     "fields": {
-                      "items": {},
+                      "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                      "items": {
+                        "properties": {
+                          "field_name": {
+                            "type": "string"
+                          },
+                          "properties": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
                       "type": "array"
                     },
                     "id": {
+                      "description": "Unique identifier of the lookup table.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "is_global": {
+                      "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
                       "type": "boolean"
                     },
                     "item_attributes": {
-                      "items": {},
+                      "description": "Names of the item attributes available on rows of this lookup table.",
+                      "items": {
+                        "type": "string"
+                      },
                       "type": "array"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "tag": {
+                      "description": "Name of the lookup table, unique within the domain.",
                       "type": "string"
                     }
                   },
@@ -4929,7 +5371,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Lookup Table",
+        "summary": "Lookup Tables",
         "tags": [
           "lookup_table"
         ]
@@ -4955,6 +5397,7 @@
         }
       ],
       "put": {
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
         "operationId": "lookup_table_v1_detail_put",
         "requestBody": {
           "content": {
@@ -4962,17 +5405,36 @@
               "schema": {
                 "properties": {
                   "fields": {
-                    "items": {},
+                    "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                    "items": {
+                      "properties": {
+                        "field_name": {
+                          "type": "string"
+                        },
+                        "properties": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "type": "array"
                   },
                   "is_global": {
+                    "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
                     "type": "boolean"
                   },
                   "item_attributes": {
-                    "items": {},
+                    "description": "Names of the item attributes available on rows of this lookup table.",
+                    "items": {
+                      "type": "string"
+                    },
                     "type": "array"
                   },
                   "tag": {
+                    "description": "Name of the lookup table, unique within the domain.",
                     "type": "string"
                   }
                 },
@@ -4989,25 +5451,46 @@
                 "schema": {
                   "properties": {
                     "fields": {
-                      "items": {},
+                      "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                      "items": {
+                        "properties": {
+                          "field_name": {
+                            "type": "string"
+                          },
+                          "properties": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
                       "type": "array"
                     },
                     "id": {
+                      "description": "Unique identifier of the lookup table.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "is_global": {
+                      "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
                       "type": "boolean"
                     },
                     "item_attributes": {
-                      "items": {},
+                      "description": "Names of the item attributes available on rows of this lookup table.",
+                      "items": {
+                        "type": "string"
+                      },
                       "type": "array"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "tag": {
+                      "description": "Name of the lookup table, unique within the domain.",
                       "type": "string"
                     }
                   },
@@ -5018,7 +5501,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Lookup Table",
+        "summary": "Lookup Tables",
         "tags": [
           "lookup_table"
         ]
@@ -5026,6 +5509,7 @@
     },
     "/a/{domain}/api/lookup_table_item/v1/": {
       "get": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
         "operationId": "lookup_table_item_v1_list_get",
         "parameters": [
           {
@@ -5076,25 +5560,54 @@
                       "items": {
                         "properties": {
                           "data_type_id": {
+                            "description": "Identifier of the lookup table this item belongs to.",
                             "type": "string"
                           },
                           "fields": {
-                            "additionalProperties": true,
+                            "additionalProperties": {
+                              "properties": {
+                                "field_list": {
+                                  "items": {
+                                    "properties": {
+                                      "field_value": {
+                                        "type": "string"
+                                      },
+                                      "properties": {
+                                        "additionalProperties": {
+                                          "type": "string"
+                                        },
+                                        "type": "object"
+                                      }
+                                    },
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                             "type": "object"
                           },
                           "id": {
+                            "description": "Unique identifier of the lookup table item.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "item_attributes": {
-                            "additionalProperties": true,
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "description": "Attribute values for the row, keyed by attribute name.",
                             "type": "object"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "sort_key": {
+                            "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                             "type": "integer"
                           }
                         },
@@ -5110,7 +5623,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items",
         "tags": [
           "lookup_table_item"
         ]
@@ -5127,6 +5640,7 @@
         }
       ],
       "post": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
         "operationId": "lookup_table_item_v1_list_post",
         "requestBody": {
           "content": {
@@ -5134,17 +5648,44 @@
               "schema": {
                 "properties": {
                   "data_type_id": {
+                    "description": "Identifier of the lookup table this item belongs to.",
                     "type": "string"
                   },
                   "fields": {
-                    "additionalProperties": true,
+                    "additionalProperties": {
+                      "properties": {
+                        "field_list": {
+                          "items": {
+                            "properties": {
+                              "field_value": {
+                                "type": "string"
+                              },
+                              "properties": {
+                                "additionalProperties": {
+                                  "type": "string"
+                                },
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                     "type": "object"
                   },
                   "item_attributes": {
-                    "additionalProperties": true,
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Attribute values for the row, keyed by attribute name.",
                     "type": "object"
                   },
                   "sort_key": {
+                    "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                     "type": "integer"
                   }
                 },
@@ -5167,25 +5708,54 @@
                       "items": {
                         "properties": {
                           "data_type_id": {
+                            "description": "Identifier of the lookup table this item belongs to.",
                             "type": "string"
                           },
                           "fields": {
-                            "additionalProperties": true,
+                            "additionalProperties": {
+                              "properties": {
+                                "field_list": {
+                                  "items": {
+                                    "properties": {
+                                      "field_value": {
+                                        "type": "string"
+                                      },
+                                      "properties": {
+                                        "additionalProperties": {
+                                          "type": "string"
+                                        },
+                                        "type": "object"
+                                      }
+                                    },
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                             "type": "object"
                           },
                           "id": {
+                            "description": "Unique identifier of the lookup table item.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "item_attributes": {
-                            "additionalProperties": true,
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "description": "Attribute values for the row, keyed by attribute name.",
                             "type": "object"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "sort_key": {
+                            "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                             "type": "integer"
                           }
                         },
@@ -5201,7 +5771,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items",
         "tags": [
           "lookup_table_item"
         ]
@@ -5209,6 +5779,7 @@
     },
     "/a/{domain}/api/lookup_table_item/v1/{pk}/": {
       "delete": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
         "operationId": "lookup_table_item_v1_detail_delete",
         "responses": {
           "200": {
@@ -5217,25 +5788,54 @@
                 "schema": {
                   "properties": {
                     "data_type_id": {
+                      "description": "Identifier of the lookup table this item belongs to.",
                       "type": "string"
                     },
                     "fields": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "properties": {
+                          "field_list": {
+                            "items": {
+                              "properties": {
+                                "field_value": {
+                                  "type": "string"
+                                },
+                                "properties": {
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "type": "object"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                       "type": "object"
                     },
                     "id": {
+                      "description": "Unique identifier of the lookup table item.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "item_attributes": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Attribute values for the row, keyed by attribute name.",
                       "type": "object"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "sort_key": {
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                       "type": "integer"
                     }
                   },
@@ -5246,12 +5846,13 @@
             "description": "The requested record."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items",
         "tags": [
           "lookup_table_item"
         ]
       },
       "get": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
         "operationId": "lookup_table_item_v1_detail_get",
         "responses": {
           "200": {
@@ -5260,25 +5861,54 @@
                 "schema": {
                   "properties": {
                     "data_type_id": {
+                      "description": "Identifier of the lookup table this item belongs to.",
                       "type": "string"
                     },
                     "fields": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "properties": {
+                          "field_list": {
+                            "items": {
+                              "properties": {
+                                "field_value": {
+                                  "type": "string"
+                                },
+                                "properties": {
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "type": "object"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                       "type": "object"
                     },
                     "id": {
+                      "description": "Unique identifier of the lookup table item.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "item_attributes": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Attribute values for the row, keyed by attribute name.",
                       "type": "object"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "sort_key": {
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                       "type": "integer"
                     }
                   },
@@ -5289,7 +5919,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items",
         "tags": [
           "lookup_table_item"
         ]
@@ -5315,6 +5945,7 @@
         }
       ],
       "put": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
         "operationId": "lookup_table_item_v1_detail_put",
         "requestBody": {
           "content": {
@@ -5322,17 +5953,44 @@
               "schema": {
                 "properties": {
                   "data_type_id": {
+                    "description": "Identifier of the lookup table this item belongs to.",
                     "type": "string"
                   },
                   "fields": {
-                    "additionalProperties": true,
+                    "additionalProperties": {
+                      "properties": {
+                        "field_list": {
+                          "items": {
+                            "properties": {
+                              "field_value": {
+                                "type": "string"
+                              },
+                              "properties": {
+                                "additionalProperties": {
+                                  "type": "string"
+                                },
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                     "type": "object"
                   },
                   "item_attributes": {
-                    "additionalProperties": true,
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Attribute values for the row, keyed by attribute name.",
                     "type": "object"
                   },
                   "sort_key": {
+                    "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                     "type": "integer"
                   }
                 },
@@ -5349,25 +6007,54 @@
                 "schema": {
                   "properties": {
                     "data_type_id": {
+                      "description": "Identifier of the lookup table this item belongs to.",
                       "type": "string"
                     },
                     "fields": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "properties": {
+                          "field_list": {
+                            "items": {
+                              "properties": {
+                                "field_value": {
+                                  "type": "string"
+                                },
+                                "properties": {
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "type": "object"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                       "type": "object"
                     },
                     "id": {
+                      "description": "Unique identifier of the lookup table item.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "item_attributes": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Attribute values for the row, keyed by attribute name.",
                       "type": "object"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "sort_key": {
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                       "type": "integer"
                     }
                   },
@@ -5378,7 +6065,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items",
         "tags": [
           "lookup_table_item"
         ]
@@ -5386,6 +6073,7 @@
     },
     "/a/{domain}/api/lookup_table_item/v2/": {
       "get": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests.",
         "operationId": "lookup_table_item_v2_list_get",
         "parameters": [
           {
@@ -5436,25 +6124,54 @@
                       "items": {
                         "properties": {
                           "data_type_id": {
+                            "description": "Identifier of the lookup table this item belongs to.",
                             "type": "string"
                           },
                           "fields": {
-                            "additionalProperties": true,
+                            "additionalProperties": {
+                              "properties": {
+                                "field_list": {
+                                  "items": {
+                                    "properties": {
+                                      "field_value": {
+                                        "type": "string"
+                                      },
+                                      "properties": {
+                                        "additionalProperties": {
+                                          "type": "string"
+                                        },
+                                        "type": "object"
+                                      }
+                                    },
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                             "type": "object"
                           },
                           "id": {
+                            "description": "Unique identifier of the lookup table item.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "item_attributes": {
-                            "additionalProperties": true,
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "description": "Attribute values for the row, keyed by attribute name.",
                             "type": "object"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "sort_key": {
+                            "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                             "type": "integer"
                           }
                         },
@@ -5470,7 +6187,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items (v2)",
         "tags": [
           "lookup_table_item"
         ]
@@ -5487,6 +6204,7 @@
         }
       ],
       "post": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests.",
         "operationId": "lookup_table_item_v2_list_post",
         "requestBody": {
           "content": {
@@ -5494,17 +6212,44 @@
               "schema": {
                 "properties": {
                   "data_type_id": {
+                    "description": "Identifier of the lookup table this item belongs to.",
                     "type": "string"
                   },
                   "fields": {
-                    "additionalProperties": true,
+                    "additionalProperties": {
+                      "properties": {
+                        "field_list": {
+                          "items": {
+                            "properties": {
+                              "field_value": {
+                                "type": "string"
+                              },
+                              "properties": {
+                                "additionalProperties": {
+                                  "type": "string"
+                                },
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                     "type": "object"
                   },
                   "item_attributes": {
-                    "additionalProperties": true,
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Attribute values for the row, keyed by attribute name.",
                     "type": "object"
                   },
                   "sort_key": {
+                    "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                     "type": "integer"
                   }
                 },
@@ -5527,25 +6272,54 @@
                       "items": {
                         "properties": {
                           "data_type_id": {
+                            "description": "Identifier of the lookup table this item belongs to.",
                             "type": "string"
                           },
                           "fields": {
-                            "additionalProperties": true,
+                            "additionalProperties": {
+                              "properties": {
+                                "field_list": {
+                                  "items": {
+                                    "properties": {
+                                      "field_value": {
+                                        "type": "string"
+                                      },
+                                      "properties": {
+                                        "additionalProperties": {
+                                          "type": "string"
+                                        },
+                                        "type": "object"
+                                      }
+                                    },
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                             "type": "object"
                           },
                           "id": {
+                            "description": "Unique identifier of the lookup table item.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "item_attributes": {
-                            "additionalProperties": true,
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "description": "Attribute values for the row, keyed by attribute name.",
                             "type": "object"
                           },
                           "resource_uri": {
+                            "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
                           },
                           "sort_key": {
+                            "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                             "type": "integer"
                           }
                         },
@@ -5561,7 +6335,7 @@
             "description": "A page of records."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items (v2)",
         "tags": [
           "lookup_table_item"
         ]
@@ -5569,6 +6343,7 @@
     },
     "/a/{domain}/api/lookup_table_item/v2/{pk}/": {
       "delete": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests.",
         "operationId": "lookup_table_item_v2_detail_delete",
         "responses": {
           "200": {
@@ -5577,25 +6352,54 @@
                 "schema": {
                   "properties": {
                     "data_type_id": {
+                      "description": "Identifier of the lookup table this item belongs to.",
                       "type": "string"
                     },
                     "fields": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "properties": {
+                          "field_list": {
+                            "items": {
+                              "properties": {
+                                "field_value": {
+                                  "type": "string"
+                                },
+                                "properties": {
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "type": "object"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                       "type": "object"
                     },
                     "id": {
+                      "description": "Unique identifier of the lookup table item.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "item_attributes": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Attribute values for the row, keyed by attribute name.",
                       "type": "object"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "sort_key": {
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                       "type": "integer"
                     }
                   },
@@ -5606,12 +6410,13 @@
             "description": "The requested record."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items (v2)",
         "tags": [
           "lookup_table_item"
         ]
       },
       "get": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests.",
         "operationId": "lookup_table_item_v2_detail_get",
         "responses": {
           "200": {
@@ -5620,25 +6425,54 @@
                 "schema": {
                   "properties": {
                     "data_type_id": {
+                      "description": "Identifier of the lookup table this item belongs to.",
                       "type": "string"
                     },
                     "fields": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "properties": {
+                          "field_list": {
+                            "items": {
+                              "properties": {
+                                "field_value": {
+                                  "type": "string"
+                                },
+                                "properties": {
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "type": "object"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                       "type": "object"
                     },
                     "id": {
+                      "description": "Unique identifier of the lookup table item.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "item_attributes": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Attribute values for the row, keyed by attribute name.",
                       "type": "object"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "sort_key": {
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                       "type": "integer"
                     }
                   },
@@ -5649,7 +6483,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items (v2)",
         "tags": [
           "lookup_table_item"
         ]
@@ -5675,6 +6509,7 @@
         }
       ],
       "put": {
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests.",
         "operationId": "lookup_table_item_v2_detail_put",
         "requestBody": {
           "content": {
@@ -5682,17 +6517,44 @@
               "schema": {
                 "properties": {
                   "data_type_id": {
+                    "description": "Identifier of the lookup table this item belongs to.",
                     "type": "string"
                   },
                   "fields": {
-                    "additionalProperties": true,
+                    "additionalProperties": {
+                      "properties": {
+                        "field_list": {
+                          "items": {
+                            "properties": {
+                              "field_value": {
+                                "type": "string"
+                              },
+                              "properties": {
+                                "additionalProperties": {
+                                  "type": "string"
+                                },
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                     "type": "object"
                   },
                   "item_attributes": {
-                    "additionalProperties": true,
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Attribute values for the row, keyed by attribute name.",
                     "type": "object"
                   },
                   "sort_key": {
+                    "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                     "type": "integer"
                   }
                 },
@@ -5709,25 +6571,54 @@
                 "schema": {
                   "properties": {
                     "data_type_id": {
+                      "description": "Identifier of the lookup table this item belongs to.",
                       "type": "string"
                     },
                     "fields": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "properties": {
+                          "field_list": {
+                            "items": {
+                              "properties": {
+                                "field_value": {
+                                  "type": "string"
+                                },
+                                "properties": {
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "type": "object"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
                       "type": "object"
                     },
                     "id": {
+                      "description": "Unique identifier of the lookup table item.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "item_attributes": {
-                      "additionalProperties": true,
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Attribute values for the row, keyed by attribute name.",
                       "type": "object"
                     },
                     "resource_uri": {
+                      "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
                     },
                     "sort_key": {
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
                       "type": "integer"
                     }
                   },
@@ -5738,7 +6629,7 @@
             "description": "The requested record."
           }
         },
-        "summary": "Lookup Table Item",
+        "summary": "Lookup Table Items (v2)",
         "tags": [
           "lookup_table_item"
         ]

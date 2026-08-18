@@ -239,7 +239,7 @@
                           "archived": {
                             "description": "Whether the form has been archived.",
                             "readOnly": true,
-                            "type": "string"
+                            "type": "boolean"
                           },
                           "attachments": {
                             "additionalProperties": true,
@@ -389,7 +389,7 @@
                     "archived": {
                       "description": "Whether the form has been archived.",
                       "readOnly": true,
-                      "type": "string"
+                      "type": "boolean"
                     },
                     "attachments": {
                       "additionalProperties": true,

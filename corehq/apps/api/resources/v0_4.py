@@ -269,6 +269,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
                 'type': 'array',
                 'items': {'type': 'object'},
             },
+            'archived': {'type': 'boolean'},
             'resource_uri': {
                 'description': 'URI of this record in the API.',
             },
