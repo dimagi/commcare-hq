@@ -202,6 +202,7 @@
                           },
                           "primary_location": {
                             "description": "The location ID of the primary location of the user.",
+                            "nullable": true,
                             "type": "string"
                           },
                           "require_account_confirmation": {
@@ -316,6 +317,7 @@
                   },
                   "primary_location": {
                     "description": "The location ID of the primary location of the user.",
+                    "nullable": true,
                     "type": "string"
                   },
                   "require_account_confirmation": {
@@ -446,6 +448,7 @@
                           },
                           "primary_location": {
                             "description": "The location ID of the primary location of the user.",
+                            "nullable": true,
                             "type": "string"
                           },
                           "require_account_confirmation": {
@@ -557,6 +560,7 @@
                     },
                     "primary_location": {
                       "description": "The location ID of the primary location of the user.",
+                      "nullable": true,
                       "type": "string"
                     },
                     "require_account_confirmation": {
@@ -661,6 +665,7 @@
                     },
                     "primary_location": {
                       "description": "The location ID of the primary location of the user.",
+                      "nullable": true,
                       "type": "string"
                     },
                     "require_account_confirmation": {
@@ -779,6 +784,7 @@
                   },
                   "primary_location": {
                     "description": "The location ID of the primary location of the user.",
+                    "nullable": true,
                     "type": "string"
                   },
                   "require_account_confirmation": {
@@ -869,6 +875,7 @@
                     },
                     "primary_location": {
                       "description": "The location ID of the primary location of the user.",
+                      "nullable": true,
                       "type": "string"
                     },
                     "require_account_confirmation": {

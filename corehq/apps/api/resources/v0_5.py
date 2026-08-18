@@ -279,6 +279,13 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             'user_data': {
                 'additionalProperties': {'type': 'string'},
             },
+            'primary_location': {
+                # dehydrate_primary_location() returns None for a user
+                # with no assigned location; the CharField declaration
+                # doesn't set null=True, so without this override the
+                # generated schema would wrongly forbid that real value.
+                'nullable': True,
+            },
             'require_account_confirmation': {'writeOnly': True},
             'send_confirmation_email_now': {'writeOnly': True},
             'resource_uri': {

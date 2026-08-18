@@ -8,11 +8,10 @@ verify ``required``, ``oneOf``/``anyOf`` branch membership, ``enum``
 values, and so on).
 """
 
-import jsonschema
 import pytest
-from openapi_schema_validator import OAS30Validator
 
 from corehq.apps.api.openapi.builder import build_all
+from corehq.apps.api.openapi.tests.oas_validation import validator_for
 
 
 def _iter_examples(documents):
@@ -77,14 +76,7 @@ def test_example_validates_against_its_own_schema(
     example,
     document,
 ):
-    # OAS30Validator (not a plain jsonschema Draft7Validator) because
-    # OpenAPI 3.0 schemas use the ``nullable`` keyword, which plain JSON
-    # Schema doesn't understand -- a bare Draft7Validator would reject
-    # every legitimately-null value (e.g. PaginationMeta's "next") as a
-    # false positive, unrelated to whether the example is actually
-    # wrong.
-    resolver = jsonschema.RefResolver.from_schema(document)
-    validator = OAS30Validator(schema, resolver=resolver)
+    validator = validator_for(document, schema)
     errors = list(validator.iter_errors(example))
     assert not errors, (
         f'{spec} {method.upper()} {path} ({kind}): example does not '
