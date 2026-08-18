@@ -22,7 +22,6 @@ from .utils import APIResourceTest, FakeFormESView
 @es_test(requires=[case_adapter])
 class TestCommCareCaseResource(APIResourceTest):
     resource = v0_4.CommCareCaseResource
-    case_ids = []
 
     def _setup_case(self, cases=None):
 
@@ -42,6 +41,10 @@ class TestCommCareCaseResource(APIResourceTest):
                 **kwargs
             )
             backend_case.save()
+            # Cases live in the sharded databases, which are not rolled back
+            # between test methods, so they must be cleaned up explicitly.
+            # Without this, tests that use the same hard-coded case ID collide.
+            self.addCleanup(backend_case.delete)
             backend_cases.append(backend_case)
 
         case_adapter.bulk_index(backend_cases, refresh=True)
