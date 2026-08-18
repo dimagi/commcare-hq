@@ -10,6 +10,52 @@ from unmagic import fixture, use
 
 OPERATION_ID_RE = re.compile(r'[a-z][a-zA-Z0-9]*')
 
+#: The view each spec path served by a hand-written Django view must resolve to.
+#:
+#: Tastypie-served paths are deliberately absent. ``HqBaseResource
+#: .get_urlpattern`` bakes ``resource_name`` into the URL pattern as a regex
+#: literal, so asserting which resource answers ``/api/group/v1/`` only restates
+#: the pattern the spec path was copied from -- a tautology.
+#:
+#: These paths do not have that property: they are independent, hand-ordered
+#: entries in their apps' urlconfs, and several overlap. ``/a/{domain}/receiver/
+#: api/`` and ``/a/{domain}/receiver/{app_id}/`` are the clearest case -- if the
+#: two were ever reordered, the first would be shadowed by the second with
+#: ``app_id='api'``, silently routing OpenRosa submissions to the wrong view
+#: while ``test_all_paths_resolve`` still passed.
+NON_TASTYPIE_VIEWS = {
+    '/a/{domain}/api/case/v2/':
+        'corehq.apps.hqcase.views.case_api',
+    '/a/{domain}/api/case/v2/{case_id}':
+        'corehq.apps.hqcase.views.case_api',
+    '/a/{domain}/api/case/v2/ext/{external_id}/':
+        'corehq.apps.hqcase.views.case_api',
+    '/a/{domain}/api/case/v2/bulk-fetch/':
+        'corehq.apps.hqcase.views.case_api_bulk_fetch',
+    '/a/{domain}/api/form_attachment/v1/{instance_id}/{attachment_id}':
+        'corehq.apps.api.object_fetch_api.view_form_attachment',
+    '/a/{domain}/receiver/api/':
+        'corehq.apps.receiverwrapper.views.post_api',
+    '/a/{domain}/receiver/{app_id}/':
+        'corehq.apps.receiverwrapper.views.post',
+    '/a/{domain}/fixtures/fixapi/':
+        'corehq.apps.fixtures.views.upload_fixture_api',
+    '/a/{domain}/fixtures/fixapi/status/{download_id}/':
+        'corehq.apps.fixtures.views.fixture_api_upload_status',
+    '/a/{domain}/apps/api/import_app/':
+        'corehq.apps.app_manager.views.app_import_api.import_app_api',
+    '/a/{domain}/apps/api/{app_id}/multimedia/':
+        'corehq.apps.app_manager.views.app_import_api.upload_multimedia_api',
+    '/a/{domain}/apps/api/{app_id}/multimedia/status/{processing_id}/':
+        'corehq.apps.app_manager.views.app_import_api.multimedia_status_api',
+    '/a/{domain}/importer/excel/bulk_upload_api/':
+        'corehq.apps.case_importer.views.bulk_case_upload_api',
+    '/a/{domain}/api/messaging-event/v1/':
+        'corehq.apps.api.resources.messaging_event.view.messaging_events',
+    '/a/{domain}/api/messaging-event/v1/{event_id}/':
+        'corehq.apps.api.resources.messaging_event.view.messaging_events',
+}
+
 SPEC_ROOT = os.path.join(settings.FILEPATH, 'docs', 'api', 'openapi')
 SPEC_PATH = os.path.join(SPEC_ROOT, 'openapi.yaml')
 HTTP_METHODS = frozenset(
@@ -155,6 +201,49 @@ def _concrete_url(path, path_item):
             f'{path} has a placeholder {missing} with no matching path '
             f'parameter declared; declared parameters: {sorted(examples)}'
         ) from None
+
+
+def _view_name(func):
+    return f'{func.__module__}.{func.__qualname__}'
+
+
+@use(spec)
+def test_non_tastypie_paths_resolve_to_the_expected_view():
+    """Guard the hand-written Django paths against urlconf reordering.
+
+    ``test_all_paths_resolve`` only checks that *something* answers each path.
+    That is enough for the tastypie paths, whose URL patterns are generated from
+    the resource name, but not for the paths below, where two patterns can match
+    the same URL and only their order in the urlconf decides which one wins.
+    """
+    resolved = {
+        path: _view_name(resolve(_concrete_url(path, path_item)).func)
+        for path, path_item in spec()['paths'].items()
+    }
+
+    unknown = sorted(set(NON_TASTYPIE_VIEWS) - set(resolved))
+    assert not unknown, (
+        'NON_TASTYPIE_VIEWS names paths that are not in the spec:\n  '
+        + '\n  '.join(unknown)
+    )
+
+    unlisted = sorted(
+        path for path, view in resolved.items()
+        if path not in NON_TASTYPIE_VIEWS and not view.startswith('tastypie.')
+    )
+    assert not unlisted, (
+        'spec paths served by a hand-written view with no entry in '
+        'NON_TASTYPIE_VIEWS:\n  ' + '\n  '.join(unlisted)
+    )
+
+    wrong = [
+        f'{path} resolves to {resolved[path]}, expected {expected}'
+        for path, expected in sorted(NON_TASTYPIE_VIEWS.items())
+        if resolved[path] != expected
+    ]
+    assert not wrong, (
+        'spec paths resolving to the wrong view:\n  ' + '\n  '.join(wrong)
+    )
 
 
 @use(spec)
