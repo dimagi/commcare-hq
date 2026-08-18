@@ -1228,3 +1228,188 @@ the view's own `if` chain", and anything that falls through returns a 405
   response (its message talks about "too many requests") but is a 401, not
   the 429 the shared `TooManyRequests` response would suggest -- a client
   branching on status code alone would miss it.
+
+## fixture/v1, lookup_table/v1, lookup_table_item/v1 (`fixture.rst`)
+
+- **`fixture/v1` is not method-restricted at all, but its writes are broken
+  by a different mechanism than `location_type/v1`'s.** Confirmed by direct
+  introspection: `FixtureResource()._meta.list_allowed_methods` and
+  `.detail_allowed_methods` both evaluate to `['get', 'post', 'put', 'delete',
+  'patch']` (tastypie's full default), because `FixtureResource.Meta`
+  (`corehq/apps/fixtures/resources/v0_1.py:91-95`) sets `authentication`,
+  `object_class`, `resource_name`, and `limit`, but never
+  `allowed_methods`/`list_allowed_methods`/`detail_allowed_methods`. So a
+  non-`GET` request passes `method_check` (`tastypie/resources.py:521-555`)
+  and reaches the normal create/update/delete flow. Unlike
+  `location_type/v1`, `FixtureResource` is a plain `tastypie.resources.
+  Resource` subclass (via `HqBaseResource`), not a `ModelResource`, and it
+  overrides only `obj_get`/`obj_get_list`/`detail_uri_kwargs`
+  (`v0_1.py:59-89`) -- it never overrides `obj_create`/`obj_update`/
+  `obj_delete`, so those fall through to the base `Resource`'s versions
+  (`tastypie/resources.py:1198-1247`), which unconditionally `raise
+  NotImplementedError()`. Because this is a plain `Resource`, not a
+  `ModelResource`, `Meta.authorization` (`ReadOnlyAuthorization`, inherited
+  from `CustomResourceMeta`, confirmed by introspection) is never consulted at
+  all -- `ReadOnlyAuthorization.create_detail`/`update_detail`/`delete_detail`
+  are only ever called from `ModelResource.obj_create`/`obj_update`/
+  `obj_delete` (`tastypie/resources.py:2232-2387`), which `FixtureResource`
+  does not use. `NotImplementedError` has no `.response` attribute, so
+  `wrap_view`'s generic exception handler (`tastypie/resources.py:250-270`)
+  falls through to `_handle_500` (`:291-315`), and
+  `get_response_class_for_exception` (`:274-289`) does not special-case
+  `NotImplementedError`, so it returns `http.HttpApplicationError` -- a genuine
+  **500**, not the bare 401 `location_type/v1` produces for the same verbs
+  and not a 405. The spec documents only the real, working `GET` operations
+  for `fixture/v1`, matching `fixture.rst`, and omits any write operations
+  rather than documenting ones that only ever crash.
+- **`lookup_table/v1` and `lookup_table_item/v1`'s `Meta.authorization =
+  ReadOnlyAuthorization()` (inherited, unmodified) is likewise never
+  consulted, for the same "plain `Resource`, custom `obj_create`/`obj_update`/
+  `obj_delete`" reason -- but unlike `fixture/v1`, these two resources DO
+  implement working custom versions of all three
+  (`v0_1.py:193-236,360-368,370-409`), so their declared
+  `list_allowed_methods = ['get', 'post']` /
+  `detail_allowed_methods = ['get', 'put', 'delete']` (`v0_1.py:243-244,
+  416-417`, confirmed by introspection) are the real, enforced method set.
+  Noted only so a reader does not assume `ReadOnlyAuthorization` on these two
+  classes means anything -- it is dead configuration.
+- **`fixture.rst:122-123` states "Permission Required: Edit Apps" for the
+  Excel upload API, but the code requires Edit Data, not Edit Apps.**
+  `upload_fixture_api`/`fixture_api_upload_status` are both gated by
+  `require_can_edit_fixtures` (`corehq/apps/fixtures/dispatcher.py:9-13`),
+  which composes `require_permission(HqPermissions.edit_data)` with
+  `requires_privilege_with_fallback(privileges.LOOKUP_TABLES)` -- there is no
+  `edit_apps` check anywhere in this path.
+  `_get_fixture_upload_args_from_request` (`corehq/apps/fixtures/views.py
+  :553-556`) additionally re-checks `HqPermissions.edit_data.name` explicitly,
+  reinforcing that Edit Data, not Edit Apps, is the real requirement.
+- **`uploadFixtureExcel`'s and `getFixtureUploadStatus`'s HTTP status is
+  always 200, regardless of outcome.** `upload_fixture_api`
+  (`corehq/apps/fixtures/views.py:417-426`) does `return
+  JsonResponse(upload_fixture_api_response.get_response())` with no `status=`
+  argument, so the response's real status (Django defaults `JsonResponse` to
+  200) never reflects `UploadFixtureAPIResponse.code`'s 402/405 values
+  (`views.py:377-393`); those exist only inside the body. Likewise
+  `fixture_api_upload_status` (`views.py:429-464`) calls `json_response(...)`
+  (`dimagi/utils/web.py:76-84`) without a `status_code` argument on every one
+  of its branches, including the `TaskFailedError` branch, so a failed queued
+  upload is still reported as HTTP 200 with `{"error": true, ...}` in the
+  body. `fixture.rst:156-176`'s "Response" table documents `code` values of
+  200/402/405 in a way that reads as if they were the transport status, with
+  no statement that the transport status is always 200 regardless.
+- **`getFixtureUploadStatus` has no reachable 404 for any `download_id`,
+  including one that was never issued.** `get_download_context`
+  (`corehq/ex-submodules/soil/util.py:73-107`) calls `DownloadBase.get
+  (download_id)`; if that returns `None` (unknown id), it falls back to a
+  fresh, task-less `DownloadBase(download_id=download_id)` rather than
+  raising. `get_task_status(None, ...)` (`corehq/ex-submodules/soil/progress.
+  py:144-154`) then takes the `if not task:` branch, which reports
+  `is_ready=False`/`failed=False` -- indistinguishable from a real task still
+  running. A caller polling a mistyped or expired `download_id` gets an
+  indefinite "in progress" response, never an error.
+- **`createLookupTableItem`'s and `replaceLookupTableItem`'s 404 (for an
+  unknown `data_type_id`) is tastypie's generic-exception-handler canned
+  body, not a resource-specific message, even though the exception raised
+  ("Lookup table not found") suggests one.** `LookupTableItemResource.
+  obj_create` (`v0_1.py:370-388`) raises tastypie's own `NotFound('Lookup
+  table not found')` at `v0_1.py:377` when the referenced lookup table does
+  not exist. On `POST` (`createLookupTableItem`), `post_list`
+  (`tastypie/resources.py:1385-1407`) has no `try`/`except` around its call
+  to `obj_create`, so the exception propagates uncaught into `wrap_view`'s
+  generic handler, which maps `NotFound` to a 404
+  (`get_response_class_for_exception`, `:274-289`) via `_handle_500`
+  (`:291-315`) -- producing the same canned `{"error_message": "Sorry, this
+  request could not be processed. Please try again later."}` body used for
+  any uncaught exception in production, discarding the resource's own message
+  text entirely. On `PUT` (`replaceLookupTableItem`) against an unknown
+  `lookup_table_item_id`, the same thing happens one level deeper: `obj_update`
+  (`v0_1.py:390-409`) raises `NotFound` for the missing row, which `put_detail`
+  (`tastypie/resources.py:1467-1511`) correctly catches and retries via
+  `obj_create` -- but if *that* also raises `NotFound` (because `data_type_id`
+  is also invalid), nothing catches the second exception, since `put_detail`'s
+  `except` only wraps the first `obj_update` call. Net effect: two operations
+  on this resource can 404, and both do so through the same canned,
+  non-resource-specific path -- never through a clean, resource-owned
+  not-found response the way `deleteLookupTableItem`'s 404 does.
+- **`replaceLookupTable`'s and `replaceLookupTableItem`'s `PUT` against a
+  nonexistent id does not 404 -- it silently creates an unrelated new object
+  under a different, server-generated id.** Both resources' `obj_update`
+  (`v0_1.py:205-218,390-409`) raise tastypie's `NotFound` for an unknown
+  `pk`; `put_detail` (`tastypie/resources.py:1467-1511`) catches exactly that
+  exception and falls back to calling `obj_create` with the *same submitted
+  body*. Neither resource's `obj_create` (`v0_1.py:193-203,370-388`) makes any
+  use of the URL's `pk` -- `LookupTableResource.obj_create` only checks
+  whether the submitted `tag` is already taken, and
+  `LookupTableItemResource.obj_create` only checks that `data_type_id`
+  references an existing table. So a `PUT` to
+  `/api/lookup_table/v1/{nonexistent_id}/` (or the equivalent for
+  `lookup_table_item`) with an otherwise-valid body succeeds, returning 201,
+  and creates a brand-new object at a new id that has nothing to do with the
+  id in the URL. This is the same tastypie fallback mechanism already
+  documented for `replaceGroup` in `paths/group.yaml`, but unlike that case
+  (which falls through to an uncaught 500 because `Group.obj_create` uses
+  Couch and hits a different failure mode), this fallback actually succeeds
+  here, silently masking what looks like a "the id you asked for doesn't
+  exist" error as a success.
+- **`createLookupTable`'s, `replaceLookupTable`'s, `createLookupTableItem`'s,
+  and `replaceLookupTableItem`'s validation-failure 400 is a bare JSON array
+  of strings, not an object at all -- a third distinct 400 shape alongside
+  the `{"error": ...}` and `{"error_message": ...}` shapes already documented
+  elsewhere in this file.** Both resources declare a
+  `validate_deserialized_data` attribute (a `JSONSchemaValidator` instance,
+  `v0_1.py:133-159,300-336`). `HqBaseResource.alter_deserialized_detail_data`
+  (`corehq/apps/api/resources/__init__.py:153-167`) calls it and, on a Django
+  `ValidationError`, does `raise ImmediateHttpResponse(self.error_response
+  (request, error.messages))` -- passing the validator's `error.messages`
+  (already a plain list of strings; `JSONSchemaValidator.__call__`,
+  `corehq/util/validation.py:51-67`, raises `ValidationError(django_errors)`
+  where `django_errors` is a list of single-message `ValidationError`s)
+  directly as the "errors" argument. `error_response`
+  (`tastypie/resources.py:1264-1299`) serializes that argument as-is with no
+  wrapping object of any kind, defaulting to a 400 status. A client that
+  branches on `body.error` or `body.error_message` to extract a validation
+  message will get neither key -- the message is `body[0]`, `body[1]`, etc.
+- **`deleteLookupTable`'s and `deleteLookupTableItem`'s successful delete
+  returns 202 Accepted, not the 204 No Content tastypie's own `delete_detail`
+  docstring and `paths/group.yaml`'s `deleteGroup` both describe as the
+  default.** Both resources' `obj_delete` (`v0_1.py:176-184,360-368`) end
+  with `return ImmediateHttpResponse(response=HttpAccepted())`
+  (`tastypie/http.py:17-18`: `HttpAccepted.status_code = 202`), raised as an
+  exception rather than returned normally. `delete_detail`
+  (`tastypie/resources.py:1525-1542`) only ever reaches its own `return
+  http.HttpNoContent()` if `obj_delete` returns normally without raising;
+  since both `obj_delete` implementations always raise
+  `ImmediateHttpResponse` on the success path, that line is dead code for
+  these two resources, and the 202 (caught by `wrap_view`'s generic
+  `hasattr(e, 'response')` check, `tastypie/resources.py:250-254`) is what
+  callers actually see.
+- **`lookup_table/v1` and `lookup_table_item/v1` require only the generic
+  `access_api` permission, not a specific one, even though `fixture.rst`'s
+  read-only fixture API (documented as requiring Edit Apps) and its Excel
+  upload API (documented as requiring Edit Apps, actually Edit Data) both
+  gate on something specific.** `LookupTableResource.Meta` and
+  `LookupTableItemResource.Meta` (`v0_1.py:241-245,414-418`) never set
+  `authentication`, so both inherit `CustomResourceMeta.authentication =
+  LoginAndDomainAuthentication()` (`corehq/apps/api/resources/meta.py:76-78`),
+  which only requires the generic `access_api` permission
+  (`corehq/apps/api/resources/auth.py:108-112`) plus domain membership --
+  not `edit_apps`, not `edit_data`, and not any lookup-table-specific
+  permission. Neither of `fixture.rst`'s "Lookup Table Individual API" or
+  "Lookup Table Rows API" sections states a permission requirement at all
+  (confirmed: no "Permission Required" field appears in either section), so
+  this is not a docs/code disagreement, but it means any domain member with
+  API access can create, edit, and delete lookup tables and their rows via
+  this API, which is easy to miss without reading the code.
+- **`fixtures.v0_6.LookupTableItemResource` is registered at
+  `lookup_table_item/v2` but is entirely undocumented by `fixture.rst`, and
+  is out of scope for this spec.** `corehq/apps/api/urls.py:191`
+  (`fixtures.v0_6.LookupTableItemResource.get_urlpattern('v2')`) registers
+  it alongside the `v1` resources this task documents (`urls.py:189-190`).
+  `v0_6.LookupTableItemResource` (`corehq/apps/fixtures/resources/v0_6.py`)
+  subclasses `v0_1.LookupTableItemResource` and changes exactly one thing:
+  `Meta.always_return_data = True`, meaning its `POST`/`PUT` return the full
+  serialized row (200/201 with a body) instead of the empty-bodied responses
+  `v1` returns. Per the plan, the spec covers what `fixture.rst` covers, so
+  `v2` is intentionally left out of `paths/lookup-table.yaml`; flagged here
+  rather than silently dropped.
+  branching on status code alone would miss it.

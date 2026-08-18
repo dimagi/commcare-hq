@@ -114,3 +114,19 @@ paths:
     $ref: "./paths/sso.yaml#/List"
   /api/user_domains/v1/:
     $ref: "./paths/user-domains.yaml#/List"
+  /a/{domain}/api/fixture/v1/:
+    $ref: "./paths/fixture.yaml#/List"
+  /a/{domain}/api/fixture/v1/{fixture_item_id}/:
+    $ref: "./paths/fixture.yaml#/Detail"
+  /a/{domain}/fixtures/fixapi/:
+    $ref: "./paths/fixture.yaml#/Upload"
+  /a/{domain}/fixtures/fixapi/status/{download_id}/:
+    $ref: "./paths/fixture.yaml#/UploadStatus"
+  /a/{domain}/api/lookup_table/v1/:
+    $ref: "./paths/lookup-table.yaml#/List"
+  /a/{domain}/api/lookup_table/v1/{lookup_table_id}/:
+    $ref: "./paths/lookup-table.yaml#/Detail"
+  /a/{domain}/api/lookup_table_item/v1/:
+    $ref: "./paths/lookup-table.yaml#/ItemList"
+  /a/{domain}/api/lookup_table_item/v1/{lookup_table_item_id}/:
+    $ref: "./paths/lookup-table.yaml#/ItemDetail"

@@ -2909,6 +2909,549 @@ paths:
           description: Not a real response for this operation -- every authentication failure surfaces as 401 instead. See the description above.
         '429':
           description: The request was rate limited. Back off and retry.
+  /a/{domain}/api/fixture/v1/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    get:
+      operationId: listFixtures
+      summary: List fixture data items (lookup table rows)
+      description: |-
+        Returns fixture data items (lookup table rows) the authenticated user is permitted to see. Requires the Edit Apps permission (`RequirePermissionAuthentication(HqPermissions.edit_apps)`, `v0_1.py:92`). `Meta.limit = 0` (`v0_1.py:95`), so the default page size is unlimited unless the caller supplies `limit` explicitly.
+        `FixtureResource.Meta` (`v0_1.py:91-95`) declares no `list_allowed_methods`/`detail_allowed_methods`/`allowed_methods`, so it defaults to tastypie's full `['get', 'post', 'put', 'delete', 'patch']` for both list and detail (confirmed by instantiating the resource: see the discrepancy file). Only `GET` is documented here, matching `fixture.rst`, because the other methods are not actually implemented -- `FixtureResource` overrides only `obj_get`/`obj_get_list`, so `obj_create`/`obj_update`/`obj_delete` fall through to `Resource`'s base implementations, which raise `NotImplementedError` and surface as a bare 500. See the discrepancy file.
+      tags:
+        - Data
+      parameters:
+        - name: fixture_type
+          in: query
+          required: false
+          description: Restrict to fixture items whose lookup table `tag` matches this value (`fixture.rst:42-52`).
+          example: city
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: A page of fixture items.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FixtureList'
+        '400':
+          description: '`limit` or `offset` is not a valid integer (`Paginator.get_limit`/`get_offset`, `tastypie/paginator.py:53-81, 85-107`), converted by `wrap_view` to the shared `{"error": ...}` shape.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the Edit Apps permission, or is not a member of this project space. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty.
+  /a/{domain}/api/fixture/v1/{fixture_item_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: fixture_item_id
+        in: path
+        required: true
+        description: Fixture item (lookup table row) UUID.
+        example: 1J9NF7B4FTH73435PYJJSL5SJ
+        schema:
+          type: string
+    get:
+      operationId: getFixture
+      summary: Retrieve a single fixture data item
+      description: Requires the Edit Apps permission.
+      tags:
+        - Data
+      parameters:
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: The fixture item.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fixture'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks the Edit Apps permission, or is not a member of this project space. The response body is empty. Same mechanism as `listFixtures`'s 403.
+        '404':
+          description: The requested fixture item does not exist. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listFixtures`'s 429.
+  /a/{domain}/fixtures/fixapi/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    post:
+      operationId: uploadFixtureExcel
+      summary: Bulk-create or replace lookup tables from an Excel file
+      description: |-
+        Uploads an `.xlsx` file containing one or more lookup tables (`fixture.rst:100-178`; `upload_fixture_api`, `views.py:417-426`). Requires the Edit Data permission and the Lookup Tables privilege (`require_can_edit_fixtures`, `dispatcher.py:9-13`) -- despite `fixture.rst:122-123` stating "Permission Required: Edit Apps"; the code checks `HqPermissions.edit_data`, not `edit_apps` (also re-checked explicitly inside the view, `views.py:553-556`). See the discrepancy file.
+        **The HTTP status is always 200**, whether the upload succeeds, is queued, or is rejected. `upload_fixture_api` (`views.py:417-426`) returns `JsonResponse(...)` with no `status=` argument, so the real outcome is only visible in the body's `code` field (200 success, 402 validation warning, 405 rejected/failed) -- not in the transport-level status code. See the discrepancy file.
+        When `async=true`, the file is queued via `fixture_upload_async.delay` (`views.py:483-489`) and the response always reports `code: 200` ("success") with a `status_url`/`download_id` pointing at `getFixtureUploadStatus` -- file-format validation happens later, inside the queued task, and is only visible by polling that status URL. When `async` is absent or not `"true"`, the upload is validated and applied synchronously and the response never includes `status_url`/`download_id`.
+      tags:
+        - Data
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file-to-upload
+                - replace
+              properties:
+                file-to-upload:
+                  type: string
+                  format: binary
+                  description: The `.xlsx` file containing the lookup table data. Its internal structure is not modeled here.
+                replace:
+                  type: string
+                  description: '`"true"` if existing tables of the same tag should be replaced, `"false"` to merge/append (`_get_fixture_upload_args_from_request`, `views.py:535-558`).'
+                  example: 'false'
+                async:
+                  type: string
+                  description: '`"true"` to queue the upload and process it in the background, returning a `status_url` immediately. Any other value (including omission) processes synchronously.'
+                  example: 'false'
+      responses:
+        '200':
+          description: 'Always returned, regardless of outcome. The body''s `code` field carries the real result: `200` success, `402` validation warning, `405` fail (`UploadFixtureAPIResponse.response_codes`, `views.py:377-393`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    description: Synchronous result, or a request-argument failure (missing file/`replace`) caught before queuing.
+                    required:
+                      - message
+                      - code
+                    properties:
+                      message:
+                        type: string
+                        example: Error processing your file. Submit a valid (.xlsx) file
+                      code:
+                        type: integer
+                        enum:
+                          - 200
+                          - 402
+                          - 405
+                        example: 402
+                    additionalProperties: false
+                  - type: object
+                    description: 'Accepted for asynchronous processing (`AsyncUploadFixtureAPIResponse`, `views.py:396-408`). Always `code: 200` -- the queued task''s own success or failure is only observable via `status_url`.'
+                    required:
+                      - message
+                      - code
+                      - status_url
+                      - download_id
+                    properties:
+                      message:
+                        type: string
+                        example: File has been uploaded successfully and is queued for processing.
+                      code:
+                        type: integer
+                        enum:
+                          - 200
+                        example: 200
+                      status_url:
+                        type: string
+                        example: https://www.commcarehq.org/a/demo/fixtures/fixapi/status/dl-2998e6834a654ab5ba74f372246caa75/
+                      download_id:
+                        type: string
+                        example: dl-2998e6834a654ab5ba74f372246caa75
+        '401':
+          description: Authentication credentials were missing or invalid. The response body is empty or plain text, not JSON.
+        '403':
+          description: The authenticated user lacks the Edit Data permission, or the domain lacks the Lookup Tables privilege. The response is an HTML error page, not JSON.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty.
+  /a/{domain}/fixtures/fixapi/status/{download_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: download_id
+        in: path
+        required: true
+        description: Opaque download id returned by `uploadFixtureExcel`'s `status_url` (`fixture.rst:249`).
+        example: dl-2998e6834a654ab5ba74f372246caa75
+        schema:
+          type: string
+    get:
+      operationId: getFixtureUploadStatus
+      summary: Poll the status of a queued fixture upload
+      description: |-
+        Polls the background job started by `uploadFixtureExcel` with `async=true` (`fixture_api_upload_status`, `views.py:429-446`). Requires the Edit Data permission and the Lookup Tables privilege, same mechanism as `uploadFixtureExcel`.
+        **The HTTP status is always 200**, including when the queued task failed or an unknown `download_id` is supplied -- `json_response` (`dimagi/utils/web.py:76-84`) is called without a `status_code` argument on every branch. `get_download_context` never raises for an unknown `download_id`: `DownloadBase.get` returning `None` falls back to a fresh, task-less `DownloadBase`, and `get_task_status(None, ...)` (`soil/progress.py:144-154`) reports it as still in progress rather than failing. There is no reachable 404 for this operation. See the discrepancy file.
+      tags:
+        - Data
+      responses:
+        '200':
+          description: Current status. Body shape depends on progress; the three shapes are mutually exclusive and never combined.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    description: Still running.
+                    required:
+                      - message
+                      - progress
+                    properties:
+                      message:
+                        type: string
+                        example: Task in progress. 42% complete
+                      progress:
+                        type: integer
+                        nullable: true
+                        example: 42
+                  - type: object
+                    description: Finished successfully.
+                    required:
+                      - complete
+                      - message
+                    properties:
+                      complete:
+                        type: boolean
+                        enum:
+                          - true
+                      message:
+                        type: string
+                        example: Upload complete.
+                  - type: object
+                    description: Failed, either because the queued task raised (`TaskFailedError`, `views.py:438-446`) or because the task completed but reported an error in its result (`views.py:453-457`).
+                    required:
+                      - error
+                      - message
+                    properties:
+                      error:
+                        type: boolean
+                        enum:
+                          - true
+                      message:
+                        type: string
+                        example: 'Upload did not complete. Reason: ''invalid file'''
+        '401':
+          description: Authentication credentials were missing or invalid. The response body is empty or plain text, not JSON. Same mechanism as `uploadFixtureExcel`'s 401.
+        '403':
+          description: The authenticated user lacks the Edit Data permission, or the domain lacks the Lookup Tables privilege. The response is an HTML error page, not JSON. Same mechanism as `uploadFixtureExcel`'s 403.
+  /a/{domain}/api/lookup_table/v1/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    get:
+      operationId: listLookupTables
+      summary: List lookup tables
+      description: Returns lookup table schemas (tag, fields, and global flag) in this project space. `LookupTableResource.Meta` (`v0_1.py:241-245`) does not override `authentication`, so it uses `CustomResourceMeta`'s `LoginAndDomainAuthentication` -- any domain member with API access can call this, not specifically an Edit Apps/Edit Data user. Neither `fixture.rst`'s "Lookup Table Individual API" section nor its "Lookup Table Rows API" section states a permission requirement at all, so this does not contradict the docs, but it is a meaningfully more permissive surface than the read-only fixture API above. See the discrepancy file.
+      tags:
+        - Data
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: A page of lookup tables.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LookupTableList'
+        '400':
+          description: '`limit` or `offset` is not a valid integer, converted by `wrap_view` to the shared `{"error": ...}` shape.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks API access, or is not a member of this project space. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listFixtures`'s 429.
+    post:
+      operationId: createLookupTable
+      summary: Create a lookup table
+      description: '`obj_create` (`v0_1.py:193-203`) rejects a `tag` that already exists in the domain. `Meta.always_return_data` is not set (defaults to `False`), so a successful create returns an empty body -- confirmed by instantiating the resource (`always_return_data=False`); `fixture.rst` (`:244-284`) never actually shows sample output for this operation, so this does not contradict it, but note that `fixture.rst`''s own "List Lookup Table" sample output (`:217-242`) does show a full object body, which an integrator could easily over-generalize from.'
+      tags:
+        - Data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LookupTableWrite'
+      responses:
+        '201':
+          description: The lookup table was created. The body is empty; the `Location` header is set from `get_resource_uri`, but that always resolves to an empty string for this resource family (see the discrepancy file), so the header carries no usable value either.
+        '400':
+          description: 'Two distinct shapes, depending on cause. A `tag` that already exists raises tastypie''s own `BadRequest` (`v0_1.py:196-197`), giving the shared `{"error": ...}` shape. Malformed `fields`/ `item_attributes` (e.g. a field with both or neither of `name`/ `field_name`) fail `LookupTableResource.validate_deserialized_data` (`v0_1.py:133-159`), whose `ValidationError` is caught by `HqBaseResource.alter_deserialized_detail_data` (`corehq/apps/api/resources/__init__.py:153-167`) and re-raised through `error_response` (`tastypie/resources.py:1264-1299`), which serializes the raw list of message strings with **no** wrapping object at all -- not `{"error": ...}`, not `{"error_message": ...}`.'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Error'
+                  - type: array
+                    description: JSON Schema validation failures, one message per error.
+                    items:
+                      type: string
+                    example:
+                      - '''name'' is a required property: {''properties'': []}'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks API access, or is not a member of this project space. The response body is empty. Same mechanism as `listLookupTables`'s 403.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listLookupTables`'s 429.
+  /a/{domain}/api/lookup_table/v1/{lookup_table_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: lookup_table_id
+        in: path
+        required: true
+        description: Lookup table UUID.
+        example: bcf49791f7f04f09bd46262097e107f2
+        schema:
+          type: string
+    get:
+      operationId: getLookupTable
+      summary: Retrieve a single lookup table
+      tags:
+        - Data
+      parameters:
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: The lookup table.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LookupTable'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks API access, or is not a member of this project space. The response body is empty. Same mechanism as `listLookupTables`'s 403.
+        '404':
+          description: The requested lookup table does not exist. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listLookupTables`'s 429.
+    put:
+      operationId: replaceLookupTable
+      summary: Replace a lookup table
+      description: |-
+        The submitted `tag` must equal the existing table's `tag` exactly -- `obj_update` (`v0_1.py:205-218`) raises a 400 if it differs (`"Lookup table tag cannot be changed"`), a constraint `fixture.rst` never states.
+        **No 404 is reachable here, by design of the fallback tastypie already provides -- but it silently creates an unrelated new table instead of signalling a problem.** `obj_update` raises tastypie's `NotFound` for an unknown `lookup_table_id` (`v0_1.py:210-215`); `put_detail` (`tastypie/resources.py:1467-1511`) catches exactly that exception and falls back to `obj_create` with the *same submitted body*. Since `obj_create` (`v0_1.py:193-203`) ignores the URL's `pk` entirely and only checks whether the submitted `tag` is already taken, a `PUT` to a nonexistent `lookup_table_id` with a fresh `tag` **creates a brand-new lookup table under a different, server-generated id** and returns 201, not 404. This is the same tastypie fallback mechanism documented for `replaceGroup`, but unlike that case, it does not fall through to an uncaught 500 here -- it actually succeeds, just not at the id the caller asked for. See the discrepancy file.
+      tags:
+        - Data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LookupTableWrite'
+      responses:
+        '201':
+          description: No lookup table existed at `lookup_table_id`, so a new one was created instead, under a new id. The body is empty; the `Location` header is set but always resolves to an empty string (see `createLookupTable`'s 201). See this operation's description for why this happens instead of a 404.
+        '204':
+          description: The existing lookup table (identified by `lookup_table_id`) was updated in place. The body is empty (`always_return_data=False`).
+        '400':
+          description: '`tag` is missing (`v0_1.py:206-207`), `tag` differs from the existing table''s `tag` (`v0_1.py:217-218`), the fallback-create''s `tag` is already taken by another table (`v0_1.py:196-197`), or `fields`/`item_attributes` fail schema validation (same two-shape 400 as `createLookupTable`).'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Error'
+                  - type: array
+                    items:
+                      type: string
+                    example:
+                      - '''name'' is a required property: {''properties'': []}'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks API access, or is not a member of this project space. The response body is empty. Same mechanism as `listLookupTables`'s 403.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listLookupTables`'s 429.
+    delete:
+      operationId: deleteLookupTable
+      summary: Delete a lookup table
+      description: '**Returns 202 Accepted, not the 204 No Content tastypie normally returns for a successful delete.** `obj_delete` (`v0_1.py:176-184`) raises `ImmediateHttpResponse(response=HttpAccepted())` on success (`tastypie/http.py:17-18`: `HttpAccepted.status_code = 202`) instead of returning normally, so `delete_detail`''s own `return http.HttpNoContent()` (`tastypie/resources.py:1525-1542`) is never reached. See the discrepancy file.'
+      tags:
+        - Data
+      responses:
+        '202':
+          description: The lookup table was deleted. The body is empty.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks API access, or is not a member of this project space. The response body is empty. Same mechanism as `listLookupTables`'s 403.
+        '404':
+          description: The requested lookup table does not exist. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listLookupTables`'s 429.
+  /a/{domain}/api/lookup_table_item/v1/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+    get:
+      operationId: listLookupTableItems
+      summary: List lookup table rows
+      description: Returns lookup table rows across all of this project space's lookup tables. Same permissive `LoginAndDomainAuthentication` as `listLookupTables` -- no domain-scoped filtering by lookup table is offered by this operation; use `data_type_id` on the row objects themselves to group by table.
+      tags:
+        - Data
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: A page of lookup table rows.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LookupTableItemList'
+        '400':
+          description: '`limit` or `offset` is not a valid integer, converted by `wrap_view` to the shared `{"error": ...}` shape.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks API access, or is not a member of this project space. The response body is empty. Same mechanism as `listLookupTables`'s 403.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listLookupTables`'s 429.
+    post:
+      operationId: createLookupTableItem
+      summary: Create a lookup table row
+      description: |-
+        `obj_create` (`v0_1.py:370-388`) requires `data_type_id` and rejects one that does not reference an existing lookup table.
+        **A nonexistent `data_type_id` produces a 404 on this list-level operation, not a 400 -- and it is not the resource's own not-found path.** `obj_create` raises tastypie's own `NotFound` (`v0_1.py:377`) when `LookupTable.objects.filter(id=data_type_id).exists()` is false. Unlike `put_detail`, tastypie's `post_list` (`tastypie/resources.py:1385-1407`) has no `try`/`except` around its call to `obj_create` at all, so this `NotFound` propagates uncaught through `dispatch()` into `wrap_view`'s generic exception handler (`tastypie/resources.py:250-270`), which maps `NotFound` to a 404 (`get_response_class_for_exception`, `:274-289`) with the same canned `{"error_message": ...}` body used for uncaught exceptions generally -- not the resource-specific message ("Lookup table not found") that `obj_delete` raises the same exception class for elsewhere. See the discrepancy file.
+      tags:
+        - Data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LookupTableItemWrite'
+      responses:
+        '201':
+          description: The row was created. The body is empty (`always_return_data=False`); the `Location` header always resolves to an empty string (see `createLookupTable`'s 201).
+        '400':
+          description: 'Two distinct shapes. `data_type_id` missing raises tastypie''s own `BadRequest` (`v0_1.py:373-374`), giving the shared `{"error": ...}` shape. Malformed `fields`/`item_attributes` fail `LookupTableItemResource.validate_deserialized_data` (`v0_1.py:300-336`), giving the same bare-array-of-strings shape as `createLookupTable`''s validation 400.'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Error'
+                  - type: array
+                    items:
+                      type: string
+                    example:
+                      - '''field_value'' is a required property'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks API access, or is not a member of this project space. The response body is empty. Same mechanism as `listLookupTables`'s 403.
+        '404':
+          description: '`data_type_id` does not reference an existing lookup table. See this operation''s description for the canned-error mechanism.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LookupTableErrorMessage'
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listLookupTables`'s 429.
+  /a/{domain}/api/lookup_table_item/v1/{lookup_table_item_id}/:
+    parameters:
+      - $ref: '#/components/parameters/Domain'
+      - name: lookup_table_item_id
+        in: path
+        required: true
+        description: Lookup table row UUID.
+        example: e8433b25e60c4e228b0c7a679af2847b
+        schema:
+          type: string
+    get:
+      operationId: getLookupTableItem
+      summary: Retrieve a single lookup table row
+      tags:
+        - Data
+      parameters:
+        - $ref: '#/components/parameters/Format'
+      responses:
+        '200':
+          description: The lookup table row.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LookupTableItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks API access, or is not a member of this project space. The response body is empty. Same mechanism as `listLookupTables`'s 403.
+        '404':
+          description: The requested lookup table row does not exist. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listLookupTables`'s 429.
+    put:
+      operationId: replaceLookupTableItem
+      summary: Replace a lookup table row
+      description: |-
+        **No 404 for the common case -- an unknown `lookup_table_item_id` falls back to creating a new row under a different id, exactly like `replaceLookupTable`.** `obj_update` (`v0_1.py:390-409`) raises tastypie's `NotFound` for an unknown id (`v0_1.py:396-400`); `put_detail` catches it and retries via `obj_create` (`v0_1.py:370-388`), which ignores the URL's `pk`.
+        **A 404 IS reachable, though, when the fallback itself fails.** If `data_type_id` also does not reference an existing lookup table, the fallback `obj_create` raises its own `NotFound` (`v0_1.py:377`), and this time nothing catches it -- `put_detail`'s `except` only wraps the first `obj_update` call, not the fallback `obj_create` it invokes. The exception propagates to the same generic-exception-handler 404 used by `createLookupTableItem`. See the discrepancy file.
+      tags:
+        - Data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LookupTableItemWrite'
+      responses:
+        '201':
+          description: No row existed at `lookup_table_item_id`, so a new one was created instead under a new id (see this operation's description).
+        '204':
+          description: The existing row (identified by `lookup_table_item_id`) was updated in place. The body is empty (`always_return_data=False`).
+        '400':
+          description: '`data_type_id` missing gives the shared `{"error": ...}` shape; malformed `fields`/`item_attributes` give the bare-array-of-strings shape. Same two shapes as `createLookupTableItem`''s 400.'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Error'
+                  - type: array
+                    items:
+                      type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks API access, or is not a member of this project space. The response body is empty. Same mechanism as `listLookupTables`'s 403.
+        '404':
+          description: Neither `lookup_table_item_id` nor the fallback-create's `data_type_id` reference an existing row/lookup table. See this operation's description.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LookupTableErrorMessage'
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listLookupTables`'s 429.
+    delete:
+      operationId: deleteLookupTableItem
+      summary: Delete a lookup table row
+      description: '**Returns 202 Accepted, not 204.** Same mechanism as `deleteLookupTable`: `obj_delete` (`v0_1.py:360-368`) raises `ImmediateHttpResponse(response=HttpAccepted())` on success.'
+      tags:
+        - Data
+      responses:
+        '202':
+          description: The row was deleted. The body is empty.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: The authenticated user lacks API access, or is not a member of this project space. The response body is empty. Same mechanism as `listLookupTables`'s 403.
+        '404':
+          description: The requested lookup table row does not exist. The response body is empty.
+        '429':
+          description: The request was rate limited. Back off and retry. The response body is empty. Same mechanism as `listLookupTables`'s 429.
 components:
   securitySchemes:
     ApiKey:
@@ -4743,6 +5286,235 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/UserDomain'
+    Fixture:
+      type: object
+      description: A single fixture data item (a row of a lookup table), as returned by the read-only `fixture/v1` API. `FixtureResource` (`v0_1.py:45-96`) wraps `LookupTableRow`.
+      properties:
+        id:
+          type: string
+          description: Fixture item (lookup table row) UUID.
+          example: 1J9NF7B4FTH73435PYJJSL5SJ
+        fixture_type:
+          type: string
+          nullable: true
+          description: Name (`tag`) of the row's lookup table. Null when the referenced lookup table no longer exists -- `convert_fdt` (`v0_1.py:25-42`) leaves `fixture_type` unset in that case, and the field is declared `null=True` (`v0_1.py:49-50`).
+          example: city
+        fields:
+          type: object
+          additionalProperties: true
+          description: Values for the row's custom fields, keyed by field name. `dehydrate_fields` (`v0_1.py:53-57`) returns `bundle.obj.fields_without_attributes`.
+          example:
+            name: Boston
+            population: 617594
+            state: Massachusetts
+        resource_uri:
+          type: string
+          description: Always empty. `FixtureResource` participates in tastypie's `get_resource_uri`, but the reverse lookup always raises `NoReverseMatch` for this resource, which is caught and returns `''` (`tastypie/resources.py:810-829`). Every sample in `fixture.rst` shows this as `""`.
+          example: ''
+    FixtureList:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            objects:
+              type: array
+              items:
+                $ref: '#/components/schemas/Fixture'
+    LookupTable:
+      type: object
+      description: A lookup table's schema (its tag, fields, and global flag), as managed by `LookupTableResource` (`v0_1.py:111-246`). Note this resource does not accept a `description` field -- `LookupTable.description` exists on the model but `LookupTableResource` never declares it as an API field.
+      properties:
+        id:
+          type: string
+          description: Lookup table UUID.
+          example: bcf49791f7f04f09bd46262097e107f2
+        tag:
+          type: string
+          description: Lookup table name (the "Table ID" shown in the UI).
+          example: vaccines
+        is_global:
+          type: boolean
+          description: Whether the table is accessible to all users.
+          example: true
+        fields:
+          type: array
+          description: The table's column definitions. `dehydrate_fields` (`v0_1.py:161-168`) always emits the `field_name`/`properties` shape shown here, even though the resource's own write-side JSON Schema validator (`v0_1.py:133-159`) also accepts a bare `name` key on input.
+          items:
+            type: object
+            properties:
+              field_name:
+                type: string
+                example: name
+              properties:
+                type: array
+                items:
+                  type: string
+                example:
+                  - lang
+        item_attributes:
+          type: array
+          description: Names of the row-level attributes available on this table's items. Not shown in any `fixture.rst` sample output, but a genuine declared field (`v0_1.py:131`).
+          items:
+            type: string
+          example: []
+        resource_uri:
+          type: string
+          description: Always empty. Same mechanism as `Fixture.resource_uri`.
+          example: ''
+    LookupTableList:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            objects:
+              type: array
+              items:
+                $ref: '#/components/schemas/LookupTable'
+    LookupTableWrite:
+      type: object
+      description: Payload for creating or replacing a lookup table. `tag` is required on both create and replace (`obj_create`/`obj_update`, `v0_1.py:193-236`). On replace, the submitted `tag` must match the existing table's `tag` exactly -- `obj_update` raises a 400 (`"Lookup table tag cannot be changed"`) otherwise; this constraint is not mentioned in `fixture.rst`.
+      required:
+        - tag
+      properties:
+        tag:
+          type: string
+          example: vaccines
+        fields:
+          type: array
+          items:
+            type: object
+            properties:
+              field_name:
+                type: string
+              properties:
+                type: array
+                items:
+                  type: string
+            example:
+              field_name: name
+              properties:
+                - lang
+          example:
+            - field_name: name
+              properties:
+                - lang
+            - field_name: price
+              properties: []
+        is_global:
+          type: boolean
+          description: 'Default: false.'
+          example: true
+        item_attributes:
+          type: array
+          items:
+            type: string
+    LookupTableItem:
+      type: object
+      description: A single lookup table row, as managed by `LookupTableItemResource` (`v0_1.py:268-418`).
+      properties:
+        id:
+          type: string
+          description: Lookup table row UUID.
+          example: e8433b25e60c4e228b0c7a679af2847b
+        data_type_id:
+          type: string
+          description: UUID of the row's lookup table (`attribute='table_id'`).
+          example: bcf49791f7f04f09bd46262097e107f2
+        fields:
+          type: object
+          description: Field values keyed by field name; each value is a `field_list` of `{field_value, properties}` entries. `dehydrate_fields` (`v0_1.py:343-352`) always emits `field_value`, even though the write-side `FieldsDictField.hydrate` (`v0_1.py:253-265`) also accepts a bare `value` key on input.
+          additionalProperties:
+            type: object
+            properties:
+              field_list:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field_value:
+                      type: string
+                    properties:
+                      type: object
+                      additionalProperties:
+                        type: string
+          example:
+            name:
+              field_list:
+                - field_value: MMR
+                  properties:
+                    lang: en
+            price:
+              field_list:
+                - field_value: '7'
+                  properties: {}
+        sort_key:
+          type: integer
+          description: Row order as uploaded from Excel. Not shown in any user-facing UI; new rows created via the API get the next available sort key (`obj_create`, `v0_1.py:381-383`).
+          example: 2
+        item_attributes:
+          type: object
+          additionalProperties:
+            type: string
+          description: Free-form row-level attributes. Not shown in any `fixture.rst` sample output, but a genuine declared field (`v0_1.py:298`).
+        resource_uri:
+          type: string
+          description: Always empty. Same mechanism as `Fixture.resource_uri`.
+          example: ''
+    LookupTableItemList:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            objects:
+              type: array
+              items:
+                $ref: '#/components/schemas/LookupTableItem'
+    LookupTableItemWrite:
+      type: object
+      description: Payload for creating or replacing a lookup table row. `data_type_id` is required on both create and replace (`obj_create`/`obj_update`, `v0_1.py:370-409`); on create, it must reference an existing lookup table or the request fails (see the discrepancy file for the surprising 404 shape this produces).
+      required:
+        - data_type_id
+      properties:
+        data_type_id:
+          type: string
+          example: bcf49791f7f04f09bd46262097e107f2
+        fields:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              field_list:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field_value:
+                      type: string
+                    properties:
+                      type: object
+                      additionalProperties:
+                        type: string
+          example:
+            name:
+              field_list:
+                - field_value: MMR
+                  properties:
+                    lang: en
+            price:
+              field_list:
+                - field_value: '7'
+                  properties: {}
+        item_attributes:
+          type: object
+          additionalProperties:
+            type: string
+    LookupTableErrorMessage:
+      type: object
+      description: Generic canned-error body produced by tastypie's exception handler (`_handle_500`, `tastypie/resources.py:291-315`) whenever `NotFound` or `ObjectDoesNotExist` propagates uncaught out of an operation that does not itself catch it -- keyed `error_message`, not the `error` key used by the shared `Error` schema, and not resource-specific text.
+      properties:
+        error_message:
+          type: string
+          example: Sorry, this request could not be processed. Please try again later.
   responses:
     BadRequest:
       description: The request was malformed or a parameter value was invalid.
