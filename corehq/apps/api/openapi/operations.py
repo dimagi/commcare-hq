@@ -117,7 +117,7 @@ def standard_list_parameters(resource_schema):
     return parameters
 
 
-def object_schema(resource_schema, docs):
+def object_schema(resource_schema, docs, *, use_in=None, for_list=False):
     """The schema for a single object returned by the resource.
 
     A ``Docs.field_schemas`` entry normally overrides a declared Tastypie
@@ -138,14 +138,29 @@ def object_schema(resource_schema, docs):
     ``resource_uri`` field. Requiring ``type`` for additions keeps that
     inherited, no-longer-applicable override from being invented as a
     phantom property.
+
+    ``use_in`` is a ``{field_name: field.use_in}`` map (``build_schema()``
+    does not report it, so it has to be read separately off the live
+    resource's ``.fields``). A field whose ``use_in`` is ``'list'`` or
+    ``'detail'`` is dropped from the schema built for the other one, the
+    same way ``full_dehydrate()`` drops it from the actual response --
+    see e.g. ``web-user-v1``'s ``tableau_groups`` (``use_in='detail'``),
+    which must not appear in the list schema it never appears in.
     """
     field_schemas = docs.get('field_schemas', {})
     declared_fields = resource_schema['fields']
+    use_in = use_in or {}
+    wanted = 'list' if for_list else 'detail'
+    visible_fields = {
+        name: info
+        for name, info in declared_fields.items()
+        if use_in.get(name, 'all') in ('all', wanted)
+    }
     properties = {
         name: field_to_schema(info, override=field_schemas.get(name))
-        for name, info in declared_fields.items()
+        for name, info in visible_fields.items()
     }
-    properties.update(_field_schema_additions(field_schemas, declared_fields))
+    properties.update(_field_schema_additions(field_schemas, visible_fields))
     return {'type': 'object', 'properties': properties}
 
 
@@ -237,7 +252,23 @@ def resource_paths(entry):
     path_parameters = [] if entry.scope == USER else [DOMAIN_PARAMETER]
     summary = docs.get('summary') or name.replace('_', ' ').title()
     description = _description(docs, resource)
-    schema = object_schema(resource_schema, docs)
+    # A field's ``use_in`` may itself be a callable (e.g. HQ's own
+    # ``UseIfRequested`` -- see corehq/apps/api/fields.py), evaluated
+    # per-bundle at dehydration time. There's no bundle here to call it
+    # with, and the conservative, previously-true-for-every-field
+    # reading is "appears in both": treat a callable the same as 'all'
+    # rather than mistakenly excluding the field from both schemas.
+    use_in = {
+        field_name: (field.use_in if not callable(field.use_in) else 'all')
+        for field_name, field in resource.fields.items()
+    }
+    # The response schema differs between the list and detail paths
+    # whenever a field is ``use_in``-restricted to one or the other (see
+    # ``object_schema()``). Write responses -- a POST's created record,
+    # a PUT's updated one -- describe a single object, so they use the
+    # detail shape even when they happen to appear on the list path.
+    list_schema = object_schema(resource_schema, docs, use_in=use_in, for_list=True)
+    schema = object_schema(resource_schema, docs, use_in=use_in, for_list=False)
     write_schema = request_schema(resource_schema, docs)
 
     paths = {}
@@ -250,7 +281,7 @@ def resource_paths(entry):
         item = {'parameters': list(path_parameters)}
         for method in list_methods:
             if method == 'get':
-                responses = _list_responses(schema)
+                responses = _list_responses(list_schema)
                 example = docs.get('examples', {}).get('list_response')
                 if example:
                     responses['200']['content']['application/json'][

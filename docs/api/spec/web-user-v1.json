@@ -179,11 +179,6 @@
                           "role": {
                             "type": "string"
                           },
-                          "tableau_groups": {
-                            "items": {},
-                            "nullable": true,
-                            "type": "array"
-                          },
                           "tableau_role": {
                             "nullable": true,
                             "type": "string"
