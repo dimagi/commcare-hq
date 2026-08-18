@@ -80,6 +80,39 @@ COMPOUND_FILTERS = {
     'indices': _index_filter,
 }
 
+# Descriptions for the query parameters generated from the filters above.
+FILTER_DESCRIPTIONS = {
+    'external_id': 'Return cases with this external ID.',
+    'case_type': 'Return cases of this case type.',
+    'owner_id': 'Return cases owned by this user or group ID.',
+    'case_name': 'Return cases with this case name.',
+    'closed': 'Return only closed (true) or only open (false) cases.',
+    INCLUDE_DEPRECATED: 'Include cases whose case type is deprecated.',
+    'properties': 'Filter by case property, as properties.<name>=<value>.',
+    'last_modified': 'Filter by modification date, as '
+                     'last_modified.gte=<date>.',
+    'server_last_modified': 'Filter by server modification date.',
+    'date_opened': 'Filter by the date the case was opened.',
+    'date_closed': 'Filter by the date the case was closed.',
+    'indexed_on': 'Filter by the date the case was indexed for search.',
+    'indices': 'Return cases indexed by the given case, as '
+               'indices.<identifier>=<case_id>.',
+}
+
+
+def filter_parameters():
+    """OpenAPI query parameters for the filters this module implements."""
+    parameters = []
+    for name in sorted({*SIMPLE_FILTERS, *COMPOUND_FILTERS}):
+        parameters.append({
+            'name': name,
+            'in': 'query',
+            'required': False,
+            'description': FILTER_DESCRIPTIONS[name],
+            'schema': {'type': 'string'},
+        })
+    return parameters
+
 
 def get_list(domain, couch_user, params):
     if 'cursor' in params:

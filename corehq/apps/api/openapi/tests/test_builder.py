@@ -67,3 +67,12 @@ def test_bundle_contains_every_documented_path():
         if slug == 'bundle':
             continue
         assert set(doc['paths']) <= bundle_paths
+
+
+def test_case_api_v2_is_in_the_generated_documents():
+    documents = build_all()
+    assert 'case-v2' in documents
+    validate(documents['case-v2'])
+    paths = documents['case-v2']['paths']
+    assert '/a/{domain}/api/case/v2/' in paths
+    assert 'requestBody' in paths['/a/{domain}/api/case/v2/']['post']

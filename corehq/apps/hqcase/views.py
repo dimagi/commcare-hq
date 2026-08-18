@@ -28,11 +28,14 @@ from corehq.apps.locations.permissions import user_can_access_case
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.models import CommCareCase
 
+from corehq.apps.api.openapi.jsonobject_schema import jsonobject_to_schema
+from corehq.apps.api.openapi.view_adapter import api_docs
+
 from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
 from .api.field_filters import get_fields_filter_fn
-from .api.get_list import get_list
+from .api.get_list import filter_parameters, get_list
 from .api.get_bulk import get_bulk
-from .api.updates import handle_case_update
+from .api.updates import JsonCaseCreation, handle_case_update
 from .tasks import delete_exploded_case_task, explode_case_task
 
 
@@ -84,6 +87,46 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
         return redirect('hq_soil_download', self.domain, download.download_id)
 
 
+# ``JsonCaseCreation``'s generated schema includes three properties a POST
+# body should never carry: ``case_id`` (rejected by
+# ``JsonCaseCreation.wrap()`` -- the ID is always server-generated for a
+# creation), ``user_id`` (overwritten unconditionally with the
+# authenticated user's ID in ``updates._get_individual_update()``, so a
+# client-supplied value is always discarded), and ``is_new_case`` (not a
+# real request field at all -- it only appears because jsonobject treats
+# the plain ``is_new_case = True`` class attribute as a boolean property).
+# They are dropped here so the published schema documents only what a
+# client actually controls.
+_POST_REQUEST_SCHEMA = jsonobject_to_schema(JsonCaseCreation)
+for _internal_field in ('case_id', 'user_id', 'is_new_case'):
+    _POST_REQUEST_SCHEMA['properties'].pop(_internal_field, None)
+    if _internal_field in _POST_REQUEST_SCHEMA.get('required', []):
+        _POST_REQUEST_SCHEMA['required'].remove(_internal_field)
+
+
+@api_docs(
+    summary='Cases',
+    description=(
+        'Fetch, create and update cases. GET returns a page of cases '
+        'matching the given filters, or a single case when a case ID is '
+        'given. POST with a single JSON object always creates a new '
+        'case. POST with a list performs a bulk change: each item '
+        'creates or updates a case according to its own "create" field, '
+        'or is upserted by external_id when "create" is omitted. PUT '
+        'updates the case identified by the case ID or external ID in '
+        'the URL.'
+    ),
+    doc_slug='case-v2',
+    paths=['/a/{domain}/api/case/v2/', '/a/{domain}/api/case/v2/{case_id}/'],
+    methods=['get', 'post', 'put'],
+    parameters=filter_parameters(),
+    # Stored as the single-object schema; ``view_paths()`` in
+    # ``builder.py`` wraps it in a ``oneOf`` with an array-of-this-schema
+    # alternative when building the requestBody, since POST accepts a
+    # single case or a list of them for bulk changes.
+    request_schemas={'post': _POST_REQUEST_SCHEMA},
+    examples={'post_request': 'case/v2/post_request.json'},
+)
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @allow_cors(['OPTIONS', 'GET', 'POST', 'PUT'])

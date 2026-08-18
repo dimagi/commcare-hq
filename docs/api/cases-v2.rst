@@ -35,8 +35,19 @@ POST /                      Create new case
 POST /                      Create or update cases in bulk
 PUT /<case_id>              Update existing case
 PUT /ext/<ext_id>/          Upsert case by external ID
-PUT /                       Upsert case by external ID
+PUT /                       Update existing case, identified by
+                            ``case_id`` or ``external_id`` in the body.
+                            Despite the name, this is **not** an upsert:
+                            unlike ``PUT /ext/<ext_id>/``, it errors if no
+                            matching case is found.
 =========================== ======================================
+
+The reference below covers ``GET`` and ``POST /`` on the list endpoint, and
+``GET`` and ``PUT`` on the individual-case endpoint (``/<case_id>``). The
+other endpoints in the table above -- bulk fetch, and the ``ext/<ext_id>/``
+variants -- are documented in prose further down this page.
+
+.. openapi:: spec/case-v2.json
 
 Single Case Serialization Format
 --------------------------------
