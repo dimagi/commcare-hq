@@ -18,24 +18,53 @@ from no_exceptions.exceptions import Http400
 
 class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
     type = "case"
-    id = fields.CharField(attribute='case_id', readonly=True, unique=True)
+    id = fields.CharField(
+        attribute='case_id',
+        readonly=True,
+        unique=True,
+        help_text='Case UUID.',
+    )
     case_id = id
-    user_id = fields.CharField(attribute='user_id', null=True)
+    user_id = fields.CharField(
+        attribute='user_id',
+        null=True,
+        help_text='UUID of the user that last modified the case.',
+    )
     date_modified = fields.CharField(attribute='date_modified', default="1900-01-01")
-    closed = fields.BooleanField(attribute='closed')
-    date_closed = fields.CharField(attribute='closed_on', null=True)
+    closed = fields.BooleanField(
+        attribute='closed',
+        help_text='Whether the case is closed.',
+    )
+    date_closed = fields.CharField(
+        attribute='closed_on',
+        null=True,
+        help_text='Date and time the case was closed, or null if the '
+                  'case is open.',
+    )
 
     server_date_modified = fields.CharField(attribute='server_date_modified', default="1900-01-01")
     server_date_opened = fields.CharField(attribute='server_date_opened', null=True)
 
-    xform_ids = fields.ListField(attribute='xform_ids')
+    xform_ids = fields.ListField(
+        attribute='xform_ids',
+        help_text='UUIDs of the forms that have updated this case.',
+    )
 
-    properties = fields.DictField()
+    properties = fields.DictField(
+        help_text='Case property values, including special predefined '
+                  'properties (case_name, case_type, external_id, '
+                  'owner_id, date_opened) and any user-defined dynamic '
+                  'properties.',
+    )
 
     def dehydrate_properties(self, bundle):
         return bundle.obj.get_properties_in_api_format()
 
-    indices = fields.DictField()
+    indices = fields.DictField(
+        help_text='References to other cases linked to this case, keyed '
+                  'by index identifier, each giving the related '
+                  'case_type and case_id.',
+    )
 
     def dehydrate_indices(self, bundle):
         return bundle.obj.get_index_map()
