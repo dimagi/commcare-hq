@@ -15,6 +15,24 @@ reST pages remain the prose narrative; this spec is the reference.
     openapi/index.html     # generated, committed (Redoc page)
   ```
 
+## Where to read it
+
+Served by CommCare HQ itself, unauthenticated (like `/styleguide/`):
+
+| URL                     | What                                                           |
+| ----------------------- | -------------------------------------------------------------- |
+| `/apidocs/`             | The Redoc reference page                                       |
+| `/apidocs/openapi.yaml` | The bundled specification, for code generators and LLM tooling |
+
+Locally that is <http://localhost:8000/apidocs/>. The views are in
+`corehq/apps/api/docs_views.py` and serve the committed `dist/` artifacts
+straight from disk, cached per process — so a stale `dist/` shows stale docs.
+`yarn openapi:check` (and the `lint-openapi` CI job) is what keeps them honest.
+
+The same content is also published through readthedocs, where the Sphinx build
+copies `dist/` into the site root — `<docs-root>/openapi/index.html` and
+`<docs-root>/openapi.bundled.yaml`.
+
 ## Requirements
 
 `@redocly/cli`'s declared supported range is `>=22.12.0 || >=20.19.0 <21.0.0`.
