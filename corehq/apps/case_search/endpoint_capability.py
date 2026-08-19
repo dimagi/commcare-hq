@@ -8,18 +8,18 @@ parsed and validated against this metadata in :mod:`.endpoint_query_spec`.
 from django.db.models import Prefetch
 from django.utils.translation import gettext_lazy as _
 
+from corehq.apps.case_search.const import DISTANCE_UNITS
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CaseType,
 )
-from corehq.apps.es.queries import DISTANCE_UNITS
 
 FIELD_TYPE_TEXT = 'text'
 FIELD_TYPE_NUMBER = 'number'
 FIELD_TYPE_DATE = 'date'
 FIELD_TYPE_DATETIME = 'datetime'
 FIELD_TYPE_SELECT = 'select'
-FIELD_TYPE_GEOPOINT = 'geopoint'
+FIELD_TYPE_GPS = 'gps'
 
 # DataType -> field type mapping
 _DATA_TYPE_MAP = {
@@ -30,7 +30,7 @@ _DATA_TYPE_MAP = {
     CaseProperty.DataType.DATE: FIELD_TYPE_DATE,
     CaseProperty.DataType.NUMBER: FIELD_TYPE_NUMBER,
     CaseProperty.DataType.SELECT: FIELD_TYPE_SELECT,
-    CaseProperty.DataType.GPS: FIELD_TYPE_GEOPOINT,
+    CaseProperty.DataType.GPS: FIELD_TYPE_GPS,
 }
 
 # DataTypes excluded from the query builder (not an oversight).
@@ -78,7 +78,7 @@ _OPERATOR_BY_TYPE = {
         ('selected_all', _('is all')),
         ('is_empty', _('is empty')),
     ],
-    FIELD_TYPE_GEOPOINT: [
+    FIELD_TYPE_GPS: [
         ('within_distance', _('within distance')),
     ],
 }
@@ -115,7 +115,7 @@ OPERATOR_INPUT_SCHEMAS = {
     'lte': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'fuzzy_date': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'within_distance': [
-        {'name': 'point', 'type': FIELD_TYPE_GEOPOINT},
+        {'name': 'point', 'type': FIELD_TYPE_GPS},
         {'name': 'distance', 'type': FIELD_TYPE_NUMBER},
         {'name': 'unit', 'type': INPUT_TYPE_CHOICE, 'options': DISTANCE_UNITS},
     ],
