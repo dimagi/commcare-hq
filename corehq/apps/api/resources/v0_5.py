@@ -67,6 +67,7 @@ from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from corehq.apps.api.util import (
     django_date_filter,
     get_obj,
+    get_object_or_not_exist,
     make_date_filter,
     parse_str_to_date,
     cursor_based_query_for_datasource
@@ -1022,13 +1023,7 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
 
     def obj_get(self, bundle, **kwargs):
         self._ensure_toggle_enabled(bundle.request)
-        domain = kwargs['domain']
-        pk = kwargs['pk']
-        try:
-            data_source = get_document_or_404(DataSourceConfiguration, domain, pk)
-        except Http404 as e:
-            raise NotFound(str(e))
-        return data_source
+        return get_object_or_not_exist(DataSourceConfiguration, kwargs['pk'], kwargs['domain'])
 
     def obj_get_list(self, bundle, **kwargs):
         self._ensure_toggle_enabled(bundle.request)
@@ -1037,12 +1032,7 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
 
     def obj_update(self, bundle, **kwargs):
         self._ensure_toggle_enabled(bundle.request)
-        domain = kwargs['domain']
-        pk = kwargs['pk']
-        try:
-            data_source = get_document_or_404(DataSourceConfiguration, domain, pk)
-        except Http404 as e:
-            raise NotFound(str(e))
+        data_source = self.get_document_for_update(kwargs['pk'], kwargs['domain'])
         allowed_update_fields = [
             'display_name',
             'configured_filter',
@@ -1075,6 +1065,7 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
 
     class Meta(CustomResourceMeta):
         resource_name = 'ucr_data_source'
+        object_class = DataSourceConfiguration
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get', 'put']
         always_return_data = True

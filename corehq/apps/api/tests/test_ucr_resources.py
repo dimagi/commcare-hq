@@ -168,6 +168,12 @@ class TestDataSourceConfigurationResource(APIResourceTest):
     api_name = "v0.5"
 
     @flag_enabled('USER_CONFIGURABLE_REPORTS')
+    def test_cant_get_missing_data_source(self):
+        response = self._assert_auth_get_resource(self.single_endpoint(uuid.uuid4().hex))
+
+        assert response.status_code == 404, response.content
+
+    @flag_enabled('USER_CONFIGURABLE_REPORTS')
     def test_cant_update_missing_data_source(self):
         response = self._assert_auth_post_resource(
             self.single_endpoint(uuid.uuid4().hex),
@@ -179,6 +185,26 @@ class TestDataSourceConfigurationResource(APIResourceTest):
         # put_detail must not echo the exception message: some carry internal
         # detail, and get_document_or_404 even embeds a traceback
         assert response.content == b""
+
+    @flag_enabled('USER_CONFIGURABLE_REPORTS')
+    def test_cant_update_data_source_in_another_domain(self):
+        not_my_data_source = DataSourceConfiguration(
+            domain='not-my-project',
+            referenced_doc_type="XFormInstance",
+            table_id=uuid.uuid4().hex,
+            display_name="theirs",
+        )
+        not_my_data_source.save()
+        self.addCleanup(not_my_data_source.delete)
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(not_my_data_source._id),
+            json.dumps({"display_name": "mine now"}),
+            method="PUT",
+        )
+
+        assert response.status_code == 404, response.content
+        assert DataSourceConfiguration.get(not_my_data_source._id).display_name == "theirs"
 
 
 class TestConfigurableReportDataResource(APIResourceTest):
