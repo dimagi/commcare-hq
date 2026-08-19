@@ -27,6 +27,9 @@ from corehq.apps.es.tests.utils import (
     case_search_es_setup,
     es_test,
 )
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.project_db.populate import send_to_project_db
+from corehq.apps.project_db.tests.util import project_db_table
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import flag_enabled
 
@@ -128,10 +131,19 @@ class TestCaseSearchEndpoint(TestCase):
         )
         endpoint.current_version = version
         endpoint.save(update_fields=['current_version'])
-        # TODO: pass criteria once CaseSearchEndpointQueryBuilder applies them.
-        # res = self._run_query(['person'], [SearchCriteria('family', 'Ramos')], endpoint_id=endpoint.id)
-        # self.assertItemsEqual(["Jane"], [case.name for case in res])
-        res = self._run_query(['person'], [], endpoint_id=endpoint.id)
+
+        _, cases = submit_case_blocks([CaseBlock(
+            case_id=str(uuid.uuid4()),
+            case_type='person',
+            case_name='Luisa',
+            create=True,
+        ).as_text()], domain=self.domain)
+        with project_db_table(self.domain, 'person', {}):
+            send_to_project_db(self.domain, 'person', cases)
+            # TODO: pass criteria once CaseSearchEndpointQueryBuilder applies them.
+            # res = self._run_query(['person'], [SearchCriteria('family', 'Ramos')], endpoint_id=endpoint.id)
+            # self.assertItemsEqual(["Jane"], [case.name for case in res])
+            res = self._run_query(['person'], [], endpoint_id=endpoint.id)
         self.assertGreater(len(res), 0)
 
     @flag_enabled('CASE_SEARCH_ENDPOINTS')
