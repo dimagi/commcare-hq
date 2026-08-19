@@ -99,6 +99,20 @@ class TestHQScopes:
         assert STATIC_SCOPES.issubset(all_scopes.keys())
         assert 'my-project' in all_scopes[f'{DOMAIN_SCOPE_PREFIX}my-project']
 
+    def test_describe_scopes_covers_static_and_domain_scopes(self):
+        descriptions = HQScopes().describe_scopes(
+            ['access_apis', f'{DOMAIN_SCOPE_PREFIX}my-project']
+        )
+        assert len(descriptions) == 2
+        assert 'my-project' in descriptions[1]
+
+    def test_describe_scopes_skips_what_it_cannot_describe(self):
+        """
+        form_invalid feeds this the posted scope field, which is whatever came
+        back through the browser. Raising would turn a validation error into a 500.
+        """
+        assert HQScopes().describe_scopes(['bogus']) == []
+
     def test_available_scopes_without_a_request(self):
         """OIDC discovery calls this with no arguments; it must not raise."""
         assert set(HQScopes().get_available_scopes()) == STATIC_SCOPES

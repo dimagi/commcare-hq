@@ -34,6 +34,20 @@ class HQScopes(SettingsScopes):
     def get_all_scopes(self):
         return ScopeDescriptions(super().get_all_scopes())
 
+    def describe_scopes(self, scopes):
+        """
+        Descriptions for ``scopes``, skipping any that have none. Each must be
+        looked up: checking membership first would report dynamic scopes as absent.
+        """
+        all_scopes = self.get_all_scopes()
+        descriptions = []
+        for scope in scopes:
+            try:
+                descriptions.append(all_scopes[scope])
+            except KeyError:
+                continue
+        return descriptions
+
     def get_available_scopes(self, application=None, request=None, *args, **kwargs):
         scopes = list(super().get_available_scopes(application, request, *args, **kwargs))
         scopes.extend(self._grantable_domain_scopes(request))
