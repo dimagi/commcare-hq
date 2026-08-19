@@ -5,7 +5,6 @@ hand-written API views use this decorator instead, which carries the same
 information plus the paths the view serves.
 """
 
-import functools
 from dataclasses import dataclass, field
 
 VIEW_DOCS = []
@@ -31,17 +30,21 @@ class ApiViewDocs:
 
 
 def api_docs(**kwargs):
-    """Attach OpenAPI documentation to a function-based API view."""
+    """Attach OpenAPI documentation to a function-based API view.
+
+    This annotates the view in place and returns the same object rather than
+    wrapping it. Wrapping would change the view's identity, and
+    ``@waf_allow`` registers the object it decorates while ``urls.py`` routes
+    whatever the outermost decorator returned. A wrapper therefore silently
+    drops the view from the WAF allowlist that
+    ``./manage.py list_waf_allow_patterns`` generates, because that command
+    looks the routed callable up in ``resolver.reverse_dict``.
+    """
     docs = ApiViewDocs(**kwargs)
 
     def decorate(view):
         VIEW_DOCS.append(docs)
-
-        @functools.wraps(view)
-        def wrapper(*args, **view_kwargs):
-            return view(*args, **view_kwargs)
-
-        wrapper._openapi_docs = docs
-        return wrapper
+        view._openapi_docs = docs
+        return view
 
     return decorate
