@@ -184,6 +184,22 @@ NON_FILTER_PARAMETERS = (
 )
 
 
+def _filter_description(name):
+    """``FILTER_DESCRIPTIONS[name]``, without the ability to take the
+    site down.
+
+    ``filter_parameters()`` runs at *import* time -- it is a decorator
+    argument in ``corehq/apps/hqcase/views.py`` -- so an indexing lookup
+    here would turn a filter added without a description into a
+    ``KeyError`` during Django app loading, taking down the whole site
+    rather than failing a test. ``tests/test_view_adapter.py``'s
+    ``test_every_case_api_filter_has_a_description`` is the real gate on
+    this invariant; a safe lookup here just keeps a violation from being
+    worse than a test failure.
+    """
+    return FILTER_DESCRIPTIONS.get(name, f"Filter cases by '{name}'.")
+
+
 def filter_parameters():
     """OpenAPI query parameters this endpoint accepts: the case filters
     plus paging, the raw query expression, and the field-shaping
@@ -215,7 +231,7 @@ def filter_parameters():
                 'name': f'{name}.<{placeholder}>',
                 'in': 'query',
                 'required': False,
-                'description': FILTER_DESCRIPTIONS[name],
+                'description': _filter_description(name),
                 'schema': {'type': 'string'},
             })
         else:
@@ -224,7 +240,7 @@ def filter_parameters():
                     'name': f'{name}.{qualifier}',
                     'in': 'query',
                     'required': False,
-                    'description': FILTER_DESCRIPTIONS[name],
+                    'description': _filter_description(name),
                     'schema': {'type': 'string'},
                 })
     return parameters

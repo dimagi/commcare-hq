@@ -48,6 +48,17 @@ def test_every_case_api_filter_has_a_description():
     )
 
 
+def test_missing_filter_description_does_not_raise():
+    """filter_parameters() runs at import time (a decorator argument in
+    hqcase/views.py); a plain FILTER_DESCRIPTIONS[name] lookup would
+    turn a filter added without a description into a KeyError during
+    Django app loading. It must degrade to a generic description
+    instead."""
+    from corehq.apps.hqcase.api.get_list import _filter_description
+
+    assert _filter_description('not_a_real_filter')
+
+
 def test_compound_filters_are_published_under_usable_names():
     """A compound filter's bare prefix (e.g. ``properties``) is not a
     valid query parameter -- _get_filter() requires a ``.`` in the key --
