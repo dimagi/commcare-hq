@@ -51,10 +51,18 @@ def _references_pagination_meta(paths):
     return needle in json.dumps(paths)
 
 
-def build_document(entries, *, title, tags=()):
-    paths = {}
-    for entry in entries:
-        paths.update(resource_paths(entry))
+def build_document(paths, *, title, tags=()):
+    """Assemble one complete OpenAPI document from an already-final
+    ``paths`` mapping.
+
+    ``paths`` must be the *complete* set of paths this document will
+    ever contain -- ``components.schemas`` is derived from it right
+    here, so a path spliced in afterwards (as the old callers of this
+    function used to do for view documents and the bundle) would not be
+    reflected in the derived components, silently producing a dangling
+    ``$ref`` the moment some path referenced a component that an
+    earlier, incomplete ``paths`` did not.
+    """
     schemas = {}
     if _references_pagination_meta(paths):
         schemas['PaginationMeta'] = PAGINATION_META_SCHEMA
@@ -248,21 +256,43 @@ def view_paths(docs):
     return paths
 
 
+def _group_view_docs_by_slug(view_docs):
+    """Merge every ``ApiViewDocs`` sharing a ``doc_slug`` into one
+    ``paths`` mapping and one list of ``(name, description)`` tag pairs
+    per slug, in registration order.
+
+    Pulled out of ``build_all()`` so the merge -- paths fully combined
+    before any document is built from them, and every view's tag pair
+    collected rather than only the first-registered one -- is testable
+    without depending on the real, globally-registered ``VIEW_DOCS``.
+    """
+    paths_by_slug = {}
+    tag_pairs_by_slug = {}
+    for docs in view_docs:
+        paths_by_slug.setdefault(docs.doc_slug, {}).update(
+            view_paths(docs)
+        )
+        tag_pairs_by_slug.setdefault(docs.doc_slug, []).append(
+            _view_tag(docs)
+        )
+    return paths_by_slug, tag_pairs_by_slug
+
+
 def build_all():
     """Every documented spec, keyed by ``doc_slug``, plus ``'bundle'``."""
     entries = documented_entries()
+    resource_paths_by_entry = {
+        entry: resource_paths(entry) for entry in entries
+    }
+    resource_tags = [_resource_tag(entry) for entry in entries]
     documents = {
         entry.doc_slug: build_document(
-            [entry],
+            paths,
             title=_title(entry),
             tags=_merge_tags([_resource_tag(entry)]),
         )
-        for entry in entries
+        for entry, paths in resource_paths_by_entry.items()
     }
-    resource_tags = [_resource_tag(entry) for entry in entries]
-    bundle = build_document(
-        entries, title='CommCare Data APIs', tags=_merge_tags(resource_tags)
-    )
 
     # Deferred, not because of an import cycle -- hoisting this to module
     # scope works fine, ``corehq.apps.api.urls`` never imports
@@ -275,29 +305,42 @@ def build_all():
 
     # More than one decorated view can share a doc_slug (e.g. Case API v2
     # is both `case_api` and the separate `case_api_bulk_fetch` view), so
-    # their paths are merged into one document rather than the later view
-    # overwriting the earlier one's. The merged document's title is
-    # derived from the shared doc_slug rather than from whichever view's
-    # `summary` happened to register first, so it doesn't depend on --
-    # or misrepresent -- registration order.
-    view_documents = {}
-    view_tags = []
-    for docs in VIEW_DOCS:
-        paths = view_paths(docs)
-        view_tags.append(_view_tag(docs))
-        if docs.doc_slug in view_documents:
-            view_documents[docs.doc_slug]['paths'].update(paths)
-        else:
-            title = docs.doc_slug.replace('-', ' ').title()
-            document = build_document(
-                [], title=title, tags=_merge_tags([_view_tag(docs)])
-            )
-            document['paths'] = paths
-            view_documents[docs.doc_slug] = document
-        bundle['paths'].update(paths)
+    # their paths -- and their tag descriptions -- are fully merged
+    # *before* a document is built from them. Building a document from
+    # only the first view's paths and splicing the rest in afterward
+    # (the old approach) derives `components.schemas` from an incomplete
+    # `paths`, and only ever sees the first view's `_view_tag()`. The
+    # merged document's title is derived from the shared doc_slug rather
+    # than from whichever view's `summary` happened to register first,
+    # so it doesn't depend on -- or misrepresent -- registration order.
+    view_paths_by_slug, view_tag_pairs_by_slug = _group_view_docs_by_slug(
+        VIEW_DOCS
+    )
 
-    if view_tags:
-        bundle['tags'] = _merge_tags(resource_tags + view_tags)
+    view_documents = {
+        doc_slug: build_document(
+            paths,
+            title=doc_slug.replace('-', ' ').title(),
+            tags=_merge_tags(view_tag_pairs_by_slug[doc_slug]),
+        )
+        for doc_slug, paths in view_paths_by_slug.items()
+    }
+
+    bundle_paths = {}
+    for paths in resource_paths_by_entry.values():
+        bundle_paths.update(paths)
+    for paths in view_paths_by_slug.values():
+        bundle_paths.update(paths)
+    view_tags = [
+        tag
+        for pairs in view_tag_pairs_by_slug.values()
+        for tag in pairs
+    ]
+    bundle = build_document(
+        bundle_paths,
+        title='CommCare Data APIs',
+        tags=_merge_tags(resource_tags + view_tags),
+    )
 
     documents.update(view_documents)
     documents['bundle'] = bundle
