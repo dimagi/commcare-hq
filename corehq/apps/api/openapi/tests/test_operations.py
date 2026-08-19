@@ -300,6 +300,25 @@ def test_put_advertises_201_where_the_fallback_is_reachable():
     assert '201' in put['responses']
 
 
+def test_user_v1_documents_language_and_role_as_writable():
+    """language and role are real fields CommcareUserUpdates.update()
+    dispatches, but neither is a declared Tastypie field, so without a
+    field_schemas addition (like password's) neither would appear in
+    the request body at all."""
+    entry = ApiEntry(v0_5.CommCareUserResource, 'v1', 'user-v1')
+    paths = resource_paths(entry)
+    for path, method in (
+        ('/a/{domain}/api/user/v1/', 'post'),
+        ('/a/{domain}/api/user/v1/{pk}/', 'put'),
+    ):
+        schema = paths[path][method]['requestBody']['content'][
+            'application/json'
+        ]['schema']
+        for name in ('language', 'role'):
+            assert name in schema['properties']
+            assert schema['properties'][name]['writeOnly'] is True
+
+
 def test_declared_list_example_is_attached():
     entry = ApiEntry(v0_5.CommCareUserResource, 'v1', 'user-v1')
     operation = resource_paths(entry)['/a/{domain}/api/user/v1/']['get']

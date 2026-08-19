@@ -209,6 +209,11 @@
                             "readOnly": true,
                             "type": "string"
                           },
+                          "language": {
+                            "description": "The user's language/locale code, e.g. 'en'. Not returned in the response.",
+                            "type": "string",
+                            "writeOnly": true
+                          },
                           "last_name": {
                             "description": "Last name of user.",
                             "nullable": true,
@@ -248,6 +253,11 @@
                             "description": "URI of this record in the API.",
                             "readOnly": true,
                             "type": "string"
+                          },
+                          "role": {
+                            "description": "Name of the role to assign the mobile worker within this project space. Not returned in the response.",
+                            "type": "string",
+                            "writeOnly": true
                           },
                           "send_confirmation_email_now": {
                             "default": false,
@@ -324,6 +334,11 @@
                     },
                     "type": "array"
                   },
+                  "language": {
+                    "description": "The user's language/locale code, e.g. 'en'. Not returned in the response.",
+                    "type": "string",
+                    "writeOnly": true
+                  },
                   "last_name": {
                     "description": "Last name of user.",
                     "nullable": true,
@@ -357,6 +372,11 @@
                     "default": false,
                     "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
                     "type": "boolean",
+                    "writeOnly": true
+                  },
+                  "role": {
+                    "description": "Name of the role to assign the mobile worker within this project space. Not returned in the response.",
+                    "type": "string",
                     "writeOnly": true
                   },
                   "send_confirmation_email_now": {
@@ -463,6 +483,11 @@
                       "readOnly": true,
                       "type": "string"
                     },
+                    "language": {
+                      "description": "The user's language/locale code, e.g. 'en'. Not returned in the response.",
+                      "type": "string",
+                      "writeOnly": true
+                    },
                     "last_name": {
                       "description": "Last name of user.",
                       "nullable": true,
@@ -502,6 +527,11 @@
                       "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
+                    },
+                    "role": {
+                      "description": "Name of the role to assign the mobile worker within this project space. Not returned in the response.",
+                      "type": "string",
+                      "writeOnly": true
                     },
                     "send_confirmation_email_now": {
                       "default": false,
@@ -582,6 +612,11 @@
                     },
                     "type": "array"
                   },
+                  "language": {
+                    "description": "The user's language/locale code, e.g. 'en'. Not returned in the response.",
+                    "type": "string",
+                    "writeOnly": true
+                  },
                   "last_name": {
                     "description": "Last name of user.",
                     "nullable": true,
@@ -615,6 +650,11 @@
                     "default": false,
                     "description": "If True, creates an unconfirmed account (similar to a deactivated account). False by default. Write-only: not returned in the response.",
                     "type": "boolean",
+                    "writeOnly": true
+                  },
+                  "role": {
+                    "description": "Name of the role to assign the mobile worker within this project space. Not returned in the response.",
+                    "type": "string",
                     "writeOnly": true
                   },
                   "send_confirmation_email_now": {
@@ -678,6 +718,11 @@
                       "readOnly": true,
                       "type": "string"
                     },
+                    "language": {
+                      "description": "The user's language/locale code, e.g. 'en'. Not returned in the response.",
+                      "type": "string",
+                      "writeOnly": true
+                    },
                     "last_name": {
                       "description": "Last name of user.",
                       "nullable": true,
@@ -717,6 +762,11 @@
                       "description": "URI of this record in the API.",
                       "readOnly": true,
                       "type": "string"
+                    },
+                    "role": {
+                      "description": "Name of the role to assign the mobile worker within this project space. Not returned in the response.",
+                      "type": "string",
+                      "writeOnly": true
                     },
                     "send_confirmation_email_now": {
                       "default": false,

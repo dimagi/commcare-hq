@@ -298,6 +298,24 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                               'password on confirmation). Not returned '
                               'in the response.',
             },
+            # Neither of these is a declared Tastypie field --
+            # CommcareUserUpdates.update() (see user_updates.py) reads
+            # both directly off bundle.data, the same way it reads
+            # password -- so, like password, they only exist here as
+            # write-only additions (see request_schema()'s docstring).
+            'language': {
+                'type': 'string',
+                'writeOnly': True,
+                'description': "The user's language/locale code, e.g. "
+                              "'en'. Not returned in the response.",
+            },
+            'role': {
+                'type': 'string',
+                'writeOnly': True,
+                'description': 'Name of the role to assign the mobile '
+                              'worker within this project space. Not '
+                              'returned in the response.',
+            },
             'resource_uri': {
                 'description': 'URI of this record in the API.',
             },
@@ -394,6 +412,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             'require_account_confirmation',
             'send_confirmation_email_now',
             'password',
+            'language',
+            'role',
         }
 
     class Meta(v0_1.CommCareUserResource.Meta):
