@@ -1,5 +1,4 @@
 from django.db.models import Max
-
 from tastypie import fields as tp_f
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpAccepted
@@ -93,6 +92,12 @@ class FixtureResource(HqBaseResource):
         object_class = LookupTableRow
         resource_name = 'fixture'
         limit = 0
+        # This is a plain Resource with no obj_create/obj_update/
+        # obj_delete, so a write raises NotImplementedError (500).
+        # Without these, Tastypie's default ``allowed_methods`` would
+        # still publish POST/PUT/PATCH/DELETE as if they worked.
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
 
 
 class InternalFixtureResource(FixtureResource):
@@ -124,11 +129,32 @@ class LookupTableResource(HqBaseResource):
 
         "item_attributes": ["name", "height"]
     """
-    id = UUIDField(attribute='id', readonly=True, unique=True)
-    is_global = tp_f.BooleanField(attribute='is_global')
-    tag = tp_f.CharField(attribute='tag')
-    fields = tp_f.ListField(attribute='fields')
-    item_attributes = tp_f.ListField(attribute='item_attributes')
+    id = UUIDField(
+        attribute='id',
+        readonly=True,
+        unique=True,
+        help_text='Unique identifier of the lookup table.',
+    )
+    is_global = tp_f.BooleanField(
+        attribute='is_global',
+        help_text='Whether the lookup table is accessible to all users '
+                  'on the domain, regardless of location assignment.',
+    )
+    tag = tp_f.CharField(
+        attribute='tag',
+        help_text='Name of the lookup table, unique within the domain.',
+    )
+    fields = tp_f.ListField(
+        attribute='fields',
+        help_text='The custom fields defined for rows of this lookup '
+                  'table, each giving a field_name and the properties '
+                  'available on it.',
+    )
+    item_attributes = tp_f.ListField(
+        attribute='item_attributes',
+        help_text='Names of the item attributes available on rows of '
+                  'this lookup table.',
+    )
 
     validate_deserialized_data = JSONSchemaValidator({
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -238,6 +264,38 @@ class LookupTableResource(HqBaseResource):
     def detail_uri_kwargs(self, bundle_or_obj):
         return {'pk': get_obj(bundle_or_obj).id.hex}
 
+    class Docs:
+        summary = 'Lookup Tables'
+        description = (
+            'List, create, update or delete lookup tables (also known '
+            'as fixtures) in a project space. A lookup table defines '
+            'the fields available on its rows; see the lookup table '
+            'item resources for the rows themselves.'
+        )
+        examples = {'list_response': 'lookup_table/v1/list_response.json'}
+        # obj_update() below raises tastypie's own NotFound (not a
+        # domain-specific exception) when the identified table does not
+        # exist, so Tastypie's create-on-PUT fallback genuinely fires
+        # here. See operations._write_responses().
+        put_creates_on_missing = True
+        field_schemas = {
+            'fields': {
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'field_name': {'type': 'string'},
+                        'properties': {
+                            'type': 'array',
+                            'items': {'type': 'string'},
+                        },
+                    },
+                },
+            },
+            'item_attributes': {
+                'items': {'type': 'string'},
+            },
+        }
+
     class Meta(CustomResourceMeta):
         object_class = LookupTable
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -292,10 +350,28 @@ class LookupTableItemResource(HqBaseResource):
             "height": "30-50 meters",
         }
     """
-    id = UUIDField(attribute='id', readonly=True, unique=True)
-    data_type_id = UUIDField(attribute='table_id')
-    fields = FieldsDictField(attribute='fields')
-    item_attributes = tp_f.DictField(attribute='item_attributes')
+    id = UUIDField(
+        attribute='id',
+        readonly=True,
+        unique=True,
+        help_text='Unique identifier of the lookup table item.',
+    )
+    data_type_id = UUIDField(
+        attribute='table_id',
+        help_text='Identifier of the lookup table this item belongs to.',
+    )
+    fields = FieldsDictField(
+        attribute='fields',
+        help_text='Field values for the row, keyed by field name. Each '
+                  'field holds a field_list of one or more values, each '
+                  'with its own properties (for example a language '
+                  'code).',
+    )
+    item_attributes = tp_f.DictField(
+        attribute='item_attributes',
+        help_text='Attribute values for the row, keyed by attribute '
+                  'name.',
+    )
 
     validate_deserialized_data = JSONSchemaValidator({
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -338,7 +414,12 @@ class LookupTableItemResource(HqBaseResource):
     # It appears that sort_key is not included in any user facing UI. It is only defined as
     # the order of rows in the excel file when uploaded. We'll keep this behavior by incrementing
     # the sort key on new item creations
-    sort_key = tp_f.IntegerField(attribute='sort_key')
+    sort_key = tp_f.IntegerField(
+        attribute='sort_key',
+        help_text='Order of this row within its lookup table, as '
+                  'defined by the row order in the uploaded Excel '
+                  'file. Not exposed in any user-facing UI.',
+    )
 
     def dehydrate_fields(self, bundle):
         def field_json(values):
@@ -410,6 +491,46 @@ class LookupTableItemResource(HqBaseResource):
 
     def detail_uri_kwargs(self, bundle_or_obj):
         return {'pk': get_obj(bundle_or_obj).id.hex}
+
+    class Docs:
+        summary = 'Lookup Table Items'
+        description = (
+            'List, create, update or delete the rows (items) of a '
+            'lookup table in a project space.'
+        )
+        # obj_update() above raises tastypie's own NotFound (not a
+        # domain-specific exception) when the identified row does not
+        # exist, so Tastypie's create-on-PUT fallback genuinely fires
+        # here -- unlike user-v1 and location-v2, whose obj_update raises
+        # something else. See operations._write_responses().
+        put_creates_on_missing = True
+        field_schemas = {
+            'fields': {
+                'additionalProperties': {
+                    'type': 'object',
+                    'properties': {
+                        'field_list': {
+                            'type': 'array',
+                            'items': {
+                                'type': 'object',
+                                'properties': {
+                                    'field_value': {'type': 'string'},
+                                    'properties': {
+                                        'type': 'object',
+                                        'additionalProperties': {
+                                            'type': 'string',
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            'item_attributes': {
+                'additionalProperties': {'type': 'string'},
+            },
+        }
 
     class Meta(CustomResourceMeta):
         object_class = LookupTableRow
