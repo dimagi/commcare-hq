@@ -274,6 +274,11 @@ class LookupTableResource(HqBaseResource):
             'item resources for the rows themselves.'
         )
         examples = {'list_response': 'lookup_table/v1/list_response.json'}
+        # obj_update() below raises tastypie's own NotFound (not a
+        # domain-specific exception) when the identified table does not
+        # exist, so Tastypie's create-on-PUT fallback genuinely fires
+        # here. See operations._write_responses().
+        put_creates_on_missing = True
         field_schemas = {
             'fields': {
                 'items': {
@@ -497,6 +502,12 @@ class LookupTableItemResource(HqBaseResource):
             'List, create, update or delete the rows (items) of a '
             'lookup table in a project space.'
         )
+        # obj_update() above raises tastypie's own NotFound (not a
+        # domain-specific exception) when the identified row does not
+        # exist, so Tastypie's create-on-PUT fallback genuinely fires
+        # here -- unlike user-v1 and location-v2, whose obj_update raises
+        # something else. See operations._write_responses().
+        put_creates_on_missing = True
         field_schemas = {
             'fields': {
                 'additionalProperties': {

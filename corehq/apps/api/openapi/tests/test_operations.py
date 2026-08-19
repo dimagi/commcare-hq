@@ -14,6 +14,7 @@ from corehq.apps.api.openapi.operations import (
     standard_list_parameters,
 )
 from corehq.apps.api.resources import v0_5
+from corehq.apps.fixtures.resources import v0_1 as fixtures_v0_1
 from corehq.apps.locations.resources import v0_6
 
 
@@ -258,6 +259,45 @@ def test_web_user_v1_request_body_is_restricted_to_genuinely_writable_fields():
         'tableau_role',
         'tableau_groups',
     }
+
+
+@pytest.mark.parametrize(
+    'resource_cls, version, doc_slug, detail_path',
+    [
+        (
+            v0_5.CommCareUserResource, 'v1', 'user-v1',
+            '/a/{domain}/api/user/v1/{pk}/',
+        ),
+        (
+            v0_6.LocationResource, 'v2', 'location-v2',
+            '/a/{domain}/api/location/v2/{location_id}/',
+        ),
+    ],
+)
+def test_put_does_not_advertise_a_201_it_cannot_return(
+    resource_cls, version, doc_slug, detail_path
+):
+    """user-v1's obj_update raises couch's ResourceNotFound (-> 500) and
+    location-v2's raises LocationAPIError (-> 400) for a missing record;
+    neither ever reaches tastypie's create-on-PUT fallback, so PUT must
+    not document a 201 alternative."""
+    entry = ApiEntry(resource_cls, version, doc_slug)
+    put = resource_paths(entry)[detail_path]['put']
+    assert set(put['responses']) - {'201'} == set(put['responses']), (
+        f'{doc_slug} documents an unreachable 201 for PUT'
+    )
+
+
+def test_put_advertises_201_where_the_fallback_is_reachable():
+    """LookupTableResource's obj_update raises tastypie's own NotFound
+    for a missing table, so the create-on-PUT fallback is real."""
+    entry = ApiEntry(
+        fixtures_v0_1.LookupTableResource, 'v1', 'lookup-table-v1'
+    )
+    put = resource_paths(entry)[
+        '/a/{domain}/api/lookup_table/v1/{pk}/'
+    ]['put']
+    assert '201' in put['responses']
 
 
 def test_declared_list_example_is_attached():

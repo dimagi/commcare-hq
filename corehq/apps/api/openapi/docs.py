@@ -19,6 +19,7 @@ DOCS_KEYS = (
     'list_write_responses',
     'detail_write_responses',
     'writable_fields',
+    'put_creates_on_missing',
 )
 
 

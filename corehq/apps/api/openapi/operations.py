@@ -379,6 +379,9 @@ def resource_paths(entry):
                     always_return_data=always_return_data,
                     is_list=False,
                     collection_name=collection_name,
+                    put_creates_on_missing=docs.get(
+                        'put_creates_on_missing', False
+                    ),
                 )
             operation = {
                 'summary': summary,
@@ -464,7 +467,13 @@ def _request_body(schema):
 
 
 def _write_responses(
-    method, schema, *, always_return_data, is_list, collection_name
+    method,
+    schema,
+    *,
+    always_return_data,
+    is_list,
+    collection_name,
+    put_creates_on_missing=False,
 ):
     """The response(s) Tastypie actually returns for a write method.
 
@@ -482,8 +491,14 @@ def _write_responses(
       ``always_return_data`` is set. On a detail path, if the identified
       record does not exist, Tastypie falls back to creating it instead,
       which returns 201 -- with a body only when ``always_return_data``
-      is set -- regardless of the flag's effect on the update case. Both
-      outcomes are documented as alternate responses for PUT detail.
+      is set -- regardless of the flag's effect on the update case. This
+      fallback only fires when the resource's own ``obj_update`` raises
+      *tastypie's* ``NotFound``; a resource whose ``obj_update`` raises
+      something else on a missing record (a couch ``ResourceNotFound``,
+      or a resource-specific ``BadRequest`` subclass) never reaches it,
+      so the 201 alternative is only documented when the caller passes
+      ``put_creates_on_missing=True`` -- established per resource by
+      reading its ``obj_update``.
     - PATCH returns 202, with a body only when ``always_return_data`` is
       set.
     - DELETE always returns 204 with no body -- never a body, regardless
@@ -531,7 +546,7 @@ def _write_responses(
             'The record was updated.',
             update_body,
         )
-        if not is_list:
+        if not is_list and put_creates_on_missing:
             # The identified record did not exist, so it was created
             # instead.
             create_body = schema if always_return_data else None
