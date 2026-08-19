@@ -3,6 +3,7 @@
 {% load compress %}
 {% load static %}
 {% load hq_shared_tags %}
+{% js_entry "hqwebapp/js/oauth_authorize" %}
 
 {% block stylesheets %}
   {% compress css %}
@@ -61,7 +62,7 @@
           {% endblocktrans %}
         </h2>
 
-        <form method="post" action="">
+        <form method="post" action="" x-data="{ selectedDomains: [] }">
           {% csrf_token %}
           {% for field in form %}
             {% if field.is_hidden %}{{ field }}{% endif %}
@@ -80,6 +81,15 @@
             <div class="alert alert-danger">{{ error }}</div>
           {% endfor %}
 
+          <div class="mb-3" x-cloak>
+            <label class="form-label" for="{{ form.domains.id_for_label }}">
+              {{ form.domains.label }}
+            </label>
+            {{ form.domains }}
+            {% for error in form.domains.errors %}
+              <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+          </div>
           <div class="mt-3 text-center gap-3">
             <input
               type="submit"
@@ -91,6 +101,8 @@
               class="btn btn-primary btn-lg"
               name="allow"
               value="{% trans 'Authorize' %}"
+              :disabled="selectedDomains.length === 0"
+              disabled
             />
           </div>
         </form>
