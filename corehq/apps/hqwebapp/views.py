@@ -1489,6 +1489,28 @@ def log_email_event(request, secret, domain=None):
     return HttpResponse()
 
 
+@require_GET
+def oauth_authorization_server_metadata(request):
+    """RFC 8414 metadata describing HQ as an OAuth 2.0 authorization server."""
+    def absolute(urlname):
+        return request.build_absolute_uri(reverse(urlname))
+
+    return JsonResponse({
+        'issuer': request.build_absolute_uri('/').rstrip('/'),
+        'authorization_endpoint': absolute('oauth2_provider:authorize'),
+        'token_endpoint': absolute('oauth2_provider:token'),
+        'revocation_endpoint': absolute('oauth2_provider:revoke-token'),
+        'introspection_endpoint': absolute('oauth2_provider:introspect'),
+        'response_types_supported': ['code'],
+        'grant_types_supported': ['authorization_code', 'refresh_token'],
+        'code_challenge_methods_supported': ['S256'],
+        'token_endpoint_auth_methods_supported': [
+            'client_secret_basic', 'client_secret_post',
+        ],
+        'scopes_supported': list(settings.OAUTH2_PROVIDER['SCOPES']),
+    })
+
+
 @method_decorator(require_superuser, name="dispatch")
 class OauthApplicationRegistration(BasePageView):
     urlname = 'oauth_application_registration'
