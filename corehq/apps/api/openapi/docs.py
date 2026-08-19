@@ -18,6 +18,7 @@ DOCS_KEYS = (
     'extra_operations',
     'list_write_responses',
     'detail_write_responses',
+    'writable_fields',
 )
 
 

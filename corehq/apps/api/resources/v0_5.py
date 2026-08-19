@@ -375,6 +375,26 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 },
             },
         }
+        # CommcareUserUpdates.update() (obj_update) and obj_create's own
+        # handling (username, password) are what actually accept these --
+        # every other declared field, notably ``eulas`` (inherited from
+        # UserResource), is rejected with "Attempted to update unknown or
+        # non-editable field" if sent. See operations.request_schema().
+        writable_fields = {
+            'username',
+            'first_name',
+            'last_name',
+            'default_phone_number',
+            'email',
+            'phone_numbers',
+            'groups',
+            'user_data',
+            'primary_location',
+            'locations',
+            'require_account_confirmation',
+            'send_confirmation_email_now',
+            'password',
+        }
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -632,6 +652,23 @@ class WebUserResource(v0_1.WebUserResource):
                               'them from it.',
             },
         ]
+        # WebUserUpdates.update() (obj_update) is what actually accepts
+        # these. Every other declared field -- username, first_name,
+        # last_name, default_phone_number, email, phone_numbers, eulas,
+        # is_admin, permissions, is_active_in_domain -- is either
+        # read-only in practice (dehydrate-only, e.g. is_admin,
+        # permissions, is_active_in_domain) or rejected with "Attempted
+        # to update unknown or non-editable field" if sent. See
+        # operations.request_schema().
+        writable_fields = {
+            'role',
+            'primary_location_id',
+            'assigned_location_ids',
+            'profile',
+            'user_data',
+            'tableau_role',
+            'tableau_groups',
+        }
 
     class Meta(v0_1.WebUserResource.Meta):
         detail_allowed_methods = ['get', 'patch']

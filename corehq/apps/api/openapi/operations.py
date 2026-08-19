@@ -200,6 +200,16 @@ def request_schema(resource_schema, docs):
     Tastypie field, such as ``CommCareUserResource``'s ``password`` --
     can be documented at all. Without this, the convention could declare
     additions for responses but had no way to express one for requests.
+
+    Most HQ resources hand-roll ``obj_create``/``obj_update`` and reject
+    any key their own dispatch table does not recognise -- Tastypie's
+    generic hydrate path (which every declared, non-readonly field would
+    genuinely accept) is not what actually runs. A ``Docs.writable_fields``
+    set, where present, is therefore the authority on what a write request
+    accepts, restricting both declared fields and additions to exactly
+    that set; a resource with no ``writable_fields`` falls back to "every
+    non-readonly declared field", which is only correct for resources that
+    really do use Tastypie's generic hydrate path.
     """
     # NOTE: Tastypie's per-field ``blank`` metadata is *not* used here to
     # derive ``required``, even though it looks like the obvious source.
@@ -216,14 +226,23 @@ def request_schema(resource_schema, docs):
     # reliably derived, via ``jsonobject``'s own ``required=True``.
     field_schemas = docs.get('field_schemas', {})
     declared_fields = resource_schema['fields']
+    writable_fields = docs.get('writable_fields')
     properties = {
         name: field_to_schema(info, override=field_schemas.get(name))
         for name, info in declared_fields.items()
         if not info.get('readonly')
+        and (writable_fields is None or name in writable_fields)
     }
-    properties.update(
-        _field_schema_additions(field_schemas, declared_fields, writable=True)
+    additions = _field_schema_additions(
+        field_schemas, declared_fields, writable=True
     )
+    if writable_fields is not None:
+        additions = {
+            name: schema
+            for name, schema in additions.items()
+            if name in writable_fields
+        }
+    properties.update(additions)
     return {'type': 'object', 'properties': properties}
 
 

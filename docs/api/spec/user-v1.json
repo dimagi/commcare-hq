@@ -312,11 +312,6 @@
                     "description": "Email address of user.",
                     "type": "string"
                   },
-                  "eulas": {
-                    "description": "End user license agreements the user has accepted.",
-                    "nullable": true,
-                    "type": "string"
-                  },
                   "first_name": {
                     "description": "First name of user.",
                     "nullable": true,
@@ -573,11 +568,6 @@
                   },
                   "email": {
                     "description": "Email address of user.",
-                    "type": "string"
-                  },
-                  "eulas": {
-                    "description": "End user license agreements the user has accepted.",
-                    "nullable": true,
                     "type": "string"
                   },
                   "first_name": {

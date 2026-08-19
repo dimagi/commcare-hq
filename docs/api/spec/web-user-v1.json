@@ -357,45 +357,6 @@
                     "nullable": true,
                     "type": "array"
                   },
-                  "default_phone_number": {
-                    "description": "Primary phone number of user.",
-                    "nullable": true,
-                    "type": "string"
-                  },
-                  "email": {
-                    "description": "Email address of user.",
-                    "type": "string"
-                  },
-                  "eulas": {
-                    "description": "End user license agreements the user has accepted.",
-                    "nullable": true,
-                    "type": "string"
-                  },
-                  "first_name": {
-                    "description": "First name of user.",
-                    "nullable": true,
-                    "type": "string"
-                  },
-                  "is_active_in_domain": {
-                    "type": "boolean"
-                  },
-                  "is_admin": {
-                    "type": "boolean"
-                  },
-                  "last_name": {
-                    "description": "Last name of user.",
-                    "nullable": true,
-                    "type": "string"
-                  },
-                  "permissions": {
-                    "additionalProperties": true,
-                    "type": "object"
-                  },
-                  "phone_numbers": {
-                    "description": "List of all phone numbers of the user.",
-                    "items": {},
-                    "type": "array"
-                  },
                   "primary_location_id": {
                     "type": "string"
                   },
@@ -418,10 +379,6 @@
                   "user_data": {
                     "additionalProperties": true,
                     "type": "object"
-                  },
-                  "username": {
-                    "description": "User name of the user, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
-                    "type": "string"
                   }
                 },
                 "type": "object"

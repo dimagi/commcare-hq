@@ -218,6 +218,48 @@ def test_write_only_fields_are_flagged_but_still_writable():
     )
 
 
+def test_user_v1_request_body_excludes_fields_the_resource_rejects():
+    """CommcareUserUpdates.update() rejects any key outside its own
+    dispatch table; ``eulas`` (inherited from UserResource) is not in it,
+    so publishing it as writable would advertise a field that gets a 400
+    ('Attempted to update unknown or non-editable field') in practice."""
+    entry = ApiEntry(v0_5.CommCareUserResource, 'v1', 'user-v1')
+    paths = resource_paths(entry)
+    for path, method in (
+        ('/a/{domain}/api/user/v1/', 'post'),
+        ('/a/{domain}/api/user/v1/{pk}/', 'put'),
+    ):
+        schema = paths[path][method]['requestBody']['content'][
+            'application/json'
+        ]['schema']
+        assert 'eulas' not in schema['properties']
+        assert 'username' in schema['properties']
+        assert 'password' in schema['properties']
+
+
+def test_web_user_v1_request_body_is_restricted_to_genuinely_writable_fields():
+    """WebUserUpdates.update() only dispatches role, location, user_data,
+    tableau_role and tableau_groups; every other declared field --
+    including username, email, first_name, last_name, phone_numbers,
+    default_phone_number, eulas, is_admin, permissions and
+    is_active_in_domain -- is either dehydrate-only or rejected outright,
+    so it must not appear in the PATCH request body."""
+    entry = ApiEntry(v0_5.WebUserResource, 'v1', 'web-user-v1')
+    paths = resource_paths(entry)
+    schema = paths['/a/{domain}/api/web-user/v1/{pk}/']['patch'][
+        'requestBody'
+    ]['content']['application/json']['schema']
+    assert set(schema['properties']) == {
+        'role',
+        'primary_location_id',
+        'assigned_location_ids',
+        'profile',
+        'user_data',
+        'tableau_role',
+        'tableau_groups',
+    }
+
+
 def test_declared_list_example_is_attached():
     entry = ApiEntry(v0_5.CommCareUserResource, 'v1', 'user-v1')
     operation = resource_paths(entry)['/a/{domain}/api/user/v1/']['get']
