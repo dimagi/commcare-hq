@@ -105,7 +105,7 @@ def test_set_local_search_path():
         schema.set_local_search_path(conn)
         search_path = conn.execute(sqlalchemy.text('SHOW search_path')).scalar()
         schema.drop(conn)
-    assert search_path == schema.name
+    assert search_path == f'{schema.name}, public'
 
 @use('db')
 def test_long_domain_schema_lifecycle():

@@ -147,7 +147,7 @@ class DomainSchema:
     def set_local_search_path(self, conn):
         """Scope the connection's search_path to a domain's project DB schema"""
         conn.execute(sqlalchemy.text(
-            f'SET LOCAL search_path TO {self._quoted_name}'
+            f'SET LOCAL search_path TO {self._quoted_name}, public'
         ))
 
     def drop(self, conn):
