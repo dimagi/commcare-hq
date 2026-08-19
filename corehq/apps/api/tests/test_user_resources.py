@@ -1,4 +1,5 @@
 import json
+import uuid
 from unittest.mock import Mock, patch, call
 
 from django.test import TestCase
@@ -457,6 +458,28 @@ class TestCommCareUserResource(APIResourceTest):
         )
         self.assertEqual(user_history.change_messages['password'], UserChangeMessage.password_reset()['password'])
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_API)
+
+    def test_cant_update_missing_user(self):
+        response = self._assert_auth_post_resource(self.single_endpoint(uuid.uuid4().hex),
+                                                   json.dumps({"first_name": "test"}),
+                                                   content_type='application/json',
+                                                   method='PUT')
+
+        assert response.status_code == 404, response.content
+
+    def test_cant_update_user_in_another_domain(self):
+        not_my_user = CommCareUser.create(domain='not-my-project', username="theirs",
+                                          password="qwer1234", created_by=None, created_via=None)
+        self.addCleanup(not_my_user.delete, 'not-my-project', deleted_by=None)
+        first_name_before = not_my_user.first_name
+
+        response = self._assert_auth_post_resource(self.single_endpoint(not_my_user._id),
+                                                   json.dumps({"first_name": "mine now"}),
+                                                   content_type='application/json',
+                                                   method='PUT')
+
+        assert response.status_code == 404, response.content
+        assert CommCareUser.get(not_my_user._id).first_name == first_name_before
 
     def test_update_fails(self):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",

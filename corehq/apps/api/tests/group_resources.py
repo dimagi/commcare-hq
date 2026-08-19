@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.es.groups import group_adapter
@@ -139,6 +140,25 @@ class TestGroupResource(APIResourceTest):
         self.assertTrue(modified.reporting)
         self.assertTrue(modified.case_sharing)
         self.assertEqual(modified.metadata["localization"], "Ghana")
+
+    def test_cant_update_missing_group(self):
+        response = self._assert_auth_post_resource(self.single_endpoint(uuid.uuid4().hex),
+                                                   json.dumps({"name": "test group"}),
+                                                   content_type='application/json',
+                                                   method='PUT')
+
+        assert response.status_code == 404, response.content
+
+    def test_cant_update_group_in_another_domain(self):
+        not_my_group = self._add_group(Group({"name": "theirs", "domain": "not-my-project"}))
+
+        response = self._assert_auth_post_resource(self.single_endpoint(not_my_group._id),
+                                                   json.dumps({"name": "mine now"}),
+                                                   content_type='application/json',
+                                                   method='PUT')
+
+        assert response.status_code == 404, response.content
+        assert Group.get(not_my_group._id).name == "theirs"
 
     def test_delete_group(self):
 

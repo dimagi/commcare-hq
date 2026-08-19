@@ -349,8 +349,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             raise BadRequest(_("You must require account confirmation to send a confirmation email."))
 
     def obj_update(self, bundle, **kwargs):
-        bundle.obj = CommCareUser.get(kwargs['pk'])
-        assert bundle.obj.domain == kwargs['domain']
+        bundle.obj = self.get_document_for_update(kwargs['pk'], kwargs['domain'])
         send_confirmation_email = string_to_boolean(bundle.data.pop('send_confirmation_email_now', False))
         user_change_logger = self._get_user_change_logger(bundle)
         errors = self._update(bundle, user_change_logger)
@@ -760,8 +759,7 @@ class GroupResource(v0_4.GroupResource):
         return bundle
 
     def obj_update(self, bundle, **kwargs):
-        bundle.obj = Group.get(kwargs['pk'])
-        assert bundle.obj.domain == kwargs['domain']
+        bundle.obj = self.get_document_for_update(kwargs['pk'], kwargs['domain'])
         if self._update(bundle):
             assert bundle.obj.domain == kwargs['domain']
             bundle.obj.save()

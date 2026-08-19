@@ -1,6 +1,6 @@
 import json
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import HttpResponse
 from django.urls import NoReverseMatch, include, re_path
 
@@ -16,7 +16,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.api.cors import add_cors_headers_to_response
-from corehq.apps.api.util import get_obj
+from corehq.apps.api.util import get_obj, get_object_or_not_exist
 from corehq.apps.users.util import is_dimagi_email
 
 
@@ -356,3 +356,12 @@ class CouchResourceMixin(object):
         return {
             'pk': get_obj(bundle_or_obj)._id
         }
+
+    def get_document_for_update(self, doc_id, domain):
+        """
+        Converts ``ObjectDoesNotExist`` into ``tastypie.NotFound``
+        """
+        try:
+            return get_object_or_not_exist(self._meta.object_class, doc_id, domain)
+        except ObjectDoesNotExist as err:
+            raise NotFound(str(err))
