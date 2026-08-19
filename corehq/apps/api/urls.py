@@ -44,7 +44,8 @@ from corehq.apps.api.odata.urls import (
     odata_case_urlpatterns,
     odata_form_urlpatterns,
 )
-from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5, v1_0
+from corehq.apps.api.openapi.catalogue import DOMAIN, USER, entries_for_scope
+from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
 from corehq.apps.api.resources.messaging_event.view import messaging_events
 from corehq.apps.api.resources.v0_5 import (
     DomainCases,
@@ -60,7 +61,35 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations import resources as locations
 from corehq.motech.generic_inbound.views import generic_inbound_api
 
-_OLD_API_LIST = (
+# The deprecated v0.x URL scheme: /a/<domain>/api/v0.5/case/ and friends.
+# Superseded by the versioned-per-resource scheme the catalogue drives
+# (/a/<domain>/api/case/v1/). Kept until usage monitoring shows integrators
+# have migrated, then removed wholesale -- which is why it stays a list of
+# its own rather than being folded into the catalogue.
+#
+# To remove the scheme, delete all of:
+#   - this list and VERSIONED_USER_API_LIST, their two versioned_apis()
+#     calls in urlpatterns, and versioned_apis() itself, which then has no
+#     caller;
+#   - the four Case API v0.6 aliases below (CASE_V06_*) and their constants
+#     in corehq/apps/api/const.py;
+#   - the v0.5-prefixed odata, messaging-event and ucr routes, which are
+#     spelled inline in urlpatterns rather than coming from these lists;
+#   - the waf_allow() call at the bottom of this module, whose hard-coded
+#     pattern matches api/v<digits>/form/;
+#   - ProductResource, the one resource class these lists leave with no
+#     other caller. The other older classes here -- v0_1.CommCareUserResource,
+#     v0_1.WebUserResource, v0_3.CommCareCaseResource, v0_4.GroupResource --
+#     are base classes of the catalogued v1 resources (user-v1, web-user-v1,
+#     case-v1, group-v1) and of SingleSignOnResource.post_list, so they stay.
+#
+# On proving nothing else moved: EXPECTED_DOMAIN_PATTERNS in
+# corehq/apps/api/tests/test_urls.py pins the inline routes above by name,
+# but NOT the per-resource URLs these lists generate -- path('', include(...))
+# collapses all of them into a single '' entry. Removing a resource from
+# these lists therefore changes no pinned pattern. Check the resource URLs by
+# regenerating that snapshot and reading the diff, not by watching it pass.
+_DEPRECATED_API_LIST = (
     (
         (0, 3),
         (
@@ -187,7 +216,7 @@ urlpatterns = [
     path(
         'case/v2/ext/<path:external_id>/', case_api, name='case_api_detail_ext'
     ),
-    path('', include(list(versioned_apis(_OLD_API_LIST)))),
+    path('', include(list(versioned_apis(_DEPRECATED_API_LIST)))),
     url(
         r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$',
         CaseAttachmentAPI.as_view(),
@@ -219,37 +248,10 @@ urlpatterns = [
     url(
         r'ucr/(?P<api_version>v1)/', v0_5.get_ucr_data, name='api_get_ucr_data'
     ),
-    v0_4.ApplicationResource.get_urlpattern('v1'),
-    v0_4.CommCareCaseResource.get_urlpattern('v1'),
-    v0_4.XFormInstanceResource.get_urlpattern('v1'),
-    v0_4.SingleSignOnResource.get_urlpattern('v1'),
-    v0_5.CommCareUserResource.get_urlpattern('v1'),
-    v0_5.WebUserResource.get_urlpattern('v1'),
-    v0_5.GroupResource.get_urlpattern('v1'),
-    v0_5.BulkUserResource.get_urlpattern('v1'),
-    fixtures.v0_1.InternalFixtureResource.get_urlpattern('v1'),
-    fixtures.v0_1.FixtureResource.get_urlpattern('v1'),
-    v0_5.DeviceReportResource.get_urlpattern('v1'),
-    DomainMetadataResource.get_urlpattern('v1'),
-    locations.v0_5.LocationResource.get_urlpattern('v1'),
-    locations.v0_6.LocationResource.get_urlpattern('v2'),
-    locations.v0_5.LocationTypeResource.get_urlpattern('v1'),
-    v0_5.SimpleReportConfigurationResource.get_urlpattern('v1'),
-    v0_5.ConfigurableReportDataResource.get_urlpattern('v1'),
-    v0_5.DataSourceConfigurationResource.get_urlpattern('v1'),
-    DomainForms.get_urlpattern('v1'),
-    DomainCases.get_urlpattern('v1'),
-    DomainUsernames.get_urlpattern('v1'),
-    locations.v0_1.InternalLocationResource.get_urlpattern('v1'),
-    v0_5.ODataCaseResource.get_urlpattern('v1'),
-    v0_5.ODataFormResource.get_urlpattern('v1'),
-    fixtures.v0_1.LookupTableResource.get_urlpattern('v1'),
-    fixtures.v0_1.LookupTableItemResource.get_urlpattern('v1'),
-    fixtures.v0_6.LookupTableItemResource.get_urlpattern('v2'),
-    v0_5.NavigationEventAuditResource.get_urlpattern('v1'),
-    v1_0.CommCareAnalyticsUserResource.get_urlpattern('v1'),
-    v1_0.InvitationResource.get_urlpattern('v1'),
-    v1_0.DETExportInstanceResource.get_urlpattern('v1'),
+    *[
+        entry.resource.get_urlpattern(entry.version)
+        for entry in entries_for_scope(DOMAIN)
+    ],
 ]
 
 
@@ -305,8 +307,10 @@ VERSIONED_USER_API_LIST = (
 
 user_urlpatterns = [
     path('', include(list(versioned_apis(VERSIONED_USER_API_LIST)))),
-    v0_5.IdentityResource.get_urlpattern('v1'),
-    UserDomainsResource.get_urlpattern('v1'),
+    *[
+        entry.resource.get_urlpattern(entry.version)
+        for entry in entries_for_scope(USER)
+    ],
 ]
 
 waf_allow(
