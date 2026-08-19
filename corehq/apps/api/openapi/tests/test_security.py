@@ -1,5 +1,6 @@
 from tastypie.authorization import ReadOnlyAuthorization
 
+from corehq.apps.api.openapi.builder import build_all
 from corehq.apps.api.openapi.security import (
     SECURITY_REQUIREMENT,
     SECURITY_SCHEMES,
@@ -80,11 +81,40 @@ def test_meta_default_authentication_has_no_permission():
 
 
 def test_sso_is_recognised_as_authenticating_nobody():
-    """SingleSignOnResource verifies credentials inside post_list and
-    accepts anonymous requests to do so, so publishing the document-wide
-    security requirement for it would be a false statement."""
+    # SingleSignOnResource verifies credentials inside post_list and
+    # accepts anonymous requests to do so, so publishing the
+    # document-wide security requirement for it would be a false
+    # statement.
     assert not enforces_authentication(SingleSignOnResource())
 
 
 def test_a_resource_with_real_authentication_enforces_it():
     assert enforces_authentication(v0_5.CommCareUserResource())
+
+
+def test_only_sso_publishes_an_empty_security_requirement():
+    # Asserts the *set* of unauthenticated operations.
+    #
+    # ``security: []`` is OpenAPI's explicit "this operation needs
+    # none", published wherever ``enforces_authentication()`` returns
+    # False. The tests above prove that function answers correctly for
+    # two resources; this one pins the answer across every generated
+    # document, so a resource that stops enforcing authentication, for
+    # example by gaining an ``Authentication`` subclass that does not
+    # override ``is_authenticated``, cannot start advertising itself as
+    # open without this failing.
+    #
+    # Only ``SingleSignOnResource``'s POST qualifies today: it verifies
+    # credentials inside ``post_list`` and must accept an anonymous
+    # request in order to do so.
+    unauthenticated = {
+        (slug, path, method)
+        for slug, document in build_all().items()
+        for path, item in document.get('paths', {}).items()
+        for method, operation in item.items()
+        if method != 'parameters' and operation.get('security') == []
+    }
+    assert unauthenticated == {
+        ('sso-v1', '/a/{domain}/api/sso/v1/', 'post'),
+        ('bundle', '/a/{domain}/api/sso/v1/', 'post'),
+    }
