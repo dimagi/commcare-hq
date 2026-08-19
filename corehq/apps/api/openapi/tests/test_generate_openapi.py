@@ -9,6 +9,7 @@ from django.core.management.base import CommandError
 from corehq.apps.api.management.commands import generate_openapi
 from corehq.apps.api.openapi.builder import build_all
 from corehq.apps.api.management.commands.generate_openapi import (
+    SPEC_DIR,
     orphaned_specs,
     serialize,
     stale_specs,
@@ -72,6 +73,17 @@ def test_orphaned_specs_reports_a_stale_file_not_in_build_all(tmp_path):
 
 def test_orphaned_specs_is_empty_for_a_missing_directory(tmp_path):
     assert orphaned_specs(tmp_path / 'does-not-exist', build_all()) == []
+
+
+def test_committed_specs_are_up_to_date():
+    """Regeneration must be a no-op. If this fails, run:
+
+    ./manage.py generate_openapi
+
+    Asks the question through the same helper as ``--check``, so the suite
+    and the command cannot disagree about what "up to date" means.
+    """
+    assert stale_specs(SPEC_DIR, build_all()) == []
 
 
 # ``handle()`` itself, as opposed to the helpers above. The helpers are
