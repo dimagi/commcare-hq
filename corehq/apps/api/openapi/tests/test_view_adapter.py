@@ -67,6 +67,20 @@ def test_compound_filters_are_published_under_usable_names():
         assert f'last_modified.{qualifier}' in names
 
 
+def test_paging_and_field_shaping_parameters_are_published():
+    """get_list() supports limit/cursor pagination, an xpath 'query'
+    filter, and mutually-exclusive fields/exclude field shaping, none of
+    which is a case filter -- they must still be documented, or a client
+    generated from the spec cannot page or shape a response at all."""
+    from corehq.apps.hqcase.views import case_api
+
+    names = {p['name'] for p in case_api._openapi_docs.parameters}
+    for name in ('limit', 'cursor', 'query', 'fields', 'exclude'):
+        assert name in names
+    assert 'fields.<name>' in names
+    assert 'exclude.<name>' in names
+
+
 def _case_v2_schema(method, path=None):
     from corehq.apps.hqcase.views import case_api
 

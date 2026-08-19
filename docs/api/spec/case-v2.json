@@ -46,6 +46,70 @@
         "operationId": "case-v2_list_get",
         "parameters": [
           {
+            "description": "Maximum number of cases to return per page. Defaults to 20, maximum 5000.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "An opaque cursor from a previous response's `next.cursor`, used to fetch the next page of results. Do not combine with other filter parameters, which are already encoded in the cursor.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "An XPath-like case search query expression (see build_filter_from_xpath).",
+            "in": "query",
+            "name": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Comma-separated list of field names to include in the response. Use dot notation to select a nested field, e.g. fields.properties=<name>. Mutually exclusive with exclude -- using both in the same request returns an error.",
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Comma-separated list of field names to include in the response. Use dot notation to select a nested field, e.g. fields.properties=<name>. Mutually exclusive with exclude -- using both in the same request returns an error.",
+            "in": "query",
+            "name": "fields.<name>",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Comma-separated list of field names to remove from the response. Use dot notation to select a nested field, e.g. exclude.properties=<name>. Mutually exclusive with fields -- using both in the same request returns an error.",
+            "in": "query",
+            "name": "exclude",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Comma-separated list of field names to remove from the response. Use dot notation to select a nested field, e.g. exclude.properties=<name>. Mutually exclusive with fields -- using both in the same request returns an error.",
+            "in": "query",
+            "name": "exclude.<name>",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "Return cases with this case name.",
             "in": "query",
             "name": "case_name",

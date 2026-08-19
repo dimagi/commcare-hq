@@ -120,8 +120,74 @@ FREEFORM_COMPOUND_FILTERS = {
 }
 
 
+# Parameters get_list() and its helpers accept that are not themselves
+# case filters: paging (limit/cursor), a raw query expression, and the
+# field-shaping parameters implemented by field_filters.py. Kept apart
+# from FILTER_DESCRIPTIONS/SIMPLE_FILTERS/COMPOUND_FILTERS because they
+# are not filters and are never looked up by name from those tables.
+_FIELDS_DESCRIPTION = (
+    'Comma-separated list of field names to include in the response. '
+    'Use dot notation to select a nested field, e.g. '
+    'fields.properties=<name>. Mutually exclusive with exclude -- using '
+    'both in the same request returns an error.'
+)
+_EXCLUDE_DESCRIPTION = (
+    'Comma-separated list of field names to remove from the response. '
+    'Use dot notation to select a nested field, e.g. '
+    'exclude.properties=<name>. Mutually exclusive with fields -- using '
+    'both in the same request returns an error.'
+)
+
+NON_FILTER_PARAMETERS = (
+    {
+        'name': 'limit',
+        'description': f'Maximum number of cases to return per page. '
+                       f'Defaults to {DEFAULT_PAGE_SIZE}, maximum '
+                       f'{MAX_PAGE_SIZE}.',
+        'schema': {'type': 'integer', 'default': DEFAULT_PAGE_SIZE},
+    },
+    {
+        'name': 'cursor',
+        'description': "An opaque cursor from a previous response's "
+                       '`next.cursor`, used to fetch the next page of '
+                       'results. Do not combine with other filter '
+                       'parameters, which are already encoded in the '
+                       'cursor.',
+        'schema': {'type': 'string'},
+    },
+    {
+        'name': 'query',
+        'description': 'An XPath-like case search query expression '
+                       '(see build_filter_from_xpath).',
+        'schema': {'type': 'string'},
+    },
+    {
+        'name': 'fields',
+        'description': _FIELDS_DESCRIPTION,
+        'schema': {'type': 'string'},
+    },
+    {
+        'name': 'fields.<name>',
+        'description': _FIELDS_DESCRIPTION,
+        'schema': {'type': 'string'},
+    },
+    {
+        'name': 'exclude',
+        'description': _EXCLUDE_DESCRIPTION,
+        'schema': {'type': 'string'},
+    },
+    {
+        'name': 'exclude.<name>',
+        'description': _EXCLUDE_DESCRIPTION,
+        'schema': {'type': 'string'},
+    },
+)
+
+
 def filter_parameters():
-    """OpenAPI query parameters for the filters this module implements.
+    """OpenAPI query parameters this endpoint accepts: the case filters
+    plus paging, the raw query expression, and the field-shaping
+    parameters (see ``NON_FILTER_PARAMETERS``).
 
     None of ``SIMPLE_FILTERS`` or ``COMPOUND_FILTERS`` names a usable
     query parameter on its own for a compound filter: ``_get_filter()``
@@ -130,7 +196,10 @@ def filter_parameters():
     therefore expanded into the concrete parameter name(s) a client can
     actually send.
     """
-    parameters = []
+    parameters = [
+        {'in': 'query', 'required': False, **param}
+        for param in NON_FILTER_PARAMETERS
+    ]
     for name in sorted(SIMPLE_FILTERS):
         parameters.append({
             'name': name,
