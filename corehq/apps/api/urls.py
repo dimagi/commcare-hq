@@ -44,7 +44,8 @@ from corehq.apps.api.odata.urls import (
     odata_case_urlpatterns,
     odata_form_urlpatterns,
 )
-from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5, v1_0
+from corehq.apps.api.openapi.catalogue import DOMAIN, USER, entries_for_scope
+from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
 from corehq.apps.api.resources.messaging_event.view import messaging_events
 from corehq.apps.api.resources.v0_5 import (
     DomainCases,
@@ -219,37 +220,10 @@ urlpatterns = [
     url(
         r'ucr/(?P<api_version>v1)/', v0_5.get_ucr_data, name='api_get_ucr_data'
     ),
-    v0_4.ApplicationResource.get_urlpattern('v1'),
-    v0_4.CommCareCaseResource.get_urlpattern('v1'),
-    v0_4.XFormInstanceResource.get_urlpattern('v1'),
-    v0_4.SingleSignOnResource.get_urlpattern('v1'),
-    v0_5.CommCareUserResource.get_urlpattern('v1'),
-    v0_5.WebUserResource.get_urlpattern('v1'),
-    v0_5.GroupResource.get_urlpattern('v1'),
-    v0_5.BulkUserResource.get_urlpattern('v1'),
-    fixtures.v0_1.InternalFixtureResource.get_urlpattern('v1'),
-    fixtures.v0_1.FixtureResource.get_urlpattern('v1'),
-    v0_5.DeviceReportResource.get_urlpattern('v1'),
-    DomainMetadataResource.get_urlpattern('v1'),
-    locations.v0_5.LocationResource.get_urlpattern('v1'),
-    locations.v0_6.LocationResource.get_urlpattern('v2'),
-    locations.v0_5.LocationTypeResource.get_urlpattern('v1'),
-    v0_5.SimpleReportConfigurationResource.get_urlpattern('v1'),
-    v0_5.ConfigurableReportDataResource.get_urlpattern('v1'),
-    v0_5.DataSourceConfigurationResource.get_urlpattern('v1'),
-    DomainForms.get_urlpattern('v1'),
-    DomainCases.get_urlpattern('v1'),
-    DomainUsernames.get_urlpattern('v1'),
-    locations.v0_1.InternalLocationResource.get_urlpattern('v1'),
-    v0_5.ODataCaseResource.get_urlpattern('v1'),
-    v0_5.ODataFormResource.get_urlpattern('v1'),
-    fixtures.v0_1.LookupTableResource.get_urlpattern('v1'),
-    fixtures.v0_1.LookupTableItemResource.get_urlpattern('v1'),
-    fixtures.v0_6.LookupTableItemResource.get_urlpattern('v2'),
-    v0_5.NavigationEventAuditResource.get_urlpattern('v1'),
-    v1_0.CommCareAnalyticsUserResource.get_urlpattern('v1'),
-    v1_0.InvitationResource.get_urlpattern('v1'),
-    v1_0.DETExportInstanceResource.get_urlpattern('v1'),
+    *[
+        entry.resource.get_urlpattern(entry.version)
+        for entry in entries_for_scope(DOMAIN)
+    ],
 ]
 
 
@@ -305,8 +279,10 @@ VERSIONED_USER_API_LIST = (
 
 user_urlpatterns = [
     path('', include(list(versioned_apis(VERSIONED_USER_API_LIST)))),
-    v0_5.IdentityResource.get_urlpattern('v1'),
-    UserDomainsResource.get_urlpattern('v1'),
+    *[
+        entry.resource.get_urlpattern(entry.version)
+        for entry in entries_for_scope(USER)
+    ],
 ]
 
 waf_allow(
