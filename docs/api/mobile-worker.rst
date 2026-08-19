@@ -248,6 +248,11 @@ Request & Response Details
        }
     }
 
+**Response**
+
+PUT only updates an existing mobile worker, it never creates one. If no mobile
+worker with the given ID exists in the domain, the response is 404 Not Found.
+
 User Delete (Mobile Worker)
 ===========================
 

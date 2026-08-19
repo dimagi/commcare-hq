@@ -231,3 +231,8 @@ Request & Response Details
         "8a642f722c9e617eeed29290e409fcd5"
       ]
     }
+
+**Response**
+
+PUT only updates an existing group, it never creates one. If no group with the
+given ID exists in the domain, the response is 404 Not Found.
