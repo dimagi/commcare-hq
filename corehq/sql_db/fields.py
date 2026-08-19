@@ -39,6 +39,11 @@ class ModelClassField(CharField):
             return value
         return self._slug_by_model[value]
 
+    def pre_save(self, model_instance, add):
+        # Override pre_save to ensure the slug value is returned, which is
+        # ultimately what is saved to the database.
+        return self.get_prep_value(getattr(model_instance, self.attname))
+
 
 class CharIdField(CharField):
     """CharField that does not create varchar_pattern_ops index
