@@ -6,9 +6,9 @@ from collections import namedtuple
 from dataclasses import InitVar, dataclass
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
-from dimagi.utils.parsing import string_to_boolean
 
-from django.urls import re_path as url
+import pytz
+from dimagi.utils.parsing import string_to_boolean
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models import Max, Min, Q
@@ -16,28 +16,26 @@ from django.db.models.functions import TruncDate
 from django.http import (
     Http404,
     HttpResponse,
+    HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseNotFound,
-    HttpResponseBadRequest,
     JsonResponse,
     QueryDict,
 )
 from django.test import override_settings
+from django.urls import re_path as url
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 from django.views.decorators.csrf import csrf_exempt
-
-import pytz
 from memoized import memoized_property
+from phonelog.models import DeviceReportEntry
 from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource
-
-from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -53,6 +51,10 @@ from corehq.apps.api.odata.views import (
     add_odata_headers,
     raise_odata_permissions_issues,
 )
+from corehq.apps.api.openapi.declarations import (
+    response_object,
+    query_parameter,
+)
 from corehq.apps.api.resources.auth import (
     LoginAuthentication,
     ODataAuthentication,
@@ -65,18 +67,25 @@ from corehq.apps.api.resources.meta import (
 )
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from corehq.apps.api.util import (
+    cursor_based_query_for_datasource,
     django_date_filter,
     get_obj,
     make_date_filter,
     parse_str_to_date,
-    cursor_based_query_for_datasource
 )
-from corehq.apps.api.validation import WebUserResourceSpec, WebUserValidationException
+from corehq.apps.api.validation import (
+    WebUserResourceSpec,
+    WebUserValidationException,
+)
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.case_importer.views import require_can_edit_data
-from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
+from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
+    CustomDataFieldsProfile,
+)
 from corehq.apps.domain.decorators import api_auth
+from corehq.apps.domain.forms import send_password_reset_email
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
@@ -85,7 +94,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
-from corehq.apps.reports.models import TableauUser, TableauConnectedApp
+from corehq.apps.reports.models import TableauConnectedApp, TableauUser
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
@@ -113,7 +122,9 @@ from corehq.apps.userreports.util import (
     get_indicator_adapter,
     get_report_config_or_not_found,
 )
-from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
+from corehq.apps.users.account_confirmation import (
+    send_account_confirmation_if_necessary,
+)
 from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
     get_user_id_by_username,
@@ -129,12 +140,11 @@ from corehq.apps.users.models import (
 )
 from corehq.apps.users.util import (
     generate_mobile_username,
-    raw_username,
     log_user_change,
+    raw_username,
     verify_modify_user_conditions,
 )
 from corehq.apps.users.validation import validate_profile_id
-from corehq.apps.domain.forms import send_password_reset_email
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
@@ -251,10 +261,166 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
 
 class CommCareUserResource(v0_1.CommCareUserResource):
-    primary_location = fields.CharField()
-    locations = fields.ListField()
-    require_account_confirmation = fields.BooleanField(default=False)
-    send_confirmation_email_now = fields.BooleanField(default=False)
+    primary_location = fields.CharField(
+        help_text='The location ID of the primary location of the user.',
+    )
+    locations = fields.ListField(
+        help_text='A list of location IDs that the user is assigned to.',
+    )
+    require_account_confirmation = fields.BooleanField(
+        default=False,
+        help_text='If True, creates an unconfirmed account (similar to a '
+                  'deactivated account). False by default. Write-only: '
+                  'not returned in the response.',
+    )
+    send_confirmation_email_now = fields.BooleanField(
+        default=False,
+        help_text='If True, immediately sends an account confirmation '
+                  'email. False by default. Write-only: not returned in '
+                  'the response.',
+    )
+
+    class Docs:
+        summary = 'Mobile Workers'
+        description = (
+            'List mobile workers in a project space, or fetch a single '
+            'mobile worker by identifier. Mobile workers are the users '
+            'who submit forms from CommCare mobile or web apps.\n\n'
+            'When `require_account_confirmation` is set, `password` '
+            'must be omitted (the user sets their own password on '
+            'confirmation) and `email` must be provided (the '
+            'confirmation is sent there). When `phone_numbers` is sent, '
+            'its first entry becomes the mobile worker\'s '
+            '`default_phone_number`.'
+        )
+        examples = {'list_response': 'user/v1/list_response.json'}
+        field_schemas = {
+            'phone_numbers': {
+                'items': {'type': 'string'},
+            },
+            'groups': {
+                'items': {'type': 'string'},
+            },
+            'locations': {
+                'items': {'type': 'string'},
+            },
+            'user_data': {
+                'additionalProperties': {'type': 'string'},
+            },
+            'primary_location': {
+                # dehydrate_primary_location() returns None for a user
+                # with no assigned location; the CharField declaration
+                # doesn't set null=True, so without this override the
+                # generated schema would wrongly forbid that real value.
+                'nullable': True,
+            },
+            'require_account_confirmation': {'writeOnly': True},
+            'send_confirmation_email_now': {'writeOnly': True},
+        }
+        # None of these is a declared Tastypie field --
+        # CommcareUserUpdates.update() (see user_updates.py) reads all
+        # three directly off bundle.data -- so they exist only as
+        # write-only additions (see request_schema()'s docstring).
+        added_fields = {
+            'password': {
+                'type': 'string',
+                'writeOnly': True,
+                'description': "The user's password. Required unless "
+                              'connect_username is provided, or unless '
+                              'require_account_confirmation is set (in '
+                              'which case the user sets their own '
+                              'password on confirmation). Not returned '
+                              'in the response.',
+            },
+            'language': {
+                'type': 'string',
+                'writeOnly': True,
+                'description': "The user's language/locale code, e.g. "
+                              "'en'. Not returned in the response.",
+            },
+            'role': {
+                'type': 'string',
+                'writeOnly': True,
+                'description': 'Name of the role to assign the mobile '
+                              'worker within this project space. Not '
+                              'returned in the response.',
+            },
+        }
+        parameters = [
+            query_parameter('group', 'Group UUID. Returns only mobile workers belonging to that group.'),
+            query_parameter(
+                'archived',
+                'When true, list archived (deactivated) users instead of active ones.',
+                {'type': 'boolean'},
+            ),
+            query_parameter(
+                'extras',
+                'When true, add extra data fields for recent user activity. May slow down the response.',
+                {'type': 'boolean'},
+            ),
+        ]
+        extra_operations = [
+            {
+                'path': '{pk}/activate/',
+                'method': 'post',
+                'operation_id': 'activate',
+                'summary': 'Activate Mobile Worker',
+                'description': 'Reactivate a deactivated mobile worker.',
+            },
+            {
+                'path': '{pk}/deactivate/',
+                'method': 'post',
+                'operation_id': 'deactivate',
+                'summary': 'Deactivate Mobile Worker',
+                'description': 'Deactivate a mobile worker, preventing '
+                              'them from logging in or submitting '
+                              'forms.',
+            },
+            {
+                'path': '{pk}/email_password_reset/',
+                'method': 'post',
+                'operation_id': 'email_password_reset',
+                'summary': 'Email Password Reset',
+                'description': "Send the mobile worker a password "
+                              "reset email.",
+            },
+        ]
+        list_write_responses = {
+            # serialize() below overrides always_return_data's full
+            # record with just the new user's ID for a POST response.
+            'post': {
+                '201': response_object(
+                    'The created mobile worker.',
+                    {
+                        'type': 'object',
+                        'properties': {'id': {'type': 'string'}},
+                        'required': ['id'],
+                    },
+                ),
+            },
+        }
+        # CommcareUserUpdates.update() (obj_update) and obj_create's own
+        # handling (username, password) are what actually accept these --
+        # every other declared field, notably ``eulas`` (inherited from
+        # UserResource), is rejected with "Attempted to update unknown or
+        # non-editable field" if sent. See operations.request_schema().
+        writable_fields = {
+            'username',
+            'first_name',
+            'last_name',
+            'default_phone_number',
+            'email',
+            'phone_numbers',
+            'groups',
+            'user_data',
+            'primary_location',
+            'locations',
+            'require_account_confirmation',
+            'send_confirmation_email_now',
+            'password',
+            'language',
+            'role',
+        }
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -492,6 +658,44 @@ class WebUserResource(v0_1.WebUserResource):
     # Don't use in list for performance - it currently makes a request for each user in the response
     tableau_groups = fields.ListField(null=True, use_in='detail')
 
+    class Docs:
+        extra_operations = [
+            {
+                'path': '{pk}/activate/',
+                'method': 'post',
+                'operation_id': 'activate',
+                'summary': 'Activate Web User',
+                'description': "Re-enable a web user's membership in "
+                              'this project space.',
+            },
+            {
+                'path': '{pk}/deactivate/',
+                'method': 'post',
+                'operation_id': 'deactivate',
+                'summary': 'Deactivate Web User',
+                'description': "Disable a web user's membership in "
+                              'this project space, without removing '
+                              'them from it.',
+            },
+        ]
+        # WebUserUpdates.update() (obj_update) is what actually accepts
+        # these. Every other declared field -- username, first_name,
+        # last_name, default_phone_number, email, phone_numbers, eulas,
+        # is_admin, permissions, is_active_in_domain -- is either
+        # read-only in practice (dehydrate-only, e.g. is_admin,
+        # permissions, is_active_in_domain) or rejected with "Attempted
+        # to update unknown or non-editable field" if sent. See
+        # operations.request_schema().
+        writable_fields = {
+            'role',
+            'primary_location_id',
+            'assigned_location_ids',
+            'profile',
+            'user_data',
+            'tableau_role',
+            'tableau_groups',
+        }
+
     class Meta(v0_1.WebUserResource.Meta):
         detail_allowed_methods = ['get', 'patch']
         always_return_data = True
@@ -665,6 +869,33 @@ class AdminWebUserResource(v0_1.UserResource):
 
 
 class GroupResource(v0_4.GroupResource):
+
+    class Docs:
+        list_write_responses = {
+            # serialize() below overrides always_return_data's full
+            # record with just the new group's ID for a POST response.
+            'post': {
+                '201': response_object(
+                    'The created group.',
+                    {
+                        'type': 'object',
+                        'properties': {'id': {'type': 'string'}},
+                        'required': ['id'],
+                    },
+                ),
+            },
+            # patch_list() (via patch_list_replica() in
+            # corehq/apps/api/resources/__init__.py) returns a bare
+            # array of group IDs, not an object -- see serialize()'s
+            # _is_list() branch below.
+            'patch': {
+                '202': response_object(
+                    'The IDs of the created or updated groups, in the '
+                    'same order as the request.',
+                    {'type': 'array', 'items': {'type': 'string'}},
+                ),
+            },
+        }
 
     class Meta(v0_4.GroupResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -1110,6 +1341,12 @@ class UserDomainsResource(ApiVersioningMixin, CorsResourceMixin, Resource):
         object_class = UserDomain
         include_resource_uri = False
         paginator_class = DoesNothingPaginator
+        # This is a plain Resource with no obj_create/obj_update/
+        # obj_delete, so a write raises NotImplementedError (500).
+        # Without these, Tastypie's default ``allowed_methods`` would
+        # still publish POST/PUT/PATCH/DELETE as if they worked.
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
 
     def dispatch_list(self, request, **kwargs):
         try:
