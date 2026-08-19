@@ -100,10 +100,38 @@ FILTER_DESCRIPTIONS = {
 }
 
 
+# The date-based compound filters take one of exactly these qualifiers
+# (see _make_date_filter/make_date_filter). Unlike ``properties`` and
+# ``indices``, whose qualifier is an open-ended, caller-supplied name,
+# this set is small and fixed, so each ``<name>.<qualifier>`` can be
+# published as a concrete, usable parameter.
+DATE_FILTER_QUALIFIERS = ('gt', 'gte', 'lt', 'lte')
+
+# Compound filters whose qualifier is a caller-supplied name (a case
+# property, or an index identifier) rather than one of a fixed set --
+# there is no way to enumerate these as concrete parameters, so they are
+# published under a documented placeholder name instead. OpenAPI 3.0.3
+# has no first-class way to express "a family of parameters sharing a
+# dotted prefix"; this matches the convention already used for these
+# same filters on docs/api/cases-v2.rst.
+FREEFORM_COMPOUND_FILTERS = {
+    'properties': 'name',
+    'indices': 'identifier',
+}
+
+
 def filter_parameters():
-    """OpenAPI query parameters for the filters this module implements."""
+    """OpenAPI query parameters for the filters this module implements.
+
+    None of ``SIMPLE_FILTERS`` or ``COMPOUND_FILTERS`` names a usable
+    query parameter on its own for a compound filter: ``_get_filter()``
+    requires a ``.`` in the key, so ``GET ...?properties=x`` is rejected
+    with "'properties' is not a valid parameter." Each compound filter is
+    therefore expanded into the concrete parameter name(s) a client can
+    actually send.
+    """
     parameters = []
-    for name in sorted({*SIMPLE_FILTERS, *COMPOUND_FILTERS}):
+    for name in sorted(SIMPLE_FILTERS):
         parameters.append({
             'name': name,
             'in': 'query',
@@ -111,6 +139,25 @@ def filter_parameters():
             'description': FILTER_DESCRIPTIONS[name],
             'schema': {'type': 'string'},
         })
+    for name in sorted(COMPOUND_FILTERS):
+        if name in FREEFORM_COMPOUND_FILTERS:
+            placeholder = FREEFORM_COMPOUND_FILTERS[name]
+            parameters.append({
+                'name': f'{name}.<{placeholder}>',
+                'in': 'query',
+                'required': False,
+                'description': FILTER_DESCRIPTIONS[name],
+                'schema': {'type': 'string'},
+            })
+        else:
+            for qualifier in DATE_FILTER_QUALIFIERS:
+                parameters.append({
+                    'name': f'{name}.{qualifier}',
+                    'in': 'query',
+                    'required': False,
+                    'description': FILTER_DESCRIPTIONS[name],
+                    'schema': {'type': 'string'},
+                })
     return parameters
 
 

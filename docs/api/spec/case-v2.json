@@ -73,24 +73,6 @@
             }
           },
           {
-            "description": "Filter by the date the case was closed.",
-            "in": "query",
-            "name": "date_closed",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Filter by the date the case was opened.",
-            "in": "query",
-            "name": "date_opened",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "description": "Return cases with this external ID.",
             "in": "query",
             "name": "external_id",
@@ -109,33 +91,6 @@
             }
           },
           {
-            "description": "Filter by the date the case was indexed for search.",
-            "in": "query",
-            "name": "indexed_on",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Return cases indexed by the given case, as indices.<identifier>=<case_id>.",
-            "in": "query",
-            "name": "indices",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Filter by modification date, as last_modified.gte=<date>.",
-            "in": "query",
-            "name": "last_modified",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "description": "Return cases owned by this user or group ID.",
             "in": "query",
             "name": "owner_id",
@@ -145,9 +100,162 @@
             }
           },
           {
+            "description": "Filter by the date the case was closed.",
+            "in": "query",
+            "name": "date_closed.gt",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by the date the case was closed.",
+            "in": "query",
+            "name": "date_closed.gte",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by the date the case was closed.",
+            "in": "query",
+            "name": "date_closed.lt",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by the date the case was closed.",
+            "in": "query",
+            "name": "date_closed.lte",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by the date the case was opened.",
+            "in": "query",
+            "name": "date_opened.gt",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by the date the case was opened.",
+            "in": "query",
+            "name": "date_opened.gte",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by the date the case was opened.",
+            "in": "query",
+            "name": "date_opened.lt",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by the date the case was opened.",
+            "in": "query",
+            "name": "date_opened.lte",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by the date the case was indexed for search.",
+            "in": "query",
+            "name": "indexed_on.gt",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by the date the case was indexed for search.",
+            "in": "query",
+            "name": "indexed_on.gte",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by the date the case was indexed for search.",
+            "in": "query",
+            "name": "indexed_on.lt",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by the date the case was indexed for search.",
+            "in": "query",
+            "name": "indexed_on.lte",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Return cases indexed by the given case, as indices.<identifier>=<case_id>.",
+            "in": "query",
+            "name": "indices.<identifier>",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by modification date, as last_modified.gte=<date>.",
+            "in": "query",
+            "name": "last_modified.gt",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by modification date, as last_modified.gte=<date>.",
+            "in": "query",
+            "name": "last_modified.gte",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by modification date, as last_modified.gte=<date>.",
+            "in": "query",
+            "name": "last_modified.lt",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by modification date, as last_modified.gte=<date>.",
+            "in": "query",
+            "name": "last_modified.lte",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "Filter by case property, as properties.<name>=<value>.",
             "in": "query",
-            "name": "properties",
+            "name": "properties.<name>",
             "required": false,
             "schema": {
               "type": "string"
@@ -156,7 +264,34 @@
           {
             "description": "Filter by server modification date.",
             "in": "query",
-            "name": "server_last_modified",
+            "name": "server_last_modified.gt",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by server modification date.",
+            "in": "query",
+            "name": "server_last_modified.gte",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by server modification date.",
+            "in": "query",
+            "name": "server_last_modified.lt",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by server modification date.",
+            "in": "query",
+            "name": "server_last_modified.lte",
             "required": false,
             "schema": {
               "type": "string"

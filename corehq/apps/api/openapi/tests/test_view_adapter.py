@@ -48,6 +48,25 @@ def test_every_case_api_filter_has_a_description():
     )
 
 
+def test_compound_filters_are_published_under_usable_names():
+    """A compound filter's bare prefix (e.g. ``properties``) is not a
+    valid query parameter -- _get_filter() requires a ``.`` in the key --
+    so the published parameter list must never contain the bare prefix,
+    and date-based compound filters must be published as their concrete
+    gt/gte/lt/lte qualifiers."""
+    from corehq.apps.hqcase.views import case_api
+
+    names = {p['name'] for p in case_api._openapi_docs.parameters}
+    assert not names & {
+        'properties', 'indices', 'last_modified', 'server_last_modified',
+        'date_opened', 'date_closed', 'indexed_on',
+    }
+    assert 'properties.<name>' in names
+    assert 'indices.<identifier>' in names
+    for qualifier in ('gt', 'gte', 'lt', 'lte'):
+        assert f'last_modified.{qualifier}' in names
+
+
 def _case_v2_schema(method, path=None):
     from corehq.apps.hqcase.views import case_api
 
