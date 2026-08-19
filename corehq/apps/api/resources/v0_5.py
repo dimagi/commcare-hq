@@ -263,7 +263,13 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         description = (
             'List mobile workers in a project space, or fetch a single '
             'mobile worker by identifier. Mobile workers are the users '
-            'who submit forms from CommCare mobile or web apps.'
+            'who submit forms from CommCare mobile or web apps.\n\n'
+            'When `require_account_confirmation` is set, `password` '
+            'must be omitted (the user sets their own password on '
+            'confirmation) and `email` must be provided (the '
+            'confirmation is sent there). When `phone_numbers` is sent, '
+            'its first entry becomes the mobile worker\'s '
+            '`default_phone_number`.'
         )
         examples = {'list_response': 'user/v1/list_response.json'}
         field_schemas = {

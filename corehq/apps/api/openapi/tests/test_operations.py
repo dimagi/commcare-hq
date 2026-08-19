@@ -319,6 +319,22 @@ def test_user_v1_documents_language_and_role_as_writable():
             assert schema['properties'][name]['writeOnly'] is True
 
 
+def test_user_v1_description_documents_account_confirmation_constraints():
+    """validate_new_user_input() enforces that password is omitted and
+    email is provided when require_account_confirmation is set, and
+    _update_phone_numbers() makes the first phone_numbers entry the
+    default. These preconditions used to live on mobile-worker.rst,
+    which this branch reduces to a stub; they must survive somewhere a
+    reader of the generated spec will see them."""
+    entry = ApiEntry(v0_5.CommCareUserResource, 'v1', 'user-v1')
+    operation = resource_paths(entry)['/a/{domain}/api/user/v1/']['post']
+    description = operation['description']
+    assert 'require_account_confirmation' in description
+    assert 'password' in description
+    assert 'email' in description
+    assert 'default_phone_number' in description
+
+
 def test_declared_list_example_is_attached():
     entry = ApiEntry(v0_5.CommCareUserResource, 'v1', 'user-v1')
     operation = resource_paths(entry)['/a/{domain}/api/user/v1/']['get']

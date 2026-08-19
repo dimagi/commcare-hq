@@ -66,7 +66,7 @@
   "paths": {
     "/a/{domain}/api/user/v1/": {
       "get": {
-        "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nRequires the `edit_commcare_users` permission.",
+        "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nWhen `require_account_confirmation` is set, `password` must be omitted (the user sets their own password on confirmation) and `email` must be provided (the confirmation is sent there). When `phone_numbers` is sent, its first entry becomes the mobile worker's `default_phone_number`.\n\nRequires the `edit_commcare_users` permission.",
         "operationId": "user_v1_list_get",
         "parameters": [
           {
@@ -306,7 +306,7 @@
         }
       ],
       "post": {
-        "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nRequires the `edit_commcare_users` permission.",
+        "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nWhen `require_account_confirmation` is set, `password` must be omitted (the user sets their own password on confirmation) and `email` must be provided (the confirmation is sent there). When `phone_numbers` is sent, its first entry becomes the mobile worker's `default_phone_number`.\n\nRequires the `edit_commcare_users` permission.",
         "operationId": "user_v1_list_post",
         "requestBody": {
           "content": {
@@ -431,7 +431,7 @@
     },
     "/a/{domain}/api/user/v1/{pk}/": {
       "delete": {
-        "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nRequires the `edit_commcare_users` permission.",
+        "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nWhen `require_account_confirmation` is set, `password` must be omitted (the user sets their own password on confirmation) and `email` must be provided (the confirmation is sent there). When `phone_numbers` is sent, its first entry becomes the mobile worker's `default_phone_number`.\n\nRequires the `edit_commcare_users` permission.",
         "operationId": "user_v1_detail_delete",
         "responses": {
           "204": {
@@ -444,7 +444,7 @@
         ]
       },
       "get": {
-        "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nRequires the `edit_commcare_users` permission.",
+        "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nWhen `require_account_confirmation` is set, `password` must be omitted (the user sets their own password on confirmation) and `email` must be provided (the confirmation is sent there). When `phone_numbers` is sent, its first entry becomes the mobile worker's `default_phone_number`.\n\nRequires the `edit_commcare_users` permission.",
         "operationId": "user_v1_detail_get",
         "responses": {
           "200": {
@@ -584,7 +584,7 @@
         }
       ],
       "put": {
-        "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nRequires the `edit_commcare_users` permission.",
+        "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nWhen `require_account_confirmation` is set, `password` must be omitted (the user sets their own password on confirmation) and `email` must be provided (the confirmation is sent there). When `phone_numbers` is sent, its first entry becomes the mobile worker's `default_phone_number`.\n\nRequires the `edit_commcare_users` permission.",
         "operationId": "user_v1_detail_put",
         "requestBody": {
           "content": {
@@ -956,7 +956,7 @@
   ],
   "tags": [
     {
-      "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.",
+      "description": "List mobile workers in a project space, or fetch a single mobile worker by identifier. Mobile workers are the users who submit forms from CommCare mobile or web apps.\n\nWhen `require_account_confirmation` is set, `password` must be omitted (the user sets their own password on confirmation) and `email` must be provided (the confirmation is sent there). When `phone_numbers` is sent, its first entry becomes the mobile worker's `default_phone_number`.",
       "name": "user"
     }
   ]
