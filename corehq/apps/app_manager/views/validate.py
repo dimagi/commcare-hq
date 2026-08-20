@@ -43,9 +43,9 @@ class AppValidateApiView(View):
 
     @method_decorator(require_permission(HqPermissions.edit_apps, login_decorator=api_auth()))
     def get(self, request, domain, app_id):
-        app, error = get_app_for_api(domain, app_id)
-        if error:
-            return errors_response(error)
+        app, result = get_app_for_api(domain, app_id)
+        if not result.success:
+            return errors_response(result)
 
         errors = app.validate_app()
         return JsonResponse(ValidationResult(not errors, errors).to_json())

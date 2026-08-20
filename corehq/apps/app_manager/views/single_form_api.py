@@ -219,13 +219,13 @@ def get_app_for_api(domain, app_id):
     if app_doc is None or app_doc.get('copy_of'):
         return None, ApiResult.error(FORM_API_APP_NOT_FOUND, f"Application ({app_id}) not found")
 
-    return wrap_app(app_doc), None
+    return wrap_app(app_doc), ApiResult()
 
 
 def get_form_for_api(domain, app_id, module_id, form_id):
-    app, error = get_app_for_api(domain, app_id)
-    if error:
-        return None, error
+    app, result = get_app_for_api(domain, app_id)
+    if not result.success:
+        return None, result
 
     try:
         module = app.get_module_by_unique_id(module_id)
