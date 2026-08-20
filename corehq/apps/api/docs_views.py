@@ -12,9 +12,11 @@ import logging
 
 from django.conf import settings
 from django.http import HttpResponse
+from django.shortcuts import render
 
 from corehq.apps.api.cors import add_cors_headers_to_response
 from corehq.apps.api.openapi import artifacts
+from corehq.apps.api.openapi.catalogue import documented_entries
 
 logger = logging.getLogger(__name__)
 
@@ -82,3 +84,23 @@ def api_spec(request, slug=None):
     # is correct and cheap to compute, in case that ever changes.
     response['ETag'] = f'"{digest}"'
     return response
+
+
+def api_docs_index(request):
+    """Lists the documented APIs, and how completely each is described."""
+    apis = []
+    for entry in documented_entries():
+        described, total = artifacts.description_coverage(entry.doc_slug)
+        apis.append(
+            {
+                'slug': entry.doc_slug,
+                'title': (artifacts.read_spec(entry.doc_slug) or {})
+                .get('info', {})
+                .get('title', entry.doc_slug),
+                'described': described,
+                'total': total,
+                'complete': bool(total) and described == total,
+            }
+        )
+    apis.sort(key=lambda api: api['title'])
+    return render(request, 'api/docs_index.html', {'apis': apis})
