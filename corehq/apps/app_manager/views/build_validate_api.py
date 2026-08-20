@@ -16,6 +16,7 @@ from corehq.apps.api.decorators import api_throttle
 from corehq.apps.app_manager.dbaccessors import get_latest_build_version
 from corehq.apps.app_manager.tasks import build_app_task
 from corehq.apps.app_manager.views.single_form_api import (
+    get_app_doc_for_api,
     get_app_for_api,
     get_form_for_api,
 )
@@ -73,16 +74,32 @@ class FormValidateApiView(View):
 @method_decorator(json_error, name='dispatch')
 @method_decorator(api_throttle, name='dispatch')
 class AppBuildApiView(View):
-    """POST to trigger a new build of an application's latest version."""
+    """GET whether an application's latest version has been built, or
+    POST to trigger a new build of it.
 
-    @method_decorator(require_permission(HqPermissions.edit_apps, login_decorator=api_auth()))
-    def post(self, request, domain, app_id):
-        app, result = get_app_for_api(domain, app_id)
+    GET never deserializes the full app doc into an ``Application`` --
+    just reads its version off the raw doc -- so it's cheap to poll.
+    """
+
+    @method_decorator(require_permission(HqPermissions.view_apps, login_decorator=api_auth()))
+    def get(self, request, domain, app_id):
+        app_doc, result = get_app_doc_for_api(domain, app_id)
         if not result.success:
             return errors_response(result)
 
-        if get_latest_build_version(domain, app_id) == app.version:
-            return JsonResponse({'status': 'already_built', 'version': app.version})
+        version = app_doc['version']
+        built = get_latest_build_version(domain, app_id) == version
+        return JsonResponse({'version': version, 'built': built})
 
-        build_app_task.delay(app_id, domain, app.version, user_id=request.couch_user.get_id)
-        return JsonResponse({'status': 'build_queued', 'version': app.version})
+    @method_decorator(require_permission(HqPermissions.edit_apps, login_decorator=api_auth()))
+    def post(self, request, domain, app_id):
+        app_doc, result = get_app_doc_for_api(domain, app_id)
+        if not result.success:
+            return errors_response(result)
+
+        version = app_doc['version']
+        if get_latest_build_version(domain, app_id) == version:
+            return JsonResponse({'status': 'already_built', 'version': version})
+
+        build_app_task.delay(app_id, domain, version, user_id=request.couch_user.get_id)
+        return JsonResponse({'status': 'build_queued', 'version': version})

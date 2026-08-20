@@ -161,3 +161,30 @@ class ValidateApiTests(TestCase):
 
         response = self.client.post(self._build_url(app_id=build._id))
         assert response.status_code == 404
+
+    def test_build_status_not_built(self):
+        response = self.client.get(self._build_url())
+        assert response.status_code == 200
+        assert response.json() == {'version': self.app.version, 'built': False}
+
+    def test_build_status_built(self):
+        build = self.app.make_build()
+        build.save()
+        self.addCleanup(build.delete)
+
+        response = self.client.get(self._build_url())
+        assert response.status_code == 200
+        assert response.json() == {'version': self.app.version, 'built': True}
+
+    def test_build_status_returns_404_for_missing_app(self):
+        response = self.client.get(self._build_url(app_id='missing-app'))
+        assert response.status_code == 404
+        assert response.json()['errors'][0]['error'] == 'app_not_found'
+
+    def test_build_status_returns_404_for_saved_build(self):
+        build = self.app.make_build()
+        build.save()
+        self.addCleanup(build.delete)
+
+        response = self.client.get(self._build_url(app_id=build._id))
+        assert response.status_code == 404

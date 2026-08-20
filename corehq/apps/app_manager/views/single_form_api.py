@@ -209,7 +209,7 @@ def patch_form_for_api(domain, app_id, module_id, form_id, source, if_match):
     return form, ApiResult()
 
 
-def get_app_for_api(domain, app_id):
+def get_app_doc_for_api(domain, app_id):
     try:
         app_doc = get_app_doc(domain, app_id)
     except ResourceNotFound:
@@ -219,6 +219,14 @@ def get_app_for_api(domain, app_id):
     # app that does not exist at all.
     if app_doc is None or app_doc.get('copy_of'):
         return None, ApiResult.error(FORM_API_APP_NOT_FOUND, f"Application ({app_id}) not found")
+
+    return app_doc, ApiResult()
+
+
+def get_app_for_api(domain, app_id):
+    app_doc, result = get_app_doc_for_api(domain, app_id)
+    if not result.success:
+        return None, result
 
     return wrap_app(app_doc), ApiResult()
 
