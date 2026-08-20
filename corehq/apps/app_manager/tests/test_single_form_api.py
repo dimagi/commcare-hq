@@ -95,6 +95,9 @@ class SingleFormApiViewTests(TestCase):
             'form_id': form_id or self.form_id,
         })
 
+    def _etag(self):
+        return self.client.get(self._url())['ETag']
+
     def test_head_matches_get_etag(self):
         assert self.client.head(self._url())['ETag'] == self.client.get(self._url())['ETag']
 
@@ -157,6 +160,145 @@ class SingleFormApiViewTests(TestCase):
         client = Client()
         client.login(username=self.non_admin_username, password=self.non_admin_password)
         assert client.get(self._url()).status_code != 200
+
+    def test_patch_updates_only_specified_field(self):
+        etag = self._etag()
+        response = self.client.patch(
+            self._url(), data=json.dumps({'name': {'en': 'Updated'}}),
+            content_type='application/json', HTTP_IF_MATCH=etag,
+        )
+        assert response.status_code == 200
+        assert response.json() == {}
+
+        app = Application.get(self.app._id)
+        module = app.get_module_by_unique_id(self.module_id)
+        assert module.get_form_by_unique_id(self.form_id).name['en'] == 'Updated'
+
+    def test_patch_applies_source(self):
+        etag = self._etag()
+        new_xml = get_simple_form(xmlns='updated-xmlns')
+        response = self.client.patch(
+            self._url(), data=json.dumps({'source': new_xml}),
+            content_type='application/json', HTTP_IF_MATCH=etag,
+        )
+        assert response.status_code == 200
+        app = Application.get(self.app._id)
+        module = app.get_module_by_unique_id(self.module_id)
+        assert module.get_form_by_unique_id(self.form_id).source == new_xml
+
+    def test_patch_etag_is_accepted_by_the_next_patch(self):
+        first = self.client.patch(
+            self._url(), data=json.dumps({'name': {'en': 'First'}}),
+            content_type='application/json', HTTP_IF_MATCH=self._etag(),
+        )
+        # no GET in between: the previous response carried the new ETag
+        second = self.client.patch(
+            self._url(), data=json.dumps({'name': {'en': 'Second'}}),
+            content_type='application/json', HTTP_IF_MATCH=first['ETag'],
+        )
+        assert second.status_code == 200
+
+    def test_patch_requires_if_match(self):
+        response = self.client.patch(
+            self._url(), data=json.dumps({'name': {'en': 'x'}}), content_type='application/json'
+        )
+        assert response.status_code == 428
+        assert response.json()['errors'][0]['error'] == 'precondition_required'
+
+    def test_patch_rejects_stale_if_match(self):
+        response = self.client.patch(
+            self._url(), data=json.dumps({'name': {'en': 'x'}}),
+            content_type='application/json', HTTP_IF_MATCH='"stale"',
+        )
+        assert response.status_code == 412
+        assert response.json()['errors'][0]['error'] == 'precondition_failed'
+
+    def test_patch_returns_invalid_json_for_bad_body(self):
+        response = self.client.patch(
+            self._url(), data='not json', content_type='application/json', HTTP_IF_MATCH=self._etag()
+        )
+        assert response.status_code == 400
+        assert response.json()['errors'][0]['error'] == 'invalid_json'
+
+    def test_patch_returns_404_for_missing_app(self):
+        response = self.client.patch(
+            self._url(app_id='missing-app'), data=json.dumps({}),
+            content_type='application/json', HTTP_IF_MATCH='"anything"',
+        )
+        assert response.status_code == 404
+
+    def test_patch_returns_404_for_saved_build(self):
+        build = self.app.make_build()
+        build.save()
+        self.addCleanup(build.delete)
+        response = self.client.patch(
+            self._url(app_id=build._id), data=json.dumps({'name': {'en': 'x'}}),
+            content_type='application/json', HTTP_IF_MATCH='"anything"',
+        )
+        assert response.status_code == 404
+
+    def test_patch_returns_doc_type_mismatch(self):
+        response = self.client.patch(
+            self._url(), data=json.dumps({'doc_type': 'AdvancedForm'}),
+            content_type='application/json', HTTP_IF_MATCH=self._etag(),
+        )
+        assert response.status_code == 422
+        assert response.json()['errors'][0]['error'] == 'doc_type_mismatch'
+
+    def test_patch_returns_unrecognized_field(self):
+        response = self.client.patch(
+            self._url(), data=json.dumps({'not_a_field': 'x'}),
+            content_type='application/json', HTTP_IF_MATCH=self._etag(),
+        )
+        assert response.status_code == 400
+        assert response.json()['errors'][0]['error'] == 'unrecognized_field'
+
+    def test_patch_returns_conflict_on_concurrent_write(self):
+        etag = self._etag()
+        with patch.object(Application, 'save', side_effect=ResourceConflict):
+            response = self.client.patch(
+                self._url(), data=json.dumps({'name': {'en': 'x'}}),
+                content_type='application/json', HTTP_IF_MATCH=etag,
+            )
+        assert response.status_code == 409
+        assert response.json()['errors'][0]['error'] == 'conflict'
+
+    def test_patch_rejects_unauthenticated_request(self):
+        response = Client().patch(
+            self._url(), data=json.dumps({}), content_type='application/json', HTTP_IF_MATCH='"x"'
+        )
+        assert response.status_code != 200
+
+    @has_permissions(edit_apps=False)
+    def test_patch_rejects_user_without_edit_apps_permission(self):
+        client = Client()
+        client.login(username=self.non_admin_username, password=self.non_admin_password)
+        response = client.patch(
+            self._url(), data=json.dumps({'name': {'en': 'x'}}),
+            content_type='application/json', HTTP_IF_MATCH='"x"',
+        )
+        assert response.status_code != 200
+
+    def test_rejects_put_method(self):
+        response = self.client.put(self._url(), data=json.dumps({}), content_type='application/json')
+        assert response.status_code == 405
+
+    # --- round-trip ---
+
+    def test_get_then_patch_with_its_etag_then_reject_reuse(self):
+        etag = self._etag()
+        first = self.client.patch(
+            self._url(), data=json.dumps({'name': {'en': 'First'}}),
+            content_type='application/json', HTTP_IF_MATCH=etag,
+        )
+        assert first.status_code == 200
+
+        second = self.client.patch(
+            self._url(), data=json.dumps({'name': {'en': 'Second'}}),
+            content_type='application/json', HTTP_IF_MATCH=etag,  # stale now
+        )
+        assert second.status_code == 412
+
 
 class UpdateFormForApiTests(TestCase):
     domain = 'form-api-patch-domain'

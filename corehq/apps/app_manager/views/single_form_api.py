@@ -43,6 +43,7 @@ FORM_API_DOC_TYPE_MISMATCH = 'doc_type_mismatch'
 FORM_API_PRECONDITION_REQUIRED = 'precondition_required'
 FORM_API_PRECONDITION_FAILED = 'precondition_failed'
 FORM_API_CONFLICT = 'conflict'
+FORM_API_INVALID_JSON = 'invalid_json'
 
 ETAG = 'etag'
 
@@ -50,6 +51,13 @@ _ERROR_TO_STATUS_CODE = {
     FORM_API_APP_NOT_FOUND: 404,
     FORM_API_MODULE_NOT_FOUND: 404,
     FORM_API_FORM_NOT_FOUND: 404,
+    FORM_API_UNRECOGNIZED_FIELD: 400,
+    FORM_API_INVALID_FIELD_VALUE: 400,
+    FORM_API_DOC_TYPE_MISMATCH: 422,
+    FORM_API_PRECONDITION_REQUIRED: 428,
+    FORM_API_PRECONDITION_FAILED: 412,
+    FORM_API_CONFLICT: 409,
+    FORM_API_INVALID_JSON: 400,
 }
 
 
@@ -102,6 +110,27 @@ class SingleFormApiView(View):
             return _errors_response(result)
 
         return FormResource(form).get_response()
+
+    @method_decorator(require_permission(HqPermissions.edit_apps, login_decorator=api_auth()))
+    def patch(self, request, domain, app_id, module_id, form_id):
+        try:
+            source = json.loads(request.body)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            source = None
+        if not isinstance(source, dict):
+            return _errors_response(
+                ApiResult.error(FORM_API_INVALID_JSON, 'Invalid JSON body')
+            )
+
+        if_match = request.headers.get('If-Match')
+
+        form, result = patch_form_for_api(domain, app_id, module_id, form_id, source, if_match)
+        if not result.success:
+            return _errors_response(result)
+
+        response = JsonResponse({}, status=200)
+        response[ETAG] = FormResource(form).get_etag()
+        return response
 
 
 def _errors_response(result):
