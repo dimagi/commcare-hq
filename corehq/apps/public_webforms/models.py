@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from casexml.apps.phone.models import OTARestoreUser
+from dimagi.utils.web import get_url_base
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import PUBLIC_USER_ID
@@ -13,6 +14,38 @@ from corehq.apps.users.util import PUBLIC_USER_ID
 class PublicWebformType(models.TextChoices):
     REGISTRATION = ('registration', _("Registration"))
     SURVEY = ('survey', _("Survey"))
+
+
+class PublicWebformStatus(models.IntegerChoices):
+    """Whether a webform is accepting requests for a one-time link.
+
+    Derived from ``expires_at`` and ``is_disabled`` rather than stored, so
+    a webform expires without anything having to write to it.
+    """
+
+    OPEN = (0, _("Open"))
+    CLOSED = (1, _("Closed"))
+    EXPIRED = (2, _("Expired"))
+
+
+class PublicWebformQuerySet(models.QuerySet):
+
+    def with_status(self):
+        """Annotate ``status``, so it can be filtered on in the database."""
+        return self.annotate(
+            status=models.Case(
+                models.When(
+                    expires_at__lt=timezone.now(),
+                    then=models.Value(PublicWebformStatus.EXPIRED),
+                ),
+                models.When(
+                    is_disabled=True,
+                    then=models.Value(PublicWebformStatus.CLOSED),
+                ),
+                default=models.Value(PublicWebformStatus.OPEN),
+                output_field=models.IntegerField(),
+            ),
+        )
 
 
 class PublicWebform(models.Model):
@@ -31,8 +64,24 @@ class PublicWebform(models.Model):
     expires_at = models.DateTimeField()
     is_disabled = models.BooleanField(default=True)
 
+    objects = PublicWebformQuerySet.as_manager()
+
     class Meta:
         indexes = [models.Index(fields=['domain', 'id'])]
+
+    @property
+    def public_url(self):
+        """The absolute link a respondent opens to request a one-time link.
+
+        Absolute because it is shared by email, SMS, and QR code, where a
+        relative URL is meaningless.
+        """
+        # TODO: point at the real public route once it exists
+        return f'{get_url_base()}/placeholder/url/{self.public_id.hex}'
+
+    @property
+    def is_expired(self):
+        return self.expires_at < timezone.now()
 
 
 class PublicFormSession(models.Model):

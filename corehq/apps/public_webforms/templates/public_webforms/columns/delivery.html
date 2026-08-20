@@ -1,0 +1,33 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% if record.allow_email %}
+  <span
+    class="badge fs-6 fa-regular bg-primary-subtle text-primary-emphasis"
+    title="{% trans_html_attr "Email enabled" %}"
+  >
+    <i class="fa-regular fa-envelope"></i>
+  </span>
+{% else %}
+  <span
+    class="badge fs-6 fa-regular bg-light text-body-tertiary"
+    title="{% trans_html_attr "Email disabled" %}"
+  >
+    <i class="fa-regular fa-envelope"></i>
+  </span>
+{% endif %}
+{% if record.allow_sms %}
+  <span
+    class="badge fs-6 fa-regular bg-primary-subtle text-primary-emphasis"
+    title="{% trans_html_attr "SMS enabled" %}"
+  >
+    <i class="fa-regular fa-comment"></i>
+  </span>
+{% else %}
+  <span
+    class="badge fs-6 fa-regular bg-light text-body-tertiary"
+    title="{% trans_html_attr "SMS disabled" %}"
+  >
+    <i class="fa-regular fa-comment"></i>
+  </span>
+{% endif %}
