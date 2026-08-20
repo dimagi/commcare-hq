@@ -143,6 +143,25 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         self.assertEqual(response_dict['meta']['total_count'], 2)
         self.assertEqual(len(response_dict['objects']), 2)
 
+    def test_cant_get_missing_report_configuration(self):
+        response = self._assert_auth_get_resource(self.single_endpoint(uuid.uuid4().hex))
+
+        assert response.status_code == 404, response.content
+
+    def test_cant_get_report_configuration_in_another_domain(self):
+        not_mine = ReportConfiguration(
+            domain='not-my-project',
+            config_id=self.data_source._id,
+            columns=[],
+            filters=[],
+        )
+        not_mine.save()
+        self.addCleanup(not_mine.delete)
+
+        response = self._assert_auth_get_resource(self.single_endpoint(not_mine._id))
+
+        assert response.status_code == 404, response.content
+
     def test_disallowed_methods(self):
         response = self._assert_auth_post_resource(
             self.single_endpoint(self.report_configuration._id),

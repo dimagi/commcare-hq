@@ -14,7 +14,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import Max, Min, Q
 from django.db.models.functions import TruncDate
 from django.http import (
-    Http404,
     HttpResponse,
     HttpResponseForbidden,
     HttpResponseNotFound,
@@ -976,13 +975,7 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         } for c in obj_columns]
 
     def obj_get(self, bundle, **kwargs):
-        domain = kwargs['domain']
-        pk = kwargs['pk']
-        try:
-            report_configuration = get_document_or_404(ReportConfiguration, domain, pk)
-        except Http404 as e:
-            raise NotFound(str(e))
-        return report_configuration
+        return get_object_or_not_exist(ReportConfiguration, kwargs['pk'], kwargs['domain'])
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
