@@ -52,7 +52,7 @@ from corehq.apps.api.resources.v0_5 import (
     UserDomainsResource,
 )
 from corehq.apps.app_manager.views.single_form_api import SingleFormApiView
-from corehq.apps.app_manager.views.validate import (
+from corehq.apps.app_manager.views.build_validate_api import (
     AppValidateApiView,
     FormValidateApiView,
 )
