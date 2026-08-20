@@ -5,6 +5,22 @@
 
 {% block page_content %}
   <h2 class="h4 mb-3">{% trans "Query ProjectDB" %}</h2>
+  <div class="mb-4">
+    <h3 class="h6">{% trans "Tables" %}</h3>
+    {% if table_names %}
+      <ul class="list-inline font-monospace mb-0">
+        {% for table_name in table_names %}
+          <li class="list-inline-item badge bg-light text-dark border">
+            {{ table_name }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-body-secondary mb-0">
+        {% trans "This project has no ProjectDB tables yet." %}
+      </p>
+    {% endif %}
+  </div>
   <form
     hx-post="{{ request.path_info }}"
     hq-hx-action="run_query"

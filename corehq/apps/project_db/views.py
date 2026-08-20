@@ -38,6 +38,10 @@ class QueryProjectDBView(HqHtmxActionMixin, BaseProjectDataView):
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
 
+    @property
+    def page_context(self):
+        return {'table_names': sorted(get_domain_tables(self.domain))}
+
     @hq_hx_action('post')
     def run_query(self, request, *args, **kwargs):
         context = {'sql': request.POST.get('sql', '')}
