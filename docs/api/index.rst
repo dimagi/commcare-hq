@@ -66,6 +66,10 @@ and response fields, generated from the API's OpenAPI specification:
 - `API reference index <https://www.commcarehq.org/api/docs/>`_
 - `Machine-readable OpenAPI document <https://www.commcarehq.org/api/openapi.json>`_
 
+That document covers every documented endpoint in one OpenAPI 3.0.3 file, and
+is the one to point a code generator or an agent at. Each API's own
+specification is served from its reference page.
+
 The pages below give a sentence of orientation per API and link to its
 reference.
 
