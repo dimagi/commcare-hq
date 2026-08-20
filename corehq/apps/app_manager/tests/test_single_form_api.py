@@ -10,10 +10,13 @@ from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.util import get_simple_form
 from corehq.apps.app_manager.views.single_form_api import (
     FORM_API_APP_NOT_FOUND,
+    FORM_API_DOC_TYPE_MISMATCH,
     FORM_API_FORM_NOT_FOUND,
     FORM_API_MODULE_NOT_FOUND,
+    FORM_API_UNRECOGNIZED_FIELD,
     ApiError,
     FormResource,
+    create_form_patch,
     _form_resource_dict,
     get_form_for_api,
 )
@@ -194,6 +197,52 @@ class GetFormForApiTests(TestCase):
 
         assert result.success is False
         assert result.errors[0].error == FORM_API_FORM_NOT_FOUND
+
+
+class CreateFormPatchTests(TestCase):
+    def setUp(self):
+        app = Application.new_app('create-form-patch-domain', 'Test App')
+        module = app.add_module(Module.new_module('Module One', lang='en'))
+        self.form = module.new_form('Form One', lang='en', attachment=get_simple_form(xmlns='xmlns-1'))
+
+    def test_returns_only_specified_fields(self):
+        fields_to_set, errors = create_form_patch(self.form, {'name': {'en': 'Renamed'}})
+
+        assert errors == []
+        assert fields_to_set == {'name': {'en': 'Renamed'}}
+
+    def test_returns_unrecognized_field_error(self):
+        fields_to_set, errors = create_form_patch(self.form, {'not_a_real_field': 'x'})
+
+        assert fields_to_set is None
+        assert errors == [ApiError(FORM_API_UNRECOGNIZED_FIELD, mock.ANY)]
+
+    def test_returns_doc_type_mismatch_error(self):
+        fields_to_set, errors = create_form_patch(self.form, {'doc_type': 'AdvancedForm'})
+
+        assert fields_to_set is None
+        assert errors == [ApiError(FORM_API_DOC_TYPE_MISMATCH, mock.ANY)]
+
+    def test_doc_type_matching_is_a_noop(self):
+        fields_to_set, errors = create_form_patch(self.form, {'doc_type': 'Form'})
+
+        assert errors == []
+        assert 'doc_type' not in fields_to_set
+
+    def test_unique_id_and_xmlns_are_dropped_not_overwritten(self):
+        fields_to_set, errors = create_form_patch(
+            self.form, {'unique_id': 'spoofed-id', 'xmlns': 'spoofed-xmlns'}
+        )
+
+        assert errors == []
+        assert 'unique_id' not in fields_to_set
+        assert 'xmlns' not in fields_to_set
+
+    def test_source_is_allowed_but_not_included_in_fields_to_set(self):
+        fields_to_set, errors = create_form_patch(self.form, {'source': '<h:html/>'})
+
+        assert errors == []
+        assert 'source' not in fields_to_set
 
 
 class FormResourceEtagTests(TestCase):

@@ -35,6 +35,9 @@ from corehq.util.view_utils import json_error
 FORM_API_APP_NOT_FOUND = 'app_not_found'
 FORM_API_MODULE_NOT_FOUND = 'module_not_found'
 FORM_API_FORM_NOT_FOUND = 'form_not_found'
+FORM_API_UNRECOGNIZED_FIELD = 'unrecognized_field'
+FORM_API_INVALID_FIELD_VALUE = 'invalid_field_value'
+FORM_API_DOC_TYPE_MISMATCH = 'doc_type_mismatch'
 
 ETAG = 'etag'
 
@@ -167,6 +170,46 @@ def get_form_for_api(domain, app_id, module_id, form_id):
         return None, ApiResult.error(FORM_API_FORM_NOT_FOUND, f"Module ({module_id}) not found")
 
     return form, ApiResult()
+
+
+def create_form_patch(form, source):
+    """Return ``(fields_to_set, errors)`` -- the subset of ``source`` that's
+    valid to apply to ``form``, as a plain ``{attr_name: value}`` dict.
+
+    ``unique_id`` and ``xmlns`` in ``source`` are silently dropped (never
+    settable). ``source`` should be set separately using ``save_xform``.
+
+    ``doc_type`` in ``source`` is checked against
+    ``form``'s actual type -- mismatch returns ``doc_type_mismatch``, a
+    match is dropped like the other two identity fields.
+
+    Every other key must be a recognized property of ``form``'s schema, or
+    this returns ``unrecognized_field``.
+    """
+    valid_fields = set(type(form).properties().keys())
+    fields_to_set = {}
+    errors = []
+
+    for key, value in source.items():
+        if key in ('unique_id', 'xmlns', 'source'):
+            continue
+        if key == 'doc_type':
+            if value != form.doc_type:
+                errors.append(ApiError(
+                    FORM_API_DOC_TYPE_MISMATCH,
+                    f"Form doc_type '{value}' does not match existing doc_type '{form.doc_type}'",
+                ))
+            continue
+        if key not in valid_fields:
+            errors.append(ApiError(
+                FORM_API_UNRECOGNIZED_FIELD, f"'{key}' is not a recognized field"
+            ))
+        else:
+            fields_to_set[key] = value
+    if errors:
+        return None, errors
+
+    return fields_to_set, []
 
 
 def _form_resource_dict(form):
