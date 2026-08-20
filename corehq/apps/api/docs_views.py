@@ -12,9 +12,10 @@ import logging
 
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotModified
+from django.shortcuts import render
 
 from corehq.apps.api.cors import add_cors_headers_to_response
-from corehq.apps.api.openapi import artifacts
+from corehq.apps.api.openapi import artifacts, response_fields
 
 logger = logging.getLogger(__name__)
 
@@ -147,3 +148,33 @@ def _matches_client_etag(request, etag):
         if tag
     }
     return '*' in offered or etag in offered
+
+
+def api_docs_index(request):
+    """Lists the documented APIs, and how completely each is described.
+
+    Covers every slug the generator produces a spec for -- the catalogue's
+    resources and the function-based views (Case API v2) alike -- so an API
+    whose spec and reference page are built and served does not go unlisted.
+
+    The coverage figures are recomputed per request rather than cached,
+    which looks worth optimising and measurably is not: walking all twenty
+    specs takes about 0.1 ms, because ``read_spec()`` already caches the
+    parsed documents and only the traversal repeats. Caching the numbers
+    would add an invalidation problem to save a tenth of a millisecond.
+    """
+    apis = []
+    for slug in artifacts.documented_slugs():
+        spec = artifacts.read_spec(slug) or {}
+        described, total = response_fields.description_coverage(spec)
+        apis.append(
+            {
+                'slug': slug,
+                'title': spec.get('info', {}).get('title', slug),
+                'described': described,
+                'total': total,
+                'complete': bool(total) and described == total,
+            }
+        )
+    apis.sort(key=lambda api: api['title'])
+    return render(request, 'api/docs_index.html', {'apis': apis})

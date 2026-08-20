@@ -4,6 +4,7 @@ from unittest.mock import patch
 from django.test import Client, SimpleTestCase, TestCase
 
 from corehq.apps.api.docs_views import SPEC_CACHE_SECONDS, with_host
+from corehq.apps.api.openapi import artifacts, response_fields
 
 
 class TestWithHost(SimpleTestCase):
@@ -219,3 +220,72 @@ class TestSpecCaching(TestCase):
         document = json.loads(other.content)
         host = document['servers'][0]['variables']['host']['default']
         assert host == 'b.example.org'
+
+    def test_the_html_index_is_left_uncached(self):
+        """Its URL has no extension, so the middleware's caching branch
+        would rewrite Content-Type to None. Deliberately not opted in.
+
+        The index is asserted rather than a reference page because it needs
+        no build step: a Redoc page 404s unless ``yarn openapi:docs`` has
+        run, which would make this pass without checking anything."""
+        response = self.client.get('/api/docs/')
+        assert response.status_code == 200
+        assert response['Content-Type'].startswith('text/html')
+        assert 'no-store' in response['Cache-Control']
+
+
+class TestDocsIndex(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+
+    def test_index_is_served_anonymously(self):
+        response = self.client.get('/api/docs/')
+        assert response.status_code == 200
+
+    def test_index_lists_every_documented_api(self):
+        from corehq.apps.api.openapi.artifacts import documented_slugs
+
+        content = self.client.get('/api/docs/').content.decode()
+        for slug in documented_slugs():
+            assert f'/api/docs/{slug}/' in content, slug
+
+    def test_index_marks_each_coverage_state(self):
+        # One API per coverage state, so a hard-coded count can't drift out
+        # from under the assertions -- the numbers below are derived from
+        # the specs themselves.
+        full_described, full_total = response_fields.description_coverage(
+            artifacts.read_spec('user-v1')
+        )
+        partial_described, partial_total = response_fields.description_coverage(
+            artifacts.read_spec('web-user-v1')
+        )
+        none_described, none_total = response_fields.description_coverage(
+            artifacts.read_spec('user-domains-v1')
+        )
+        empty_described, empty_total = response_fields.description_coverage(
+            artifacts.read_spec('sso-v1')
+        )
+        assert full_total and full_described == full_total
+        assert partial_total and 0 < partial_described < partial_total
+        assert none_total and none_described == 0
+        assert empty_total == 0
+
+        content = self.client.get('/api/docs/').content.decode()
+        assert (
+            f'Fully documented ({full_described}/{full_total} fields)'
+            in content
+        )
+        assert (
+            f'Partly documented ({partial_described}/{partial_total} '
+            'fields)' in content
+        )
+        assert (
+            'No field descriptions yet '
+            f'({none_described}/{none_total} fields)' in content
+        )
+        assert 'No response fields declared' in content
+
+    def test_index_links_the_machine_readable_bundle(self):
+        content = self.client.get('/api/docs/').content.decode()
+        assert '/api/openapi.json' in content
