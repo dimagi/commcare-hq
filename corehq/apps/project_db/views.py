@@ -1,3 +1,5 @@
+import time
+
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -62,11 +64,15 @@ class QueryProjectDBView(HqHtmxActionMixin, BaseProjectDataView):
 def run_user_sql(domain, user_sql):
     query = translate(user_sql, get_domain_tables(domain))
     with get_project_db_engine().connect() as conn:
+        start = time.perf_counter()
         result = conn.execute(query)
+        rows = result.fetchmany(MAX_ROWS)
+        duration = time.perf_counter() - start
         return {
             'query': compile_query(query),
             'columns': list(result.keys()),
-            'rows': result.fetchmany(MAX_ROWS),
+            'rows': rows,
+            'duration': duration,
         }
 
 
