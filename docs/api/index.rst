@@ -57,6 +57,12 @@ Rate limiting
 Requests are throttled per project space. A throttled request is answered
 with a ``Retry-After`` header giving the seconds to wait.
 
+Response format
+~~~~~~~~~~~~~~~~
+
+Many endpoints accept a ``format`` parameter (``json`` by default, ``xml``
+also supported), returning the same data serialized differently.
+
 The API reference
 ~~~~~~~~~~~~~~~~~
 
