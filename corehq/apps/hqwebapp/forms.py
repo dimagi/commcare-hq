@@ -229,15 +229,16 @@ class HQAllowForm(AllowForm):
         label=_('On the project spaces:'),
         widget=forms.SelectMultiple(attrs={
             'class': 'form-select',
-            'x-select2': json.dumps({'allowClear': True}),
+            'x-select2': json.dumps({'selectionCssClass': 'form-select p-1 pb-2 pe-4'}),
             '@select2change': 'selectedDomains = $event.detail || []',
+            'x-ref': 'domains',
         }),
     )
 
     def __init__(self, *args, domain_choices=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['domains'].choices = list(domain_choices or [])
-        self.fields['domains'].widget.attrs['data-placeholder'] = _("Select project spaces")
+        self.fields['domains'].widget.attrs['data-placeholder'] = _("Choose project spaces")
 
     def clean(self):
         cleaned_data = super().clean()

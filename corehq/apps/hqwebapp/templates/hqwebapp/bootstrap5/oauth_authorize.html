@@ -62,7 +62,7 @@
           {% endblocktrans %}
         </h2>
 
-        <form method="post" action="" x-data="{ selectedDomains: [] }">
+        <form method="post" action="" x-data="consentForm">
           {% csrf_token %}
           {% for field in form %}
             {% if field.is_hidden %}{{ field }}{% endif %}
@@ -85,12 +85,37 @@
             <label class="form-label" for="{{ form.domains.id_for_label }}">
               {{ form.domains.label }}
             </label>
+            <div class="mb-2 float-end">
+              <button
+                type="button"
+                class="btn btn-sm btn-link p-0"
+                x-show="domainCount > 1"
+                @click="setAllDomains(true)"
+                :disabled="allDomainsSelected"
+              >
+                {% trans "Select all" %}
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-link p-0 ms-3"
+                @click="setAllDomains(false)"
+                :disabled="selectedDomains.length === 0"
+              >
+                {% trans "Clear" %}
+              </button>
+            </div>
             {{ form.domains }}
             {% for error in form.domains.errors %}
               <div class="text-danger small mt-1">{{ error }}</div>
             {% endfor %}
+            <div
+              class="alert alert-info mt-2 mb-0 py-2"
+              x-show="allDomainsSelected && domainCount > 1"
+            >
+              {% trans "This application will have access to data on all your project spaces." %}
+            </div>
           </div>
-          <div class="mt-3 text-center gap-3">
+          <div class="d-flex justify-content-center gap-2">
             <input
               type="submit"
               class="btn btn-outline-primary btn-lg"
