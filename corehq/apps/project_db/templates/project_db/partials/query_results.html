@@ -14,6 +14,9 @@
       </dl>
     {% endif %}
   </details>
+  <p class="text-body-secondary">
+    {% blocktrans with duration=result.duration|floatformat:3 %}Evaluated in {{ duration }} seconds{% endblocktrans %}
+  </p>
   {% if result.rows %}
     {% if result.rows|length == max_rows %}
       <div class="alert alert-info">
