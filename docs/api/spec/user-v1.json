@@ -198,7 +198,7 @@
                             "type": "string"
                           },
                           "groups": {
-                            "description": "List of all group IDs belonging to the user.",
+                            "description": "List of all group IDs belonging to the user. On update, this replaces the existing list.",
                             "items": {
                               "type": "string"
                             },
@@ -220,7 +220,7 @@
                             "type": "string"
                           },
                           "locations": {
-                            "description": "A list of location IDs that the user is assigned to.",
+                            "description": "A list of location IDs that the user is assigned to. On update, this replaces the existing list, and must be provided together with primary_location (or both left empty to remove all locations).",
                             "items": {
                               "type": "string"
                             },
@@ -232,14 +232,14 @@
                             "writeOnly": true
                           },
                           "phone_numbers": {
-                            "description": "List of all phone numbers of the user.",
+                            "description": "List of all phone numbers of the user. On update, this replaces the existing list.",
                             "items": {
                               "type": "string"
                             },
                             "type": "array"
                           },
                           "primary_location": {
-                            "description": "The location ID of the primary location of the user.",
+                            "description": "The location ID of the primary location of the user, which must be one of the locations. On update, primary_location and locations must be provided together (or both left empty to remove all locations).",
                             "nullable": true,
                             "type": "string"
                           },
@@ -261,7 +261,7 @@
                           },
                           "send_confirmation_email_now": {
                             "default": false,
-                            "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
+                            "description": "If True, immediately sends an account confirmation email. False by default. On update, this fails unless the mobile worker's account is still unconfirmed and it has an email address.",
                             "type": "boolean",
                             "writeOnly": true
                           },
@@ -269,11 +269,11 @@
                             "additionalProperties": {
                               "type": "string"
                             },
-                            "description": "Any additional custom data associated with the user.",
+                            "description": "Any additional custom data associated with the user. When the response format is XML, keys that begin with a digit are omitted, since XML attribute names cannot start with a digit.",
                             "type": "object"
                           },
                           "username": {
-                            "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
+                            "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\". Required to create a mobile worker.",
                             "type": "string"
                           }
                         },
@@ -328,7 +328,7 @@
                     "type": "string"
                   },
                   "groups": {
-                    "description": "List of all group IDs belonging to the user.",
+                    "description": "List of all group IDs belonging to the user. On update, this replaces the existing list.",
                     "items": {
                       "type": "string"
                     },
@@ -345,7 +345,7 @@
                     "type": "string"
                   },
                   "locations": {
-                    "description": "A list of location IDs that the user is assigned to.",
+                    "description": "A list of location IDs that the user is assigned to. On update, this replaces the existing list, and must be provided together with primary_location (or both left empty to remove all locations).",
                     "items": {
                       "type": "string"
                     },
@@ -357,14 +357,14 @@
                     "writeOnly": true
                   },
                   "phone_numbers": {
-                    "description": "List of all phone numbers of the user.",
+                    "description": "List of all phone numbers of the user. On update, this replaces the existing list.",
                     "items": {
                       "type": "string"
                     },
                     "type": "array"
                   },
                   "primary_location": {
-                    "description": "The location ID of the primary location of the user.",
+                    "description": "The location ID of the primary location of the user, which must be one of the locations. On update, primary_location and locations must be provided together (or both left empty to remove all locations).",
                     "nullable": true,
                     "type": "string"
                   },
@@ -381,7 +381,7 @@
                   },
                   "send_confirmation_email_now": {
                     "default": false,
-                    "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
+                    "description": "If True, immediately sends an account confirmation email. False by default. On update, this fails unless the mobile worker's account is still unconfirmed and it has an email address.",
                     "type": "boolean",
                     "writeOnly": true
                   },
@@ -389,11 +389,11 @@
                     "additionalProperties": {
                       "type": "string"
                     },
-                    "description": "Any additional custom data associated with the user.",
+                    "description": "Any additional custom data associated with the user. When the response format is XML, keys that begin with a digit are omitted, since XML attribute names cannot start with a digit.",
                     "type": "object"
                   },
                   "username": {
-                    "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
+                    "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\". Required to create a mobile worker.",
                     "type": "string"
                   }
                 },
@@ -472,7 +472,7 @@
                       "type": "string"
                     },
                     "groups": {
-                      "description": "List of all group IDs belonging to the user.",
+                      "description": "List of all group IDs belonging to the user. On update, this replaces the existing list.",
                       "items": {
                         "type": "string"
                       },
@@ -494,7 +494,7 @@
                       "type": "string"
                     },
                     "locations": {
-                      "description": "A list of location IDs that the user is assigned to.",
+                      "description": "A list of location IDs that the user is assigned to. On update, this replaces the existing list, and must be provided together with primary_location (or both left empty to remove all locations).",
                       "items": {
                         "type": "string"
                       },
@@ -506,14 +506,14 @@
                       "writeOnly": true
                     },
                     "phone_numbers": {
-                      "description": "List of all phone numbers of the user.",
+                      "description": "List of all phone numbers of the user. On update, this replaces the existing list.",
                       "items": {
                         "type": "string"
                       },
                       "type": "array"
                     },
                     "primary_location": {
-                      "description": "The location ID of the primary location of the user.",
+                      "description": "The location ID of the primary location of the user, which must be one of the locations. On update, primary_location and locations must be provided together (or both left empty to remove all locations).",
                       "nullable": true,
                       "type": "string"
                     },
@@ -535,7 +535,7 @@
                     },
                     "send_confirmation_email_now": {
                       "default": false,
-                      "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
+                      "description": "If True, immediately sends an account confirmation email. False by default. On update, this fails unless the mobile worker's account is still unconfirmed and it has an email address.",
                       "type": "boolean",
                       "writeOnly": true
                     },
@@ -543,11 +543,11 @@
                       "additionalProperties": {
                         "type": "string"
                       },
-                      "description": "Any additional custom data associated with the user.",
+                      "description": "Any additional custom data associated with the user. When the response format is XML, keys that begin with a digit are omitted, since XML attribute names cannot start with a digit.",
                       "type": "object"
                     },
                     "username": {
-                      "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
+                      "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\". Required to create a mobile worker.",
                       "type": "string"
                     }
                   },
@@ -606,7 +606,7 @@
                     "type": "string"
                   },
                   "groups": {
-                    "description": "List of all group IDs belonging to the user.",
+                    "description": "List of all group IDs belonging to the user. On update, this replaces the existing list.",
                     "items": {
                       "type": "string"
                     },
@@ -623,7 +623,7 @@
                     "type": "string"
                   },
                   "locations": {
-                    "description": "A list of location IDs that the user is assigned to.",
+                    "description": "A list of location IDs that the user is assigned to. On update, this replaces the existing list, and must be provided together with primary_location (or both left empty to remove all locations).",
                     "items": {
                       "type": "string"
                     },
@@ -635,14 +635,14 @@
                     "writeOnly": true
                   },
                   "phone_numbers": {
-                    "description": "List of all phone numbers of the user.",
+                    "description": "List of all phone numbers of the user. On update, this replaces the existing list.",
                     "items": {
                       "type": "string"
                     },
                     "type": "array"
                   },
                   "primary_location": {
-                    "description": "The location ID of the primary location of the user.",
+                    "description": "The location ID of the primary location of the user, which must be one of the locations. On update, primary_location and locations must be provided together (or both left empty to remove all locations).",
                     "nullable": true,
                     "type": "string"
                   },
@@ -659,7 +659,7 @@
                   },
                   "send_confirmation_email_now": {
                     "default": false,
-                    "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
+                    "description": "If True, immediately sends an account confirmation email. False by default. On update, this fails unless the mobile worker's account is still unconfirmed and it has an email address.",
                     "type": "boolean",
                     "writeOnly": true
                   },
@@ -667,11 +667,11 @@
                     "additionalProperties": {
                       "type": "string"
                     },
-                    "description": "Any additional custom data associated with the user.",
+                    "description": "Any additional custom data associated with the user. When the response format is XML, keys that begin with a digit are omitted, since XML attribute names cannot start with a digit.",
                     "type": "object"
                   },
                   "username": {
-                    "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
+                    "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\". Required to create a mobile worker.",
                     "type": "string"
                   }
                 },
@@ -707,7 +707,7 @@
                       "type": "string"
                     },
                     "groups": {
-                      "description": "List of all group IDs belonging to the user.",
+                      "description": "List of all group IDs belonging to the user. On update, this replaces the existing list.",
                       "items": {
                         "type": "string"
                       },
@@ -729,7 +729,7 @@
                       "type": "string"
                     },
                     "locations": {
-                      "description": "A list of location IDs that the user is assigned to.",
+                      "description": "A list of location IDs that the user is assigned to. On update, this replaces the existing list, and must be provided together with primary_location (or both left empty to remove all locations).",
                       "items": {
                         "type": "string"
                       },
@@ -741,14 +741,14 @@
                       "writeOnly": true
                     },
                     "phone_numbers": {
-                      "description": "List of all phone numbers of the user.",
+                      "description": "List of all phone numbers of the user. On update, this replaces the existing list.",
                       "items": {
                         "type": "string"
                       },
                       "type": "array"
                     },
                     "primary_location": {
-                      "description": "The location ID of the primary location of the user.",
+                      "description": "The location ID of the primary location of the user, which must be one of the locations. On update, primary_location and locations must be provided together (or both left empty to remove all locations).",
                       "nullable": true,
                       "type": "string"
                     },
@@ -770,7 +770,7 @@
                     },
                     "send_confirmation_email_now": {
                       "default": false,
-                      "description": "If True, immediately sends an account confirmation email. False by default. Write-only: not returned in the response.",
+                      "description": "If True, immediately sends an account confirmation email. False by default. On update, this fails unless the mobile worker's account is still unconfirmed and it has an email address.",
                       "type": "boolean",
                       "writeOnly": true
                     },
@@ -778,11 +778,11 @@
                       "additionalProperties": {
                         "type": "string"
                       },
-                      "description": "Any additional custom data associated with the user.",
+                      "description": "Any additional custom data associated with the user. When the response format is XML, keys that begin with a digit are omitted, since XML attribute names cannot start with a digit.",
                       "type": "object"
                     },
                     "username": {
-                      "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\".",
+                      "description": "User name of user, including domain, for example \"jdoe@example.commcarehq.org\". Required to create a mobile worker.",
                       "type": "string"
                     }
                   },
