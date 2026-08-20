@@ -158,13 +158,13 @@ def avoid_parallel_build_request(fn):
     def new_fn(app, comment, user_id, *args, **kwargs):
         domain = app.domain
         app_id = app.get_id
-        if _build_request_in_progress(domain, app_id):
+        if build_request_in_progress(domain, app_id):
             raise BuildConflictException()
-        _set_build_in_progress_lock(domain, app_id)
+        set_build_in_progress_lock(domain, app_id)
         try:
             fn_return = fn(app, comment, user_id, *args, **kwargs)
         finally:
-            _release_build_in_progress_lock(domain, app_id)
+            release_build_in_progress_lock(domain, app_id)
         return fn_return
     return new_fn
 
@@ -208,7 +208,7 @@ def check_access_and_redirect(func):
     return wrapped
 
 
-def _set_build_in_progress_lock(domain, app_id):
+def set_build_in_progress_lock(domain, app_id):
     key = _build_request_cache_key(domain, app_id)
     cache.set(key, True, 60 * 60)  # Lock for an hour
 
@@ -217,12 +217,12 @@ def _build_request_cache_key(domain, app_id):
     return 'app-build-{domain}-{app_id}'.format(domain=domain, app_id=app_id)
 
 
-def _release_build_in_progress_lock(domain, app_id):
+def release_build_in_progress_lock(domain, app_id):
     key = _build_request_cache_key(domain, app_id)
     cache.delete(key)
 
 
-def _build_request_in_progress(domain, app_id):
+def build_request_in_progress(domain, app_id):
     key = _build_request_cache_key(domain, app_id)
     return cache.get(key, False)
 

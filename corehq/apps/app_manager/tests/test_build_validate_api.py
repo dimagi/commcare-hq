@@ -3,6 +3,7 @@ from unittest.mock import patch
 from django.test import Client, TestCase
 from django.urls import reverse
 
+from corehq.apps.app_manager.decorators import release_build_in_progress_lock
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.util import get_simple_form
 from corehq.apps.domain.shortcuts import create_domain
@@ -131,14 +132,39 @@ class ValidateApiTests(TestCase):
         assert response.status_code == 404
         assert response.json()['errors'][0]['error'] == 'form_not_found'
 
-    def test_build_queues_new_build(self):
+    def test_build_triggers_new_build(self):
+        # CELERY_TASK_ALWAYS_EAGER runs the queued task inline, so by the
+        # time the response is built the build has already completed.
         response = self.client.post(self._build_url())
         assert response.status_code == 200
-        assert response.json() == {'status': 'build_queued', 'version': self.app.version}
+        assert response.json() == {
+            'app_version': self.app.version,
+            'latest_built_app_version': self.app.version,
+            'build_queued': False,
+        }
 
         latest_build = self.app.get_latest_build()
         self.addCleanup(latest_build.delete)
         assert latest_build.version == self.app.version
+
+    def test_build_stays_queued_until_task_releases_lock(self):
+        self.addCleanup(release_build_in_progress_lock, self.domain.name, self.app._id)
+        with patch(
+            'corehq.apps.app_manager.views.build_validate_api.build_app_task.delay'
+        ) as mock_delay:
+            response = self.client.post(self._build_url())
+        mock_delay.assert_called_once()
+
+        assert response.json() == {
+            'app_version': self.app.version,
+            'latest_built_app_version': None,
+            'build_queued': True,
+        }
+        # still queued: the (mocked-away) task hasn't run to release the lock
+        assert self.client.get(self._build_url()).json()['build_queued'] is True
+
+        release_build_in_progress_lock(self.domain.name, self.app._id)
+        assert self.client.get(self._build_url()).json()['build_queued'] is False
 
     def test_build_returns_already_built_for_current_version(self):
         build = self.app.make_build()
@@ -147,7 +173,11 @@ class ValidateApiTests(TestCase):
 
         response = self.client.post(self._build_url())
         assert response.status_code == 200
-        assert response.json() == {'status': 'already_built', 'version': self.app.version}
+        assert response.json() == {
+            'app_version': self.app.version,
+            'latest_built_app_version': self.app.version,
+            'build_queued': False,
+        }
 
     def test_build_returns_404_for_missing_app(self):
         response = self.client.post(self._build_url(app_id='missing-app'))
@@ -165,7 +195,11 @@ class ValidateApiTests(TestCase):
     def test_build_status_not_built(self):
         response = self.client.get(self._build_url())
         assert response.status_code == 200
-        assert response.json() == {'version': self.app.version, 'built': False}
+        assert response.json() == {
+            'app_version': self.app.version,
+            'latest_built_app_version': None,
+            'build_queued': False,
+        }
 
     def test_build_status_built(self):
         build = self.app.make_build()
@@ -174,7 +208,11 @@ class ValidateApiTests(TestCase):
 
         response = self.client.get(self._build_url())
         assert response.status_code == 200
-        assert response.json() == {'version': self.app.version, 'built': True}
+        assert response.json() == {
+            'app_version': self.app.version,
+            'latest_built_app_version': self.app.version,
+            'build_queued': False,
+        }
 
     def test_build_status_returns_404_for_missing_app(self):
         response = self.client.get(self._build_url(app_id='missing-app'))

@@ -14,6 +14,10 @@ from django.views.generic import View
 
 from corehq.apps.api.decorators import api_throttle
 from corehq.apps.app_manager.dbaccessors import get_latest_build_version
+from corehq.apps.app_manager.decorators import (
+    build_request_in_progress,
+    set_build_in_progress_lock,
+)
 from corehq.apps.app_manager.tasks import build_app_task
 from corehq.apps.app_manager.views.single_form_api import (
     get_app_doc_for_api,
@@ -75,10 +79,12 @@ class FormValidateApiView(View):
 @method_decorator(api_throttle, name='dispatch')
 class AppBuildApiView(View):
     """GET whether an application's latest version has been built, or
-    POST to trigger a new build of it.
+    POST to trigger a new build of it. Both return the same shape:
+    ``app_version``, ``latest_built_app_version``, and ``build_queued``
+    (whether a build for this app is currently in flight).
 
-    GET never deserializes the full app doc into an ``Application`` --
-    just reads its version off the raw doc -- so it's cheap to poll.
+    Neither deserializes the full app doc into an ``Application`` --
+    just reads its version off the raw doc -- so both are cheap to poll.
     """
 
     @method_decorator(require_permission(HqPermissions.view_apps, login_decorator=api_auth()))
@@ -87,9 +93,7 @@ class AppBuildApiView(View):
         if not result.success:
             return errors_response(result)
 
-        version = app_doc['version']
-        built = get_latest_build_version(domain, app_id) == version
-        return JsonResponse({'version': version, 'built': built})
+        return JsonResponse(_build_status(domain, app_id, app_doc['version']))
 
     @method_decorator(require_permission(HqPermissions.edit_apps, login_decorator=api_auth()))
     def post(self, request, domain, app_id):
@@ -98,8 +102,17 @@ class AppBuildApiView(View):
             return errors_response(result)
 
         version = app_doc['version']
-        if get_latest_build_version(domain, app_id) == version:
-            return JsonResponse({'status': 'already_built', 'version': version})
+        already_built = get_latest_build_version(domain, app_id) == version
+        if not already_built and not build_request_in_progress(domain, app_id):
+            set_build_in_progress_lock(domain, app_id)
+            build_app_task.delay(app_id, domain, version, user_id=request.couch_user.get_id)
 
-        build_app_task.delay(app_id, domain, version, user_id=request.couch_user.get_id)
-        return JsonResponse({'status': 'build_queued', 'version': version})
+        return JsonResponse(_build_status(domain, app_id, version))
+
+
+def _build_status(domain, app_id, version):
+    return {
+        'app_version': version,
+        'latest_built_app_version': get_latest_build_version(domain, app_id),
+        'build_queued': build_request_in_progress(domain, app_id),
+    }

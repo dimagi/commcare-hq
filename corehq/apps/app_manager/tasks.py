@@ -54,15 +54,23 @@ def autogenerate_build_task(app_id, domain, version, comment):
 
 @serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60)
 def build_app_task(app_id, domain, version, user_id=None):
+    # The caller sets the build-in-progress lock before queuing this task
+    # (so pollers see "queued" immediately); this task is responsible for
+    # releasing it once the build attempt is over, one way or another.
+    from corehq.apps.app_manager.decorators import release_build_in_progress_lock
+
     app = get_app(domain, app_id)
     if app.version != version:
         # app has changed since this task was queued; a later task
         # will build the current version
+        release_build_in_progress_lock(domain, app_id)
         return
     try:
         copy = app.make_build(user_id=user_id)
     except AppValidationError:
         return
+    finally:
+        release_build_in_progress_lock(domain, app_id)
     copy.save(increment_version=False)
     return copy
 
