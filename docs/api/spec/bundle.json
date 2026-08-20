@@ -4409,12 +4409,12 @@
                           },
                           "metadata": {
                             "additionalProperties": true,
-                            "description": "Custom metadata associated with the group.",
+                            "description": "Custom metadata associated with the group. On PUT, replaces the stored metadata entirely rather than merging keys.",
                             "nullable": true,
                             "type": "object"
                           },
                           "name": {
-                            "description": "Name of the group.",
+                            "description": "Name of the group. Required to create a group, and must be unique within the domain \u2014 creating or renaming to a name already in use by another group, or to a blank name, is rejected.",
                             "type": "string"
                           },
                           "reporting": {
@@ -4428,7 +4428,7 @@
                             "type": "string"
                           },
                           "users": {
-                            "description": "UUIDs of the users in this group.",
+                            "description": "UUIDs of the users in this group. On PUT, replaces the group's membership to match this list exactly (users not included are removed).",
                             "items": {
                               "type": "string"
                             },
@@ -4482,12 +4482,12 @@
                   },
                   "metadata": {
                     "additionalProperties": true,
-                    "description": "Custom metadata associated with the group.",
+                    "description": "Custom metadata associated with the group. On PUT, replaces the stored metadata entirely rather than merging keys.",
                     "nullable": true,
                     "type": "object"
                   },
                   "name": {
-                    "description": "Name of the group.",
+                    "description": "Name of the group. Required to create a group, and must be unique within the domain \u2014 creating or renaming to a name already in use by another group, or to a blank name, is rejected.",
                     "type": "string"
                   },
                   "reporting": {
@@ -4496,7 +4496,7 @@
                     "type": "boolean"
                   },
                   "users": {
-                    "description": "UUIDs of the users in this group.",
+                    "description": "UUIDs of the users in this group. On PUT, replaces the group's membership to match this list exactly (users not included are removed).",
                     "items": {
                       "type": "string"
                     },
@@ -4548,12 +4548,12 @@
                   },
                   "metadata": {
                     "additionalProperties": true,
-                    "description": "Custom metadata associated with the group.",
+                    "description": "Custom metadata associated with the group. On PUT, replaces the stored metadata entirely rather than merging keys.",
                     "nullable": true,
                     "type": "object"
                   },
                   "name": {
-                    "description": "Name of the group.",
+                    "description": "Name of the group. Required to create a group, and must be unique within the domain \u2014 creating or renaming to a name already in use by another group, or to a blank name, is rejected.",
                     "type": "string"
                   },
                   "reporting": {
@@ -4562,7 +4562,7 @@
                     "type": "boolean"
                   },
                   "users": {
-                    "description": "UUIDs of the users in this group.",
+                    "description": "UUIDs of the users in this group. On PUT, replaces the group's membership to match this list exactly (users not included are removed).",
                     "items": {
                       "type": "string"
                     },
@@ -4640,12 +4640,12 @@
                     },
                     "metadata": {
                       "additionalProperties": true,
-                      "description": "Custom metadata associated with the group.",
+                      "description": "Custom metadata associated with the group. On PUT, replaces the stored metadata entirely rather than merging keys.",
                       "nullable": true,
                       "type": "object"
                     },
                     "name": {
-                      "description": "Name of the group.",
+                      "description": "Name of the group. Required to create a group, and must be unique within the domain \u2014 creating or renaming to a name already in use by another group, or to a blank name, is rejected.",
                       "type": "string"
                     },
                     "reporting": {
@@ -4659,7 +4659,7 @@
                       "type": "string"
                     },
                     "users": {
-                      "description": "UUIDs of the users in this group.",
+                      "description": "UUIDs of the users in this group. On PUT, replaces the group's membership to match this list exactly (users not included are removed).",
                       "items": {
                         "type": "string"
                       },
@@ -4717,12 +4717,12 @@
                   },
                   "metadata": {
                     "additionalProperties": true,
-                    "description": "Custom metadata associated with the group.",
+                    "description": "Custom metadata associated with the group. On PUT, replaces the stored metadata entirely rather than merging keys.",
                     "nullable": true,
                     "type": "object"
                   },
                   "name": {
-                    "description": "Name of the group.",
+                    "description": "Name of the group. Required to create a group, and must be unique within the domain \u2014 creating or renaming to a name already in use by another group, or to a blank name, is rejected.",
                     "type": "string"
                   },
                   "reporting": {
@@ -4731,7 +4731,7 @@
                     "type": "boolean"
                   },
                   "users": {
-                    "description": "UUIDs of the users in this group.",
+                    "description": "UUIDs of the users in this group. On PUT, replaces the group's membership to match this list exactly (users not included are removed).",
                     "items": {
                       "type": "string"
                     },
@@ -4766,12 +4766,12 @@
                     },
                     "metadata": {
                       "additionalProperties": true,
-                      "description": "Custom metadata associated with the group.",
+                      "description": "Custom metadata associated with the group. On PUT, replaces the stored metadata entirely rather than merging keys.",
                       "nullable": true,
                       "type": "object"
                     },
                     "name": {
-                      "description": "Name of the group.",
+                      "description": "Name of the group. Required to create a group, and must be unique within the domain \u2014 creating or renaming to a name already in use by another group, or to a blank name, is rejected.",
                       "type": "string"
                     },
                     "reporting": {
@@ -4785,7 +4785,7 @@
                       "type": "string"
                     },
                     "users": {
-                      "description": "UUIDs of the users in this group.",
+                      "description": "UUIDs of the users in this group. On PUT, replaces the group's membership to match this list exactly (users not included are removed).",
                       "items": {
                         "type": "string"
                       },
