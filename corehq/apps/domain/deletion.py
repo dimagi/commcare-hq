@@ -255,10 +255,19 @@ def _delete_data_files(domain_name):
 
 def _delete_bulk_async_jobs(domain_name):
     from corehq.apps.data_interfaces.models import BulkAsyncJob
-    get_blob_db().bulk_delete(metas=list(BlobMeta.objects.partitioned_query(domain_name).filter(
-        parent_id=domain_name,
-        type_code=CODES.bulk_async_job,
-    )))
+
+    blob_db = get_blob_db()
+    query = BulkAsyncJob.objects.filter(domain=domain_name)
+    for job_id in query.values_list('id', flat=True):
+        parent_id = job_id.hex
+        blob_db.bulk_delete(
+            metas=list(
+                BlobMeta.objects.partitioned_query(parent_id).filter(
+                    parent_id=parent_id,
+                    type_code=CODES.bulk_async_job,
+                )
+            )
+        )
     BulkAsyncJob.objects.filter(domain=domain_name).delete()
 
 
