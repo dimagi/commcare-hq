@@ -234,7 +234,7 @@ def get_form_for_api(domain, app_id, module_id, form_id):
 
     form = module.get_form_by_unique_id(form_id)
     if form is None:
-        return None, ApiResult.error(FORM_API_FORM_NOT_FOUND, f"Module ({module_id}) not found")
+        return None, ApiResult.error(FORM_API_FORM_NOT_FOUND, f"Form ({form_id}) not found")
 
     return form, ApiResult()
 
