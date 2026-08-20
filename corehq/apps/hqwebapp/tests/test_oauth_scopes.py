@@ -6,14 +6,13 @@ import pytest
 from corehq.apps.hqwebapp import oauth_scopes
 from corehq.apps.hqwebapp.oauth_scopes import (
     DOMAIN_SCOPE_PREFIX,
+    STATIC_SCOPES,
     HQScopes,
     ScopeDescriptions,
     domain_scope,
     token_domains,
 )
 from corehq.apps.users.models import CouchUser
-
-STATIC_SCOPES = {'access_apis', 'reports:view', 'mobile_access', 'sync'}
 
 
 class FakeOAuthRequest:
@@ -96,8 +95,11 @@ class TestHQScopes:
 
     def test_get_all_scopes_supports_domain_lookup(self):
         all_scopes = HQScopes().get_all_scopes()
-        assert STATIC_SCOPES.issubset(all_scopes.keys())
+        assert set(STATIC_SCOPES).issubset(all_scopes.keys())
         assert 'my-project' in all_scopes[f'{DOMAIN_SCOPE_PREFIX}my-project']
+
+    def test_default_scopes(self):
+        assert HQScopes().get_default_scopes() == list(STATIC_SCOPES)
 
     def test_describe_scopes_covers_static_and_domain_scopes(self):
         descriptions = HQScopes().describe_scopes(
@@ -115,11 +117,11 @@ class TestHQScopes:
 
     def test_available_scopes_without_a_request(self):
         """OIDC discovery calls this with no arguments; it must not raise."""
-        assert set(HQScopes().get_available_scopes()) == STATIC_SCOPES
+        assert HQScopes().get_available_scopes() == list(STATIC_SCOPES)
 
     def test_available_scopes_without_a_requested_domain(self):
         request = FakeOAuthRequest(scopes=['access_apis'])
-        assert set(HQScopes().get_available_scopes(request=request)) == STATIC_SCOPES
+        assert HQScopes().get_available_scopes(request=request) == list(STATIC_SCOPES)
 
     def test_unauthenticated_authorize_step_permits_a_valid_project_space(self):
         """
@@ -133,7 +135,7 @@ class TestHQScopes:
     def test_syntactically_invalid_project_space_is_rejected(self, domain):
         request = FakeOAuthRequest(scopes=[f'{DOMAIN_SCOPE_PREFIX}{domain}'], user=None)
         available = HQScopes().get_available_scopes(request=request)
-        assert set(available) == STATIC_SCOPES
+        assert available == list(STATIC_SCOPES)
 
     @pytest.mark.parametrize('requested, granted', [
         (['domain:mine'], {'domain:mine'}),
@@ -144,4 +146,4 @@ class TestHQScopes:
         request = FakeOAuthRequest(scopes=requested, user=object())
         with _member_of('mine'):
             available = HQScopes().get_available_scopes(request=request)
-        assert set(available) == STATIC_SCOPES | granted
+        assert set(available) == set(STATIC_SCOPES) | granted
