@@ -143,6 +143,25 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         self.assertEqual(response_dict['meta']['total_count'], 2)
         self.assertEqual(len(response_dict['objects']), 2)
 
+    def test_cant_get_missing_report_configuration(self):
+        response = self._assert_auth_get_resource(self.single_endpoint(uuid.uuid4().hex))
+
+        assert response.status_code == 404, response.content
+
+    def test_cant_get_report_configuration_in_another_domain(self):
+        not_mine = ReportConfiguration(
+            domain='not-my-project',
+            config_id=self.data_source._id,
+            columns=[],
+            filters=[],
+        )
+        not_mine.save()
+        self.addCleanup(not_mine.delete)
+
+        response = self._assert_auth_get_resource(self.single_endpoint(not_mine._id))
+
+        assert response.status_code == 404, response.content
+
     def test_disallowed_methods(self):
         response = self._assert_auth_post_resource(
             self.single_endpoint(self.report_configuration._id),
@@ -168,6 +187,12 @@ class TestDataSourceConfigurationResource(APIResourceTest):
     api_name = "v0.5"
 
     @flag_enabled('USER_CONFIGURABLE_REPORTS')
+    def test_cant_get_missing_data_source(self):
+        response = self._assert_auth_get_resource(self.single_endpoint(uuid.uuid4().hex))
+
+        assert response.status_code == 404, response.content
+
+    @flag_enabled('USER_CONFIGURABLE_REPORTS')
     def test_cant_update_missing_data_source(self):
         response = self._assert_auth_post_resource(
             self.single_endpoint(uuid.uuid4().hex),
@@ -179,6 +204,26 @@ class TestDataSourceConfigurationResource(APIResourceTest):
         # put_detail must not echo the exception message: some carry internal
         # detail, and get_document_or_404 even embeds a traceback
         assert response.content == b""
+
+    @flag_enabled('USER_CONFIGURABLE_REPORTS')
+    def test_cant_update_data_source_in_another_domain(self):
+        not_my_data_source = DataSourceConfiguration(
+            domain='not-my-project',
+            referenced_doc_type="XFormInstance",
+            table_id=uuid.uuid4().hex,
+            display_name="theirs",
+        )
+        not_my_data_source.save()
+        self.addCleanup(not_my_data_source.delete)
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(not_my_data_source._id),
+            json.dumps({"display_name": "mine now"}),
+            method="PUT",
+        )
+
+        assert response.status_code == 404, response.content
+        assert DataSourceConfiguration.get(not_my_data_source._id).display_name == "theirs"
 
 
 class TestConfigurableReportDataResource(APIResourceTest):
@@ -295,6 +340,11 @@ class TestConfigurableReportDataResource(APIResourceTest):
         )
         cls.report_configuration.save()
         cls.addClassCleanup(cls.report_configuration.delete)
+
+    def test_cant_fetch_data_for_missing_report(self):
+        response = self.client.get(self.single_endpoint(uuid.uuid4().hex))
+
+        assert response.status_code == 404, response.content
 
     def test_fetching_data(self):
         response = self.client.get(

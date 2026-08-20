@@ -1,6 +1,6 @@
 import json
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import HttpResponse
 from django.urls import NoReverseMatch, include, re_path
 
@@ -16,7 +16,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.api.cors import add_cors_headers_to_response
-from corehq.apps.api.util import get_obj
+from corehq.apps.api.util import get_obj, get_object_or_not_exist
 from corehq.apps.users.util import is_dimagi_email
 
 
@@ -173,6 +173,24 @@ class HqBaseResource(ApiVersioningMixin, CorsResourceMixin, JsonResourceMixin, R
 
     def get_required_privilege(self):
         return privileges.API_ACCESS
+
+    def get_detail(self, request, **kwargs):
+        """Return a single object, or respond 404 if it does not exist.
+
+        Tastypie's ``get_detail`` only translates ``ObjectDoesNotExist``
+        into a 404, so an ``obj_get`` that signals a missing object with
+        ``NotFound`` -- the natural reading of that name, and what
+        ``obj_update`` requires -- escapes to ``_handle_500`` instead.
+        Accepting both here means either exception works from either hook.
+
+        Unlike ``put_detail``, this only has to wrap the parent: tastypie
+        lets ``NotFound`` propagate out of ``get_detail`` rather than
+        acting on it.
+        """
+        try:
+            return super().get_detail(request, **kwargs)
+        except NotFound:
+            return http.HttpNotFound()
 
     def put_detail(self, request, **kwargs):
         """Update an existing object, or respond 404 if it does not exist.
@@ -356,3 +374,12 @@ class CouchResourceMixin(object):
         return {
             'pk': get_obj(bundle_or_obj)._id
         }
+
+    def get_document_for_update(self, doc_id, domain):
+        """
+        Converts ``ObjectDoesNotExist`` into ``tastypie.NotFound``
+        """
+        try:
+            return get_object_or_not_exist(self._meta.object_class, doc_id, domain)
+        except ObjectDoesNotExist as err:
+            raise NotFound(str(err))

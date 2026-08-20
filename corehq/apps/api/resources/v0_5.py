@@ -14,7 +14,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import Max, Min, Q
 from django.db.models.functions import TruncDate
 from django.http import (
-    Http404,
     HttpResponse,
     HttpResponseForbidden,
     HttpResponseNotFound,
@@ -67,6 +66,7 @@ from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from corehq.apps.api.util import (
     django_date_filter,
     get_obj,
+    get_object_or_not_exist,
     make_date_filter,
     parse_str_to_date,
     cursor_based_query_for_datasource
@@ -349,8 +349,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             raise BadRequest(_("You must require account confirmation to send a confirmation email."))
 
     def obj_update(self, bundle, **kwargs):
-        bundle.obj = CommCareUser.get(kwargs['pk'])
-        assert bundle.obj.domain == kwargs['domain']
+        bundle.obj = self.get_document_for_update(kwargs['pk'], kwargs['domain'])
         send_confirmation_email = string_to_boolean(bundle.data.pop('send_confirmation_email_now', False))
         user_change_logger = self._get_user_change_logger(bundle)
         errors = self._update(bundle, user_change_logger)
@@ -760,8 +759,7 @@ class GroupResource(v0_4.GroupResource):
         return bundle
 
     def obj_update(self, bundle, **kwargs):
-        bundle.obj = Group.get(kwargs['pk'])
-        assert bundle.obj.domain == kwargs['domain']
+        bundle.obj = self.get_document_for_update(kwargs['pk'], kwargs['domain'])
         if self._update(bundle):
             assert bundle.obj.domain == kwargs['domain']
             bundle.obj.save()
@@ -977,13 +975,7 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         } for c in obj_columns]
 
     def obj_get(self, bundle, **kwargs):
-        domain = kwargs['domain']
-        pk = kwargs['pk']
-        try:
-            report_configuration = get_document_or_404(ReportConfiguration, domain, pk)
-        except Http404 as e:
-            raise NotFound(str(e))
-        return report_configuration
+        return get_object_or_not_exist(ReportConfiguration, kwargs['pk'], kwargs['domain'])
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -1024,13 +1016,7 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
 
     def obj_get(self, bundle, **kwargs):
         self._ensure_toggle_enabled(bundle.request)
-        domain = kwargs['domain']
-        pk = kwargs['pk']
-        try:
-            data_source = get_document_or_404(DataSourceConfiguration, domain, pk)
-        except Http404 as e:
-            raise NotFound(str(e))
-        return data_source
+        return get_object_or_not_exist(DataSourceConfiguration, kwargs['pk'], kwargs['domain'])
 
     def obj_get_list(self, bundle, **kwargs):
         self._ensure_toggle_enabled(bundle.request)
@@ -1039,12 +1025,7 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
 
     def obj_update(self, bundle, **kwargs):
         self._ensure_toggle_enabled(bundle.request)
-        domain = kwargs['domain']
-        pk = kwargs['pk']
-        try:
-            data_source = get_document_or_404(DataSourceConfiguration, domain, pk)
-        except Http404 as e:
-            raise NotFound(str(e))
+        data_source = self.get_document_for_update(kwargs['pk'], kwargs['domain'])
         allowed_update_fields = [
             'display_name',
             'configured_filter',
@@ -1077,6 +1058,7 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
 
     class Meta(CustomResourceMeta):
         resource_name = 'ucr_data_source'
+        object_class = DataSourceConfiguration
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get', 'put']
         always_return_data = True
