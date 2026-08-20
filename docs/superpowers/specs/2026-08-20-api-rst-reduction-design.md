@@ -33,9 +33,12 @@ a home.**
 
 > **Correction, 2026-08-20.** Three claims below are out of date:
 >
-> - `lookup-table-item-v1` and `lookup-table-item-v2` ARE rendered —
->   `fixture.rst` renders all three lookup-table specs. The gap this section
->   describes was closed before this design was written.
+> - `lookup-table-item-v1` and `lookup-table-item-v2` are **not** undocumented.
+>   Both specs are complete and fully described, and `fixture.rst` rendered all
+>   three lookup-table specs — the gap this section describes was closed before
+>   this design was written. (Since the reStructuredText rendering path was
+>   removed, no page renders a spec at all; each of the three gets its own link
+>   to its reference page instead.)
 > - Ten specs are fully described, not none: `case-v1`, `form-v1`, `group-v1`,
 >   `location-type-v1`, `location-v1`, `location-v2`, `lookup-table-item-v1`,
 >   `lookup-table-item-v2`, `lookup-table-v1`, `user-v1`.
