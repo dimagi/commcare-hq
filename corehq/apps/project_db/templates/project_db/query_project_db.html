@@ -1,7 +1,31 @@
 {% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% js_entry 'hqwebapp/js/htmx_and_alpine' %}
 
 {% block page_content %}
-  <h3>{% trans "Query ProjectDB" %}</h3>
+  <h2 class="h4 mb-3">{% trans "Query ProjectDB" %}</h2>
+  <form
+    hx-post="{{ request.path_info }}"
+    hq-hx-action="run_query"
+    hx-target="#query-results"
+    hx-disabled-elt="find button[type=submit]"
+  >
+    <div class="mb-3">
+      <textarea
+        class="form-control font-monospace"
+        name="sql"
+        rows="8"
+        spellcheck="false"
+        placeholder="SELECT * FROM my_case_type"
+      ></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">{% trans "Run" %}</button>
+  </form>
+  <div id="query-results" class="mt-4"></div>
 {% endblock %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}

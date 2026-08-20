@@ -1,0 +1,32 @@
+{% load i18n %}
+{% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+{% else %}
+  {% if rows %}
+    {% if rows|length == max_rows %}
+      <div class="alert alert-info">
+        {% blocktrans %}Showing the first {{ max_rows }} rows.{% endblocktrans %}
+      </div>
+    {% endif %}
+    <div class="table-responsive">
+      <table class="table table-striped table-sm">
+        <thead>
+          <tr>
+            {% for column in columns %}
+            <th>{{ column }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>
+              {% for value in row %}<td>{{ value }}</td>{% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-body-secondary">{% trans "No results" %}</p>
+  {% endif %}
+{% endif %}
