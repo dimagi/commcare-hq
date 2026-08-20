@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from django.test import Client, SimpleTestCase, TestCase
 
@@ -156,3 +157,44 @@ class TestDocsIndex(TestCase):
     def test_index_links_the_machine_readable_bundle(self):
         content = self.client.get('/api/docs/').content.decode()
         assert '/api/openapi.json' in content
+
+
+class TestDocsPage(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+
+    def test_serves_the_built_page(self):
+        with patch(
+            'corehq.apps.api.openapi.artifacts.read_page',
+            return_value='<html>redoc</html>',
+        ):
+            response = self.client.get('/api/docs/user-v1/')
+        assert response.status_code == 200
+        assert response.content == b'<html>redoc</html>'
+
+    def test_unknown_slug_is_404_without_reading_the_filesystem(self):
+        with patch(
+            'corehq.apps.api.openapi.artifacts.read_page'
+        ) as read_page:
+            response = self.client.get('/api/docs/not-a-real-api/')
+        assert response.status_code == 404
+        read_page.assert_not_called()
+
+    def test_missing_artifact_names_the_build_command_in_debug(self):
+        with patch(
+            'corehq.apps.api.openapi.artifacts.read_page', return_value=None
+        ):
+            with self.settings(DEBUG=True):
+                response = self.client.get('/api/docs/user-v1/')
+        assert response.status_code == 404
+        assert b'yarn openapi:docs' in response.content
+
+    def test_missing_artifact_says_nothing_outside_debug(self):
+        with patch(
+            'corehq.apps.api.openapi.artifacts.read_page', return_value=None
+        ):
+            with self.settings(DEBUG=False):
+                response = self.client.get('/api/docs/user-v1/')
+        assert response.status_code == 404
+        assert response.content == b''

@@ -86,6 +86,30 @@ def api_spec(request, slug=None):
     return response
 
 
+def api_docs_page(request, slug):
+    """The generated Redoc reference page for one API.
+
+    The page is produced by ``yarn openapi:docs`` during the asset build and
+    is not committed. Deployed environments always build static assets, so
+    a missing page means either a local checkout that has not run the build
+    or a broken deploy -- hence the warning log as well as the 404.
+    """
+    if slug not in artifacts.documented_slugs():
+        return _not_found(f'No API documentation for {slug!r}.')
+    page = artifacts.read_page(slug)
+    if page is None:
+        logger.warning(
+            'API reference page %r is missing from %s',
+            slug,
+            artifacts.DIST_DIR,
+        )
+        return _not_found(
+            f'{artifacts.page_path(slug)} has not been built. '
+            f'{artifacts.BUILD_HINT}'
+        )
+    return HttpResponse(page)
+
+
 def api_docs_index(request):
     """Lists the documented APIs, and how completely each is described."""
     apis = []
