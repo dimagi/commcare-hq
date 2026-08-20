@@ -109,8 +109,8 @@ def _resolve(schema, spec, seen):
     a caller that recurses into ``anyOf`` branches must know what has already
     been followed or a self-referential document recurses forever.
 
-    Yields an empty schema for a ref already in ``seen``, and for a remote or
-    malformed ref, which this generator never produces.
+    Returns an empty schema for a ref already in ``seen``, and for a remote
+    or malformed ref, which this generator never produces.
     """
     while True:
         ref = schema.get('$ref')
