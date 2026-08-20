@@ -45,8 +45,24 @@ extensions = [
     'myst_parser',
     'sphinx.ext.viewcode',
     'sphinxcontrib_django',
+    'sphinxcontrib.openapi',
     'sphinx_rtd_theme',
 ]
+
+# sphinxcontrib-openapi ships two renderers for the `.. openapi::` directive:
+# the default 'httpdomain:old' renderer never emits response/request JSON
+# schema field descriptions, while 'httpdomain' does (see
+# render_json_schema_description() in sphinxcontrib/openapi/renderers/
+# _httpdomain.py). Use the newer renderer for all `.. openapi::` blocks.
+#
+# Note: invoking the renderer directly by name, e.g. `.. openapi:httpdomain::`,
+# triggers a spurious "unknown directive name" warning, because Sphinx's
+# domain-aware directive dispatch treats the text before the colon as a
+# *domain* name (there is no 'openapi' domain) before falling back to
+# docutils' plain directive registry, where it is in fact registered and
+# works. Setting the default renderer here instead lets pages use the
+# colon-free `.. openapi::` directive and avoids the warning entirely.
+openapi_default_renderer = 'httpdomain'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -63,7 +79,7 @@ release = '1.0'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', 'superpowers']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
