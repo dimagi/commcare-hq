@@ -1421,7 +1421,7 @@ class TestInvitationResource(APIResourceTest):
         self.addCleanup(invitation.delete)
         self.assertEqual(invitation.get_role_name(), "App Editor")
         self.assertEqual(invitation.primary_location, self.loc1)
-        self.assertEqual(list(invitation.assigned_locations.all()), [self.loc1, self.loc2])
+        self.assertCountEqual(invitation.assigned_locations.all(), [self.loc1, self.loc2])
         self.assertEqual(invitation.profile, self.profile)
         self.assertEqual(invitation.custom_user_data["favorite_subject"], "math")
         self.assertEqual(invitation.tableau_role, "Viewer")
