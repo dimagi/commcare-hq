@@ -33,7 +33,7 @@ class HQAuthorizationView(AuthorizationView):
     def domain_choices(self):
         choices = [
             (domain, self._domain_display_name(domain))
-            for domain in self.request.couch_user.get_domains()
+            for domain in self.request.couch_user.get_domains(allow_enterprise=True)
         ]
         return sorted(choices, key=lambda choice: choice[1].lower())
 
