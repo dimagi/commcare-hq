@@ -15,17 +15,19 @@ import hashlib
 import json
 from dataclasses import dataclass
 
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django.core.serializers.json import DjangoJSONEncoder
-from couchdbkit.exceptions import ResourceNotFound
 from django.http import HttpResponse, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
+from jsonobject.exceptions import BadValueError
 from memoized import memoized
 
 from corehq.apps.api.decorators import api_throttle
 from corehq.apps.app_manager.dbaccessors import get_app_doc, wrap_app
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException
+from corehq.apps.app_manager.util import save_xform
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -38,6 +40,9 @@ FORM_API_FORM_NOT_FOUND = 'form_not_found'
 FORM_API_UNRECOGNIZED_FIELD = 'unrecognized_field'
 FORM_API_INVALID_FIELD_VALUE = 'invalid_field_value'
 FORM_API_DOC_TYPE_MISMATCH = 'doc_type_mismatch'
+FORM_API_PRECONDITION_REQUIRED = 'precondition_required'
+FORM_API_PRECONDITION_FAILED = 'precondition_failed'
+FORM_API_CONFLICT = 'conflict'
 
 ETAG = 'etag'
 
@@ -145,6 +150,55 @@ class FormResource:
             ensure_ascii=False,
             cls=DjangoJSONEncoder,
         ).encode('utf-8')
+
+
+def patch_form_for_api(domain, app_id, module_id, form_id, source, if_match):
+    form, result = get_form_for_api(domain, app_id, module_id, form_id)
+    if not result.success:
+        return None, result
+
+    errors = []
+    current_etag = FormResource(form).get_etag()
+    if if_match is None:
+        errors.append(ApiError(
+            FORM_API_PRECONDITION_REQUIRED, 'If-Match header is required.'
+        ))
+    elif if_match != current_etag:
+        errors.append(ApiError(
+            FORM_API_PRECONDITION_FAILED, 'If-Match does not match the current ETag.'
+        ))
+
+    source_xml = source.get('source')
+    if source_xml is not None and not isinstance(source_xml, str):
+        errors.append(ApiError(
+            FORM_API_INVALID_FIELD_VALUE, 'source must be a string'
+        ))
+
+    fields_to_set, patch_errors = create_form_patch(form, source)
+    if patch_errors:
+        errors.extend(patch_errors)
+
+    if errors:
+        return None, ApiResult(errors)
+
+    try:
+        for key, value in fields_to_set.items():
+            setattr(form, key, value)
+    except (ValueError, BadValueError) as e:
+        return None, ApiResult.error(FORM_API_INVALID_FIELD_VALUE, str(e))
+
+    app = form.get_app()
+    if source_xml is not None:
+        save_xform(app, form, source_xml.encode('utf-8'))
+
+    try:
+        app.save()
+    except ResourceConflict:
+        return None, ApiResult.error(
+            FORM_API_CONFLICT, 'Application was concurrently modified, please retry'
+        )
+
+    return form, ApiResult()
 
 
 def get_form_for_api(domain, app_id, module_id, form_id):

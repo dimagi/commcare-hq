@@ -3,22 +3,29 @@ import json
 from unittest import mock
 from unittest.mock import patch
 
+from couchdbkit.exceptions import ResourceConflict
 from django.test import Client, TestCase
 from django.urls import reverse
 
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.util import get_simple_form
+from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.views.single_form_api import (
     FORM_API_APP_NOT_FOUND,
+    FORM_API_CONFLICT,
     FORM_API_DOC_TYPE_MISMATCH,
     FORM_API_FORM_NOT_FOUND,
+    FORM_API_INVALID_FIELD_VALUE,
     FORM_API_MODULE_NOT_FOUND,
+    FORM_API_PRECONDITION_FAILED,
+    FORM_API_PRECONDITION_REQUIRED,
     FORM_API_UNRECOGNIZED_FIELD,
     ApiError,
     FormResource,
     create_form_patch,
     _form_resource_dict,
     get_form_for_api,
+    patch_form_for_api,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -150,6 +157,150 @@ class SingleFormApiViewTests(TestCase):
         client = Client()
         client.login(username=self.non_admin_username, password=self.non_admin_password)
         assert client.get(self._url()).status_code != 200
+
+class UpdateFormForApiTests(TestCase):
+    domain = 'form-api-patch-domain'
+
+    def setUp(self):
+        self.app = Application.new_app(self.domain, 'Test App')
+        self.module = self.app.add_module(Module.new_module('Module One', lang='en'))
+        self.form = self.module.new_form('Form One', lang='en', attachment=get_simple_form(xmlns='xmlns-1'))
+        self.form.comment = 'original comment'
+        self.module_id = self.module.unique_id
+        self.form_id = self.form.unique_id
+        self.app.save()
+        self.addCleanup(self.app.delete)
+
+    def _etag(self):
+        form, _ = get_form_for_api(
+            self.domain, self.app._id, self.module_id, self.form_id
+        )
+        return FormResource(form).get_etag()
+
+    def test_updates_only_specified_fields(self):
+        form, result = patch_form_for_api(
+            self.domain, self.app._id, self.module_id, self.form_id,
+            {'name': {'en': 'Renamed'}}, self._etag(),
+        )
+
+        assert result.success is True
+        assert form.name['en'] == 'Renamed'
+        assert form.comment == 'original comment'  # untouched
+
+    def test_bumps_app_version(self):
+        old_version = self.app.version
+        patch_form_for_api(
+            self.domain, self.app._id, self.module_id, self.form_id,
+            {'name': {'en': 'Renamed'}}, self._etag(),
+        )
+        assert Application.get(self.app._id).version > old_version
+
+    def test_applies_source_via_save_xform(self):
+        new_xml = get_simple_form(xmlns='xmlns-2')
+        form, result = patch_form_for_api(
+            self.domain, self.app._id, self.module_id, self.form_id,
+            {'source': new_xml}, self._etag(),
+        )
+        assert result.success is True
+        assert form.source == new_xml
+
+    def test_leaves_xml_untouched_when_source_absent(self):
+        original_source = self.form.source
+        form, result = patch_form_for_api(
+            self.domain, self.app._id, self.module_id, self.form_id,
+            {'name': {'en': 'Renamed'}}, self._etag(),
+        )
+        assert form.source == original_source
+
+    def test_unique_id_in_body_is_silently_ignored(self):
+        form, result = patch_form_for_api(
+            self.domain, self.app._id, self.module_id, self.form_id,
+            {'unique_id': 'spoofed-id', 'name': {'en': 'Renamed'}}, self._etag(),
+        )
+        assert result.success is True
+        assert form.unique_id == self.form_id  # NOT 'spoofed-id'
+
+    def test_xmlns_in_body_is_silently_ignored(self):
+        original_xmlns = self.form.xmlns
+        form, result = patch_form_for_api(
+            self.domain, self.app._id, self.module_id, self.form_id,
+            {'xmlns': 'spoofed-xmlns', 'name': {'en': 'Renamed'}}, self._etag(),
+        )
+        assert result.success is True
+        assert form.xmlns == original_xmlns
+
+    def test_returns_invalid_field_value_for_wrong_type(self):
+        form, result = patch_form_for_api(
+            self.domain, self.app._id, self.module_id, self.form_id,
+            {'name': 'not-a-dict'}, self._etag(),
+        )
+        assert result.success is False
+        assert result.errors[0].error == FORM_API_INVALID_FIELD_VALUE
+
+    def test_returns_precondition_required_when_if_match_missing(self):
+        form, result = patch_form_for_api(
+            self.domain, self.app._id, self.module_id, self.form_id,
+            {'name': {'en': 'x'}}, None,
+        )
+        assert result.success is False
+        assert result.errors[0].error == FORM_API_PRECONDITION_REQUIRED
+
+    def test_returns_precondition_failed_for_stale_if_match(self):
+        form, result = patch_form_for_api(
+            self.domain, self.app._id, self.module_id, self.form_id,
+            {'name': {'en': 'x'}}, '"stale-etag"',
+        )
+        assert result.success is False
+        assert result.errors[0].error == FORM_API_PRECONDITION_FAILED
+
+    def test_propagates_a_failed_lookup(self):
+        form, result = patch_form_for_api(
+            self.domain, self.app._id, 'missing-module', self.form_id, {}, None
+        )
+        assert result.errors[0].error == FORM_API_MODULE_NOT_FOUND
+
+    def test_does_not_save_on_any_failure(self):
+        old_version = self.app.version
+        patch_form_for_api(
+            self.domain, self.app._id, self.module_id, self.form_id,
+            {'not_a_real_field': 'x'}, self._etag(),
+        )
+        assert Application.get(self.app._id).version == old_version
+
+    def test_returns_conflict_when_save_hits_concurrent_write(self):
+        etag = self._etag()
+        with patch.object(Application, 'save', side_effect=ResourceConflict):
+            form, result = patch_form_for_api(
+                self.domain, self.app._id, self.module_id, self.form_id,
+                {'name': {'en': 'x'}}, etag,
+            )
+
+        assert result.success is False
+        assert result.errors[0].error == FORM_API_CONFLICT
+
+    def test_a_losing_write_leaves_the_xml_untouched(self):
+        # save_xform only stages the XML, and app.save() writes the blob and
+        # the doc inside one rollback scope, so losing the save race must
+        # not leave the new XML behind without the fields that go with it.
+        original_source = self.form.source
+        etag = self._etag()
+
+        def commit_a_conflicting_change(app, form, xml, **kw):
+            other = Application.get(app._id)
+            other.name = 'Renamed By Someone Else'
+            other.save()
+            return save_xform(app, form, xml, **kw)
+
+        with patch(f'{patch_form_for_api.__module__}.save_xform',
+                   side_effect=commit_a_conflicting_change):
+            form, result = patch_form_for_api(
+                self.domain, self.app._id, self.module_id, self.form_id,
+                {'source': get_simple_form(xmlns='xmlns-clobber')}, etag,
+            )
+
+        assert result.errors[0].error == FORM_API_CONFLICT
+        assert Application.get(self.app._id).get_form(self.form_id).source == original_source
+
 
 class GetFormForApiTests(TestCase):
     def setUp(self):
