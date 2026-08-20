@@ -66,6 +66,12 @@ class ValidateApiTests(TestCase):
             'form_id': form_id or self.form_id,
         })
 
+    def _build_url(self, app_id=None):
+        return reverse('app_build_api', kwargs={
+            'domain': self.domain.name,
+            'app_id': app_id or self.app._id,
+        })
+
     def test_app_valid(self):
         response = self.client.get(self._app_url())
         assert response.status_code == 200
@@ -124,3 +130,34 @@ class ValidateApiTests(TestCase):
         response = self.client.get(self._form_url(form_id='missing-form'))
         assert response.status_code == 404
         assert response.json()['errors'][0]['error'] == 'form_not_found'
+
+    def test_build_queues_new_build(self):
+        response = self.client.post(self._build_url())
+        assert response.status_code == 200
+        assert response.json() == {'status': 'build_queued', 'version': self.app.version}
+
+        latest_build = self.app.get_latest_build()
+        self.addCleanup(latest_build.delete)
+        assert latest_build.version == self.app.version
+
+    def test_build_returns_already_built_for_current_version(self):
+        build = self.app.make_build()
+        build.save()
+        self.addCleanup(build.delete)
+
+        response = self.client.post(self._build_url())
+        assert response.status_code == 200
+        assert response.json() == {'status': 'already_built', 'version': self.app.version}
+
+    def test_build_returns_404_for_missing_app(self):
+        response = self.client.post(self._build_url(app_id='missing-app'))
+        assert response.status_code == 404
+        assert response.json()['errors'][0]['error'] == 'app_not_found'
+
+    def test_build_returns_404_for_saved_build(self):
+        build = self.app.make_build()
+        build.save()
+        self.addCleanup(build.delete)
+
+        response = self.client.post(self._build_url(app_id=build._id))
+        assert response.status_code == 404

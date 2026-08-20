@@ -52,6 +52,21 @@ def autogenerate_build_task(app_id, domain, version, comment):
     return copy
 
 
+@serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60)
+def build_app_task(app_id, domain, version, user_id=None):
+    app = get_app(domain, app_id)
+    if app.version != version:
+        # app has changed since this task was queued; a later task
+        # will build the current version
+        return
+    try:
+        copy = app.make_build(user_id=user_id)
+    except AppValidationError:
+        return
+    copy.save(increment_version=False)
+    return copy
+
+
 @task(queue='background_queue', ignore_result=True)
 def create_build_files_for_all_app_profiles(domain, build_id):
     app = get_app(domain, build_id)

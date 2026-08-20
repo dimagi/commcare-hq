@@ -1,9 +1,9 @@
-"""GET API to validate an application or form.
+"""GET API to validate an application or form, and POST to trigger a build.
 
-Both endpoints run the same checks the "Validate" build button runs, and
-return the same structured error dicts the underlying validators produce
-(``type``, ``message``, etc.) rather than inventing a parallel error
-vocabulary for every existing validation failure.
+The validate endpoints run the same checks the "Validate" build button
+runs, and return the same structured error dicts the underlying
+validators produce (``type``, ``message``, etc.) rather than inventing a
+parallel error vocabulary for every existing validation failure.
 """
 from dataclasses import dataclass, field
 
@@ -13,6 +13,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
 from corehq.apps.api.decorators import api_throttle
+from corehq.apps.app_manager.dbaccessors import get_latest_build_version
+from corehq.apps.app_manager.tasks import build_app_task
 from corehq.apps.app_manager.views.single_form_api import (
     get_app_for_api,
     get_form_for_api,
@@ -65,3 +67,22 @@ class FormValidateApiView(View):
 
         errors = form.validate_for_build()
         return JsonResponse(ValidationResult(not errors, errors).to_json())
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(json_error, name='dispatch')
+@method_decorator(api_throttle, name='dispatch')
+class AppBuildApiView(View):
+    """POST to trigger a new build of an application's latest version."""
+
+    @method_decorator(require_permission(HqPermissions.edit_apps, login_decorator=api_auth()))
+    def post(self, request, domain, app_id):
+        app, result = get_app_for_api(domain, app_id)
+        if not result.success:
+            return errors_response(result)
+
+        if get_latest_build_version(domain, app_id) == app.version:
+            return JsonResponse({'status': 'already_built', 'version': app.version})
+
+        build_app_task.delay(app_id, domain, app.version, user_id=request.couch_user.get_id)
+        return JsonResponse({'status': 'build_queued', 'version': app.version})
