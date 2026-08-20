@@ -1,43 +1,13 @@
 """Run Schemathesis against the committed OpenAPI specs.
 
-The specs in ``docs/api/spec/`` are generated from the resource classes, so
-they cannot drift from the *code*. They can still drift from the *responses*
-the code produces: a field that serialises to ``null`` where the schema says
-string, a paginator that stops emitting ``total_count``, a declared type that
-no longer matches the data behind it. Nothing in the generator notices any of
-that, because the generator never makes a request.
-
-`Schemathesis <https://schemathesis.readthedocs.io/>`_ does. It generates
-requests from the parameter schemas -- ``limit`` and ``offset`` across the
-integer range, every ``order_by`` value, unexpected combinations of the two --
-sends them to a running instance, and validates each response against the
-document that described it, shrinking any failure to a minimal input.
-
-Requests are real, against a real project space, so only read methods are
-exercised by default. See :data:`READ_METHODS`.
-
 ::
 
     ./manage.py verify_openapi case-v1 --url http://localhost:8000 \\
         -H "Authorization: ApiKey me@example.com:<key>" \\
         -P domain=my-project -n 50
 
-Every path but ``user-domains-v1``'s is under ``/a/{domain}/``, so ``-P
-domain=`` is all but always needed: a generated project space would only ever
-produce a 404, and a 404 is reported as an undocumented status code because
-the specs document only 200. A pinned name is matched wherever it appears, so
-``-P domain=`` also fills the ``domain`` *query* parameter that the location
-resources document alongside the path one.
-
-The identifier a detail endpoint takes is found rather than pinned -- see
-:func:`harvest_identifiers` -- though ``-P pk=<case id>`` still wins if given.
-
-``--once`` sends a single predictable request per operation instead of
-generating many. See :data:`ONCE_PHASE`.
-
-Schemathesis is a development dependency, since nothing but this command needs
-it, so it is imported where it is used rather than at module scope: this module
-has to stay importable in environments that do not have it.
+Schemathesis is a development dependency, so it is imported where it is used
+to keep this module importable without it.
 """
 
 import textwrap
@@ -54,62 +24,51 @@ from django.core.management.base import (
 from corehq.apps.api.management.commands.generate_openapi import SPEC_DIR
 
 #: Methods exercised unless ``--methods`` says otherwise. A generated write
-#: request would create or destroy records in the project space under test.
+#: request would change data in the project space under test.
 READ_METHODS = ('GET', 'HEAD')
 
-#: ``bundle.json`` repeats every path in the per-resource documents, so
-#: checking it alongside them would test everything twice.
+#: ``bundle.json`` repeats every path in the per-resource documents.
 EXCLUDED_SLUGS = frozenset(['bundle'])
 
-#: Statuses that mean the operation did not come back clean.
+#: Scenario statuses, as Schemathesis names them.
 FAILING = frozenset(['failure', 'error', 'interrupted'])
+SKIPPED = 'skip'
+ERROR = 'error'
 
-#: Every phase Schemathesis can run. ``examples`` replays the examples in the
-#: document, ``coverage`` walks each parameter's boundary values, ``fuzzing``
-#: generates data from the parameter schemas, ``stateful`` follows the links
-#: between operations.
+#: Every phase Schemathesis can run:
+# https://schemathesis.readthedocs.io/en/stable/explanations/data-generation/
 PHASES = ('examples', 'coverage', 'fuzzing', 'stateful')
 
-#: Run these unless ``--phases`` says otherwise. ``stateful`` is left out
-#: because following a link means running the operation it points at, which is
-#: how a read turns into a write.
+#: ``stateful`` is left out because following a link runs the operation it
+#: points at, which turns a read run into a write run.
 DEFAULT_PHASES = ('examples', 'coverage', 'fuzzing')
 
-#: The phase ``--once`` runs. Fuzzing is the only one that sends exactly one
-#: request per operation and leaves out every optional parameter: ``examples``
-#: has nothing to replay, because the generator writes no examples into the
-#: documents, and ``coverage`` fills in each parameter's documented default.
+#: The phase ``--once`` runs: the only one that sends exactly one request per
+#: operation with no optional parameters.
 ONCE_PHASE = 'fuzzing'
 
-#: ``--mode`` values. Schemathesis generates data that either satisfies the
-#: schema or deliberately violates it; ``all`` does both.
+#: ``--mode`` values, as Schemathesis generation modes.
 MODES = {
     'positive': ('positive',),
     'negative': ('negative',),
     'all': ('positive', 'negative'),
 }
 
-#: Generate valid data unless asked otherwise, where Schemathesis would
-#: default to both. Invalid data asks a different question and answers it
-#: noisily here: these resources reject it with a 400, the specs document only
-#: 200, so every correct rejection is reported as an undocumented status code.
-#: It also lets the coverage phase try methods a path does not document, which
-#: :data:`READ_METHODS` does not constrain.
+#: Schemathesis would default to both. Invalid data makes these resources
+#: answer 400 where the specs document only 200, so every correct rejection
+#: reads as an undocumented status code.
 DEFAULT_MODES = MODES['positive']
 
 #: The project space placeholder in the generated paths. Every other path
 #: parameter identifies a single record.
 DOMAIN_PARAMETER = 'domain'
 
-#: Where to harvest identifiers for a document that has no list endpoint of
-#: its own. ``configurablereportdata`` is addressed by report configuration id
-#: -- its ``obj_get`` passes ``pk`` to ``_get_report_configuration`` -- and
-#: those are what ``report-config-v1`` lists.
+#: Documents with no list endpoint of their own. ``report-data-v1`` is
+#: addressed by report configuration id, which ``report-config-v1`` lists.
 IDENTIFIER_SOURCES = {'report-data-v1': 'report-config-v1'}
 
-#: Tastypie serialises a record's identifier as ``id``. Resources addressed by
-#: a named parameter repeat it under that name, so the named key is preferred
-#: where a record carries both.
+#: Tastypie serialises a record's identifier as ``id``; resources addressed by
+#: a named parameter repeat it under that name, which is preferred.
 FALLBACK_IDENTIFIER = 'id'
 
 INSTALL_HINT = (
@@ -117,10 +76,8 @@ INSTALL_HINT = (
     'nothing but this command needs it: run `uv sync` to get it.'
 )
 
-#: Shown under the options. Written out rather than left to the reader to
-#: assemble, because the two things this command is for -- checking that
-#: responses match the specs, and generating requests to look for cases where
-#: they do not -- differ only in flags that mean nothing on their own.
+#: Shown under the options: the flags that separate the two ways to run this
+#: mean little on their own.
 EPILOG = """
 There are two ways to run this.
 
@@ -139,18 +96,6 @@ There are two ways to run this.
         --url http://localhost:8000 \\
         -H "Authorization: ApiKey me@example.com:<key>" \\
         -P domain=my-project
-
-  Add -m all to generate invalid data as well, which asks whether the
-  resources reject what they should rather than whether they document what
-  they return. Expect noise: these specs document only 200, so every 400 a
-  resource correctly answers with is reported as an undocumented status code.
-
-Drop the SLUG to check every document. Get an API key from /account/api_keys/.
-
-The identifier a detail endpoint takes is harvested from the list endpoint
-alongside it, so the project space needs records in it; endpoints whose
-identifier cannot be found are skipped rather than checked. Use -P pk=<id> to
-choose the record yourself, or --no-harvest to ask for none.
 """
 
 
@@ -165,7 +110,7 @@ class Result:
     label: str
     phase: str
     status: str
-    #: One entry per distinct failure or error, ready to print.
+    #: One entry per distinct failure or error.
     details: tuple = ()
 
     @property
@@ -181,9 +126,8 @@ class Result:
 def spec_paths(slugs=None, spec_dir=SPEC_DIR):
     """The documents to check, in a stable order.
 
-    ``slugs`` names documents, e.g. ``['case-v1']``. When it is empty
-    everything but :data:`EXCLUDED_SLUGS` is checked; naming one of those
-    explicitly is honoured.
+    ``slugs`` names documents, e.g. ``['case-v1']``; empty means all but
+    :data:`EXCLUDED_SLUGS`, though naming one of those is honoured.
     """
     paths = sorted(spec_dir.glob('*.json'))
     if not slugs:
@@ -198,8 +142,7 @@ def spec_paths(slugs=None, spec_dir=SPEC_DIR):
 def parse_pairs(values, separator):
     """``['a: b', 'c: d']`` as ``{'a': 'b', 'c': 'd'}``.
 
-    Only the first separator splits, so a header value may contain one --
-    ``Authorization: ApiKey user:key``.
+    Only the first separator splits, so a header value may contain one.
     """
     pairs = {}
     for value in values:
@@ -210,12 +153,20 @@ def parse_pairs(values, separator):
     return pairs
 
 
-def split_list(value, upper=False):
+def split_list(value, *, upper=False):
     """``'a, b'`` as ``['a', 'b']``."""
     items = [item.strip() for item in value.split(',') if item.strip()]
     if not items:
         raise ValueError(f'Expected a comma-separated list, got "{value}".')
     return [item.upper() for item in items] if upper else items
+
+
+def positive_int(value):
+    """An ``argparse`` type: a count of at least one."""
+    number = int(value)
+    if number < 1:
+        raise ValueError(f'Expected a positive integer, got "{value}".')
+    return number
 
 
 def parse_phases(value):
@@ -268,8 +219,7 @@ def read_operations(schema):
 def identifier_parameter(operation):
     """The path parameter naming a single record, if there is one.
 
-    ``/a/{domain}/api/case/v1/`` has none and is a list endpoint;
-    ``/a/{domain}/api/case/v1/{pk}/`` is addressed by ``pk``.
+    ``/api/case/v1/`` has none; ``/api/case/v1/{pk}/`` is addressed by ``pk``.
     """
     for parameter in operation.path_parameters:
         if parameter.name != DOMAIN_PARAMETER:
@@ -281,10 +231,9 @@ def list_records(path, *, base_url, headers=None, parameters=None,
                  spec_dir=SPEC_DIR):
     """The records a document's list endpoint returns, for harvesting ids.
 
-    One plain request, not a generated one, so that what a detail endpoint is
-    given does not depend on what Hypothesis happened to produce. A document
-    with no list endpoint of its own is redirected by
-    :data:`IDENTIFIER_SOURCES`.
+    One plain request rather than a generated one, so a detail endpoint's
+    identifier does not depend on what Hypothesis produced.
+    :data:`IDENTIFIER_SOURCES` redirects documents with no list endpoint.
     """
     slug = IDENTIFIER_SOURCES.get(path.stem)
     if slug:
@@ -292,42 +241,58 @@ def list_records(path, *, base_url, headers=None, parameters=None,
     schema = load_schema(
         path, base_url=base_url, headers=headers, parameters=parameters,
     )
-    for operation in read_operations(schema):
-        if identifier_parameter(operation) is not None:
-            continue
-        names = {parameter.name for parameter in operation.path_parameters}
-        case = operation.Case(path_parameters={
-            name: value for name, value in (parameters or {}).items()
-            if name in names
-        })
-        try:
-            response = case.call(base_url=base_url, headers=headers)
-            payload = response.json()
-        except Exception:
-            # A list endpoint that cannot be reached or read is a failure the
-            # run itself reports; here it only means no identifier to pin.
-            return []
-        if response.status_code != 200 or not isinstance(payload, dict):
-            return []
-        return [
-            record for record in payload.get('objects') or []
-            if isinstance(record, dict)
-        ]
-    return []
+    operation = next(
+        (candidate for candidate in read_operations(schema)
+         if identifier_parameter(candidate) is None),
+        None,
+    )
+    if operation is None:
+        return []
+
+    names = {parameter.name for parameter in operation.path_parameters}
+    case = operation.Case(path_parameters={
+        name: value for name, value in (parameters or {}).items()
+        if name in names
+    })
+    try:
+        response = case.call(base_url=base_url, headers=headers)
+    except Exception:
+        # Failing here only means no identifier to pin; the run reports the
+        # unreachable endpoint itself.
+        return []
+    if response.status_code != 200:
+        return []
+    try:
+        payload = response.json()
+    except ValueError:
+        return []
+    if not isinstance(payload, dict):
+        return []
+    return [
+        record for record in payload.get('objects') or []
+        if isinstance(record, dict)
+    ]
+
+
+def identifier_value(record, name):
+    """A record's identifier as a string: its ``name`` key, else ``id``.
+
+    ``True`` is an ``int`` in Python, so booleans are rejected explicitly.
+    """
+    for key in (name, FALLBACK_IDENTIFIER):
+        value = record.get(key)
+        if isinstance(value, (str, int)) and not isinstance(value, bool):
+            return str(value)
+    return None
 
 
 def harvest_identifiers(path, *, base_url, headers=None, parameters=None,
                         spec_dir=SPEC_DIR):
-    """Identifiers that address real records, for a document's detail endpoints.
-
-    A detail endpoint needs an identifier, and rather than have one pinned by
-    hand this calls the list endpoint alongside it and takes one out of the
-    response. A project space with data in it is therefore a prerequisite.
+    """Identifiers for a document's detail endpoints, from its list endpoint.
 
     Returns the values found, keyed by path parameter name, and the paths whose
-    identifier could not be found, keyed to the name they wanted -- because the
-    project space holds no records of that kind, or because the list endpoint
-    did not answer. Anything already in ``parameters`` is left alone.
+    identifier was not found, keyed to the name they wanted -- an empty project
+    space yields none. Names already in ``parameters`` are left alone.
     """
     schema = load_schema(
         path, base_url=base_url, headers=headers, parameters=parameters,
@@ -347,9 +312,9 @@ def harvest_identifiers(path, *, base_url, headers=None, parameters=None,
     )
     for record in records:
         for name in list(wanted):
-            value = record.get(name, record.get(FALLBACK_IDENTIFIER))
-            if isinstance(value, (str, int)) and not isinstance(value, bool):
-                found[name] = str(value)
+            value = identifier_value(record, name)
+            if value is not None:
+                found[name] = value
                 del wanted[name]
         if not wanted:
             break
@@ -362,10 +327,8 @@ def harvest_identifiers(path, *, base_url, headers=None, parameters=None,
 def describe_failures(recorder):
     """The distinct check failures a scenario recorded, ready to print.
 
-    A scenario runs many generated cases, and a schema that does not match the
-    data fails identically for most of them, so failures are deduplicated by
-    what they say. The code sample is a curl command that reproduces the one
-    Schemathesis shrank to.
+    Deduplicated by what they say, since one bad schema fails identically for
+    most generated cases. The code sample is a curl reproduction.
     """
     described = {}
     for checks in recorder.checks.values():
@@ -374,30 +337,27 @@ def describe_failures(recorder):
                 continue
             failure = check.failure_info.failure
             key = (check.name, failure.title, failure.message)
-            described[key] = '\n'.join([
+            described.setdefault(key, '\n'.join([
                 f'{check.name}: {failure.title}',
                 failure.message,
                 check.failure_info.code_sample,
-            ])
+            ]))
     return list(described.values())
 
 
 def check_spec(path, **options):
     """Yield a :class:`Result` per operation per phase, as they finish.
 
-    Ahead of the phases named, Schemathesis probes the instance once to work
-    out what it tolerates -- a single ``GET``, which no configuration here
-    turns off.
+    Schemathesis sends one ``GET`` to probe the instance before any phase, which
+    no configuration here turns off.
     """
     from schemathesis.engine import events, from_schema
 
     schema = load_schema(path, **options)
 
     # Errors arrive as their own events, one per generated case, ahead of the
-    # scenario they belong to. Held here so that the scenario can report why it
-    # failed rather than only that it did, and keyed by exception class so that
-    # an unreachable instance reads as one line per operation rather than one
-    # per generated URL.
+    # scenario they belong to. Kept by exception class so an unreachable
+    # instance reads as one line per operation rather than one per URL.
     errors = defaultdict(dict)
     for event in from_schema(schema).execute():
         if isinstance(event, events.NonFatalError):
@@ -405,7 +365,7 @@ def check_spec(path, **options):
                 type(event.value).__name__, str(event.value),
             )
         elif isinstance(event, events.FatalError):
-            yield Result('', '', 'error', (str(event.exception),))
+            yield Result(path.stem, 'Fatal', ERROR, (str(event.exception),))
         elif isinstance(event, events.ScenarioFinished):
             details = describe_failures(event.recorder)
             details.extend(errors.pop(event.label, {}).values())
@@ -418,8 +378,7 @@ def check_spec(path, **options):
 
 
 class Command(BaseCommand):
-    # Wrapped by hand: HelpFormatter leaves the description as written, which
-    # is what keeps the examples in EPILOG legible.
+    # Wrapped by hand: HelpFormatter leaves the description as written.
     help = (
         'Send requests built from the committed OpenAPI specs to a running\n'
         'instance and check that the responses match the specs. Use --once for\n'
@@ -481,7 +440,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             '-n', '--max-examples',
-            type=int,
+            type=positive_int,
             help='Generated requests per operation. Every one is a real '
             'request, so this sets how long a run takes. Schemathesis '
             'defaults to 100.',
@@ -489,11 +448,11 @@ class Command(BaseCommand):
         parser.add_argument(
             '--once',
             action='store_true',
-            help='Verify rather than fuzz: send one predictable request per '
-            f'operation and check its response. Shorthand for --phases '
-            f'{ONCE_PHASE} -n 1 with generation fixed, so the request carries '
-            'nothing but the parameters given here. Cannot be combined with '
-            '--phases or -n.',
+            help='Validate rather than fuzz: send one request per operation, '
+            'carrying nothing but the parameters given here, and check the '
+            'response. The same request every run. Cannot be combined with '
+            f'--phases or -n. (It runs the {ONCE_PHASE} phase with a single '
+            'fixed example, so that is what the results are labelled.)',
         )
         parser.add_argument(
             '-m', '--mode',
@@ -524,7 +483,7 @@ class Command(BaseCommand):
 
     def handle(self, slugs, url, headers, parameters, harvest, max_examples,
                once, mode, methods, phases, **kwargs):
-        if once and (phases or max_examples):
+        if once and (phases is not None or max_examples is not None):
             raise CommandError(
                 f'--once means --phases {ONCE_PHASE} -n 1; drop the other.'
             )
@@ -548,21 +507,19 @@ class Command(BaseCommand):
         passed = failed = skipped = 0
         for path in paths:
             self.stdout.write(self.style.MIGRATE_HEADING(f'{path.stem}:'))
-            for result in self.check_document(path, options, harvest):
-                self.stdout.write(
-                    (self.style.ERROR if result.failed else self.style.SUCCESS)
-                    (textwrap.indent(str(result), '  '))
-                )
+            for result in self.check_document(path, options, harvest=harvest):
+                style = self.style.ERROR if result.failed else self.style.SUCCESS
+                self.stdout.write(style(textwrap.indent(str(result), '  ')))
                 if result.failed:
                     failed += 1
-                elif result.status == 'skip':
+                elif result.status == SKIPPED:
                     skipped += 1
                 else:
                     passed += 1
 
         if failed:
             raise CommandError(f'{failed} checks did not pass.')
-        if not (passed or skipped):
+        if not passed and not skipped:
             # Otherwise a typo in --methods reads as a clean run.
             raise CommandError('No operations matched. Nothing was checked.')
         summary = f'{passed} check{"" if passed == 1 else "s"} passed'
@@ -570,16 +527,15 @@ class Command(BaseCommand):
             summary += f', {skipped} skipped'
         self.stdout.write(self.style.SUCCESS(f'{summary}.'))
 
-    def check_document(self, path, options, harvest):
+    def check_document(self, path, options, *, harvest):
         """Check one document, harvesting identifiers for it first.
 
-        Not named ``check``: that is Django's system-checks hook, and shadowing
-        it breaks every invocation that does not pass ``--skip-checks``.
+        Not named ``check``: that is Django's system-checks hook.
         """
         options = dict(options)
-        excluded = {}
+        unresolved = {}
         if harvest:
-            found, excluded = harvest_identifiers(
+            found, unresolved = harvest_identifiers(
                 path,
                 base_url=options['base_url'],
                 headers=options['headers'],
@@ -587,12 +543,16 @@ class Command(BaseCommand):
             )
             if found:
                 options['parameters'] = {**options['parameters'], **found}
-                pinned = ', '.join(f'{n}={v}' for n, v in found.items())
+                pinned = ', '.join(
+                    f'{name}={value}' for name, value in found.items()
+                )
                 self.stdout.write(f'  harvested {pinned}')
-        for path_, name in excluded.items():
+        for endpoint, name in unresolved.items():
             yield Result(
-                f'GET {path_}', 'Harvest', 'skip',
+                f'GET {endpoint}', 'Harvest', SKIPPED,
                 (f'no {name} to address a record with: the list endpoint '
                  'returned no records',),
             )
-        yield from check_spec(path, exclude_paths=tuple(excluded), **options)
+        yield from check_spec(
+            path, exclude_paths=tuple(unresolved), **options,
+        )
