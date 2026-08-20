@@ -10,10 +10,10 @@ from corehq.apps.domain.forms import ConfidentialDomainPasswordResetForm
 from corehq.apps.domain.views.settings import DomainPasswordResetView
 from corehq.apps.domain.views.sms import PublicSMSRatesView
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.oauth_views import HQAuthorizationView
 from corehq.apps.hqwebapp.session_details_endpoint.views import (
     SessionDetailsView,
 )
-from corehq.apps.hqwebapp.oauth_authorize import HQAuthorizationView
 from corehq.apps.hqwebapp.views import (
     BugReportView,
     MaintenanceAlertsView,
@@ -119,8 +119,7 @@ urlpatterns = [
         name=OauthApplicationRegistration.urlname
     ),
     # Shadows oauth2_provider's authorize view (must precede the include)
-    # to add the project-space picker to the consent screen
-    url(r'^oauth/authorize/$', HQAuthorizationView.as_view(), name='oauth_authorize'),
+    url(r'^oauth/authorize/$', HQAuthorizationView.as_view(), name=HQAuthorizationView.urlname),
     url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^\.well-known/oauth-authorization-server$',
         oauth_authorization_server_metadata,

@@ -1,18 +1,12 @@
-"""OAuth consent screen with a project-space picker.
-
-Replaces django-oauth-toolkit's AuthorizationView so the user can
-restrict the grant to one of their project spaces at consent time. The
-chosen domain is recorded as a ``domain:<name>`` scope on the grant
-(and therefore on the tokens minted from it); "All my project spaces"
-preserves the pre-existing behavior of an unrestricted token.
-"""
 from django import forms
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from oauth2_provider.forms import AllowForm
-from oauth2_provider.views import AuthorizationView
+from oauth2_provider.views.base import AuthorizationView
 
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.oauth_scopes import DOMAIN_SCOPE_PREFIX, domain_scope
 from corehq.apps.users.models import CouchUser
 
@@ -21,6 +15,7 @@ class DomainScopedAllowForm(AllowForm):
     domain = forms.ChoiceField(
         required=False,
         label=_('Limit access to project space'),
+        widget=forms.Select(attrs={'class': 'form-select'}),
     )
 
     def __init__(self, *args, user_domains=(), **kwargs):
@@ -30,9 +25,20 @@ class DomainScopedAllowForm(AllowForm):
         ] + [(domain, domain) for domain in user_domains]
 
 
+@method_decorator(use_bootstrap5, name="dispatch")
 class HQAuthorizationView(AuthorizationView):
+    """
+    The OAuth2 consent screen, extended with a custom HTML template and
+    a project-space picker.
+
+    The chosen domain is recorded as a ``domain:<name>`` scope on the
+    grant (and therefore on the tokens minted from it); "All my project
+    spaces" preserves the pre-existing behavior of an unrestricted
+    token.
+    """
+    urlname = 'oauth_authorize'
     form_class = DomainScopedAllowForm
-    template_name = 'hqwebapp/oauth_authorize.html'
+    template_name = 'hqwebapp/bootstrap5/oauth_authorize.html'
 
     @cached_property
     def _user_domains(self):

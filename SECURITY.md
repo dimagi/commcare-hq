@@ -1,0 +1,42 @@
+# Security Policy
+
+## About
+
+Dimagi, the maker of CommCare, takes the security of our software products and services seriously. 
+
+For more information about CommCare’s security policies, please visit the [Dimagi Trust Center](https://dimagi.safebase.us/).
+
+## Reporting a vulnerability
+
+Please report suspected security vulnerabilities **privately**. Do not open a
+public GitHub issue or pull request, and do not post details to the CommCare
+forum, for a security issue.
+
+Email your report to **`support@dimagi.com`**.
+
+When you report, please include as much of the following as you can:
+
+- A description of the vulnerability and its impact.
+- Steps to reproduce, or a proof of concept.
+- The affected component(s), endpoint(s), or file(s), and the commit or
+  deployment you tested against.
+
+## What to expect
+
+- We aim to acknowledge your report as fast as reasonably possible.
+- We follow **coordinated disclosure**. Accordingly we request that 
+  you provide us a reasonable opportunity to release a fix and protect
+  covered surfaces before any public disclosure, and notify us of intent
+  to publish. With your permission, we are glad to credit individuals who
+  have discovered vulnerabilities.
+
+Where appropriate for confirmed vulnerabilities, we publish a 
+[GitHub Security Advisory](https://github.com/dimagi/commcare-hq/security/advisories).
+
+## Supported versions
+
+CommCare HQ is continuously delivered: it is deployed from the `master` branch,
+and there are no long-term maintenance branches. Security fixes are applied to
+`master`. Self-hosted operators should track `master` and deploy updates
+regularly so that security fixes are picked up promptly through their normal
+deploy process.
