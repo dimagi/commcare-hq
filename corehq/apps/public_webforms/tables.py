@@ -70,6 +70,8 @@ class PublicWebformTable(BaseHtmxTable, tables.Table):
     )
     actions = columns.Column(
         verbose_name=_("Actions"),
+        attrs={'td': {'class': 'text-nowrap'}},
+        empty_values=(),
     )
 
     def __init__(self, domain, timezone, is_filtered=False, **kwargs):
@@ -105,6 +107,12 @@ class PublicWebformTable(BaseHtmxTable, tables.Table):
             STATUS_BADGES[status],
             status.label,
         )
+
+    def render_actions(self, record):
+        return render_to_string('public_webforms/columns/actions.html', {
+            'domain': self.domain,
+            'record': record,
+        })
 
     def render_expires_at(self, value):
         return ServerTime(value).user_time(self.timezone).ui_string()
