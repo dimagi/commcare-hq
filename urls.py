@@ -8,6 +8,7 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.extensions import extension_points
 from corehq.apps.enterprise.urls import \
     domain_specific as enterprise_domain_specific
+from corehq.apps.api.docs_views import api_spec
 from corehq.apps.api.urls import user_urlpatterns as user_api_urlpatterns
 from corehq.apps.app_manager.views.formdesigner import ping
 from corehq.apps.app_manager.views.phone import list_apps
@@ -105,7 +106,9 @@ urlpatterns = [
     url(r'^auditcare/', include('corehq.apps.auditcare.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^analytics/', include('corehq.apps.analytics.urls')),
+    url(r'^api/', include('corehq.apps.api.docs_urls')),
     url(r'^api/', include(user_api_urlpatterns)),
+    url(r'^\.well-known/openapi\.json$', api_spec, name='well_known_openapi'),
     url(r'^register/', include('corehq.apps.registration.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
