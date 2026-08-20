@@ -11,9 +11,13 @@ left unescaped, encoded as UTF-8. A client can therefore recompute the
 ETag from a response it already holds instead of treating it as opaque.
 """
 import dataclasses
+import hashlib
+import json
 from dataclasses import dataclass
 
+from django.core.serializers.json import DjangoJSONEncoder
 from couchdbkit.exceptions import ResourceNotFound
+from memoized import memoized
 
 from corehq.apps.app_manager.dbaccessors import get_app_doc, wrap_app
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException
@@ -50,6 +54,36 @@ class ApiError:
         return dataclasses.asdict(self)
 
 
+class FormResource:
+    """A form's API representation: the exact bytes sent to clients, and
+    an ETag over those same bytes.
+
+    Each accessor is memoized and they build on one another, so a caller
+    that needs only the ETag does the serialization once and a caller
+    that needs the whole response does not repeat it. An instance must
+    not outlive a change to ``form``, or it will serve the memoized
+    representation of the older version -- build one where it is needed
+    rather than passing it around.
+    """
+
+    def __init__(self, form):
+        self.form = form
+
+    @memoized
+    def get_etag(self):
+        return '"{}"'.format(hashlib.sha256(self.get_body()).hexdigest())
+
+    @memoized
+    def get_body(self):
+        return json.dumps(
+            _form_resource_dict(self.form),
+            sort_keys=True,
+            separators=(',', ':'),
+            ensure_ascii=False,
+            cls=DjangoJSONEncoder,
+        ).encode('utf-8')
+
+
 def get_form_for_api(domain, app_id, module_id, form_id):
     try:
         app_doc = get_app_doc(domain, app_id)
@@ -73,3 +107,20 @@ def get_form_for_api(domain, app_id, module_id, form_id):
         return None, ApiResult.error(FORM_API_FORM_NOT_FOUND, f"Module ({module_id}) not found")
 
     return form, ApiResult()
+
+
+def _form_resource_dict(form):
+    """The single-form-API's resource representation of ``form`` -- its
+    JSON fields plus its XForm XML under ``source``.
+
+    ``validation_cache`` is dropped. Assigning that attribute writes a
+    dynamic property onto the document as well as to the Django cache it
+    is declared against, so every in-memory form carries the key, while
+    one reloaded from Couch has it stripped by ``FormBase.wrap``.
+    Leaving it in would make the ETag depend on where the form was
+    obtained rather than on its content.
+    """
+    resource = form.to_json()
+    resource.pop('validation_cache', None)
+    resource['source'] = form.source
+    return resource
