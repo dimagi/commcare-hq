@@ -37,6 +37,18 @@
       ></textarea>
     </div>
     <button type="submit" class="btn btn-primary">{% trans "Run" %}</button>
+    <button
+      type="button"
+      class="btn btn-outline-primary"
+      hx-post="{{ request.path_info }}"
+      hq-hx-action="copy_db_context"
+      hx-swap="none"
+      hx-disabled-elt="this"
+      x-data
+      @htmx:after-request="navigator.clipboard.writeText($event.detail.xhr.responseText)"
+    >
+      <i class="fa fa-clipboard"></i> {% trans "Copy DB Context" %}
+    </button>
   </form>
   <div id="query-results" class="mt-4"></div>
 {% endblock %}
