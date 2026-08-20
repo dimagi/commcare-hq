@@ -2,8 +2,18 @@
 {% if error %}
   <div class="alert alert-danger">{{ error }}</div>
 {% else %}
-  {% if rows %}
-    {% if rows|length == max_rows %}
+  <h3 class="h6">{% trans "Translated SQL" %}</h3>
+  <pre class="p-3 mb-3 bg-body-tertiary border rounded">{{ result.query.sql }}</pre>
+  {% if result.query.params %}
+    <dl class="row font-monospace mb-4">
+      {% for name, value in result.query.params.items %}
+        <dt class="col-sm-2 fw-normal text-body-secondary">:{{ name }}</dt>
+        <dd class="col-sm-10">{{ value }}</dd>
+      {% endfor %}
+    </dl>
+  {% endif %}
+  {% if result.rows %}
+    {% if result.rows|length == max_rows %}
       <div class="alert alert-info">
         {% blocktrans %}Showing the first {{ max_rows }} rows.{% endblocktrans %}
       </div>
@@ -12,13 +22,13 @@
       <table class="table table-striped table-sm">
         <thead>
           <tr>
-            {% for column in columns %}
+            {% for column in result.columns %}
             <th>{{ column }}</th>
             {% endfor %}
           </tr>
         </thead>
         <tbody>
-          {% for row in rows %}
+          {% for row in result.rows %}
             <tr>
               {% for value in row %}<td>{{ value }}</td>{% endfor %}
             </tr>
