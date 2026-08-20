@@ -138,6 +138,7 @@ dev = [
     'psutil>5.1.3', # for memory profiling
     'wheel',
     'ruff', # linting, formatting, and import sorting
+    'schemathesis', # ./manage.py verify_openapi
     {include-group = "test"},
 ]
 docs = [
