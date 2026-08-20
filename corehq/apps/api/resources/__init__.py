@@ -174,6 +174,24 @@ class HqBaseResource(ApiVersioningMixin, CorsResourceMixin, JsonResourceMixin, R
     def get_required_privilege(self):
         return privileges.API_ACCESS
 
+    def get_detail(self, request, **kwargs):
+        """Return a single object, or respond 404 if it does not exist.
+
+        Tastypie's ``get_detail`` only translates ``ObjectDoesNotExist``
+        into a 404, so an ``obj_get`` that signals a missing object with
+        ``NotFound`` -- the natural reading of that name, and what
+        ``obj_update`` requires -- escapes to ``_handle_500`` instead.
+        Accepting both here means either exception works from either hook.
+
+        Unlike ``put_detail``, this only has to wrap the parent: tastypie
+        lets ``NotFound`` propagate out of ``get_detail`` rather than
+        acting on it.
+        """
+        try:
+            return super().get_detail(request, **kwargs)
+        except NotFound:
+            return http.HttpNotFound()
+
     def put_detail(self, request, **kwargs):
         """Update an existing object, or respond 404 if it does not exist.
 

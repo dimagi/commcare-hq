@@ -341,6 +341,11 @@ class TestConfigurableReportDataResource(APIResourceTest):
         cls.report_configuration.save()
         cls.addClassCleanup(cls.report_configuration.delete)
 
+    def test_cant_fetch_data_for_missing_report(self):
+        response = self.client.get(self.single_endpoint(uuid.uuid4().hex))
+
+        assert response.status_code == 404, response.content
+
     def test_fetching_data(self):
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id))
