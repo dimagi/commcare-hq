@@ -28,23 +28,24 @@ from corehq.apps.api.decorators import api_throttle
 from corehq.apps.app_manager.dbaccessors import get_app_doc, wrap_app
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException
 from corehq.apps.app_manager.util import save_xform
-from corehq.apps.app_manager.views.base_api import status_for_result, errors_response
+from corehq.apps.app_manager.views.base_api import (
+    FORM_API_APP_NOT_FOUND,
+    FORM_API_CONFLICT,
+    FORM_API_DOC_TYPE_MISMATCH,
+    FORM_API_FORM_NOT_FOUND,
+    FORM_API_INVALID_FIELD_VALUE,
+    FORM_API_INVALID_JSON,
+    FORM_API_MODULE_NOT_FOUND,
+    FORM_API_PRECONDITION_FAILED,
+    FORM_API_PRECONDITION_REQUIRED,
+    FORM_API_UNRECOGNIZED_FIELD,
+    errors_response,
+    status_for_result,
+)
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import json_error
-
-# ApiError.error codes
-FORM_API_APP_NOT_FOUND = 'app_not_found'
-FORM_API_MODULE_NOT_FOUND = 'module_not_found'
-FORM_API_FORM_NOT_FOUND = 'form_not_found'
-FORM_API_UNRECOGNIZED_FIELD = 'unrecognized_field'
-FORM_API_INVALID_FIELD_VALUE = 'invalid_field_value'
-FORM_API_DOC_TYPE_MISMATCH = 'doc_type_mismatch'
-FORM_API_PRECONDITION_REQUIRED = 'precondition_required'
-FORM_API_PRECONDITION_FAILED = 'precondition_failed'
-FORM_API_CONFLICT = 'conflict'
-FORM_API_INVALID_JSON = 'invalid_json'
 
 ETAG = 'etag'
 
