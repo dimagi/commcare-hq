@@ -28,6 +28,7 @@ from corehq.apps.api.decorators import api_throttle
 from corehq.apps.app_manager.dbaccessors import get_app_doc, wrap_app
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException
 from corehq.apps.app_manager.util import save_xform
+from corehq.apps.app_manager.views.base_api import errors_response
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -107,7 +108,7 @@ class SingleFormApiView(View):
     def get(self, request, domain, app_id, module_id, form_id):
         form, result = get_form_for_api(domain, app_id, module_id, form_id)
         if not result.success:
-            return _errors_response(result)
+            return errors_response(result)
 
         return FormResource(form).get_response()
 
@@ -118,7 +119,7 @@ class SingleFormApiView(View):
         except (json.JSONDecodeError, UnicodeDecodeError):
             source = None
         if not isinstance(source, dict):
-            return _errors_response(
+            return errors_response(
                 ApiResult.error(FORM_API_INVALID_JSON, 'Invalid JSON body')
             )
 
@@ -126,18 +127,11 @@ class SingleFormApiView(View):
 
         form, result = patch_form_for_api(domain, app_id, module_id, form_id, source, if_match)
         if not result.success:
-            return _errors_response(result)
+            return errors_response(result)
 
         response = JsonResponse({}, status=200)
         response[ETAG] = FormResource(form).get_etag()
         return response
-
-
-def _errors_response(result):
-    return JsonResponse(
-        {'errors': [error.to_json() for error in result.errors]},
-        status=_status_for_result(result),
-    )
 
 
 def _status_for_result(result):
@@ -230,7 +224,7 @@ def patch_form_for_api(domain, app_id, module_id, form_id, source, if_match):
     return form, ApiResult()
 
 
-def get_form_for_api(domain, app_id, module_id, form_id):
+def get_app_for_api(domain, app_id):
     try:
         app_doc = get_app_doc(domain, app_id)
     except ResourceNotFound:
@@ -241,7 +235,11 @@ def get_form_for_api(domain, app_id, module_id, form_id):
     if app_doc is None or app_doc.get('copy_of'):
         return None, ApiResult.error(FORM_API_APP_NOT_FOUND, f"Application ({app_id}) not found")
 
-    app = wrap_app(app_doc)
+
+def get_form_for_api(domain, app_id, module_id, form_id):
+    app, error = get_app_for_api(domain, app_id)
+    if error:
+        return error
 
     try:
         module = app.get_module_by_unique_id(module_id)
