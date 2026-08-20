@@ -31,6 +31,19 @@ a home.**
 
 ## Current state
 
+> **Correction, 2026-08-20.** Three claims below are out of date:
+>
+> - `lookup-table-item-v1` and `lookup-table-item-v2` ARE rendered —
+>   `fixture.rst` renders all three lookup-table specs. The gap this section
+>   describes was closed before this design was written.
+> - Ten specs are fully described, not none: `case-v1`, `form-v1`, `group-v1`,
+>   `location-type-v1`, `location-v1`, `location-v2`, `lookup-table-item-v1`,
+>   `lookup-table-item-v2`, `lookup-table-v1`, `user-v1`.
+> - `cases-v2.rst` already renders `case-v2`, whose fields are almost entirely
+>   undescribed. The downgrade this design warns against has therefore already
+>   shipped on that page, and is corrected by the description backfill rather
+>   than by holding the reduction back.
+
 Twenty-seven pages, in three groups:
 
 **Already rendering a spec (9):** `cases-v1`, `cases-v2`, `fixture`,
