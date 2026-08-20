@@ -17,15 +17,32 @@ from dataclasses import dataclass
 
 from django.core.serializers.json import DjangoJSONEncoder
 from couchdbkit.exceptions import ResourceNotFound
+from django.http import HttpResponse, JsonResponse
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import View
 from memoized import memoized
 
+from corehq.apps.api.decorators import api_throttle
 from corehq.apps.app_manager.dbaccessors import get_app_doc, wrap_app
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException
+from corehq.apps.domain.decorators import api_auth
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
+from corehq.util.view_utils import json_error
 
 # ApiError.error codes
 FORM_API_APP_NOT_FOUND = 'app_not_found'
 FORM_API_MODULE_NOT_FOUND = 'module_not_found'
 FORM_API_FORM_NOT_FOUND = 'form_not_found'
+
+ETAG = 'etag'
+
+_ERROR_TO_STATUS_CODE = {
+    FORM_API_APP_NOT_FOUND: 404,
+    FORM_API_MODULE_NOT_FOUND: 404,
+    FORM_API_FORM_NOT_FOUND: 404,
+}
 
 
 @dataclass
@@ -54,6 +71,42 @@ class ApiError:
         return dataclasses.asdict(self)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(json_error, name='dispatch')
+@method_decorator(api_throttle, name='dispatch')
+class SingleFormApiView(View):
+    """HEAD/GET/PATCH a single form's JSON fields and XForm XML."""
+
+    @method_decorator(require_permission(HqPermissions.view_apps, login_decorator=api_auth()))
+    def head(self, request, domain, app_id, module_id, form_id):
+        form, result = get_form_for_api(domain, app_id, module_id, form_id)
+        if not result.success:
+            return HttpResponse(status=_status_for_result(result))
+
+        response = HttpResponse(status=200)
+        response[ETAG] = FormResource(form).get_etag()
+        return response
+
+    @method_decorator(require_permission(HqPermissions.view_apps, login_decorator=api_auth()))
+    def get(self, request, domain, app_id, module_id, form_id):
+        form, result = get_form_for_api(domain, app_id, module_id, form_id)
+        if not result.success:
+            return _errors_response(result)
+
+        return FormResource(form).get_response()
+
+
+def _errors_response(result):
+    return JsonResponse(
+        {'errors': [error.to_json() for error in result.errors]},
+        status=_status_for_result(result),
+    )
+
+
+def _status_for_result(result):
+    return _ERROR_TO_STATUS_CODE[result.errors[0].error]
+
+
 class FormResource:
     """A form's API representation: the exact bytes sent to clients, and
     an ETag over those same bytes.
@@ -68,6 +121,13 @@ class FormResource:
 
     def __init__(self, form):
         self.form = form
+
+    def get_response(self, status=200):
+        response = HttpResponse(
+            self.get_body(), status=status, content_type='application/json'
+        )
+        response[ETAG] = self.get_etag()
+        return response
 
     @memoized
     def get_etag(self):
