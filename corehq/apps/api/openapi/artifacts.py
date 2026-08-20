@@ -99,15 +99,54 @@ def spec_content_hash(slug):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _record_properties(schema):
-    """The properties of one record, unwrapping the pagination envelope.
+_REF_PREFIX = '#/components/schemas/'
+
+
+def _resolve(schema, spec, seen):
+    """Follow a chain of local ``$ref``s to the schema they name.
+
+    Returns ``(schema, seen)`` -- the refs followed come back with it, because
+    a caller that recurses into ``anyOf`` branches must know what has already
+    been followed or a self-referential document recurses forever.
+
+    Yields an empty schema for a ref already in ``seen``, and for a remote or
+    malformed ref, which this generator never produces.
+    """
+    while True:
+        ref = schema.get('$ref')
+        if ref is None:
+            return schema, seen
+        if ref in seen or not ref.startswith(_REF_PREFIX):
+            return {}, seen
+        seen = seen | {ref}
+        schema = (
+            spec.get('components', {})
+            .get('schemas', {})
+            .get(ref[len(_REF_PREFIX):], {})
+        )
+
+
+def _record_property_items(schema, spec, seen=frozenset()):
+    """Yield ``(name, property)`` pairs for one record's fields.
 
     List responses are ``{meta, objects: [record]}``; detail responses are the
-    record itself.
+    record itself. A response may also be a ``$ref``, or branch through
+    ``anyOf``/``oneOf``/``allOf`` -- ``case-v2``'s detail response does. Every
+    branch contributes, and a name may be yielded more than once, so the caller
+    must treat a field as described if any occurrence describes it.
     """
+    schema, seen = _resolve(schema, spec, seen)
+    for key in ('anyOf', 'oneOf', 'allOf'):
+        if key in schema:
+            for branch in schema[key]:
+                yield from _record_property_items(branch, spec, seen)
+            return
     properties = schema.get('properties', {})
-    envelope = properties.get('objects', {}).get('items', {}).get('properties')
-    return envelope if envelope is not None else properties
+    inner, _ = _resolve(
+        properties.get('objects', {}).get('items', {}), spec, seen
+    )
+    envelope = inner.get('properties')
+    yield from (properties if envelope is None else envelope).items()
 
 
 def description_coverage(slug):
@@ -135,7 +174,7 @@ def description_coverage(slug):
                 )
                 if not schema:
                     continue
-                for name, prop in _record_properties(schema).items():
+                for name, prop in _record_property_items(schema, spec):
                     if not isinstance(prop, dict):
                         continue
                     described[name] = (

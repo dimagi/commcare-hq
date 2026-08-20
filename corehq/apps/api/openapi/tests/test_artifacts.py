@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from corehq.apps.api.openapi import artifacts
@@ -107,3 +109,146 @@ def test_coverage_counts_each_property_once():
 
 def test_coverage_is_zero_for_an_unknown_slug():
     assert artifacts.description_coverage('not-a-real-api') == (0, 0)
+
+
+def test_coverage_counts_fields_across_anyof_branches(tmp_path, monkeypatch,
+                                                      request):
+    spec = {
+        'openapi': '3.0.3',
+        'paths': {
+            '/thing/': {
+                'get': {
+                    'responses': {
+                        '200': {
+                            'content': {
+                                'application/json': {
+                                    'schema': {
+                                        'anyOf': [
+                                            {'type': 'object', 'properties': {
+                                                'described': {
+                                                    'type': 'string',
+                                                    'description': 'yes',
+                                                },
+                                                'bare': {'type': 'string'},
+                                            }},
+                                            {'type': 'object', 'properties': {
+                                                'other': {'type': 'string'},
+                                            }},
+                                        ],
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
+    (tmp_path / 'branchy-v1.json').write_text(json.dumps(spec))
+    monkeypatch.setattr(artifacts, 'SPEC_DIR', tmp_path)
+    artifacts.read_spec.cache_clear()
+    request.addfinalizer(artifacts.read_spec.cache_clear)
+    assert artifacts.description_coverage('branchy-v1') == (1, 3)
+
+
+def test_coverage_follows_a_ref_response_schema(tmp_path, monkeypatch, request):
+    spec = {
+        'openapi': '3.0.3',
+        'components': {'schemas': {'Thing': {
+            'type': 'object',
+            'properties': {
+                'named': {'type': 'string', 'description': 'documented'},
+                'plain': {'type': 'string'},
+            },
+        }}},
+        'paths': {
+            '/thing/': {
+                'get': {
+                    'responses': {
+                        '200': {
+                            'content': {
+                                'application/json': {
+                                    'schema': {
+                                        '$ref': '#/components/schemas/Thing',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
+    (tmp_path / 'reffy-v1.json').write_text(json.dumps(spec))
+    monkeypatch.setattr(artifacts, 'SPEC_DIR', tmp_path)
+    artifacts.read_spec.cache_clear()
+    request.addfinalizer(artifacts.read_spec.cache_clear)
+    assert artifacts.description_coverage('reffy-v1') == (1, 2)
+
+
+def test_coverage_survives_a_self_referential_ref(tmp_path, monkeypatch,
+                                                  request):
+    spec = {
+        'openapi': '3.0.3',
+        'components': {'schemas': {'Loop': {
+            'allOf': [{'$ref': '#/components/schemas/Loop'}],
+        }}},
+        'paths': {
+            '/thing/': {
+                'get': {
+                    'responses': {
+                        '200': {
+                            'content': {
+                                'application/json': {
+                                    'schema': {
+                                        '$ref': '#/components/schemas/Loop',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
+    (tmp_path / 'loopy-v1.json').write_text(json.dumps(spec))
+    monkeypatch.setattr(artifacts, 'SPEC_DIR', tmp_path)
+    artifacts.read_spec.cache_clear()
+    request.addfinalizer(artifacts.read_spec.cache_clear)
+    assert artifacts.description_coverage('loopy-v1') == (0, 0)
+
+
+def test_a_field_described_on_one_branch_stays_described(tmp_path, monkeypatch,
+                                                        request):
+    """The branch merge must not let a bare occurrence of a name overwrite a
+    described one -- the ordering of anyOf branches is not meaningful."""
+    spec = {
+        'openapi': '3.0.3',
+        'paths': {
+            '/thing/': {
+                'get': {
+                    'responses': {
+                        '200': {
+                            'content': {
+                                'application/json': {
+                                    'schema': {
+                                        'anyOf': [
+                                            {'properties': {'x': {
+                                                'description': 'documented',
+                                            }}},
+                                            {'properties': {'x': {}}},
+                                        ],
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
+    (tmp_path / 'dupe-v1.json').write_text(json.dumps(spec))
+    monkeypatch.setattr(artifacts, 'SPEC_DIR', tmp_path)
+    artifacts.read_spec.cache_clear()
+    request.addfinalizer(artifacts.read_spec.cache_clear)
+    assert artifacts.description_coverage('dupe-v1') == (1, 1)
