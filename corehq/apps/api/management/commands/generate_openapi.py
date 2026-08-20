@@ -1,14 +1,11 @@
 """Write the committed OpenAPI specs for the CommCare data APIs."""
 
 import json
-from pathlib import Path
 
-from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
+from corehq.apps.api.openapi.artifacts import SPEC_DIR
 from corehq.apps.api.openapi.builder import build_all
-
-SPEC_DIR = Path(settings.BASE_DIR) / 'docs' / 'api' / 'spec'
 
 
 def serialize(document):
