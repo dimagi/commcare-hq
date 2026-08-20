@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
@@ -8,6 +9,7 @@ from sqlalchemy.dialects import postgresql
 from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.apps.project_db.describe import describe_project_db
 from corehq.apps.project_db.table_ddl import (
     get_domain_tables,
     get_project_db_engine,
@@ -51,6 +53,10 @@ class QueryProjectDBView(HqHtmxActionMixin, BaseProjectDataView):
             })
         return self.render_htmx_partial_response(
             request, 'project_db/partials/query_results.html', context)
+
+    @hq_hx_action('post')
+    def copy_db_context(self, request, *args, **kwargs):
+        return HttpResponse(describe_project_db(self.domain))
 
 
 def run_user_sql(domain, user_sql):
