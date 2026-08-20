@@ -47,6 +47,7 @@ def test_domain_scope():
 
 
 @pytest.mark.parametrize('scope_string, expected', [
+    (None, frozenset()),
     ('', frozenset()),
     ('access_apis', frozenset()),
     ('access_apis domain:alpha', frozenset({'alpha'})),
@@ -59,11 +60,6 @@ def test_domain_scope():
 ])
 def test_token_domains(scope_string, expected):
     assert token_domains(scope_string) == expected
-
-
-@pytest.mark.parametrize('scope_string', [None, 42, object(), ['domain:alpha']])
-def test_token_domains_ignores_non_strings(scope_string):
-    assert token_domains(scope_string) == frozenset()
 
 
 def test_token_domains_fails_closed_on_empty_domain():

@@ -90,9 +90,8 @@ def token_domains(scope_string):
     >>> token_domains('access_apis')
     frozenset()
     """
-    if not isinstance(scope_string, str):
-        # `access_token` is not always a real token: callers may hold a stand-in
-        # without a usable scope. Treat that as unrestricted rather than failing.
+    if scope_string is None:
+        # No access token on the request, so nothing restricts it.
         return frozenset()
     return frozenset(
         scope.removeprefix(DOMAIN_SCOPE_PREFIX)
