@@ -41,7 +41,7 @@ class ValidationResult:
 class AppValidateApiView(View):
     """GET whether an application is valid, and its build errors if not."""
 
-    @method_decorator(require_permission(HqPermissions.view_apps, login_decorator=api_auth()))
+    @method_decorator(require_permission(HqPermissions.edit_apps, login_decorator=api_auth()))
     def get(self, request, domain, app_id):
         app, error = get_app_for_api(domain, app_id)
         if error:
