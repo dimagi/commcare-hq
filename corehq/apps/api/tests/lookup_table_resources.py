@@ -343,6 +343,41 @@ class TestLookupTableItemResourceV06(APIResourceTest):
             }
         }
 
+    def test_cant_create_item_in_a_lookup_table_in_another_domain(self):
+        not_my_data_type = LookupTable(
+            domain='not-my-project',
+            tag="lookup_table",
+            fields=[TypeField("fixture_property", ["lang", "name"])],
+            item_attributes=[],
+        )
+        not_my_data_type.save()
+        self.addCleanup(not_my_data_type.delete)
+        data_item_json = self._get_data_item_create()
+        data_item_json['data_type_id'] = not_my_data_type.id.hex
+
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps(data_item_json),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 404, response.content
+        assert not LookupTableRow.objects.filter(
+            table_id=not_my_data_type.id).exists()
+
+    def test_create_item_in_a_nonexistent_lookup_table_is_404(self):
+        """Not a 500, which is what an escaping NotFound produces here."""
+        data_item_json = self._get_data_item_create()
+        data_item_json['data_type_id'] = uuid.uuid4().hex
+
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps(data_item_json),
+            content_type='application/json',
+        )
+
+        assert response.status_code == 404, response.content
+
     def test_create(self):
         data_item_json = self._get_data_item_create()
         response = self._assert_auth_post_resource(

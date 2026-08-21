@@ -2,7 +2,7 @@ from django.db.models import Max
 
 from tastypie import fields as tp_f
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
-from tastypie.http import HttpAccepted
+from tastypie.http import HttpAccepted, HttpNotFound
 from tastypie.resources import Resource
 
 from corehq.apps.api.fields import UUIDField
@@ -373,8 +373,18 @@ class LookupTableItemResource(HqBaseResource):
         if not data_type_id:
             raise BadRequest("data_type_id must be specified")
 
-        if not LookupTable.objects.filter(id=data_type_id).exists():
-            raise NotFound('Lookup table not found')
+        if not LookupTable.objects.filter(
+            id=data_type_id, domain=kwargs['domain']
+        ).exists():
+            # Scoped to the domain, like obj_update's check on the row it
+            # is updating: without it a table in another domain resolves,
+            # and the row is created in the caller's domain referencing a
+            # table that domain cannot see.
+            #
+            # ImmediateHttpResponse rather than NotFound: tastypie converts
+            # NotFound to a 404 on the detail routes, but from obj_create on
+            # the list route it escapes as an unhandled 500.
+            raise ImmediateHttpResponse(HttpNotFound())
 
         self.full_hydrate(bundle)
         bundle.obj.domain = kwargs['domain']
