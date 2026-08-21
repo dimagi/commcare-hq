@@ -467,6 +467,9 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     CustomDeletion('toggles', _disable_toggles, []),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),
+    ModelDeletion('translations', 'AITranslation', 'domain'),
+    ModelDeletion('translations', 'AITranslationUsage', 'domain'),
+    ModelDeletion('translations', 'AITranslationConfig', 'domain'),
     ModelDeletion(
         'generic_inbound', 'ConfigurableAPI', 'domain',
         extra_models=["ConfigurableApiValidation", "RequestLog", "ProcessingAttempt"],
