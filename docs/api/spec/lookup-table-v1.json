@@ -66,7 +66,7 @@
   "paths": {
     "/a/{domain}/api/lookup_table/v1/": {
       "get": {
-        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves. On update, `is_global`, `fields` and `item_attributes` are each independently optional -- a key left out of the request body keeps its current value; `tag` is the exception and must always be included, unchanged.",
         "operationId": "lookup_table_v1_list_get",
         "parameters": [
           {
@@ -147,7 +147,7 @@
                       "items": {
                         "properties": {
                           "fields": {
-                            "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                            "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it. Optional on create, defaulting to an empty list. On update, if provided, this replaces the entire list of fields.",
                             "items": {
                               "properties": {
                                 "field_name": {
@@ -170,7 +170,7 @@
                             "type": "string"
                           },
                           "is_global": {
-                            "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
+                            "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment. Optional on create; defaults to false if omitted.",
                             "type": "boolean"
                           },
                           "item_attributes": {
@@ -186,7 +186,7 @@
                             "type": "string"
                           },
                           "tag": {
-                            "description": "Name of the lookup table, unique within the domain.",
+                            "description": "Name of the lookup table, unique within the domain. Creating a table with a tag that already exists on the domain is rejected. Required on every update request, and cannot be changed to a different value.",
                             "type": "string"
                           }
                         },
@@ -219,7 +219,7 @@
         }
       ],
       "post": {
-        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves. On update, `is_global`, `fields` and `item_attributes` are each independently optional -- a key left out of the request body keeps its current value; `tag` is the exception and must always be included, unchanged.",
         "operationId": "lookup_table_v1_list_post",
         "requestBody": {
           "content": {
@@ -227,7 +227,7 @@
               "schema": {
                 "properties": {
                   "fields": {
-                    "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                    "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it. Optional on create, defaulting to an empty list. On update, if provided, this replaces the entire list of fields.",
                     "items": {
                       "properties": {
                         "field_name": {
@@ -245,7 +245,7 @@
                     "type": "array"
                   },
                   "is_global": {
-                    "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
+                    "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment. Optional on create; defaults to false if omitted.",
                     "type": "boolean"
                   },
                   "item_attributes": {
@@ -256,7 +256,7 @@
                     "type": "array"
                   },
                   "tag": {
-                    "description": "Name of the lookup table, unique within the domain.",
+                    "description": "Name of the lookup table, unique within the domain. Creating a table with a tag that already exists on the domain is rejected. Required on every update request, and cannot be changed to a different value.",
                     "type": "string"
                   }
                 },
@@ -279,7 +279,7 @@
     },
     "/a/{domain}/api/lookup_table/v1/{pk}/": {
       "delete": {
-        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves. On update, `is_global`, `fields` and `item_attributes` are each independently optional -- a key left out of the request body keeps its current value; `tag` is the exception and must always be included, unchanged.",
         "operationId": "lookup_table_v1_detail_delete",
         "responses": {
           "204": {
@@ -292,7 +292,7 @@
         ]
       },
       "get": {
-        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves. On update, `is_global`, `fields` and `item_attributes` are each independently optional -- a key left out of the request body keeps its current value; `tag` is the exception and must always be included, unchanged.",
         "operationId": "lookup_table_v1_detail_get",
         "responses": {
           "200": {
@@ -301,7 +301,7 @@
                 "schema": {
                   "properties": {
                     "fields": {
-                      "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                      "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it. Optional on create, defaulting to an empty list. On update, if provided, this replaces the entire list of fields.",
                       "items": {
                         "properties": {
                           "field_name": {
@@ -324,7 +324,7 @@
                       "type": "string"
                     },
                     "is_global": {
-                      "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
+                      "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment. Optional on create; defaults to false if omitted.",
                       "type": "boolean"
                     },
                     "item_attributes": {
@@ -340,7 +340,7 @@
                       "type": "string"
                     },
                     "tag": {
-                      "description": "Name of the lookup table, unique within the domain.",
+                      "description": "Name of the lookup table, unique within the domain. Creating a table with a tag that already exists on the domain is rejected. Required on every update request, and cannot be changed to a different value.",
                       "type": "string"
                     }
                   },
@@ -377,7 +377,7 @@
         }
       ],
       "put": {
-        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves. On update, `is_global`, `fields` and `item_attributes` are each independently optional -- a key left out of the request body keeps its current value; `tag` is the exception and must always be included, unchanged.",
         "operationId": "lookup_table_v1_detail_put",
         "requestBody": {
           "content": {
@@ -385,7 +385,7 @@
               "schema": {
                 "properties": {
                   "fields": {
-                    "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                    "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it. Optional on create, defaulting to an empty list. On update, if provided, this replaces the entire list of fields.",
                     "items": {
                       "properties": {
                         "field_name": {
@@ -403,7 +403,7 @@
                     "type": "array"
                   },
                   "is_global": {
-                    "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
+                    "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment. Optional on create; defaults to false if omitted.",
                     "type": "boolean"
                   },
                   "item_attributes": {
@@ -414,7 +414,7 @@
                     "type": "array"
                   },
                   "tag": {
-                    "description": "Name of the lookup table, unique within the domain.",
+                    "description": "Name of the lookup table, unique within the domain. Creating a table with a tag that already exists on the domain is rejected. Required on every update request, and cannot be changed to a different value.",
                     "type": "string"
                   }
                 },
@@ -469,7 +469,7 @@
   ],
   "tags": [
     {
-      "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
+      "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves. On update, `is_global`, `fields` and `item_attributes` are each independently optional -- a key left out of the request body keeps its current value; `tag` is the exception and must always be included, unchanged.",
       "name": "lookup_table"
     }
   ]

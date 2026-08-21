@@ -139,17 +139,23 @@ class LookupTableResource(HqBaseResource):
     is_global = tp_f.BooleanField(
         attribute='is_global',
         help_text='Whether the lookup table is accessible to all users '
-                  'on the domain, regardless of location assignment.',
+                  'on the domain, regardless of location assignment. '
+                  'Optional on create; defaults to false if omitted.',
     )
     tag = tp_f.CharField(
         attribute='tag',
-        help_text='Name of the lookup table, unique within the domain.',
+        help_text='Name of the lookup table, unique within the domain. '
+                  'Creating a table with a tag that already exists on '
+                  'the domain is rejected. Required on every update '
+                  'request, and cannot be changed to a different value.',
     )
     fields = tp_f.ListField(
         attribute='fields',
         help_text='The custom fields defined for rows of this lookup '
                   'table, each giving a field_name and the properties '
-                  'available on it.',
+                  'available on it. Optional on create, defaulting to '
+                  'an empty list. On update, if provided, this replaces '
+                  'the entire list of fields.',
     )
     item_attributes = tp_f.ListField(
         attribute='item_attributes',
@@ -271,7 +277,11 @@ class LookupTableResource(HqBaseResource):
             'List, create, update or delete lookup tables (also known '
             'as fixtures) in a project space. A lookup table defines '
             'the fields available on its rows; see the lookup table '
-            'item resources for the rows themselves.'
+            'item resources for the rows themselves. On update, '
+            '`is_global`, `fields` and `item_attributes` are each '
+            'independently optional -- a key left out of the request '
+            'body keeps its current value; `tag` is the exception and '
+            'must always be included, unchanged.'
         )
         examples = {'list_response': 'lookup_table/v1/list_response.json'}
         # obj_update() below raises tastypie's own NotFound (not a
@@ -362,14 +372,19 @@ class LookupTableItemResource(HqBaseResource):
     )
     data_type_id = UUIDField(
         attribute='table_id',
-        help_text='Identifier of the lookup table this item belongs to.',
+        help_text='Identifier of the lookup table this item belongs to. '
+                  'Required when creating or updating a row; a request '
+                  'without it is rejected.',
     )
     fields = FieldsDictField(
         attribute='fields',
         help_text='Field values for the row, keyed by field name. Each '
                   'field holds a field_list of one or more values, each '
                   'with its own properties (for example a language '
-                  'code).',
+                  'code). Optional on create, defaulting to no fields. '
+                  'On update, if provided, this replaces the entire '
+                  'fields dict -- field names omitted from the '
+                  'submitted value are removed from the row.',
     )
     item_attributes = tp_f.DictField(
         attribute='item_attributes',
@@ -422,7 +437,10 @@ class LookupTableItemResource(HqBaseResource):
         attribute='sort_key',
         help_text='Order of this row within its lookup table, as '
                   'defined by the row order in the uploaded Excel '
-                  'file. Not exposed in any user-facing UI.',
+                  'file. Not exposed in any user-facing UI. On create, '
+                  'always assigned by the server as one greater than '
+                  'the current maximum for the table; any value '
+                  'submitted by the client is ignored.',
     )
 
     def dehydrate_fields(self, bundle):
@@ -500,7 +518,10 @@ class LookupTableItemResource(HqBaseResource):
         summary = 'Lookup Table Items'
         description = (
             'List, create, update or delete the rows (items) of a '
-            'lookup table in a project space.'
+            'lookup table in a project space. On update, `data_type_id` '
+            'must always be included; if the request body includes '
+            'neither `fields` nor `item_attributes`, the row is left '
+            'unmodified.'
         )
         # obj_update() above raises tastypie's own NotFound (not a
         # domain-specific exception) when the identified row does not
