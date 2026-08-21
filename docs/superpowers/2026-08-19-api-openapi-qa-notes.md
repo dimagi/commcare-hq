@@ -28,25 +28,22 @@ documented endpoint in one page.
 
 ## Look at the published documentation pages
 
-This is what readthedocs will show:
+The reference is now a set of Redoc pages built from the specs, served at
+`/api/docs/`:
 
 ```bash
-cd docs && uv run make html
-xdg-open _build/html/api/list-mobile-workers.html
+yarn openapi:docs
 ```
 
-The build takes a few minutes because it imports all of CommCare HQ. Output
-lands in `docs/_build/html/`; `api/index.html` is the contents page.
+Then run the dev server and visit `/api/docs/` — that is the contents page,
+linking to a reference page per API. Also check:
 
-Pages that changed:
-
-`cases-v1`, `cases-v2`, `fixture`, `form-data`, `index`, `list-forms`,
-`list-groups`, `list-mobile-workers`, `location-types`, `locations-v1`,
-`locations-v2`, `mobile-worker`, `user-group`.
+- `/api/openapi.json` returns the merged spec bundle as JSON.
+- `/.well-known/openapi.json` returns the same.
 
 ## What to check
 
-On a rendered page, for each endpoint:
+On a rendered reference page, for each endpoint:
 
 - The **HTTP methods** listed are the ones the endpoint really supports.
 - **Query parameters** appear with descriptions, and they work when you try them
@@ -63,17 +60,10 @@ documentation promises a parameter, a field or a status code the server does not
 deliver, that is exactly the class of bug this work is meant to eliminate —
 please report it with the endpoint and the payload.
 
-Three pages are deliberately short pointers to a fuller page, because the
-renderer publishes a whole spec at once and putting it on both pages would
-collide:
-
-| Pointer page    | Renders the endpoints |
-| --------------- | --------------------- |
-| `mobile-worker` | `list-mobile-workers` |
-| `form-data`     | `list-forms`          |
-| `list-groups`   | `user-group`          |
-
-A pointer page with a working link is correct, not a missing page.
+The `docs/api/*.rst` pages are now short orientation pages — a sentence or two
+and a link to the reference page — rather than the rendered tables they used to
+carry. They're still worth a human look: check that each links to the right
+reference page.
 
 ## Confirm the specs match the code
 
@@ -86,9 +76,6 @@ problem. `uv run ./manage.py generate_openapi` regenerates them.
 
 ## Known gaps — please do not file these
 
-- **Field lists show only the first variant** where a request body accepts more
-  than one shape (Case API v2's bulk and external-ID bodies). The rendered
-  example still shows every shape. This is a limitation of the renderer.
 - **Some specs have no field descriptions yet.** Fully described: `case-v1`,
   `form-v1`, `group-v1`, `location-v1`, `location-v2`, `location-type-v1`,
   `lookup-table-v1`, `lookup-table-item-v1`, `lookup-table-item-v2`, `user-v1`,

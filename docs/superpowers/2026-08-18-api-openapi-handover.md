@@ -3,10 +3,23 @@
 Branch: `nh/api-openapi-specs` (44 commits on top of `master` at `ef148302e5a`)
 Date: 2026-08-18
 
+> **2026-08-20 update:** the RST rendering path this document describes was
+> removed on 2026-08-20 (see
+> `docs/superpowers/plans/2026-08-20-api-rst-reduction.md`). The reference is
+> now Redoc pages built by `yarn openapi:docs` and served at `/api/docs/`.
+> Ruling 15 below and known issue 13 no longer apply — the renderer they
+> describe is gone. Ruling 15's own reasoning was an argument _against_ using
+> ReDoc, on the grounds that it renders client-side and so is invisible to grep
+> and to agents; the project adopted ReDoc anyway, because the pages are now
+> pre-built to static HTML at deploy time, which removes the objection ruling 15
+> raised. The rulings and known issue are left as written below — they were
+> correct at the time.
+
 Companion documents:
 
 - Design: `docs/superpowers/specs/2026-08-17-commcare-api-openapi-design.md`
-- Plan: `docs/superpowers/plans/2026-08-17-commcare-api-openapi.md`
+- Plan: completed and removed on 2026-08-20; the design and this document remain
+  the record.
 - Maintainer guide: `corehq/apps/api/openapi/README.md`
 
 `docs/superpowers/` is excluded from the Sphinx build, so this file is internal

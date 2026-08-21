@@ -20,15 +20,16 @@ The same check runs as a test
 3. Add a `Docs` inner class with `summary`, `description`, and optionally
    `examples` and `field_schemas`. `Docs` is merged across the class hierarchy,
    so put shared documentation on the base resource and override only what
-   changes in a later version. A `field_schemas` entry for a field the
-   resource does not declare (an *addition* -- see `operations.object_schema`)
-   is only picked up if it carries a `type`; without one it is silently
-   dropped instead of appearing in the generated schema.
+   changes in a later version. A `field_schemas` entry for a field the resource
+   does not declare (an _addition_ -- see `operations.object_schema`) is only
+   picked up if it carries a `type`; without one it is silently dropped instead
+   of appearing in the generated schema.
 4. Put JSON examples under `examples/<resource>/<version>/` and reference them
    by relative path.
 5. Add the slug to `DOCUMENTED_SLUGS` in `tests/test_documented_fields.py`.
-6. Regenerate, and point the `docs/api/*.rst` page at the new spec with the
-   `openapi::` directive.
+6. Regenerate, run `yarn openapi:docs`, and confirm the API appears at
+   `/api/docs/` with full description coverage. The `docs/api/*.rst` page gets a
+   sentence and a link to the reference page, not a directive.
 
 Function-based views use the `@api_docs` decorator in `view_adapter.py` instead
 of a `Docs` class.
@@ -87,10 +88,17 @@ regressed — investigate rather than assuming it's part of the same baseline.
   `create` branch (e.g. Case API v2 bulk); a uniform single-shape example would
   validate without exercising the branching at all.
 
-- **`sphinxcontrib-openapi` renders only the first branch of an `anyOf`/`oneOf`
-  field list.** The rendered example still shows all shapes, so a reader can
-  infer the variance, but the generated field list is incomplete for the Case
-  API v2 bulk and ext-PUT request bodies.
+- **Branching response schemas are where tooling tends to silently
+  under-report.** A schema keyed by `$ref`, `anyOf`, `oneOf` or `allOf` caught
+  out two different tools here. The old `sphinxcontrib-openapi` renderer (since
+  removed in favour of Redoc, which renders every branch) showed only the first
+  branch of an `anyOf`/`oneOf` field list. `description_coverage` in
+  `artifacts.py` had the same blindness until Task 2: it read
+  `schema['properties']` directly, so a branching schema contributed zero fields
+  to the count, until a `_record_property_items` traversal was added that
+  follows refs and branches. If a coverage or lint number ever looks too good
+  (or too bad) on a resource with branching bodies, check whether the tool is
+  walking into the branches at all before trusting the count.
 
 - **Nine specs are generated but carry no field descriptions:**
   `application-v1`, `bulk-user-v1`, `det-export-v1`, `fixture-v1`,
