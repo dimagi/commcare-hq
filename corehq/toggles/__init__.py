@@ -1025,6 +1025,14 @@ CASE_SEARCH_ENDPOINTS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+PROJECT_DB = StaticToggle(
+    'project_db',
+    'ProjectDB: Auto-managed SQL database of project case data',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="Note that this is in testing and will not work without a dev helping.",
+)
+
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
