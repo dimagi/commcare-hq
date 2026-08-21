@@ -3,10 +3,24 @@ import hashlib
 import json
 from dataclasses import dataclass
 
+from couchdbkit.exceptions import ResourceNotFound
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, JsonResponse
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import View
 from memoized import memoized
 
+from corehq import toggles
+from corehq.apps.api.decorators import api_throttle
+from corehq.apps.app_manager.dbaccessors import get_app_doc, wrap_app
+from corehq.apps.app_manager.exceptions import (
+    ModuleNotFoundException,
+)
+from corehq.apps.domain.decorators import api_auth
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
+from corehq.util.view_utils import json_error
 
 # ApiError.error codes
 FORM_API_APP_NOT_FOUND = 'app_not_found'
@@ -46,6 +60,29 @@ class ApiError:
 
     def to_json(self):
         return dataclasses.asdict(self)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(json_error, name='dispatch')
+class SingleFormApiView(View):
+    """HEAD/GET/PATCH a single form's JSON fields and XForm XML."""
+
+    def dispatch(self, request, *args, **kwargs):
+        # Rolling out by domain. Until this is generally available the flag
+        # also bounds who can reach an endpoint that does not yet check
+        # access_api, unlike the rest of the APIs here.
+        if not toggles.SINGLE_FORM_API.enabled(kwargs.get('domain')):
+            return HttpResponse(status=404)
+        return super().dispatch(request, *args, **kwargs)
+
+    @method_decorator(require_permission(HqPermissions.view_apps, login_decorator=api_auth()))
+    @method_decorator(api_throttle)
+    def get(self, request, domain, app_id, module_id, form_id):
+        form, result = get_form_for_api(domain, app_id, module_id, form_id)
+        if not result.success:
+            return _errors_response(result)
+
+        return FormResource(form).get_response()
 
 
 def _errors_response(result):
@@ -99,6 +136,37 @@ class FormResource:
             ensure_ascii=False,
             cls=DjangoJSONEncoder,
         ).encode('utf-8')
+
+
+def get_form_for_api(domain, app_id, module_id, form_id):
+    try:
+        app_doc = get_app_doc(domain, app_id)
+    except ResourceNotFound:
+        app_doc = None
+
+    # Only a live, editable Application is addressable. A saved build is a
+    # frozen copy; a deleted app is 'Application-Deleted'; a RemoteApp has no
+    # modules at all; a LinkedApplication is overwritten by its next sync.
+    # None of them is any more addressable than an app that does not exist.
+    if (
+        app_doc is None
+        or app_doc.get('copy_of')
+        or app_doc.get('doc_type') != 'Application'
+    ):
+        return None, ApiResult.error(FORM_API_APP_NOT_FOUND, f"Application ({app_id}) not found")
+
+    app = wrap_app(app_doc)
+
+    try:
+        module = app.get_module_by_unique_id(module_id)
+    except ModuleNotFoundException:
+        return None, ApiResult.error(FORM_API_MODULE_NOT_FOUND, f"Module ({module_id}) not found")
+
+    form = module.get_form_by_unique_id(form_id)
+    if form is None:
+        return None, ApiResult.error(FORM_API_FORM_NOT_FOUND, f"Form ({form_id}) not found")
+
+    return form, ApiResult()
 
 
 def _form_resource_dict(form):
