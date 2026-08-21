@@ -221,7 +221,7 @@ def filter_parameters():
             'name': name,
             'in': 'query',
             'required': False,
-            'description': FILTER_DESCRIPTIONS[name],
+            'description': _filter_description(name),
             'schema': {'type': 'string'},
         })
     for name in sorted(COMPOUND_FILTERS):
