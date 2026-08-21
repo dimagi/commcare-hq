@@ -23,7 +23,7 @@ committed spec.
 | Base URL | in spec | path in case-v1.json |
 | Authentication note + wiki link | in guide already | `docs/api/index.rst`, Authentication section |
 | Permission Required ("Edit Data") | in spec | `Docs.description`, "Requires the `edit_data` permission." |
-| Link to `case-data.rst` ("Case Data API") for shared parameters | obsolete | `docs/api/case-data.rst` does not exist anywhere in this repo (`ls docs/api/*.rst`, `grep -rn case-data docs/api/*.rst` — no match, not in any toctree either); the link was already dead before this sweep |
+| Link to `case-data.rst` ("Case Data API") for shared parameters | obsolete | the link was already dead before this sweep: `docs/api/case-data.rst` is absent from the working tree and from every toctree. It did once exist — added in `d6f27ca4fec` and removed in `e4ecc4d8b63` "Reshuffle Case API docs a bit" — so this is a link left behind by that reshuffle rather than one that never resolved. The shared parameters it pointed at are in the guide and the spec now. |
 | Input `owner_id` incl. "should not use with user" | in spec | parameters, `owner_id` — "should not be used together with user_id" |
 | Input `user_id` | in spec | parameters, `user_id` |
 | Input `type` | in spec | parameters, `type` |
