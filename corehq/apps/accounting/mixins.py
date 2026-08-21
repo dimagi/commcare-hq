@@ -2,7 +2,7 @@ import itertools
 from datetime import date, timedelta
 
 from corehq.apps.accounting.const import DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE
-from corehq.apps.accounting.models import CreditLine, Subscription
+from corehq.apps.accounting.models import CreditLine, SoftwarePlanEdition, Subscription
 from corehq.apps.accounting.utils import get_first_day_x_months_later
 from corehq.apps.accounting.utils.unpaid_invoice import Downgrade
 from corehq.apps.accounting.utils.invoicing import (
@@ -82,7 +82,11 @@ class BillingModalsMixin(object):
     def _low_credits_context(self):
         context = {}
         current_subscription = Subscription.get_active_subscription_by_domain(self.domain)
-        if current_subscription:
+        not_enterprise_subscription = (
+            current_subscription
+            and current_subscription.plan_version.plan.edition != SoftwarePlanEdition.ENTERPRISE
+        )
+        if current_subscription and not_enterprise_subscription:
             monthly_fee = current_subscription.plan_version.product_rate.monthly_fee
             if monthly_fee:
                 prepaid_credits = get_total_credits_available_for_product(current_subscription)
