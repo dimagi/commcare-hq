@@ -1007,7 +1007,7 @@
     },
     "/a/{domain}/api/case/v2/": {
       "get": {
-        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
+        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case -- it does not check external_id for an existing match, so posting one that already exists creates a second case with a duplicate external_id; use PUT by external ID instead if that is not what you want. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert. Every change is attributed to the authenticated caller; there is no way to submit a change as another user. A change can also fail only once the form built from it is processed, rather than during upfront validation; in that case no case changes are made and the response is a 400 with \"error\" and \"form_id\" fields (the ID of the resulting error form), rather than the \"error\"-only shape used for other input errors.",
         "operationId": "case-v2_list_get",
         "parameters": [
           {
@@ -1021,7 +1021,7 @@
             }
           },
           {
-            "description": "An opaque cursor from a previous response's `next.cursor`, used to fetch the next page of results. Do not combine with other filter parameters, which are already encoded in the cursor.",
+            "description": "An opaque cursor from a previous response's `next.cursor`, used to fetch the next page of results. Do not combine with other filter parameters, which are already encoded in the cursor. Paging through with cursor returns cases ordered oldest-indexed to newest-indexed; a case that is updated while you are paging through results may be skipped by the page it would otherwise have appeared in and returned again near the end of the results instead.",
             "in": "query",
             "name": "cursor",
             "required": false,
@@ -1334,39 +1334,49 @@
                 "schema": {
                   "properties": {
                     "cases": {
+                      "description": "The page of matching cases, each serialized as described above.",
                       "items": {
                         "anyOf": [
                           {
                             "properties": {
                               "case_id": {
+                                "description": "The case's unique, server-generated ID.",
                                 "type": "string"
                               },
                               "case_name": {
+                                "description": "The case's display name.",
                                 "type": "string"
                               },
                               "case_type": {
+                                "description": "The case type, as defined by the project's data model.",
                                 "type": "string"
                               },
                               "closed": {
+                                "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                                 "type": "boolean"
                               },
                               "date_closed": {
+                                "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                                 "format": "date-time",
                                 "nullable": true,
                                 "type": "string"
                               },
                               "date_opened": {
+                                "description": "The date and time the case was created.",
                                 "format": "date-time",
                                 "type": "string"
                               },
                               "domain": {
+                                "description": "The domain (project space) the case belongs to.",
                                 "type": "string"
                               },
                               "external_id": {
+                                "description": "An external identifier for the case, e.g. from another system. Null if none was set.",
                                 "nullable": true,
                                 "type": "string"
                               },
                               "indexed_on": {
+                                "description": "The date and time the case was last written to the search index this API reads from, used to paginate list results; it can lag slightly behind server_last_modified. When this case is returned directly from a create/update response (as opposed to a GET), the case has not yet reached the search index, so this is instead the time the response was generated. See last_modified for how these three timestamps differ.",
                                 "format": "date-time",
                                 "type": "string"
                               },
@@ -1374,33 +1384,41 @@
                                 "additionalProperties": {
                                   "properties": {
                                     "case_id": {
+                                      "description": "The ID of the related (target) case.",
                                       "type": "string"
                                     },
                                     "case_type": {
+                                      "description": "The related case's case type.",
                                       "type": "string"
                                     },
                                     "relationship": {
+                                      "description": "\"child\" or \"extension\".",
                                       "type": "string"
                                     }
                                   },
                                   "type": "object"
                                 },
+                                "description": "The case's indices (relationships to other cases), keyed by index identifier (e.g. \"parent\", \"host\").",
                                 "type": "object"
                               },
                               "last_modified": {
+                                "description": "The date and time of the case's last update, as recorded by the client that submitted it. Compare with server_last_modified (the server's own record of when it received that update) and indexed_on (when the case was last written to the search index this API reads from) -- the three can differ, e.g. when a client's clock is skewed, or the search index has fallen behind.",
                                 "format": "date-time",
                                 "type": "string"
                               },
                               "owner_id": {
+                                "description": "The ID of the case's current owner: a user, case-sharing group, or location ID.",
                                 "type": "string"
                               },
                               "properties": {
                                 "additionalProperties": {
                                   "type": "string"
                                 },
+                                "description": "The case's user-defined properties, each a string value keyed by property name.",
                                 "type": "object"
                               },
                               "server_last_modified": {
+                                "description": "The date and time the server processed the case's last update. See last_modified for how this differs from that field and from indexed_on.",
                                 "format": "date-time",
                                 "type": "string"
                               }
@@ -1409,7 +1427,16 @@
                           },
                           {
                             "properties": {
+                              "case_id": {
+                                "description": "The case_id that could not be resolved. Present only in a bulk result.",
+                                "type": "string"
+                              },
                               "error": {
+                                "description": "Present instead of a case when it could not be resolved: it doesn't exist, belongs to a different domain, or the caller lacks permission to see it. In a bulk result (bulk-fetch, or a comma-separated case_id list) this is always the literal text \"not found\", even when the actual cause is a domain mismatch or a permission error; the single-case detail endpoints give a more specific message instead.",
+                                "type": "string"
+                              },
+                              "external_id": {
+                                "description": "The external_id that could not be resolved. Present only in a bulk result.",
                                 "type": "string"
                               }
                             },
@@ -1420,12 +1447,14 @@
                       "type": "array"
                     },
                     "matching_records": {
+                      "description": "The total number of cases matching this request's filters, not the number of cases in this page's \"cases\" array -- check for \"next\" to determine whether more pages remain.",
                       "type": "integer"
                     },
                     "next": {
                       "description": "Present only when more records match than were returned; pass its \"cursor\" value back as a query parameter to fetch the next page.",
                       "properties": {
                         "cursor": {
+                          "description": "Opaque pagination state; pass back as the \"cursor\" query parameter.",
                           "type": "string"
                         }
                       },
@@ -1460,7 +1489,7 @@
         }
       ],
       "post": {
-        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
+        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case -- it does not check external_id for an existing match, so posting one that already exists creates a second case with a duplicate external_id; use PUT by external ID instead if that is not what you want. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert. Every change is attributed to the authenticated caller; there is no way to submit a change as another user. A change can also fail only once the form built from it is processed, rather than during upfront validation; in that case no case changes are made and the response is a 400 with \"error\" and \"form_id\" fields (the ID of the resulting error form), rather than the \"error\"-only shape used for other input errors.",
         "operationId": "case-v2_list_post",
         "requestBody": {
           "content": {
@@ -1497,31 +1526,39 @@
                   {
                     "properties": {
                       "case_name": {
+                        "description": "The case's display name. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing name unchanged. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "case_type": {
+                        "description": "The case type, as defined by the project's data model. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing type unchanged. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "close": {
                         "default": false,
+                        "description": "Set to true to close the case as part of this update. Defaults to false.",
                         "type": "boolean"
                       },
                       "external_id": {
+                        "description": "An external identifier for the case, e.g. from another system. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "indices": {
                         "additionalProperties": {
                           "properties": {
                             "case_id": {
+                              "description": "The ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                               "type": "string"
                             },
                             "case_type": {
+                              "description": "The related case's case type. Required whenever case_id, external_id or temporary_id is given.",
                               "type": "string"
                             },
                             "external_id": {
+                              "description": "The external ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                               "type": "string"
                             },
                             "relationship": {
+                              "description": "\"child\" or \"extension\" (see the Extension Cases feature). Required whenever case_id, external_id or temporary_id is given.",
                               "enum": [
                                 "child",
                                 "extension"
@@ -1529,21 +1566,26 @@
                               "type": "string"
                             },
                             "temporary_id": {
+                              "description": "The temporary_id of another case being created or updated in the same bulk request. Exactly one of case_id, external_id or temporary_id must be given.",
                               "type": "string"
                             }
                           },
                           "type": "object"
                         },
+                        "description": "The case's indices (relationships to other cases) to set, keyed by an identifier of your choosing (e.g. \"parent\", \"host\"), which must also be a valid XML element name as described for properties above.",
                         "type": "object"
                       },
                       "owner_id": {
+                        "description": "The ID of the case's new owner: a user, case-sharing group, or location ID. Not validated against a real owner beyond the access checks enforced for the authenticated user. Required when creating a case; optional on updates and upserts, where omitting it leaves the current owner unchanged. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "properties": {
                         "additionalProperties": true,
+                        "description": "User-defined case properties to set, as name/value pairs. All values must be strings. Property names must be valid XML element names (non-blank, not starting with a digit or with \"xml\") and may not be case_type, case_name or owner_id, which are set via their own top-level fields instead.",
                         "type": "object"
                       },
                       "temporary_id": {
+                        "description": "An identifier for this case, unique within the current bulk request, that another item in the same request can reference from an index instead of a real case_id -- see \"indices.<name>.temporary_id\". Not stored; discarded once the request has been processed.",
                         "type": "string"
                       }
                     },
@@ -1555,19 +1597,23 @@
                     "type": "object"
                   },
                   {
+                    "description": "Performs a bulk create/update: each item is created, updated or upserted according to its own \"create\" field. All items are submitted in a single form. Capped at 100 items per request; a longer list is rejected in full, with no cases changed, with the message \"You cannot submit more than 100 updates in a single request.\"",
                     "items": {
                       "oneOf": [
                         {
                           "description": "Creates a new case. Requires case_name, case_type and owner_id, like a single-object POST.",
                           "properties": {
                             "case_name": {
+                              "description": "The case's display name. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing name unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "case_type": {
+                              "description": "The case type, as defined by the project's data model. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing type unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "close": {
                               "default": false,
+                              "description": "Set to true to close the case as part of this update. Defaults to false.",
                               "type": "boolean"
                             },
                             "create": {
@@ -1577,21 +1623,26 @@
                               "type": "boolean"
                             },
                             "external_id": {
+                              "description": "An external identifier for the case, e.g. from another system. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "indices": {
                               "additionalProperties": {
                                 "properties": {
                                   "case_id": {
+                                    "description": "The ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   },
                                   "case_type": {
+                                    "description": "The related case's case type. Required whenever case_id, external_id or temporary_id is given.",
                                     "type": "string"
                                   },
                                   "external_id": {
+                                    "description": "The external ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   },
                                   "relationship": {
+                                    "description": "\"child\" or \"extension\" (see the Extension Cases feature). Required whenever case_id, external_id or temporary_id is given.",
                                     "enum": [
                                       "child",
                                       "extension"
@@ -1599,21 +1650,26 @@
                                     "type": "string"
                                   },
                                   "temporary_id": {
+                                    "description": "The temporary_id of another case being created or updated in the same bulk request. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   }
                                 },
                                 "type": "object"
                               },
+                              "description": "The case's indices (relationships to other cases) to set, keyed by an identifier of your choosing (e.g. \"parent\", \"host\"), which must also be a valid XML element name as described for properties above.",
                               "type": "object"
                             },
                             "owner_id": {
+                              "description": "The ID of the case's new owner: a user, case-sharing group, or location ID. Not validated against a real owner beyond the access checks enforced for the authenticated user. Required when creating a case; optional on updates and upserts, where omitting it leaves the current owner unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "properties": {
                               "additionalProperties": true,
+                              "description": "User-defined case properties to set, as name/value pairs. All values must be strings. Property names must be valid XML element names (non-blank, not starting with a digit or with \"xml\") and may not be case_type, case_name or owner_id, which are set via their own top-level fields instead.",
                               "type": "object"
                             },
                             "temporary_id": {
+                              "description": "An identifier for this case, unique within the current bulk request, that another item in the same request can reference from an index instead of a real case_id -- see \"indices.<name>.temporary_id\". Not stored; discarded once the request has been processed.",
                               "type": "string"
                             }
                           },
@@ -1629,16 +1685,20 @@
                           "description": "Updates an existing case. Must include either \"case_id\" or \"external_id\" to identify the case (JsonCaseUpdate.validate() enforces this at runtime, though neither is individually required by this schema, since either satisfies it).",
                           "properties": {
                             "case_id": {
+                              "description": "The ID of the case to update. Required to identify the case unless external_id is given instead (JsonCaseUpdate.validate() enforces this at runtime -- see the request schema description above for exactly where). Not used when creating a case, where the ID is always server-generated.",
                               "type": "string"
                             },
                             "case_name": {
+                              "description": "The case's display name. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing name unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "case_type": {
+                              "description": "The case type, as defined by the project's data model. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing type unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "close": {
                               "default": false,
+                              "description": "Set to true to close the case as part of this update. Defaults to false.",
                               "type": "boolean"
                             },
                             "create": {
@@ -1648,21 +1708,26 @@
                               "type": "boolean"
                             },
                             "external_id": {
+                              "description": "An external identifier for the case, e.g. from another system. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "indices": {
                               "additionalProperties": {
                                 "properties": {
                                   "case_id": {
+                                    "description": "The ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   },
                                   "case_type": {
+                                    "description": "The related case's case type. Required whenever case_id, external_id or temporary_id is given.",
                                     "type": "string"
                                   },
                                   "external_id": {
+                                    "description": "The external ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   },
                                   "relationship": {
+                                    "description": "\"child\" or \"extension\" (see the Extension Cases feature). Required whenever case_id, external_id or temporary_id is given.",
                                     "enum": [
                                       "child",
                                       "extension"
@@ -1670,18 +1735,22 @@
                                     "type": "string"
                                   },
                                   "temporary_id": {
+                                    "description": "The temporary_id of another case being created or updated in the same bulk request. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   }
                                 },
                                 "type": "object"
                               },
+                              "description": "The case's indices (relationships to other cases) to set, keyed by an identifier of your choosing (e.g. \"parent\", \"host\"), which must also be a valid XML element name as described for properties above.",
                               "type": "object"
                             },
                             "owner_id": {
+                              "description": "The ID of the case's new owner: a user, case-sharing group, or location ID. Not validated against a real owner beyond the access checks enforced for the authenticated user. Required when creating a case; optional on updates and upserts, where omitting it leaves the current owner unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "properties": {
                               "additionalProperties": true,
+                              "description": "User-defined case properties to set, as name/value pairs. All values must be strings. Property names must be valid XML element names (non-blank, not starting with a digit or with \"xml\") and may not be case_type, case_name or owner_id, which are set via their own top-level fields instead.",
                               "type": "object"
                             }
                           },
@@ -1691,16 +1760,19 @@
                           "type": "object"
                         },
                         {
-                          "description": "Upserts a case by external_id: updates it if a case with that external_id already exists, or creates it otherwise.",
+                          "description": "Upserts a case by external_id: updates it if a case with that external_id already exists, or creates it otherwise. CommCare HQ looks up every upserted item's external_id before any of them are saved, so if this same external_id appears more than once in one request, every occurrence after the first is treated as \"not found yet\" and a duplicate case is created for it -- keep external_ids unique within a single request. The same race exists across concurrent requests: two requests upserting the same external_id at the same time can each create a case.",
                           "properties": {
                             "case_name": {
+                              "description": "The case's display name. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing name unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "case_type": {
+                              "description": "The case type, as defined by the project's data model. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing type unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "close": {
                               "default": false,
+                              "description": "Set to true to close the case as part of this update. Defaults to false.",
                               "type": "boolean"
                             },
                             "create": {
@@ -1711,21 +1783,26 @@
                               "type": "boolean"
                             },
                             "external_id": {
+                              "description": "An external identifier for the case, e.g. from another system. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "indices": {
                               "additionalProperties": {
                                 "properties": {
                                   "case_id": {
+                                    "description": "The ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   },
                                   "case_type": {
+                                    "description": "The related case's case type. Required whenever case_id, external_id or temporary_id is given.",
                                     "type": "string"
                                   },
                                   "external_id": {
+                                    "description": "The external ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   },
                                   "relationship": {
+                                    "description": "\"child\" or \"extension\" (see the Extension Cases feature). Required whenever case_id, external_id or temporary_id is given.",
                                     "enum": [
                                       "child",
                                       "extension"
@@ -1733,18 +1810,22 @@
                                     "type": "string"
                                   },
                                   "temporary_id": {
+                                    "description": "The temporary_id of another case being created or updated in the same bulk request. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   }
                                 },
                                 "type": "object"
                               },
+                              "description": "The case's indices (relationships to other cases) to set, keyed by an identifier of your choosing (e.g. \"parent\", \"host\"), which must also be a valid XML element name as described for properties above.",
                               "type": "object"
                             },
                             "owner_id": {
+                              "description": "The ID of the case's new owner: a user, case-sharing group, or location ID. Not validated against a real owner beyond the access checks enforced for the authenticated user. Required when creating a case; optional on updates and upserts, where omitting it leaves the current owner unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "properties": {
                               "additionalProperties": true,
+                              "description": "User-defined case properties to set, as name/value pairs. All values must be strings. Property names must be valid XML element names (non-blank, not starting with a digit or with \"xml\") and may not be case_type, case_name or owner_id, which are set via their own top-level fields instead.",
                               "type": "object"
                             }
                           },
@@ -1774,36 +1855,46 @@
                     {
                       "properties": {
                         "case": {
+                          "description": "The case's state after applying this create/update.",
                           "properties": {
                             "case_id": {
+                              "description": "The case's unique, server-generated ID.",
                               "type": "string"
                             },
                             "case_name": {
+                              "description": "The case's display name.",
                               "type": "string"
                             },
                             "case_type": {
+                              "description": "The case type, as defined by the project's data model.",
                               "type": "string"
                             },
                             "closed": {
+                              "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                               "type": "boolean"
                             },
                             "date_closed": {
+                              "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                               "format": "date-time",
                               "nullable": true,
                               "type": "string"
                             },
                             "date_opened": {
+                              "description": "The date and time the case was created.",
                               "format": "date-time",
                               "type": "string"
                             },
                             "domain": {
+                              "description": "The domain (project space) the case belongs to.",
                               "type": "string"
                             },
                             "external_id": {
+                              "description": "An external identifier for the case, e.g. from another system. Null if none was set.",
                               "nullable": true,
                               "type": "string"
                             },
                             "indexed_on": {
+                              "description": "The date and time the case was last written to the search index this API reads from, used to paginate list results; it can lag slightly behind server_last_modified. When this case is returned directly from a create/update response (as opposed to a GET), the case has not yet reached the search index, so this is instead the time the response was generated. See last_modified for how these three timestamps differ.",
                               "format": "date-time",
                               "type": "string"
                             },
@@ -1811,33 +1902,41 @@
                               "additionalProperties": {
                                 "properties": {
                                   "case_id": {
+                                    "description": "The ID of the related (target) case.",
                                     "type": "string"
                                   },
                                   "case_type": {
+                                    "description": "The related case's case type.",
                                     "type": "string"
                                   },
                                   "relationship": {
+                                    "description": "\"child\" or \"extension\".",
                                     "type": "string"
                                   }
                                 },
                                 "type": "object"
                               },
+                              "description": "The case's indices (relationships to other cases), keyed by index identifier (e.g. \"parent\", \"host\").",
                               "type": "object"
                             },
                             "last_modified": {
+                              "description": "The date and time of the case's last update, as recorded by the client that submitted it. Compare with server_last_modified (the server's own record of when it received that update) and indexed_on (when the case was last written to the search index this API reads from) -- the three can differ, e.g. when a client's clock is skewed, or the search index has fallen behind.",
                               "format": "date-time",
                               "type": "string"
                             },
                             "owner_id": {
+                              "description": "The ID of the case's current owner: a user, case-sharing group, or location ID.",
                               "type": "string"
                             },
                             "properties": {
                               "additionalProperties": {
                                 "type": "string"
                               },
+                              "description": "The case's user-defined properties, each a string value keyed by property name.",
                               "type": "object"
                             },
                             "server_last_modified": {
+                              "description": "The date and time the server processed the case's last update. See last_modified for how this differs from that field and from indexed_on.",
                               "format": "date-time",
                               "type": "string"
                             }
@@ -1845,6 +1944,7 @@
                           "type": "object"
                         },
                         "form_id": {
+                          "description": "The ID of the form generated to submit this change.",
                           "type": "string"
                         }
                       },
@@ -1857,37 +1957,47 @@
                     {
                       "properties": {
                         "cases": {
+                          "description": "The state of each case after applying this bulk create/update, in the same order as the request.",
                           "items": {
                             "properties": {
                               "case_id": {
+                                "description": "The case's unique, server-generated ID.",
                                 "type": "string"
                               },
                               "case_name": {
+                                "description": "The case's display name.",
                                 "type": "string"
                               },
                               "case_type": {
+                                "description": "The case type, as defined by the project's data model.",
                                 "type": "string"
                               },
                               "closed": {
+                                "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                                 "type": "boolean"
                               },
                               "date_closed": {
+                                "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                                 "format": "date-time",
                                 "nullable": true,
                                 "type": "string"
                               },
                               "date_opened": {
+                                "description": "The date and time the case was created.",
                                 "format": "date-time",
                                 "type": "string"
                               },
                               "domain": {
+                                "description": "The domain (project space) the case belongs to.",
                                 "type": "string"
                               },
                               "external_id": {
+                                "description": "An external identifier for the case, e.g. from another system. Null if none was set.",
                                 "nullable": true,
                                 "type": "string"
                               },
                               "indexed_on": {
+                                "description": "The date and time the case was last written to the search index this API reads from, used to paginate list results; it can lag slightly behind server_last_modified. When this case is returned directly from a create/update response (as opposed to a GET), the case has not yet reached the search index, so this is instead the time the response was generated. See last_modified for how these three timestamps differ.",
                                 "format": "date-time",
                                 "type": "string"
                               },
@@ -1895,33 +2005,41 @@
                                 "additionalProperties": {
                                   "properties": {
                                     "case_id": {
+                                      "description": "The ID of the related (target) case.",
                                       "type": "string"
                                     },
                                     "case_type": {
+                                      "description": "The related case's case type.",
                                       "type": "string"
                                     },
                                     "relationship": {
+                                      "description": "\"child\" or \"extension\".",
                                       "type": "string"
                                     }
                                   },
                                   "type": "object"
                                 },
+                                "description": "The case's indices (relationships to other cases), keyed by index identifier (e.g. \"parent\", \"host\").",
                                 "type": "object"
                               },
                               "last_modified": {
+                                "description": "The date and time of the case's last update, as recorded by the client that submitted it. Compare with server_last_modified (the server's own record of when it received that update) and indexed_on (when the case was last written to the search index this API reads from) -- the three can differ, e.g. when a client's clock is skewed, or the search index has fallen behind.",
                                 "format": "date-time",
                                 "type": "string"
                               },
                               "owner_id": {
+                                "description": "The ID of the case's current owner: a user, case-sharing group, or location ID.",
                                 "type": "string"
                               },
                               "properties": {
                                 "additionalProperties": {
                                   "type": "string"
                                 },
+                                "description": "The case's user-defined properties, each a string value keyed by property name.",
                                 "type": "object"
                               },
                               "server_last_modified": {
+                                "description": "The date and time the server processed the case's last update. See last_modified for how this differs from that field and from indexed_on.",
                                 "format": "date-time",
                                 "type": "string"
                               }
@@ -1931,6 +2049,7 @@
                           "type": "array"
                         },
                         "form_id": {
+                          "description": "The ID of the single form generated to submit every case in this bulk request.",
                           "type": "string"
                         }
                       },
@@ -1953,7 +2072,7 @@
         ]
       },
       "put": {
-        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
+        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case -- it does not check external_id for an existing match, so posting one that already exists creates a second case with a duplicate external_id; use PUT by external ID instead if that is not what you want. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert. Every change is attributed to the authenticated caller; there is no way to submit a change as another user. A change can also fail only once the form built from it is processed, rather than during upfront validation; in that case no case changes are made and the response is a 400 with \"error\" and \"form_id\" fields (the ID of the resulting error form), rather than the \"error\"-only shape used for other input errors.",
         "operationId": "case-v2_list_put",
         "requestBody": {
           "content": {
@@ -1981,34 +2100,43 @@
                     ],
                     "properties": {
                       "case_id": {
+                        "description": "The ID of the case to update. Required to identify the case unless external_id is given instead (JsonCaseUpdate.validate() enforces this at runtime -- see the request schema description above for exactly where). Not used when creating a case, where the ID is always server-generated.",
                         "type": "string"
                       },
                       "case_name": {
+                        "description": "The case's display name. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing name unchanged. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "case_type": {
+                        "description": "The case type, as defined by the project's data model. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing type unchanged. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "close": {
                         "default": false,
+                        "description": "Set to true to close the case as part of this update. Defaults to false.",
                         "type": "boolean"
                       },
                       "external_id": {
+                        "description": "An external identifier for the case, e.g. from another system. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "indices": {
                         "additionalProperties": {
                           "properties": {
                             "case_id": {
+                              "description": "The ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                               "type": "string"
                             },
                             "case_type": {
+                              "description": "The related case's case type. Required whenever case_id, external_id or temporary_id is given.",
                               "type": "string"
                             },
                             "external_id": {
+                              "description": "The external ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                               "type": "string"
                             },
                             "relationship": {
+                              "description": "\"child\" or \"extension\" (see the Extension Cases feature). Required whenever case_id, external_id or temporary_id is given.",
                               "enum": [
                                 "child",
                                 "extension"
@@ -2016,37 +2144,45 @@
                               "type": "string"
                             },
                             "temporary_id": {
+                              "description": "The temporary_id of another case being created or updated in the same bulk request. Exactly one of case_id, external_id or temporary_id must be given.",
                               "type": "string"
                             }
                           },
                           "type": "object"
                         },
+                        "description": "The case's indices (relationships to other cases) to set, keyed by an identifier of your choosing (e.g. \"parent\", \"host\"), which must also be a valid XML element name as described for properties above.",
                         "type": "object"
                       },
                       "owner_id": {
+                        "description": "The ID of the case's new owner: a user, case-sharing group, or location ID. Not validated against a real owner beyond the access checks enforced for the authenticated user. Required when creating a case; optional on updates and upserts, where omitting it leaves the current owner unchanged. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "properties": {
                         "additionalProperties": true,
+                        "description": "User-defined case properties to set, as name/value pairs. All values must be strings. Property names must be valid XML element names (non-blank, not starting with a digit or with \"xml\") and may not be case_type, case_name or owner_id, which are set via their own top-level fields instead.",
                         "type": "object"
                       }
                     },
                     "type": "object"
                   },
                   {
+                    "description": "Performs a bulk create/update: each item is created, updated or upserted according to its own \"create\" field. All items are submitted in a single form. Capped at 100 items per request; a longer list is rejected in full, with no cases changed, with the message \"You cannot submit more than 100 updates in a single request.\"",
                     "items": {
                       "oneOf": [
                         {
                           "description": "Creates a new case. Requires case_name, case_type and owner_id, like a single-object POST.",
                           "properties": {
                             "case_name": {
+                              "description": "The case's display name. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing name unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "case_type": {
+                              "description": "The case type, as defined by the project's data model. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing type unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "close": {
                               "default": false,
+                              "description": "Set to true to close the case as part of this update. Defaults to false.",
                               "type": "boolean"
                             },
                             "create": {
@@ -2056,21 +2192,26 @@
                               "type": "boolean"
                             },
                             "external_id": {
+                              "description": "An external identifier for the case, e.g. from another system. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "indices": {
                               "additionalProperties": {
                                 "properties": {
                                   "case_id": {
+                                    "description": "The ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   },
                                   "case_type": {
+                                    "description": "The related case's case type. Required whenever case_id, external_id or temporary_id is given.",
                                     "type": "string"
                                   },
                                   "external_id": {
+                                    "description": "The external ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   },
                                   "relationship": {
+                                    "description": "\"child\" or \"extension\" (see the Extension Cases feature). Required whenever case_id, external_id or temporary_id is given.",
                                     "enum": [
                                       "child",
                                       "extension"
@@ -2078,21 +2219,26 @@
                                     "type": "string"
                                   },
                                   "temporary_id": {
+                                    "description": "The temporary_id of another case being created or updated in the same bulk request. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   }
                                 },
                                 "type": "object"
                               },
+                              "description": "The case's indices (relationships to other cases) to set, keyed by an identifier of your choosing (e.g. \"parent\", \"host\"), which must also be a valid XML element name as described for properties above.",
                               "type": "object"
                             },
                             "owner_id": {
+                              "description": "The ID of the case's new owner: a user, case-sharing group, or location ID. Not validated against a real owner beyond the access checks enforced for the authenticated user. Required when creating a case; optional on updates and upserts, where omitting it leaves the current owner unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "properties": {
                               "additionalProperties": true,
+                              "description": "User-defined case properties to set, as name/value pairs. All values must be strings. Property names must be valid XML element names (non-blank, not starting with a digit or with \"xml\") and may not be case_type, case_name or owner_id, which are set via their own top-level fields instead.",
                               "type": "object"
                             },
                             "temporary_id": {
+                              "description": "An identifier for this case, unique within the current bulk request, that another item in the same request can reference from an index instead of a real case_id -- see \"indices.<name>.temporary_id\". Not stored; discarded once the request has been processed.",
                               "type": "string"
                             }
                           },
@@ -2108,16 +2254,20 @@
                           "description": "Updates an existing case. Must include either \"case_id\" or \"external_id\" to identify the case (JsonCaseUpdate.validate() enforces this at runtime, though neither is individually required by this schema, since either satisfies it).",
                           "properties": {
                             "case_id": {
+                              "description": "The ID of the case to update. Required to identify the case unless external_id is given instead (JsonCaseUpdate.validate() enforces this at runtime -- see the request schema description above for exactly where). Not used when creating a case, where the ID is always server-generated.",
                               "type": "string"
                             },
                             "case_name": {
+                              "description": "The case's display name. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing name unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "case_type": {
+                              "description": "The case type, as defined by the project's data model. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing type unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "close": {
                               "default": false,
+                              "description": "Set to true to close the case as part of this update. Defaults to false.",
                               "type": "boolean"
                             },
                             "create": {
@@ -2127,21 +2277,26 @@
                               "type": "boolean"
                             },
                             "external_id": {
+                              "description": "An external identifier for the case, e.g. from another system. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "indices": {
                               "additionalProperties": {
                                 "properties": {
                                   "case_id": {
+                                    "description": "The ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   },
                                   "case_type": {
+                                    "description": "The related case's case type. Required whenever case_id, external_id or temporary_id is given.",
                                     "type": "string"
                                   },
                                   "external_id": {
+                                    "description": "The external ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   },
                                   "relationship": {
+                                    "description": "\"child\" or \"extension\" (see the Extension Cases feature). Required whenever case_id, external_id or temporary_id is given.",
                                     "enum": [
                                       "child",
                                       "extension"
@@ -2149,18 +2304,22 @@
                                     "type": "string"
                                   },
                                   "temporary_id": {
+                                    "description": "The temporary_id of another case being created or updated in the same bulk request. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   }
                                 },
                                 "type": "object"
                               },
+                              "description": "The case's indices (relationships to other cases) to set, keyed by an identifier of your choosing (e.g. \"parent\", \"host\"), which must also be a valid XML element name as described for properties above.",
                               "type": "object"
                             },
                             "owner_id": {
+                              "description": "The ID of the case's new owner: a user, case-sharing group, or location ID. Not validated against a real owner beyond the access checks enforced for the authenticated user. Required when creating a case; optional on updates and upserts, where omitting it leaves the current owner unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "properties": {
                               "additionalProperties": true,
+                              "description": "User-defined case properties to set, as name/value pairs. All values must be strings. Property names must be valid XML element names (non-blank, not starting with a digit or with \"xml\") and may not be case_type, case_name or owner_id, which are set via their own top-level fields instead.",
                               "type": "object"
                             }
                           },
@@ -2170,16 +2329,19 @@
                           "type": "object"
                         },
                         {
-                          "description": "Upserts a case by external_id: updates it if a case with that external_id already exists, or creates it otherwise.",
+                          "description": "Upserts a case by external_id: updates it if a case with that external_id already exists, or creates it otherwise. CommCare HQ looks up every upserted item's external_id before any of them are saved, so if this same external_id appears more than once in one request, every occurrence after the first is treated as \"not found yet\" and a duplicate case is created for it -- keep external_ids unique within a single request. The same race exists across concurrent requests: two requests upserting the same external_id at the same time can each create a case.",
                           "properties": {
                             "case_name": {
+                              "description": "The case's display name. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing name unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "case_type": {
+                              "description": "The case type, as defined by the project's data model. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing type unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "close": {
                               "default": false,
+                              "description": "Set to true to close the case as part of this update. Defaults to false.",
                               "type": "boolean"
                             },
                             "create": {
@@ -2190,21 +2352,26 @@
                               "type": "boolean"
                             },
                             "external_id": {
+                              "description": "An external identifier for the case, e.g. from another system. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "indices": {
                               "additionalProperties": {
                                 "properties": {
                                   "case_id": {
+                                    "description": "The ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   },
                                   "case_type": {
+                                    "description": "The related case's case type. Required whenever case_id, external_id or temporary_id is given.",
                                     "type": "string"
                                   },
                                   "external_id": {
+                                    "description": "The external ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   },
                                   "relationship": {
+                                    "description": "\"child\" or \"extension\" (see the Extension Cases feature). Required whenever case_id, external_id or temporary_id is given.",
                                     "enum": [
                                       "child",
                                       "extension"
@@ -2212,18 +2379,22 @@
                                     "type": "string"
                                   },
                                   "temporary_id": {
+                                    "description": "The temporary_id of another case being created or updated in the same bulk request. Exactly one of case_id, external_id or temporary_id must be given.",
                                     "type": "string"
                                   }
                                 },
                                 "type": "object"
                               },
+                              "description": "The case's indices (relationships to other cases) to set, keyed by an identifier of your choosing (e.g. \"parent\", \"host\"), which must also be a valid XML element name as described for properties above.",
                               "type": "object"
                             },
                             "owner_id": {
+                              "description": "The ID of the case's new owner: a user, case-sharing group, or location ID. Not validated against a real owner beyond the access checks enforced for the authenticated user. Required when creating a case; optional on updates and upserts, where omitting it leaves the current owner unchanged. Maximum length 255 characters.",
                               "type": "string"
                             },
                             "properties": {
                               "additionalProperties": true,
+                              "description": "User-defined case properties to set, as name/value pairs. All values must be strings. Property names must be valid XML element names (non-blank, not starting with a digit or with \"xml\") and may not be case_type, case_name or owner_id, which are set via their own top-level fields instead.",
                               "type": "object"
                             }
                           },
@@ -2253,36 +2424,46 @@
                     {
                       "properties": {
                         "case": {
+                          "description": "The case's state after applying this create/update.",
                           "properties": {
                             "case_id": {
+                              "description": "The case's unique, server-generated ID.",
                               "type": "string"
                             },
                             "case_name": {
+                              "description": "The case's display name.",
                               "type": "string"
                             },
                             "case_type": {
+                              "description": "The case type, as defined by the project's data model.",
                               "type": "string"
                             },
                             "closed": {
+                              "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                               "type": "boolean"
                             },
                             "date_closed": {
+                              "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                               "format": "date-time",
                               "nullable": true,
                               "type": "string"
                             },
                             "date_opened": {
+                              "description": "The date and time the case was created.",
                               "format": "date-time",
                               "type": "string"
                             },
                             "domain": {
+                              "description": "The domain (project space) the case belongs to.",
                               "type": "string"
                             },
                             "external_id": {
+                              "description": "An external identifier for the case, e.g. from another system. Null if none was set.",
                               "nullable": true,
                               "type": "string"
                             },
                             "indexed_on": {
+                              "description": "The date and time the case was last written to the search index this API reads from, used to paginate list results; it can lag slightly behind server_last_modified. When this case is returned directly from a create/update response (as opposed to a GET), the case has not yet reached the search index, so this is instead the time the response was generated. See last_modified for how these three timestamps differ.",
                               "format": "date-time",
                               "type": "string"
                             },
@@ -2290,33 +2471,41 @@
                               "additionalProperties": {
                                 "properties": {
                                   "case_id": {
+                                    "description": "The ID of the related (target) case.",
                                     "type": "string"
                                   },
                                   "case_type": {
+                                    "description": "The related case's case type.",
                                     "type": "string"
                                   },
                                   "relationship": {
+                                    "description": "\"child\" or \"extension\".",
                                     "type": "string"
                                   }
                                 },
                                 "type": "object"
                               },
+                              "description": "The case's indices (relationships to other cases), keyed by index identifier (e.g. \"parent\", \"host\").",
                               "type": "object"
                             },
                             "last_modified": {
+                              "description": "The date and time of the case's last update, as recorded by the client that submitted it. Compare with server_last_modified (the server's own record of when it received that update) and indexed_on (when the case was last written to the search index this API reads from) -- the three can differ, e.g. when a client's clock is skewed, or the search index has fallen behind.",
                               "format": "date-time",
                               "type": "string"
                             },
                             "owner_id": {
+                              "description": "The ID of the case's current owner: a user, case-sharing group, or location ID.",
                               "type": "string"
                             },
                             "properties": {
                               "additionalProperties": {
                                 "type": "string"
                               },
+                              "description": "The case's user-defined properties, each a string value keyed by property name.",
                               "type": "object"
                             },
                             "server_last_modified": {
+                              "description": "The date and time the server processed the case's last update. See last_modified for how this differs from that field and from indexed_on.",
                               "format": "date-time",
                               "type": "string"
                             }
@@ -2324,6 +2513,7 @@
                           "type": "object"
                         },
                         "form_id": {
+                          "description": "The ID of the form generated to submit this change.",
                           "type": "string"
                         }
                       },
@@ -2336,37 +2526,47 @@
                     {
                       "properties": {
                         "cases": {
+                          "description": "The state of each case after applying this bulk create/update, in the same order as the request.",
                           "items": {
                             "properties": {
                               "case_id": {
+                                "description": "The case's unique, server-generated ID.",
                                 "type": "string"
                               },
                               "case_name": {
+                                "description": "The case's display name.",
                                 "type": "string"
                               },
                               "case_type": {
+                                "description": "The case type, as defined by the project's data model.",
                                 "type": "string"
                               },
                               "closed": {
+                                "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                                 "type": "boolean"
                               },
                               "date_closed": {
+                                "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                                 "format": "date-time",
                                 "nullable": true,
                                 "type": "string"
                               },
                               "date_opened": {
+                                "description": "The date and time the case was created.",
                                 "format": "date-time",
                                 "type": "string"
                               },
                               "domain": {
+                                "description": "The domain (project space) the case belongs to.",
                                 "type": "string"
                               },
                               "external_id": {
+                                "description": "An external identifier for the case, e.g. from another system. Null if none was set.",
                                 "nullable": true,
                                 "type": "string"
                               },
                               "indexed_on": {
+                                "description": "The date and time the case was last written to the search index this API reads from, used to paginate list results; it can lag slightly behind server_last_modified. When this case is returned directly from a create/update response (as opposed to a GET), the case has not yet reached the search index, so this is instead the time the response was generated. See last_modified for how these three timestamps differ.",
                                 "format": "date-time",
                                 "type": "string"
                               },
@@ -2374,33 +2574,41 @@
                                 "additionalProperties": {
                                   "properties": {
                                     "case_id": {
+                                      "description": "The ID of the related (target) case.",
                                       "type": "string"
                                     },
                                     "case_type": {
+                                      "description": "The related case's case type.",
                                       "type": "string"
                                     },
                                     "relationship": {
+                                      "description": "\"child\" or \"extension\".",
                                       "type": "string"
                                     }
                                   },
                                   "type": "object"
                                 },
+                                "description": "The case's indices (relationships to other cases), keyed by index identifier (e.g. \"parent\", \"host\").",
                                 "type": "object"
                               },
                               "last_modified": {
+                                "description": "The date and time of the case's last update, as recorded by the client that submitted it. Compare with server_last_modified (the server's own record of when it received that update) and indexed_on (when the case was last written to the search index this API reads from) -- the three can differ, e.g. when a client's clock is skewed, or the search index has fallen behind.",
                                 "format": "date-time",
                                 "type": "string"
                               },
                               "owner_id": {
+                                "description": "The ID of the case's current owner: a user, case-sharing group, or location ID.",
                                 "type": "string"
                               },
                               "properties": {
                                 "additionalProperties": {
                                   "type": "string"
                                 },
+                                "description": "The case's user-defined properties, each a string value keyed by property name.",
                                 "type": "object"
                               },
                               "server_last_modified": {
+                                "description": "The date and time the server processed the case's last update. See last_modified for how this differs from that field and from indexed_on.",
                                 "format": "date-time",
                                 "type": "string"
                               }
@@ -2410,6 +2618,7 @@
                           "type": "array"
                         },
                         "form_id": {
+                          "description": "The ID of the single form generated to submit every case in this bulk request.",
                           "type": "string"
                         }
                       },
@@ -2475,12 +2684,14 @@
                 ],
                 "properties": {
                   "case_ids": {
+                    "description": "Case IDs to fetch.",
                     "items": {
                       "type": "string"
                     },
                     "type": "array"
                   },
                   "external_ids": {
+                    "description": "External IDs to fetch.",
                     "items": {
                       "type": "string"
                     },
@@ -2500,39 +2711,49 @@
                 "schema": {
                   "properties": {
                     "cases": {
+                      "description": "The requested cases, one entry per case_id/external_id given, in the same order (case_ids first, then external_ids, if both were supplied). A case that could not be found appears as an error stub instead.",
                       "items": {
                         "anyOf": [
                           {
                             "properties": {
                               "case_id": {
+                                "description": "The case's unique, server-generated ID.",
                                 "type": "string"
                               },
                               "case_name": {
+                                "description": "The case's display name.",
                                 "type": "string"
                               },
                               "case_type": {
+                                "description": "The case type, as defined by the project's data model.",
                                 "type": "string"
                               },
                               "closed": {
+                                "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                                 "type": "boolean"
                               },
                               "date_closed": {
+                                "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                                 "format": "date-time",
                                 "nullable": true,
                                 "type": "string"
                               },
                               "date_opened": {
+                                "description": "The date and time the case was created.",
                                 "format": "date-time",
                                 "type": "string"
                               },
                               "domain": {
+                                "description": "The domain (project space) the case belongs to.",
                                 "type": "string"
                               },
                               "external_id": {
+                                "description": "An external identifier for the case, e.g. from another system. Null if none was set.",
                                 "nullable": true,
                                 "type": "string"
                               },
                               "indexed_on": {
+                                "description": "The date and time the case was last written to the search index this API reads from, used to paginate list results; it can lag slightly behind server_last_modified. When this case is returned directly from a create/update response (as opposed to a GET), the case has not yet reached the search index, so this is instead the time the response was generated. See last_modified for how these three timestamps differ.",
                                 "format": "date-time",
                                 "type": "string"
                               },
@@ -2540,33 +2761,41 @@
                                 "additionalProperties": {
                                   "properties": {
                                     "case_id": {
+                                      "description": "The ID of the related (target) case.",
                                       "type": "string"
                                     },
                                     "case_type": {
+                                      "description": "The related case's case type.",
                                       "type": "string"
                                     },
                                     "relationship": {
+                                      "description": "\"child\" or \"extension\".",
                                       "type": "string"
                                     }
                                   },
                                   "type": "object"
                                 },
+                                "description": "The case's indices (relationships to other cases), keyed by index identifier (e.g. \"parent\", \"host\").",
                                 "type": "object"
                               },
                               "last_modified": {
+                                "description": "The date and time of the case's last update, as recorded by the client that submitted it. Compare with server_last_modified (the server's own record of when it received that update) and indexed_on (when the case was last written to the search index this API reads from) -- the three can differ, e.g. when a client's clock is skewed, or the search index has fallen behind.",
                                 "format": "date-time",
                                 "type": "string"
                               },
                               "owner_id": {
+                                "description": "The ID of the case's current owner: a user, case-sharing group, or location ID.",
                                 "type": "string"
                               },
                               "properties": {
                                 "additionalProperties": {
                                   "type": "string"
                                 },
+                                "description": "The case's user-defined properties, each a string value keyed by property name.",
                                 "type": "object"
                               },
                               "server_last_modified": {
+                                "description": "The date and time the server processed the case's last update. See last_modified for how this differs from that field and from indexed_on.",
                                 "format": "date-time",
                                 "type": "string"
                               }
@@ -2575,7 +2804,16 @@
                           },
                           {
                             "properties": {
+                              "case_id": {
+                                "description": "The case_id that could not be resolved. Present only in a bulk result.",
+                                "type": "string"
+                              },
                               "error": {
+                                "description": "Present instead of a case when it could not be resolved: it doesn't exist, belongs to a different domain, or the caller lacks permission to see it. In a bulk result (bulk-fetch, or a comma-separated case_id list) this is always the literal text \"not found\", even when the actual cause is a domain mismatch or a permission error; the single-case detail endpoints give a more specific message instead.",
+                                "type": "string"
+                              },
+                              "external_id": {
+                                "description": "The external_id that could not be resolved. Present only in a bulk result.",
                                 "type": "string"
                               }
                             },
@@ -2584,6 +2822,14 @@
                         ]
                       },
                       "type": "array"
+                    },
+                    "matching_records": {
+                      "description": "The number of requested case_ids/external_ids that were found. Unlike the list endpoint's \"matching_records\", this isn't counting matches against a filter -- bulk-fetch takes explicit IDs, so this is simply the count of IDs that resolved.",
+                      "type": "integer"
+                    },
+                    "missing_records": {
+                      "description": "The number of requested case_ids/external_ids that could not be found.",
+                      "type": "integer"
                     }
                   },
                   "required": [
@@ -2604,7 +2850,7 @@
     },
     "/a/{domain}/api/case/v2/ext/{external_id}/": {
       "get": {
-        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
+        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case -- it does not check external_id for an existing match, so posting one that already exists creates a second case with a duplicate external_id; use PUT by external ID instead if that is not what you want. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert. Every change is attributed to the authenticated caller; there is no way to submit a change as another user. A change can also fail only once the form built from it is processed, rather than during upfront validation; in that case no case changes are made and the response is a 400 with \"error\" and \"form_id\" fields (the ID of the resulting error form), rather than the \"error\"-only shape used for other input errors.",
         "operationId": "case-v2_ext_external_id_get",
         "responses": {
           "200": {
@@ -2613,34 +2859,43 @@
                 "schema": {
                   "properties": {
                     "case_id": {
+                      "description": "The case's unique, server-generated ID.",
                       "type": "string"
                     },
                     "case_name": {
+                      "description": "The case's display name.",
                       "type": "string"
                     },
                     "case_type": {
+                      "description": "The case type, as defined by the project's data model.",
                       "type": "string"
                     },
                     "closed": {
+                      "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                       "type": "boolean"
                     },
                     "date_closed": {
+                      "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                       "format": "date-time",
                       "nullable": true,
                       "type": "string"
                     },
                     "date_opened": {
+                      "description": "The date and time the case was created.",
                       "format": "date-time",
                       "type": "string"
                     },
                     "domain": {
+                      "description": "The domain (project space) the case belongs to.",
                       "type": "string"
                     },
                     "external_id": {
+                      "description": "An external identifier for the case, e.g. from another system. Null if none was set.",
                       "nullable": true,
                       "type": "string"
                     },
                     "indexed_on": {
+                      "description": "The date and time the case was last written to the search index this API reads from, used to paginate list results; it can lag slightly behind server_last_modified. When this case is returned directly from a create/update response (as opposed to a GET), the case has not yet reached the search index, so this is instead the time the response was generated. See last_modified for how these three timestamps differ.",
                       "format": "date-time",
                       "type": "string"
                     },
@@ -2648,33 +2903,41 @@
                       "additionalProperties": {
                         "properties": {
                           "case_id": {
+                            "description": "The ID of the related (target) case.",
                             "type": "string"
                           },
                           "case_type": {
+                            "description": "The related case's case type.",
                             "type": "string"
                           },
                           "relationship": {
+                            "description": "\"child\" or \"extension\".",
                             "type": "string"
                           }
                         },
                         "type": "object"
                       },
+                      "description": "The case's indices (relationships to other cases), keyed by index identifier (e.g. \"parent\", \"host\").",
                       "type": "object"
                     },
                     "last_modified": {
+                      "description": "The date and time of the case's last update, as recorded by the client that submitted it. Compare with server_last_modified (the server's own record of when it received that update) and indexed_on (when the case was last written to the search index this API reads from) -- the three can differ, e.g. when a client's clock is skewed, or the search index has fallen behind.",
                       "format": "date-time",
                       "type": "string"
                     },
                     "owner_id": {
+                      "description": "The ID of the case's current owner: a user, case-sharing group, or location ID.",
                       "type": "string"
                     },
                     "properties": {
                       "additionalProperties": {
                         "type": "string"
                       },
+                      "description": "The case's user-defined properties, each a string value keyed by property name.",
                       "type": "object"
                     },
                     "server_last_modified": {
+                      "description": "The date and time the server processed the case's last update. See last_modified for how this differs from that field and from indexed_on.",
                       "format": "date-time",
                       "type": "string"
                     }
@@ -2702,7 +2965,7 @@
           }
         },
         {
-          "description": "The case's external ID.",
+          "description": "The case's external ID. If more than one case in the domain shares this external ID, GET fails with a 400 listing every matching case_id, rather than returning any one of them.",
           "in": "path",
           "name": "external_id",
           "required": true,
@@ -2712,7 +2975,7 @@
         }
       ],
       "put": {
-        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
+        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case -- it does not check external_id for an existing match, so posting one that already exists creates a second case with a duplicate external_id; use PUT by external ID instead if that is not what you want. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert. Every change is attributed to the authenticated caller; there is no way to submit a change as another user. A change can also fail only once the form built from it is processed, rather than during upfront validation; in that case no case changes are made and the response is a 400 with \"error\" and \"form_id\" fields (the ID of the resulting error form), rather than the \"error\"-only shape used for other input errors.",
         "operationId": "case-v2_ext_external_id_put",
         "requestBody": {
           "content": {
@@ -2730,31 +2993,39 @@
                   {
                     "properties": {
                       "case_name": {
+                        "description": "The case's display name. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing name unchanged. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "case_type": {
+                        "description": "The case type, as defined by the project's data model. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing type unchanged. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "close": {
                         "default": false,
+                        "description": "Set to true to close the case as part of this update. Defaults to false.",
                         "type": "boolean"
                       },
                       "external_id": {
+                        "description": "An external identifier for the case, e.g. from another system. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "indices": {
                         "additionalProperties": {
                           "properties": {
                             "case_id": {
+                              "description": "The ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                               "type": "string"
                             },
                             "case_type": {
+                              "description": "The related case's case type. Required whenever case_id, external_id or temporary_id is given.",
                               "type": "string"
                             },
                             "external_id": {
+                              "description": "The external ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                               "type": "string"
                             },
                             "relationship": {
+                              "description": "\"child\" or \"extension\" (see the Extension Cases feature). Required whenever case_id, external_id or temporary_id is given.",
                               "enum": [
                                 "child",
                                 "extension"
@@ -2762,21 +3033,26 @@
                               "type": "string"
                             },
                             "temporary_id": {
+                              "description": "The temporary_id of another case being created or updated in the same bulk request. Exactly one of case_id, external_id or temporary_id must be given.",
                               "type": "string"
                             }
                           },
                           "type": "object"
                         },
+                        "description": "The case's indices (relationships to other cases) to set, keyed by an identifier of your choosing (e.g. \"parent\", \"host\"), which must also be a valid XML element name as described for properties above.",
                         "type": "object"
                       },
                       "owner_id": {
+                        "description": "The ID of the case's new owner: a user, case-sharing group, or location ID. Not validated against a real owner beyond the access checks enforced for the authenticated user. Required when creating a case; optional on updates and upserts, where omitting it leaves the current owner unchanged. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "properties": {
                         "additionalProperties": true,
+                        "description": "User-defined case properties to set, as name/value pairs. All values must be strings. Property names must be valid XML element names (non-blank, not starting with a digit or with \"xml\") and may not be case_type, case_name or owner_id, which are set via their own top-level fields instead.",
                         "type": "object"
                       },
                       "temporary_id": {
+                        "description": "An identifier for this case, unique within the current bulk request, that another item in the same request can reference from an index instead of a real case_id -- see \"indices.<name>.temporary_id\". Not stored; discarded once the request has been processed.",
                         "type": "string"
                       }
                     },
@@ -2790,34 +3066,43 @@
                   {
                     "properties": {
                       "case_id": {
+                        "description": "The ID of the case to update. Required to identify the case unless external_id is given instead (JsonCaseUpdate.validate() enforces this at runtime -- see the request schema description above for exactly where). Not used when creating a case, where the ID is always server-generated.",
                         "type": "string"
                       },
                       "case_name": {
+                        "description": "The case's display name. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing name unchanged. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "case_type": {
+                        "description": "The case type, as defined by the project's data model. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing type unchanged. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "close": {
                         "default": false,
+                        "description": "Set to true to close the case as part of this update. Defaults to false.",
                         "type": "boolean"
                       },
                       "external_id": {
+                        "description": "An external identifier for the case, e.g. from another system. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "indices": {
                         "additionalProperties": {
                           "properties": {
                             "case_id": {
+                              "description": "The ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                               "type": "string"
                             },
                             "case_type": {
+                              "description": "The related case's case type. Required whenever case_id, external_id or temporary_id is given.",
                               "type": "string"
                             },
                             "external_id": {
+                              "description": "The external ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                               "type": "string"
                             },
                             "relationship": {
+                              "description": "\"child\" or \"extension\" (see the Extension Cases feature). Required whenever case_id, external_id or temporary_id is given.",
                               "enum": [
                                 "child",
                                 "extension"
@@ -2825,25 +3110,29 @@
                               "type": "string"
                             },
                             "temporary_id": {
+                              "description": "The temporary_id of another case being created or updated in the same bulk request. Exactly one of case_id, external_id or temporary_id must be given.",
                               "type": "string"
                             }
                           },
                           "type": "object"
                         },
+                        "description": "The case's indices (relationships to other cases) to set, keyed by an identifier of your choosing (e.g. \"parent\", \"host\"), which must also be a valid XML element name as described for properties above.",
                         "type": "object"
                       },
                       "owner_id": {
+                        "description": "The ID of the case's new owner: a user, case-sharing group, or location ID. Not validated against a real owner beyond the access checks enforced for the authenticated user. Required when creating a case; optional on updates and upserts, where omitting it leaves the current owner unchanged. Maximum length 255 characters.",
                         "type": "string"
                       },
                       "properties": {
                         "additionalProperties": true,
+                        "description": "User-defined case properties to set, as name/value pairs. All values must be strings. Property names must be valid XML element names (non-blank, not starting with a digit or with \"xml\") and may not be case_type, case_name or owner_id, which are set via their own top-level fields instead.",
                         "type": "object"
                       }
                     },
                     "type": "object"
                   }
                 ],
-                "description": "Upsert by external ID. If no case with this external ID exists, the case-creation branch applies (case_name, case_type and owner_id are required); if one does, the case-update branch applies (neither is required)."
+                "description": "Upsert by external ID. If no case with this external ID exists, the case-creation branch applies (case_name, case_type and owner_id are required); if one does, the case-update branch applies (neither is required). Two requests upserting the same external ID at the same time can race: both may see no existing case and each create one."
               }
             }
           },
@@ -2856,36 +3145,46 @@
                 "schema": {
                   "properties": {
                     "case": {
+                      "description": "The case's state after applying this create/update.",
                       "properties": {
                         "case_id": {
+                          "description": "The case's unique, server-generated ID.",
                           "type": "string"
                         },
                         "case_name": {
+                          "description": "The case's display name.",
                           "type": "string"
                         },
                         "case_type": {
+                          "description": "The case type, as defined by the project's data model.",
                           "type": "string"
                         },
                         "closed": {
+                          "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                           "type": "boolean"
                         },
                         "date_closed": {
+                          "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
                         },
                         "date_opened": {
+                          "description": "The date and time the case was created.",
                           "format": "date-time",
                           "type": "string"
                         },
                         "domain": {
+                          "description": "The domain (project space) the case belongs to.",
                           "type": "string"
                         },
                         "external_id": {
+                          "description": "An external identifier for the case, e.g. from another system. Null if none was set.",
                           "nullable": true,
                           "type": "string"
                         },
                         "indexed_on": {
+                          "description": "The date and time the case was last written to the search index this API reads from, used to paginate list results; it can lag slightly behind server_last_modified. When this case is returned directly from a create/update response (as opposed to a GET), the case has not yet reached the search index, so this is instead the time the response was generated. See last_modified for how these three timestamps differ.",
                           "format": "date-time",
                           "type": "string"
                         },
@@ -2893,33 +3192,41 @@
                           "additionalProperties": {
                             "properties": {
                               "case_id": {
+                                "description": "The ID of the related (target) case.",
                                 "type": "string"
                               },
                               "case_type": {
+                                "description": "The related case's case type.",
                                 "type": "string"
                               },
                               "relationship": {
+                                "description": "\"child\" or \"extension\".",
                                 "type": "string"
                               }
                             },
                             "type": "object"
                           },
+                          "description": "The case's indices (relationships to other cases), keyed by index identifier (e.g. \"parent\", \"host\").",
                           "type": "object"
                         },
                         "last_modified": {
+                          "description": "The date and time of the case's last update, as recorded by the client that submitted it. Compare with server_last_modified (the server's own record of when it received that update) and indexed_on (when the case was last written to the search index this API reads from) -- the three can differ, e.g. when a client's clock is skewed, or the search index has fallen behind.",
                           "format": "date-time",
                           "type": "string"
                         },
                         "owner_id": {
+                          "description": "The ID of the case's current owner: a user, case-sharing group, or location ID.",
                           "type": "string"
                         },
                         "properties": {
                           "additionalProperties": {
                             "type": "string"
                           },
+                          "description": "The case's user-defined properties, each a string value keyed by property name.",
                           "type": "object"
                         },
                         "server_last_modified": {
+                          "description": "The date and time the server processed the case's last update. See last_modified for how this differs from that field and from indexed_on.",
                           "format": "date-time",
                           "type": "string"
                         }
@@ -2927,6 +3234,7 @@
                       "type": "object"
                     },
                     "form_id": {
+                      "description": "The ID of the form generated to submit this change.",
                       "type": "string"
                     }
                   },
@@ -2949,7 +3257,7 @@
     },
     "/a/{domain}/api/case/v2/{case_id}/": {
       "get": {
-        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
+        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case -- it does not check external_id for an existing match, so posting one that already exists creates a second case with a duplicate external_id; use PUT by external ID instead if that is not what you want. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert. Every change is attributed to the authenticated caller; there is no way to submit a change as another user. A change can also fail only once the form built from it is processed, rather than during upfront validation; in that case no case changes are made and the response is a 400 with \"error\" and \"form_id\" fields (the ID of the resulting error form), rather than the \"error\"-only shape used for other input errors.",
         "operationId": "case-v2_case_id_get",
         "responses": {
           "200": {
@@ -2960,34 +3268,43 @@
                     {
                       "properties": {
                         "case_id": {
+                          "description": "The case's unique, server-generated ID.",
                           "type": "string"
                         },
                         "case_name": {
+                          "description": "The case's display name.",
                           "type": "string"
                         },
                         "case_type": {
+                          "description": "The case type, as defined by the project's data model.",
                           "type": "string"
                         },
                         "closed": {
+                          "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                           "type": "boolean"
                         },
                         "date_closed": {
+                          "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
                         },
                         "date_opened": {
+                          "description": "The date and time the case was created.",
                           "format": "date-time",
                           "type": "string"
                         },
                         "domain": {
+                          "description": "The domain (project space) the case belongs to.",
                           "type": "string"
                         },
                         "external_id": {
+                          "description": "An external identifier for the case, e.g. from another system. Null if none was set.",
                           "nullable": true,
                           "type": "string"
                         },
                         "indexed_on": {
+                          "description": "The date and time the case was last written to the search index this API reads from, used to paginate list results; it can lag slightly behind server_last_modified. When this case is returned directly from a create/update response (as opposed to a GET), the case has not yet reached the search index, so this is instead the time the response was generated. See last_modified for how these three timestamps differ.",
                           "format": "date-time",
                           "type": "string"
                         },
@@ -2995,33 +3312,41 @@
                           "additionalProperties": {
                             "properties": {
                               "case_id": {
+                                "description": "The ID of the related (target) case.",
                                 "type": "string"
                               },
                               "case_type": {
+                                "description": "The related case's case type.",
                                 "type": "string"
                               },
                               "relationship": {
+                                "description": "\"child\" or \"extension\".",
                                 "type": "string"
                               }
                             },
                             "type": "object"
                           },
+                          "description": "The case's indices (relationships to other cases), keyed by index identifier (e.g. \"parent\", \"host\").",
                           "type": "object"
                         },
                         "last_modified": {
+                          "description": "The date and time of the case's last update, as recorded by the client that submitted it. Compare with server_last_modified (the server's own record of when it received that update) and indexed_on (when the case was last written to the search index this API reads from) -- the three can differ, e.g. when a client's clock is skewed, or the search index has fallen behind.",
                           "format": "date-time",
                           "type": "string"
                         },
                         "owner_id": {
+                          "description": "The ID of the case's current owner: a user, case-sharing group, or location ID.",
                           "type": "string"
                         },
                         "properties": {
                           "additionalProperties": {
                             "type": "string"
                           },
+                          "description": "The case's user-defined properties, each a string value keyed by property name.",
                           "type": "object"
                         },
                         "server_last_modified": {
+                          "description": "The date and time the server processed the case's last update. See last_modified for how this differs from that field and from indexed_on.",
                           "format": "date-time",
                           "type": "string"
                         }
@@ -3031,39 +3356,49 @@
                     {
                       "properties": {
                         "cases": {
+                          "description": "The requested cases, one entry per case_id/external_id given, in the same order (case_ids first, then external_ids, if both were supplied). A case that could not be found appears as an error stub instead.",
                           "items": {
                             "anyOf": [
                               {
                                 "properties": {
                                   "case_id": {
+                                    "description": "The case's unique, server-generated ID.",
                                     "type": "string"
                                   },
                                   "case_name": {
+                                    "description": "The case's display name.",
                                     "type": "string"
                                   },
                                   "case_type": {
+                                    "description": "The case type, as defined by the project's data model.",
                                     "type": "string"
                                   },
                                   "closed": {
+                                    "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                                     "type": "boolean"
                                   },
                                   "date_closed": {
+                                    "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                                     "format": "date-time",
                                     "nullable": true,
                                     "type": "string"
                                   },
                                   "date_opened": {
+                                    "description": "The date and time the case was created.",
                                     "format": "date-time",
                                     "type": "string"
                                   },
                                   "domain": {
+                                    "description": "The domain (project space) the case belongs to.",
                                     "type": "string"
                                   },
                                   "external_id": {
+                                    "description": "An external identifier for the case, e.g. from another system. Null if none was set.",
                                     "nullable": true,
                                     "type": "string"
                                   },
                                   "indexed_on": {
+                                    "description": "The date and time the case was last written to the search index this API reads from, used to paginate list results; it can lag slightly behind server_last_modified. When this case is returned directly from a create/update response (as opposed to a GET), the case has not yet reached the search index, so this is instead the time the response was generated. See last_modified for how these three timestamps differ.",
                                     "format": "date-time",
                                     "type": "string"
                                   },
@@ -3071,33 +3406,41 @@
                                     "additionalProperties": {
                                       "properties": {
                                         "case_id": {
+                                          "description": "The ID of the related (target) case.",
                                           "type": "string"
                                         },
                                         "case_type": {
+                                          "description": "The related case's case type.",
                                           "type": "string"
                                         },
                                         "relationship": {
+                                          "description": "\"child\" or \"extension\".",
                                           "type": "string"
                                         }
                                       },
                                       "type": "object"
                                     },
+                                    "description": "The case's indices (relationships to other cases), keyed by index identifier (e.g. \"parent\", \"host\").",
                                     "type": "object"
                                   },
                                   "last_modified": {
+                                    "description": "The date and time of the case's last update, as recorded by the client that submitted it. Compare with server_last_modified (the server's own record of when it received that update) and indexed_on (when the case was last written to the search index this API reads from) -- the three can differ, e.g. when a client's clock is skewed, or the search index has fallen behind.",
                                     "format": "date-time",
                                     "type": "string"
                                   },
                                   "owner_id": {
+                                    "description": "The ID of the case's current owner: a user, case-sharing group, or location ID.",
                                     "type": "string"
                                   },
                                   "properties": {
                                     "additionalProperties": {
                                       "type": "string"
                                     },
+                                    "description": "The case's user-defined properties, each a string value keyed by property name.",
                                     "type": "object"
                                   },
                                   "server_last_modified": {
+                                    "description": "The date and time the server processed the case's last update. See last_modified for how this differs from that field and from indexed_on.",
                                     "format": "date-time",
                                     "type": "string"
                                   }
@@ -3106,7 +3449,16 @@
                               },
                               {
                                 "properties": {
+                                  "case_id": {
+                                    "description": "The case_id that could not be resolved. Present only in a bulk result.",
+                                    "type": "string"
+                                  },
                                   "error": {
+                                    "description": "Present instead of a case when it could not be resolved: it doesn't exist, belongs to a different domain, or the caller lacks permission to see it. In a bulk result (bulk-fetch, or a comma-separated case_id list) this is always the literal text \"not found\", even when the actual cause is a domain mismatch or a permission error; the single-case detail endpoints give a more specific message instead.",
+                                    "type": "string"
+                                  },
+                                  "external_id": {
+                                    "description": "The external_id that could not be resolved. Present only in a bulk result.",
                                     "type": "string"
                                   }
                                 },
@@ -3115,6 +3467,14 @@
                             ]
                           },
                           "type": "array"
+                        },
+                        "matching_records": {
+                          "description": "The number of requested case_ids/external_ids that were found. Unlike the list endpoint's \"matching_records\", this isn't counting matches against a filter -- bulk-fetch takes explicit IDs, so this is simply the count of IDs that resolved.",
+                          "type": "integer"
+                        },
+                        "missing_records": {
+                          "description": "The number of requested case_ids/external_ids that could not be found.",
+                          "type": "integer"
                         }
                       },
                       "required": [
@@ -3145,7 +3505,7 @@
           }
         },
         {
-          "description": "The case ID. For GET, multiple IDs may be given as a comma-separated list, e.g. \"id1,id2,id3\", to fetch several cases at once.",
+          "description": "The case ID. For GET, multiple IDs may be given as a comma-separated list, e.g. \"id1,id2,id3\", to fetch several cases at once -- for more than around 100 IDs, prefer POST /bulk-fetch/, which has no such practical limit. For PUT, if the request body also includes a \"case_id\" field, the body's value is used to identify the case, and this path value is only used to fill it in when the body omits it; the two are not checked against each other.",
           "in": "path",
           "name": "case_id",
           "required": true,
@@ -3155,7 +3515,7 @@
         }
       ],
       "put": {
-        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
+        "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case -- it does not check external_id for an existing match, so posting one that already exists creates a second case with a duplicate external_id; use PUT by external ID instead if that is not what you want. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert. Every change is attributed to the authenticated caller; there is no way to submit a change as another user. A change can also fail only once the form built from it is processed, rather than during upfront validation; in that case no case changes are made and the response is a 400 with \"error\" and \"form_id\" fields (the ID of the resulting error form), rather than the \"error\"-only shape used for other input errors.",
         "operationId": "case-v2_case_id_put",
         "requestBody": {
           "content": {
@@ -3169,34 +3529,43 @@
               "schema": {
                 "properties": {
                   "case_id": {
+                    "description": "The ID of the case to update. Required to identify the case unless external_id is given instead (JsonCaseUpdate.validate() enforces this at runtime -- see the request schema description above for exactly where). Not used when creating a case, where the ID is always server-generated.",
                     "type": "string"
                   },
                   "case_name": {
+                    "description": "The case's display name. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing name unchanged. Maximum length 255 characters.",
                     "type": "string"
                   },
                   "case_type": {
+                    "description": "The case type, as defined by the project's data model. Required when creating a case; optional on updates and upserts, where omitting it leaves the existing type unchanged. Maximum length 255 characters.",
                     "type": "string"
                   },
                   "close": {
                     "default": false,
+                    "description": "Set to true to close the case as part of this update. Defaults to false.",
                     "type": "boolean"
                   },
                   "external_id": {
+                    "description": "An external identifier for the case, e.g. from another system. Maximum length 255 characters.",
                     "type": "string"
                   },
                   "indices": {
                     "additionalProperties": {
                       "properties": {
                         "case_id": {
+                          "description": "The ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                           "type": "string"
                         },
                         "case_type": {
+                          "description": "The related case's case type. Required whenever case_id, external_id or temporary_id is given.",
                           "type": "string"
                         },
                         "external_id": {
+                          "description": "The external ID of the related case. Exactly one of case_id, external_id or temporary_id must be given.",
                           "type": "string"
                         },
                         "relationship": {
+                          "description": "\"child\" or \"extension\" (see the Extension Cases feature). Required whenever case_id, external_id or temporary_id is given.",
                           "enum": [
                             "child",
                             "extension"
@@ -3204,18 +3573,22 @@
                           "type": "string"
                         },
                         "temporary_id": {
+                          "description": "The temporary_id of another case being created or updated in the same bulk request. Exactly one of case_id, external_id or temporary_id must be given.",
                           "type": "string"
                         }
                       },
                       "type": "object"
                     },
+                    "description": "The case's indices (relationships to other cases) to set, keyed by an identifier of your choosing (e.g. \"parent\", \"host\"), which must also be a valid XML element name as described for properties above.",
                     "type": "object"
                   },
                   "owner_id": {
+                    "description": "The ID of the case's new owner: a user, case-sharing group, or location ID. Not validated against a real owner beyond the access checks enforced for the authenticated user. Required when creating a case; optional on updates and upserts, where omitting it leaves the current owner unchanged. Maximum length 255 characters.",
                     "type": "string"
                   },
                   "properties": {
                     "additionalProperties": true,
+                    "description": "User-defined case properties to set, as name/value pairs. All values must be strings. Property names must be valid XML element names (non-blank, not starting with a digit or with \"xml\") and may not be case_type, case_name or owner_id, which are set via their own top-level fields instead.",
                     "type": "object"
                   }
                 },
@@ -3232,36 +3605,46 @@
                 "schema": {
                   "properties": {
                     "case": {
+                      "description": "The case's state after applying this create/update.",
                       "properties": {
                         "case_id": {
+                          "description": "The case's unique, server-generated ID.",
                           "type": "string"
                         },
                         "case_name": {
+                          "description": "The case's display name.",
                           "type": "string"
                         },
                         "case_type": {
+                          "description": "The case type, as defined by the project's data model.",
                           "type": "string"
                         },
                         "closed": {
+                          "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                           "type": "boolean"
                         },
                         "date_closed": {
+                          "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
                         },
                         "date_opened": {
+                          "description": "The date and time the case was created.",
                           "format": "date-time",
                           "type": "string"
                         },
                         "domain": {
+                          "description": "The domain (project space) the case belongs to.",
                           "type": "string"
                         },
                         "external_id": {
+                          "description": "An external identifier for the case, e.g. from another system. Null if none was set.",
                           "nullable": true,
                           "type": "string"
                         },
                         "indexed_on": {
+                          "description": "The date and time the case was last written to the search index this API reads from, used to paginate list results; it can lag slightly behind server_last_modified. When this case is returned directly from a create/update response (as opposed to a GET), the case has not yet reached the search index, so this is instead the time the response was generated. See last_modified for how these three timestamps differ.",
                           "format": "date-time",
                           "type": "string"
                         },
@@ -3269,33 +3652,41 @@
                           "additionalProperties": {
                             "properties": {
                               "case_id": {
+                                "description": "The ID of the related (target) case.",
                                 "type": "string"
                               },
                               "case_type": {
+                                "description": "The related case's case type.",
                                 "type": "string"
                               },
                               "relationship": {
+                                "description": "\"child\" or \"extension\".",
                                 "type": "string"
                               }
                             },
                             "type": "object"
                           },
+                          "description": "The case's indices (relationships to other cases), keyed by index identifier (e.g. \"parent\", \"host\").",
                           "type": "object"
                         },
                         "last_modified": {
+                          "description": "The date and time of the case's last update, as recorded by the client that submitted it. Compare with server_last_modified (the server's own record of when it received that update) and indexed_on (when the case was last written to the search index this API reads from) -- the three can differ, e.g. when a client's clock is skewed, or the search index has fallen behind.",
                           "format": "date-time",
                           "type": "string"
                         },
                         "owner_id": {
+                          "description": "The ID of the case's current owner: a user, case-sharing group, or location ID.",
                           "type": "string"
                         },
                         "properties": {
                           "additionalProperties": {
                             "type": "string"
                           },
+                          "description": "The case's user-defined properties, each a string value keyed by property name.",
                           "type": "object"
                         },
                         "server_last_modified": {
+                          "description": "The date and time the server processed the case's last update. See last_modified for how this differs from that field and from indexed_on.",
                           "format": "date-time",
                           "type": "string"
                         }
@@ -3303,6 +3694,7 @@
                       "type": "object"
                     },
                     "form_id": {
+                      "description": "The ID of the form generated to submit this change.",
                       "type": "string"
                     }
                   },
@@ -9121,7 +9513,7 @@
       "name": "user_domains"
     },
     {
-      "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert.",
+      "description": "Fetch, create and update cases. GET returns a page of cases matching the given filters, or a single case when a case ID is given. POST with a single JSON object always creates a new case -- it does not check external_id for an existing match, so posting one that already exists creates a second case with a duplicate external_id; use PUT by external ID instead if that is not what you want. POST with a list performs a bulk change: each item creates or updates a case according to its own \"create\" field, or is upserted by external_id when \"create\" is omitted. PUT to the case ID or external ID in the URL updates that case; PUT to the external ID URL is a genuine upsert, creating the case if none exists with that external ID. PUT to the list URL (no ID in the path) instead identifies the case via a case_id/external_id field in the body, and requires the case to already exist -- it is not an upsert. Every change is attributed to the authenticated caller; there is no way to submit a change as another user. A change can also fail only once the form built from it is processed, rather than during upfront validation; in that case no case changes are made and the response is a 400 with \"error\" and \"form_id\" fields (the ID of the resulting error form), rather than the \"error\"-only shape used for other input errors.",
       "name": "case-v2"
     }
   ]
