@@ -9,7 +9,12 @@ from unmagic import use
 from django.db import DatabaseError
 
 from corehq.apps.public_webforms import forms
-from corehq.apps.public_webforms.models import PublicWebformType
+from corehq.apps.public_webforms.models import (
+    PublicWebform,
+    PublicWebformStatus,
+    PublicWebformType,
+)
+from corehq.apps.public_webforms.tests.utils import create_webform
 
 DOMAIN = 'public-webform-forms'
 TIMEZONE = pytz.timezone('America/New_York')
@@ -17,9 +22,52 @@ SURVEY_FORM = SimpleNamespace(is_registration_form=lambda: False)
 REGISTRATION_FORM = SimpleNamespace(is_registration_form=lambda: True)
 
 
+def _filter(**params):
+    queryset = PublicWebform.objects.with_status()
+    return list(forms.PublicWebformFilterForm(params).filter(queryset))
+
+
+@use('db')
+@pytest.mark.parametrize('params', [
+    {'search': 'natal'},
+    {'status': PublicWebformStatus.CLOSED},
+    {'session_type': PublicWebformType.REGISTRATION},
+], ids=['search', 'status', 'session_type'])
+def test_each_filter_narrows_the_list(params):
+    wanted = create_webform(
+        label='Antenatal visit',
+        session_type=PublicWebformType.REGISTRATION,
+        is_disabled=True,
+    )
+    create_webform(
+        label='Household survey',
+        session_type=PublicWebformType.SURVEY,
+        is_disabled=False,
+    )
+
+    assert _filter(**params) == [wanted]
+
+
+@use('db')
+def test_a_value_that_is_not_offered_is_ignored():
+    # The query string is linkable, so a hand-edited filter must not break it.
+    webform = create_webform()
+
+    assert _filter(status='not-a-status') == [webform]
+
+
+@pytest.mark.parametrize('params, expected', [
+    ({}, False),
+    ({'search': ''}, False),
+    ({'search': 'natal'}, True),
+    ({'status': 'not-a-status'}, False),
+], ids=['unfiltered', 'blank', 'searching', 'not-offered'])
+def test_is_filtering_reports_whether_the_list_was_narrowed(params, expected):
+    assert forms.PublicWebformFilterForm(params).is_filtering is expected
+
+
 def _form(data=None, has_sms_privilege=False, eligible_form=SURVEY_FORM):
-    """Stubs the reads that go to the database or to released builds, which the
-    accounting and form_choices tests cover."""
+    """Stubs the reads that go to the database or to released builds."""
     args = [data] if data is not None else []
     with patch.multiple(
         forms,
