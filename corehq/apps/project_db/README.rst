@@ -35,11 +35,29 @@ created if absent, and new columns and indexes are added, but existing ones are
 never dropped or rewritten. A new case property becomes a new column; a new case
 type becomes a new table.
 
+Access control
+--------------
+
+Each domain gets a read-only Postgres role named after its schema with access
+to only that schema. Queries connect as that role, so Postgres refuses to read
+another domain's tables however the query is written. This is a
+belt-and-suspenders backstop for the query layer, which shouldn't allow that
+sort of access anyways. Table definition and population connect as the owner
+instead, since the domain role cannot write.
+
+HQ's database user cannot create roles, so provisioning goes through
+``projectdb_provision_role`` and ``projectdb_drop_role``, ``SECURITY DEFINER``
+functions that run as their owner. commcare-cloud installs these in production;
+``project_db_setup.sql`` mirrors that template for dev and CI, where
+``setup_project_db`` applies it.
+
 Status
 ------
 
-This module currently defines and provisions the table structure only.
-Populating the tables with case data and querying them are not yet implemented.
+Schema provisioning, population, and querying are all driven by management
+commands: ``manage_project_db`` syncs, populates, describes, and drops a
+domain's tables, and ``query_project_db`` runs a read-only query against them.
+There is no UI or API yet.
 
 TODOs
 ----
@@ -48,7 +66,7 @@ TODOs
   is not registered in ``corehq/apps/domain/deletion.py``. Because this is a raw
   Postgres schema rather than a Django model, the standard model-based
   registration won't catch it; deleting a domain would orphan its
-  ``projectdb_<domain>`` schema and data.
+  ``projectdb_<domain>`` schema, data, and role.
 - Use the stored property-name comments when populating. Each property column
   stores its raw case property name as a Postgres comment, which lets the
   source property be recovered by inspecting the table. ``case_to_row`` could
@@ -58,6 +76,5 @@ TODOs
   support both?
 - Index external ID.
 - Put limit on number of property columns
-- Add a SQL user per domain with only access to that domain's schema
 - Set up automatic update call on data dictionary change, and auto population
   on case update
