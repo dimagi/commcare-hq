@@ -82,11 +82,11 @@ class BillingModalsMixin(object):
     def _low_credits_context(self):
         context = {}
         current_subscription = Subscription.get_active_subscription_by_domain(self.domain)
-        not_enterprise_subscription = (
+        enterprise_subscription = (
             current_subscription
-            and current_subscription.plan_version.plan.edition != SoftwarePlanEdition.ENTERPRISE
+            and current_subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
         )
-        if current_subscription and not_enterprise_subscription:
+        if current_subscription and not enterprise_subscription:
             monthly_fee = current_subscription.plan_version.product_rate.monthly_fee
             if monthly_fee:
                 prepaid_credits = get_total_credits_available_for_product(current_subscription)
