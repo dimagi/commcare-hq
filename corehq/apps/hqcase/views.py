@@ -516,14 +516,20 @@ _CASE_SCHEMA = {
         },
         'closed': {
             'type': 'boolean',
-            'description': 'Whether the case is closed.',
+            'description': 'Whether the case is closed. Send '
+                           '"close": true to close a case. This API '
+                           'cannot reopen one: a case is reopened by '
+                           'archiving the form that closed it, which is '
+                           'done in CommCare HQ rather than here.',
         },
         'date_closed': {
             'type': 'string',
             'format': 'date-time',
             'nullable': True,
             'description': 'The date and time the case was closed. '
-                           'Null while the case is open.',
+                           'Null while the case is open, and null again '
+                           'if the case is later reopened by archiving '
+                           'the form that closed it.',
         },
         'properties': {
             'type': 'object',
