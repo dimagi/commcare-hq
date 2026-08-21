@@ -1126,9 +1126,16 @@ class UserDomainsResource(ApiVersioningMixin, CorsResourceMixin, Resource):
 
         api_key = getattr(request, 'api_key', None)  # HQApiKey set by HQApiKeyAuthentication
         api_key_domain = getattr(api_key, 'domain', '')
+        oauth_domains = getattr(request, 'oauth_token_domains', None)
 
         results = []
-        domains = [api_key_domain] if api_key_domain else couch_user.get_domains()
+        if api_key_domain:
+            domains = [api_key_domain]
+        elif oauth_domains:
+            domains = [domain for domain in couch_user.get_domains() if domain in oauth_domains]
+        else:
+            domains = couch_user.get_domains()
+
         for domain in domains:
             domain_object = Domain.get_by_name(domain)
             if feature_flag and feature_flag not in toggles.toggles_dict(username=username, domain=domain):
