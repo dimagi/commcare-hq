@@ -69,7 +69,7 @@
         "operationId": "application_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -270,7 +270,7 @@
         "operationId": "bulk-user_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -450,7 +450,7 @@
         "operationId": "case_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 5000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -3395,7 +3395,7 @@
         "operationId": "det_export_instance_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -3597,7 +3597,7 @@
         "operationId": "fixture_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -3759,7 +3759,7 @@
         "operationId": "form_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records. Maximum: 1000.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -4314,7 +4314,7 @@
         "operationId": "group_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -4802,7 +4802,7 @@
         "operationId": "location_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -5151,7 +5151,7 @@
         "operationId": "location_v2_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 5000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -5824,7 +5824,7 @@
         "operationId": "location_type_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -6040,7 +6040,7 @@
         "operationId": "lookup_table_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -6414,7 +6414,7 @@
         "operationId": "lookup_table_item_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -6790,7 +6790,7 @@
         "operationId": "lookup_table_item_v2_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -7345,7 +7345,7 @@
         "operationId": "simplereportconfiguration_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -7552,7 +7552,7 @@
         "operationId": "user_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -8413,7 +8413,7 @@
         "operationId": "web-user_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -8919,7 +8919,7 @@
         "operationId": "user_domains_v1_list_get",
         "parameters": [
           {
-            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "description": "Maximum number of records to return, capped at 1000. Use 0 to request that maximum.",
             "in": "query",
             "name": "limit",
             "required": false,

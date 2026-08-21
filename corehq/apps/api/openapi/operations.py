@@ -68,15 +68,33 @@ def filter_parameters(filtering):
     return parameters
 
 
-def standard_list_parameters(resource_schema):
+def _limit_description(max_limit):
+    """What ``limit`` actually does, given the resource's cap.
+
+    ``Paginator.get_limit()`` returns ``max_limit`` when the requested limit
+    is 0 or above the cap, so "0 means every record" is only true for a
+    resource whose cap is falsy -- and every documented resource has one,
+    since tastypie's ``ResourceOptions`` defaults it to 1000.
+    """
+    if not max_limit:
+        return (
+            'Maximum number of records to return. '
+            'Use 0 to request all records.'
+        )
+    return (
+        'Maximum number of records to return, capped at '
+        f'{max_limit}. Use 0 to request that maximum.'
+    )
+
+
+def standard_list_parameters(resource_schema, max_limit):
     """The pagination and format parameters every list endpoint accepts."""
     parameters = [
         {
             'name': 'limit',
             'in': 'query',
             'required': False,
-            'description': 'Maximum number of records to return. '
-            'Use 0 to request all records.',
+            'description': _limit_description(max_limit),
             'schema': {
                 'type': 'integer',
                 'default': resource_schema['default_limit'],
@@ -328,7 +346,7 @@ def resource_paths(entry):
                 operation['description'] = description
             if method == 'get':
                 derived = standard_list_parameters(
-                    resource_schema
+                    resource_schema, resource._meta.max_limit
                 ) + filter_parameters(resource_schema.get('filtering', {}))
                 operation['parameters'] = merge_declared_parameters(
                     derived, docs.get('parameters', [])

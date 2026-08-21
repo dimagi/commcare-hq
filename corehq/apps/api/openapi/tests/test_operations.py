@@ -44,16 +44,33 @@ def test_filters_are_sorted_for_stable_output():
 
 
 def test_standard_list_parameters():
-    params = standard_list_parameters({'default_limit': 20})
+    params = standard_list_parameters({'default_limit': 20}, 1000)
     assert names(params) == ['limit', 'offset', 'format']
     limit = params[0]
     assert limit['schema']['default'] == 20
     assert limit['schema']['type'] == 'integer'
+    assert limit['description'] == (
+        'Maximum number of records to return, capped at 1000. '
+        'Use 0 to request that maximum.'
+    )
+
+
+def test_limit_says_zero_means_everything_only_without_a_cap():
+    """Paginator.get_limit() returns max_limit when limit is 0, so
+    "0 means all records" is true only for an uncapped resource."""
+    capped = standard_list_parameters({'default_limit': 20}, 5000)[0]
+    assert 'capped at 5000' in capped['description']
+    assert 'all records' not in capped['description']
+    uncapped = standard_list_parameters({'default_limit': 20}, None)[0]
+    assert uncapped['description'] == (
+        'Maximum number of records to return. '
+        'Use 0 to request all records.'
+    )
 
 
 def test_order_by_is_added_when_the_resource_declares_ordering():
     params = standard_list_parameters(
-        {'default_limit': 20, 'ordering': ['date_modified']}
+        {'default_limit': 20, 'ordering': ['date_modified']}, 1000
     )
     assert names(params) == ['limit', 'offset', 'format', 'order_by']
     order_by = params[-1]
