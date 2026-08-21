@@ -276,6 +276,15 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         }
         parameters = [
             {
+                'name': 'limit',
+                'in': 'query',
+                'required': False,
+                'description': 'Maximum number of records to return. '
+                              'Use 0 to request all records. Maximum: '
+                              '1000.',
+                'schema': {'type': 'integer', 'default': 20},
+            },
+            {
                 'name': 'xmlns',
                 'in': 'query',
                 'required': False,
