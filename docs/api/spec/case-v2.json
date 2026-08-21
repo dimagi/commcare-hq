@@ -387,11 +387,11 @@
                                 "type": "string"
                               },
                               "closed": {
-                                "description": "Whether the case is closed.",
+                                "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                                 "type": "boolean"
                               },
                               "date_closed": {
-                                "description": "The date and time the case was closed. Null while the case is open.",
+                                "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                                 "format": "date-time",
                                 "nullable": true,
                                 "type": "string"
@@ -905,11 +905,11 @@
                               "type": "string"
                             },
                             "closed": {
-                              "description": "Whether the case is closed.",
+                              "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                               "type": "boolean"
                             },
                             "date_closed": {
-                              "description": "The date and time the case was closed. Null while the case is open.",
+                              "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                               "format": "date-time",
                               "nullable": true,
                               "type": "string"
@@ -1008,11 +1008,11 @@
                                 "type": "string"
                               },
                               "closed": {
-                                "description": "Whether the case is closed.",
+                                "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                                 "type": "boolean"
                               },
                               "date_closed": {
-                                "description": "The date and time the case was closed. Null while the case is open.",
+                                "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                                 "format": "date-time",
                                 "nullable": true,
                                 "type": "string"
@@ -1474,11 +1474,11 @@
                               "type": "string"
                             },
                             "closed": {
-                              "description": "Whether the case is closed.",
+                              "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                               "type": "boolean"
                             },
                             "date_closed": {
-                              "description": "The date and time the case was closed. Null while the case is open.",
+                              "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                               "format": "date-time",
                               "nullable": true,
                               "type": "string"
@@ -1577,11 +1577,11 @@
                                 "type": "string"
                               },
                               "closed": {
-                                "description": "Whether the case is closed.",
+                                "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                                 "type": "boolean"
                               },
                               "date_closed": {
-                                "description": "The date and time the case was closed. Null while the case is open.",
+                                "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                                 "format": "date-time",
                                 "nullable": true,
                                 "type": "string"
@@ -1764,11 +1764,11 @@
                                 "type": "string"
                               },
                               "closed": {
-                                "description": "Whether the case is closed.",
+                                "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                                 "type": "boolean"
                               },
                               "date_closed": {
-                                "description": "The date and time the case was closed. Null while the case is open.",
+                                "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                                 "format": "date-time",
                                 "nullable": true,
                                 "type": "string"
@@ -1906,11 +1906,11 @@
                       "type": "string"
                     },
                     "closed": {
-                      "description": "Whether the case is closed.",
+                      "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                       "type": "boolean"
                     },
                     "date_closed": {
-                      "description": "The date and time the case was closed. Null while the case is open.",
+                      "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                       "format": "date-time",
                       "nullable": true,
                       "type": "string"
@@ -2195,11 +2195,11 @@
                           "type": "string"
                         },
                         "closed": {
-                          "description": "Whether the case is closed.",
+                          "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                           "type": "boolean"
                         },
                         "date_closed": {
-                          "description": "The date and time the case was closed. Null while the case is open.",
+                          "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -2315,11 +2315,11 @@
                           "type": "string"
                         },
                         "closed": {
-                          "description": "Whether the case is closed.",
+                          "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                           "type": "boolean"
                         },
                         "date_closed": {
-                          "description": "The date and time the case was closed. Null while the case is open.",
+                          "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
@@ -2409,11 +2409,11 @@
                                     "type": "string"
                                   },
                                   "closed": {
-                                    "description": "Whether the case is closed.",
+                                    "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                                     "type": "boolean"
                                   },
                                   "date_closed": {
-                                    "description": "The date and time the case was closed. Null while the case is open.",
+                                    "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                                     "format": "date-time",
                                     "nullable": true,
                                     "type": "string"
@@ -2655,11 +2655,11 @@
                           "type": "string"
                         },
                         "closed": {
-                          "description": "Whether the case is closed.",
+                          "description": "Whether the case is closed. Send \"close\": true to close a case. This API cannot reopen one: a case is reopened by archiving the form that closed it, which is done in CommCare HQ rather than here.",
                           "type": "boolean"
                         },
                         "date_closed": {
-                          "description": "The date and time the case was closed. Null while the case is open.",
+                          "description": "The date and time the case was closed. Null while the case is open, and null again if the case is later reopened by archiving the form that closed it.",
                           "format": "date-time",
                           "nullable": true,
                           "type": "string"
