@@ -1,14 +1,37 @@
 from functools import wraps
 
-from django.http import HttpResponse, JsonResponse
-
-from django_prbac.decorators import requires_privilege
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.urls import reverse
+from django_prbac.decorators import (
+    requires_privilege,
+    requires_privilege_raise404,
+)
 from django_prbac.exceptions import PermissionDenied
 
 from corehq import privileges
 from corehq.apps.accounting.models import DefaultProductPlan
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.const import USER_DATE_FORMAT
 from corehq.toggles import domain_has_privilege_from_toggle
+
+
+def accounting_admin_required(view_func):
+    """Require a logged-in user with the ACCOUNTING_ADMIN privilege.
+
+    Sessions authenticated via SSO are rejected: accounting pages
+    historically required superuser status, whose decorator blocked SSO
+    sessions, and dropping the superuser requirement should not open
+    these pages to externally-managed logins.
+    """
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        if is_request_using_sso(request):
+            return HttpResponseRedirect(reverse("no_permissions"))
+        return view_func(request, *args, **kwargs)
+    return login_required(
+        requires_privilege_raise404(privileges.ACCOUNTING_ADMIN)(_inner)
+    )
 
 
 def requires_privilege_with_fallback(slug, **assignment):
@@ -51,7 +74,9 @@ def requires_privilege_with_fallback(slug, **assignment):
                 )
             except PermissionDenied:
                 request.show_trial_notice = False
-                from corehq.apps.domain.views.accounting import SubscriptionUpgradeRequiredView
+                from corehq.apps.domain.views.accounting import (
+                    SubscriptionUpgradeRequiredView,
+                )
                 return SubscriptionUpgradeRequiredView().get(
                     request, request.domain, slug
                 )
