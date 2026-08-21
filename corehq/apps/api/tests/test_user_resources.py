@@ -1084,12 +1084,20 @@ class TestBulkUserAPI(APIResourceTest):
         result = self.query(limit=limit)
         self.assertEqual(result.status_code, 200)
         users = json.loads(result.content)['objects']
-        self.assertEqual(len(users), limit)
+        self.assertEqual(
+            [user['username'] for user in users],
+            ['robb_stark', 'jon_snow', 'brandon_stark'],
+        )
 
-        result = self.query(start_at=limit, limit=limit)
+        # 'offset' is applied by the Elasticsearch query, so the paginator must
+        # not slice the results a second time and skip the whole page.
+        result = self.query(offset=limit, limit=limit)
         self.assertEqual(result.status_code, 200)
         users = json.loads(result.content)['objects']
-        self.assertEqual(len(users), limit)
+        self.assertEqual(
+            [user['username'] for user in users],
+            ['eddard_stark', 'catelyn_stark', 'tyrion_lannister'],
+        )
 
     def test_basic(self):
         response = self.query()

@@ -151,7 +151,12 @@ from . import (
     v0_1,
     v0_4,
 )
-from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_cursor_based_pagination
+from .pagination import (
+    DoesNothingPaginator,
+    NoCountingPaginator,
+    PreSlicedPaginator,
+    response_for_cursor_based_pagination,
+)
 
 MOCK_BULK_USER_ES = None
 EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 1000
@@ -197,6 +202,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         detail_allowed_methods = ['get']
         object_class = object
         resource_name = 'bulk-user'
+        paginator_class = PreSlicedPaginator
 
     def dehydrate(self, bundle):
         fields = bundle.request.GET.getlist('fields')
@@ -222,13 +228,19 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         fields = list(self.fields)
         fields.remove('id')
         fields.append('_id')
+        # The paginator resolves (and validates) 'limit' and 'offset' the same
+        # way it will when building the response meta, so the page reported
+        # there always matches the page fetched from Elasticsearch.
+        paginator = self._meta.paginator_class(
+            params, [], limit=self._meta.limit, max_limit=self._meta.max_limit,
+        )
         fn = MOCK_BULK_USER_ES or user_es_call
         users = fn(
             domain=kwargs['domain'],
             q=param('q'),
             fields=fields,
-            size=param('limit'),
-            start_at=param('offset'),
+            size=paginator.get_limit(),
+            start_at=paginator.get_offset(),
         )
         return list(map(self.to_obj, users))
 
