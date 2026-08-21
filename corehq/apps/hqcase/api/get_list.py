@@ -152,7 +152,12 @@ NON_FILTER_PARAMETERS = (
                        '`next.cursor`, used to fetch the next page of '
                        'results. Do not combine with other filter '
                        'parameters, which are already encoded in the '
-                       'cursor.',
+                       'cursor. Paging through with cursor returns '
+                       'cases ordered oldest-indexed to newest-indexed; '
+                       'a case that is updated while you are paging '
+                       'through results may be skipped by the page it '
+                       'would otherwise have appeared in and returned '
+                       'again near the end of the results instead.',
         'schema': {'type': 'string'},
     },
     {

@@ -1,0 +1,173 @@
+# Sweep: case-v2
+
+Source pages: docs/api/cases-v2.rst (711 lines at 64eeada51d9)
+
+Reference URL: `/api/docs/case-v2/`. Coverage 20/20.
+
+This sweep also carries the four inaccuracies already found and fixed while
+writing case-v2's descriptions (see the task report), plus several more
+found while reading this page closely for the create/update/upsert
+distinctions the operation description already shows are subtle.
+
+## Major changes from v1 / Supported Endpoints
+
+| Item | Bucket | Where it went |
+| --- | --- | --- |
+| "Major changes from v1" bullet list (5 items: JSON bodies instead of XForms, filter/query by case property, bulk get-by-id/external-id, clearer field names, performant deep pagination) | rewritten | folded into the reduced page's one-paragraph orientation |
+| Supported Endpoints and Methods table (10 rows) | in spec already | `paths`/`methods` on case-v2.json; each operation's own `summary`/`description` names the corresponding behavior |
+
+## Single Case Serialization Format
+
+| Item | Bucket | Where it went |
+| --- | --- | --- |
+| Sample JSON block | n/a | illustrative; every field it shows is covered by the Included fields table below |
+| `domain` / `case_id` / `case_type` / `case_name` / `external_id` / `owner_id` | in spec | `_CASE_SCHEMA`, properties.\*.description (case-v2.json) |
+| `date_opened` / `last_modified` / `server_last_modified` "ISO 8601 UTC datetime" | in spec | same, plus `format: date-time` on each; last_modified/server_last_modified descriptions also explain how the two differ, which the old page did not |
+| `indexed_on` paragraph (pagination use, "subject to change...", "time response was processed" for create/update) | in spec | properties.indexed_on.description, plus its relationship to last_modified/server_last_modified spelled out (the old page discussed indexed_on alone) |
+| `closed` "Boolean true/false. Always present" | in spec | properties.closed.description |
+| `date_closed` "always present, null for open cases" | in spec (needs domain review) | properties.date_closed.description states the best-supported reading of the code: this API has no "reopen" action (only `close: true`), and nothing in the normal update path (`update_strategy.py`) clears `closed`/`closed_on` once set — only a case rebuild triggered by archiving the closing form (`undo_close_case_view`, outside this API) does. Whether that is a complete and accurate account is a question for a domain reviewer, not something the code alone settles; flagged rather than guessed. |
+| `properties` "Contains all user-defined properties, as strings" | in spec | properties.properties.description |
+| `indices` "Dict containing a series of indices **(not included by default)**" | obsolete (inaccurate as written) | `get_fields_filter_fn()` (`field_filters.py`) returns the identity function unless `fields`/`exclude` is passed, and `serialize_case()`/`serialize_es_case()` always populate `indices` — it is included by default like every other field. Description written to match this. |
+| `indices.<name>` "typically parent/host, not constrained" | in spec | properties.indices.description |
+| `indices.<name>.case_id` / `.case_type` | in spec | nested properties.indices.additionalProperties.properties.\*.description |
+| `indices.<name>.relationship` "Either child or extension" | in spec | same, and confirmed against `CommCareCaseIndex.RELATIONSHIP_CHOICES` (`corehq/form_processor/models/cases.py`) — only two DB choices exist, so this is exhaustive, not illustrative |
+
+## Case Create/Update/Upsert Format
+
+| Item | Bucket | Where it went |
+| --- | --- | --- |
+| Sample JSON block | n/a | illustrative |
+| "All values other than close must be string types" | in spec | reflected by each field's JSON Schema `type` (string vs. boolean for `close`) |
+| `case_id` "Only allowed in bulk updates. Server-generated for creations, passed via URI for individual updates" | obsolete (inaccurate as written) — see also new finding below | rejected outright on creation (`JsonCaseCreation.wrap()`); allowed on any update, not only bulk ones. See the new PUT/case_id finding below for the more important correction. |
+| `case_type` / `case_name` "Required for new, optional for updates. Max length 255" | in spec | `_FIELD_DESCRIPTIONS['case_type'/'case_name']`, request schema `required` lists |
+| `owner_id` "UUID of case owner. Not validated server-side. Required for new, optional for updates. Max length 255" | in spec | `_FIELD_DESCRIPTIONS['owner_id']` — also corrected/extended: owner_id can be a user, a case-sharing group, or a location ID, confirmed via `user_can_access_case()`/module docstring in `corehq/apps/locations/permissions.py`; the old page called it only "UUID of the case owner" |
+| `temporary_id` "Bulk create/update only. Unique per request. Other cases may reference it. Not saved" | in spec | `_FIELD_DESCRIPTIONS['temporary_id']` |
+| `external_id` "Max length 255" | in spec | `_FIELD_DESCRIPTIONS['external_id']` |
+| `properties` rule: "Not blank / only letters and numbers / doesn't start with a number / doesn't start with xml" | obsolete (inaccurate as written) | `is_identifier_invalid()` (`corehq/apps/fixtures/utils.py`) validates via `xml.etree.ElementTree.Element()`, which accepts any valid XML element name — not just letters and digits (e.g. hyphens, underscores, periods are fine). Rewritten to say "a valid XML element name" plus the three concrete rules the code actually enforces (non-blank, not starting with a digit, not starting with "xml"), dropping the false "only letters and numbers" restriction. |
+| `properties` rule: case_type/case_name/owner_id "must be specified at the top level" | in spec | `_FIELD_DESCRIPTIONS['properties']`, confirmed against `CaseBlock._built_ins` |
+| `indices` / `indices.<name>` | in spec | `_FIELD_DESCRIPTIONS['indices']` |
+| `indices.<name>.case_id` | in spec | `_INDEX_DESCRIPTIONS['case_id']` |
+| `indices.<name>.temporary_id` "Bulk create/update only, for a case created in the same request" | in spec | `_INDEX_DESCRIPTIONS['temporary_id']` |
+| `indices.<name>.case_type` | in spec | `_INDEX_DESCRIPTIONS['case_type']` |
+| `indices.<name>.relationship` "Must be child or extension. See Extension Cases feature flag" | in spec (feature-flag reference kept as a pointer, not a gate claim) | `_INDEX_DESCRIPTIONS['relationship']`; not re-verified whether Extension Cases is still a gated feature flag today, since that is a product-configuration fact independent of the API contract itself |
+| `close` "Boolean, defaults to False" | in spec | `_FIELD_DESCRIPTIONS['close']` |
+
+### New finding: PUT to the case detail URL does not enforce the body's `case_id` against the URL
+
+Not a claim from the old page — found while reading the create/update
+distinctions closely, per the coordinator's steer.
+
+`_handle_case_put_post()` (`corehq/apps/hqcase/views.py`) only copies the
+URL's `case_id` into the request body **if the body doesn't already have
+one**:
+
+```python
+if not is_creation and case_id and 'case_id' not in data:
+    data['case_id'] = case_id
+```
+
+If a client PUTs to `/case/v2/<url_case_id>` with a body that already
+contains a different `case_id`, the body's value silently wins — the
+target case is the one named in the body, not the URL, and nothing
+rejects the mismatch. This is unlike the external-ID PUT endpoint
+(`_handle_ext_put()`), which explicitly checks a body-supplied `case_id`
+against the case it looked up and raises a 400 ("case_id is read-only
+and cannot be modified") on a mismatch.
+
+| Item | Bucket | Where it went |
+| --- | --- | --- |
+| PUT detail-path `case_id` precedence gap | belongs in spec | `path_parameter_descriptions['case_id']`, case-v2.json |
+
+## API Usage: Get List of Cases
+
+| Item | Bucket | Where it went |
+| --- | --- | --- |
+| `limit` "Defaults to 20, maximum 5000" | in spec | `limit` parameter description, `get_list.py` |
+| `external_id` / `case_type` / `owner_id` / `case_name` / `closed` filters | in spec | `FILTER_DESCRIPTIONS`, same names |
+| `indices.parent` / `indices.host` / `indices.<name>` "id of a parent or host case; returns children/extensions" | in spec | `indices.<identifier>` parameter description |
+| `last_modified.gt/gte/lt/lte`, `server_last_modified.*`, `indexed_on.*`, `date_opened.*`, `date_closed.*` "Accepts ISO 8601 date or datetime" | in spec | corresponding `<name>.<qualifier>` parameters, `DATE_FILTER_QUALIFIERS` |
+| `properties.<property>` incl. "empty and missing values treated the same" | in spec | `properties.<name>` parameter description |
+
+## Limiting Response Fields
+
+| Item | Bucket | Where it went |
+| --- | --- | --- |
+| `fields` / `exclude` incl. mutual exclusivity, dot-param syntax, examples, "applies to each case object, not envelope fields", "preserved across paginated requests" | in spec | `fields`, `fields.<name>`, `exclude`, `exclude.<name>` parameters, `get_list.py` |
+
+## Pagination
+
+| Item | Bucket | Where it went |
+| --- | --- | --- |
+| "cursor pagination" rationale (vs. limit/offset, deep-paging performance) | belongs in guide | `docs/api/index.rst` already documents pagination generically (Task 3); the cursor-vs-offset choice is case-v2-specific context folded into this page's orientation paragraph instead of restated per-field |
+| "results ordered oldest to newest" | belongs in spec | `cursor` parameter description, `get_list.py` (confirmed against `_get_query()`'s `.sort('@indexed_on').sort('doc_id', ...)`) |
+| "cases updated during the pull may reappear towards the end" | belongs in spec | same `cursor` parameter description |
+
+## Get individual case
+
+| Item | Bucket | Where it went |
+| --- | --- | --- |
+| "No filter parameters; fields/exclude apply" | in spec | already implied by `fields`/`exclude` being GET-only query parameters with no case filters listed for the detail path |
+| WARNING: "If identified by external ID and not unique, only one case will be returned" | obsolete (inaccurate as written) | verified against `CommCareCase.objects.get_case_by_external_id(..., raise_multiple=True)`: a second matching case now raises `MultipleObjectsReturned`, caught in `_get_by_external_id()` and turned into a 400 listing every matching case_id. It has not silently returned one case for some time. Corrected description added to `path_parameter_descriptions['external_id']`. |
+
+## Get Case's index information
+
+| Item | Bucket | Where it went |
+| --- | --- | --- |
+| "Indices included in individual case serialization; look at indices.parent.case_id" | in spec | properties.indices.description |
+| "reverse" indices via `indices.parent=<case_id>` on the list view | in spec | `indices.<identifier>` parameter description |
+| Response format sample | n/a | illustrative; fields already covered above |
+
+## Get cases in bulk
+
+| Item | Bucket | Where it went |
+| --- | --- | --- |
+| GET comma-separated case_id list; "limited by max URL length, unsuitable for >100 cases; use bulk-fetch instead" | in spec | `path_parameter_descriptions['case_id']`, case-v2.json |
+| POST `/bulk-fetch/`; body needs one or both of `case_ids`/`external_ids` | in spec | `_BULK_FETCH_SCHEMA.anyOf`, request schema |
+| `fields`/`exclude` as query params alongside the POST body | in spec | same parameters as the GET endpoints (shared parameter set) |
+| Response `matching_records` "number of cases found" | in spec | `_BULK_FETCH_RESPONSE_SCHEMA.properties.matching_records.description` — also newly distinguished from the list endpoint's `matching_records` (a filter-match total), since bulk-fetch has no filter, only explicit IDs |
+| Response `missing_records` "number not found" | in spec | `_BULK_FETCH_RESPONSE_SCHEMA.properties.missing_records.description` — this field previously existed in the real response (`BulkFetchResults`, get_bulk.py) but was entirely absent from the schema; added here, not merely described |
+| Response `cases`: order preserved, case_ids before external_ids, error stub on not-found | in spec | `_BULK_FETCH_RESPONSE_SCHEMA.properties.cases.description` |
+| Error stub shape (`{"case_id"/"external_id": ..., "error": "not found"}`) | belongs in spec | `_CASE_OR_ERROR_SCHEMA`'s error branch previously declared only `error`; added `case_id`/`external_id` properties, since `get_bulk.py`'s `_get_error_doc()` genuinely includes one of them |
+| Error message is always literally "not found" | belongs in spec | `_CASE_OR_ERROR_SCHEMA`'s `error` property description now says so explicitly, and that this is truer/less specific than the single-case detail endpoints' messages — a client cannot tell "doesn't exist" from "wrong domain" from "no permission" from this body alone, which is exactly the distinction an integrator needs told |
+
+## Create Case / Update Existing Case / Bulk Create-Update Cases
+
+| Item | Bucket | Where it went |
+| --- | --- | --- |
+| "POST always creates; duplicate external_id created if reused; not an upsert; use PUT for upsert" | belongs in spec | case_api's operation `description`, case-v2.json |
+| Return value table naming the form-ID field **`xform_id`** | obsolete (inaccurate as written) | the actual response key, for every one of these operations, is `form_id` (`_handle_case_update()`, `corehq/apps/hqcase/views.py`) — verified there is no `xform_id` key anywhere in the actual response. Documented as `form_id` throughout `_UPDATE_RESPONSE_SCHEMA`/`_BULK_UPDATE_RESPONSE_SCHEMA`. |
+| "This response includes the current state of the case... slight delay before an immediate fetch reflects it" | in spec | implied by `indexed_on`'s description (create/update responses predate indexing) |
+| "PUT by external ID: updated if found, created if not (upsert)" | in spec already | case_api's operation `description` |
+| Bulk: "create field required true/false, determines create vs. update" | in spec | `_with_create_flag()` descriptions on each bulk-item variant |
+| Bulk: "up to 100 cases per request, single form submission" | belongs in spec | the array branch of `_single_or_bulk_schema()` previously had a `maxItems` with no prose; added a `description` |
+| Bulk: "if >100, server returns 400 'Payload too large', no changes saved" | obsolete (inaccurate as written) | the actual error message, from `_get_bulk_updates()` (`updates.py`), is "You cannot submit more than 100 updates in a single request" — not "Payload too large". Status code (400) and "no changes saved" were both accurate and are kept; the message text is corrected in the new `description` above. |
+| Upsert: "create may be omitted if external_id given and case_id isn't; slower; ensure uniqueness within request; concurrent requests must not target the same case" | belongs in spec | the upsert branch's `_with_create_flag()` description, `_bulk_item_schema()` |
+| DANGER: "upserting the same case twice in one request creates duplicates, because lookups happen before any changes" | belongs in spec | same description — this was a critical warning that had no home in the spec at all; added before deleting it from the page |
+| WARNING: "race condition between two simultaneous upsert requests for the same case" | belongs in spec | same description, and also added to `_PUT_EXT_SCHEMA`'s description, since the same race applies to the single-item external-ID PUT upsert, not just the bulk upsert branch |
+
+## Temporary ID
+
+| Item | Bucket | Where it went |
+| --- | --- | --- |
+| Definition and example (create a case and its child in one request) | in spec | `_FIELD_DESCRIPTIONS['temporary_id']`, `_INDEX_DESCRIPTIONS['temporary_id']` |
+| Example JSON block | n/a | illustrative |
+
+## Form Submission
+
+| Item | Bucket | Where it went |
+| --- | --- | --- |
+| "username/user_id correspond to the submitting user; API cannot be used to make it appear another user made the change" | belongs in spec | case_api's operation `description` ("Every change is attributed to the authenticated caller...") |
+| `xmlns` = `http://commcarehq.org/case_api` | obsolete | not a documented contract field — no request or response field exposes or accepts an xmlns; it is internal plumbing (`_submit_case_blocks()`'s default) with no client-visible effect. Dropped rather than added to the spec. |
+| `device_id` = "User agent string from the request" | obsolete | same reasoning — derived automatically (`request.META['HTTP_USER_AGENT']`), not a field a client sets or reads. Dropped. |
+| "Most errors are caught before submission; some are only caught when the form is processed, producing an XFormError; a 400 with the XFormError ID and message is returned; no case changes occur" | belongs in spec | case_api's operation `description` (the new sentence about the `form_id`-bearing 400 for submission-time failures) |
+
+## Items considered for promotion and rejected
+
+- **"Extension Cases feature flag" gating `relationship: extension`**: the
+  relationship values themselves are exhaustively `child`/`extension` at
+  the database level regardless of any feature flag (see above), and
+  whether case creation with `relationship: extension` is currently
+  gated behind a feature flag is a product-configuration fact, not part
+  of this API's request/response contract. Not re-verified or promoted;
+  the old page's pointer to the wiki page is simply dropped along with
+  the rest of the page's prose, per the sweep procedure.
