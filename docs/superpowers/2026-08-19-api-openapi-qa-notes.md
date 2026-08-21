@@ -1,14 +1,28 @@
 # QA notes: OpenAPI specs for the CommCare data APIs
 
-Branch: `nh/openapi-specs-groom` (stacked on `nh/api-test-isolation-fixes`)
+Branch: `nh/api-docs-consolidation`
 
 ## What changed
 
 The data APIs now have OpenAPI 3.0.3 specifications generated from the API code
-itself, committed under `docs/api/spec/`. The per-endpoint documentation pages
-under `docs/api/` no longer hold hand-written parameter and field tables — they
-render from those specs instead. So there are two things to look at: the specs,
-and the pages built from them.
+itself, committed under `docs/api/spec/`. The reference documentation is built
+from those specs as Redoc pages, served at `/api/docs/`.
+
+The reStructuredText pages under `docs/api/` are no longer the reference. Eleven
+of them have been reduced to a title, a sentence of orientation and a link to
+their API's reference page; `docs/api/index.rst` carries a guide to what applies
+across all the APIs (authentication, URL structure, versioning, pagination,
+throttling). The remaining pages are unchanged, because their APIs have no
+generated spec yet.
+
+So there are three things to look at: the specs, the reference pages built from
+them, and the reduced reStructuredText pages.
+
+Anything a reduced page used to say should now be either in the spec (and so on
+the reference page) or in the guide. Each reduction has an audit trail under
+`docs/api/sweep/` listing every item and where it went — if you find something
+that looks lost, that is where to check first, and a genuine omission is worth
+reporting.
 
 Nothing about the APIs' behaviour changed. If a request or response behaves
 differently from before, that is a bug worth reporting.
@@ -78,11 +92,17 @@ problem. `uv run ./manage.py generate_openapi` regenerates them.
 
 - **Some specs have no field descriptions yet.** Fully described: `case-v1`,
   `form-v1`, `group-v1`, `location-v1`, `location-v2`, `location-type-v1`,
-  `lookup-table-v1`, `lookup-table-item-v1`, `lookup-table-item-v2`, `user-v1`,
-  and Case API v2. Structurally correct but not yet described: `application-v1`,
+  `lookup-table-v1`, `lookup-table-item-v1`, `lookup-table-item-v2` and
+  `user-v1`. Partly described: `case-v2` (1 field of 19) and `web-user-v1` (8 of
+  19). Structurally correct but not described at all: `application-v1`,
   `bulk-user-v1`, `det-export-v1`, `fixture-v1`, `report-config-v1`,
-  `report-data-v1`, `sso-v1`, `user-domains-v1`, and `web-user-v1`'s own
-  (non-inherited) fields. That is the planned first slice, not an oversight.
+  `report-data-v1`, `sso-v1` and `user-domains-v1`. That is the planned first
+  slice, not an oversight. `/api/docs/` states each API's coverage, so it is the
+  quickest way to see the current position rather than trusting this list.
+- **`case-v2` is the known exception worth naming**, because it is heavily used
+  and barely described. Its backfill is outstanding work, and
+  `docs/api/cases-v2.rst` is deliberately left as hand-written prose until that
+  lands — so it is the one page that has not been reduced.
 - **The lint pass reports 14 warnings**, all `operation-description`, on the
   specs above. Zero errors is the bar; the warning count should fall as those
   APIs are documented.
