@@ -1,0 +1,521 @@
+MobileWorker:
+  type: object
+  description: >-
+    A CommCare (mobile-worker) user, as returned by `v0_5.CommCareUserResource`
+    (`corehq/apps/api/resources/v0_5.py:241-393`).
+  properties:
+    id:
+      type: string
+      description: User UUID.
+      example: 3c5a623af057e23a32ae4000cf291339
+    username:
+      type: string
+      description: Username, including the `@domain.commcarehq.org` suffix.
+      example: jdoe@example.commcarehq.org
+    first_name:
+      type: string
+      nullable: true
+      example: John
+    last_name:
+      type: string
+      nullable: true
+      example: Doe
+    default_phone_number:
+      type: string
+      nullable: true
+      description:
+        The user's primary phone number (the first entry in `phone_numbers`).
+      example: "+50253311399"
+    email:
+      type: string
+      example: jdoe@example.org
+    phone_numbers:
+      type: array
+      items:
+        type: string
+      description: All phone numbers registered to the user.
+      example: ["+50253311399", "+50253314588"]
+    groups:
+      type: array
+      items:
+        type: string
+      description: Group UUIDs the user belongs to (`get_group_ids`).
+      example:
+        - 9a0accdba29e01a61ea099394737c4fb
+        - b4ccdba29e01a61ea099394737c4fbf7
+    primary_location:
+      type: string
+      nullable: true
+      description: Location UUID of the user's primary location.
+      example: 26fc44e2792b4f2fa8ef86178f0a958e
+    locations:
+      type: array
+      items:
+        type: string
+      description: Location UUIDs the user is assigned to.
+      example:
+        - 26fc44e2792b4f2fa8ef86178f0a958e
+        - c1b029932ed442a6a846a4ea10e46a78
+    user_data:
+      type: object
+      additionalProperties: true
+      description: >-
+        Custom data associated with the user, plus several `commcare_*` keys
+        injected by `dehydrate_user_data`
+        (`corehq/apps/api/resources/v0_1.py:111-124`). Property names beginning
+        with a digit are dropped when `format=xml` (attribute names cannot start
+        with a digit in XML).
+      example:
+        chw_id: "13/43/DFA"
+        commcare_project: demo
+    eulas:
+      type: string
+      description: >-
+        Undocumented in `list-mobile-workers.rst`. A `CharField` over the user's
+        `eulas` attribute (`corehq/apps/api/resources/v0_1.py:34`) --
+        `tastypie.fields.CharField.convert` calls `str()` on whatever the
+        attribute holds, so this is a Python `repr` of a list of
+        `LicenseAgreement` objects, not structured JSON. See the discrepancy
+        file.
+      example: "[]"
+    resource_uri:
+      type: string
+      description: >-
+        Undocumented in `list-mobile-workers.rst`. Present on every response
+        because `include_resource_uri` defaults to `True` and is never
+        overridden; `CommCareUserResource.get_resource_uri`
+        (`corehq/apps/api/resources/v0_5.py:257-268`) always computes a real
+        detail URL. See the discrepancy file.
+      example: /a/demo/api/user/v1/3c5a623af057e23a32ae4000cf291339/
+    extras:
+      type: object
+      description: >-
+        Present only when the `extras` query parameter is truthy
+        (`CommCareUserResource.dehydrate`,
+        `corehq/apps/api/resources/v0_1.py:76-109`). Adds four
+        Elasticsearch-backed counts; computing them can slow the request.
+      properties:
+        submitted_last_30:
+          type: integer
+          example: 4
+        completed_last_30:
+          type: integer
+          example: 3
+        submitted_last_month:
+          type: integer
+          example: 5
+        completed_last_month:
+          type: integer
+          example: 4
+MobileWorkerList:
+  allOf:
+    - $ref: "./pagination.yaml#/PaginatedResponse"
+    - type: object
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: "#/MobileWorker"
+MobileWorkerWrite:
+  type: object
+  description: >-
+    Payload for both `createMobileWorker` (POST) and `updateMobileWorker` (PUT).
+    `username` and (usually) `password` are required on create only --
+    `obj_create` (`corehq/apps/api/resources/v0_5.py:270-274,307-308`) requires
+    `username` always and requires either `password` or `connect_username`
+    unless two-stage account confirmation is in effect. `obj_update`
+    (`v0_5.py:351-373`) ignores `username` entirely (it is popped before the
+    generic field updater runs on create, and is never accepted as an update
+    key) -- there is no way to rename a mobile worker through this endpoint.
+    `connect_username` is accepted by the code (`v0_5.py:278,334-338`) but is
+    undocumented in `mobile-worker.rst`; it only works when the
+    `COMMCARE_CONNECT` toggle is enabled for the domain.
+  properties:
+    username:
+      type: string
+      description: Required on create. Ignored on update.
+      example: jdoe
+    password:
+      type: string
+      description: >-
+        Required on create unless `connect_username` is given or two-stage
+        account confirmation applies. Optional on update (sets a new password).
+      example: qwer1234
+    first_name:
+      type: string
+      example: John
+    last_name:
+      type: string
+      example: Doe
+    email:
+      type: string
+      example: jdoe@example.org
+    phone_numbers:
+      type: array
+      items:
+        type: string
+      description: >-
+        The first entry becomes `default_phone_number`. On update, this replaces
+        the existing list.
+      example: ["+50253311399", "50253314588"]
+    default_phone_number:
+      type: string
+      description: >-
+        Undocumented in `mobile-worker.rst`'s Input Parameters table (it does
+        appear, redundantly alongside `phone_numbers`, in the reST page's own
+        sample input), but a real, separately recognized update key:
+        `CommcareUserUpdates._update_default_phone_number`
+        (`corehq/apps/api/user_updates.py:148,204-214`) adds the number to
+        `phone_numbers` if not already present and marks it the default. See the
+        discrepancy file.
+      example: "+50253311399"
+    groups:
+      type: array
+      items:
+        type: string
+      description: On update, this replaces the existing group list.
+      example:
+        - 9a0accdba29e01a61ea099394737c4fb
+        - b4ccdba29e01a61ea099394737c4fbf7
+    user_data:
+      type: object
+      additionalProperties: true
+      description: >-
+        On update, this replaces the existing custom data wholesale -- fetch the
+        current value first if you only mean to change part of it.
+      example:
+        chw_id: "13/43/DFA"
+    language:
+      type: string
+      example: en
+    primary_location:
+      type: string
+      description: >-
+        Must be one of `locations`. On update, pass an empty string to clear it.
+      example: 26fc44e2792b4f2fa8ef86178f0a958e
+    locations:
+      type: array
+      items:
+        type: string
+      description:
+        On update, pass an empty array to clear all assigned locations.
+      example:
+        - 26fc44e2792b4f2fa8ef86178f0a958e
+        - c1b029932ed442a6a846a4ea10e46a78
+    require_account_confirmation:
+      type: boolean
+      default: false
+      description: >-
+        Create only. If `true`, creates an unconfirmed account instead of
+        setting a password; requires `email` and forbids `password`.
+      example: true
+    send_confirmation_email_now:
+      type: boolean
+      default: false
+      description: >-
+        If `true` on create, requires `require_account_confirmation: true` and
+        immediately emails the confirmation link. On update, sends the
+        confirmation email for an already-unconfirmed account.
+      example: true
+    connect_username:
+      type: string
+      description: >-
+        Undocumented in `mobile-worker.rst`. Links the new user to a ConnectID
+        account instead of setting a password
+        (`corehq/apps/api/resources/v0_5.py:278,334-338`). Requires the
+        `COMMCARE_CONNECT` toggle; otherwise the request is rejected with a 400.
+        See the discrepancy file.
+      example: connect_jdoe
+WebUser:
+  type: object
+  description: >-
+    A web user, as returned by `v0_5.WebUserResource`
+    (`corehq/apps/api/resources/v0_5.py:473-573`).
+  properties:
+    id:
+      type: string
+      description: User UUID.
+      example: 8f9756be9b1c7f28057d707b405d18f6
+    username:
+      type: string
+      example: jdoe@example.com
+    first_name:
+      type: string
+      nullable: true
+      example: John
+    last_name:
+      type: string
+      nullable: true
+      example: Doe
+    default_phone_number:
+      type: string
+      nullable: true
+      example: "+50253311399"
+    email:
+      type: string
+      example: john.doe@example.org
+    phone_numbers:
+      type: array
+      items:
+        type: string
+      example: []
+    role:
+      type: string
+      description: Role name in this domain, or `""` if the user has no role.
+      example: App Editor
+    permissions:
+      type: object
+      additionalProperties: true
+      description: >-
+        The role's full permission set (`HqPermissions.to_json()`), tens of
+        boolean/list keys. Modelled loosely here; see
+        `corehq/apps/users/models.py`'s `HqPermissions` for the authoritative
+        field list.
+      example:
+        edit_web_users: true
+        edit_commcare_users: true
+        view_reports: true
+        view_report_list: []
+    is_admin:
+      type: boolean
+      description: Whether the user is a domain admin.
+      example: false
+    eulas:
+      type: string
+      description: >-
+        Undocumented in `list-webusers.rst`'s Output Parameters table (it does
+        appear, as a stringified Python list, in `webuser.rst`'s PATCH sample
+        response at line 216). Same `str()`-of-attribute shape as
+        `MobileWorker.eulas`; see the discrepancy file.
+      example: "[]"
+    resource_uri:
+      type: string
+      description: >-
+        `list-webusers.rst`'s sample shows this as an always-empty string. That
+        is stale: `WebUserResource.get_resource_uri`
+        (`corehq/apps/api/resources/v0_5.py:524-532`) always computes a real
+        detail URL. See the discrepancy file.
+      example: /a/demo/api/web-user/v1/8f9756be9b1c7f28057d707b405d18f6/
+    primary_location_id:
+      type: string
+      description: >-
+        Undocumented in `list-webusers.rst`'s Output Parameters table, though it
+        does appear in `webuser.rst`'s PATCH sample response. Empty string when
+        unset (`dehydrate_primary_location_id`,
+        `corehq/apps/api/resources/v0_5.py:487-488`). See the discrepancy file.
+      example: 26fc44e2792b4f2fa8ef86178f0a958e
+    assigned_location_ids:
+      type: array
+      items:
+        type: string
+      description:
+        Undocumented in `list-webusers.rst`; see the discrepancy file.
+      example:
+        - 26fc44e2792b4f2fa8ef86178f0a958e
+        - c1b029932ed442a6a846a4ea10e46a78
+    profile:
+      type: string
+      description: >-
+        Undocumented in `list-webusers.rst`; see the discrepancy file. Empty
+        string when the user has no custom-data profile.
+      example: Blue
+    user_data:
+      type: object
+      additionalProperties: true
+      description:
+        Undocumented in `list-webusers.rst`; see the discrepancy file.
+      example:
+        Can Edit Client: "yes"
+    tableau_role:
+      type: string
+      nullable: true
+      description: >-
+        Undocumented in `list-webusers.rst`; see the discrepancy file. `null`
+        when the user has no `TableauUser` record for this domain
+        (`dehydrate_tableau_role`, `corehq/apps/api/resources/v0_5.py:500-506`).
+      example: Viewer
+    is_active_in_domain:
+      type: boolean
+      description:
+        Undocumented in `list-webusers.rst`; see the discrepancy file.
+      example: true
+    tableau_groups:
+      type: array
+      items:
+        type: string
+      description: >-
+        Undocumented in `list-webusers.rst`. Declared `use_in='detail'`
+        (`corehq/apps/api/resources/v0_5.py:481`), so unlike every other field
+        on this schema it is present on `getWebUser` but omitted entirely from
+        `listWebUsers` -- a deliberate performance exception (the field comment
+        says computing it makes one request per user). See the discrepancy file.
+      example: ["city", "county"]
+WebUserList:
+  allOf:
+    - $ref: "./pagination.yaml#/PaginatedResponse"
+    - type: object
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: "#/WebUser"
+WebUserUpdate:
+  type: object
+  description: >-
+    Payload for `updateWebUser` (PATCH). Validated through `WebUserResourceSpec`
+    (`corehq/apps/api/validation.py:37-49`) before any field is applied.
+  properties:
+    role:
+      type: string
+      example: App Editor
+    primary_location_id:
+      type: string
+      description: Must be one of `assigned_location_ids`.
+      example: 26fc44e2792b4f2fa8ef86178f0a958e
+    assigned_location_ids:
+      type: array
+      items:
+        type: string
+      example:
+        - 26fc44e2792b4f2fa8ef86178f0a958e
+        - c1b029932ed442a6a846a4ea10e46a78
+    profile:
+      type: string
+      example: Facility User
+    user_data:
+      type: object
+      additionalProperties: true
+      description: >-
+        Merged onto the user's existing custom data (`obj_update`,
+        `corehq/apps/api/resources/v0_5.py:538-542`) -- unlike
+        `MobileWorkerWrite.user_data`, this one is not a wholesale replacement.
+      example:
+        Can Edit Client: "yes"
+        Can View Data: "yes"
+    tableau_role:
+      type: string
+      example: Viewer
+    tableau_groups:
+      type: array
+      items:
+        type: string
+      example: ["city", "county"]
+Invitation:
+  type: object
+  description: >-
+    Request and response body for `inviteWebUser` (`v1_0.InvitationResource`,
+    `corehq/apps/api/resources/v1_0.py:76-174`). `email` and `role` are required
+    on the request; every other property (including `id`) is present on the
+    response.
+  required: [email, role]
+  properties:
+    id:
+      type: string
+      description: >-
+        Invitation UUID. Declared as a real field (`id =
+        fields.CharField(attribute='uuid', readonly=True, unique=True)`,
+        `v1_0.py:77`) and returned because `always_return_data = True` -- but
+        `webuser.rst`'s "Sample output" (lines 101-120) omits it, even though
+        its own "Output Parameters" table two sections earlier says `id` is the
+        *only* thing returned. Neither reST claim matches the code: the response
+        includes `id` alongside every other field. See the discrepancy file.
+      example: 844b88b3-8f4a-43f8-ba39-62e3014a6998
+    email:
+      type: string
+      example: jdoe@dimagi.com
+    role:
+      type: string
+      example: App Editor
+    primary_location_id:
+      type: string
+      nullable: true
+      example: 26fc44e2792b4f2fa8ef86178f0a958e
+    assigned_location_ids:
+      type: array
+      items:
+        type: string
+      example:
+        - 26fc44e2792b4f2fa8ef86178f0a958e
+        - c1b029932ed442a6a846a4ea10e46a78
+    profile:
+      type: string
+      nullable: true
+      example: Facility User
+    user_data:
+      type: object
+      additionalProperties: true
+      example:
+        Can Edit Client: "yes"
+        Can View Data: "yes"
+    tableau_role:
+      type: string
+      nullable: true
+      example: Viewer
+    tableau_groups:
+      type: array
+      items:
+        type: string
+      example: ["city", "county"]
+Identity:
+  type: object
+  description: >-
+    The authenticated web user's own identity, as returned by
+    `v0_5.IdentityResource` (`corehq/apps/api/resources/v0_5.py:1145-1162`).
+    Unlike every other list operation in this spec, the response is the bare
+    object, not a `meta`/`objects` envelope --
+    `ListToSingleObjectSerializer.to_json`
+    (`corehq/apps/api/resources/serializers.py:6-16`) unwraps the single-element
+    list tastypie would otherwise return.
+  properties:
+    id:
+      type: string
+      example: 672bdfc8-3629-10e0-9e24-005057aa7fe5
+    username:
+      type: string
+      example: demo@dimagi.com
+    first_name:
+      type: string
+      example: Demo
+    last_name:
+      type: string
+      example: User
+    email:
+      type: string
+      example: demo@dimagi.com
+UserErrorMessage:
+  type: object
+  description: >-
+    Error body keyed `error_message` rather than the `error` key used by most
+    other resources' error responses. Reached via tastypie's generic
+    uncaught-exception handler (`wrap_view`'s `except Exception` ->
+    `_handle_500`, `tastypie/resources.py:250-265,291-315`) whenever a custom
+    `prepend_urls` view (`activate`/`deactivate`/`email_password_reset` on
+    either resource) raises tastypie's own `NotFound()` -- that handler maps
+    `NotFound` to a 404 status but always builds a generic canned message in
+    production, never the raised exception's own text (`raise NotFound()` is
+    called with no arguments on both resources in any case). See the discrepancy
+    file.
+  properties:
+    error_message:
+      type: string
+      example:
+        Sorry, this request could not be processed. Please try again later.
+WebUserErrors:
+  type: object
+  description: >-
+    Error body keyed `errors` (plural, a list), distinct from both the shared
+    `Error` schema's `error` key and `UserErrorMessage`'s `error_message` key.
+    Raised as `WebUserValidationException`
+    (`corehq/apps/api/validation.py:31-33`, always a list of strings) and
+    surfaced via `ImmediateHttpResponse(JsonResponse({"errors": e.message},
+    status=400))` on both `updateWebUser`
+    (`corehq/apps/api/resources/v0_5.py:563-564`) and `inviteWebUser`
+    (`corehq/apps/api/resources/v1_0.py:124-125`).
+  required: [errors]
+  properties:
+    errors:
+      type: array
+      items:
+        type: string
+      example:
+        - "Role does not exist: Not A Real Role"

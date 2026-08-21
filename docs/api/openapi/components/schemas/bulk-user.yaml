@@ -1,0 +1,71 @@
+BulkUser:
+  type: object
+  description: >-
+    A basic user record, as returned by `v0_5.BulkUserResource`
+    (`corehq/apps/api/resources/v0_5.py:172-238`). Backed by Elasticsearch, not
+    the couch `CommCareUser`/`WebUser` models -- only the fields declared below
+    exist; this resource returns both mobile workers and web users indifferently
+    (it queries `UserES` with no user-type filter).
+  properties:
+    id:
+      type: string
+      description: User UUID (`_id` in the underlying Elasticsearch document).
+      example: 0e478e1f5430c8efad06a2c88f1f5d80
+    email:
+      type: string
+      example: user1@gmail.com
+    username:
+      type: string
+      example: user1@gmail.com
+    first_name:
+      type: string
+      nullable: true
+      example: User1
+    last_name:
+      type: string
+      nullable: true
+      example: ""
+    phone_numbers:
+      type: array
+      nullable: true
+      items:
+        type: string
+      example: []
+    resource_uri:
+      type: string
+      description: >-
+        Always the empty string. `include_resource_uri` defaults to `True` and
+        is never overridden, so the field is present, but neither
+        `BulkUserResource` nor its `Meta` overrides `get_resource_uri`; the base
+        `resource_uri_kwargs` (`tastypie/resources.py:787-807`) omits `domain`,
+        so reversing `api_dispatch_detail` fails with `NoReverseMatch`, which
+        `get_resource_uri` (`tastypie/resources.py:810-829`) catches and turns
+        into `''`. Matches `bulk-user.rst`'s own sample output (`:53`, `:62`).
+      example: ""
+BulkUserList:
+  allOf:
+    - $ref: "./pagination.yaml#/PaginatedResponse"
+    - type: object
+      properties:
+        meta:
+          allOf:
+            - $ref: "./pagination.yaml#/PaginationMeta"
+            - type: object
+              properties:
+                total_count:
+                  type: integer
+                  description: >-
+                    Not the true count of matching users in the domain --
+                    `total_count` comes from `Paginator.get_count()`
+                    (`tastypie/paginator.py:118-126`), which falls back to
+                    `len(self.objects)` because the object list here is a plain
+                    Python list of namedtuples, not a queryset with a `.count()`
+                    method. `self.objects` is already the single Elasticsearch
+                    page `obj_get_list` fetched (at most `limit` items), so
+                    `total_count` reports the size of the *current page*, not
+                    the domain's real user count. See the discrepancy file.
+                  example: 20
+        objects:
+          type: array
+          items:
+            $ref: "#/BulkUser"

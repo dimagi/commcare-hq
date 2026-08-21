@@ -1,0 +1,357 @@
+Location:
+  type: object
+  description: >-
+    A single location, as returned by the v1 location API
+    (`v0_5.LocationResource`, `corehq/apps/locations/resources/v0_5.py:67-127`).
+    Read-only -- this resource declares `allowed_methods = ['get']`
+    (`corehq/apps/locations/resources/v0_5.py:77`). See `LocationV2` for the
+    newer serialization used by v2, which adds create/update.
+  properties:
+    id:
+      type: integer
+      description: >-
+        `SQLLocation`'s internal integer primary key. Distinct from
+        `location_id`, the UUID-like string used in URLs and by the v2 API.
+      example: 1
+    name:
+      type: string
+      example: Namibia
+    domain:
+      type: string
+      description: Project space the location belongs to.
+      example: demo
+    location_id:
+      type: string
+      description: UUID-like identifier used in URLs and by the v2 API.
+      example: f373a6837c1243938abfc56618cce88b
+    site_code:
+      type: string
+      example: namibia
+    external_id:
+      type: string
+      nullable: true
+      example: null
+    created_at:
+      type: string
+      pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?$'
+      description: >-
+        Naive timestamp, no timezone offset (`format: date-time` is deliberately
+        not used, since it implies RFC3339). This is a tastypie resource, not
+        DRF -- serialized by `Serializer.format_datetime`
+        (`tastypie/serializers.py:198-214`), whose default `datetime_formatting
+        = 'iso-8601'` calls `data.isoformat()` after `make_naive(data)`. That
+        `make_naive` is tastypie's own (`tastypie/utils/timezone.py:13-17`),
+        which only strips tzinfo when `settings.USE_TZ` is true; with `USE_TZ =
+        False` (`settings.py:57`) it is a no-op on the already-naive value from
+        `SQLLocation.created_at` (`models.DateTimeField(auto_now_add=True)`,
+        `corehq/apps/locations/models.py:371`), so `isoformat()` never adds a
+        `Z`. Confirmed by `corehq/apps/locations/tests/test_api_resources.py:75`
+        (`somerville.created_at.isoformat()`).
+      example: "2023-05-09T16:10:47.225938"
+    last_modified:
+      type: string
+      pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?$'
+      description: >-
+        Naive timestamp, same reasoning as `created_at`; source field
+        `SQLLocation.last_modified` (`models.DateTimeField(auto_now=True)`,
+        `corehq/apps/locations/models.py:372`).
+      example: "2023-05-09T16:10:47.225947"
+    latitude:
+      type: string
+      nullable: true
+      description: >-
+        Decimal latitude. `SQLLocation.latitude` is a Django `DecimalField`
+        (`corehq/apps/locations/models.py:375`); tastypie's
+        `fields.DecimalField.convert` (`tastypie/fields.py:277-281`) produces a
+        `decimal.Decimal`, which the JSON encoder renders as a string.
+      example: null
+    longitude:
+      type: string
+      nullable: true
+      description: Decimal longitude. Same serialization as `latitude`.
+      example: null
+    location_data:
+      type: object
+      additionalProperties: true
+      description: Arbitrary key/value metadata attached to the location.
+      example: {}
+    location_type:
+      type: string
+      description: >-
+        Absolute URI of the location's type
+        (`v0_5.LocationResource.dehydrate_location_type`,
+        `corehq/apps/locations/resources/v0_5.py:115-122`). See
+        `paths/location-type.yaml`.
+      example: https://www.commcarehq.org/a/demo/api/location_type/v1/1/
+    parent:
+      type: string
+      nullable: true
+      description:
+        Absolute URI of the parent location, or null if there is none.
+      example: null
+    resource_uri:
+      type: string
+      example: https://www.commcarehq.org/a/demo/api/location/v1/f373a6837c1243938abfc56618cce88b/
+LocationList:
+  allOf:
+    - $ref: "./pagination.yaml#/PaginatedResponse"
+    - type: object
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: "#/Location"
+
+LocationV2:
+  type: object
+  description: >-
+    A single location, as returned by the v2 location API
+    (`v0_6.LocationResource`, `corehq/apps/locations/resources/v0_6.py:25-79`).
+    Only 8 fields are declared on `Meta.fields`
+    (`corehq/apps/locations/resources/v0_6.py:39-48`) -- `location_type` and
+    `parent`, which v1 exposes as fields, are dropped entirely for v2;
+    `location_type_code`, `location_type_name`, and `parent_location_id` are
+    added directly onto `bundle.data` by the `dehydrate` override
+    (`v0_6.py:71-79`), not through the field mechanism. Verified against
+    `corehq/apps/locations/tests/test_api_resources.py:157-213`.
+  properties:
+    domain:
+      type: string
+      example: dimagi-test
+    location_id:
+      type: string
+      example: 68e65fbc2dc840ff8bf03849e57aca88
+    name:
+      type: string
+      example: Fairfax County
+    site_code:
+      type: string
+      example: fairfax_county
+    last_modified:
+      type: string
+      pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?$'
+      description: >-
+        Naive timestamp, no timezone offset -- same reasoning as `Location`'s
+        `last_modified`.
+      example: "2024-03-11T19:29:16.845849"
+    latitude:
+      type: string
+      nullable: true
+      example: "31.4100000000"
+    longitude:
+      type: string
+      nullable: true
+      example: null
+    location_data:
+      type: object
+      additionalProperties: true
+      example:
+        pop: "1001"
+    location_type_code:
+      type: string
+      example: county
+    location_type_name:
+      type: string
+      example: County
+    parent_location_id:
+      type: string
+      description: >-
+        UUID of the direct parent, or an empty string if the location has no
+        parent -- not null. `v0_6.LocationResource.dehydrate`
+        (`corehq/apps/locations/resources/v0_6.py:71-75`) sets
+        `bundle.data['parent_location_id'] = ''` in the no-parent branch, unlike
+        v1's `parent`, which is null when absent. Confirmed by
+        `corehq/apps/locations/tests/test_api_resources.py:167`
+        (`"parent_location_id": ""`).
+      example: 41b0bdfbae20428e9435ae8c3dcd22e7
+LocationV2List:
+  allOf:
+    - $ref: "./pagination.yaml#/PaginatedResponse"
+    - type: object
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: "#/LocationV2"
+
+LocationCreate:
+  type: object
+  description: >-
+    Payload for creating a single v2 location (`v0_6.LocationResource
+    .obj_create`, `corehq/apps/locations/resources/v0_6.py:81-88`), and for a
+    bulk-PATCH item with no `location_id`. Any key not listed here (including
+    `location_id`) is rejected with a 400 once all recognized keys are consumed
+    (`_update`, `v0_6.py:134-136`, `"Invalid fields were included in request:
+    [...]"`).
+  required: [name, location_type_code]
+  properties:
+    name:
+      type: string
+      example: Greenville
+    location_type_code:
+      type: string
+      example: city
+    site_code:
+      type: string
+      description: >-
+        Generated automatically if omitted. Must be unique on the domain.
+      example: greenville
+    latitude:
+      description: Accepts a number or a decimal string.
+      oneOf:
+        - type: number
+        - type: string
+      example: "31.41"
+    longitude:
+      description: Accepts a number or a decimal string.
+      oneOf:
+        - type: number
+        - type: string
+      example: "-97.41"
+    location_data:
+      type: object
+      additionalProperties: true
+      example:
+        pop: "1000"
+    parent_location_id:
+      type: string
+      description: >-
+        UUID of the direct parent. Validated to exist, to support child
+        locations, and to have no duplicate-named sibling
+        (`_validate_new_parent`, `v0_6.py:154-162`).
+      example: 46329a9e1bad47158739d56f6f667165
+
+LocationUpdate:
+  type: object
+  description: >-
+    Payload for `PUT /a/{domain}/api/location/v2/{location_id}/`
+    (`v0_6.LocationResource.obj_update`, `v0_6.py:90-99`). No field is required
+    -- only the fields present are changed. Do **not** include `location_id` in
+    this body: the detail PUT resolves the target location from the URL alone
+    (`kwargs.get('location_id')` is always truthy here, so
+    `bundle.data.pop('location_id')` at `v0_6.py:91` never runs), so a
+    `location_id` key in the body survives to the end-of-`_update` leftover
+    check (`v0_6.py:134-136`) and triggers a 400 ("Invalid fields were included
+    in request: ['location_id']."). Undocumented by `locations-v2.rst`; see the
+    discrepancy file. Any other unrecognized key is rejected the same way.
+  properties:
+    name:
+      type: string
+      description: Must be unique among siblings.
+      example: New Denver
+    site_code:
+      type: string
+      description: Must be unique on the domain.
+      example: new_denver
+    latitude:
+      description: Accepts a number or a decimal string.
+      oneOf:
+        - type: number
+        - type: string
+      example: 33.9012
+    longitude:
+      description: Accepts a number or a decimal string.
+      oneOf:
+        - type: number
+        - type: string
+      example: -97.41
+    location_data:
+      type: object
+      additionalProperties: true
+    location_type_code:
+      type: string
+      description: >-
+        If the location has a parent, the new type must be a valid child type of
+        that parent.
+      example: county
+    parent_location_id:
+      type: string
+      description: >-
+        The parent must exist, support child locations, and not already have a
+        same-named child.
+      example: 46329a9e1bad47158739d56f6f667165
+
+LocationBulkUpdate:
+  type: object
+  description: >-
+    A bulk-PATCH item that updates an existing location -- same editable fields
+    as `LocationUpdate`, plus the required `location_id` that tells
+    `v0_6.LocationResource.patch_list`'s `create_or_update` closure
+    (`v0_6.py:166-171`) to call `obj_update` rather than `obj_create`.
+  required: [location_id]
+  properties:
+    location_id:
+      type: string
+      example: eea759ae08044807be749f665a1fd39a
+    name:
+      type: string
+      example: Springfield
+    site_code:
+      type: string
+    latitude:
+      oneOf:
+        - type: number
+        - type: string
+      example: "32.42"
+    longitude:
+      oneOf:
+        - type: number
+        - type: string
+    location_data:
+      type: object
+      additionalProperties: true
+      example:
+        pop: "1004"
+    location_type_code:
+      type: string
+    parent_location_id:
+      type: string
+
+LocationType:
+  type: object
+  description: >-
+    A location type (`v0_5.LocationTypeResource`,
+    `corehq/apps/locations/resources/v0_5.py:26-64`). Read-only in practice (see
+    `paths/location-type.yaml` for the write-method discrepancy).
+  properties:
+    id:
+      type: integer
+      description: >-
+        `LocationType`'s internal integer primary key -- unlike most ids in this
+        API, this one is a plain integer, not a UUID string.
+      example: 1
+    domain:
+      type: string
+      example: demo
+    name:
+      type: string
+      example: Country
+    code:
+      type: string
+      example: country
+    parent:
+      type: string
+      nullable: true
+      description: Absolute URI of the parent location type, or null.
+      example: null
+    administrative:
+      type: boolean
+      example: true
+    shares_cases:
+      type: boolean
+      example: false
+    view_descendants:
+      type: boolean
+      example: false
+    resource_uri:
+      type: string
+      example: https://www.commcarehq.org/a/demo/api/location_type/v1/1/
+LocationTypeList:
+  allOf:
+    - $ref: "./pagination.yaml#/PaginatedResponse"
+    - type: object
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: "#/LocationType"
