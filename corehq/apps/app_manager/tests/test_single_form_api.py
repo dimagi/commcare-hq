@@ -109,6 +109,9 @@ class SingleFormApiViewTests(TestCase):
                 self._url(), data=json.dumps({}), content_type='application/json',
             ).status_code == 404
 
+    def test_head_matches_get_etag(self):
+        assert self.client.head(self._url())['ETag'] == self.client.get(self._url())['ETag']
+
     def test_head_returns_404_for_missing_app(self):
         response = self.client.head(self._url(app_id='missing-app'))
         assert response.status_code == 404
@@ -117,6 +120,12 @@ class SingleFormApiViewTests(TestCase):
     # asserting on the content proves nothing. Content-Length still reports
     # the body the view built, which is the thing that must stay empty --
     # neither Django nor gunicorn strips it in production.
+    def test_head_builds_no_body(self):
+        assert self.client.head(self._url())['Content-Length'] == '0'
+
+    def test_head_builds_no_body_for_an_error(self):
+        assert self.client.head(self._url(form_id='missing-form'))['Content-Length'] == '0'
+
     def test_get_returns_bare_resource(self):
         response = self.client.get(self._url())
         assert response.status_code == 200
@@ -162,6 +171,9 @@ class SingleFormApiViewTests(TestCase):
         client = Client()
         client.login(username=self.non_admin_username, password=self.non_admin_password)
         assert client.get(self._url()).status_code != 200
+
+    def test_head_reports_the_content_type_get_would_send(self):
+        assert self.client.head(self._url())['Content-Type'] == 'application/json'
 
     def test_missing_form_says_the_form_is_missing(self):
         response = self.client.get(self._url(form_id='missing-form'))

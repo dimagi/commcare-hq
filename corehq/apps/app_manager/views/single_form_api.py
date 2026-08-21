@@ -77,6 +77,19 @@ class SingleFormApiView(View):
 
     @method_decorator(require_permission(HqPermissions.view_apps, login_decorator=api_auth()))
     @method_decorator(api_throttle)
+    def head(self, request, domain, app_id, module_id, form_id):
+        form, result = get_form_for_api(domain, app_id, module_id, form_id)
+        if not result.success:
+            return HttpResponse(
+                status=_status_for_result(result), content_type='application/json'
+            )
+
+        response = HttpResponse(status=200, content_type='application/json')
+        response[ETAG] = FormResource(form).get_etag()
+        return response
+
+    @method_decorator(require_permission(HqPermissions.view_apps, login_decorator=api_auth()))
+    @method_decorator(api_throttle)
     def get(self, request, domain, app_id, module_id, form_id):
         form, result = get_form_for_api(domain, app_id, module_id, form_id)
         if not result.success:
