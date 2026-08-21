@@ -217,6 +217,13 @@ def create_or_update_project_db(domain):
             update_table(conn, table)
 
 
+def get_domain_tables(domain):
+    engine = get_project_db_engine()
+    metadata = sqlalchemy.MetaData()
+    metadata.reflect(bind=engine, schema=DomainSchema(domain).name)
+    return {t.comment: t for t in metadata.tables.values()}
+
+
 def preview_drop(domain):
     """Return the PostgreSQL CASCADE notices for dropping a domain's schema"""
     schema = DomainSchema(domain)
