@@ -4,11 +4,9 @@
 prose, that its examples resolve, and that its published fields carry
 descriptions. Those checks all iterate ``documented_entries()``, so a
 function-based view catalogued in ``VIEW_CATALOGUE`` had none of them: it
-could ship an empty summary, or an example key nothing looks up, and only
-a human reading the rendered page would notice.
-
-The response-description guard arrives with case v2's own field
-descriptions, since it is what pins them.
+could ship an empty summary, an example key nothing looks up, or an
+undescribed response field, and only a human reading the rendered page
+would notice.
 
 The two resource guards with no counterpart here are deliberate.
 ``test_no_documented_write_method_is_a_phantom`` compares a spec against
@@ -19,6 +17,8 @@ lives in ``test_case_v2_urls.py``, which needs the URLconf.
 
 import pytest
 
+from corehq.apps.api.openapi import response_fields
+from corehq.apps.api.openapi.builder import build_all
 from corehq.apps.api.openapi.catalogue import documented_view_entries
 from corehq.apps.api.openapi.examples import EXAMPLES_DIR
 from corehq.apps.api.openapi.view_operations import (
@@ -70,4 +70,31 @@ def test_every_declared_view_example_is_one_the_builder_looks_up(entry):
     )
     assert not unused, (
         f'{entry.view} declares example key(s) nothing looks up: {unused}'
+    )
+
+
+@pytest.mark.parametrize(
+    'slug', sorted({entry.doc_slug for entry in VIEW_ENTRIES})
+)
+def test_every_response_field_of_a_documented_view_has_a_description(slug):
+    """The view counterpart of
+    ``test_every_field_of_documented_apis_has_a_description``.
+
+    Read off the built document rather than the declaration, for the same
+    reason the resource guard reads off the generated schema: only a
+    description that actually reaches the spec counts. Unlike the resource
+    guard there is no allowlist -- every catalogued view is fully described
+    today, and a new one arriving half-documented should have to say so
+    rather than be waved through by omission.
+    """
+    spec = build_all()[slug]
+    _, total = response_fields.description_coverage(spec)
+    assert total, f'{slug} publishes no response fields to describe'
+    undescribed = response_fields.undescribed_fields(spec)
+    assert not undescribed, (
+        f'{slug} publishes response field(s) with no description: '
+        + ', '.join(
+            f'{method.upper()} {path} -> {name}'
+            for path, method, name in undescribed
+        )
     )
