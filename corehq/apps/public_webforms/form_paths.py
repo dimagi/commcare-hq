@@ -18,6 +18,7 @@ def get_public_webform_form_paths(domain, webforms):
             'app_name': _app_name(webform, apps, builds),
             'app_url': _app_url(webform, apps, domain),
             'app_version': _app_version(webform, builds),
+            'menu_name': _menu_name(webform, builds),
             'form_name': _form_name(webform, builds),
         } for webform in webforms
     }
@@ -52,6 +53,13 @@ def _app_url(webform, apps, domain):
 def _app_version(webform, builds):
     build = builds.get(webform.app_build_id)
     return build.version if build else None
+
+
+def _menu_name(webform, builds):
+    build = builds.get(webform.app_build_id)
+    form = build.get_form(webform.form_unique_id) if build else None
+    menu = form.get_module() if form else None
+    return menu.default_name() if menu else None
 
 
 def _form_name(webform, builds):
