@@ -7,13 +7,77 @@ including data retrieval, case and form submissions, and user
 management. This page describes different APIs available for
 integration.
 
-.. note::
-    This feature requires a **CommCare Software Plan**
+Using the CommCare APIs
+------------------------
 
-    This feature is only available to CommCare users with a
-    **Standard Plan or above**. For more details, please see the
-    `CommCare Pricing Overview <https://commcare.dimagi.com/pricing/>`_
+The CommCare APIs require a Software Plan of Standard or higher.
 
+Authentication
+~~~~~~~~~~~~~~
+
+Requests authenticate with an API key, HTTP Basic, HTTP Digest, or OAuth2.
+API key authentication sends the key in an ``Authorization`` header::
+
+    Authorization: ApiKey <username>:<api-key>
+
+For a web user the username is the email address the account signs in
+with. Generate a key from your account settings under *API Keys*. A key
+can be scoped to a single project space and to a set of IP addresses.
+
+URL structure
+~~~~~~~~~~~~~
+
+Most endpoints are scoped to a project space::
+
+    https://www.commcarehq.org/a/<domain>/api/<resource>/<version>/
+
+A few are scoped to the authenticated user rather than a project space, and
+omit the domain::
+
+    https://www.commcarehq.org/api/<resource>/<version>/
+
+Versioning
+~~~~~~~~~~
+
+The version in the URL changes only for a breaking change. Adding a field to
+a response, or a new optional parameter, does not bump the version — so a
+client must tolerate unfamiliar fields.
+
+Pagination
+~~~~~~~~~~
+
+List endpoints accept ``limit`` and ``offset`` and return a ``meta`` object
+with ``limit``, ``offset``, ``total_count``, ``next`` and ``previous``.
+Follow ``next`` until it is ``null`` rather than computing offsets, and note
+that some endpoints paginate by cursor instead.
+
+Rate limiting
+~~~~~~~~~~~~~
+
+Requests are throttled per project space. A throttled request is answered
+with a ``Retry-After`` header giving the seconds to wait.
+
+Response format
+~~~~~~~~~~~~~~~~
+
+Many endpoints accept a ``format`` parameter (``json`` by default, ``xml``
+also supported), returning the same data serialized differently.
+
+The API reference
+~~~~~~~~~~~~~~~~~
+
+Every documented API has a reference page listing its endpoints, parameters
+and response fields, generated from the API's OpenAPI specification:
+
+- `API reference index <https://www.commcarehq.org/api/docs/>`_
+- `Machine-readable OpenAPI document <https://www.commcarehq.org/api/openapi.json>`_
+
+That document covers every documented endpoint in one OpenAPI 3.0.3 file, and
+is the one to point a code generator or an agent at. Each API's own
+specification is served from its reference page.
+
+The pages below give a sentence of orientation per API and link to its
+reference.
 
 Table of contents
 -----------------

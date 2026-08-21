@@ -66,6 +66,9 @@ jobs:
       - name: Install Node.js dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Build OpenAPI reference pages
+        run: yarn openapi:docs
+
       - uses: sibiraj-s/action-eslint@bcf41bb9abce43cdbad51ab9b3da2eddaa17eab3  # v3.0.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

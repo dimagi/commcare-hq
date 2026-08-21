@@ -26,6 +26,93 @@ class LocationResource(v0_5.LocationResource):
     resource_name = 'location'
     patch_limit = 100
 
+    class Docs:
+        summary = 'Locations (v2)'
+        description = (
+            'List locations in a project space, create locations, or '
+            'fetch and update a single location. Version 2 returns '
+            'location data as a nested object and supports filtering by '
+            'last modified date.\n\n'
+            'The bulk PATCH request is atomic: if any location in the '
+            'request fails validation, none of the locations in the '
+            'request are created or updated.'
+        )
+        examples = {'list_response': 'location/v2/list_response.json'}
+        field_schemas = {
+            'parent_location_id': {
+                'type': 'string',
+                'description': 'Location ID of the parent location, or '
+                              'an empty string if this is a root-level '
+                              'location. When creating a location, or '
+                              'moving one to a new parent without also '
+                              'changing location_type_code in the same '
+                              'request, the parent must exist, be able '
+                              'to have child locations of this type, '
+                              'and must not already have a child '
+                              'location with the same name.',
+            },
+            'location_type_name': {
+                'type': 'string',
+                'readOnly': True,
+                'description': 'Name of the location type of this '
+                              'location. Derived from location_type_code '
+                              'and not itself writable.',
+            },
+            'location_type_code': {
+                'type': 'string',
+                'description': 'Code of the location type of this '
+                              'location. If the location has a parent, '
+                              'the new type must be a valid child type '
+                              'of that parent.',
+            },
+            'location_id': {
+                'description': 'UUID of the location. In a bulk PATCH '
+                               'request, include this to update an '
+                               'existing location, or omit it to create '
+                               'a new one.',
+            },
+            'location_data': {
+                'description': 'Custom data associated with the '
+                               'location, keyed by field name. On '
+                               'create or update, this replaces the '
+                               'location\'s entire custom data — keys '
+                               'not included in the value are removed, '
+                               'not merged.',
+            },
+            'site_code': {
+                'description': 'Unique (within the domain) code '
+                               'identifying the location, used in case '
+                               'sharing and bulk data. If omitted when '
+                               'creating a location, one is generated '
+                               'automatically from the name.',
+            },
+            'name': {
+                'description': 'Name of the location. Must be unique '
+                               'among sibling locations under the same '
+                               'parent.',
+            },
+        }
+        list_write_responses = {
+            # patch_list() below calls patch_list_replica() (defined in
+            # corehq/apps/api/resources/__init__.py), which returns a
+            # bare array of location IDs, not an object.
+            'patch': {
+                '202': {
+                    'description': 'The IDs of the created or updated '
+                                  'locations, in the same order as the '
+                                  'request.',
+                    'content': {
+                        'application/json': {
+                            'schema': {
+                                'type': 'array',
+                                'items': {'type': 'string'},
+                            },
+                        },
+                    },
+                },
+            },
+        }
+
     class Meta:
         max_limit = 5000
         queryset = SQLLocation.active_objects.all()
