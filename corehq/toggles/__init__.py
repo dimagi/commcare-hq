@@ -2083,6 +2083,17 @@ SAVE_ONLY_EDITED_FORM_FIELDS = FeatureRelease(
     """
 )
 
+SINGLE_FORM_API = StaticToggle(
+    slug='single_form_api',
+    label='Read and update a single form of an application over the API',
+    tag=TAG_GA_PATH,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Enables HEAD/GET/PATCH on an individual form within an application,
+    rather than having to re-import the whole application to change one form.
+    """,
+)
+
 APP_DEPENDENCIES = StaticToggle(
     slug='app-dependencies',
     label='Set Android app dependencies that must be installed before using a CommCare app',
