@@ -28,6 +28,10 @@ ON = CLIENT.c.case_id == VISIT.c.parent_id
 CLIENT_VISIT = CLIENT.join(VISIT, ON)
 JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
 
+# An alias is what makes joining a table to itself possible
+VISIT_V, VISIT_P = VISIT.alias('v'), VISIT.alias('p')
+SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
+
 
 @pytest.mark.parametrize('sql, expected', [
     ('SELECT * FROM client', select([CLIENT])),
@@ -74,6 +78,11 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
      select([CLIENT.join(VISIT, and_(ON, VISIT.c.name == literal('x')))])),
     ('SELECT * FROM client LEFT JOIN visit ON client.case_id = visit.parent_id',
      select([CLIENT.join(VISIT, ON, isouter=True)])),
+
+    # Table aliases
+    ('SELECT v.visit_id, p.visit_id '
+     'FROM visit AS v JOIN visit AS p ON v.parent_id = p.visit_id',
+     select([VISIT_V.c.visit_id, VISIT_P.c.visit_id]).select_from(SELF_JOIN)),
 
     # DISTINCT
     ('SELECT DISTINCT name FROM client', select([CLIENT.c.name]).distinct()),
@@ -221,8 +230,9 @@ def _compiled(query):
     'SELECT * FROM client JOIN visit USING (case_id)',  # USING instead of ON
     'SELECT * FROM client JOIN visit',                  # no ON clause
     'SELECT * FROM client, visit',                      # comma join has no ON
-    'SELECT * FROM client AS c JOIN visit ON c.case_id = visit.parent_id',  # alias
     'SELECT * FROM client JOIN client ON client.case_id = client.case_id',  # self join
+    'SELECT * FROM client AS c(a, b)',    # column aliases on a table
+    "SELECT * FROM client AS c WHERE client.name = 'x'",  # table must be referenced by alias
     f'SELECT name {JOIN_SQL}',              # ambiguous, both tables have `name`
     f'SELECT client.visit_id {JOIN_SQL}',   # column belongs to the other table
 ])
@@ -234,8 +244,7 @@ def test_rejects_unsupported(sql):
 @pytest.mark.parametrize('alias, expected', [
     ('id', 'id'),
     ('"My Id"', '"My Id"'),
-    # A column alias is the only user-supplied identifier that reaches the
-    # generated SQL, so it must always come back out quoted and escaped.
+    # Ensure user-supplied identifiers come out quoted and escaped
     ('"a""b"', '"a""b"'),
     ('"a\'b"', '"a\'b"'),
     ('"); DROP TABLE client; --"', '"); DROP TABLE client; --"'),
@@ -245,6 +254,11 @@ def test_escapes_alias_identifiers(alias, expected):
     query = translate(f'SELECT case_id AS {alias} FROM client', TABLES)
     sql, params = _compiled(query)
     assert sql == f'SELECT client.case_id AS {expected} \nFROM client'
+    assert params == {}
+
+    query = translate(f'SELECT case_id FROM client AS {alias}', TABLES)
+    sql, params = _compiled(query)
+    assert sql == f'SELECT {expected}.case_id \nFROM client AS {expected}'
     assert params == {}
 
 
