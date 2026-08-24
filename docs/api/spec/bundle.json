@@ -6045,7 +6045,7 @@
     },
     "/a/{domain}/api/lookup_table/v1/": {
       "get": {
-        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves. On update, `is_global`, `fields` and `item_attributes` are each independently optional -- a key left out of the request body keeps its current value; `tag` is the exception and must always be included, unchanged.",
         "operationId": "lookup_table_v1_list_get",
         "parameters": [
           {
@@ -6126,7 +6126,7 @@
                       "items": {
                         "properties": {
                           "fields": {
-                            "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                            "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it. Optional on create, defaulting to an empty list. On update, if provided, this replaces the entire list of fields.",
                             "items": {
                               "properties": {
                                 "field_name": {
@@ -6149,7 +6149,7 @@
                             "type": "string"
                           },
                           "is_global": {
-                            "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
+                            "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment. Optional on create; defaults to false if omitted.",
                             "type": "boolean"
                           },
                           "item_attributes": {
@@ -6165,7 +6165,7 @@
                             "type": "string"
                           },
                           "tag": {
-                            "description": "Name of the lookup table, unique within the domain.",
+                            "description": "Name of the lookup table, unique within the domain. Creating a table with a tag that already exists on the domain is rejected. Required on every update request, and cannot be changed to a different value.",
                             "type": "string"
                           }
                         },
@@ -6198,7 +6198,7 @@
         }
       ],
       "post": {
-        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves. On update, `is_global`, `fields` and `item_attributes` are each independently optional -- a key left out of the request body keeps its current value; `tag` is the exception and must always be included, unchanged.",
         "operationId": "lookup_table_v1_list_post",
         "requestBody": {
           "content": {
@@ -6206,7 +6206,7 @@
               "schema": {
                 "properties": {
                   "fields": {
-                    "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                    "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it. Optional on create, defaulting to an empty list. On update, if provided, this replaces the entire list of fields.",
                     "items": {
                       "properties": {
                         "field_name": {
@@ -6224,7 +6224,7 @@
                     "type": "array"
                   },
                   "is_global": {
-                    "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
+                    "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment. Optional on create; defaults to false if omitted.",
                     "type": "boolean"
                   },
                   "item_attributes": {
@@ -6235,7 +6235,7 @@
                     "type": "array"
                   },
                   "tag": {
-                    "description": "Name of the lookup table, unique within the domain.",
+                    "description": "Name of the lookup table, unique within the domain. Creating a table with a tag that already exists on the domain is rejected. Required on every update request, and cannot be changed to a different value.",
                     "type": "string"
                   }
                 },
@@ -6258,7 +6258,7 @@
     },
     "/a/{domain}/api/lookup_table/v1/{pk}/": {
       "delete": {
-        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves. On update, `is_global`, `fields` and `item_attributes` are each independently optional -- a key left out of the request body keeps its current value; `tag` is the exception and must always be included, unchanged.",
         "operationId": "lookup_table_v1_detail_delete",
         "responses": {
           "204": {
@@ -6271,7 +6271,7 @@
         ]
       },
       "get": {
-        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves. On update, `is_global`, `fields` and `item_attributes` are each independently optional -- a key left out of the request body keeps its current value; `tag` is the exception and must always be included, unchanged.",
         "operationId": "lookup_table_v1_detail_get",
         "responses": {
           "200": {
@@ -6280,7 +6280,7 @@
                 "schema": {
                   "properties": {
                     "fields": {
-                      "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                      "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it. Optional on create, defaulting to an empty list. On update, if provided, this replaces the entire list of fields.",
                       "items": {
                         "properties": {
                           "field_name": {
@@ -6303,7 +6303,7 @@
                       "type": "string"
                     },
                     "is_global": {
-                      "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
+                      "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment. Optional on create; defaults to false if omitted.",
                       "type": "boolean"
                     },
                     "item_attributes": {
@@ -6319,7 +6319,7 @@
                       "type": "string"
                     },
                     "tag": {
-                      "description": "Name of the lookup table, unique within the domain.",
+                      "description": "Name of the lookup table, unique within the domain. Creating a table with a tag that already exists on the domain is rejected. Required on every update request, and cannot be changed to a different value.",
                       "type": "string"
                     }
                   },
@@ -6356,7 +6356,7 @@
         }
       ],
       "put": {
-        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
+        "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves. On update, `is_global`, `fields` and `item_attributes` are each independently optional -- a key left out of the request body keeps its current value; `tag` is the exception and must always be included, unchanged.",
         "operationId": "lookup_table_v1_detail_put",
         "requestBody": {
           "content": {
@@ -6364,7 +6364,7 @@
               "schema": {
                 "properties": {
                   "fields": {
-                    "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it.",
+                    "description": "The custom fields defined for rows of this lookup table, each giving a field_name and the properties available on it. Optional on create, defaulting to an empty list. On update, if provided, this replaces the entire list of fields.",
                     "items": {
                       "properties": {
                         "field_name": {
@@ -6382,7 +6382,7 @@
                     "type": "array"
                   },
                   "is_global": {
-                    "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment.",
+                    "description": "Whether the lookup table is accessible to all users on the domain, regardless of location assignment. Optional on create; defaults to false if omitted.",
                     "type": "boolean"
                   },
                   "item_attributes": {
@@ -6393,7 +6393,7 @@
                     "type": "array"
                   },
                   "tag": {
-                    "description": "Name of the lookup table, unique within the domain.",
+                    "description": "Name of the lookup table, unique within the domain. Creating a table with a tag that already exists on the domain is rejected. Required on every update request, and cannot be changed to a different value.",
                     "type": "string"
                   }
                 },
@@ -6419,7 +6419,7 @@
     },
     "/a/{domain}/api/lookup_table_item/v1/": {
       "get": {
-        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. On update, `data_type_id` must always be included; if the request body includes neither `fields` nor `item_attributes`, the row is left unmodified.",
         "operationId": "lookup_table_item_v1_list_get",
         "parameters": [
           {
@@ -6470,7 +6470,7 @@
                       "items": {
                         "properties": {
                           "data_type_id": {
-                            "description": "Identifier of the lookup table this item belongs to.",
+                            "description": "Identifier of the lookup table this item belongs to. Required when creating or updating a row; a request without it is rejected.",
                             "type": "string"
                           },
                           "fields": {
@@ -6496,7 +6496,7 @@
                               },
                               "type": "object"
                             },
-                            "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
+                            "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code). Optional on create, defaulting to no fields. On update, if provided, this replaces the entire fields dict -- field names omitted from the submitted value are removed from the row.",
                             "type": "object"
                           },
                           "id": {
@@ -6517,7 +6517,7 @@
                             "type": "string"
                           },
                           "sort_key": {
-                            "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
+                            "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI. On create, always assigned by the server as one greater than the current maximum for the table; any value submitted by the client is ignored.",
                             "type": "integer"
                           }
                         },
@@ -6550,7 +6550,7 @@
         }
       ],
       "post": {
-        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. On update, `data_type_id` must always be included; if the request body includes neither `fields` nor `item_attributes`, the row is left unmodified.",
         "operationId": "lookup_table_item_v1_list_post",
         "requestBody": {
           "content": {
@@ -6558,7 +6558,7 @@
               "schema": {
                 "properties": {
                   "data_type_id": {
-                    "description": "Identifier of the lookup table this item belongs to.",
+                    "description": "Identifier of the lookup table this item belongs to. Required when creating or updating a row; a request without it is rejected.",
                     "type": "string"
                   },
                   "fields": {
@@ -6584,7 +6584,7 @@
                       },
                       "type": "object"
                     },
-                    "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
+                    "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code). Optional on create, defaulting to no fields. On update, if provided, this replaces the entire fields dict -- field names omitted from the submitted value are removed from the row.",
                     "type": "object"
                   },
                   "item_attributes": {
@@ -6595,7 +6595,7 @@
                     "type": "object"
                   },
                   "sort_key": {
-                    "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
+                    "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI. On create, always assigned by the server as one greater than the current maximum for the table; any value submitted by the client is ignored.",
                     "type": "integer"
                   }
                 },
@@ -6618,7 +6618,7 @@
     },
     "/a/{domain}/api/lookup_table_item/v1/{pk}/": {
       "delete": {
-        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. On update, `data_type_id` must always be included; if the request body includes neither `fields` nor `item_attributes`, the row is left unmodified.",
         "operationId": "lookup_table_item_v1_detail_delete",
         "responses": {
           "204": {
@@ -6631,7 +6631,7 @@
         ]
       },
       "get": {
-        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. On update, `data_type_id` must always be included; if the request body includes neither `fields` nor `item_attributes`, the row is left unmodified.",
         "operationId": "lookup_table_item_v1_detail_get",
         "responses": {
           "200": {
@@ -6640,7 +6640,7 @@
                 "schema": {
                   "properties": {
                     "data_type_id": {
-                      "description": "Identifier of the lookup table this item belongs to.",
+                      "description": "Identifier of the lookup table this item belongs to. Required when creating or updating a row; a request without it is rejected.",
                       "type": "string"
                     },
                     "fields": {
@@ -6666,7 +6666,7 @@
                         },
                         "type": "object"
                       },
-                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code). Optional on create, defaulting to no fields. On update, if provided, this replaces the entire fields dict -- field names omitted from the submitted value are removed from the row.",
                       "type": "object"
                     },
                     "id": {
@@ -6687,7 +6687,7 @@
                       "type": "string"
                     },
                     "sort_key": {
-                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI. On create, always assigned by the server as one greater than the current maximum for the table; any value submitted by the client is ignored.",
                       "type": "integer"
                     }
                   },
@@ -6724,7 +6724,7 @@
         }
       ],
       "put": {
-        "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. On update, `data_type_id` must always be included; if the request body includes neither `fields` nor `item_attributes`, the row is left unmodified.",
         "operationId": "lookup_table_item_v1_detail_put",
         "requestBody": {
           "content": {
@@ -6732,7 +6732,7 @@
               "schema": {
                 "properties": {
                   "data_type_id": {
-                    "description": "Identifier of the lookup table this item belongs to.",
+                    "description": "Identifier of the lookup table this item belongs to. Required when creating or updating a row; a request without it is rejected.",
                     "type": "string"
                   },
                   "fields": {
@@ -6758,7 +6758,7 @@
                       },
                       "type": "object"
                     },
-                    "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
+                    "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code). Optional on create, defaulting to no fields. On update, if provided, this replaces the entire fields dict -- field names omitted from the submitted value are removed from the row.",
                     "type": "object"
                   },
                   "item_attributes": {
@@ -6769,7 +6769,7 @@
                     "type": "object"
                   },
                   "sort_key": {
-                    "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
+                    "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI. On create, always assigned by the server as one greater than the current maximum for the table; any value submitted by the client is ignored.",
                     "type": "integer"
                   }
                 },
@@ -6795,7 +6795,7 @@
     },
     "/a/{domain}/api/lookup_table_item/v2/": {
       "get": {
-        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests.",
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests. On update, `data_type_id` must always be included; if the request body includes neither `fields` nor `item_attributes`, the row is left unmodified.",
         "operationId": "lookup_table_item_v2_list_get",
         "parameters": [
           {
@@ -6846,7 +6846,7 @@
                       "items": {
                         "properties": {
                           "data_type_id": {
-                            "description": "Identifier of the lookup table this item belongs to.",
+                            "description": "Identifier of the lookup table this item belongs to. Required when creating or updating a row; a request without it is rejected.",
                             "type": "string"
                           },
                           "fields": {
@@ -6872,7 +6872,7 @@
                               },
                               "type": "object"
                             },
-                            "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
+                            "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code). Optional on create, defaulting to no fields. On update, if provided, this replaces the entire fields dict -- field names omitted from the submitted value are removed from the row.",
                             "type": "object"
                           },
                           "id": {
@@ -6893,7 +6893,7 @@
                             "type": "string"
                           },
                           "sort_key": {
-                            "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
+                            "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI. On create, always assigned by the server as one greater than the current maximum for the table; any value submitted by the client is ignored.",
                             "type": "integer"
                           }
                         },
@@ -6926,7 +6926,7 @@
         }
       ],
       "post": {
-        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests.",
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests. On update, `data_type_id` must always be included; if the request body includes neither `fields` nor `item_attributes`, the row is left unmodified.",
         "operationId": "lookup_table_item_v2_list_post",
         "requestBody": {
           "content": {
@@ -6934,7 +6934,7 @@
               "schema": {
                 "properties": {
                   "data_type_id": {
-                    "description": "Identifier of the lookup table this item belongs to.",
+                    "description": "Identifier of the lookup table this item belongs to. Required when creating or updating a row; a request without it is rejected.",
                     "type": "string"
                   },
                   "fields": {
@@ -6960,7 +6960,7 @@
                       },
                       "type": "object"
                     },
-                    "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
+                    "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code). Optional on create, defaulting to no fields. On update, if provided, this replaces the entire fields dict -- field names omitted from the submitted value are removed from the row.",
                     "type": "object"
                   },
                   "item_attributes": {
@@ -6971,7 +6971,7 @@
                     "type": "object"
                   },
                   "sort_key": {
-                    "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
+                    "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI. On create, always assigned by the server as one greater than the current maximum for the table; any value submitted by the client is ignored.",
                     "type": "integer"
                   }
                 },
@@ -6988,7 +6988,7 @@
                 "schema": {
                   "properties": {
                     "data_type_id": {
-                      "description": "Identifier of the lookup table this item belongs to.",
+                      "description": "Identifier of the lookup table this item belongs to. Required when creating or updating a row; a request without it is rejected.",
                       "type": "string"
                     },
                     "fields": {
@@ -7014,7 +7014,7 @@
                         },
                         "type": "object"
                       },
-                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code). Optional on create, defaulting to no fields. On update, if provided, this replaces the entire fields dict -- field names omitted from the submitted value are removed from the row.",
                       "type": "object"
                     },
                     "id": {
@@ -7035,7 +7035,7 @@
                       "type": "string"
                     },
                     "sort_key": {
-                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI. On create, always assigned by the server as one greater than the current maximum for the table; any value submitted by the client is ignored.",
                       "type": "integer"
                     }
                   },
@@ -7054,7 +7054,7 @@
     },
     "/a/{domain}/api/lookup_table_item/v2/{pk}/": {
       "delete": {
-        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests.",
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests. On update, `data_type_id` must always be included; if the request body includes neither `fields` nor `item_attributes`, the row is left unmodified.",
         "operationId": "lookup_table_item_v2_detail_delete",
         "responses": {
           "204": {
@@ -7067,7 +7067,7 @@
         ]
       },
       "get": {
-        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests.",
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests. On update, `data_type_id` must always be included; if the request body includes neither `fields` nor `item_attributes`, the row is left unmodified.",
         "operationId": "lookup_table_item_v2_detail_get",
         "responses": {
           "200": {
@@ -7076,7 +7076,7 @@
                 "schema": {
                   "properties": {
                     "data_type_id": {
-                      "description": "Identifier of the lookup table this item belongs to.",
+                      "description": "Identifier of the lookup table this item belongs to. Required when creating or updating a row; a request without it is rejected.",
                       "type": "string"
                     },
                     "fields": {
@@ -7102,7 +7102,7 @@
                         },
                         "type": "object"
                       },
-                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code). Optional on create, defaulting to no fields. On update, if provided, this replaces the entire fields dict -- field names omitted from the submitted value are removed from the row.",
                       "type": "object"
                     },
                     "id": {
@@ -7123,7 +7123,7 @@
                       "type": "string"
                     },
                     "sort_key": {
-                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI. On create, always assigned by the server as one greater than the current maximum for the table; any value submitted by the client is ignored.",
                       "type": "integer"
                     }
                   },
@@ -7160,7 +7160,7 @@
         }
       ],
       "put": {
-        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests.",
+        "description": "List, create, update or delete the rows (items) of a lookup table in a project space. Version 2 returns the created or updated row in the response body for write requests. On update, `data_type_id` must always be included; if the request body includes neither `fields` nor `item_attributes`, the row is left unmodified.",
         "operationId": "lookup_table_item_v2_detail_put",
         "requestBody": {
           "content": {
@@ -7168,7 +7168,7 @@
               "schema": {
                 "properties": {
                   "data_type_id": {
-                    "description": "Identifier of the lookup table this item belongs to.",
+                    "description": "Identifier of the lookup table this item belongs to. Required when creating or updating a row; a request without it is rejected.",
                     "type": "string"
                   },
                   "fields": {
@@ -7194,7 +7194,7 @@
                       },
                       "type": "object"
                     },
-                    "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
+                    "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code). Optional on create, defaulting to no fields. On update, if provided, this replaces the entire fields dict -- field names omitted from the submitted value are removed from the row.",
                     "type": "object"
                   },
                   "item_attributes": {
@@ -7205,7 +7205,7 @@
                     "type": "object"
                   },
                   "sort_key": {
-                    "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
+                    "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI. On create, always assigned by the server as one greater than the current maximum for the table; any value submitted by the client is ignored.",
                     "type": "integer"
                   }
                 },
@@ -7222,7 +7222,7 @@
                 "schema": {
                   "properties": {
                     "data_type_id": {
-                      "description": "Identifier of the lookup table this item belongs to.",
+                      "description": "Identifier of the lookup table this item belongs to. Required when creating or updating a row; a request without it is rejected.",
                       "type": "string"
                     },
                     "fields": {
@@ -7248,7 +7248,7 @@
                         },
                         "type": "object"
                       },
-                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code). Optional on create, defaulting to no fields. On update, if provided, this replaces the entire fields dict -- field names omitted from the submitted value are removed from the row.",
                       "type": "object"
                     },
                     "id": {
@@ -7269,7 +7269,7 @@
                       "type": "string"
                     },
                     "sort_key": {
-                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI. On create, always assigned by the server as one greater than the current maximum for the table; any value submitted by the client is ignored.",
                       "type": "integer"
                     }
                   },
@@ -7285,7 +7285,7 @@
                 "schema": {
                   "properties": {
                     "data_type_id": {
-                      "description": "Identifier of the lookup table this item belongs to.",
+                      "description": "Identifier of the lookup table this item belongs to. Required when creating or updating a row; a request without it is rejected.",
                       "type": "string"
                     },
                     "fields": {
@@ -7311,7 +7311,7 @@
                         },
                         "type": "object"
                       },
-                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code).",
+                      "description": "Field values for the row, keyed by field name. Each field holds a field_list of one or more values, each with its own properties (for example a language code). Optional on create, defaulting to no fields. On update, if provided, this replaces the entire fields dict -- field names omitted from the submitted value are removed from the row.",
                       "type": "object"
                     },
                     "id": {
@@ -7332,7 +7332,7 @@
                       "type": "string"
                     },
                     "sort_key": {
-                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI.",
+                      "description": "Order of this row within its lookup table, as defined by the row order in the uploaded Excel file. Not exposed in any user-facing UI. On create, always assigned by the server as one greater than the current maximum for the table; any value submitted by the client is ignored.",
                       "type": "integer"
                     }
                   },
@@ -9142,11 +9142,11 @@
       "name": "configurablereportdata"
     },
     {
-      "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves.",
+      "description": "List, create, update or delete lookup tables (also known as fixtures) in a project space. A lookup table defines the fields available on its rows; see the lookup table item resources for the rows themselves. On update, `is_global`, `fields` and `item_attributes` are each independently optional -- a key left out of the request body keeps its current value; `tag` is the exception and must always be included, unchanged.",
       "name": "lookup_table"
     },
     {
-      "description": "List, create, update or delete the rows (items) of a lookup table in a project space.",
+      "description": "List, create, update or delete the rows (items) of a lookup table in a project space. On update, `data_type_id` must always be included; if the request body includes neither `fields` nor `item_attributes`, the row is left unmodified.",
       "name": "lookup_table_item"
     },
     {
