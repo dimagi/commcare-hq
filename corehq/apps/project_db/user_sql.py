@@ -8,7 +8,17 @@ import sqlglot
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
-from sqlalchemy import and_, literal, not_, or_, select, union, union_all
+from sqlalchemy import (
+    and_,
+    literal,
+    not_,
+    nullsfirst,
+    nullslast,
+    or_,
+    select,
+    union,
+    union_all,
+)
 
 
 class UnsupportedSQL(Exception):
@@ -57,8 +67,8 @@ def _unpack(node, *args):
 
 
 def _convert_select(node, tables):
-    expressions, from_, joins, where, distinct = _unpack(
-        node, 'expressions', 'from_', 'joins', 'where', 'distinct')
+    expressions, from_, joins, where, distinct, order = _unpack(
+        node, 'expressions', 'from_', 'joins', 'where', 'distinct', 'order')
     if from_ is None:
         raise UnsupportedSQL("a FROM clause is required")
     selectable = _convert_table_ref(from_.this, tables)
@@ -70,6 +80,8 @@ def _convert_select(node, tables):
     if where is not None:
         predicate, = _unpack(where, 'this')
         query = query.where(_convert_predicate(predicate, selectable.c))
+    if order is not None:
+        query = query.order_by(*_convert_order(order, selectable.c))
     return query
 
 
@@ -82,6 +94,19 @@ def _convert_distinct_on(node, columns):
     if not on_expressions:
         raise UnsupportedSQL("DISTINCT ON requires at least one column")
     return [_convert_column(e, columns) for e in on_expressions]
+
+
+def _convert_order(node, columns):
+    """Convert an ORDER BY clause to a list of sort keys"""
+    order_expressions, = _unpack(node, 'expressions')
+    return [_convert_sort_key(e, columns) for e in order_expressions]
+
+
+def _convert_sort_key(node, columns):
+    expression, desc, nulls_first = _unpack(node, 'this', 'desc', 'nulls_first')
+    col = _convert_column(expression, columns)
+    sort_key = col.desc() if desc else col.asc()
+    return nullsfirst(sort_key) if nulls_first else nullslast(sort_key)
 
 
 def _convert_join(node, selectable, tables):
