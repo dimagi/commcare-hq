@@ -556,6 +556,29 @@ class TestCommCareUserResource(APIResourceTest):
         updated_user = CommCareUser.get(user.get_id)
         self.assertEqual(updated_user.is_account_confirmed, True)
 
+    def test_delete_user(self):
+        user = CommCareUser.create(domain=self.domain.name, username='doomed_user', password='*****',
+                                   created_by=None, created_via=None)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+        response = self._assert_auth_post_resource(self.single_endpoint(user.get_id), '', method='DELETE')
+
+        assert response.status_code == 204, response.content
+        assert CommCareUser.get(user.get_id).is_deleted()
+
+    def test_cant_delete_user_in_another_domain(self):
+        not_my_domain = create_domain('not-my-project')
+        self.addCleanup(not_my_domain.delete)
+        not_my_user = CommCareUser.create(domain=not_my_domain.name, username='user', password='*****',
+                                          created_by=None, created_via=None)
+        self.addCleanup(not_my_user.delete, not_my_domain.name, deleted_by=None)
+
+        response = self._assert_auth_post_resource(self.single_endpoint(not_my_user.get_id), '', method='DELETE')
+
+        assert response.status_code == 404, response.content
+        assert not CommCareUser.get(not_my_user.get_id).is_deleted()
+        assert not UserHistory.objects.filter(user_id=not_my_user.get_id).exists()
+
     def test_activate_user(self):
         """Activate the user through the API"""
         user = CommCareUser.create(domain=self.domain.name, username='inactive_user', password='*****',
@@ -1390,7 +1413,7 @@ class TestInvitationResource(APIResourceTest):
         self.addCleanup(invitation.delete)
         self.assertEqual(invitation.get_role_name(), "App Editor")
         self.assertEqual(invitation.primary_location, self.loc1)
-        self.assertEqual(list(invitation.assigned_locations.all()), [self.loc1, self.loc2])
+        self.assertCountEqual(invitation.assigned_locations.all(), [self.loc1, self.loc2])
         self.assertEqual(invitation.profile, self.profile)
         self.assertEqual(invitation.custom_user_data["favorite_subject"], "math")
         self.assertEqual(invitation.tableau_role, "Viewer")

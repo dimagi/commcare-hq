@@ -290,6 +290,7 @@ HQ_APPS = (
     'corehq.apps.products',
     'corehq.apps.programs',
     'corehq.apps.project_db',
+    'corehq.apps.public_webforms',
     'corehq.apps.registry.app_config.RegistryAppConfig',
     'corehq.project_limits',
     'corehq.apps.commtrack',
@@ -787,6 +788,7 @@ AUDIT_ALL_VIEWS = False
 AUDIT_VIEWS = []
 AUDIT_MODULES = []
 AUDIT_ADMIN_VIEWS = False
+AUDITCARE_RETENTION_YEARS = 6
 
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
@@ -889,9 +891,10 @@ OAUTH2_PROVIDER = {
     # https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#access-token-expire-seconds
     'ACCESS_TOKEN_EXPIRE_SECONDS': 15 * 60,
     'PKCE_REQUIRED': _pkce_required,
+    'SCOPES_BACKEND_CLASS': 'corehq.apps.hqwebapp.oauth_scopes.HQScopes',
     'SCOPES': {
-        'access_apis': 'Access API data on all your CommCare projects',
-        'reports:view': 'Allow users to view and download all report data',
+        'access_apis': 'Access CommCare API data',
+        'reports:view': 'View and download report data',
         'mobile_access': 'Allow access to mobile sync and submit endpoints',
         'sync': '(Deprecated, do not use) Allow access to mobile endpoints',
     },

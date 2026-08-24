@@ -73,6 +73,10 @@
   font-family: $font-family-base;
 }
 
+.select2-container .select2-search--inline .select2-search__field {
+  font-family: $font-family-base !important;
+}
+
 .select2-container.select2-container-active > .select2-choice {
   box-shadow: 0 0 10px $cc-brand-mid;
 }

@@ -1270,7 +1270,7 @@ msgstr ""
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
-#: corehq/apps/registration/forms.py
+#: corehq/apps/public_webforms/forms.py corehq/apps/registration/forms.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/forms.py
@@ -5344,6 +5344,7 @@ msgstr "केस"
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py
 #: corehq/apps/reports/standard/inspect.py
 #: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
@@ -5365,8 +5366,9 @@ msgstr "डेटा स्रोत"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/linked_domain/const.py corehq/apps/reports/filters/forms.py
-#: corehq/apps/reports/filters/select.py
+#: corehq/apps/linked_domain/const.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+#: corehq/apps/reports/filters/forms.py corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 msgid "Application"
@@ -5415,12 +5417,15 @@ msgstr "इस रिपोर्ट के लिए डेटा प्रा�
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py
 msgid "Menu"
 msgstr "मेनू"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/domain/forms.py
-#: corehq/apps/export/forms.py corehq/apps/reports/filters/select.py
+#: corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+#: corehq/apps/reports/filters/select.py
 msgid "Select Application"
 msgstr "एप्लिकेशन चुनें"
 
@@ -5428,10 +5433,12 @@ msgstr "एप्लिकेशन चुनें"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list.html
 #: corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 msgid "Select Menu"
 msgstr "मेनू चुनें"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 msgid "Select Form"
 msgstr "फॉर्म चुनें"
 
@@ -5786,6 +5793,32 @@ msgid ""
 msgstr ""
 "एप्लिकेशन की कॉपी सफल रही, लेकिन एप्लिकेशन में मल्टीमीडिया फ़ाइल(फ़ाइलें) "
 "गायब हैं।"
+
+#: corehq/apps/app_manager/models/applications.py
+#| msgid ""
+#| "Copying the application succeeded, but the application will have errors "
+#| "because your application contains a Mobile Report Module that references a "
+#| "UCR configured in this project space. Multimedia may be absent."
+msgid ""
+"Updating the application succeeded, but the application will have errors "
+"because it contains a Mobile Report Module that references a custom report "
+"(UCR) that isn't available in this project space. Multimedia may be absent."
+msgstr ""
+"एप्लिकेशन अपडेट करना सफल रहा, लेकिन एप्लिकेशन में त्रुटियाँ होंगी क्योंकि "
+"इसमें एक मोबाइल रिपोर्ट मॉड्यूल है जो एक कस्टम रिपोर्ट (UCR) को संदर्भित "
+"करता है जो इस प्रोजेक्ट स्पेस में उपलब्ध नहीं है। मल्टीमीडिया अनुपस्थित हो "
+"सकता है।"
+
+#: corehq/apps/app_manager/models/applications.py
+#| msgid ""
+#| "Copying the application succeeded, but the application is missing multimedia"
+#| " file(s)."
+msgid ""
+"Updating the application succeeded, but the application is missing "
+"multimedia file(s)."
+msgstr ""
+"एप्लिकेशन अपडेट करना सफल रहा, लेकिन एप्लिकेशन में मल्टीमीडिया फ़ाइल(फ़ाइलें)"
+" गायब हैं।"
 
 #: corehq/apps/app_manager/models/applications.py
 msgid "Space-separated list of privilege strings from corehq.privileges"
@@ -7886,7 +7919,7 @@ msgstr "मूल्य"
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/data_cleaning/forms/columns.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/views.py
+#: corehq/apps/data_dictionary/views.py corehq/apps/public_webforms/forms.py
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
@@ -8060,7 +8093,8 @@ msgstr "बल्क ऐप्लिकेशन अनुवाद"
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
-#: corehq/apps/app_manager/views/modules.py corehq/apps/reminders/forms.py
+#: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py corehq/apps/reminders/forms.py
 #: corehq/apps/sms/filters.py
 msgid "Survey"
 msgstr "सर्वेक्षण"
@@ -14163,6 +14197,7 @@ msgid "Followup Form"
 msgstr "फॉलोअप फॉर्म"
 
 #: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py
 msgid "Registration"
 msgstr "पंजीकरण"
 
@@ -14494,6 +14529,11 @@ msgstr ""
 "प्रॉपर्टी सही ढंग से स्वरूपित नहीं है। इसे इस तरह स्वरूपित होना चाहिए: "
 "loacation:mytype:referencetype/property। उदाहरण के लिए: "
 "location:outlet:state/name"
+
+#: corehq/apps/builds/models.py
+#, python-format
+msgid "Build version %(value)s does not comply with the x.y.z schema"
+msgstr "बिल्ड संस्करण %(value)s x.y.z स्कीमा के अनुरूप नहीं है"
 
 #: corehq/apps/builds/templates/builds/all.html
 msgid "Build Number"
@@ -16016,8 +16056,8 @@ msgid "No endpoints configured."
 msgstr "कोई एंडपॉइंट कॉन्फ़िगर नहीं किया गया है।"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-msgid "-- Field --"
-msgstr "-- फ़ील्ड --"
+msgid "Field"
+msgstr "फ़ील्ड"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Operation --"
@@ -16030,6 +16070,10 @@ msgstr "पैरामीटर"
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Parameter --"
 msgstr "-- पैरामीटर --"
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+msgid "Copy condition"
+msgstr "शर्त कॉपी करें"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "Remove condition"
@@ -16060,6 +16104,10 @@ msgid "match none of the following"
 msgstr "निम्न में से किसी से भी मेल नहीं खाता है"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
+msgid "Copy group"
+msgstr "समूह कॉपी करें"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
 msgid "Remove group"
 msgstr "समूह हटाएँ"
 
@@ -16070,6 +16118,18 @@ msgstr "अभी तक कोई शर्त नहीं है। नीच
 #: corehq/apps/case_search/templates/case_search/partials/group_node.html
 msgid "Add Condition"
 msgstr "शर्त जोड़ें"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Paste Condition"
+msgstr "शर्त पेस्ट करें"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Paste Group"
+msgstr "समूह पेस्ट करें"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Copied group is nested too deeply to paste here"
+msgstr "कॉपी किया गया समूह यहाँ चिपकाने के लिए बहुत गहराई में नेस्टेड है"
 
 #: corehq/apps/case_search/templates/case_search/partials/query_builder.html
 msgid "Show query JSON"
@@ -16963,7 +17023,7 @@ msgid "Default consumption values updated"
 msgstr "डिफ़ॉल्ट खपत मान अपडेट किए गए"
 
 #: corehq/apps/commtrack/views.py corehq/apps/domain/forms.py
-#: corehq/apps/reminders/forms.py
+#: corehq/apps/public_webforms/forms.py corehq/apps/reminders/forms.py
 #: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
 #: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
 #: corehq/apps/sms/models.py corehq/messaging/scheduling/forms.py
@@ -20387,13 +20447,11 @@ msgstr "{form} को सफलतापूर्वक अनआर्काइ
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-#| msgid "Could not archive {form}: {error}"
 msgid "Could not archive {form}"
 msgstr "{form} को आर्काइव नहीं किया जा सका"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-#| msgid "Could not archive {form}: {error}"
 msgid "Could not unarchive {form}"
 msgstr "{form} को अनआर्काइव नहीं किया जा सका"
 
@@ -21324,6 +21382,7 @@ msgstr "कृपया OData फ़ीड्स के लिए एक सी�
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/public_webforms/forms.py
 #: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py
@@ -24405,19 +24464,23 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#, python-format
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >our help site</a\n"
+"      >our pricing page</a\n"
 "    >.\n"
 "  "
 msgstr ""
 "\n"
-"    CommCare सॉफ़्टवेयर प्लान के बारे में अधिक जानकारी के लिए, <a href=\\\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\\\" target=\\\"_blank\\\">हमारी सहायता साइट</a> देखें।\n"
+"    CommCare सॉफ़्टवेयर प्लान के बारे में अधिक जानकारी के लिए,\n"
+"    <a\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
+"      target=\"_blank\"\n"
+"      >हमारे मूल्य निर्धारण पृष्ठ</a\n"
+"    > पर जाएँ।\n"
 "  "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
@@ -37633,6 +37696,109 @@ msgstr "प्रोग्राम सहेजा गया!"
 msgid "Edit Program"
 msgstr "प्रोग्राम संपादित करें"
 
+#: corehq/apps/public_webforms/forms.py
+msgid "Identifies this public webform. Respondents will see the form's name."
+msgstr ""
+"यह सार्वजनिक वेबफॉर्म की पहचान करता है। उत्तरदाता फॉर्म का नाम देखेंगे।"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "Delete Request"
+msgid "Close Requests At"
+msgstr "अनुरोध बंद करें"
+
+#: corehq/apps/public_webforms/forms.py
+msgid ""
+"The public request page closes at this time. One-time links already sent can"
+" be used until they expire."
+msgstr ""
+"सार्वजनिक अनुरोध पृष्ठ इस समय बंद हो जाएगा। पहले से भेजे गए एक-बार के लिंक "
+"उनकी समाप्ति तक उपयोग किए जा सकते हैं।"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "How Respondents Receive Their One-time Link"
+msgstr "उत्तरदाता अपना एक-बार का लिंक कैसे प्राप्त करते हैं"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "Delete Request"
+msgid "Open to Requests"
+msgstr "अनुरोधों के लिए खुला"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Immediately open this public webform to one-time link requests."
+msgstr "इस सार्वजनिक वेबफॉर्म को तुरंत एक-बार लिंक अनुरोधों के लिए खोलें।"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A branded email with a single-use link."
+msgstr "एक ब्रांडेड ईमेल जिसमें एक सिंगल-यूज़ लिंक है।"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A short text with a shortened link. Billed per message sent."
+msgstr ""
+"एक छोटा टेक्स्ट जिसमें एक छोटा लिंक है। भेजे गए प्रत्येक संदेश के लिए बिल "
+"किया जाएगा।"
+
+#: corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#: corehq/apps/public_webforms/views.py
+#| msgid "Public Webforms"
+msgid "New Public Webform"
+msgstr "नया सार्वजनिक वेबफॉर्म"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "Public Webforms"
+msgid "Create Public Webform"
+msgstr "सार्वजनिक वेबफॉर्म बनाएं"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "Please select application"
+msgid "Please select an application, menu, and form."
+msgstr "कृपया एक एप्लिकेशन, मेनू और फॉर्म चुनें।"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "The selected form does not have a schedule enabled."
+msgid "The selected form can't be used for a public webform."
+msgstr "चयनित फॉर्म को सार्वजनिक वेबफॉर्म के लिए उपयोग नहीं किया जा सकता।"
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#: corehq/apps/public_webforms/views.py corehq/privileges.py
+#: corehq/tabs/tabclasses.py
+msgid "Public Webforms"
+msgstr "सार्वजनिक वेबफॉर्म्स"
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+msgid ""
+"\n"
+"      Publish a registration or survey form to a public URL. Respondents request\n"
+"      a one-time link, pass a bot check, and complete the form once — no\n"
+"      CommCare account needed. Manage which forms are open, when they close, and\n"
+"      revoke access at any time.\n"
+"    "
+msgstr ""
+"\n"
+"      एक पंजीकरण या सर्वेक्षण फॉर्म को सार्वजनिक URL पर प्रकाशित करें। उत्तरदाता एक-बार लिंक का अनुरोध करते हैं, बॉट चेक पास करते हैं, और फॉर्म एक बार पूरा करते हैं — CommCare खाता आवश्यक नहीं है। यह प्रबंधित करें कि कौन से फॉर्म खुले हैं, वे कब बंद होते हैं, और कभी भी एक्सेस रद्द करें।\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+msgid ""
+"\n"
+"          Only <strong>registration</strong> and <strong>survey</strong> forms\n"
+"          are eligible. Forms that update existing cases can't be made public.\n"
+"        "
+msgstr ""
+"\n"
+"          केवल <strong>पंजीकरण</strong> और <strong>सर्वेक्षण</strong> फॉर्म पात्र हैं। जो फॉर्म मौजूदा केस अपडेट करते हैं, उन्हें सार्वजनिक नहीं किया जा सकता।\n"
+"        "
+
+#: corehq/apps/public_webforms/views.py
+#| msgid "Public Webforms"
+msgid "Manage Public Webforms"
+msgstr "सार्वजनिक वेबफॉर्म प्रबंधित करें"
+
+#: corehq/apps/public_webforms/views.py
+#| msgid "Public Webforms"
+msgid "Public webform created."
+msgstr "सार्वजनिक वेबफॉर्म बनाया गया।"
+
 #: corehq/apps/registration/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
@@ -40136,6 +40302,10 @@ msgstr "रीपीटर चुनने के लिए क्लिक क�
 #: corehq/apps/reports/filters/select.py
 msgid "Record Status"
 msgstr "रिकॉर्ड स्थिति"
+
+#: corehq/apps/reports/filters/select.py
+msgid "Payload Error"
+msgstr "पेलोड त्रुटि"
 
 #: corehq/apps/reports/filters/select.py
 msgid "Rebuild restriction feature flag status"
@@ -57060,6 +57230,14 @@ msgstr "अज्ञात केस-प्रकार"
 msgid "Unknown user"
 msgstr "अनजान उपयोगकर्ता"
 
+#: corehq/motech/repeaters/models.py
+msgid "Form {} is not found"
+msgstr "फ़ॉर्म {} नहीं मिला"
+
+#: corehq/motech/repeaters/models.py
+msgid "Case {} is not found"
+msgstr "केस {} नहीं मिला"
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Forms"
 msgstr "फ़ॉर्म फॉरवर्ड करें"
@@ -57376,8 +57554,12 @@ msgid "Delivery Attempts"
 msgstr "डिलीवरी प्रयास"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "View Responses"
-msgstr "प्रतिक्रियाएँ देखें"
+msgid "Preview Payloads"
+msgstr "प्रीव्यू पेलोड्स"
+
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "The payload could not be found."
+msgstr "पेलोड नहीं मिल सका।"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -57789,10 +57971,6 @@ msgstr "लॉक किए गए एडमिन प्रश्न"
 msgid "Save to Case"
 msgstr "केस में सहेजें"
 
-#: corehq/privileges.py
-msgid "Public Webforms"
-msgstr "सार्वजनिक वेबफॉर्म्स"
-
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "रिपोर्ट बिल्डर रिपोर्ट्स"
@@ -57868,6 +58046,11 @@ msgstr "मेरे एप्लिकेशन"
 #: corehq/tabs/tabclasses.py
 msgid "New Application"
 msgstr "नया एप्लिकेशन"
+
+#: corehq/tabs/tabclasses.py
+#| msgid "Create and release new build for apps"
+msgid "Create and manage public webforms."
+msgstr "सार्वजनिक वेबफॉर्म बनाएं और प्रबंधित करें।"
 
 #: corehq/tabs/tabclasses.py
 msgid "Test Inbound SMS"
@@ -58775,6 +58958,12 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid "-- Field --"
+#~ msgstr "-- फ़ील्ड --"
+
+#~ msgid "View Responses"
+#~ msgstr "प्रतिक्रियाएँ देखें"
 
 #, python-brace-format
 #~ msgid "XForm {form_id} does not belong to domain {domain}"

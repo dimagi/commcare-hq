@@ -5,8 +5,9 @@ from django.core.exceptions import ImproperlyConfigured
 import sqlalchemy
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
-from sqlalchemy import Boolean, Column, Date, DateTime, Numeric, Table, Text
+from sqlalchemy import ARRAY, Boolean, Column, Date, DateTime, Numeric, Table, Text
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.types import UserDefinedType
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.sql_db.connections import PROJECT_DB_ENGINE_ID, connection_manager
@@ -38,7 +39,9 @@ def get_project_db_engine():
         raise ImproperlyConfigured(
             f"'{PROJECT_DB_ENGINE_ID}' database not defined in REPORTING_DATABASES"
         )
-    return connection_manager.get_engine(PROJECT_DB_ENGINE_ID)
+    engine = connection_manager.get_engine(PROJECT_DB_ENGINE_ID)
+    _register_earth_type(engine.dialect)
+    return engine
 
 
 def create_project_db_extensions():
@@ -100,11 +103,25 @@ class DomainSchema:
         ))
 
 
+class Earth(UserDefinedType):
+    """The ``earth`` type from PostgreSQL's earthdistance extension."""
+
+    def get_col_spec(self, **kw):
+        return 'earth'
+
+
+def _register_earth_type(dialect):
+    if 'earth' not in dialect.ischema_names:
+        dialect.ischema_names = {**dialect.ischema_names, 'earth': Earth}
+
+
 class CaseTable:
     COERCED_PROPERTY_TYPES = {
-        # CaseProperty data_type to SQLAlchemy column type
-        CaseProperty.DataType.DATE: Date,
-        CaseProperty.DataType.NUMBER: Numeric,
+        # CaseProperty data_type:  (SQLAlchemy column type, default)
+        CaseProperty.DataType.DATE: (Date, None),
+        CaseProperty.DataType.NUMBER: (Numeric, None),
+        CaseProperty.DataType.SELECT: (ARRAY(Text), '{}'),
+        CaseProperty.DataType.GPS: (Earth, None),
     }
 
     def __init__(self, domain, case_type):
@@ -138,8 +155,10 @@ class CaseTable:
         for name, data_type in self._get_dd_properties():
             yield Column(property_column(name), Text, nullable=False, server_default='', comment=name)
 
-            if col_type := self.COERCED_PROPERTY_TYPES.get(data_type):
-                yield Column(property_column(name, data_type), col_type, comment=name)
+            if data_type in self.COERCED_PROPERTY_TYPES:
+                col_type, default = self.COERCED_PROPERTY_TYPES[data_type]
+                yield Column(property_column(name, data_type), col_type, comment=name,
+                             nullable=default is None, server_default=default)
 
     def _get_dd_properties(self):
         return CaseProperty.objects.filter(

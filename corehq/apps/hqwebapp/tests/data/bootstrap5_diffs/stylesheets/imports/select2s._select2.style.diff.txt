@@ -8,7 +8,7 @@
      margin-left: 10px;
      margin-bottom: 3px;
    }
-@@ -14,74 +15,195 @@
+@@ -14,74 +15,199 @@
  }
  
  // Static width for select2 widgets, which otherwise grow too large on form view's case management tab
@@ -106,6 +106,10 @@
 +.select2-search__field::placeholder {
 +  font-size: $font-size-base;
 +  font-family: $font-family-base;
++}
++
++.select2-container .select2-search--inline .select2-search__field {
++  font-family: $font-family-base !important;
 +}
 +
 +.select2-container.select2-container-active > .select2-choice {

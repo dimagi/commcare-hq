@@ -43,6 +43,7 @@ from corehq.apps.domain.auth import (
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.hqwebapp.oauth_scopes import token_domains
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.sso.utils.request_helpers import (
     is_request_blocked_from_viewing_domain_due_to_sso,
@@ -247,18 +248,40 @@ def _oauth2_check(scopes):
         if valid:
             request.user = r.user
             request._auth_method_restricts_superuser_access = True
+            # Read the raw scope string, not `access_token.scopes`, which intersects
+            # against an enumerated dict of static scopes and drops dynamic (domain) scopes.
+            access_token = getattr(r, 'access_token', None)
+            request.oauth_token_domains = token_domains(getattr(access_token, 'scope', None))
             return True
 
     def real_decorator(view):
         def wrapper(request, *args, **kwargs):
-            auth = auth_check(request)
-            if auth:
-                return view(request, *args, **kwargs)
-
-            response = HttpUnauthorized()
-            return response
+            if not auth_check(request):
+                return HttpUnauthorized()
+            if not _oauth_token_allows_request_domain(request):
+                return HttpResponseForbidden()
+            return view(request, *args, **kwargs)
         return wrapper
     return real_decorator
+
+
+def _oauth_token_allows_request_domain(request):
+    """
+    Check an OAuth2 token's project space scope against the requested project space.
+
+    Returns ``True`` when the token is not restricted to any project space.
+
+    A token restricted to one project space is still allowed on project-agnostic
+    endpoints. Those are how a client discovers which projects it may use, so
+    rejecting them would break integration setup.
+    """
+    allowed_domains = getattr(request, 'oauth_token_domains', None)
+    if not allowed_domains:
+        return True
+    domain = getattr(request, 'domain', '')
+    if not domain:
+        return True
+    return domain in allowed_domains
 
 
 def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False,

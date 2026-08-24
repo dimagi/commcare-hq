@@ -49,6 +49,7 @@ IGNORE_MODELS = {
     "auth.Group",
     "auth.Permission",
     "blobs.BlobMigrationState",
+    "builds.CommCareMobileBuild",
     "celery.TaskRecord",
     "cleanup.DeletedCouchDoc",
     "contenttypes.ContentType",

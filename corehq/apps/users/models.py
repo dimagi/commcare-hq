@@ -664,12 +664,14 @@ class _AuthorizableMixin(IsMemberOfMixin):
             or self.has_permission(domain, 'edit_linked_configurations')
         )
 
-    def get_domains(self):
+    def get_domains(self, allow_enterprise=False):
         domains = [dm.domain for dm in self.domain_memberships]
-        if set(domains) == set(self.domains):
-            return domains
-        else:
+        if set(domains) != set(self.domains):
             raise self.Inconsistent("domains and domain_memberships out of sync")
+        if allow_enterprise:
+            from corehq.apps.enterprise.models import EnterprisePermissions
+            return EnterprisePermissions.expand_domains(domains)
+        return domains
 
     @memoized
     def has_permission(self, domain, permission, data=None):
@@ -2517,8 +2519,12 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_language_code(self):
         return self.language
 
-    def get_domains(self):
-        return [dm.domain for dm in self.domain_memberships]
+    def get_domains(self, allow_enterprise=False):
+        domains = [dm.domain for dm in self.domain_memberships]
+        if allow_enterprise:
+            from corehq.apps.enterprise.models import EnterprisePermissions
+            return EnterprisePermissions.expand_domains(domains)
+        return domains
 
     @classmethod
     def get_admins_by_domain(cls, domain):
@@ -3343,8 +3349,7 @@ class DeactivateMobileWorkerTrigger(models.Model):
 
 
 def check_and_send_limit_email(domain, plan_limit, user_count, prev_count):
-    ADDITIONAL_USERS_PRICING = ("https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
-                                "2420015134/CommCare+Pricing+Overview#Additional-Mobile-Users-Fees")
+    ADDITIONAL_USERS_PRICING = 'https://commcare.dimagi.com/pricing/#add-ons'
     ENTERPRISE_LIMIT = -1
     if plan_limit == ENTERPRISE_LIMIT:
         return

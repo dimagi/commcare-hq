@@ -7,12 +7,12 @@ from django.http import HttpResponse
 from django.test import RequestFactory, SimpleTestCase, TestCase
 
 from casexml.apps.phone.xml import get_registration_element_data
-from corehq.apps.app_manager.const import (
+from corehq.apps.public_webforms.decorators import (
     PUBLIC_FORM_SESSION_COOKIE_NAME,
     PUBLIC_FORM_SESSION_HEADER,
+    allow_public_form_session,
 )
-from corehq.apps.app_manager.decorators import allow_public_form_session
-from corehq.apps.app_manager.models import (
+from corehq.apps.public_webforms.models import (
     OTARestorePublicFormUser,
     PublicFormSession,
     PublicFormUser,

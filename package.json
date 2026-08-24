@@ -38,7 +38,7 @@
         "datatables.net-bs5": "1.13.8",
         "datatables.net-fixedcolumns-bs5": "4.3.0",
         "detectrtc": "1.4.0",
-        "dompurify": "3.4.12",
+        "dompurify": "3.4.13",
         "eonasdan-bootstrap-datetimepicker": "4.17.49",
         "exports-loader": "5.0.0",
         "fast-levenshtein": "3.0.0",
@@ -67,7 +67,6 @@
         "marionette.approuter": "^1.0.2",
         "marionette.templatecache": "^1.0.0",
         "markdown-it": "14.2.0",
-        "modernizr": "^3.13.1",
         "moment": "2.29.4",
         "multiselect": "0.9.12",
         "npm": "11.6.2",
@@ -87,7 +86,6 @@
         "webpack": "5.104.1",
         "webpack-cli": "5.1.4",
         "webpack-merge": "6.0.1",
-        "webpack-modernizr-loader": "5.0.0",
         "xpath": "dimagi/js-xpath#v0.0.8",
         "zxcvbn": "4.4.2"
     },
@@ -136,8 +134,6 @@
         "diff": "8.0.3"
     },
     "scripts": {
-        "postinstall": "yarn run -s build:modernizr",
-        "build:modernizr": "modernizr -c modernizr-conf.json -d corehq/apps/hqwebapp/static/hqwebapp/js/lib",
         "dev": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js --watch",
         "test": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js",
         "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js"

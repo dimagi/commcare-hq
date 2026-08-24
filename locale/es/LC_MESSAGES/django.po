@@ -1317,7 +1317,7 @@ msgstr ""
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
-#: corehq/apps/registration/forms.py
+#: corehq/apps/public_webforms/forms.py corehq/apps/registration/forms.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/forms.py
@@ -5498,6 +5498,7 @@ msgstr "Caso"
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py
 #: corehq/apps/reports/standard/inspect.py
 #: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
@@ -5519,8 +5520,9 @@ msgstr "Fuente de Datos"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/linked_domain/const.py corehq/apps/reports/filters/forms.py
-#: corehq/apps/reports/filters/select.py
+#: corehq/apps/linked_domain/const.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+#: corehq/apps/reports/filters/forms.py corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 msgid "Application"
@@ -5570,12 +5572,15 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py
 msgid "Menu"
 msgstr "Menú"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/domain/forms.py
-#: corehq/apps/export/forms.py corehq/apps/reports/filters/select.py
+#: corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+#: corehq/apps/reports/filters/select.py
 msgid "Select Application"
 msgstr "Seleccione la Aplicación"
 
@@ -5583,10 +5588,12 @@ msgstr "Seleccione la Aplicación"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list.html
 #: corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 msgid "Select Menu"
 msgstr "Seleccione el Menú"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 msgid "Select Form"
 msgstr "Seleccione el Formulario"
 
@@ -5948,6 +5955,32 @@ msgid ""
 " file(s)."
 msgstr ""
 "La copia de la aplicación se realizó con éxito, pero faltan archivos "
+"multimedia en la aplicación."
+
+#: corehq/apps/app_manager/models/applications.py
+#| msgid ""
+#| "Copying the application succeeded, but the application will have errors "
+#| "because your application contains a Mobile Report Module that references a "
+#| "UCR configured in this project space. Multimedia may be absent."
+msgid ""
+"Updating the application succeeded, but the application will have errors "
+"because it contains a Mobile Report Module that references a custom report "
+"(UCR) that isn't available in this project space. Multimedia may be absent."
+msgstr ""
+"La actualización de la aplicación fue exitosa, pero la aplicación tendrá "
+"errores porque contiene un Módulo de Reporte Móvil que hace referencia a un "
+"reporte personalizado (UCR) que no está disponible en este espacio de "
+"proyecto. Puede que falte contenido multimedia."
+
+#: corehq/apps/app_manager/models/applications.py
+#| msgid ""
+#| "Copying the application succeeded, but the application is missing multimedia"
+#| " file(s)."
+msgid ""
+"Updating the application succeeded, but the application is missing "
+"multimedia file(s)."
+msgstr ""
+"La actualización de la aplicación fue exitosa, pero faltan archivos "
 "multimedia en la aplicación."
 
 #: corehq/apps/app_manager/models/applications.py
@@ -8099,7 +8132,7 @@ msgstr "Valor"
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/data_cleaning/forms/columns.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/views.py
+#: corehq/apps/data_dictionary/views.py corehq/apps/public_webforms/forms.py
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
@@ -8274,7 +8307,8 @@ msgstr "Traducciones de Aplicaciones Generales"
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
-#: corehq/apps/app_manager/views/modules.py corehq/apps/reminders/forms.py
+#: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py corehq/apps/reminders/forms.py
 #: corehq/apps/sms/filters.py
 msgid "Survey"
 msgstr "Encuesta"
@@ -14477,6 +14511,7 @@ msgid "Followup Form"
 msgstr "Formulario de Seguimiento"
 
 #: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py
 msgid "Registration"
 msgstr "Registro"
 
@@ -14817,6 +14852,11 @@ msgstr ""
 "La propiedad no ha sido formateada correctamente. Debe ser formateada como: "
 "loacation:mytype:referencetype/property. Por ejemplo: "
 "location:outlet:state/name"
+
+#: corehq/apps/builds/models.py
+#, python-format
+msgid "Build version %(value)s does not comply with the x.y.z schema"
+msgstr "La versión de compilación %(value)s no cumple con el esquema x.y.z"
 
 #: corehq/apps/builds/templates/builds/all.html
 msgid "Build Number"
@@ -16354,8 +16394,8 @@ msgid "No endpoints configured."
 msgstr "No hay puntos finales configurados."
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-msgid "-- Field --"
-msgstr "-- Campo --"
+msgid "Field"
+msgstr "Campo"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Operation --"
@@ -16368,6 +16408,10 @@ msgstr "Parámetro"
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Parameter --"
 msgstr "-- Parámetro --"
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
+msgid "Copy condition"
+msgstr "Copiar condición"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "Remove condition"
@@ -16398,6 +16442,10 @@ msgid "match none of the following"
 msgstr "no coincidir con ninguno de los siguientes"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
+msgid "Copy group"
+msgstr "Copiar grupo"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
 msgid "Remove group"
 msgstr "Eliminar grupo"
 
@@ -16408,6 +16456,18 @@ msgstr "Aún no hay condiciones. Agrega una condición o grupo abajo."
 #: corehq/apps/case_search/templates/case_search/partials/group_node.html
 msgid "Add Condition"
 msgstr "Agregar condición"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Paste Condition"
+msgstr "Pegar condición"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Paste Group"
+msgstr "Pegar grupo"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Copied group is nested too deeply to paste here"
+msgstr "El grupo copiado está anidado demasiado profundo para pegar aquí"
 
 #: corehq/apps/case_search/templates/case_search/partials/query_builder.html
 msgid "Show query JSON"
@@ -17319,7 +17379,7 @@ msgid "Default consumption values updated"
 msgstr "Valores predeterminados de consumo actualizados"
 
 #: corehq/apps/commtrack/views.py corehq/apps/domain/forms.py
-#: corehq/apps/reminders/forms.py
+#: corehq/apps/public_webforms/forms.py corehq/apps/reminders/forms.py
 #: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
 #: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
 #: corehq/apps/sms/models.py corehq/messaging/scheduling/forms.py
@@ -20783,13 +20843,11 @@ msgstr "Desarchivado exitosamente {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-#| msgid "Could not archive {form}: {error}"
 msgid "Could not archive {form}"
 msgstr "No se pudo archivar {form}"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-#| msgid "Could not archive {form}: {error}"
 msgid "Could not unarchive {form}"
 msgstr "No se pudo desarchivar {form}"
 
@@ -21742,6 +21800,7 @@ msgstr "Por favor, especifica un límite para los feeds OData."
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/public_webforms/forms.py
 #: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py
@@ -24916,23 +24975,22 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#, python-format
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >our help site</a\n"
+"      >our pricing page</a\n"
 "    >.\n"
 "  "
 msgstr ""
 "\n"
 "    Para más información sobre los planes de software de CommCare, visita\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >nuestro sitio de ayuda</a\n"
+"      >nuestra página de precios</a\n"
 "    >.\n"
 "  "
 
@@ -38388,6 +38446,117 @@ msgstr "¡Programa guardado!"
 msgid "Edit Program"
 msgstr "Editar Programa"
 
+#: corehq/apps/public_webforms/forms.py
+msgid "Identifies this public webform. Respondents will see the form's name."
+msgstr ""
+"Identifica este formulario web público. Las personas que respondan verán el "
+"nombre del formulario."
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "Delete Request"
+msgid "Close Requests At"
+msgstr "Cerrar Solicitudes En"
+
+#: corehq/apps/public_webforms/forms.py
+msgid ""
+"The public request page closes at this time. One-time links already sent can"
+" be used until they expire."
+msgstr ""
+"La página pública de solicitudes se cerrará en este momento. Los enlaces de "
+"un solo uso ya enviados podrán usarse hasta que expiren."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "How Respondents Receive Their One-time Link"
+msgstr "Cómo reciben su enlace de un solo uso las personas que responden"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "Delete Request"
+msgid "Open to Requests"
+msgstr "Abierto a Solicitudes"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Immediately open this public webform to one-time link requests."
+msgstr ""
+"Abrir inmediatamente este formulario web público a solicitudes de enlace de "
+"un solo uso."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A branded email with a single-use link."
+msgstr "Un correo electrónico con marca y un enlace de un solo uso."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A short text with a shortened link. Billed per message sent."
+msgstr ""
+"Un mensaje de texto corto con un enlace acortado. Se cobra por cada mensaje "
+"enviado."
+
+#: corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#: corehq/apps/public_webforms/views.py
+#| msgid "Public Webforms"
+msgid "New Public Webform"
+msgstr "Nuevo Formulario Web Público"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "Public Webforms"
+msgid "Create Public Webform"
+msgstr "Crear Formulario Web Público"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "Please select application"
+msgid "Please select an application, menu, and form."
+msgstr "Por favor, selecciona una aplicación, menú y formulario."
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "The selected form does not have a schedule enabled."
+msgid "The selected form can't be used for a public webform."
+msgstr ""
+"El formulario seleccionado no puede usarse para un formulario web público."
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#: corehq/apps/public_webforms/views.py corehq/privileges.py
+#: corehq/tabs/tabclasses.py
+msgid "Public Webforms"
+msgstr "Formularios web públicos"
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+msgid ""
+"\n"
+"      Publish a registration or survey form to a public URL. Respondents request\n"
+"      a one-time link, pass a bot check, and complete the form once — no\n"
+"      CommCare account needed. Manage which forms are open, when they close, and\n"
+"      revoke access at any time.\n"
+"    "
+msgstr ""
+"\n"
+"      Publica un formulario de registro o encuesta en una URL pública. Las personas que respondan solicitan\n"
+"      un enlace de un solo uso, pasan una verificación de bot y completan el formulario una vez — no\n"
+"      se necesita cuenta de CommCare. Gestiona qué formularios están abiertos, cuándo cierran y\n"
+"      revoca el acceso en cualquier momento.\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+msgid ""
+"\n"
+"          Only <strong>registration</strong> and <strong>survey</strong> forms\n"
+"          are eligible. Forms that update existing cases can't be made public.\n"
+"        "
+msgstr ""
+"\n"
+"          Solo los formularios de <strong>registro</strong> y <strong>encuesta</strong>\n"
+"          son elegibles. Los formularios que actualizan casos existentes no pueden hacerse públicos.\n"
+"        "
+
+#: corehq/apps/public_webforms/views.py
+#| msgid "Public Webforms"
+msgid "Manage Public Webforms"
+msgstr "Gestionar Formularios Web Públicos"
+
+#: corehq/apps/public_webforms/views.py
+#| msgid "Public Webforms"
+msgid "Public webform created."
+msgstr "Formulario web público creado."
+
 #: corehq/apps/registration/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
@@ -40922,6 +41091,10 @@ msgstr "Haga clic para seleccionar repetidores"
 #: corehq/apps/reports/filters/select.py
 msgid "Record Status"
 msgstr "Grabar Estado"
+
+#: corehq/apps/reports/filters/select.py
+msgid "Payload Error"
+msgstr "Error de carga útil"
 
 #: corehq/apps/reports/filters/select.py
 msgid "Rebuild restriction feature flag status"
@@ -58117,6 +58290,14 @@ msgstr "Tipo de caso desconocido"
 msgid "Unknown user"
 msgstr "Usuario desconocido"
 
+#: corehq/motech/repeaters/models.py
+msgid "Form {} is not found"
+msgstr "Formulario {} no encontrado"
+
+#: corehq/motech/repeaters/models.py
+msgid "Case {} is not found"
+msgstr "Caso {} no encontrado"
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Forms"
 msgstr "Reenviar Formularios"
@@ -58440,8 +58621,12 @@ msgid "Delivery Attempts"
 msgstr "Intentos de Envíos"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "View Responses"
-msgstr "Ver Respuestas"
+msgid "Preview Payloads"
+msgstr "Vista previa de cargas útiles"
+
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "The payload could not be found."
+msgstr "No se pudo encontrar la carga útil."
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -58863,10 +59048,6 @@ msgstr "Preguntas de Administración Bloqueadas"
 msgid "Save to Case"
 msgstr "Guardar en el caso"
 
-#: corehq/privileges.py
-msgid "Public Webforms"
-msgstr "Formularios web públicos"
-
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Reportes de Desarrollador de Reportes"
@@ -58942,6 +59123,11 @@ msgstr "Mis Aplicaciones"
 #: corehq/tabs/tabclasses.py
 msgid "New Application"
 msgstr "Aplicación Nueva"
+
+#: corehq/tabs/tabclasses.py
+#| msgid "Create and release new build for apps"
+msgid "Create and manage public webforms."
+msgstr "Crea y gestiona formularios web públicos."
 
 #: corehq/tabs/tabclasses.py
 msgid "Test Inbound SMS"
@@ -59852,6 +60038,12 @@ msgstr "Las columnas requeridas son {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Ingrese un JSON válido"
+
+#~ msgid "-- Field --"
+#~ msgstr "-- Campo --"
+
+#~ msgid "View Responses"
+#~ msgstr "Ver Respuestas"
 
 #, python-brace-format
 #~ msgid "XForm {form_id} does not belong to domain {domain}"

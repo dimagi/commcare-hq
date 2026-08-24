@@ -373,10 +373,12 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         return bundle
 
     def obj_delete(self, bundle, **kwargs):
-        user = CommCareUser.get(kwargs['pk'])
+        user = CommCareUser.get_by_user_id(kwargs['pk'], kwargs['domain'])
         if user:
             user.retire(bundle.request.domain, deleted_by=bundle.request.couch_user,
                         deleted_via=USER_CHANGE_VIA_API)
+        else:
+            raise NotFound(f"Could not find user for id: {kwargs['pk']}")
         return ImmediateHttpResponse(response=http.HttpAccepted())
 
     def dehydrate_primary_location(self, bundle):
