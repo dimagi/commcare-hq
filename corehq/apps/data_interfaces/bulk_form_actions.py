@@ -38,6 +38,7 @@ def run_bulk_form_action(job):
     """Execute ``job`` start to finish, updating counts and status on the row."""
     try:
         user_id = _resolve_user_id(job.requested_by)
+        action_fn = build_form_action(job, user_id)
     except BulkFormActionError:
         mark_job_failed(job.id)
         raise
@@ -47,7 +48,6 @@ def run_bulk_form_action(job):
     job.save()
 
     form_ids = job.get_requested_ids()
-    action_fn = build_form_action(job, user_id)
     save_interval = _save_interval(job.requested_count)
 
     skipped = defaultdict(list)
@@ -96,7 +96,7 @@ def build_form_action(job, user_id):
         return lambda f: f.archive(user_id=user_id)
     if job.action == BulkAsyncJob.Action.UNARCHIVE:
         return lambda f: f.unarchive(user_id=user_id)
-    raise ValueError(f'unknown bulk action: {job.action}')
+    raise BulkFormActionError(f'unknown bulk action: {job.action}')
 
 
 def mark_job_failed(job_id):

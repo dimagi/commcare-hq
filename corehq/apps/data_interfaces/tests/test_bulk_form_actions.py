@@ -41,6 +41,10 @@ class TestBuildFormAction(TestCase):
         action_fn = build_form_action(self._job(BulkAsyncJob.Action.UNARCHIVE), user_id='uid')
         assert callable(action_fn)
 
+    def test_unsupported_action(self):
+        with pytest.raises(BulkFormActionError):
+            build_form_action(self._job('UNKNOWN'), user_id='uid')
+
 
 @sharded
 class TestRunBulkFormAction(TestCase):
@@ -113,6 +117,17 @@ class TestRunBulkFormAction(TestCase):
 
     def test_unknown_user_raises_error(self):
         job = self._job(BulkAsyncJob.Action.ARCHIVE, ['form-1'], username='unknown')
+
+        with pytest.raises(BulkFormActionError):
+            run_bulk_form_action(job)
+
+        job.refresh_from_db()
+        assert job.status == BulkAsyncJob.Status.FAILED
+        assert job.started_at is None
+        assert job.completed_at is not None
+
+    def test_unsupported_action_raises_error(self):
+        job = self._job('UNKNOWN', ['form-1'])
 
         with pytest.raises(BulkFormActionError):
             run_bulk_form_action(job)
