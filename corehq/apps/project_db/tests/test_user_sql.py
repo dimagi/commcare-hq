@@ -3,6 +3,7 @@ from decimal import Decimal
 import pytest
 from sqlalchemy import (
     and_,
+    bindparam,
     column,
     not_,
     nullsfirst,
@@ -157,6 +158,13 @@ SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
     ('SELECT * FROM client WHERE name IS NOT TRUE',
      select([CLIENT]).where(not_(CLIENT.c.name.is_(True)))),
 
+    # Query parameters are left for the caller to bind after translation
+    ('SELECT * FROM client WHERE name = :who',
+     select([CLIENT]).where(CLIENT.c.name == bindparam('who'))),
+    # One parameter can hold a whole list of values
+    ('SELECT * FROM client WHERE name IN :names',
+     select([CLIENT]).where(CLIENT.c.name.in_(bindparam('names', expanding=True)))),
+
     # Array operators
     ("SELECT * FROM survey WHERE symptoms @> ARRAY['fever', 'cough']",
      select([SURVEY]).where(SURVEY.c.symptoms.bool_op('@>')(_bind(['fever', 'cough'])))),
@@ -213,6 +221,16 @@ def _compiled(query):
     'SELECT * FROM client WHERE case_id = -1',    # negative number
     "SELECT * FROM client WHERE name LIKE 'x%'",  # LIKE
     'SELECT * FROM client WHERE name IN ()',      # IN with no values
+
+    # Query parameters must be named, and the name must be a plain identifier
+    # because it is interpolated into the compiled SQL
+    'SELECT * FROM client WHERE name = %s',           # unnamed
+    'SELECT * FROM client WHERE name = ?',            # unnamed
+    'SELECT * FROM client WHERE name = $1',           # positional
+    'SELECT * FROM client WHERE name = %(who)s',      # not the supported spelling
+    'SELECT * FROM client WHERE name = :hq_param_1',  # reserved prefix
+    'SELECT * FROM client WHERE name IN tbl',         # IN takes a list or parameter
+    'SELECT * FROM client WHERE name = :"a)s; DROP TABLE client; --"',
     'SELECT * FROM survey WHERE symptoms @> ARRAY[symptoms]', # Array literals only
     'SELECT * FROM client WHERE name IN (SELECT name FROM client)',  # IN a subquery
     'SELECT * FROM client WHERE name',            # not a comparison
@@ -267,6 +285,16 @@ def test_literals_bind_under_our_own_prefix():
                    'WHERE client.name = %(hq_param_1)s '
                    'AND client.case_id = %(hq_param_2)s')
     assert params == {'hq_param_1': (str, 'x'), 'hq_param_2': (int, 5)}
+
+
+def test_query_parameters_are_left_unbound():
+    query = translate("SELECT name FROM client WHERE name = :who AND case_id = 'c1'", TABLES)
+    compiled = query.compile(dialect=postgresql.dialect())
+    assert str(compiled) == ('SELECT client.name \nFROM client \n'
+                             'WHERE client.name = %(who)s '
+                             'AND client.case_id = %(hq_param_1)s')
+    assert [name for name, bind in compiled.binds.items() if bind.required] == ['who']
+    assert compiled.params == {'hq_param_1': 'c1', 'who': None}
 
 
 def test_handle_quoted_tables():
