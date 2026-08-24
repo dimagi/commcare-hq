@@ -1992,7 +1992,8 @@ class BulkAsyncJob(models.Model):
         return self.status in (self.Status.COMPLETE, self.Status.FAILED)
 
     def set_requested_ids(self, form_ids, db=None):
-        ids = sorted(set(form_ids))
+        # dict.fromkeys dedups while keeping the order ids were requested in
+        ids = list(dict.fromkeys(form_ids))
         self.requested_ids_blob_key = self._put_blob(ids, db=db)
         return ids
 
@@ -2000,8 +2001,7 @@ class BulkAsyncJob(models.Model):
         return self._get_blob(self.requested_ids_blob_key)
 
     def set_skipped(self, grouped):
-        sorted_groups = {reason: sorted(ids) for reason, ids in grouped.items()}
-        self.skipped_ids_blob_key = self._put_blob(sorted_groups)
+        self.skipped_ids_blob_key = self._put_blob(grouped)
 
     def get_skipped(self):
         return self._get_blob(self.skipped_ids_blob_key)

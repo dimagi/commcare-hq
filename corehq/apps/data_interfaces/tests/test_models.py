@@ -665,17 +665,17 @@ class TestBulkAsyncJobBlobs(TestCase):
             requested_by='someone',
         )
 
-    def test_requested_ids_round_trip_dedups_and_sorts(self):
+    def test_requested_ids_round_trip_dedups(self):
         job = self._job()
         stored = job.set_requested_ids(['c', 'a', 'b', 'a'])
-        assert stored == ['a', 'b', 'c']
+        assert stored == ['c', 'a', 'b']
         assert job.requested_ids_blob_key
-        assert job.get_requested_ids() == ['a', 'b', 'c']
+        assert job.get_requested_ids() == ['c', 'a', 'b']
 
-    def test_skipped_round_trip_sorts_each_group(self):
+    def test_skipped_round_trip(self):
         job = self._job()
         job.set_skipped({'not_found': ['z', 'a'], 'not_archived': ['n', 'm']})
-        assert job.get_skipped() == {'not_found': ['a', 'z'], 'not_archived': ['m', 'n']}
+        assert job.get_skipped() == {'not_found': ['z', 'a'], 'not_archived': ['n', 'm']}
 
 
 class TestBulkAsyncJobModelField(TestCase):
