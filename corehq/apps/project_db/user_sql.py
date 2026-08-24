@@ -57,17 +57,31 @@ def _unpack(node, *args):
 
 
 def _convert_select(node, tables):
-    expressions, from_, joins, where = _unpack(node, 'expressions', 'from_', 'joins', 'where')
+    expressions, from_, joins, where, distinct = _unpack(
+        node, 'expressions', 'from_', 'joins', 'where', 'distinct')
     if from_ is None:
         raise UnsupportedSQL("a FROM clause is required")
     selectable = _convert_table_ref(from_.this, tables)
     for join in joins or []:
         selectable = _convert_join(join, selectable, tables)
     query = select(_convert_projection(expressions, selectable.c)).select_from(selectable)
+    if distinct is not None:
+        query = query.distinct(*_convert_distinct_on(distinct, selectable.c))
     if where is not None:
         predicate, = _unpack(where, 'this')
         query = query.where(_convert_predicate(predicate, selectable.c))
     return query
+
+
+def _convert_distinct_on(node, columns):
+    """Resolve the columns of a ``DISTINCT ON``, or none for a plain ``DISTINCT``"""
+    on, = _unpack(node, 'on')
+    if on is None:
+        return []
+    on_expressions, = _unpack(on, 'expressions')
+    if not on_expressions:
+        raise UnsupportedSQL("DISTINCT ON requires at least one column")
+    return [_convert_column(e, columns) for e in on_expressions]
 
 
 def _convert_join(node, selectable, tables):

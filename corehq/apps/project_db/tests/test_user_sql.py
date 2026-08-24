@@ -72,6 +72,14 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
     ('SELECT * FROM client LEFT JOIN visit ON client.case_id = visit.parent_id',
      select([CLIENT.join(VISIT, ON, isouter=True)])),
 
+    # DISTINCT
+    ('SELECT DISTINCT name FROM client', select([CLIENT.c.name]).distinct()),
+    # DISTINCT ON columns need not appear in the projection
+    ('SELECT DISTINCT ON (case_id) name FROM client',
+     select([CLIENT.c.name]).distinct(CLIENT.c.case_id)),
+    ('SELECT DISTINCT ON (case_id, name) name FROM client',
+     select([CLIENT.c.name]).distinct(CLIENT.c.case_id, CLIENT.c.name)),
+
     # Unions
     ('SELECT case_id FROM client UNION SELECT visit_id FROM visit',
      union(select([CLIENT.c.case_id]), select([VISIT.c.visit_id]))),
@@ -170,6 +178,7 @@ def _compiled(query):
     'SELECT visit.name FROM client',      # qualified by a table not in the FROM
     "SELECT * FROM client WHERE name IS 'x'",       # IS with an unsupported operand
     'SELECT * FROM client WHERE name IS DISTINCT FROM NULL',  # IS DISTINCT FROM
+    'SELECT DISTINCT ON () name FROM client',        # DISTINCT ON with no columns
     'SELECT * FROM client WHERE case_id = -1',    # negative number
     "SELECT * FROM client WHERE name LIKE 'x%'",  # LIKE
     'SELECT * FROM client WHERE name IN ()',      # IN with no values
