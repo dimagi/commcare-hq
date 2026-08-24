@@ -21,7 +21,8 @@ from corehq.apps.project_db.user_sql import UnsupportedSQL, translate
 CLIENT = table('client', column('case_id'), column('name'))
 VISIT = table('visit', column('visit_id'), column('parent_id'), column('name'))
 FORM = table('form', column('form_id'), column('visit_id'))
-TABLES = {'client': CLIENT, 'visit': VISIT, 'form': FORM}
+SURVEY = table('survey', column('symptoms'))
+TABLES = {'client': CLIENT, 'visit': VISIT, 'form': FORM, 'survey': SURVEY}
 
 ON = CLIENT.c.case_id == VISIT.c.parent_id
 CLIENT_VISIT = CLIENT.join(VISIT, ON)
@@ -147,6 +148,16 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
      select([CLIENT]).where(CLIENT.c.name.is_(False))),
     ('SELECT * FROM client WHERE name IS NOT TRUE',
      select([CLIENT]).where(not_(CLIENT.c.name.is_(True)))),
+
+    # Array operators
+    ("SELECT * FROM survey WHERE symptoms @> ARRAY['fever', 'cough']",
+     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('@>')(literal(['fever', 'cough'])))),
+    ("SELECT * FROM survey WHERE symptoms <@ ARRAY['fever']",
+     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('<@')(literal(['fever'])))),
+    ("SELECT * FROM survey WHERE symptoms && ARRAY['fever']",
+     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('&&')(literal(['fever'])))),
+    ("SELECT * FROM survey WHERE symptoms @> '{fever,cough}'",
+     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('@>')(literal('{fever,cough}')))),
 ])
 def test_valid_queries(sql, expected):
     assert _compiled(translate(sql, TABLES)) == _compiled(expected)
@@ -194,6 +205,7 @@ def _compiled(query):
     'SELECT * FROM client WHERE case_id = -1',    # negative number
     "SELECT * FROM client WHERE name LIKE 'x%'",  # LIKE
     'SELECT * FROM client WHERE name IN ()',      # IN with no values
+    'SELECT * FROM survey WHERE symptoms @> ARRAY[symptoms]', # Array literals only
     'SELECT * FROM client WHERE name IN (SELECT name FROM client)',  # IN a subquery
     'SELECT * FROM client WHERE name',            # not a comparison
     "SELECT * FROM client WHERE LOWER(name) = 'x'",  # function call
