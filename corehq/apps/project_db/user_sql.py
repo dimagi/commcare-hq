@@ -114,7 +114,7 @@ def _convert_join(node, selectable, tables):
     table_ref, on, side = _unpack(node, 'this', 'on', 'side')
     table = _convert_table_ref(table_ref, tables)
     if table.name in {col.table.name for col in selectable.c}:
-        raise UnsupportedSQL(f"table joined more than once: {table.name}")
+        raise UnsupportedSQL(f"table name used more than once: {table.name}")
     predicate = _convert_predicate(on, list(selectable.c) + list(table.c))
 
     if not side:
@@ -241,8 +241,12 @@ def _convert_table_ref(node, tables):
     """Return the table a SQL table reference refers to"""
     if not (isinstance(node, exp.Table) and isinstance(node.this, exp.Identifier)):
         raise UnsupportedSQL(f"expected table, got {str(node)}")
-    identifier, = _unpack(node, 'this')
+    identifier, alias = _unpack(node, 'this', 'alias')
     try:
-        return tables[identifier.name]
+        selectable = tables[identifier.name]
     except KeyError:
         raise UnsupportedSQL(f"unknown table: {identifier.name}")
+    if alias is not None:
+        alias_identifier, = _unpack(alias, 'this')
+        return selectable.alias(alias_identifier.name)
+    return selectable
