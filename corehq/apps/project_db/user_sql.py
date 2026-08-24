@@ -3,6 +3,7 @@
 Only a strict subset of SQL is supported; anything outside it errors
 """
 import operator
+import re
 
 import sqlglot
 from sqlglot import exp
@@ -26,6 +27,10 @@ class UnsupportedSQL(Exception):
 
 
 LITERAL_PARAM_PREFIX = 'hq_param'  # Our reserved namespace for parameters
+
+# A query parameter's name is interpolated into the compiled SQL, so it is
+# restricted to characters that cannot close the placeholder and inject SQL.
+PARAM_NAME = re.compile(r'[A-Za-z_][A-Za-z0-9_]*\Z')
 
 
 def _bind(value):
@@ -201,11 +206,15 @@ def _convert_predicate(node, columns):
         value = _convert_value(expression, columns)
         return value.isnot(target) if negate else value.is_(target)
     if isinstance(node, exp.In):
-        value, values = _unpack(node, 'this', 'expressions')
+        value, values, field = _unpack(node, 'this', 'expressions', 'field')
+        operand = _convert_value(value, columns)
+        if field is not None:
+            if not isinstance(field, exp.Placeholder):
+                raise UnsupportedSQL(f"unsupported IN expression: {str(field)}")
+            return operand.in_(_convert_placeholder(field, expanding=True))
         if not values:
             raise UnsupportedSQL("IN requires at least one value")
-        return _convert_value(value, columns).in_(
-            [_convert_value(v, columns) for v in values])
+        return operand.in_([_convert_value(v, columns) for v in values])
     if combine := BOOLEAN_OPS.get(type(node)):
         left, right = _unpack(node, 'this', 'expression')
         return combine(_convert_predicate(left, columns),
@@ -232,7 +241,19 @@ def _convert_value(node, columns):
         return _bind(bool(value))
     if isinstance(node, exp.Array):
         return _convert_array(node)
+    if isinstance(node, exp.Placeholder):
+        return _convert_placeholder(node)
     return _convert_column(node, columns)
+
+
+def _convert_placeholder(node, expanding=False):
+    """Convert a ``:name`` placeholder to a parameter for the caller to bind"""
+    name, = _unpack(node, 'this')
+    if not isinstance(name, str) or not PARAM_NAME.match(name):
+        raise UnsupportedSQL("query parameters must be written as `:name`")
+    if name.startswith(LITERAL_PARAM_PREFIX):
+        raise UnsupportedSQL(f"query parameter names may not begin with '{LITERAL_PARAM_PREFIX}'")
+    return bindparam(name, expanding=expanding)
 
 
 def _convert_array(node):
