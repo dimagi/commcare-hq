@@ -6,6 +6,8 @@ from sqlalchemy import (
     column,
     literal,
     not_,
+    nullsfirst,
+    nullslast,
     or_,
     select,
     table,
@@ -79,6 +81,14 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
      select([CLIENT.c.name]).distinct(CLIENT.c.case_id)),
     ('SELECT DISTINCT ON (case_id, name) name FROM client',
      select([CLIENT.c.name]).distinct(CLIENT.c.case_id, CLIENT.c.name)),
+
+    # ORDER BY - each key gets its own direction and default NULLS placement
+    ('SELECT * FROM client ORDER BY name, case_id DESC',
+     select([CLIENT]).order_by(nullslast(CLIENT.c.name.asc()),
+                               nullsfirst(CLIENT.c.case_id.desc()))),
+    # An explicit NULLS placement overrides the direction's default
+    ('SELECT name FROM client ORDER BY name DESC NULLS LAST',
+     select([CLIENT.c.name]).order_by(nullslast(CLIENT.c.name.desc()))),
 
     # Unions
     ('SELECT case_id FROM client UNION SELECT visit_id FROM visit',
@@ -179,6 +189,8 @@ def _compiled(query):
     "SELECT * FROM client WHERE name IS 'x'",       # IS with an unsupported operand
     'SELECT * FROM client WHERE name IS DISTINCT FROM NULL',  # IS DISTINCT FROM
     'SELECT DISTINCT ON () name FROM client',        # DISTINCT ON with no columns
+    'SELECT name FROM client ORDER BY 1',           # ORDER BY an ordinal
+    'SELECT name AS n FROM client ORDER BY n',      # ORDER BY a column alias
     'SELECT * FROM client WHERE case_id = -1',    # negative number
     "SELECT * FROM client WHERE name LIKE 'x%'",  # LIKE
     'SELECT * FROM client WHERE name IN ()',      # IN with no values
