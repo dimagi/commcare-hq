@@ -10,7 +10,7 @@ from sqlglot.errors import SqlglotError
 
 from sqlalchemy import (
     and_,
-    literal,
+    bindparam,
     not_,
     nullsfirst,
     nullslast,
@@ -23,6 +23,14 @@ from sqlalchemy import (
 
 class UnsupportedSQL(Exception):
     """Raised when the input uses SQL that the translator does not support."""
+
+
+LITERAL_PARAM_PREFIX = 'hq_param'  # Our reserved namespace for parameters
+
+
+def _bind(value):
+    """Bind a value as a uniquely named parameter"""
+    return bindparam(LITERAL_PARAM_PREFIX, value, unique=True)
 
 
 def translate(sql, tables):
@@ -218,10 +226,10 @@ def _convert_value(node, columns):
     """Convert a SQL value expression to a ``ColumnElement``"""
     if isinstance(node, exp.Literal):
         _unpack(node, 'this', 'is_string')
-        return literal(node.to_py())  # Use `literal` to make this a bound parameter
+        return _bind(node.to_py())  # Bind it so the value never reaches the SQL
     if isinstance(node, exp.Boolean):
         value, = _unpack(node, 'this')
-        return literal(bool(value))
+        return _bind(bool(value))
     if isinstance(node, exp.Array):
         return _convert_array(node)
     return _convert_column(node, columns)
@@ -234,7 +242,7 @@ def _convert_array(node):
         if not isinstance(element, exp.Literal):
             raise UnsupportedSQL(f"array elements must be literals: {str(element)}")
         _unpack(element, 'this', 'is_string')
-    return literal([element.to_py() for element in elements])
+    return _bind([element.to_py() for element in elements])
 
 
 def _convert_table_ref(node, tables):
