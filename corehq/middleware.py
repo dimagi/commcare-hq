@@ -16,7 +16,6 @@ from django.utils.deprecation import MiddlewareMixin
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import legacy_domain_re
-from corehq.const import OPENROSA_DEFAULT_VERSION
 from corehq.util.timer import DURATION_REPORTING_THRESHOLD
 from corehq.util.view_utils import set_language_cookie
 from dimagi.utils.logging import notify_exception
@@ -51,10 +50,6 @@ class OpenRosaMiddleware(MiddlewareMixin):
             if header in request.META:
                 or_headers[header] = request.META[header]
         request.openrosa_headers = or_headers
-
-    def process_response(self, request, response):
-        response[OPENROSA_VERSION_HEADER] = OPENROSA_DEFAULT_VERSION
-        return response
 
 
 profile_logger = logging.getLogger('profile_middleware')
