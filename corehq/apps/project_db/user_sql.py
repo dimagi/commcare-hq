@@ -170,6 +170,12 @@ COMPARISONS = {
     exp.LTE: operator.le,
 }
 
+ARRAY_OPS = {
+    exp.ArrayContainsAll: '@>',
+    exp.ArrayContainedBy: '<@',
+    exp.ArrayOverlaps: '&&',
+}
+
 
 def _convert_predicate(node, columns):
     """Convert a boolean-valued SQL expression to a ``ColumnElement``"""
@@ -196,6 +202,10 @@ def _convert_predicate(node, columns):
         left, right = _unpack(node, 'this', 'expression')
         return combine(_convert_predicate(left, columns),
                        _convert_predicate(right, columns))
+    if array_op := ARRAY_OPS.get(type(node)):
+        left, right = _unpack(node, 'this', 'expression')
+        contains = _convert_value(left, columns).bool_op(array_op)
+        return contains(_convert_value(right, columns))
     if compare := COMPARISONS.get(type(node)):
         left, right = _unpack(node, 'this', 'expression')
         return compare(_convert_value(left, columns),
@@ -212,7 +222,19 @@ def _convert_value(node, columns):
     if isinstance(node, exp.Boolean):
         value, = _unpack(node, 'this')
         return literal(bool(value))
+    if isinstance(node, exp.Array):
+        return _convert_array(node)
     return _convert_column(node, columns)
+
+
+def _convert_array(node):
+    """Convert an ``ARRAY[...]`` literal into a single bound parameter"""
+    elements, = _unpack(node, 'expressions')
+    for element in elements:
+        if not isinstance(element, exp.Literal):
+            raise UnsupportedSQL(f"array elements must be literals: {str(element)}")
+        _unpack(element, 'this', 'is_string')
+    return literal([element.to_py() for element in elements])
 
 
 def _convert_table_ref(node, tables):
