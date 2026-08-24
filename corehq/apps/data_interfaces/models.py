@@ -1994,8 +1994,8 @@ class BulkAsyncJob(models.Model):
     def set_requested_ids(self, form_ids, db=None):
         # dict.fromkeys dedups while keeping the order ids were requested in
         ids = list(dict.fromkeys(form_ids))
+        self.requested_count = len(ids)
         self.requested_ids_blob_key = self._put_blob(ids, db=db)
-        return ids
 
     def get_requested_ids(self):
         return self._get_blob(self.requested_ids_blob_key)

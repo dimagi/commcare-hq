@@ -667,8 +667,8 @@ class TestBulkAsyncJobBlobs(TestCase):
 
     def test_requested_ids_round_trip_dedups(self):
         job = self._job()
-        stored = job.set_requested_ids(['c', 'a', 'b', 'a'])
-        assert stored == ['c', 'a', 'b']
+        job.set_requested_ids(['c', 'a', 'b', 'a'])
+        assert job.requested_count == 3
         assert job.requested_ids_blob_key
         assert job.get_requested_ids() == ['c', 'a', 'b']
 

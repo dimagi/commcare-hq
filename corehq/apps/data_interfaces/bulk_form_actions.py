@@ -69,7 +69,7 @@ def run_bulk_form_action(job):
 
     job.processed_count = processed
     job.succeeded_count = succeeded
-    job.set_skipped(dict(skipped))
+    job.set_skipped(skipped)
     job.status = BulkAsyncJob.Status.COMPLETE
     job.completed_at = datetime.now(tz=UTC)
     job.save()
@@ -84,8 +84,7 @@ def create_bulk_form_job(domain, action, requested_by, form_ids):
             action=action,
             requested_by=requested_by,
         )
-        stored_ids = job.set_requested_ids(form_ids, db=db)
-        job.requested_count = len(stored_ids)
+        job.set_requested_ids(form_ids, db=db)
         job.save()
     return job
 

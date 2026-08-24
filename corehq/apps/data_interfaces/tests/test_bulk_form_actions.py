@@ -63,8 +63,7 @@ class TestRunBulkFormAction(TestCase):
         job = BulkAsyncJob(
             domain=DOMAIN, model=XFormInstance, action=action, requested_by=username,
         )
-        stored = job.set_requested_ids(form_ids)
-        job.requested_count = len(stored)
+        job.set_requested_ids(form_ids)
         job.save()
         return job
 
