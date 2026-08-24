@@ -7,6 +7,7 @@ import pytest
 from corehq.apps.data_interfaces.bulk_form_actions import (
     SKIPPED,
     SUCCEEDED,
+    BulkFormActionError,
     FormActionResult,
     _apply_form_action,
     _save_interval,
@@ -15,11 +16,14 @@ from corehq.apps.data_interfaces.bulk_form_actions import (
     run_bulk_form_action,
 )
 from corehq.apps.data_interfaces.models import BulkAsyncJob
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import WebUser
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.form_processor.models.forms import XFormInstance
 from corehq.form_processor.tests.utils import create_form_for_test, sharded
 
 DOMAIN = 'bulk-actions-test'
+USERNAME = 'abc@example.com'
 
 
 class TestBuildFormAction(TestCase):
@@ -45,15 +49,15 @@ class TestRunBulkFormAction(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.blob_db = TemporaryFilesystemBlobDB()
+        cls.addClassCleanup(cls.blob_db.close)
+        cls.domain = create_domain(DOMAIN)
+        cls.addClassCleanup(cls.domain.delete)
+        cls.user = WebUser.create(DOMAIN, USERNAME, '***', None, None)
+        cls.addClassCleanup(cls.user.delete, None, None)
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.blob_db.close()
-        super().tearDownClass()
-
-    def _job(self, action, form_ids):
+    def _job(self, action, form_ids, username=USERNAME):
         job = BulkAsyncJob(
-            domain=DOMAIN, model=XFormInstance, action=action, requested_by='u',
+            domain=DOMAIN, model=XFormInstance, action=action, requested_by=username,
         )
         stored = job.set_requested_ids(form_ids)
         job.requested_count = len(stored)
@@ -106,6 +110,17 @@ class TestRunBulkFormAction(TestCase):
         run_bulk_form_action(job)
 
         assert seen == [0, 1, 2, 3, 3]
+
+    def test_unknown_user_raises_error(self):
+        job = self._job(BulkAsyncJob.Action.ARCHIVE, ['form-1'], username='unknown')
+
+        with pytest.raises(BulkFormActionError):
+            run_bulk_form_action(job)
+
+        job.refresh_from_db()
+        assert job.status == BulkAsyncJob.Status.FAILED
+        assert job.started_at is None
+        assert job.completed_at is not None
 
 
 class TestMarkJobFailed(TestCase):

@@ -22,6 +22,10 @@ SUCCEEDED = 'succeeded'
 SKIPPED = 'skipped'
 
 
+class BulkFormActionError(Exception):
+    """A job cannot be run because its row is invalid"""
+
+
 @dataclass(frozen=True)
 class FormActionResult:
     """Outcome of a bulk form action for a single requested form id."""
@@ -32,11 +36,16 @@ class FormActionResult:
 
 def run_bulk_form_action(job):
     """Execute ``job`` start to finish, updating counts and status on the row."""
+    try:
+        user_id = _resolve_user_id(job.requested_by)
+    except BulkFormActionError:
+        mark_job_failed(job.id)
+        raise
+
     job.status = BulkAsyncJob.Status.RUNNING
     job.started_at = datetime.now(tz=UTC)
     job.save()
 
-    user_id = _resolve_user_id(job.requested_by)
     form_ids = job.get_requested_ids()
     action_fn = build_form_action(job, user_id)
     save_interval = _save_interval(job.requested_count)
@@ -133,6 +142,5 @@ def _save_interval(requested_count):
 def _resolve_user_id(username):
     user = CouchUser.get_by_username(username)
     if user is None:
-        log.warning("bulk form action: user %s not found; using user_id=None", username)
-        return None
+        raise BulkFormActionError(f"bulk form action: user {username} not found")
     return user.user_id
