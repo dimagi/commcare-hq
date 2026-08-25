@@ -661,6 +661,13 @@ To build Webpack bundles like it's done in production environments, pleas use `y
 This command does not have a watch functionality, so it needs to be re-run every time you make
 changes to javascript files bundled by Webpack.
 
+The API reference pages under `/api/docs/` are generated from the committed
+OpenAPI specifications by `yarn openapi:docs`, which `yarn build` runs for you.
+`yarn dev` does not, so run it once after installing, and again after changing
+an API's documentation and regenerating the specs with
+`./manage.py generate_openapi`. Until you do, those pages return 404 with a
+message naming the command.
+
 For more information about JavaScript and Static Files, please see the
 [Dimagi JavaScript Guide](https://commcare-hq.readthedocs.io/js-guide/README.html) on Read the Docs.
 

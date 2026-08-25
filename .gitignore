@@ -89,6 +89,9 @@ extensions/
 # webpack build related
 /webpack/_build/
 
+# generated API reference pages (built by `yarn openapi:docs`)
+/docs/api/dist/
+
 # ruff
 ruff.toml
 CLAUDE.local.md
