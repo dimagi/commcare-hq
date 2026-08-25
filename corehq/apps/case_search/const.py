@@ -16,6 +16,19 @@ IDENTIFIER = 'identifier'
 # Maximum number of results to pull from ElasticSearch
 CASE_SEARCH_MAX_RESULTS = 500
 
+DISTANCE_UNITS_TO_METER = {
+    "meters": 1,
+    "kilometers": 1000,
+    "centimeters": 0.01,
+    "millimeters": 0.001,
+    "miles": 1609.344,
+    "yards": 0.9144,
+    "feet": 0.3048,
+    "inch": 0.0254,
+    "nauticalmiles": 1852,
+}
+DISTANCE_UNITS = list(DISTANCE_UNITS_TO_METER.keys())
+
 # Added to each case response when case searches are performed
 RELEVANCE_SCORE = "commcare_search_score"
 COMMCARE_PROJECT = "commcare_project"
