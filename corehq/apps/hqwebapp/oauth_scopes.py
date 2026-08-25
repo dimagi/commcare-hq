@@ -1,12 +1,19 @@
 import re
 
-from django.utils.translation import gettext as _
-from oauth2_provider.scopes import SettingsScopes
+from django.utils.translation import gettext_lazy as _
+from oauth2_provider.scopes import BaseScopes
 
 from corehq.apps.users.models import CouchUser
 
 DOMAIN_SCOPE_PREFIX = 'domain:'
 ALL_PROJECTS_SCOPE = ''
+
+STATIC_SCOPES = {
+    'access_apis': _("Access CommCare API data"),
+    'reports:view': _("View and download report data"),
+    'mobile_access': _("Allow access to mobile sync and submit endpoints"),
+    'sync': _("(Deprecated, do not use) Allow access to mobile endpoints"),
+}
 
 class ScopeDescriptions(dict):
     """
@@ -25,14 +32,17 @@ class ScopeDescriptions(dict):
         raise KeyError(key)
 
 
-class HQScopes(SettingsScopes):
+class HQScopes(BaseScopes):
     """
-    Adds the dynamic ``domain:<name>`` scope to the statically configured scopes.
+    Adds the dynamic ``domain:<name>`` scope to STATIC_SCOPES.
     Wired up via the ``SCOPES_BACKEND_CLASS`` setting.
     """
 
     def get_all_scopes(self):
-        return ScopeDescriptions(super().get_all_scopes())
+        return ScopeDescriptions(STATIC_SCOPES)
+
+    def get_default_scopes(self, application=None, request=None, *args, **kwargs):
+        return list(STATIC_SCOPES)
 
     def describe_scopes(self, scopes):
         """
@@ -49,9 +59,7 @@ class HQScopes(SettingsScopes):
         return descriptions
 
     def get_available_scopes(self, application=None, request=None, *args, **kwargs):
-        scopes = list(super().get_available_scopes(application, request, *args, **kwargs))
-        scopes.extend(self._grantable_domain_scopes(request))
-        return scopes
+        return list(STATIC_SCOPES) + self._grantable_domain_scopes(request)
 
     def _grantable_domain_scopes(self, request):
         if request is None:

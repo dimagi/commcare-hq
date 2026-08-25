@@ -10,14 +10,16 @@ from corehq.apps.domain.forms import ConfidentialDomainPasswordResetForm
 from corehq.apps.domain.views.settings import DomainPasswordResetView
 from corehq.apps.domain.views.sms import PublicSMSRatesView
 from corehq.apps.hqwebapp.decorators import waf_allow
-from corehq.apps.hqwebapp.oauth_views import HQAuthorizationView
+from corehq.apps.hqwebapp.oauth_views import (
+    HQAuthorizationView,
+    OauthApplicationRegistration,
+)
 from corehq.apps.hqwebapp.session_details_endpoint.views import (
     SessionDetailsView,
 )
 from corehq.apps.hqwebapp.views import (
     BugReportView,
     MaintenanceAlertsView,
-    OauthApplicationRegistration,
     SolutionsFeatureRequestView,
     check_sso_login_status,
     create_alert,

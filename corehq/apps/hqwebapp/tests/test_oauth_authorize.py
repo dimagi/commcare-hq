@@ -44,6 +44,14 @@ class TestHQAllowForm:
             ('delta', 'Delta Project'),
         ]
 
+    @pytest.mark.parametrize('choices, initial', [
+        ([('alpha', 'Alpha Project')], ['alpha']),
+        ([('alpha', 'Alpha Project'), ('beta', 'Beta Project')], None),
+    ])
+    def test_a_lone_project_space_is_preselected(self, choices, initial):
+        form = self.build_form(domain_choices=choices)
+        assert form.fields['domains'].initial == initial
+
     @pytest.mark.parametrize('requested, chosen, granted', [
         ('access_apis', ['alpha'], 'access_apis domain:alpha'),
         ('access_apis', ['alpha', 'beta'], 'access_apis domain:alpha domain:beta'),
