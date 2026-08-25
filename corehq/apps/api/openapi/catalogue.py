@@ -109,3 +109,50 @@ def entries_for_scope(scope):
 
 def documented_entries():
     return [entry for entry in CATALOGUE if entry.doc_slug]
+
+
+@dataclass(frozen=True)
+class ViewEntry:
+    """One documented function-based API view.
+
+    ``view`` is a dotted ``module:attribute`` path rather than the function
+    itself, so importing this module never imports a view module. Only
+    ``build_all()`` resolves it.
+
+    No ``scope`` field: unlike ``ApiEntry``, which builds its base URL from
+    the scope, a view declares its paths whole, prefix included.
+    """
+
+    view: str
+    doc_slug: str
+
+    def resolve(self):
+        """Import and return the view function this entry names."""
+        from django.utils.module_loading import import_string
+
+        return import_string(self.view.replace(':', '.'))
+
+
+VIEW_CATALOGUE = (
+    ViewEntry('corehq.apps.hqcase.views:case_api', 'case-v2'),
+    ViewEntry('corehq.apps.hqcase.views:case_api_bulk_fetch', 'case-v2'),
+)
+
+
+def documented_view_entries():
+    # Unlike ApiEntry, whose doc_slug may be None (routed but not
+    # documented), every ViewEntry is documented by construction, so this
+    # filters nothing -- it exists so callers go through one accessor
+    # rather than reading VIEW_CATALOGUE directly.
+    return list(VIEW_CATALOGUE)
+
+
+def documented_slugs():
+    """Every doc slug the generator produces a per-API spec for.
+
+    Resources and views alike. One registry, so a slug the generator
+    writes a spec for cannot be one the serving views reject.
+    """
+    return {entry.doc_slug for entry in documented_entries()} | {
+        entry.doc_slug for entry in documented_view_entries()
+    }

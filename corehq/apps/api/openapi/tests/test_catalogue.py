@@ -63,6 +63,48 @@ def test_operation_ids_are_unique_across_the_catalogue():
     )
 
 
+def test_every_view_entry_resolves_to_a_documented_view():
+    # Replaces the old failure mode: a documented view whose module was
+    # missing from load_view_docs()'s hard-coded import list generated a
+    # spec that the serving views then 404ed on.
+    from corehq.apps.api.openapi.catalogue import VIEW_CATALOGUE
+
+    for entry in VIEW_CATALOGUE:
+        view = entry.resolve()
+        assert hasattr(view, '_openapi_docs'), (
+            f'{entry.view} is in VIEW_CATALOGUE but carries no @api_docs'
+        )
+
+
+def test_documented_slugs_covers_resources_and_views():
+    from corehq.apps.api.openapi.catalogue import (
+        VIEW_CATALOGUE,
+        documented_entries,
+        documented_slugs,
+    )
+
+    slugs = documented_slugs()
+    assert slugs == (
+        {entry.doc_slug for entry in documented_entries()}
+        | {entry.doc_slug for entry in VIEW_CATALOGUE}
+    )
+    assert 'case-v2' in slugs
+
+
+def test_resource_and_view_slugs_are_disjoint():
+    """``build_all()`` does ``documents.update(view_documents)``, so a
+    view slug colliding with a resource slug would silently overwrite the
+    resource's document. The two registries must never share a slug."""
+    from corehq.apps.api.openapi.catalogue import (
+        VIEW_CATALOGUE,
+        documented_entries,
+    )
+
+    resource_slugs = {entry.doc_slug for entry in documented_entries()}
+    view_slugs = {entry.doc_slug for entry in VIEW_CATALOGUE}
+    assert not (resource_slugs & view_slugs)
+
+
 def test_every_catalogued_resource_can_build_a_schema():
     """The generator depends on this for every resource in the catalogue.
 
