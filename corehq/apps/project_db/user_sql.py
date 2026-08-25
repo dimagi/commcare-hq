@@ -6,9 +6,6 @@ import operator
 import re
 
 import sqlglot
-from sqlglot import exp
-from sqlglot.errors import SqlglotError
-
 from sqlalchemy import (
     and_,
     bindparam,
@@ -20,10 +17,21 @@ from sqlalchemy import (
     union,
     union_all,
 )
+from sqlglot import exp
+from sqlglot.errors import SqlglotError
 
 
-class UnsupportedSQL(Exception):
+class _UserFacingError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
+
+class UnsupportedSQL(_UserFacingError):
     """Raised when the input uses SQL that the translator does not support."""
+
+
+class BadParameters(_UserFacingError):
+    """The parameters don't match the query"""
 
 
 LITERAL_PARAM_PREFIX = 'hq_param'  # Our reserved namespace for parameters
@@ -36,6 +44,29 @@ PARAM_NAME = re.compile(r'[A-Za-z_][A-Za-z0-9_]*\Z')
 def _bind(value):
     """Bind a value as a uniquely named parameter"""
     return bindparam(LITERAL_PARAM_PREFIX, value, unique=True)
+
+
+def get_parameters(query):
+    """Return the parameters a translated query leaves for the caller to supply"""
+    return [name for name, bind in query.compile().binds.items() if bind.required]
+
+
+def clean_parameters(query, raw_parameters):
+    """Validate input parameters against query and coerce array params"""
+    from .populate import coerce_to_select
+    binds = {
+        name: bind for name, bind in query.compile().binds.items()
+        if bind.required
+    }
+    if set(raw_parameters) != set(binds):
+        raise BadParameters(f"Expected params {set(binds)}, got {set(raw_parameters)}")
+    return {
+        name: (
+            coerce_to_select(raw_parameters.get(name))
+            if bind.expanding
+            else raw_parameters.get(name) or None
+        ) for name, bind in binds.items()
+    }
 
 
 def translate(sql, tables):

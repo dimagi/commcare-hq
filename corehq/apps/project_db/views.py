@@ -16,7 +16,13 @@ from corehq.apps.project_db.table_ddl import (
     get_domain_tables,
     get_project_db_engine,
 )
-from corehq.apps.project_db.user_sql import UnsupportedSQL, translate
+from corehq.apps.project_db.user_sql import (
+    BadParameters,
+    UnsupportedSQL,
+    clean_parameters,
+    get_parameters,
+    translate,
+)
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
@@ -42,17 +48,39 @@ class QueryProjectDBView(HqHtmxActionMixin, BaseProjectDataView):
         return {'table_names': sorted(get_domain_tables(self.domain))}
 
     @hq_hx_action('post')
-    def run_query(self, request, *args, **kwargs):
-        context = {'sql': request.POST.get('sql', '')}
+    def process_query(self, request, *args, **kwargs):
+        """Translate the query, running it if it takes no parameters"""
+        return self._query_response(request, always_run=False)
+
+    @hq_hx_action('post')
+    def run_query_with_parameters(self, request, *args, **kwargs):
+        """Run the query with the parameter values given on the page"""
+        return self._query_response(request, always_run=True)
+
+    def _query_response(self, request, always_run):
+        submitted_params = {
+            name.removeprefix('param:'): value
+            for name, value in request.POST.items()
+            if name.startswith('param:')
+        }
+        context = {'sql': request.POST.get('sql', ''),
+                   'max_rows': MAX_ROWS}
         try:
-            query_result = run_user_sql(self.domain, context['sql'])
+            query = translate(context['sql'], get_domain_tables(self.domain))
         except UnsupportedSQL as error:
-            context['error'] = str(error)
+            context['error'] = error.msg
         else:
-            context.update({
-                'result': query_result,
-                'max_rows': MAX_ROWS,
-            })
+            query_params = get_parameters(query)
+            context['query'] = compile_query(query)
+            context['parameters'] = [{
+                'name': parameter,
+                'value': submitted_params.get(parameter, ''),
+            } for parameter in query_params]
+            if always_run or not query_params:
+                try:
+                    context['result'] = execute_query(query, submitted_params)
+                except BadParameters as error:
+                    context['error'] = error.msg
         return self.render_htmx_partial_response(
             request, 'project_db/partials/query_results.html', context)
 
@@ -61,26 +89,25 @@ class QueryProjectDBView(HqHtmxActionMixin, BaseProjectDataView):
         return HttpResponse(describe_project_db(self.domain))
 
 
-def run_user_sql(domain, user_sql):
-    query = translate(user_sql, get_domain_tables(domain))
+def execute_query(query, submitted_params):
+    params = clean_parameters(query, submitted_params)
     with get_project_db_engine().connect() as conn:
         start = time.perf_counter()
-        result = conn.execute(query)
+        result = conn.execute(query, params)
         rows = result.fetchmany(MAX_ROWS)
-        duration = time.perf_counter() - start
         return {
-            'query': compile_query(query),
             'columns': list(result.keys()),
             'rows': rows,
-            'duration': duration,
+            'duration': time.perf_counter() - start,
         }
 
 
 def compile_query(query):
-    """Render a SQLAlchemy selectable as pretty-printed PostgreSQL and its bound params"""
+    """Render a SQLAlchemy selectable as pretty-printed PostgreSQL and its bound values"""
     compiled = query.compile(dialect=postgresql.dialect(paramstyle='named'))
-    sql = sqlglot.transpile(str(compiled), read='postgres', write='postgres', pretty=True)[0]
+    unbound = get_parameters(query)
     return {
-        'sql': sql,
-        'params': compiled.params
+        'sql': sqlglot.transpile(str(compiled), read='postgres', write='postgres', pretty=True)[0],
+        'params': {name: value for name, value in compiled.params.items()
+                   if name not in unbound},
     }
