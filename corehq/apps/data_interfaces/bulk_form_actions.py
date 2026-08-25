@@ -75,7 +75,7 @@ def run_bulk_form_action(job):
     job.save()
 
 
-def create_bulk_form_job(domain, action, requested_by, form_ids):
+def create_bulk_form_job(domain, action, requested_by, form_ids, api_key=None):
     """Use ``AtomicBlobs`` to prevent an orphaned requested ids blob"""
     with AtomicBlobs(get_blob_db()) as db:
         job = BulkAsyncJob(
@@ -83,6 +83,7 @@ def create_bulk_form_job(domain, action, requested_by, form_ids):
             model=XFormInstance,
             action=action,
             requested_by=requested_by,
+            api_key=api_key,
         )
         job.set_requested_ids(form_ids, db=db)
         job.save()
