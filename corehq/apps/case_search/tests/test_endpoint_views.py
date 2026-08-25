@@ -47,11 +47,11 @@ class EndpointViewTestCase(TestCase):
         endpoint = CaseSearchEndpoint.objects.create(
             domain=self.domain,
             name=name,
-            case_type=case_type,
         )
         version = CaseSearchEndpointVersion.objects.create(
             endpoint=endpoint,
             version_number=1,
+            case_type=case_type,
             query=dict(EMPTY_QUERY),
             parameters=[],
             action=CaseSearchEndpointVersion.Action.CREATE,
@@ -137,7 +137,7 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         endpoint = CaseSearchEndpoint.objects.get(
             domain=self.domain, name='new-endpoint'
         )
-        assert endpoint.case_type == 'my_case_type'
+        assert endpoint.current_version.case_type == 'my_case_type'
         assert endpoint.current_version is not None
         assert endpoint.current_version.version_number == 1
         assert endpoint.current_version.query == EMPTY_QUERY
@@ -224,7 +224,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
         # Scalar fields are seeded on the form (read via form.<field>.value).
         form = response.context['form']
         assert form['name'].value() == ep.name
-        assert form['case_type'].value() == ep.case_type
+        assert form['case_type'].value() == ep.current_version.case_type
 
     def test_404_for_wrong_domain(self):
         ep = self._make_endpoint()
@@ -248,7 +248,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
             self._edit_url(ep.id),
             self._post_data(
                 name=ep.name,
-                case_type=ep.case_type,
+                case_type=ep.current_version.case_type,
                 query=json.dumps(new_query),
                 parameters='[]',
             ),
@@ -278,7 +278,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
         ep.refresh_from_db()
         assert ep.name == 'renamed'
         assert ep.target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH
-        assert ep.case_type == 'new_target'
+        assert ep.current_version.case_type == 'new_target'
 
     def test_duplicate_name_error(self):
         self._make_endpoint(name='ep1')
@@ -287,7 +287,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
             self._edit_url(ep2.id),
             self._post_data(
                 name='ep1',
-                case_type=ep2.case_type,
+                case_type=ep2.current_version.case_type,
             ),
         )
         assert response.status_code == 200
@@ -299,7 +299,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
             self._edit_url(ep.id),
             self._post_data(
                 name='my-ep',
-                case_type=ep.case_type,
+                case_type=ep.current_version.case_type,
             ),
         )
         assert response.status_code == 302
@@ -318,6 +318,7 @@ class TestCaseSearchEndpointDeactivateView(EndpointViewTestCase):
             == CaseSearchEndpointVersion.Action.DEACTIVATE
         )
         assert ep.current_version.created_by == self.username
+        assert ep.current_version.case_type is None
         assert ep.current_version.query is None
         assert ep.current_version.parameters is None
         assert ep.versions.count() == 2
