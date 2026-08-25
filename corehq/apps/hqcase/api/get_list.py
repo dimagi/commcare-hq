@@ -1,19 +1,22 @@
 from base64 import b64decode, b64encode
 
+from dimagi.utils.parsing import FALSE_STRINGS
 from django.http import QueryDict
 
 from corehq.apps.api.util import make_date_filter
+from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.case_search.filter_dsl import (
     build_filter_from_xpath,
 )
-from corehq.apps.case_search.exceptions import CaseFilterError
+from corehq.apps.data_dictionary.util import (
+    get_data_dict_deprecated_case_types,
+)
 from corehq.apps.es import case_search, filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
-from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
-from dimagi.utils.parsing import FALSE_STRINGS
+
 from .core import UserError, serialize_es_case
 from .field_filters import get_fields_filter_fn
 
@@ -79,7 +82,6 @@ COMPOUND_FILTERS = {
     'indexed_on': _make_date_filter(case_search.indexed_on),
     'indices': _index_filter,
 }
-
 
 def get_list(domain, couch_user, params):
     if 'cursor' in params:
