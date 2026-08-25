@@ -56,7 +56,7 @@ class PublicWebformTable(BaseHtmxTable, tables.Table):
         verbose_name=_("Submissions"),
     )
     expires_at = columns.Column(
-        verbose_name=_("Closes"),
+        verbose_name=_("Expires"),
     )
     delivery = columns.TemplateColumn(
         template_name='public_webforms/columns/delivery.html',
