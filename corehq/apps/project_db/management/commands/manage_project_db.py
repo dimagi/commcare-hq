@@ -3,9 +3,9 @@ from django.core.management.base import BaseCommand, CommandError
 
 import dateutil.parser
 import sqlalchemy
-from sqlalchemy.schema import CreateIndex, CreateTable
 
 from corehq.apps.data_dictionary.models import CaseType
+from corehq.apps.project_db.describe import describe_project_db
 from corehq.apps.project_db.populate import send_to_project_db
 from corehq.apps.project_db.table_ddl import (
     DomainSchema,
@@ -72,7 +72,7 @@ class Command(BaseCommand):
         if drop:
             _drop(domain, self.stdout)
         if describe:
-            _describe(domain)
+            self.stdout.write(describe_project_db(domain))
 
 
 def _drop(domain, stdout):
@@ -110,24 +110,3 @@ def _populate_case_type(domain, case_type, start_date, prefix):
     cases = with_progress_bar(iter_all_rows(accessor), length=total,
                               oneline='concise', prefix=f"{prefix}: {case_type}")
     send_to_project_db(domain, case_type, cases)
-
-
-def _describe(domain):
-    engine = get_project_db_engine()
-    metadata = sqlalchemy.MetaData()
-    metadata.reflect(bind=engine, schema=DomainSchema(domain).name)
-    if not metadata.tables:
-        raise CommandError(f"No project DB tables found for domain '{domain}'")
-
-    print(f"-- Project DB schema for domain: {domain}")
-    with engine.connect() as conn:
-        for table in sorted(metadata.tables.values(), key=lambda t: t.name):
-            row_count = conn.execute(
-                sqlalchemy.select([sqlalchemy.func.count()]).select_from(table)
-            ).scalar()
-            ddl = str(CreateTable(table).compile(dialect=engine.dialect)).strip()
-            print(f"\n-- {row_count} rows")
-            print(f"{ddl};")
-            for index in table.indexes:
-                idx_ddl = str(CreateIndex(index).compile(dialect=engine.dialect)).strip()
-                print(f"{idx_ddl};")

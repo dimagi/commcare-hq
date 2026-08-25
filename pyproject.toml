@@ -108,6 +108,7 @@ dependencies = [
     "simplejson",
     "sqlagg",
     "SQLAlchemy",
+    "sqlglot",
     "stripe",
     "text-unidecode",
     "toposort",
