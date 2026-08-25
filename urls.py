@@ -4,6 +4,10 @@ from django.contrib import admin
 from django.shortcuts import render
 from django.views.generic import RedirectView, TemplateView
 
+from oauth2_provider.urls import (
+    metadata_urlpatterns as oauth2_metadata_urlpatterns,
+)
+
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.extensions import extension_points
 from corehq.apps.enterprise.urls import \
@@ -104,6 +108,11 @@ for url_module in extension_points.domain_specific_urls():
 urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(
         url=static('hqwebapp/images/favicon2.png'), permanent=True)),
+    # Strict RFC 8414 well-known URIs must live at the domain root. The distinct
+    # instance namespace keeps reverse("oauth2_provider:...") pointing at the
+    # /oauth/ mount in corehq.apps.hqwebapp.urls.
+    url(r'^', include((oauth2_metadata_urlpatterns, 'oauth2_provider'),
+                      namespace='oauth2_metadata')),
     url(r'^auditcare/', include('corehq.apps.auditcare.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^analytics/', include('corehq.apps.analytics.urls')),
