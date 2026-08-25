@@ -16,7 +16,14 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects import postgresql
 
-from corehq.apps.project_db.user_sql import UnsupportedSQL, _bind, translate
+from corehq.apps.project_db.user_sql import (
+    BadParameters,
+    UnsupportedSQL,
+    _bind,
+    clean_parameters,
+    get_parameters,
+    translate,
+)
 
 CLIENT = table('client', column('case_id'), column('name'))
 VISIT = table('visit', column('visit_id'), column('parent_id'), column('name'))
@@ -293,8 +300,39 @@ def test_query_parameters_are_left_unbound():
     assert str(compiled) == ('SELECT client.name \nFROM client \n'
                              'WHERE client.name = %(who)s '
                              'AND client.case_id = %(hq_param_1)s')
-    assert [name for name, bind in compiled.binds.items() if bind.required] == ['who']
     assert compiled.params == {'hq_param_1': 'c1', 'who': None}
+
+
+@pytest.mark.parametrize('sql, expected', [
+    ('SELECT * FROM client', []),
+    # Parameters come back in the order they appear
+    ('SELECT * FROM client WHERE name IN :names AND case_id = :cid',
+     ['names', 'cid']),
+    # Literals are already bound, and a parameter used twice is listed once
+    ("SELECT * FROM client WHERE name = :who AND case_id = 'c1' OR name = :who",
+     ['who']),
+])
+def test_get_parameters(sql, expected):
+    assert get_parameters(translate(sql, TABLES)) == expected
+
+
+@pytest.mark.parametrize('sql, raw, expected', [
+    ('SELECT * FROM client', {}, {}),
+    ('SELECT * FROM client WHERE name = :who', {'who': 'ann'}, {'who': 'ann'}),
+    # A falsy value is passed through as-is
+    ('SELECT * FROM client WHERE name = :who', {'who': ''}, {'who': ''}),
+])
+def test_clean_parameters(sql, raw, expected):
+    assert clean_parameters(translate(sql, TABLES), raw) == expected
+
+
+@pytest.mark.parametrize('sql, raw', [
+    ('SELECT * FROM client WHERE name = :who', {}),
+    ('SELECT * FROM client', {'stale': 'x'}),
+])
+def test_clean_parameters_rejects_a_mismatched_set(sql, raw):
+    with pytest.raises(BadParameters):
+        clean_parameters(translate(sql, TABLES), raw)
 
 
 def test_handle_quoted_tables():
