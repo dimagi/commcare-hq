@@ -1,15 +1,19 @@
-from couchdbkit.exceptions import DocTypeError
-
-from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 
 from dimagi.utils.couch.database import iter_docs
 
-from corehq.apps.app_manager.dbaccessors import wrap_app
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 
 
 def get_public_webform_form_paths(domain, webforms):
+    """Iterate through all apps and builds referenced by included
+    PublicWebforms to get URLs and display names.
+
+    For performance, ``webforms`` should be limited to a reasonable number,
+    e.g., 100, which is typically the max passed by a paginated table view.
+    """
     webforms = list(webforms)
     builds = _get_apps(domain, {webform.app_build_id for webform in webforms})
     apps = _get_apps(domain, {webform.app_id for webform in webforms})
@@ -28,20 +32,17 @@ def _get_apps(domain, app_ids):
     for doc in iter_docs(Application.get_db(), list(app_ids)):
         if doc.get('domain') != domain or doc['doc_type'].endswith('-Deleted'):
             continue
-        try:
-            apps[doc['_id']] = wrap_app(doc)
-        except DocTypeError:
-            pass
+        apps[doc['_id']] = doc
     return apps
 
 
 def _app_name(webform, apps, builds):
     named_app = apps.get(webform.app_id)
     if named_app:
-        return named_app.name
+        return named_app['name']
     else:
         named_build = builds.get(webform.app_build_id)
-        return "{} {}".format(named_build.name, _("(Deleted)")) if named_build else None
+        return "{} {}".format(named_build['name'], _("(Deleted)")) if named_build else None
 
 
 def _app_url(webform, apps, domain):
@@ -51,10 +52,15 @@ def _app_url(webform, apps, domain):
 
 def _app_version(webform, builds):
     build = builds.get(webform.app_build_id)
-    return build.version if build else None
+    return build['version'] if build else None
 
 
 def _form_name(webform, builds):
     build = builds.get(webform.app_build_id)
-    form = build.get_form(webform.form_unique_id) if build else None
-    return form.default_name() if form else None
+    if not build:
+        return None
+    langs = [build.get('default_language')] + build.get('langs', [])
+    for module in build.get('modules', []):
+        for form in module.get('forms', []):
+            if form.get('unique_id') == webform.form_unique_id:
+                return clean_trans(form['name'], langs)
