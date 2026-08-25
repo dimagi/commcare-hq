@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.db.models import Count, Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -96,12 +95,7 @@ class PublicWebformTableView(
     def get_queryset(self):
         queryset = PublicWebform.objects.filter(
             domain=self.domain
-        ).with_status().annotate(
-            submissions=Count(
-                'publicformsession',
-                filter=Q(publicformsession__submitted_at__isnull=False),
-            ),
-        )
+        ).with_status().with_submissions_count()
         return self.filter_form.filter(queryset).order_by('-expires_at')
 
     def get_table_kwargs(self):

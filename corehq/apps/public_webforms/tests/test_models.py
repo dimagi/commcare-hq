@@ -60,6 +60,23 @@ def test_with_status_derives_status_from_expiry_and_the_open_setting(
     assert annotated.status == expected
 
 
+@use('db')
+@pytest.mark.parametrize('submitted_at, expected_submissions', [
+    (None, 0),
+    (timezone.now(), 1),
+], ids=['no-submissions', 'one-submission'])
+def test_with_submissions_count(submitted_at, expected_submissions):
+    webform = create_webform()
+    PublicFormSession.objects.create(
+        public_webform=webform,
+        expires_at=timezone.now() + datetime.timedelta(days=1),
+        submitted_at=submitted_at,
+    )
+
+    annotated = PublicWebform.objects.with_submissions_count().get(pk=webform.pk)
+    assert annotated.submissions == expected_submissions
+
+
 def test_public_form_session_username():
     webform = PublicWebform(domain='public-forms-domain')
     session = PublicFormSession(public_webform=webform)

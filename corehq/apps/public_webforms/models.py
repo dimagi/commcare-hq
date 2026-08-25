@@ -47,6 +47,14 @@ class PublicWebformQuerySet(models.QuerySet):
             ),
         )
 
+    def with_submissions_count(self):
+        return self.annotate(
+            submissions=models.Count(
+                'publicformsession',
+                filter=models.Q(publicformsession__submitted_at__isnull=False),
+            ),
+        )
+
 
 class PublicWebform(models.Model):
 
