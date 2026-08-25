@@ -228,6 +228,23 @@ def is_accounting_admin(user):
         return False
 
 
+def get_accounting_admin_users():
+    """Return the Django users holding the ACCOUNTING_ADMIN privilege.
+
+    Scans the whole prbac ``UserRole`` table, which is assumed to stay
+    small: rows are only created when Dimagi-internal privileges are
+    granted to individual users.
+    """
+    accounting_privilege = Role.get_privilege(privileges.ACCOUNTING_ADMIN)
+    if accounting_privilege is None:
+        return []
+    return [
+        user_role.user
+        for user_role in UserRole.objects.select_related('user')
+        if user_role.has_privilege(accounting_privilege)
+    ]
+
+
 def make_anchor_tag(href, name, attrs=None):
     context = {
         'href': href,
