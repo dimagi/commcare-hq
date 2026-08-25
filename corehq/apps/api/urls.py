@@ -31,6 +31,16 @@ from django.urls import re_path as url
 from tastypie.api import Api
 
 from corehq.apps.api import accounting
+from corehq.apps.api.const import (
+    CASE_BULK_FETCH_URL,
+    CASE_DETAIL_URL,
+    CASE_EXT_URL,
+    CASE_LIST_URL,
+    CASE_V06_BULK_FETCH_URL,
+    CASE_V06_DETAIL_URL,
+    CASE_V06_EXT_URL,
+    CASE_V06_LIST_URL,
+)
 from corehq.apps.api.domain_metadata import (
     DomainMetadataResource,
     GIRResource,
@@ -196,26 +206,15 @@ urlpatterns = [
         name='api_messaging_event_detail',
     ),
     # Case API v0.6 endpoints
-    url(r'v0\.6/case/bulk-fetch/$', case_api_bulk_fetch),
-    # Trailing slash optional: https://github.com/dimagi/commcare-hq/pull/29939
-    url(r'v0.6/case/?$', case_api, name='case_api_v0.6'),
-    url(
-        r'v0\.6/case/(?P<case_id>[\w\-,]+)/?$',
-        case_api,
-        name='case_api_v0.6_detail',
-    ),
-    path('v0.6/case/ext/<path:external_id>/', case_api),
+    url(CASE_V06_BULK_FETCH_URL, case_api_bulk_fetch),
+    url(CASE_V06_LIST_URL, case_api, name='case_api_v0.6'),
+    url(CASE_V06_DETAIL_URL, case_api, name='case_api_v0.6_detail'),
+    url(CASE_V06_EXT_URL, case_api),
     # Case API v2 endpoints
-    url(
-        r'case/v2/bulk-fetch/$',
-        case_api_bulk_fetch,
-        name='case_api_bulk_fetch',
-    ),
-    url(r'case/v2/?$', case_api, name='case_api'),
-    url(r'case/v2/(?P<case_id>[\w\-,]+)/?$', case_api, name='case_api_detail'),
-    path(
-        'case/v2/ext/<path:external_id>/', case_api, name='case_api_detail_ext'
-    ),
+    url(CASE_BULK_FETCH_URL, case_api_bulk_fetch, name='case_api_bulk_fetch'),
+    url(CASE_LIST_URL, case_api, name='case_api'),
+    url(CASE_DETAIL_URL, case_api, name='case_api_detail'),
+    url(CASE_EXT_URL, case_api, name='case_api_detail_ext'),
     path('', include(list(versioned_apis(_DEPRECATED_API_LIST)))),
     url(
         r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$',
