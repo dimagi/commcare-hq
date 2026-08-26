@@ -12,15 +12,14 @@ are available, and put 'em here if you end up using any of 'em.
 """
 import re
 
+from corehq.apps.case_search.const import DISTANCE_UNITS
+
 from .filters import date_range, range_filter
 
 MUST = "must"
 MUST_NOT = "must_not"
 SHOULD = "should"
 BOOL = "bool"
-
-DISTANCE_UNITS = ["miles", "yards", "feet", "inch", "kilometers", "meters",
-                  "centimeters", "millimeters", "nauticalmiles"]
 
 
 def BOOL_CLAUSE(query, **kwargs):
