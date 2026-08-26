@@ -99,7 +99,7 @@ class PublicFormSession(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     email = models.EmailField(null=True)
-    phone_number = models.CharField(null=True)
+    phone_number = models.CharField(max_length=126, null=True)
     opened_at = models.DateTimeField(null=True)
     submitted_at = models.DateTimeField(null=True)
     xform_id = models.CharField(null=True)
