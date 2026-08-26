@@ -395,6 +395,13 @@ class SessionDetailsAccessChecksTest(TestCase):
         with patch('corehq.apps.domain.decorators.has_privilege', return_value=False):
             assert self._post(session_key, 'checks-privilege').status_code == 404
 
+    def test_missing_domain_is_a_bad_request(self):
+        session_key = self._login('checks-nodomain')
+        data = json.dumps({'sessionId': session_key})
+        response = _post_with_hmac(reverse('session_details'), data,
+                                   content_type="application/json")
+        assert response.status_code == 400
+
 
 class SessionDetailsSsoChecksTest(TestCase):
     """An SSO user is served only where the project space trusts their provider."""

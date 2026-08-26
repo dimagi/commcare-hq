@@ -44,7 +44,7 @@ class SessionDetailsView(View):
     Authentication is done by HMAC signing of the request body:
 
         secret = settings.FORMPLAYER_INTERNAL_AUTH_KEY
-        data = '{"session_id": "123"}'
+        data = '{"sessionId": "123", "domain": "my-project-space"}'
         digest = base64.b64encode(hmac.new(secret, data, hashlib.sha256).digest())
         requests.post(url, data=data, headers={'X-MAC-DIGEST': digest})
 
@@ -82,10 +82,13 @@ class SessionDetailsView(View):
             raise Http404
 
         domain = data.get('domain')
-        if domain and toggles.DISABLE_WEB_APPS.enabled(domain):
+        if not domain:
+            return HttpResponseBadRequest()
+
+        if toggles.DISABLE_WEB_APPS.enabled(domain):
             return HttpResponse('Service Temporarily Unavailable', content_type='text/plain', status=503)
 
-        if domain and not _may_act_in_domain(session, domain):
+        if not _may_act_in_domain(session, domain):
             raise Http404
 
         # reset the session's expiry if there's some formplayer activity
