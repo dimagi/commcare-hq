@@ -52,7 +52,7 @@
               type="text"
               id="endpoint-name"
               name="name"
-              class="form-control{% if form.name.errors %}is-invalid{% endif %}"
+              class="form-control {{ form.name.errors|yesno:'is-invalid,' }}"
               x-model="name"
               placeholder="{% trans "Enter endpoint name" %}"
               required
@@ -194,7 +194,7 @@
               <select
                 id="case-type"
                 name="case_type"
-                class="form-select{% if form.case_type.errors %}is-invalid{% endif %}"
+                class="form-select {{ form.case_type.errors|yesno:'is-invalid,' }}"
                 x-model="targetCasetype"
                 @change="onCasetypeChange()"
               >

@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.html import escape
 
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.domain.shortcuts import create_domain
@@ -287,7 +288,12 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
             self._new_url(), self._post_data(name='existing')
         )
         assert response.status_code == 200
-        assert 'already exists' in response.context['form'].errors['name'][0]
+        error = response.context['form'].errors['name'][0]
+        assert 'already exists' in error
+        content = response.content.decode()
+        # Bootstrap only reveals .invalid-feedback next to .is-invalid
+        assert 'form-control is-invalid' in content
+        assert escape(error) in content
 
     def test_form_field_validation_error(self):
         cases = [
