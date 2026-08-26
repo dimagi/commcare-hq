@@ -26,6 +26,8 @@ from corehq.apps.case_search.utils import QueryHelper, get_primary_case_search_e
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import not_found
+from corehq.apps.project_db.table_ddl import get_domain_tables
+from corehq.apps.project_db.user_sql import UnsupportedSQL, translate
 from corehq.apps.settings.views import BaseProjectDataView
 
 from dimagi.utils.logging import notify_exception
@@ -48,7 +50,7 @@ def _get_endpoint(domain, endpoint_id):
 
 
 def _add_endpoint_version(endpoint, *, action, created_by, case_type=None, query=None,
-                          parameters=None, extra_update_fields=()):
+                          parameters=None, dangerous_sql='', extra_update_fields=()):
     """Create the next version for ``endpoint`` and make it the current version.
 
     Must be called within a transaction. ``extra_update_fields`` are saved on the
@@ -62,6 +64,7 @@ def _add_endpoint_version(endpoint, *, action, created_by, case_type=None, query
         case_type=case_type,
         query=query,
         parameters=parameters,
+        dangerous_sql=dangerous_sql,
         created_by=created_by,
         action=action,
     )
@@ -75,6 +78,7 @@ class CaseSearchEndpointForm(forms.Form):
     case_type = forms.CharField(required=False)
     query = forms.JSONField(required=False)
     parameters = forms.JSONField(required=False)
+    sql = forms.CharField(required=False, widget=forms.Textarea)
 
     def __init__(self, *args, domain, target_type, exclude_pk=None, capability=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -112,9 +116,19 @@ class CaseSearchEndpointForm(forms.Form):
 
     def clean(self):
         cleaned = super().clean()
-        if self.target_type != CaseSearchEndpoint.TargetType.ELASTICSEARCH:
-            # Project DB endpoints have no query spec to validate yet.
-            return cleaned
+        # An endpoint is configured one way or the other, so the fields
+        # belonging to the other kind are dropped rather than saved unchecked.
+        if self.target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH:
+            cleaned['sql'] = ''
+            self._clean_query(cleaned)
+        elif self.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB:
+            cleaned['case_type'] = None
+            cleaned['query'] = None
+            self._clean_sql(cleaned)
+
+        return cleaned
+
+    def _clean_query(self, cleaned):
         query = cleaned.get('query')
         parameters = cleaned.get('parameters')
         # Only run semantic validation when both fields parsed cleanly.
@@ -127,7 +141,18 @@ class CaseSearchEndpointForm(forms.Form):
                 )
             for error in errors:
                 self.add_error(None, error)
-        return cleaned
+
+    def _clean_sql(self, cleaned):
+        sql = (cleaned.get('sql') or '').strip()
+        if not sql:
+            self.add_error('sql', 'SQL is required.')
+            return
+        try:
+            # Called for its exceptions: the query is rebuilt when the
+            # endpoint runs, since the domain's tables change over time.
+            translate(sql, get_domain_tables(self.domain))
+        except UnsupportedSQL as error:
+            self.add_error('sql', str(error))
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
@@ -244,6 +269,7 @@ class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
                 action=CaseSearchEndpointVersion.Action.CREATE,
                 created_by=request.couch_user.username,
                 case_type=cd['case_type'],
+                dangerous_sql=cd['sql'],
                 query=cd['query'],
                 parameters=cd['parameters'],
             )
@@ -286,6 +312,7 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
             initial={
                 'name': self._endpoint.name,
                 'case_type': current.case_type if current else None,
+                'sql': current.dangerous_sql if current else '',
                 'query': current.query if current else empty_query,
                 'parameters': current.parameters if current else list,
             },
@@ -310,6 +337,7 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
                 action=CaseSearchEndpointVersion.Action.UPDATE,
                 created_by=request.couch_user.username,
                 case_type=cd['case_type'],
+                dangerous_sql=cd['sql'],
                 query=cd['query'],
                 parameters=cd['parameters'],
                 extra_update_fields=['name'],
