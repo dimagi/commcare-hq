@@ -83,28 +83,6 @@
             {% endfor %}
           </div>
 
-          {# Case Type #}
-          <div class="col-md-3">
-            <label for="case-type" class="form-label fw-semibold"
-              >{% trans "Case Type" %}</label
-            >
-            <select
-              id="case-type"
-              name="case_type"
-              class="form-select{% if form.case_type.errors %}is-invalid{% endif %}"
-              x-model="targetCasetype"
-              @change="onCasetypeChange()"
-            >
-              <option value="">{% trans "-- Select a case type --" %}</option>
-              {% for ct_name in capability.case_types %}
-                <option value="{{ ct_name }}">{{ ct_name }}</option>
-              {% endfor %}
-            </select>
-            {% for error in form.case_type.errors %}
-              <div class="invalid-feedback">{{ error }}</div>
-            {% endfor %}
-          </div>
-
           {% if endpoint and endpoint.current_version %}
             <div class="col-md-3">
               <label class="form-label fw-semibold"
@@ -193,6 +171,30 @@
         <i class="fa-solid fa-filter me-1"></i>{% trans "Query" %}
       </div>
       <div class="card-body">
+        {# Case Type #}
+        <div class="row g-3 mb-3 align-items-center">
+          <label for="case-type" class="col-md-2 col-form-label fw-semibold"
+            >{% trans "Case Type" %}</label
+          >
+          <div class="col-md-4">
+            <select
+              id="case-type"
+              name="case_type"
+              class="form-select{% if form.case_type.errors %}is-invalid{% endif %}"
+              x-model="targetCasetype"
+              @change="onCasetypeChange()"
+            >
+              <option value="">{% trans "-- Select a case type --" %}</option>
+              {% for ct_name in capability.case_types %}
+                <option value="{{ ct_name }}">{{ ct_name }}</option>
+              {% endfor %}
+            </select>
+            {% for error in form.case_type.errors %}
+              <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+
         {% include "case_search/partials/query_builder.html" %}
       </div>
     </div>
