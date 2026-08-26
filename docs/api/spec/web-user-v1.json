@@ -1,0 +1,608 @@
+{
+  "components": {
+    "schemas": {
+      "PaginationMeta": {
+        "description": "Pagination metadata for a page of records.",
+        "properties": {
+          "limit": {
+            "type": "integer"
+          },
+          "next": {
+            "nullable": true,
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "previous": {
+            "nullable": true,
+            "type": "string"
+          },
+          "total_count": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "description": "Send the header `Authorization: ApiKey <username>:<api_key>`. Generate an API key from your CommCare HQ account settings.",
+        "in": "header",
+        "name": "Authorization",
+        "type": "apiKey"
+      },
+      "BasicAuth": {
+        "description": "HTTP Basic authentication with a CommCare HQ username and password.",
+        "scheme": "basic",
+        "type": "http"
+      },
+      "DigestAuth": {
+        "description": "HTTP Digest authentication with a CommCare HQ username and password.",
+        "scheme": "digest",
+        "type": "http"
+      },
+      "OAuth2": {
+        "description": "OAuth2 with the `access_apis` scope.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "/oauth/authorize/",
+            "scopes": {
+              "access_apis": "Access the CommCare APIs"
+            },
+            "tokenUrl": "/oauth/token/"
+          }
+        },
+        "type": "oauth2"
+      }
+    }
+  },
+  "info": {
+    "description": "CommCare data API.",
+    "title": "Web User V1",
+    "version": "1.0.0"
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/a/{domain}/api/web-user/v1/": {
+      "get": {
+        "description": "Requires the `edit_web_users` permission.",
+        "operationId": "web-user_v1_list_get",
+        "parameters": [
+          {
+            "description": "Maximum number of records to return. Use 0 to request all records.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of records to skip.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Response format.",
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "json",
+              "enum": [
+                "json",
+                "xml"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationMeta"
+                    },
+                    "objects": {
+                      "items": {
+                        "properties": {
+                          "assigned_location_ids": {
+                            "items": {},
+                            "nullable": true,
+                            "type": "array"
+                          },
+                          "default_phone_number": {
+                            "description": "Primary phone number of user.",
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "email": {
+                            "description": "Email address of user.",
+                            "type": "string"
+                          },
+                          "eulas": {
+                            "description": "End user license agreements the user has accepted.",
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "first_name": {
+                            "description": "First name of user.",
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "id": {
+                            "description": "User UUID.",
+                            "readOnly": true,
+                            "type": "string"
+                          },
+                          "is_active_in_domain": {
+                            "type": "boolean"
+                          },
+                          "is_admin": {
+                            "type": "boolean"
+                          },
+                          "last_name": {
+                            "description": "Last name of user.",
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "permissions": {
+                            "additionalProperties": true,
+                            "type": "object"
+                          },
+                          "phone_numbers": {
+                            "description": "List of all phone numbers of the user.",
+                            "items": {},
+                            "type": "array"
+                          },
+                          "primary_location_id": {
+                            "type": "string"
+                          },
+                          "profile": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "resource_uri": {
+                            "readOnly": true,
+                            "type": "string"
+                          },
+                          "role": {
+                            "type": "string"
+                          },
+                          "tableau_role": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "user_data": {
+                            "additionalProperties": true,
+                            "type": "object"
+                          },
+                          "username": {
+                            "description": "User name of the user, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "A page of records."
+          }
+        },
+        "summary": "Web-User",
+        "tags": [
+          "web-user"
+        ]
+      },
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "/a/{domain}/api/web-user/v1/{pk}/": {
+      "get": {
+        "description": "Requires the `edit_web_users` permission.",
+        "operationId": "web-user_v1_detail_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "assigned_location_ids": {
+                      "items": {},
+                      "nullable": true,
+                      "type": "array"
+                    },
+                    "default_phone_number": {
+                      "description": "Primary phone number of user.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "email": {
+                      "description": "Email address of user.",
+                      "type": "string"
+                    },
+                    "eulas": {
+                      "description": "End user license agreements the user has accepted.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "first_name": {
+                      "description": "First name of user.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "id": {
+                      "description": "User UUID.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "is_active_in_domain": {
+                      "type": "boolean"
+                    },
+                    "is_admin": {
+                      "type": "boolean"
+                    },
+                    "last_name": {
+                      "description": "Last name of user.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "permissions": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "phone_numbers": {
+                      "description": "List of all phone numbers of the user.",
+                      "items": {},
+                      "type": "array"
+                    },
+                    "primary_location_id": {
+                      "type": "string"
+                    },
+                    "profile": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "resource_uri": {
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "tableau_groups": {
+                      "items": {},
+                      "nullable": true,
+                      "type": "array"
+                    },
+                    "tableau_role": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "user_data": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "username": {
+                      "description": "User name of the user, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The requested record."
+          }
+        },
+        "summary": "Web-User",
+        "tags": [
+          "web-user"
+        ]
+      },
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Unique identifier of the record.",
+          "in": "path",
+          "name": "pk",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "patch": {
+        "description": "Requires the `edit_web_users` permission.",
+        "operationId": "web-user_v1_detail_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "assigned_location_ids": {
+                    "items": {},
+                    "nullable": true,
+                    "type": "array"
+                  },
+                  "primary_location_id": {
+                    "type": "string"
+                  },
+                  "profile": {
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "tableau_groups": {
+                    "items": {},
+                    "nullable": true,
+                    "type": "array"
+                  },
+                  "tableau_role": {
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "user_data": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "assigned_location_ids": {
+                      "items": {},
+                      "nullable": true,
+                      "type": "array"
+                    },
+                    "default_phone_number": {
+                      "description": "Primary phone number of user.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "email": {
+                      "description": "Email address of user.",
+                      "type": "string"
+                    },
+                    "eulas": {
+                      "description": "End user license agreements the user has accepted.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "first_name": {
+                      "description": "First name of user.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "id": {
+                      "description": "User UUID.",
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "is_active_in_domain": {
+                      "type": "boolean"
+                    },
+                    "is_admin": {
+                      "type": "boolean"
+                    },
+                    "last_name": {
+                      "description": "Last name of user.",
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "permissions": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "phone_numbers": {
+                      "description": "List of all phone numbers of the user.",
+                      "items": {},
+                      "type": "array"
+                    },
+                    "primary_location_id": {
+                      "type": "string"
+                    },
+                    "profile": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "resource_uri": {
+                      "readOnly": true,
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "tableau_groups": {
+                      "items": {},
+                      "nullable": true,
+                      "type": "array"
+                    },
+                    "tableau_role": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "user_data": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "username": {
+                      "description": "User name of the user, for example \"jdoe@example.com\". Web user usernames are plain email addresses, unlike mobile worker usernames.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The update was accepted."
+          }
+        },
+        "summary": "Web-User",
+        "tags": [
+          "web-user"
+        ]
+      }
+    },
+    "/a/{domain}/api/web-user/v1/{pk}/activate/": {
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Unique identifier of the record.",
+          "in": "path",
+          "name": "pk",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "description": "Re-enable a web user's membership in this project space.",
+        "operationId": "web-user_v1_activate",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The request was accepted."
+          }
+        },
+        "summary": "Activate Web User",
+        "tags": [
+          "web-user"
+        ]
+      }
+    },
+    "/a/{domain}/api/web-user/v1/{pk}/deactivate/": {
+      "parameters": [
+        {
+          "description": "The project space (domain) name.",
+          "in": "path",
+          "name": "domain",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Unique identifier of the record.",
+          "in": "path",
+          "name": "pk",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "description": "Disable a web user's membership in this project space, without removing them from it.",
+        "operationId": "web-user_v1_deactivate",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The request was accepted."
+          }
+        },
+        "summary": "Deactivate Web User",
+        "tags": [
+          "web-user"
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    },
+    {
+      "BasicAuth": []
+    },
+    {
+      "DigestAuth": []
+    },
+    {
+      "OAuth2": [
+        "access_apis"
+      ]
+    }
+  ],
+  "servers": [
+    {
+      "description": "A CommCare HQ instance.",
+      "url": "https://{host}",
+      "variables": {
+        "host": {
+          "default": "www.commcarehq.org",
+          "description": "Hostname of the CommCare HQ instance."
+        }
+      }
+    }
+  ],
+  "tags": [
+    {
+      "name": "web-user"
+    }
+  ]
+}
