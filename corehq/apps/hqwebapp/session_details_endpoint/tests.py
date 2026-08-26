@@ -1,11 +1,13 @@
 import datetime
 import json
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytz
 
 from django.conf import settings
-from django.test import Client, TestCase
+from django.contrib.auth.models import User
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from django.utils.dateparse import parse_datetime
@@ -319,6 +321,80 @@ class SessionDetailsAccessChecksTest(TestCase):
         session_key = self._login('checks-member')
         assert self._post(session_key, 'checks-member').status_code == 200
 
+    def test_deactivated_user_is_refused(self):
+        session_key = self._login('checks-deact')
+        user = User.objects.get(username='u-checks-deact')
+        user.is_active = False
+        user.save()
+        assert self._post(session_key, 'checks-deact').status_code == 404
+
+    def test_changed_password_is_refused(self):
+        session_key = self._login('checks-pw')
+        user = User.objects.get(username='u-checks-pw')
+        user.set_password('a-new-password')
+        user.save()
+        assert self._post(session_key, 'checks-pw').status_code == 404
+
+    def test_deactivated_in_project_space_is_refused(self):
+        session_key = self._login('checks-indom')
+        web_user = WebUser.get_by_username('u-checks-indom')
+        web_user.set_is_active('checks-indom', False)
+        web_user.save()
+        assert self._post(session_key, 'checks-indom').status_code == 404
+
+    def test_inactive_project_space_is_refused(self):
+        session_key = self._login('checks-inactive', is_active=False)
+        assert self._post(session_key, 'checks-inactive').status_code == 404
+
+    def test_unsatisfied_two_factor_is_refused(self):
+        session_key = self._login('checks-2fa', two_factor_auth=True)
+        assert self._post(session_key, 'checks-2fa').status_code == 404
+
+    def test_project_space_they_do_not_belong_to_is_refused(self):
+        session_key = self._login('checks-member2')
+        other = Domain.get_or_create_with_name('checks-other', is_active=True)
+        self.addCleanup(other.delete)
+        assert self._post(session_key, 'checks-other').status_code == 404
+
+    def test_unrecognised_project_space_is_refused(self):
+        session_key = self._login('checks-unknown')
+        assert self._post(session_key, 'no-such-project-space').status_code == 404
+
+    def test_deactivated_mobile_worker_is_refused(self):
+        domain = Domain.get_or_create_with_name('checks-mobile', is_active=True)
+        self.addCleanup(lambda: Domain.get_by_name('checks-mobile').delete())
+        CommCareUser.create('checks-mobile', 'mw', 'shhh', None, None)
+        self.addCleanup(
+            lambda: CommCareUser.get_by_username('mw').delete('checks-mobile', deleted_by=None)
+        )
+        client = Client()
+        assert client.login(username='mw', password='shhh')
+        session_key = client.session.session_key
+
+        worker = CommCareUser.get_by_username('mw')
+        worker.is_active = False
+        worker.save()
+
+        assert self._post(session_key, domain.name).status_code == 404
+
+    def test_superuser_is_refused_a_project_space_that_restricts_them(self):
+        session_key = self._login('checks-super')
+        superuser = WebUser.get_by_username('u-checks-super')
+        superuser.is_superuser = True
+        superuser.save()
+        restricted = Domain.get_or_create_with_name('checks-restricted', is_active=True)
+        restricted.restrict_superusers = True
+        restricted.save()
+        self.addCleanup(lambda: Domain.get_by_name('checks-restricted').delete())
+
+        assert self._post(session_key, 'checks-restricted').status_code == 404
+
+    @override_settings(IS_SAAS_ENVIRONMENT=True)
+    def test_lapsed_project_access_is_refused(self):
+        session_key = self._login('checks-privilege')
+        with patch('corehq.apps.domain.decorators.has_privilege', return_value=False):
+            assert self._post(session_key, 'checks-privilege').status_code == 404
+
 
 class SessionDetailsSsoChecksTest(TestCase):
     """An SSO user is served only where the project space trusts their provider."""
@@ -355,6 +431,9 @@ class SessionDetailsSsoChecksTest(TestCase):
     def _post(self, session_key):
         data = json.dumps({'sessionId': session_key, 'domain': self.domain.name})
         return _post_with_hmac(reverse('session_details'), data, content_type="application/json")
+
+    def test_untrusted_identity_provider_is_refused(self):
+        assert self._post(self._sso_session_key()).status_code == 404
 
     def test_trusted_identity_provider_is_allowed(self):
         self.idp.create_trust_with_domain(self.domain.name, self.user.username)
