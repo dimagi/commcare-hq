@@ -57,7 +57,7 @@ class SessionDetailsViewTest(TestCase):
 
     @softer_assert()
     def test_session_details_view(self):
-        data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
+        data = json.dumps({'sessionId': self.session_key, 'domain': self.domain.name})
         response = _post_with_hmac(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         self.assertJSONEqual(response.content, self.expected_response)
@@ -66,14 +66,14 @@ class SessionDetailsViewTest(TestCase):
     def test_session_details_view_expired_session(self):
         self.session.set_expiry(-1)  # 1 second in the past
         self.session.save()
-        data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
+        data = json.dumps({'sessionId': self.session_key, 'domain': self.domain.name})
         response = _post_with_hmac(self.url, data, content_type="application/json")
         self.assertEqual(404, response.status_code)
 
     @softer_assert()
     def test_session_details_view_updates_session(self):
         expired_date = self.session.get_expiry_date()
-        data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
+        data = json.dumps({'sessionId': self.session_key, 'domain': self.domain.name})
         response = _post_with_hmac(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         self.assertGreater(self.session.get_expiry_date(), expired_date)
@@ -185,7 +185,7 @@ class SessionDetailsViewTest(TestCase):
         self.assertNotEqual(session_expiry, data['session_expiry'])
 
     def test_with_hmac_signing(self):
-        data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
+        data = json.dumps({'sessionId': self.session_key, 'domain': self.domain.name})
         header_value = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data)
         response = Client().post(
             self.url,
@@ -197,7 +197,7 @@ class SessionDetailsViewTest(TestCase):
         self.assertJSONEqual(response.content, self.expected_response)
 
     def test_with_hmac_signing_fail(self):
-        data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
+        data = json.dumps({'sessionId': self.session_key, 'domain': self.domain.name})
 
         response = Client().post(
             self.url,
@@ -212,7 +212,7 @@ class SessionDetailsViewTest(TestCase):
     @flag_enabled('CALC_XPATHS', is_preview=True)
     def test_session_details_view_toggles(self):
         toggles.all_toggles()
-        data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
+        data = json.dumps({'sessionId': self.session_key, 'domain': self.domain.name})
         response = _post_with_hmac(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         expected_response = self.expected_response.copy()
