@@ -1244,6 +1244,7 @@ msgstr ""
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
@@ -5861,10 +5862,6 @@ msgstr ""
 "Kunakili programu kumeweza, lakini programu inakosa faili ya multimedia."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid ""
-#| "Copying the application succeeded, but the application will have errors "
-#| "because your application contains a Mobile Report Module that references a "
-#| "UCR configured in this project space. Multimedia may be absent."
 msgid ""
 "Updating the application succeeded, but the application will have errors "
 "because it contains a Mobile Report Module that references a custom report "
@@ -5876,9 +5873,6 @@ msgstr ""
 "kukosekana."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid ""
-#| "Copying the application succeeded, but the application is missing multimedia"
-#| " file(s)."
 msgid ""
 "Updating the application succeeded, but the application is missing "
 "multimedia file(s)."
@@ -16790,6 +16784,7 @@ msgstr "Hakuna maswali ya hivi karibuni"
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
 msgstr "Futa"
@@ -19857,6 +19852,7 @@ msgstr "Imesitishwa"
 
 #: corehq/apps/data_interfaces/models.py
 #: corehq/apps/domain/templates/error.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/integration/kyc/models.py
 #: corehq/apps/integration/payments/const.py
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
@@ -20216,6 +20212,7 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 msgid "Select all"
 msgstr "Chagua zote"
 
@@ -33222,6 +33219,25 @@ msgstr ""
 " la Wingu kutoka kwenye menyu hapo juu. Akaunti na mradi wako vinaweza kuwa "
 "kwenye eneo tofauti."
 
+#: corehq/apps/hqwebapp/forms.py
+#| msgid "Your project spaces:"
+msgid "On the project space:"
+msgid_plural "On the project spaces:"
+msgstr[0] "Eneo lako la miradi:"
+msgstr[1] "Eneo lako la miradi:"
+
+#: corehq/apps/hqwebapp/forms.py
+#| msgid "Your project spaces:"
+msgid "Choose project space"
+msgid_plural "Choose project spaces"
+msgstr[0] "Eneo lako la miradi:"
+msgstr[1] "Eneo lako la miradi:"
+
+#: corehq/apps/hqwebapp/forms.py
+#| msgid "Push content to a downstream project space"
+msgid "Choose at least one project space."
+msgstr "Chagua angalau nafasi moja ya mradi."
+
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid "Open chat"
 msgstr "Fungua gumzo"
@@ -33352,6 +33368,29 @@ msgstr "US"
 #: corehq/apps/hqwebapp/models.py
 msgid "Staging"
 msgstr "Staging"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#| msgid "-The CommCare HQ team"
+msgid "Access CommCare API data"
+msgstr "Fikia data ya API ya CommCare"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#| msgid "Failed to download export."
+msgid "View and download report data"
+msgstr "Tazama na pakua data ya ripoti"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "Allow access to mobile sync and submit endpoints"
+msgstr "Ruhusu ufikiaji wa kusawazisha simu na kuwasilisha mwisho"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "(Deprecated, do not use) Allow access to mobile endpoints"
+msgstr "(Imepitwa na wakati, usitumie) Ruhusu ufikiaji wa mwisho wa simu"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#| msgid "You have been added to the \"{}\" project space."
+msgid "Access data in the \"{}\" project space only"
+msgstr "Fikia data katika nafasi ya mradi \"{}\" pekee"
 
 #: corehq/apps/hqwebapp/tables/elasticsearch/records.py
 msgid "users"
@@ -33828,6 +33867,43 @@ msgstr ""
 "            </div>\n"
 "          </div>\n"
 "        "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#| msgid "Path in Application"
+msgid "Authorize Application"
+msgstr "Idhinisha Programu"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "            Thanks for using %(cc_name)s!\n"
+#| "          "
+msgid ""
+"\n"
+"            Authorize %(application_name)s?\n"
+"          "
+msgstr ""
+"\n"
+"            Idhinisha %(application_name)s?\n"
+"          "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+msgid "This application is requesting permission to:"
+msgstr "Programu hii inaomba ruhusa ya:"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#| msgid ""
+#| "Your project space has not been granted access to data from any other "
+#| "project spaces."
+msgid "This application will have access to data on all your project spaces."
+msgstr ""
+"Programu hii itakuwa na ufikiaji wa data kwenye nafasi zote za mradi wako."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#| msgid "uncategorized"
+msgid "Authorize"
+msgstr "Idhinisha"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/rollout_revert_modal.html
 #, python-format
@@ -38121,7 +38197,6 @@ msgstr ""
 " fomu."
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "Delete Request"
 msgid "Close Requests At"
 msgstr "Funga Maombi Kwa"
 
@@ -38138,7 +38213,6 @@ msgid "How Respondents Receive Their One-time Link"
 msgstr "Jinsi Wajibu Wanavyopokea Kiungo Chao cha Mara Moja"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "Delete Request"
 msgid "Open to Requests"
 msgstr "Fungua kwa Maombi"
 
@@ -38161,22 +38235,18 @@ msgstr ""
 #: corehq/apps/public_webforms/forms.py
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
 #: corehq/apps/public_webforms/views.py
-#| msgid "Public Webforms"
 msgid "New Public Webform"
 msgstr "Fomu Mpya ya Umma ya Wavuti"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "Public Webforms"
 msgid "Create Public Webform"
 msgstr "Unda Fomu ya Umma ya Wavuti"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "Please select application"
 msgid "Please select an application, menu, and form."
 msgstr "Tafadhali chagua programu, menyu, na fomu."
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "The selected form does not have a schedule enabled."
 msgid "The selected form can't be used for a public webform."
 msgstr "Fomu iliyochaguliwa haiwezi kutumika kwa fomu ya umma ya wavuti."
 
@@ -38215,12 +38285,10 @@ msgstr ""
 "        "
 
 #: corehq/apps/public_webforms/views.py
-#| msgid "Public Webforms"
 msgid "Manage Public Webforms"
 msgstr "Dhibiti Fomu za Umma za Wavuti"
 
 #: corehq/apps/public_webforms/views.py
-#| msgid "Public Webforms"
 msgid "Public webform created."
 msgstr "Fomu ya umma ya wavuti imeundwa."
 
@@ -58596,7 +58664,6 @@ msgid "New Application"
 msgstr "Programu Mpya"
 
 #: corehq/tabs/tabclasses.py
-#| msgid "Create and release new build for apps"
 msgid "Create and manage public webforms."
 msgstr "Unda na simamia fomu za mtandaoni za umma."
 
@@ -62042,9 +62109,6 @@ msgstr "Weka JSON halali"
 #~ "\n"
 #~ "    %(inviter)s amekualika kujiunga na mradi wa %(domain)s kwenye CommCare HQ.\n"
 #~ "    Mwaliko huu unaisha baada ya siku %(days)s.\n"
-
-#~ msgid "-The CommCare HQ team"
-#~ msgstr "-Timu ya CommCare HQ"
 
 #~ msgid "Thank you for using CommCare HQ."
 #~ msgstr "Asante kwa kutumia CommCare HQ."
