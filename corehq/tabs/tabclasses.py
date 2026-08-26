@@ -634,7 +634,8 @@ class ProjectDataTab(UITab):
                 'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
             }]])
 
-        if toggles.CASE_SEARCH_ENDPOINTS.enabled(self.domain):
+        if (toggles.CASE_SEARCH_ENDPOINTS.enabled(self.domain)
+                and self.couch_user.is_domain_admin(self.domain)):
             items.append([_('Case Search Endpoints'), [{
                 'title': _(CaseSearchEndpointsView.page_title),
                 'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain]),

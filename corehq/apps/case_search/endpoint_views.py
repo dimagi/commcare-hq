@@ -23,6 +23,7 @@ from corehq.apps.case_search.models import (
     criteria_dict_to_criteria_list,
 )
 from corehq.apps.case_search.utils import QueryHelper, get_primary_case_search_endpoint_results
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import not_found
@@ -30,9 +31,10 @@ from corehq.apps.settings.views import BaseProjectDataView
 
 from dimagi.utils.logging import notify_exception
 
-_ENDPOINT_DECORATORS = [
+_ADMIN_ENDPOINT_DECORATORS = [
     use_bootstrap5,
     toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
+    domain_admin_required,
 ]
 
 def empty_query():
@@ -129,7 +131,7 @@ class CaseSearchEndpointForm(forms.Form):
         return cleaned
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
 class CaseSearchEndpointsView(BaseProjectDataView):
     urlname = 'case_search_endpoints'
     page_title = gettext_lazy('Case Search Endpoints')
@@ -190,7 +192,7 @@ class CaseSearchEndpointEditBaseView(BaseProjectDataView):
         return self.render_to_response(self.get_context_data())
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
 class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
     urlname = 'case_search_endpoint_new'
     page_title = gettext_lazy('New Case Search Endpoint')
@@ -239,7 +241,7 @@ class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
         )
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
 class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
     urlname = 'case_search_endpoint_edit'
     page_title = gettext_lazy('Edit Case Search Endpoint')
@@ -300,7 +302,7 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
         )
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
 class CaseSearchEndpointDeactivateView(BaseDomainView):
     urlname = 'case_search_endpoint_deactivate'
     http_method_names = ['post']
@@ -328,7 +330,7 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
         )
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
 class CaseSearchEndpointTestView(BaseDomainView):
     """Runs a query builder spec against the project's cases and returns an
     HTMX partial with the matching results (or validation errors).
