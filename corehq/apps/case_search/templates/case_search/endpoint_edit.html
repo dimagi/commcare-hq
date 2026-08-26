@@ -17,7 +17,6 @@
 {% block page_content %}
   {% initial_page_data "endpoint_mode" endpoint_mode %}
   {% initial_page_data "initial_name" form.name.value %}
-  {% initial_page_data "initial_target_type" form.target_type.value %}
   {% initial_page_data "initial_case_type" form.case_type.value %}
   {% initial_page_data "initial_parameters" form.parameters.value %}
   {% initial_page_data "initial_query" form.query.value %}
@@ -63,24 +62,17 @@
             {% endfor %}
           </div>
 
-          {# Target Type #}
+          {# Endpoint Type — fixed when the endpoint is created #}
           <div class="col-md-3">
-            <label for="target-type" class="form-label fw-semibold"
-              >{% trans "Target Type" %}</label
+            <label class="form-label fw-semibold"
+              >{% trans "Endpoint Type" %}</label
             >
-            <select
-              id="target-type"
-              name="target_type"
-              class="form-select{% if form.target_type.errors %}is-invalid{% endif %}"
-              x-model="targetType"
-            >
-              {% for value, label in form.target_type.field.choices %}
-                <option value="{{ value }}">{{ label }}</option>
-              {% endfor %}
-            </select>
-            {% for error in form.target_type.errors %}
-              <div class="invalid-feedback">{{ error }}</div>
-            {% endfor %}
+            <input
+              type="text"
+              class="form-control-plaintext"
+              value="{{ target_type_display }}"
+              readonly
+            />
           </div>
 
           {% if endpoint and endpoint.current_version %}
