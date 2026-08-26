@@ -75,17 +75,21 @@ class CaseSearchEndpointForm(forms.Form):
         choices=CaseSearchEndpoint.TargetType.choices
     )
     case_type = forms.CharField(required=False)
-    query = forms.JSONField(required=False)
-    parameters = forms.JSONField(required=False)
+    query = forms.JSONField(required=False, error_messages={'invalid': 'Invalid query JSON.'})
+    parameters = forms.JSONField(required=False, error_messages={'invalid': 'Invalid parameters JSON.'})
 
-    def __init__(self, *args, domain, exclude_pk=None, capability=None, **kwargs):
+    def __init__(self, *args, domain, exclude_pk=None, capability=None, require_name=True, **kwargs):
         super().__init__(*args, **kwargs)
         self.domain = domain
         self.exclude_pk = exclude_pk
         self.capability = capability
+        self.require_name = require_name
+        self.fields['name'].required = require_name
 
     def clean_name(self):
-        name = self.cleaned_data['name']
+        name = self.cleaned_data.get('name')
+        if not self.require_name:
+            return name
         qs = CaseSearchEndpoint.objects.filter(domain=self.domain, name=name)
         if self.exclude_pk:
             qs = qs.exclude(pk=self.exclude_pk)
@@ -115,12 +119,13 @@ class CaseSearchEndpointForm(forms.Form):
         cleaned = super().clean()
         query = cleaned.get('query')
         parameters = cleaned.get('parameters')
+        self.parsed_query = None
         # Only run semantic validation when both fields parsed cleanly.
         if query is not None and parameters is not None:
             capability = self.capability or get_capability(self.domain)
             parameters, errors = parse_parameter_spec(parameters)
             if not errors:
-                _, errors = parse_query_spec(
+                self.parsed_query, errors = parse_query_spec(
                     query, parameters, cleaned.get('case_type') or '', capability
                 )
             for error in errors:
@@ -345,44 +350,36 @@ class CaseSearchEndpointTestView(BaseDomainView):
         return reverse(self.urlname, args=[self.domain])
 
     def post(self, request, *args, **kwargs):
-        case_type = request.POST.get('case_type', '')
-        try:
-            parameters = json.loads(request.POST.get('parameters', '[]'))
-        except (json.JSONDecodeError, ValueError):
-            return self._render_results(request, errors=['Invalid parameters JSON.'])
-
         try:
             test_param_values = json.loads(request.POST.get('test_param_values', '{}'))
         except (json.JSONDecodeError, ValueError):
             return self._render_results(request, errors=['Invalid test parameter values.'])
 
-        try:
-            query = json.loads(request.POST.get('query') or '{}')
-        except (json.JSONDecodeError, ValueError):
-            return self._render_results(request, errors=['Invalid query JSON.'])
-
-        parameters, errors = parse_parameter_spec(parameters)
-        if errors:
-            return self._render_results(request, errors=errors)
-
         capability = get_capability(domain=self.domain)
-        if case_type not in capability['case_types']:
-            return self._render_results(request, errors=[f"Unknown case type: '{case_type}'"])
+        form = CaseSearchEndpointForm(
+            request.POST, domain=self.domain, capability=capability, require_name=False,
+        )
+        if not form.is_valid():
+            return self._render_results(request, errors=self._flatten_errors(form))
+
+        target_type = form.cleaned_data['target_type']
+        case_type = form.cleaned_data['case_type']
         fields = capability['case_types'][case_type]
-        query_root, errors = parse_query_spec(query, parameters, case_type, capability)
-        if errors:
-            return self._render_results(request, errors=errors)
         try:
-            results = self._run_query(case_type, query_root, test_param_values)
+            results = self._run_query(case_type, form.parsed_query, test_param_values, target_type)
         except Exception as e:
             notify_exception(request, str(e))
             return self._render_results(request, errors=['Query Execution Failed'])
         return self._render_results(request, fields=fields, results=results)
 
-    def _run_query(self, case_type, query, test_param_values):
+    @staticmethod
+    def _flatten_errors(form):
+        return [error for errors in form.errors.values() for error in errors]
+
+    def _run_query(self, case_type, query, test_param_values, target_type):
         helper = QueryHelper(self.domain)
         criteria = criteria_dict_to_criteria_list(test_param_values)
-        return get_primary_case_search_endpoint_results(helper, [case_type], criteria, query, 20)
+        return get_primary_case_search_endpoint_results(helper, target_type, case_type, criteria, query, 20)
 
     def _render_results(self, request, *, errors=None, fields=None, results=None):
         # Always 200 so HTMX swaps the partial in (it ignores error statuses).

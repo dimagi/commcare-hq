@@ -8,10 +8,10 @@ from jsonobject.exceptions import BadValueError
 
 from couchforms.geopoint import GeoPoint
 
+from corehq.apps.case_search.const import DISTANCE_UNITS
 from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.es import filters
-from corehq.apps.es.queries import DISTANCE_UNITS
 from corehq.apps.es.case_search import (
     case_property_geo_distance,
     case_property_query,
