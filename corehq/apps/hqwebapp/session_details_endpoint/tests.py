@@ -13,7 +13,13 @@ from django.utils.dateparse import parse_datetime
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.sso.models import (
+    AuthenticatedEmailDomain,
+    IdentityProvider,
+    TrustedIdentityProvider,
+)
+from corehq.apps.sso.tests import generator as sso_generator
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.util.hmac_request import get_hmac_digest
 from corehq.util.test_utils import flag_enabled, softer_assert
 
@@ -285,6 +291,74 @@ class PublicSessionDetailsViewTest(TestCase):
         data = json.dumps({'publicSessionKey': str(session.session_key)})
         response = _post_with_hmac(self.url, data, content_type="application/json")
         assert response.status_code == 404
+
+
+class SessionDetailsAccessChecksTest(TestCase):
+    """One test per answer the endpoint gives about a project space."""
+
+    def _login(self, domain_name, **domain_attrs):
+        domain = Domain.get_or_create_with_name(domain_name, is_active=True)
+        self.addCleanup(lambda: Domain.get_by_name(domain_name).delete())
+        WebUser.create(domain_name, f'u-{domain_name}', 'shhh', None, None)
+        self.addCleanup(
+            lambda: WebUser.get_by_username(f'u-{domain_name}').delete(domain_name, deleted_by=None)
+        )
+        if domain_attrs:
+            for name, value in domain_attrs.items():
+                setattr(domain, name, value)
+            domain.save()
+        client = Client()
+        assert client.login(username=f'u-{domain_name}', password='shhh')
+        return client.session.session_key
+
+    def _post(self, session_key, domain_name):
+        data = json.dumps({'sessionId': session_key, 'domain': domain_name})
+        return _post_with_hmac(reverse('session_details'), data, content_type="application/json")
+
+    def test_member_is_allowed(self):
+        session_key = self._login('checks-member')
+        assert self._post(session_key, 'checks-member').status_code == 200
+
+
+class SessionDetailsSsoChecksTest(TestCase):
+    """An SSO user is served only where the project space trusts their provider."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.account = sso_generator.get_billing_account_for_idp()
+        cls.domain = Domain.get_or_create_with_name('sso-checks', is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
+        cls.user = WebUser.create(cls.domain.name, 'jorge@helpingearth.org', 'shhh', None, None)
+        cls.addClassCleanup(cls.user.delete, cls.domain.name, deleted_by=None)
+        cls.idp = sso_generator.create_idp('helping-earth', cls.account)
+        cls.idp.is_active = True
+        cls.idp.save()
+        AuthenticatedEmailDomain.objects.create(
+            email_domain='helpingearth.org', identity_provider=cls.idp,
+        )
+        cls.addClassCleanup(IdentityProvider.objects.all().delete)
+        cls.addClassCleanup(AuthenticatedEmailDomain.objects.all().delete)
+
+    def tearDown(self):
+        TrustedIdentityProvider.objects.all().delete()
+        super().tearDown()
+
+    def _sso_session_key(self):
+        client = Client()
+        assert client.login(username='jorge@helpingearth.org', password='shhh')
+        session = client.session
+        session['samlSessionIndex'] = '_7c84c96e-8774-4e64-893c-06f91d285100'
+        session.save()
+        return session.session_key
+
+    def _post(self, session_key):
+        data = json.dumps({'sessionId': session_key, 'domain': self.domain.name})
+        return _post_with_hmac(reverse('session_details'), data, content_type="application/json")
+
+    def test_trusted_identity_provider_is_allowed(self):
+        self.idp.create_trust_with_domain(self.domain.name, self.user.username)
+        assert self._post(self._sso_session_key()).status_code == 200
 
 
 def _post_with_hmac(url, data, client=None, **kwargs):
