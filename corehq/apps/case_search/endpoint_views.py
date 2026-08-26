@@ -2,6 +2,7 @@ import json
 
 from django import forms
 from django.db import transaction
+from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -74,16 +75,14 @@ def _add_endpoint_version(endpoint, *, action, created_by, case_type=None, query
 
 class CaseSearchEndpointForm(forms.Form):
     name = forms.CharField()
-    target_type = forms.ChoiceField(
-        choices=CaseSearchEndpoint.TargetType.choices
-    )
     case_type = forms.CharField(required=False)
     query = forms.JSONField(required=False)
     parameters = forms.JSONField(required=False)
 
-    def __init__(self, *args, domain, exclude_pk=None, capability=None, **kwargs):
+    def __init__(self, *args, domain, target_type, exclude_pk=None, capability=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.domain = domain
+        self.target_type = target_type
         self.exclude_pk = exclude_pk
         self.capability = capability
 
@@ -116,6 +115,9 @@ class CaseSearchEndpointForm(forms.Form):
 
     def clean(self):
         cleaned = super().clean()
+        if self.target_type != CaseSearchEndpoint.TargetType.ELASTICSEARCH:
+            # Project DB endpoints have no query spec to validate yet.
+            return cleaned
         query = cleaned.get('query')
         parameters = cleaned.get('parameters')
         # Only run semantic validation when both fields parsed cleanly.
@@ -150,6 +152,10 @@ class CaseSearchEndpointsView(BaseProjectDataView):
             )
             .select_related('current_version')
             .order_by('name'),
+            'target_types': [
+                CaseSearchEndpoint.TargetType.ELASTICSEARCH,
+                CaseSearchEndpoint.TargetType.PROJECT_DB,
+            ],
         }
 
 
@@ -158,6 +164,7 @@ class CaseSearchEndpointEditBaseView(BaseProjectDataView):
 
     template_name = 'case_search/endpoint_edit.html'
     mode = None
+    target_type = None
 
     @property
     def parent_pages(self):
@@ -182,6 +189,8 @@ class CaseSearchEndpointEditBaseView(BaseProjectDataView):
         return {
             'capability': self.capability,
             'endpoint_mode': self.mode,
+            'target_type': self.target_type,
+            'target_type_display': CaseSearchEndpoint.TargetType(self.target_type).label,
             'max_group_depth': MAX_QUERY_DEPTH - 1,
             'post_url': self.page_url,
             'form': self._form,
@@ -198,17 +207,24 @@ class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
     page_title = gettext_lazy('New Case Search Endpoint')
     mode = 'new'
 
+    @cached_property
+    def target_type(self):
+        value = self.request.GET.get('target_type')
+        if value not in CaseSearchEndpoint.TargetType.values:
+            raise Http404(f"Unknown target_type: {value!r}")
+        return value
+
     @property
     def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
+        return reverse(self.urlname, args=[self.domain], query={'target_type': self.target_type})
 
     def _make_form(self, data=None):
         return CaseSearchEndpointForm(
             data,
             domain=self.domain,
+            target_type=self.target_type,
             capability=self.capability,
             initial={
-                'target_type': CaseSearchEndpoint.TargetType.PROJECT_DB,
                 'query': empty_query,
                 'parameters': list,
             },
@@ -223,7 +239,7 @@ class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
             endpoint = CaseSearchEndpoint.objects.create(
                 domain=self.domain,
                 name=cd['name'],
-                target_type=cd['target_type'],
+                target_type=self.target_type,
             )
             _add_endpoint_version(
                 endpoint,
@@ -254,6 +270,10 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
         return super().dispatch(request, *args, **kwargs)
 
     @property
+    def target_type(self):
+        return self._endpoint.target_type
+
+    @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self._endpoint.id])
 
@@ -262,11 +282,11 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
         return CaseSearchEndpointForm(
             data,
             domain=self.domain,
+            target_type=self.target_type,
             exclude_pk=self._endpoint.pk,
             capability=self.capability,
             initial={
                 'name': self._endpoint.name,
-                'target_type': self._endpoint.target_type,
                 'case_type': current.case_type if current else None,
                 'query': current.query if current else empty_query,
                 'parameters': current.parameters if current else list,
@@ -287,7 +307,6 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
         endpoint = self._endpoint
         with transaction.atomic():
             endpoint.name = cd['name']
-            endpoint.target_type = cd['target_type']
             _add_endpoint_version(
                 endpoint,
                 action=CaseSearchEndpointVersion.Action.UPDATE,
@@ -295,7 +314,7 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
                 case_type=cd['case_type'],
                 query=cd['query'],
                 parameters=cd['parameters'],
-                extra_update_fields=['name', 'target_type'],
+                extra_update_fields=['name'],
             )
         return redirect(
             reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
