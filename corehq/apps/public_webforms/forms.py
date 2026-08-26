@@ -64,7 +64,7 @@ class PublicWebformFilterForm(forms.Form):
     }
 
     def filter(self, queryset):
-        self.is_valid()  # populates cleaned_data, dropping any invalid field
+        self.is_valid()
         for field, lookup in self.lookups.items():
             if value := self.cleaned_data.get(field):
                 queryset = queryset.filter(**{lookup: value})
