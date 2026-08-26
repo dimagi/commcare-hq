@@ -20,6 +20,10 @@ response against the spec, in both directions:
 """
 
 import json
+import uuid
+
+from casexml.apps.case.mock import CaseBlock
+from django.test import TestCase
 
 from corehq.apps.api.openapi.builder import build_all
 from corehq.apps.api.openapi.tests.oas_validation import (
@@ -28,11 +32,15 @@ from corehq.apps.api.openapi.tests.oas_validation import (
 )
 from corehq.apps.api.resources import v0_5
 from corehq.apps.api.tests.utils import APIResourceTest
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.groups import group_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.api.core import serialize_case
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.models import CommCareCase
 
 
 def _find_path(document, *, detail):
@@ -200,3 +208,84 @@ class TestGroupApiMatchesItsSpec(ApiSpecContract, APIResourceTest):
     @property
     def record_id(self):
         return self.group._id
+
+
+def _case_record_schema(document):
+    """The published schema for one case record.
+
+    A case v2 list response wraps its records in ``cases``, whose items are
+    an ``anyOf`` of a case and an error stub -- a bulk fetch reports a
+    missing case in place, rather than failing the request. The case is the
+    branch that describes an actual case.
+    """
+    items = (
+        document['paths']['/a/{domain}/api/case/v2/']['get']['responses'][
+            '200'
+        ]['content']['application/json']['schema']['properties']['cases'][
+            'items'
+        ]
+    )
+    for branch in items.get('anyOf', [items]):
+        properties = branch.get('properties', {})
+        if 'case_id' in properties and 'case_name' in properties:
+            return properties
+    raise AssertionError(
+        'no branch of the case v2 list response describes a case record'
+    )
+
+
+class TestCaseApiSchemaMatchesItsSerializer(TestCase):
+    """Case v2's response schema is transcribed by hand.
+
+    Every other documented API derives its response schema from tastypie's
+    metadata, so a field cannot appear in one and not the other. Case v2 has
+    no metadata to derive from: ``serialize_case()`` is a dict literal and
+    the schema is a second dict literal written to match it. Nothing but
+    this test makes them agree.
+
+    It is not a hypothetical risk. The bulk-fetch response omitted
+    ``matching_records`` and ``missing_records`` for as long as it was
+    documented, and the omission was found by reading ``get_bulk()`` rather
+    than by anything failing.
+
+    ``serialize_es_case()`` serves the list and bulk-fetch responses while
+    ``serialize_case()`` serves the detail and write responses; one schema
+    can describe both because
+    ``hqcase.tests.test_serialization.TestAPISerialization`` pins the two to
+    each other.
+    """
+
+    domain = 'test-case-v2-contract'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.case_id = str(uuid.uuid4())
+        submit_case_blocks(
+            [
+                CaseBlock(
+                    case_id=cls.case_id,
+                    case_type='player',
+                    case_name='Elizabeth Harmon',
+                    external_id='1',
+                    owner_id='methuen_home',
+                    create=True,
+                    update={'sport': 'chess'},
+                ).as_text()
+            ],
+            domain=cls.domain,
+        )
+
+    def test_every_serialized_field_is_documented_and_vice_versa(self):
+        case = CommCareCase.objects.get_case(self.case_id, self.domain)
+        serialized = set(serialize_case(case))
+        declared = declared_response_fields(
+            _case_record_schema(build_all()['case-v2'])
+        )
+        assert serialized == declared, (
+            'case v2 schema and serialize_case() disagree -- '
+            f'serialized but undocumented: {sorted(serialized - declared)}; '
+            f'documented but never returned: {sorted(declared - serialized)}'
+        )
