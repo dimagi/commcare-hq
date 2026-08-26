@@ -164,13 +164,18 @@
           <i class="fa-solid fa-database me-1"></i>{% trans "SQL" %}
         </div>
         <div class="card-body">
-          {# No name attribute: nothing is posted or stored yet. #}
           <textarea
             id="endpoint-sql"
+            name="sql"
             class="form-control font-monospace"
             rows="12"
             aria-label="{% trans "SQL" %}"
-          ></textarea>
+          >
+{{ form.sql.value|default:"" }}</textarea
+          >
+          {% for error in form.sql.errors %}
+            <div class="alert alert-danger mt-2">{{ error }}</div>
+          {% endfor %}
         </div>
       </div>
     {% else %}
