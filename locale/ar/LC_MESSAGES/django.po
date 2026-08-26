@@ -1274,6 +1274,7 @@ msgstr ""
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
@@ -18651,7 +18652,9 @@ msgstr "لا توجد استعلامات حديثة"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/domain/forms.py corehq/apps/sms/templates/sms/chat_contacts.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#: corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
 msgstr "مسح"
 
@@ -22111,6 +22114,7 @@ msgstr "متوقف"
 
 #: corehq/apps/data_interfaces/models.py
 #: corehq/apps/domain/templates/error.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/integration/kyc/models.py
 #: corehq/apps/integration/payments/const.py
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
@@ -22499,6 +22503,7 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 msgid "Select all"
 msgstr "تحديد الكل"
 
@@ -36426,6 +36431,36 @@ msgid ""
 "be in a different location."
 msgstr ""
 
+#: corehq/apps/hqwebapp/forms.py
+#, fuzzy
+#| msgid "Your project spaces:"
+msgid "On the project space:"
+msgid_plural "On the project spaces:"
+msgstr[0] "مساحات مشاريعك:"
+msgstr[1] "مساحات مشاريعك:"
+msgstr[2] "مساحات مشاريعك:"
+msgstr[3] "مساحات مشاريعك:"
+msgstr[4] "مساحات مشاريعك:"
+msgstr[5] "مساحات مشاريعك:"
+
+#: corehq/apps/hqwebapp/forms.py
+#, fuzzy
+#| msgid "Your project spaces:"
+msgid "Choose project space"
+msgid_plural "Choose project spaces"
+msgstr[0] "مساحات مشاريعك:"
+msgstr[1] "مساحات مشاريعك:"
+msgstr[2] "مساحات مشاريعك:"
+msgstr[3] "مساحات مشاريعك:"
+msgstr[4] "مساحات مشاريعك:"
+msgstr[5] "مساحات مشاريعك:"
+
+#: corehq/apps/hqwebapp/forms.py
+#, fuzzy
+#| msgid "Push content to a downstream project space"
+msgid "Choose at least one project space."
+msgstr "دفع المحتوى إلى مساحة مشروع فرعية"
+
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #, fuzzy
 #| msgid "Open"
@@ -36589,6 +36624,32 @@ msgstr ""
 #| msgid "Messaging"
 msgid "Staging"
 msgstr "الرسائل"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#, fuzzy
+#| msgid "-The CommCare HQ team"
+msgid "Access CommCare API data"
+msgstr "-فريق CommCare HQ"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#, fuzzy
+#| msgid "Failed to download export."
+msgid "View and download report data"
+msgstr "فشل تنزيل التصدير."
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "Allow access to mobile sync and submit endpoints"
+msgstr ""
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "(Deprecated, do not use) Allow access to mobile endpoints"
+msgstr ""
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#, fuzzy
+#| msgid "You have been added to the \"{}\" project space."
+msgid "Access data in the \"{}\" project space only"
+msgstr "تمت إضافتك إلى مساحة المشروع \"{}\"."
 
 #: corehq/apps/hqwebapp/tables/elasticsearch/records.py
 #, fuzzy
@@ -37115,6 +37176,45 @@ msgstr ""
 "            </div>\n"
 "          </div>\n"
 "        "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, fuzzy
+#| msgid "Path in Application"
+msgid "Authorize Application"
+msgstr "المسار في التطبيق"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            Thanks for using %(cc_name)s!\n"
+#| "          "
+msgid ""
+"\n"
+"            Authorize %(application_name)s?\n"
+"          "
+msgstr ""
+"\n"
+"            شكرًا لاستخدامك %(cc_name)s!\n"
+"          "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+msgid "This application is requesting permission to:"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, fuzzy
+#| msgid ""
+#| "Your project space has not been granted access to data from any other "
+#| "project spaces."
+msgid "This application will have access to data on all your project spaces."
+msgstr "لم يتم منح مساحتك حق الوصول إلى بيانات من أي مساحات مشاريع أخرى."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, fuzzy
+#| msgid "uncategorized"
+msgid "Authorize"
+msgstr "غير مصنف"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/rollout_revert_modal.html
 #, python-format
@@ -67140,9 +67240,6 @@ msgstr "أدخل JSON صالحًا"
 #~ "\n"
 #~ "    %(inviter)s دعاك للانضمام إلى مشروع %(domain)s على CommCare HQ.\n"
 #~ "    تنتهي صلاحية هذه الدعوة خلال %(days)s يوم/أيام.\n"
-
-#~ msgid "-The CommCare HQ team"
-#~ msgstr "-فريق CommCare HQ"
 
 #~ msgid "Thank you for using CommCare HQ."
 #~ msgstr "شكرًا لاستخدامك CommCare HQ."

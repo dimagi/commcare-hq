@@ -1294,6 +1294,7 @@ msgstr ""
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
@@ -18976,7 +18977,9 @@ msgstr "Немає останніх запитів"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/domain/forms.py corehq/apps/sms/templates/sms/chat_contacts.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#: corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
 msgstr "Очистити"
 
@@ -22481,6 +22484,7 @@ msgstr "Зупинено"
 
 #: corehq/apps/data_interfaces/models.py
 #: corehq/apps/domain/templates/error.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/integration/kyc/models.py
 #: corehq/apps/integration/payments/const.py
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
@@ -22872,6 +22876,7 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 msgid "Select all"
 msgstr "Вибрати всі"
 
@@ -37034,6 +37039,32 @@ msgid ""
 "be in a different location."
 msgstr ""
 
+#: corehq/apps/hqwebapp/forms.py
+#, fuzzy
+#| msgid "Your project spaces:"
+msgid "On the project space:"
+msgid_plural "On the project spaces:"
+msgstr[0] "Ваші робочі простори:"
+msgstr[1] "Ваші робочі простори:"
+msgstr[2] "Ваші робочі простори:"
+msgstr[3] "Ваші робочі простори:"
+
+#: corehq/apps/hqwebapp/forms.py
+#, fuzzy
+#| msgid "Your project spaces:"
+msgid "Choose project space"
+msgid_plural "Choose project spaces"
+msgstr[0] "Ваші робочі простори:"
+msgstr[1] "Ваші робочі простори:"
+msgstr[2] "Ваші робочі простори:"
+msgstr[3] "Ваші робочі простори:"
+
+#: corehq/apps/hqwebapp/forms.py
+#, fuzzy
+#| msgid "Push content to a downstream project space"
+msgid "Choose at least one project space."
+msgstr "Надсилати вміст у підлеглий простір проєкту"
+
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #, fuzzy
 #| msgid "Open"
@@ -37197,6 +37228,32 @@ msgstr ""
 #| msgid "Messaging"
 msgid "Staging"
 msgstr "Обмін повідомленнями"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#, fuzzy
+#| msgid "-The CommCare HQ team"
+msgid "Access CommCare API data"
+msgstr "-Команда CommCare HQ"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#, fuzzy
+#| msgid "Failed to download export."
+msgid "View and download report data"
+msgstr "Не вдалося завантажити експорт."
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "Allow access to mobile sync and submit endpoints"
+msgstr ""
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "(Deprecated, do not use) Allow access to mobile endpoints"
+msgstr ""
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#, fuzzy
+#| msgid "You have been added to the \"{}\" project space."
+msgid "Access data in the \"{}\" project space only"
+msgstr "Вас додано до простору проєкту \"{}\"."
 
 #: corehq/apps/hqwebapp/tables/elasticsearch/records.py
 #, fuzzy
@@ -37725,6 +37782,47 @@ msgstr ""
 "            </div>\n"
 "          </div>\n"
 "        "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, fuzzy
+#| msgid "Path in Application"
+msgid "Authorize Application"
+msgstr "Шлях у програмі"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            Thanks for using %(cc_name)s!\n"
+#| "          "
+msgid ""
+"\n"
+"            Authorize %(application_name)s?\n"
+"          "
+msgstr ""
+"\n"
+"            Дякуємо, що користуєтеся %(cc_name)s!\n"
+"          "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+msgid "This application is requesting permission to:"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, fuzzy
+#| msgid ""
+#| "Your project space has not been granted access to data from any other "
+#| "project spaces."
+msgid "This application will have access to data on all your project spaces."
+msgstr ""
+"Ваш проектний простір не отримав доступу до даних жодного іншого проектного "
+"простору."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, fuzzy
+#| msgid "uncategorized"
+msgid "Authorize"
+msgstr "без категорії"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/rollout_revert_modal.html
 #, python-format
@@ -68350,9 +68448,6 @@ msgstr "Введіть коректний JSON"
 #~ "    %(inviter)s запросив(-ла) вас приєднатися до проєкту %(domain)s на "
 #~ "CommCare HQ.\n"
 #~ "    Це запрошення дійсне протягом %(days)s дн(ів).\n"
-
-#~ msgid "-The CommCare HQ team"
-#~ msgstr "-Команда CommCare HQ"
 
 #~ msgid "Thank you for using CommCare HQ."
 #~ msgstr "Дякуємо, що користуєтеся CommCare HQ."
