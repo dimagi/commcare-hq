@@ -136,6 +136,7 @@ UNKNOWN_MODELS = {
     "ivr.Call",
     "oauth2_provider.AccessToken",
     "oauth2_provider.Application",
+    "oauth2_provider.DeviceGrant",
     "oauth2_provider.Grant",
     "oauth2_provider.IDToken",
     "oauth2_provider.RefreshToken",
