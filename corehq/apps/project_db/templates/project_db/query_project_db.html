@@ -1,0 +1,61 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% js_entry 'hqwebapp/js/htmx_and_alpine' %}
+
+{% block page_content %}
+  <h2 class="h4 mb-3">{% trans "Query ProjectDB" %}</h2>
+  <details class="mb-4" open>
+    <summary class="h6">{% trans "Tables" %}</summary>
+    {% if table_names %}
+      <ul class="list-inline font-monospace mb-0">
+        {% for table_name in table_names %}
+          <li class="list-inline-item badge bg-light text-dark border">
+            {{ table_name }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-body-secondary mb-0">
+        {% trans "This project has no ProjectDB tables yet." %}
+      </p>
+    {% endif %}
+  </details>
+  <form
+    id="query-form"
+    hx-post="{{ request.path_info }}"
+    hq-hx-action="process_query"
+    hx-target="#query-results"
+    hx-include="#query-results"
+    hx-disabled-elt="find button[type=submit]"
+  >
+    <div class="mb-3">
+      <textarea
+        class="form-control font-monospace"
+        name="sql"
+        rows="8"
+        spellcheck="false"
+        placeholder="SELECT * FROM my_case_type"
+      ></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">{% trans "Process" %}</button>
+    <button
+      type="button"
+      class="btn btn-outline-primary"
+      hx-post="{{ request.path_info }}"
+      hq-hx-action="copy_db_context"
+      hx-swap="none"
+      hx-disabled-elt="this"
+      x-data
+      @htmx:after-request="navigator.clipboard.writeText($event.detail.xhr.responseText)"
+    >
+      <i class="fa fa-clipboard"></i> {% trans "Copy DB Context" %}
+    </button>
+  </form>
+  <div id="query-results" class="mt-4"></div>
+{% endblock %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}
