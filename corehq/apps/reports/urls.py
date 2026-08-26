@@ -17,7 +17,11 @@ from corehq.apps.reports.standard.cases.case_data import (
     resave_case_view,
     undo_close_case_view,
 )
-from corehq.apps.reports.standard.tableau import TableauView, get_tableau_server_ticket
+from corehq.apps.reports.standard.tableau import (
+    TableauView,
+    get_tableau_server_ticket,
+    get_tableau_embedding_jwt,
+)
 from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
     CustomConfigurableReportDispatcher,
@@ -157,6 +161,7 @@ urlpatterns = [
 
     url(r'^tableau/(?P<viz_id>[\d]+)/$', TableauView.as_view(), name=TableauView.urlname),
     url(r'^tableau/ticket/$', get_tableau_server_ticket, name='get_tableau_server_ticket'),
+    url(r'^tableau/embedding_jwt/$', get_tableau_embedding_jwt, name='get_tableau_embedding_jwt'),
 
     # Internal Use
     url(r'^reprocess_error_form/$', ReprocessXFormErrorView.as_view(),
