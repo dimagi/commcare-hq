@@ -157,39 +157,57 @@
       </div>
     </div>
 
-    {# ── Query card ── #}
-    <div class="card mb-3">
-      <div class="card-header">
-        <i class="fa-solid fa-filter me-1"></i>{% trans "Query" %}
-      </div>
-      <div class="card-body">
-        {# Case Type #}
-        <div class="row g-3 mb-3 align-items-center">
-          <label for="case-type" class="col-md-2 col-form-label fw-semibold"
-            >{% trans "Case Type" %}</label
-          >
-          <div class="col-md-4">
-            <select
-              id="case-type"
-              name="case_type"
-              class="form-select{% if form.case_type.errors %}is-invalid{% endif %}"
-              x-model="targetCasetype"
-              @change="onCasetypeChange()"
-            >
-              <option value="">{% trans "-- Select a case type --" %}</option>
-              {% for ct_name in capability.case_types %}
-                <option value="{{ ct_name }}">{{ ct_name }}</option>
-              {% endfor %}
-            </select>
-            {% for error in form.case_type.errors %}
-              <div class="invalid-feedback">{{ error }}</div>
-            {% endfor %}
-          </div>
+    {% if target_type == 'project_db' %}
+      {# ── SQL card ── #}
+      <div class="card mb-3">
+        <div class="card-header">
+          <i class="fa-solid fa-database me-1"></i>{% trans "SQL" %}
         </div>
-
-        {% include "case_search/partials/query_builder.html" %}
+        <div class="card-body">
+          {# No name attribute: nothing is posted or stored yet. #}
+          <textarea
+            id="endpoint-sql"
+            class="form-control font-monospace"
+            rows="12"
+            aria-label="{% trans "SQL" %}"
+          ></textarea>
+        </div>
       </div>
-    </div>
+    {% else %}
+      {# ── Query card ── #}
+      <div class="card mb-3">
+        <div class="card-header">
+          <i class="fa-solid fa-filter me-1"></i>{% trans "Query" %}
+        </div>
+        <div class="card-body">
+          {# Case Type #}
+          <div class="row g-3 mb-3 align-items-center">
+            <label for="case-type" class="col-md-2 col-form-label fw-semibold"
+              >{% trans "Case Type" %}</label
+            >
+            <div class="col-md-4">
+              <select
+                id="case-type"
+                name="case_type"
+                class="form-select{% if form.case_type.errors %}is-invalid{% endif %}"
+                x-model="targetCasetype"
+                @change="onCasetypeChange()"
+              >
+                <option value="">{% trans "-- Select a case type --" %}</option>
+                {% for ct_name in capability.case_types %}
+                  <option value="{{ ct_name }}">{{ ct_name }}</option>
+                {% endfor %}
+              </select>
+              {% for error in form.case_type.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          {% include "case_search/partials/query_builder.html" %}
+        </div>
+      </div>
+    {% endif %}
 
     {# ── Tester card ── #}
     <div class="card mb-3">
