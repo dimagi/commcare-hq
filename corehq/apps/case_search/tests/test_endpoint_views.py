@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.project_db.tests.util import project_db_table
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
@@ -61,6 +62,9 @@ class EndpointViewTestCase(TestCase):
         endpoint.current_version = version
         endpoint.save(update_fields=['current_version'])
         return endpoint
+
+    def _project_db_table(self, case_type='my_case_type'):
+        return project_db_table(self.domain, case_type, {'nickname': 'plain'})
 
     def _list_url(self):
         return reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
@@ -184,21 +188,60 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
                 assert response.status_code == 404
 
     def test_create_project_db_endpoint(self):
-        response = self.client.post(
-            self._new_url(target_type='project_db'),
-            self._post_data(
-                name='sql-endpoint',
-                case_type='',
-                # Project DB endpoints skip query validation entirely, so a
-                # spec that Elasticsearch would reject still saves.
-                query=json.dumps({'type': 'bogus'}),
-            ),
-        )
+        with self._project_db_table():
+            response = self.client.post(
+                self._new_url(target_type='project_db'),
+                self._post_data(
+                    name='sql-endpoint',
+                    sql='SELECT case_id FROM my_case_type',
+                    # Elasticsearch fields are dropped, not validated, so a
+                    # spec Elasticsearch would reject does not block the save
+                    case_type='my_case_type',
+                    query=json.dumps({'type': 'bogus'}),
+                ),
+            )
         assert response.status_code == 302
         endpoint = CaseSearchEndpoint.objects.get(
             domain=self.domain, name='sql-endpoint'
         )
         assert endpoint.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB
+        version = endpoint.current_version
+        # The user's input is stored verbatim
+        assert version.dangerous_sql == 'SELECT case_id FROM my_case_type'
+        # ...and nothing belonging to an Elasticsearch endpoint is kept
+        assert version.case_type is None
+        assert version.query is None
+
+    def test_elasticsearch_endpoint_does_not_store_sql(self):
+        self.client.post(
+            self._new_url(),
+            self._post_data(name='es-endpoint', sql='DROP TABLE my_case_type'),
+        )
+        endpoint = CaseSearchEndpoint.objects.get(
+            domain=self.domain, name='es-endpoint'
+        )
+        assert endpoint.current_version.dangerous_sql == ''
+
+    def test_project_db_sql_errors(self):
+        cases = [
+            ('', 'SQL is required.'),
+            ('DELETE FROM my_case_type', 'unsupported statement'),
+            ('SELECT nope FROM my_case_type', 'unknown column'),
+            ('SELECT case_id FROM no_such_table', 'unknown table'),
+        ]
+        for sql, expected in cases:
+            with self.subTest(sql=sql), self._project_db_table():
+                response = self.client.post(
+                    self._new_url(target_type='project_db'),
+                    self._post_data(name='bad-sql', case_type='', sql=sql),
+                )
+                assert response.status_code == 200
+                errors = response.context['form'].errors['sql']
+                assert expected in errors[0]
+                assert errors[0] in response.content.decode()
+        assert not CaseSearchEndpoint.objects.filter(
+            domain=self.domain, name='bad-sql'
+        ).exists()
 
     def test_create_endpoint(self):
         response = self.client.post(
@@ -291,6 +334,37 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
 
 
 class TestCaseSearchEndpointEditView(EndpointViewTestCase):
+    def test_project_db_endpoint_seeds_sql_from_current_version(self):
+        ep = self._make_endpoint(
+            target_type=CaseSearchEndpoint.TargetType.PROJECT_DB
+        )
+        version = ep.current_version
+        version.dangerous_sql = 'SELECT case_id FROM my_case_type'
+        version.save(update_fields=['dangerous_sql'])
+        response = self.client.get(self._edit_url(ep.id))
+        form = response.context['form']
+        assert form['sql'].value() == 'SELECT case_id FROM my_case_type'
+
+    def test_edit_project_db_endpoint_versions_sql(self):
+        ep = self._make_endpoint(
+            target_type=CaseSearchEndpoint.TargetType.PROJECT_DB
+        )
+        with self._project_db_table():
+            response = self.client.post(
+                self._edit_url(ep.id),
+                self._post_data(
+                    name=ep.name,
+                    case_type='',
+                    sql='SELECT case_name FROM my_case_type',
+                ),
+            )
+        assert response.status_code == 302
+        ep.refresh_from_db()
+        assert ep.current_version.version_number == 2
+        assert ep.current_version.dangerous_sql == (
+            'SELECT case_name FROM my_case_type'
+        )
+
     def test_get(self):
         ep = self._make_endpoint()
         response = self.client.get(self._edit_url(ep.id))
