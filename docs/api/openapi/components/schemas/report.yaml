@@ -1,0 +1,186 @@
+Report:
+  type: object
+  description: >-
+    A configurable ("UCR") report definition, as served by
+    `SimpleReportConfigurationResource` (`corehq/apps/api/resources/
+    v0_5.py:957-1001`).
+  properties:
+    id:
+      type: string
+      description: Report configuration UUID.
+      example: 9aab0eeb88555a7b3bc8676883e7379a
+    resource_uri:
+      type: string
+      description: >-
+        Relative URL of this report's detail operation. Every tastypie resource
+        adds this field by default (`include_resource_uri`,
+        `tastypie/resources.py:96,161`), and `list-reports.rst`'s sample output
+        (`:76-77,116-117`) does show it.
+      example: /a/demo/api/simplereportconfiguration/v1/9aab0eeb88555a7b3bc8676883e7379a/
+    title:
+      type: string
+      nullable: true
+      description: Report title, as set in the report builder.
+      example: Test Report 1
+    columns:
+      type: array
+      description: >-
+        The columns in the report (`dehydrate_columns`, `v0_5.py:971-977`).
+      items:
+        $ref: "#/ReportColumn"
+    filters:
+      type: array
+      description: >-
+        The filters that can be used for the report (`dehydrate_filters`,
+        `v0_5.py:963-969`).
+      items:
+        $ref: "#/ReportFilter"
+ReportColumn:
+  type: object
+  required: [column_id, display, type]
+  properties:
+    column_id:
+      type: string
+      example: gender
+    display:
+      type: string
+      example: Gender
+    type:
+      type: string
+      description: >-
+        `list-reports.rst:30-31` documents exactly two values, `"field"` (a
+        single result column) and `"expanded"` (expands into multiple result
+        columns when downloading report data). The underlying UCR column config
+        is not restricted to these two by the code (`dehydrate_columns` copies
+        `c["type"]` verbatim, `v0_5.py:971-977`), so other UCR column types
+        could in principle appear; not modeled as an `enum` for that reason.
+      example: expanded
+ReportFilter:
+  type: object
+  required: [datatype, slug]
+  properties:
+    type:
+      type: string
+      description: >-
+        `list-reports.rst:38` documents `"date"`, `"choice_list"`, and
+        `"dynamic_choice_list"` as the filter `type` values, but the code does
+        not constrain this (`dehydrate_filters` copies `f["type"]` verbatim,
+        `v0_5.py:963-969`). **Present on every real response, but absent from
+        both sample objects in `list-reports.rst:65-74,97-114`** -- the field is
+        real, the samples are incomplete. See the discrepancy file.
+      example: choice_list
+    datatype:
+      type: string
+      description: >-
+        `list-reports.rst:37` documents `"string"`, `"integer"`, or `"decimal"`
+        as the only `datatype` values, but the page's own second sample object
+        (`:110-113`) shows `"datatype": "date"` for a filter named `form_date`
+        -- contradicting its own prose. The code does not constrain this value
+        at all. Not modeled as an `enum`.
+      example: string
+    slug:
+      type: string
+      description: >-
+        The filter's identifier, used as a `filter_name` query parameter on
+        `downloadReportData`.
+      example: owner_name
+ReportList:
+  allOf:
+    - $ref: "./pagination.yaml#/PaginatedResponse"
+    - type: object
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: "#/Report"
+      description: >-
+        `SimpleReportConfigurationResource.Meta.paginator_class` is
+        `DoesNothingPaginator` (`v0_5.py:1001`; `corehq/apps/api/resources/
+        pagination.py:42-47`), which returns the full unfiltered list and a
+        `meta` containing only `total_count` -- `limit`/`offset`/`next`/
+        `previous` are never present, and `limit`/`offset` query parameters have
+        no effect. `PaginationMeta`'s properties are all optional, so this
+        narrower shape still validates.
+ReportColumnData:
+  type: object
+  required: [header, slug]
+  properties:
+    header:
+      type: string
+      example: Gender-male
+    slug:
+      type: string
+      example: gender-male
+    expand_column_value:
+      type: string
+      description: >-
+        Present only for a sub-column produced by expanding an `"expanded"`
+        report column (`UCRExpandDatabaseSubcolumn`, `v0_5.py:885-886`); the
+        distinct value of the source column this sub-column represents.
+      example: male
+ConfigurableReportData:
+  type: object
+  description: >-
+    The result of running a single report, served by
+    `ConfigurableReportDataResource` (`v0_5.py:812-954`). Detail-only -- see
+    `downloadReportData`'s operation description.
+  required: [columns, data, total_records, next_page]
+  properties:
+    columns:
+      type: array
+      items:
+        $ref: "#/ReportColumnData"
+    data:
+      type: array
+      description: >-
+        One object per result row, keyed by each column's `slug`
+        (`_get_report_data`, `v0_5.py:862-890`). The set of keys depends
+        entirely on the report's own column configuration, so this is modeled as
+        an opaque object per row rather than named properties.
+      items:
+        type: object
+        additionalProperties: true
+    total_records:
+      type: integer
+      example: 30
+    next_page:
+      type: string
+      description: >-
+        Relative URL (via Django's `reverse`, not `get_resource_uri`) for the
+        next page of results, repeating every current query parameter with
+        `offset` advanced by `limit`. **Empty string, not `null`, when there is
+        no further page** (`_get_next_page`, `v0_5.py:846-860`, `else` branch
+        returns `""`) -- `download-report-data.rst` has no example of the last
+        page, so this is undocumented.
+      example: /a/demo/api/configurablereportdata/v1/9aab0eeb88555a7b4568676883e7379a/?offset=3&limit=3&state=vermont
+    resource_uri:
+      type: string
+      description: >-
+        Every tastypie resource adds this field by default
+        (`include_resource_uri`, `tastypie/resources.py:96,161`), and this
+        resource's own `get_resource_uri` override (`v0_5.py:940-949`) appends
+        the effective `offset`/`limit` query parameters to it. Undocumented --
+        `download-report-data.rst`'s sample output (`:61-98`) has no
+        `resource_uri` key. See the discrepancy file.
+      example: /a/demo/api/configurablereportdata/v1/9aab0eeb88555a7b4568676883e7379a/?offset=20&limit=10
+ReportErrorMessage:
+  type: object
+  description: >-
+    Error body keyed `error_message`, not the `error` key used by the shared
+    `Error` schema. Both `getReport`'s and `downloadReportData`'s 404s reach it
+    via tastypie's generic uncaught-exception handler (`wrap_view`'s `except
+    Exception` -> `_handle_500`, `tastypie/resources.py:250-265,291-315`, which
+    maps a raised `NotFound` to a 404 status but always builds a canned message,
+    never the raised exception's own text):
+    `SimpleReportConfigurationResource.obj_get` (`v0_5.py:979-986`) raises
+    `NotFound(str(e))` from a caught `Http404`, and
+    `ConfigurableReportDataResource._get_report_configuration`
+    (`v0_5.py:919-932`) raises bare `NotFound()`. Neither is tastypie's
+    `ObjectDoesNotExist` (the only exception `get_detail` itself catches,
+    `tastypie/resources.py:1362-1383`), so both reach the generic handler
+    instead of a clean 404. See the discrepancy file.
+  properties:
+    error_message:
+      type: string
+      example:
+        Sorry, this request could not be processed. Please try again later.
