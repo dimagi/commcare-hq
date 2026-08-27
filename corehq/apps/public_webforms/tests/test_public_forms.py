@@ -120,19 +120,33 @@ def test_phone_number_rejects_non_digits(entered):
 @use('db', skip_turnstile)
 @pytest.mark.parametrize('data, email, phone_number', [
     ({'delivery': 'email', 'email': 'respondent@example.com'},
-     'respondent@example.com', ''),
+     'respondent@example.com', None),
     ({'delivery': 'sms', 'phone_number': '+15551234567'},
-     '', '15551234567'),
+     None, '15551234567'),
 ], ids=['email', 'sms'])
-def test_create_session_records_contact_info(
+def test_a_session_records_contact_info(
     data, email, phone_number
 ):
     webform = create_webform(allow_sms=True)
     form = PublicWebformLinkRequestForm(webform, data)
     assert form.is_valid(), form.errors
 
-    session = form.create_session()
+    session = form.get_or_create_session()
 
     assert session.public_webform == webform
     assert session.email == email
     assert session.phone_number == phone_number
+
+
+@use('db', skip_turnstile)
+def test_asking_twice_returns_the_link_already_sent():
+    webform = create_webform()
+    form = PublicWebformLinkRequestForm(
+        webform, {'delivery': 'email', 'email': 'respondent@example.com'}
+    )
+    assert form.is_valid(), form.errors
+
+    first = form.get_or_create_session()
+    second = form.get_or_create_session()
+
+    assert second == first

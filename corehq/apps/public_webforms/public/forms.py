@@ -79,10 +79,14 @@ class PublicWebformLinkRequestForm(forms.Form):
             self.add_error('phone_number', _("Enter a valid phone number."))
         return digits
 
-    def create_session(self):
-        return PublicFormSession.objects.create(
+    def get_or_create_session(self):
+        email = self.cleaned_data['email']
+        phone_number = self.cleaned_data['phone_number']
+        contact = {'email': email} if email else {'phone_number': phone_number}
+        session = PublicFormSession.get_active_session_for_contact(
+            self.webform, **contact)
+        return session or PublicFormSession.objects.create(
             public_webform=self.webform,
-            email=self.cleaned_data['email'],
-            phone_number=self.cleaned_data['phone_number'],
             expires_at=timezone.now() + PublicFormSession.DEFAULT_LIFESPAN,
+            **contact,
         )

@@ -125,6 +125,17 @@ class PublicFormSession(models.Model):
             expires_at__gt=timezone.now(),
         ).first()
 
+    @classmethod
+    def get_active_session_for_contact(cls, public_webform, email=None, phone_number=None):
+        assert bool(email) != bool(phone_number)
+        contact = {'email': email} if email else {'phone_number': phone_number}
+        return cls.objects.filter(
+            public_webform=public_webform,
+            submitted_at__isnull=True,
+            expires_at__gt=timezone.now(),
+            **contact,
+        ).order_by('-created_at').first()
+
     @property
     def session_username(self):
         return f"{PUBLIC_USER_ID}{self.id.hex}@{self.public_webform.domain}.commcarehq.org"
