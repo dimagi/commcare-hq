@@ -1,12 +1,15 @@
 import json
 
 from django import forms
+from django.core.exceptions import ImproperlyConfigured
 from django.db import transaction
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
+
+from sqlalchemy.exc import SQLAlchemyError
 
 from corehq import toggles
 from corehq.apps.case_search.endpoint_capability import (
@@ -148,9 +151,21 @@ class CaseSearchEndpointForm(forms.Form):
             self.add_error('sql', 'SQL is required.')
             return
         try:
+            tables = get_domain_tables(self.domain)
+        except (ImproperlyConfigured, SQLAlchemyError) as error:
+            # Not the author's fault, so report it against the form rather
+            # than the field, and let them keep what they wrote.
+            notify_exception(
+                None, f'project_db unavailable for {self.domain}: {error}'
+            )
+            self.add_error(
+                None, 'The project database is unavailable. Please try again.'
+            )
+            return
+        try:
             # Called for its exceptions: the query is rebuilt when the
             # endpoint runs, since the domain's tables change over time.
-            translate(sql, get_domain_tables(self.domain))
+            translate(sql, tables)
         except UnsupportedSQL as error:
             self.add_error('sql', str(error))
 
