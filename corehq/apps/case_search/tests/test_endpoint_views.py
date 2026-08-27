@@ -92,6 +92,41 @@ class EndpointViewTestCase(TestCase):
         return data
 
 
+class TestEndpointViewAccess(EndpointViewTestCase):
+    nonadmin_username = 'nonadmin@example.com'
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.nonadmin = WebUser.create(
+            cls.domain, cls.nonadmin_username, 'password', None, None
+        )
+        cls.addClassCleanup(cls.nonadmin.delete, cls.domain, None)
+
+    def setUp(self):
+        super().setUp()
+        self.client.login(username=self.nonadmin_username, password='password')
+
+    def test_nonadmin_member_is_denied(self):
+        ep = self._make_endpoint()
+        cases = [
+            ('get', self._list_url()),
+            ('get', self._new_url()),
+            ('get', self._edit_url(ep.id)),
+            ('post', self._deactivate_url(ep.id)),
+            ('post', self._test_url()),
+        ]
+        for method, url in cases:
+            with self.subTest(method=method, url=url):
+                response = getattr(self.client, method)(url)
+                # domain_admin_required redirects rather than returning 403.
+                self.assertRedirects(
+                    response, reverse('homepage'), fetch_redirect_response=False
+                )
+        ep.refresh_from_db()
+        assert ep.is_active
+
+
 class TestCaseSearchEndpointsListView(EndpointViewTestCase):
     def test_empty_list(self):
         response = self.client.get(self._list_url())

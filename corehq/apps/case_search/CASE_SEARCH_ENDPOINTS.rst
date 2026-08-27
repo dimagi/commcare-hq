@@ -100,8 +100,4 @@ TODOs
 -----
 
 - [ ] Sort configuration
-- [ ] Guard with role permission (right now everybody on domain can see the views)
-- [ ] Allow usage of today's date, user id, etc.
-  - Either an option in the endpoint config
-  - Or via separately configured parameters on the case list page
 - [ ] Paginate endpoint list view (currently unbounded query)
