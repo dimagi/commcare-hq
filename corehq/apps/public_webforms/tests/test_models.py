@@ -23,7 +23,7 @@ from corehq.apps.public_webforms.models import (
     PublicWebform,
     PublicWebformStatus,
 )
-from corehq.apps.public_webforms.tests.utils import create_webform
+from corehq.apps.public_webforms.tests.utils import create_session, create_webform
 from corehq.apps.users.util import PUBLIC_USER_ID
 
 
@@ -67,11 +67,7 @@ def test_with_status_derives_status_from_expiry_and_the_open_setting(
 ], ids=['no-submissions', 'one-submission'])
 def test_with_submissions_count(submitted_at, expected_submissions):
     webform = create_webform()
-    PublicFormSession.objects.create(
-        public_webform=webform,
-        expires_at=timezone.now() + datetime.timedelta(days=1),
-        submitted_at=submitted_at,
-    )
+    create_session(webform, submitted_at=submitted_at)
 
     annotated = PublicWebform.objects.with_submissions_count().get(pk=webform.pk)
     assert annotated.submissions == expected_submissions
@@ -209,10 +205,7 @@ class AllowPublicFormSessionTests(TestCase):
             allow_email=True,
             expires_at=future_expiration,
         )
-        self.session = PublicFormSession.objects.create(
-            public_webform=self.webform,
-            expires_at=future_expiration,
-        )
+        self.session = create_session(self.webform, expires_at=future_expiration)
         self.factory = RequestFactory()
 
     def _request(self, with_header=True, cookie_value=None):
