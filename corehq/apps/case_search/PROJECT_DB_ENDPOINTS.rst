@@ -76,8 +76,13 @@ in control of which table is the case::
 
     SELECT parent.case_id AS pid, child.case_id FROM parent JOIN child ...
 
-``inner_columns`` does not exist on a ``CompoundSelect``, so a ``UNION`` is
-checked per leg via ``.selects``.
+``inner_columns`` does not exist on a ``CompoundSelect``, so a ``UNION``
+collects the columns of every leg via ``.selects``.
+
+The matching columns must also all belong to one table, which is what makes
+the results a single case type with a single set of property columns. A
+``UNION`` of two case types is therefore rejected; a ``UNION`` of two queries
+against the same table is fine.
 
 Everything else about the projection is the author's choice. Selecting fewer
 columns produces a smaller case; ``SELECT case_id FROM patient`` yields a case
@@ -234,6 +239,14 @@ honour it. Project DB has one schema per domain, so the query runs against the
 endpoint's own domain and nothing else: no error, fewer cases than asked for,
 and no ``COMMCARE_PROJECT`` tags on the results. Both can be set on the same
 request today, so this is reachable rather than theoretical.
+
+**One case type per endpoint.** The ``case_id`` columns must all come from
+one table, so an endpoint cannot return a mix of case types — a ``UNION``
+across two of them is rejected. Elasticsearch endpoints have the same limit,
+querying ``[endpoint.current_version.case_type]``, so this is parity rather
+than a new restriction. Lifting it means ``rows_to_cases`` resolving the
+table per row instead of once, and the rows do not currently say which table
+they came from.
 
 **Case indices.** Results carry no ``<index>`` elements. Project DB stores
 ``parent_id`` and ``host_id`` but not identifier, referenced type, or
