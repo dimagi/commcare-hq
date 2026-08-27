@@ -2,7 +2,7 @@ from memoized import memoized
 
 from django.contrib import messages
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import get_language, gettext_lazy as _
@@ -18,6 +18,15 @@ from corehq.apps.public_webforms.public.forms import (
 
 
 class BasePublicWebformView(BasePageView):
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.webform.is_open:
+            return render(
+                request,
+                'public_webforms/public/webform_closed.html',
+                status=404,
+            )
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     @memoized

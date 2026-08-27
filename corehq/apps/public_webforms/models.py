@@ -86,6 +86,10 @@ class PublicWebform(models.Model):
     def is_expired(self):
         return self.expires_at < timezone.now()
 
+    @property
+    def is_open(self):
+        return not self.is_disabled and not self.is_expired
+
 
 class PublicFormSession(models.Model):
 
