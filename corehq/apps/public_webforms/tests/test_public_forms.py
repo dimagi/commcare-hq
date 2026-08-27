@@ -5,7 +5,10 @@ from corehq.apps.public_webforms.models import PublicWebform
 from corehq.apps.public_webforms.public.forms import (
     PublicWebformLinkRequestForm,
 )
-from corehq.apps.public_webforms.tests.utils import create_webform
+from corehq.apps.public_webforms.tests.utils import (
+    create_webform,
+    skip_turnstile,
+)
 
 
 def _form(allow_email=True, allow_sms=True, data=None):
@@ -40,6 +43,7 @@ def test_a_choice_is_offered_only_when_both_channels_are_allowed(
     assert form.can_choose_delivery is expected
 
 
+@use(skip_turnstile)
 @pytest.mark.parametrize('allow_email, allow_sms, delivery', [
     (True, False, 'sms'),
     (False, True, 'email'),
@@ -56,6 +60,7 @@ def test_a_channel_the_webform_disallows_is_rejected(
     assert 'delivery' in form.errors
 
 
+@use(skip_turnstile)
 @pytest.mark.parametrize('delivery, missing', [
     ('email', 'email'),
     ('sms', 'phone_number'),
@@ -67,6 +72,7 @@ def test_the_chosen_channel_needs_contact_information(delivery, missing):
     assert missing in form.errors
 
 
+@use(skip_turnstile)
 @pytest.mark.parametrize('data, expected_discarded', [
     (
         {'delivery': 'email', 'email': 'respondent@example.com', 'phone_number': '+15551234567'},
@@ -86,6 +92,7 @@ def test_the_channel_not_chosen_is_discarded(data, expected_discarded):
     assert form.cleaned_data[expected_discarded] == ''
 
 
+@use(skip_turnstile)
 @pytest.mark.parametrize('entered, expected', [
     ('+254712345678', '254712345678'),
     ('+1 (555) 123-4567', '15551234567'),
@@ -98,6 +105,7 @@ def test_phone_number_is_reduced_to_its_digits(entered, expected):
     assert form.cleaned_data['phone_number'] == expected
 
 
+@use(skip_turnstile)
 @pytest.mark.parametrize('entered', [
     '  ',
     '555-CALL-NOW',
@@ -109,7 +117,7 @@ def test_phone_number_rejects_non_digits(entered):
     assert 'phone_number' in form.errors
 
 
-@use('db')
+@use('db', skip_turnstile)
 @pytest.mark.parametrize('data, email, phone_number', [
     ({'delivery': 'email', 'email': 'respondent@example.com'},
      'respondent@example.com', ''),

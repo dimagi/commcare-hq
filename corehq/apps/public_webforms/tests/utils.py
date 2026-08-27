@@ -1,7 +1,9 @@
 import datetime
 
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.utils import timezone
+
+from unmagic import fixture
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.public_webforms.models import PublicWebform
@@ -12,6 +14,12 @@ OTHER_DOMAIN = 'public-forms-other-domain'
 PASSWORD = 'Passw0rd!'
 ADMIN_USER = 'webform-admin@example.com'
 NORMAL_USER = 'normal-user@example.com'
+
+
+@fixture
+def skip_turnstile():
+    with override_settings(TURNSTILE_SECRET_KEY=''):
+        yield
 
 
 def create_webform(**kwargs):

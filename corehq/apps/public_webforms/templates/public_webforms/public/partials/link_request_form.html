@@ -90,6 +90,13 @@
       >{% trans "Message and data rates may apply." %}</span
     >
   </div>
+  
+  <div class="mb-3">
+    {{ form.turnstile }}
+    {% if form.turnstile.errors %}
+      <div class="help-block text-danger">{{ form.turnstile.errors }}</div>
+    {% endif %}
+  </div>
 
   <button
     type="submit"
