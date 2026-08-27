@@ -1,0 +1,201 @@
+Case:
+  type: object
+  description: >-
+    A single case, as returned by the case data API (JSON format). Most of a
+    case's identifying and business data lives in the nested `properties` object
+    rather than at the top level -- see that property's description. Fields
+    declared by `v0_3.CommCareCaseResource`
+    (`corehq/apps/api/resources/v0_3.py:19-76`) and `v0_4.CommCareCaseResource`
+    (`corehq/apps/api/resources/v0_4.py:186-233`).
+  properties:
+    id:
+      type: string
+      description:
+        Case UUID. Identical to `case_id` -- both are aliases of the same
+        attribute.
+      example: 0X9OCW3JMV98EYOVN32SGN4II
+    case_id:
+      type: string
+      description: Case UUID.
+      example: 0X9OCW3JMV98EYOVN32SGN4II
+    domain:
+      type: string
+      description: Project space the case belongs to.
+      example: demo
+    user_id:
+      type: string
+      nullable: true
+      description: UUID of the user that last modified the case.
+      example: 3c5a623af057e23a32ae4000cf291339
+    date_modified:
+      type: string
+      format: date-time
+      description: >-
+        Date and time the case was last modified, from the submitting phone's
+        clock. Genuinely `Z`-suffixed RFC3339, regardless of the underlying
+        `modified_on` Django `DateTimeField` being naive (`settings.USE_TZ =
+        False`, `settings.py:57`): `CommCareCase.to_json`
+        (`corehq/form_processor/models/cases.py:426-434`) serializes it via
+        `CommCareCaseSerializer` (`corehq/form_processor/serializers.py:
+        172-180`, a plain DRF `ModelSerializer` with no per-field override),
+        whose default `DateTimeField.to_representation`
+        (`rest_framework/fields.py:1198-1214`) uses `output_format =
+        getattr(self, 'format', api_settings.DATETIME_FORMAT)`. This project
+        sets `REST_FRAMEWORK = {'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'}`
+        (`settings.py:2083-2085`), so DRF takes the
+        `value.strftime(output_format)` branch and appends a literal `Z`
+        unconditionally -- timezone-awareness never enters into it, since that
+        branch is not the ISO-8601 one that would otherwise gate the suffix on
+        the value being aware-and-UTC.
+      example: "2016-11-29T14:50:41.156000Z"
+    closed:
+      type: boolean
+      description: Whether the case is closed.
+      example: false
+    date_closed:
+      type: string
+      format: date-time
+      nullable: true
+      description: >-
+        Date and time the case was closed, `Z`-suffixed RFC3339 (same reasoning
+        as `date_modified`; source field `closed_on`).
+      example: "2011-12-20T15:09:47.000000Z"
+    server_date_modified:
+      type: string
+      format: date-time
+      description: >-
+        Date and time the case was last modified, from the server's clock.
+        `Z`-suffixed RFC3339 (same reasoning as `date_modified`; source field
+        `server_modified_on`).
+      example: "2012-04-05T23:56:41.000000Z"
+    server_date_opened:
+      type: string
+      format: date-time
+      nullable: true
+      description: >-
+        Date and time the case was opened, from the server's clock. `Z`-suffixed
+        RFC3339 (same reasoning as `date_modified`; source field
+        `server_opened_on`).
+      example: "2012-04-05T23:56:41.000000Z"
+    indexed_on:
+      type: string
+      format: date-time
+      description: >-
+        Date and time this revision of the case was indexed into Elasticsearch.
+        This is the recommended field to page through results on (see
+        `indexed_on_start`/`indexed_on_end` on the list operation) -- it handles
+        edge cases `server_date_modified` does not. Also `Z`-suffixed RFC3339,
+        by a different mechanism than the other date fields:
+        `ElasticCase._from_dict` sets it to
+        `json_format_datetime(datetime.utcnow())`
+        (`corehq/apps/es/cases.py:84`), and `json_format_datetime`
+        (`corehq/ex-submodules/dimagi/utils/parsing.py:48-60`) always strftimes
+        with the literal format `%Y-%m-%dT%H:%M:%S.%fZ` -- a `Z` and
+        always-six-digit microseconds on every value, independent of DRF.
+      example: "2012-04-05T23:56:41.000000Z"
+    opened_by:
+      type: string
+      nullable: true
+      description: >-
+        UUID of the user that opened the case. Undocumented in `cases-v1.rst`;
+        see the discrepancy file.
+      example: 3c5a623af057e23a32ae4000cf291339
+    closed_by:
+      type: string
+      nullable: true
+      description: >-
+        UUID of the user that closed the case. Undocumented in `cases-v1.rst`;
+        see the discrepancy file.
+      example: 3c5a623af057e23a32ae4000cf291339
+    xform_ids:
+      type: array
+      items:
+        type: string
+      description: UUIDs of forms that have touched this case.
+      example:
+        - 3HQEXR2S0GIRFY2GF40HAR7ZE
+    properties:
+      type: object
+      additionalProperties: true
+      description: >-
+        Case property values -- arbitrary, application-defined case data. Always
+        includes the special properties `case_name`, `case_type`, `date_opened`,
+        `external_id`, and `owner_id` (`corehq/apps/api/models.py:201-212`),
+        plus every dynamic case property the application defines. Because
+        dynamic properties are application-defined, their names and types cannot
+        be enumerated here.
+      example:
+        case_name: ryan
+        case_type: programmer
+        date_opened: "2012-03-13T18:21:52"
+        external_id: "45WKYXQRFFU3AT4Y022EX7HF2"
+        owner_id: null
+        role: artisan
+    indices:
+      type: object
+      additionalProperties:
+        type: object
+        properties:
+          case_type:
+            type: string
+            description: Case type of the referenced case.
+            example: mother
+          case_id:
+            type: string
+            description: UUID of the referenced case.
+            example: 8GPM05TVPIUH0Q4XLXVIURRTA
+          relationship:
+            type: string
+            enum: [child, extension]
+            description: >-
+              The index's relationship to the referenced case. Unconditional on
+              every index entry, and undocumented in `cases-v1.rst`; see the
+              discrepancy file. Backed by `CommCareCaseIndex.relationship_id`, a
+              `PositiveSmallIntegerField` restricted to exactly two `choices`
+              (`corehq/form_processor/models/cases.py:1090-1097`), mapped to the
+              string constants `CASE_INDEX_CHILD`/`CASE_INDEX_EXTENSION`
+              (`corehq/ex-submodules/casexml/apps/case/const.py:50-51`).
+            example: child
+      description: >-
+        References to other cases, keyed by index identifier. An empty object
+        when the case has no indices. Each entry always has `case_type`,
+        `case_id`, and `relationship` (`get_index_map`,
+        `corehq/form_processor/models/cases.py:839-846`).
+      example: {}
+    xforms_by_name:
+      type: object
+      additionalProperties: true
+      description: >-
+        Forms that have touched this case, keyed by form name, each value a list
+        of full form representations. Included only when the
+        `xforms_by_name__full=true` query parameter is passed.
+    xforms_by_xmlns:
+      type: object
+      additionalProperties: true
+      description: >-
+        Forms that have touched this case, keyed by XMLNS, each value a list of
+        full form representations. Included only when the
+        `xforms_by_xmlns__full=true` query parameter is passed.
+    child_cases:
+      type: object
+      additionalProperties: true
+      description: >-
+        Child cases, keyed by case id, each value a full case representation.
+        Included only when the `child_cases__full=true` query parameter is
+        passed.
+    parent_cases:
+      type: object
+      additionalProperties: true
+      description: >-
+        Parent cases, keyed by case id, each value a full case representation.
+        Included only when the `parent_cases__full=true` query parameter is
+        passed.
+CaseList:
+  allOf:
+    - $ref: "./pagination.yaml#/PaginatedResponse"
+    - type: object
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: "#/Case"

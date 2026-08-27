@@ -1,0 +1,29 @@
+apis:
+  commcare:
+    root: ./openapi.yaml
+extends:
+  - recommended
+rules:
+  operation-operationId: error
+  operation-summary: error
+  operation-4xx-response: warn
+  no-unused-components: error
+  path-params-defined: error
+  tag-description: off
+  info-license: off
+  # CommCare HQ's real API URLs always end in a trailing slash (Django/tastypie
+  # convention, confirmed in docs/api/*.rst and the resource code); the spec
+  # must record the actual URLs, so this rule does not apply here.
+  no-path-trailing-slash: off
+  # Promoted from the `recommended` ruleset's default `warn`. A mismatch here
+  # means a date/time field is declared `format: date-time` (RFC3339, offset
+  # required) but exemplified with a value the format doesn't actually
+  # satisfy -- which, on this API, is a real signal that the declared format
+  # is wrong for what the field actually accepts/emits (see case/v1's
+  # naive-vs-offset-aware date fields and the discrepancy file). Left at
+  # `warn`, this kind of mismatch is easy to reintroduce silently across the
+  # remaining resource tasks; `error` makes the existing `exit 0` gate mean
+  # something. Both rules fire on the same underlying mistake -- one on
+  # parameters, one on schema properties -- so both are promoted together.
+  no-invalid-parameter-examples: error
+  no-invalid-schema-examples: error
