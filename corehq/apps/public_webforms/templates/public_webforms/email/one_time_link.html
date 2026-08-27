@@ -1,0 +1,53 @@
+{% extends "registration/email/base_templates/_base.html" %}
+{% load i18n %}
+
+{% block preview_text %}
+  {% blocktrans %}
+    Your one-time link for {{ form_name }}
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_headline %}
+  {% blocktrans %}
+    Your link is ready
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_url %}{{ url }}{% endblock %}
+
+{% block cta_text %}
+  {% blocktrans %}
+    Open the form
+  {% endblocktrans %}
+{% endblock %}
+
+{% block lead_text %}
+  {% blocktrans %}
+    You asked for a link to complete {{ form_name }}, a form collected by
+    {{ project_name }}.
+  {% endblocktrans %}
+{% endblock %}
+
+{% block secondary_text %}
+  <p>
+    {% blocktrans %}
+      This link expires in {{ expires_in }} and can only be used once. If it
+      stops working, you can ask for another.
+    {% endblocktrans %}
+  </p>
+  <p>
+    {% blocktrans %}
+      What you submit is sent to {{ project_name }} and may be seen by the
+      people who run it.
+    {% endblocktrans %}
+  </p>
+  <p>
+    <a href="{{ url }}">{{ url }}</a>
+  </p>
+{% endblock %}
+
+{% block reason_for_email %}
+  {% blocktrans %}
+    You received this message because a one-time link was requested
+  {% endblocktrans %}
+{% endblock %}
