@@ -395,6 +395,19 @@ class SessionDetailsAccessChecksTest(TestCase):
         with patch('corehq.apps.domain.decorators.has_privilege', return_value=False):
             assert self._post(session_key, 'checks-privilege').status_code == 404
 
+    def test_domains_omits_a_space_they_are_deactivated_in(self):
+        session_key = self._login('checks-listed')
+        Domain.get_or_create_with_name('checks-unlisted', is_active=True)
+        self.addCleanup(lambda: Domain.get_by_name('checks-unlisted').delete())
+        web_user = WebUser.get_by_username('u-checks-listed')
+        web_user.add_domain_membership('checks-unlisted')
+        web_user.set_is_active('checks-unlisted', False)
+        web_user.save()
+
+        response = self._post(session_key, 'checks-listed')
+        assert response.status_code == 200
+        assert json.loads(response.content)['domains'] == ['checks-listed']
+
     def test_missing_domain_is_a_bad_request(self):
         session_key = self._login('checks-nodomain')
         data = json.dumps({'sessionId': session_key})

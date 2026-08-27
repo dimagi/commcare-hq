@@ -97,9 +97,11 @@ class SessionDetailsView(View):
         session.save()
 
         domains = set()
-        for member_domain in couch_user.domains:
-            domains.add(member_domain)
-            domains.update(EnterprisePermissions.get_domains(member_domain))
+        for membership in couch_user.domain_memberships:
+            if not membership.is_active:
+                continue
+            domains.add(membership.domain)
+            domains.update(EnterprisePermissions.get_domains(membership.domain))
 
         enabled_toggles = toggles_enabled_for_user(user.username) | toggles_enabled_for_domain(domain)
         enabled_previews = previews_enabled_for_domain(domain)
