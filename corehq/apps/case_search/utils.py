@@ -51,6 +51,8 @@ from corehq.apps.case_search.models import (
     extract_search_request_config,
 )
 from corehq.apps.case_search.endpoint_query_spec import ParameterInput, parse_parameter_spec, parse_query_spec
+from corehq.apps.project_db.cases import get_case_id_column, rows_to_cases
+from corehq.apps.project_db.user_sql import UserSQL, UserSQLValidationError
 from corehq.apps.case_search.xpath_functions.query_functions import date_permutations, validate_date
 from corehq.apps.es import HQESQuery, case_search
 from corehq.apps.es import cases as case_es
@@ -136,6 +138,9 @@ def get_endpoint_results(helper, config):
     if not endpoint.is_active:
         raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
 
+    if endpoint.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB:
+        return get_project_db_endpoint_results(helper, endpoint, config)
+
     parameters, errors = parse_parameter_spec(endpoint.current_version.parameters)
     query_root = None
     if not errors:
@@ -155,6 +160,40 @@ def get_endpoint_results(helper, config):
         [endpoint.current_version.case_type],
         config.criteria,
         query_root)
+
+
+@time_function()
+def get_project_db_endpoint_results(helper, endpoint, config):
+    """Run a project DB endpoint's SQL and return the cases it selected.
+
+    A data registry is ignored: project DB stores one schema per domain, so
+    an endpoint only ever searches its own.
+    """
+    user_sql = UserSQL(helper.domain, endpoint.current_version.dangerous_sql)
+    values = {criteria.key: criteria.value for criteria in config.criteria}
+    try:
+        # Raises if the stored SQL no longer suits the domain's tables, or
+        # if the criteria do not supply every parameter it declares.
+        case_id_column = get_case_id_column(user_sql.query)
+        result = user_sql.run(
+            {name: values[name] for name in user_sql.parameters
+             if name in values},
+            resolve_max_results(helper.domain),
+        )
+    except UserSQLValidationError as error:
+        notify_exception(None, "Stored endpoint SQL failed", details={
+            'endpoint': endpoint.id, 'error': error.msg,
+        })
+        raise CaseSearchUserError(
+            _("Endpoint '{}' query is invalid").format(config.endpoint_id))
+    return rows_to_cases(result.rows, helper.domain, case_id_column.table)
+
+
+def resolve_max_results(domain):
+    if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(domain):
+        return 1500
+    return CASE_SEARCH_MAX_RESULTS
+
 
 @time_function()
 def get_primary_case_search_endpoint_results(helper, case_types, criteria, endpoint_query, limit=None):
@@ -284,14 +323,10 @@ class CaseSearchQueryBuilder:
         return search_es
 
     def _get_initial_search_es(self):
-        max_results = CASE_SEARCH_MAX_RESULTS
-        if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
-            max_results = 1500
-
         return (self.helper.get_base_queryset('main')
                 .case_type(self.case_types)
                 .is_closed(False)
-                .size(max_results))
+                .size(resolve_max_results(self.request_domain)))
 
     def _apply_sort(self, search_es, commcare_sort=None):
         if commcare_sort:
@@ -428,14 +463,10 @@ class CaseSearchEndpointQueryBuilder:
         return search_es.add_query(query, queries.MUST)
 
     def _get_initial_search_es(self):
-        max_results = CASE_SEARCH_MAX_RESULTS
-        if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
-            max_results = 1500
-
         return (self.helper.get_base_queryset('main')
                 .case_type(self.case_types)
                 .is_closed(False)
-                .size(max_results))
+                .size(resolve_max_results(self.request_domain)))
 
     def _get_child_queries(self, node):
         child_queries = [self._parse_query(child) for child in node.children]

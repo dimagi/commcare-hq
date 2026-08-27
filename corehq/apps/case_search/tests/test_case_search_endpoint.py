@@ -22,6 +22,12 @@ from corehq.apps.case_search.models import (
     SearchCriteria,
 )
 from corehq.apps.domain.shortcuts import create_user
+from corehq.apps.project_db.table_ddl import (
+    get_domain_tables,
+    get_project_db_engine,
+    property_column,
+)
+from corehq.apps.project_db.tests.util import project_db_table
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
@@ -118,7 +124,8 @@ class TestCaseSearchEndpoint(TestCase):
     @flag_enabled('CASE_SEARCH_ENDPOINTS')
     def test_endpoint_id_runs_query(self):
         endpoint = CaseSearchEndpoint.objects.create(
-            domain=self.domain, name='people')
+            domain=self.domain, name='people',
+            target_type=CaseSearchEndpoint.TargetType.ELASTICSEARCH)
         version = CaseSearchEndpointVersion.objects.create(
             endpoint=endpoint,
             version_number=1,
@@ -139,3 +146,80 @@ class TestCaseSearchEndpoint(TestCase):
     def test_unknown_endpoint_id_raises(self):
         with self.assertRaises(CaseSearchUserError):
             self._run_query(['person'], [], endpoint_id=404)
+
+
+@es_test(requires=[case_search_adapter], setup_class=True)
+class TestProjectDBCaseSearchEndpoint(TestCase):
+    domain = "TestProjectDBEndpoint"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        CaseSearchConfig.objects.create(domain=cls.domain, enabled=True)
+
+    def _make_endpoint(self, name, sql):
+        endpoint = CaseSearchEndpoint.objects.create(
+            domain=self.domain, name=name,
+            target_type=CaseSearchEndpoint.TargetType.PROJECT_DB)
+        version = CaseSearchEndpointVersion.objects.create(
+            endpoint=endpoint,
+            version_number=1,
+            dangerous_sql=sql,
+            parameters=[],
+            action=CaseSearchEndpointVersion.Action.CREATE,
+        )
+        endpoint.current_version = version
+        endpoint.save(update_fields=['current_version'])
+        return endpoint
+
+    def _patients(self):
+        """Populate a patient table with two cases"""
+        table = get_domain_tables(self.domain)['patient']
+        with get_project_db_engine().begin() as conn:
+            conn.execute(table.insert().values([
+                {'case_id': 'p1', 'owner_id': 'o1', 'case_name': 'Ann',
+                 'closed': False, 'external_id': '',
+                 property_column('nickname'): 'Annie'},
+                {'case_id': 'p2', 'owner_id': 'o1', 'case_name': 'Bob',
+                 'closed': False, 'external_id': '',
+                 property_column('nickname'): 'Bobby'},
+            ]))
+
+    def _run(self, endpoint, criteria=()):
+        config = CaseSearchRequestConfig(
+            criteria=list(criteria), case_types=['patient'],
+            endpoint_id=endpoint.id)
+        return get_case_search_results(self.domain, config)
+
+    @flag_enabled('CASE_SEARCH_ENDPOINTS')
+    def test_returns_cases_in_the_order_the_sql_selected(self):
+        with project_db_table(self.domain, 'patient', {'nickname': 'plain'}):
+            self._patients()
+            endpoint = self._make_endpoint(
+                'patients', 'SELECT * FROM patient ORDER BY case_name DESC')
+            res = self._run(endpoint)
+        assert [case.case_id for case in res] == ['p2', 'p1']
+        assert [case.name for case in res] == ['Bob', 'Ann']
+        assert res[0].domain == self.domain
+        assert res[0].type == 'patient'
+        assert res[0].case_json['nickname'] == 'Bobby'
+
+    @flag_enabled('CASE_SEARCH_ENDPOINTS')
+    def test_criteria_bind_to_sql_parameters(self):
+        with project_db_table(self.domain, 'patient', {'nickname': 'plain'}):
+            self._patients()
+            endpoint = self._make_endpoint(
+                'by-nickname',
+                'SELECT * FROM patient WHERE prop__nickname = :nickname')
+            res = self._run(endpoint, [SearchCriteria('nickname', 'Bobby')])
+        assert [case.name for case in res] == ['Bob']
+
+    @flag_enabled('CASE_SEARCH_ENDPOINTS')
+    def test_missing_parameter_is_a_user_error(self):
+        with project_db_table(self.domain, 'patient', {'nickname': 'plain'}):
+            self._patients()
+            endpoint = self._make_endpoint(
+                'by-nickname',
+                'SELECT * FROM patient WHERE prop__nickname = :nickname')
+            with self.assertRaises(CaseSearchUserError):
+                self._run(endpoint)
