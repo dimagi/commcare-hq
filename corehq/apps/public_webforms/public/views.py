@@ -17,8 +17,26 @@ from corehq.apps.public_webforms.public.forms import (
 )
 
 
+class BasePublicWebformView(BasePageView):
+
+    @property
+    @memoized
+    def webform(self):
+        return get_object_or_404(PublicWebform, public_id=self.kwargs.get('public_id'))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, kwargs={'public_id': self.webform.public_id.hex})
+
+    @property
+    def main_context(self):
+        context = super().main_context
+        context['section'] = {'page_name': _("One-Time Link Request")}
+        return context
+
+
 @method_decorator(use_bootstrap5, name='dispatch')
-class PublicWebformRequestView(BasePageView):
+class PublicWebformRequestView(BasePublicWebformView):
     urlname = 'public_webform_request'
     template_name = 'public_webforms/public/webform_request.html'
 
@@ -33,11 +51,6 @@ class PublicWebformRequestView(BasePageView):
 
     @property
     @memoized
-    def webform(self):
-        return get_object_or_404(PublicWebform, public_id=self.kwargs.get('public_id'))
-
-    @property
-    @memoized
     def form_name(self):
         app = get_app(self.webform.domain, self.webform.app_build_id)
         form = app.get_form(self.webform.form_unique_id) if app else None
@@ -46,16 +59,6 @@ class PublicWebformRequestView(BasePageView):
     @property
     def page_title(self):
         return self.form_name
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, kwargs={'public_id': self.webform.public_id.hex})
-
-    @property
-    def main_context(self):
-        context = super().main_context
-        context['section'] = {'page_name': _("One-Time Link Request")}
-        return context
 
     def post(self, request, *args, **kwargs):
         if not self.form.is_valid():
