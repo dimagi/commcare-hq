@@ -1,5 +1,4 @@
 import re
-from datetime import timedelta
 
 from django import forms
 from django.utils import timezone
@@ -85,5 +84,5 @@ class PublicWebformLinkRequestForm(forms.Form):
             public_webform=self.webform,
             email=self.cleaned_data['email'],
             phone_number=self.cleaned_data['phone_number'],
-            expires_at=timezone.now() + timedelta(hours=1),
+            expires_at=timezone.now() + PublicFormSession.DEFAULT_LIFESPAN,
         )

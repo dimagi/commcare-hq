@@ -9,24 +9,26 @@ import pytest
 from unmagic import use
 
 from corehq.apps.public_webforms.models import PublicFormSession
-from corehq.apps.public_webforms.public.views import PublicWebformRequestView
+from corehq.apps.public_webforms.public.views import (
+    PublicWebformLinkSentView,
+    PublicWebformRequestView,
+)
 from corehq.apps.public_webforms.tests.utils import (
     create_webform,
     skip_turnstile,
 )
 
 
-def _url(public_id):
-    return reverse(
-        PublicWebformRequestView.urlname, kwargs={'public_id': public_id.hex})
+def _url(urlname, public_id):
+    return reverse(urlname, kwargs={'public_id': public_id.hex})
 
 
 def _get(public_id):
-    return Client().get(_url(public_id))
+    return Client().get(_url(PublicWebformRequestView.urlname, public_id))
 
 
 def _request_a_link(public_id, **fields):
-    return Client().post(_url(public_id), {
+    return Client().post(_url(PublicWebformRequestView.urlname, public_id), {
         'delivery': 'email',
         'email': 'respondent@example.com',
         **fields,
@@ -66,3 +68,14 @@ def test_a_request_to_a_webform_not_accepting_requests_creates_no_session():
 
     assert b'Requests Closed' in response.content
     assert not PublicFormSession.objects.filter(public_webform=webform).exists()
+
+
+@use('db', skip_turnstile)
+def test_a_requested_link_redirects_to_a_page_saying_it_was_sent():
+    webform = create_webform(is_disabled=False)
+
+    response = _request_a_link(webform.public_id)
+
+    assert response.status_code == 302
+    assert response.url == _url(
+        PublicWebformLinkSentView.urlname, webform.public_id)
