@@ -73,6 +73,40 @@ def test_with_submissions_count(submitted_at, expected_submissions):
     assert annotated.submissions == expected_submissions
 
 
+@use('db')
+def test_get_active_session_for_contact():
+    webform = create_webform()
+    session = create_session(webform, email='respondent@example.com')
+
+    found = PublicFormSession.get_active_session_for_contact(
+        webform, email='respondent@example.com', phone_number='')
+
+    assert found == session
+
+
+@use('db')
+@pytest.mark.parametrize('session_kwargs', [
+    {'expires_at': timezone.now() - datetime.timedelta(minutes=1)},
+    {'submitted_at': timezone.now()},
+], ids=['expired', 'already-submitted'])
+def test_get_active_session_for_contact_ignores_inactive_session(session_kwargs):
+    webform = create_webform()
+    create_session(webform, email='respondent@example.com', **session_kwargs)
+
+    assert PublicFormSession.get_active_session_for_contact(
+        webform, email='respondent@example.com', phone_number='') is None
+
+
+@pytest.mark.parametrize('email, phone_number', [
+    ('respondent@example.com', '15551234567'),
+    ('', ''),
+], ids=['both', 'neither'])
+def test_get_active_session_for_contact_requires_exactly_one_channel(email, phone_number):
+    with pytest.raises(AssertionError):
+        PublicFormSession.get_active_session_for_contact(
+            PublicWebform(), email=email, phone_number=phone_number)
+
+
 def test_public_form_session_username():
     webform = PublicWebform(domain='public-forms-domain')
     session = PublicFormSession(public_webform=webform)
