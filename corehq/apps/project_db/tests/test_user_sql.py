@@ -1,11 +1,14 @@
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
 from sqlalchemy import (
     and_,
+    bindparam,
     column,
-    literal,
     not_,
+    nullsfirst,
+    nullslast,
     or_,
     select,
     table,
@@ -14,16 +17,27 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects import postgresql
 
-from corehq.apps.project_db.user_sql import UnsupportedSQL, translate
+from corehq.apps.project_db.user_sql import (
+    BadParameters,
+    UnsupportedSQL,
+    UserSQL,
+    _bind,
+    translate,
+)
 
 CLIENT = table('client', column('case_id'), column('name'))
 VISIT = table('visit', column('visit_id'), column('parent_id'), column('name'))
 FORM = table('form', column('form_id'), column('visit_id'))
-TABLES = {'client': CLIENT, 'visit': VISIT, 'form': FORM}
+SURVEY = table('survey', column('symptoms'))
+TABLES = {'client': CLIENT, 'visit': VISIT, 'form': FORM, 'survey': SURVEY}
 
 ON = CLIENT.c.case_id == VISIT.c.parent_id
 CLIENT_VISIT = CLIENT.join(VISIT, ON)
 JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
+
+# An alias is what makes joining a table to itself possible
+VISIT_V, VISIT_P = VISIT.alias('v'), VISIT.alias('p')
+SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
 
 
 @pytest.mark.parametrize('sql, expected', [
@@ -37,21 +51,21 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
      select([CLIENT.c.case_id.label('My Id')])),
 
     ("SELECT * FROM client WHERE name = 'x'",
-     select([CLIENT]).where(CLIENT.c.name == literal('x'))),
+     select([CLIENT]).where(CLIENT.c.name == _bind('x'))),
     ("SELECT * FROM client WHERE name <> 'x'",
-     select([CLIENT]).where(CLIENT.c.name != literal('x'))),
+     select([CLIENT]).where(CLIENT.c.name != _bind('x'))),
     ('SELECT * FROM client WHERE case_id > 5',
-     select([CLIENT]).where(CLIENT.c.case_id > literal(5))),
+     select([CLIENT]).where(CLIENT.c.case_id > _bind(5))),
     ('SELECT * FROM client WHERE case_id <= 5.5',
-     select([CLIENT]).where(CLIENT.c.case_id <= literal(Decimal('5.5')))),
+     select([CLIENT]).where(CLIENT.c.case_id <= _bind(Decimal('5.5')))),
     # Operands may appear in either order
     ("SELECT * FROM client WHERE 'x' = name",
-     select([CLIENT]).where(literal('x') == CLIENT.c.name)),
+     select([CLIENT]).where(_bind('x') == CLIENT.c.name)),
 
     # Columns may be qualified by their table
     ('SELECT client.name FROM client', select([CLIENT.c.name])),
     ("SELECT * FROM client WHERE client.name = 'x'",
-     select([CLIENT]).where(CLIENT.c.name == literal('x'))),
+     select([CLIENT]).where(CLIENT.c.name == _bind('x'))),
 
     # Joins
     (f'SELECT * {JOIN_SQL}', select([CLIENT_VISIT])),
@@ -61,16 +75,37 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
     (f'SELECT parent_id {JOIN_SQL}',
      select([VISIT.c.parent_id]).select_from(CLIENT_VISIT)),
     (f"SELECT * {JOIN_SQL} WHERE visit.name = 'x'",
-     select([CLIENT_VISIT]).where(VISIT.c.name == literal('x'))),
+     select([CLIENT_VISIT]).where(VISIT.c.name == _bind('x'))),
     (f'SELECT client.name, form.form_id {JOIN_SQL} '
      'JOIN form ON visit.visit_id = form.visit_id',
      select([CLIENT.c.name, FORM.c.form_id]).select_from(
          CLIENT_VISIT.join(FORM, VISIT.c.visit_id == FORM.c.visit_id))),
     ("SELECT * FROM client JOIN visit "
      "ON client.case_id = visit.parent_id AND visit.name = 'x'",
-     select([CLIENT.join(VISIT, and_(ON, VISIT.c.name == literal('x')))])),
+     select([CLIENT.join(VISIT, and_(ON, VISIT.c.name == _bind('x')))])),
     ('SELECT * FROM client LEFT JOIN visit ON client.case_id = visit.parent_id',
      select([CLIENT.join(VISIT, ON, isouter=True)])),
+
+    # Table aliases
+    ('SELECT v.visit_id, p.visit_id '
+     'FROM visit AS v JOIN visit AS p ON v.parent_id = p.visit_id',
+     select([VISIT_V.c.visit_id, VISIT_P.c.visit_id]).select_from(SELF_JOIN)),
+
+    # DISTINCT
+    ('SELECT DISTINCT name FROM client', select([CLIENT.c.name]).distinct()),
+    # DISTINCT ON columns need not appear in the projection
+    ('SELECT DISTINCT ON (case_id) name FROM client',
+     select([CLIENT.c.name]).distinct(CLIENT.c.case_id)),
+    ('SELECT DISTINCT ON (case_id, name) name FROM client',
+     select([CLIENT.c.name]).distinct(CLIENT.c.case_id, CLIENT.c.name)),
+
+    # ORDER BY - each key gets its own direction and default NULLS placement
+    ('SELECT * FROM client ORDER BY name, case_id DESC',
+     select([CLIENT]).order_by(nullslast(CLIENT.c.name.asc()),
+                               nullsfirst(CLIENT.c.case_id.desc()))),
+    # An explicit NULLS placement overrides the direction's default
+    ('SELECT name FROM client ORDER BY name DESC NULLS LAST',
+     select([CLIENT.c.name]).order_by(nullslast(CLIENT.c.name.desc()))),
 
     # Unions
     ('SELECT case_id FROM client UNION SELECT visit_id FROM visit',
@@ -85,38 +120,38 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
      union(union(select([CLIENT.c.case_id]), select([VISIT.c.visit_id])),
            select([FORM.c.form_id]))),
     ("SELECT case_id FROM client WHERE name = 'x' UNION SELECT visit_id FROM visit",
-     union(select([CLIENT.c.case_id]).where(CLIENT.c.name == literal('x')),
+     union(select([CLIENT.c.case_id]).where(CLIENT.c.name == _bind('x')),
            select([VISIT.c.visit_id]))),
 
     # WHERE clauses
     ("SELECT * FROM client WHERE name = 'x' AND case_id = 'c1'",
-     select([CLIENT]).where(and_(CLIENT.c.name == literal('x'),
-                                 CLIENT.c.case_id == literal('c1')))),
+     select([CLIENT]).where(and_(CLIENT.c.name == _bind('x'),
+                                 CLIENT.c.case_id == _bind('c1')))),
     ("SELECT * FROM client WHERE name = 'x' OR case_id = 'c1'",
-     select([CLIENT]).where(or_(CLIENT.c.name == literal('x'),
-                                CLIENT.c.case_id == literal('c1')))),
+     select([CLIENT]).where(or_(CLIENT.c.name == _bind('x'),
+                                CLIENT.c.case_id == _bind('c1')))),
     ("SELECT * FROM client WHERE NOT name = 'x'",
-     select([CLIENT]).where(not_(CLIENT.c.name == literal('x')))),
+     select([CLIENT]).where(not_(CLIENT.c.name == _bind('x')))),
     ("SELECT * FROM client WHERE (name = 'x')",
-     select([CLIENT]).where(CLIENT.c.name == literal('x'))),
+     select([CLIENT]).where(CLIENT.c.name == _bind('x'))),
     # Parentheses override the usual AND-before-OR precedence
     ("SELECT * FROM client WHERE (name = 'x' OR name = 'y') AND case_id = 'c1'",
-     select([CLIENT]).where(and_(or_(CLIENT.c.name == literal('x'),
-                                     CLIENT.c.name == literal('y')),
-                                 CLIENT.c.case_id == literal('c1')))),
+     select([CLIENT]).where(and_(or_(CLIENT.c.name == _bind('x'),
+                                     CLIENT.c.name == _bind('y')),
+                                 CLIENT.c.case_id == _bind('c1')))),
     ("SELECT * FROM client WHERE name = 'x' AND case_id = 'c1' AND name = 'y'",
-     select([CLIENT]).where(and_(and_(CLIENT.c.name == literal('x'),
-                                      CLIENT.c.case_id == literal('c1')),
-                                 CLIENT.c.name == literal('y')))),
+     select([CLIENT]).where(and_(and_(CLIENT.c.name == _bind('x'),
+                                      CLIENT.c.case_id == _bind('c1')),
+                                 CLIENT.c.name == _bind('y')))),
     ("SELECT * FROM client WHERE name IN ('x', 'y')",
-     select([CLIENT]).where(CLIENT.c.name.in_([literal('x'), literal('y')]))),
+     select([CLIENT]).where(CLIENT.c.name.in_([_bind('x'), _bind('y')]))),
     # The values may be any supported value expression, not just literals
     ('SELECT * FROM client WHERE name IN (case_id)',
      select([CLIENT]).where(CLIENT.c.name.in_([CLIENT.c.case_id]))),
     ("SELECT * FROM client WHERE name NOT IN ('x')",
-     select([CLIENT]).where(not_(CLIENT.c.name.in_([literal('x')])))),
+     select([CLIENT]).where(not_(CLIENT.c.name.in_([_bind('x')])))),
     ('SELECT * FROM client WHERE name = TRUE',
-     select([CLIENT]).where(CLIENT.c.name == literal(True))),
+     select([CLIENT]).where(CLIENT.c.name == _bind(True))),
     ('SELECT * FROM client WHERE name IS NULL',
      select([CLIENT]).where(CLIENT.c.name.is_(None))),
     ('SELECT * FROM client WHERE name IS NOT NULL',
@@ -129,6 +164,23 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
      select([CLIENT]).where(CLIENT.c.name.is_(False))),
     ('SELECT * FROM client WHERE name IS NOT TRUE',
      select([CLIENT]).where(not_(CLIENT.c.name.is_(True)))),
+
+    # Query parameters are left for the caller to bind after translation
+    ('SELECT * FROM client WHERE name = :who',
+     select([CLIENT]).where(CLIENT.c.name == bindparam('who'))),
+    # One parameter can hold a whole list of values
+    ('SELECT * FROM client WHERE name IN :names',
+     select([CLIENT]).where(CLIENT.c.name.in_(bindparam('names', expanding=True)))),
+
+    # Array operators
+    ("SELECT * FROM survey WHERE symptoms @> ARRAY['fever', 'cough']",
+     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('@>')(_bind(['fever', 'cough'])))),
+    ("SELECT * FROM survey WHERE symptoms <@ ARRAY['fever']",
+     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('<@')(_bind(['fever'])))),
+    ("SELECT * FROM survey WHERE symptoms && ARRAY['fever']",
+     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('&&')(_bind(['fever'])))),
+    ("SELECT * FROM survey WHERE symptoms @> '{fever,cough}'",
+     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('@>')(_bind('{fever,cough}')))),
 ])
 def test_valid_queries(sql, expected):
     assert _compiled(translate(sql, TABLES)) == _compiled(expected)
@@ -170,9 +222,23 @@ def _compiled(query):
     'SELECT visit.name FROM client',      # qualified by a table not in the FROM
     "SELECT * FROM client WHERE name IS 'x'",       # IS with an unsupported operand
     'SELECT * FROM client WHERE name IS DISTINCT FROM NULL',  # IS DISTINCT FROM
+    'SELECT DISTINCT ON () name FROM client',        # DISTINCT ON with no columns
+    'SELECT name FROM client ORDER BY 1',           # ORDER BY an ordinal
+    'SELECT name AS n FROM client ORDER BY n',      # ORDER BY a column alias
     'SELECT * FROM client WHERE case_id = -1',    # negative number
     "SELECT * FROM client WHERE name LIKE 'x%'",  # LIKE
     'SELECT * FROM client WHERE name IN ()',      # IN with no values
+
+    # Query parameters must be named, and the name must be a plain identifier
+    # because it is interpolated into the compiled SQL
+    'SELECT * FROM client WHERE name = %s',           # unnamed
+    'SELECT * FROM client WHERE name = ?',            # unnamed
+    'SELECT * FROM client WHERE name = $1',           # positional
+    'SELECT * FROM client WHERE name = %(who)s',      # not the supported spelling
+    'SELECT * FROM client WHERE name = :hq_param_1',  # reserved prefix
+    'SELECT * FROM client WHERE name IN tbl',         # IN takes a list or parameter
+    'SELECT * FROM client WHERE name = :"a)s; DROP TABLE client; --"',
+    'SELECT * FROM survey WHERE symptoms @> ARRAY[symptoms]', # Array literals only
     'SELECT * FROM client WHERE name IN (SELECT name FROM client)',  # IN a subquery
     'SELECT * FROM client WHERE name',            # not a comparison
     "SELECT * FROM client WHERE LOWER(name) = 'x'",  # function call
@@ -188,8 +254,9 @@ def _compiled(query):
     'SELECT * FROM client JOIN visit USING (case_id)',  # USING instead of ON
     'SELECT * FROM client JOIN visit',                  # no ON clause
     'SELECT * FROM client, visit',                      # comma join has no ON
-    'SELECT * FROM client AS c JOIN visit ON c.case_id = visit.parent_id',  # alias
     'SELECT * FROM client JOIN client ON client.case_id = client.case_id',  # self join
+    'SELECT * FROM client AS c(a, b)',    # column aliases on a table
+    "SELECT * FROM client AS c WHERE client.name = 'x'",  # table must be referenced by alias
     f'SELECT name {JOIN_SQL}',              # ambiguous, both tables have `name`
     f'SELECT client.visit_id {JOIN_SQL}',   # column belongs to the other table
 ])
@@ -201,8 +268,7 @@ def test_rejects_unsupported(sql):
 @pytest.mark.parametrize('alias, expected', [
     ('id', 'id'),
     ('"My Id"', '"My Id"'),
-    # A column alias is the only user-supplied identifier that reaches the
-    # generated SQL, so it must always come back out quoted and escaped.
+    # Ensure user-supplied identifiers come out quoted and escaped
     ('"a""b"', '"a""b"'),
     ('"a\'b"', '"a\'b"'),
     ('"); DROP TABLE client; --"', '"); DROP TABLE client; --"'),
@@ -213,6 +279,79 @@ def test_escapes_alias_identifiers(alias, expected):
     sql, params = _compiled(query)
     assert sql == f'SELECT client.case_id AS {expected} \nFROM client'
     assert params == {}
+
+    query = translate(f'SELECT case_id FROM client AS {alias}', TABLES)
+    sql, params = _compiled(query)
+    assert sql == f'SELECT {expected}.case_id \nFROM client AS {expected}'
+    assert params == {}
+
+
+def test_literals_bind_under_our_own_prefix():
+    sql, params = _compiled(translate("SELECT name FROM client WHERE name = 'x' AND case_id = 5", TABLES))
+    assert sql == ('SELECT client.name \nFROM client \n'
+                   'WHERE client.name = %(hq_param_1)s '
+                   'AND client.case_id = %(hq_param_2)s')
+    assert params == {'hq_param_1': (str, 'x'), 'hq_param_2': (int, 5)}
+
+
+def test_query_parameters_are_left_unbound():
+    query = translate("SELECT name FROM client WHERE name = :who AND case_id = 'c1'", TABLES)
+    compiled = query.compile(dialect=postgresql.dialect())
+    assert str(compiled) == ('SELECT client.name \nFROM client \n'
+                             'WHERE client.name = %(who)s '
+                             'AND client.case_id = %(hq_param_1)s')
+    assert compiled.params == {'hq_param_1': 'c1', 'who': None}
+
+
+def _user_sql(sql):
+    """A ``UserSQL`` over the test tables, with the domain lookup already done"""
+    user_sql = UserSQL('test-domain', sql)
+    with patch('corehq.apps.project_db.user_sql.get_domain_tables', return_value=TABLES):
+        user_sql.query  # a cached_property, so the tables are resolved just once
+    return user_sql
+
+
+@pytest.mark.parametrize('sql, expected', [
+    ('SELECT * FROM client', []),
+    # Parameters come back in the order they appear
+    ('SELECT * FROM client WHERE name IN :names AND case_id = :cid',
+     ['names', 'cid']),
+    # Literals are already bound, and a parameter used twice is listed once
+    ("SELECT * FROM client WHERE name = :who AND case_id = 'c1' OR name = :who",
+     ['who']),
+])
+def test_parameters(sql, expected):
+    assert _user_sql(sql).parameters == expected
+
+
+def test_get_info_separates_literals_from_parameters():
+    """These are the three things the results page renders"""
+    info = _user_sql(
+        "SELECT name FROM client WHERE name = :who AND case_id = 'c1'").get_info()
+    assert info.parameters == ['who']
+    assert info.bound_literals == {'hq_param_1': 'c1'}
+    # sqlglot rewrites the placeholders to pyformat when it pretty-prints
+    assert '%(who)s' in info.translated_sql
+    assert '%(hq_param_1)s' in info.translated_sql
+
+
+@pytest.mark.parametrize('sql, raw, expected', [
+    ('SELECT * FROM client', {}, {}),
+    ('SELECT * FROM client WHERE name = :who', {'who': 'ann'}, {'who': 'ann'}),
+    # A falsy value is passed through as-is
+    ('SELECT * FROM client WHERE name = :who', {'who': ''}, {'who': ''}),
+])
+def test_clean_parameters(sql, raw, expected):
+    assert _user_sql(sql)._clean_parameters(raw) == expected
+
+
+@pytest.mark.parametrize('sql, raw', [
+    ('SELECT * FROM client WHERE name = :who', {}),
+    ('SELECT * FROM client', {'stale': 'x'}),
+])
+def test_clean_parameters_rejects_a_mismatched_set(sql, raw):
+    with pytest.raises(BadParameters):
+        _user_sql(sql)._clean_parameters(raw)
 
 
 def test_handle_quoted_tables():

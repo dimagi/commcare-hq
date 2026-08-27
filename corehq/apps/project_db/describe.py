@@ -28,16 +28,24 @@ Schema:
 
 Supported SQL:
  * SELECT of a column list or *, with optional AS aliases.
- * A single table in the FROM clause.
- * JOIN and LEFT JOIN, with an ON condition.
+ * DISTINCT, and DISTINCT ON (columns).
+ * A single table in the FROM clause, with an optional alias.
+ * JOIN and LEFT JOIN, with an ON condition. A table can be joined to itself if
+   each side is given a different alias.
  * WHERE, combining conditions with AND, OR and NOT, and comparing columns and
    literals with =, <>, <, <=, >, >=, IS NULL/TRUE/FALSE and IN.
+ * Array containment against an ARRAY['a', 'b'] literal, for select_prop__
+   columns: @> holds all of these, <@ holds only these, && holds any of these.
+ * ORDER BY a column, with ASC/DESC and NULLS FIRST/LAST.
  * UNION and UNION ALL of the above.
+ * Named :parameters wherever a literal is allowed
 
 Not supported:
- * Aggregates, function calls and arithmetic.
- * GROUP BY, ORDER BY, LIMIT, DISTINCT and LIKE.
- * Subqueries, CTEs and table aliases.
+ * Aggregates, function calls, arithmetic and casts (::type).
+ * GROUP BY, LIMIT, LIKE and BETWEEN.
+ * Negative numbers.
+ * Subqueries and CTEs.
+ * INTERSECT and EXCEPT.
 
 This project has the following tables:
 {% for summary in table_summaries %}\
