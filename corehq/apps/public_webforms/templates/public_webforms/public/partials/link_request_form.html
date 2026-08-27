@@ -85,7 +85,10 @@
     {{ form.turnstile.errors }}
   </div>
 
-  <button type="submit" class="btn btn-primary btn-lg icon-link">
+  <button
+    type="submit"
+    class="btn btn-primary btn-lg icon-link disable-on-submit"
+  >
     {% trans "Send my link" %}
     <i class="fa fa-arrow-right"></i>
   </button>
