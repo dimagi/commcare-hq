@@ -1,3 +1,4 @@
+from datetime import timedelta
 from uuid import UUID, uuid4
 
 from django.db import models
@@ -92,6 +93,8 @@ class PublicWebform(models.Model):
 
 
 class PublicFormSession(models.Model):
+
+    DEFAULT_LIFESPAN = timedelta(hours=1)
 
     id = models.UUIDField(primary_key=True, default=uuid4)
     session_key = models.UUIDField(default=uuid4, unique=True, db_index=True)
