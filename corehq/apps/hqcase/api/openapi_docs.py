@@ -243,7 +243,15 @@ def _bulk_item_schema():
         upsert_base,
         {'type': 'boolean', 'nullable': True, 'enum': [None]},
         'Upserts a case by external_id: updates it if a case with that '
-        'external_id already exists, or creates it otherwise.',
+        'external_id already exists, or creates it otherwise. CommCare '
+        'HQ looks up every upserted item\'s external_id before any of '
+        'them are saved, so if this same external_id appears more than '
+        'once in one request, every occurrence after the first is '
+        'treated as "not found yet" and a duplicate case is created for '
+        'it -- keep external_ids unique within a single request. The '
+        'same race exists across concurrent requests: two requests '
+        'upserting the same external_id at the same time can each '
+        'create a case.',
     )
     return {'oneOf': [create_item, update_item, upsert_item]}
 
@@ -263,6 +271,16 @@ def _single_or_bulk_schema(single_schema):
                 'type': 'array',
                 'items': _bulk_item_schema(),
                 'maxItems': CASEBLOCK_CHUNKSIZE,
+                'description': (
+                    'Performs a bulk create/update: each item is created, '
+                    'updated or upserted according to its own "create" '
+                    'field. All items are submitted in a single form. '
+                    f'Capped at {CASEBLOCK_CHUNKSIZE} items per request; a '
+                    'longer list is rejected in full, with no cases '
+                    'changed, with the message "You cannot submit more '
+                    f'than {CASEBLOCK_CHUNKSIZE} updates in a single '
+                    'request".'
+                ),
             },
         ]
     }
@@ -316,7 +334,9 @@ _PUT_EXT_SCHEMA = {
         'Upsert by external ID. If no case with this external ID '
         'exists, the case-creation branch applies (case_name, '
         'case_type and owner_id are required); if one does, the '
-        'case-update branch applies (neither is required).'
+        'case-update branch applies (neither is required). Two '
+        'requests upserting the same external ID at the same time can '
+        'race: both may see no existing case and each create one.'
     ),
     'anyOf': [_POST_SINGLE_SCHEMA, _PUT_SINGLE_SCHEMA],
 }
@@ -624,15 +644,26 @@ CASE_API_DOCS = {
         'Fetch, create and update cases. GET returns a page of cases '
         'matching the given filters, or a single case when a case ID is '
         'given. POST with a single JSON object always creates a new '
-        'case. POST with a list performs a bulk change: each item '
-        'creates or updates a case according to its own "create" field, '
-        'or is upserted by external_id when "create" is omitted. PUT to '
-        'the case ID or external ID in the URL updates that case; PUT '
-        'to the external ID URL is a genuine upsert, creating the case '
-        'if none exists with that external ID. PUT to the list URL '
-        '(no ID in the path) instead identifies the case via a '
-        'case_id/external_id field in the body, and requires the case '
-        'to already exist -- it is not an upsert.'
+        'case -- it does not check external_id for an existing match, '
+        'so posting one that already exists creates a second case with '
+        'a duplicate external_id; use PUT by external ID instead if '
+        'that is not what you want. POST with a list performs a bulk '
+        'change: each item creates or updates a case according to its '
+        'own "create" field, or is upserted by external_id when '
+        '"create" is omitted. PUT to the case ID or external ID in the '
+        'URL updates that case; PUT to the external ID URL is a '
+        'genuine upsert, creating the case if none exists with that '
+        'external ID. PUT to the list URL (no ID in the path) instead '
+        'identifies the case via a case_id/external_id field in the '
+        'body, and requires the case to already exist -- it is not an '
+        'upsert. Every change is attributed to the authenticated '
+        'caller; there is no way to submit a change as another user. '
+        'A change can also fail only once the form built from it is '
+        'processed, rather than during upfront validation; in that '
+        'case no case changes are made and the response is a 400 with '
+        '"error" and "form_id" fields (the ID of the resulting error '
+        'form), rather than the "error"-only shape used for other '
+        'input errors.'
     ),
     'paths': [CASE_LIST_PATH, CASE_DETAIL_PATH, CASE_EXT_PATH],
     'methods': ['get', 'post', 'put'],
@@ -641,9 +672,19 @@ CASE_API_DOCS = {
         'case_id': (
             'The case ID. For GET, multiple IDs may be given as a '
             'comma-separated list, e.g. "id1,id2,id3", to fetch several '
-            'cases at once.'
+            'cases at once -- for more than around 100 IDs, prefer '
+            'POST /bulk-fetch/, which has no such practical limit. For '
+            'PUT, if the request body also includes a "case_id" field, '
+            'the body\'s value is used to identify the case, and this '
+            'path value is only used to fill it in when the body omits '
+            'it; the two are not checked against each other.'
         ),
-        'external_id': "The case's external ID.",
+        'external_id': (
+            "The case's external ID. If more than one case in the "
+            "domain shares this external ID, GET fails with a 400 "
+            'listing every matching case_id, rather than returning any '
+            'one of them.'
+        ),
     },
     # 'post' and 'put' (no path) are the single-object schemas, so that
     # introspecting `case_api._openapi_docs.request_schemas['post']`
