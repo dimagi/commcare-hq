@@ -5,6 +5,7 @@ from django import forms
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from corehq.apps.hqwebapp.fields import TurnstileField
 from corehq.apps.public_webforms.models import PublicFormSession
 
 
@@ -36,6 +37,7 @@ class PublicWebformLinkRequestForm(forms.Form):
             'x-model': 'phoneNumber',
         }),
     )
+    turnstile = TurnstileField()
 
     def __init__(self, webform, *args, **kwargs):
         self.webform = webform
