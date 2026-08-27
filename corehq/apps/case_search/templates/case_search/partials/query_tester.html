@@ -52,7 +52,7 @@
   class="btn btn-secondary"
   hx-post="{% url 'case_search_endpoint_test' domain %}"
   hx-include="closest form"
-  :hx-vals="JSON.stringify({test_param_values: testParamValues})"
+  :hx-vals="JSON.stringify({test_param_values: testParamValues, target_type: '{{ target_type }}'})"
   hx-target="#test-results"
   hx-swap="innerHTML"
   hx-indicator="#test-spinner"

@@ -7,8 +7,13 @@ from django.urls import reverse
 from django.utils.html import escape
 from sqlalchemy.exc import OperationalError
 
-from corehq.apps.data_dictionary.models import CaseType
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.project_db.table_ddl import (
+    get_domain_tables,
+    get_project_db_engine,
+    property_column,
+)
 from corehq.apps.project_db.tests.util import project_db_table
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
@@ -40,6 +45,8 @@ class EndpointViewTestCase(TestCase):
         for name in ('my_case_type', 'case_type_a', 'new_target'):
             ct = CaseType.objects.create(domain=cls.domain, name=name)
             cls.addClassCleanup(ct.delete)
+            if name == 'my_case_type':
+                CaseProperty.objects.create(case_type=ct, name='nickname')
 
     def setUp(self):
         self.client.login(username=self.username, password='password')
@@ -573,3 +580,62 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
     def test_requires_post(self):
         response = self.client.get(self._test_url())
         assert response.status_code == 405
+
+    def test_sql_renders_cases_like_the_elasticsearch_tester(self):
+        with self._project_db_table():
+            table = get_domain_tables(self.domain)['my_case_type']
+            with get_project_db_engine().begin() as conn:
+                conn.execute(table.insert().values(
+                    case_id='c1', owner_id='o1', case_name='Ann',
+                    closed=False, external_id='',
+                    **{property_column('nickname'): 'Annie'}))
+            response = self.client.post(self._test_url(), {
+                'target_type': 'project_db',
+                'sql': 'SELECT * FROM my_case_type',
+            })
+        content = response.content.decode()
+        assert response.status_code == 200
+        assert 'alert-danger' not in content
+        # The same columns an Elasticsearch endpoint's results would have
+        assert 'Case Name' in content
+        assert 'nickname' in content
+        assert 'Ann' in content
+        assert 'Annie' in content
+
+    def test_sql_shows_the_translated_query(self):
+        with self._project_db_table():
+            response = self.client.post(self._test_url(), {
+                'target_type': 'project_db',
+                'sql': 'SELECT * FROM my_case_type',
+            })
+        content = response.content.decode()
+        assert 'Translated SQL' in content
+        assert 'my_case_type' in content
+
+    def test_sql_with_parameters_runs_with_them_empty(self):
+        with self._project_db_table():
+            table = get_domain_tables(self.domain)['my_case_type']
+            with get_project_db_engine().begin() as conn:
+                conn.execute(table.insert().values(
+                    case_id='c1', owner_id='o1', case_name='Ann',
+                    closed=False, external_id=''))
+            response = self.client.post(self._test_url(), {
+                'target_type': 'project_db',
+                'sql': 'SELECT * FROM my_case_type WHERE case_name = :who',
+            })
+        content = response.content.decode()
+        assert response.status_code == 200
+        assert 'alert-danger' not in content
+        # Nothing matches the empty string, so no rows come back
+        assert 'Ann' not in content
+
+    def test_sql_errors_are_shown(self):
+        with self._project_db_table():
+            response = self.client.post(self._test_url(), {
+                'target_type': 'project_db',
+                'sql': 'DELETE FROM my_case_type',
+            })
+        content = response.content.decode()
+        assert response.status_code == 200
+        assert 'alert-danger' in content
+        assert 'unsupported statement' in content

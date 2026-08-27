@@ -31,9 +31,14 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import not_found
-from corehq.apps.project_db.cases import get_case_id_column
+from corehq.apps.project_db.cases import get_case_id_column, rows_to_cases
 from corehq.apps.project_db.table_ddl import get_domain_tables
-from corehq.apps.project_db.user_sql import UnsupportedSQL, translate
+from corehq.apps.project_db.user_sql import (
+    UnsupportedSQL,
+    UserSQL,
+    UserSQLValidationError,
+    translate,
+)
 from corehq.apps.settings.views import BaseProjectDataView
 
 from dimagi.utils.logging import notify_exception
@@ -411,7 +416,11 @@ class CaseSearchEndpointTestView(BaseDomainView):
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
 
+    _sql_row_limit = 20
+
     def post(self, request, *args, **kwargs):
+        if request.POST.get('target_type') == CaseSearchEndpoint.TargetType.PROJECT_DB:
+            return self._run_sql(request)
         case_type = request.POST.get('case_type', '')
         try:
             parameters = json.loads(request.POST.get('parameters', '[]'))
@@ -451,7 +460,34 @@ class CaseSearchEndpointTestView(BaseDomainView):
         criteria = criteria_dict_to_criteria_list(test_param_values)
         return get_primary_case_search_endpoint_results(helper, [case_type], criteria, query, 20)
 
-    def _render_results(self, request, *, errors=None, fields=None, results=None):
+    def _run_sql(self, request):
+        """Run the SQL card's contents and render the cases it selected.
+
+        The same shape as the Elasticsearch tester, because it is the same
+        thing an endpoint returns. Parameters are not bound yet, so a query
+        that declares any runs with them empty.
+        """
+        user_sql = UserSQL(self.domain, request.POST.get('sql', ''))
+        try:
+            case_id_column = get_case_id_column(user_sql.query)
+            translated_sql = user_sql.get_info().translated_sql
+            result = user_sql.run(
+                {name: '' for name in user_sql.parameters},
+                self._sql_row_limit,
+            )
+        except UserSQLValidationError as error:
+            return self._render_results(request, errors=[error.msg])
+        table = case_id_column.table
+        capability = get_capability(domain=self.domain)
+        return self._render_results(
+            request,
+            fields=capability['case_types'].get(table.comment, {}),
+            results=rows_to_cases(result.rows, self.domain, table),
+            translated_sql=translated_sql,
+        )
+
+    def _render_results(self, request, *, errors=None, fields=None, results=None,
+                        translated_sql=None):
         # Always 200 so HTMX swaps the partial in (it ignores error statuses).
         field_names = (fields or {}).keys()
         if results:
@@ -466,4 +502,5 @@ class CaseSearchEndpointTestView(BaseDomainView):
             'errors': errors or [],
             'columns': (['Case Name'] + [k for k in field_names]),
             'rows': rows or [],
+            'translated_sql': translated_sql,
         })
