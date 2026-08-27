@@ -24,14 +24,45 @@ from corehq.const import USER_CHANGE_VIA_API
 
 class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     type = "user"
-    id = fields.CharField(attribute='get_id', readonly=True, unique=True)
-    username = fields.CharField(attribute='username', unique=True)
-    first_name = fields.CharField(attribute='first_name', null=True)
-    last_name = fields.CharField(attribute='last_name', null=True)
-    default_phone_number = fields.CharField(attribute='default_phone_number', null=True)
-    email = fields.CharField(attribute='email')
-    phone_numbers = fields.ListField(attribute='phone_numbers')
-    eulas = fields.CharField(attribute='eulas', null=True)
+    id = fields.CharField(
+        attribute='get_id',
+        readonly=True,
+        unique=True,
+        help_text='User UUID.',
+    )
+    username = fields.CharField(
+        attribute='username',
+        unique=True,
+        help_text='User name of the user.',
+    )
+    first_name = fields.CharField(
+        attribute='first_name',
+        null=True,
+        help_text='First name of user.',
+    )
+    last_name = fields.CharField(
+        attribute='last_name',
+        null=True,
+        help_text='Last name of user.',
+    )
+    default_phone_number = fields.CharField(
+        attribute='default_phone_number',
+        null=True,
+        help_text='Primary phone number of user.',
+    )
+    email = fields.CharField(
+        attribute='email',
+        help_text='Email address of user.',
+    )
+    phone_numbers = fields.ListField(
+        attribute='phone_numbers',
+        help_text='List of all phone numbers of the user.',
+    )
+    eulas = fields.CharField(
+        attribute='eulas',
+        null=True,
+        help_text='End user license agreements the user has accepted.',
+    )
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -65,8 +96,19 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
 
 
 class CommCareUserResource(UserResource):
-    groups = fields.ListField(attribute='get_group_ids')
-    user_data = fields.DictField()
+    username = fields.CharField(
+        attribute='username',
+        unique=True,
+        help_text='User name of user, including domain, for example '
+                  '"jdoe@example.commcarehq.org".',
+    )
+    groups = fields.ListField(
+        attribute='get_group_ids',
+        help_text='List of all group IDs belonging to the user.',
+    )
+    user_data = fields.DictField(
+        help_text='Any additional custom data associated with the user.',
+    )
 
     class Meta(UserResource.Meta):
         authentication = RequirePermissionAuthentication(HqPermissions.edit_commcare_users)
@@ -137,6 +179,13 @@ class CommCareUserResource(UserResource):
 
 
 class WebUserResource(UserResource):
+    username = fields.CharField(
+        attribute='username',
+        unique=True,
+        help_text='User name of the user, for example "jdoe@example.com". '
+                  'Web user usernames are plain email addresses, unlike '
+                  'mobile worker usernames.',
+    )
     role = fields.CharField()
     is_admin = fields.BooleanField()
     permissions = fields.DictField()
