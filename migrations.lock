@@ -925,6 +925,7 @@ project_limits
  0005_systemlimit_owneriddefault
 public_webforms
  0001_initial
+ 0002_publicformsession_contact_info
 registration
  0001_initial
  0002_alter_request_ip

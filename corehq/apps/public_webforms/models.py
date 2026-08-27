@@ -42,6 +42,8 @@ class PublicFormSession(models.Model):
     public_webform = models.ForeignKey(PublicWebform, on_delete=models.CASCADE, db_index=False)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
+    email = models.EmailField(null=True)
+    phone_number = models.CharField(max_length=126, null=True)
     opened_at = models.DateTimeField(null=True)
     submitted_at = models.DateTimeField(null=True)
     xform_id = models.CharField(null=True)
