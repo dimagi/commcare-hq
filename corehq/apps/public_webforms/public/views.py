@@ -1,17 +1,18 @@
 from memoized import memoized
 
-from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.timesince import timeuntil
 from django.utils.translation import get_language, gettext_lazy as _
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.public_webforms.models import PublicWebform
+from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.public_webforms.public.forms import (
     PublicWebformLinkRequestForm,
 )
@@ -64,8 +65,10 @@ class PublicWebformRequestView(BasePublicWebformView):
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
         self.form.create_session()
-        messages.success(request, _("Your one-time link is on its way."))
-        return HttpResponseRedirect(self.page_url)
+        return HttpResponseRedirect(reverse(
+            PublicWebformLinkSentView.urlname,
+            kwargs={'public_id': self.webform.public_id.hex},
+        ))
 
     @property
     def page_context(self):
@@ -78,3 +81,26 @@ class PublicWebformRequestView(BasePublicWebformView):
     def form(self):
         data = [self.request.POST] if self.request.method == 'POST' else []
         return PublicWebformLinkRequestForm(self.webform, *data)
+
+
+@method_decorator(use_bootstrap5, name='dispatch')
+class PublicWebformLinkSentView(BasePublicWebformView):
+
+    urlname = 'public_webform_link_sent'
+    template_name = 'public_webforms/public/webform_link_sent.html'
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        now = timezone.now()
+        context.update({
+            # the session is not carried across the redirect, so this is how
+            # long any link lasts, not how long this respondent's link has left
+            'link_lifespan': timeuntil(
+                now + PublicFormSession.DEFAULT_LIFESPAN, now),
+            'request_url': reverse(
+                PublicWebformRequestView.urlname,
+                kwargs={'public_id': self.webform.public_id.hex},
+            ) if self.webform.is_open else None,
+        })
+        return context
