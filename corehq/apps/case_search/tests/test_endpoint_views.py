@@ -1,9 +1,11 @@
 import json
 from unittest.mock import patch
 
+from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.html import escape
+from sqlalchemy.exc import OperationalError
 
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.domain.shortcuts import create_domain
@@ -222,6 +224,34 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
             domain=self.domain, name='es-endpoint'
         )
         assert endpoint.current_version.dangerous_sql == ''
+
+    def test_project_db_unavailable_is_not_the_authors_fault(self):
+        # The engine falls back to the default database under DEBUG or
+        # UNIT_TESTING, so the failure has to be injected to be reachable.
+        cases = [
+            ImproperlyConfigured("'project_db' database not defined"),
+            OperationalError('connection refused', None, None),
+        ]
+        for error in cases:
+            with self.subTest(error=type(error).__name__), patch(
+                'corehq.apps.case_search.endpoint_views.get_domain_tables',
+                side_effect=error,
+            ):
+                response = self.client.post(
+                    self._new_url(target_type='project_db'),
+                    self._post_data(
+                        name='sql-endpoint',
+                        sql='SELECT case_id FROM my_case_type',
+                    ),
+                )
+                assert response.status_code == 200
+                form = response.context['form']
+                assert 'unavailable' in form.non_field_errors()[0]
+                # The author keeps what they wrote
+                assert form['sql'].value() == 'SELECT case_id FROM my_case_type'
+        assert not CaseSearchEndpoint.objects.filter(
+            domain=self.domain, name='sql-endpoint'
+        ).exists()
 
     def test_project_db_sql_errors(self):
         cases = [
