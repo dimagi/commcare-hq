@@ -64,7 +64,7 @@ class PublicWebformRequestView(BasePublicWebformView):
     def post(self, request, *args, **kwargs):
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
-        self.form.create_session()
+        self.form.get_or_create_session()
         return HttpResponseRedirect(reverse(
             PublicWebformLinkSentView.urlname,
             kwargs={'public_id': self.webform.public_id.hex},
