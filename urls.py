@@ -76,6 +76,7 @@ domain_specific = [
     url(r'^case/', include('corehq.apps.hqcase.urls')),
     url(r'^case/', include('corehq.apps.case_search.urls')),
     url(r'^clean/', include('corehq.apps.data_cleaning.urls')),
+    url(r'^project_db/', include('corehq.apps.project_db.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^campaign/', include('corehq.apps.campaign.urls')),
     url(r'^microplanning/', include('corehq.apps.geospatial.urls')),
