@@ -31,6 +31,7 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import not_found
+from corehq.apps.project_db.cases import get_case_id_column
 from corehq.apps.project_db.table_ddl import get_domain_tables
 from corehq.apps.project_db.user_sql import UnsupportedSQL, translate
 from corehq.apps.settings.views import BaseProjectDataView
@@ -166,9 +167,10 @@ class CaseSearchEndpointForm(forms.Form):
             )
             return
         try:
-            # Called for its exceptions: the query is rebuilt when the
-            # endpoint runs, since the domain's tables change over time.
-            translate(sql, tables)
+            # Translated for its errors, then discarded: the domain's
+            # tables change over time, so the query is rebuilt when the
+            # endpoint runs rather than saved here and replayed.
+            get_case_id_column(translate(sql, tables))
         except UnsupportedSQL as error:
             self.add_error('sql', str(error.msg))
 

@@ -259,6 +259,8 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
             ('DELETE FROM my_case_type', 'unsupported statement'),
             ('SELECT nope FROM my_case_type', 'unknown column'),
             ('SELECT case_id FROM no_such_table', 'unknown table'),
+            # Case search needs to know which column is the case
+            ('SELECT case_name FROM my_case_type', "must be named 'case_id'"),
         ]
         for sql, expected in cases:
             with self.subTest(sql=sql), self._project_db_table():
@@ -269,7 +271,7 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
                 assert response.status_code == 200
                 errors = response.context['form'].errors['sql']
                 assert expected in errors[0]
-                assert errors[0] in response.content.decode()
+                assert escape(errors[0]) in response.content.decode()
         assert not CaseSearchEndpoint.objects.filter(
             domain=self.domain, name='bad-sql'
         ).exists()
@@ -391,14 +393,14 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
                 self._post_data(
                     name=ep.name,
                     case_type='',
-                    sql='SELECT case_name FROM my_case_type',
+                    sql='SELECT case_id, case_name FROM my_case_type',
                 ),
             )
         assert response.status_code == 302
         ep.refresh_from_db()
         assert ep.current_version.version_number == 2
         assert ep.current_version.dangerous_sql == (
-            'SELECT case_name FROM my_case_type'
+            'SELECT case_id, case_name FROM my_case_type'
         )
 
     def test_get(self):
