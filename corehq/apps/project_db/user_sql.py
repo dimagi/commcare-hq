@@ -4,6 +4,9 @@ Only a strict subset of SQL is supported; anything outside it errors
 """
 import operator
 import re
+import time
+from collections import namedtuple
+from functools import cached_property
 
 import sqlglot
 from sqlalchemy import (
@@ -17,20 +20,26 @@ from sqlalchemy import (
     union,
     union_all,
 )
+from sqlalchemy.dialects import postgresql
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
+from corehq.apps.project_db.table_ddl import (
+    get_domain_tables,
+    get_project_db_engine,
+)
 
-class _UserFacingError(Exception):
+
+class UserSQLValidationError(Exception):
     def __init__(self, msg):
         self.msg = msg
 
 
-class UnsupportedSQL(_UserFacingError):
+class UnsupportedSQL(UserSQLValidationError):
     """Raised when the input uses SQL that the translator does not support."""
 
 
-class BadParameters(_UserFacingError):
+class BadParameters(UserSQLValidationError):
     """The parameters don't match the query"""
 
 
@@ -46,20 +55,56 @@ def _bind(value):
     return bindparam(LITERAL_PARAM_PREFIX, value, unique=True)
 
 
-def get_parameters(query):
-    """Return the parameters a translated query leaves for the caller to supply"""
-    return [name for name, bind in query.compile().binds.items() if bind.required]
+QueryInfo = namedtuple('QueryInfo', 'translated_sql bound_literals parameters')
+QueryResult = namedtuple('QueryResult', 'columns rows duration')
 
 
-def clean_parameters(query, raw_parameters):
-    """Validate input parameters against query"""
-    binds = {
-        name: bind for name, bind in query.compile().binds.items()
-        if bind.required
-    }
-    if set(raw_parameters) != set(binds):
-        raise BadParameters(f"Expected params {set(binds)}, got {set(raw_parameters)}")
-    return {name: raw_parameters[name] for name, bind in binds.items()}
+class UserSQL:
+    def __init__(self, domain, raw_sql):
+        self.domain = domain
+        self.raw_sql = raw_sql
+
+    @cached_property
+    def query(self):
+        return translate(self.raw_sql, get_domain_tables(self.domain))
+
+    @cached_property
+    def _compiled(self):
+        return self.query.compile(dialect=postgresql.dialect(paramstyle='named'))
+
+    def get_info(self):
+        return QueryInfo(
+            translated_sql=sqlglot.transpile(
+                str(self._compiled), read='postgres', write='postgres', pretty=True
+            )[0],
+            bound_literals={
+                name: value for name, value in self._compiled.params.items()
+                if name not in self.parameters
+            },
+            parameters=self.parameters,
+        )
+
+    @property
+    def parameters(self):
+        """Return the parameters a translated query leaves for the caller to supply"""
+        return [name for name, bind in self._compiled.binds.items() if bind.required]
+
+    def run(self, parameter_values, max_rows):
+        params = self._clean_parameters(parameter_values)
+        with get_project_db_engine().connect() as conn:
+            start = time.perf_counter()
+            result = conn.execute(self.query, params)
+            rows = result.fetchmany(max_rows)
+            return QueryResult(
+                columns=list(result.keys()),
+                rows=rows,
+                duration=time.perf_counter() - start,
+            )
+
+    def _clean_parameters(self, raw_parameters):
+        if set(raw_parameters) != set(self.parameters):
+            raise BadParameters(f"Expected params {set(self.parameters)}, got {set(raw_parameters)}")
+        return {name: raw_parameters[name] for name in self.parameters}
 
 
 def translate(sql, tables):

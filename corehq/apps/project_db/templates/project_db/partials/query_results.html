@@ -4,10 +4,10 @@
 {% else %}
   <details open>
     <summary class="h6">{% trans "Translated SQL" %}</summary>
-    <pre class="p-3 mb-3 bg-body-tertiary border rounded">{{ query.sql }}</pre>
-    {% if query.params %}
+    <pre class="p-3 mb-3 bg-body-tertiary border rounded">{{ query.translated_sql }}</pre>
+    {% if query.bound_literals %}
       <dl class="row font-monospace mb-4">
-        {% for name, value in query.params.items %}
+        {% for name, value in query.bound_literals.items %}
           <dt class="col-sm-2 fw-normal text-body-secondary">:{{ name }}</dt>
           <dd class="col-sm-10">{{ value }}</dd>
         {% endfor %}

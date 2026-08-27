@@ -1,4 +1,5 @@
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
 from sqlalchemy import (
@@ -19,9 +20,8 @@ from sqlalchemy.dialects import postgresql
 from corehq.apps.project_db.user_sql import (
     BadParameters,
     UnsupportedSQL,
+    UserSQL,
     _bind,
-    clean_parameters,
-    get_parameters,
     translate,
 )
 
@@ -303,6 +303,14 @@ def test_query_parameters_are_left_unbound():
     assert compiled.params == {'hq_param_1': 'c1', 'who': None}
 
 
+def _user_sql(sql):
+    """A ``UserSQL`` over the test tables, with the domain lookup already done"""
+    user_sql = UserSQL('test-domain', sql)
+    with patch('corehq.apps.project_db.user_sql.get_domain_tables', return_value=TABLES):
+        user_sql.query  # a cached_property, so the tables are resolved just once
+    return user_sql
+
+
 @pytest.mark.parametrize('sql, expected', [
     ('SELECT * FROM client', []),
     # Parameters come back in the order they appear
@@ -312,8 +320,19 @@ def test_query_parameters_are_left_unbound():
     ("SELECT * FROM client WHERE name = :who AND case_id = 'c1' OR name = :who",
      ['who']),
 ])
-def test_get_parameters(sql, expected):
-    assert get_parameters(translate(sql, TABLES)) == expected
+def test_parameters(sql, expected):
+    assert _user_sql(sql).parameters == expected
+
+
+def test_get_info_separates_literals_from_parameters():
+    """These are the three things the results page renders"""
+    info = _user_sql(
+        "SELECT name FROM client WHERE name = :who AND case_id = 'c1'").get_info()
+    assert info.parameters == ['who']
+    assert info.bound_literals == {'hq_param_1': 'c1'}
+    # sqlglot rewrites the placeholders to pyformat when it pretty-prints
+    assert '%(who)s' in info.translated_sql
+    assert '%(hq_param_1)s' in info.translated_sql
 
 
 @pytest.mark.parametrize('sql, raw, expected', [
@@ -323,7 +342,7 @@ def test_get_parameters(sql, expected):
     ('SELECT * FROM client WHERE name = :who', {'who': ''}, {'who': ''}),
 ])
 def test_clean_parameters(sql, raw, expected):
-    assert clean_parameters(translate(sql, TABLES), raw) == expected
+    assert _user_sql(sql)._clean_parameters(raw) == expected
 
 
 @pytest.mark.parametrize('sql, raw', [
@@ -332,7 +351,7 @@ def test_clean_parameters(sql, raw, expected):
 ])
 def test_clean_parameters_rejects_a_mismatched_set(sql, raw):
     with pytest.raises(BadParameters):
-        clean_parameters(translate(sql, TABLES), raw)
+        _user_sql(sql)._clean_parameters(raw)
 
 
 def test_handle_quoted_tables():

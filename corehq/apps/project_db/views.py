@@ -1,28 +1,14 @@
-import time
-
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
 
-import sqlglot
-from sqlalchemy.dialects import postgresql
-
 from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.project_db.describe import describe_project_db
-from corehq.apps.project_db.table_ddl import (
-    get_domain_tables,
-    get_project_db_engine,
-)
-from corehq.apps.project_db.user_sql import (
-    BadParameters,
-    UnsupportedSQL,
-    clean_parameters,
-    get_parameters,
-    translate,
-)
+from corehq.apps.project_db.table_ddl import get_domain_tables
+from corehq.apps.project_db.user_sql import UserSQL, UserSQLValidationError
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
@@ -63,51 +49,23 @@ class QueryProjectDBView(HqHtmxActionMixin, BaseProjectDataView):
             for name, value in request.POST.items()
             if name.startswith('param:')
         }
-        context = {'sql': request.POST.get('sql', ''),
-                   'max_rows': MAX_ROWS}
+        context = {'max_rows': MAX_ROWS}
+        user_sql = UserSQL(self.domain, request.POST.get('sql', ''))
         try:
-            query = translate(context['sql'], get_domain_tables(self.domain))
-        except UnsupportedSQL as error:
+            context['query'] = user_sql.get_info()
+            if always_run or not user_sql.parameters:
+                context['result'] = user_sql.run(submitted_params, MAX_ROWS)
+        except UserSQLValidationError as error:
             context['error'] = error.msg
         else:
-            query_params = get_parameters(query)
-            context['query'] = compile_query(query)
-            context['parameters'] = [{
-                'name': parameter,
-                'value': submitted_params.get(parameter, ''),
-            } for parameter in query_params]
-            if always_run or not query_params:
-                try:
-                    context['result'] = execute_query(query, submitted_params)
-                except BadParameters as error:
-                    context['error'] = error.msg
+            # Re-render parameters with values previously submitted for them
+            context['parameters'] = [
+                {'name': name, 'value': submitted_params.get(name, '')}
+                for name in user_sql.parameters
+            ]
         return self.render_htmx_partial_response(
             request, 'project_db/partials/query_results.html', context)
 
     @hq_hx_action('post')
     def copy_db_context(self, request, *args, **kwargs):
         return HttpResponse(describe_project_db(self.domain))
-
-
-def execute_query(query, submitted_params):
-    params = clean_parameters(query, submitted_params)
-    with get_project_db_engine().connect() as conn:
-        start = time.perf_counter()
-        result = conn.execute(query, params)
-        rows = result.fetchmany(MAX_ROWS)
-        return {
-            'columns': list(result.keys()),
-            'rows': rows,
-            'duration': time.perf_counter() - start,
-        }
-
-
-def compile_query(query):
-    """Render a SQLAlchemy selectable as pretty-printed PostgreSQL and its bound values"""
-    compiled = query.compile(dialect=postgresql.dialect(paramstyle='named'))
-    unbound = get_parameters(query)
-    return {
-        'sql': sqlglot.transpile(str(compiled), read='postgres', write='postgres', pretty=True)[0],
-        'params': {name: value for name, value in compiled.params.items()
-                   if name not in unbound},
-    }
