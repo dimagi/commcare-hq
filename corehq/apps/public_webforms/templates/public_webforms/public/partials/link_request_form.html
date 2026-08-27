@@ -79,6 +79,12 @@
       >{% trans "Message and data rates may apply." %}</span
     >
   </div>
+
+  <div class="mb-3">
+    {{ form.turnstile }}
+    {{ form.turnstile.errors }}
+  </div>
+
   <button type="submit" class="btn btn-primary btn-lg icon-link">
     {% trans "Send my link" %}
     <i class="fa fa-arrow-right"></i>
