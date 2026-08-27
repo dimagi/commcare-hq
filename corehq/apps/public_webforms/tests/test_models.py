@@ -42,6 +42,19 @@ def test_is_expired(offset, expected):
     assert PublicWebform(expires_at=timezone.now() + offset).is_expired is expected
 
 
+@pytest.mark.parametrize('offset, is_disabled, expected', [
+    (datetime.timedelta(minutes=1), False, True),
+    (datetime.timedelta(minutes=1), True, False),
+    (datetime.timedelta(minutes=-1), False, False),
+    (datetime.timedelta(minutes=-1), True, False),
+], ids=['open', 'closed', 'expired', 'expired-and-closed'])
+def test_is_open(offset, is_disabled, expected):
+    webform = PublicWebform(
+        expires_at=timezone.now() + offset, is_disabled=is_disabled)
+
+    assert webform.is_open is expected
+
+
 @use('db')
 @pytest.mark.parametrize('expires_in, is_disabled, expected', [
     (datetime.timedelta(days=1), False, PublicWebformStatus.OPEN),
