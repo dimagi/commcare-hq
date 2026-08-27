@@ -1,0 +1,61 @@
+{% extends "hqwebapp/bootstrap5/base_page.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% js_entry "public_webforms/js/request" %}
+
+{% block js %}
+  {{ block.super }}
+  <script
+    src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+    async
+    defer
+  ></script>
+{% endblock js %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  <link
+    rel="stylesheet"
+    href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}"
+  />
+{% endblock stylesheets %}
+
+{% block navigation %}
+  <nav
+    id="hq-navigation"
+    class="navbar navbar-expand-lg bg-light border-bottom-1 navbar-hq-main-menu"
+  >
+    <div class="container-fluid">
+      <div class="navbar-header hq-header">
+        <a href="{% url "homepage" %}" class="navbar-brand">
+          {% if CUSTOM_LOGO_URL %}
+            <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
+          {% else %}
+            <div></div>
+          {% endif %}
+        </a>
+      </div>
+      <nav class="navbar-signin ms-2" role="navigation">
+        <div class="nav-settings-bar">
+          {% include "hqwebapp/partials/bootstrap5/language_dropdown.html" %}
+        </div>
+      </nav>
+    </div>
+  </nav>
+{% endblock navigation %}
+
+{% block page_content %}
+  {{ block.super }}
+  <div class="lead">
+    {% blocktrans %}
+      We'll send a private, single-use link to complete the form using the
+      contact information you provide below.
+    {% endblocktrans %}
+  </div>
+
+  <div class="row">
+    <div class="col-sm-9 col-md-8 col-lg-6 mt-4">
+      {% include "public_webforms/public/partials/link_request_form.html" %}
+    </div>
+  </div>
+{% endblock page_content %}

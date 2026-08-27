@@ -81,7 +81,7 @@ class PublicWebform(models.Model):
     def public_url(self):
         """The absolute link a respondent opens to request a one-time link."""
         # TODO: point at the real public route once it exists
-        return f'{get_url_base()}/placeholder/url/{self.public_id.hex}'
+        return f'{get_url_base()}/webforms/{self.public_id.hex}/'
 
     @property
     def is_expired(self):
