@@ -24,21 +24,19 @@ def post_fork(server, worker):
 
 
 def on_starting(server):
-    """Function for testing since actual function can not have additional args"""
     _on_starting(server)
 
 
-def _on_starting(server, path=None):
-    """Function for testing"""
+def _on_starting(server):
+    """Implementation lives in here to make it easier to test"""
     try:
-        _remove_prometheus_metric_files(path)
+        _remove_prometheus_metric_files()
     except Exception:
         server.log.exception("Error clearing Prometheus metrics")
 
 
-def _remove_prometheus_metric_files(path, worker=None):
-    if path is None:
-        path = os.environ.get('PROMETHEUS_MULTIPROC_DIR')
+def _remove_prometheus_metric_files(worker=None):
+    path = os.environ.get('PROMETHEUS_MULTIPROC_DIR')
     if not path:
         return
 
@@ -54,9 +52,9 @@ def child_exit(server, worker):
     _child_exit(server, worker)
 
 
-def _child_exit(server, worker, path=None):
-    """Function for testing since actual function can not have additional args"""
+def _child_exit(server, worker):
+    """Implementation lives in here to make it easier to test"""
     try:
-        _remove_prometheus_metric_files(path, worker)
+        _remove_prometheus_metric_files(worker)
     except Exception:
         server.log.exception("Error clearing Prometheus live metrics")
