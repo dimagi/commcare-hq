@@ -30,7 +30,7 @@ class ProviderSpec:
 
 
 def language_name(lang_code):
-    """Human-readable name for an HQ app language code (2- or 3-letter)."""
+    """Human-readable name for an HQ app language code."""
     return _langcodes_get_name(lang_code) or lang_code
 
 
