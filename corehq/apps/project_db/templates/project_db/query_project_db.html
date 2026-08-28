@@ -22,9 +22,11 @@
     {% endif %}
   </details>
   <form
+    id="query-form"
     hx-post="{{ request.path_info }}"
-    hq-hx-action="run_query"
+    hq-hx-action="process_query"
     hx-target="#query-results"
+    hx-include="#query-results"
     hx-disabled-elt="find button[type=submit]"
   >
     <div class="mb-3">
@@ -36,7 +38,7 @@
         placeholder="SELECT * FROM my_case_type"
       ></textarea>
     </div>
-    <button type="submit" class="btn btn-primary">{% trans "Run" %}</button>
+    <button type="submit" class="btn btn-primary">{% trans "Process" %}</button>
     <button
       type="button"
       class="btn btn-outline-primary"
