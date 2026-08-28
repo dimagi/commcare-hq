@@ -19,6 +19,7 @@ from sqlalchemy.dialects import postgresql
 
 from corehq.apps.project_db.user_sql import (
     MAX_PAREN_DEPTH,
+    MAX_TREE_DEPTH,
     BadParameters,
     UnsupportedSQL,
     UserSQL,
@@ -362,16 +363,25 @@ def test_handle_quoted_tables():
     assert str(result) == str(select([hyphenated_table]))
 
 
-def test_rejects_deeply_nested_parentheses():
-    sql = 'SELECT * FROM client WHERE ' + '(' * 100 + 'name = 1' + ')' * 100
+@pytest.mark.parametrize('sql', [
+    # Nesting deep enough to exhaust the parser's stack
+    'SELECT * FROM client WHERE ' + '(' * 100 + 'name = 1' + ')' * 100,
+    # Nesting deep enough to exhaust the conversion's stack: this parses fine
+    'SELECT * FROM client WHERE ' + ' AND '.join(['name = 1'] * 1000),
+])
+def test_rejects_deeply_nested(sql):
     with pytest.raises(UnsupportedSQL, match='nested too deeply'):
         translate(sql, TABLES)
 
 
-def test_allows_parentheses_nested_up_to_the_limit():
-    # The deepest nesting the limit allows must still parse, so that raising
-    # the limit past what the stack allows fails here rather than crashing
-    # the interpreter.
-    depth = MAX_PAREN_DEPTH
-    sql = 'SELECT * FROM client WHERE ' + '(' * depth + 'name = 1' + ')' * depth
+@pytest.mark.parametrize('sql', [
+    # The deepest nesting each limit allows must still be translatable, so
+    # that raising a limit past what the stack allows fails here rather than
+    # crashing the interpreter.
+    'SELECT * FROM client WHERE ' + '(' * MAX_PAREN_DEPTH + 'name = 1'
+    + ')' * MAX_PAREN_DEPTH,
+    'SELECT * FROM client WHERE '
+    + ' AND '.join(['name = 1'] * (MAX_TREE_DEPTH - 5)),
+])
+def test_allows_nesting_up_to_the_limit(sql):
     assert translate(sql, TABLES) is not None
