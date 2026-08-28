@@ -196,3 +196,98 @@ class TestCaseSearchEndpoint(TestCase):
     def test_unknown_endpoint_id_raises(self):
         with self.assertRaises(CaseSearchUserError):
             self._run_query(['person'], [], endpoint_id=404)
+
+
+SQL_DOMAIN = 'test-endpoint-sql'
+PETS = [
+    ('p1', 'Fido', 'brown'),
+    ('p2', 'Rex', 'black'),
+]
+
+
+@fixture
+def pet_table():
+    with project_db_table(SQL_DOMAIN, 'pet', {'color': 'plain'}):
+        yield
+
+
+def _make_sql_endpoint(sql):
+    endpoint = CaseSearchEndpoint.objects.create(
+        domain=SQL_DOMAIN,
+        name='pets',
+        target_type=CaseSearchEndpoint.TargetType.PROJECT_DB,
+    )
+    version = CaseSearchEndpointVersion.objects.create(
+        endpoint=endpoint,
+        version_number=1,
+        case_type='pet',
+        dangerous_sql=sql,
+        action=CaseSearchEndpointVersion.Action.CREATE,
+    )
+    endpoint.current_version = version
+    endpoint.save(update_fields=['current_version'])
+    return endpoint
+
+
+def _populate_pets():
+    send_to_project_db(SQL_DOMAIN, 'pet', [
+        CommCareCase(
+            case_id=case_id,
+            domain=SQL_DOMAIN,
+            type='pet',
+            name=name,
+            owner_id='owner1',
+            opened_on=datetime.datetime(2025, 1, 1),
+            modified_on=datetime.datetime(2025, 6, 1),
+            server_modified_on=datetime.datetime(2025, 6, 1),
+            closed=False,
+            external_id='',
+            case_json={'color': color},
+            indices=[],
+        ) for case_id, name, color in PETS
+    ])
+
+
+def _run_sql_query(endpoint, criteria):
+    config = CaseSearchRequestConfig(
+        criteria=criteria, case_types=['pet'], endpoint_id=endpoint.id)
+    return get_case_search_results(SQL_DOMAIN, config)
+
+
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_without_parameters():
+    _populate_pets()
+    endpoint = _make_sql_endpoint('SELECT * FROM pet')
+
+    cases = sorted(_run_sql_query(endpoint, []), key=lambda case: case.name)
+
+    assert [case.name for case in cases] == ['Fido', 'Rex']
+    assert [case.case_id for case in cases] == ['p1', 'p2']
+    assert [case.case_json for case in cases] == [{'color': 'brown'}, {'color': 'black'}]
+    assert all(case.domain == SQL_DOMAIN and case.type == 'pet' for case in cases)
+
+
+COLOR_SQL = (
+    "SELECT * FROM pet "
+    "WHERE (:color IS NULL OR :color = '' OR prop__color = :color)"
+)
+
+
+@pytest.mark.parametrize('criteria, expected', [
+    ([SearchCriteria('color', 'brown')], ['Fido']),
+    ([SearchCriteria('color', 'black')], ['Rex']),
+    ([SearchCriteria('color', 'chartreuse')], []),
+    # an unsupplied parameter is passed as '', which the query treats as "any"
+    ([], ['Fido', 'Rex']),
+    ([SearchCriteria('color', '')], ['Fido', 'Rex']),
+])
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_with_text_parameter(criteria, expected):
+    _populate_pets()
+    endpoint = _make_sql_endpoint(COLOR_SQL)
+
+    cases = _run_sql_query(endpoint, criteria)
+
+    assert sorted(case.name for case in cases) == expected
