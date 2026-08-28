@@ -170,7 +170,7 @@ class CaseSearchEndpointForm(forms.Form):
             # endpoint runs, since the domain's tables change over time.
             translate(sql, tables)
         except UnsupportedSQL as error:
-            self.add_error('sql', str(error))
+            self.add_error('sql', str(error.msg))
 
 
 @method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
