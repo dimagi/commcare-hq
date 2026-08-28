@@ -43,10 +43,12 @@ class EndpointViewTestCase(TestCase):
         flag.__enter__()
         self.addCleanup(flag.__exit__, None, None, None)
 
-    def _make_endpoint(self, name='my-endpoint', case_type='case_type_a'):
+    def _make_endpoint(self, name='my-endpoint', case_type='case_type_a',
+                       target_type=CaseSearchEndpoint.TargetType.ELASTICSEARCH):
         endpoint = CaseSearchEndpoint.objects.create(
             domain=self.domain,
             name=name,
+            target_type=target_type,
         )
         version = CaseSearchEndpointVersion.objects.create(
             endpoint=endpoint,
@@ -63,8 +65,9 @@ class EndpointViewTestCase(TestCase):
     def _list_url(self):
         return reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
 
-    def _new_url(self):
-        return reverse(CaseSearchEndpointNewView.urlname, args=[self.domain])
+    def _new_url(self, target_type=CaseSearchEndpoint.TargetType.ELASTICSEARCH):
+        url = reverse(CaseSearchEndpointNewView.urlname, args=[self.domain])
+        return f'{url}?target_type={target_type}' if target_type else url
 
     def _edit_url(self, endpoint_id):
         return reverse(
@@ -83,7 +86,6 @@ class EndpointViewTestCase(TestCase):
     def _post_data(self, **overrides):
         data = {
             'name': 'an-endpoint',
-            'target_type': CaseSearchEndpoint.TargetType.PROJECT_DB,
             'case_type': 'my_case_type',
             'query': json.dumps(EMPTY_QUERY),
             'parameters': '[]',
@@ -139,6 +141,13 @@ class TestCaseSearchEndpointsListView(EndpointViewTestCase):
         assert response.status_code == 200
         assert ep in response.context['endpoints']
 
+    def test_new_endpoint_button_per_target_type(self):
+        response = self.client.get(self._list_url())
+        content = response.content.decode()
+        for target_type in CaseSearchEndpoint.TargetType:
+            assert f'?target_type={target_type.value}' in content
+            assert f'New Endpoint ({target_type.label})' in content
+
     def test_inactive_endpoints_not_shown(self):
         ep = self._make_endpoint()
         ep.is_active = False
@@ -155,10 +164,41 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         assert 'capability' in response.context
         # Defaults are seeded on the form (read via form.<field>.value).
         form = response.context['form']
-        assert form['target_type'].value() == (
-            CaseSearchEndpoint.TargetType.PROJECT_DB
-        )
         assert json.loads(form['query'].value()) == EMPTY_QUERY
+
+    def test_target_type_comes_from_querystring(self):
+        cases = [
+            ('project_db', CaseSearchEndpoint.TargetType.PROJECT_DB),
+            ('es', CaseSearchEndpoint.TargetType.ELASTICSEARCH),
+        ]
+        for param, expected in cases:
+            with self.subTest(param=param):
+                response = self.client.get(self._new_url(target_type=param))
+                assert response.status_code == 200
+                assert response.context['target_type'] == expected
+
+    def test_invalid_target_type_404s(self):
+        for param in ['bogus', None]:
+            with self.subTest(param=param):
+                response = self.client.get(self._new_url(target_type=param))
+                assert response.status_code == 404
+
+    def test_create_project_db_endpoint(self):
+        response = self.client.post(
+            self._new_url(target_type='project_db'),
+            self._post_data(
+                name='sql-endpoint',
+                case_type='',
+                # Project DB endpoints skip query validation entirely, so a
+                # spec that Elasticsearch would reject still saves.
+                query=json.dumps({'type': 'bogus'}),
+            ),
+        )
+        assert response.status_code == 302
+        endpoint = CaseSearchEndpoint.objects.get(
+            domain=self.domain, name='sql-endpoint'
+        )
+        assert endpoint.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB
 
     def test_create_endpoint(self):
         response = self.client.post(
@@ -172,6 +212,7 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         endpoint = CaseSearchEndpoint.objects.get(
             domain=self.domain, name='new-endpoint'
         )
+        assert endpoint.target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH
         assert endpoint.current_version.case_type == 'my_case_type'
         assert endpoint.current_version is not None
         assert endpoint.current_version.version_number == 1
@@ -306,13 +347,11 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
             self._edit_url(ep.id),
             self._post_data(
                 name='renamed',
-                target_type=CaseSearchEndpoint.TargetType.ELASTICSEARCH,
                 case_type='new_target',
             ),
         )
         ep.refresh_from_db()
         assert ep.name == 'renamed'
-        assert ep.target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH
         assert ep.current_version.case_type == 'new_target'
 
     def test_duplicate_name_error(self):
