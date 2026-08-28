@@ -1,7 +1,14 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<form method="post" x-data="{ delivery: '{{ form.delivery.value|escapejs }}' }">
+<form
+  method="post"
+  x-data="{
+    delivery: '{{ form.delivery.value|escapejs }}',
+    email: '{{ form.email.value|default_if_none:''|escapejs }}',
+    phoneNumber: '{{ form.phone_number.value|default_if_none:''|escapejs }}',
+  }"
+>
   {% csrf_token %}
 
   {% if form.can_choose_delivery %}
@@ -87,6 +94,8 @@
   <button
     type="submit"
     class="btn btn-primary btn-lg icon-link disable-on-submit"
+    :disabled="delivery === 'email' ? !email.trim() : !phoneNumber.trim()"
+    disabled
   >
     {% trans "Send my link" %}
     <i class="fa fa-arrow-right"></i>
