@@ -112,7 +112,9 @@ class LLMTranslator(abc.ABC):
             this model will be used, optional, default is ''
         """
         self.api_key = api_key
-        assert model in self.supported_models, f"Model {model} is not supported by {self.__class__.__name__}."
+        if model not in self.supported_models:
+            raise LLMTranslatorError(
+                f"Model {model} is not supported by {self.__class__.__name__}.")
         self.model = model
         self.lang = lang
         self.backup_model = backup_model
