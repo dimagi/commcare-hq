@@ -137,6 +137,14 @@ def test_public_form_session_username():
     )
 
 
+def test_public_form_session_one_time_link():
+    webform = PublicWebform(domain='public-forms-domain')
+    session = PublicFormSession(public_webform=webform)
+    # absolute because it is shared over email and SMS
+    assert session.one_time_link.startswith(get_url_base())
+    assert session.id.hex in session.one_time_link
+
+
 class PublicFormUserTests(SimpleTestCase):
 
     def setUp(self):
