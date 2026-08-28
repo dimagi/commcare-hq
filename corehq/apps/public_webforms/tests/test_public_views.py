@@ -16,6 +16,7 @@ from corehq.apps.public_webforms.public.views import (
 )
 from corehq.apps.public_webforms.tests.utils import (
     create_webform,
+    public_webforms_available,
     skip_turnstile,
 )
 
@@ -36,7 +37,7 @@ def _request_a_link(public_id, **fields):
     })
 
 
-@use('db')
+@use('db', public_webforms_available)
 @pytest.mark.parametrize('expires_in, is_disabled', [
     (datetime.timedelta(days=1), True),
     (datetime.timedelta(days=-1), False),
@@ -53,7 +54,7 @@ def test_a_webform_not_accepting_requests_says_so(expires_in, is_disabled):
     assert b'Requests Closed' in response.content
 
 
-@use('db')
+@use('db', public_webforms_available)
 def test_an_unknown_link_is_not_found():
     response = _get(uuid4())
 
@@ -61,7 +62,7 @@ def test_an_unknown_link_is_not_found():
     assert b'Requests Closed' not in response.content
 
 
-@use('db', skip_turnstile)
+@use('db', public_webforms_available, skip_turnstile)
 def test_a_request_to_a_webform_not_accepting_requests_creates_no_session():
     webform = create_webform(is_disabled=True)
 
@@ -71,7 +72,7 @@ def test_a_request_to_a_webform_not_accepting_requests_creates_no_session():
     assert not PublicFormSession.objects.filter(public_webform=webform).exists()
 
 
-@use('db', skip_turnstile)
+@use('db', public_webforms_available, skip_turnstile)
 def test_a_requested_link_redirects_to_a_page_saying_it_was_sent():
     webform = create_webform(is_disabled=False)
     with mock.patch('corehq.apps.public_webforms.public.views.get_app', return_value=None):
@@ -82,7 +83,7 @@ def test_a_requested_link_redirects_to_a_page_saying_it_was_sent():
         PublicWebformLinkSentView.urlname, webform.public_id)
 
 
-@use('db', skip_turnstile)
+@use('db', public_webforms_available, skip_turnstile)
 def test_a_requested_link_is_sent():
     webform = create_webform(is_disabled=False)
 

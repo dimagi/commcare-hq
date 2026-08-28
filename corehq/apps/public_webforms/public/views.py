@@ -1,6 +1,6 @@
 from memoized import memoized
 
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
@@ -8,6 +8,8 @@ from django.utils.decorators import method_decorator
 from django.utils.timesince import timeuntil
 from django.utils.translation import get_language, gettext_lazy as _
 
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -19,12 +21,23 @@ from corehq.apps.public_webforms.public.forms import (
 )
 
 
+def public_webforms_enabled(domain):
+    return (
+        domain_has_privilege(domain, privileges.PUBLIC_WEBFORMS)
+        and toggles.PUBLIC_WEBFORMS.enabled(domain, namespace=toggles.NAMESPACE_DOMAIN)
+    )
+
+
 class BasePublicWebformView(BasePageView):
 
     @property
     @memoized
     def webform(self):
-        return get_object_or_404(PublicWebform, public_id=self.kwargs.get('public_id'))
+        webform = get_object_or_404(
+            PublicWebform, public_id=self.kwargs.get('public_id'))
+        if not public_webforms_enabled(webform.domain):
+            raise Http404
+        return webform
 
     @property
     def page_url(self):
