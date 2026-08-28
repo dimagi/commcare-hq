@@ -99,5 +99,16 @@ an open question.
 TODOs
 -----
 
-- [ ] Sort configuration
-- [ ] Paginate endpoint list view (currently unbounded query)
+- Query timeout
+- ES does not return closed cases. Should we enforce that for SQL?
+- With SQL endpoints:
+  - Should we enforce selecting all columns from one table (matching a case type)?
+  - Expand case search so it can contain columns that do not match
+    exactly one case type. And test that properly
+- Case indices
+- How are deleted cases handles? Will populate remove them?
+- Support typed parameters
+  - Handle date ranges.
+  - Proper strategy for not provided parameters at run time.
+- Sort configuration (ES endpoints)
+- Paginate endpoint list view (currently unbounded query)
