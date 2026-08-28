@@ -16,6 +16,7 @@ class PublicWebformLinkRequestForm(forms.Form):
             'class': 'form-control form-control-lg',
             'placeholder': "you@example.com",
             'autocomplete': 'email',
+            'x-model': 'email',
         }),
     )
     phone_number = forms.CharField(
@@ -26,6 +27,7 @@ class PublicWebformLinkRequestForm(forms.Form):
             'class': 'form-control form-control-lg',
             'type': 'tel',
             'autocomplete': 'tel',
+            'x-model': 'phoneNumber',
         }),
     )
 
