@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.hqwebapp.fields import TurnstileField
 from corehq.apps.public_webforms.models import PublicFormSession
+from corehq.apps.public_webforms.rate_limiter import rate_limit_link_request
 
 
 class PublicWebformLinkRequestForm(forms.Form):
@@ -67,6 +68,10 @@ class PublicWebformLinkRequestForm(forms.Form):
             cleaned_data['email'] = ''
             cleaned_data['phone_number'] = self._clean_phone_number(
                 cleaned_data.get('phone_number'))
+
+        contact = cleaned_data.get('email') or cleaned_data.get('phone_number')
+        if contact and rate_limit_link_request(contact):
+            self.add_error(None, _("Please wait a moment before trying again."))
         return cleaned_data
 
     def _clean_phone_number(self, phone_number):
