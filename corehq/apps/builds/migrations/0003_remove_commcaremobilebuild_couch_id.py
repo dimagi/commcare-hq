@@ -2,15 +2,6 @@
 
 from django.db import migrations
 
-
-INDEX_NAME = 'builds_comm_couch_i_3b9fc6_idx'
-DROP_INDEX_SQL = f'DROP INDEX CONCURRENTLY IF EXISTS {INDEX_NAME}'
-CREATE_INDEX_SQL = (
-    f'CREATE INDEX CONCURRENTLY IF NOT EXISTS {INDEX_NAME} '
-    f'ON builds_commcaremobilebuild (couch_id)'
-)
-
-
 class Migration(migrations.Migration):
     atomic = False
 
@@ -19,18 +10,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
-            sql=DROP_INDEX_SQL,
-            reverse_sql=CREATE_INDEX_SQL,
+        migrations.SeparateDatabaseAndState(
             state_operations=[
-                migrations.RemoveIndex(
-                    model_name='commcaremobilebuild',
-                    name=INDEX_NAME,
+                migrations.RemoveField(
+                    model_name='CommCareMobileBuild',
+                    name='couch_id',
                 ),
             ],
-        ),
-        migrations.RemoveField(
-            model_name='commcaremobilebuild',
-            name='couch_id',
+            database_operations=[
+                # Empty - don't touch database yet
+            ],
         ),
     ]
