@@ -3,7 +3,7 @@ import datetime
 from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
-from unmagic import fixture
+from unmagic import fixture, use
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
@@ -44,6 +44,16 @@ def create_session(webform, **kwargs):
         'expires_at': timezone.now() + datetime.timedelta(hours=1),
         **kwargs,
     })
+
+
+@use('db')
+@fixture
+def webform_domain():
+    domain_obj = create_domain(DOMAIN)
+    try:
+        yield domain_obj
+    finally:
+        domain_obj.delete()
 
 
 class PublicWebformViewTestCase(TestCase):
