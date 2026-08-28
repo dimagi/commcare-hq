@@ -8,12 +8,20 @@ from unmagic import fixture, use
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
+from corehq.privileges import PUBLIC_WEBFORMS
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 DOMAIN = 'public-forms-domain'
 OTHER_DOMAIN = 'public-forms-other-domain'
 PASSWORD = 'Passw0rd!'
 ADMIN_USER = 'webform-admin@example.com'
 NORMAL_USER = 'normal-user@example.com'
+
+
+@fixture
+def public_webforms_available():
+    with flag_enabled('PUBLIC_WEBFORMS'), privilege_enabled(PUBLIC_WEBFORMS):
+        yield
 
 
 @fixture
