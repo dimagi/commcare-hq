@@ -3,6 +3,7 @@ from unittest import mock
 from unmagic import fixture, use
 
 from deployment.gunicorn.gunicorn_conf import (
+    _mark_prometheus_worker_dead,
     _remove_prometheus_metric_files,
     child_exit,
     on_starting,
@@ -46,18 +47,14 @@ def test_remove_prometheus_metric_files_deletes_metric_files():
 
 
 @use(prometheus_dir)
-def test_remove_prometheus_metric_files_marks_worker_dead():
+def test_mark_prometheus_worker_dead():
     path = prometheus_dir()
-    metric_file = path / 'counter_1.db'
-    metric_file.touch()
     worker = mock.Mock(pid=4321)
 
     with mock.patch('prometheus_client.multiprocess.mark_process_dead') as mark_process_dead:
-        _remove_prometheus_metric_files(worker)
+        _mark_prometheus_worker_dead(worker)
 
     mark_process_dead.assert_called_once_with(4321, str(path))
-    # one worker exiting must not discard the metrics of its live siblings
-    assert metric_file.exists()
 
 
 def test_on_starting_logs_errors():
