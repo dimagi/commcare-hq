@@ -1,5 +1,11 @@
+import re
+from datetime import timedelta
+
 from django import forms
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+from corehq.apps.public_webforms.models import PublicFormSession
 
 
 class PublicWebformLinkRequestForm(forms.Form):
@@ -46,3 +52,36 @@ class PublicWebformLinkRequestForm(forms.Form):
     @property
     def can_choose_delivery(self):
         return len(self.fields['delivery'].choices) > 1
+
+    def clean(self):
+        cleaned_data = super().clean()
+        delivery = cleaned_data.get('delivery')
+        # the field for the option not chosen is submitted but ignored, so
+        # switching between them can't leave a stale value behind
+        if delivery == 'email':
+            cleaned_data['phone_number'] = ''
+            if not cleaned_data.get('email'):
+                self.add_error('email', _("Enter the email address to send your link to."))
+        elif delivery == 'sms':
+            cleaned_data['email'] = ''
+            cleaned_data['phone_number'] = self._clean_phone_number(
+                cleaned_data.get('phone_number'))
+        return cleaned_data
+
+    def _clean_phone_number(self, phone_number):
+        # the widget submits a full international number, punctuation and all
+        digits = re.sub(r'[\s+\-().]', '', phone_number or '')
+        if not digits:
+            self.add_error(
+                'phone_number', _("Enter the phone number to send your link to."))
+        elif not digits.isdigit():
+            self.add_error('phone_number', _("Enter a valid phone number."))
+        return digits
+
+    def create_session(self):
+        return PublicFormSession.objects.create(
+            public_webform=self.webform,
+            email=self.cleaned_data['email'],
+            phone_number=self.cleaned_data['phone_number'],
+            expires_at=timezone.now() + timedelta(hours=1),
+        )
