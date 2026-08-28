@@ -21,9 +21,6 @@ f881c46d351a7c581ba8 corehq/apps/app_manager/_design/views/applications_brief/ma
 8dec3f849bf1d49b1398 corehq/apps/app_manager/_design/views/builds_by_date/map.js
 83d4baace1fa5a6ede96 corehq/apps/app_manager/_design/views/builds_by_date/reduce.js
 75bbddd54533f81f0ca8 corehq/apps/app_manager/_design/views/saved_app/map.js
-24e8ae72c6e5c58d4322 corehq/apps/builds/_design/filters/all_builds.js
-e8e02909ad40921a6c08 corehq/apps/builds/_design/views/all/map.js
-83d4baace1fa5a6ede96 corehq/apps/builds/_design/views/all/reduce.js
 e4d8d844cdfb2c4271e5 corehq/apps/domain/_design/filters/all_docs.js
 fac1f3b0e29a7c020867 corehq/apps/domain/_design/filters/all_domains.js
 8e2d540d69d7df1f0313 corehq/apps/domain/_design/filters/domains_inclusive.js
