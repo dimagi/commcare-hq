@@ -215,11 +215,16 @@ class TestProjectDBCaseSearchEndpoint(TestCase):
         assert [case.name for case in res] == ['Bob']
 
     @flag_enabled('CASE_SEARCH_ENDPOINTS')
-    def test_missing_parameter_is_a_user_error(self):
+    def test_missing_parameter_binds_an_empty_string(self):
+        # Criteria that do not mention a parameter leave it bound to '',
+        # so the comparison matches nothing rather than being refused.
+        # Elasticsearch drops clauses whose parameters were not supplied;
+        # whether SQL should bind NULL and leave it to the query to handle
+        # is still open.
         with project_db_table(self.domain, 'patient', {'nickname': 'plain'}):
             self._patients()
             endpoint = self._make_endpoint(
                 'by-nickname',
                 'SELECT * FROM patient WHERE prop__nickname = :nickname')
-            with self.assertRaises(CaseSearchUserError):
-                self._run(endpoint)
+            res = self._run(endpoint)
+        assert res == []
