@@ -11,6 +11,10 @@
 >
   {% csrf_token %}
 
+  {% for error in form.non_field_errors %}
+    <div class="alert alert-warning">{{ error }}</div>
+  {% endfor %}
+
   {% if form.can_choose_delivery %}
     <fieldset class="mb-4">
       <legend class="form-label fs-6 border-0">
