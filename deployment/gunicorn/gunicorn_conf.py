@@ -35,17 +35,13 @@ def _on_starting(server):
         server.log.exception("Error clearing Prometheus metrics")
 
 
-def _remove_prometheus_metric_files(worker=None):
+def _remove_prometheus_metric_files():
     path = os.environ.get('PROMETHEUS_MULTIPROC_DIR')
     if not path:
         return
 
-    if worker:
-        from prometheus_client import multiprocess
-        multiprocess.mark_process_dead(worker.pid, path)
-    else:
-        for f in glob.glob(os.path.join(path, '*.db')):
-            os.remove(f)
+    for f in glob.glob(os.path.join(path, '*.db')):
+        os.remove(f)
 
 
 def child_exit(server, worker):
@@ -55,6 +51,15 @@ def child_exit(server, worker):
 def _child_exit(server, worker):
     """Implementation lives in here to make it easier to test"""
     try:
-        _remove_prometheus_metric_files(worker)
+        _mark_prometheus_worker_dead(worker)
     except Exception:
         server.log.exception("Error clearing Prometheus live metrics")
+
+
+def _mark_prometheus_worker_dead(worker):
+    path = os.environ.get('PROMETHEUS_MULTIPROC_DIR')
+    if not path:
+        return
+
+    from prometheus_client import multiprocess
+    multiprocess.mark_process_dead(worker.pid, path)
