@@ -1,4 +1,5 @@
 import datetime
+from unittest import mock
 from uuid import uuid4
 
 from django.test import Client
@@ -73,9 +74,23 @@ def test_a_request_to_a_webform_not_accepting_requests_creates_no_session():
 @use('db', skip_turnstile)
 def test_a_requested_link_redirects_to_a_page_saying_it_was_sent():
     webform = create_webform(is_disabled=False)
-
-    response = _request_a_link(webform.public_id)
+    with mock.patch('corehq.apps.public_webforms.public.views.get_app', return_value=None):
+        response = _request_a_link(webform.public_id)
 
     assert response.status_code == 302
     assert response.url == _url(
         PublicWebformLinkSentView.urlname, webform.public_id)
+
+
+@use('db', skip_turnstile)
+def test_a_requested_link_is_sent():
+    webform = create_webform(is_disabled=False)
+
+    with (
+        mock.patch('corehq.apps.public_webforms.public.views.get_app', return_value=None),
+        mock.patch('corehq.apps.public_webforms.public.views.send_one_time_link') as send
+    ):
+        _request_a_link(webform.public_id, email='someone@example.com')
+
+    session = PublicFormSession.objects.get(public_webform=webform)
+    assert send.call_args.args[0] == session
