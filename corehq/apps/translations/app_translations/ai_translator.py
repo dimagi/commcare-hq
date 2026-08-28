@@ -7,6 +7,8 @@ from dataclasses import dataclass
 
 from django.contrib import messages
 
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
 )
@@ -54,7 +56,13 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
         try:
             translator.translate(batch)
         except Exception:
-            pass  # failed units are simply absent from fmt.results
+            notify_exception(None, 'AI app translation batch failed', details={
+                'domain': app.domain,
+                'app_id': app.get_id,
+                'target_lang': target_lang,
+                'batch': f'{i + 1}/{len(batches)}',
+                'unit_ids': sorted(batch),
+            })
         if progress_callback:
             progress_callback(i + 1, len(batches))
     errors = fmt.save_output()
