@@ -51,7 +51,9 @@ def test_mark_prometheus_worker_dead():
     path = prometheus_dir()
     worker = mock.Mock(pid=4321)
 
-    with mock.patch('prometheus_client.multiprocess.mark_process_dead') as mark_process_dead:
+    with mock.patch(
+        'prometheus_client.multiprocess.mark_process_dead'
+    ) as mark_process_dead:
         _mark_prometheus_worker_dead(worker)
 
     mark_process_dead.assert_called_once_with(4321, str(path))
@@ -59,7 +61,10 @@ def test_mark_prometheus_worker_dead():
 
 def test_on_starting_logs_errors():
     server = Server()
-    with mock.patch('deployment.gunicorn.gunicorn_conf._remove_prometheus_metric_files', side_effect=Exception):
+    with mock.patch(
+        'deployment.gunicorn.gunicorn_conf._remove_prometheus_metric_files',
+        side_effect=Exception,
+    ):
         on_starting(server)
 
     assert len(server.log.logs) == 1
@@ -67,7 +72,10 @@ def test_on_starting_logs_errors():
 
 def test_child_exit_logs_errors():
     server = Server()
-    with mock.patch('deployment.gunicorn.gunicorn_conf._remove_prometheus_metric_files', side_effect=Exception):
+    with mock.patch(
+        'deployment.gunicorn.gunicorn_conf._remove_prometheus_metric_files',
+        side_effect=Exception,
+    ):
         child_exit(server, None)
 
     assert len(server.log.logs) == 1
