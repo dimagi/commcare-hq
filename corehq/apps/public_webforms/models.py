@@ -137,6 +137,12 @@ class PublicFormSession(models.Model):
         ).order_by('-created_at').first()
 
     @property
+    def one_time_link(self):
+        """The absolute link sent to the respondent who asked for it."""
+        # TODO: implement real public link handling, at this url or otherwise
+        return f'{self.public_webform.public_url}{self.id.hex}/'
+
+    @property
     def session_username(self):
         return f"{PUBLIC_USER_ID}{self.id.hex}@{self.public_webform.domain}.commcarehq.org"
 
