@@ -22,8 +22,6 @@ class Server:
 def setup():
     # ensure env var not set
     os.environ.pop('PROMETHEUS_MULTIPROC_DIR', None)
-    # DEPRECATED: prometheus_multiproc_dir has been replaced by PROMETHEUS_MULTIPROC_DIR
-    os.environ.pop('prometheus_multiproc_dir', None)
 
 
 @pytest.mark.parametrize("path", [None, '', '/not/a/real/path'])
