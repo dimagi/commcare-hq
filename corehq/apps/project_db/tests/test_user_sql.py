@@ -18,6 +18,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects import postgresql
 
 from corehq.apps.project_db.user_sql import (
+    MAX_PAREN_DEPTH,
     BadParameters,
     UnsupportedSQL,
     UserSQL,
@@ -359,3 +360,18 @@ def test_handle_quoted_tables():
     tables = {'hyphenated-table': hyphenated_table}
     result = translate('SELECT * FROM "hyphenated-table"', tables)
     assert str(result) == str(select([hyphenated_table]))
+
+
+def test_rejects_deeply_nested_parentheses():
+    sql = 'SELECT * FROM client WHERE ' + '(' * 100 + 'name = 1' + ')' * 100
+    with pytest.raises(UnsupportedSQL, match='nested too deeply'):
+        translate(sql, TABLES)
+
+
+def test_allows_parentheses_nested_up_to_the_limit():
+    # The deepest nesting the limit allows must still parse, so that raising
+    # the limit past what the stack allows fails here rather than crashing
+    # the interpreter.
+    depth = MAX_PAREN_DEPTH
+    sql = 'SELECT * FROM client WHERE ' + '(' * depth + 'name = 1' + ')' * depth
+    assert translate(sql, TABLES) is not None

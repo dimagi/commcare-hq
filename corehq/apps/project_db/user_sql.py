@@ -49,6 +49,10 @@ LITERAL_PARAM_PREFIX = 'hq_param'  # Our reserved namespace for parameters
 # restricted to characters that cannot close the placeholder and inject SQL.
 PARAM_NAME = re.compile(r'[A-Za-z_][A-Za-z0-9_]*\Z')
 
+MAX_PAREN_DEPTH = 20
+
+NESTED_TOO_DEEPLY = "SQL is nested too deeply"
+
 
 def _bind(value):
     """Bind a value as a uniquely named parameter"""
@@ -113,6 +117,9 @@ def translate(sql, tables):
     :param sql: the user-supplied SQL statement
     :param tables: mapping of table name to SQLAlchemy ``Table``
     """
+    # sqlglot's parser recurses about 20 stack frames per level of parentheses,
+    # so deeply nested input exhausts the stack
+    _check_paren_depth(sql)
     try:
         statements = sqlglot.parse(sql, read='postgres')
     except SqlglotError:
@@ -121,6 +128,18 @@ def translate(sql, tables):
         raise UnsupportedSQL("this only supports a single statement")
 
     return _convert_query(statements[0], tables)
+
+
+def _check_paren_depth(sql):
+    """Reject SQL whose parentheses nest deeper than the parser can handle"""
+    depth = 0
+    for char in sql:
+        if char == '(':
+            depth += 1
+            if depth > MAX_PAREN_DEPTH:
+                raise UnsupportedSQL(NESTED_TOO_DEEPLY)
+        elif char == ')':
+            depth -= 1
 
 
 def _convert_query(node, tables):
