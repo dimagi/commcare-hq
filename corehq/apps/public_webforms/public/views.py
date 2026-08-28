@@ -12,6 +12,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.public_webforms.messaging import send_one_time_link
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.public_webforms.public.forms import (
     PublicWebformLinkRequestForm,
@@ -64,7 +65,7 @@ class PublicWebformRequestView(BasePublicWebformView):
     def post(self, request, *args, **kwargs):
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
-        self.form.get_or_create_session()
+        send_one_time_link(self.form.get_or_create_session(), self.form_name)
         return HttpResponseRedirect(reverse(
             PublicWebformLinkSentView.urlname,
             kwargs={'public_id': self.webform.public_id.hex},
