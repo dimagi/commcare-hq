@@ -224,6 +224,32 @@ Follow up
 Deferred deliberately. Each is a behaviour a reader of the code would
 otherwise be right to flag as a bug.
 
+**No statement timeout.** An endpoint's SQL runs against the reporting
+database on a mobile sync request. ``resolve_max_results`` caps the rows
+returned but not how long the query takes, so a bad join over a large project
+DB holds a worker. The query tester carries the same exposure, but that is a
+domain admin clicking a button; this is any mobile user.
+
+**Two row-to-case conversions.** ``project_db.cases.rows_to_cases`` and
+``case_search.utils._rows_to_cases`` both exist; only the latter runs. They
+differ in three ways worth reconciling before either is relied on:
+
+- The case type comes from ``config.case_types[0]``, the request, rather than
+  from the table the ``case_id`` column belongs to. A request whose case type
+  disagrees with the SQL's table mislabels the cases and reads property
+  columns from the wrong table.
+- Static columns are read unguarded, so a query selecting fewer columns —
+  ``SELECT case_id FROM patient`` — raises ``NoSuchColumnError`` instead of
+  returning a smaller case.
+- ``CaseTable(domain, case_type).reflect()`` re-reflects per request, on top
+  of the reflection ``UserSQL`` already did through ``get_domain_tables``.
+
+**A missing parameter binds an empty string.** ``query_params`` fills any
+parameter the criteria did not supply with ``''`` rather than letting
+``UserSQL`` raise ``BadParameters``, so a query meant to filter instead
+matches whatever equals the empty string. ``get_case_id_column`` is also no
+longer consulted at runtime; ``row['case_id']`` is hardcoded.
+
 **Closed cases are returned.** Elasticsearch endpoints apply
 ``.is_closed(False)``; project DB endpoints return whatever the SQL selects.
 The author can add ``WHERE closed = false``, but nothing prompts them to, and
