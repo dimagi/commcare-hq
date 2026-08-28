@@ -30,6 +30,13 @@ def on_starting(server):
         server.log.exception("Error clearing Prometheus metrics")
 
 
+def child_exit(server, worker):
+    try:
+        _mark_prometheus_worker_dead(worker)
+    except Exception:
+        server.log.exception("Error clearing Prometheus live metrics")
+
+
 def _remove_prometheus_metric_files():
     path = os.environ.get('PROMETHEUS_MULTIPROC_DIR')
     if not path:
@@ -37,13 +44,6 @@ def _remove_prometheus_metric_files():
 
     for f in glob.glob(os.path.join(path, '*.db')):
         os.remove(f)
-
-
-def child_exit(server, worker):
-    try:
-        _mark_prometheus_worker_dead(worker)
-    except Exception:
-        server.log.exception("Error clearing Prometheus live metrics")
 
 
 def _mark_prometheus_worker_dead(worker):
