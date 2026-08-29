@@ -24,11 +24,6 @@ def post_fork(server, worker):
 
 
 def on_starting(server):
-    _on_starting(server)
-
-
-def _on_starting(server):
-    """Implementation lives in here to make it easier to test"""
     try:
         _remove_prometheus_metric_files()
     except Exception:
@@ -45,11 +40,6 @@ def _remove_prometheus_metric_files():
 
 
 def child_exit(server, worker):
-    _child_exit(server, worker)
-
-
-def _child_exit(server, worker):
-    """Implementation lives in here to make it easier to test"""
     try:
         _mark_prometheus_worker_dead(worker)
     except Exception:
