@@ -61,46 +61,61 @@ class TestIsDomainAvailableToLink(SimpleTestCase):
 
     @patch('corehq.apps.users.models.CouchUser')
     def test_none_upstream_domain_returns_false(self, mock_user):
-        result = is_domain_available_to_link(None, 'domain', mock_user)
+        with self._available_to_link_patch():
+            result = is_domain_available_to_link(None, 'domain', mock_user)
         self.assertFalse(result)
 
     @patch('corehq.apps.users.models.CouchUser')
     def test_none_candidate_domain_returns_false(self, mock_user):
-        result = is_domain_available_to_link('domain', None, mock_user)
+        with self._available_to_link_patch():
+            result = is_domain_available_to_link('domain', None, mock_user)
         self.assertFalse(result)
 
     @patch('corehq.apps.users.models.CouchUser')
     def test_none_upstream_and_none_candidate_domain_returns_false(self, mock_user):
-        result = is_domain_available_to_link(None, None, mock_user)
+        with self._available_to_link_patch():
+            result = is_domain_available_to_link(None, None, mock_user)
         self.assertFalse(result)
 
     @patch('corehq.apps.users.models.CouchUser')
     def test_same_domain_returns_false(self, mock_user):
-        result = is_domain_available_to_link('domain', 'domain', mock_user)
+        with self._available_to_link_patch():
+            result = is_domain_available_to_link('domain', 'domain', mock_user)
         self.assertFalse(result)
 
     @patch('corehq.apps.users.models.CouchUser')
     def test_domain_in_active_link_returns_false(self, mock_user):
-        with patch('corehq.apps.linked_domain.util.is_domain_in_active_link') as mock_active_link:
-            mock_active_link.return_value = True
+        with self._available_to_link_patch(is_domain_in_active_link=True):
             result = is_domain_available_to_link('upstream', 'downstream', mock_user)
         self.assertFalse(result)
 
     @patch('corehq.apps.users.models.CouchUser')
     def test_user_without_access_returns_false(self, mock_user):
-        with patch('corehq.apps.linked_domain.util.is_domain_in_active_link') as mock_active_link,\
-             patch('corehq.apps.linked_domain.util.user_has_access_in_all_domains') as mock_access:
-            mock_active_link.return_value = False
-            mock_access.return_value = False
+        with self._available_to_link_patch(user_has_access_in_all_domains=False):
             result = is_domain_available_to_link('upstream', 'downstream', mock_user)
         self.assertFalse(result)
 
     @patch('corehq.apps.users.models.CouchUser')
-    def test_user_with_access_returns_true(self, mock_user):
-        with patch('corehq.apps.linked_domain.util.is_domain_in_active_link') as mock_active_link, \
-            patch(
-                'corehq.apps.linked_domain.util.user_has_access_in_all_domains') as mock_access:
-            mock_active_link.return_value = False
-            mock_access.return_value = True
+    def test_candidate_domain_without_access_returns_false(self, mock_user):
+        with self._available_to_link_patch(can_domain_access_linked_domains=False):
+            result = is_domain_available_to_link('upstream', 'downstream', mock_user)
+        self.assertFalse(result)
+
+    @patch('corehq.apps.users.models.CouchUser')
+    def test_linkable_domain_returns_true(self, mock_user):
+        with self._available_to_link_patch():
             result = is_domain_available_to_link('upstream', 'downstream', mock_user)
         self.assertTrue(result)
+
+    def _available_to_link_patch(
+            self,
+            is_domain_in_active_link=False,
+            user_has_access_in_all_domains=True,
+            can_domain_access_linked_domains=True,
+        ):
+        return patch.multiple(
+            'corehq.apps.linked_domain.util',
+            is_domain_in_active_link=lambda *args: is_domain_in_active_link,
+            user_has_access_in_all_domains=lambda *args: user_has_access_in_all_domains,
+            can_domain_access_linked_domains=lambda *args: can_domain_access_linked_domains,
+        )
