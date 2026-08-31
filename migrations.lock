@@ -274,6 +274,7 @@ case_search
  0018_add_endpoint_version_audit_fields
  0019_rename_target_name_casesearchendpoint_case_type
  0020_remove_casesearchendpoint_case_type_and_more
+ 0021_casesearchendpointversion_dangerous_sql
 celery
  0001_taskrecord
  0002_taskrecord_kombu_serialization
