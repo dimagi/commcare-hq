@@ -107,6 +107,44 @@ class TestSubscription(BaseAccountingTest):
     def test_creation(self):
         self.assertIsNotNone(self.subscription)
 
+    def test_update_subscription_leaves_skip_auto_downgrade_until_unchanged_by_default(self):
+        expiration = datetime.date(2016, 3, 1)
+        self.subscription.skip_auto_downgrade_until = expiration
+        self.subscription.save()
+
+        self.subscription.update_subscription(
+            date_start=self.subscription.date_start,
+            date_end=self.subscription.date_end,
+        )
+
+        self.subscription.refresh_from_db()
+        assert self.subscription.skip_auto_downgrade_until == expiration
+
+    def test_update_subscription_clears_skip_auto_downgrade_until_when_explicitly_none(self):
+        self.subscription.skip_auto_downgrade_until = datetime.date(2016, 3, 1)
+        self.subscription.save()
+
+        self.subscription.update_subscription(
+            date_start=self.subscription.date_start,
+            date_end=self.subscription.date_end,
+            skip_auto_downgrade_until=None,
+        )
+
+        self.subscription.refresh_from_db()
+        assert self.subscription.skip_auto_downgrade_until is None
+
+    def test_update_subscription_sets_skip_auto_downgrade_until(self):
+        new_expiration = datetime.date(2016, 4, 1)
+
+        self.subscription.update_subscription(
+            date_start=self.subscription.date_start,
+            date_end=self.subscription.date_end,
+            skip_auto_downgrade_until=new_expiration,
+        )
+
+        self.subscription.refresh_from_db()
+        assert self.subscription.skip_auto_downgrade_until == new_expiration
+
     def test_no_activation(self):
         tasks.activate_subscriptions(based_on_date=self.subscription.date_start - datetime.timedelta(30))
         subscription = Subscription.visible_objects.get(id=self.subscription.id)

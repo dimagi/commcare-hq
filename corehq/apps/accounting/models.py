@@ -1171,6 +1171,9 @@ class DisabledManager(models.Manager):
         raise NotImplementedError
 
 
+_UNSET = object()
+
+
 class Subscription(models.Model):
     """
     Links a Subscriber to a SoftwarePlan and BillingAccount, necessary for invoicing.
@@ -1209,6 +1212,7 @@ class Subscription(models.Model):
     is_hidden_to_ops = models.BooleanField(default=False)
     skip_auto_downgrade = models.BooleanField(default=False)
     skip_auto_downgrade_reason = models.CharField(blank=True, max_length=256)
+    skip_auto_downgrade_until = models.DateField(null=True, blank=True)
     auto_renew = models.BooleanField(default=False)
 
     visible_objects = VisibleSubscriptionManager()
@@ -1346,7 +1350,9 @@ class Subscription(models.Model):
                             web_user=None, note=None, adjustment_method=None,
                             service_type=None, pro_bono_status=None, funding_source=None,
                             skip_invoicing_if_no_feature_charges=None, skip_auto_downgrade=None,
-                            skip_auto_downgrade_reason=None, auto_renew=None):
+                            skip_auto_downgrade_reason=None,
+                            skip_auto_downgrade_until=_UNSET,
+                            auto_renew=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         self._update_dates(date_start, date_end)
@@ -1366,6 +1372,8 @@ class Subscription(models.Model):
             skip_auto_downgrade_reason=skip_auto_downgrade_reason,
             auto_renew=auto_renew,
         )
+        if skip_auto_downgrade_until is not _UNSET:
+            self.skip_auto_downgrade_until = skip_auto_downgrade_until
 
         self.save()
 
@@ -1440,6 +1448,7 @@ class Subscription(models.Model):
             skip_invoicing_if_no_feature_charges=self.skip_invoicing_if_no_feature_charges,
             skip_auto_downgrade=self.skip_auto_downgrade,
             skip_auto_downgrade_reason=self.skip_auto_downgrade_reason,
+            skip_auto_downgrade_until=self.skip_auto_downgrade_until,
             auto_renew=self.auto_renew,
             date_end=self.date_end,
         )
@@ -1453,7 +1462,8 @@ class Subscription(models.Model):
                     auto_generate_credits=False, is_trial=False,
                     do_not_email_invoice=False, do_not_email_reminder=False,
                     skip_invoicing_if_no_feature_charges=False,
-                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None, auto_renew=None):
+                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None,
+                    skip_auto_downgrade_until=None, auto_renew=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1501,6 +1511,7 @@ class Subscription(models.Model):
             funding_source=(funding_source or FundingSource.CLIENT),
             skip_auto_downgrade=skip_auto_downgrade,
             skip_auto_downgrade_reason=skip_auto_downgrade_reason or '',
+            skip_auto_downgrade_until=skip_auto_downgrade_until,
         )
         new_subscription.auto_renew = auto_renew if auto_renew is not None else new_subscription.can_auto_renew
 
