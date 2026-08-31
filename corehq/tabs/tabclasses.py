@@ -635,13 +635,6 @@ class ProjectDataTab(UITab):
                 'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
             }]])
 
-        if (toggles.CASE_SEARCH_ENDPOINTS.enabled(self.domain)
-                and self.couch_user.is_domain_admin(self.domain)):
-            items.append([_('Case Search Endpoints'), [{
-                'title': _(CaseSearchEndpointsView.page_title),
-                'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain]),
-            }]])
-
         if self._can_view_data_dictionary:
             items.append([DataDictionaryView.page_title, [{
                 'title': DataDictionaryView.page_title,
@@ -1035,6 +1028,15 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': False,
                     'subpages': [],
                 })
+        if (toggles.CASE_SEARCH_ENDPOINTS.enabled(self.domain)
+                and self.couch_user.is_domain_admin(self.domain)):
+            explore_data_views.append({
+                'title': _(CaseSearchEndpointsView.page_title),
+                'url': reverse(CaseSearchEndpointsView.urlname, args=(self.domain,)),
+                'icon': 'fa fa-search',
+                'show_in_dropdown': False,
+                'subpages': [],
+            })
         return explore_data_views
 
     def _get_geospatial_views(self):
