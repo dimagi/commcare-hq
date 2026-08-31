@@ -942,6 +942,7 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
     description = "List of all customer invoices"
     slug = "customer_invoices"
     fields = [
+        'corehq.apps.accounting.interface.CustomerInvoiceNumberFilter',
         'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.SubscriberFilter',
         'corehq.apps.accounting.interface.PaymentStatusFilter',
@@ -1081,6 +1082,10 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
     @memoized
     def _invoices(self):
         queryset = CustomerInvoice.objects.all()
+
+        customer_invoice_id = CustomerInvoiceNumberFilter.get_value(self.request, self.domain)
+        if customer_invoice_id is not None:
+            queryset = queryset.filter(id=int(customer_invoice_id))
 
         if self.subscription:
             queryset = queryset.filter(subscriptions=self.subscription)
