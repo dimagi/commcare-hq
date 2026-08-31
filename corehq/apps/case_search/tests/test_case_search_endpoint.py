@@ -1,7 +1,11 @@
+import datetime
 import uuid
 from unittest import mock
 
 from django.test import TestCase
+
+import pytest
+from unmagic import fixture, use
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
@@ -12,7 +16,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.case_search.const import IS_RELATED_CASE
-from corehq.apps.data_dictionary.models import CaseType
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
@@ -27,6 +31,9 @@ from corehq.apps.es.tests.utils import (
     case_search_es_setup,
     es_test,
 )
+from corehq.apps.project_db.populate import send_to_project_db
+from corehq.apps.project_db.tests.util import project_db_table
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import flag_enabled
 
@@ -44,6 +51,12 @@ class TestCaseSearchEndpoint(TestCase):
         CaseSearchConfig.objects.create(domain=cls.domain, enabled=True)
         cls.person_case_type = CaseType.objects.create(domain=cls.domain, name='person')
         cls.addClassCleanup(cls.person_case_type.delete)
+        # the endpoint query builder validates fields against the data dictionary
+        CaseProperty.objects.create(
+            case_type=cls.person_case_type,
+            name='family',
+            data_type=CaseProperty.DataType.PLAIN,
+        )
         cls.household_1 = str(uuid.uuid4())
         case_blocks = [CaseBlock(
             case_id=cls.household_1,
@@ -115,25 +128,69 @@ class TestCaseSearchEndpoint(TestCase):
             ("Villanueva", "true"),
         ])
 
-    @flag_enabled('CASE_SEARCH_ENDPOINTS')
-    def test_endpoint_id_runs_query(self):
+    def _make_es_endpoint(self, query, parameters=None):
         endpoint = CaseSearchEndpoint.objects.create(
-            domain=self.domain, name='people')
+            domain=self.domain,
+            name='people',
+            target_type=CaseSearchEndpoint.TargetType.ELASTICSEARCH,
+        )
         version = CaseSearchEndpointVersion.objects.create(
             endpoint=endpoint,
             version_number=1,
             case_type='person',
-            query={'type': 'all', 'children': []},
-            parameters=[],
+            query=query,
+            parameters=parameters or [],
             action=CaseSearchEndpointVersion.Action.CREATE,
         )
         endpoint.current_version = version
         endpoint.save(update_fields=['current_version'])
-        # TODO: pass criteria once CaseSearchEndpointQueryBuilder applies them.
-        # res = self._run_query(['person'], [SearchCriteria('family', 'Ramos')], endpoint_id=endpoint.id)
-        # self.assertItemsEqual(["Jane"], [case.name for case in res])
+        return endpoint
+
+    @flag_enabled('CASE_SEARCH_ENDPOINTS')
+    def test_endpoint_id_runs_query(self):
+        endpoint = self._make_es_endpoint({'type': 'all', 'children': []})
         res = self._run_query(['person'], [], endpoint_id=endpoint.id)
-        self.assertGreater(len(res), 0)
+        self.assertItemsEqual(["Jane", "Xiomara", "Alba", "Rogelio", "Jane"], [
+            case.name for case in res
+        ])
+
+    @flag_enabled('CASE_SEARCH_ENDPOINTS')
+    def test_endpoint_text_parameter(self):
+        endpoint = self._make_es_endpoint(
+            query={
+                'type': 'all',
+                'children': [{
+                    'type': 'component',
+                    'field': 'family',
+                    'operator': 'equals',
+                    'inputs': {'value': {'type': 'parameter', 'value': 'family'}},
+                }],
+            },
+            parameters=[{'name': 'family', 'type': 'text'}],
+        )
+        res = self._run_query(
+            ['person'], [SearchCriteria('family', 'Ramos')], endpoint_id=endpoint.id)
+        self.assertItemsEqual(["Jane"], [case.name for case in res])
+
+    @flag_enabled('CASE_SEARCH_ENDPOINTS')
+    def test_endpoint_text_parameter_not_supplied(self):
+        # an unsupplied parameter drops its condition rather than filtering on ''
+        endpoint = self._make_es_endpoint(
+            query={
+                'type': 'all',
+                'children': [{
+                    'type': 'component',
+                    'field': 'family',
+                    'operator': 'equals',
+                    'inputs': {'value': {'type': 'parameter', 'value': 'family'}},
+                }],
+            },
+            parameters=[{'name': 'family', 'type': 'text'}],
+        )
+        res = self._run_query(['person'], [], endpoint_id=endpoint.id)
+        self.assertItemsEqual(["Jane", "Xiomara", "Alba", "Rogelio", "Jane"], [
+            case.name for case in res
+        ])
 
     @flag_enabled('CASE_SEARCH_ENDPOINTS')
     def test_unknown_endpoint_id_raises(self):
