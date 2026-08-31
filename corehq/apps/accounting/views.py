@@ -45,6 +45,7 @@ from corehq.apps.accounting.async_handlers import (
     SoftwareProductRateAsyncHandler,
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
+    WireInvoiceNumberAsyncHandler,
 )
 from corehq.apps.accounting.exceptions import (
     CreateAccountingAdminError,
@@ -1204,6 +1205,7 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         SoftwarePlanAsyncHandler,
         InvoiceNumberAsyncHandler,
         CustomerInvoiceNumberAsyncHandler,
+        WireInvoiceNumberAsyncHandler,
         InvoiceBalanceAsyncHandler,
     ]
 

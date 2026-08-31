@@ -56,6 +56,7 @@ from .filters import (
     SubscriberFilter,
     SubscriptionTypeFilter,
     TrialStatusFilter,
+    WireInvoiceNumberFilter,
 )
 from .forms import AdjustBalanceForm
 from .models import (
@@ -499,6 +500,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
     description = "List of all wire invoices"
     slug = "wire_invoices"
     fields = [
+        'corehq.apps.accounting.interface.WireInvoiceNumberFilter',
         'corehq.apps.accounting.interface.DomainFilter',
         'corehq.apps.accounting.interface.PaymentStatusFilter',
         'corehq.apps.accounting.interface.StatementPeriodFilter',
@@ -588,6 +590,10 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
     @memoized
     def _invoices(self):
         queryset = WireInvoice.objects.all()
+
+        wire_invoice_id = WireInvoiceNumberFilter.get_value(self.request, self.domain)
+        if wire_invoice_id is not None:
+            queryset = queryset.filter(id=int(wire_invoice_id))
 
         domain_name = DomainFilter.get_value(self.request, self.domain)
         if domain_name is not None:
@@ -936,6 +942,7 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
     description = "List of all customer invoices"
     slug = "customer_invoices"
     fields = [
+        'corehq.apps.accounting.interface.CustomerInvoiceNumberFilter',
         'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.SubscriberFilter',
         'corehq.apps.accounting.interface.PaymentStatusFilter',
@@ -1075,6 +1082,10 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
     @memoized
     def _invoices(self):
         queryset = CustomerInvoice.objects.all()
+
+        customer_invoice_id = CustomerInvoiceNumberFilter.get_value(self.request, self.domain)
+        if customer_invoice_id is not None:
+            queryset = queryset.filter(id=int(customer_invoice_id))
 
         if self.subscription:
             queryset = queryset.filter(subscriptions=self.subscription)
