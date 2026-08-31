@@ -16,5 +16,8 @@
   {# outside the table, so a modal doesn't inherit a cell's styling #}
   {% for row in table.paginated_rows %}
     {% include "public_webforms/partials/qr_modal.html" with webform=row.record domain=table.domain %}
+    {% if not row.record.is_expired %}
+      {% include "public_webforms/partials/status_modal.html" with webform=row.record domain=table.domain %}
+    {% endif %}
   {% endfor %}
 {% endblock after_table %}
