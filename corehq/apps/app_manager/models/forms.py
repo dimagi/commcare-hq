@@ -15,8 +15,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from django.core.cache import cache
-from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy as _
 from lxml import etree
 from memoized import memoized
 
@@ -1090,7 +1089,7 @@ class ShadowForm(AdvancedForm):
             for form in self.get_app().get_forms() if form.form_type == "advanced_form"
         ]
         if self.shadow_parent_form_id and self.shadow_parent_form_id not in [x[0] for x in options]:
-            options = [(self.shadow_parent_form_id, gettext_lazy("Unknown, please change"))] + options
+            options = [(self.shadow_parent_form_id, _("Unknown, please change"))] + options
         return options
 
     @staticmethod
