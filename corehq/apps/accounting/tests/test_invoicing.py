@@ -469,36 +469,31 @@ class TestFlaggedPayAnnuallyPrepayInvoice(BaseInvoiceTestCase):
             is_product=True,
         )
 
-    def test_monthly_invoice_product_fully_paid(self):
+    def test_no_prepayment_invoice(self):
+        invoice = self.create_invoices().first()
+        assert get_flagged_pay_annually_prepay_invoice(invoice) is None
+
+    def test_monthly_invoice_product_fully_paid_is_ignored(self):
         prepay_invoice = self.create_prepayment_invoice(self.subscription.date_start)
         self.create_product_credit(prepay_invoice.balance)
         invoice = self.create_invoices().first()
-        flagged_invoice = get_flagged_pay_annually_prepay_invoice(invoice)
-        self.assertIsNone(flagged_invoice)
+        assert get_flagged_pay_annually_prepay_invoice(invoice) is None
 
-    def test_no_prepayment_invoice(self):
-        invoice = self.create_invoices().first()
-        flagged_invoice = get_flagged_pay_annually_prepay_invoice(invoice)
-        self.assertIsNone(flagged_invoice)
-
-    def test_prepayment_invoice_not_due_yet(self):
+    def test_prepayment_invoice_not_due_yet_is_ignored(self):
         self.create_prepayment_invoice(datetime.date.today() + relativedelta(days=1))
         invoice = self.create_invoices().first()
-        result = get_flagged_pay_annually_prepay_invoice(invoice)
-        self.assertIsNone(result)
+        assert get_flagged_pay_annually_prepay_invoice(invoice) is None
 
     def test_account_on_autopay_is_ignored(self):
         self.create_prepayment_invoice(self.subscription.date_start)
         invoice = self.create_invoices().first()
         invoice.account.auto_pay_user = self.billing_contact
-        result = get_flagged_pay_annually_prepay_invoice(invoice)
-        self.assertIsNone(result)
+        assert get_flagged_pay_annually_prepay_invoice(invoice) is None
 
-    def test_matching_prepayment_invoice_exists(self):
+    def test_matching_prepayment_invoice_is_flagged(self):
         prepay_invoice = self.create_prepayment_invoice(self.subscription.date_start)
         invoice = self.create_invoices().first()
-        result = get_flagged_pay_annually_prepay_invoice(invoice)
-        self.assertEqual(result, prepay_invoice)
+        assert get_flagged_pay_annually_prepay_invoice(invoice) == prepay_invoice
 
 
 class TestGetProratedSoftwarePlanCost(SimpleTestCase):
