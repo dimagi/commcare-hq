@@ -2594,9 +2594,11 @@ class BillingRecord(BillingRecordBase):
         autogenerate = (subscription.auto_generate_credits and not self.invoice.balance)
         small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD
                             and subscription.service_type == SubscriptionType.IMPLEMENTATION)
+        zero_dollar_annual = (self.invoice.balance <= 0
+                              and subscription.plan_version.plan.is_annual_plan)
         hidden = self.invoice.is_hidden
         do_not_email_invoice = self.invoice.subscription.do_not_email_invoice
-        return not (autogenerate or small_contracted or hidden or do_not_email_invoice)
+        return not (autogenerate  or small_contracted or zero_dollar_annual or hidden or do_not_email_invoice)
 
     def is_email_throttled(self):
         month = self.invoice.date_start.month

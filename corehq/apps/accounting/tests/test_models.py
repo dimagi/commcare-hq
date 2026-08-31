@@ -273,6 +273,13 @@ class TestBillingRecord(BaseAccountingTest):
         self.invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD + 1)
         self.assertTrue(self.billing_record.should_send_email)
 
+    def test_should_send_email_pay_annually(self):
+        self.subscription.plan_version.plan.is_annual_plan = True
+        self.assertFalse(self.billing_record.should_send_email)
+
+        self.invoice.balance = Decimal(0.01)
+        self.assertTrue(self.billing_record.should_send_email)
+
     def test_should_send_email_hidden(self):
         self.assertTrue(self.billing_record.should_send_email)
 
