@@ -5,8 +5,17 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.html import escape
+
+import pytest
+from sqlalchemy import ARRAY, Text, bindparam
 from sqlalchemy.exc import OperationalError
 
+from corehq.apps.case_search.endpoint_capability import (
+    FIELD_TYPE_DATERANGE,
+    FIELD_TYPE_SELECT,
+    FIELD_TYPE_TEXT,
+)
+from corehq.apps.case_search.endpoint_query_spec import Parameter
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.project_db.tests.util import project_db_table
@@ -19,6 +28,7 @@ from ..endpoint_views import (
     CaseSearchEndpointNewView,
     CaseSearchEndpointsView,
     CaseSearchEndpointTestView,
+    sql_parameter_errors,
 )
 from ..models import CaseSearchEndpoint, CaseSearchEndpointVersion
 
@@ -67,7 +77,9 @@ class EndpointViewTestCase(TestCase):
         return endpoint
 
     def _project_db_table(self, case_type='my_case_type'):
-        return project_db_table(self.domain, case_type, {'nickname': 'plain'})
+        return project_db_table(
+            self.domain, case_type, {'nickname': 'plain', 'tags': 'select'}
+        )
 
     def _list_url(self):
         return reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
@@ -225,6 +237,62 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         )
         assert endpoint.current_version.dangerous_sql == ''
 
+    def _save_sql(self, sql, parameters):
+        with self._project_db_table():
+            return self.client.post(
+                self._new_url(target_type='project_db'),
+                self._post_data(
+                    name='sql-endpoint',
+                    sql=sql,
+                    parameters=json.dumps(parameters),
+                ),
+            )
+
+    def test_sql_parameters_are_checked_against_the_spec(self):
+        response = self._save_sql(
+            'SELECT case_id FROM my_case_type WHERE prop__nickname = :who',
+            [{'name': 'somebody_else', 'type': 'text'}],
+        )
+        assert response.status_code == 200
+        errors = response.context['form'].errors['sql']
+        assert any("Undefined parameter ':who'" in e for e in errors), errors
+        assert any("':somebody_else' is not used" in e for e in errors), errors
+        assert not CaseSearchEndpoint.objects.filter(
+            domain=self.domain, name='sql-endpoint').exists()
+
+    def test_declared_parameters_may_be_saved(self):
+        response = self._save_sql(
+            'SELECT case_id FROM my_case_type '
+            'WHERE (:who IS NULL OR prop__nickname = :who) '
+            'AND (:tags IS NULL OR select_prop__tags && :tags) '
+            'AND (:seen_from IS NULL OR prop__nickname > :seen_from) '
+            'AND (:seen_to IS NULL OR prop__nickname < :seen_to)',
+            [
+                {'name': 'who', 'type': 'text'},
+                {'name': 'tags', 'type': 'select'},
+                {'name': 'seen', 'type': 'daterange'},
+            ],
+        )
+        assert response.status_code == 302, response.context['form'].errors
+
+    def test_select_parameter_must_be_compared_with_an_array_column(self):
+        response = self._save_sql(
+            'SELECT case_id FROM my_case_type WHERE prop__nickname = :tags',
+            [{'name': 'tags', 'type': 'select'}],
+        )
+        assert response.status_code == 200
+        errors = response.context['form'].errors['sql']
+        assert any('select_prop__ column' in e for e in errors), errors
+
+    def test_parameter_used_with_in_is_rejected(self):
+        response = self._save_sql(
+            'SELECT case_id FROM my_case_type WHERE prop__nickname IN :tags',
+            [{'name': 'tags', 'type': 'select'}],
+        )
+        assert response.status_code == 200
+        errors = response.context['form'].errors['sql']
+        assert any('used with IN' in e for e in errors), errors
+
     def test_project_db_unavailable_is_not_the_authors_fault(self):
         # The engine falls back to the default database under DEBUG or
         # UNIT_TESTING, so the failure has to be injected to be reachable.
@@ -234,7 +302,7 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         ]
         for error in cases:
             with self.subTest(error=type(error).__name__), patch(
-                'corehq.apps.case_search.endpoint_views.get_domain_tables',
+                'corehq.apps.project_db.user_sql.get_domain_tables',
                 side_effect=error,
             ):
                 response = self.client.post(
@@ -571,3 +639,44 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
     def test_requires_post(self):
         response = self.client.get(self._test_url())
         assert response.status_code == 405
+
+
+# ── matching a parameter spec against the SQL that binds it ──────────────────
+
+def _binds(**types):
+    """Stand in for ``UserSQL.parameter_binds``: a bind per placeholder"""
+    return {
+        name: bindparam(name, type_=type_, expanding=(type_ == 'expanding'))
+        for name, type_ in types.items()
+    }
+
+
+TEXT_PARAM = Parameter(name='color', type=FIELD_TYPE_TEXT)
+SELECT_PARAM = Parameter(name='species', type=FIELD_TYPE_SELECT)
+RANGE_PARAM = Parameter(name='dob', type=FIELD_TYPE_DATERANGE)
+
+
+@pytest.mark.parametrize('binds, parameters', [
+    ({}, []),
+    (_binds(color=Text()), [TEXT_PARAM]),
+    (_binds(species=ARRAY(Text())), [SELECT_PARAM]),
+    (_binds(dob_from=Text(), dob_to=Text()), [RANGE_PARAM]),
+    # A parameter only ever compared with NULL says nothing about its shape
+    (_binds(species=None), [SELECT_PARAM]),
+])
+def test_sql_parameter_errors_accepts(binds, parameters):
+    assert list(sql_parameter_errors(binds, parameters)) == []
+
+
+@pytest.mark.parametrize('binds, parameters, error_fragment', [
+    (_binds(color=Text()), [], "Undefined parameter ':color'"),
+    ({}, [TEXT_PARAM], "Parameter ':color' is not used by the SQL"),
+    # A date range must be bound by both of its derived names
+    (_binds(dob_from=Text()), [RANGE_PARAM], "Parameter ':dob_to' is not used"),
+    (_binds(color='expanding'), [TEXT_PARAM], "used with IN, which is not supported"),
+    (_binds(species=Text()), [SELECT_PARAM], "must be compared with a select_prop__ column"),
+    (_binds(color=ARRAY(Text())), [TEXT_PARAM], "must be declared as a select parameter"),
+])
+def test_sql_parameter_errors_reports(binds, parameters, error_fragment):
+    errors = list(sql_parameter_errors(binds, parameters))
+    assert any(error_fragment in e for e in errors), errors

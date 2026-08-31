@@ -85,9 +85,22 @@ class UserSQL:
         )
 
     @property
+    def parameter_binds(self):
+        """The bind parameters a translated query leaves for the caller to supply.
+
+        Keyed by name. A bind carries the type it was compared against and
+        whether it expands into a list, which callers validating a query
+        against a parameter spec need.
+        """
+        return {
+            name: bind for name, bind in self._compiled.binds.items()
+            if bind.required
+        }
+
+    @property
     def parameters(self):
         """Return the parameters a translated query leaves for the caller to supply"""
-        return [name for name, bind in self._compiled.binds.items() if bind.required]
+        return list(self.parameter_binds)
 
     def run(self, parameter_values, max_rows):
         params = self._clean_parameters(parameter_values)
