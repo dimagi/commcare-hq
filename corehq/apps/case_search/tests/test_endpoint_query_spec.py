@@ -445,12 +445,15 @@ def test_derived_placeholder_may_not_collide():
 
 
 @pytest.mark.parametrize('parameters, criteria, expected', [
-    # A criterion that is absent or blank binds as NULL, whatever the type
+    # An absent criterion binds as NULL, whatever the type
     ([TEXT], [], {'color': None}),
-    ([TEXT], [('color', '')], {'color': None}),
     ([NUMBER], [], {'weight': None}),
     ([SELECT], [], {'species': None}),
     ([RANGE], [], {'dob_from': None, 'dob_to': None}),
+    # For text and number, a blank value is one someone purposefully
+    # supplied, so it is passed through rather than read as unset
+    ([TEXT], [('color', '')], {'color': ''}),
+    ([NUMBER], [('weight', '')], {'weight': ''}),
     # Criteria the endpoint does not declare are ignored
     ([TEXT], [('color', 'red'), ('undeclared', 'x')], {'color': 'red'}),
     ([], [('color', 'red')], {}),

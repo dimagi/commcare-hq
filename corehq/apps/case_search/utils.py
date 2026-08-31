@@ -36,6 +36,7 @@ from corehq.apps.case_search.endpoint_capability import (
 )
 from corehq.apps.case_search.endpoint_query_spec import (
     ParameterInput,
+    bind_values,
     parse_parameter_spec,
     parse_query_spec,
 )
@@ -186,14 +187,24 @@ def _get_project_db_endpoint(domain, config):
 
 def get_project_db_fixture(domain, endpoint, config):
     """Run a ``project_db`` endpoint's query and return the results as XML"""
-    user_sql = UserSQL(domain, endpoint.current_version.dangerous_sql, CASE_SEARCH_MAX_RESULTS)
-    all_params = {c.key: c.value for c in config.criteria}
+    version = endpoint.current_version
+    parameters, errors = parse_parameter_spec(version.parameters)
+    if errors:
+        # The spec is validated when the endpoint is saved, so this is a bug
+        # or a hand-edited record rather than anything the searcher did.
+        notify_exception(None, "Stored endpoint parameters failed validation", details={
+            'endpoint': endpoint.id, 'errors': errors,
+        })
+        raise CaseSearchUserError(
+            _("Endpoint '{}' parameters are invalid").format(config.endpoint_id))
+    user_sql = UserSQL(domain, version.dangerous_sql, CASE_SEARCH_MAX_RESULTS)
+    query_params = bind_values(parameters, config.criteria)
     with metrics_histogram_timer(
         'commcare.project_db.endpoint_query.duration',
         timing_buckets=(.1, .5, 1, 2, 5, 10),
         tags={'domain': domain, 'endpoint_id': str(endpoint.id)},
     ):
-        result = user_sql.run(all_params)
+        result = user_sql.run(query_params)
     return _rows_to_fixture(result.rows)
 
 

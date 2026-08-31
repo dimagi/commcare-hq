@@ -124,9 +124,16 @@ def placeholders_for(param):
 def bind_values(parameters, criteria):
     """Map search criteria onto the values ``UserSQL.run`` expects.
 
-    A criterion that is absent or blank binds as ``None``: NULL coerces to any
-    column type, so endpoint SQL can guard every parameter with
-    ``(:p IS NULL OR ...)``.
+    An absent criterion binds as ``None`` for every parameter type: NULL
+    coerces to any column type, so endpoint SQL can guard every parameter
+    with ``(:p IS NULL OR ...)``.
+
+    A blank value is different: for ``select`` and ``daterange``, blank means
+    nothing was chosen, so it binds as unset the same as an absent criterion.
+    For ``text`` and ``number``, a blank value is one the searcher
+    purposefully supplied rather than "unset", so it is bound as given -
+    a blank ``number`` is not a valid value and surfaces as a query error
+    rather than being silently treated as NULL.
 
     :raises CaseSearchUserError: when a criterion's shape does not match the
         type its parameter declares.
@@ -139,16 +146,26 @@ def bind_values(parameters, criteria):
 
 
 def _bind_parameter(param, criterion):
-    value = _value_without_blanks(criterion)
     if param.type == FIELD_TYPE_DATERANGE:
+        value = _value_without_blanks(criterion)
         return dict(zip(placeholders_for(param), _as_date_range(param, value)))
     if param.type == FIELD_TYPE_SELECT:
+        value = _value_without_blanks(criterion)
         return {param.name: _as_list(value)}
-    return {param.name: _as_scalar(param, value)}
+    return {param.name: _as_scalar(param, _raw_value(criterion))}
+
+
+def _raw_value(criterion):
+    """The criterion's value as supplied, with a blank kept as a blank"""
+    return None if criterion is None else criterion.value
 
 
 def _value_without_blanks(criterion):
-    """The criterion's value, with blank terms dropped and blank read as unset"""
+    """The criterion's value, with blank terms dropped and blank read as unset
+
+    Only used for ``select`` and ``daterange``, where blank means nothing
+    was chosen rather than a value someone typed.
+    """
     if criterion is None:
         return None
     if criterion.has_multiple_terms:
