@@ -1,0 +1,75 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load django_tables2 %}
+
+<div
+  id="confirm-status-{{ webform.id }}"
+  class="modal fade"
+  tabindex="-1"
+  aria-labelledby="confirm-status-{{ webform.id }}-title"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <form
+      class="modal-content"
+      method="post"
+      action="{% url 'set_public_webform_status' domain webform.id %}{% querystring %}"
+    >
+      {% csrf_token %}
+      <div class="modal-header">
+        <h4 id="confirm-status-{{ webform.id }}-title" class="modal-title">
+          {% if webform.is_disabled %}
+            {% trans "Open Public Webform" %}
+          {% else %}
+            {% trans "Close Public Webform" %}
+          {% endif %}
+        </h4>
+        <button
+          class="btn-close"
+          type="button"
+          aria-label="{% trans_html_attr "Close" %}"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p class="fw-semibold">{{ webform.label }}</p>
+        {% if webform.is_disabled %}
+          <p>
+            {% blocktrans %}
+              Respondents will be able to request a one-time link to complete
+              this form.
+            {% endblocktrans %}
+          </p>
+        {% else %}
+          <p>
+            {% blocktrans %}
+              Respondents will no longer be able to request a one-time link to
+              complete this form. Links already sent can be used until they
+              expire.
+            {% endblocktrans %}
+          </p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button
+          class="btn btn-outline-primary"
+          type="button"
+          data-bs-dismiss="modal"
+        >
+          {% trans "Cancel" %}
+        </button>
+        {% if webform.is_disabled %}
+          <input type="hidden" name="is_disabled" value="false" />
+          <button class="btn btn-primary disable-on-submit" type="submit">
+            {% trans "Open" %}
+          </button>
+        {% else %}
+          <input type="hidden" name="is_disabled" value="true" />
+          <button class="btn btn-primary disable-on-submit" type="submit">
+            {% trans "Close" %}
+          </button>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
