@@ -173,7 +173,10 @@ def get_endpoint_results(helper, config):
 def get_project_db_results(endpoint, helper, config):
     user_sql = UserSQL(helper.domain, endpoint.current_version.dangerous_sql)
     all_params = {c.key: c.value for c in config.criteria}
-    query_params = {p: all_params.get(p, '') for p in user_sql.parameters}
+    # An absent or blank criterion becomes NULL: it coerces to any column type,
+    # so endpoint SQL can guard every parameter with `(:p IS NULL OR ...)`.
+    # An empty string would fail to coerce to a numeric or date column.
+    query_params = {p: all_params.get(p) or None for p in user_sql.parameters}
     result = user_sql.run(query_params, max_rows=CASE_SEARCH_MAX_RESULTS)
     return _rows_to_cases(result, helper.domain, config.case_types[0])
 
