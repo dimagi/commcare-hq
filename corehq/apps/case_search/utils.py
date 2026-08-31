@@ -35,6 +35,7 @@ from corehq.apps.case_search.endpoint_capability import (
 )
 from corehq.apps.case_search.endpoint_query_spec import (
     ParameterInput,
+    bind_values,
     parse_parameter_spec,
     parse_query_spec,
 )
@@ -171,13 +172,19 @@ def get_endpoint_results(helper, config):
 
 
 def get_project_db_results(endpoint, helper, config):
-    user_sql = UserSQL(helper.domain, endpoint.current_version.dangerous_sql)
-    all_params = {c.key: c.value for c in config.criteria}
-    # An absent or blank criterion becomes NULL: it coerces to any column type,
-    # so endpoint SQL can guard every parameter with `(:p IS NULL OR ...)`.
-    # An empty string would fail to coerce to a numeric or date column.
-    query_params = {p: all_params.get(p) or None for p in user_sql.parameters}
-    result = user_sql.run(query_params, max_rows=CASE_SEARCH_MAX_RESULTS)
+    version = endpoint.current_version
+    parameters, errors = parse_parameter_spec(version.parameters)
+    if errors:
+        # The spec is validated when the endpoint is saved, so this is a bug
+        # or a hand-edited record rather than anything the searcher did.
+        notify_exception(None, "Stored endpoint parameters failed validation", details={
+            'endpoint': endpoint.id, 'errors': errors,
+        })
+        raise CaseSearchUserError(
+            _("Endpoint '{}' parameters are invalid").format(config.endpoint_id))
+    user_sql = UserSQL(helper.domain, version.dangerous_sql)
+    result = user_sql.run(bind_values(parameters, config.criteria),
+                          max_rows=CASE_SEARCH_MAX_RESULTS)
     return _rows_to_cases(result, helper.domain, config.case_types[0])
 
 
