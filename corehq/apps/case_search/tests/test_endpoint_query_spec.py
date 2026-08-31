@@ -5,8 +5,10 @@ import pytest
 from corehq.apps.case_search.endpoint_capability import (
     OPERATOR_INPUT_SCHEMAS,
     FIELD_TYPE_DATE,
+    FIELD_TYPE_DATERANGE,
     FIELD_TYPE_GEOPOINT,
     FIELD_TYPE_NUMBER,
+    FIELD_TYPE_SELECT,
     FIELD_TYPE_TEXT,
     get_operations_for_field_type,
 )
@@ -17,9 +19,13 @@ from corehq.apps.case_search.endpoint_query_spec import (
     ConstantInput,
     GroupNode,
     Parameter,
+    bind_values,
     parse_parameter_spec,
     parse_query_spec,
+    sql_placeholders,
 )
+from corehq.apps.case_search.exceptions import CaseSearchUserError
+from corehq.apps.case_search.models import SearchCriteria
 
 
 @fixture
@@ -470,3 +476,71 @@ def test_parameter_input_error(params, input_value, error_fragment):
         params, 'patient', sample_capability(),
     )
     assert any(error_fragment in e for e in errors)
+
+
+# ── binding parameters into SQL ──────────────────────────────────────────────
+
+TEXT = Parameter(name='color', type=FIELD_TYPE_TEXT)
+NUMBER = Parameter(name='weight', type=FIELD_TYPE_NUMBER)
+SELECT = Parameter(name='species', type=FIELD_TYPE_SELECT)
+RANGE = Parameter(name='dob', type=FIELD_TYPE_DATERANGE)
+
+
+@pytest.mark.parametrize('parameters, expected', [
+    ([], []),
+    ([TEXT, NUMBER], ['color', 'weight']),
+    # a date range is bound as two placeholders
+    ([RANGE], ['dob_from', 'dob_to']),
+    ([TEXT, RANGE], ['color', 'dob_from', 'dob_to']),
+])
+def test_sql_placeholders(parameters, expected):
+    assert sql_placeholders(parameters) == expected
+
+
+def test_derived_placeholder_may_not_collide():
+    _, errors = parse_parameter_spec([
+        {'name': 'dob', 'type': FIELD_TYPE_DATERANGE},
+        {'name': 'dob_from', 'type': FIELD_TYPE_TEXT},
+    ])
+    assert any("Duplicate SQL parameter name: 'dob_from'" in e for e in errors)
+
+
+@pytest.mark.parametrize('parameters, criteria, expected', [
+    # A criterion that is absent or blank binds as NULL, whatever the type
+    ([TEXT], [], {'color': None}),
+    ([TEXT], [('color', '')], {'color': None}),
+    ([NUMBER], [], {'weight': None}),
+    ([SELECT], [], {'species': None}),
+    ([RANGE], [], {'dob_from': None, 'dob_to': None}),
+    # Criteria the endpoint does not declare are ignored
+    ([TEXT], [('color', 'red'), ('undeclared', 'x')], {'color': 'red'}),
+    ([], [('color', 'red')], {}),
+    # Scalars pass through untouched -- Postgres coerces them per column
+    ([TEXT], [('color', 'red')], {'color': 'red'}),
+    ([NUMBER], [('weight', '12')], {'weight': '12'}),
+    # A select parameter is always a list, however many values were searched
+    ([SELECT], [('species', 'dog')], {'species': ['dog']}),
+    ([SELECT], [('species', ['dog', 'cat'])], {'species': ['dog', 'cat']}),
+    ([SELECT], [('species', ['dog', ''])], {'species': ['dog']}),
+    ([SELECT], [('species', ['', ''])], {'species': None}),
+    # A date range is split into its two bounds
+    ([RANGE], [('dob', '__range__2026-08-03__2026-08-20')],
+     {'dob_from': '2026-08-03', 'dob_to': '2026-08-20'}),
+    # A blank term alongside the range is dropped
+    ([RANGE], [('dob', ['', '__range__2026-08-03__2026-08-20'])],
+     {'dob_from': '2026-08-03', 'dob_to': '2026-08-20'}),
+])
+def test_bind_values(parameters, criteria, expected):
+    assert bind_values(parameters, [SearchCriteria(k, v) for k, v in criteria]) == expected
+
+
+@pytest.mark.parametrize('parameters, criteria, error_fragment', [
+    # Multiple values need a select parameter to have somewhere to go
+    ([TEXT], [('color', ['red', 'blue'])], "Only one value may be given for 'color'"),
+    ([NUMBER], [('weight', ['1', '2'])], "Only one value may be given for 'weight'"),
+    ([RANGE], [('dob', '2026-08-03')], "'dob' must be given as a date range"),
+    ([RANGE], [('dob', '__range__2026-08-03')], "Invalid date range for 'dob'"),
+])
+def test_bind_values_rejects_mismatched_criteria(parameters, criteria, error_fragment):
+    with pytest.raises(CaseSearchUserError, match=error_fragment):
+        bind_values(parameters, [SearchCriteria(k, v) for k, v in criteria])
