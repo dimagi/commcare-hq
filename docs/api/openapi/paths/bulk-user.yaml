@@ -1,0 +1,105 @@
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listUsersBulk
+    summary: List basic user data in bulk
+    description: >-
+      Fast, Elasticsearch-backed lookup of a small set of fields for every user
+      in the domain (`v0_5.BulkUserResource`,
+      `corehq/apps/api/resources/v0_5.py:172-238`). Returns both mobile workers
+      and web users indifferently -- the underlying `UserES` query applies no
+      user-type filter. Requires the Edit Mobile Workers permission.
+    tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Limit"
+      - name: offset
+        in: query
+        required: false
+        description: >-
+          Use with `limit` to paginate results. **Only safe at `offset=0`.**
+          `obj_get_list` (`corehq/apps/api/resources/v0_5.py:211-233`) already
+          applies `offset`/`limit` itself when querying Elasticsearch
+          (`user_es_call`, `v0_5.py:161-169`, `size=limit, start_at=offset`),
+          returning a single already-offset page. Tastypie's own paginator then
+          runs on top of that page and reads the *same* `offset` GET parameter
+          again (`Paginator.get_slice`, `tastypie/paginator.py:109-116`:
+          `self.objects[offset:offset + limit]`) -- `BulkUserResource.Meta`
+          never sets `paginator_class`, so it gets tastypie's real, slicing
+          `Paginator` (`tastypie/resources.py:80`), not a no-op one. For any
+          `offset > 0` this second slice starts past the end of the (already
+          short) page, so `objects` comes back empty even though matching
+          records exist. See the discrepancy file.
+        example: 0
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - $ref: "../components/parameters.yaml#/Format"
+      - name: q
+        in: query
+        required: false
+        description: >-
+          Elasticsearch query string, passed verbatim as a `query_string` query
+          (`user_es_call`, `corehq/apps/api/resources/v0_5.py:161-169`).
+        example: foo
+        schema:
+          type: string
+      - name: fields
+        in: query
+        required: false
+        description: >-
+          Restrict the returned fields to this set; repeat the parameter for
+          multiple fields (`?fields=username&fields=first_name`). Each value
+          must name a real field on this resource (`id`, `email`, `username`,
+          `first_name`, `last_name`, `phone_numbers`, or `resource_uri`) or the
+          request fails with a 400 (`obj_get_list`,
+          `corehq/apps/api/resources/v0_5.py:212-215`). Filtering happens at
+          serialization time (`BulkUserResource.dehydrate`, `v0_5.py:201-209`)
+          -- every field is still fetched from Elasticsearch regardless of this
+          parameter.
+        example: ["username", "first_name", "last_name"]
+        schema:
+          type: array
+          items:
+            type: string
+    responses:
+      "200":
+        description: >-
+          A page of users. See the `offset` parameter and the `BulkUserList`
+          schema's `total_count` note for two related pagination discrepancies.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/bulk-user.yaml#/BulkUserList"
+      "400":
+        description: >-
+          An entry in `fields` is not a real field on this resource, or
+          `limit`/`offset` is not a valid integer (`Paginator.get_limit`/
+          `get_offset`, `tastypie/paginator.py:70-76,99-107`). Both raise
+          tastypie's `BadRequest`, converted by `wrap_view` to the shared
+          `{"error": ...}` shape.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Deliberately not the shared ref: identical mechanism to the
+        # UserResource family (`RequirePermissionAuthentication` ->
+        # `LoginAndDomainAuthentication._auth_test`,
+        # `corehq/apps/api/resources/auth.py:114-135`) -- a failed permission
+        # or domain-membership check returns a bare `HttpResponseForbidden()`.
+        description:
+          The authenticated user lacks the Edit Mobile Workers permission, or is
+          not a member of this project space. The response body is empty.
+      "429":
+        # Deliberately not the shared ref: `BulkUserResource.Meta` inherits
+        # `CustomResourceMeta`'s real `HQThrottle`
+        # (`corehq/apps/api/resources/meta.py:76-81`), and a throttled
+        # request gets tastypie's bare `http.HttpTooManyRequests()` -- no
+        # JSON body.
+        description:
+          The request was rate limited. Back off and retry. The response body is
+          empty.
