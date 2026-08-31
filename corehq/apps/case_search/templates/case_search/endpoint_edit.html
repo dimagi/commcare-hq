@@ -125,8 +125,19 @@
               <option value="text">{% trans "text" %}</option>
               <option value="number">{% trans "number" %}</option>
               <option value="date">{% trans "date" %}</option>
+              {% if target_type == 'project_db' %}
+                {# Only bindable in SQL: neither has an operation in the query builder #}
+                <option value="daterange">{% trans "date range" %}</option>
+                <option value="select">{% trans "select" %}</option>
+              {% endif %}
               <option value="geopoint">{% trans "geopoint" %}</option>
             </select>
+            {% if target_type == 'project_db' %}
+              <span
+                class="text-body-secondary small font-monospace text-nowrap"
+                x-text="placeholderHint(param)"
+              ></span>
+            {% endif %}
             <button
               type="button"
               class="btn text-secondary border-0 p-1"
@@ -173,6 +184,15 @@
           >
 {{ form.sql.value|default:"" }}</textarea
           >
+          <div class="form-text">
+            {% blocktrans %}
+              Guard every parameter so that leaving it blank does not filter,
+              e.g. <code>(:color IS NULL OR prop__color = :color)</code>. A
+              select parameter holds a list, so compare it with a
+              <code>select_prop__</code> column using
+              <code>&amp;&amp;</code> (any of) or <code>@&gt;</code> (all of).
+            {% endblocktrans %}
+          </div>
           {% for error in form.sql.errors %}
             <div class="alert alert-danger mt-2">{{ error }}</div>
           {% endfor %}
