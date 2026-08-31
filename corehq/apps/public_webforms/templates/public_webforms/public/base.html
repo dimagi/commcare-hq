@@ -1,0 +1,33 @@
+{% extends "hqwebapp/bootstrap5/base_page.html" %}
+
+{% block content %}
+  <div class="col-sm-9 col-md-8 col-lg-7 col-xl-6 col-xxl-5 m-auto">
+    {{ block.super }}
+  </div>
+{% endblock content %}
+
+{% block navigation %}
+  <nav
+    id="hq-navigation"
+    class="navbar navbar-expand-lg bg-light border-bottom-1 navbar-hq-main-menu"
+  >
+    <div class="container-fluid">
+      <div class="navbar-header hq-header">
+        <a href="{% url "homepage" %}" class="navbar-brand">
+          {% if CUSTOM_LOGO_URL %}
+            <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
+          {% else %}
+            <div></div>
+          {% endif %}
+        </a>
+      </div>
+      {% if not request.couch_user %}
+        <nav class="navbar-signin ms-2" role="navigation">
+          <div class="nav-settings-bar">
+            {% include "hqwebapp/partials/bootstrap5/language_dropdown.html" %}
+          </div>
+        </nav>
+      {% endif %}
+    </div>
+  </nav>
+{% endblock navigation %}
