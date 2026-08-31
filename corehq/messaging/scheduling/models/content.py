@@ -531,6 +531,10 @@ class ConnectMessageContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_CONNECT_USER_NOT_FOUND)
             return
 
+        # send_message_to_verified_number records its own errors, and completed()
+        # leaves an errored subevent alone.
+        logged_subevent.completed()
+
 
 class ConnectMessageSurveyContent(SurveyContent):
 

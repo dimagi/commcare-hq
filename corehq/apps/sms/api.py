@@ -110,10 +110,12 @@ def add_msg_tags(msg, metadata):
 def log_sms_exception(msg):
     direction = "OUT" if msg.direction == OUTGOING else "IN"
     message = "[SMS %s] Error processing SMS" % direction
+    # ConnectMessage identifies itself with a message_id, where SMS uses a couch_id
+    message_id = getattr(msg, 'couch_id', None) or getattr(msg, 'message_id', None)
     notify_exception(None, message=message, details={
         'domain': msg.domain,
         'date': msg.date,
-        'message_id': msg.couch_id,
+        'message_id': message_id,
     })
 
 
@@ -227,7 +229,7 @@ def send_message_to_verified_number(verified_number, text, metadata=None, logged
     if verified_number.is_sms:
         return queue_outgoing_sms(msg)
     else:
-        return send_connect_message(msg, backend)
+        return send_connect_message(msg, backend, logged_subevent=logged_subevent)
 
 
 def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None):
@@ -402,13 +404,18 @@ def should_log_exception_for_backend(backend, exception):
         return True
 
 
-def send_connect_message(message, backend):
+def send_connect_message(message, backend, logged_subevent=None):
     try:
         backend.send(message)
-        return True
-    except Exception:
+    except Exception as error:
         log_sms_exception(message)
+        if logged_subevent:
+            logged_subevent.error(
+                MessagingEvent.ERROR_CONNECT_GATEWAY,
+                additional_error_text=str(error),
+            )
         return False
+    return True
 
 
 def register_sms_user(

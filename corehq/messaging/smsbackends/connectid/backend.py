@@ -5,6 +5,7 @@ from Crypto.Cipher import AES
 from django.conf import settings
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.sms.mixin import BackendProcessingException
 from corehq.apps.users.models import ConnectIDUserLink, CouchUser
 
 FCM_ANALYTICS_LABEL = "commcare-hq-message-notification"
@@ -38,7 +39,10 @@ class ConnectBackend:
             },
             auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
         )
-        return response.status_code == requests.codes.OK
+        if response.status_code != requests.codes.OK:
+            raise BackendProcessingException(
+                f"HTTP {response.status_code}: {response.text}"
+            )
 
     def create_channel(self, user_link):
         domain_obj = Domain.get_by_name(user_link.domain)
