@@ -56,6 +56,7 @@ from .filters import (
     SubscriberFilter,
     SubscriptionTypeFilter,
     TrialStatusFilter,
+    WireInvoiceNumberFilter,
 )
 from .forms import AdjustBalanceForm
 from .models import (
@@ -499,6 +500,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
     description = "List of all wire invoices"
     slug = "wire_invoices"
     fields = [
+        'corehq.apps.accounting.interface.WireInvoiceNumberFilter',
         'corehq.apps.accounting.interface.DomainFilter',
         'corehq.apps.accounting.interface.PaymentStatusFilter',
         'corehq.apps.accounting.interface.StatementPeriodFilter',
@@ -588,6 +590,10 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
     @memoized
     def _invoices(self):
         queryset = WireInvoice.objects.all()
+
+        wire_invoice_id = WireInvoiceNumberFilter.get_value(self.request, self.domain)
+        if wire_invoice_id is not None:
+            queryset = queryset.filter(id=int(wire_invoice_id))
 
         domain_name = DomainFilter.get_value(self.request, self.domain)
         if domain_name is not None:
