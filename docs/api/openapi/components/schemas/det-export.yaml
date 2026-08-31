@@ -1,0 +1,80 @@
+DETExport:
+  type: object
+  description: >-
+    A case or form export instance flagged for Data Export Tool (DET) config
+    download (`DETExportInstanceResource`,
+    `corehq/apps/api/resources/v1_0.py:177-226`).
+  required:
+    - id
+    - name
+    - type
+    - export_format
+    - is_deidentified
+    - case_type
+    - xmlns
+    - det_config_url
+  properties:
+    id:
+      type: string
+      description: Export instance UUID.
+      example: a1b2c3
+    resource_uri:
+      type: string
+      description: >-
+        Every tastypie resource adds this field by default
+        (`include_resource_uri`, `tastypie/resources.py:96,161`); undocumented
+        in `det-exports.rst`'s sample output (`:59-84`), but present on every
+        response. See the discrepancy file.
+      example: /a/demo/api/det_export_instance/v1/a1b2c3/
+    name:
+      type: string
+      description: >-
+        The name given by the user who created the export. For case exports,
+        defaults to the case type and the export's creation date.
+      example: My Case Export
+    type:
+      type: string
+      enum: [case, form]
+      description: >-
+        `dehydrate_type` (`v1_0.py:210-214`) asserts the underlying object is a
+        `CaseExportInstance` or `FormExportInstance` and returns its own `.type`
+        attribute, which is one of these two values.
+      example: case
+    export_format:
+      type: string
+      description: The file format the user chose to export data in.
+      example: csv
+    is_deidentified:
+      type: boolean
+      description:
+        Whether personal identifiers are excluded from the export data.
+      example: false
+    case_type:
+      type: string
+      nullable: true
+      description: >-
+        The case type of exported cases. `null` for form exports
+        (`dehydrate_case_type`, `v1_0.py:216-220`).
+      example: stock
+    xmlns:
+      type: string
+      nullable: true
+      description: >-
+        The XMLNS of exported forms. `null` for case exports (`dehydrate_xmlns`,
+        `v1_0.py:222-226`).
+      example: null
+    det_config_url:
+      type: string
+      description: >-
+        Absolute URL where the DET config file can be downloaded. Accepts API
+        Key authentication.
+      example: https://www.commcarehq.org/a/demo/data/export/custom/schema/det/download/a1b2c3/
+DETExportList:
+  allOf:
+    - $ref: "./pagination.yaml#/PaginatedResponse"
+    - type: object
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: "#/DETExport"

@@ -1,0 +1,446 @@
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listWebUsers
+    summary: List web users
+    description: >-
+      Returns web users with a role in the project space. Requires the Edit Web
+      Users permission.
+    tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Limit"
+      - $ref: "../components/parameters.yaml#/Offset"
+      - $ref: "../components/parameters.yaml#/Format"
+      - name: web_username
+        in: query
+        required: false
+        description: Filter the list to a single username (exact match).
+        example: bob@example.com
+        schema:
+          type: string
+    responses:
+      "200":
+        description: A page of web users.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/user.yaml#/WebUserList"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Deliberately not the shared ref: same mechanism as `user.yaml`'s
+        # list/detail operations -- `RequirePermissionAuthentication
+        # .is_authenticated` (`corehq/apps/api/resources/auth.py:152-163`)
+        # -> `LoginAndDomainAuthentication._auth_test`
+        # (`corehq/apps/api/resources/auth.py:114-135`) returns a bare
+        # `HttpResponseForbidden()` on a failed permission or domain-
+        # membership check. The response body is empty.
+        description:
+          The authenticated user lacks the Edit Web Users permission, or is not
+          a member of this project space. The response body is empty.
+      "429":
+        # Deliberately not the shared ref: bare `http.HttpTooManyRequests()`,
+        # no body -- same `HQThrottle` mechanism as the mobile worker
+        # resource (`corehq/apps/api/resources/meta.py:40-49`).
+        description:
+          The request was rate limited. Back off and retry. The response body is
+          empty.
+Detail:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: user_id
+      in: path
+      required: true
+      description: Web user UUID.
+      example: 8f9756be9b1c7f28057d707b405d18f6
+      schema:
+        type: string
+  get:
+    operationId: getWebUser
+    summary: Retrieve a single web user
+    description: >-
+      Requires the Edit Web Users permission
+      (`WebUserResource.Meta.authentication =
+      RequirePermissionAuthentication(HqPermissions.edit_web_users)`,
+      `corehq/apps/api/resources/v0_1.py:155-156`). The `role`, `is_admin` and
+      `permissions` fields are resolved against *this* project space's domain
+      membership, not the account globally (`dehydrate_role`,
+      `dehydrate_is_admin`, `dehydrate_permissions`, `v0_1.py:144-153`).
+
+
+      **An unknown `user_id`, or one belonging to another project space, returns
+      400 -- not 404.** Same mechanism as `getMobileWorker`: `obj_get`
+      (`v0_1.py:36-43`) returns `None` instead of raising, and the resulting
+      `ApiFieldError` in `full_dehydrate` is converted by `wrap_view` into a 400
+      with the shared `{"error": ...}` body.
+
+
+      The 403 body is empty, not JSON.
+    tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: The web user.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/user.yaml#/WebUser"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "400":
+        # Deliberately not a 404 -- same mechanism as `getMobileWorker`.
+        # `WebUserResource` does not override `UserResource.obj_get`
+        # (`corehq/apps/api/resources/v0_1.py:36-43`), which returns `None`
+        # (never raises) on a miss or a domain mismatch. Tastypie's
+        # `get_detail` only converts `ObjectDoesNotExist`/
+        # `MultipleObjectsReturned` to a 404, so the bare `None` reaches
+        # `full_dehydrate`, where `ApiField.dehydrate`
+        # (`tastypie/fields.py:116-136`) raises `tastypie.fields
+        # .ApiFieldError` for the first non-nullable, no-default field
+        # (`id`, `v0_1.py:27`). `wrap_view` catches `ApiFieldError`
+        # explicitly and converts it to a 400 with the shared `{"error":
+        # ...}` shape, before the generic 500 path is ever reached. See the
+        # discrepancy file (this corrects an earlier, wrong "500" claim).
+        description:
+          The web user does not exist, or belongs to a different project space.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "403":
+        description:
+          The authenticated user lacks the Edit Web Users permission, or is not
+          a member of this project space. The response body is empty.
+      "429":
+        description:
+          The request was rate limited. Back off and retry. The response body is
+          empty.
+  patch:
+    operationId: updateWebUser
+    summary: Update a web user
+    description: >-
+      Requires the Edit Web Users and Edit Access APIs permissions. `user_data`
+      is merged onto the existing value; every other field is a wholesale
+      replacement. Validated through `WebUserResourceSpec`
+      (`corehq/apps/api/validation.py:37-49`) before any field is applied.
+    tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/user.yaml#/WebUserUpdate"
+          examples:
+            update:
+              value:
+                role: App Editor
+                primary_location_id: 26fc44e2792b4f2fa8ef86178f0a958e
+                assigned_location_ids:
+                  - 26fc44e2792b4f2fa8ef86178f0a958e
+                  - c1b029932ed442a6a846a4ea10e46a78
+                profile: Facility User
+                user_data:
+                  Can Edit Client: "yes"
+                  Can View Data: "yes"
+                  Can Edit Data: ""
+                tableau_role: Viewer
+                tableau_groups: ["city", "county"]
+    responses:
+      "202":
+        description: >-
+          The updated web user. Returned with status 202: tastypie's
+          `patch_detail` (`tastypie/resources.py:1719-1720`) explicitly passes
+          `response_class=http.HttpAccepted` when `always_return_data = True` --
+          contrast `updateMobileWorker`'s PUT, whose `put_detail` defaults to
+          plain 200 in the same situation.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/user.yaml#/WebUser"
+      "400":
+        description: >-
+          Three distinct causes share this status. `WebUserResourceSpec`
+          validation failures (invalid `role`, `profile`, or location ids) raise
+          `WebUserValidationException`, caught in `obj_update`
+          (`corehq/apps/api/resources/v0_5.py:548-564`) and turned into
+          `ImmediateHttpResponse(JsonResponse({"errors": e.message},
+          status=400))` -- the `errors` (plural) shape. Field-updater failures
+          instead raise tastypie's own `BadRequest` (`v0_5.py:567-570`),
+          converted by `wrap_view` to the shared `{"error": ...}` shape. A
+          missing or wrong-domain `user_id` hits the same
+          `ApiFieldError`-during-`full_dehydrate` path described on
+          `getWebUser`'s 400 -- `patch_detail`
+          (`tastypie/resources.py:1680-1688`) calls `cached_obj_get` (->
+          `obj_get`) *before* `obj_update` ever runs, so this is reached well
+          before `WebUserResource.obj_update`'s own re-fetch logic
+          (`v0_5.py:534-536`) -- and produces the same shared `{"error": ...}`
+          shape as the second cause. Modelled with `anyOf`, not `oneOf`: the
+          shared `Error` schema has no `required` and no `additionalProperties:
+          false`, so an `{"errors": [...]}` body would validate against *both*
+          branches under `oneOf` and fail a strict validator even though it is a
+          genuine response.
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - $ref: "../components/schemas/user.yaml#/WebUserErrors"
+                - $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description:
+          The authenticated user lacks the Edit Web Users permission, or is not
+          a member of this project space. The response body is empty.
+      "429":
+        description:
+          The request was rate limited. Back off and retry. The response body is
+          empty.
+Activate:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: user_id
+      in: path
+      required: true
+      description: Web user UUID.
+      example: 8f9756be9b1c7f28057d707b405d18f6
+      schema:
+        type: string
+  post:
+    operationId: activateWebUser
+    summary: Reactivate a web user in this project space
+    description: >-
+      `webuser.rst`'s "User Enable/Disable API" section documents this path
+      (`mobile-worker.rst` and `webuser.rst` both call the corresponding concept
+      "Enable/Disable"). Served by a custom `prepend_urls` view
+      (`WebUserResource.enable_user`/`_modify_user_status`,
+      `corehq/apps/api/resources/v0_5.py:600-602,607-608,613-633`), separate
+      from the tastypie-generated detail dispatch. Sets
+      `domain_membership.is_active`, not the account's global active state.
+    tags: [Users]
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      "202":
+        description: >-
+          The web user was activated in this project space. The response body is
+          the JSON literal `{}`.
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description:
+          The authenticated user lacks the Edit Web Users permission, or is not
+          a member of this project space. The response body is empty.
+      "404":
+        # Deliberately not the shared NotFound ref: bare `NotFound()`
+        # (`v0_5.py:622`), reached via `wrap_view`'s generic exception
+        # handler exactly as on the mobile worker resource's custom views --
+        # a canned `error_message` body, not the (empty) exception text.
+        description: The web user does not exist in this project space.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/user.yaml#/UserErrorMessage"
+      "429":
+        description:
+          The request was rate limited. Back off and retry. The response body is
+          empty.
+Deactivate:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: user_id
+      in: path
+      required: true
+      description: Web user UUID.
+      example: 8f9756be9b1c7f28057d707b405d18f6
+      schema:
+        type: string
+  post:
+    operationId: deactivateWebUser
+    summary: Deactivate a web user in this project space
+    description: >-
+      See `activateWebUser` for the shared mechanism
+      (`WebUserResource.disable_user`/`_modify_user_status`,
+      `corehq/apps/api/resources/v0_5.py:600-604,610-611,613-633`).
+    tags: [Users]
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      "202":
+        description: >-
+          The web user was deactivated in this project space. The response body
+          is the JSON literal `{}`.
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description:
+          The authenticated user lacks the Edit Web Users permission, or is not
+          a member of this project space. The response body is empty.
+      "404":
+        description: The web user does not exist in this project space.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/user.yaml#/UserErrorMessage"
+      "429":
+        description:
+          The request was rate limited. Back off and retry. The response body is
+          empty.
+Invitation:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  post:
+    operationId: inviteWebUser
+    summary: Invite a web user
+    description: >-
+      Requires the Edit Web Users and Edit Access APIs permissions. Creates an
+      `Invitation` record and emails the invitee; it does not create the
+      `WebUser` itself, which is only created once the invitation is accepted.
+      `v1_0.InvitationResource.Meta.allowed_methods = ['post']`
+      (`corehq/apps/api/resources/v1_0.py:87-91`) -- this resource has no list
+      or detail GET.
+    tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/user.yaml#/Invitation"
+          examples:
+            invite:
+              value:
+                email: jdoe@dimagi.com
+                role: App Editor
+                primary_location_id: 26fc44e2792b4f2fa8ef86178f0a958e
+                assigned_location_ids:
+                  - 26fc44e2792b4f2fa8ef86178f0a958e
+                  - c1b029932ed442a6a846a4ea10e46a78
+                profile: Facility User
+                user_data:
+                  Can Edit Client: "yes"
+                  Can View Data: "yes"
+                tableau_role: Viewer
+                tableau_groups: ["city", "county"]
+    responses:
+      "201":
+        description: >-
+          The invitation was created. `always_return_data = True`, and
+          `post_list` (`tastypie/resources.py:1384-1404`) explicitly uses
+          `response_class=http.HttpCreated` (201) in that case. The response
+          includes every declared field, including `id` -- `webuser.rst`'s own
+          "Output Parameters" table and its "Sample output" disagree with each
+          other about this (the table says only `id` is returned; the sample
+          shows everything except `id`), and neither matches the code. See the
+          discrepancy file.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/user.yaml#/Invitation"
+      "400":
+        description: >-
+          Two distinct shapes exist. `WebUserResourceSpec` validation failures
+          (invalid `role`, `profile`, or an unrecognized
+          `primary_location_id`/`assigned_location_ids` entry that
+          `WebUserResourceSpec` itself rejects) raise
+          `WebUserValidationException` -> `{"errors": [...]}`
+          (`corehq/apps/api/resources/v1_0.py:107-125`). A *recognized-looking
+          but nonexistent* location id that passes that check is instead caught
+          later, when resolving `SQLLocation` objects, and raises
+          `ImmediateHttpResponse(JsonResponse({"error": "Could not find location
+          ids: ..."}, status=400))` -- the shared singular-`error` shape
+          (`v1_0.py:139-141`). Modelled with `anyOf`, not `oneOf`: the shared
+          `Error` schema has no `required` and no `additionalProperties: false`,
+          so an `{"errors": [...]}` body would validate against both branches
+          under `oneOf` and fail a strict validator even though it is a genuine
+          response.
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - $ref: "../components/schemas/user.yaml#/WebUserErrors"
+                - $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description:
+          The authenticated user lacks the Edit Web Users permission, or is not
+          a member of this project space. The response body is empty.
+      "429":
+        description:
+          The request was rate limited. Back off and retry. The response body is
+          empty.
+Identity:
+  get:
+    operationId: getIdentity
+    summary: Look up the authenticated web user's own identity
+    description: >-
+      Root-mounted, unlike every other operation in this spec -- no `{domain}`
+      path segment. Registered directly under `/api/`
+      (`v0_5.IdentityResource.get_urlpattern('v1')`, included via
+      `user_urlpatterns` at `corehq/apps/api/urls.py:246` and mounted at root
+      (not the domain-scoped module at `urls.py:55`) by `urls.py:108`, `url(
+      r'^api/', include(user_api_urlpatterns))`). Only requires login, not
+      domain membership or any specific permission (`LoginAuthentication`,
+      `v0_5.py:1157`).
+    tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: >-
+          The authenticated user's identity. Unlike every other list operation,
+          the body is the bare object, not a `meta`/`objects` envelope -- see
+          `Identity`'s schema description.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/user.yaml#/Identity"
+      "401":
+        # Deliberately not the shared ref, though the shape happens to
+        # coincide in the documented case: `LoginAuthentication.is_authenticated`
+        # (`corehq/apps/api/resources/auth.py:69-79`) delegates to
+        # `_auth_test` (`auth.py:81-95`), which returns a plain `False` on any
+        # login failure (it has no `except PermissionDenied` branch, unlike
+        # `LoginAndDomainAuthentication._auth_test`). Tastypie's own
+        # `is_authenticated` (`tastypie/resources.py:557-572`) then raises a
+        # bare, empty `http.HttpUnauthorized()` -- not the shared schema's
+        # `{"error": ...}` body.
+        description: >-
+          Authentication credentials were missing or invalid. The response body
+          is empty.
+      "403":
+        # Deliberately not the shared ref: because this resource requires no
+        # domain and no specific permission, the only real 403 path is the
+        # login-challenge decorator's own membership check
+        # (`corehq/apps/domain/decorators.py:308-329`, the `require_domain =
+        # False` branch used here since `LoginAuthentication` is constructed
+        # with `require_domain=False`, `auth.py:73`): if the request
+        # authenticates as a mobile worker rather than a web user (
+        # `allow_cc_users` defaults to `False`), it returns a bare
+        # `HttpResponseForbidden()`.
+        description: >-
+          The authenticated user is a mobile worker, not a web user. The
+          response body is empty.
+      "429":
+        # Not the shared ref: `IdentityResource.Meta` (`v0_5.py:1155-1162`)
+        # is a plain `object`, not `CustomResourceMeta` -- it never sets
+        # `throttle`, so tastypie's default `BaseThrottle.should_be_throttled`
+        # (`tastypie/throttle.py:51-61`) applies, which always returns
+        # `False`. No code path was found that rate-limits this endpoint;
+        # this response documents only the possibility of infrastructure-
+        # level rate limiting, not verified application behavior. See the
+        # discrepancy file.
+        description: The request was rate limited. Back off and retry.
