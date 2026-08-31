@@ -274,6 +274,12 @@ class TestConnectMessageContentSend(TestCase):
         message = ConnectMessage.objects.get(domain=self.domain)
         assert message.text == 'Hello'
 
+    def test_message_log_is_linked_to_the_subevent(self):
+        subevent = self.send_message(status_code=200)
+
+        message = ConnectMessage.objects.get(domain=self.domain)
+        assert message.messaging_subevent_id == subevent.pk
+
     def test_failed_send_errors_the_subevent(self):
         subevent = self.send_message(status_code=400, text='{"error": "invalid channel"}')
 
