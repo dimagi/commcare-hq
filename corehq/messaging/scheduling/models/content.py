@@ -531,6 +531,10 @@ class ConnectMessageContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_CONNECT_USER_NOT_FOUND)
             return
 
+        # A failed send has already errored the subevent, and completed()
+        # never overwrites an error status, so this only marks successful sends
+        logged_subevent.completed()
+
 
 class ConnectMessageSurveyContent(SurveyContent):
 
