@@ -70,3 +70,38 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           annotations: true
+
+  # Runs unconditionally (not gated on changed-files like the other jobs
+  # above): a change to code the spec describes (e.g. corehq/apps/api/urls.py)
+  # with no edit to the spec itself can still invalidate it, so this must
+  # always run rather than skip when the spec files themselves are untouched.
+  lint-openapi:
+    name: Lint OpenAPI
+    runs-on: ubuntu-latest
+
+    steps:
+      # Audit-only: records egress from the runner, never fails the build.
+      # Tighten to egress-policy: block once audit logs confirm the endpoint list.
+      - name: Harden runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+        with:
+          egress-policy: audit
+
+      - name: Check out Git repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38  # v6.5.0
+        with:
+          node-version: 24
+
+      - name: Install Node.js dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Validate OpenAPI spec
+        run: yarn openapi:lint
+
+      - name: Check committed OpenAPI artifacts are current
+        run: yarn openapi:check

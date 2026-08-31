@@ -1,0 +1,115 @@
+# WHICH OF THESE ARE ACTUALLY USED
+#
+# `BadRequest`, `Unauthorized` and `TooManyRequests` are referenced by real
+# operations. `Forbidden` and `NotFound` are **templates, referenced by zero
+# operations on purpose** -- see their own comments below. There is deliberately
+# no `ServerError`: it was removed in the final review because no operation
+# referenced it, nothing in this API documents a 500 as a contract, and unlike
+# the two templates below nothing else in the spec refers to it either.
+#
+# The two templates are kept rather than deleted because roughly thirty inline
+# comments across `paths/` cite them by name -- "deliberately NOT the shared
+# `Forbidden` ref, which declares a JSON body this operation never produces" --
+# and that reasoning only reads if the thing being contrasted against still
+# exists. They document the shape a reader might *expect*, next to the reason it
+# is usually wrong.
+BadRequest:
+  description: The request was malformed or a parameter value was invalid.
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/Error"
+# A 401 from this API has TWO distinct body shapes, and only one of them is
+# the JSON declared below. Verify which one applies before pointing an
+# operation at this ref:
+#   * EMPTY body -- the common case. A missing or invalid credential never
+#     reaches CommCare's own code: the scheme's challenge decorator answers
+#     first, e.g. `basicauth` returns `HttpResponse(status=401)` with only a
+#     `WWW-Authenticate` header and no content
+#     (corehq/apps/domain/auth.py:150-152), reached via `_login_or_challenge`
+#     (corehq/apps/domain/decorators.py:281-305). Digest and API-key auth
+#     behave the same way.
+#   * The JSON `{"error": ...}` body below -- reached only after a successful
+#     login, from `wrap_4xx_errors_for_apis`
+#     (corehq/apps/api/resources/auth.py:28-33), which turns a message-less
+#     `Http404` (raised for a session-authenticated non-member at
+#     corehq/apps/domain/decorators.py:149) into
+#     `{"error": "not authorized"}`; and from `HqBaseResource.dispatch`
+#     (corehq/apps/api/resources/__init__.py:133-139,147-151), which returns
+#     `{"error": "API access has been temporarily cut off due to too many
+#     requests. ..."}` under the `API_BLACKLIST` toggle and
+#     `{"error": "Your current subscription does not have access to this
+#     feature"}` when the domain lacks the API_ACCESS privilege.
+# The JSON shape is declared here because it is the only one with a body worth
+# documenting; the description says plainly that an empty 401 is the norm.
+Unauthorized:
+  description: >-
+    Authentication failed, or the caller is authenticated but not entitled to
+    use the API at all. **Two body shapes are possible.** A missing or invalid
+    credential returns an *empty* body with a `WWW-Authenticate` challenge
+    header -- the scheme's challenge decorator answers before CommCare's own
+    code runs. The JSON `{"error": ...}` body below is returned only after a
+    successful login: `{"error": "not authorized"}` when the user is not a
+    member of the project space, and a subscription/rate-limit message when the
+    project space lacks API access or is blacklisted (the latter is
+    semantically a rate limit but is served as 401, not 429).
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/Error"
+# TEMPLATE -- referenced by no operation, and that is deliberate. This JSON body
+# is NOT universal: at least three distinct 403 shapes exist. Every tastypie
+# resource using `RequirePermissionAuthentication` returns a bare, empty-bodied
+# `HttpResponseForbidden()` (corehq/apps/api/resources/auth.py:129-130), and the
+# plain-Django-view endpoints (case/v2, messaging-event, form submission) render
+# Django's `403.html` template through `handler403 = no_permissions`
+# (urls.py:49, corehq/apps/hqwebapp/views.py:362-373) -- an HTML page. Every
+# operation in this spec was checked and every one of them models its 403
+# inline. Do not point a new operation at this ref: verify the real body against
+# the code and write it inline, as the existing operations do.
+Forbidden:
+  description: >-
+    The authenticated user lacks the permission required for this endpoint.
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/Error"
+# TEMPLATE -- referenced by no operation, and that is deliberate. This JSON
+# `{"error": ...}` body only holds where a resource actually renders one, and at
+# least four distinct 404 shapes exist: a bare `http.HttpNotFound()` with an
+# empty body (tastypie's own `get_detail`); a canned
+# `{"error_message": ...}` built by tastypie's generic `_handle_500`; a
+# resource-specific JSON object; and a Django HTML error page
+# (`getFormAttachment`). Several operations return no 404 at all -- a miss
+# surfaces as a 400 (`getMobileWorker`, `replaceLocationV2`), an uncaught 500
+# (`replaceGroup`), or a silent create (`replaceLookupTable`). See group/v1's
+# `getGroup` and `deleteGroup` for two different shapes on one resource, and the
+# discrepancy file for the full evidence. Do not point a new operation at this
+# ref: verify the real body and write it inline.
+NotFound:
+  description: The requested resource does not exist in this project space.
+  content:
+    application/json:
+      schema:
+        $ref: "./schemas/error.yaml#/Error"
+# This response has NO body, and that is not an omission. Every operation
+# pointing at this ref is served by a tastypie resource, and tastypie's
+# `throttle_check` raises `ImmediateHttpResponse(http.HttpTooManyRequests())`
+# (tastypie/resources.py:575-598) -- an `HttpResponse` subclass constructed with
+# no content (tastypie/http.py:81-82), so nothing is ever run through the
+# serializer. Do not add a `content:` block back.
+#
+# No `Retry-After` header either: tastypie only sets one when
+# `should_be_throttled` returns an `int` (excluding `bool`) or a `datetime`,
+# and `HQThrottle.should_be_throttled` returns a plain bool
+# (corehq/apps/api/resources/meta.py:42-47).
+#
+# Other operations declare their 429 inline rather than using this ref, because
+# theirs differ in other ways -- the plain-Django-view endpoints throttled by
+# `api_throttle` (corehq/apps/api/decorators.py:51-61) do send a `Retry-After`
+# header. No 429 anywhere in this API has been found to carry a body.
+TooManyRequests:
+  description: >-
+    The request was rate limited. Back off and retry. Rate limits are applied
+    per user and project space. The response body is **empty** and no
+    `Retry-After` header is sent.
