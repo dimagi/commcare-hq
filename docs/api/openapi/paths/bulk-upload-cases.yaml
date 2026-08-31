@@ -1,0 +1,121 @@
+Upload:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  post:
+    operationId: bulkUploadCases
+    summary: Bulk-create or update cases from an Excel file
+    description: >-
+      Uploads an Excel file of case data to create or update cases, via the same
+      importer used by the Excel Case Data Importer UI
+      (`bulk_case_upload_api`/`_bulk_case_upload_api`,
+      `corehq/apps/case_importer/views.py:461-550`). Uploads are subject to the
+      same restrictions as the UI importer but with much more limited feedback
+      (`bulk-upload-cases.rst:83-85`); test uploads there first. Requires the
+      Edit Data permission (`require_can_edit_data =
+      require_permission(HqPermissions.edit_data)`, `case_importer/views.py:72`,
+      applied at `:467`).
+
+      A success `code` means the upload was *processed*, not that every row
+      imported without error -- business-level failures (e.g. an invalid
+      location) surface later, via the `status_url`, whose own response shape is
+      out of scope for this spec.
+    tags: [Data]
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [file, case_type]
+            properties:
+              file:
+                type: string
+                format: binary
+                description: >-
+                  The `.xlsx`/`.xls` file containing case data. Its internal
+                  structure is not modeled here.
+              case_type:
+                type: string
+                description: The case type to assign to created cases.
+                example: household
+              search_field:
+                type: string
+                description: >-
+                  Whether to match existing cases against CommCare HQ's internal
+                  `case_id` or an external `external_id`
+                  (`_bulk_case_upload_api`, `views.py:495-503`). Any other value
+                  is rejected with a 500 (see the `500` response).
+                enum: [case_id, external_id]
+                default: case_id
+                example: external_id
+              search_column:
+                type: string
+                description: >-
+                  The spreadsheet column to match against `search_field`.
+                  Defaults to `case_id` or `external_id` matching
+                  `search_field`.
+                example: household_id
+              create_new_cases:
+                type: string
+                description: >-
+                  `"on"` to create new cases when no existing case matches
+                  `search_field` -- compared literally against the string `"on"`
+                  (`views.py:496`); any other value (including omission) means
+                  false.
+                example: "on"
+              name_column:
+                type: string
+                description:
+                  The spreadsheet column to interpret as the case name.
+                example: household_name
+    responses:
+      "200":
+        description: >-
+          The upload was processed (successfully or not -- see `code`).
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/bulk-upload-cases.yaml#/BulkUploadCasesResponse"
+      "401":
+        # Plain-Django-view endpoint. api_auth() dispatches to a
+        # digest/basic/api-key/oauth challenge decorator; a failed challenge
+        # returns that decorator's own 401 directly -- empty or plain-text
+        # body, not JSON. Same mechanism as uploadFixtureExcel's/
+        # importApplication's 401.
+        description: >-
+          Authentication credentials were missing or invalid. The response body
+          is empty or plain text, not JSON.
+      "403":
+        # require_can_edit_data -> require_permission_raw
+        # (corehq/apps/users/decorators.py:34-54) raises Django's
+        # PermissionDenied for a non-ajax request lacking the permission;
+        # Django's handler403 = no_permissions renders an HTML error page,
+        # not JSON. Same mechanism as uploadFixtureExcel's/
+        # importApplication's 403.
+        description: >-
+          The authenticated user lacks the Edit Data permission. The response is
+          an HTML error page, not JSON.
+      # 429 deliberately omitted: corehq/apps/case_importer/views.py has no
+      # api_throttle (or any other throttle) decorator on
+      # bulk_case_upload_api, unlike every other write endpoint in this
+      # spec (importApplication, uploadApplicationMultimedia,
+      # getMultimediaUploadStatus, uploadFixtureExcel all have one). There
+      # is no reachable 429 for this operation -- do not add one back. See
+      # the discrepancy file.
+      "500":
+        description: >-
+          A caught `ImporterError` (e.g. missing `file`/`case_type`, an invalid
+          `search_field` value, or a bulk-import config error),
+          `SpreadsheetFileExtError` (wrong file extension), or
+          `SpreadsheetFileInvalidError` (unreadable spreadsheet)
+          (`bulk_case_upload_api`, `views.py:470-482`). **The HTTP transport
+          status genuinely is 500 here** (`json_response(...,
+          status_code=500)`), unlike several other upload endpoints in this API
+          where the body's `code` diverges from the real transport status. Any
+          other exception type is not caught and produces Django's own
+          unhandled-error response instead (HTML, not this shape) -- see the
+          discrepancy file.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/bulk-upload-cases.yaml#/BulkUploadCasesResponse"
