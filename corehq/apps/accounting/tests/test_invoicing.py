@@ -487,6 +487,13 @@ class TestFlaggedPayAnnuallyPrepayInvoice(BaseInvoiceTestCase):
         result = get_flagged_pay_annually_prepay_invoice(invoice)
         self.assertIsNone(result)
 
+    def test_account_on_autopay_is_ignored(self):
+        self.create_prepayment_invoice(self.subscription.date_start)
+        invoice = self.create_invoices().first()
+        invoice.account.auto_pay_user = self.billing_contact
+        result = get_flagged_pay_annually_prepay_invoice(invoice)
+        self.assertIsNone(result)
+
     def test_matching_prepayment_invoice_exists(self):
         prepay_invoice = self.create_prepayment_invoice(self.subscription.date_start)
         invoice = self.create_invoices().first()
