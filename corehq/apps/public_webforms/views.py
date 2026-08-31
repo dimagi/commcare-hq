@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_POST
 from memoized import memoized
 
 from corehq import privileges, toggles
@@ -17,6 +18,7 @@ from corehq.apps.hqwebapp.tables.pagination import (
 )
 from corehq.apps.public_webforms.forms import (
     CreatePublicWebformForm,
+    EditPublicWebformForm,
     PublicWebformFilterForm,
 )
 from corehq.apps.public_webforms.models import PublicWebform
@@ -141,9 +143,72 @@ class CreatePublicWebformView(BasePublicWebformsView):
             self.domain, self.domain_object.get_default_timezone(), *data)
 
 
+class EditPublicWebformView(BasePublicWebformsView):
+    urlname = 'edit_public_webform'
+    template_name = 'public_webforms/edit.html'
+    page_title = _("Edit Public Webform")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.webform.id])
+
+    def post(self, request, *args, **kwargs):
+        if not self.form.is_valid():
+            return self.get(request, *args, **kwargs)
+        self.form.update_public_webform()
+        messages.success(request, _("Public webform updated."))
+        return HttpResponseRedirect(
+            reverse(ManagePublicWebformsView.urlname, args=[self.domain]))
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'form': self.form,
+        })
+        return context
+
+    @property
+    @memoized
+    def webform(self):
+        return get_object_or_404(
+            PublicWebform, domain=self.domain, id=self.kwargs['webform_id'])
+
+    @property
+    @memoized
+    def form(self):
+        data = [self.request.POST] if self.request.method == 'POST' else []
+        return EditPublicWebformForm(
+            self.domain,
+            self.domain_object.get_default_timezone(),
+            self.webform,
+            *data,
+        )
+
+
 @public_webforms_access
 def public_webform_qr_code(request, domain, webform_id):
     """Serve the public URL as a QR code PNG, as ``odk_qr_code`` does for app
     installs, so the dashboard can show one without embedding image data."""
     webform = get_object_or_404(PublicWebform, domain=domain, id=webform_id)
     return HttpResponse(get_qrcode(webform.public_url), content_type='image/png')
+
+
+@require_POST
+@public_webforms_access
+def set_public_webform_status(request, domain, webform_id):
+    """Open or close a webform to requests for a one-time link."""
+    webform = get_object_or_404(PublicWebform, domain=domain, id=webform_id)
+    webform.is_disabled = request.POST.get('is_disabled') == 'true'
+    webform.save()
+    messages.success(request, _("Public webform closed to new requests.")
+                     if webform.is_disabled
+                     else _("Public webform opened to new requests."))
+    return HttpResponseRedirect(_dashboard_url(request, domain))
+
+
+def _dashboard_url(request, domain):
+    """The dashboard as the admin left it, filters and page included."""
+    url = reverse(ManagePublicWebformsView.urlname, args=[domain])
+    query = request.GET.urlencode()
+    return f'{url}?{query}' if query else url
