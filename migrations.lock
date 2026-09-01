@@ -143,6 +143,7 @@ accounting
  0121_invoicing_plan_monthly
  0122_stop_declaring_invoicing_plan
  0123_subscription_skip_auto_downgrade_until
+ 0124_scheduled_prepayment_invoice
 admin
  0001_initial
  0002_logentry_remove_auto_add
