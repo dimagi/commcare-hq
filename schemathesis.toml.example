@@ -1,0 +1,50 @@
+# Copy this file to schemathesis.toml to set defaults for `schemathesis run`.
+# The copy is gitignored. See "Checking an API against its OpenAPI spec" in
+# DEV_SETUP.md.
+#
+# Schemathesis reads schemathesis.toml on every run started from this
+# directory, and refuses to start if a variable named below is unset. Keeping
+# it a copy leaves runs against other APIs alone.
+#
+# Several of these settings work around specs that document less than the API
+# does. Each one says below what would let it be relaxed.
+
+# Where to send the requests.
+base-url = "http://localhost:8000"
+
+# Who to send them as. Generate an API key from your account settings. No spec
+# can supply this, so it stays. It is also what lets the ignored_auth check
+# strip the credentials and confirm the endpoint refuses the request.
+[headers]
+Authorization = "ApiKey $CCHQ_API_KEY"
+
+# Which project space to test against. Every API path contains {domain}, and a
+# made-up value would only ever 404. Nothing on the command line sets this, and
+# no spec can supply it either, so it stays too.
+[parameters]
+domain = "$CCHQ_DOMAIN"
+
+# Only send data the spec calls valid. The current spec documents a 200 and nothing
+# else, so invalid requests come back with a correct 400 that gets reported as
+# an undocumented status.
+#
+# Switch to "all" once the specs document the 400, 401, 403 and 404 each
+# resource returns.
+# Most API bugs hide in the invalid requests, so this is the one worth doing.
+[generation]
+mode = "positive"
+
+# Do not chain requests together. Chaining follows a link from one endpoint to
+# the next and runs whatever it points at, which can be a delete.
+#
+# Enable once the specs declare links
+# Links are what let a chain use a real id: a POST returns
+# one, and the link hands it to the GET or DELETE that follows.
+[phases.stateful]
+enabled = false
+
+# Do not probe each path with the methods it does not document. 
+#
+# Restore the probe once every path documents every method it accepts.
+[phases.coverage]
+unexpected-methods = []
