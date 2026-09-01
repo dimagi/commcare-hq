@@ -2060,6 +2060,20 @@ class ScheduledPrepaymentInvoiceStatus(object):
 INACTIVE_SUBSCRIPTION_REASON = 'Subscription is paused or no longer active'
 
 
+class ScheduledPrepaymentInvoiceManager(models.Manager):
+
+    def pending(self):
+        return self.get_queryset().filter(
+            status=ScheduledPrepaymentInvoiceStatus.PENDING
+        )
+
+    def due(self, today):
+        return self.pending().filter(send_date__lte=today)
+
+    def due_domains(self, today):
+        return list(self.due(today).values_list('domain', flat=True).distinct())
+
+
 class ScheduledPrepaymentInvoice(models.Model):
     """A prepayment invoice queued for generation on a future date"""
 
@@ -2093,6 +2107,8 @@ class ScheduledPrepaymentInvoice(models.Model):
     # blank cancelled_by means the system cancelled it rather than an operator
     cancelled_by = models.CharField(blank=True, max_length=80)
     cancelled_reason = models.CharField(blank=True, max_length=256)
+
+    objects = ScheduledPrepaymentInvoiceManager()
 
     def __str__(self):
         return (

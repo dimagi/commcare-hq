@@ -22,6 +22,9 @@ from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
+from corehq.apps.accounting.const import (
+    SCHEDULED_PREPAYMENT_MAX_FAILURES,
+)
 from corehq.apps.accounting.emails import (
     send_dimagi_contact_ending_reminder_email,
     send_renewal_reminder_email,
@@ -52,6 +55,8 @@ from corehq.apps.accounting.models import (
     DomainUserHistory,
     FeatureType,
     FormSubmittingMobileWorkerHistory,
+    ScheduledPrepaymentInvoice,
+    ScheduledPrepaymentInvoiceStatus,
     SoftwarePlanEdition,
     Subscription,
     SubscriptionAdjustment,
@@ -83,7 +88,7 @@ from corehq.apps.accounting.utils.unpaid_invoice import (
 )
 from corehq.apps.accounting.usage import get_web_user_usage
 from corehq.apps.app_manager.dbaccessors import get_all_apps
-from corehq.apps.celery import periodic_task, task
+from corehq.apps.celery import periodic_task, serial_task, task
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.users.models import CommCareUser, FakeUser
@@ -992,3 +997,68 @@ def calculate_domains_in_customer_billing_accounts(today=None):
                 f"Unable to create BillingAccountDomainHistory for account {account.name}: {e}",
                 show_stack_trace=True,
             )
+
+
+@periodic_task(
+    run_every=crontab(minute=0, hour=6),
+    queue=settings.CELERY_PERIODIC_QUEUE,
+    acks_late=True,
+    durable=True,
+)
+def process_scheduled_prepayment_invoices():
+    today = datetime.date.today()
+    for domain in ScheduledPrepaymentInvoice.objects.due_domains(today):
+        process_scheduled_prepayment_invoices_for_domain.delay(domain)
+
+
+@serial_task('{domain}', timeout=30 * 60, queue='background_queue', durable=True)
+def process_scheduled_prepayment_invoices_for_domain(domain):
+    """Advance this domain's queue. Serial per domain to avoid redelivered invoices"""
+    generate_due_scheduled_invoices(datetime.date.today(), domain=domain)
+
+
+def generate_due_scheduled_invoices(today, domain=None):
+    due = ScheduledPrepaymentInvoice.objects.due(today)
+    if domain is not None:
+        due = due.filter(domain=domain)
+    for scheduled in list(due):
+        _send_scheduled_prepayment_invoice(scheduled)
+
+
+def _send_scheduled_prepayment_invoice(scheduled):
+    try:
+        with transaction.atomic():
+            factory = DomainWireInvoiceFactory(
+                scheduled.domain,
+                date_start=scheduled.date_start,
+                date_end=scheduled.date_end,
+                contact_emails=scheduled.contact_emails,
+                cc_emails=scheduled.cc_emails,
+            )
+            scheduled.invoice_id = factory.create_wire_credits_invoice(
+                scheduled.amount,
+                scheduled.credit_label,
+                scheduled.unit_cost,
+                scheduled.quantity,
+                send_async=False,
+            )
+            scheduled.status = ScheduledPrepaymentInvoiceStatus.SENT
+            scheduled.save()
+    except Exception as e:
+        _record_scheduled_invoice_failure(scheduled, e)
+    else:
+        log_accounting_info(
+            f"Sent scheduled prepayment invoice {scheduled.id} for domain "
+            f"{scheduled.domain} as invoice {scheduled.invoice_id}."
+        )
+
+
+def _record_scheduled_invoice_failure(scheduled, exception):
+    scheduled.failure_count += 1
+    if scheduled.failure_count >= SCHEDULED_PREPAYMENT_MAX_FAILURES:
+        scheduled.status = ScheduledPrepaymentInvoiceStatus.FAILED
+    scheduled.save()
+    log_error_and_soft_assert(
+        f"Failed to send scheduled prepayment invoice {scheduled.id} for domain "
+        f"{scheduled.domain} (attempt {scheduled.failure_count}): {exception}"
+    )
