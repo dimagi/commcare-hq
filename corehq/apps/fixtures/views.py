@@ -35,6 +35,7 @@ from soil.util import expose_cached_download, get_download_context
 from corehq.apps.api.decorators import api_throttle
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.fixtures.constants import LOOKUP_TABLE_TAG_MAX_LENGTH
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
 from corehq.apps.fixtures.download import prepare_fixture_html
 from corehq.apps.fixtures.exceptions import (
@@ -127,8 +128,10 @@ def update_tables(request, domain, data_type_id=None):
             if is_identifier_invalid(field_name) and 'remove' not in method:
                 validation_errors.append(field_name)
         validation_errors = [_(INVALID_NAME_ERROR) % repr(e) for e in validation_errors]
-        if len(data_tag) < 1 or len(data_tag) > 31:
-            validation_errors.append(_("Table ID must be between 1 and 31 characters."))
+        if len(data_tag) < 1 or len(data_tag) > LOOKUP_TABLE_TAG_MAX_LENGTH:
+            validation_errors.append(_(
+                "Table ID must be between 1 and %(max_length)s characters."
+            ) % {"max_length": LOOKUP_TABLE_TAG_MAX_LENGTH})
 
         if validation_errors:
             return json_response({
