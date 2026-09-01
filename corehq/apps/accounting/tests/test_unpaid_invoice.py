@@ -135,7 +135,7 @@ class TestDowngrades(BaseAccountingTest):
         Downgrade.run_action(only_downgrade_domain=domain.name)
         assert InvoiceCommunicationHistory.objects.filter(
             invoice=latest_invoice,
-        ).count(), 1
+        ).count() == 1
 
     def test_belated_overdue_notification(self):
         # just in case on the 30th day, the downgrade process fails, make
@@ -166,7 +166,7 @@ class TestDowngrades(BaseAccountingTest):
         assert InvoiceCommunicationHistory.objects.filter(
             invoice=latest_invoice,
             communication_type=CommunicationType.DOWNGRADE_WARNING,
-        ).count(), 1
+        ).count() == 1
 
     def test_downgrade(self):
         domain, latest_invoice = self._simulate_downgrade(
@@ -310,7 +310,7 @@ class TestInvoiceReminder(BaseAccountingTest):
         assert InvoiceCommunicationHistory.objects.filter(
             invoice=latest_invoice,
             communication_type=CommunicationType.INVOICE_REMINDER,
-        ).count(), 1
+        ).count() == 1
 
     def test_belated_invoice_reminder(self):
         domain, latest_invoice = self._send_invoice_reminders(
@@ -374,7 +374,7 @@ class TestInvoiceReminder(BaseAccountingTest):
         assert CustomerInvoiceCommunicationHistory.objects.filter(
             invoice=latest_invoice,
             communication_type=CommunicationType.INVOICE_REMINDER,
-        ).count(), 1
+        ).count() == 1
 
     def test_belated_customer_invoice_reminder(self):
         domain, latest_invoice = self._send_invoice_reminders(
