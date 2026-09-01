@@ -595,6 +595,9 @@ def create_wire_credits_invoice(domain_name,
         record.skipped_email = True
         record.save()
 
+    # useful for non-async callers
+    return wire_invoice.id
+
 
 @task(ignore_result=True, acks_late=True, durable=True)
 def send_purchase_receipt(
