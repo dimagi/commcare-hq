@@ -1,5 +1,6 @@
 import datetime
 import math
+from collections import defaultdict
 from decimal import Decimal, InvalidOperation
 
 from jsonobject.exceptions import BadValueError
@@ -12,6 +13,15 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.data_dictionary.models import CaseProperty
 
 from .table_ddl import CaseTable, get_project_db_engine, property_column
+
+
+def send_cases_to_project_db(domain, cases):
+    """Bulk upsert CommCareCases"""
+    cases_by_type = defaultdict(list)
+    for case in cases:
+        cases_by_type[case.type].append(case)
+    for case_type, case_type_cases in cases_by_type.items():
+        populate_case_type(domain, case_type, case_type_cases)
 
 
 def populate_case_type(domain, case_type, cases):

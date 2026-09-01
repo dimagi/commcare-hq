@@ -14,6 +14,7 @@ from corehq.apps.project_db.populate import (
     coerce_to_number,
     coerce_to_select,
     populate_case_type,
+    send_cases_to_project_db,
     upsert_cases,
 )
 from corehq.apps.project_db.table_ddl import (
@@ -293,3 +294,22 @@ def test_send_to_project_db_bad_type():
             _make_case({'first_name': 'Bob'}, type='patient'),
             _make_case({}, type='clinic'),
         ])
+
+
+@use('db')
+def test_send_cases_to_project_db():
+    domain = 'test-mixed'
+    with project_db_table(domain, 'patient', {'first_name': 'plain'}), \
+         project_db_table(domain, 'clinic', {'city': 'plain'}):
+        send_cases_to_project_db(domain, [
+            _make_case({'first_name': 'Alice'}, case_id='c1', type='patient'),
+            _make_case({'city': 'Boston'}, case_id='c2', type='clinic'),
+            _make_case({'first_name': 'Bob'}, case_id='c3', type='patient'),
+            _make_case({}, case_id='c4', type='no-such-table'),  # skipped
+        ])
+        with get_project_db_engine().begin() as conn:
+            patients = conn.execute(CaseTable(domain, 'patient').reflect().select()).fetchall()
+            clinics = conn.execute(CaseTable(domain, 'clinic').reflect().select()).fetchall()
+
+    assert sorted(r['case_id'] for r in patients) == ['c1', 'c3']
+    assert [r['case_id'] for r in clinics] == ['c2']
