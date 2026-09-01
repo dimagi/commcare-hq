@@ -64,6 +64,7 @@ from corehq.apps.accounting.models import (
     InvoicePdf,
     PaymentMethodType,
     PaymentType,
+    ScheduledPrepaymentInvoice,
     SoftwarePlanEdition,
     StripePaymentMethod,
     Subscription,
@@ -93,6 +94,7 @@ from corehq.apps.accounting.utils import (
     get_paused_plan_context,
     is_downgrade,
     log_accounting_error,
+    log_accounting_info,
     pause_current_subscription,
     quantize_accounting_decimal,
 )
@@ -913,6 +915,35 @@ def validate_quantity(request):
     return quantity
 
 
+def validate_send_date(request):
+    send_date = _get_date_or_none(request.POST.get('send_date'))
+    if send_date is None:
+        raise ValidationError(message=_('A send date is required.'))
+    if send_date <= datetime.date.today():
+        raise ValidationError(message=_('The send date must be in the future.'))
+    return send_date
+
+
+def _get_date_or_none(date_string):
+    """Unlike ``_get_date_or_today``, bad input is an error rather than
+    defaulting to today.
+    """
+    try:
+        return datetime.date.fromisoformat(date_string)
+    except (TypeError, ValueError):
+        return None
+
+
+def validate_credit_label(request):
+    credit_label = request.POST.get('credit_label', 'General Credits')
+    max_length = ScheduledPrepaymentInvoice._meta.get_field('credit_label').max_length
+    if len(credit_label) > max_length:
+        raise ValidationError(message=_(
+            'The credit label must be %(max_length)d characters or fewer.'
+        ) % {'max_length': max_length})
+    return credit_label
+
+
 class CreditsWireInvoiceView(DomainAccountingSettings):
     http_method_names = ['post']
     urlname = 'domain_wire_payment'
@@ -945,6 +976,58 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
             return json_response({'error': {'message': str(e)}})
 
         return json_response({'success': True})
+
+
+class SchedulePrepaymentInvoiceView(DomainAccountingSettings):
+    """Queues a prepayment invoice for generation on a future date"""
+    http_method_names = ['post']
+    urlname = 'domain_schedule_prepayment_invoice'
+
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(SchedulePrepaymentInvoiceView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            contact_email, cc_emails = validate_emails(request)
+            amount = validate_amount(request)
+            date_start, date_end = validate_daterange(request)
+            unit_cost = validate_unit_cost(request)
+            quantity = validate_quantity(request)
+            send_date = validate_send_date(request)
+            credit_label = validate_credit_label(request)
+        except ValidationError as e:
+            return json_response({'error': {'message': e.message}})
+
+        subscription = Subscription.get_active_subscription_by_domain(request.domain)
+        if subscription is None:
+            return json_response({'error': {'message': _(
+                'This project space has no active subscription, so an invoice '
+                'cannot be scheduled for it.'
+            )}})
+
+        scheduled = ScheduledPrepaymentInvoice.objects.create(
+            domain=request.domain,
+            subscription=subscription,
+            send_date=send_date,
+            amount=amount,
+            credit_label=credit_label,
+            unit_cost=unit_cost,
+            quantity=quantity,
+            contact_emails=[contact_email],
+            cc_emails=[email for email in cc_emails if email],
+            date_start=datetime.date.fromisoformat(date_start),
+            date_end=datetime.date.fromisoformat(date_end),
+            created_by=request.couch_user.username,
+        )
+        log_accounting_info(
+            f"Scheduled prepayment invoice {scheduled.id} for domain "
+            f"{scheduled.domain} on {scheduled.send_date} by {scheduled.created_by}."
+        )
+        return json_response({
+            'success': True,
+            'send_date': scheduled.send_date.isoformat(),
+        })
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
