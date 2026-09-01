@@ -138,9 +138,9 @@ class CreatePublicWebformView(BasePublicWebformsView):
     @property
     @memoized
     def form(self):
-        data = [self.request.POST] if self.request.method == 'POST' else []
+        data = self.request.POST if self.request.method == 'POST' else None
         return CreatePublicWebformForm(
-            self.domain, self.domain_object.get_default_timezone(), *data)
+            self.domain, self.domain_object.get_default_timezone(), data)
 
 
 class EditPublicWebformView(BasePublicWebformsView):
@@ -177,12 +177,12 @@ class EditPublicWebformView(BasePublicWebformsView):
     @property
     @memoized
     def form(self):
-        data = [self.request.POST] if self.request.method == 'POST' else []
+        data = self.request.POST if self.request.method == 'POST' else None
         return EditPublicWebformForm(
             self.domain,
             self.domain_object.get_default_timezone(),
             self.webform,
-            *data,
+            data,
         )
 
 
