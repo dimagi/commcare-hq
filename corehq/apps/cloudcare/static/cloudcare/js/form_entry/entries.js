@@ -1215,8 +1215,9 @@ function GeoPointEntry(question, options) {
 
     self.updateCenter = function () {
         var center = self.map.getCenter();
+        var wrapped = center.wrap();
         self.centerMarker.setLatLng(center);
-        self.rawAnswer([center.lat, center.lng]);
+        self.rawAnswer([wrapped.lat, wrapped.lng]);
     };
 
     self.formatLat = function () {
