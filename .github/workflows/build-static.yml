@@ -52,7 +52,7 @@ jobs:
           ./manage.py compilejsi18n
           echo "Starting generate_webpack_settings..."
           ./manage.py generate_webpack_settings
-          echo "Starting yarn build..."
+          echo "Starting yarn build (webpack bundles, then the API reference pages)..."
           yarn build
           echo "Starting compress..."
           ./manage.py compress --force -v 0

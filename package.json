@@ -137,7 +137,8 @@
     "scripts": {
         "dev": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js --watch",
         "test": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js",
-        "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js",
+        "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js && yarn openapi:docs",
+        "openapi:docs": "./scripts/build-openapi-docs.sh",
         "openapi:lint": "redocly lint docs/api/spec/*.json"
     },
     "prettier": {

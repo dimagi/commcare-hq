@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CommCare API reference</title>
+  </head>
+  <body>
+    <h1>CommCare API reference</h1>
+    <p>
+      Each API below has a reference page generated from its OpenAPI
+      specification. The full specification for every API is available as a
+      single document at <a href="/api/openapi.json">/api/openapi.json</a>.
+    </p>
+    <ul>
+      {% for api in apis %}
+        <li>
+          <a href="/api/docs/{{ api.slug }}/">{{ api.title }}</a>
+          <a href="/api/docs/{{ api.slug }}/openapi.json">specification</a>
+          {% if not api.total %}
+            <span>No response fields declared</span>
+          {% elif api.complete %}
+            <!-- prettier-ignore -->
+            <span>Fully documented ({{ api.described }}/{{ api.total }} fields)</span>
+          {% elif api.described %}
+            <!-- prettier-ignore -->
+            <span>Partly documented ({{ api.described }}/{{ api.total }} fields)</span>
+          {% else %}
+            <!-- prettier-ignore -->
+            <span>No field descriptions yet ({{ api.described }}/{{ api.total }} fields)</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>
