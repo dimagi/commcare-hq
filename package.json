@@ -91,6 +91,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
+        "@redocly/cli": "^2.46.2",
         "chai": "4.3.6",
         "colors": "1.4.0",
         "eslint": "10.0.2",
@@ -136,7 +137,8 @@
     "scripts": {
         "dev": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js --watch",
         "test": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js",
-        "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js"
+        "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js",
+        "openapi:lint": "redocly lint docs/api/spec/*.json"
     },
     "prettier": {
         "plugins": [

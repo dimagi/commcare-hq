@@ -171,6 +171,8 @@ test = [
     'pytest-django',
     'pytest-unmagic',
     'coverage',
+    'openapi-spec-validator',
+    'openapi-schema-validator',
 ]
 
 [tool.pytest.ini_options]
