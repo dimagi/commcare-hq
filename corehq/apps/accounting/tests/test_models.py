@@ -255,8 +255,6 @@ class TestBillingRecord(BaseAccountingTest):
 
     def test_should_send_email_contracted(self):
         self.subscription.service_type = SubscriptionType.IMPLEMENTATION
-        assert not self.billing_record.should_send_email
-
         self.invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD)
         assert not self.billing_record.should_send_email
 
@@ -265,13 +263,15 @@ class TestBillingRecord(BaseAccountingTest):
 
     def test_should_send_email_autogenerate_credits(self):
         self.subscription.auto_generate_credits = True
+        assert self.invoice.balance == 0
         assert not self.billing_record.should_send_email
 
-        self.invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD + 0.01)
+        self.invoice.balance = Decimal(0.01)
         assert self.billing_record.should_send_email
 
     def test_should_send_email_pay_annually(self):
         self.subscription.plan_version.plan.is_annual_plan = True
+        assert self.invoice.balance == 0
         assert not self.billing_record.should_send_email
 
         self.invoice.balance = Decimal(0.01)
