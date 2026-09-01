@@ -29,6 +29,7 @@ IGNORE_MODELS = {
     "accounting.LineItem",
     "accounting.PaymentMethod",
     "accounting.PaymentRecord",
+    "accounting.ScheduledPrepaymentInvoice",
     "accounting.SoftwarePlan",
     "accounting.SoftwarePlanVersion",
     "accounting.SoftwareProductRate",
