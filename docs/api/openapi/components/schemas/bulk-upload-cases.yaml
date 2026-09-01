@@ -1,0 +1,34 @@
+BulkUploadCasesResponse:
+  type: object
+  required: [code, message]
+  description: >-
+    Response of `bulkUploadCases` (`bulk_case_upload_api`/
+    `_bulk_case_upload_api`, `corehq/apps/case_importer/views.py:470-550`). A
+    success code indicates the upload was *processed*, not that every row
+    imported cleanly -- `bulk-upload-cases.rst:89` warns business-level failures
+    (e.g. an invalid location) only surface later, via `status_url`.
+  properties:
+    code:
+      type: integer
+      enum: [200, 500]
+      description: >-
+        `200` on success (`views.py:550`, HTTP status is also 200). `500` on a
+        caught `ImporterError`/`SpreadsheetFileExtError`/
+        `SpreadsheetFileInvalidError` (`views.py:474-482`) -- **and here the
+        HTTP transport status genuinely is 500 too** (`json_response(...,
+        status_code=500)`, `views.py:482`), unlike several other endpoints in
+        this API where a `code`/`status` field in the body diverges from the
+        real transport status. Any other exception type is not caught here and
+        produces Django's own unhandled-error response (HTML, not this JSON
+        shape) -- see the discrepancy file.
+      example: 200
+    message:
+      type: string
+      example: success
+    status_url:
+      type: string
+      description: >-
+        Present only on success. URL to poll for the status of the queued import
+        job. That status endpoint (`case_importer_upload_status`) is a separate
+        view, out of scope for this spec.
+      example: /a/demo/importer/case_importer/status/dl-2998e6834a654ab5ba74f372246caa75/

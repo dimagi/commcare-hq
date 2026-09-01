@@ -1,0 +1,557 @@
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listLookupTables
+    summary: List lookup tables
+    description: >-
+      Returns lookup table schemas (tag, fields, and global flag) in this
+      project space. `LookupTableResource.Meta` (`v0_1.py:241-245`) does not
+      override `authentication`, so it uses `CustomResourceMeta`'s
+      `LoginAndDomainAuthentication` -- any domain member with API access can
+      call this, not specifically an Edit Apps/Edit Data user. Neither
+      `fixture.rst`'s "Lookup Table Individual API" section nor its "Lookup
+      Table Rows API" section states a permission requirement at all, so this
+      does not contradict the docs, but it is a meaningfully more permissive
+      surface than the read-only fixture API above. See the discrepancy file.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Limit"
+      - $ref: "../components/parameters.yaml#/Offset"
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: A page of lookup tables.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/lookup-table.yaml#/LookupTableList"
+      "400":
+        description: >-
+          `limit` or `offset` is not a valid integer, converted by `wrap_view`
+          to the shared `{"error": ...}` shape.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Deliberately not the shared Forbidden ref. LoginAndDomainAuthentication
+        # ._auth_test (corehq/apps/api/resources/auth.py:98-135) catches
+        # Django's PermissionDenied from a failed access_api permission check
+        # and converts it to a bare HttpResponseForbidden() -- no body. Same
+        # mechanism as listFixtures's 403, minus the resource-specific
+        # permission (this class only requires the generic `access_api`
+        # permission).
+        description: >-
+          The authenticated user lacks API access, or is not a member of this
+          project space. The response body is empty.
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listFixtures`'s 429.
+  post:
+    operationId: createLookupTable
+    summary: Create a lookup table
+    description: >-
+      `obj_create` (`v0_1.py:193-203`) rejects a `tag` that already exists in
+      the domain. `Meta.always_return_data` is not set (defaults to `False`), so
+      a successful create returns an empty body -- confirmed by instantiating
+      the resource (`always_return_data=False`); `fixture.rst` (`:244-284`)
+      never actually shows sample output for this operation, so this does not
+      contradict it, but note that `fixture.rst`'s own "List Lookup Table"
+      sample output (`:217-242`) does show a full object body, which an
+      integrator could easily over-generalize from.
+    tags: [Data]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/lookup-table.yaml#/LookupTableWrite"
+    responses:
+      "201":
+        description: >-
+          The lookup table was created. The body is empty; the `Location` header
+          is set from `get_resource_uri`, but that always resolves to an empty
+          string for this resource family (see the discrepancy file), so the
+          header carries no usable value either.
+      "400":
+        description: >-
+          Two distinct shapes, depending on cause. A `tag` that already exists
+          raises tastypie's own `BadRequest` (`v0_1.py:196-197`), giving the
+          shared `{"error": ...}` shape. Malformed `fields`/ `item_attributes`
+          (e.g. a field with both or neither of `name`/ `field_name`) fail
+          `LookupTableResource.validate_deserialized_data` (`v0_1.py:133-159`),
+          whose `ValidationError` is caught by
+          `HqBaseResource.alter_deserialized_detail_data`
+          (`corehq/apps/api/resources/__init__.py:153-167`) and re-raised
+          through `error_response` (`tastypie/resources.py:1264-1299`), which
+          serializes the raw list of message strings with **no** wrapping object
+          at all -- not `{"error": ...}`, not `{"error_message": ...}`.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "../components/schemas/error.yaml#/Error"
+                - type: array
+                  description: >-
+                    JSON Schema validation failures, one message per error.
+                  items:
+                    type: string
+                  example:
+                    - "'name' is a required property: {'properties': []}"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks API access, or is not a member of this
+          project space. The response body is empty. Same mechanism as
+          `listLookupTables`'s 403.
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listLookupTables`'s 429.
+Detail:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: lookup_table_id
+      in: path
+      required: true
+      description: Lookup table UUID.
+      example: bcf49791f7f04f09bd46262097e107f2
+      schema:
+        type: string
+  get:
+    operationId: getLookupTable
+    summary: Retrieve a single lookup table
+    description: >-
+      **No resource-specific permission is required.**
+      `LookupTableResource.Meta` (`corehq/apps/fixtures/resources/v0_1.py:241-245`)
+      inherits `CustomResourceMeta`'s plain
+      `LoginAndDomainAuthentication` (`corehq/apps/api/resources/meta.py:76-81`)
+      and never overrides `authentication` -- login, membership of this project
+      space, and the project space's generic API-access privilege are the whole
+      check. Note this is *weaker* than the `fixture/v1` resource over the same
+      underlying data, which does require Edit Apps
+      (`RequirePermissionAuthentication(HqPermissions.edit_apps)`,
+      `v0_1.py:91-92`).
+
+
+      Returns the table definition -- its `tag`, `fields` and `item_attributes`
+      -- not its rows; rows are served by the `lookup_table_item` resource.
+
+
+      An unknown `lookup_table_id`, or one belonging to another project space,
+      returns **404 with an empty body**: `obj_get` (`v0_1.py:170-171`) raises
+      Django's `ObjectDoesNotExist` through `get_sql_object_or_not_exist`
+      (`v0_1.py:421-433`), and tastypie's `get_detail` answers with a bare
+      `http.HttpNotFound()`. The 403 body is likewise empty, not JSON.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: The lookup table.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/lookup-table.yaml#/LookupTable"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks API access, or is not a member of this
+          project space. The response body is empty. Same mechanism as
+          `listLookupTables`'s 403.
+      "404":
+        # Deliberately not the shared NotFound ref: obj_get (v0_1.py:170-171)
+        # raises Django's ObjectDoesNotExist via get_sql_object_or_not_exist,
+        # caught by tastypie's default get_detail
+        # (tastypie/resources.py:1362-1383), which returns a bare
+        # http.HttpNotFound() -- no body. Same mechanism as getFixture.
+        description:
+          The requested lookup table does not exist. The response body is empty.
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listLookupTables`'s 429.
+  put:
+    operationId: replaceLookupTable
+    summary: Replace a lookup table
+    description: >-
+      The submitted `tag` must equal the existing table's `tag` exactly --
+      `obj_update` (`v0_1.py:205-218`) raises a 400 if it differs (`"Lookup
+      table tag cannot be changed"`), a constraint `fixture.rst` never states.
+
+      **No 404 is reachable here, by design of the fallback tastypie already
+      provides -- but it silently creates an unrelated new table instead of
+      signalling a problem.** `obj_update` raises tastypie's `NotFound` for an
+      unknown `lookup_table_id` (`v0_1.py:210-215`); `put_detail`
+      (`tastypie/resources.py:1467-1511`) catches exactly that exception and
+      falls back to `obj_create` with the *same submitted body*. Since
+      `obj_create` (`v0_1.py:193-203`) ignores the URL's `pk` entirely and only
+      checks whether the submitted `tag` is already taken, a `PUT` to a
+      nonexistent `lookup_table_id` with a fresh `tag` **creates a brand-new
+      lookup table under a different, server-generated id** and returns 201, not
+      404. This is the same tastypie fallback mechanism documented for
+      `replaceGroup`, but unlike that case, it does not fall through to an
+      uncaught 500 here -- it actually succeeds, just not at the id the caller
+      asked for. See the discrepancy file.
+    tags: [Data]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/lookup-table.yaml#/LookupTableWrite"
+    responses:
+      "204":
+        description: >-
+          The existing lookup table (identified by `lookup_table_id`) was
+          updated in place. The body is empty (`always_return_data=False`).
+      "201":
+        description: >-
+          No lookup table existed at `lookup_table_id`, so a new one was created
+          instead, under a new id. The body is empty; the `Location` header is
+          set but always resolves to an empty string (see `createLookupTable`'s
+          201). See this operation's description for why this happens instead of
+          a 404.
+      "400":
+        description: >-
+          `tag` is missing (`v0_1.py:206-207`), `tag` differs from the existing
+          table's `tag` (`v0_1.py:217-218`), the fallback-create's `tag` is
+          already taken by another table (`v0_1.py:196-197`), or
+          `fields`/`item_attributes` fail schema validation (same two-shape 400
+          as `createLookupTable`).
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "../components/schemas/error.yaml#/Error"
+                - type: array
+                  items:
+                    type: string
+                  example:
+                    - "'name' is a required property: {'properties': []}"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks API access, or is not a member of this
+          project space. The response body is empty. Same mechanism as
+          `listLookupTables`'s 403.
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listLookupTables`'s 429.
+  delete:
+    operationId: deleteLookupTable
+    summary: Delete a lookup table
+    description: >-
+      **Returns 202 Accepted, not the 204 No Content tastypie normally returns
+      for a successful delete.** `obj_delete` (`v0_1.py:176-184`) raises
+      `ImmediateHttpResponse(response=HttpAccepted())` on success
+      (`tastypie/http.py:17-18`: `HttpAccepted.status_code = 202`) instead of
+      returning normally, so `delete_detail`'s own `return http.HttpNoContent()`
+      (`tastypie/resources.py:1525-1542`) is never reached. See the discrepancy
+      file.
+    tags: [Data]
+    responses:
+      "202":
+        description: The lookup table was deleted. The body is empty.
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks API access, or is not a member of this
+          project space. The response body is empty. Same mechanism as
+          `listLookupTables`'s 403.
+      "404":
+        # Deliberately not the shared NotFound ref: obj_delete (v0_1.py:176-
+        # 184) raises tastypie's own NotFound for an unknown id, which
+        # delete_detail's except clause (tastypie/resources.py:1541-1542)
+        # catches directly and converts to a bare http.HttpNotFound() -- no
+        # body. Unlike replaceLookupTable's PUT, DELETE has no obj_create
+        # fallback, so this 404 is genuinely reachable.
+        description:
+          The requested lookup table does not exist. The response body is empty.
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listLookupTables`'s 429.
+ItemList:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listLookupTableItems
+    summary: List lookup table rows
+    description: >-
+      Returns lookup table rows across all of this project space's lookup
+      tables. Same permissive `LoginAndDomainAuthentication` as
+      `listLookupTables` -- no domain-scoped filtering by lookup table is
+      offered by this operation; use `data_type_id` on the row objects
+      themselves to group by table.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Limit"
+      - $ref: "../components/parameters.yaml#/Offset"
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: A page of lookup table rows.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/lookup-table.yaml#/LookupTableItemList"
+      "400":
+        description: >-
+          `limit` or `offset` is not a valid integer, converted by `wrap_view`
+          to the shared `{"error": ...}` shape.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks API access, or is not a member of this
+          project space. The response body is empty. Same mechanism as
+          `listLookupTables`'s 403.
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listLookupTables`'s 429.
+  post:
+    operationId: createLookupTableItem
+    summary: Create a lookup table row
+    description: >-
+      `obj_create` (`v0_1.py:370-388`) requires `data_type_id` and rejects one
+      that does not reference an existing lookup table.
+
+      **A nonexistent `data_type_id` produces a 404 on this list-level
+      operation, not a 400 -- and it is not the resource's own not-found path.**
+      `obj_create` raises tastypie's own `NotFound` (`v0_1.py:377`) when
+      `LookupTable.objects.filter(id=data_type_id).exists()` is false. Unlike
+      `put_detail`, tastypie's `post_list` (`tastypie/resources.py:1385-1407`)
+      has no `try`/`except` around its call to `obj_create` at all, so this
+      `NotFound` propagates uncaught through `dispatch()` into `wrap_view`'s
+      generic exception handler (`tastypie/resources.py:250-270`), which maps
+      `NotFound` to a 404 (`get_response_class_for_exception`, `:274-289`) with
+      the same canned `{"error_message": ...}` body used for uncaught exceptions
+      generally -- not the resource-specific message ("Lookup table not found")
+      that `obj_delete` raises the same exception class for elsewhere. See the
+      discrepancy file.
+    tags: [Data]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/lookup-table.yaml#/LookupTableItemWrite"
+    responses:
+      "201":
+        description: >-
+          The row was created. The body is empty (`always_return_data=False`);
+          the `Location` header always resolves to an empty string (see
+          `createLookupTable`'s 201).
+      "400":
+        description: >-
+          Two distinct shapes. `data_type_id` missing raises tastypie's own
+          `BadRequest` (`v0_1.py:373-374`), giving the shared `{"error": ...}`
+          shape. Malformed `fields`/`item_attributes` fail
+          `LookupTableItemResource.validate_deserialized_data`
+          (`v0_1.py:300-336`), giving the same bare-array-of-strings shape as
+          `createLookupTable`'s validation 400.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "../components/schemas/error.yaml#/Error"
+                - type: array
+                  items:
+                    type: string
+                  example:
+                    - "'field_value' is a required property"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks API access, or is not a member of this
+          project space. The response body is empty. Same mechanism as
+          `listLookupTables`'s 403.
+      "404":
+        description: >-
+          `data_type_id` does not reference an existing lookup table. See this
+          operation's description for the canned-error mechanism.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/lookup-table.yaml#/LookupTableErrorMessage"
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listLookupTables`'s 429.
+ItemDetail:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: lookup_table_item_id
+      in: path
+      required: true
+      description: Lookup table row UUID.
+      example: e8433b25e60c4e228b0c7a679af2847b
+      schema:
+        type: string
+  get:
+    operationId: getLookupTableItem
+    summary: Retrieve a single lookup table row
+    description: >-
+      **No resource-specific permission is required** --
+      `LookupTableItemResource.Meta`
+      (`corehq/apps/fixtures/resources/v0_1.py:414-418`) inherits
+      `CustomResourceMeta`'s `LoginAndDomainAuthentication`
+      (`corehq/apps/api/resources/meta.py:76-81`) without overriding it, so
+      login, project-space membership and the generic API-access privilege are
+      the whole check. Same caveat as `getLookupTable`: the `fixture/v1`
+      resource over the same rows requires Edit Apps.
+
+
+      The row's `data_type_id` is the id of the lookup table it belongs to. Its
+      `fields` use the nested field-list shape documented on the
+      `LookupTableItem` schema, not the flat shape used by the table's own
+      `fields`.
+
+
+      An unknown `lookup_table_item_id`, or one belonging to another project
+      space, returns **404 with an empty body**: `obj_get` (`v0_1.py:354-355`)
+      raises Django's `ObjectDoesNotExist` through
+      `get_sql_object_or_not_exist`, and tastypie's `get_detail` answers with a
+      bare `http.HttpNotFound()`. The 403 body is likewise empty, not JSON.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: The lookup table row.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/lookup-table.yaml#/LookupTableItem"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks API access, or is not a member of this
+          project space. The response body is empty. Same mechanism as
+          `listLookupTables`'s 403.
+      "404":
+        # Deliberately not the shared NotFound ref: obj_get (v0_1.py:354-355)
+        # raises Django's ObjectDoesNotExist via get_sql_object_or_not_exist,
+        # caught by tastypie's default get_detail, which returns a bare
+        # http.HttpNotFound() -- no body. Same mechanism as getLookupTable.
+        description:
+          The requested lookup table row does not exist. The response body is
+          empty.
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listLookupTables`'s 429.
+  put:
+    operationId: replaceLookupTableItem
+    summary: Replace a lookup table row
+    description: >-
+      **No 404 for the common case -- an unknown `lookup_table_item_id` falls
+      back to creating a new row under a different id, exactly like
+      `replaceLookupTable`.** `obj_update` (`v0_1.py:390-409`) raises tastypie's
+      `NotFound` for an unknown id (`v0_1.py:396-400`); `put_detail` catches it
+      and retries via `obj_create` (`v0_1.py:370-388`), which ignores the URL's
+      `pk`.
+
+      **A 404 IS reachable, though, when the fallback itself fails.** If
+      `data_type_id` also does not reference an existing lookup table, the
+      fallback `obj_create` raises its own `NotFound` (`v0_1.py:377`), and this
+      time nothing catches it -- `put_detail`'s `except` only wraps the first
+      `obj_update` call, not the fallback `obj_create` it invokes. The exception
+      propagates to the same generic-exception-handler 404 used by
+      `createLookupTableItem`. See the discrepancy file.
+    tags: [Data]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/lookup-table.yaml#/LookupTableItemWrite"
+    responses:
+      "204":
+        description: >-
+          The existing row (identified by `lookup_table_item_id`) was updated in
+          place. The body is empty (`always_return_data=False`).
+      "201":
+        description: >-
+          No row existed at `lookup_table_item_id`, so a new one was created
+          instead under a new id (see this operation's description).
+      "400":
+        description: >-
+          `data_type_id` missing gives the shared `{"error": ...}` shape;
+          malformed `fields`/`item_attributes` give the bare-array-of-strings
+          shape. Same two shapes as `createLookupTableItem`'s 400.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "../components/schemas/error.yaml#/Error"
+                - type: array
+                  items:
+                    type: string
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks API access, or is not a member of this
+          project space. The response body is empty. Same mechanism as
+          `listLookupTables`'s 403.
+      "404":
+        description: >-
+          Neither `lookup_table_item_id` nor the fallback-create's
+          `data_type_id` reference an existing row/lookup table. See this
+          operation's description.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/lookup-table.yaml#/LookupTableErrorMessage"
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listLookupTables`'s 429.
+  delete:
+    operationId: deleteLookupTableItem
+    summary: Delete a lookup table row
+    description: >-
+      **Returns 202 Accepted, not 204.** Same mechanism as `deleteLookupTable`:
+      `obj_delete` (`v0_1.py:360-368`) raises
+      `ImmediateHttpResponse(response=HttpAccepted())` on success.
+    tags: [Data]
+    responses:
+      "202":
+        description: The row was deleted. The body is empty.
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks API access, or is not a member of this
+          project space. The response body is empty. Same mechanism as
+          `listLookupTables`'s 403.
+      "404":
+        # obj_delete (v0_1.py:360-368) raises tastypie's own NotFound for an
+        # unknown id; delete_detail's except clause catches it directly and
+        # converts to a bare http.HttpNotFound() -- no body. No obj_create
+        # fallback for DELETE, so this 404 is genuinely reachable.
+        description:
+          The requested lookup table row does not exist. The response body is
+          empty.
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listLookupTables`'s 429.

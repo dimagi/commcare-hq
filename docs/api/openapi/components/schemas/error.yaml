@@ -1,0 +1,7 @@
+Error:
+  type: object
+  properties:
+    error:
+      type: string
+      description: Human-readable description of the failure.
+      example: not authorized
