@@ -1,0 +1,91 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load django_tables2 %}
+{% js_entry 'hqwebapp/js/htmx_and_alpine' %}
+
+{% block page_content %}
+  <h1 class="page-title">{% trans "Public Webforms" %}</h1>
+  <p class="lead">
+    {% blocktrans %}
+      Publish a registration or survey form to a public URL. Respondents request
+      a one-time link, pass a bot check, and complete the form once — no
+      CommCare account needed. Manage which forms are open, when they close, and
+      revoke access at any time.
+    {% endblocktrans %}
+  </p>
+
+  <div class="mb-3">
+    <a
+      class="btn btn-primary icon-link"
+      href="{% url 'create_public_webform' domain %}"
+    >
+      <i class="fa fa-plus"></i>
+      {% trans "New Public Webform" %}
+    </a>
+    <a class="btn btn-link icon-link" href="placeholder/for/help">
+      {# TODO: real help link #}
+      <i class="fa fa-info-circle"></i>
+      {% trans "How public forms work" %}
+    </a>
+  </div>
+
+  <div class="card">
+    <h4 class="card-header">{% trans "Webforms" %}</h4>
+    <form
+      class="row g-2 p-3 pb-0"
+      hx-get="{% url 'public_webforms_table' domain %}"
+      hx-target="#PublicWebformTable"
+      hx-swap="outerHTML"
+      hx-trigger="change, input delay:300ms from:find input[type=search]"
+    >
+      <div class="col-sm-6 col-lg-4">
+        <label
+          class="visually-hidden"
+          for="{{ filter_form.search.id_for_label }}"
+        >
+          {{ filter_form.search.label }}
+        </label>
+        <div class="input-group">
+          {{ filter_form.search }}
+          <span class="input-group-text">
+            <i class="fa fa-search"></i>
+          </span>
+        </div>
+      </div>
+      <div class="col-sm-3 col-lg-2">
+        <label
+          class="visually-hidden"
+          for="{{ filter_form.session_type.id_for_label }}"
+        >
+          {{ filter_form.session_type.label }}
+        </label>
+        {{ filter_form.session_type }}
+      </div>
+      <div class="col-sm-3 col-lg-2">
+        <label
+          class="visually-hidden"
+          for="{{ filter_form.status.id_for_label }}"
+        >
+          {{ filter_form.status.label }}
+        </label>
+        {{ filter_form.status }}
+      </div>
+    </form>
+    <div class="card-body">
+      <div
+        hx-trigger="load"
+        hx-get="{% url 'public_webforms_table' domain %}{% querystring %}"
+      >
+        <div class="htmx-indicator p-3">
+          <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock %}

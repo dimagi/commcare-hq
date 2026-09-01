@@ -1244,6 +1244,7 @@ msgstr ""
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
@@ -1258,7 +1259,7 @@ msgstr ""
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
-#: corehq/apps/registration/forms.py
+#: corehq/apps/public_webforms/forms.py corehq/apps/registration/forms.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/forms.py
@@ -5413,6 +5414,7 @@ msgstr "Kesi"
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py
 #: corehq/apps/reports/standard/inspect.py
 #: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
@@ -5434,8 +5436,9 @@ msgstr "Chanzo cha Data"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/linked_domain/const.py corehq/apps/reports/filters/forms.py
-#: corehq/apps/reports/filters/select.py
+#: corehq/apps/linked_domain/const.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+#: corehq/apps/reports/filters/forms.py corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 msgid "Application"
@@ -5482,12 +5485,15 @@ msgstr "Chagua aina ya kesi au fomu ambayo data itachukuliwa kwa ripoti hii."
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py
 msgid "Menu"
 msgstr "Menyu"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/domain/forms.py
-#: corehq/apps/export/forms.py corehq/apps/reports/filters/select.py
+#: corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+#: corehq/apps/reports/filters/select.py
 msgid "Select Application"
 msgstr "Chagua Programu"
 
@@ -5495,10 +5501,12 @@ msgstr "Chagua Programu"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list.html
 #: corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 msgid "Select Menu"
 msgstr "Chagua Menyu"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 msgid "Select Form"
 msgstr "Chagua Fomu"
 
@@ -5852,6 +5860,25 @@ msgid ""
 " file(s)."
 msgstr ""
 "Kunakili programu kumeweza, lakini programu inakosa faili ya multimedia."
+
+#: corehq/apps/app_manager/models/applications.py
+msgid ""
+"Updating the application succeeded, but the application will have errors "
+"because it contains a Mobile Report Module that references a custom report "
+"(UCR) that isn't available in this project space. Multimedia may be absent."
+msgstr ""
+"Sasisho la programu limefanikiwa, lakini programu itakuwa na makosa kwa "
+"sababu ina Moduli ya Ripoti ya Simu inayorejelea ripoti maalum (UCR) ambayo "
+"haipatikani kwenye nafasi hii ya mradi. Vyombo vya habari vinaweza "
+"kukosekana."
+
+#: corehq/apps/app_manager/models/applications.py
+msgid ""
+"Updating the application succeeded, but the application is missing "
+"multimedia file(s)."
+msgstr ""
+"Sasisho la programu limefanikiwa, lakini programu inakosa faili za vyombo "
+"vya habari."
 
 #: corehq/apps/app_manager/models/applications.py
 msgid "Space-separated list of privilege strings from corehq.privileges"
@@ -7977,7 +8004,7 @@ msgstr "Thamani"
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/data_cleaning/forms/columns.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/views.py
+#: corehq/apps/data_dictionary/views.py corehq/apps/public_webforms/forms.py
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
@@ -14668,6 +14695,11 @@ msgstr ""
 "loacation:mytype:referencetype/property. Kwa mfano: "
 "location:outlet:state/name"
 
+#: corehq/apps/builds/models.py
+#, python-format
+msgid "Build version %(value)s does not comply with the x.y.z schema"
+msgstr "Toleo la ujenzi %(value)s halikidhi mpangilio wa x.y.z"
+
 #: corehq/apps/builds/templates/builds/all.html
 msgid "Build Number"
 msgstr "Nambari ya Ujenzi"
@@ -16197,7 +16229,6 @@ msgid "No endpoints configured."
 msgstr "Hakuna vituo vilivyosanidiwa."
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Fields"
 msgid "Field"
 msgstr "Sehemu"
 
@@ -16214,7 +16245,6 @@ msgid "-- Parameter --"
 msgstr "-- Kigezo --"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Close Condition"
 msgid "Copy condition"
 msgstr "Nakili sharti"
 
@@ -16247,7 +16277,6 @@ msgid "match none of the following"
 msgstr "usilinganishe yoyote kati ya yafuatayo"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "No Group"
 msgid "Copy group"
 msgstr "Nakili kundi"
 
@@ -16264,12 +16293,10 @@ msgid "Add Condition"
 msgstr "Ongeza Sharti"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_node.html
-#| msgid "Case Conditions"
 msgid "Paste Condition"
 msgstr "Bandika Sharti"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_node.html
-#| msgid "Case Group"
 msgid "Paste Group"
 msgstr "Bandika Kundi"
 
@@ -16757,6 +16784,7 @@ msgstr "Hakuna maswali ya hivi karibuni"
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
 msgstr "Futa"
@@ -17180,7 +17208,7 @@ msgid "Default consumption values updated"
 msgstr "Thamani za matumizi chaguo-msingi zimesasishwa"
 
 #: corehq/apps/commtrack/views.py corehq/apps/domain/forms.py
-#: corehq/apps/reminders/forms.py
+#: corehq/apps/public_webforms/forms.py corehq/apps/reminders/forms.py
 #: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
 #: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
 #: corehq/apps/sms/models.py corehq/messaging/scheduling/forms.py
@@ -19824,6 +19852,7 @@ msgstr "Imesitishwa"
 
 #: corehq/apps/data_interfaces/models.py
 #: corehq/apps/domain/templates/error.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/integration/kyc/models.py
 #: corehq/apps/integration/payments/const.py
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
@@ -20183,6 +20212,7 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 msgid "Select all"
 msgstr "Chagua zote"
 
@@ -21570,6 +21600,7 @@ msgstr "Tafadhali taja kikomo cha OData feeds."
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/public_webforms/forms.py
 #: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py
@@ -33188,6 +33219,25 @@ msgstr ""
 " la Wingu kutoka kwenye menyu hapo juu. Akaunti na mradi wako vinaweza kuwa "
 "kwenye eneo tofauti."
 
+#: corehq/apps/hqwebapp/forms.py
+#| msgid "Your project spaces:"
+msgid "On the project space:"
+msgid_plural "On the project spaces:"
+msgstr[0] "Eneo lako la miradi:"
+msgstr[1] "Eneo lako la miradi:"
+
+#: corehq/apps/hqwebapp/forms.py
+#| msgid "Your project spaces:"
+msgid "Choose project space"
+msgid_plural "Choose project spaces"
+msgstr[0] "Eneo lako la miradi:"
+msgstr[1] "Eneo lako la miradi:"
+
+#: corehq/apps/hqwebapp/forms.py
+#| msgid "Push content to a downstream project space"
+msgid "Choose at least one project space."
+msgstr "Chagua angalau nafasi moja ya mradi."
+
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid "Open chat"
 msgstr "Fungua gumzo"
@@ -33318,6 +33368,29 @@ msgstr "US"
 #: corehq/apps/hqwebapp/models.py
 msgid "Staging"
 msgstr "Staging"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#| msgid "-The CommCare HQ team"
+msgid "Access CommCare API data"
+msgstr "Fikia data ya API ya CommCare"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#| msgid "Failed to download export."
+msgid "View and download report data"
+msgstr "Tazama na pakua data ya ripoti"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "Allow access to mobile sync and submit endpoints"
+msgstr "Ruhusu ufikiaji wa kusawazisha simu na kuwasilisha mwisho"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "(Deprecated, do not use) Allow access to mobile endpoints"
+msgstr "(Imepitwa na wakati, usitumie) Ruhusu ufikiaji wa mwisho wa simu"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#| msgid "You have been added to the \"{}\" project space."
+msgid "Access data in the \"{}\" project space only"
+msgstr "Fikia data katika nafasi ya mradi \"{}\" pekee"
 
 #: corehq/apps/hqwebapp/tables/elasticsearch/records.py
 msgid "users"
@@ -33794,6 +33867,43 @@ msgstr ""
 "            </div>\n"
 "          </div>\n"
 "        "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#| msgid "Path in Application"
+msgid "Authorize Application"
+msgstr "Idhinisha Programu"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "            Thanks for using %(cc_name)s!\n"
+#| "          "
+msgid ""
+"\n"
+"            Authorize %(application_name)s?\n"
+"          "
+msgstr ""
+"\n"
+"            Idhinisha %(application_name)s?\n"
+"          "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+msgid "This application is requesting permission to:"
+msgstr "Programu hii inaomba ruhusa ya:"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#| msgid ""
+#| "Your project space has not been granted access to data from any other "
+#| "project spaces."
+msgid "This application will have access to data on all your project spaces."
+msgstr ""
+"Programu hii itakuwa na ufikiaji wa data kwenye nafasi zote za mradi wako."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#| msgid "uncategorized"
+msgid "Authorize"
+msgstr "Idhinisha"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/rollout_revert_modal.html
 #, python-format
@@ -38080,6 +38190,108 @@ msgstr "Programu imehifadhiwa!"
 msgid "Edit Program"
 msgstr "Hariri Programu"
 
+#: corehq/apps/public_webforms/forms.py
+msgid "Identifies this public webform. Respondents will see the form's name."
+msgstr ""
+"Inatambulisha fomu hii ya umma ya wavuti. Wajibu watakaojibu wataona jina la"
+" fomu."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Close Requests At"
+msgstr "Funga Maombi Kwa"
+
+#: corehq/apps/public_webforms/forms.py
+msgid ""
+"The public request page closes at this time. One-time links already sent can"
+" be used until they expire."
+msgstr ""
+"Ukurasa wa maombi ya umma utafunga wakati huu. Viungo vya mara moja "
+"vilivyotumwa tayari vinaweza kutumika hadi vimalizike muda wake."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "How Respondents Receive Their One-time Link"
+msgstr "Jinsi Wajibu Wanavyopokea Kiungo Chao cha Mara Moja"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Open to Requests"
+msgstr "Fungua kwa Maombi"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Immediately open this public webform to one-time link requests."
+msgstr ""
+"Fungua mara moja fomu hii ya umma ya wavuti kwa maombi ya kiungo cha mara "
+"moja."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A branded email with a single-use link."
+msgstr "Barua pepe yenye chapa na kiungo cha matumizi mara moja."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A short text with a shortened link. Billed per message sent."
+msgstr ""
+"Ujumbe mfupi wenye kiungo kilichofupishwa. Ada inatozwa kwa kila ujumbe "
+"uliotumwa."
+
+#: corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#: corehq/apps/public_webforms/views.py
+msgid "New Public Webform"
+msgstr "Fomu Mpya ya Umma ya Wavuti"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Create Public Webform"
+msgstr "Unda Fomu ya Umma ya Wavuti"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Please select an application, menu, and form."
+msgstr "Tafadhali chagua programu, menyu, na fomu."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "The selected form can't be used for a public webform."
+msgstr "Fomu iliyochaguliwa haiwezi kutumika kwa fomu ya umma ya wavuti."
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#: corehq/apps/public_webforms/views.py corehq/privileges.py
+#: corehq/tabs/tabclasses.py
+msgid "Public Webforms"
+msgstr "Fomu za Wavuti za Umma"
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+msgid ""
+"\n"
+"      Publish a registration or survey form to a public URL. Respondents request\n"
+"      a one-time link, pass a bot check, and complete the form once — no\n"
+"      CommCare account needed. Manage which forms are open, when they close, and\n"
+"      revoke access at any time.\n"
+"    "
+msgstr ""
+"\n"
+"      Chapisha fomu ya usajili au utafiti kwenye URL ya umma. Wajibu wanaomba\n"
+"      kiungo cha mara moja, hupitia ukaguzi wa roboti, na kukamilisha fomu mara moja  hakuna\n"
+"      akaunti ya CommCare inahitajika. Dhibiti ni fomu zipi zimefunguliwa, lini zinafungwa, na\n"
+"      batilisha ufikiaji wakati wowote.\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+msgid ""
+"\n"
+"          Only <strong>registration</strong> and <strong>survey</strong> forms\n"
+"          are eligible. Forms that update existing cases can't be made public.\n"
+"        "
+msgstr ""
+"\n"
+"          Ni <strong>fomu za usajili</strong> na <strong>fomu za utafiti</strong> pekee\n"
+"          zinazostahili. Fomu zinazosasisha kesi zilizopo haziwezi kufanywa kuwa za umma.\n"
+"        "
+
+#: corehq/apps/public_webforms/views.py
+msgid "Manage Public Webforms"
+msgstr "Dhibiti Fomu za Umma za Wavuti"
+
+#: corehq/apps/public_webforms/views.py
+msgid "Public webform created."
+msgstr "Fomu ya umma ya wavuti imeundwa."
+
 #: corehq/apps/registration/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
@@ -40590,7 +40802,6 @@ msgid "Record Status"
 msgstr "Hali ya Rekodi"
 
 #: corehq/apps/reports/filters/select.py
-#| msgid "Payload"
 msgid "Payload Error"
 msgstr "Hitilafu ya Payload"
 
@@ -57627,12 +57838,10 @@ msgid "Unknown user"
 msgstr "Mtumiaji hajulikani"
 
 #: corehq/motech/repeaters/models.py
-#| msgid "Filter {} not found!"
 msgid "Form {} is not found"
 msgstr "Fomu {} haijapatikana"
 
 #: corehq/motech/repeaters/models.py
-#| msgid "{} not found"
 msgid "Case {} is not found"
 msgstr "Kesi {} haijapatikana"
 
@@ -57960,7 +58169,6 @@ msgid "Preview Payloads"
 msgstr "Onyesha Payloads"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-#| msgid "Gateway could not be found."
 msgid "The payload could not be found."
 msgstr "Payload haikuweza kupatikana."
 
@@ -58379,10 +58587,6 @@ msgstr "Maswali ya Msimamizi Yaliyofungwa"
 msgid "Save to Case"
 msgstr "Hifadhi kwenye Kesi"
 
-#: corehq/privileges.py
-msgid "Public Webforms"
-msgstr "Fomu za Wavuti za Umma"
-
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Ripoti za Mjenzi wa Ripoti"
@@ -58458,6 +58662,10 @@ msgstr "Programu Zangu"
 #: corehq/tabs/tabclasses.py
 msgid "New Application"
 msgstr "Programu Mpya"
+
+#: corehq/tabs/tabclasses.py
+msgid "Create and manage public webforms."
+msgstr "Unda na simamia fomu za mtandaoni za umma."
 
 #: corehq/tabs/tabclasses.py
 msgid "Test Inbound SMS"
@@ -61901,9 +62109,6 @@ msgstr "Weka JSON halali"
 #~ "\n"
 #~ "    %(inviter)s amekualika kujiunga na mradi wa %(domain)s kwenye CommCare HQ.\n"
 #~ "    Mwaliko huu unaisha baada ya siku %(days)s.\n"
-
-#~ msgid "-The CommCare HQ team"
-#~ msgstr "-Timu ya CommCare HQ"
 
 #~ msgid "Thank you for using CommCare HQ."
 #~ msgstr "Asante kwa kutumia CommCare HQ."

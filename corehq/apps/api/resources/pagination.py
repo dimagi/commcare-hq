@@ -39,6 +39,21 @@ class NoCountingPaginator(Paginator):
         return None
 
 
+class PreSlicedPaginator(Paginator):
+    """
+    Paginator for resources whose ``obj_get_list`` has already applied
+    ``limit`` and ``offset`` to the underlying query, so that the objects
+    handed to the paginator *are* the requested page.
+
+    The default paginator would slice that page a second time, dropping
+    ``offset`` records that the query had already skipped, which makes any
+    request with ``offset >= limit`` come back empty.
+    """
+
+    def get_slice(self, limit, offset):
+        return self.objects
+
+
 class DoesNothingPaginator(Paginator):
     def page(self):
         return {

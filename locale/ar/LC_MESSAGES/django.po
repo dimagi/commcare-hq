@@ -1274,6 +1274,7 @@ msgstr ""
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
@@ -1288,7 +1289,7 @@ msgstr ""
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
-#: corehq/apps/registration/forms.py
+#: corehq/apps/public_webforms/forms.py corehq/apps/registration/forms.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/forms.py
@@ -6120,6 +6121,7 @@ msgstr "حالة"
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py corehq/apps/reports/standard/inspect.py
 #: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
 #: corehq/apps/reports/templates/reports/reportdata/bootstrap5/case_data.html
@@ -6140,8 +6142,9 @@ msgstr "مصدر البيانات"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/linked_domain/const.py corehq/apps/reports/filters/forms.py
-#: corehq/apps/reports/filters/select.py
+#: corehq/apps/linked_domain/const.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+#: corehq/apps/reports/filters/forms.py corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 msgid "Application"
@@ -6189,12 +6192,15 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py
 msgid "Menu"
 msgstr "القائمة"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/domain/forms.py
-#: corehq/apps/export/forms.py corehq/apps/reports/filters/select.py
+#: corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+#: corehq/apps/reports/filters/select.py
 msgid "Select Application"
 msgstr "اختر التطبيق"
 
@@ -6202,10 +6208,12 @@ msgstr "اختر التطبيق"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list.html
 #: corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 msgid "Select Menu"
 msgstr "اختر القائمة"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 msgid "Select Form"
 msgstr "اختر النموذج"
 
@@ -6554,6 +6562,31 @@ msgstr ""
 msgid ""
 "Copying the application succeeded, but the application is missing multimedia "
 "file(s)."
+msgstr "تم نسخ التطبيق بنجاح، لكن التطبيق يفتقد ملف/ملفات وسائط متعددة."
+
+#: corehq/apps/app_manager/models/applications.py
+#, fuzzy
+#| msgid ""
+#| "Copying the application succeeded, but the application will have errors "
+#| "because your application contains a Mobile Report Module that references "
+#| "a UCR configured in this project space. Multimedia may be absent."
+msgid ""
+"Updating the application succeeded, but the application will have errors "
+"because it contains a Mobile Report Module that references a custom report "
+"(UCR) that isn't available in this project space. Multimedia may be absent."
+msgstr ""
+"تم نسخ التطبيق بنجاح، لكن سيحتوي التطبيق على أخطاء لأن تطبيقك يحتوي على وحدة "
+"تقرير جوال تشير إلى UCR تم تكوينه في مساحة المشروع هذه. قد تكون الوسائط "
+"المتعددة غير متوفرة."
+
+#: corehq/apps/app_manager/models/applications.py
+#, fuzzy
+#| msgid ""
+#| "Copying the application succeeded, but the application is missing "
+#| "multimedia file(s)."
+msgid ""
+"Updating the application succeeded, but the application is missing "
+"multimedia file(s)."
 msgstr "تم نسخ التطبيق بنجاح، لكن التطبيق يفتقد ملف/ملفات وسائط متعددة."
 
 #: corehq/apps/app_manager/models/applications.py
@@ -8677,7 +8710,7 @@ msgstr "القيمة"
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/data_cleaning/forms/columns.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/views.py
+#: corehq/apps/data_dictionary/views.py corehq/apps/public_webforms/forms.py
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
@@ -16381,6 +16414,11 @@ msgstr ""
 "الخاصية غير منسقة بشكل صحيح. يجب أن تكون بالتنسيق التالي: location:mytype:"
 "referencetype/property. على سبيل المثال: location:outlet:state/name"
 
+#: corehq/apps/builds/models.py
+#, python-format
+msgid "Build version %(value)s does not comply with the x.y.z schema"
+msgstr ""
+
 #: corehq/apps/builds/templates/builds/all.html
 msgid "Build Number"
 msgstr "رقم البناء"
@@ -18614,7 +18652,9 @@ msgstr "لا توجد استعلامات حديثة"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/domain/forms.py corehq/apps/sms/templates/sms/chat_contacts.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#: corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
 msgstr "مسح"
 
@@ -19056,7 +19096,7 @@ msgid "Default consumption values updated"
 msgstr "تم تحديث قيم الاستهلاك الافتراضية"
 
 #: corehq/apps/commtrack/views.py corehq/apps/domain/forms.py
-#: corehq/apps/reminders/forms.py
+#: corehq/apps/public_webforms/forms.py corehq/apps/reminders/forms.py
 #: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
 #: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
 #: corehq/apps/sms/models.py corehq/messaging/scheduling/forms.py
@@ -22074,6 +22114,7 @@ msgstr "متوقف"
 
 #: corehq/apps/data_interfaces/models.py
 #: corehq/apps/domain/templates/error.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/integration/kyc/models.py
 #: corehq/apps/integration/payments/const.py
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
@@ -22462,6 +22503,7 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 msgid "Select all"
 msgstr "تحديد الكل"
 
@@ -23895,6 +23937,7 @@ msgstr "يرجى تحديد حد لتغذيات OData."
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/public_webforms/forms.py
 #: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py
@@ -36388,6 +36431,36 @@ msgid ""
 "be in a different location."
 msgstr ""
 
+#: corehq/apps/hqwebapp/forms.py
+#, fuzzy
+#| msgid "Your project spaces:"
+msgid "On the project space:"
+msgid_plural "On the project spaces:"
+msgstr[0] "مساحات مشاريعك:"
+msgstr[1] "مساحات مشاريعك:"
+msgstr[2] "مساحات مشاريعك:"
+msgstr[3] "مساحات مشاريعك:"
+msgstr[4] "مساحات مشاريعك:"
+msgstr[5] "مساحات مشاريعك:"
+
+#: corehq/apps/hqwebapp/forms.py
+#, fuzzy
+#| msgid "Your project spaces:"
+msgid "Choose project space"
+msgid_plural "Choose project spaces"
+msgstr[0] "مساحات مشاريعك:"
+msgstr[1] "مساحات مشاريعك:"
+msgstr[2] "مساحات مشاريعك:"
+msgstr[3] "مساحات مشاريعك:"
+msgstr[4] "مساحات مشاريعك:"
+msgstr[5] "مساحات مشاريعك:"
+
+#: corehq/apps/hqwebapp/forms.py
+#, fuzzy
+#| msgid "Push content to a downstream project space"
+msgid "Choose at least one project space."
+msgstr "دفع المحتوى إلى مساحة مشروع فرعية"
+
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #, fuzzy
 #| msgid "Open"
@@ -36551,6 +36624,32 @@ msgstr ""
 #| msgid "Messaging"
 msgid "Staging"
 msgstr "الرسائل"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#, fuzzy
+#| msgid "-The CommCare HQ team"
+msgid "Access CommCare API data"
+msgstr "-فريق CommCare HQ"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#, fuzzy
+#| msgid "Failed to download export."
+msgid "View and download report data"
+msgstr "فشل تنزيل التصدير."
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "Allow access to mobile sync and submit endpoints"
+msgstr ""
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "(Deprecated, do not use) Allow access to mobile endpoints"
+msgstr ""
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#, fuzzy
+#| msgid "You have been added to the \"{}\" project space."
+msgid "Access data in the \"{}\" project space only"
+msgstr "تمت إضافتك إلى مساحة المشروع \"{}\"."
 
 #: corehq/apps/hqwebapp/tables/elasticsearch/records.py
 #, fuzzy
@@ -37077,6 +37176,45 @@ msgstr ""
 "            </div>\n"
 "          </div>\n"
 "        "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, fuzzy
+#| msgid "Path in Application"
+msgid "Authorize Application"
+msgstr "المسار في التطبيق"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            Thanks for using %(cc_name)s!\n"
+#| "          "
+msgid ""
+"\n"
+"            Authorize %(application_name)s?\n"
+"          "
+msgstr ""
+"\n"
+"            شكرًا لاستخدامك %(cc_name)s!\n"
+"          "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+msgid "This application is requesting permission to:"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, fuzzy
+#| msgid ""
+#| "Your project space has not been granted access to data from any other "
+#| "project spaces."
+msgid "This application will have access to data on all your project spaces."
+msgstr "لم يتم منح مساحتك حق الوصول إلى بيانات من أي مساحات مشاريع أخرى."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, fuzzy
+#| msgid "uncategorized"
+msgid "Authorize"
+msgstr "غير مصنف"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/rollout_revert_modal.html
 #, python-format
@@ -41697,6 +41835,112 @@ msgstr "تم حفظ البرنامج!"
 #: corehq/apps/programs/views.py
 msgid "Edit Program"
 msgstr "تعديل البرنامج"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Identifies this public webform. Respondents will see the form's name."
+msgstr ""
+
+#: corehq/apps/public_webforms/forms.py
+#, fuzzy
+#| msgid "Delete Request"
+msgid "Close Requests At"
+msgstr "حذف الطلب"
+
+#: corehq/apps/public_webforms/forms.py
+msgid ""
+"The public request page closes at this time. One-time links already sent can "
+"be used until they expire."
+msgstr ""
+
+#: corehq/apps/public_webforms/forms.py
+msgid "How Respondents Receive Their One-time Link"
+msgstr ""
+
+#: corehq/apps/public_webforms/forms.py
+#, fuzzy
+#| msgid "Delete Request"
+msgid "Open to Requests"
+msgstr "حذف الطلب"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Immediately open this public webform to one-time link requests."
+msgstr ""
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A branded email with a single-use link."
+msgstr ""
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A short text with a shortened link. Billed per message sent."
+msgstr ""
+
+#: corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#: corehq/apps/public_webforms/views.py
+#, fuzzy
+#| msgid "Public Name"
+msgid "New Public Webform"
+msgstr "الاسم العام"
+
+#: corehq/apps/public_webforms/forms.py
+#, fuzzy
+#| msgid "Public Name"
+msgid "Create Public Webform"
+msgstr "الاسم العام"
+
+#: corehq/apps/public_webforms/forms.py
+#, fuzzy
+#| msgid "Please select application"
+msgid "Please select an application, menu, and form."
+msgstr "يرجى اختيار التطبيق"
+
+#: corehq/apps/public_webforms/forms.py
+#, fuzzy
+#| msgid "The selected form does not have a schedule enabled."
+msgid "The selected form can't be used for a public webform."
+msgstr "النموذج المحدد لا يحتوي على جدول زمني مفعل."
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#: corehq/apps/public_webforms/views.py corehq/privileges.py
+#: corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "Public Name"
+msgid "Public Webforms"
+msgstr "الاسم العام"
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+msgid ""
+"\n"
+"      Publish a registration or survey form to a public URL. Respondents "
+"request\n"
+"      a one-time link, pass a bot check, and complete the form once — no\n"
+"      CommCare account needed. Manage which forms are open, when they close, "
+"and\n"
+"      revoke access at any time.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+msgid ""
+"\n"
+"          Only <strong>registration</strong> and <strong>survey</strong> "
+"forms\n"
+"          are eligible. Forms that update existing cases can't be made "
+"public.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/public_webforms/views.py
+#, fuzzy
+#| msgid "Public Name"
+msgid "Manage Public Webforms"
+msgstr "الاسم العام"
+
+#: corehq/apps/public_webforms/views.py
+#, fuzzy
+#| msgid "Public Name"
+msgid "Public webform created."
+msgstr "الاسم العام"
 
 #: corehq/apps/registration/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
@@ -63064,12 +63308,6 @@ msgstr "عرض الأسئلة المتقدمة"
 msgid "Save to Case"
 msgstr "حفظ الحالة"
 
-#: corehq/privileges.py
-#, fuzzy
-#| msgid "Public Name"
-msgid "Public Webforms"
-msgstr "الاسم العام"
-
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "تقارير منشئ التقارير"
@@ -63145,6 +63383,12 @@ msgstr "تطبيقاتي"
 #: corehq/tabs/tabclasses.py
 msgid "New Application"
 msgstr "تطبيق جديد"
+
+#: corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "Create and release new build for apps"
+msgid "Create and manage public webforms."
+msgstr "إنشاء وإصدار بناء جديد للتطبيقات"
 
 #: corehq/tabs/tabclasses.py
 msgid "Test Inbound SMS"
@@ -66996,9 +67240,6 @@ msgstr "أدخل JSON صالحًا"
 #~ "\n"
 #~ "    %(inviter)s دعاك للانضمام إلى مشروع %(domain)s على CommCare HQ.\n"
 #~ "    تنتهي صلاحية هذه الدعوة خلال %(days)s يوم/أيام.\n"
-
-#~ msgid "-The CommCare HQ team"
-#~ msgstr "-فريق CommCare HQ"
 
 #~ msgid "Thank you for using CommCare HQ."
 #~ msgstr "شكرًا لاستخدامك CommCare HQ."

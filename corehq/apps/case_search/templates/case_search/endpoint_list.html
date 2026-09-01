@@ -6,12 +6,40 @@
 {% block page_content %}
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="h4 mb-0">{% trans "Case Search Endpoints" %}</h2>
-    <a
-      href="{% url 'case_search_endpoint_new' domain %}"
-      class="btn btn-primary"
-    >
-      {% trans "New Endpoint" %}
-    </a>
+    <div class="btn-group">
+      {% with primary=target_types.0 %}
+        <a
+          href="{% url 'case_search_endpoint_new' domain %}?target_type={{ primary.value }}"
+          class="btn btn-primary"
+        >
+          {% blocktrans trimmed with label=primary.label %}
+            New Endpoint ({{ label }})
+          {% endblocktrans %}
+        </a>
+      {% endwith %}
+      <button
+        type="button"
+        class="btn btn-primary dropdown-toggle dropdown-toggle-split"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+      >
+        <span class="visually-hidden">{% trans "Toggle Dropdown" %}</span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        {% for target_type in target_types|slice:"1:" %}
+          <li>
+            <a
+              class="dropdown-item"
+              href="{% url 'case_search_endpoint_new' domain %}?target_type={{ target_type.value }}"
+            >
+              {% blocktrans trimmed with label=target_type.label %}
+                New Endpoint ({{ label }})
+              {% endblocktrans %}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
   </div>
 
   {% if endpoints %}
@@ -19,7 +47,7 @@
       <thead>
         <tr>
           <th>{% trans "Name" %}</th>
-          <th>{% trans "Target Type" %}</th>
+          <th>{% trans "Endpoint Type" %}</th>
           <th>{% trans "Case Type" %}</th>
           <th>{% trans "Version" %}</th>
           <th>{% trans "Updated On" %}</th>
@@ -32,7 +60,7 @@
           <tr>
             <td>{{ endpoint.name }}</td>
             <td>{{ endpoint.get_target_type_display }}</td>
-            <td>{{ endpoint.case_type }}</td>
+            <td>{{ endpoint.current_version.case_type }}</td>
             <td>
               {% if endpoint.current_version %}
                 v{{ endpoint.current_version.version_number }}

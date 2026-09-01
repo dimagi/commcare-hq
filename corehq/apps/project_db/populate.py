@@ -106,8 +106,6 @@ def coerce_to_select(value):
     return [x for x in str(value).split(' ') if x]
 
 
-
-
 def coerce_to_gps(value):
     """Parse a GPS case property into an earthdistance ``earth`` cube literal."""
     try:
