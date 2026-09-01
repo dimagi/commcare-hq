@@ -1281,6 +1281,13 @@ class Subscription(models.Model):
         return self.plan_version.plan.edition == SoftwarePlanEdition.FREE
 
     @property
+    def should_skip_downgrade(self):
+        return self.skip_auto_downgrade and (
+            self.skip_auto_downgrade_until is None
+            or self.skip_auto_downgrade_until > datetime.date.today()
+        )
+
+    @property
     def allowed_attr_changes(self):
         """
         These are the attributes of a Subscription that can always be

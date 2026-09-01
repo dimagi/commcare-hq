@@ -322,8 +322,13 @@ class TestSubscriptionForm(BaseAccountingTest):
         )
         assert kwargs['web_user'] == self.web_user
         assert kwargs['internal_change']
-        for k, v in self.shared_keywords().items():
+        expected = self.shared_keywords()
+        expected_days = expected.pop('skip_auto_downgrade_days')
+        for k, v in expected.items():
             assert kwargs[k] == v
+        assert kwargs['skip_auto_downgrade_until'] == datetime.date.today() + datetime.timedelta(
+            days=expected_days
+        )
 
     def test_form_data_update_subscription(self):
         subscription = Subscription.new_domain_subscription(
@@ -343,8 +348,88 @@ class TestSubscriptionForm(BaseAccountingTest):
             kwargs = update_subscription.call_args.kwargs
 
         assert kwargs['web_user'] == self.web_user
-        for k, v in self.shared_keywords().items():
+        expected = self.shared_keywords()
+        expected_days = expected.pop('skip_auto_downgrade_days')
+        for k, v in expected.items():
             assert kwargs[k] == v
+        assert kwargs['skip_auto_downgrade_until'] == datetime.date.today() + datetime.timedelta(
+            days=expected_days
+        )
+
+    def test_shared_keywords_computes_skip_auto_downgrade_until_from_days(self):
+        subscription_form = SubscriptionForm(
+            subscription=None,
+            account_id=self.plan.id,
+            web_user=self.web_user,
+        )
+        subscription_form.cleaned_data = {**self.shared_keywords(), 'skip_auto_downgrade_days': 5}
+
+        assert subscription_form.shared_keywords['skip_auto_downgrade_until'] == (
+            datetime.date.today() + datetime.timedelta(days=5)
+        )
+
+    def test_shared_keywords_blank_skip_auto_downgrade_days_means_no_expiration(self):
+        subscription_form = SubscriptionForm(
+            subscription=None,
+            account_id=self.plan.id,
+            web_user=self.web_user,
+        )
+        subscription_form.cleaned_data = {**self.shared_keywords(), 'skip_auto_downgrade_days': None}
+
+        assert subscription_form.shared_keywords['skip_auto_downgrade_until'] is None
+
+    def test_editing_subscription_prefills_skip_auto_downgrade_days_remaining(self):
+        subscription = Subscription.new_domain_subscription(
+            domain=self.domain.name,
+            plan_version=self.plan,
+            account=self.account,
+        )
+        subscription.skip_auto_downgrade = True
+        subscription.skip_auto_downgrade_until = datetime.date.today() + datetime.timedelta(days=10)
+        subscription.save()
+
+        subscription_form = SubscriptionForm(
+            subscription=subscription,
+            account_id=self.account.id,
+            web_user=self.web_user,
+        )
+
+        assert subscription_form.fields['skip_auto_downgrade'].initial is True
+        assert subscription_form.fields['skip_auto_downgrade_days'].initial == 10
+
+    def test_editing_subscription_with_expired_skip_auto_downgrade_unchecks_checkbox(self):
+        subscription = Subscription.new_domain_subscription(
+            domain=self.domain.name,
+            plan_version=self.plan,
+            account=self.account,
+        )
+        subscription.skip_auto_downgrade = True
+        subscription.skip_auto_downgrade_until = datetime.date.today() - datetime.timedelta(days=3)
+        subscription.save()
+
+        subscription_form = SubscriptionForm(
+            subscription=subscription,
+            account_id=self.account.id,
+            web_user=self.web_user,
+        )
+
+        assert subscription_form.fields['skip_auto_downgrade'].initial is False
+        assert subscription_form.fields['skip_auto_downgrade_days'].initial is None
+
+    def test_editing_subscription_with_no_expiration_leaves_skip_auto_downgrade_days_blank(self):
+        subscription = Subscription.new_domain_subscription(
+            domain=self.domain.name,
+            plan_version=self.plan,
+            account=self.account,
+        )
+
+        subscription_form = SubscriptionForm(
+            subscription=subscription,
+            account_id=self.account.id,
+            web_user=self.web_user,
+        )
+
+        assert subscription_form.fields['skip_auto_downgrade_days'].initial is None
 
     @staticmethod
     def shared_keywords():
@@ -364,6 +449,7 @@ class TestSubscriptionForm(BaseAccountingTest):
             'funding_source': 'FundingSource',
             'skip_auto_downgrade': True,
             'skip_auto_downgrade_reason': 'You said so',
+            'skip_auto_downgrade_days': 30,
             'auto_renew': True,
         }
 

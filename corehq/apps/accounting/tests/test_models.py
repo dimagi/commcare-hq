@@ -145,6 +145,36 @@ class TestSubscription(BaseAccountingTest):
         self.subscription.refresh_from_db()
         assert self.subscription.skip_auto_downgrade_until == new_expiration
 
+    def test_should_skip_downgrade_is_false_when_skip_auto_downgrade_is_false(self):
+        self.subscription.skip_auto_downgrade = False
+        self.subscription.skip_auto_downgrade_until = None
+        assert not self.subscription.should_skip_downgrade
+
+    def test_should_skip_downgrade_is_true_when_skip_active_with_no_expiration_set(self):
+        self.subscription.skip_auto_downgrade = True
+        self.subscription.skip_auto_downgrade_until = None
+        assert self.subscription.should_skip_downgrade
+
+    def test_should_skip_downgrade_is_true_when_skip_active_for_future_expiration(self):
+        self.subscription.skip_auto_downgrade = True
+        self.subscription.skip_auto_downgrade_until = datetime.date.today() + datetime.timedelta(days=1)
+        assert self.subscription.should_skip_downgrade
+
+    def test_should_skip_downgrade_is_false_when_expiration_is_today(self):
+        self.subscription.skip_auto_downgrade = True
+        self.subscription.skip_auto_downgrade_until = datetime.date.today()
+        assert not self.subscription.should_skip_downgrade
+
+    def test_should_skip_downgrade_is_false_when_expiration_is_in_the_past(self):
+        self.subscription.skip_auto_downgrade = True
+        self.subscription.skip_auto_downgrade_until = datetime.date.today() - datetime.timedelta(days=1)
+        assert not self.subscription.should_skip_downgrade
+
+    def test_should_skip_downgrade_is_false_when_expired_but_skip_auto_downgrade_is_false(self):
+        self.subscription.skip_auto_downgrade = False
+        self.subscription.skip_auto_downgrade_until = datetime.date.today() - datetime.timedelta(days=1)
+        assert not self.subscription.should_skip_downgrade
+
     def test_no_activation(self):
         tasks.activate_subscriptions(based_on_date=self.subscription.date_start - datetime.timedelta(30))
         subscription = Subscription.visible_objects.get(id=self.subscription.id)

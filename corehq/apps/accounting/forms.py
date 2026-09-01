@@ -592,6 +592,12 @@ class SubscriptionForm(forms.Form):
         max_length=256,
         required=False,
     )
+    skip_auto_downgrade_days = forms.IntegerField(
+        label=gettext_lazy("Extension length"),
+        help_text=gettext_lazy("Leave blank to skip indefinitely."),
+        required=False,
+        min_value=1,
+    )
     auto_renew = forms.BooleanField(
         label=gettext_lazy("Enable auto renewal"),
         help_text=gettext_lazy("Applies if subscription has a future end date and is type 'Product'"),
@@ -682,8 +688,13 @@ class SubscriptionForm(forms.Form):
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
             self.fields['funding_source'].initial = subscription.funding_source
-            self.fields['skip_auto_downgrade'].initial = subscription.skip_auto_downgrade
-            self.fields['skip_auto_downgrade_reason'].initial = subscription.skip_auto_downgrade_reason
+            self.fields['skip_auto_downgrade'].initial = subscription.should_skip_downgrade
+            if subscription.should_skip_downgrade:
+                self.fields['skip_auto_downgrade_reason'].initial = subscription.skip_auto_downgrade_reason
+                if subscription.skip_auto_downgrade_until:
+                    self.fields['skip_auto_downgrade_days'].initial = (
+                        subscription.skip_auto_downgrade_until - today
+                    ).days
             self.fields['auto_renew'].initial = subscription.auto_renew
 
             if (
@@ -770,6 +781,7 @@ class SubscriptionForm(forms.Form):
                     crispy.Field('skip_auto_downgrade', data_bind="checked: skipAutoDowngrade")
                 ),
                 crispy.Div(
+                    crispy.Field('skip_auto_downgrade_days'),
                     crispy.Field(
                         'skip_auto_downgrade_reason', data_bind="attr: {required: skipAutoDowngrade}"
                     ),
@@ -820,6 +832,11 @@ class SubscriptionForm(forms.Form):
 
     @property
     def shared_keywords(self):
+        skip_auto_downgrade_days = self.cleaned_data['skip_auto_downgrade_days']
+        skip_auto_downgrade_until = (
+            datetime.date.today() + datetime.timedelta(days=skip_auto_downgrade_days)
+            if skip_auto_downgrade_days is not None else None
+        )
         return dict(
             date_start=self.cleaned_data['date_start'],
             date_end=self.cleaned_data['date_end'],
@@ -835,6 +852,7 @@ class SubscriptionForm(forms.Form):
             funding_source=self.cleaned_data['funding_source'],
             skip_auto_downgrade=self.cleaned_data['skip_auto_downgrade'],
             skip_auto_downgrade_reason=self.cleaned_data['skip_auto_downgrade_reason'],
+            skip_auto_downgrade_until=skip_auto_downgrade_until,
             auto_renew=self.cleaned_data['auto_renew'],
         )
 
