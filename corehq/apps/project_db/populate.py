@@ -2,21 +2,20 @@ import datetime
 import math
 from decimal import Decimal, InvalidOperation
 
+from jsonobject.exceptions import BadValueError
 from sqlalchemy import ARRAY, Text
 from sqlalchemy.dialects.postgresql import insert
 
-from jsonobject.exceptions import BadValueError
-
+from couchforms.geopoint import GeoPoint
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.data_dictionary.models import CaseProperty
-from couchforms.geopoint import GeoPoint
 
 from .table_ddl import CaseTable, get_project_db_engine, property_column
 
 
-def send_to_project_db(domain, case_type, cases):
-    """Bulk upsert CommCareCases of a single case type"""
+def populate_case_type(domain, case_type, cases):
+    """Chunked upsert CommCareCases of a single case type"""
     engine = get_project_db_engine()
     table = CaseTable(domain, case_type).reflect()
     if table is not None:
