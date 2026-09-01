@@ -53,6 +53,10 @@ from corehq.apps.api.resources.v0_5 import (
 )
 from corehq.apps.zapier.api.v0_5 import ZapierUserDomains
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
+from corehq.apps.data_interfaces.api.views import (
+    bulk_form_action,
+    bulk_form_action_status,
+)
 from corehq.apps.fixtures import resources as fixtures
 from corehq.apps.hqcase.views import case_api, case_api_bulk_fetch
 from corehq.apps.hqwebapp.decorators import waf_allow
@@ -164,6 +168,11 @@ urlpatterns = [
     url(r'ucr/(?P<api_version>v1)/', v0_5.get_ucr_data, name="api_get_ucr_data"),
     v0_4.ApplicationResource.get_urlpattern('v1'),
     v0_4.CommCareCaseResource.get_urlpattern('v1'),
+    # Must be defined before XFormInstance URLs since form/v1/bulk-action
+    # would match form/v1/<form-id>
+    url(r'form/v1/bulk-action/?$', bulk_form_action, name='bulk_form_action'),
+    url(r'form/v1/bulk-action/(?P<job_id>[\w-]+)/?$', bulk_form_action_status,
+        name='bulk_form_action_status'),
     v0_4.XFormInstanceResource.get_urlpattern('v1'),
     v0_4.SingleSignOnResource.get_urlpattern('v1'),
     v0_5.CommCareUserResource.get_urlpattern('v1'),
