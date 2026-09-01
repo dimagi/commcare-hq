@@ -2,6 +2,7 @@
 import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
+import moment from "moment";
 import widgets from "accounting/js/widgets";
 import "accounting/js/credits_tab";
 import "jquery-ui/ui/widgets/datepicker";
@@ -47,6 +48,16 @@ var invoiceModel = function () {
     self.noInvoice = ko.observable(invoice);
     var skipAutoDowngrade = $('#id_skip_auto_downgrade').prop("checked");
     self.skipAutoDowngrade = ko.observable(skipAutoDowngrade);
+    self.skipAutoDowngradeDays = ko.observable($('#id_skip_auto_downgrade_days').val());
+    self.skipAutoDowngradeHint = ko.computed(function () {
+        var value = self.skipAutoDowngradeDays();
+        var numDays = parseInt(value, 10);
+        if (!value || isNaN(numDays)) {
+            return gettext("Auto-pause will be skipped indefinitely");
+        }
+        var resumeDate = moment().add(numDays, 'days').format("LL");
+        return interpolate(gettext("Auto-pause will resume on %(date)s"), {"date": resumeDate}, true);
+    });
     return self;
 };
 

@@ -594,7 +594,7 @@ class SubscriptionForm(forms.Form):
     )
     skip_auto_downgrade_days = forms.IntegerField(
         label=gettext_lazy("Extension length"),
-        help_text=gettext_lazy("Leave blank to skip indefinitely."),
+        help_text=mark_safe('<span data-bind="text: skipAutoDowngradeHint"></span>'),  # nosec: no user input
         required=False,
         min_value=1,
     )
@@ -781,7 +781,10 @@ class SubscriptionForm(forms.Form):
                     crispy.Field('skip_auto_downgrade', data_bind="checked: skipAutoDowngrade")
                 ),
                 crispy.Div(
-                    crispy.Field('skip_auto_downgrade_days'),
+                    crispy.Field(
+                        'skip_auto_downgrade_days',
+                        data_bind="value: skipAutoDowngradeDays, valueUpdate: 'input'",
+                    ),
                     crispy.Field(
                         'skip_auto_downgrade_reason', data_bind="attr: {required: skipAutoDowngrade}"
                     ),
