@@ -199,19 +199,27 @@ class TestCaseSearchEndpoint(TestCase):
 
 
 SQL_DOMAIN = 'test-endpoint-sql'
+PET_PROPERTIES = {
+    'color': 'plain',
+    'weight': 'number',
+    'species': 'select',
+    'shot_due': 'date',
+}
 PETS = [
-    ('p1', 'Fido', 'brown', '20'),
-    ('p2', 'Rex', 'black', '5'),
+    ('p1', 'Fido', {'color': 'brown', 'weight': '20',
+                    'species': 'dog', 'shot_due': '2026-08-18'}),
+    ('p2', 'Rex', {'color': 'black', 'weight': '5',
+                   'species': 'cat lion', 'shot_due': '2026-01-05'}),
 ]
 
 
 @fixture
 def pet_table():
-    with project_db_table(SQL_DOMAIN, 'pet', {'color': 'plain', 'weight': 'number'}):
+    with project_db_table(SQL_DOMAIN, 'pet', PET_PROPERTIES):
         yield
 
 
-def _make_sql_endpoint(sql):
+def _make_sql_endpoint(sql, parameters=None):
     endpoint = CaseSearchEndpoint.objects.create(
         domain=SQL_DOMAIN,
         name='pets',
@@ -222,6 +230,7 @@ def _make_sql_endpoint(sql):
         version_number=1,
         case_type='pet',
         dangerous_sql=sql,
+        parameters=parameters or [],
         action=CaseSearchEndpointVersion.Action.CREATE,
     )
     endpoint.current_version = version
@@ -242,9 +251,9 @@ def _populate_pets():
             server_modified_on=datetime.datetime(2025, 6, 1),
             closed=False,
             external_id='',
-            case_json={'color': color, 'weight': weight},
+            case_json=properties,
             indices=[],
-        ) for case_id, name, color, weight in PETS
+        ) for case_id, name, properties in PETS
     ])
 
 
@@ -264,10 +273,7 @@ def test_sql_endpoint_without_parameters():
 
     assert [case.name for case in cases] == ['Fido', 'Rex']
     assert [case.case_id for case in cases] == ['p1', 'p2']
-    assert [case.case_json for case in cases] == [
-        {'color': 'brown', 'weight': '20'},
-        {'color': 'black', 'weight': '5'},
-    ]
+    assert [case.case_json for case in cases] == [props for _, _, props in PETS]
     assert all(case.domain == SQL_DOMAIN and case.type == 'pet' for case in cases)
 
 
@@ -290,7 +296,7 @@ COLOR_SQL = (
 @flag_enabled('CASE_SEARCH_ENDPOINTS')
 def test_sql_endpoint_with_text_parameter(criteria, expected):
     _populate_pets()
-    endpoint = _make_sql_endpoint(COLOR_SQL)
+    endpoint = _make_sql_endpoint(COLOR_SQL, [{'name': 'color', 'type': 'text'}])
 
     cases = _run_sql_query(endpoint, criteria)
 
@@ -316,8 +322,70 @@ WEIGHT_SQL = (
 @flag_enabled('CASE_SEARCH_ENDPOINTS')
 def test_sql_endpoint_with_number_parameter(criteria, expected):
     _populate_pets()
-    endpoint = _make_sql_endpoint(WEIGHT_SQL)
+    endpoint = _make_sql_endpoint(WEIGHT_SQL, [{'name': 'weight', 'type': 'number'}])
 
     cases = _run_sql_query(endpoint, criteria)
 
     assert sorted(case.name for case in cases) == expected
+
+
+SPECIES_SQL = (
+    "SELECT * FROM pet "
+    "WHERE (:species IS NULL OR select_prop__species && :species)"
+)
+
+
+@pytest.mark.parametrize('criteria, expected', [
+    # A select parameter is bound as a list however many values were searched
+    ([SearchCriteria('species', 'dog')], ['Fido']),
+    ([SearchCriteria('species', ['dog', 'lion'])], ['Fido', 'Rex']),
+    ([SearchCriteria('species', 'fish')], []),
+    ([], ['Fido', 'Rex']),
+    ([SearchCriteria('species', '')], ['Fido', 'Rex']),
+])
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_with_select_parameter(criteria, expected):
+    _populate_pets()
+    endpoint = _make_sql_endpoint(
+        SPECIES_SQL, [{'name': 'species', 'type': 'select'}])
+
+    cases = _run_sql_query(endpoint, criteria)
+
+    assert sorted(case.name for case in cases) == expected
+
+
+DUE_SQL = (
+    "SELECT * FROM pet "
+    "WHERE (:due_from IS NULL OR date_prop__shot_due >= :due_from) "
+    "AND (:due_to IS NULL OR date_prop__shot_due <= :due_to)"
+)
+
+
+@pytest.mark.parametrize('criteria, expected', [
+    # One criterion named for the parameter fills both of its placeholders
+    ([SearchCriteria('due', '__range__2026-08-03__2026-08-20')], ['Fido']),
+    ([SearchCriteria('due', '__range__2026-01-01__2026-12-31')], ['Fido', 'Rex']),
+    ([SearchCriteria('due', '__range__2020-01-01__2020-12-31')], []),
+    ([], ['Fido', 'Rex']),
+])
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_with_daterange_parameter(criteria, expected):
+    _populate_pets()
+    endpoint = _make_sql_endpoint(
+        DUE_SQL, [{'name': 'due', 'type': 'daterange'}])
+
+    cases = _run_sql_query(endpoint, criteria)
+
+    assert sorted(case.name for case in cases) == expected
+
+
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_rejects_multiple_values_for_a_text_parameter():
+    _populate_pets()
+    endpoint = _make_sql_endpoint(COLOR_SQL, [{'name': 'color', 'type': 'text'}])
+
+    with pytest.raises(CaseSearchUserError, match="Only one value may be given"):
+        _run_sql_query(endpoint, [SearchCriteria('color', ['brown', 'black'])])
