@@ -27,7 +27,6 @@ from couchdbkit import ResourceNotFound
 from looseversion import LooseVersion
 from memoized import memoized
 
-from corehq.apps.users.models import ActivityLevel
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -93,18 +92,15 @@ from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
 )
-
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
-from corehq.apps.app_manager.templatetags.xforms_extras import (
-    trans,
-)
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import (
+    domain_has_usercase_access,
     expire_get_latest_app_release_by_location_cache,
     get_and_assert_practice_user_in_domain,
     get_correct_app_class,
     get_latest_app_release_by_location,
     is_remote_app,
-    domain_has_usercase_access,
     save_xform,
     update_form_unique_ids,
     update_report_module_ids,
@@ -131,6 +127,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.apps.users.dbaccessors import get_display_name_for_user_id
+from corehq.apps.users.models import ActivityLevel
 from corehq.apps.users.util import cc_user_domain
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
@@ -139,23 +136,10 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.conversions import ServerTime
 
-from .base import (
-    CustomAssertion,
-    IndexedSchema,
-    rename_key,
-)
-from .form_actions import (
-    FormActionCondition,
-    UpdateCaseAction,
-)
-from .forms import (
-    AdvancedForm,
-    FormBase,
-    ShadowForm,
-)
-from .mixins import (
-    CommentMixin,
-)
+from .base import CustomAssertion, IndexedSchema, rename_key
+from .form_actions import FormActionCondition, UpdateCaseAction
+from .forms import AdvancedForm, FormBase, ShadowForm
+from .mixins import CommentMixin
 
 ATTACHMENT_REGEX = r'[^/]*\.xml'
 
@@ -963,10 +947,12 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         super(Application, self).save(*args, **kwargs)
         # Import loop if this is imported at the top
         # TODO: revamp so signal_connections <- models <- signals
-        from corehq.apps.app_manager import signals
         from couchforms.analytics import get_form_analytics_metadata
+
+        from corehq.apps.app_manager import signals
         from corehq.apps.reports.analytics.esaccessors import (
-            guess_form_name_from_submissions_using_xmlns)
+            guess_form_name_from_submissions_using_xmlns,
+        )
         for xmlns in self.get_xmlns_map():
             get_form_analytics_metadata.clear(self.domain, self._id, xmlns)
             guess_form_name_from_submissions_using_xmlns.clear(self.domain, xmlns)
@@ -1701,7 +1687,9 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
     @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):
-        from corehq.apps.app_manager.app_schemas.app_case_metadata import AppCaseMetadataBuilder
+        from corehq.apps.app_manager.app_schemas.app_case_metadata import (
+            AppCaseMetadataBuilder,
+        )
         return AppCaseMetadataBuilder(self.domain, self).case_metadata()
 
     def get_subcase_types(self, case_type):
@@ -1887,7 +1875,9 @@ class LinkedApplication(Application):
     @property
     @memoized
     def domain_link(self):
-        from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
+        from corehq.apps.linked_domain.dbaccessors import (
+            get_upstream_domain_link,
+        )
         return get_upstream_domain_link(self.domain)
 
     @memoized
