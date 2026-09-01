@@ -1,73 +1,10 @@
 Location Types API
 ==================
 
-List Location Types
--------------------
+List the location types configured in a project space, or fetch a single
+location type by identifier. Location types define the organizational
+hierarchy that locations are arranged in.
 
-**Description**
-
-Retrieves a list of location types available in the specified domain.
-
-**Base URL**
-
-.. code-block:: text
-
-    GET https://www.commcarehq.org/a/[domain]/api/location_type/v1/
-
-
-**Sample JSON Output**
-
-.. code-block:: json
-
-    {
-      "meta": {
-        "limit": 20,
-        "next": null,
-        "offset": 0,
-        "previous": null,
-        "total_count": 1
-      },
-      "objects": [
-        {
-          "administrative": true,
-          "code": "country",
-          "domain": "[domain]",
-          "id": 1,
-          "name": "Country",
-          "parent": null,
-          "resource_uri": "https://www.commcarehq.org/a/[domain]/api/location_type/v1/1/",
-          "shares_cases": false,
-          "view_descendants": false
-        }
-      ]
-    }
-
-Location Type Details
----------------------
-
-**Description**
-
-Retrieves details for a specific location type.
-
-**Base URL**
-
-.. code-block:: text
-
-    GET https://www.commcarehq.org/a/[domain]/api/location_type/v1/[id]/
-
-
-**Sample JSON Output**
-
-.. code-block:: json
-
-    {
-      "administrative": true,
-      "code": "country",
-      "domain": "[domain]",
-      "id": 1,
-      "name": "Country",
-      "parent": null,
-      "resource_uri": "https://www.commcarehq.org/a/[domain]/api/location_type/v1/1/",
-      "shares_cases": false,
-      "view_descendants": false
-    }
+The full reference for this API — every endpoint, parameter and response
+field — is published at `Location Types API v1
+<https://www.commcarehq.org/api/docs/location-type-v1/>`_.

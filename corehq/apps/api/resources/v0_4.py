@@ -604,8 +604,28 @@ class GroupResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMi
         )
         examples = {'list_response': 'group/v1/list_response.json'}
         field_schemas = {
+            'name': {
+                'description': (
+                    'Name of the group. Required to create a group, '
+                    'and must be unique within the domain — creating '
+                    'or renaming to a name already in use by another '
+                    'group, or to a blank name, is rejected.'
+                ),
+            },
             'users': {
                 'items': {'type': 'string'},
+                'description': (
+                    'UUIDs of the users in this group. On PUT, '
+                    "replaces the group's membership to match this "
+                    'list exactly (users not included are removed).'
+                ),
+            },
+            'metadata': {
+                'description': (
+                    'Custom metadata associated with the group. On '
+                    'PUT, replaces the stored metadata entirely '
+                    'rather than merging keys.'
+                ),
             },
         }
 

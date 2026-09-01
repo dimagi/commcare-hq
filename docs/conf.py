@@ -63,7 +63,7 @@ release = '1.0'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', 'api/sweep']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'

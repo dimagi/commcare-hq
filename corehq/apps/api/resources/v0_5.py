@@ -295,17 +295,41 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         )
         examples = {'list_response': 'user/v1/list_response.json'}
         field_schemas = {
+            'username': {
+                'description': 'User name of user, including '
+                              'domain, for example '
+                              '"jdoe@example.commcarehq.org". '
+                              'Required to create a mobile worker.',
+            },
             'phone_numbers': {
                 'items': {'type': 'string'},
+                'description': 'List of all phone numbers of the '
+                              'user. On update, this replaces the '
+                              'existing list.',
             },
             'groups': {
                 'items': {'type': 'string'},
+                'description': 'List of all group IDs belonging to '
+                              'the user. On update, this replaces '
+                              'the existing list.',
             },
             'locations': {
                 'items': {'type': 'string'},
+                'description': 'A list of location IDs that the '
+                              'user is assigned to. On update, this '
+                              'replaces the existing list, and must '
+                              'be provided together with '
+                              'primary_location (or both left empty '
+                              'to remove all locations).',
             },
             'user_data': {
                 'additionalProperties': {'type': 'string'},
+                'description': 'Any additional custom data '
+                              'associated with the user. When the '
+                              'response format is XML, keys that '
+                              'begin with a digit are omitted, '
+                              'since XML attribute names cannot '
+                              'start with a digit.',
             },
             'primary_location': {
                 # dehydrate_primary_location() returns None for a user
@@ -313,9 +337,23 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 # doesn't set null=True, so without this override the
                 # generated schema would wrongly forbid that real value.
                 'nullable': True,
+                'description': 'The location ID of the primary '
+                              'location of the user, which must be '
+                              'one of the locations. On update, '
+                              'primary_location and locations must '
+                              'be provided together (or both left '
+                              'empty to remove all locations).',
             },
             'require_account_confirmation': {'writeOnly': True},
-            'send_confirmation_email_now': {'writeOnly': True},
+            'send_confirmation_email_now': {
+                'writeOnly': True,
+                'description': 'If True, immediately sends an '
+                              'account confirmation email. False by '
+                              'default. On update, this fails '
+                              "unless the mobile worker's account is "
+                              'still unconfirmed and it has an '
+                              'email address.',
+            },
         }
         # None of these is a declared Tastypie field --
         # CommcareUserUpdates.update() (see user_updates.py) reads all
