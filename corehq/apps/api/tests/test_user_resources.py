@@ -1,6 +1,7 @@
 import json
 from unittest.mock import Mock, patch, call
 
+from django.http import HttpRequest
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -109,9 +110,11 @@ class TestCommCareUserResource(APIResourceTest):
             'first_name': '',
             'groups': [],
             'id': backend_id,
+            'language': None,
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
+            'role': 'Mobile Worker Default',
             'user_data': {'commcare_project': 'qwerty', PROFILE_SLUG: '', 'imaginary': '',
                           'commcare_location_id': self.loc2.location_id,
                           'commcare_primary_case_sharing_id': self.loc2.location_id,
@@ -142,9 +145,11 @@ class TestCommCareUserResource(APIResourceTest):
             'first_name': '',
             'groups': [],
             'id': backend_id,
+            'language': None,
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
+            'role': 'Mobile Worker Default',
             'user_data': {'commcare_project': 'qwerty',
                           PROFILE_SLUG: '',
                           'imaginary': '',
@@ -1084,12 +1089,20 @@ class TestBulkUserAPI(APIResourceTest):
         result = self.query(limit=limit)
         self.assertEqual(result.status_code, 200)
         users = json.loads(result.content)['objects']
-        self.assertEqual(len(users), limit)
+        self.assertEqual(
+            [user['username'] for user in users],
+            ['robb_stark', 'jon_snow', 'brandon_stark'],
+        )
 
-        result = self.query(start_at=limit, limit=limit)
+        # 'offset' is applied by the Elasticsearch query, so the paginator must
+        # not slice the results a second time and skip the whole page.
+        result = self.query(offset=limit, limit=limit)
         self.assertEqual(result.status_code, 200)
         users = json.loads(result.content)['objects']
-        self.assertEqual(len(users), limit)
+        self.assertEqual(
+            [user['username'] for user in users],
+            ['eddard_stark', 'catelyn_stark', 'tyrion_lannister'],
+        )
 
     def test_basic(self):
         response = self.query()
@@ -1189,7 +1202,7 @@ class TestUserDomainsResource(TestCase):
     def test_domain_returned_when_no_filter(self, _):
         bundle = Bundle()
         bundle.obj = self.user
-        bundle.request = Mock()
+        bundle.request = Mock(spec=HttpRequest)
         bundle.request.GET = {}
         bundle.request.user = self.user
         bundle.request.api_key = None
@@ -1200,7 +1213,7 @@ class TestUserDomainsResource(TestCase):
     def test_exception_when_invalid_filter_sent(self, _):
         bundle = Bundle()
         bundle.obj = self.user
-        bundle.request = Mock()
+        bundle.request = Mock(spec=HttpRequest)
         bundle.request.GET = {"feature_flag": "its_a_feature_not_bug"}
         bundle.request.user = self.user
         bundle.request.api_key = None
@@ -1212,7 +1225,7 @@ class TestUserDomainsResource(TestCase):
     def test_domain_returned_when_valid_flag_sent(self, *args):
         bundle = Bundle()
         bundle.obj = self.user
-        bundle.request = Mock()
+        bundle.request = Mock(spec=HttpRequest)
         bundle.request.GET = {"feature_flag": "superset-analytics"}
         bundle.request.user = self.user
         bundle.request.api_key = None
@@ -1223,7 +1236,7 @@ class TestUserDomainsResource(TestCase):
     def test_domain_not_returned_when_flag_not_enabled(self, *args):
         bundle = Bundle()
         bundle.obj = self.user
-        bundle.request = Mock()
+        bundle.request = Mock(spec=HttpRequest)
         bundle.request.GET = {"feature_flag": "superset-analytics"}
         bundle.request.user = self.user
         bundle.request.api_key = None
@@ -1250,7 +1263,7 @@ class TestUserDomainsResourcePagination(TestCase):
         assert len(data['objects']) == 25
 
 
-class TestUserDomainsResourceApiKeyFiltering(TestCase):
+class TestUserDomainsResourceCredentialScopeFiltering(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -1266,12 +1279,13 @@ class TestUserDomainsResourceApiKeyFiltering(TestCase):
         cls.user.save()
         cls.addClassCleanup(cls.user.delete, cls.domain, deleted_by=None)
 
-    def _make_bundle(self, api_key=None):
+    def _make_bundle(self, api_key=None, oauth_token_domains=None):
         bundle = Bundle()
-        bundle.request = Mock()
+        bundle.request = Mock(spec=HttpRequest)
         bundle.request.GET = {}
         bundle.request.user = self.user.get_django_user()
         bundle.request.api_key = api_key
+        bundle.request.oauth_token_domains = oauth_token_domains
         return bundle
 
     @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
@@ -1301,6 +1315,26 @@ class TestUserDomainsResourceApiKeyFiltering(TestCase):
         api_key = Mock()
         api_key.domain = self.domain2
         resp = UserDomainsResource().obj_get_list(self._make_bundle(api_key=api_key))
+        domain_names = [d.domain_name for d in resp]
+        assert domain_names == [self.domain2]
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_all_domains_returned_with_unrestricted_oauth_token(self, _):
+        resp = UserDomainsResource().obj_get_list(
+            self._make_bundle(oauth_token_domains=frozenset())
+        )
+        domain_names = [d.domain_name for d in resp]
+        assert set(domain_names) == {self.domain, self.domain2}
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_only_token_domains_returned_with_domain_scoped_oauth_token(self, _):
+        """
+        A scoped token is let through to this endpoint so a client can find out
+        which project spaces it may use, so it must not see the others.
+        """
+        resp = UserDomainsResource().obj_get_list(
+            self._make_bundle(oauth_token_domains=frozenset({self.domain2}))
+        )
         domain_names = [d.domain_name for d in resp]
         assert domain_names == [self.domain2]
 
