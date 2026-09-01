@@ -191,6 +191,44 @@ class TestDowngrades(BaseAccountingTest):
         subscription = Subscription.get_active_subscription_by_domain(domain)
         self.assertEqual(subscription.plan_version.plan.edition, SoftwarePlanEdition.PAUSED)
 
+    def test_downgrade_blocked_while_skip_auto_downgrade_is_active(self):
+        domain, latest_invoice = self._simulate_downgrade(DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE)
+
+        warning_days_ago = DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE - DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING
+        history = InvoiceCommunicationHistory.objects.filter(
+            invoice=latest_invoice
+        ).latest('date_created')
+        history.date_created = datetime.date.today() - datetime.timedelta(days=warning_days_ago)
+        history.save()
+
+        subscription = Subscription.get_active_subscription_by_domain(domain)
+        subscription.skip_auto_downgrade = True
+        subscription.skip_auto_downgrade_until = datetime.date.today() + datetime.timedelta(days=1)
+        subscription.save()
+
+        Downgrade.run_action(only_downgrade_domain=domain.name)
+        subscription = Subscription.get_active_subscription_by_domain(domain)
+        assert subscription.plan_version.plan.edition != SoftwarePlanEdition.PAUSED
+
+    def test_downgrade_proceeds_once_skip_auto_downgrade_expires(self):
+        domain, latest_invoice = self._simulate_downgrade(DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE)
+
+        warning_days_ago = DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE - DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING
+        history = InvoiceCommunicationHistory.objects.filter(
+            invoice=latest_invoice
+        ).latest('date_created')
+        history.date_created = datetime.date.today() - datetime.timedelta(days=warning_days_ago)
+        history.save()
+
+        subscription = Subscription.get_active_subscription_by_domain(domain)
+        subscription.skip_auto_downgrade = True
+        subscription.skip_auto_downgrade_until = datetime.date.today() - datetime.timedelta(days=1)
+        subscription.save()
+
+        Downgrade.run_action(only_downgrade_domain=domain.name)
+        subscription = Subscription.get_active_subscription_by_domain(domain)
+        assert subscription.plan_version.plan.edition == SoftwarePlanEdition.PAUSED
+
     def test_overdue_customer_notification(self):
         domain, latest_invoice = self._simulate_downgrade(
             DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE,
@@ -359,3 +397,66 @@ class TestInvoiceReminder(BaseAccountingTest):
             invoice=latest_invoice,
             communication_type=CommunicationType.INVOICE_REMINDER,
         ).exists())
+
+
+class TestDowngradeEligibility(BaseAccountingTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        generator.bootstrap_test_software_plan_versions()
+        cls.plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.ADVANCED)
+        cls.free_plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.FREE)
+        cls.paused_plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.PAUSED)
+
+    @classmethod
+    def tearDownClass(cls):
+        utils.clear_plan_version_cache()
+        super().tearDownClass()
+
+    def test_eligible_when_not_skipped(self):
+        subscription = self._subscription()
+        assert Downgrade.is_subscription_eligible_for_process(subscription)
+
+    def test_not_eligible_when_skip_has_no_expiration(self):
+        subscription = self._subscription(skip_auto_downgrade=True)
+        assert not Downgrade.is_subscription_eligible_for_process(subscription)
+
+    def test_not_eligible_when_skip_expires_in_the_future(self):
+        subscription = self._subscription(
+            skip_auto_downgrade_until=datetime.date.today() + datetime.timedelta(days=1),
+        )
+        assert not Downgrade.is_subscription_eligible_for_process(subscription)
+
+    def test_eligible_when_skip_expires_today(self):
+        subscription = self._subscription(
+            skip_auto_downgrade_until=datetime.date.today(),
+        )
+        assert Downgrade.is_subscription_eligible_for_process(subscription)
+
+    def test_eligible_when_skip_expired_in_the_past(self):
+        subscription = self._subscription(
+            skip_auto_downgrade_until=datetime.date.today() - datetime.timedelta(days=1),
+        )
+        assert Downgrade.is_subscription_eligible_for_process(subscription)
+
+    def test_not_eligible_for_free_edition_even_if_skip_expired(self):
+        subscription = self._subscription(
+            plan_version=self.free_plan_version,
+            skip_auto_downgrade_until=datetime.date.today() - datetime.timedelta(days=1),
+        )
+        assert not Downgrade.is_subscription_eligible_for_process(subscription)
+
+    def test_not_eligible_for_paused_edition_even_if_skip_expired(self):
+        subscription = self._subscription(
+            plan_version=self.paused_plan_version,
+            skip_auto_downgrade_until=datetime.date.today() - datetime.timedelta(days=1),
+        )
+        assert not Downgrade.is_subscription_eligible_for_process(subscription)
+
+    def _subscription(self, plan_version=None, skip_auto_downgrade=False, skip_auto_downgrade_until=None):
+        return Subscription(
+            plan_version=plan_version or self.plan_version,
+            skip_auto_downgrade=skip_auto_downgrade or skip_auto_downgrade_until is not None,
+            skip_auto_downgrade_until=skip_auto_downgrade_until,
+        )
