@@ -8,6 +8,9 @@ Alpine.data("consentForm", () => ({
 
     init() {
         this.domainCount = this.$refs.domains.options.length;
+        this.selectedDomains = Array.from(
+            this.$refs.domains.selectedOptions, (option) => option.value,
+        );
     },
 
     setAllDomains(selected) {

@@ -151,7 +151,12 @@ from . import (
     v0_1,
     v0_4,
 )
-from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_cursor_based_pagination
+from .pagination import (
+    DoesNothingPaginator,
+    NoCountingPaginator,
+    PreSlicedPaginator,
+    response_for_cursor_based_pagination,
+)
 
 MOCK_BULK_USER_ES = None
 EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 1000
@@ -197,6 +202,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         detail_allowed_methods = ['get']
         object_class = object
         resource_name = 'bulk-user'
+        paginator_class = PreSlicedPaginator
 
     def dehydrate(self, bundle):
         fields = bundle.request.GET.getlist('fields')
@@ -222,13 +228,19 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         fields = list(self.fields)
         fields.remove('id')
         fields.append('_id')
+        # The paginator resolves (and validates) 'limit' and 'offset' the same
+        # way it will when building the response meta, so the page reported
+        # there always matches the page fetched from Elasticsearch.
+        paginator = self._meta.paginator_class(
+            params, [], limit=self._meta.limit, max_limit=self._meta.max_limit,
+        )
         fn = MOCK_BULK_USER_ES or user_es_call
         users = fn(
             domain=kwargs['domain'],
             q=param('q'),
             fields=fields,
-            size=param('limit'),
-            start_at=param('offset'),
+            size=paginator.get_limit(),
+            start_at=paginator.get_offset(),
         )
         return list(map(self.to_obj, users))
 
@@ -1126,9 +1138,16 @@ class UserDomainsResource(ApiVersioningMixin, CorsResourceMixin, Resource):
 
         api_key = getattr(request, 'api_key', None)  # HQApiKey set by HQApiKeyAuthentication
         api_key_domain = getattr(api_key, 'domain', '')
+        oauth_domains = getattr(request, 'oauth_token_domains', None)
 
         results = []
-        domains = [api_key_domain] if api_key_domain else couch_user.get_domains()
+        if api_key_domain:
+            domains = [api_key_domain]
+        elif oauth_domains:
+            domains = [domain for domain in couch_user.get_domains() if domain in oauth_domains]
+        else:
+            domains = couch_user.get_domains()
+
         for domain in domains:
             domain_object = Domain.get_by_name(domain)
             if feature_flag and feature_flag not in toggles.toggles_dict(username=username, domain=domain):

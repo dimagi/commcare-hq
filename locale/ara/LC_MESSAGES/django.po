@@ -1226,6 +1226,7 @@ msgstr ""
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
@@ -5781,10 +5782,6 @@ msgid ""
 msgstr "تم نسخ التطبيق بنجاح، لكن التطبيق يفتقد ملف/ملفات وسائط متعددة."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid ""
-#| "Copying the application succeeded, but the application will have errors "
-#| "because your application contains a Mobile Report Module that references a "
-#| "UCR configured in this project space. Multimedia may be absent."
 msgid ""
 "Updating the application succeeded, but the application will have errors "
 "because it contains a Mobile Report Module that references a custom report "
@@ -5795,9 +5792,6 @@ msgstr ""
 "الوسائط المتعددة غير موجودة."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid ""
-#| "Copying the application succeeded, but the application is missing multimedia"
-#| " file(s)."
 msgid ""
 "Updating the application succeeded, but the application is missing "
 "multimedia file(s)."
@@ -16526,6 +16520,7 @@ msgstr "لا توجد استعلامات حديثة"
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
 msgstr "مسح"
@@ -19551,6 +19546,7 @@ msgstr "متوقف"
 
 #: corehq/apps/data_interfaces/models.py
 #: corehq/apps/domain/templates/error.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/integration/kyc/models.py
 #: corehq/apps/integration/payments/const.py
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
@@ -19910,6 +19906,7 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 msgid "Select all"
 msgstr "تحديد الكل"
 
@@ -32707,6 +32704,33 @@ msgstr ""
 "ما زلت تواجه مشكلة؟<div class='spacer'></div>تأكد من أنك قد اخترت الموقع "
 "السحابي الصحيح من القائمة أعلاه. قد يكون حسابك ومشروعك في موقع مختلف."
 
+#: corehq/apps/hqwebapp/forms.py
+#| msgid "Your project spaces:"
+msgid "On the project space:"
+msgid_plural "On the project spaces:"
+msgstr[0] "مساحات مشاريعك:"
+msgstr[1] "مساحات مشاريعك:"
+msgstr[2] "مساحات مشاريعك:"
+msgstr[3] "مساحات مشاريعك:"
+msgstr[4] "مساحات مشاريعك:"
+msgstr[5] "مساحات مشاريعك:"
+
+#: corehq/apps/hqwebapp/forms.py
+#| msgid "Your project spaces:"
+msgid "Choose project space"
+msgid_plural "Choose project spaces"
+msgstr[0] "مساحات مشاريعك:"
+msgstr[1] "مساحات مشاريعك:"
+msgstr[2] "مساحات مشاريعك:"
+msgstr[3] "مساحات مشاريعك:"
+msgstr[4] "مساحات مشاريعك:"
+msgstr[5] "مساحات مشاريعك:"
+
+#: corehq/apps/hqwebapp/forms.py
+#| msgid "Push content to a downstream project space"
+msgid "Choose at least one project space."
+msgstr "اختر مساحة مشروع واحدة على الأقل."
+
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid "Open chat"
 msgstr "فتح الدردشة"
@@ -32837,6 +32861,29 @@ msgstr "الولايات المتحدة"
 #: corehq/apps/hqwebapp/models.py
 msgid "Staging"
 msgstr "تجريبي"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#| msgid "-The CommCare HQ team"
+msgid "Access CommCare API data"
+msgstr "الوصول إلى بيانات واجهة برمجة تطبيقات CommCare"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#| msgid "Failed to download export."
+msgid "View and download report data"
+msgstr "عرض وتنزيل بيانات التقارير"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "Allow access to mobile sync and submit endpoints"
+msgstr "السماح بالوصول إلى نقاط مزامنة وإرسال الهاتف المحمول"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "(Deprecated, do not use) Allow access to mobile endpoints"
+msgstr "(مهمل، لا تستخدم) السماح بالوصول إلى نقاط نهاية الهاتف المحمول"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+#| msgid "You have been added to the \"{}\" project space."
+msgid "Access data in the \"{}\" project space only"
+msgstr "الوصول إلى البيانات في مساحة المشروع \"{}\" فقط"
 
 #: corehq/apps/hqwebapp/tables/elasticsearch/records.py
 msgid "users"
@@ -33310,6 +33357,42 @@ msgstr ""
 "            </div>\n"
 "          </div>\n"
 "        "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#| msgid "Path in Application"
+msgid "Authorize Application"
+msgstr "تفويض التطبيق"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "            Thanks for using %(cc_name)s!\n"
+#| "          "
+msgid ""
+"\n"
+"            Authorize %(application_name)s?\n"
+"          "
+msgstr ""
+"\n"
+"            هل تريد تفويض %(application_name)s؟\n"
+"          "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+msgid "This application is requesting permission to:"
+msgstr "يطلب هذا التطبيق إذنًا للقيام بما يلي:"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#| msgid ""
+#| "Your project space has not been granted access to data from any other "
+#| "project spaces."
+msgid "This application will have access to data on all your project spaces."
+msgstr "سيكون لهذا التطبيق حق الوصول إلى البيانات في جميع مساحات مشاريعك."
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#| msgid "uncategorized"
+msgid "Authorize"
+msgstr "تفويض"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/rollout_revert_modal.html
 #, python-format
@@ -37512,7 +37595,6 @@ msgid "Identifies this public webform. Respondents will see the form's name."
 msgstr "يحدد هذا النموذج العام على الويب. سيرى المستجيبون اسم النموذج."
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "Delete Request"
 msgid "Close Requests At"
 msgstr "إغلاق الطلبات عند"
 
@@ -37529,7 +37611,6 @@ msgid "How Respondents Receive Their One-time Link"
 msgstr "كيف يتلقى المستجيبون رابطهم لمرة واحدة"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "Delete Request"
 msgid "Open to Requests"
 msgstr "مفتوح للطلبات"
 
@@ -37548,22 +37629,18 @@ msgstr "رسالة نصية قصيرة مع رابط مختصر. يتم احتس
 #: corehq/apps/public_webforms/forms.py
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
 #: corehq/apps/public_webforms/views.py
-#| msgid "Public Webforms"
 msgid "New Public Webform"
 msgstr "نموذج ويب عام جديد"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "Public Webforms"
 msgid "Create Public Webform"
 msgstr "إنشاء نموذج ويب عام"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "Please select application"
 msgid "Please select an application, menu, and form."
 msgstr "يرجى اختيار تطبيق وقائمة ونموذج."
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "The selected form does not have a schedule enabled."
 msgid "The selected form can't be used for a public webform."
 msgstr "لا يمكن استخدام النموذج المحدد كنموذج ويب عام."
 
@@ -37602,12 +37679,10 @@ msgstr ""
 "        "
 
 #: corehq/apps/public_webforms/views.py
-#| msgid "Public Webforms"
 msgid "Manage Public Webforms"
 msgstr "إدارة النماذج العامة على الويب"
 
 #: corehq/apps/public_webforms/views.py
-#| msgid "Public Webforms"
 msgid "Public webform created."
 msgstr "تم إنشاء نموذج ويب عام."
 
@@ -57620,7 +57695,6 @@ msgid "New Application"
 msgstr "تطبيق جديد"
 
 #: corehq/tabs/tabclasses.py
-#| msgid "Create and release new build for apps"
 msgid "Create and manage public webforms."
 msgstr "إنشاء وإدارة النماذج الإلكترونية العامة."
 
@@ -60984,9 +61058,6 @@ msgstr "أدخل JSON صالحًا"
 #~ "\n"
 #~ "    %(inviter)s دعاك للانضمام إلى مشروع %(domain)s على CommCare HQ.\n"
 #~ "    تنتهي صلاحية هذه الدعوة خلال %(days)s يوم/أيام.\n"
-
-#~ msgid "-The CommCare HQ team"
-#~ msgstr "-فريق CommCare HQ"
 
 #~ msgid "Thank you for using CommCare HQ."
 #~ msgstr "شكرًا لاستخدامك CommCare HQ."

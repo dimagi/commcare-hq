@@ -468,6 +468,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
         '/a/{domain}/clean/',
+        '/a/{domain}/project_db/',
         '/a/{domain}/microplanning/',
         '/a/{domain}/kyc/',
         '/a/{domain}/payments/'
@@ -632,12 +633,6 @@ class ProjectDataTab(UITab):
             items.append([_('CSQL Fixtures'), [{
                 'title': _(CSQLFixtureExpressionView.page_title),
                 'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
-            }]])
-
-        if toggles.CASE_SEARCH_ENDPOINTS.enabled(self.domain):
-            items.append([_('Case Search Endpoints'), [{
-                'title': _(CaseSearchEndpointsView.page_title),
-                'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain]),
             }]])
 
         if self._can_view_data_dictionary:
@@ -1024,6 +1019,24 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': False,
                     'subpages': [],
                 }])
+            if toggles.PROJECT_DB.enabled(self.domain):
+                from corehq.apps.project_db.views import QueryProjectDBView
+                explore_data_views.append({
+                    'title': _(QueryProjectDBView.page_title),
+                    'url': reverse(QueryProjectDBView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-database',
+                    'show_in_dropdown': False,
+                    'subpages': [],
+                })
+        if (toggles.CASE_SEARCH_ENDPOINTS.enabled(self.domain)
+                and self.couch_user.is_domain_admin(self.domain)):
+            explore_data_views.append({
+                'title': _(CaseSearchEndpointsView.page_title),
+                'url': reverse(CaseSearchEndpointsView.urlname, args=(self.domain,)),
+                'icon': 'fa fa-search',
+                'show_in_dropdown': False,
+                'subpages': [],
+            })
         return explore_data_views
 
     def _get_geospatial_views(self):

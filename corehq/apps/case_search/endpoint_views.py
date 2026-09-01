@@ -1,12 +1,16 @@
 import json
 
 from django import forms
+from django.core.exceptions import ImproperlyConfigured
 from django.db import transaction
+from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
+
+from sqlalchemy.exc import SQLAlchemyError
 
 from corehq import toggles
 from corehq.apps.case_search.endpoint_capability import (
@@ -23,16 +27,20 @@ from corehq.apps.case_search.models import (
     criteria_dict_to_criteria_list,
 )
 from corehq.apps.case_search.utils import QueryHelper, get_primary_case_search_endpoint_results
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import not_found
+from corehq.apps.project_db.table_ddl import get_domain_tables
+from corehq.apps.project_db.user_sql import UnsupportedSQL, translate
 from corehq.apps.settings.views import BaseProjectDataView
 
 from dimagi.utils.logging import notify_exception
 
-_ENDPOINT_DECORATORS = [
+_ADMIN_ENDPOINT_DECORATORS = [
     use_bootstrap5,
     toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
+    domain_admin_required,
 ]
 
 def empty_query():
@@ -47,8 +55,8 @@ def _get_endpoint(domain, endpoint_id):
     )
 
 
-def _add_endpoint_version(endpoint, *, action, created_by, query=None, parameters=None,
-                          extra_update_fields=()):
+def _add_endpoint_version(endpoint, *, action, created_by, case_type=None, query=None,
+                          parameters=None, dangerous_sql='', extra_update_fields=()):
     """Create the next version for ``endpoint`` and make it the current version.
 
     Must be called within a transaction. ``extra_update_fields`` are saved on the
@@ -59,8 +67,10 @@ def _add_endpoint_version(endpoint, *, action, created_by, query=None, parameter
     version = CaseSearchEndpointVersion.objects.create(
         endpoint=endpoint,
         version_number=next_num,
+        case_type=case_type,
         query=query,
         parameters=parameters,
+        dangerous_sql=dangerous_sql,
         created_by=created_by,
         action=action,
     )
@@ -71,16 +81,15 @@ def _add_endpoint_version(endpoint, *, action, created_by, query=None, parameter
 
 class CaseSearchEndpointForm(forms.Form):
     name = forms.CharField()
-    target_type = forms.ChoiceField(
-        choices=CaseSearchEndpoint.TargetType.choices
-    )
     case_type = forms.CharField(required=False)
     query = forms.JSONField(required=False)
     parameters = forms.JSONField(required=False)
+    sql = forms.CharField(required=False, widget=forms.Textarea)
 
-    def __init__(self, *args, domain, exclude_pk=None, capability=None, **kwargs):
+    def __init__(self, *args, domain, target_type, exclude_pk=None, capability=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.domain = domain
+        self.target_type = target_type
         self.exclude_pk = exclude_pk
         self.capability = capability
 
@@ -113,6 +122,19 @@ class CaseSearchEndpointForm(forms.Form):
 
     def clean(self):
         cleaned = super().clean()
+        # An endpoint is configured one way or the other, so the fields
+        # belonging to the other kind are dropped rather than saved unchecked.
+        if self.target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH:
+            cleaned['sql'] = ''
+            self._clean_query(cleaned)
+        elif self.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB:
+            cleaned['case_type'] = None
+            cleaned['query'] = None
+            self._clean_sql(cleaned)
+
+        return cleaned
+
+    def _clean_query(self, cleaned):
         query = cleaned.get('query')
         parameters = cleaned.get('parameters')
         # Only run semantic validation when both fields parsed cleanly.
@@ -125,10 +147,33 @@ class CaseSearchEndpointForm(forms.Form):
                 )
             for error in errors:
                 self.add_error(None, error)
-        return cleaned
+
+    def _clean_sql(self, cleaned):
+        sql = (cleaned.get('sql') or '').strip()
+        if not sql:
+            self.add_error('sql', 'SQL is required.')
+            return
+        try:
+            tables = get_domain_tables(self.domain)
+        except (ImproperlyConfigured, SQLAlchemyError) as error:
+            # Not the author's fault, so report it against the form rather
+            # than the field, and let them keep what they wrote.
+            notify_exception(
+                None, f'project_db unavailable for {self.domain}: {error}'
+            )
+            self.add_error(
+                None, 'The project database is unavailable. Please try again.'
+            )
+            return
+        try:
+            # Called for its exceptions: the query is rebuilt when the
+            # endpoint runs, since the domain's tables change over time.
+            translate(sql, tables)
+        except UnsupportedSQL as error:
+            self.add_error('sql', str(error.msg))
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
 class CaseSearchEndpointsView(BaseProjectDataView):
     urlname = 'case_search_endpoints'
     page_title = gettext_lazy('Case Search Endpoints')
@@ -147,6 +192,10 @@ class CaseSearchEndpointsView(BaseProjectDataView):
             )
             .select_related('current_version')
             .order_by('name'),
+            'target_types': [
+                CaseSearchEndpoint.TargetType.ELASTICSEARCH,
+                CaseSearchEndpoint.TargetType.PROJECT_DB,
+            ],
         }
 
 
@@ -155,6 +204,7 @@ class CaseSearchEndpointEditBaseView(BaseProjectDataView):
 
     template_name = 'case_search/endpoint_edit.html'
     mode = None
+    target_type = None
 
     @property
     def parent_pages(self):
@@ -179,6 +229,8 @@ class CaseSearchEndpointEditBaseView(BaseProjectDataView):
         return {
             'capability': self.capability,
             'endpoint_mode': self.mode,
+            'target_type': self.target_type,
+            'target_type_display': CaseSearchEndpoint.TargetType(self.target_type).label,
             'max_group_depth': MAX_QUERY_DEPTH - 1,
             'post_url': self.page_url,
             'form': self._form,
@@ -189,23 +241,30 @@ class CaseSearchEndpointEditBaseView(BaseProjectDataView):
         return self.render_to_response(self.get_context_data())
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
 class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
     urlname = 'case_search_endpoint_new'
     page_title = gettext_lazy('New Case Search Endpoint')
     mode = 'new'
 
+    @cached_property
+    def target_type(self):
+        value = self.request.GET.get('target_type')
+        if value not in CaseSearchEndpoint.TargetType.values:
+            raise Http404(f"Unknown target_type: {value!r}")
+        return value
+
     @property
     def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
+        return reverse(self.urlname, args=[self.domain], query={'target_type': self.target_type})
 
     def _make_form(self, data=None):
         return CaseSearchEndpointForm(
             data,
             domain=self.domain,
+            target_type=self.target_type,
             capability=self.capability,
             initial={
-                'target_type': CaseSearchEndpoint.TargetType.PROJECT_DB,
                 'query': empty_query,
                 'parameters': list,
             },
@@ -220,13 +279,14 @@ class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
             endpoint = CaseSearchEndpoint.objects.create(
                 domain=self.domain,
                 name=cd['name'],
-                target_type=cd['target_type'],
-                case_type=cd['case_type'],
+                target_type=self.target_type,
             )
             _add_endpoint_version(
                 endpoint,
                 action=CaseSearchEndpointVersion.Action.CREATE,
                 created_by=request.couch_user.username,
+                case_type=cd['case_type'],
+                dangerous_sql=cd['sql'],
                 query=cd['query'],
                 parameters=cd['parameters'],
             )
@@ -238,7 +298,7 @@ class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
         )
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
 class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
     urlname = 'case_search_endpoint_edit'
     page_title = gettext_lazy('Edit Case Search Endpoint')
@@ -251,6 +311,10 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
         return super().dispatch(request, *args, **kwargs)
 
     @property
+    def target_type(self):
+        return self._endpoint.target_type
+
+    @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self._endpoint.id])
 
@@ -259,12 +323,13 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
         return CaseSearchEndpointForm(
             data,
             domain=self.domain,
+            target_type=self.target_type,
             exclude_pk=self._endpoint.pk,
             capability=self.capability,
             initial={
                 'name': self._endpoint.name,
-                'target_type': self._endpoint.target_type,
-                'case_type': self._endpoint.case_type,
+                'case_type': current.case_type if current else None,
+                'sql': current.dangerous_sql if current else '',
                 'query': current.query if current else empty_query,
                 'parameters': current.parameters if current else list,
             },
@@ -284,22 +349,22 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
         endpoint = self._endpoint
         with transaction.atomic():
             endpoint.name = cd['name']
-            endpoint.target_type = cd['target_type']
-            endpoint.case_type = cd['case_type']
             _add_endpoint_version(
                 endpoint,
                 action=CaseSearchEndpointVersion.Action.UPDATE,
                 created_by=request.couch_user.username,
+                case_type=cd['case_type'],
+                dangerous_sql=cd['sql'],
                 query=cd['query'],
                 parameters=cd['parameters'],
-                extra_update_fields=['name', 'target_type', 'case_type'],
+                extra_update_fields=['name'],
             )
         return redirect(
             reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
         )
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
 class CaseSearchEndpointDeactivateView(BaseDomainView):
     urlname = 'case_search_endpoint_deactivate'
     http_method_names = ['post']
@@ -327,7 +392,7 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
         )
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
 class CaseSearchEndpointTestView(BaseDomainView):
     """Runs a query builder spec against the project's cases and returns an
     HTMX partial with the matching results (or validation errors).

@@ -247,6 +247,9 @@ SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
 
+TURNSTILE_SECRET_KEY = ''
+TURNSTILE_SITE_KEY = ''
+
 MAXMIND_ACCOUNT_ID = ''
 MAXMIND_LICENSE_KEY = ''
 
@@ -892,12 +895,6 @@ OAUTH2_PROVIDER = {
     'ACCESS_TOKEN_EXPIRE_SECONDS': 15 * 60,
     'PKCE_REQUIRED': _pkce_required,
     'SCOPES_BACKEND_CLASS': 'corehq.apps.hqwebapp.oauth_scopes.HQScopes',
-    'SCOPES': {
-        'access_apis': 'Access CommCare API data',
-        'reports:view': 'View and download report data',
-        'mobile_access': 'Allow access to mobile sync and submit endpoints',
-        'sync': '(Deprecated, do not use) Allow access to mobile endpoints',
-    },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
 

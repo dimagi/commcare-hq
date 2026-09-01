@@ -7,6 +7,7 @@ from django.contrib.auth.signals import user_login_failed
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext_lazy
 
 from captcha.fields import ReCaptchaField
 from crispy_forms import layout as crispy
@@ -226,7 +227,6 @@ class HQAllowForm(AllowForm):
 
     domains = forms.MultipleChoiceField(
         required=False,
-        label=_('On the project spaces:'),
         widget=forms.SelectMultiple(attrs={
             'class': 'form-select',
             'x-select2': json.dumps({'selectionCssClass': 'form-select p-1 pb-2 pe-4'}),
@@ -237,14 +237,27 @@ class HQAllowForm(AllowForm):
 
     def __init__(self, *args, domain_choices=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['domains'].choices = list(domain_choices or [])
-        self.fields['domains'].widget.attrs['data-placeholder'] = _("Choose project spaces")
+        domain_field = self.fields['domains']
+        domain_field.choices = list(domain_choices or [])
+        self.choice_count = len(domain_field.choices)
+        domain_field.label = ngettext_lazy(
+            "On the project space:",
+            "On the project spaces:",
+            self.choice_count,
+        )
+        domain_field.widget.attrs['data-placeholder'] = ngettext_lazy(
+            "Choose project space",
+            "Choose project spaces",
+            self.choice_count,
+        )
+        if self.choice_count == 1:
+            domain_field.initial = [domain_field.choices[0][0]]
 
     def clean(self):
         cleaned_data = super().clean()
         if cleaned_data.get('allow') and not cleaned_data.get('domains'):
             self.add_error(
-                'domains', _("Choose which project spaces this application may access.")
+                'domains', _("Choose at least one project space."),
             )
         cleaned_data['scope'] = self._scope_with_chosen_project_spaces(cleaned_data)
         return cleaned_data
