@@ -65,10 +65,10 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance - adjustment_amount, self.invoice.balance)
+        assert original_balance - adjustment_amount == self.invoice.balance
 
     def test_transfer_credit_with_credit(self):
         original_credit_balance = random.randint(5, 10)
@@ -91,14 +91,14 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance - adjustment_amount, self.invoice.balance)
-        self.assertEqual(original_credit_balance - adjustment_amount, sum(
+        assert original_balance - adjustment_amount == self.invoice.balance
+        assert original_credit_balance - adjustment_amount == sum(
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
-        ))
+        )
 
     def test_transfer_credit_without_credit(self):
         original_credit_balance = 0
@@ -121,14 +121,14 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance, self.invoice.balance)
-        self.assertEqual(original_credit_balance, sum(
+        assert original_balance == self.invoice.balance
+        assert original_credit_balance == sum(
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
-        ))
+        )
 
 
 class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
@@ -159,10 +159,10 @@ class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance - adjustment_amount, self.invoice.balance)
+        assert original_balance - adjustment_amount == self.invoice.balance
 
     def test_transfer_credit_with_credit(self):
         original_credit_balance = random.randint(5, 10)
@@ -184,14 +184,14 @@ class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance - adjustment_amount, self.invoice.balance)
-        self.assertEqual(original_credit_balance - adjustment_amount, sum(
+        assert original_balance - adjustment_amount == self.invoice.balance
+        assert original_credit_balance - adjustment_amount == sum(
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_customer_invoice(self.invoice)
-        ))
+        )
 
     def test_transfer_credit_without_credit(self):
         original_credit_balance = 0
@@ -213,14 +213,14 @@ class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance, self.invoice.balance)
-        self.assertEqual(original_credit_balance, sum(
+        assert original_balance == self.invoice.balance
+        assert original_credit_balance == sum(
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_customer_invoice(self.invoice)
-        ))
+        )
 
 
 class TestSubscriptionForm(BaseAccountingTest):
@@ -485,8 +485,8 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
         self.form.trigger_invoice()
 
         invoice = self.subscription.invoice_set.latest('date_created')
-        self.assertEqual(invoice.date_start, self.statement_start)
-        self.assertEqual(invoice.date_end, self.statement_end)
+        assert invoice.date_start == self.statement_start
+        assert invoice.date_end == self.statement_end
 
     def test_clean_previous_invoices(self):
         prev_invoice = Invoice.objects.create(
@@ -499,16 +499,16 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
 
         with self.assertRaises(InvoiceError) as e:
             self.form.clean_previous_invoices(self.statement_start, self.statement_end, self.domain.name)
-        self.assertIn(prev_invoice.invoice_number, str(e.exception))
+        assert prev_invoice.invoice_number in str(e.exception)
 
     def test_show_testing_options(self):
         self.init_form(self.form_data(), show_testing_options=False)
-        self.assertNotIn('num_mobile_workers', self.form.fields)
-        self.assertNotIn('num_form_submitting_workers', self.form.fields)
+        assert 'num_mobile_workers' not in self.form.fields
+        assert 'num_form_submitting_workers' not in self.form.fields
 
         self.init_form(self.form_data(), show_testing_options=True)
-        self.assertIn('num_mobile_workers', self.form.fields)
-        self.assertIn('num_form_submitting_workers', self.form.fields)
+        assert 'num_mobile_workers' in self.form.fields
+        assert 'num_form_submitting_workers' in self.form.fields
 
     def test_num_mobile_workers(self):
         num_users = 10
@@ -522,7 +522,7 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
         user_history = DomainUserHistory.objects.get(
             domain=self.domain.name, record_date=self.statement_end
         )
-        self.assertEqual(user_history.num_users, num_users)
+        assert user_history.num_users == num_users
 
     def test_num_form_submitting_mobile_workers(self):
         num_users = 5
@@ -536,7 +536,7 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
         user_history = FormSubmittingMobileWorkerHistory.objects.get(
             domain=self.domain.name, record_date=self.statement_end
         )
-        self.assertEqual(user_history.num_users, num_users)
+        assert user_history.num_users == num_users
 
 
 class TestPlanContactForm(TestCase):
@@ -565,5 +565,5 @@ class TestPlanContactForm(TestCase):
         text_content = args[3]
 
         expected_subject = f'[{request_type}] {self.domain.name}'
-        self.assertEqual(subject, expected_subject)
-        self.assertTrue(all(value in text_content for value in data.values()))
+        assert subject == expected_subject
+        assert all(value in text_content for value in data.values())

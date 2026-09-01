@@ -226,12 +226,12 @@ class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
     def test_keep_software_plan_consistent_for_customer_billing_accounts(self):
         with patch('builtins.input', side_effect=[self.account.name, 'DONE']):
             old_subscription1 = Subscription.get_active_subscription_by_domain(self.domain1)
-            self.assertEqual(old_subscription1.plan_version, self.newest_version)
+            assert old_subscription1.plan_version == self.newest_version
 
             old_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
-            self.assertEqual(old_subscription2.plan_version, self.first_version)
+            assert old_subscription2.plan_version == self.first_version
 
             call_command('list_customer_billing_account_software_plan', update=True)
 
             new_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
-            self.assertEqual(new_subscription2.plan_version, self.newest_version)
+            assert new_subscription2.plan_version == self.newest_version
