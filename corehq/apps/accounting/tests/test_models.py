@@ -1,13 +1,12 @@
 import datetime
 from decimal import Decimal
+from unittest import mock
 
+import pytest
+from dimagi.utils.dates import add_months_to_date
 from django.core import mail
 from django.db import models
 from django.test import SimpleTestCase
-
-from unittest import mock
-
-from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting import tasks
 from corehq.apps.accounting.const import SMALL_INVOICE_THRESHOLD
@@ -28,7 +27,10 @@ from corehq.apps.accounting.tests.generator import (
     FakeStripeCardManager,
     FakeStripeCustomerManager,
 )
-from corehq.apps.accounting.tests.utils import clear_subscription_caches_on_commit
+from corehq.apps.accounting.tests.utils import (
+    clear_subscription_caches_on_commit,
+    mocked_stripe_api,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import (
     SmsBillable,
@@ -38,7 +40,6 @@ from corehq.apps.smsbillables.models import (
     SmsUsageFeeCriteria,
 )
 from corehq.util.dates import get_previous_month_date_range
-from corehq.apps.accounting.tests.utils import mocked_stripe_api
 
 
 class TestBillingAccount(BaseAccountingTest):
@@ -54,7 +55,8 @@ class TestBillingAccount(BaseAccountingTest):
         assert self.billing_account is not None
 
     def test_deletions(self):
-        self.assertRaises(models.ProtectedError, self.currency.delete)
+        with pytest.raises(models.ProtectedError):
+            self.currency.delete()
 
     def test_autopay_user(self):
         assert not self.billing_account.auto_pay_enabled
@@ -211,9 +213,12 @@ class TestSubscription(BaseAccountingTest):
         assert not subscription.is_active
 
     def test_deletions(self):
-        self.assertRaises(models.ProtectedError, self.account.delete)
-        self.assertRaises(models.ProtectedError, self.subscription.plan_version.delete)
-        self.assertRaises(models.ProtectedError, self.subscription.subscriber.delete)
+        with pytest.raises(models.ProtectedError):
+            self.account.delete()
+        with pytest.raises(models.ProtectedError):
+            self.subscription.plan_version.delete()
+        with pytest.raises(models.ProtectedError):
+            self.subscription.subscriber.delete()
 
     def test_is_hidden_to_ops(self):
         self.subscription.is_hidden_to_ops = True

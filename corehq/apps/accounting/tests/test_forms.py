@@ -2,10 +2,10 @@ import datetime
 import random
 from unittest.mock import patch
 
+import pytest
+from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-
-from dateutil.relativedelta import relativedelta
 
 from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.forms import (
@@ -278,7 +278,8 @@ class TestSubscriptionForm(BaseAccountingTest):
             **self.shared_keywords(),
         }
 
-        self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
+        with pytest.raises(ValidationError):
+            subscription_form.clean_active_accounts()
 
     def test_customer_plan_not_added_to_regular_account(self):
         subscription = Subscription.new_domain_subscription(
@@ -296,7 +297,8 @@ class TestSubscriptionForm(BaseAccountingTest):
             **self.shared_keywords(),
         }
 
-        self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
+        with pytest.raises(ValidationError):
+            subscription_form.clean_active_accounts()
 
     def test_form_data_create_subscription(self):
         required_args = {
@@ -497,9 +499,9 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
         self.init_form(self.form_data())
         self.form.full_clean()
 
-        with self.assertRaises(InvoiceError) as e:
+        with pytest.raises(InvoiceError) as e:
             self.form.clean_previous_invoices(self.statement_start, self.statement_end, self.domain.name)
-        assert prev_invoice.invoice_number in str(e.exception)
+        assert prev_invoice.invoice_number in str(e.value)
 
     def test_show_testing_options(self):
         self.init_form(self.form_data(), show_testing_options=False)
