@@ -180,7 +180,8 @@ msgstr "Показати лише пробні підписки"
 #: corehq/apps/hqadmin/templates/hqadmin/email_status.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
-#: corehq/apps/notifications/forms.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/notifications/forms.py corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/tables.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
 #: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
 #: corehq/apps/userreports/views.py
@@ -1920,6 +1921,7 @@ msgstr "Номер виписки"
 #: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/hqadmin/templates/hqadmin/email_status.html
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/standard/sms.py
@@ -5404,6 +5406,7 @@ msgstr "Справа"
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/public_webforms/tables.py
 #: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py
 #: corehq/apps/reports/standard/inspect.py
@@ -7629,6 +7632,7 @@ msgstr "Налаштування меню"
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
@@ -7802,6 +7806,7 @@ msgstr "Встановити CommCare"
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_feedback.html
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/async/bootstrap5/default.html
@@ -14898,6 +14903,7 @@ msgstr "Редагувати віджет"
 #: corehq/apps/hqwebapp/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
 #: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
 #: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
 #: corehq/messaging/scheduling/templates/scheduling/dashboard.html
@@ -15829,7 +15835,6 @@ msgstr "у межах відстані"
 
 #: corehq/apps/case_search/endpoint_views.py
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#: corehq/tabs/tabclasses.py
 msgid "Case Search Endpoints"
 msgstr "Кінцеві точки пошуку кейсів"
 
@@ -16027,6 +16032,7 @@ msgid "results"
 msgstr "результатів"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/public_webforms/models.py
 #: corehq/apps/userreports/reports/builder/forms.py
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Closed"
@@ -16125,12 +16131,9 @@ msgstr "Введіть назву кінцевої точки"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-msgid "Target Type"
-msgstr "Цільовий тип"
-
-#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-msgid "-- Select a case type --"
-msgstr "-- Оберіть тип кейсу --"
+#| msgid "Input Type"
+msgid "Endpoint Type"
+msgstr "Тип кінцевої точки"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 msgid "Parameters"
@@ -16171,6 +16174,14 @@ msgid "Add Parameter"
 msgstr "Додати параметр"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "SQL"
+msgstr "SQL"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "-- Select a case type --"
+msgstr "-- Оберіть тип кейсу --"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/partials/query_tester.html
 msgid "Test query"
 msgstr "Тестувати запит"
@@ -16180,8 +16191,15 @@ msgid "Create Endpoint"
 msgstr "Створити кінцеву точку"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-msgid "New Endpoint"
-msgstr "Нова кінцева точка"
+#, python-format
+#| msgid "New Endpoint"
+msgid "New Endpoint (%(label)s)"
+msgstr "Нова кінцева точка (%(label)s)"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#| msgid "File Dropzone"
+msgid "Toggle Dropdown"
+msgstr "Перемкнути випадаючий список"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 msgid "Updated On"
@@ -17659,6 +17677,10 @@ msgstr "Панель керування HQ"
 #: corehq/apps/dashboard/views.py
 msgid "Build, update, and deploy applications"
 msgstr "Створюйте, оновлюйте та розгортайте додатки"
+
+#: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
+msgid "New Application"
+msgstr "Новий додаток"
 
 #: corehq/apps/dashboard/views.py
 msgid "View worker monitoring reports and inspect project data"
@@ -20593,6 +20615,56 @@ msgstr ""
 "    <span>Повернутися до <a href=\"%(form_management_url)s\">Управління формами</a>, щоб скасувати це.</span>\n"
 "  "
 
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#| msgid "Please try again."
+msgid "The job failed. Please try again."
+msgstr "Завдання не виконано. Будь ласка, спробуйте ще раз."
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "            Changes have been saved successfully!\n"
+#| "        "
+msgid ""
+"\n"
+"            %(counter)s form processed successfully\n"
+"          "
+msgid_plural ""
+"\n"
+"            %(counter)s forms processed successfully\n"
+"          "
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+msgstr[3] ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#| msgid "No Forms are supplied"
+msgid "Some forms were skipped:"
+msgstr "Деякі форми були пропущені:"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to reverse this.</span>\n"
+#| "  "
+msgid ""
+"\n"
+"    <span\n"
+"      >Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to reverse\n"
+"      this.</span\n"
+"    >\n"
+"  "
+msgstr ""
+"\n"
+"    <span\n"
+"      >Повернутися до <a href=\"%(form_management_url)s\">Управління формами</a>, щоб скасувати\n"
+"      це.</span\n"
+"    >\n"
+"  "
+
 #: corehq/apps/data_interfaces/utils.py
 msgid "The case group was not found."
 msgstr "Групу справ не знайдено."
@@ -20772,6 +20844,11 @@ msgstr "Справу додано"
 #: corehq/apps/data_interfaces/views.py
 msgid "Form Management"
 msgstr "Управління формами"
+
+#: corehq/apps/data_interfaces/views.py
+#| msgid "No Forms are supplied"
+msgid "No forms were supplied."
+msgstr "Форми не були надані."
 
 #: corehq/apps/data_interfaces/views.py
 msgid "Form Status"
@@ -28257,6 +28334,7 @@ msgstr ""
 "повторюється"
 
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
 msgid "Process"
 msgstr "Обробити"
 
@@ -33189,6 +33267,16 @@ msgstr "Збірка застосунку"
 msgid "Case Group"
 msgstr "Група кейсів"
 
+#: corehq/apps/hqwebapp/fields.py
+#| msgid "Please confirm that you want to proceed?"
+msgid "Please confirm that you are not a robot."
+msgstr "Будь ласка, підтвердьте, що ви не робот."
+
+#: corehq/apps/hqwebapp/fields.py
+#| msgid "There was an error saving your alert. Please try again!"
+msgid "We could not confirm that you are not a robot. Please try again."
+msgstr "Не вдалося підтвердити, що ви не робот. Будь ласка, спробуйте ще раз."
+
 #: corehq/apps/hqwebapp/forms.py
 msgid ""
 "Sorry - you have attempted to login with an incorrect password too many "
@@ -33230,7 +33318,6 @@ msgstr ""
 "проєкт можуть бути в іншому розташуванні."
 
 #: corehq/apps/hqwebapp/forms.py
-#| msgid "Your project spaces:"
 msgid "On the project space:"
 msgid_plural "On the project spaces:"
 msgstr[0] "Ваші робочі простори:"
@@ -33239,7 +33326,6 @@ msgstr[2] "Ваші робочі простори:"
 msgstr[3] "Ваші робочі простори:"
 
 #: corehq/apps/hqwebapp/forms.py
-#| msgid "Your project spaces:"
 msgid "Choose project space"
 msgid_plural "Choose project spaces"
 msgstr[0] "Ваші робочі простори:"
@@ -33248,7 +33334,6 @@ msgstr[2] "Ваші робочі простори:"
 msgstr[3] "Ваші робочі простори:"
 
 #: corehq/apps/hqwebapp/forms.py
-#| msgid "Push content to a downstream project space"
 msgid "Choose at least one project space."
 msgstr "Оберіть принаймні один робочий простір проєкту."
 
@@ -33385,12 +33470,10 @@ msgid "Staging"
 msgstr "Стенд"
 
 #: corehq/apps/hqwebapp/oauth_scopes.py
-#| msgid "-The CommCare HQ team"
 msgid "Access CommCare API data"
 msgstr "Доступ до даних API CommCare"
 
 #: corehq/apps/hqwebapp/oauth_scopes.py
-#| msgid "Failed to download export."
 msgid "View and download report data"
 msgstr "Перегляд і завантаження даних звітів"
 
@@ -33404,7 +33487,6 @@ msgid "(Deprecated, do not use) Allow access to mobile endpoints"
 msgstr "(Застаріло, не використовувати) Дозволити доступ до мобільних точок"
 
 #: corehq/apps/hqwebapp/oauth_scopes.py
-#| msgid "You have been added to the \"{}\" project space."
 msgid "Access data in the \"{}\" project space only"
 msgstr "Доступ до даних лише у робочому просторі \"{}\""
 
@@ -33885,16 +33967,11 @@ msgstr ""
 "        "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
-#| msgid "Path in Application"
 msgid "Authorize Application"
 msgstr "Авторизувати застосунок"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Thanks for using %(cc_name)s!\n"
-#| "          "
 msgid ""
 "\n"
 "            Authorize %(application_name)s?\n"
@@ -33909,16 +33986,12 @@ msgid "This application is requesting permission to:"
 msgstr "Цей застосунок запитує дозвіл на:"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
-#| msgid ""
-#| "Your project space has not been granted access to data from any other "
-#| "project spaces."
 msgid "This application will have access to data on all your project spaces."
 msgstr ""
 "Цей застосунок матиме доступ до даних у всіх ваших робочих просторах "
 "проєкту."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
-#| msgid "uncategorized"
 msgid "Authorize"
 msgstr "Авторизувати"
 
@@ -38219,6 +38292,76 @@ msgstr "Програму збережено!"
 msgid "Edit Program"
 msgstr "Редагувати програму"
 
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#| msgid "Translate Me"
+msgid "Translated SQL"
+msgstr "Перекладений SQL"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+msgid "Try it out"
+msgstr "Спробувати"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+msgid "Run"
+msgstr "Запустити"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#, python-format
+#| msgid "Duration: %(duration)s"
+msgid "Evaluated in %(duration)s seconds"
+msgstr "Оцінено за %(duration)s секунд"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#, python-format
+#| msgid "Showing the first"
+msgid "Showing the first %(max_rows)s rows."
+msgstr "Показано перші %(max_rows)s рядків."
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#| msgid "results"
+msgid "No results"
+msgstr "Немає результатів"
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+#: corehq/apps/project_db/views.py
+#| msgid "My Projects"
+msgid "Query ProjectDB"
+msgstr "Запит до ProjectDB"
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+#| msgid "Table "
+msgid "Tables"
+msgstr "Таблиці"
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+msgid "This project has no ProjectDB tables yet."
+msgstr "У цьому проєкті ще немає таблиць ProjectDB."
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+#| msgid "Custom SMS Content"
+msgid "Copy DB Context"
+msgstr "Копіювати контекст БД"
+
+#: corehq/apps/public_webforms/form_paths.py
+#| msgid "Deleted"
+msgid "(Deleted)"
+msgstr "(Видалено)"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "Search Filter"
+msgid "Search labels"
+msgstr "Пошук міток"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "All statuses"
+msgid "Any status"
+msgstr "Будь-який статус"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "type"
+msgid "Any type"
+msgstr "Будь-який тип"
+
 #: corehq/apps/public_webforms/forms.py
 msgid "Identifies this public webform. Respondents will see the form's name."
 msgstr ""
@@ -38277,6 +38420,40 @@ msgstr "Будь ласка, виберіть застосунок, меню т�
 msgid "The selected form can't be used for a public webform."
 msgstr "Обрану форму не можна використовувати для публічної веб-форми."
 
+#: corehq/apps/public_webforms/models.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Open"
+msgstr "Відкрити"
+
+#: corehq/apps/public_webforms/models.py
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap3/web_users.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/web_users.html
+msgid "Expired"
+msgstr "Термін дії минув"
+
+#: corehq/apps/public_webforms/tables.py
+#| msgid "View Submissions"
+msgid "Submissions"
+msgstr "Відправлення"
+
+#: corehq/apps/public_webforms/tables.py
+#| msgid "Expired"
+msgid "Expires"
+msgstr "Термін дії"
+
+#: corehq/apps/public_webforms/tables.py
+#| msgid "Delivered"
+msgid "Delivery"
+msgstr "Доставка"
+
+#: corehq/apps/public_webforms/tables.py
+#| msgid "Public Name"
+msgid "Public URL"
+msgstr "Публічний URL"
+
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
 #: corehq/apps/public_webforms/views.py corehq/privileges.py
 #: corehq/tabs/tabclasses.py
@@ -38299,6 +38476,16 @@ msgstr ""
 "      скасовуйте доступ у будь-який час.\n"
 "    "
 
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#| msgid "New Public Webform"
+msgid "How public forms work"
+msgstr "Як працюють публічні форми"
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#| msgid "forms"
+msgid "Webforms"
+msgstr "Вебформи"
+
 #: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 msgid ""
 "\n"
@@ -38310,6 +38497,32 @@ msgstr ""
 "          Лише <strong>реєстраційні</strong> та <strong>опитувальні</strong> форми\n"
 "          дозволені. Форми, які оновлюють існуючі справи, не можуть бути публічними.\n"
 "        "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
+msgid "Public URL QR Code"
+msgstr "QR-код публічного URL"
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
+msgid ""
+"\n"
+"            Respondents who scan this code open the same page as the public URL,\n"
+"            where they can request a one-time link.\n"
+"          "
+msgstr ""
+"\n"
+"            Респонденти, які сканують цей код, відкривають ту ж сторінку, що й публічний URL,\n"
+"            де вони можуть запросити одноразове посилання.\n"
+"          "
+
+#: corehq/apps/public_webforms/templates/public_webforms/tables/public_webform.html
+#| msgid "Public webform created."
+msgid "No public webforms match these filters."
+msgstr "Жодна публічна вебформа не відповідає цим фільтрам."
+
+#: corehq/apps/public_webforms/templates/public_webforms/tables/public_webform.html
+#| msgid "No grants have been created."
+msgid "No public webforms have been created yet."
+msgstr "Публічні вебформи ще не створені."
 
 #: corehq/apps/public_webforms/views.py
 msgid "Manage Public Webforms"
@@ -44266,14 +44479,6 @@ msgstr "Створити новий проєкт"
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 msgid "Copy Full Key"
 msgstr "Скопіювати повний ключ"
-
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/web_users.html
-msgid "Expired"
-msgstr "Термін дії минув"
 
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 msgid "Delete Key"
@@ -54261,10 +54466,6 @@ msgid "Empty Case"
 msgstr "Порожній кейс"
 
 #: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Open"
-msgstr "Відкрити"
-
-#: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Modified On"
 msgstr "Змінено"
 
@@ -58672,10 +58873,6 @@ msgid "My Applications"
 msgstr "Мої додатки"
 
 #: corehq/tabs/tabclasses.py
-msgid "New Application"
-msgstr "Новий додаток"
-
-#: corehq/tabs/tabclasses.py
 msgid "Create and manage public webforms."
 msgstr "Створюйте та керуйте публічними вебформами."
 
@@ -59591,6 +59788,9 @@ msgstr "Обов'язкові колонки: {column_names}"
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
 
+#~ msgid "Target Type"
+#~ msgstr "Цільовий тип"
+
 #~ msgid "-- Field --"
 #~ msgstr "-- Поле --"
 
@@ -59675,9 +59875,6 @@ msgstr "Введіть коректний JSON"
 #~ msgid "Logs"
 #~ msgstr "Журнали"
 
-#~ msgid "Run"
-#~ msgstr "Запустити"
-
 #, python-format
 #~ msgid ""
 #~ "\n"
@@ -59714,10 +59911,6 @@ msgstr "Введіть коректний JSON"
 #, python-format
 #~ msgid "Ended: %(date_ended)s"
 #~ msgstr "Завершено: %(date_ended)s"
-
-#, python-format
-#~ msgid "Duration: %(duration)s"
-#~ msgstr "Тривалість: %(duration)s"
 
 #~ msgid "Status:"
 #~ msgstr "Статус:"
@@ -59870,9 +60063,6 @@ msgstr "Введіть коректний JSON"
 
 #~ msgid "Normal Case List"
 #~ msgstr "Звичайний список справ"
-
-#~ msgid "Search Filter"
-#~ msgstr "Фільтр пошуку"
 
 #~ msgid "Copy case list filter"
 #~ msgstr "Копіювати фільтр списку справ"
@@ -60704,9 +60894,6 @@ msgstr "Введіть коректний JSON"
 #~ msgid ""
 #~ "Confirm that resources are completely translated before performing request"
 #~ msgstr "Підтвердіть, що ресурси повністю перекладені перед виконанням запиту"
-
-#~ msgid "Please confirm that you want to proceed?"
-#~ msgstr "Будь ласка, підтвердіть, що бажаєте продовжити?"
 
 #~ msgid "Version not available for app"
 #~ msgstr "Версія для додатку недоступна"
