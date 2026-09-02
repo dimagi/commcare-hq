@@ -47,7 +47,7 @@ from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
-    require_deploy_apps,
+    require_can_edit_or_view_apps,
 )
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
@@ -1273,7 +1273,7 @@ def _get_form_datums(domain, app_id, form_id):
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def view_form_legacy(request, domain, app_id, module_id, form_id):
     """
     This view has been kept around to not break any documentation on example apps
@@ -1285,7 +1285,7 @@ def view_form_legacy(request, domain, app_id, module_id, form_id):
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def view_form(request, domain, app_id, form_unique_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(

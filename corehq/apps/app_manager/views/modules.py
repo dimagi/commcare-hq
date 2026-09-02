@@ -43,7 +43,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
-    require_deploy_apps,
+    require_can_edit_or_view_apps,
 )
 from corehq.apps.app_manager.exceptions import (
     AppMisconfigurationError,
@@ -1694,14 +1694,14 @@ def _init_biometrics_identify_module(app, lang, enroll_form_id):
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def view_module(request, domain, app_id, module_unique_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, module_unique_id=module_unique_id)
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def view_module_legacy(request, domain, app_id, module_id):
     """
     This view has been kept around to not break any documentation on example apps

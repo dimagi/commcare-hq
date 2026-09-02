@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.http import HttpResponse
 
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.decorators import require_deploy_apps
+from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.models import (
     ConditionalCaseUpdate,
     FormActionCondition,
@@ -18,7 +18,7 @@ from corehq.apps.app_manager.app_schemas.app_case_metadata import (
 from custom.ucla.forms import TaskCreationForm
 
 
-@require_deploy_apps
+@require_can_edit_apps
 def task_creation(request, domain, app_id, module_id, form_id):
     '''
     This view is meant to be run as a one-off script to support a specific
