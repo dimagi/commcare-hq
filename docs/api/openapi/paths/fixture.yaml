@@ -1,0 +1,343 @@
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listFixtures
+    summary: List fixture data items (lookup table rows)
+    description: >-
+      Returns fixture data items (lookup table rows) the authenticated user is
+      permitted to see. Requires the Edit Apps permission
+      (`RequirePermissionAuthentication(HqPermissions.edit_apps)`,
+      `v0_1.py:92`). `Meta.limit = 0` (`v0_1.py:95`), so the default page size
+      is unlimited unless the caller supplies `limit` explicitly.
+
+      `FixtureResource.Meta` (`v0_1.py:91-95`) declares no
+      `list_allowed_methods`/`detail_allowed_methods`/`allowed_methods`, so it
+      defaults to tastypie's full `['get', 'post', 'put', 'delete', 'patch']`
+      for both list and detail (confirmed by instantiating the resource: see the
+      discrepancy file). Only `GET` is documented here, matching `fixture.rst`,
+      because the other methods are not actually implemented --
+      `FixtureResource` overrides only `obj_get`/`obj_get_list`, so
+      `obj_create`/`obj_update`/`obj_delete` fall through to `Resource`'s base
+      implementations, which raise `NotImplementedError` and surface as a bare
+      500. See the discrepancy file.
+    tags: [Data]
+    parameters:
+      - name: fixture_type
+        in: query
+        required: false
+        description: >-
+          Restrict to fixture items whose lookup table `tag` matches this value
+          (`fixture.rst:42-52`).
+        example: city
+        schema:
+          type: string
+      - $ref: "../components/parameters.yaml#/Limit"
+      - $ref: "../components/parameters.yaml#/Offset"
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: A page of fixture items.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/lookup-table.yaml#/FixtureList"
+      "400":
+        description: >-
+          `limit` or `offset` is not a valid integer
+          (`Paginator.get_limit`/`get_offset`, `tastypie/paginator.py:53-81,
+          85-107`), converted by `wrap_view` to the shared `{"error": ...}`
+          shape.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Deliberately not the shared Forbidden ref. RequirePermissionAuthentication
+        # (corehq/apps/api/resources/auth.py:152-163) delegates to
+        # LoginAndDomainAuthentication._auth_test (auth.py:114-135): a failed
+        # permission check raises Django's PermissionDenied
+        # (require_permission_raw, corehq/apps/users/decorators.py:34-54),
+        # caught directly by _auth_test and converted to a bare
+        # HttpResponseForbidden() -- no body. Same mechanism as location-v1's
+        # and location-type's 403.
+        description: >-
+          The authenticated user lacks the Edit Apps permission, or is not a
+          member of this project space. The response body is empty.
+      "429":
+        # Deliberately not the shared ref: FixtureResource.Meta inherits
+        # CustomResourceMeta's real HQThrottle (corehq/apps/api/resources/
+        # meta.py:76-81), and a throttled request gets tastypie's bare
+        # http.HttpTooManyRequests() (tastypie/resources.py:574-598) -- no
+        # JSON body. Same mechanism documented for listUsersBulk.
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty.
+Detail:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: fixture_item_id
+      in: path
+      required: true
+      description: Fixture item (lookup table row) UUID.
+      example: 1J9NF7B4FTH73435PYJJSL5SJ
+      schema:
+        type: string
+  get:
+    operationId: getFixture
+    summary: Retrieve a single fixture data item
+    description: Requires the Edit Apps permission.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: The fixture item.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/lookup-table.yaml#/Fixture"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks the Edit Apps permission, or is not a
+          member of this project space. The response body is empty. Same
+          mechanism as `listFixtures`'s 403.
+      "404":
+        # Deliberately not the shared NotFound ref: get_sql_object_or_not_exist
+        # (v0_1.py:421-433) raises Django's ObjectDoesNotExist, caught by
+        # tastypie's default get_detail (tastypie/resources.py:1362-1383),
+        # which returns a bare http.HttpNotFound() -- no body. Same mechanism
+        # as getGroup/getLocationV1.
+        description:
+          The requested fixture item does not exist. The response body is empty.
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listFixtures`'s 429.
+Upload:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  post:
+    operationId: uploadFixtureExcel
+    summary: Bulk-create or replace lookup tables from an Excel file
+    description: >-
+      Uploads an `.xlsx` file containing one or more lookup tables
+      (`fixture.rst:100-178`; `upload_fixture_api`, `views.py:417-426`).
+      Requires the Edit Data permission and the Lookup Tables privilege
+      (`require_can_edit_fixtures`, `dispatcher.py:9-13`) -- despite
+      `fixture.rst:122-123` stating "Permission Required: Edit Apps"; the code
+      checks `HqPermissions.edit_data`, not `edit_apps` (also re-checked
+      explicitly inside the view, `views.py:553-556`). See the discrepancy file.
+
+      **The HTTP status is always 200**, whether the upload succeeds, is queued,
+      or is rejected. `upload_fixture_api` (`views.py:417-426`) returns
+      `JsonResponse(...)` with no `status=` argument, so the real outcome is
+      only visible in the body's `code` field (200 success, 402 validation
+      warning, 405 rejected/failed) -- not in the transport-level status code.
+      See the discrepancy file.
+
+      When `async=true`, the file is queued via `fixture_upload_async.delay`
+      (`views.py:483-489`) and the response always reports `code: 200`
+      ("success") with a `status_url`/`download_id` pointing at
+      `getFixtureUploadStatus` -- file-format validation happens later, inside
+      the queued task, and is only visible by polling that status URL. When
+      `async` is absent or not `"true"`, the upload is validated and applied
+      synchronously and the response never includes `status_url`/`download_id`.
+    tags: [Data]
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [file-to-upload, replace]
+            properties:
+              file-to-upload:
+                type: string
+                format: binary
+                description: >-
+                  The `.xlsx` file containing the lookup table data. Its
+                  internal structure is not modeled here.
+              replace:
+                type: string
+                description: >-
+                  `"true"` if existing tables of the same tag should be
+                  replaced, `"false"` to merge/append
+                  (`_get_fixture_upload_args_from_request`, `views.py:535-558`).
+                example: "false"
+              async:
+                type: string
+                description: >-
+                  `"true"` to queue the upload and process it in the background,
+                  returning a `status_url` immediately. Any other value
+                  (including omission) processes synchronously.
+                example: "false"
+    responses:
+      "200":
+        description: >-
+          Always returned, regardless of outcome. The body's `code` field
+          carries the real result: `200` success, `402` validation warning,
+          `405` fail (`UploadFixtureAPIResponse.response_codes`,
+          `views.py:377-393`).
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  description: >-
+                    Synchronous result, or a request-argument failure (missing
+                    file/`replace`) caught before queuing.
+                  required: [message, code]
+                  properties:
+                    message:
+                      type: string
+                      example:
+                        Error processing your file. Submit a valid (.xlsx) file
+                    code:
+                      type: integer
+                      enum: [200, 402, 405]
+                      example: 402
+                  additionalProperties: false
+                - type: object
+                  description: >-
+                    Accepted for asynchronous processing
+                    (`AsyncUploadFixtureAPIResponse`, `views.py:396-408`).
+                    Always `code: 200` -- the queued task's own success or
+                    failure is only observable via `status_url`.
+                  required: [message, code, status_url, download_id]
+                  properties:
+                    message:
+                      type: string
+                      example:
+                        File has been uploaded successfully and is queued for
+                        processing.
+                    code:
+                      type: integer
+                      enum: [200]
+                      example: 200
+                    status_url:
+                      type: string
+                      example: >-
+                        https://www.commcarehq.org/a/demo/fixtures/fixapi/status/dl-2998e6834a654ab5ba74f372246caa75/
+                    download_id:
+                      type: string
+                      example: dl-2998e6834a654ab5ba74f372246caa75
+      "401":
+        # Plain-Django-view endpoint, not a tastypie resource. api_auth()
+        # (get_multi_auth_decorator, corehq/apps/domain/decorators.py:394-428)
+        # dispatches to a digest/basic/api-key challenge decorator
+        # (get_auth_decorator_map) when the request is not already
+        # session-authenticated; a failed challenge returns that decorator's
+        # own 401 (e.g. _api_key's bare tastypie HttpUnauthorized(),
+        # corehq/apps/domain/decorators.py:225-239, or django_digest's own
+        # WWW-Authenticate challenge) -- empty or plain-text body, not JSON.
+        description: >-
+          Authentication credentials were missing or invalid. The response body
+          is empty or plain text, not JSON.
+      "403":
+        # require_can_edit_fixtures (dispatcher.py:9-13) wraps
+        # require_permission(HqPermissions.edit_data), whose
+        # require_permission_raw (corehq/apps/users/decorators.py:18-61)
+        # raises Django's PermissionDenied for a non-ajax request lacking the
+        # permission; Django's handler403 = no_permissions
+        # (corehq/apps/hqwebapp/views.py:362-373, wired at urls.py:49) renders
+        # an HTML error page, not JSON.
+        description: >-
+          The authenticated user lacks the Edit Data permission, or the domain
+          lacks the Lookup Tables privilege. The response is an HTML error page,
+          not JSON.
+      "429":
+        # api_throttle (corehq/apps/api/decorators.py:51-61) returns a bare
+        # HttpResponse(status=429) with no body.
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty.
+UploadStatus:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: download_id
+      in: path
+      required: true
+      description: >-
+        Opaque download id returned by `uploadFixtureExcel`'s `status_url`
+        (`fixture.rst:249`).
+      example: dl-2998e6834a654ab5ba74f372246caa75
+      schema:
+        type: string
+  get:
+    operationId: getFixtureUploadStatus
+    summary: Poll the status of a queued fixture upload
+    description: >-
+      Polls the background job started by `uploadFixtureExcel` with `async=true`
+      (`fixture_api_upload_status`, `views.py:429-446`). Requires the Edit Data
+      permission and the Lookup Tables privilege, same mechanism as
+      `uploadFixtureExcel`.
+
+      **The HTTP status is always 200**, including when the queued task failed
+      or an unknown `download_id` is supplied -- `json_response`
+      (`dimagi/utils/web.py:76-84`) is called without a `status_code` argument
+      on every branch. `get_download_context` never raises for an unknown
+      `download_id`: `DownloadBase.get` returning `None` falls back to a fresh,
+      task-less `DownloadBase`, and `get_task_status(None, ...)`
+      (`soil/progress.py:144-154`) reports it as still in progress rather than
+      failing. There is no reachable 404 for this operation. See the discrepancy
+      file.
+    tags: [Data]
+    responses:
+      "200":
+        description: >-
+          Current status. Body shape depends on progress; the three shapes are
+          mutually exclusive and never combined.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  description: Still running.
+                  required: [message, progress]
+                  properties:
+                    message:
+                      type: string
+                      example: Task in progress. 42% complete
+                    progress:
+                      type: integer
+                      nullable: true
+                      example: 42
+                - type: object
+                  description: Finished successfully.
+                  required: [complete, message]
+                  properties:
+                    complete:
+                      type: boolean
+                      enum: [true]
+                    message:
+                      type: string
+                      example: Upload complete.
+                - type: object
+                  description: >-
+                    Failed, either because the queued task raised
+                    (`TaskFailedError`, `views.py:438-446`) or because the task
+                    completed but reported an error in its result
+                    (`views.py:453-457`).
+                  required: [error, message]
+                  properties:
+                    error:
+                      type: boolean
+                      enum: [true]
+                    message:
+                      type: string
+                      example: "Upload did not complete. Reason: 'invalid file'"
+      "401":
+        description: >-
+          Authentication credentials were missing or invalid. The response body
+          is empty or plain text, not JSON. Same mechanism as
+          `uploadFixtureExcel`'s 401.
+      "403":
+        description: >-
+          The authenticated user lacks the Edit Data permission, or the domain
+          lacks the Lookup Tables privilege. The response is an HTML error page,
+          not JSON. Same mechanism as `uploadFixtureExcel`'s 403.

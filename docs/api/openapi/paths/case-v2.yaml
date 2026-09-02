@@ -1,0 +1,1602 @@
+# Case Data API v2 (`docs/api/cases-v2.rst`).
+#
+# Unlike every other resource in this spec, v2 is not a tastypie resource, so
+# there is no `Meta.list_allowed_methods` to read. The allowed methods are the
+# branches of `case_api`'s own dispatch (`corehq/apps/hqcase/views.py:96-112`);
+# anything that falls through returns 405 `{"error": "Request method not
+# allowed"}`. The four path items below record exactly those branches:
+#
+#   GET  + case_id     -> _handle_get           (single, or comma-separated multi)
+#   GET  + external_id -> _handle_ext_get
+#   GET  (neither)     -> _handle_list_view
+#   POST (no case_id)  -> _handle_case_put_post(is_creation=True)
+#   PUT  + external_id -> _handle_ext_put       (upsert)
+#   PUT  (otherwise)   -> _handle_case_put_post(is_creation=False)
+#
+# Trailing slashes: `corehq/apps/api/urls.py:151-152` ends both the list and
+# detail patterns with `/?$`, so the slash is optional on those two and both
+# forms resolve. The paths below follow `cases-v2.rst` -- slash on the list
+# path, none on the detail path. `bulk-fetch/` (urls.py:150) and `ext/<id>/`
+# (urls.py:153) genuinely require their trailing slash.
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listCasesV2
+    summary: List cases
+    description: >-
+      Returns a page of cases matching the filters below. Requires the Edit Data
+      permission and API access. Backed by the case-search Elasticsearch index
+      (`get_list`, `corehq/apps/hqcase/api/get_list.py:84-118`).
+
+
+      **Pagination is cursor-based, not offset-based.** There is no `offset`
+      parameter. When more results exist the response carries a `next` field
+      holding an absolute URL with an opaque `cursor`; follow it verbatim until
+      the field is absent. Results are ordered oldest-to-newest by `indexed_on`,
+      so a case modified during a long pull may appear a second time near the
+      end of the run.
+
+
+      **Unrecognised parameters are rejected**, unlike case/v1 which silently
+      turns them into raw Elasticsearch term filters: any name that is not one
+      of those below fails the request with a 400 `"'<name>' is not a valid
+      parameter."` (`_get_filter`,
+      `corehq/apps/hqcase/api/get_list.py:154-165`).
+
+
+      **Repeating a parameter ORs its values.** `?owner_id=a&owner_id=b` returns
+      cases owned by either (`corehq/apps/hqcase/api/get_list.py:135-143`).
+      Different parameters are ANDed.
+
+
+      **Four parameters below are name templates, not literal names.** OpenAPI
+      cannot express "any parameter whose name begins with `properties.`", so
+      `properties.<property_name>`, `indices.<index_name>`,
+      `fields.<parent_field>` and `exclude.<parent_field>` are listed with an
+      angle-bracket placeholder that you must replace with a real name before
+      sending. Send `?properties.state=bihar`, not
+      `?properties.<property_name>=bihar`; likewise `?indices.parent=<case_id>`,
+      `?fields.properties=edd,age` and `?exclude.properties=husband_name`. You
+      may send as many of each family as you need, and each is parsed by
+      splitting the parameter name on `.` (`corehq/apps/hqcase/api/get_list.py:
+      161-163`, `corehq/apps/hqcase/api/field_filters.py:37-43`). Every other
+      parameter below is a literal name.
+    tags: [Data]
+    parameters:
+      - name: limit
+        in: query
+        required: false
+        description: >-
+          Page size. Defaults to 20; values above 5000 fail with a 400
+          (`corehq/apps/hqcase/api/get_list.py:20-21,128-130`).
+        example: 100
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5000
+          default: 20
+      - name: cursor
+        in: query
+        required: false
+        description: >-
+          Opaque pagination token, taken verbatim from a previous response's
+          `next` URL. It encodes the whole original query, so when it is present
+          every other query parameter on the request is ignored
+          (`corehq/apps/hqcase/api/get_list.py:85-91`). Do not construct or
+          modify it.
+        example: Y2FzZV90eXBlPXBhdGllbnQ=
+        schema:
+          type: string
+      - name: case_type
+        in: query
+        required: false
+        description: Exact match on the case type.
+        example: patient
+        schema:
+          type: string
+      - name: case_name
+        in: query
+        required: false
+        description: Exact match on the case name.
+        example: Elizabeth Harmon
+        schema:
+          type: string
+      - name: external_id
+        in: query
+        required: false
+        description: Exact match on the case's external id.
+        example: "1"
+        schema:
+          type: string
+      - name: owner_id
+        in: query
+        required: false
+        description: >-
+          Exact match on the owning mobile worker, group, or location UUID.
+        example: 20cc9dda-b90a-4af3-aa3d-fc67184e73ef
+        schema:
+          type: string
+      - name: closed
+        in: query
+        required: false
+        description: >-
+          Filter by case status. Parsed by `_to_boolean`
+          (`corehq/apps/hqcase/api/get_list.py:27-28`): an empty value or one of
+          `false`, `f`, `no`, `n`, `0` (case-insensitive) means false, and
+          **every other value -- including `maybe` or `2` -- means true**. Omit
+          the parameter to return both open and closed cases.
+        example: false
+        schema:
+          type: boolean
+      - name: include_deprecated
+        in: query
+        required: false
+        description: >-
+          By default cases whose type is marked deprecated in the project's data
+          dictionary are excluded. Set this to true to include them
+          (`_include_deprecated_filter`,
+          `corehq/apps/hqcase/api/get_list.py:51-55`). Same permissive boolean
+          parsing as `closed`. Undocumented in `cases-v2.rst`; see the
+          discrepancy file.
+        example: true
+        schema:
+          type: boolean
+      - name: query
+        in: query
+        required: false
+        description: >-
+          A CommCare case-search XPath expression, applied as an additional
+          filter (`build_filter_from_xpath` via `_get_query_filter`,
+          `corehq/apps/hqcase/api/get_list.py:168-172`). An expression that
+          fails to parse returns a 400 `"Bad query: ..."`. Undocumented in
+          `cases-v2.rst`; see the discrepancy file.
+        example: "dob < '1950-01-01'"
+        schema:
+          type: string
+      - name: properties.<property_name>
+        in: query
+        required: false
+        description: >-
+          Filter on a user-defined case property. Substitute the property name
+          for `<property_name>`, e.g. `properties.state=bihar`. Exact matches
+          only -- no ranges or wildcards. An empty value matches both cases
+          where the property is unset and cases where it is set to the empty
+          string.
+        example: bihar
+        schema:
+          type: string
+      - name: indices.<index_name>
+        in: query
+        required: false
+        description: >-
+          Reverse index lookup. Substitute the index identifier for
+          `<index_name>` and pass a case id, e.g.
+          `indices.parent=<household_case_id>` to list the children of that
+          household. This is the only way to traverse indices backwards; a
+          case's own outgoing indices are already in its `indices` field.
+        example: eb1a8c23-6d6d-4b61-894c-ae1c437d8dac
+        schema:
+          type: string
+      - name: last_modified.gte
+        in: query
+        required: false
+        description: >-
+          Only cases whose `last_modified` is at or after this moment. This and
+          the other 19 date filters accept either an ISO-8601 date
+          (`YYYY-MM-DD`) or anything `dateutil.parser.parse` understands
+          (`parse_str_to_date`, `corehq/apps/api/util.py:96-105`), which
+          **does** include a `Z` or a `+HH:MM` offset -- a difference from
+          case/v1's `*_start`/`*_end` filters, which reject offsets. A value
+          that cannot be parsed returns a 400 `"Cannot parse datetime '<val>'"`.
+          `format: date-time` is deliberately not declared, because the bare
+          date form these parameters also accept is not an RFC3339 date-time.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: last_modified.gt
+        in: query
+        required: false
+        description:
+          Only cases whose `last_modified` is strictly after this moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: last_modified.lte
+        in: query
+        required: false
+        description:
+          Only cases whose `last_modified` is at or before this moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: last_modified.lt
+        in: query
+        required: false
+        description:
+          Only cases whose `last_modified` is strictly before this moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: server_last_modified.gte
+        in: query
+        required: false
+        description: >-
+          Only cases whose `server_last_modified` is at or after this moment.
+          Same accepted formats as `last_modified.gte`.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: server_last_modified.gt
+        in: query
+        required: false
+        description:
+          Only cases whose `server_last_modified` is strictly after this moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: server_last_modified.lte
+        in: query
+        required: false
+        description:
+          Only cases whose `server_last_modified` is at or before this moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: server_last_modified.lt
+        in: query
+        required: false
+        description:
+          Only cases whose `server_last_modified` is strictly before this
+          moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: indexed_on.gte
+        in: query
+        required: false
+        description: >-
+          Only cases indexed into Elasticsearch at or after this moment. Same
+          accepted formats as `last_modified.gte`. Note this is the field cursor
+          pagination already sorts on, so prefer following `next` over filtering
+          on it by hand.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: indexed_on.gt
+        in: query
+        required: false
+        description:
+          Only cases indexed into Elasticsearch strictly after this moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: indexed_on.lte
+        in: query
+        required: false
+        description:
+          Only cases indexed into Elasticsearch at or before this moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: indexed_on.lt
+        in: query
+        required: false
+        description:
+          Only cases indexed into Elasticsearch strictly before this moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: date_opened.gte
+        in: query
+        required: false
+        description: >-
+          Only cases opened at or after this moment. Same accepted formats as
+          `last_modified.gte`.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: date_opened.gt
+        in: query
+        required: false
+        description: Only cases opened strictly after this moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: date_opened.lte
+        in: query
+        required: false
+        description: Only cases opened at or before this moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: date_opened.lt
+        in: query
+        required: false
+        description: Only cases opened strictly before this moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: date_closed.gte
+        in: query
+        required: false
+        description: >-
+          Only cases closed at or after this moment. Same accepted formats as
+          `last_modified.gte`. Open cases have no `date_closed` and so match
+          none of these four filters.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: date_closed.gt
+        in: query
+        required: false
+        description: Only cases closed strictly after this moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: date_closed.lte
+        in: query
+        required: false
+        description: Only cases closed at or before this moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: date_closed.lt
+        in: query
+        required: false
+        description: Only cases closed strictly before this moment.
+        example: "2020-03-19T14:31:34.133000Z"
+        schema:
+          type: string
+      - name: fields
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of case fields to keep; everything else is
+          dropped from each returned case. Dot notation reaches into nested
+          objects (`properties.dob`). Mutually exclusive with `exclude` --
+          sending both is a 400 (`get_fields_filter_fn`,
+          `corehq/apps/hqcase/api/field_filters.py:4-16`). Only the case objects
+          are filtered; the envelope's `matching_records` and `next` are not.
+          The setting survives cursor pagination.
+        example: case_id,case_name
+        schema:
+          type: string
+      - name: fields.<parent_field>
+        in: query
+        required: false
+        description: >-
+          Shorthand for listing sub-fields of one parent. Substitute the parent
+          field name, e.g. `fields.properties=edd,lmp,age` is exactly
+          `fields=properties.edd,properties.lmp,properties.age`. Combine freely
+          with `fields`.
+        example: edd,lmp,age
+        schema:
+          type: string
+      - name: exclude
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of case fields to drop; everything else is kept.
+          Dot notation reaches into nested objects. Mutually exclusive with
+          `fields`.
+        example: properties
+        schema:
+          type: string
+      - name: exclude.<parent_field>
+        in: query
+        required: false
+        description: >-
+          Shorthand for excluding sub-fields of one parent, e.g.
+          `exclude.properties=husband_name`.
+        example: husband_name
+        schema:
+          type: string
+    responses:
+      "200":
+        description: A page of cases.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/case-v2.yaml#/CaseV2List"
+      "400":
+        description: >-
+          An unrecognised query parameter, an unparsable date, a `limit` above
+          5000, a malformed `query` expression, or `fields` and `exclude`
+          together. Every one of these is raised as a `UserError` and rendered
+          by `case_api`'s handler (`corehq/apps/hqcase/views.py:111-112`) as the
+          standard `{"error": ...}` body.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
+      "403":
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Two causes, both
+        # non-JSON:
+        #  - Authenticated but not a member of this project space:
+        #    `_login_or_challenge`'s inner `_inner` returns a bare
+        #    `HttpResponseForbidden()`
+        #    (corehq/apps/domain/decorators.py:303,329) -- empty body.
+        #  - A member lacking Edit Data or API access: `require_permission`
+        #    raises `django.core.exceptions.PermissionDenied`
+        #    (corehq/apps/users/decorators.py:51-54); the view catches only
+        #    `UserError` (corehq/apps/hqcase/views.py:111-112), so it reaches
+        #    this project's `handler403 = no_permissions` (urls.py:49), which
+        #    renders the `403.html` template
+        #    (`_no_permissions_message`, corehq/apps/hqwebapp/views.py:349-358)
+        #    inside an `HttpResponseForbidden`
+        #    (corehq/apps/hqwebapp/views.py:362-373) -- an HTML page.
+        # Traced from source, not verified against a live server.
+        description: >-
+          The caller is authenticated but is not a member of this project
+          space (empty body), or is a member lacking the Edit Data or API
+          access permission (a Django HTML error page). **Neither shape is
+          JSON.**
+      "429":
+        # Deliberately not the shared TooManyRequests ref: this resource is
+        # throttled by `api_throttle` (corehq/apps/api/decorators.py:51-61),
+        # which returns `HttpResponse(status=429, headers={'Retry-After': ...})`
+        # -- no content, but *with* a `Retry-After` header, which the shared
+        # tastypie response does not carry. See the discrepancy file.
+        description: >-
+          The request was rate limited. The response body is empty; the
+          `Retry-After` header carries the number of seconds to wait.
+        headers:
+          Retry-After:
+            description: Seconds to wait before retrying.
+            schema:
+              type: integer
+  post:
+    operationId: createCasesV2
+    summary: Create a case, or create and update cases in bulk
+    description: >-
+      **The body's JSON type selects the mode.** A single JSON object creates
+      exactly one case. A JSON array switches to bulk mode
+      (`handle_case_update`, `corehq/apps/hqcase/api/updates.py:198-218`), where
+      each entry must carry its own `create` flag and may create, update, or
+      upsert -- so despite the name, a POST here is not restricted to creations.
+      With an array body this endpoint behaves identically to `PUT` on the same
+      path.
+
+
+      Creating a single case is **not** an upsert: a payload whose `external_id`
+      already exists creates a second case carrying the same `external_id`. Use
+      `PUT /a/{domain}/api/case/v2/ext/{external_id}/` when you need upsert
+      semantics.
+
+
+      Every change is applied by submitting a server-generated XForm with xmlns
+      `http://commcarehq.org/case_api`, attributed to the authenticated user,
+      with the request's `User-Agent` recorded as the device id
+      (`corehq/apps/hqcase/api/updates.py:344-353`). A bulk payload becomes one
+      form, so the batch is all-or-nothing.
+
+
+      Note the success status is **200, not 201**, for both modes
+      (`JsonResponse` default, `corehq/apps/hqcase/views.py:281-289`).
+    tags: [Data]
+    parameters:
+      - name: fields
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of fields to keep on the case object(s) in the
+          response. Applies to `case`/`cases` only, never to `form_id`. Mutually
+          exclusive with `exclude`.
+        example: case_id,case_type
+        schema:
+          type: string
+      - name: fields.<parent_field>
+        in: query
+        required: false
+        description: Sub-field shorthand, e.g. `fields.properties=dob`.
+        example: dob
+        schema:
+          type: string
+      - name: exclude
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of fields to drop from the case object(s) in the
+          response. Mutually exclusive with `fields`.
+        example: properties
+        schema:
+          type: string
+      - name: exclude.<parent_field>
+        in: query
+        required: false
+        description:
+          Sub-field shorthand, e.g. `exclude.properties=husband_name`.
+        example: husband_name
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "../components/schemas/case-v2.yaml#/CaseV2Create"
+              - $ref: "../components/schemas/case-v2.yaml#/CaseV2BulkChangeList"
+          examples:
+            singleCase:
+              summary: One case (object body -- creates one case)
+              value:
+                case_type: patient
+                case_name: Elizabeth Harmon
+                owner_id: 20cc9dda-b90a-4af3-aa3d-fc67184e73ef
+                external_id: "1"
+                properties:
+                  dob: "1948-11-02"
+                indices:
+                  parent:
+                    case_id: eb1a8c23-6d6d-4b61-894c-ae1c437d8dac
+                    case_type: household
+                    relationship: child
+            bulkWithTemporaryId:
+              summary:
+                Array body -- bulk mode, linking two new cases by temporary_id
+              value:
+                - create: true
+                  case_type: mother
+                  case_name: Cersei Lannister
+                  owner_id: 20cc9dda-b90a-4af3-aa3d-fc67184e73ef
+                  temporary_id: "1"
+                  properties:
+                    dob: "1988-11-02"
+                - create: true
+                  case_type: baby
+                  case_name: Tommen Baratheon
+                  owner_id: 9dd08c69-4ace-4e1d-9929-146d22d1070c
+                  properties:
+                    dob: "2008-03-01"
+                  indices:
+                    parent:
+                      temporary_id: "1"
+                      case_type: mother
+                      relationship: child
+            bulkUpsert:
+              summary:
+                Array body -- upsert on external_id via an explicit null create
+              value:
+                - create: null
+                  case_type: patient
+                  case_name: Elizabeth Harmon
+                  owner_id: 20cc9dda-b90a-4af3-aa3d-fc67184e73ef
+                  external_id: "1"
+                  properties:
+                    dob: "1948-11-02"
+    responses:
+      "200":
+        description: >-
+          The case or cases after the change. The envelope mirrors the request:
+          an object body returns `case`, an array body returns `cases`.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "../components/schemas/case-v2.yaml#/CaseV2WriteResponse"
+                - $ref: "../components/schemas/case-v2.yaml#/CaseV2BulkWriteResponse"
+      "400":
+        description: >-
+          Validation failed and nothing was saved. Most failures return the
+          standard `{"error": ...}` body -- malformed JSON, an unknown field, a
+          missing required field, a non-string property value, an invalid
+          property or index name, an index naming a case that cannot be
+          resolved, a bulk entry without a `create` key, or a bulk payload of
+          more than 100 entries. Bulk validation errors are collected across
+          entries and joined into one message prefixed `Error in row <n>:`
+          (`corehq/apps/hqcase/api/updates.py:239-260`). The one exception is a
+          failure raised while the generated form is being processed, which adds
+          a `form_id` -- see `CaseV2SubmissionError`.
+        content:
+          application/json:
+            schema:
+              # `anyOf`, not `oneOf`: these are not alternative contracts but
+              # one contract with an optional extra field. The body always
+              # carries `error`; a failure raised during form processing adds
+              # `form_id`. That body legitimately satisfies both branches, so
+              # `oneOf` would reject it.
+              anyOf:
+                - $ref: "../components/schemas/error.yaml#/Error"
+                - $ref: "../components/schemas/case-v2.yaml#/CaseV2SubmissionError"
+      "401":
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
+      "403":
+        description: >-
+          Returned as JSON only for the location-restriction check below. A
+          plain Edit Data / API access permission failure, or non-membership of
+          the project space, also yields a 403 but with a **non-JSON** body --
+          see `listCasesV2`'s 403 for that trace.
+
+
+          A location-restricted user submitted a payload touching an owner or
+          an indexed case outside their accessible locations
+          (`validate_update_permission`,
+          `corehq/apps/hqcase/api/updates.py:383-431`, rendered at
+          `corehq/apps/hqcase/views.py:273-274`).
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "429":
+        # See the note on listCasesV2's 429: api_throttle returns an empty body.
+        description: >-
+          The request was rate limited. The response body is empty; the
+          `Retry-After` header carries the number of seconds to wait.
+        headers:
+          Retry-After:
+            description: Seconds to wait before retrying.
+            schema:
+              type: integer
+  put:
+    operationId: updateCasesV2
+    summary: Update a case identified in the payload, or update cases in bulk
+    description: >-
+      The same handler as `POST` on this path, entered with `is_creation=False`
+      (`corehq/apps/hqcase/views.py:108-109`), so the body's JSON type again
+      selects the mode: a single object updates one existing case, an array is
+      bulk mode and behaves exactly as it does under `POST`.
+
+
+      With an object body the case is selected by the `case_id` or `external_id`
+      **in the body** -- there is no id in the URL. Despite the summary line in
+      `cases-v2.rst`'s endpoint table, an object body here is a plain update,
+      not an upsert: an `external_id` that matches no case returns a 400 `"Could
+      not find a case with external_id '<id>'"`
+      (`corehq/apps/hqcase/api/updates.py:287-291`, exercised by
+      `corehq/apps/hqcase/tests/test_case_update_api.py:541-551`). Upsert is
+      available on the by-external-id path, or per entry in a bulk payload via
+      `create: null`. See the discrepancy file.
+    tags: [Data]
+    parameters:
+      - name: fields
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of fields to keep on the case object(s) in the
+          response. Mutually exclusive with `exclude`.
+        example: case_id,case_type
+        schema:
+          type: string
+      - name: fields.<parent_field>
+        in: query
+        required: false
+        description: Sub-field shorthand, e.g. `fields.properties=dob`.
+        example: dob
+        schema:
+          type: string
+      - name: exclude
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of fields to drop from the case object(s) in the
+          response. Mutually exclusive with `fields`.
+        example: properties
+        schema:
+          type: string
+      - name: exclude.<parent_field>
+        in: query
+        required: false
+        description:
+          Sub-field shorthand, e.g. `exclude.properties=husband_name`.
+        example: husband_name
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "../components/schemas/case-v2.yaml#/CaseV2Update"
+              - $ref: "../components/schemas/case-v2.yaml#/CaseV2BulkChangeList"
+          examples:
+            singleUpdateByExternalId:
+              summary: Object body -- update the one case with this external id
+              value:
+                external_id: "1"
+                properties:
+                  champion: "true"
+            bulkUpdate:
+              summary: Array body -- bulk mode, same rules as POST
+              value:
+                - create: false
+                  external_id: "1"
+                  owner_id: us_chess_federation
+    responses:
+      "200":
+        description: >-
+          The case or cases after the change. An object body returns `case`, an
+          array body returns `cases`.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "../components/schemas/case-v2.yaml#/CaseV2WriteResponse"
+                - $ref: "../components/schemas/case-v2.yaml#/CaseV2BulkWriteResponse"
+      "400":
+        description: >-
+          Validation failed and nothing was saved. Same causes as `POST`, plus
+          the two selector failures specific to updates: no `case_id` or
+          `external_id` supplied, and an id that matches no case in this project
+          space. **A missing case is reported as a 400, not a 404** -- see the
+          discrepancy file.
+        content:
+          application/json:
+            schema:
+              # `anyOf`, not `oneOf`: these are not alternative contracts but
+              # one contract with an optional extra field. The body always
+              # carries `error`; a failure raised during form processing adds
+              # `form_id`. That body legitimately satisfies both branches, so
+              # `oneOf` would reject it.
+              anyOf:
+                - $ref: "../components/schemas/error.yaml#/Error"
+                - $ref: "../components/schemas/case-v2.yaml#/CaseV2SubmissionError"
+      "401":
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
+      "403":
+        description: >-
+          Returned as JSON only for the location-restriction check below. A
+          plain Edit Data / API access permission failure, or non-membership of
+          the project space, also yields a 403 but with a **non-JSON** body --
+          see `listCasesV2`'s 403 for that trace.
+
+
+          The payload touches owners or indexed cases outside a
+          location-restricted user's accessible locations
+          (`validate_update_permission`,
+          `corehq/apps/hqcase/api/updates.py:383-431`, rendered at
+          `corehq/apps/hqcase/views.py:273-274`).
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "429":
+        # See the note on listCasesV2's 429: api_throttle returns an empty body.
+        description: >-
+          The request was rate limited. The response body is empty; the
+          `Retry-After` header carries the number of seconds to wait.
+        headers:
+          Retry-After:
+            description: Seconds to wait before retrying.
+            schema:
+              type: integer
+Detail:
+  # Only GET and PUT reach a handler here. POST falls through `case_api`'s
+  # dispatch (corehq/apps/hqcase/views.py:104 requires `not case_id`) to the
+  # 405 at line 110, and DELETE and PATCH have no branch at all.
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: case_id
+      in: path
+      required: true
+      style: simple
+      explode: false
+      description: >-
+        A case UUID -- **or several, joined by commas**, which changes the shape
+        of the response. `_handle_get` (`corehq/apps/hqcase/views.py:130-133`)
+        splits this segment on `,`: with no comma it returns one bare case
+        object, and with at least one comma it returns the multi-case envelope
+        (`cases` / `matching_records` / `missing_records`) instead, with one
+        entry per id in the order given and a `{"case_id": ..., "error": "not
+        found"}` stub for each id that did not resolve. Send the ids as one
+        comma-joined string in this path segment, for example
+        `/a/demo/api/case/v2/79e25a30-8db5-4a5a-827b-0297b254e87f,5262c03f-f483-4b36-9a08-cdaf89791e65`;
+        do not send a JSON array, and do not repeat the segment. The URL pattern
+        accepts only word characters, hyphens and commas
+        (`corehq/apps/api/urls.py:152`), and the practical ceiling is roughly
+        100 ids before the URL gets too long -- use `POST
+        /a/{domain}/api/case/v2/bulk-fetch/` beyond that, or whenever you want
+        to fetch by external id.
+      example: 79e25a30-8db5-4a5a-827b-0297b254e87f
+      schema:
+        type: string
+  get:
+    operationId: getCaseV2
+    summary: Retrieve one case by id, or several by comma-separated ids
+    description: >-
+      Requires the Edit Data permission and API access. Served from the
+      case-search Elasticsearch index, so a case created moments ago may not be
+      visible yet.
+
+
+      **The response shape depends on the path segment.** One id returns the
+      case object on its own. Two or more comma-separated ids return the
+      multi-case envelope described on the `case_id` parameter -- the same
+      envelope the bulk-fetch endpoint returns, and a different shape from the
+      list endpoint's. Branch on which you get, or always send at least two ids
+      if you want a stable shape.
+
+
+      Note that the two forms differ in how they report a miss: a single unknown
+      id is a 404, while an unknown id among several is a stub entry inside a
+      200.
+    tags: [Data]
+    parameters:
+      - name: fields
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of case fields to keep. Dot notation reaches into
+          nested objects. Mutually exclusive with `exclude`. Not applied to
+          not-found stubs in the multi-id form
+          (`corehq/apps/hqcase/views.py:139-142`).
+        example: case_id,case_name
+        schema:
+          type: string
+      - name: fields.<parent_field>
+        in: query
+        required: false
+        description: Sub-field shorthand, e.g. `fields.properties=edd,age`.
+        example: edd,age
+        schema:
+          type: string
+      - name: exclude
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of case fields to drop. Mutually exclusive with
+          `fields`.
+        example: case_name
+        schema:
+          type: string
+      - name: exclude.<parent_field>
+        in: query
+        required: false
+        description:
+          Sub-field shorthand, e.g. `exclude.properties=husband_name`.
+        example: husband_name
+        schema:
+          type: string
+    responses:
+      "200":
+        description: >-
+          One case when the path segment held a single id; the multi-case
+          envelope when it held comma-separated ids.
+        content:
+          application/json:
+            schema:
+              # A real discriminated union -- the request decides which shape
+              # comes back -- so `oneOf` is right. The `not` is load-bearing:
+              # `CaseV2` declares no `required` (a `fields=` filter can reduce
+              # a case to one key, or to `{}`), so without it the envelope
+              # would match both branches and fail `oneOf`'s exactly-one rule.
+              # Reading: "a case, and not the multi-case envelope".
+              oneOf:
+                - allOf:
+                    - $ref: "../components/schemas/case-v2.yaml#/CaseV2"
+                    - not:
+                        $ref: "../components/schemas/case-v2.yaml#/CaseV2BulkResult"
+                - $ref: "../components/schemas/case-v2.yaml#/CaseV2BulkResult"
+      "400":
+        description: >-
+          `fields` and `exclude` were both supplied, or more than 5000 ids were
+          listed in the path segment.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
+      "403":
+        description: >-
+          Returned as JSON only for the location-restriction check below. A
+          plain Edit Data / API access permission failure, or non-membership of
+          the project space, also yields a 403 but with a **non-JSON** body --
+          see `listCasesV2`'s 403 for that trace.
+
+
+          The caller is location-restricted and the case is outside their
+          accessible locations (`corehq/apps/hqcase/views.py:151-156`). The
+          single-id form only -- in the multi-id form inaccessible cases are
+          filtered out of the query and come back as not-found stubs instead.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "404":
+        description: >-
+          **Single-id form only.** No case with this id exists in this project
+          space. The body is the standard `{"error": "Case '<case_id>' not
+          found"}` (`corehq/apps/hqcase/views.py:153-154`) -- unlike the
+          tastypie resources elsewhere in this spec, whose 404s are often empty
+          or differently keyed. A case that exists in another project space is
+          reported as not found here too. The comma-separated form never returns
+          404; missing ids appear as stubs in a 200.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "429":
+        # See the note on listCasesV2's 429: api_throttle returns an empty body.
+        description: >-
+          The request was rate limited. The response body is empty; the
+          `Retry-After` header carries the number of seconds to wait.
+        headers:
+          Retry-After:
+            description: Seconds to wait before retrying.
+            schema:
+              type: integer
+  put:
+    operationId: updateCaseV2
+    summary: Update the case with this id
+    # No 404 here, deliberately. `JsonCaseUpdate.get_case_id`
+    # (corehq/apps/hqcase/api/updates.py:157-163) raises `UserError` for an id
+    # that matches no case, and `case_api`'s handler (views.py:111-112) turns
+    # every `UserError` into a 400. There is no code path from this operation
+    # to a 404. Documenting one would send clients looking for a status the
+    # endpoint cannot return; see the discrepancy file.
+    description: >-
+      Updates the case named in the path. The body must be a **single JSON
+      object** -- an array body is not bulk mode here; it hits an unhandled
+      `TypeError` at `corehq/apps/hqcase/views.py:257-258` and returns a 500.
+      Use `POST` or `PUT` on `/a/{domain}/api/case/v2/` for bulk changes.
+
+
+      This is an update only, never a creation: an id that matches no case
+      returns a 400, not a 404 and not a new case.
+
+
+      A `case_id` inside the body takes precedence over the one in the path
+      (`corehq/apps/hqcase/views.py:257-258`), so a body carrying a different
+      `case_id` silently updates that other case instead. Omit it from the body.
+    tags: [Data]
+    parameters:
+      - name: fields
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of fields to keep on the returned `case`.
+          Mutually exclusive with `exclude`.
+        example: case_id,case_type
+        schema:
+          type: string
+      - name: fields.<parent_field>
+        in: query
+        required: false
+        description: Sub-field shorthand, e.g. `fields.properties=dob`.
+        example: dob
+        schema:
+          type: string
+      - name: exclude
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of fields to drop from the returned `case`.
+          Mutually exclusive with `fields`.
+        example: properties
+        schema:
+          type: string
+      - name: exclude.<parent_field>
+        in: query
+        required: false
+        description:
+          Sub-field shorthand, e.g. `exclude.properties=husband_name`.
+        example: husband_name
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/case-v2.yaml#/CaseV2Update"
+          examples:
+            partialUpdate:
+              summary: Set two properties and reassign the case
+              value:
+                owner_id: us_chess_federation
+                properties:
+                  rank: "2100"
+                  champion: "true"
+            closeCase:
+              summary: Close the case
+              value:
+                close: true
+    responses:
+      "200":
+        description: The case after the update.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/case-v2.yaml#/CaseV2WriteResponse"
+      "400":
+        description: >-
+          Validation failed and nothing was saved -- including the
+          case-not-found case, which is reported here rather than as a 404.
+        content:
+          application/json:
+            schema:
+              # `anyOf`, not `oneOf`: these are not alternative contracts but
+              # one contract with an optional extra field. The body always
+              # carries `error`; a failure raised during form processing adds
+              # `form_id`. That body legitimately satisfies both branches, so
+              # `oneOf` would reject it.
+              anyOf:
+                - $ref: "../components/schemas/error.yaml#/Error"
+                - $ref: "../components/schemas/case-v2.yaml#/CaseV2SubmissionError"
+      "401":
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
+      "403":
+        description: >-
+          Returned as JSON only for the location-restriction check below. A
+          plain Edit Data / API access permission failure, or non-membership of
+          the project space, also yields a 403 but with a **non-JSON** body --
+          see `listCasesV2`'s 403 for that trace.
+
+
+          The payload touches owners or indexed cases outside a
+          location-restricted user's accessible locations
+          (`validate_update_permission`,
+          `corehq/apps/hqcase/api/updates.py:383-431`, rendered at
+          `corehq/apps/hqcase/views.py:273-274`).
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "429":
+        # See the note on listCasesV2's 429: api_throttle returns an empty body.
+        description: >-
+          The request was rate limited. The response body is empty; the
+          `Retry-After` header carries the number of seconds to wait.
+        headers:
+          Retry-After:
+            description: Seconds to wait before retrying.
+            schema:
+              type: integer
+DetailByExternalId:
+  # No POST operation here, deliberately. Django routes POST on this path to
+  # `case_api` too, and because the `case_id` kwarg is empty it matches the
+  # branch at corehq/apps/hqcase/views.py:104 and creates a brand-new case,
+  # ignoring the `external_id` in the URL entirely. That is undocumented and
+  # near-certainly unintended, and an agent that discovered it here would
+  # create duplicate cases; it is recorded in the discrepancy file instead of
+  # being published as a supported operation.
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: external_id
+      in: path
+      required: true
+      description: >-
+        The case's external id. Django matches it with a `<path:>` converter
+        (`corehq/apps/api/urls.py:153`), so it may contain slashes, but the
+        trailing slash on this path is required. External ids are not unique; if
+        more than one case in this project space carries this one, both
+        operations below fail with a 400 rather than picking one.
+      example: "1"
+      schema:
+        type: string
+  get:
+    operationId: getCaseV2ByExternalId
+    summary: Retrieve a single case by external id
+    description: >-
+      Requires the Edit Data permission and API access. Unlike the by-`case_id`
+      read, this one goes straight to PostgreSQL rather than Elasticsearch
+      (`_get_by_external_id` -> `CommCareCase.objects.get_case_by_external_id`,
+      `corehq/apps/hqcase/views.py:188-200`), so a just-written case is visible
+      immediately. The returned fields are identical.
+
+
+      There is no comma-separated multi-fetch on this path -- the whole segment
+      is treated as one external id. To fetch several by external id use `POST
+      /a/{domain}/api/case/v2/bulk-fetch/`.
+    tags: [Data]
+    parameters:
+      - name: fields
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of case fields to keep. Mutually exclusive with
+          `exclude`.
+        example: case_id,case_name
+        schema:
+          type: string
+      - name: fields.<parent_field>
+        in: query
+        required: false
+        description: Sub-field shorthand, e.g. `fields.properties=edd,age`.
+        example: edd,age
+        schema:
+          type: string
+      - name: exclude
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of case fields to drop. Mutually exclusive with
+          `fields`.
+        example: case_name
+        schema:
+          type: string
+      - name: exclude.<parent_field>
+        in: query
+        required: false
+        description:
+          Sub-field shorthand, e.g. `exclude.properties=husband_name`.
+        example: husband_name
+        schema:
+          type: string
+    responses:
+      "200":
+        description: The case.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/case-v2.yaml#/CaseV2"
+      "400":
+        description: >-
+          More than one case in this project space carries this external id
+          (`"Multiple cases found with external_id '<id>': <case_ids>"`,
+          `corehq/apps/hqcase/views.py:195-200`), or `fields` and `exclude` were
+          both supplied. Note `cases-v2.rst:395-398` says a non-unique external
+          id simply returns one of the matches; the code returns this 400
+          instead -- see the discrepancy file.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
+      "403":
+        description: >-
+          Returned as JSON only for the location-restriction check below. A
+          plain Edit Data / API access permission failure, or non-membership of
+          the project space, also yields a 403 but with a **non-JSON** body --
+          see `listCasesV2`'s 403 for that trace.
+
+
+          The caller is location-restricted and the case is outside their
+          accessible locations (`corehq/apps/hqcase/views.py:179-183`).
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "404":
+        description: >-
+          No case in this project space carries this external id. The body is
+          the standard `{"error": "Case '<external_id>' not found"}`
+          (`corehq/apps/hqcase/views.py:163-167`).
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "429":
+        # See the note on listCasesV2's 429: api_throttle returns an empty body.
+        description: >-
+          The request was rate limited. The response body is empty; the
+          `Retry-After` header carries the number of seconds to wait.
+        headers:
+          Retry-After:
+            description: Seconds to wait before retrying.
+            schema:
+              type: integer
+  put:
+    operationId: updateCaseV2ByExternalId
+    summary: Create or update the case with this external id
+    # No 404 here, deliberately, and this one is by design rather than by
+    # accident: `_handle_ext_put` (corehq/apps/hqcase/views.py:234-236) treats
+    # "no case with this external id" as the create branch of an upsert, so a
+    # miss is a 200 with a newly created case. There is no code path to a 404.
+    description: >-
+      **This is the only upsert endpoint in the API.** If a case with this
+      external id exists it is updated; if none exists it is created
+      (`_handle_ext_put`, `corehq/apps/hqcase/views.py:224-248`). Because a miss
+      creates, send `case_type`, `case_name` and `owner_id` unless you are
+      certain the case already exists -- they are required on the create branch.
+      Repeating an identical request is idempotent
+      (`corehq/apps/hqcase/tests/test_case_update_api.py:792-849`).
+
+
+      The body must be a single JSON object. Unlike `POST` and `PUT` on
+      `/a/{domain}/api/case/v2/`, an array body is rejected outright with a 400
+      `"Payload must be a single JSON object"`
+      (`corehq/apps/hqcase/views.py:229-230`) -- there is no bulk mode here.
+
+
+      `external_id` is filled in from the path when the body omits it.
+    tags: [Data]
+    parameters:
+      - name: fields
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of fields to keep on the returned `case`.
+          Mutually exclusive with `exclude`.
+        example: case_id,case_type
+        schema:
+          type: string
+      - name: fields.<parent_field>
+        in: query
+        required: false
+        description: Sub-field shorthand, e.g. `fields.properties=dob`.
+        example: dob
+        schema:
+          type: string
+      - name: exclude
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of fields to drop from the returned `case`.
+          Mutually exclusive with `fields`.
+        example: properties
+        schema:
+          type: string
+      - name: exclude.<parent_field>
+        in: query
+        required: false
+        description:
+          Sub-field shorthand, e.g. `exclude.properties=husband_name`.
+        example: husband_name
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/case-v2.yaml#/CaseV2Upsert"
+          examples:
+            upsert:
+              summary:
+                Create the case if this external id is new, update it otherwise
+              value:
+                case_type: player
+                case_name: Magnus Carlsen
+                owner_id: world_chess
+                properties:
+                  rank: "2800"
+                  country: Norway
+    responses:
+      "200":
+        description: >-
+          The case after the create or update. The same status is returned
+          whether the case was created or updated; compare `case.date_opened`
+          with `case.last_modified` if you need to tell them apart.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/case-v2.yaml#/CaseV2WriteResponse"
+      "400":
+        description: >-
+          Validation failed and nothing was saved. Causes specific to this
+          endpoint: an array body, more than one case carrying this external id,
+          and a body `case_id` that disagrees with the one the external id
+          resolves to (`corehq/apps/hqcase/views.py:241-246`). Otherwise the
+          same causes as the other write endpoints.
+        content:
+          application/json:
+            schema:
+              # `anyOf`, not `oneOf`: these are not alternative contracts but
+              # one contract with an optional extra field. The body always
+              # carries `error`; a failure raised during form processing adds
+              # `form_id`. That body legitimately satisfies both branches, so
+              # `oneOf` would reject it.
+              anyOf:
+                - $ref: "../components/schemas/error.yaml#/Error"
+                - $ref: "../components/schemas/case-v2.yaml#/CaseV2SubmissionError"
+      "401":
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
+      "403":
+        description: >-
+          Returned as JSON only for the location-restriction check below. A
+          plain Edit Data / API access permission failure, or non-membership of
+          the project space, also yields a 403 but with a **non-JSON** body --
+          see `listCasesV2`'s 403 for that trace.
+
+
+          The payload touches owners or indexed cases outside a
+          location-restricted user's accessible locations
+          (`validate_update_permission`,
+          `corehq/apps/hqcase/api/updates.py:383-431`, rendered at
+          `corehq/apps/hqcase/views.py:273-274`).
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "429":
+        # See the note on listCasesV2's 429: api_throttle returns an empty body.
+        description: >-
+          The request was rate limited. The response body is empty; the
+          `Retry-After` header carries the number of seconds to wait.
+        headers:
+          Retry-After:
+            description: Seconds to wait before retrying.
+            schema:
+              type: integer
+BulkFetch:
+  # Only POST is documented. `case_api_bulk_fetch`
+  # (corehq/apps/hqcase/views.py:115-127) does not branch on the request
+  # method at all, so a GET or a PUT to this path is routed here too -- a GET
+  # has no body and always fails with 400 "Payload must be valid JSON", and a
+  # PUT with a valid body would work exactly like POST. Neither is documented
+  # or intended; see the discrepancy file.
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  post:
+    operationId: bulkFetchCasesV2
+    summary: Fetch many cases by id or external id
+    description: >-
+      Reads cases in bulk with the ids in the request body rather than the URL,
+      which lifts the URL-length ceiling of the comma-separated `GET` form and
+      is the only bulk read that accepts external ids. Requires the Edit Data
+      permission and API access. Despite being a `POST`, this endpoint only
+      reads -- it never creates or modifies anything.
+
+
+      The body must carry at least one of `case_ids` and `external_ids`. The
+      response holds one entry per requested id, in the order supplied, with
+      `case_ids` results before `external_ids` results; ids that resolved to
+      nothing come back as stubs rather than being dropped, so positions line up
+      with the request. Fetching by external id where the id is not unique
+      returns whichever matching case Elasticsearch surfaced, without an error.
+
+
+      This is the same envelope the comma-separated `GET
+      /a/{domain}/api/case/v2/{case_id}` form returns.
+
+
+      Note the trailing slash on this path is required
+      (`corehq/apps/api/urls.py:150`), unlike the list and detail paths.
+    tags: [Data]
+    parameters:
+      - name: fields
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of case fields to keep, passed as a URL query
+          parameter alongside the body. Applies to each case in `cases` but not
+          to not-found stubs and not to the envelope's counters. Mutually
+          exclusive with `exclude`.
+        example: case_id
+        schema:
+          type: string
+      - name: fields.<parent_field>
+        in: query
+        required: false
+        description: Sub-field shorthand, e.g. `fields.properties=dob`.
+        example: dob
+        schema:
+          type: string
+      - name: exclude
+        in: query
+        required: false
+        description: >-
+          Comma-separated list of case fields to drop. Mutually exclusive with
+          `fields`.
+        example: properties
+        schema:
+          type: string
+      - name: exclude.<parent_field>
+        in: query
+        required: false
+        description:
+          Sub-field shorthand, e.g. `exclude.properties=husband_name`.
+        example: husband_name
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/case-v2.yaml#/CaseV2BulkFetchRequest"
+          examples:
+            byBothIdKinds:
+              summary: Two case ids and two external ids
+              value:
+                case_ids:
+                  - 30ad22bd-f828-4e3f-8287-a67a180cff4f
+                  - d5e5962a-c5f1-483c-a58a-590167d594a9
+                external_ids:
+                  - id1
+                  - id2
+    responses:
+      "200":
+        description: >-
+          One entry per requested id, plus found and missing counts. A 200 does
+          not mean every id resolved -- check `missing_records`.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/case-v2.yaml#/CaseV2BulkResult"
+      "400":
+        description: >-
+          The body was not valid JSON, carried neither `case_ids` nor
+          `external_ids` (or carried only empty lists), or asked for more than
+          5000 ids in total (`corehq/apps/hqcase/views.py:203-214`,
+          `corehq/apps/hqcase/api/get_bulk.py:36-37`). Also returned when
+          `fields` and `exclude` are both supplied.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        # Deliberately NOT the shared `Unauthorized` ref. `case_api` /
+        # `case_api_bulk_fetch` are plain Django views
+        # (corehq/apps/hqcase/views.py:87-127), not tastypie resources, so
+        # neither `wrap_4xx_errors_for_apis`
+        # (corehq/apps/api/resources/auth.py:23-34) nor `HqBaseResource
+        # .dispatch` (corehq/apps/api/resources/__init__.py:132-151) -- the two
+        # code paths that produce the shared ref's JSON `{"error": ...}` 401 --
+        # is in play here. `api_auth()`
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # scheme-specific challenge decorator via `get_auth_decorator_map` /
+        # `_login_or_challenge` (decorators.py:264-334,463-492); that decorator
+        # answers before the view runs, e.g. `basicauth` returns
+        # `HttpResponse(status=401)` with only a `WWW-Authenticate` header
+        # (corehq/apps/domain/auth.py:150-152). Traced from source, not
+        # verified against a live server.
+        description: >-
+          Authentication failed. The response is scheme-dependent and carries
+          **no JSON body** -- typically a bare challenge response with a
+          `WWW-Authenticate` header -- rather than the `{"error": ...}` shape
+          the tastypie-backed resources in this spec return.
+      "403":
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Two causes, both
+        # non-JSON:
+        #  - Authenticated but not a member of this project space:
+        #    `_login_or_challenge`'s inner `_inner` returns a bare
+        #    `HttpResponseForbidden()`
+        #    (corehq/apps/domain/decorators.py:303,329) -- empty body.
+        #  - A member lacking Edit Data or API access: `require_permission`
+        #    raises `django.core.exceptions.PermissionDenied`
+        #    (corehq/apps/users/decorators.py:51-54); the view catches only
+        #    `UserError` (corehq/apps/hqcase/views.py:111-112), so it reaches
+        #    this project's `handler403 = no_permissions` (urls.py:49), which
+        #    renders the `403.html` template
+        #    (`_no_permissions_message`, corehq/apps/hqwebapp/views.py:349-358)
+        #    inside an `HttpResponseForbidden`
+        #    (corehq/apps/hqwebapp/views.py:362-373) -- an HTML page.
+        # Traced from source, not verified against a live server.
+        description: >-
+          The caller is authenticated but is not a member of this project
+          space (empty body), or is a member lacking the Edit Data or API
+          access permission (a Django HTML error page). **Neither shape is
+          JSON.**
+      "429":
+        # See the note on listCasesV2's 429: api_throttle returns an empty body.
+        description: >-
+          The request was rate limited. The response body is empty; the
+          `Retry-After` header carries the number of seconds to wait.
+        headers:
+          Retry-After:
+            description: Seconds to wait before retrying.
+            schema:
+              type: integer
