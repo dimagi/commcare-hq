@@ -9,7 +9,7 @@ from no_exceptions.exceptions import Http403
 import requests
 
 from corehq import toggles
-from corehq.apps.reports.models import TableauServer, TableauVisualization
+from corehq.apps.reports.models import TableauConnectedApp, TableauServer, TableauVisualization
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.locations.permissions import location_safe
@@ -65,6 +65,8 @@ class TableauView(BaseDomainView):
             "validate_hostname": _get_hostname(self.visualization.server),
             "view_url": self.visualization.view_url,
             "viz_id": self.visualization.id,
+            "has_connected_app": TableauConnectedApp.objects.filter(
+                server=self.visualization.server).exists(),
         }
 
     def get(self, request, *args, **kwargs):
@@ -126,3 +128,37 @@ def get_tableau_server_ticket(request, domain):
             "success": False,
             "message": _("Request to Tableau failed with status code {}").format(tabserver_response.status_code),
         })
+
+
+@login_and_domain_required
+@require_POST
+@location_safe
+def get_tableau_embedding_jwt(request, domain):
+    """Mint a Connected App JWT to embed a visualization"""
+    visualization_data = {data: value[0] for data, value in dict(request.POST).items()}
+
+    server = TableauServer.objects.get(domain=domain)
+
+    if not request.couch_user.can_view_tableau_viz(domain, TableauVisualization.objects.get(
+            id=visualization_data.pop('viz_id'))):
+        raise Http403
+
+    try:
+        connected_app = TableauConnectedApp.objects.get(server=server)
+    except TableauConnectedApp.DoesNotExist:
+        return JsonResponse({
+            "success": False,
+            "message": _("No Tableau Connected App is configured for this project. It is required to embed "
+                         "reports using the Tableau Embedding API."),
+        })
+
+    if server.get_reports_using_role:
+        tableau_username = f"HQ/{request.couch_user.get_role(domain).name}"
+    else:
+        # An equivalent Tableau user with the username "HQ/{username}" must exist.
+        tableau_username = f"HQ/{request.couch_user.username}"
+
+    return JsonResponse({
+        "success": True,
+        "token": connected_app.create_embedding_jwt(tableau_username),
+    })
