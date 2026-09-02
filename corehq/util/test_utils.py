@@ -237,6 +237,7 @@ class privilege_enabled:
         'corehq.apps.domain.auth.domain_has_privilege',
         'corehq.apps.export.views.list.domain_has_privilege',
         'corehq.apps.export.views.new.domain_has_privilege',
+        'corehq.apps.public_webforms.public.views.domain_has_privilege',
         'corehq.apps.users.landing_pages.domain_has_privilege',
         'corehq.apps.users.permissions.domain_has_privilege',
         'corehq.apps.users.views.mobile.users.domain_has_privilege',
