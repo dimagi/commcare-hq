@@ -132,6 +132,19 @@ $(function () {
         $("#prepay-date-end").datetimepicker({
             format: "YYYY-MM-DD",
         });
+        var tomorrow = new Date();
+        tomorrow.setHours(0, 0, 0, 0);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        $("#prepay-send-date").datetimepicker({
+            format: "YYYY-MM-DD",
+            minDate: tomorrow,
+            // without this, setting minDate is effectively a default
+            useCurrent: false,
+        }).on("dp.change", function () {
+            // knockout doesn't observe these changes, so watch manually
+            $(this).trigger("change");
+        });
     });
 });
 

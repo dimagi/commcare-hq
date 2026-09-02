@@ -117,10 +117,39 @@ var paymentMethodHandler = function (formId, opts) {
         self.autopayCard(autopayStripeCard);
     }
 
+    self.scheduledSendDateInput = ko.observable();
+
+    self.isScheduling = ko.computed(function () {
+        return self.paymentMethod() === self.WIRE
+            && !! self.scheduledSendDateInput();
+    });
+
+    self.isSendDateValid = ko.computed(function () {
+        var value = self.scheduledSendDateInput();
+        if (!value) {
+            return true;  // blank means send now
+        }
+        var parsed = new Date(value + "T00:00:00");
+        if (isNaN(parsed.getTime())) {
+            return false;
+        }
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return parsed > today;  // today is send-now territory, not scheduling
+    });
+
+    // The btn label informs user if sending now or scheduling for later
+    self.submitBtnText = ko.computed(function () {
+        if (self.isScheduling() && opts.scheduleBtnText) {
+            return opts.scheduleBtnText;
+        }
+        return opts.submitBtnText;
+    });
+
     self.submitURL = self.submitURL || ko.computed(function () {
         var url = opts.credit_card_url;
         if (self.paymentMethod() === self.WIRE) {
-            url = opts.wire_url;
+            url = self.isScheduling() ? opts.schedule_url : opts.wire_url;
         }
         return url;
     });
@@ -206,7 +235,7 @@ var paymentMethodHandler = function (formId, opts) {
         if (self.paymentMethod() === self.CREDIT_CARD) {
             return !(!! self.costItem() && self.costItem().isValid()) || self.selectedCard().isProcessing();
         } else {
-            return (self.paymentProcessing());
+            return (self.paymentProcessing()) || !self.isSendDateValid();
         }
     });
 
@@ -226,6 +255,7 @@ var paymentMethodHandler = function (formId, opts) {
     self.reset = function () {
         self.paymentIsComplete(false);
         self.serverErrorMsg('');
+        self.scheduledSendDateInput(undefined);
         self.newCard().reset();
         self.resetStripeCardUI(true);
     };
