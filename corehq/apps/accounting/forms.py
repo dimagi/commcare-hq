@@ -89,6 +89,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
+from corehq.apps.users.util import is_dimagi_email
 from corehq.util.dates import get_first_last_days
 
 
@@ -2772,9 +2773,13 @@ class CreateAdminForm(forms.Form):
                 "User '%s' does not exist" % username
             )
         web_user = WebUser.get_by_username(username)
-        if not web_user or not web_user.is_superuser:
+        if not web_user:
             raise CreateAccountingAdminError(
-                "The user '%s' is not a superuser." % username,
+                "The user '%s' is not a web user." % username,
+            )
+        if settings.IS_DIMAGI_ENVIRONMENT and not is_dimagi_email(username):
+            raise CreateAccountingAdminError(
+                "The user '%s' does not have a Dimagi email address." % username,
             )
         try:
             user_role = UserRole.objects.get(user=user)

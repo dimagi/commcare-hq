@@ -24,7 +24,6 @@ from django.utils.translation import gettext_noop
 from django.views.generic import View
 
 from couchdbkit import ResourceNotFound
-from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Grant, Role
 from memoized import memoized
 
@@ -47,6 +46,7 @@ from corehq.apps.accounting.async_handlers import (
     SubscriptionFilterAsyncHandler,
     WireInvoiceNumberAsyncHandler,
 )
+from corehq.apps.accounting.decorators import accounting_admin_required
 from corehq.apps.accounting.exceptions import (
     CreateAccountingAdminError,
     CreditLineError,
@@ -118,7 +118,6 @@ from corehq.apps.accounting.utils.invoicing import (
     get_oldest_overdue_invoice_over_threshold,
 )
 from corehq.apps.accounting.utils.unpaid_invoice import Downgrade
-from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.views.accounting import DomainBillingStatementsView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.views import (
@@ -129,8 +128,7 @@ from corehq.apps.sso.tasks import auto_deactivate_removed_sso_users
 from corehq.toggles import ACCOUNTING_TESTING_TOOLS
 
 
-@require_superuser
-@requires_privilege_raise404(privileges.ACCOUNTING_ADMIN)
+@accounting_admin_required
 def accounting_default(request):
     return HttpResponseRedirect(AccountingInterface.get_url())
 
@@ -142,8 +140,7 @@ class AccountingSectionView(BaseSectionPageView):
     def section_url(self):
         return reverse('accounting_default')
 
-    @method_decorator(require_superuser)
-    @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
+    @method_decorator(accounting_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)
 
@@ -1209,8 +1206,7 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         InvoiceBalanceAsyncHandler,
     ]
 
-    @method_decorator(require_superuser)
-    @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
+    @method_decorator(accounting_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSingleOptionResponseView, self).dispatch(request, *args, **kwargs)
 
