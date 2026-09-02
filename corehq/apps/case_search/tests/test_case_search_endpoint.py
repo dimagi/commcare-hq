@@ -205,9 +205,12 @@ PETS = [
 ]
 
 
-@fixture
+@fixture(scope="module")
 def pet_table():
+    # The pets are read but never written, so the table is built once for
+    # every test in the module rather than per test.
     with project_db_table(SQL_DOMAIN, 'pet', {'color': 'plain', 'weight': 'number'}):
+        _populate_pets()
         yield
 
 
@@ -257,7 +260,6 @@ def _run_sql_query(endpoint, criteria):
 @use('db', pet_table)
 @flag_enabled('CASE_SEARCH_ENDPOINTS')
 def test_sql_endpoint_without_parameters():
-    _populate_pets()
     endpoint = _make_sql_endpoint('SELECT * FROM pet')
 
     cases = sorted(_run_sql_query(endpoint, []), key=lambda case: case.name)
@@ -289,7 +291,6 @@ COLOR_SQL = (
 @use('db', pet_table)
 @flag_enabled('CASE_SEARCH_ENDPOINTS')
 def test_sql_endpoint_with_text_parameter(criteria, expected):
-    _populate_pets()
     endpoint = _make_sql_endpoint(COLOR_SQL)
 
     cases = _run_sql_query(endpoint, criteria)
@@ -315,7 +316,6 @@ WEIGHT_SQL = (
 @use('db', pet_table)
 @flag_enabled('CASE_SEARCH_ENDPOINTS')
 def test_sql_endpoint_with_number_parameter(criteria, expected):
-    _populate_pets()
     endpoint = _make_sql_endpoint(WEIGHT_SQL)
 
     cases = _run_sql_query(endpoint, criteria)
