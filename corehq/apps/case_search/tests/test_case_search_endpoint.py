@@ -5,6 +5,7 @@ from unittest import mock
 from django.test import TestCase
 
 import pytest
+from lxml import etree
 from unmagic import fixture, use
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
@@ -16,7 +17,6 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.case_search.const import IS_RELATED_CASE
-from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
@@ -25,19 +25,18 @@ from corehq.apps.case_search.models import (
     CaseSearchRequestConfig,
     SearchCriteria,
 )
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.es.case_search import case_search_adapter
-from corehq.apps.es.tests.utils import (
-    case_search_es_setup,
-    es_test,
-)
+from corehq.apps.es.tests.utils import case_search_es_setup, es_test
 from corehq.apps.project_db.populate import populate_case_type
 from corehq.apps.project_db.tests.util import project_db_table
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.tests.util.xml import assert_xml_equal
 from corehq.util.test_utils import flag_enabled
 
-from ..utils import get_case_search_results
+from ..utils import get_case_search_results, get_project_db_fixture
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
@@ -253,71 +252,56 @@ def _populate_pets():
 
 def _run_sql_query(endpoint, criteria):
     config = CaseSearchRequestConfig(
-        criteria=criteria, case_types=['pet'], endpoint_id=endpoint.id)
-    return get_case_search_results(SQL_DOMAIN, config)
+        criteria=[SearchCriteria(key, value) for key, value in criteria.items()],
+        case_types=['pet'],
+        endpoint_id=endpoint.id,
+    )
+    return get_project_db_fixture(SQL_DOMAIN, endpoint, config)
 
 
 @use('db', pet_table)
 @flag_enabled('CASE_SEARCH_ENDPOINTS')
-def test_sql_endpoint_without_parameters():
-    endpoint = _make_sql_endpoint('SELECT * FROM pet')
+def test_sql_endpoint_returns_selected_columns():
+    _populate_pets()
+    endpoint = _make_sql_endpoint(
+        'SELECT case_id, case_name, prop__color AS color FROM pet ORDER BY case_id')
+    fixture = _run_sql_query(endpoint, {})
+    assert_xml_equal("""
+    <results id="case">
+        <case case_id="p1" case_type="pet">
+            <case_id>p1</case_id>
+            <case_name>Fido</case_name>
+            <color>brown</color>
+        </case>
+        <case case_id="p2" case_type="pet">
+            <case_id>p2</case_id>
+            <case_name>Rex</case_name>
+            <color>black</color>
+        </case>
+    </results>""", fixture)
 
-    cases = sorted(_run_sql_query(endpoint, []), key=lambda case: case.name)
 
-    assert [case.name for case in cases] == ['Fido', 'Rex']
-    assert [case.case_id for case in cases] == ['p1', 'p2']
-    assert [case.case_json for case in cases] == [
-        {'color': 'brown', 'weight': '20'},
-        {'color': 'black', 'weight': '5'},
-    ]
-    assert all(case.domain == SQL_DOMAIN and case.type == 'pet' for case in cases)
+COLOR_SQL = "SELECT * FROM pet WHERE (:color IS NULL OR prop__color = :color)"
+WEIGHT_SQL = "SELECT * FROM pet WHERE (:weight IS NULL OR number_prop__weight > :weight)"
 
 
-COLOR_SQL = (
-    "SELECT * FROM pet "
-    "WHERE (:color IS NULL OR prop__color = :color)"
-)
-
-
-@pytest.mark.parametrize('criteria, expected', [
-    ([SearchCriteria('color', 'brown')], ['Fido']),
-    ([SearchCriteria('color', 'black')], ['Rex']),
-    ([SearchCriteria('color', 'chartreuse')], []),
-    # an unsupplied or blank parameter is passed as NULL, which the guard
-    # treats as "any"
-    ([], ['Fido', 'Rex']),
-    ([SearchCriteria('color', '')], ['Fido', 'Rex']),
+@pytest.mark.parametrize('sql, criteria, expected', [
+    (COLOR_SQL, {'color': 'brown'}, ['Fido']),
+    (COLOR_SQL, {'color': 'black'}, ['Rex']),
+    (COLOR_SQL, {'color': 'chartreuse'}, []),
+    (COLOR_SQL, {}, ['Fido', 'Rex']),
+    (COLOR_SQL, {'color': ''}, ['Fido', 'Rex']),
+    (WEIGHT_SQL, {'weight': '12'}, ['Fido']),
+    (WEIGHT_SQL, {'weight': '1'}, ['Fido', 'Rex']),
+    (WEIGHT_SQL, {'weight': '100'}, []),
+    (WEIGHT_SQL, {}, ['Fido', 'Rex']),
+    (WEIGHT_SQL, {'weight': ''}, ['Fido', 'Rex']),
 ])
 @use('db', pet_table)
 @flag_enabled('CASE_SEARCH_ENDPOINTS')
-def test_sql_endpoint_with_text_parameter(criteria, expected):
-    endpoint = _make_sql_endpoint(COLOR_SQL)
-
-    cases = _run_sql_query(endpoint, criteria)
-
-    assert sorted(case.name for case in cases) == expected
-
-
-WEIGHT_SQL = (
-    "SELECT * FROM pet "
-    "WHERE (:weight IS NULL OR number_prop__weight > :weight)"
-)
-
-
-@pytest.mark.parametrize('criteria, expected', [
-    ([SearchCriteria('weight', '12')], ['Fido']),
-    ([SearchCriteria('weight', '1')], ['Fido', 'Rex']),
-    ([SearchCriteria('weight', '100')], []),
-    # NULL is the only sentinel that coerces to a numeric column; an empty
-    # string would fail with "invalid input syntax for type numeric"
-    ([], ['Fido', 'Rex']),
-    ([SearchCriteria('weight', '')], ['Fido', 'Rex']),
-])
-@use('db', pet_table)
-@flag_enabled('CASE_SEARCH_ENDPOINTS')
-def test_sql_endpoint_with_number_parameter(criteria, expected):
-    endpoint = _make_sql_endpoint(WEIGHT_SQL)
-
-    cases = _run_sql_query(endpoint, criteria)
-
-    assert sorted(case.name for case in cases) == expected
+def test_sql_endpoint_with_text_parameter(sql, criteria, expected):
+    _populate_pets()
+    endpoint = _make_sql_endpoint(sql)
+    fixture = _run_sql_query(endpoint, criteria)
+    names = sorted(case.findtext('case_name') for case in etree.fromstring(fixture))
+    assert names == expected
