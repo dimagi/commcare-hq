@@ -46,6 +46,7 @@ from corehq.apps.accounting.invoicing import (
     DomainWireInvoiceFactory,
 )
 from corehq.apps.accounting.models import (
+    INACTIVE_SUBSCRIPTION_REASON,
     BillingAccount,
     BillingAccountDomainHistory,
     BillingAccountWebUserHistory,
@@ -1006,15 +1007,36 @@ def calculate_domains_in_customer_billing_accounts(today=None):
     durable=True,
 )
 def process_scheduled_prepayment_invoices():
-    today = datetime.date.today()
-    for domain in ScheduledPrepaymentInvoice.objects.due_domains(today):
+    for domain in ScheduledPrepaymentInvoice.objects.pending_domains():
         process_scheduled_prepayment_invoices_for_domain.delay(domain)
 
 
 @serial_task('{domain}', timeout=30 * 60, queue='background_queue', durable=True)
 def process_scheduled_prepayment_invoices_for_domain(domain):
     """Advance this domain's queue. Serial per domain to avoid redelivered invoices"""
+    cancel_scheduled_invoices_for_inactive_subscriptions(domain=domain)
     generate_due_scheduled_invoices(datetime.date.today(), domain=domain)
+
+
+def cancel_scheduled_invoices_for_inactive_subscriptions(domain=None):
+    """Drop scheduled invoices whose subscription has since paused or ended"""
+    pending = ScheduledPrepaymentInvoice.objects.pending().select_related(
+        'subscription__plan_version__plan'
+    )
+    if domain is not None:
+        pending = pending.filter(domain=domain)
+    for scheduled in pending:
+        subscription = scheduled.subscription
+        if subscription.is_active and not subscription.plan_version.is_paused:
+            continue
+        scheduled.status = ScheduledPrepaymentInvoiceStatus.CANCELLED
+        scheduled.cancelled_reason = INACTIVE_SUBSCRIPTION_REASON
+        scheduled.save()
+        log_accounting_info(
+            f"Cancelled scheduled prepayment invoice {scheduled.id} for domain "
+            f"{scheduled.domain}: subscription {subscription.id} is paused or "
+            f"no longer active."
+        )
 
 
 def generate_due_scheduled_invoices(today, domain=None):

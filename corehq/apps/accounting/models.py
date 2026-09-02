@@ -2070,8 +2070,8 @@ class ScheduledPrepaymentInvoiceManager(models.Manager):
     def due(self, today):
         return self.pending().filter(send_date__lte=today)
 
-    def due_domains(self, today):
-        return list(self.due(today).values_list('domain', flat=True).distinct())
+    def pending_domains(self):
+        return list(self.pending().values_list('domain', flat=True).distinct())
 
 
 class ScheduledPrepaymentInvoice(models.Model):

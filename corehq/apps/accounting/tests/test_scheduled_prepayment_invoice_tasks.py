@@ -4,14 +4,19 @@ from unittest.mock import patch
 
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.models import (
+    INACTIVE_SUBSCRIPTION_REASON,
     ScheduledPrepaymentInvoice,
     ScheduledPrepaymentInvoiceStatus,
+    SoftwarePlanEdition,
+    Subscription,
     WirePrepaymentInvoice,
 )
 from corehq.apps.accounting.tasks import (
+    cancel_scheduled_invoices_for_inactive_subscriptions,
     generate_due_scheduled_invoices,
     process_scheduled_prepayment_invoices_for_domain,
 )
+from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.wire_invoice_base import (
     WirePrepaymentTestCase,
 )
@@ -140,25 +145,14 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         scheduled.refresh_from_db()
         assert scheduled.status == ScheduledPrepaymentInvoiceStatus.FAILED
         assert not self.get_invoices().exists()
-    def test_lists_only_domains_with_something_due(self):
-        self.schedule(send_date=datetime.date.today())
 
-        due = ScheduledPrepaymentInvoice.objects.due_domains(datetime.date.today())
-
-        assert due == [self.domain_obj.name]
-
-    def test_ignores_domains_whose_requests_are_not_due(self):
-        self.schedule(send_date=in_days(1))
-
-        assert ScheduledPrepaymentInvoice.objects.due_domains(datetime.date.today()) == []
-
-    def test_lists_a_domain_once_however_many_are_due(self):
+    def test_lists_a_domain_once_however_many_are_pending(self):
         self.schedule(send_date=datetime.date.today())
         self.schedule(send_date=in_days(-1))
 
-        due = ScheduledPrepaymentInvoice.objects.due_domains(datetime.date.today())
-
-        assert due == [self.domain_obj.name]
+        assert ScheduledPrepaymentInvoice.objects.pending_domains() == [
+            self.domain_obj.name
+        ]
 
     def test_the_per_domain_task_sends_that_domain_s_requests(self):
         self.schedule(send_date=datetime.date.today())
@@ -171,3 +165,69 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
             domain=self.domain_obj.name,
             status=ScheduledPrepaymentInvoiceStatus.PENDING,
         ).exists()
+
+    def deactivate_subscription(self):
+        # queryset update rather than mutating self.subscription: the object is
+        # built in setUpClass, so an in-memory change would outlive the
+        # transaction and leak into later tests
+        Subscription.visible_objects.filter(id=self.subscription.id).update(is_active=False)
+
+    def pause_subscription(self):
+        paused = generator.subscribable_plan_version(SoftwarePlanEdition.PAUSED)
+        Subscription.visible_objects.filter(id=self.subscription.id).update(
+            plan_version=paused
+        )
+
+    def test_cancels_when_the_subscription_is_paused(self):
+        scheduled = self.schedule(send_date=in_days(30))
+        self.pause_subscription()
+
+        cancel_scheduled_invoices_for_inactive_subscriptions()
+
+        scheduled.refresh_from_db()
+        assert scheduled.status == ScheduledPrepaymentInvoiceStatus.CANCELLED
+
+    def test_cancels_when_the_subscription_is_no_longer_active(self):
+        scheduled = self.schedule(send_date=in_days(30))
+        self.deactivate_subscription()
+
+        cancel_scheduled_invoices_for_inactive_subscriptions()
+
+        scheduled.refresh_from_db()
+        assert scheduled.status == ScheduledPrepaymentInvoiceStatus.CANCELLED
+
+    def test_records_why_the_system_cancelled_it(self):
+        scheduled = self.schedule(send_date=in_days(30))
+        self.deactivate_subscription()
+
+        cancel_scheduled_invoices_for_inactive_subscriptions()
+
+        scheduled.refresh_from_db()
+        assert scheduled.cancelled_reason == INACTIVE_SUBSCRIPTION_REASON
+        # blank cancelled_by is what marks this as the system, not an operator
+        assert scheduled.cancelled_by == ''
+
+    def test_leaves_an_active_subscription_alone(self):
+        scheduled = self.schedule(send_date=in_days(30))
+
+        cancel_scheduled_invoices_for_inactive_subscriptions()
+
+        scheduled.refresh_from_db()
+        assert scheduled.status == ScheduledPrepaymentInvoiceStatus.PENDING
+
+    def test_a_paused_subscription_stops_a_send_due_today(self):
+        scheduled = self.schedule(send_date=datetime.date.today())
+        self.deactivate_subscription()
+
+        process_scheduled_prepayment_invoices_for_domain(self.domain_obj.name)
+
+        scheduled.refresh_from_db()
+        assert scheduled.status == ScheduledPrepaymentInvoiceStatus.CANCELLED
+        assert not self.get_invoices().exists()
+
+    def test_fans_out_to_domains_whose_requests_are_not_due_yet(self):
+        self.schedule(send_date=in_days(30))
+
+        pending = ScheduledPrepaymentInvoice.objects.pending_domains()
+
+        assert pending == [self.domain_obj.name]
