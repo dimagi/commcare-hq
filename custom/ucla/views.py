@@ -21,9 +21,9 @@ from custom.ucla.forms import TaskCreationForm
 @require_deploy_apps
 def task_creation(request, domain, app_id, module_id, form_id):
     '''
-    This view is meant to be a run as a one-off script to support a specific
+    This view is meant to be run as a one-off script to support a specific
     app that Jeremy is writing. Running this script subsequent times on the
-    same form will not have adverse affects.
+    same form will not have adverse effects.
     :param request:
     :param domain:
     :param app_id:
@@ -42,12 +42,16 @@ def task_creation(request, domain, app_id, module_id, form_id):
             message = _ucla_form_modifier(form, questions)
             return HttpResponse(message, content_type="text/plain")
 
-        return HttpResponse("Soemthing was wrong with the form you submitted. Your CommCare form is unchanged.", content_type="text/plain")
+        return HttpResponse(
+            "Something was wrong with the form you submitted. Your CommCare form is unchanged.",
+            content_type="text/plain",
+        )
 
     elif request.method == 'GET':
         html_form = TaskCreationForm()
         response = HttpResponse()
-        response.write('<form action="'+reverse('ucla_task_creation', args=(domain, app_id, module_id, form_id))+'" method="post">')
+        action = reverse('ucla_task_creation', args=(domain, app_id, module_id, form_id))
+        response.write('<form action="' + action + '" method="post">')
         response.write(html_form.as_p())
         response.write('<p><input type="submit" value="Process Form"></p>')
         response.write("</form>")
