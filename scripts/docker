@@ -254,7 +254,7 @@ export TRAVIS_PULL_REQUEST_SHA="$TRAVIS_PULL_REQUEST_SHA"
 export TRAVIS_REPO_SLUG="$TRAVIS_REPO_SLUG"
 
 # Check pinned service versions
-pg_version=14
+pg_version=18
 export DOCKER_HQ_POSTGRES_VERSION="${DOCKER_HQ_POSTGRES_VERSION:-$pg_version}"
 if (( "$DOCKER_HQ_POSTGRES_VERSION" < "$pg_version" )); then
     echo "WARNING postgres is pinned with DOCKER_HQ_POSTGRES_VERSION=$DOCKER_HQ_POSTGRES_VERSION"
