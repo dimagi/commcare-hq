@@ -188,7 +188,8 @@ msgstr "عرض الاشتراكات التجريبية فقط"
 #: corehq/apps/hqadmin/templates/hqadmin/email_status.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
-#: corehq/apps/notifications/forms.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/notifications/forms.py corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/tables.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
 #: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
 #: corehq/apps/userreports/views.py
@@ -2050,6 +2051,7 @@ msgstr "رقم البيان"
 #: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/hqadmin/templates/hqadmin/email_status.html
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/standard/sms.py
@@ -6121,6 +6123,7 @@ msgstr "حالة"
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/public_webforms/tables.py
 #: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py corehq/apps/reports/standard/inspect.py
 #: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
@@ -8344,6 +8347,7 @@ msgstr "إعدادات القائمة"
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
@@ -8519,6 +8523,7 @@ msgstr "تثبيت CommCare"
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_feedback.html
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/async/bootstrap5/default.html
@@ -16633,6 +16638,7 @@ msgstr "تعديل الأداة"
 #: corehq/apps/hqwebapp/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
 #: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
 #: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
 #: corehq/messaging/scheduling/templates/scheduling/dashboard.html
@@ -17617,7 +17623,6 @@ msgstr "المثيل"
 
 #: corehq/apps/case_search/endpoint_views.py
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#: corehq/tabs/tabclasses.py
 #, fuzzy
 #| msgid "Case Search Settings"
 msgid "Case Search Endpoints"
@@ -17824,6 +17829,7 @@ msgid "results"
 msgstr "نتائج"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/public_webforms/models.py
 #: corehq/apps/userreports/reports/builder/forms.py
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Closed"
@@ -17933,15 +17939,9 @@ msgstr "أدخل اسم التقرير هنا"
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #, fuzzy
-#| msgid "Parent Type"
-msgid "Target Type"
-msgstr "نوع الأصل"
-
-#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#, fuzzy
-#| msgid "Select a Case Type"
-msgid "-- Select a case type --"
-msgstr "اختر نوع الحالة"
+#| msgid "Input Type"
+msgid "Endpoint Type"
+msgstr "نوع الإدخال"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #, fuzzy
@@ -17992,6 +17992,16 @@ msgid "Add Parameter"
 msgstr "إضافة معلمة"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "SQL"
+msgstr ""
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#, fuzzy
+#| msgid "Select a Case Type"
+msgid "-- Select a case type --"
+msgstr "اختر نوع الحالة"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/partials/query_tester.html
 #, fuzzy
 #| msgid "Test API Key"
@@ -18005,10 +18015,16 @@ msgid "Create Endpoint"
 msgstr "غير نشط"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#, fuzzy
+#, fuzzy, python-format
 #| msgid "Server Endpoint"
-msgid "New Endpoint"
+msgid "New Endpoint (%(label)s)"
 msgstr "نقطة نهاية الخادم"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#, fuzzy
+#| msgid "File Dropzone"
+msgid "Toggle Dropdown"
+msgstr "منطقة إسقاط الملفات"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #, fuzzy
@@ -19604,6 +19620,10 @@ msgstr "لوحة تحكم HQ"
 #: corehq/apps/dashboard/views.py
 msgid "Build, update, and deploy applications"
 msgstr "إنشاء التطبيقات وتحديثها ونشرها"
+
+#: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
+msgid "New Application"
+msgstr "تطبيق جديد"
 
 #: corehq/apps/dashboard/views.py
 msgid "View worker monitoring reports and inspect project data"
@@ -22930,6 +22950,78 @@ msgstr ""
 "لعكس هذا الإجراء.</span>\n"
 "  "
 
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#, fuzzy
+#| msgid "Please try again."
+msgid "The job failed. Please try again."
+msgstr "يرجى المحاولة مرة أخرى."
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            Changes have been saved successfully!\n"
+#| "        "
+msgid ""
+"\n"
+"            %(counter)s form processed successfully\n"
+"          "
+msgid_plural ""
+"\n"
+"            %(counter)s forms processed successfully\n"
+"          "
+msgstr[0] ""
+"\n"
+"            تم حفظ التغييرات بنجاح!\n"
+"        "
+msgstr[1] ""
+"\n"
+"            تم حفظ التغييرات بنجاح!\n"
+"        "
+msgstr[2] ""
+"\n"
+"            تم حفظ التغييرات بنجاح!\n"
+"        "
+msgstr[3] ""
+"\n"
+"            تم حفظ التغييرات بنجاح!\n"
+"        "
+msgstr[4] ""
+"\n"
+"            تم حفظ التغييرات بنجاح!\n"
+"        "
+msgstr[5] ""
+"\n"
+"            تم حفظ التغييرات بنجاح!\n"
+"        "
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#, fuzzy
+#| msgid "No Forms are supplied"
+msgid "Some forms were skipped:"
+msgstr "لم يتم توفير أي نماذج"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> "
+#| "to reverse this.</span>\n"
+#| "  "
+msgid ""
+"\n"
+"    <span\n"
+"      >Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to "
+"reverse\n"
+"      this.</span\n"
+"    >\n"
+"  "
+msgstr ""
+"\n"
+"    <span>العودة إلى <a href=\"%(form_management_url)s\">إدارة النماذج</a> "
+"لعكس هذا الإجراء.</span>\n"
+"  "
+
 #: corehq/apps/data_interfaces/utils.py
 msgid "The case group was not found."
 msgstr "لم يتم العثور على مجموعة الحالات."
@@ -23110,6 +23202,12 @@ msgstr "تمت إضافة الحالة"
 #: corehq/apps/data_interfaces/views.py
 msgid "Form Management"
 msgstr "إدارة النماذج"
+
+#: corehq/apps/data_interfaces/views.py
+#, fuzzy
+#| msgid "No Forms are supplied"
+msgid "No forms were supplied."
+msgstr "لم يتم توفير أي نماذج"
 
 #: corehq/apps/data_interfaces/views.py
 msgid "Form Status"
@@ -31239,6 +31337,7 @@ msgid "Unable to process applications. Please report an issue if this persists"
 msgstr "تعذر معالجة التطبيقات. يرجى الإبلاغ عن المشكلة إذا استمرت"
 
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
 msgid "Process"
 msgstr "معالجة"
 
@@ -36393,6 +36492,18 @@ msgstr "بناء التطبيق"
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/sms/models.py
 msgid "Case Group"
 msgstr "مجموعة الحالات"
+
+#: corehq/apps/hqwebapp/fields.py
+#, fuzzy
+#| msgid "Please confirm that you want to proceed?"
+msgid "Please confirm that you are not a robot."
+msgstr "يرجى التأكيد على رغبتك في المتابعة؟"
+
+#: corehq/apps/hqwebapp/fields.py
+#, fuzzy
+#| msgid "There was an error saving your alert. Please try again!"
+msgid "We could not confirm that you are not a robot. Please try again."
+msgstr "حدث خطأ أثناء حفظ التنبيه. يرجى المحاولة مرة أخرى!"
 
 #: corehq/apps/hqwebapp/forms.py
 msgid ""
@@ -41836,6 +41947,85 @@ msgstr "تم حفظ البرنامج!"
 msgid "Edit Program"
 msgstr "تعديل البرنامج"
 
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#, fuzzy
+#| msgid "Translate Me"
+msgid "Translated SQL"
+msgstr "ترجم لي"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+msgid "Try it out"
+msgstr ""
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+msgid "Run"
+msgstr "تشغيل"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#, fuzzy, python-format
+#| msgid "Duration: %(duration)s"
+msgid "Evaluated in %(duration)s seconds"
+msgstr "المدة: %(duration)s"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#, fuzzy, python-format
+#| msgid "Showing the first"
+msgid "Showing the first %(max_rows)s rows."
+msgstr "عرض أول"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#, fuzzy
+#| msgid "results"
+msgid "No results"
+msgstr "نتائج"
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+#: corehq/apps/project_db/views.py
+#, fuzzy
+#| msgid "My Projects"
+msgid "Query ProjectDB"
+msgstr "مشاريعي"
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+#, fuzzy
+#| msgid "Table "
+msgid "Tables"
+msgstr "جدول "
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+msgid "This project has no ProjectDB tables yet."
+msgstr ""
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+#, fuzzy
+#| msgid "Custom SMS Content"
+msgid "Copy DB Context"
+msgstr "محتوى الرسالة النصية المخصص"
+
+#: corehq/apps/public_webforms/form_paths.py
+#, fuzzy
+#| msgid "Deleted"
+msgid "(Deleted)"
+msgstr "تم الحذف"
+
+#: corehq/apps/public_webforms/forms.py
+#, fuzzy
+#| msgid "Search Filter"
+msgid "Search labels"
+msgstr "مرشح البحث"
+
+#: corehq/apps/public_webforms/forms.py
+#, fuzzy
+#| msgid "All statuses"
+msgid "Any status"
+msgstr "جميع الحالات"
+
+#: corehq/apps/public_webforms/forms.py
+#, fuzzy
+#| msgid "type"
+msgid "Any type"
+msgstr "النوع"
+
 #: corehq/apps/public_webforms/forms.py
 msgid "Identifies this public webform. Respondents will see the form's name."
 msgstr ""
@@ -41900,6 +42090,44 @@ msgstr "يرجى اختيار التطبيق"
 msgid "The selected form can't be used for a public webform."
 msgstr "النموذج المحدد لا يحتوي على جدول زمني مفعل."
 
+#: corehq/apps/public_webforms/models.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Open"
+msgstr "مفتوح"
+
+#: corehq/apps/public_webforms/models.py
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap3/web_users.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/web_users.html
+msgid "Expired"
+msgstr "منتهي الصلاحية"
+
+#: corehq/apps/public_webforms/tables.py
+#, fuzzy
+#| msgid "View recent submissions"
+msgid "Submissions"
+msgstr "عرض الإرسالات الأخيرة"
+
+#: corehq/apps/public_webforms/tables.py
+#, fuzzy
+#| msgid "Expired"
+msgid "Expires"
+msgstr "منتهي الصلاحية"
+
+#: corehq/apps/public_webforms/tables.py
+#, fuzzy
+#| msgid "Delivered"
+msgid "Delivery"
+msgstr "تم التسليم"
+
+#: corehq/apps/public_webforms/tables.py
+#, fuzzy
+#| msgid "Public Name"
+msgid "Public URL"
+msgstr "الاسم العام"
+
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
 #: corehq/apps/public_webforms/views.py corehq/privileges.py
 #: corehq/tabs/tabclasses.py
@@ -41920,6 +42148,18 @@ msgid ""
 "    "
 msgstr ""
 
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#, fuzzy
+#| msgid "Public Name"
+msgid "How public forms work"
+msgstr "الاسم العام"
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#, fuzzy
+#| msgid "forms"
+msgid "Webforms"
+msgstr "نماذج"
+
 #: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 msgid ""
 "\n"
@@ -41929,6 +42169,31 @@ msgid ""
 "public.\n"
 "        "
 msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
+msgid "Public URL QR Code"
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
+msgid ""
+"\n"
+"            Respondents who scan this code open the same page as the public "
+"URL,\n"
+"            where they can request a one-time link.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/tables/public_webform.html
+#, fuzzy
+#| msgid "Public Name"
+msgid "No public webforms match these filters."
+msgstr "الاسم العام"
+
+#: corehq/apps/public_webforms/templates/public_webforms/tables/public_webform.html
+#, fuzzy
+#| msgid "No grants have been created."
+msgid "No public webforms have been created yet."
+msgstr "لم يتم إنشاء أي منح."
 
 #: corehq/apps/public_webforms/views.py
 #, fuzzy
@@ -48150,14 +48415,6 @@ msgstr "إنشاء مشروع جديد"
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 msgid "Copy Full Key"
 msgstr "نسخ المفتاح الكامل"
-
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/web_users.html
-msgid "Expired"
-msgstr "منتهي الصلاحية"
 
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 msgid "Delete Key"
@@ -58869,10 +59126,6 @@ msgid "Empty Case"
 msgstr "حالة فارغة"
 
 #: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Open"
-msgstr "مفتوح"
-
-#: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Modified On"
 msgstr "تم التعديل في"
 
@@ -63381,10 +63634,6 @@ msgid "My Applications"
 msgstr "تطبيقاتي"
 
 #: corehq/tabs/tabclasses.py
-msgid "New Application"
-msgstr "تطبيق جديد"
-
-#: corehq/tabs/tabclasses.py
 #, fuzzy
 #| msgid "Create and release new build for apps"
 msgid "Create and manage public webforms."
@@ -64297,6 +64546,11 @@ msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
 
 #, fuzzy
+#~| msgid "Parent Type"
+#~ msgid "Target Type"
+#~ msgstr "نوع الأصل"
+
+#, fuzzy
 #~| msgid "Add Field"
 #~ msgid "-- Field --"
 #~ msgstr "إضافة حقل"
@@ -64389,9 +64643,6 @@ msgstr "أدخل JSON صالحًا"
 #~ msgid "Logs"
 #~ msgstr "السجلات"
 
-#~ msgid "Run"
-#~ msgstr "تشغيل"
-
 #, python-format
 #~ msgid ""
 #~ "\n"
@@ -64428,10 +64679,6 @@ msgstr "أدخل JSON صالحًا"
 #, python-format
 #~ msgid "Ended: %(date_ended)s"
 #~ msgstr "تاريخ الانتهاء: %(date_ended)s"
-
-#, python-format
-#~ msgid "Duration: %(duration)s"
-#~ msgstr "المدة: %(duration)s"
 
 #~ msgid "Status:"
 #~ msgstr "الحالة:"
@@ -64609,9 +64856,6 @@ msgstr "أدخل JSON صالحًا"
 
 #~ msgid "Normal Case List"
 #~ msgstr "قائمة الحالات العادية"
-
-#~ msgid "Search Filter"
-#~ msgstr "مرشح البحث"
 
 #~ msgid "Copy case list filter"
 #~ msgstr "نسخ مرشح قائمة الحالات"
@@ -65493,9 +65737,6 @@ msgstr "أدخل JSON صالحًا"
 #~ msgid ""
 #~ "Confirm that resources are completely translated before performing request"
 #~ msgstr "تأكد من أن الموارد مترجمة بالكامل قبل تنفيذ الطلب"
-
-#~ msgid "Please confirm that you want to proceed?"
-#~ msgstr "يرجى التأكيد على رغبتك في المتابعة؟"
 
 #~ msgid "Version not available for app"
 #~ msgstr "الإصدار غير متوفر للتطبيق"

@@ -180,7 +180,8 @@ msgstr "Mostra solo sottoscrizioni in prova"
 #: corehq/apps/hqadmin/templates/hqadmin/email_status.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
-#: corehq/apps/notifications/forms.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/notifications/forms.py corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/tables.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
 #: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
 #: corehq/apps/userreports/views.py
@@ -1936,6 +1937,7 @@ msgstr "N. estratto conto"
 #: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/hqadmin/templates/hqadmin/email_status.html
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/standard/sms.py
@@ -5431,6 +5433,7 @@ msgstr "Caso"
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/public_webforms/tables.py
 #: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py
 #: corehq/apps/reports/standard/inspect.py
@@ -7698,6 +7701,7 @@ msgstr "Impostazioni menu"
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
@@ -7872,6 +7876,7 @@ msgstr "Installa CommCare"
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_feedback.html
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/async/bootstrap5/default.html
@@ -14967,6 +14972,7 @@ msgstr "Modifica Widget"
 #: corehq/apps/hqwebapp/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
 #: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
 #: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
 #: corehq/messaging/scheduling/templates/scheduling/dashboard.html
@@ -15912,7 +15918,6 @@ msgstr "entro la distanza"
 
 #: corehq/apps/case_search/endpoint_views.py
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#: corehq/tabs/tabclasses.py
 msgid "Case Search Endpoints"
 msgstr "Endpoint di ricerca casi"
 
@@ -16109,6 +16114,7 @@ msgid "results"
 msgstr "risultati"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/public_webforms/models.py
 #: corehq/apps/userreports/reports/builder/forms.py
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Closed"
@@ -16207,12 +16213,9 @@ msgstr "Inserisci il nome dell'endpoint"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-msgid "Target Type"
-msgstr "Tipo di destinazione"
-
-#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-msgid "-- Select a case type --"
-msgstr "-- Seleziona un tipo di caso --"
+#| msgid "Input Type"
+msgid "Endpoint Type"
+msgstr "Tipo di endpoint"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 msgid "Parameters"
@@ -16253,6 +16256,14 @@ msgid "Add Parameter"
 msgstr "Aggiungi Parametro"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "SQL"
+msgstr "SQL"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "-- Select a case type --"
+msgstr "-- Seleziona un tipo di caso --"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/partials/query_tester.html
 msgid "Test query"
 msgstr "Testa query"
@@ -16262,8 +16273,15 @@ msgid "Create Endpoint"
 msgstr "Crea Endpoint"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-msgid "New Endpoint"
-msgstr "Nuovo endpoint"
+#, python-format
+#| msgid "New Endpoint"
+msgid "New Endpoint (%(label)s)"
+msgstr "Nuovo endpoint (%(label)s)"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#| msgid "File Dropzone"
+msgid "Toggle Dropdown"
+msgstr "Attiva/disattiva menu a discesa"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 msgid "Updated On"
@@ -17752,6 +17770,10 @@ msgstr "Dashboard HQ"
 #: corehq/apps/dashboard/views.py
 msgid "Build, update, and deploy applications"
 msgstr "Crea, aggiorna e distribuisci applicazioni"
+
+#: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
+msgid "New Application"
+msgstr "Nuova applicazione"
 
 #: corehq/apps/dashboard/views.py
 msgid "View worker monitoring reports and inspect project data"
@@ -20682,6 +20704,54 @@ msgstr ""
 "    <span>Torna a <a href=\"%(form_management_url)s\">Gestisci moduli</a> per annullare questa operazione.</span>\n"
 "  "
 
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#| msgid "Please try again."
+msgid "The job failed. Please try again."
+msgstr "L'operazione non è riuscita. Riprova."
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "            Changes have been saved successfully!\n"
+#| "        "
+msgid ""
+"\n"
+"            %(counter)s form processed successfully\n"
+"          "
+msgid_plural ""
+"\n"
+"            %(counter)s forms processed successfully\n"
+"          "
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#| msgid "No Forms are supplied"
+msgid "Some forms were skipped:"
+msgstr "Alcuni moduli sono stati saltati:"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to reverse this.</span>\n"
+#| "  "
+msgid ""
+"\n"
+"    <span\n"
+"      >Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to reverse\n"
+"      this.</span\n"
+"    >\n"
+"  "
+msgstr ""
+"\n"
+"    <span\n"
+"      >Torna a <a href=\"%(form_management_url)s\">Gestisci Moduli</a> per annullare\n"
+"      questa operazione.</span\n"
+"    >\n"
+"  "
+
 #: corehq/apps/data_interfaces/utils.py
 msgid "The case group was not found."
 msgstr "Il gruppo di casi non è stato trovato."
@@ -20864,6 +20934,11 @@ msgstr "Caso aggiunto"
 #: corehq/apps/data_interfaces/views.py
 msgid "Form Management"
 msgstr "Gestione moduli"
+
+#: corehq/apps/data_interfaces/views.py
+#| msgid "No Forms are supplied"
+msgid "No forms were supplied."
+msgstr "Nessun modulo fornito."
 
 #: corehq/apps/data_interfaces/views.py
 msgid "Form Status"
@@ -28390,6 +28465,7 @@ msgstr ""
 "persiste"
 
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
 msgid "Process"
 msgstr "Elabora"
 
@@ -33344,6 +33420,16 @@ msgstr "Build dell'applicazione"
 msgid "Case Group"
 msgstr "Gruppo di casi"
 
+#: corehq/apps/hqwebapp/fields.py
+#| msgid "Please confirm that you want to proceed?"
+msgid "Please confirm that you are not a robot."
+msgstr "Conferma di non essere un robot."
+
+#: corehq/apps/hqwebapp/fields.py
+#| msgid "There was an error saving your alert. Please try again!"
+msgid "We could not confirm that you are not a robot. Please try again."
+msgstr "Non siamo riusciti a confermare che non sei un robot. Riprova."
+
 #: corehq/apps/hqwebapp/forms.py
 msgid ""
 "Sorry - you have attempted to login with an incorrect password too many "
@@ -33385,21 +33471,18 @@ msgstr ""
 "potrebbero trovarsi in una posizione diversa."
 
 #: corehq/apps/hqwebapp/forms.py
-#| msgid "Your project spaces:"
 msgid "On the project space:"
 msgid_plural "On the project spaces:"
 msgstr[0] "I tuoi spazi progetto:"
 msgstr[1] "I tuoi spazi progetto:"
 
 #: corehq/apps/hqwebapp/forms.py
-#| msgid "Your project spaces:"
 msgid "Choose project space"
 msgid_plural "Choose project spaces"
 msgstr[0] "I tuoi spazi progetto:"
 msgstr[1] "I tuoi spazi progetto:"
 
 #: corehq/apps/hqwebapp/forms.py
-#| msgid "Push content to a downstream project space"
 msgid "Choose at least one project space."
 msgstr "Scegli almeno uno spazio di progetto."
 
@@ -33537,12 +33620,10 @@ msgid "Staging"
 msgstr "Staging"
 
 #: corehq/apps/hqwebapp/oauth_scopes.py
-#| msgid "-The CommCare HQ team"
 msgid "Access CommCare API data"
 msgstr "Accedi ai dati API di CommCare"
 
 #: corehq/apps/hqwebapp/oauth_scopes.py
-#| msgid "Failed to download export."
 msgid "View and download report data"
 msgstr "Visualizza e scarica i dati dei report"
 
@@ -33556,7 +33637,6 @@ msgstr ""
 "(Deprecato, non utilizzare) Consenti accesso ai punti di accesso mobile"
 
 #: corehq/apps/hqwebapp/oauth_scopes.py
-#| msgid "You have been added to the \"{}\" project space."
 msgid "Access data in the \"{}\" project space only"
 msgstr "Accedi ai dati solo nello spazio di progetto \"{}\""
 
@@ -34040,16 +34120,11 @@ msgstr ""
 "        "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
-#| msgid "Path in Application"
 msgid "Authorize Application"
 msgstr "Autorizza applicazione"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Thanks for using %(cc_name)s!\n"
-#| "          "
 msgid ""
 "\n"
 "            Authorize %(application_name)s?\n"
@@ -34064,15 +34139,11 @@ msgid "This application is requesting permission to:"
 msgstr "Questa applicazione sta richiedendo il permesso di:"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
-#| msgid ""
-#| "Your project space has not been granted access to data from any other "
-#| "project spaces."
 msgid "This application will have access to data on all your project spaces."
 msgstr ""
 "Questa applicazione avrà accesso ai dati su tutti i tuoi spazi di progetto."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
-#| msgid "uncategorized"
 msgid "Authorize"
 msgstr "Autorizza"
 
@@ -38393,6 +38464,76 @@ msgstr "Programma salvato!"
 msgid "Edit Program"
 msgstr "Modifica Programma"
 
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#| msgid "Translate Me"
+msgid "Translated SQL"
+msgstr "SQL tradotto"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+msgid "Try it out"
+msgstr "Provalo"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+msgid "Run"
+msgstr "Esegui"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#, python-format
+#| msgid "Duration: %(duration)s"
+msgid "Evaluated in %(duration)s seconds"
+msgstr "Valutato in %(duration)s secondi"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#, python-format
+#| msgid "Showing the first"
+msgid "Showing the first %(max_rows)s rows."
+msgstr "Visualizzazione delle prime %(max_rows)s righe."
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#| msgid "results"
+msgid "No results"
+msgstr "Nessun risultato"
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+#: corehq/apps/project_db/views.py
+#| msgid "My Projects"
+msgid "Query ProjectDB"
+msgstr "Interroga ProjectDB"
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+#| msgid "Table "
+msgid "Tables"
+msgstr "Tabelle"
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+msgid "This project has no ProjectDB tables yet."
+msgstr "Questo progetto non ha ancora tabelle ProjectDB."
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+#| msgid "Custom SMS Content"
+msgid "Copy DB Context"
+msgstr "Copia contesto DB"
+
+#: corehq/apps/public_webforms/form_paths.py
+#| msgid "Deleted"
+msgid "(Deleted)"
+msgstr "(Eliminato)"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "Search Filter"
+msgid "Search labels"
+msgstr "Cerca etichette"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "All statuses"
+msgid "Any status"
+msgstr "Qualsiasi stato"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "type"
+msgid "Any type"
+msgstr "Qualsiasi tipo"
+
 #: corehq/apps/public_webforms/forms.py
 msgid "Identifies this public webform. Respondents will see the form's name."
 msgstr ""
@@ -38454,6 +38595,40 @@ msgid "The selected form can't be used for a public webform."
 msgstr ""
 "Il modulo selezionato non può essere utilizzato per un modulo web pubblico."
 
+#: corehq/apps/public_webforms/models.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Open"
+msgstr "Apri"
+
+#: corehq/apps/public_webforms/models.py
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap3/web_users.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/web_users.html
+msgid "Expired"
+msgstr "Scaduto"
+
+#: corehq/apps/public_webforms/tables.py
+#| msgid "View Submissions"
+msgid "Submissions"
+msgstr "Invii"
+
+#: corehq/apps/public_webforms/tables.py
+#| msgid "Expired"
+msgid "Expires"
+msgstr "Scade"
+
+#: corehq/apps/public_webforms/tables.py
+#| msgid "Delivered"
+msgid "Delivery"
+msgstr "Consegna"
+
+#: corehq/apps/public_webforms/tables.py
+#| msgid "Public Name"
+msgid "Public URL"
+msgstr "URL pubblico"
+
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
 #: corehq/apps/public_webforms/views.py corehq/privileges.py
 #: corehq/tabs/tabclasses.py
@@ -38476,6 +38651,16 @@ msgstr ""
 "      revoca l'accesso in qualsiasi momento.\n"
 "    "
 
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#| msgid "New Public Webform"
+msgid "How public forms work"
+msgstr "Come funzionano i moduli pubblici"
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#| msgid "forms"
+msgid "Webforms"
+msgstr "Moduli web"
+
 #: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 msgid ""
 "\n"
@@ -38487,6 +38672,32 @@ msgstr ""
 "          Solo i moduli di <strong>registrazione</strong> e <strong>sondaggio</strong>\n"
 "          sono idonei. I moduli che aggiornano casi esistenti non possono essere resi pubblici.\n"
 "        "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
+msgid "Public URL QR Code"
+msgstr "Codice QR dell'URL pubblico"
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
+msgid ""
+"\n"
+"            Respondents who scan this code open the same page as the public URL,\n"
+"            where they can request a one-time link.\n"
+"          "
+msgstr ""
+"\n"
+"            Le persone che scansionano questo codice aprono la stessa pagina dell'URL pubblico,\n"
+"            dove possono richiedere un link monouso.\n"
+"          "
+
+#: corehq/apps/public_webforms/templates/public_webforms/tables/public_webform.html
+#| msgid "Public webform created."
+msgid "No public webforms match these filters."
+msgstr "Nessun modulo web pubblico corrisponde a questi filtri."
+
+#: corehq/apps/public_webforms/templates/public_webforms/tables/public_webform.html
+#| msgid "No grants have been created."
+msgid "No public webforms have been created yet."
+msgstr "Non sono ancora stati creati moduli web pubblici."
 
 #: corehq/apps/public_webforms/views.py
 msgid "Manage Public Webforms"
@@ -44478,14 +44689,6 @@ msgstr "Crea un nuovo progetto"
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 msgid "Copy Full Key"
 msgstr "Copia chiave completa"
-
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/web_users.html
-msgid "Expired"
-msgstr "Scaduto"
 
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 msgid "Delete Key"
@@ -54532,10 +54735,6 @@ msgid "Empty Case"
 msgstr "Caso vuoto"
 
 #: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Open"
-msgstr "Apri"
-
-#: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Modified On"
 msgstr "Modificato il"
 
@@ -58974,10 +59173,6 @@ msgid "My Applications"
 msgstr "Le mie applicazioni"
 
 #: corehq/tabs/tabclasses.py
-msgid "New Application"
-msgstr "Nuova applicazione"
-
-#: corehq/tabs/tabclasses.py
 msgid "Create and manage public webforms."
 msgstr "Crea e gestisci moduli web pubblici."
 
@@ -59893,6 +60088,9 @@ msgstr "Le colonne obbligatorie sono {column_names}"
 msgid "Enter valid JSON"
 msgstr "Inserisci un JSON valido"
 
+#~ msgid "Target Type"
+#~ msgstr "Tipo di destinazione"
+
 #~ msgid "-- Field --"
 #~ msgstr "-- Campo --"
 
@@ -59978,9 +60176,6 @@ msgstr "Inserisci un JSON valido"
 #~ msgid "Logs"
 #~ msgstr "Log"
 
-#~ msgid "Run"
-#~ msgstr "Esegui"
-
 #, python-format
 #~ msgid ""
 #~ "\n"
@@ -60017,10 +60212,6 @@ msgstr "Inserisci un JSON valido"
 #, python-format
 #~ msgid "Ended: %(date_ended)s"
 #~ msgstr "Terminato: %(date_ended)s"
-
-#, python-format
-#~ msgid "Duration: %(duration)s"
-#~ msgstr "Durata: %(duration)s"
 
 #~ msgid "Status:"
 #~ msgstr "Stato:"
@@ -60172,9 +60363,6 @@ msgstr "Inserisci un JSON valido"
 
 #~ msgid "Normal Case List"
 #~ msgstr "Elenco casi normale"
-
-#~ msgid "Search Filter"
-#~ msgstr "Filtro di ricerca"
 
 #~ msgid "Copy case list filter"
 #~ msgstr "Copia filtro elenco casi"
@@ -61016,9 +61204,6 @@ msgstr "Inserisci un JSON valido"
 #~ msgstr ""
 #~ "Conferma che le risorse siano completamente tradotte prima di eseguire la "
 #~ "richiesta"
-
-#~ msgid "Please confirm that you want to proceed?"
-#~ msgstr "Confermi di voler procedere?"
 
 #~ msgid "Version not available for app"
 #~ msgstr "Versione non disponibile per l'app"
