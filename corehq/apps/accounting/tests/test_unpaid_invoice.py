@@ -408,11 +408,7 @@ class TestDowngradeEligibility(BaseAccountingTest):
         cls.plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.ADVANCED)
         cls.free_plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.FREE)
         cls.paused_plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.PAUSED)
-
-    @classmethod
-    def tearDownClass(cls):
-        utils.clear_plan_version_cache()
-        super().tearDownClass()
+        cls.addClassCleanup(utils.clear_plan_version_cache)
 
     def test_eligible_when_not_skipped(self):
         subscription = self._subscription()

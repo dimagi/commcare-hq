@@ -49,7 +49,7 @@ var invoiceModel = function () {
     var skipAutoDowngrade = $('#id_skip_auto_downgrade').prop("checked");
     self.skipAutoDowngrade = ko.observable(skipAutoDowngrade);
     self.skipAutoDowngradeDays = ko.observable($('#id_skip_auto_downgrade_days').val());
-    self.skipAutoDowngradeHint = ko.computed(function () {
+    self.skipAutoDowngradeHint = ko.pureComputed(function () {
         var value = self.skipAutoDowngradeDays();
         var numDays = parseInt(value, 10);
         if (!value || isNaN(numDays)) {
