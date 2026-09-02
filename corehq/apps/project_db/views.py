@@ -45,7 +45,10 @@ class QueryProjectDBView(HqHtmxActionMixin, BaseProjectDataView):
 
     def _query_response(self, request, always_run):
         submitted_params = {
-            name.removeprefix('param:'): value
+            # A blank input becomes NULL, matching how case search endpoints
+            # pass unsupplied parameters: NULL coerces to any column type,
+            # while '' fails against a numeric or date column.
+            name.removeprefix('param:'): value or None
             for name, value in request.POST.items()
             if name.startswith('param:')
         }
@@ -60,7 +63,7 @@ class QueryProjectDBView(HqHtmxActionMixin, BaseProjectDataView):
         else:
             # Re-render parameters with values previously submitted for them
             context['parameters'] = [
-                {'name': name, 'value': submitted_params.get(name, '')}
+                {'name': name, 'value': submitted_params.get(name) or ''}
                 for name in user_sql.parameters
             ]
         return self.render_htmx_partial_response(
