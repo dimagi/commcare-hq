@@ -1,0 +1,33 @@
+# Long-running support processes for local development. Run them with:
+#
+#     uvx honcho start -f Procfile.dev
+#
+# Django is deliberately not included. Run it in its own terminal:
+#
+#     ./manage.py runserver localhost:8000
+#
+# honcho does pass its terminal through to child processes, but they all share
+# it, so an interactive prompt competes with webpack and celery output and there
+# is no way to direct keystrokes at one process. Keeping Django separate gives
+# breakpoint()/pdb a terminal to itself, keeps request logs readable, and lets
+# you restart the app without cycling everything else. To debug inside a celery
+# task, use celery.contrib.rdb rather than breakpoint().
+#
+# Ctrl-C stops every process. Note that honcho also stops them all as soon as one
+# of them exits, so if the group dies immediately, read the message from the
+# first process that failed.
+#
+# The backing services (postgres, couch, redis, elasticsearch, kafka, zookeeper,
+# minio) run in containers, not here: start them with `./scripts/docker up -d`.
+#
+# `uv run` is used so each process finds the project virtualenv without you
+# having to activate it first. formplayer needs a JDK, and sdkman keeps its JDKs
+# off PATH unless sdkman-init.sh has been sourced, so that location is added
+# here; a nonexistent directory in PATH is ignored, leaving any system java to be
+# found as usual.
+js: yarn dev
+# The queue list is long on purpose: `check_services` reports a queue as blocked
+# when nothing consumes it, so a worker on only the default queue leaves celery
+# permanently red even while it is running. These are the queues it watches.
+worker: uv run celery -A corehq worker -B -l info -Q celery,analytics_queue,async_restore_queue,background_queue,case_import_queue,email_queue,export_download_queue,malt_generation_queue,reminder_case_update_queue,reminder_queue,reminder_rule_queue,repeat_record_queue,saved_exports_queue,send_report_throttled,sms_queue,submission_reprocessing_queue,sumologic_logs_queue
+formplayer: sh -c 'PATH="$HOME/.sdkman/candidates/java/current/bin:$PATH"; exec java -jar ./formplayer.jar'
