@@ -287,7 +287,7 @@ def test_send_long_property_name_round_trip():
 
 
 @use('db', project_db_table('test-send', 'patient', {'first_name': 'plain'}))
-def test_send_to_project_db_bad_type():
+def test_populate_case_type_bad_type():
     with pytest.raises(ValueError):
         populate_case_type('test-send', 'patient', [
             _make_case({'first_name': 'Alice'}, type='patient'),
