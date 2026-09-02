@@ -255,6 +255,32 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     locations = fields.ListField()
     require_account_confirmation = fields.BooleanField(default=False)
     send_confirmation_email_now = fields.BooleanField(default=False)
+    password = fields.CharField(
+        null=True,
+        help_text="Sets the user's password. Required on create unless "
+                  "`connect_username` is given.",
+    )
+    connect_username = fields.CharField(
+        null=True,
+        help_text="Links the user to a ConnectID account. Requires the "
+                  "COMMCARE_CONNECT feature flag.",
+    )
+    language = fields.CharField(
+        attribute='language',
+        null=True,
+        help_text="The user's preferred language code, e.g. `en`.",
+    )
+    role = fields.CharField(
+        null=True,
+        help_text="Name of an existing user role in the project space.",
+    )
+
+    WRITE_ONLY_FIELDS = (
+        'require_account_confirmation',
+        'send_confirmation_email_now',
+        'password',
+        'connect_username',
+    )
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -399,9 +425,13 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def dehydrate_locations(self, bundle):
         return bundle.obj.get_location_ids(bundle.obj.domain)
 
+    def dehydrate_role(self, bundle):
+        role = bundle.obj.get_role(bundle.obj.domain)
+        return role.name if role else ''
+
     def dehydrate(self, bundle):
-        bundle.data.pop('require_account_confirmation', None)
-        bundle.data.pop('send_confirmation_email_now', None)
+        for field_name in self.WRITE_ONLY_FIELDS:
+            bundle.data.pop(field_name, None)
         return super(v0_1.CommCareUserResource, self).dehydrate(bundle)
 
     @classmethod
