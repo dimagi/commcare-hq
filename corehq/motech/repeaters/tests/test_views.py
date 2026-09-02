@@ -1,3 +1,4 @@
+import pytest
 from django.urls import reverse
 
 from testil import assert_raises
@@ -5,7 +6,9 @@ from testil import assert_raises
 from corehq import privileges
 from corehq.motech.dhis2.tests.test_views import BaseViewTest
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import FormRepeater
+from corehq.motech.repeaters.const import State
+from corehq.motech.repeaters.models import FormRepeater, RepeatRecord
+from corehq.motech.repeaters.views.repeat_records import DomainForwardingRepeatRecords
 from corehq.util.test_utils import privilege_enabled
 
 
@@ -81,3 +84,19 @@ class TestRepeaterViews(BaseViewTest):
         }
         response = self.client.get(reverse('edit_repeater', kwargs=url_kwargs))
         assert response.status_code == 404
+
+
+def _render_payload_button(state):
+    record = RepeatRecord(domain='test', state=state)
+    # The method uses no instance state, so call it unbound with a dummy self.
+    return DomainForwardingRepeatRecords._make_view_payload_button(None, record)
+
+
+@pytest.mark.parametrize('state', [State.Success, State.Empty])
+def test_payload_button_disabled_for_succeeded_records(state):
+    assert 'disabled' in _render_payload_button(state)
+
+
+@pytest.mark.parametrize('state', [State.Pending, State.Fail, State.Cancelled])
+def test_payload_button_active_for_non_succeeded_records(state):
+    assert 'disabled' not in _render_payload_button(state)
