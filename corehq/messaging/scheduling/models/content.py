@@ -525,11 +525,20 @@ class ConnectMessageContent(Content):
             recipient.get_language_code()
         )
         connect_number = ConnectMessagingNumber(recipient)
+        metadata = self.get_sms_message_metadata(logged_subevent)
         try:
-            send_message_to_verified_number(connect_number, message, logged_subevent=logged_subevent)
+            send_message_to_verified_number(
+                connect_number,
+                message,
+                metadata=metadata,
+                logged_subevent=logged_subevent,
+            )
         except ConnectIDUserLink.DoesNotExist:
             logged_subevent.error(MessagingEvent.ERROR_CONNECT_USER_NOT_FOUND)
             return
+
+        # completed is a no-op if the send already errored the subevent
+        logged_subevent.completed()
 
 
 class ConnectMessageSurveyContent(SurveyContent):
