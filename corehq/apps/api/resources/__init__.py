@@ -5,7 +5,12 @@ from django.http import HttpResponse
 from django.urls import NoReverseMatch, include, re_path
 
 from tastypie import http
-from tastypie.exceptions import BadRequest, ImmediateHttpResponse, InvalidSortError
+from tastypie.exceptions import (
+    BadRequest,
+    ImmediateHttpResponse,
+    InvalidSortError,
+    NotFound,
+)
 from tastypie.resources import Resource, convert_post_to_patch
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -168,6 +173,47 @@ class HqBaseResource(ApiVersioningMixin, CorsResourceMixin, JsonResourceMixin, R
 
     def get_required_privilege(self):
         return privileges.API_ACCESS
+
+    def put_detail(self, request, **kwargs):
+        """Update an existing object, or respond 404 if it does not exist.
+
+        Exactly copied from https://github.com/django-tastypie/django-tastypie/blob/v0.15.1/tastypie/resources.py#L1467
+        (BSD licensed) and modified to drop tastypie's fallback to
+        ``obj_create`` when ``obj_update`` raises ``NotFound``. That
+        fallback treats PUT as an upsert, but creates the object with a
+        server-generated id rather than the one provided in the URL, so a
+        caller that meant to update one record silently gets an unrelated
+        new one instead.
+
+        ``MultipleObjectsReturned`` is deliberately not caught: an
+        ambiguous id is a server-side data problem, not a reason to create
+        another object.
+        """
+        deserialized = self.deserialize(
+            request, request.body, format=request.META.get('CONTENT_TYPE', 'application/json'))
+        deserialized = self.alter_deserialized_detail_data(request, deserialized)
+        bundle = self.build_bundle(data=deserialized, request=request)
+
+        try:
+            updated_bundle = self.obj_update(bundle=bundle, **self.remove_api_resource_names(kwargs))
+        except NotFound:
+            # --- this part differs from the source ---
+            # tastypie's wrap_view() does not translate NotFound into a 404.
+            # The exception message is not echoed back: some of these carry
+            # internal detail, and tastypie's own get_detail() likewise
+            # answers a missing object with an empty 404 body.
+            return http.HttpNotFound()
+            # --- end of diff ---
+
+        if not self._meta.always_return_data:
+            return http.HttpNoContent()
+
+        # Invalidate prefetched_objects_cache for bundled object
+        # because we might have changed a prefetched field
+        updated_bundle.obj._prefetched_objects_cache = {}
+        updated_bundle = self.full_dehydrate(updated_bundle)
+        updated_bundle = self.alter_detail_data_to_serialize(request, updated_bundle)
+        return self.create_response(request, updated_bundle)
 
     def patch_list_replica(self, create_or_update_object, request=None, obj_limit=None, **kwargs):
         """
