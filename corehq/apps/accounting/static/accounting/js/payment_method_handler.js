@@ -117,6 +117,7 @@ var paymentMethodHandler = function (formId, opts) {
         self.autopayCard(autopayStripeCard);
     }
 
+    self.confirmedSendDate = ko.observable();
     self.scheduledSendDateInput = ko.observable();
 
     self.isScheduling = ko.computed(function () {
@@ -255,6 +256,7 @@ var paymentMethodHandler = function (formId, opts) {
     self.reset = function () {
         self.paymentIsComplete(false);
         self.serverErrorMsg('');
+        self.confirmedSendDate(undefined);
         self.scheduledSendDateInput(undefined);
         self.newCard().reset();
         self.resetStripeCardUI(true);
@@ -286,6 +288,9 @@ var paymentMethodHandler = function (formId, opts) {
     };
 
     self.handleSuccess = function (response) {
+        if (response.send_date) {
+            self.confirmedSendDate(response.send_date);
+        }
         if (response.success) {
             self.costItem().reset(response);
             if (response.wasSaved) {

@@ -196,9 +196,15 @@
   {% trans "Thank you for your payment!" %}
   <!-- /ko -->
   <!-- ko if: $root.paymentMethod() === $root.WIRE -->
+  <!-- ko if: $root.confirmedSendDate() -->
+  {% trans "Scheduled. It will be generated and emailed on" %}
+  <strong data-bind="text: $root.confirmedSendDate"></strong>.
+  <!-- /ko -->
+  <!-- ko ifnot: $root.confirmedSendDate() -->
   {% blocktrans %} Thank you! You will receive an invoice via email with
   instructions for wire payment. Please include the invoice ID in the wire
   payment details. {% endblocktrans %}
+  <!-- /ko -->
   <!-- /ko -->
 </script>
 
