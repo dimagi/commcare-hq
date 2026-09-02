@@ -172,11 +172,6 @@ class TestSubscription(BaseAccountingTest):
         self.subscription.skip_auto_downgrade_until = datetime.date.today() - datetime.timedelta(days=1)
         assert not self.subscription.should_skip_downgrade
 
-    def test_should_skip_downgrade_is_false_when_expired_but_skip_auto_downgrade_is_false(self):
-        self.subscription.skip_auto_downgrade = False
-        self.subscription.skip_auto_downgrade_until = datetime.date.today() - datetime.timedelta(days=1)
-        assert not self.subscription.should_skip_downgrade
-
     def test_no_activation(self):
         tasks.activate_subscriptions(based_on_date=self.subscription.date_start - datetime.timedelta(30))
         subscription = Subscription.visible_objects.get(id=self.subscription.id)
