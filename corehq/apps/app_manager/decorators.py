@@ -22,7 +22,6 @@ from corehq.apps.app_manager.exceptions import (
     CaseError,
 )
 from corehq.apps.app_manager.util import get_latest_app_release_by_location
-from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, HqPermissions
@@ -231,4 +230,3 @@ require_can_edit_apps = require_permission(HqPermissions.edit_apps)
 require_can_edit_or_view_apps = require_permission(
     'edit_apps', view_only_permission='view_apps'
 )
-require_deploy_apps = login_and_domain_required  # todo: can fix this when it is better supported
