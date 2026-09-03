@@ -71,6 +71,7 @@ from .models import (
     PaymentRecord,
     PaymentType,
     ScheduledPrepaymentInvoice,
+    ScheduledPrepaymentInvoiceStatus,
     SoftwarePlan,
     SoftwarePlanVersion,
     Subscription,
@@ -1249,12 +1250,17 @@ class ScheduledInvoiceInterface(GenericTabularReport):
             DataTablesColumn("Reason"),
             DataTablesColumn("Invoice"),
         )
+        if not self.is_rendered_as_email:
+            header.add_column(DataTablesColumn("Action"))
         return header
 
     @property
     def rows(self):
         def _scheduled_to_row(scheduled):
-            from corehq.apps.accounting.views import WireInvoiceSummaryView
+            from corehq.apps.accounting.views import (
+                CancelScheduledInvoiceView,
+                WireInvoiceSummaryView,
+            )
             columns = [
                 format_datatables_data(
                     text=scheduled.send_date.strftime(SERVER_DATE_FORMAT),
@@ -1275,6 +1281,15 @@ class ScheduledInvoiceInterface(GenericTabularReport):
                     scheduled.invoice_id,
                 ) if scheduled.invoice_id else '',
             ]
+            if not self.is_rendered_as_email:
+                if scheduled.status == ScheduledPrepaymentInvoiceStatus.PENDING:
+                    columns.append(make_anchor_tag(
+                        reverse(CancelScheduledInvoiceView.urlname, args=[scheduled.id]),
+                        'Cancel',
+                        {'class': 'btn btn-default'},
+                    ))
+                else:
+                    columns.append('')
             return columns
 
         return list(map(_scheduled_to_row, self._scheduled_invoices))

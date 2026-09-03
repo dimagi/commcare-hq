@@ -114,6 +114,10 @@ def send_flagged_pay_annually_subscription_alert(subscription, current_invoice, 
 
 def send_scheduled_invoice_notice(scheduled):
     """Notify accounting before a queued prepayment invoice is sent"""
+    from corehq.apps.accounting.dispatcher import (
+        AccountingAdminInterfaceDispatcher,
+    )
+
     subscription = scheduled.subscription
     email_context = {
         'domain': scheduled.domain,
@@ -128,6 +132,9 @@ def send_scheduled_invoice_notice(scheduled):
         'date_end': scheduled.date_end,
         'created_by': scheduled.created_by,
         'contact_emails': ', '.join(scheduled.contact_emails),
+        'queue_url': absolute_reverse(
+            AccountingAdminInterfaceDispatcher.name(), args=['scheduled_invoices']
+        ),
     }
 
     env_prefix = (

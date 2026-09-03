@@ -59,6 +59,7 @@ from corehq.apps.accounting.forms import (
     BillingAccountContactForm,
     BulkUpgradeToLatestVersionForm,
     CancelForm,
+    CancelScheduledInvoiceForm,
     ChangeSubscriptionForm,
     CreateAdminForm,
     CreditForm,
@@ -86,6 +87,7 @@ from corehq.apps.accounting.interface import (
     AccountingInterface,
     CustomerInvoiceInterface,
     InvoiceInterface,
+    ScheduledInvoiceInterface,
     SoftwarePlanInterface,
     SubscriptionInterface,
     WireInvoiceInterface,
@@ -98,6 +100,8 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan,
     Invoice,
     InvoicePdf,
+    ScheduledPrepaymentInvoice,
+    ScheduledPrepaymentInvoiceStatus,
     SoftwarePlan,
     SoftwarePlanVersion,
     StripePaymentMethod,
@@ -705,6 +709,79 @@ class SoftwarePlanVersionView(AccountingSectionView):
             self.plan_version,
             self.request.user.username
         )
+
+
+class CancelScheduledInvoiceView(AccountingSectionView):
+    """Confirm and cancel a queued prepayment invoice.
+
+    A confirmation step rather than an inline button: cancelling is the only
+    way to stop an invoice reaching a customer, and it cannot be undone.
+    """
+    urlname = 'accounting_cancel_scheduled_invoice'
+    page_title = "Cancel Scheduled Invoice"
+    template_name = 'accounting/cancel_scheduled_invoice.html'
+
+    @property
+    @memoized
+    def scheduled_invoice(self):
+        try:
+            return ScheduledPrepaymentInvoice.objects.get(
+                id=self.kwargs['scheduled_invoice_id']
+            )
+        except ScheduledPrepaymentInvoice.DoesNotExist:
+            raise Http404()
+
+    @property
+    @memoized
+    def cancel_form(self):
+        if self.request.method == 'POST':
+            return CancelScheduledInvoiceForm(self.scheduled_invoice, self.request.POST)
+        return CancelScheduledInvoiceForm(self.scheduled_invoice)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': ScheduledInvoiceInterface.name,
+            'url': self.queue_url,
+        }]
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.scheduled_invoice.id])
+
+    @property
+    def queue_url(self):
+        return ScheduledInvoiceInterface.get_url()
+
+    @property
+    def page_context(self):
+        return {
+            'scheduled_invoice': self.scheduled_invoice,
+            'cancel_form': self.cancel_form,
+            'is_pending': (
+                self.scheduled_invoice.status
+                == ScheduledPrepaymentInvoiceStatus.PENDING
+            ),
+        }
+
+    def post(self, request, *args, **kwargs):
+        scheduled = self.scheduled_invoice
+        if scheduled.status != ScheduledPrepaymentInvoiceStatus.PENDING:
+            messages.error(
+                request,
+                f"That invoice is {scheduled.get_status_display().lower()}, "
+                f"so there is nothing to cancel."
+            )
+            return HttpResponseRedirect(self.queue_url)
+        if self.cancel_form.is_valid():
+            self.cancel_form.cancel(cancelled_by=request.couch_user.username)
+            messages.success(
+                request,
+                f"Cancelled the prepayment invoice scheduled for "
+                f"{scheduled.domain} on {scheduled.send_date}."
+            )
+            return HttpResponseRedirect(self.queue_url)
+        return self.get(request, *args, **kwargs)
 
 
 class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
