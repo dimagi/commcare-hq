@@ -7,6 +7,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
@@ -363,7 +364,10 @@ class ChangeMyPasswordView(BaseMyAccountView):
             try:
                 clean_password(request.POST['new_password1'])
                 self.password_change_form.save()
+                # keep the current session valid; other sessions are invalidated
+                update_session_auth_hash(request, self.password_change_form.user)
                 messages.success(request, _("Your password was successfully changed!"))
+                return HttpResponseRedirect(self.page_url)
             except ValidationError as e:
                 messages.error(request, _(e.message))
         return self.get(request, *args, **kwargs)
