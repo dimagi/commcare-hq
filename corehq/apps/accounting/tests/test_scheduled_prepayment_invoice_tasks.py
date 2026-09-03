@@ -2,6 +2,8 @@ import datetime
 from decimal import Decimal
 from unittest.mock import patch
 
+from django.core import mail
+
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.models import (
     INACTIVE_SUBSCRIPTION_REASON,
@@ -14,6 +16,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.tasks import (
     cancel_scheduled_invoices_for_inactive_subscriptions,
     generate_due_scheduled_invoices,
+    notify_upcoming_scheduled_invoices,
     process_scheduled_prepayment_invoices_for_domain,
 )
 from corehq.apps.accounting.tests import generator
@@ -231,3 +234,64 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         pending = ScheduledPrepaymentInvoice.objects.pending_domains()
 
         assert pending == [self.domain_obj.name]
+
+    def test_notifies_accounting_five_days_ahead(self):
+        scheduled = self.schedule(send_date=in_days(5))
+        mail.outbox = []
+
+        notify_upcoming_scheduled_invoices(datetime.date.today())
+
+        scheduled.refresh_from_db()
+        assert scheduled.notified_accounting
+        assert len(mail.outbox) == 1
+        assert self.domain_obj.name in mail.outbox[0].subject
+
+    def test_does_not_notify_six_days_ahead(self):
+        scheduled = self.schedule(send_date=in_days(6))
+        mail.outbox = []
+
+        notify_upcoming_scheduled_invoices(datetime.date.today())
+
+        scheduled.refresh_from_db()
+        assert not scheduled.notified_accounting
+        assert len(mail.outbox) == 0
+
+    def test_notifies_only_once(self):
+        self.schedule(send_date=in_days(5))
+        mail.outbox = []
+
+        notify_upcoming_scheduled_invoices(datetime.date.today())
+        notify_upcoming_scheduled_invoices(datetime.date.today())
+
+        assert len(mail.outbox) == 1
+
+    def test_notifies_a_request_that_slipped_past_the_notice_window(self):
+        # a missed run should still notify
+        self.schedule(send_date=in_days(2))
+        mail.outbox = []
+
+        notify_upcoming_scheduled_invoices(datetime.date.today())
+
+        assert len(mail.outbox) == 1
+
+    def test_does_not_notify_a_cancelled_request(self):
+        self.schedule(
+            send_date=in_days(5),
+            status=ScheduledPrepaymentInvoiceStatus.CANCELLED,
+        )
+        mail.outbox = []
+
+        notify_upcoming_scheduled_invoices(datetime.date.today())
+
+        assert len(mail.outbox) == 0
+
+    def test_the_notice_names_the_amount_and_date(self):
+        self.schedule(send_date=in_days(5))
+        mail.outbox = []
+
+        notify_upcoming_scheduled_invoices(datetime.date.today())
+
+        body = mail.outbox[0].body
+        assert '12000' in body
+        assert in_days(5).isoformat() in body
+        assert '12 month prepayment' in body

@@ -23,11 +23,13 @@ from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
 from corehq.apps.accounting.const import (
+    PREPAY_SCHEDULE_NOTICE_DAYS,
     SCHEDULED_PREPAYMENT_MAX_FAILURES,
 )
 from corehq.apps.accounting.emails import (
     send_dimagi_contact_ending_reminder_email,
     send_renewal_reminder_email,
+    send_scheduled_invoice_notice,
     send_subscription_ending_email,
     send_subscription_renewed_email,
 )
@@ -1013,9 +1015,11 @@ def process_scheduled_prepayment_invoices():
 
 @serial_task('{domain}', timeout=30 * 60, queue='background_queue', durable=True)
 def process_scheduled_prepayment_invoices_for_domain(domain):
-    """Advance this domain's queue. Serial per domain to avoid redelivered invoices"""
+    """Serial per domain to avoid redelivered invoices"""
+    today = datetime.date.today()
     cancel_scheduled_invoices_for_inactive_subscriptions(domain=domain)
-    generate_due_scheduled_invoices(datetime.date.today(), domain=domain)
+    notify_upcoming_scheduled_invoices(today, domain=domain)
+    generate_due_scheduled_invoices(today, domain=domain)
 
 
 def cancel_scheduled_invoices_for_inactive_subscriptions(domain=None):
@@ -1037,6 +1041,22 @@ def cancel_scheduled_invoices_for_inactive_subscriptions(domain=None):
             f"{scheduled.domain}: subscription {subscription.id} is paused or "
             f"no longer active."
         )
+
+
+def notify_upcoming_scheduled_invoices(today, domain=None):
+    """Notify accounting before a queued invoice is sent"""
+    # send_date <= the notice date so a missed run still notifies
+    notice_date = today + datetime.timedelta(days=PREPAY_SCHEDULE_NOTICE_DAYS)
+    upcoming = ScheduledPrepaymentInvoice.objects.pending().filter(
+        send_date__lte=notice_date,
+        notified_accounting=False,
+    ).select_related('subscription__plan_version__plan', 'subscription__account')
+    if domain is not None:
+        upcoming = upcoming.filter(domain=domain)
+    for scheduled in upcoming:
+        send_scheduled_invoice_notice(scheduled)
+        scheduled.notified_accounting = True
+        scheduled.save()
 
 
 def generate_due_scheduled_invoices(today, domain=None):
