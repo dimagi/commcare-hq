@@ -200,14 +200,14 @@ class TestCaseSearchEndpoint(TestCase):
 
 SQL_DOMAIN = 'test-endpoint-sql'
 PETS = [
-    ('p1', 'Fido', 'brown'),
-    ('p2', 'Rex', 'black'),
+    ('p1', 'Fido', 'brown', '20'),
+    ('p2', 'Rex', 'black', '5'),
 ]
 
 
 @fixture
 def pet_table():
-    with project_db_table(SQL_DOMAIN, 'pet', {'color': 'plain'}):
+    with project_db_table(SQL_DOMAIN, 'pet', {'color': 'plain', 'weight': 'number'}):
         yield
 
 
@@ -242,9 +242,9 @@ def _populate_pets():
             server_modified_on=datetime.datetime(2025, 6, 1),
             closed=False,
             external_id='',
-            case_json={'color': color},
+            case_json={'color': color, 'weight': weight},
             indices=[],
-        ) for case_id, name, color in PETS
+        ) for case_id, name, color, weight in PETS
     ])
 
 
@@ -264,13 +264,16 @@ def test_sql_endpoint_without_parameters():
 
     assert [case.name for case in cases] == ['Fido', 'Rex']
     assert [case.case_id for case in cases] == ['p1', 'p2']
-    assert [case.case_json for case in cases] == [{'color': 'brown'}, {'color': 'black'}]
+    assert [case.case_json for case in cases] == [
+        {'color': 'brown', 'weight': '20'},
+        {'color': 'black', 'weight': '5'},
+    ]
     assert all(case.domain == SQL_DOMAIN and case.type == 'pet' for case in cases)
 
 
 COLOR_SQL = (
     "SELECT * FROM pet "
-    "WHERE (:color IS NULL OR :color = '' OR prop__color = :color)"
+    "WHERE (:color IS NULL OR prop__color = :color)"
 )
 
 
@@ -278,7 +281,8 @@ COLOR_SQL = (
     ([SearchCriteria('color', 'brown')], ['Fido']),
     ([SearchCriteria('color', 'black')], ['Rex']),
     ([SearchCriteria('color', 'chartreuse')], []),
-    # an unsupplied parameter is passed as '', which the query treats as "any"
+    # an unsupplied or blank parameter is passed as NULL, which the guard
+    # treats as "any"
     ([], ['Fido', 'Rex']),
     ([SearchCriteria('color', '')], ['Fido', 'Rex']),
 ])
@@ -287,6 +291,32 @@ COLOR_SQL = (
 def test_sql_endpoint_with_text_parameter(criteria, expected):
     _populate_pets()
     endpoint = _make_sql_endpoint(COLOR_SQL)
+
+    cases = _run_sql_query(endpoint, criteria)
+
+    assert sorted(case.name for case in cases) == expected
+
+
+WEIGHT_SQL = (
+    "SELECT * FROM pet "
+    "WHERE (:weight IS NULL OR number_prop__weight > :weight)"
+)
+
+
+@pytest.mark.parametrize('criteria, expected', [
+    ([SearchCriteria('weight', '12')], ['Fido']),
+    ([SearchCriteria('weight', '1')], ['Fido', 'Rex']),
+    ([SearchCriteria('weight', '100')], []),
+    # NULL is the only sentinel that coerces to a numeric column; an empty
+    # string would fail with "invalid input syntax for type numeric"
+    ([], ['Fido', 'Rex']),
+    ([SearchCriteria('weight', '')], ['Fido', 'Rex']),
+])
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_with_number_parameter(criteria, expected):
+    _populate_pets()
+    endpoint = _make_sql_endpoint(WEIGHT_SQL)
 
     cases = _run_sql_query(endpoint, criteria)
 
