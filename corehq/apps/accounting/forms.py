@@ -2236,7 +2236,6 @@ class WirePrepaymentForm(forms.Form):
             self.cleaned_data['unit_cost'],
             self.cleaned_data['quantity'],
         )
-
     def create_scheduled_invoice(self, domain, subscription, couch_user):
         scheduled = ScheduledPrepaymentInvoice.objects.create(
             domain=domain,
@@ -2265,6 +2264,35 @@ class WirePrepaymentForm(forms.Form):
             else '{}: {}'.format(self.fields[field].label, ' '.join(errors))
             for field, errors in self.errors.items()
         )
+
+
+class GeneratePrepaymentInvoiceForm(WirePrepaymentForm):
+
+    domain = forms.CharField(
+        label=gettext_lazy("Project Space"),
+        widget=forms.Select(choices=[]),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Generate Prepayment Invoice',
+                crispy.Field(
+                    'domain',
+                    css_class="accounting-async-select2",
+                ),
+            ),
+        )
+
+    def clean_domain(self):
+        domain_name = self.cleaned_data['domain']
+        if Domain.get_by_name(domain_name) is None:
+            raise ValidationError(
+                _("Project space '{}' was not found.").format(domain_name)
+            )
+        return domain_name
 
 
 class TriggerInvoiceForm(forms.Form):

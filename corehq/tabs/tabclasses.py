@@ -2451,6 +2451,7 @@ class AccountingTab(UITab):
         )))
 
         from corehq.apps.accounting.views import (
+            GeneratePrepaymentInvoiceView,
             TestRenewalEmailView,
             TriggerBookkeeperEmailView,
             TriggerCustomerInvoiceView,
@@ -2464,6 +2465,10 @@ class AccountingTab(UITab):
             {
                 'title': _(TriggerCustomerInvoiceView.page_title),
                 'url': reverse(TriggerCustomerInvoiceView.urlname),
+            },
+            {
+                'title': _(GeneratePrepaymentInvoiceView.page_title),
+                'url': reverse(GeneratePrepaymentInvoiceView.urlname),
             },
             {
                 'title': _(TriggerBookkeeperEmailView.page_title),

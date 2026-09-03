@@ -28,6 +28,8 @@ from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Grant, Role
 from memoized import memoized
 
+from dimagi.utils.web import json_response
+
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import (
     AccountFilterAsyncHandler,
@@ -64,6 +66,7 @@ from corehq.apps.accounting.forms import (
     CreateAdminForm,
     CreditForm,
     FeatureRateForm,
+    GeneratePrepaymentInvoiceForm,
     HideInvoiceForm,
     InvoiceInfoForm,
     PlanInformationForm,
@@ -123,7 +126,10 @@ from corehq.apps.accounting.utils.invoicing import (
 )
 from corehq.apps.accounting.utils.unpaid_invoice import Downgrade
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.domain.views.accounting import DomainBillingStatementsView
+from corehq.apps.domain.views.accounting import (
+    PAYMENT_ERROR_MESSAGES,
+    DomainBillingStatementsView,
+)
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.views import (
     BaseSectionPageView,
@@ -825,6 +831,54 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
             except (CreditLineError, InvoiceError, ObjectDoesNotExist) as e:
                 messages.error(request, "Error generating invoices: %s" % e, extra_tags='html')
         return self.get(request, *args, **kwargs)
+
+
+class GeneratePrepaymentInvoiceView(AccountingSectionView, AsyncHandlerMixin):
+
+    urlname = 'accounting_generate_prepayment_invoice'
+    page_title = "Generate Prepayment Invoice"
+    template_name = 'accounting/generate_prepayment_invoice.html'
+    async_handlers = [
+        Select2InvoiceTriggerHandler,
+    ]
+
+    @property
+    @memoized
+    def prepayment_form(self):
+        if self.request.method == 'POST':
+            return GeneratePrepaymentInvoiceForm(self.request.POST)
+        return GeneratePrepaymentInvoiceForm()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'prepayment_form': self.prepayment_form,
+            'payment_error_messages': PAYMENT_ERROR_MESSAGES,
+            'user_email': self.request.couch_user.username,
+            'can_schedule_prepayment_invoice': True,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+
+        form = self.prepayment_form
+        if not form.is_valid():
+            return json_response({'error': {'message': form.get_error_message()}})
+
+        try:
+            scheduled = form.save(form.cleaned_data['domain'], request.couch_user)
+        except InvoiceError as e:
+            return json_response({'error': {'message': str(e)}})
+
+        response = {'success': True}
+        if scheduled is not None:
+            response['send_date'] = scheduled.send_date.isoformat()
+        return json_response(response)
 
 
 class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):

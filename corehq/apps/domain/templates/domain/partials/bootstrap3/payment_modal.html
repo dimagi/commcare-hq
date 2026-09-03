@@ -235,6 +235,7 @@
                    }"
       >
         {% csrf_token %}
+        <input type="hidden" name="domain" data-bind="value: domain" />
         <div class="modal-body">
           <div
             data-bind="template: {

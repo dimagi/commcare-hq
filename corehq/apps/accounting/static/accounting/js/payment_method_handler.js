@@ -18,6 +18,8 @@ var billingHandler = function (formId, opts) {
     self.formId = formId;
     self.errorMessages = opts.errorMessages || {};
     self.submitBtnText = opts.submitBtnText;
+
+    self.domain = ko.observable(opts.domain || '');
     self.costItem = ko.observable();
     self.hasCostItem = ko.computed(function () {
         return !! self.costItem();

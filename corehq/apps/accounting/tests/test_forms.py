@@ -11,6 +11,7 @@ from django.test import TestCase
 from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.forms import (
     AdjustBalanceForm,
+    GeneratePrepaymentInvoiceForm,
     PlanContactForm,
     SubscriptionForm,
     TriggerInvoiceForm,
@@ -718,6 +719,42 @@ class TestWirePrepaymentForm:
         form = WirePrepaymentForm(wire_prepayment_post_data())
         assert form.is_valid(), form.errors
         assert form.get_error_message() == ''
+
+
+class TestGeneratePrepaymentInvoiceForm(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = Domain(name='prepayment-invoice', is_active=True)
+        cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
+
+    def test_valid_project_space(self):
+        form = GeneratePrepaymentInvoiceForm(
+            wire_prepayment_post_data(domain=self.domain.name)
+        )
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data['domain'] == self.domain.name
+
+    def test_unknown_project_space(self):
+        form = GeneratePrepaymentInvoiceForm(
+            wire_prepayment_post_data(domain='not-a-project-space')
+        )
+        assert not form.is_valid()
+        assert form.errors['domain'] == [
+            "Project space 'not-a-project-space' was not found."
+        ]
+
+    def test_get_error_message_includes_the_project_space(self):
+        form = GeneratePrepaymentInvoiceForm(
+            wire_prepayment_post_data(domain='not-a-project-space', quantity='0')
+        )
+        assert not form.is_valid()
+        assert form.get_error_message() == (
+            'Quantity: Ensure this value is greater than or equal to 1. '
+            "Project Space: Project space 'not-a-project-space' was not found."
+        )
 
 
 def scheduled_prepayment_post_data(**overrides):
