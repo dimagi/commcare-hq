@@ -29,16 +29,19 @@ class ConnectBackend:
             "nonce": base64.b64encode(cipher.nonce).decode("utf-8"),
             "ciphertext": base64.b64encode(data).decode("utf-8"),
         }
-        response = requests.post(
-            settings.CONNECTID_MESSAGE_URL,
-            json={
-                "channel": user_link.messaging_channel,
-                "content": content,
-                "message_id": str(message.message_id),
-                "fcm_options": {"analytics_label": FCM_ANALYTICS_LABEL}
-            },
-            auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
-        )
+        try:
+            response = requests.post(
+                settings.CONNECTID_MESSAGE_URL,
+                json={
+                    "channel": user_link.messaging_channel,
+                    "content": content,
+                    "message_id": str(message.message_id),
+                    "fcm_options": {"analytics_label": FCM_ANALYTICS_LABEL}
+                },
+                auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
+            )
+        except requests.RequestException as err:
+            raise BackendProcessingException(f"Request failed: {err}") from err
         if response.status_code != requests.codes.OK:
             raise BackendProcessingException(
                 f"HTTP {response.status_code}: {response.text}"
