@@ -223,38 +223,69 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         args = (self.account, self.domain.name, self.user.username, new_plan_version, self.subscription)
         return ConfirmNewSubscriptionForm(*args, **kwargs)
 
+    def set_current_subscription(
+        self,
+        edition,
+        is_annual_plan=False,
+        date_start=None
+    ):
+        self.subscription.delete()
+        self.subscription = generator.generate_domain_subscription(
+            self.account,
+            self.domain,
+            date_start or date.today(),
+            None,
+            plan_version=DefaultProductPlan.get_default_plan_version(
+                edition,
+                is_annual_plan=is_annual_plan,
+            ),
+            is_active=True,
+        )
+        return self.subscription
+
     def test_form_initial_values(self):
-        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
+        plan_version = DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.STANDARD,
+        )
         form = self.create_form(plan_version)
         assert form['plan_edition'].value() == plan_version.plan.edition
 
     def test_pay_monthly_subscription(self):
         new_plan_version = DefaultProductPlan.get_default_plan_version(
-            SoftwarePlanEdition.STANDARD, is_annual_plan=False
+            SoftwarePlanEdition.STANDARD,
+            is_annual_plan=False,
         )
         form = self.create_form_for_submission(new_plan_version)
         form.save()
         assert form.is_valid()
         assert self.subscription.date_end == date.today()
 
-        new_subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        new_subscription = Subscription.get_active_subscription_by_domain(
+            self.domain,
+        )
         assert new_subscription.plan_version == new_plan_version
         assert new_subscription.date_start == date.today()
         assert new_subscription.date_end is None
 
     def test_pay_annually_subscription(self):
         new_plan_version = DefaultProductPlan.get_default_plan_version(
-            SoftwarePlanEdition.STANDARD, is_annual_plan=True
+            SoftwarePlanEdition.STANDARD,
+            is_annual_plan=True,
         )
         form = self.create_form_for_submission(new_plan_version)
         form.save()
         assert form.is_valid()
         assert self.subscription.date_end == date.today()
 
-        new_subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        new_subscription = Subscription.get_active_subscription_by_domain(
+            self.domain,
+        )
         assert new_subscription.plan_version == new_plan_version
         assert new_subscription.date_start == date.today()
-        assert new_subscription.date_end == new_subscription.date_start + relativedelta(years=1)
+        assert new_subscription.date_end == (
+            new_subscription.date_start
+            + relativedelta(years=1)
+        )
 
     def test_pay_annually_creates_prepayment_invoice(self):
         new_plan_version = DefaultProductPlan.get_default_plan_version(
@@ -264,45 +295,51 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         form.save()
         assert form.is_valid()
 
-        prepayment_invoice = WirePrepaymentInvoice.objects.get(domain=self.domain.name)
-        new_subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        prepayment_invoice = WirePrepaymentInvoice.objects.get(
+            domain=self.domain.name,
+        )
+        new_subscription = Subscription.get_active_subscription_by_domain(
+            self.domain,
+        )
         assert prepayment_invoice.date_start == new_subscription.date_start
         assert prepayment_invoice.date_end == new_subscription.date_end
-        assert prepayment_invoice.date_due == date.today() + timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE)
-        assert (prepayment_invoice.balance
-                == new_plan_version.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
-
-    def test_downgrade_minimum_subscription_length(self):
-        self.subscription.delete()
-        old_plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.PRO)
-        old_date_start = date.today()
-        self.subscription = generator.generate_domain_subscription(
-            self.account, self.domain, old_date_start, None, plan_version=old_plan_version, is_active=True,
+        assert prepayment_invoice.date_due == (
+            date.today()
+            + timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE)
+        )
+        assert (
+            prepayment_invoice.balance
+            == new_plan_version.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS
         )
 
-        new_plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
+    def test_downgrade_minimum_subscription_length(self):
+        old_date_start = date.today()
+        self.set_current_subscription(
+            SoftwarePlanEdition.PRO,
+            date_start=old_date_start,
+        )
+        new_plan_version = DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.STANDARD,
+        )
         form = self.create_form_for_submission(new_plan_version)
         form.save()
         assert form.is_valid()
-        assert self.subscription.date_end == old_date_start + timedelta(days=30)
+        assert (
+            self.subscription.date_end
+            == old_date_start + timedelta(days=30)
+        )
 
         next_subscription = self.subscription.next_subscription
         assert next_subscription.plan_version == new_plan_version
-        assert next_subscription.date_start == old_date_start + timedelta(days=30)
+        assert (
+            next_subscription.date_start
+            == old_date_start + timedelta(days=30)
+        )
 
     def test_cannot_downgrade_from_annual_plan(self):
-        self.subscription.delete()
-        old_plan_version = DefaultProductPlan.get_default_plan_version(
+        self.set_current_subscription(
             SoftwarePlanEdition.PRO,
             is_annual_plan=True,
-        )
-        self.subscription = generator.generate_domain_subscription(
-            self.account,
-            self.domain,
-            date.today(),
-            None,
-            plan_version=old_plan_version,
-            is_active=True,
         )
         new_plan_version = DefaultProductPlan.get_default_plan_version(
             SoftwarePlanEdition.STANDARD,
@@ -313,20 +350,10 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         assert not form.is_valid()
 
     def test_cannot_switch_to_same_edition_monthly_from_annual(self):
-        self.subscription.delete()
-        old_plan_version = DefaultProductPlan.get_default_plan_version(
+        self.set_current_subscription(
             SoftwarePlanEdition.PRO,
             is_annual_plan=True,
         )
-        self.subscription = generator.generate_domain_subscription(
-            self.account,
-            self.domain,
-            date.today(),
-            None,
-            plan_version=old_plan_version,
-            is_active=True,
-        )
-
         new_plan_version = DefaultProductPlan.get_default_plan_version(
             SoftwarePlanEdition.PRO,
             is_annual_plan=False,
@@ -336,20 +363,10 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         assert not form.is_valid()
 
     def test_can_upgrade_from_annual_plan(self):
-        self.subscription.delete()
-        old_plan_version = DefaultProductPlan.get_default_plan_version(
+        self.set_current_subscription(
             SoftwarePlanEdition.STANDARD,
             is_annual_plan=True,
         )
-        self.subscription = generator.generate_domain_subscription(
-            self.account,
-            self.domain,
-            date.today(),
-            None,
-            plan_version=old_plan_version,
-            is_active=True,
-        )
-
         new_plan_version = DefaultProductPlan.get_default_plan_version(
             SoftwarePlanEdition.PRO,
             is_annual_plan=True,
@@ -360,7 +377,8 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
 
     def test_autopay_required_for_monthly_plan(self):
         new_plan_version = DefaultProductPlan.get_default_plan_version(
-            SoftwarePlanEdition.STANDARD, is_annual_plan=False
+            SoftwarePlanEdition.STANDARD,
+            is_annual_plan=False,
         )
         self.account.auto_pay_user = None
         self.account.save()
@@ -375,7 +393,8 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
 
     def test_autopay_required_if_set_on_account(self):
         new_plan_version = DefaultProductPlan.get_default_plan_version(
-            SoftwarePlanEdition.STANDARD, is_annual_plan=True
+            SoftwarePlanEdition.STANDARD,
+            is_annual_plan=True,
         )
         self.account.require_auto_pay = True
         self.account.auto_pay_user = None
