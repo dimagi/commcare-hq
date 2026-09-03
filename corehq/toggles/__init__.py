@@ -1025,12 +1025,20 @@ CASE_SEARCH_ENDPOINTS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+
+def _sync_project_db_schema(domain, is_enabled):
+    from corehq.apps.project_db.tasks import schedule_project_db_sync
+    if is_enabled:
+        schedule_project_db_sync(domain)
+
+
 PROJECT_DB = StaticToggle(
     'project_db',
     'ProjectDB: Auto-managed SQL database of project case data',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description="Note that this is in testing and will not work without a dev helping.",
+    save_fn=_sync_project_db_schema,
 )
 
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
