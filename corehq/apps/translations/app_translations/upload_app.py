@@ -159,7 +159,7 @@ def process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, 
         if is_single_sheet(sheet.worksheet.title):
             msgs.extend(_process_single_sheet(app, sheet, names_map=sheet_name_to_unique_id, lang=lang))
         else:
-            msgs.extend(_process_rows(app, sheet.worksheet.title, sheet, names_map=sheet_name_to_unique_id))
+            msgs.extend(process_sheet_rows(app, sheet.worksheet.title, sheet, names_map=sheet_name_to_unique_id))
 
     msgs.append(
         (messages.success, _("App Translations Updated!"))
@@ -240,18 +240,18 @@ def _process_single_sheet(app, sheet, names_map, lang=None):
         if not row['case_property'] and not row['list_or_detail'] and not row['label']:
             modules_and_forms_rows.append(row)
         elif module_or_form != row['menu_or_form']:
-            msgs.extend(_process_rows(app, module_or_form, rows, names_map, lang=lang))
+            msgs.extend(process_sheet_rows(app, module_or_form, rows, names_map, lang=lang))
             module_or_form = row['menu_or_form']
             rows = [row]
         else:
             rows.append(row)
-    msgs.extend(_process_rows(app, module_or_form, rows, names_map, lang=lang))
-    msgs.extend(_process_rows(app, MODULES_AND_FORMS_SHEET_NAME,
+    msgs.extend(process_sheet_rows(app, module_or_form, rows, names_map, lang=lang))
+    msgs.extend(process_sheet_rows(app, MODULES_AND_FORMS_SHEET_NAME,
                               modules_and_forms_rows, names_map, lang=lang))
     return msgs
 
 
-def _process_rows(app, sheet_name, rows, names_map, lang=None):
+def process_sheet_rows(app, sheet_name, rows, names_map, lang=None):
     """
     Processes the rows of a worksheet of translations.
 

@@ -23,7 +23,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_current_app,
     wrap_app,
 )
-from corehq.apps.app_manager.decorators import require_deploy_apps
+from corehq.apps.app_manager.decorators import require_can_edit_or_view_apps
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     AppLinkError,
@@ -61,7 +61,7 @@ CASE_TYPE_CONFLICT_MSG = (
 )
 
 
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def back_to_main(request, domain, app_id, module_id=None, form_id=None,
                  form_unique_id=None, module_unique_id=None):
     """

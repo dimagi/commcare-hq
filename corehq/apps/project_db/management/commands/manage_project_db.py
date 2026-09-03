@@ -6,7 +6,7 @@ import sqlalchemy
 
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.project_db.describe import describe_project_db
-from corehq.apps.project_db.populate import send_to_project_db
+from corehq.apps.project_db.populate import populate_case_type
 from corehq.apps.project_db.table_ddl import (
     DomainSchema,
     create_or_update_project_db,
@@ -109,4 +109,4 @@ def _populate_case_type(domain, case_type, start_date, prefix):
     total = sum(accessor.query(db).count() for db in accessor.sql_db_aliases)
     cases = with_progress_bar(iter_all_rows(accessor), length=total,
                               oneline='concise', prefix=f"{prefix}: {case_type}")
-    send_to_project_db(domain, case_type, cases)
+    populate_case_type(domain, case_type, cases)

@@ -31,7 +31,7 @@ from corehq.apps.es.tests.utils import (
     case_search_es_setup,
     es_test,
 )
-from corehq.apps.project_db.populate import send_to_project_db
+from corehq.apps.project_db.populate import populate_case_type
 from corehq.apps.project_db.tests.util import project_db_table
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -233,7 +233,7 @@ def _make_sql_endpoint(sql):
 
 
 def _populate_pets():
-    send_to_project_db(SQL_DOMAIN, 'pet', [
+    populate_case_type(SQL_DOMAIN, 'pet', [
         CommCareCase(
             case_id=case_id,
             domain=SQL_DOMAIN,
