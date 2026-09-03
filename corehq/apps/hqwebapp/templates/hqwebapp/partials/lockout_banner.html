@@ -1,0 +1,20 @@
+{% load i18n %}
+
+<div class="alert alert-warning alert-lockout" id="lockout-banner">
+  <i class="fa fa-exclamation-triangle"></i>
+  {% if lockout_banner_can_change_password %}
+    {% url 'change_my_password' as url_change_password %}
+    {% blocktrans trimmed %}
+      Your account is locked because of too many failed password attempts. This
+      blocks OData feeds and other integrations that sign in with your password.
+      <a href="{{ url_change_password }}">Change your password</a> to unlock
+      your account.
+    {% endblocktrans %}
+  {% else %}
+    {% blocktrans trimmed %}
+      Your account is locked because of too many failed password attempts. This
+      blocks OData feeds and other integrations that sign in with your password.
+      Log out and log back in to unlock your account.
+    {% endblocktrans %}
+  {% endif %}
+</div>
