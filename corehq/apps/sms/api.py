@@ -26,7 +26,10 @@ from corehq.apps.sms.messages import (
     MSG_USERNAME_TOO_LONG,
     get_message,
 )
-from corehq.apps.sms.mixin import BadSMSConfigException
+from corehq.apps.sms.mixin import (
+    BackendProcessingException,
+    BadSMSConfigException,
+)
 from corehq.apps.sms.models import (
     ConnectMessage,
     INCOMING,
@@ -52,7 +55,7 @@ from corehq.apps.smsforms.models import (
     SMSChannel,
     XFormsSessionSynchronization,
 )
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, ConnectIDUserLink, WebUser
 from corehq.const import USER_CHANGE_VIA_SMS
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.metrics import metrics_counter
@@ -407,14 +410,23 @@ def send_connect_message(message, backend, logged_subevent=None):
     try:
         backend.send(message)
     except Exception as error:
-        log_sms_exception(message)
+        error_code = get_connect_error_code(error)
+        # gateway and user-link failures are recorded on the subevent;
+        # only notify for errors on our side
+        if error_code == MessagingEvent.ERROR_INTERNAL_SERVER_ERROR:
+            log_sms_exception(message)
         if logged_subevent:
-            logged_subevent.error(
-                MessagingEvent.ERROR_CONNECT_GATEWAY,
-                additional_error_text=str(error),
-            )
+            logged_subevent.error(error_code, additional_error_text=str(error))
         return False
     return True
+
+
+def get_connect_error_code(error):
+    if isinstance(error, BackendProcessingException):
+        return MessagingEvent.ERROR_CONNECT_GATEWAY
+    if isinstance(error, ConnectIDUserLink.DoesNotExist):
+        return MessagingEvent.ERROR_CONNECT_USER_NOT_FOUND
+    return MessagingEvent.ERROR_INTERNAL_SERVER_ERROR
 
 
 def register_sms_user(

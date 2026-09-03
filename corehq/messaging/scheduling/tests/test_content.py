@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from unittest.mock import Mock, patch
 
+import requests
 from django.test import TestCase, override_settings
 
 from corehq.apps.domain.shortcuts import create_domain
@@ -281,14 +282,20 @@ class TestConnectMessageContentSend(TestCase):
         assert message.messaging_subevent_id == subevent.pk
 
     def test_failed_send_errors_the_subevent(self):
-        subevent = self.send_message(status_code=400, text='{"error": "invalid channel"}')
+        subevent = self.send_message(status_code=400, text='{"errors": "CHANNEL_DOES_NOT_EXIST"}')
 
         assert subevent.status == MessagingEvent.STATUS_ERROR
         assert subevent.error_code == MessagingEvent.ERROR_CONNECT_GATEWAY
-        assert 'HTTP 400' in subevent.additional_error_text
-        assert 'invalid channel' in subevent.additional_error_text
+        assert subevent.additional_error_text == 'HTTP 400: CHANNEL_DOES_NOT_EXIST'
         # the parent event is errored by MessagingSubEvent.save()
         assert subevent.parent.refresh().status == MessagingEvent.STATUS_ERROR
+
+    def test_request_error_errors_the_subevent(self):
+        subevent = self.send_message(error=requests.ConnectionError('connection refused'))
+
+        assert subevent.status == MessagingEvent.STATUS_ERROR
+        assert subevent.error_code == MessagingEvent.ERROR_CONNECT_GATEWAY
+        assert subevent.additional_error_text == 'Request failed: connection refused'
 
     def test_recipient_without_connect_link_errors_the_subevent(self):
         ConnectIDUserLink.objects.filter(commcare_user=self.recipient.get_django_user()).delete()
@@ -299,7 +306,7 @@ class TestConnectMessageContentSend(TestCase):
         assert subevent.error_code == MessagingEvent.ERROR_CONNECT_USER_NOT_FOUND
         assert not ConnectMessage.objects.filter(domain=self.domain).exists()
 
-    def send_message(self, status_code, text=''):
+    def send_message(self, status_code=200, text='', error=None):
         logged_event = MessagingEvent.objects.create(
             domain=self.domain,
             date=datetime.utcnow(),
@@ -310,9 +317,11 @@ class TestConnectMessageContentSend(TestCase):
             recipient_id=self.recipient.get_id,
         )
         content = ConnectMessageContent(message={'*': 'Hello'})
-        response = Mock(status_code=status_code, text=text)
-        with patch('corehq.messaging.smsbackends.connectid.backend.requests.post',
-                   return_value=response):
+        response = requests.Response()
+        response.status_code = status_code
+        response._content = text.encode()
+        post = {'side_effect': error} if error else {'return_value': response}
+        with patch('corehq.messaging.smsbackends.connectid.backend.requests.post', **post):
             content.send(self.recipient, logged_event)
         return MessagingSubEvent.objects.get(parent=logged_event)
 
