@@ -1,3 +1,4 @@
+import sys
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -16,9 +17,9 @@ from sqlalchemy import (
     union_all,
 )
 from sqlalchemy.dialects import postgresql
+from unmagic import fixture, use
 
 from corehq.apps.project_db.user_sql import (
-    MAX_PAREN_DEPTH,
     MAX_TREE_DEPTH,
     BadParameters,
     UnsupportedSQL,
@@ -363,25 +364,40 @@ def test_handle_quoted_tables():
     assert str(result) == str(select([hyphenated_table]))
 
 
-@pytest.mark.parametrize('sql', [
-    # Nesting deep enough to exhaust the parser's stack
-    'SELECT * FROM client WHERE ' + '(' * 100 + 'name = 1' + ')' * 100,
-    # Nesting deep enough to exhaust the conversion's stack: this parses fine
-    'SELECT * FROM client WHERE ' + ' AND '.join(['name = 1'] * 1000),
-])
-def test_rejects_deeply_nested(sql):
+@fixture
+def restore_trace_function():
+    """Put back a trace function that exhausting the stack has dropped
+
+    CPython disables tracing when the stack overflows while calling the trace
+    function, which makes coverage warn that its data is unreliable, failing
+    the whole test run at interpreter shutdown.
+    """
+    trace = sys.gettrace()
+    try:
+        yield
+    finally:
+        if sys.gettrace() is not trace:
+            sys.settrace(trace)
+
+
+@use(restore_trace_function)
+def test_rejects_nesting_that_exhausts_the_parser():
+    sql = 'SELECT * FROM client WHERE ' + '(' * 100 + 'name = 1' + ')' * 100
     with pytest.raises(UnsupportedSQL, match='nested too deeply'):
         translate(sql, TABLES)
 
 
-@pytest.mark.parametrize('sql', [
-    # The deepest nesting each limit allows must still be translatable, so
-    # that raising a limit past what the stack allows fails here rather than
+def test_rejects_a_parse_tree_too_deep_to_convert():
+    # This parses fine: the nesting is in the tree, not in parentheses
+    sql = 'SELECT * FROM client WHERE ' + ' AND '.join(['name = 1'] * 1000)
+    with pytest.raises(UnsupportedSQL, match='nested too deeply'):
+        translate(sql, TABLES)
+
+
+def test_allows_nesting_up_to_the_limit():
+    # The deepest tree the limit allows must still be translatable, so that
+    # raising the limit past what the stack allows fails here rather than
     # crashing the interpreter.
-    'SELECT * FROM client WHERE ' + '(' * MAX_PAREN_DEPTH + 'name = 1'
-    + ')' * MAX_PAREN_DEPTH,
-    'SELECT * FROM client WHERE '
-    + ' AND '.join(['name = 1'] * (MAX_TREE_DEPTH - 5)),
-])
-def test_allows_nesting_up_to_the_limit(sql):
+    sql = ('SELECT * FROM client WHERE '
+           + ' AND '.join(['name = 1'] * (MAX_TREE_DEPTH - 5)))
     assert translate(sql, TABLES) is not None

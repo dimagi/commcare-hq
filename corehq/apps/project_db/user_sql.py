@@ -49,7 +49,6 @@ LITERAL_PARAM_PREFIX = 'hq_param'  # Our reserved namespace for parameters
 # restricted to characters that cannot close the placeholder and inject SQL.
 PARAM_NAME = re.compile(r'[A-Za-z_][A-Za-z0-9_]*\Z')
 
-MAX_PAREN_DEPTH = 20
 MAX_TREE_DEPTH = 100
 NESTED_TOO_DEEPLY = "SQL is nested too deeply"
 
@@ -117,31 +116,20 @@ def translate(sql, tables):
     :param sql: the user-supplied SQL statement
     :param tables: mapping of table name to SQLAlchemy ``Table``
     """
-    # sqlglot's parser recurses about 20 stack frames per level of parentheses,
-    # so deeply nested input exhausts the stack
-    _check_paren_depth(sql)
     try:
         statements = sqlglot.parse(sql, read='postgres')
     except SqlglotError:
         raise UnsupportedSQL("could not parse SQL")
+    except RecursionError:
+        # The parser recurses about 20 stack frames per level of parentheses,
+        # so nesting them exhausts the stack before it can report anything.
+        raise UnsupportedSQL(NESTED_TOO_DEEPLY) from None
     if len(statements) != 1:
         raise UnsupportedSQL("this only supports a single statement")
     # Reject a parse tree deeper than the conversion can handle
     _check_tree_depth(statements[0])
 
     return _convert_query(statements[0], tables)
-
-
-def _check_paren_depth(sql):
-    """Reject SQL whose parentheses nest deeper than the parser can handle"""
-    depth = 0
-    for char in sql:
-        if char == '(':
-            depth += 1
-            if depth > MAX_PAREN_DEPTH:
-                raise UnsupportedSQL(NESTED_TOO_DEEPLY)
-        elif char == ')':
-            depth -= 1
 
 
 def _check_tree_depth(node):
