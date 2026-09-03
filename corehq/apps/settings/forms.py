@@ -69,6 +69,8 @@ class HQPasswordChangeForm(PasswordChangeForm):
         user = super(HQPasswordChangeForm, self).save(commit)
         couch_user = CouchUser.from_django_user(user)
         couch_user.last_password_set = datetime.utcnow()
+        # a new password also lifts the lockout from too many failed attempts
+        couch_user.login_attempts = 0
         if commit:
             couch_user.save()
         return user
