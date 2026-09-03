@@ -512,7 +512,7 @@ class ConnectMessageContent(Content):
         logged_subevent = logged_event.create_subevent_from_contact_and_content(
             recipient,
             self,
-            case_id=None,
+            case_id=self.case.case_id if self.case else None,
         )
 
         if not isinstance(recipient, CommCareUser):

@@ -280,6 +280,11 @@ class TestConnectMessageContentSend(TestCase):
         message = ConnectMessage.objects.get(domain=self.domain)
         assert message.messaging_subevent_id == subevent.pk
 
+    def test_subevent_records_the_case(self):
+        subevent = self.send_message(status_code=200, case=Mock(case_id='case-1'))
+
+        assert subevent.case_id == 'case-1'
+
     def test_failed_send_errors_the_subevent(self):
         subevent = self.send_message(status_code=400, text='{"error": "invalid channel"}')
 
@@ -290,7 +295,7 @@ class TestConnectMessageContentSend(TestCase):
         # the parent event is errored by MessagingSubEvent.save()
         assert subevent.parent.refresh().status == MessagingEvent.STATUS_ERROR
 
-    def send_message(self, status_code, text=''):
+    def send_message(self, status_code, text='', case=None):
         logged_event = MessagingEvent.objects.create(
             domain=self.domain,
             date=datetime.utcnow(),
@@ -301,6 +306,7 @@ class TestConnectMessageContentSend(TestCase):
             recipient_id=self.recipient.get_id,
         )
         content = ConnectMessageContent(message={'*': 'Hello'})
+        content.set_context(case=case)
         response = Mock(status_code=status_code, text=text)
         with patch('corehq.messaging.smsbackends.connectid.backend.requests.post',
                    return_value=response):
