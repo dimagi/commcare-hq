@@ -281,6 +281,11 @@ class TestConnectMessageContentSend(TestCase):
         message = ConnectMessage.objects.get(domain=self.domain)
         assert message.messaging_subevent_id == subevent.pk
 
+    def test_subevent_records_the_case(self):
+        subevent = self.send_message(status_code=200, case=Mock(case_id='case-1'))
+
+        assert subevent.case_id == 'case-1'
+
     def test_failed_send_errors_the_subevent(self):
         subevent = self.send_message(status_code=400, text='{"errors": "CHANNEL_DOES_NOT_EXIST"}')
 
@@ -306,7 +311,7 @@ class TestConnectMessageContentSend(TestCase):
         assert subevent.error_code == MessagingEvent.ERROR_CONNECT_USER_NOT_FOUND
         assert not ConnectMessage.objects.filter(domain=self.domain).exists()
 
-    def send_message(self, status_code=200, text='', error=None):
+    def send_message(self, status_code=200, text='', case=None, error=None):
         logged_event = MessagingEvent.objects.create(
             domain=self.domain,
             date=datetime.utcnow(),
@@ -317,6 +322,7 @@ class TestConnectMessageContentSend(TestCase):
             recipient_id=self.recipient.get_id,
         )
         content = ConnectMessageContent(message={'*': 'Hello'})
+        content.set_context(case=case)
         response = requests.Response()
         response.status_code = status_code
         response._content = text.encode()
