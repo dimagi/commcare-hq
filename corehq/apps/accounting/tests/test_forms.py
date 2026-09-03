@@ -1,10 +1,11 @@
 import datetime
 import random
-from unittest.mock import patch
+from decimal import Decimal
+from unittest.mock import call, patch
 
 import pytest
 from dateutil.relativedelta import relativedelta
-from django.core.exceptions import ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.test import TestCase
 
 from corehq.apps.accounting.exceptions import InvoiceError
@@ -13,6 +14,7 @@ from corehq.apps.accounting.forms import (
     PlanContactForm,
     SubscriptionForm,
     TriggerInvoiceForm,
+    WirePrepaymentForm,
 )
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -569,3 +571,148 @@ class TestPlanContactForm(TestCase):
         expected_subject = f'[{request_type}] {self.domain.name}'
         assert subject == expected_subject
         assert all(value in text_content for value in data.values())
+
+
+def wire_prepayment_post_data(**overrides):
+    """Returns the fields that the payment modal posts, with valid values."""
+    data = {
+        'email_to': 'jane@example.com',
+        'email_cc': '',
+        'prepay_date_start': '',
+        'prepay_date_end': '',
+        'credit_label': 'General Credits',
+        'unit_cost': '10.00',
+        'quantity': '1',
+    }
+    data.update(overrides)
+    return data
+
+
+class TestWirePrepaymentForm:
+
+    def test_valid_data(self):
+        date_start = datetime.date.today()
+        date_end = date_start + datetime.timedelta(days=365)
+        form = WirePrepaymentForm(wire_prepayment_post_data(
+            email_to='jane@example.com',
+            email_cc='john@example.com',
+            prepay_date_start=date_start.isoformat(),
+            prepay_date_end=date_end.isoformat(),
+            credit_label='Annual plan',
+            unit_cost='12.50',
+            quantity='4',
+        ))
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data == {
+            'email_to': 'jane@example.com',
+            'email_cc': ['john@example.com'],
+            'prepay_date_start': date_start,
+            'prepay_date_end': date_end,
+            'credit_label': 'Annual plan',
+            'unit_cost': Decimal('12.50'),
+            'quantity': 4,
+            'amount': Decimal('50.00'),
+        }
+
+    def test_amount_larger_than_an_invoice_can_hold(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(unit_cost='500000.00', quantity='3'))
+        assert not form.is_valid()
+        assert form.errors[NON_FIELD_ERRORS] == [
+            'The total prepayment amount cannot be more than $999999.99.'
+        ]
+
+    @pytest.mark.parametrize('email_cc, expected', [
+        ('', []),
+        ('john@example.com', ['john@example.com']),
+        ('john@example.com, bob@example.com', ['john@example.com', 'bob@example.com']),
+        ('john@example.com,', ['john@example.com']),
+        (' john@example.com ', ['john@example.com']),
+    ])
+    def test_email_cc_is_cleaned_to_a_list(self, email_cc, expected):
+        form = WirePrepaymentForm(wire_prepayment_post_data(email_cc=email_cc))
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data['email_cc'] == expected
+
+    def test_invalid_email_cc(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(
+            email_cc='john@example.com, bob@example, carol',
+        ))
+        assert not form.is_valid()
+        assert form.errors['email_cc'] == [
+            'The following e-mail addresses contain invalid characters, or are missing '
+            'required characters: "bob@example", "carol"'
+        ]
+
+    def test_dates_default_to_today(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(
+            prepay_date_start='', prepay_date_end='',
+        ))
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data['prepay_date_start'] == datetime.date.today()
+        assert form.cleaned_data['prepay_date_end'] == datetime.date.today()
+
+    def test_end_date_before_start_date(self):
+        start_date = datetime.date.today()
+        form = WirePrepaymentForm(wire_prepayment_post_data(
+            prepay_date_start=start_date.isoformat(),
+            prepay_date_end=(start_date - datetime.timedelta(days=1)).isoformat(),
+        ))
+        assert not form.is_valid()
+        assert form.errors['prepay_date_end'] == ['Prepayment end date must be after start date.']
+
+    def test_end_date_same_as_start_date(self):
+        start_date = datetime.date.today()
+        form = WirePrepaymentForm(wire_prepayment_post_data(
+            prepay_date_start=start_date.isoformat(),
+            prepay_date_end=start_date.isoformat(),
+        ))
+        assert form.is_valid(), form.errors
+
+    def test_create_invoice(self):
+        date_start = datetime.date.today()
+        date_end = date_start + datetime.timedelta(days=30)
+        form = WirePrepaymentForm(wire_prepayment_post_data(
+            email_to='jane@example.com',
+            email_cc='john@example.com, bob@example.com',
+            prepay_date_start=date_start.isoformat(),
+            prepay_date_end=date_end.isoformat(),
+            credit_label='Annual plan',
+            unit_cost='2.50',
+            quantity='4',
+        ))
+        assert form.is_valid(), form.errors
+
+        with patch('corehq.apps.accounting.forms.DomainWireInvoiceFactory') as factory:
+            form.create_invoice('test-domain')
+
+        # The factory serializes the dates for its celery task
+        assert factory.call_args == call(
+            'test-domain',
+            date_start=date_start.isoformat(),
+            date_end=date_end.isoformat(),
+            contact_emails=['jane@example.com'],
+            cc_emails=['john@example.com', 'bob@example.com'],
+        )
+        assert factory.return_value.create_wire_credits_invoice.call_args == call(
+            Decimal('10.00'), 'Annual plan', Decimal('2.50'), 4,
+        )
+
+    def test_get_error_message_labels_each_field(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(email_to='nope', quantity='0'))
+        assert not form.is_valid()
+        assert form.get_error_message() == (
+            'Email To: Enter a valid email address. '
+            'Quantity: Ensure this value is greater than or equal to 1.'
+        )
+
+    def test_get_error_message_includes_non_field_errors(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(unit_cost='500000.00', quantity='3'))
+        assert not form.is_valid()
+        assert form.get_error_message() == (
+            'The total prepayment amount cannot be more than $999999.99.'
+        )
+
+    def test_get_error_message_when_valid(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data())
+        assert form.is_valid(), form.errors
+        assert form.get_error_message() == ''

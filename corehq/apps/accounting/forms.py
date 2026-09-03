@@ -6,8 +6,12 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
-from django.core.validators import MinLengthValidator, validate_slug
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
+from django.core.validators import (
+    MinLengthValidator,
+    validate_email,
+    validate_slug,
+)
 from django.db import transaction
 from django.forms.utils import ErrorList
 from django.template.loader import render_to_string
@@ -31,6 +35,7 @@ from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
     SoftwareProductRateAsyncHandler,
 )
+from corehq.apps.accounting.const import MAX_INVOICE_AMOUNT
 from corehq.apps.accounting.exceptions import (
     CreateAccountingAdminError,
     InvoiceError,
@@ -38,6 +43,7 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.invoicing import (
     CustomerAccountInvoiceFactory,
     DomainInvoiceFactory,
+    DomainWireInvoiceFactory,
 )
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -2082,6 +2088,121 @@ class PlanContactForm(forms.Form):
         send_html_email_async.delay(subject, settings.BILLING_EMAIL,
                                     html_content, text_content,
                                     email_from=settings.DEFAULT_FROM_EMAIL)
+
+
+class WirePrepaymentForm(forms.Form):
+    """Validates a request to generate a wire prepayment invoice.
+
+    These fields are rendered by Knockout, in
+    ``domain/partials/payment_modal.html``. Field labels are duplicated here
+    and in that template.
+    """
+    email_to = forms.EmailField(
+        label=gettext_lazy("Email To"),
+    )
+    email_cc = forms.CharField(
+        label=gettext_lazy("Additional Recipients"),
+        required=False,
+    )
+    prepay_date_start = forms.DateField(
+        label=gettext_lazy("Prepayment Start Date"),
+        required=False,
+        input_formats=['%Y-%m-%d'],
+    )
+    prepay_date_end = forms.DateField(
+        label=gettext_lazy("Prepayment End Date"),
+        required=False,
+        input_formats=['%Y-%m-%d'],
+    )
+    credit_label = forms.CharField(
+        label=gettext_lazy("Credit Label"),
+        required=False,
+        empty_value="General Credits",
+    )
+    unit_cost = forms.DecimalField(
+        label=gettext_lazy("Unit Cost"),
+        min_value=0,
+        max_digits=8,
+        decimal_places=2,
+    )
+    quantity = forms.IntegerField(
+        label=gettext_lazy("Quantity"),
+        min_value=1,
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        date_start = cleaned_data.get('prepay_date_start')
+        date_end = cleaned_data.get('prepay_date_end')
+        if date_start and date_end and date_end < date_start:
+            self.add_error('prepay_date_end', _("Prepayment end date must be after start date."))
+
+        unit_cost = cleaned_data.get('unit_cost')
+        quantity = cleaned_data.get('quantity')
+        if unit_cost is not None and quantity is not None:
+            amount = unit_cost * quantity
+            if amount > MAX_INVOICE_AMOUNT:
+                self.add_error(None, _(
+                    "The total prepayment amount cannot be more than ${max_amount}."
+                ).format(max_amount=MAX_INVOICE_AMOUNT))
+            cleaned_data['amount'] = amount
+        return cleaned_data
+
+    def clean_email_cc(self):
+        """Returns the comma-separated recipients as a list of addresses."""
+        emails = [
+            email.strip()
+            for email in self.cleaned_data['email_cc'].split(',')
+            if email.strip()
+        ]
+        invalid_emails = []
+        for email in emails:
+            try:
+                validate_email(email)
+            except ValidationError:
+                invalid_emails.append(email)
+        if invalid_emails:
+            raise ValidationError(
+                _("The following e-mail addresses contain invalid characters, or are missing "
+                  "required characters: ")
+                + ', '.join('"{}"'.format(email) for email in invalid_emails)
+            )
+        return emails
+
+    def clean_prepay_date_start(self):
+        # The modal's date fields are optional, and are empty until the user
+        # picks a date.
+        return self.cleaned_data['prepay_date_start'] or datetime.date.today()
+
+    def clean_prepay_date_end(self):
+        return self.cleaned_data['prepay_date_end'] or datetime.date.today()
+
+    def create_invoice(self, domain):
+        """Emails a wire prepayment invoice for ``domain``.
+
+        :raises InvoiceError: if the domain does not exist.
+        """
+        invoice_factory = DomainWireInvoiceFactory(
+            domain,
+            date_start=self.cleaned_data['prepay_date_start'].isoformat(),
+            date_end=self.cleaned_data['prepay_date_end'].isoformat(),
+            contact_emails=[self.cleaned_data['email_to']],
+            cc_emails=self.cleaned_data['email_cc'],
+        )
+        invoice_factory.create_wire_credits_invoice(
+            self.cleaned_data['amount'],
+            self.cleaned_data['credit_label'],
+            self.cleaned_data['unit_cost'],
+            self.cleaned_data['quantity'],
+        )
+
+    def get_error_message(self):
+        """Returns all of the form's errors as a single string."""
+        return ' '.join(
+            ' '.join(errors) if field == NON_FIELD_ERRORS
+            else '{}: {}'.format(self.fields[field].label, ' '.join(errors))
+            for field, errors in self.errors.items()
+        )
 
 
 class TriggerInvoiceForm(forms.Form):

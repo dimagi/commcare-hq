@@ -44,12 +44,13 @@ from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.exceptions import (
+    InvoiceError,
     NewSubscriptionError,
     PaymentRequestError,
     SubscriptionAdjustmentError,
     SubscriptionRenewalError,
 )
-from corehq.apps.accounting.forms import PlanContactForm
+from corehq.apps.accounting.forms import PlanContactForm, WirePrepaymentForm
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.models import (
     MINIMUM_SUBSCRIPTION_LENGTH,
@@ -959,26 +960,13 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         return super(CreditsWireInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        try:
-            contact_email, cc_emails = validate_emails(request)
-            amount = validate_amount(request)
-            date_start, date_end = validate_daterange(request)
-            unit_cost = validate_unit_cost(request)
-            quantity = validate_quantity(request)
-        except ValidationError as e:
-            return json_response({'error': {'message': e.message}})
+        form = WirePrepaymentForm(request.POST)
+        if not form.is_valid():
+            return json_response({'error': {'message': form.get_error_message()}})
 
-        credit_label = request.POST.get('credit_label', 'General Credits')
-
-        wire_invoice_factory = DomainWireInvoiceFactory(
-            request.domain, date_start=date_start, date_end=date_end,
-            contact_emails=[contact_email], cc_emails=cc_emails
-        )
         try:
-            wire_invoice_factory.create_wire_credits_invoice(
-                amount, credit_label, unit_cost, quantity
-            )
-        except Exception as e:
+            form.create_invoice(request.domain)
+        except InvoiceError as e:
             return json_response({'error': {'message': str(e)}})
 
         return json_response({'success': True})

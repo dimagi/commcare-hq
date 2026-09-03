@@ -1923,6 +1923,7 @@ class InvoiceBase(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     is_hidden = models.BooleanField(default=False)
     tax_rate = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
+    # matches MAX_INVOICE_AMOUNT constant
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     date_due = models.DateField(db_index=True, null=True)
     date_paid = models.DateField(blank=True, null=True)

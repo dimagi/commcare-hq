@@ -77,7 +77,7 @@ class WirePrepaymentViewTest(WirePrepaymentTestCase):
 
         assert (
             response.json()['error']['message']
-            == 'Prepayment end date must be after start date.'
+            == 'Prepayment End Date: Prepayment end date must be after start date.'
         )
         assert not self.get_invoices().exists()
 
