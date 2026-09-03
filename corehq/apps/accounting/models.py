@@ -2044,6 +2044,63 @@ class WirePrepaymentInvoice(WireInvoice):
         return True
 
 
+class ScheduledPrepaymentInvoiceStatus(object):
+    PENDING = 'PENDING'
+    SENT = 'SENT'
+    CANCELLED = 'CANCELLED'
+    FAILED = 'FAILED'
+    CHOICES = (
+        (PENDING, 'Pending'),
+        (SENT, 'Sent'),
+        (CANCELLED, 'Cancelled'),
+        (FAILED, 'Failed'),
+    )
+
+
+INACTIVE_SUBSCRIPTION_REASON = 'Subscription is paused or no longer active'
+
+
+class ScheduledPrepaymentInvoice(models.Model):
+    """A prepayment invoice queued for generation on a future date"""
+
+    domain = models.CharField(max_length=100, db_index=True)
+    subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
+    send_date = models.DateField(db_index=True)
+    status = models.CharField(
+        max_length=25,
+        default=ScheduledPrepaymentInvoiceStatus.PENDING,
+        choices=ScheduledPrepaymentInvoiceStatus.CHOICES,
+    )
+    created_by = models.CharField(max_length=80)
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    # data needed to generate the invoice
+    amount = models.DecimalField(max_digits=10, decimal_places=4)
+    credit_label = models.CharField(max_length=256)
+    unit_cost = models.DecimalField(max_digits=10, decimal_places=4)
+    quantity = models.IntegerField()
+    contact_emails = jsonfield.JSONField(default=list)
+    cc_emails = jsonfield.JSONField(default=list)
+    date_start = models.DateField()
+    date_end = models.DateField()
+
+    notified_accounting = models.BooleanField(default=False)
+    failure_count = models.IntegerField(default=0)
+    invoice = models.ForeignKey(
+        WireInvoice, on_delete=models.PROTECT, null=True, blank=True
+    )
+    # blank cancelled_by means the system cancelled it rather than an operator
+    cancelled_by = models.CharField(blank=True, max_length=80)
+    cancelled_reason = models.CharField(blank=True, max_length=256)
+
+    def __str__(self):
+        return (
+            f'Prepayment invoice for {self.domain} scheduled to send on '
+            f'{self.send_date} ({self.status})'
+        )
+
+
 class Invoice(InvoiceBase):
     """
     This is what we'll use to calculate the balance on the accounts based on the current balance
