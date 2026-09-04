@@ -310,6 +310,48 @@ class TestMyAccountSettingsView(TestCase):
         self.assertEqual(user_history_log.changed_via, USER_CHANGE_VIA_WEB)
 
 
+class TestChangeMyPasswordView(TestCase):
+    username = 'changepw@example.com'
+    old_password = 'old-password-1234'
+    new_password = 'new-password-5678'
+
+    def setUp(self):
+        super().setUp()
+        self.couch_user = WebUser.create(None, self.username, self.old_password, None, None)
+        self.addCleanup(self.couch_user.delete, None, deleted_by=None)
+        self.url = reverse('change_my_password')
+        self.client.login(username=self.username, password=self.old_password)
+
+    def test_successful_change_redirects(self):
+        response = self.client.post(self.url, {
+            'old_password': self.old_password,
+            'new_password1': self.new_password,
+            'new_password2': self.new_password,
+        })
+        assert response.status_code == 302
+        assert response.url == self.url
+        assert WebUser.get_by_username(self.username).get_django_user().check_password(self.new_password)
+
+    def test_successful_change_keeps_user_logged_in(self):
+        self.client.post(self.url, {
+            'old_password': self.old_password,
+            'new_password1': self.new_password,
+            'new_password2': self.new_password,
+        })
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        assert response.wsgi_request.user.is_authenticated
+
+    def test_invalid_change_rerenders_form(self):
+        response = self.client.post(self.url, {
+            'old_password': 'not-the-password',
+            'new_password1': self.new_password,
+            'new_password2': self.new_password,
+        })
+        assert response.status_code == 200
+        assert not WebUser.get_by_username(self.username).get_django_user().check_password(self.new_password)
+
+
 @disable_quickcache
 class TestQrCode(SimpleTestCase):
     """Generates a URL QR code PNG file and ensures it matches the reference

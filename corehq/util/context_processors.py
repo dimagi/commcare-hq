@@ -12,6 +12,7 @@ from corehq.apps.analytics.utils.hubspot import is_hubspot_js_allowed_for_reques
 from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils import bootstrap
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -263,6 +264,25 @@ def subscription_banners(request):
             'show_free_edition_banner': True,
         })
     return context
+
+
+def lockout_banner(request):
+    """
+    Flags an authenticated web user whose account is locked after too many
+    failed password attempts. The lock only blocks password-based logins
+    (login form, Basic-auth APIs such as OData), so a user with an existing
+    session would otherwise never find out about it.
+    """
+    couch_user = getattr(request, 'couch_user', None)
+    is_logged_in_user = hasattr(request, 'user') and request.user.is_authenticated
+    if not (is_logged_in_user and couch_user and couch_user.is_web_user()):
+        return {}
+    if not couch_user.is_locked_out():
+        return {}
+    return {
+        'show_lockout_banner': True,
+        'lockout_banner_can_change_password': not is_request_using_sso(request),
+    }
 
 
 def get_demo(request):
