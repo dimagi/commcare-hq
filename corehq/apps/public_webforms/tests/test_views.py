@@ -110,3 +110,110 @@ class TestPublicWebformQrCode(PublicWebformViewTestCase):
         self.sign_in(NORMAL_USER)
 
         assert self.get(webform).status_code != 200
+
+
+@flag_enabled('PUBLIC_WEBFORMS')
+@privilege_enabled(PUBLIC_WEBFORMS)
+class TestSetPublicWebformStatus(PublicWebformViewTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.webform = create_webform(is_disabled=True)
+
+    def post(self, is_disabled, webform=None, domain=DOMAIN, query=''):
+        webform = webform or self.webform
+        url = reverse('set_public_webform_status', args=[domain, webform.id])
+        return self.client.post(f'{url}{query}', {'is_disabled': is_disabled})
+
+    def test_a_closed_webform_can_be_opened(self):
+        self.post(is_disabled='false')
+
+        self.webform.refresh_from_db()
+        assert not self.webform.is_disabled
+
+    def test_an_open_webform_can_be_closed(self):
+        self.webform.is_disabled = False
+        self.webform.save()
+
+        self.post(is_disabled='true')
+
+        self.webform.refresh_from_db()
+        assert self.webform.is_disabled
+
+    def test_the_dashboard_is_returned_to_as_it_was_left(self):
+        """Closing a webform from a filtered page shouldn't reset the filters."""
+        response = self.post(is_disabled='true', query='?status=0&page=2')
+
+        dashboard = reverse('manage_public_webforms', args=[DOMAIN])
+        assert response.url == f'{dashboard}?status=0&page=2'
+
+    def test_another_projects_webform_is_not_found(self):
+        other = create_webform(domain='public-forms-other-domain')
+
+        response = self.post(is_disabled='false', webform=other)
+
+        assert response.status_code == 404
+        other.refresh_from_db()
+        assert other.is_disabled
+
+    def test_status_cannot_be_changed_without_the_permission(self):
+        self.sign_in(NORMAL_USER)
+
+        response = self.post(is_disabled='false')
+
+        assert response.status_code != 302
+        self.webform.refresh_from_db()
+        assert self.webform.is_disabled
+
+    def test_status_cannot_be_changed_by_a_get(self):
+        url = reverse('set_public_webform_status', args=[DOMAIN, self.webform.id])
+
+        response = self.client.get(url)
+
+        assert response.status_code == 405
+
+@flag_enabled('PUBLIC_WEBFORMS')
+@privilege_enabled(PUBLIC_WEBFORMS)
+class TestEditPublicWebformView(PublicWebformViewTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.webform = create_webform(is_disabled=False)
+
+    def url(self, webform=None, domain=DOMAIN):
+        return reverse(
+            'edit_public_webform', args=[domain, (webform or self.webform).id])
+
+    def post(self, webform=None, domain=DOMAIN, **fields):
+        return self.client.post(self.url(webform, domain), {
+            'label': 'Antenatal visit',
+            'expires_at': '2026-09-01 17:00:00',
+            'link_choices': ['allow_email'],
+            'open_to_requests': 'on',
+            **fields,
+        })
+
+    def test_the_webform_is_offered_for_editing(self):
+        response = self.client.get(self.url())
+
+        assert response.status_code == 200
+        assert response.context['form'].initial['label'] == 'Antenatal visit'
+
+    def test_redirects_to_dashboard_after_save(self):
+        response = self.post(label='Antenatal visit, round two')
+
+        assert response.url == reverse('manage_public_webforms', args=[DOMAIN])
+
+    def test_another_projects_webform_is_not_found(self):
+        other = create_webform(domain=OTHER_DOMAIN, label='Not yours')
+
+        assert self.client.get(self.url(other)).status_code == 404
+        assert self.post(webform=other).status_code == 404
+
+    def test_webform_cannot_be_edited_without_permission(self):
+        self.sign_in(NORMAL_USER)
+
+        assert self.client.get(self.url()).status_code != 200
+        self.post(label='Renamed by a non-admin useur')
+        self.webform.refresh_from_db()
+        assert self.webform.label == 'Antenatal visit'
