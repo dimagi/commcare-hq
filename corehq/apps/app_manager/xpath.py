@@ -208,9 +208,8 @@ class CaseSelectionXPath(XPath):
     selector = ''
 
     def case(self, instance_name='casedb', case_name='case'):
-        return CaseXPath("instance('{inst}')/{root}/{case}[{sel}={self}]".format(
-            inst=instance_name, root=self.get_instance_root(instance_name),
-            case=case_name, sel=self.selector, self=self
+        return CaseXPath("{cases}[{sel}={self}]".format(
+            cases=all_cases_xpath(instance_name, case_name), sel=self.selector, self=self
         ))
 
     @staticmethod
@@ -218,6 +217,14 @@ class CaseSelectionXPath(XPath):
         return {
             "results:inline": "results"
         }.get(instance_name, instance_name)
+
+
+def all_cases_xpath(instance_name='casedb', case_name='case'):
+    return CaseXPath("instance('{inst}')/{root}/{case}".format(
+        inst=instance_name,
+        root=CaseSelectionXPath.get_instance_root(instance_name),
+        case=case_name,
+    ))
 
 
 class CaseIDXPath(CaseSelectionXPath):
