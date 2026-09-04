@@ -184,7 +184,15 @@
   {% trans 'Prepay by Credit Card' %}
   <!-- /ko -->
   <!-- ko if: $root.paymentMethod() === $root.WIRE -->
+  <!-- ko if: $root.domain() -->
+  {% blocktrans %}
+    Generate Prepayment Invoice for
+    <span data-bind="text: $root.domain"></span>
+  {% endblocktrans %}
+  <!-- /ko -->
+  <!-- ko ifnot: $root.domain() -->
   {% trans 'Generate Prepayment Invoice' %}
+  <!-- /ko -->
   <!-- /ko -->
 </script>
 
