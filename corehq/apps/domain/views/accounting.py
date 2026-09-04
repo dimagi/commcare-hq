@@ -36,6 +36,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
+from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
@@ -229,6 +230,10 @@ class DomainSubscriptionView(DomainAccountingSettings):
     @property
     def can_purchase_credits(self):
         return self.request.couch_user.can_edit_billing()
+
+    @property
+    def can_schedule_prepayment_invoice(self):
+        return has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
 
     def can_set_auto_renew(self):
         can_access_auto_renewal = self.request.couch_user.can_edit_billing()
@@ -446,6 +451,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
+            'can_schedule_prepayment_invoice': self.can_schedule_prepayment_invoice,
             'can_set_auto_renew': self.can_set_auto_renew(),
             'renewal_plan_preview': self.renewal_plan_preview,
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
@@ -984,6 +990,7 @@ class SchedulePrepaymentInvoiceView(DomainAccountingSettings):
     urlname = 'domain_schedule_prepayment_invoice'
 
     @method_decorator(login_and_domain_required)
+    @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
     def dispatch(self, request, *args, **kwargs):
         return super(SchedulePrepaymentInvoiceView, self).dispatch(request, *args, **kwargs)
 

@@ -140,27 +140,29 @@
       </div>
     </div>
 
-    <div class="form-group">  {# todo B5: css-form-group #}
-      <label class="form-label col-md-2"> {% trans "Send On" %} </label>
-      <div class="col-md-10">
-        <input
-          type="text"
-          id="prepay-send-date"
-          class="date-picker form-control"
-          name="send_date"
-          data-bind="textInput: $root.scheduledSendDateInput"
-          placeholder='{% trans "YYYY-MM-DD" %}'
-        />
-        <p class="help-block">{% trans "Leave blank to send now." %}</p>
-        <div
-          class="alert alert-danger"
-          data-bind="visible: $root.scheduledSendDateInput() && !$root.isSendDateValid()"
-        >
-          <i class="fa-solid fa-triangle-exclamation"></i>
-          <span>{% trans "The send date must be in the future." %}</span>
+    {% if can_schedule_prepayment_invoice %}
+      <div class="form-group">  {# todo B5: css-form-group #}
+        <label class="form-label col-md-2"> {% trans "Send On" %} </label>
+        <div class="col-md-10">
+          <input
+            type="text"
+            id="prepay-send-date"
+            class="date-picker form-control"
+            name="send_date"
+            data-bind="textInput: $root.scheduledSendDateInput"
+            placeholder='{% trans "YYYY-MM-DD" %}'
+          />
+          <p class="help-block">{% trans "Leave blank to send now." %}</p>
+          <div
+            class="alert alert-danger"
+            data-bind="visible: $root.scheduledSendDateInput() && !$root.isSendDateValid()"
+          >
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>{% trans "The send date must be in the future." %}</span>
+          </div>
         </div>
       </div>
-    </div>
+    {% endif %}
 
     <div class="form-group">  {# todo B5: css-form-group #}
       <label class="form-label col-md-2">

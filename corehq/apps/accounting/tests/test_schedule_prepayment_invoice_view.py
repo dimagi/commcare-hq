@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.urls import reverse
 
+from corehq import privileges
 from corehq.apps.accounting.models import (
     ScheduledPrepaymentInvoice,
     ScheduledPrepaymentInvoiceStatus,
@@ -11,12 +12,14 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.tests.wire_invoice_base import (
     WirePrepaymentTestCase,
 )
+from corehq.util.test_utils import privilege_enabled
 
 
 def in_days(days):
     return datetime.date.today() + datetime.timedelta(days=days)
 
 
+@privilege_enabled(privileges.ACCOUNTING_ADMIN)
 class SchedulePrepaymentInvoiceViewTest(WirePrepaymentTestCase):
     def post_schedule(self, **overrides):
         data = {
@@ -106,3 +109,17 @@ class SchedulePrepaymentInvoiceViewTest(WirePrepaymentTestCase):
         response = self.post_schedule(credit_label='x' * 256)
 
         assert response.json()['success'] is True
+
+
+class SchedulePrepaymentInvoicePermissionTest(WirePrepaymentTestCase):
+    """Scheduling is for accounting admins, not a project's billing admins"""
+
+    def test_rejects_a_billing_admin_without_accounting_admin(self):
+        url = reverse(
+            'domain_schedule_prepayment_invoice', args=[self.domain_obj.name]
+        )
+
+        response = self.admin_client.post(url, {})
+
+        assert response.status_code == 404
+        assert not ScheduledPrepaymentInvoice.objects.exists()
