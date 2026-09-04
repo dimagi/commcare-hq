@@ -1755,8 +1755,8 @@ class Subscription(models.Model):
         cls._raise_if_plan_or_account_rejects_new_subscription(account, plan_version)
 
         subscriber = Subscriber.objects.get_or_create(domain=domain)[0]
-        today = datetime.date.today()
-        date_start = date_start or today
+
+        date_start = date_start or datetime.date.today()
 
         cls._raise_if_subscription_dates_conflict(subscriber, date_start, date_end)
 
