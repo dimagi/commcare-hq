@@ -1752,24 +1752,7 @@ class Subscription(models.Model):
                                 date_start=None, date_end=None, note=None,
                                 web_user=None, adjustment_method=None, internal_change=False,
                                 **kwargs):
-        if plan_version.plan.at_max_domains():
-            raise NewSubscriptionError(
-                'The maximum number of project spaces has been reached for %(plan_version)s. ' % {
-                    'plan_version': plan_version,
-                }
-            )
-
-        if plan_version.plan.is_customer_software_plan != account.is_customer_billing_account:
-            if plan_version.plan.is_customer_software_plan:
-                raise NewSubscriptionError(
-                    'You are trying to add a Customer Software Plan to a regular Billing Account. '
-                    'Both or neither must be customer-level.'
-                )
-            else:
-                raise NewSubscriptionError(
-                    'You are trying to add a regular Software Plan to a Customer Billing Account. '
-                    'Both or neither must be customer-level.'
-                )
+        cls._raise_if_plan_or_account_rejects_new_subscription(account, plan_version)
 
         subscriber = Subscriber.objects.get_or_create(domain=domain)[0]
         today = datetime.date.today()
@@ -1847,6 +1830,28 @@ class Subscription(models.Model):
         subscription.set_billing_account_entry_point()
 
         return subscription
+
+    @classmethod
+    def _raise_if_plan_or_account_rejects_new_subscription(cls, account, plan_version):
+        if plan_version.plan.at_max_domains():
+            raise NewSubscriptionError(
+                'The maximum number of project spaces has been reached for %(plan_version)s. ' % {
+                    'plan_version': plan_version,
+                }
+            )
+
+        if plan_version.plan.is_customer_software_plan != account.is_customer_billing_account:
+            if plan_version.plan.is_customer_software_plan:
+                raise NewSubscriptionError(
+                    'You are trying to add a Customer Software Plan to a regular Billing Account. '
+                    'Both or neither must be customer-level.'
+                )
+            else:
+                raise NewSubscriptionError(
+                    'You are trying to add a regular Software Plan to a Customer Billing Account. '
+                    'Both or neither must be customer-level.'
+                )
+
 
     @classmethod
     def can_reactivate_domain_subscription(cls, account, domain, plan_version,
