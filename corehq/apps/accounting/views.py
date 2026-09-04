@@ -742,7 +742,7 @@ class CancelScheduledInvoiceView(AccountingSectionView):
     def parent_pages(self):
         return [{
             'title': ScheduledInvoiceInterface.name,
-            'url': self.queue_url,
+            'url': self.report_url,
         }]
 
     @property
@@ -750,7 +750,7 @@ class CancelScheduledInvoiceView(AccountingSectionView):
         return reverse(self.urlname, args=[self.scheduled_invoice.id])
 
     @property
-    def queue_url(self):
+    def report_url(self):
         return ScheduledInvoiceInterface.get_url()
 
     @property
@@ -772,7 +772,7 @@ class CancelScheduledInvoiceView(AccountingSectionView):
                 f"That invoice is {scheduled.get_status_display().lower()}, "
                 f"so there is nothing to cancel."
             )
-            return HttpResponseRedirect(self.queue_url)
+            return HttpResponseRedirect(self.report_url)
         if self.cancel_form.is_valid():
             self.cancel_form.cancel(cancelled_by=request.couch_user.username)
             messages.success(
@@ -780,7 +780,7 @@ class CancelScheduledInvoiceView(AccountingSectionView):
                 f"Cancelled the prepayment invoice scheduled for "
                 f"{scheduled.domain} on {scheduled.send_date}."
             )
-            return HttpResponseRedirect(self.queue_url)
+            return HttpResponseRedirect(self.report_url)
         return self.get(request, *args, **kwargs)
 
 

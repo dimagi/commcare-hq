@@ -13,4 +13,4 @@ Recipients: {{ contact_emails }}
 
 If the amount or the dates are no longer right, cancel this scheduled invoice
 and schedule a replacement before {{ send_date|date:"Y-m-d" }}:
-{{ queue_url }}
+{{ report_url }}

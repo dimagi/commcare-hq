@@ -132,7 +132,7 @@ def send_scheduled_invoice_notice(scheduled):
         'date_end': scheduled.date_end,
         'created_by': scheduled.created_by,
         'contact_emails': ', '.join(scheduled.contact_emails),
-        'queue_url': absolute_reverse(
+        'report_url': absolute_reverse(
             AccountingAdminInterfaceDispatcher.name(), args=['scheduled_invoices']
         ),
     }
