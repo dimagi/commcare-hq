@@ -2120,6 +2120,13 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
     def clean(self):
         if self.is_autopay_required() and not self.account.auto_pay_enabled:
             raise ValidationError(_("Please provide an autopay card before continuing."))
+        if (self.current_is_annual_plan() and (
+            self.is_downgrade_from_paid_plan() or self.is_same_edition()
+        )):
+            raise ValidationError(_(
+                "You cannot downgrade or make a lateral plan change while "
+                "subscribed to an annual plan."
+            ))
 
 
 class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
