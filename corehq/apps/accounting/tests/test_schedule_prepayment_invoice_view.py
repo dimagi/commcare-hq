@@ -9,14 +9,12 @@ from corehq.apps.accounting.models import (
     ScheduledPrepaymentInvoiceStatus,
     WirePrepaymentInvoice,
 )
+from corehq.apps.accounting.tests.utils import in_days
 from corehq.apps.accounting.tests.wire_invoice_base import (
     WirePrepaymentTestCase,
 )
 from corehq.util.test_utils import privilege_enabled
 
-
-def in_days(days):
-    return datetime.date.today() + datetime.timedelta(days=days)
 
 
 @privilege_enabled(privileges.ACCOUNTING_ADMIN)
@@ -76,7 +74,7 @@ class SchedulePrepaymentInvoiceViewTest(WirePrepaymentTestCase):
 
         assert (
             response.json()['error']['message']
-            == 'The send date must be in the future.'
+            == 'Send On: The send date must be in the future.'
         )
         assert not self.get_scheduled().exists()
 
@@ -89,12 +87,6 @@ class SchedulePrepaymentInvoiceViewTest(WirePrepaymentTestCase):
         response = self.post_schedule(
             send_date=datetime.date.today().isoformat()
         )
-
-        assert 'error' in response.json()
-        assert not self.get_scheduled().exists()
-
-    def test_rejects_a_missing_send_date(self):
-        response = self.post_schedule(send_date='')
 
         assert 'error' in response.json()
         assert not self.get_scheduled().exists()

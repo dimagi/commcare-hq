@@ -67,6 +67,7 @@ from corehq.apps.accounting.models import (
     PaymentType,
     PreOrPostPay,
     ProBonoStatus,
+    ScheduledPrepaymentInvoice,
     ScheduledPrepaymentInvoiceStatus,
     SoftwarePlan,
     SoftwarePlanEdition,
@@ -2093,6 +2094,8 @@ class PlanContactForm(forms.Form):
 class WirePrepaymentForm(forms.Form):
     """Validates a request to generate a wire prepayment invoice.
 
+    A blank ``send_date`` generates the invoice now; a future one schedules it.
+
     These fields are rendered by Knockout, in
     ``domain/partials/payment_modal.html``. Field labels are duplicated here
     and in that template.
@@ -2128,6 +2131,11 @@ class WirePrepaymentForm(forms.Form):
     quantity = forms.IntegerField(
         label=gettext_lazy("Quantity"),
         min_value=1,
+    )
+    send_date = forms.DateField(
+        label=gettext_lazy("Send On"),
+        required=False,
+        input_formats=['%Y-%m-%d'],
     )
 
     def clean(self):
@@ -2170,12 +2178,45 @@ class WirePrepaymentForm(forms.Form):
         return emails
 
     def clean_prepay_date_start(self):
-        # The modal's date fields are optional, and are empty until the user
-        # picks a date.
         return self.cleaned_data['prepay_date_start'] or datetime.date.today()
 
     def clean_prepay_date_end(self):
         return self.cleaned_data['prepay_date_end'] or datetime.date.today()
+
+    def clean_credit_label(self):
+        credit_label = self.cleaned_data.get('credit_label', 'General Credits')
+        max_length = ScheduledPrepaymentInvoice._meta.get_field('credit_label').max_length
+        if len(credit_label) > max_length:
+            raise ValidationError(message=_(
+                'The credit label must be %(max_length)d characters or fewer.'
+            ) % {'max_length': max_length})
+        return credit_label
+
+    def clean_send_date(self):
+        # The modal leaves this blank to send the invoice now
+        send_date = self.cleaned_data.get('send_date')
+        if send_date and send_date <= datetime.date.today():
+            raise ValidationError(message=_('The send date must be in the future.'))
+        return send_date
+
+    def save(self, domain, couch_user):
+        """Generates the invoice for ``domain``, or schedules it.
+
+        :returns: the scheduled invoice, or ``None`` if one was generated now.
+        :raises InvoiceError: if the invoice can be neither generated nor
+            scheduled.
+        """
+        if not self.cleaned_data['send_date']:
+            self.create_invoice(domain)
+            return None
+
+        subscription = Subscription.get_active_subscription_by_domain(domain)
+        if subscription is None:
+            raise InvoiceError(_(
+                'This project space has no active subscription, so an invoice '
+                'cannot be scheduled for it.'
+            ))
+        return self.create_scheduled_invoice(domain, subscription, couch_user)
 
     def create_invoice(self, domain):
         """Emails a wire prepayment invoice for ``domain``.
@@ -2195,6 +2236,27 @@ class WirePrepaymentForm(forms.Form):
             self.cleaned_data['unit_cost'],
             self.cleaned_data['quantity'],
         )
+
+    def create_scheduled_invoice(self, domain, subscription, couch_user):
+        scheduled = ScheduledPrepaymentInvoice.objects.create(
+            domain=domain,
+            subscription=subscription,
+            send_date=self.cleaned_data['send_date'],
+            amount=self.cleaned_data['amount'],
+            credit_label=self.cleaned_data['credit_label'],
+            unit_cost=self.cleaned_data['unit_cost'],
+            quantity=self.cleaned_data['quantity'],
+            contact_emails=[self.cleaned_data['email_to']],
+            cc_emails=self.cleaned_data['email_cc'],
+            date_start=self.cleaned_data['prepay_date_start'],
+            date_end=self.cleaned_data['prepay_date_end'],
+            created_by=couch_user.username,
+        )
+        log_accounting_info(
+            f"Scheduled prepayment invoice {scheduled.id} for domain "
+            f"{scheduled.domain} on {scheduled.send_date} by {scheduled.created_by}."
+        )
+        return scheduled
 
     def get_error_message(self):
         """Returns all of the form's errors as a single string."""

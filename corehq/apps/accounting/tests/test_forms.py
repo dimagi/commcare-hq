@@ -36,6 +36,7 @@ from corehq.apps.accounting.tasks import (
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
+from corehq.apps.accounting.tests.utils import in_days
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.util.dates import get_first_last_days
@@ -612,6 +613,7 @@ class TestWirePrepaymentForm:
             'unit_cost': Decimal('12.50'),
             'quantity': 4,
             'amount': Decimal('50.00'),
+            'send_date': None,
         }
 
     def test_amount_larger_than_an_invoice_can_hold(self):
@@ -716,3 +718,118 @@ class TestWirePrepaymentForm:
         form = WirePrepaymentForm(wire_prepayment_post_data())
         assert form.is_valid(), form.errors
         assert form.get_error_message() == ''
+
+
+def scheduled_prepayment_post_data(**overrides):
+    data = {
+        'email_to': 'billing@example.com',
+        'email_cc': 'ap@example.com',
+        'credit_label': '12 month prepayment',
+        'unit_cost': '1000.00',
+        'quantity': 12,
+        'amount': '12000.00',
+        'prepay_date_start': '2027-01-01',
+        'prepay_date_end': '2028-01-01',
+        'send_date': in_days(90).isoformat(),
+    }
+    data.update(overrides)
+    return data
+
+
+class TestScheduledPrepaymentForm:
+    def test_valid_data(self):
+        date_start = datetime.date.today()
+        date_end = date_start + datetime.timedelta(days=365)
+        form = WirePrepaymentForm(scheduled_prepayment_post_data(
+            email_to='billing@example.com',
+            email_cc='ap@example.com',
+            prepay_date_start=date_start.isoformat(),
+            prepay_date_end=date_end.isoformat(),
+            credit_label='12 month prepayment',
+            unit_cost='1000.00',
+            quantity='12',
+        ))
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data == {
+            'email_to': 'billing@example.com',
+            'email_cc': ['ap@example.com'],
+            'credit_label': '12 month prepayment',
+            'unit_cost': Decimal(1000.00),
+            'quantity': 12,
+            'amount': Decimal(12000.00),
+            'prepay_date_start': date_start,
+            'prepay_date_end': date_end,
+            'send_date': in_days(90),
+        }
+
+    @pytest.mark.parametrize('days_from_today', [
+        (-1),  # yesterday
+        (0),  # today
+    ])
+    def test_invalid_send_date(self, days_from_today):
+        form = WirePrepaymentForm(
+            scheduled_prepayment_post_data(send_date=in_days(days_from_today).isoformat())
+        )
+
+        assert not form.is_valid()
+        assert form.errors['send_date'] == [
+            'The send date must be in the future.'
+        ]
+
+    def test_accepts_a_send_date_of_tomorrow(self):
+        form = WirePrepaymentForm(scheduled_prepayment_post_data(send_date=in_days(1).isoformat()))
+
+        assert form.is_valid(), form.errors
+
+    def test_accepts_a_missing_send_date(self):
+        """A blank send date generates the invoice now instead of scheduling it."""
+        form = WirePrepaymentForm(scheduled_prepayment_post_data(send_date=''))
+
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data['send_date'] is None
+
+    def test_save_generates_the_invoice_when_no_send_date(self):
+        form = WirePrepaymentForm(scheduled_prepayment_post_data(send_date=''))
+        assert form.is_valid(), form.errors
+
+        with patch.object(WirePrepaymentForm, 'create_invoice') as create_invoice:
+            assert form.save('test-domain', None) is None
+
+        assert create_invoice.call_args == call('test-domain')
+
+    def test_save_schedules_the_invoice_when_given_a_send_date(self):
+        form = WirePrepaymentForm(scheduled_prepayment_post_data())
+        assert form.is_valid(), form.errors
+        couch_user = object()
+
+        with patch(
+            'corehq.apps.accounting.forms.Subscription.get_active_subscription_by_domain',
+            return_value='a subscription',
+        ), patch.object(WirePrepaymentForm, 'create_scheduled_invoice') as create_scheduled:
+            form.save('test-domain', couch_user)
+
+        assert create_scheduled.call_args == call('test-domain', 'a subscription', couch_user)
+
+    def test_save_requires_an_active_subscription_to_schedule(self):
+        form = WirePrepaymentForm(scheduled_prepayment_post_data())
+        assert form.is_valid(), form.errors
+
+        with patch(
+            'corehq.apps.accounting.forms.Subscription.get_active_subscription_by_domain',
+            return_value=None,
+        ):
+            with pytest.raises(InvoiceError, match='no active subscription'):
+                form.save('test-domain', None)
+
+    def test_rejects_credit_label_that_is_too_long(self):
+        form = WirePrepaymentForm(scheduled_prepayment_post_data(credit_label='x' * 257))
+
+        assert not form.is_valid()
+        assert form.errors['credit_label'] == [
+            'The credit label must be 256 characters or fewer.'
+        ]
+
+    def test_accepts_a_credit_label_at_the_limit(self):
+        form = WirePrepaymentForm(scheduled_prepayment_post_data(credit_label='x' * 256))
+
+        assert form.is_valid(), form.errors
