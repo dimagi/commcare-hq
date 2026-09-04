@@ -5,6 +5,7 @@
  */
 import $ from "jquery";
 import ko from "knockout";
+import moment from "moment";
 import _ from "underscore";
 import { createStripeToken, getCardElementPromise } from "accounting/js/stripe";
 import initialPageData from "hqwebapp/js/initial_page_data";
@@ -130,13 +131,11 @@ var paymentMethodHandler = function (formId, opts) {
         if (!value) {
             return true;  // blank means send now
         }
-        var parsed = new Date(value + "T00:00:00");
-        if (isNaN(parsed.getTime())) {
+        var parsed = moment(value, "YYYY-MM-DD", true);
+        if (!parsed.isValid()) {
             return false;
         }
-        var today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return parsed > today;  // today is send-now territory, not scheduling
+        return parsed.isAfter(moment().startOf("day"));
     });
 
     // The btn label informs user if sending now or scheduling for later

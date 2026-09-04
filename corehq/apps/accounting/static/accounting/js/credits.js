@@ -1,5 +1,6 @@
 import $ from "jquery";
 import ko from "knockout";
+import moment from "moment";
 import _ from "underscore";
 import paymentMethodHandler from "accounting/js/payment_method_handler";
 import "eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min";
@@ -132,9 +133,7 @@ $(function () {
         $("#prepay-date-end").datetimepicker({
             format: "YYYY-MM-DD",
         });
-        var tomorrow = new Date();
-        tomorrow.setHours(0, 0, 0, 0);
-        tomorrow.setDate(tomorrow.getDate() + 1);
+        var tomorrow = moment().startOf("day").add(1, "day");
 
         $("#prepay-send-date").datetimepicker({
             format: "YYYY-MM-DD",
