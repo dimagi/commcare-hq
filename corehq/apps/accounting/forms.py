@@ -1147,7 +1147,7 @@ class CancelScheduledInvoiceForm(forms.Form):
         required=True,
         max_length=256,
         widget=forms.Textarea(attrs={"class": "vertical-resize", "rows": "2"}),
-        help_text="Shown in the queue so it is clear why this was cancelled.",
+        help_text="Describe why this prepayment is being cancelled.",
     )
 
     def __init__(self, scheduled, *args, **kwargs):

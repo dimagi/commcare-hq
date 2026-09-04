@@ -153,9 +153,9 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         self.schedule(send_date=datetime.date.today())
         self.schedule(send_date=in_days(-1))
 
-        assert ScheduledPrepaymentInvoice.objects.pending_domains() == [
+        assert ScheduledPrepaymentInvoice.objects.pending_domains() == {
             self.domain_obj.name
-        ]
+        }
 
     def test_the_per_domain_task_sends_that_domain_s_requests(self):
         self.schedule(send_date=datetime.date.today())
@@ -233,7 +233,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
 
         pending = ScheduledPrepaymentInvoice.objects.pending_domains()
 
-        assert pending == [self.domain_obj.name]
+        assert pending == {self.domain_obj.name}
 
     def test_notifies_accounting_five_days_ahead(self):
         scheduled = self.schedule(send_date=in_days(5))

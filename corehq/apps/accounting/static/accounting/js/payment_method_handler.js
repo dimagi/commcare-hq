@@ -118,15 +118,15 @@ var paymentMethodHandler = function (formId, opts) {
         self.autopayCard(autopayStripeCard);
     }
 
-    self.confirmedSendDate = ko.observable();
-    self.scheduledSendDateInput = ko.observable();
+    self.confirmedSendDate = ko.observable(null);
+    self.scheduledSendDateInput = ko.observable(null);
 
-    self.isScheduling = ko.computed(function () {
+    self.isScheduling = ko.pureComputed(function () {
         return self.paymentMethod() === self.WIRE
             && !! self.scheduledSendDateInput();
     });
 
-    self.isSendDateValid = ko.computed(function () {
+    self.isSendDateValid = ko.pureComputed(function () {
         var value = self.scheduledSendDateInput();
         if (!value) {
             return true;  // blank means send now
@@ -255,8 +255,8 @@ var paymentMethodHandler = function (formId, opts) {
     self.reset = function () {
         self.paymentIsComplete(false);
         self.serverErrorMsg('');
-        self.confirmedSendDate(undefined);
-        self.scheduledSendDateInput(undefined);
+        self.confirmedSendDate(null);
+        self.scheduledSendDateInput(null);
         self.newCard().reset();
         self.resetStripeCardUI(true);
     };

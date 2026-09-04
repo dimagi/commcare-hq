@@ -1063,7 +1063,7 @@ def generate_due_scheduled_invoices(today, domain=None):
     due = ScheduledPrepaymentInvoice.objects.due(today)
     if domain is not None:
         due = due.filter(domain=domain)
-    for scheduled in list(due):
+    for scheduled in due:
         _send_scheduled_prepayment_invoice(scheduled)
 
 
