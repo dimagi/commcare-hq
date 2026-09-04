@@ -28,10 +28,10 @@
              self.cancelBtnEnabled(false);
              self.reportUrl(location.href);
              self.isRequestReportSubmitting = true;
-@@ -85,9 +86,9 @@
-     };
- 
-     self.resetForm = function () {
+@@ -91,9 +92,9 @@
+         self.emailInput('');
+         self.recipientEmailsText('');
+         self.isReportSent = false;
 -        self.$formElement.find("button[type='submit']").button('reset');
 +        self.$formElement.find("button[type='submit']").changeButtonState('reset');
          self.cancelBtnEnabled(true);
@@ -40,7 +40,7 @@
          resetErrors();
      };
  
-@@ -110,12 +111,12 @@
+@@ -116,12 +117,12 @@
      function hqwebappRequestReportSucccess() {
          self.isRequestReportSubmitting = false;
          self.isReportSent = true;

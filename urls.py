@@ -4,6 +4,10 @@ from django.contrib import admin
 from django.shortcuts import render
 from django.views.generic import RedirectView, TemplateView
 
+from oauth2_provider.urls import (
+    metadata_urlpatterns as oauth2_metadata_urlpatterns,
+)
+
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.extensions import extension_points
 from corehq.apps.enterprise.urls import \
@@ -72,11 +76,13 @@ domain_specific = [
     url(r'^case/', include('corehq.apps.hqcase.urls')),
     url(r'^case/', include('corehq.apps.case_search.urls')),
     url(r'^clean/', include('corehq.apps.data_cleaning.urls')),
+    url(r'^project_db/', include('corehq.apps.project_db.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^campaign/', include('corehq.apps.campaign.urls')),
     url(r'^microplanning/', include('corehq.apps.geospatial.urls')),
     url(r'^kyc/', include('corehq.apps.integration.kyc.urls')),
     url(r'^payments/', include('corehq.apps.integration.payments.urls')),
+    url(r'^public_webforms/', include('corehq.apps.public_webforms.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
@@ -102,6 +108,11 @@ for url_module in extension_points.domain_specific_urls():
 urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(
         url=static('hqwebapp/images/favicon2.png'), permanent=True)),
+    # Strict RFC 8414 well-known URIs must live at the domain root. The distinct
+    # instance namespace keeps reverse("oauth2_provider:...") pointing at the
+    # /oauth/ mount in corehq.apps.hqwebapp.urls.
+    url(r'^', include((oauth2_metadata_urlpatterns, 'oauth2_provider'),
+                      namespace='oauth2_metadata')),
     url(r'^auditcare/', include('corehq.apps.auditcare.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^analytics/', include('corehq.apps.analytics.urls')),

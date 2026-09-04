@@ -1,3 +1,5 @@
+import json
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
@@ -5,14 +7,17 @@ from django.contrib.auth.signals import user_login_failed
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext_lazy
 
 from captcha.fields import ReCaptchaField
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
+from oauth2_provider.forms import AllowForm
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
 from corehq.apps.domain.forms import NoAutocompleteMixin
+from corehq.apps.hqwebapp.oauth_scopes import DOMAIN_SCOPE_PREFIX, domain_scope
 from corehq.apps.users.models import CouchUser
 from corehq.util.metrics import metrics_counter
 
@@ -213,3 +218,59 @@ class HQBackupTokenForm(BackupTokenForm):
             metrics_counter('commcare.auth.lockouts')
             raise ValidationError(LOCKOUT_MESSAGE)
         return cleaned_data
+
+
+class HQAllowForm(AllowForm):
+    """
+    The OAuth2 consent form, extended with a project space choice.
+    """
+
+    domains = forms.MultipleChoiceField(
+        required=False,
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-select',
+            'x-select2': json.dumps({'selectionCssClass': 'form-select p-1 pb-2 pe-4'}),
+            '@select2change': 'selectedDomains = $event.detail || []',
+            'x-ref': 'domains',
+        }),
+    )
+
+    def __init__(self, *args, domain_choices=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        domain_field = self.fields['domains']
+        domain_field.choices = list(domain_choices or [])
+        self.choice_count = len(domain_field.choices)
+        domain_field.label = ngettext_lazy(
+            "On the project space:",
+            "On the project spaces:",
+            self.choice_count,
+        )
+        domain_field.widget.attrs['data-placeholder'] = ngettext_lazy(
+            "Choose project space",
+            "Choose project spaces",
+            self.choice_count,
+        )
+        if self.choice_count == 1:
+            domain_field.initial = [domain_field.choices[0][0]]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get('allow') and not cleaned_data.get('domains'):
+            self.add_error(
+                'domains', _("Choose at least one project space."),
+            )
+        cleaned_data['scope'] = self._scope_with_chosen_project_spaces(cleaned_data)
+        return cleaned_data
+
+    def _scope_with_chosen_project_spaces(self, cleaned_data):
+        """
+        Fold the chosen project spaces into the scope the grant will be made with.
+        """
+        scopes = [
+            scope for scope in (cleaned_data.get('scope') or '').split()
+            if not scope.startswith(DOMAIN_SCOPE_PREFIX)
+        ]
+        # Any project space the client asked for is dropped above: what the user
+        # picked here decides the grant, not what was requested.
+        scopes.extend(domain_scope(domain) for domain in cleaned_data.get('domains') or [])
+        return ' '.join(scopes)

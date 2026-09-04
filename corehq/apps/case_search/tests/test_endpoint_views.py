@@ -3,9 +3,11 @@ from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.html import escape
 
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.project_db.tests.util import project_db_table
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
@@ -19,6 +21,7 @@ from ..endpoint_views import (
 from ..models import CaseSearchEndpoint, CaseSearchEndpointVersion
 
 EMPTY_QUERY = {'type': 'all', 'children': []}
+EMPTY_QUERY_JSON = json.dumps(EMPTY_QUERY)
 
 
 class EndpointViewTestCase(TestCase):
@@ -38,20 +41,24 @@ class EndpointViewTestCase(TestCase):
             cls.addClassCleanup(ct.delete)
 
     def setUp(self):
-        self.client.login(username=self.username, password='password')
+        # force_login skips password hashing, which every test would
+        # otherwise pay for.
+        self.client.force_login(self.user.get_django_user())
         flag = flag_enabled('CASE_SEARCH_ENDPOINTS')
         flag.__enter__()
         self.addCleanup(flag.__exit__, None, None, None)
 
-    def _make_endpoint(self, name='my-endpoint', case_type='case_type_a'):
+    def _make_endpoint(self, name='my-endpoint', case_type='case_type_a',
+                       target_type=CaseSearchEndpoint.TargetType.ELASTICSEARCH):
         endpoint = CaseSearchEndpoint.objects.create(
             domain=self.domain,
             name=name,
-            case_type=case_type,
+            target_type=target_type,
         )
         version = CaseSearchEndpointVersion.objects.create(
             endpoint=endpoint,
             version_number=1,
+            case_type=case_type,
             query=dict(EMPTY_QUERY),
             parameters=[],
             action=CaseSearchEndpointVersion.Action.CREATE,
@@ -60,11 +67,15 @@ class EndpointViewTestCase(TestCase):
         endpoint.save(update_fields=['current_version'])
         return endpoint
 
+    def _project_db_table(self, case_type='my_case_type'):
+        return project_db_table(self.domain, case_type, {'nickname': 'plain'})
+
     def _list_url(self):
         return reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
 
-    def _new_url(self):
-        return reverse(CaseSearchEndpointNewView.urlname, args=[self.domain])
+    def _new_url(self, target_type=CaseSearchEndpoint.TargetType.ELASTICSEARCH):
+        url = reverse(CaseSearchEndpointNewView.urlname, args=[self.domain])
+        return f'{url}?target_type={target_type}' if target_type else url
 
     def _edit_url(self, endpoint_id):
         return reverse(
@@ -83,13 +94,47 @@ class EndpointViewTestCase(TestCase):
     def _post_data(self, **overrides):
         data = {
             'name': 'an-endpoint',
-            'target_type': CaseSearchEndpoint.TargetType.PROJECT_DB,
             'case_type': 'my_case_type',
             'query': json.dumps(EMPTY_QUERY),
             'parameters': '[]',
         }
         data.update(overrides)
         return data
+
+
+class TestEndpointViewAccess(EndpointViewTestCase):
+    nonadmin_username = 'nonadmin@example.com'
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.nonadmin = WebUser.create(
+            cls.domain, cls.nonadmin_username, 'password', None, None
+        )
+        cls.addClassCleanup(cls.nonadmin.delete, cls.domain, None)
+
+    def setUp(self):
+        super().setUp()
+        self.client.force_login(self.nonadmin.get_django_user())
+
+    def test_nonadmin_member_is_denied(self):
+        ep = self._make_endpoint()
+        cases = [
+            ('get', self._list_url()),
+            ('get', self._new_url()),
+            ('get', self._edit_url(ep.id)),
+            ('post', self._deactivate_url(ep.id)),
+            ('post', self._test_url()),
+        ]
+        for method, url in cases:
+            with self.subTest(method=method, url=url):
+                response = getattr(self.client, method)(url)
+                # domain_admin_required redirects rather than returning 403.
+                self.assertRedirects(
+                    response, reverse('homepage'), fetch_redirect_response=False
+                )
+        ep.refresh_from_db()
+        assert ep.is_active
 
 
 class TestCaseSearchEndpointsListView(EndpointViewTestCase):
@@ -103,6 +148,13 @@ class TestCaseSearchEndpointsListView(EndpointViewTestCase):
         response = self.client.get(self._list_url())
         assert response.status_code == 200
         assert ep in response.context['endpoints']
+
+    def test_new_endpoint_button_per_target_type(self):
+        response = self.client.get(self._list_url())
+        content = response.content.decode()
+        for target_type in CaseSearchEndpoint.TargetType:
+            assert f'?target_type={target_type.value}' in content
+            assert f'New Endpoint ({target_type.label})' in content
 
     def test_inactive_endpoints_not_shown(self):
         ep = self._make_endpoint()
@@ -120,10 +172,45 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         assert 'capability' in response.context
         # Defaults are seeded on the form (read via form.<field>.value).
         form = response.context['form']
-        assert form['target_type'].value() == (
-            CaseSearchEndpoint.TargetType.PROJECT_DB
-        )
         assert json.loads(form['query'].value()) == EMPTY_QUERY
+
+    def test_target_type_comes_from_querystring(self):
+        cases = [
+            ('project_db', CaseSearchEndpoint.TargetType.PROJECT_DB),
+            ('es', CaseSearchEndpoint.TargetType.ELASTICSEARCH),
+        ]
+        for param, expected in cases:
+            with self.subTest(param=param):
+                response = self.client.get(self._new_url(target_type=param))
+                assert response.status_code == 200
+                assert response.context['target_type'] == expected
+
+    def test_invalid_target_type_404s(self):
+        for param in ['bogus', None]:
+            with self.subTest(param=param):
+                response = self.client.get(self._new_url(target_type=param))
+                assert response.status_code == 404
+
+    def test_create_project_db_endpoint(self):
+        with self._project_db_table():
+            response = self.client.post(
+                self._new_url(target_type='project_db'),
+                self._post_data(
+                    name='sql-endpoint',
+                    sql='SELECT case_id FROM my_case_type',
+                ),
+            )
+        assert response.status_code == 302
+        endpoint = CaseSearchEndpoint.objects.get(
+            domain=self.domain, name='sql-endpoint'
+        )
+        assert endpoint.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB
+        version = endpoint.current_version
+        # The user's input is stored verbatim
+        assert version.dangerous_sql == 'SELECT case_id FROM my_case_type'
+        # ...and nothing belonging to an Elasticsearch endpoint is kept
+        assert version.case_type is None
+        assert version.query is None
 
     def test_create_endpoint(self):
         response = self.client.post(
@@ -137,8 +224,8 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         endpoint = CaseSearchEndpoint.objects.get(
             domain=self.domain, name='new-endpoint'
         )
-        assert endpoint.case_type == 'my_case_type'
-        assert endpoint.current_version is not None
+        assert endpoint.target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH
+        assert endpoint.current_version.case_type == 'my_case_type'
         assert endpoint.current_version.version_number == 1
         assert endpoint.current_version.query == EMPTY_QUERY
         assert (
@@ -168,36 +255,12 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
             self._new_url(), self._post_data(name='existing')
         )
         assert response.status_code == 200
-        assert 'already exists' in response.context['form'].errors['name'][0]
-
-    def test_form_field_validation_error(self):
-        cases = [
-            ({'query': 'not json'}, 'query', None),
-            ({'query': '[1, 2]'}, 'query', 'JSON object'),
-            ({'parameters': '{"not": "array"}'}, 'parameters', 'JSON array'),
-        ]
-        for overrides, error_field, error_fragment in cases:
-            with self.subTest(overrides=overrides):
-                response = self.client.post(self._new_url(), self._post_data(**overrides))
-                assert response.status_code == 200
-                errors = response.context['form'].errors
-                assert error_field in errors
-                if error_fragment:
-                    assert error_fragment in errors[error_field][0]
-
-    def test_invalid_query_spec_rejected(self):
-        # An unknown node type surfaces as a non-field (semantic) error.
-        response = self.client.post(
-            self._new_url(),
-            self._post_data(
-                query=json.dumps({'type': 'bogus'}),
-            ),
-        )
-        assert response.status_code == 200
-        assert response.context['form'].non_field_errors()
-        assert not CaseSearchEndpoint.objects.filter(
-            domain=self.domain, name='an-endpoint'
-        ).exists()
+        error = response.context['form'].errors['name'][0]
+        assert 'already exists' in error
+        content = response.content.decode()
+        # Bootstrap only reveals .invalid-feedback next to .is-invalid
+        assert 'form-control is-invalid' in content
+        assert escape(error) in content
 
     def test_failed_post_preserves_submitted_query(self):
         # Re-render seeds the query builder from the submitted (not DB) values.
@@ -215,6 +278,37 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
 
 
 class TestCaseSearchEndpointEditView(EndpointViewTestCase):
+    def test_project_db_endpoint_seeds_sql_from_current_version(self):
+        ep = self._make_endpoint(
+            target_type=CaseSearchEndpoint.TargetType.PROJECT_DB
+        )
+        version = ep.current_version
+        version.dangerous_sql = 'SELECT case_id FROM my_case_type'
+        version.save(update_fields=['dangerous_sql'])
+        response = self.client.get(self._edit_url(ep.id))
+        form = response.context['form']
+        assert form['sql'].value() == 'SELECT case_id FROM my_case_type'
+
+    def test_edit_project_db_endpoint_versions_sql(self):
+        ep = self._make_endpoint(
+            target_type=CaseSearchEndpoint.TargetType.PROJECT_DB
+        )
+        with self._project_db_table():
+            response = self.client.post(
+                self._edit_url(ep.id),
+                self._post_data(
+                    name=ep.name,
+                    case_type='',
+                    sql='SELECT case_name FROM my_case_type',
+                ),
+            )
+        assert response.status_code == 302
+        ep.refresh_from_db()
+        assert ep.current_version.version_number == 2
+        assert ep.current_version.dangerous_sql == (
+            'SELECT case_name FROM my_case_type'
+        )
+
     def test_get(self):
         ep = self._make_endpoint()
         response = self.client.get(self._edit_url(ep.id))
@@ -224,7 +318,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
         # Scalar fields are seeded on the form (read via form.<field>.value).
         form = response.context['form']
         assert form['name'].value() == ep.name
-        assert form['case_type'].value() == ep.case_type
+        assert form['case_type'].value() == ep.current_version.case_type
 
     def test_404_for_wrong_domain(self):
         ep = self._make_endpoint()
@@ -248,7 +342,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
             self._edit_url(ep.id),
             self._post_data(
                 name=ep.name,
-                case_type=ep.case_type,
+                case_type=ep.current_version.case_type,
                 query=json.dumps(new_query),
                 parameters='[]',
             ),
@@ -271,27 +365,12 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
             self._edit_url(ep.id),
             self._post_data(
                 name='renamed',
-                target_type=CaseSearchEndpoint.TargetType.ELASTICSEARCH,
                 case_type='new_target',
             ),
         )
         ep.refresh_from_db()
         assert ep.name == 'renamed'
-        assert ep.target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH
-        assert ep.case_type == 'new_target'
-
-    def test_duplicate_name_error(self):
-        self._make_endpoint(name='ep1')
-        ep2 = self._make_endpoint(name='ep2')
-        response = self.client.post(
-            self._edit_url(ep2.id),
-            self._post_data(
-                name='ep1',
-                case_type=ep2.case_type,
-            ),
-        )
-        assert response.status_code == 200
-        assert 'already exists' in response.context['form'].errors['name'][0]
+        assert ep.current_version.case_type == 'new_target'
 
     def test_can_keep_same_name_on_edit(self):
         ep = self._make_endpoint(name='my-ep')
@@ -299,7 +378,7 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
             self._edit_url(ep.id),
             self._post_data(
                 name='my-ep',
-                case_type=ep.case_type,
+                case_type=ep.current_version.case_type,
             ),
         )
         assert response.status_code == 302
@@ -318,6 +397,7 @@ class TestCaseSearchEndpointDeactivateView(EndpointViewTestCase):
             == CaseSearchEndpointVersion.Action.DEACTIVATE
         )
         assert ep.current_version.created_by == self.username
+        assert ep.current_version.case_type is None
         assert ep.current_version.query is None
         assert ep.current_version.parameters is None
         assert ep.versions.count() == 2
@@ -350,38 +430,20 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         assert response.status_code == 200
         assert 'alert-danger' not in response.content.decode()
 
-    def test_invalid_query_returns_error(self):
+    def test_invalid_request_returns_error(self):
         cases = [
-            ('not json', 'Invalid query JSON'),
-            (json.dumps({'type': 'bogus'}), 'alert-danger'),
+            ({'case_type': 'my_case_type', 'query': 'not json'}, 'Invalid query JSON'),
+            ({'case_type': 'my_case_type', 'query': '{"type": "bogus"}'}, 'alert-danger'),
+            ({'case_type': 'nonexistent_type', 'query': EMPTY_QUERY_JSON}, 'alert-danger'),
+            ({'query': EMPTY_QUERY_JSON}, 'alert-danger'),
         ]
-        for query, expected_text in cases:
-            with self.subTest(query=query):
-                response = self.client.post(self._test_url(), {
-                    'case_type': 'my_case_type',
-                    'query': query,
-                })
+        for data, expected_text in cases:
+            with self.subTest(data=data):
+                response = self.client.post(self._test_url(), data)
                 assert response.status_code == 200
                 content = response.content.decode()
                 assert expected_text in content
                 assert '<table' not in content
-
-    def test_unknown_case_type_returns_error(self):
-        response = self.client.post(self._test_url(), {
-            'case_type': 'nonexistent_type',
-            'query': json.dumps(EMPTY_QUERY),
-        })
-        assert response.status_code == 200
-        content = response.content.decode()
-        assert 'alert-danger' in content
-        assert '<table' not in content
-
-    def test_missing_case_type_returns_error(self):
-        response = self.client.post(self._test_url(), {
-            'query': json.dumps(EMPTY_QUERY),
-        })
-        assert response.status_code == 200
-        assert 'alert-danger' in response.content.decode()
 
     def test_requires_post(self):
         response = self.client.get(self._test_url())

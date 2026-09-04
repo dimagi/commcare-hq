@@ -8,13 +8,13 @@ from django.conf import settings
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
-from couchforms.geopoint import GeoPoint
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.phone.data_providers.case.livequery import (
     get_all_related_live_cases,
 )
+from couchforms.geopoint import GeoPoint
 from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
@@ -33,6 +33,11 @@ from corehq.apps.case_search.endpoint_capability import (
     FIELD_TYPE_SELECT,
     get_capability,
 )
+from corehq.apps.case_search.endpoint_query_spec import (
+    ParameterInput,
+    parse_parameter_spec,
+    parse_query_spec,
+)
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
     CaseSearchUserError,
@@ -50,8 +55,10 @@ from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     extract_search_request_config,
 )
-from corehq.apps.case_search.endpoint_query_spec import ParameterInput, parse_parameter_spec, parse_query_spec
-from corehq.apps.case_search.xpath_functions.query_functions import date_permutations, validate_date
+from corehq.apps.case_search.xpath_functions.query_functions import (
+    date_permutations,
+    validate_date,
+)
 from corehq.apps.es import HQESQuery, case_search
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters, queries
@@ -68,11 +75,14 @@ from corehq.apps.es.case_search import (
     wrap_case_search_hit,
 )
 from corehq.apps.es.profiling import ESQueryProfiler
+from corehq.apps.project_db.table_ddl import CaseTable
+from corehq.apps.project_db.user_sql import UserSQL
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.form_processor.models.cases import CommCareCase
 from corehq.util.quickcache import quickcache
 
 
@@ -136,13 +146,16 @@ def get_endpoint_results(helper, config):
     if not endpoint.is_active:
         raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
 
+    if endpoint.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB:
+        return get_project_db_results(endpoint, helper, config)
+
     parameters, errors = parse_parameter_spec(endpoint.current_version.parameters)
     query_root = None
     if not errors:
         query_root, errors = parse_query_spec(
             endpoint.current_version.query,
             parameters,
-            endpoint.case_type,
+            endpoint.current_version.case_type,
             get_capability(helper.domain)
         )
     if errors:
@@ -152,9 +165,42 @@ def get_endpoint_results(helper, config):
         raise CaseSearchUserError(_("Endpoint '{}' query is invalid").format(config.endpoint_id))
     return get_primary_case_search_endpoint_results(
         helper,
-        [endpoint.case_type],
+        [endpoint.current_version.case_type],
         config.criteria,
         query_root)
+
+
+def get_project_db_results(endpoint, helper, config):
+    user_sql = UserSQL(helper.domain, endpoint.current_version.dangerous_sql)
+    all_params = {c.key: c.value for c in config.criteria}
+    query_params = {p: all_params.get(p) or None for p in user_sql.parameters}
+    result = user_sql.run(query_params, max_rows=CASE_SEARCH_MAX_RESULTS)
+    return _rows_to_cases(result, helper.domain, config.case_types[0])
+
+
+def _rows_to_cases(result, domain, case_type):
+    table = CaseTable(domain, case_type).reflect()
+    prop_columns = [col for col in table.columns if col.name.startswith('prop__')
+                    and col.name in result.columns]
+    return [
+        CommCareCase(
+            case_id=row['case_id'],
+            domain=domain,
+            type=case_type,
+            name=row['case_name'],
+            owner_id=row['owner_id'],
+            opened_on=row['opened_on'],
+            closed_on=row['closed_on'],
+            closed=row['closed'],
+            modified_on=row['modified_on'],
+            server_modified_on=row['server_modified_on'],
+            external_id=row['external_id'],
+            # The column comment has the raw, untruncated property name
+            case_json={col.comment: str(row[col.name]) for col in prop_columns
+                       if row[col.name]},
+        ) for row in result.rows
+    ]
+
 
 @time_function()
 def get_primary_case_search_endpoint_results(helper, case_types, criteria, endpoint_query, limit=None):

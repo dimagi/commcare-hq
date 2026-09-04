@@ -247,6 +247,9 @@ SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
 
+TURNSTILE_SECRET_KEY = ''
+TURNSTILE_SITE_KEY = ''
+
 MAXMIND_ACCOUNT_ID = ''
 MAXMIND_LICENSE_KEY = ''
 
@@ -814,6 +817,13 @@ USERFLOW_TOKEN = ''
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 
+# API keys for AI app translations, per provider. Deliberately separate
+# from OPENAI_API_KEY, which is only used by the PO-file translation
+# pipeline in GitHub Actions.
+AI_TRANSLATION_API_KEYS = {
+    'openai': '',
+}
+
 # import local settings if we find them
 LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
@@ -891,12 +901,7 @@ OAUTH2_PROVIDER = {
     # https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#access-token-expire-seconds
     'ACCESS_TOKEN_EXPIRE_SECONDS': 15 * 60,
     'PKCE_REQUIRED': _pkce_required,
-    'SCOPES': {
-        'access_apis': 'Access API data on all your CommCare projects',
-        'reports:view': 'Allow users to view and download all report data',
-        'mobile_access': 'Allow access to mobile sync and submit endpoints',
-        'sync': '(Deprecated, do not use) Allow access to mobile endpoints',
-    },
+    'SCOPES_BACKEND_CLASS': 'corehq.apps.hqwebapp.oauth_scopes.HQScopes',
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
 

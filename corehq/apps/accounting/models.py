@@ -1171,6 +1171,9 @@ class DisabledManager(models.Manager):
         raise NotImplementedError
 
 
+_UNSET = object()
+
+
 class Subscription(models.Model):
     """
     Links a Subscriber to a SoftwarePlan and BillingAccount, necessary for invoicing.
@@ -1209,6 +1212,7 @@ class Subscription(models.Model):
     is_hidden_to_ops = models.BooleanField(default=False)
     skip_auto_downgrade = models.BooleanField(default=False)
     skip_auto_downgrade_reason = models.CharField(blank=True, max_length=256)
+    skip_auto_downgrade_until = models.DateField(null=True, blank=True)
     auto_renew = models.BooleanField(default=False)
 
     visible_objects = VisibleSubscriptionManager()
@@ -1275,6 +1279,13 @@ class Subscription(models.Model):
     @property
     def is_free_edition(self):
         return self.plan_version.plan.edition == SoftwarePlanEdition.FREE
+
+    @property
+    def should_skip_downgrade(self):
+        return self.skip_auto_downgrade and (
+            self.skip_auto_downgrade_until is None
+            or self.skip_auto_downgrade_until > datetime.date.today()
+        )
 
     @property
     def allowed_attr_changes(self):
@@ -1346,7 +1357,9 @@ class Subscription(models.Model):
                             web_user=None, note=None, adjustment_method=None,
                             service_type=None, pro_bono_status=None, funding_source=None,
                             skip_invoicing_if_no_feature_charges=None, skip_auto_downgrade=None,
-                            skip_auto_downgrade_reason=None, auto_renew=None):
+                            skip_auto_downgrade_reason=None,
+                            skip_auto_downgrade_until=_UNSET,
+                            auto_renew=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         self._update_dates(date_start, date_end)
@@ -1366,6 +1379,8 @@ class Subscription(models.Model):
             skip_auto_downgrade_reason=skip_auto_downgrade_reason,
             auto_renew=auto_renew,
         )
+        if skip_auto_downgrade_until is not _UNSET:
+            self.skip_auto_downgrade_until = skip_auto_downgrade_until
 
         self.save()
 
@@ -1440,6 +1455,7 @@ class Subscription(models.Model):
             skip_invoicing_if_no_feature_charges=self.skip_invoicing_if_no_feature_charges,
             skip_auto_downgrade=self.skip_auto_downgrade,
             skip_auto_downgrade_reason=self.skip_auto_downgrade_reason,
+            skip_auto_downgrade_until=self.skip_auto_downgrade_until,
             auto_renew=self.auto_renew,
             date_end=self.date_end,
         )
@@ -1453,7 +1469,8 @@ class Subscription(models.Model):
                     auto_generate_credits=False, is_trial=False,
                     do_not_email_invoice=False, do_not_email_reminder=False,
                     skip_invoicing_if_no_feature_charges=False,
-                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None, auto_renew=None):
+                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None,
+                    skip_auto_downgrade_until=None, auto_renew=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1501,6 +1518,7 @@ class Subscription(models.Model):
             funding_source=(funding_source or FundingSource.CLIENT),
             skip_auto_downgrade=skip_auto_downgrade,
             skip_auto_downgrade_reason=skip_auto_downgrade_reason or '',
+            skip_auto_downgrade_until=skip_auto_downgrade_until,
         )
         new_subscription.auto_renew = auto_renew if auto_renew is not None else new_subscription.can_auto_renew
 
@@ -2024,6 +2042,63 @@ class WirePrepaymentInvoice(WireInvoice):
     @property
     def is_prepayment(self):
         return True
+
+
+class ScheduledPrepaymentInvoiceStatus(object):
+    PENDING = 'PENDING'
+    SENT = 'SENT'
+    CANCELLED = 'CANCELLED'
+    FAILED = 'FAILED'
+    CHOICES = (
+        (PENDING, 'Pending'),
+        (SENT, 'Sent'),
+        (CANCELLED, 'Cancelled'),
+        (FAILED, 'Failed'),
+    )
+
+
+INACTIVE_SUBSCRIPTION_REASON = 'Subscription is paused or no longer active'
+
+
+class ScheduledPrepaymentInvoice(models.Model):
+    """A prepayment invoice queued for generation on a future date"""
+
+    domain = models.CharField(max_length=100, db_index=True)
+    subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
+    send_date = models.DateField(db_index=True)
+    status = models.CharField(
+        max_length=25,
+        default=ScheduledPrepaymentInvoiceStatus.PENDING,
+        choices=ScheduledPrepaymentInvoiceStatus.CHOICES,
+    )
+    created_by = models.CharField(max_length=80)
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    # data needed to generate the invoice
+    amount = models.DecimalField(max_digits=10, decimal_places=4)
+    credit_label = models.CharField(max_length=256)
+    unit_cost = models.DecimalField(max_digits=10, decimal_places=4)
+    quantity = models.IntegerField()
+    contact_emails = jsonfield.JSONField(default=list)
+    cc_emails = jsonfield.JSONField(default=list)
+    date_start = models.DateField()
+    date_end = models.DateField()
+
+    notified_accounting = models.BooleanField(default=False)
+    failure_count = models.IntegerField(default=0)
+    invoice = models.ForeignKey(
+        WireInvoice, on_delete=models.PROTECT, null=True, blank=True
+    )
+    # blank cancelled_by means the system cancelled it rather than an operator
+    cancelled_by = models.CharField(blank=True, max_length=80)
+    cancelled_reason = models.CharField(blank=True, max_length=256)
+
+    def __str__(self):
+        return (
+            f'Prepayment invoice for {self.domain} scheduled to send on '
+            f'{self.send_date} ({self.status})'
+        )
 
 
 class Invoice(InvoiceBase):
@@ -2594,9 +2669,11 @@ class BillingRecord(BillingRecordBase):
         autogenerate = (subscription.auto_generate_credits and not self.invoice.balance)
         small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD
                             and subscription.service_type == SubscriptionType.IMPLEMENTATION)
+        zero_dollar_annual = (self.invoice.balance <= 0
+                              and subscription.plan_version.plan.is_annual_plan)
         hidden = self.invoice.is_hidden
         do_not_email_invoice = self.invoice.subscription.do_not_email_invoice
-        return not (autogenerate or small_contracted or hidden or do_not_email_invoice)
+        return not (autogenerate  or small_contracted or zero_dollar_annual or hidden or do_not_email_invoice)
 
     def is_email_throttled(self):
         month = self.invoice.date_start.month
