@@ -140,6 +140,30 @@
       </div>
     </div>
 
+    {% if can_schedule_prepayment_invoice %}
+      <div class="form-group">
+        <label class="control-label col-md-2"> {% trans "Send On" %} </label>
+        <div class="col-md-10">
+          <input
+            type="text"
+            id="prepay-send-date"
+            class="date-picker form-control"
+            name="send_date"
+            data-bind="textInput: $root.scheduledSendDateInput"
+            placeholder='{% trans "YYYY-MM-DD" %}'
+          />
+          <p class="help-block">{% trans "Leave blank to send now." %}</p>
+          <div
+            class="alert alert-danger"
+            data-bind="visible: $root.scheduledSendDateInput() && !$root.isSendDateValid()"
+          >
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>{% trans "The send date must be in the future." %}</span>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
     <div class="form-group">
       <label class="control-label col-sm-2">
         {% trans 'Total Credits' %}
@@ -174,9 +198,15 @@
   {% trans "Thank you for your payment!" %}
   <!-- /ko -->
   <!-- ko if: $root.paymentMethod() === $root.WIRE -->
+  <!-- ko if: $root.confirmedSendDate() -->
+  {% trans "Scheduled. It will be generated and emailed on" %}
+  <strong data-bind="text: $root.confirmedSendDate"></strong>.
+  <!-- /ko -->
+  <!-- ko ifnot: $root.confirmedSendDate() -->
   {% blocktrans %} Thank you! You will receive an invoice via email with
   instructions for wire payment. Please include the invoice ID in the wire
   payment details. {% endblocktrans %}
+  <!-- /ko -->
   <!-- /ko -->
 </script>
 
