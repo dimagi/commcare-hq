@@ -11,6 +11,7 @@ from corehq.apps.accounting.models import (
     ScheduledPrepaymentInvoiceStatus,
     SoftwarePlanEdition,
     Subscription,
+    SubscriptionType,
     WirePrepaymentInvoice,
 )
 from corehq.apps.accounting.tasks import (
@@ -30,6 +31,21 @@ def in_days(days):
 
 
 class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.other_domain_obj = generator.arbitrary_domain()
+        cls.addClassCleanup(cls.other_domain_obj.delete)
+        cls.other_subscription = generator.generate_domain_subscription(
+            cls.account,
+            cls.other_domain_obj,
+            date_start=in_days(-30),
+            date_end=None,
+            plan_version=generator.subscribable_plan_version(cls.plan_edition),
+            service_type=SubscriptionType.PRODUCT,
+            is_active=True,
+        )
+
     def schedule(self, **overrides):
         kwargs = {
             'domain': self.domain_obj.name,
@@ -48,13 +64,22 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         kwargs.update(overrides)
         return ScheduledPrepaymentInvoice.objects.create(**kwargs)
 
+    def schedule_in_another_domain(self, **overrides):
+        return self.schedule(
+            domain=self.other_domain_obj.name,
+            subscription=self.other_subscription,
+            **overrides,
+        )
+
     def get_invoices(self):
         return WirePrepaymentInvoice.objects.filter(domain=self.domain_obj.name)
 
     def test_sends_an_invoice_due_today(self):
         scheduled = self.schedule(send_date=datetime.date.today())
 
-        generate_due_scheduled_invoices(datetime.date.today())
+        generate_due_scheduled_invoices(
+            datetime.date.today(), self.domain_obj.name
+        )
 
         scheduled.refresh_from_db()
         assert scheduled.status == ScheduledPrepaymentInvoiceStatus.SENT
@@ -67,21 +92,27 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
     def test_due_date_is_thirty_days_after_the_send_date(self):
         self.schedule(send_date=datetime.date.today())
 
-        generate_due_scheduled_invoices(datetime.date.today())
+        generate_due_scheduled_invoices(
+            datetime.date.today(), self.domain_obj.name
+        )
 
         assert self.get_invoices().get().date_due == in_days(30)
 
     def test_catches_up_on_an_overdue_request(self):
         self.schedule(send_date=in_days(-3))
 
-        generate_due_scheduled_invoices(datetime.date.today())
+        generate_due_scheduled_invoices(
+            datetime.date.today(), self.domain_obj.name
+        )
 
         assert self.get_invoices().count() == 1
 
     def test_leaves_a_future_request_alone(self):
         scheduled = self.schedule(send_date=in_days(1))
 
-        generate_due_scheduled_invoices(datetime.date.today())
+        generate_due_scheduled_invoices(
+            datetime.date.today(), self.domain_obj.name
+        )
 
         scheduled.refresh_from_db()
         assert scheduled.status == ScheduledPrepaymentInvoiceStatus.PENDING
@@ -90,8 +121,8 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
     def test_sends_only_once_when_run_twice(self):
         self.schedule(send_date=datetime.date.today())
 
-        generate_due_scheduled_invoices(datetime.date.today())
-        generate_due_scheduled_invoices(datetime.date.today())
+        generate_due_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
+        generate_due_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
         assert self.get_invoices().count() == 1
 
@@ -101,7 +132,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
             status=ScheduledPrepaymentInvoiceStatus.CANCELLED,
         )
 
-        generate_due_scheduled_invoices(datetime.date.today())
+        generate_due_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
         scheduled.refresh_from_db()
         assert scheduled.status == ScheduledPrepaymentInvoiceStatus.CANCELLED
@@ -115,7 +146,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
             'create_wire_credits_invoice',
             side_effect=Exception('boom'),
         ):
-            generate_due_scheduled_invoices(datetime.date.today())
+            generate_due_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
         scheduled.refresh_from_db()
         assert scheduled.status == ScheduledPrepaymentInvoiceStatus.PENDING
@@ -131,7 +162,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
             side_effect=Exception('boom'),
         ):
             for _ in range(3):
-                generate_due_scheduled_invoices(datetime.date.today())
+                generate_due_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
         scheduled.refresh_from_db()
         assert scheduled.status == ScheduledPrepaymentInvoiceStatus.FAILED
@@ -143,7 +174,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
             status=ScheduledPrepaymentInvoiceStatus.FAILED,
         )
 
-        generate_due_scheduled_invoices(datetime.date.today())
+        generate_due_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
         scheduled.refresh_from_db()
         assert scheduled.status == ScheduledPrepaymentInvoiceStatus.FAILED
@@ -169,11 +200,12 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
             status=ScheduledPrepaymentInvoiceStatus.PENDING,
         ).exists()
 
-    def deactivate_subscription(self):
+    def deactivate_subscription(self, subscription=None):
         # queryset update rather than mutating self.subscription: the object is
         # built in setUpClass, so an in-memory change would outlive the
         # transaction and leak into later tests
-        Subscription.visible_objects.filter(id=self.subscription.id).update(is_active=False)
+        subscription = subscription or self.subscription
+        Subscription.visible_objects.filter(id=subscription.id).update(is_active=False)
 
     def pause_subscription(self):
         paused = generator.subscribable_plan_version(SoftwarePlanEdition.PAUSED)
@@ -185,7 +217,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         scheduled = self.schedule(send_date=in_days(30))
         self.pause_subscription()
 
-        cancel_scheduled_invoices_for_inactive_subscriptions()
+        cancel_scheduled_invoices_for_inactive_subscriptions(self.domain_obj.name)
 
         scheduled.refresh_from_db()
         assert scheduled.status == ScheduledPrepaymentInvoiceStatus.CANCELLED
@@ -194,7 +226,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         scheduled = self.schedule(send_date=in_days(30))
         self.deactivate_subscription()
 
-        cancel_scheduled_invoices_for_inactive_subscriptions()
+        cancel_scheduled_invoices_for_inactive_subscriptions(self.domain_obj.name)
 
         scheduled.refresh_from_db()
         assert scheduled.status == ScheduledPrepaymentInvoiceStatus.CANCELLED
@@ -203,7 +235,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         scheduled = self.schedule(send_date=in_days(30))
         self.deactivate_subscription()
 
-        cancel_scheduled_invoices_for_inactive_subscriptions()
+        cancel_scheduled_invoices_for_inactive_subscriptions(self.domain_obj.name)
 
         scheduled.refresh_from_db()
         assert scheduled.cancelled_reason == INACTIVE_SUBSCRIPTION_REASON
@@ -213,7 +245,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
     def test_leaves_an_active_subscription_alone(self):
         scheduled = self.schedule(send_date=in_days(30))
 
-        cancel_scheduled_invoices_for_inactive_subscriptions()
+        cancel_scheduled_invoices_for_inactive_subscriptions(self.domain_obj.name)
 
         scheduled.refresh_from_db()
         assert scheduled.status == ScheduledPrepaymentInvoiceStatus.PENDING
@@ -239,7 +271,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         scheduled = self.schedule(send_date=in_days(5))
         mail.outbox = []
 
-        notify_upcoming_scheduled_invoices(datetime.date.today())
+        notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
         scheduled.refresh_from_db()
         assert scheduled.notified_accounting
@@ -250,7 +282,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         scheduled = self.schedule(send_date=in_days(6))
         mail.outbox = []
 
-        notify_upcoming_scheduled_invoices(datetime.date.today())
+        notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
         scheduled.refresh_from_db()
         assert not scheduled.notified_accounting
@@ -260,8 +292,8 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         self.schedule(send_date=in_days(5))
         mail.outbox = []
 
-        notify_upcoming_scheduled_invoices(datetime.date.today())
-        notify_upcoming_scheduled_invoices(datetime.date.today())
+        notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
+        notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
         assert len(mail.outbox) == 1
 
@@ -270,7 +302,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         self.schedule(send_date=in_days(2))
         mail.outbox = []
 
-        notify_upcoming_scheduled_invoices(datetime.date.today())
+        notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
         assert len(mail.outbox) == 1
 
@@ -281,7 +313,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         )
         mail.outbox = []
 
-        notify_upcoming_scheduled_invoices(datetime.date.today())
+        notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
         assert len(mail.outbox) == 0
 
@@ -289,9 +321,39 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         self.schedule(send_date=in_days(5))
         mail.outbox = []
 
-        notify_upcoming_scheduled_invoices(datetime.date.today())
+        notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
         body = mail.outbox[0].body
         assert '12000' in body
         assert in_days(5).isoformat() in body
         assert '12 month prepayment' in body
+
+    def test_does_not_send_a_request_in_another_domain(self):
+        other = self.schedule_in_another_domain(send_date=datetime.date.today())
+
+        generate_due_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
+
+        other.refresh_from_db()
+        assert other.status == ScheduledPrepaymentInvoiceStatus.PENDING
+        assert not WirePrepaymentInvoice.objects.filter(
+            domain=self.other_domain_obj.name
+        ).exists()
+
+    def test_does_not_notify_for_a_request_in_another_domain(self):
+        other = self.schedule_in_another_domain(send_date=in_days(5))
+        mail.outbox = []
+
+        notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
+
+        other.refresh_from_db()
+        assert not other.notified_accounting
+        assert len(mail.outbox) == 0
+
+    def test_does_not_cancel_a_request_in_another_domain(self):
+        other = self.schedule_in_another_domain(send_date=in_days(30))
+        self.deactivate_subscription(self.other_subscription)
+
+        cancel_scheduled_invoices_for_inactive_subscriptions(self.domain_obj.name)
+
+        other.refresh_from_db()
+        assert other.status == ScheduledPrepaymentInvoiceStatus.PENDING

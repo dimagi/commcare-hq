@@ -2062,16 +2062,19 @@ INACTIVE_SUBSCRIPTION_REASON = 'Subscription is paused or no longer active'
 
 class ScheduledPrepaymentInvoiceManager(models.Manager):
 
-    def pending(self):
+    def pending(self, domain):
+        return self._pending().filter(domain=domain)
+
+    def due(self, domain, today):
+        return self.pending(domain).filter(send_date__lte=today)
+
+    def pending_domains(self):
+        return set(self._pending().values_list('domain', flat=True))
+
+    def _pending(self):
         return self.get_queryset().filter(
             status=ScheduledPrepaymentInvoiceStatus.PENDING
         )
-
-    def due(self, today):
-        return self.pending().filter(send_date__lte=today)
-
-    def pending_domains(self):
-        return set(self.pending().values_list('domain', flat=True))
 
 
 class ScheduledPrepaymentInvoice(models.Model):

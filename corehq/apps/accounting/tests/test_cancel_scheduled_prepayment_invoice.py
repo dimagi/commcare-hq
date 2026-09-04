@@ -109,7 +109,9 @@ class CancelScheduledInvoiceTest(WirePrepaymentTestCase):
         scheduled = self.schedule(send_date=datetime.date.today())
         self.cancel(scheduled)
 
-        generate_due_scheduled_invoices(datetime.date.today())
+        generate_due_scheduled_invoices(
+            datetime.date.today(), self.domain_obj.name
+        )
 
         scheduled.refresh_from_db()
         assert scheduled.status == ScheduledPrepaymentInvoiceStatus.CANCELLED

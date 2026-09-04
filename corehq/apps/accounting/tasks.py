@@ -1017,18 +1017,16 @@ def process_scheduled_prepayment_invoices():
 def process_scheduled_prepayment_invoices_for_domain(domain):
     """Serial per domain to avoid redelivered invoices"""
     today = datetime.date.today()
-    cancel_scheduled_invoices_for_inactive_subscriptions(domain=domain)
-    notify_upcoming_scheduled_invoices(today, domain=domain)
-    generate_due_scheduled_invoices(today, domain=domain)
+    cancel_scheduled_invoices_for_inactive_subscriptions(domain)
+    notify_upcoming_scheduled_invoices(today, domain)
+    generate_due_scheduled_invoices(today, domain)
 
 
-def cancel_scheduled_invoices_for_inactive_subscriptions(domain=None):
+def cancel_scheduled_invoices_for_inactive_subscriptions(domain):
     """Drop scheduled invoices whose subscription has since paused or ended"""
-    pending = ScheduledPrepaymentInvoice.objects.pending().select_related(
+    pending = ScheduledPrepaymentInvoice.objects.pending(domain).select_related(
         'subscription__plan_version__plan'
     )
-    if domain is not None:
-        pending = pending.filter(domain=domain)
     for scheduled in pending:
         subscription = scheduled.subscription
         if subscription.is_active and not subscription.plan_version.is_paused:
@@ -1043,26 +1041,22 @@ def cancel_scheduled_invoices_for_inactive_subscriptions(domain=None):
         )
 
 
-def notify_upcoming_scheduled_invoices(today, domain=None):
+def notify_upcoming_scheduled_invoices(today, domain):
     """Notify accounting before a queued invoice is sent"""
     # send_date <= the notice date so a missed run still notifies
     notice_date = today + datetime.timedelta(days=PREPAY_SCHEDULE_NOTICE_DAYS)
-    upcoming = ScheduledPrepaymentInvoice.objects.pending().filter(
+    upcoming = ScheduledPrepaymentInvoice.objects.pending(domain).filter(
         send_date__lte=notice_date,
         notified_accounting=False,
     ).select_related('subscription__plan_version__plan', 'subscription__account')
-    if domain is not None:
-        upcoming = upcoming.filter(domain=domain)
     for scheduled in upcoming:
         send_scheduled_invoice_notice(scheduled)
         scheduled.notified_accounting = True
         scheduled.save()
 
 
-def generate_due_scheduled_invoices(today, domain=None):
-    due = ScheduledPrepaymentInvoice.objects.due(today)
-    if domain is not None:
-        due = due.filter(domain=domain)
+def generate_due_scheduled_invoices(today, domain):
+    due = ScheduledPrepaymentInvoice.objects.due(domain, today)
     for scheduled in due:
         _send_scheduled_prepayment_invoice(scheduled)
 
