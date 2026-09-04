@@ -345,7 +345,7 @@ var chargedCostItem = function (initData) {
         try {
             var balance = parseFloat(self.balance());
             return balance - 0.5 <= 0.0;
-        } catch (e) {
+        } catch {
             return false;
         }
     });
@@ -359,7 +359,7 @@ var chargedCostItem = function (initData) {
             var balance = parseFloat(self.balance()),
                 customAmount = parseFloat(self.customPaymentAmount());
             return balance >= customAmount && customAmount >= 0.5;
-        } catch (e) {
+        } catch {
             return false;
         }
     });
@@ -374,7 +374,7 @@ var chargedCostItem = function (initData) {
                 maxPartial = parseFloat(self.maxPartialAmount()),
                 customAmount = parseFloat(self.customPaymentAmount());
             return customAmount === balance || customAmount <= maxPartial;
-        } catch (e) {
+        } catch {
             return false;
         }
     });
