@@ -144,9 +144,12 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         assert scheduled.status == ScheduledPrepaymentInvoiceStatus.FAILED
         assert not self.get_invoices().exists()
 
-    def test_lists_a_domain_once_however_many_are_pending(self):
+    def test_lists_only_domains_with_pending_requests(self):
         self.schedule(send_date=datetime.date.today())
-        self.schedule(send_date=in_days(-1))
+        self.schedule_in_another_domain(
+            send_date=datetime.date.today(),
+            status=ScheduledPrepaymentInvoiceStatus.CANCELLED,
+        )
 
         assert ScheduledPrepaymentInvoice.objects.pending_domains() == {
             self.domain_obj.name
@@ -181,14 +184,6 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
 
         scheduled.refresh_from_db()
         assert scheduled.status == ScheduledPrepaymentInvoiceStatus.CANCELLED
-
-    def test_records_why_the_system_cancelled_it(self):
-        scheduled = self.schedule(send_date=in_days(30))
-        self.deactivate_subscription()
-
-        cancel_scheduled_invoices_for_inactive_subscriptions(self.domain_obj.name)
-
-        scheduled.refresh_from_db()
         assert scheduled.cancelled_reason == INACTIVE_SUBSCRIPTION_REASON
         # blank cancelled_by is what marks this as the system, not an operator
         assert scheduled.cancelled_by == ''
