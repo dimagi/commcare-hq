@@ -1785,7 +1785,7 @@ class Subscription(models.Model):
         )
         if date_end is not None:
             future_subscription_no_end = future_subscription_no_end.filter(date_start__lt=date_end)
-        if future_subscription_no_end.count() > 0:
+        if future_subscription_no_end.exists():
             raise NewSubscriptionError(_(
                 "There is already a subscription '%s' with no end date "
                 "that conflicts with the start and end dates of this "
@@ -1798,7 +1798,7 @@ class Subscription(models.Model):
         )
         if date_end is not None:
             future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
-        if future_subscriptions.count() > 0:
+        if future_subscriptions.exists():
             raise NewSubscriptionError(str(
                 _(
                     "There is already a subscription '%(sub)s' that has an end date "
