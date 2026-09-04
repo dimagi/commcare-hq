@@ -130,7 +130,7 @@
          <p
            class="form-control-text"
            data-bind="text: ('$ ' + invoice_amount())"
-@@ -216,8 +216,8 @@
+@@ -219,8 +219,8 @@
        <div class="modal-header">
          <button
            type="button"
@@ -141,7 +141,7 @@
            aria-label="Close"
          >
            <span aria-hidden="true">&times;</span>
-@@ -270,11 +270,11 @@
+@@ -274,11 +274,11 @@
                  >
                {% endblocktrans %}
              </p>
@@ -156,7 +156,7 @@
                  <input
                    type="text"
                    data-bind="value: wireEmail"
-@@ -286,11 +286,11 @@
+@@ -290,11 +290,11 @@
                </div>
              </div>
  
@@ -171,7 +171,7 @@
                  <input
                    type="text"
                    data-bind="value: wireAdditionalEmails"
-@@ -336,8 +336,8 @@
+@@ -340,8 +340,8 @@
            <button
              type="button"
              data-bind="visible: paymentIsNotComplete"
@@ -182,7 +182,7 @@
            >
              {% trans "Cancel" %}
            </button>
-@@ -358,15 +358,15 @@
+@@ -362,15 +362,15 @@
              data-bind="text: submitBtnText"
              disabled="disabled"
            ></button>
