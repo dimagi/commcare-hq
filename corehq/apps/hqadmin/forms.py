@@ -10,13 +10,14 @@ from django.db.models import Q
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
+from corehq.apps.hqadmin.utils import privileged_users_query
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import FieldWithHelpBubble, FormActions
 from corehq.apps.users.util import is_dimagi_email
 
 from email.utils import parseaddr
 
-from corehq.toggles import ALL_TAGS, IS_CONTRACTOR
+from corehq.toggles import ALL_TAGS
 
 
 class EmailForm(forms.Form):
@@ -152,9 +153,10 @@ class OffboardingUserListForm(forms.Form):
 def clean_data(cleaned_data, offboarding_list=False):
     EMAIL_INDEX = 1
     csv_email_list = cleaned_data.get('csv_email_list', '')
-    all_users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)
-                                    | (Q(is_active=True) & Q(username__endswith='@dimagi.com'))
-                                    | Q(username__in=IS_CONTRACTOR.get_enabled_users()))
+    all_users = User.objects.filter(
+        privileged_users_query(include_contractor=True, include_accounting_admin=True)
+        | (Q(is_active=True) & Q(username__endswith='@dimagi.com'))
+    )
     if offboarding_list and not csv_email_list:
         cleaned_data['csv_email_list'] = all_users
         return cleaned_data
