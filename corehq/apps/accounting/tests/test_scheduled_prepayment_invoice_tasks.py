@@ -213,7 +213,6 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
 
     def test_notifies_accounting_five_days_ahead(self):
         scheduled = self.schedule(send_date=in_days(5))
-        mail.outbox = []
 
         notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
@@ -227,7 +226,6 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
 
     def test_does_not_notify_six_days_ahead(self):
         scheduled = self.schedule(send_date=in_days(6))
-        mail.outbox = []
 
         notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
@@ -237,7 +235,6 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
 
     def test_notifies_only_once(self):
         self.schedule(send_date=in_days(5))
-        mail.outbox = []
 
         notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
         notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
@@ -247,7 +244,6 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
     def test_notifies_a_request_that_slipped_past_the_notice_window(self):
         # a missed run should still notify
         self.schedule(send_date=in_days(2))
-        mail.outbox = []
 
         notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
@@ -258,7 +254,6 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
             send_date=in_days(5),
             status=ScheduledPrepaymentInvoiceStatus.CANCELLED,
         )
-        mail.outbox = []
 
         notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
@@ -266,7 +261,6 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
 
     def test_the_notice_names_the_amount_and_date(self):
         self.schedule(send_date=in_days(5))
-        mail.outbox = []
 
         notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
@@ -288,7 +282,6 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
 
     def test_does_not_notify_for_a_request_in_another_domain(self):
         other = self.schedule_in_another_domain(send_date=in_days(5))
-        mail.outbox = []
 
         notify_upcoming_scheduled_invoices(datetime.date.today(), self.domain_obj.name)
 
