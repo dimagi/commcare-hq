@@ -22,7 +22,7 @@
      <div class="container-fluid">
 +      <div class="navbar-header hq-header">
 +        <a
-+          href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}"
++          href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% elif request.user.is_authenticated %}{% url "homepage" %}{% else %}{% prelogin_url "home" %}{% endif %}"
 +          class="navbar-brand"
 +        >
 +          {% if CUSTOM_LOGO_URL %}
