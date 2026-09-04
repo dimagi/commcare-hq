@@ -36,7 +36,6 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
-from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
@@ -861,6 +860,13 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         return super(CreditsWireInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        # Scheduling is for accounting admins, not a project's billing admins.
+        # This check goes away with this view, once prepayment invoices are
+        # generated only from the accounting admin UI.
+        if (request.POST.get('send_date')
+                and not has_privilege(request, privileges.ACCOUNTING_ADMIN)):
+            raise Http404()
+
         form = WirePrepaymentForm(request.POST)
         if not form.is_valid():
             return json_response({'error': {'message': form.get_error_message()}})
@@ -874,20 +880,6 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         if scheduled is not None:
             response['send_date'] = scheduled.send_date.isoformat()
         return json_response(response)
-
-
-class SchedulePrepaymentInvoiceView(CreditsWireInvoiceView):
-    """Queues a prepayment invoice for generation on a future date.
-
-    The form decides between generating and scheduling, so this posts the same
-    data to the same effect as its parent.
-    """
-    urlname = 'domain_schedule_prepayment_invoice'
-
-    @method_decorator(login_and_domain_required)
-    @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
-    def dispatch(self, request, *args, **kwargs):
-        return super(SchedulePrepaymentInvoiceView, self).dispatch(request, *args, **kwargs)
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):

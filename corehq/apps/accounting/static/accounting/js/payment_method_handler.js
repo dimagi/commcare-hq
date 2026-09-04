@@ -149,7 +149,7 @@ var paymentMethodHandler = function (formId, opts) {
     self.submitURL = self.submitURL || ko.computed(function () {
         var url = opts.credit_card_url;
         if (self.paymentMethod() === self.WIRE) {
-            url = self.isScheduling() ? opts.schedule_url : opts.wire_url;
+            url = opts.wire_url;
         }
         return url;
     });
