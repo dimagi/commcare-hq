@@ -26,7 +26,7 @@ from sqlglot.errors import SqlglotError
 
 from corehq.apps.project_db.table_ddl import (
     get_domain_tables,
-    get_project_db_engine,
+    get_domain_query_engine,
 )
 
 
@@ -91,7 +91,7 @@ class UserSQL:
 
     def run(self, parameter_values, max_rows):
         params = self._clean_parameters(parameter_values)
-        with get_project_db_engine().connect() as conn:
+        with get_domain_query_engine(self.domain).connect() as conn:
             start = time.perf_counter()
             result = conn.execute(self.query, params)
             rows = result.fetchmany(max_rows)

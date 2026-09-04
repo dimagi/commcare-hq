@@ -1,16 +1,24 @@
 import hashlib
+from functools import lru_cache
+from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.crypto import salted_hmac
 
 import sqlalchemy
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
+from psycopg2 import errorcodes
 from sqlalchemy import ARRAY, Boolean, Column, Date, DateTime, Numeric, Table, Text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.types import UserDefinedType
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
-from corehq.sql_db.connections import PROJECT_DB_ENGINE_ID, connection_manager
+from corehq.sql_db.connections import (
+    PROJECT_DB_ENGINE_ID,
+    connection_manager,
+    create_engine,
+)
 
 MAX_IDENTIFIER_LENGTH = 63
 _HASH_LENGTH = 8
@@ -35,27 +43,40 @@ def property_column(name, data_type=None):
 
 def get_project_db_engine():
     """Return a SQLAlchemy engine for project DB tables"""
-    if not connection_manager.engine_id_is_available(PROJECT_DB_ENGINE_ID):
-        raise ImproperlyConfigured(
-            f"'{PROJECT_DB_ENGINE_ID}' database not defined in REPORTING_DATABASES"
-        )
+    _assert_project_db_configured()
     engine = connection_manager.get_engine(PROJECT_DB_ENGINE_ID)
     _register_earth_type(engine.dialect)
     return engine
 
 
-def create_project_db_extensions():
-    """Create the Postgres extensions project DB depends on, if absent."""
-    # Production envs install extensions via commcare-cloud
+@lru_cache(maxsize=64)
+def get_domain_query_engine(domain):
+    """Return an engine that connects as the domain's read-only role"""
+    _assert_project_db_configured()
+    schema = DomainSchema(domain)
+    engine = create_engine(
+        connection_manager.get_connection_string(PROJECT_DB_ENGINE_ID),
+        connect_args={'user': schema.role_name, 'password': schema._get_password()},
+    )
+    _register_earth_type(engine.dialect)
+    return engine
+
+
+def _assert_project_db_configured():
+    if not connection_manager.engine_id_is_available(PROJECT_DB_ENGINE_ID):
+        raise ImproperlyConfigured(
+            f"'{PROJECT_DB_ENGINE_ID}' database not defined in REPORTING_DATABASES"
+        )
+
+
+SETUP_SQL_PATH = Path(__file__).parent / 'project_db_setup.sql'
+
+
+def setup_project_db():
+    """Apply project_db_setup.sql, which production applies via commcare-cloud"""
     engine = get_project_db_engine()
     with engine.begin() as conn:
-        for ext in [
-            'cube',  # Provides `cube` type needed by earthdistance
-            'earthdistance',  # `earth` column type and associated geopoint distance calculations
-            'pg_trgm',  # trigram-based similarity() function for fuzzy search
-            'fuzzystrmatch',  # phonetic match dmetaphone() function, also soundex and levenshtein
-        ]:
-            conn.execute(sqlalchemy.text(f'CREATE EXTENSION IF NOT EXISTS {ext}'))
+        conn.execute(sqlalchemy.text(SETUP_SQL_PATH.read_text()))
 
 
 class DomainSchema:
@@ -80,6 +101,38 @@ class DomainSchema:
             sqlalchemy.text(f'COMMENT ON SCHEMA {self._quoted_name} IS :comment'),
             {'comment': self.domain},
         )
+        self._create_role(conn)
+
+    role_name = name
+    _quoted_role_name = _quoted_name
+
+    def _create_role(self, conn):
+        try:
+            with conn.begin_nested():
+                conn.execute(
+                    sqlalchemy.text('SELECT public.projectdb_provision_role(:name, :password)'),
+                    {'name': self.role_name, 'password': self._get_password()},
+                )
+        except sqlalchemy.exc.ProgrammingError as err:
+            if err.orig.pgcode != errorcodes.DUPLICATE_OBJECT:
+                raise
+
+    def grant_role_read_access(self, conn):
+        # Must be reapplied after every new table is added
+        conn.execute(sqlalchemy.text(
+            f'GRANT USAGE ON SCHEMA {self._quoted_name} TO {self._quoted_role_name}'
+        ))
+        conn.execute(sqlalchemy.text(
+            f'GRANT SELECT ON ALL TABLES IN SCHEMA {self._quoted_name} '
+            f'TO {self._quoted_role_name}'
+        ))
+
+    def _get_password(self):
+        return salted_hmac(
+            key_salt='corehq.apps.project_db.role_password',
+            value=self.domain,
+            algorithm='sha256',
+        ).hexdigest()
 
     def get_comment(self, conn):
         """Return the raw domain stored as this schema's Postgres comment"""
@@ -94,10 +147,14 @@ class DomainSchema:
     def set_local_search_path(self, conn):
         """Scope the connection's search_path to a domain's project DB schema"""
         conn.execute(sqlalchemy.text(
-            f'SET LOCAL search_path TO {self._quoted_name}'
+            f'SET LOCAL search_path TO {self._quoted_name}, public'
         ))
 
     def drop(self, conn):
+        conn.execute(
+            sqlalchemy.text('SELECT public.projectdb_drop_role(:name)'),
+            {'name': self.role_name},
+        )
         conn.execute(sqlalchemy.text(
             f'DROP SCHEMA IF EXISTS {self._quoted_name} CASCADE'
         ))
@@ -211,10 +268,12 @@ def create_or_update_project_db(domain):
 
     engine = get_project_db_engine()
     with engine.begin() as conn:
-        DomainSchema(domain).create(conn)
+        schema = DomainSchema(domain)
+        schema.create(conn)
         metadata.create_all(bind=conn, checkfirst=True)
         for table in case_tables:
             update_table(conn, table)
+        schema.grant_role_read_access(conn)
 
 
 def get_domain_tables(domain):
