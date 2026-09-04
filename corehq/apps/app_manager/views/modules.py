@@ -500,7 +500,7 @@ def _case_list_form_options(app, module, lang=None):
         'is_registration_form': True,
     } for f in reg_forms})
     if (hasattr(module, 'parent_select')  # AdvancedModule doesn't have parent_select
-            and toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM
+            and toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain)
             and module.parent_select.active):
         followup_forms = get_parent_select_followup_forms(app, module)
         if followup_forms:
@@ -531,13 +531,17 @@ def _form_endpoint_options(app, module, lang=None):
 
 
 def get_parent_select_followup_forms(app, module):
+    """
+    Forms that update the parent case type and can be offered as the
+    case list form of a module using "Select Parent First". Empty if the
+    parent module no longer exists.
+    """
     if not module.parent_select.active or not module.parent_select.module_id:
         return []
-    parent_module = app.get_module_by_unique_id(
-        module.parent_select.module_id,
-        error=_("Case list used by Select Parent First in '{}' not found").format(
-            module.default_name()),
-    )
+    try:
+        parent_module = app.get_module_by_unique_id(module.parent_select.module_id)
+    except ModuleNotFoundException:
+        return []
     parent_case_type = parent_module.case_type
     rel = module.parent_select.relationship
     if (rel == 'parent' and parent_case_type != module.case_type) or rel is None:
