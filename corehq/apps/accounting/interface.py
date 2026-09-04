@@ -1292,9 +1292,8 @@ class ScheduledInvoiceInterface(GenericTabularReport):
                     columns.append('')
             return columns
 
-        return list(map(_scheduled_to_row, self._scheduled_invoices))
+        return list(map(_scheduled_to_row, self._scheduled_invoices()))
 
-    @property
     def _scheduled_invoices(self):
         queryset = ScheduledPrepaymentInvoice.objects.select_related(
             'subscription__account'

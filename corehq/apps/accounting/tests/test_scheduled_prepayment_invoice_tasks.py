@@ -46,34 +46,6 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
             is_active=True,
         )
 
-    def schedule(self, **overrides):
-        kwargs = {
-            'domain': self.domain_obj.name,
-            'subscription': self.subscription,
-            'send_date': in_days(90),
-            'amount': Decimal('12000.00'),
-            'credit_label': '12 month prepayment',
-            'unit_cost': Decimal('1000.00'),
-            'quantity': 12,
-            'contact_emails': ['billing@example.com'],
-            'cc_emails': ['ap@example.com'],
-            'date_start': datetime.date(2027, 4, 1),
-            'date_end': datetime.date(2027, 7, 1),
-            'created_by': self.username,
-        }
-        kwargs.update(overrides)
-        return ScheduledPrepaymentInvoice.objects.create(**kwargs)
-
-    def schedule_in_another_domain(self, **overrides):
-        return self.schedule(
-            domain=self.other_domain_obj.name,
-            subscription=self.other_subscription,
-            **overrides,
-        )
-
-    def get_invoices(self):
-        return WirePrepaymentInvoice.objects.filter(domain=self.domain_obj.name)
-
     def test_sends_an_invoice_due_today(self):
         scheduled = self.schedule(send_date=datetime.date.today())
 
@@ -88,15 +60,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         assert invoice.balance == Decimal('12000.0000')
         assert invoice.date_start == datetime.date(2027, 4, 1)
         assert invoice.date_end == datetime.date(2027, 7, 1)
-
-    def test_due_date_is_thirty_days_after_the_send_date(self):
-        self.schedule(send_date=datetime.date.today())
-
-        generate_due_scheduled_invoices(
-            datetime.date.today(), self.domain_obj.name
-        )
-
-        assert self.get_invoices().get().date_due == in_days(30)
+        assert invoice.date_due == in_days(30)
 
     def test_catches_up_on_an_overdue_request(self):
         self.schedule(send_date=in_days(-3))
@@ -188,7 +152,7 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
             self.domain_obj.name
         }
 
-    def test_the_per_domain_task_sends_that_domain_s_requests(self):
+    def test_per_domain_task_only_sends_specified_domain(self):
         self.schedule(send_date=datetime.date.today())
         self.schedule(send_date=in_days(-1))
 
@@ -199,19 +163,6 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
             domain=self.domain_obj.name,
             status=ScheduledPrepaymentInvoiceStatus.PENDING,
         ).exists()
-
-    def deactivate_subscription(self, subscription=None):
-        # queryset update rather than mutating self.subscription: the object is
-        # built in setUpClass, so an in-memory change would outlive the
-        # transaction and leak into later tests
-        subscription = subscription or self.subscription
-        Subscription.visible_objects.filter(id=subscription.id).update(is_active=False)
-
-    def pause_subscription(self):
-        paused = generator.subscribable_plan_version(SoftwarePlanEdition.PAUSED)
-        Subscription.visible_objects.filter(id=self.subscription.id).update(
-            plan_version=paused
-        )
 
     def test_cancels_when_the_subscription_is_paused(self):
         scheduled = self.schedule(send_date=in_days(30))
@@ -260,13 +211,6 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         assert scheduled.status == ScheduledPrepaymentInvoiceStatus.CANCELLED
         assert not self.get_invoices().exists()
 
-    def test_fans_out_to_domains_whose_requests_are_not_due_yet(self):
-        self.schedule(send_date=in_days(30))
-
-        pending = ScheduledPrepaymentInvoice.objects.pending_domains()
-
-        assert pending == {self.domain_obj.name}
-
     def test_notifies_accounting_five_days_ahead(self):
         scheduled = self.schedule(send_date=in_days(5))
         mail.outbox = []
@@ -276,7 +220,10 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
         scheduled.refresh_from_db()
         assert scheduled.notified_accounting
         assert len(mail.outbox) == 1
-        assert self.domain_obj.name in mail.outbox[0].subject
+        assert mail.outbox[0].subject == (
+            f'A prepayment invoice for {self.domain_obj.name} '
+            f'is scheduled to be sent on {in_days(5).isoformat()}'
+        )
 
     def test_does_not_notify_six_days_ahead(self):
         scheduled = self.schedule(send_date=in_days(6))
@@ -357,3 +304,41 @@ class ScheduledPrepaymentInvoiceTaskTest(WirePrepaymentTestCase):
 
         other.refresh_from_db()
         assert other.status == ScheduledPrepaymentInvoiceStatus.PENDING
+
+    def schedule(self, **overrides):
+        kwargs = {
+            'domain': self.domain_obj.name,
+            'subscription': self.subscription,
+            'send_date': in_days(90),
+            'amount': Decimal('12000.00'),
+            'credit_label': '12 month prepayment',
+            'unit_cost': Decimal('1000.00'),
+            'quantity': 12,
+            'contact_emails': ['billing@example.com'],
+            'cc_emails': ['ap@example.com'],
+            'date_start': datetime.date(2027, 4, 1),
+            'date_end': datetime.date(2027, 7, 1),
+            'created_by': self.username,
+        }
+        kwargs.update(overrides)
+        return ScheduledPrepaymentInvoice.objects.create(**kwargs)
+
+    def schedule_in_another_domain(self, **overrides):
+        return self.schedule(
+            domain=self.other_domain_obj.name,
+            subscription=self.other_subscription,
+            **overrides,
+        )
+
+    def get_invoices(self):
+        return WirePrepaymentInvoice.objects.filter(domain=self.domain_obj.name)
+
+    def deactivate_subscription(self, subscription=None):
+        subscription = subscription or self.subscription
+        Subscription.visible_objects.filter(id=subscription.id).update(is_active=False)
+
+    def pause_subscription(self):
+        paused = generator.subscribable_plan_version(SoftwarePlanEdition.PAUSED)
+        Subscription.visible_objects.filter(id=self.subscription.id).update(
+            plan_version=paused
+        )

@@ -712,11 +712,6 @@ class SoftwarePlanVersionView(AccountingSectionView):
 
 
 class CancelScheduledInvoiceView(AccountingSectionView):
-    """Confirm and cancel a queued prepayment invoice.
-
-    A confirmation step rather than an inline button: cancelling is the only
-    way to stop an invoice reaching a customer, and it cannot be undone.
-    """
     urlname = 'accounting_cancel_scheduled_invoice'
     page_title = "Cancel Scheduled Invoice"
     template_name = 'accounting/cancel_scheduled_invoice.html'
