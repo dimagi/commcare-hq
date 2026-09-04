@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,18 +1,17 @@
+@@ -1,18 +1,19 @@
 -{% extends "hqwebapp/bootstrap3/base_page.html" %}
 +{% extends "hqwebapp/bootstrap5/base_page.html" %}
  {% load i18n %}
@@ -12,6 +12,8 @@
  
  {% block title %}{% trans "Log In :: CommCare HQ" %}{% endblock title %}
  
++{% block body_class %}prelogin{% endblock body_class %}
++
  {% block background_content %}
    <div class="bg-container">
 -    <div class="bg-full-cover-fixed bg-registration"></div>
@@ -22,7 +24,7 @@
  
  {% block stylesheets %}
    <link type="text/css"
-@@ -21,10 +20,10 @@
+@@ -21,10 +22,10 @@
          href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
  
    {% compress css %}
@@ -35,7 +37,7 @@
    {% endcompress %}
  {% endblock stylesheets %}
  
-@@ -34,11 +33,13 @@
+@@ -34,11 +35,13 @@
    {% registerurl 'check_sso_login_status' %}
    {% registerurl 'iframe_sso_login_pending' %}
    {% block login-content %}

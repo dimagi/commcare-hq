@@ -66,3 +66,49 @@ ul.form-step-progress {
     }
   }
 }
+
+$prelogin-step-circle: 28px;
+
+.prelogin ul.form-step-progress {
+  background: transparent;
+  overflow: visible;
+  padding: 44px 0 10px;
+
+  li {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: $font-weight-bold;
+    font-size: 0.66rem;
+    letter-spacing: 0.05em;
+
+    &:after {
+      width: $prelogin-step-circle;
+      line-height: $prelogin-step-circle - 2px;
+      border-radius: 50%;
+      font-size: 0.8125rem;
+      background: rgba(255, 255, 255, 0.14);
+      color: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      top: -36px;
+      margin-left: $prelogin-step-circle * -0.5;
+    }
+
+    &:before {
+      top: -22px;
+      background: rgba(255, 255, 255, 0.35);
+    }
+  }
+
+  li.active {
+    color: white;
+
+    &:after {
+      background: white;
+      color: $prelogin-deep-blue;
+      border-color: white;
+    }
+
+    &:before {
+      background: white;
+    }
+  }
+}

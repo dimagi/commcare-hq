@@ -5,6 +5,8 @@
 {% load hq_shared_tags %}
 {% js_entry "hqwebapp/js/oauth_authorize" %}
 
+{% block body_class %}prelogin{% endblock body_class %}
+
 {% block stylesheets %}
   {% compress css %}
     <link
