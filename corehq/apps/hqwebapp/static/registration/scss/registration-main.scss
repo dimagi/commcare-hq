@@ -298,3 +298,46 @@ p.sso-message-block {
     text-align: left;
   }
 }
+
+.prelogin {
+  .form-bubble {
+    .btn-primary {
+      --#{$prefix}btn-bg: #{$prelogin-action-blue};
+      --#{$prefix}btn-border-color: #{$prelogin-action-blue};
+      --#{$prefix}btn-hover-bg: #{$prelogin-action-blue-hover};
+      --#{$prefix}btn-hover-border-color: #{$prelogin-action-blue-hover};
+      --#{$prefix}btn-active-bg: #{$prelogin-action-blue-active};
+      --#{$prefix}btn-active-border-color: #{$prelogin-action-blue-active};
+      --#{$prefix}btn-disabled-bg: #{$prelogin-action-blue};
+      --#{$prefix}btn-disabled-border-color: #{$prelogin-action-blue};
+    }
+
+    .btn-outline-primary {
+      --#{$prefix}btn-color: #{$prelogin-action-blue};
+      --#{$prefix}btn-border-color: #{$prelogin-action-blue};
+      --#{$prefix}btn-hover-bg: #{$prelogin-action-blue};
+      --#{$prefix}btn-hover-border-color: #{$prelogin-action-blue};
+      --#{$prefix}btn-active-bg: #{$prelogin-action-blue-active};
+      --#{$prefix}btn-active-border-color: #{$prelogin-action-blue-active};
+    }
+
+    a:not(.btn) {
+      color: $prelogin-action-blue;
+    }
+  }
+
+  .form-control::placeholder {
+    color: $gray-600;
+  }
+
+  .form-step-number {
+    color: $prelogin-muted-text;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  .form-control:focus-visible {
+    outline: 2px solid $prelogin-action-blue;
+    outline-offset: 2px;
+  }
+}
