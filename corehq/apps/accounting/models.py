@@ -1758,41 +1758,7 @@ class Subscription(models.Model):
         today = datetime.date.today()
         date_start = date_start or today
 
-        # find subscriptions that end in the future / after this subscription
-        available_subs = Subscription.visible_objects.filter(
-            subscriber=subscriber,
-        )
-
-        future_subscription_no_end = available_subs.filter(
-            date_end__exact=None,
-        )
-        if date_end is not None:
-            future_subscription_no_end = future_subscription_no_end.filter(date_start__lt=date_end)
-        if future_subscription_no_end.exists():
-            raise NewSubscriptionError(_(
-                "There is already a subscription '%s' with no end date "
-                "that conflicts with the start and end dates of this "
-                "subscription.") %
-                future_subscription_no_end.latest('date_created')
-            )
-
-        future_subscriptions = available_subs.filter(
-            date_end__gt=date_start
-        )
-        if date_end is not None:
-            future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
-        if future_subscriptions.exists():
-            raise NewSubscriptionError(str(
-                _(
-                    "There is already a subscription '%(sub)s' that has an end date "
-                    "that conflicts with the start and end dates of this "
-                    "subscription %(start)s - %(end)s."
-                ) % {
-                    'sub': future_subscriptions.latest('date_created'),
-                    'start': date_start,
-                    'end': date_end
-                }
-            ))
+        cls._raise_if_subscription_dates_conflict(subscriber, date_start, date_end)
 
         can_reactivate, last_subscription = cls.can_reactivate_domain_subscription(
             account, domain, plan_version, date_start=date_start
@@ -1852,6 +1818,43 @@ class Subscription(models.Model):
                     'Both or neither must be customer-level.'
                 )
 
+    @classmethod
+    def _raise_if_subscription_dates_conflict(cls, subscriber, date_start, date_end):
+        # find subscriptions that end in the future / after this subscription
+        available_subs = Subscription.visible_objects.filter(
+            subscriber=subscriber,
+        )
+
+        future_subscription_no_end = available_subs.filter(
+            date_end__exact=None,
+        )
+        if date_end is not None:
+            future_subscription_no_end = future_subscription_no_end.filter(date_start__lt=date_end)
+        if future_subscription_no_end.exists():
+            raise NewSubscriptionError(_(
+                "There is already a subscription '%s' with no end date "
+                "that conflicts with the start and end dates of this "
+                "subscription.") %
+                future_subscription_no_end.latest('date_created')
+            )
+
+        future_subscriptions = available_subs.filter(
+            date_end__gt=date_start
+        )
+        if date_end is not None:
+            future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
+        if future_subscriptions.exists():
+            raise NewSubscriptionError(str(
+                _(
+                    "There is already a subscription '%(sub)s' that has an end date "
+                    "that conflicts with the start and end dates of this "
+                    "subscription %(start)s - %(end)s."
+                ) % {
+                    'sub': future_subscriptions.latest('date_created'),
+                    'start': date_start,
+                    'end': date_end
+                }
+            ))
 
     @classmethod
     def can_reactivate_domain_subscription(cls, account, domain, plan_version,
