@@ -332,6 +332,95 @@ p.sso-message-block {
 
   .form-step-number {
     color: $prelogin-muted-text;
+    font-size: 0.75rem;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .btn-purple {
+    --#{$prefix}btn-color: #{$prelogin-deep-blue};
+    --#{$prefix}btn-bg: #fff;
+    --#{$prefix}btn-border-color: #fff;
+    --#{$prefix}btn-hover-color: #{$prelogin-deep-blue};
+    --#{$prefix}btn-hover-bg: #{$prelogin-action-blue-tint};
+    --#{$prefix}btn-hover-border-color: #{$prelogin-action-blue-tint};
+    --#{$prefix}btn-active-color: #{$prelogin-deep-blue};
+    --#{$prefix}btn-active-bg: #{$prelogin-action-blue-tint};
+    --#{$prefix}btn-active-border-color: #{$prelogin-action-blue-tint};
+    --#{$prefix}btn-disabled-color: #{$prelogin-deep-blue};
+    --#{$prefix}btn-disabled-bg: #fff;
+    --#{$prefix}btn-disabled-border-color: #fff;
+    --#{$prefix}btn-focus-shadow-rgb: #{to-rgb($prelogin-deep-blue)};
+    font-weight: $font-weight-semibold;
+
+    &,
+    &:link,
+    &:visited {
+      color: var(--#{$prefix}btn-color);
+      background-color: var(--#{$prefix}btn-bg);
+      border-color: var(--#{$prefix}btn-border-color);
+    }
+
+    &:hover {
+      color: var(--#{$prefix}btn-hover-color);
+      background-color: var(--#{$prefix}btn-hover-bg);
+      border-color: var(--#{$prefix}btn-hover-border-color);
+    }
+
+    &:active,
+    &:focus-visible {
+      color: var(--#{$prefix}btn-active-color);
+      background-color: var(--#{$prefix}btn-active-bg);
+      border-color: var(--#{$prefix}btn-active-border-color);
+    }
+  }
+
+  .form-bubble-purple {
+    background-color: $prelogin-action-blue;
+    color: white;
+
+    h2,
+    .lead {
+      color: white;
+    }
+
+    a:not(.btn) {
+      color: white;
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline-color: white;
+    }
+  }
+
+  .form-bubble .alert-warning {
+    background: $prelogin-warning-bg;
+    border-color: $prelogin-warning-border;
+    color: $prelogin-warning-text;
+    border-radius: 8px;
+  }
+
+  .cloud-choice {
+    --#{$prefix}btn-bg: #fff;
+    --#{$prefix}btn-border-color: #{$prelogin-card-border};
+    --#{$prefix}btn-border-width: 1.5px;
+    --#{$prefix}btn-hover-bg: #fff;
+    --#{$prefix}btn-hover-border-color: #{$prelogin-action-blue};
+    --#{$prefix}btn-active-bg: #{$prelogin-action-blue-tint};
+    --#{$prefix}btn-active-border-color: #{$prelogin-action-blue};
+    border-radius: 10px;
+
+    &.selected {
+      --#{$prefix}btn-bg: #{$prelogin-action-blue-tint};
+      --#{$prefix}btn-border-color: #{$prelogin-action-blue};
+
+      div {
+        color: $prelogin-deep-blue;
+        font-weight: $font-weight-bold;
+      }
+    }
   }
 
   a:focus-visible,

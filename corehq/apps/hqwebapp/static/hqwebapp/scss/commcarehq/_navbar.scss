@@ -159,3 +159,37 @@
     min-height: $navbar-footer-height* 4;
   }
 }
+.prelogin {
+  .navbar-hq-main-menu {
+    background: $prelogin-action-blue !important;
+    border: 0;
+
+    .navbar-brand > div {
+      background-image: url(/static/hqwebapp/images/commcare-by-dimagi-white.png);
+      background-size: contain;
+      background-repeat: no-repeat;
+      width: 140px;
+      height: 34px;
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline-color: white;
+    }
+  }
+
+  .navbar-signin {
+    .dropdown-toggle.btn-outline-primary,
+    .btn-primary {
+      --#{$prefix}btn-color: #fff;
+      --#{$prefix}btn-bg: transparent;
+      --#{$prefix}btn-border-color: rgba(255, 255, 255, 0.7);
+      --#{$prefix}btn-hover-color: #fff;
+      --#{$prefix}btn-hover-bg: rgba(255, 255, 255, 0.15);
+      --#{$prefix}btn-hover-border-color: rgba(255, 255, 255, 0.85);
+      --#{$prefix}btn-active-color: #fff;
+      --#{$prefix}btn-active-bg: rgba(255, 255, 255, 0.25);
+      --#{$prefix}btn-active-border-color: rgba(255, 255, 255, 0.85);
+    }
+  }
+}
