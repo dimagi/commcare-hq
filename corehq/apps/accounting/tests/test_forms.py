@@ -27,9 +27,12 @@ from corehq.apps.accounting.models import (
     FormSubmittingMobileWorkerHistory,
     Invoice,
     PaymentType,
+    ScheduledPrepaymentInvoice,
+    ScheduledPrepaymentInvoiceStatus,
     SoftwarePlanEdition,
     SoftwarePlanVersion,
     Subscription,
+    WirePrepaymentInvoice,
 )
 from corehq.apps.accounting.tasks import (
     calculate_users_in_all_domains,
@@ -38,6 +41,9 @@ from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from corehq.apps.accounting.tests.utils import in_days
+from corehq.apps.accounting.tests.wire_invoice_base import (
+    WirePrepaymentTestCase,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.util.dates import get_first_last_days
@@ -646,6 +652,28 @@ class TestWirePrepaymentForm:
             'required characters: "bob@example", "carol"'
         ]
 
+    def test_invalid_email_to(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(email_to='not an email'))
+
+        assert not form.is_valid()
+        assert form.errors['email_to'] == ['Enter a valid email address.']
+
+    def test_negative_unit_cost(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(unit_cost='-5.00'))
+
+        assert not form.is_valid()
+        assert form.errors['unit_cost'] == [
+            'Ensure this value is greater than or equal to 0.'
+        ]
+
+    def test_negative_quantity(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(quantity='-1'))
+
+        assert not form.is_valid()
+        assert form.errors['quantity'] == [
+            'Ensure this value is greater than or equal to 1.'
+        ]
+
     def test_dates_default_to_today(self):
         form = WirePrepaymentForm(wire_prepayment_post_data(
             prepay_date_start='', prepay_date_end='',
@@ -771,6 +799,43 @@ def scheduled_prepayment_post_data(**overrides):
     }
     data.update(overrides)
     return data
+
+
+class TestPrepaymentFormSave(WirePrepaymentTestCase):
+    def build_form(self, **overrides):
+        form = WirePrepaymentForm(scheduled_prepayment_post_data(**overrides))
+        assert form.is_valid(), form.errors
+        return form
+
+    def test_schedules_the_posted_data(self):
+        form = self.build_form(send_date=in_days(90).isoformat())
+
+        scheduled = form.save(self.domain_obj.name, self.web_user)
+
+        assert scheduled.status == ScheduledPrepaymentInvoiceStatus.PENDING
+        assert scheduled.send_date == in_days(90)
+        assert scheduled.amount == Decimal('12000.0000')
+        assert scheduled.unit_cost == Decimal('1000.0000')
+        assert scheduled.quantity == 12
+        assert scheduled.credit_label == '12 month prepayment'
+        assert scheduled.contact_emails == ['billing@example.com']
+        assert scheduled.cc_emails == ['ap@example.com']
+        assert scheduled.date_start == datetime.date(2027, 1, 1)
+        assert scheduled.date_end == datetime.date(2028, 1, 1)
+        assert scheduled.subscription == self.subscription
+        assert scheduled.created_by == self.web_user.username
+        assert not WirePrepaymentInvoice.objects.exists()
+
+    def test_generates_the_invoice_without_a_send_date(self):
+        form = self.build_form(send_date='')
+
+        assert form.save(self.domain_obj.name, self.web_user) is None
+
+        invoice = WirePrepaymentInvoice.objects.get(domain=self.domain_obj.name)
+        assert invoice.balance == Decimal('12000.0000')
+        assert invoice.date_start == datetime.date(2027, 1, 1)
+        assert invoice.date_end == datetime.date(2028, 1, 1)
+        assert not ScheduledPrepaymentInvoice.objects.exists()
 
 
 class TestScheduledPrepaymentForm:
