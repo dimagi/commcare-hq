@@ -2,6 +2,7 @@ from collections import defaultdict
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 
 
 class SMSTranslations(models.Model):
@@ -66,13 +67,6 @@ class AITranslationUsage(models.Model):
 
 
 class AITranslationConfig(models.Model):
-    """Admin-editable per-domain AI translation overrides.
-
-    Resolution order, per field: (domain, lang) > (domain,) >
-    ``settings.AI_TRANSLATION_DEFAULTS``. Blank/None fields inherit
-    from the less-specific level.
-    """
-
     domain = models.CharField(max_length=255)
     lang = models.CharField(max_length=32, blank=True, default='')
     provider = models.CharField(max_length=32, blank=True, default='')
@@ -82,26 +76,45 @@ class AITranslationConfig(models.Model):
 
     class Meta:
         unique_together = ('domain', 'lang')
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(lang='') | Q(monthly_word_limit__isnull=True),
+                name='ai_translation_limit_domain_only',
+                violation_error_message=(
+                    'monthly_word_limit is per domain and can only be set '
+                    'on the row with an empty lang.'
+                ),
+            ),
+        ]
 
     @classmethod
-    def resolve(cls, domain, lang):
-        """Return the effective config for (domain, lang) as a dict
-        with keys ``provider``, ``model`` and ``monthly_word_limit``.
+    def get_monthly_word_limit(cls, domain):
+        limit = (
+            cls.objects
+            .filter(domain=domain, lang='')
+            .values_list('monthly_word_limit', flat=True)
+            .first()
+        )
+        if limit is None:
+            limit = settings.AI_TRANSLATION_DEFAULTS['monthly_word_limit']
+        return limit
+
+    @classmethod
+    def get_model_config(cls, domain, lang=''):
+        """Return ``{'provider': ..., 'model': ...}`` from the most specific
+        row that sets a model, falling back to settings.
         """
-        resolved = dict(settings.AI_TRANSLATION_DEFAULTS)
-        rows = {
-            (row.domain, row.lang): row
-            for row in cls.objects.filter(domain=domain, lang__in=['', lang])
-        }
-        for key in [(domain, ''), (domain, lang)]:
-            row = rows.get(key)
-            if row is None:
-                continue
-            for field in resolved:
-                value = getattr(row, field)
-                if value not in ('', None):
-                    resolved[field] = value
-        return resolved
+        defaults = settings.AI_TRANSLATION_DEFAULTS
+        row = (
+            cls.objects
+            .filter(domain=domain, lang__in={'', lang})
+            .exclude(model='')
+            .order_by('-lang')  # the lang row sorts before the '' row
+            .first()
+        )
+        if row is None:
+            return {'provider': defaults['provider'], 'model': defaults['model']}
+        return {'provider': row.provider or defaults['provider'], 'model': row.model}
 
 
 class Translation(object):
