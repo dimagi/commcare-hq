@@ -268,12 +268,12 @@ def test_sql_endpoint_returns_selected_columns():
     fixture = _run_sql_query(endpoint, {})
     assert_xml_equal("""
     <results id="case">
-        <case case_id="p1" case_type="pet">
+        <case case_id="p1">
             <case_id>p1</case_id>
             <case_name>Fido</case_name>
             <color>brown</color>
         </case>
-        <case case_id="p2" case_type="pet">
+        <case case_id="p2">
             <case_id>p2</case_id>
             <case_name>Rex</case_name>
             <color>black</color>

@@ -190,16 +190,15 @@ def get_project_db_fixture(domain, endpoint, config):
     all_params = {c.key: c.value for c in config.criteria}
     query_params = {p: all_params.get(p) or None for p in user_sql.parameters}
     result = user_sql.run(query_params, max_rows=CASE_SEARCH_MAX_RESULTS)
-    return _rows_to_fixture(result.rows, config.case_types[0])
+    return _rows_to_fixture(result.rows)
 
 
-def _rows_to_fixture(rows, case_type):
+def _rows_to_fixture(rows):
     fixture = safe_element('results')
     fixture.set('id', CaseDBFixture.id)
     for row in rows:
         item = safe_element('case')
         item.attrib['case_id'] = row['case_id']  # Required for claiming to work
-        item.attrib['case_type'] = case_type  # Hack around default filtering
         for name, value in row.items():
             element = etree.Element(name)
             element.text = serialize(value)
