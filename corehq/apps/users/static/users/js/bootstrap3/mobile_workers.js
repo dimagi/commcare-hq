@@ -32,6 +32,11 @@ import "hqwebapp/js/components/search_box";
 import "hqwebapp/js/bootstrap3/validators.ko";  // email address validation
 import "eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min";
 
+// Must not be shorter than settings.MINIMUM_PASSWORD_LENGTH, or generated
+// passwords will be rejected by the server. Kept in sync with
+// STRONG_PASSWORD_LEN in corehq/apps/users/forms.py.
+var STRONG_PASSWORD_LEN = 14;
+
 // These are used as css classes, so the values of success/warning/error need to be what they are.
 var STATUS = {
     NONE: '',
@@ -408,7 +413,7 @@ var newUserCreationModel = function (options) {
         password += pick(lowercase, 1);
         password += pick(uppercase, 1);
         password += pick(numbers, 1);
-        password += pick(all, 6, 10);
+        password += pick(all, STRONG_PASSWORD_LEN - password.length);
         return shuffle(password);
     };
 
