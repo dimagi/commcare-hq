@@ -1,15 +1,16 @@
 --- 
 +++ 
-@@ -1,7 +1,7 @@
+@@ -1,7 +1,8 @@
  .form-with-steps .form-step-number {
    margin: 0;
    font-size: 1.2rem;
 -  padding: 0 0 20px;
 +  padding: 0 0 12px;
++  color: $prelogin-muted-text;
  }
  
  .form-with-steps-centered {
-@@ -16,8 +16,7 @@
+@@ -16,8 +17,7 @@
    text-align: center;
    padding: 40px 0 10px;
    margin-top: 20px;
@@ -19,7 +20,7 @@
  
    li {
      list-style-type: none;
-@@ -26,7 +25,7 @@
+@@ -26,7 +26,7 @@
      font-size: 9px;
      float: left;
      position: relative;
@@ -28,7 +29,7 @@
  
      &:after {
        content: counter(step);
-@@ -35,17 +34,16 @@
+@@ -35,17 +35,16 @@
        line-height: 20px;
        display: block;
        font-size: 10px;
@@ -49,7 +50,7 @@
      }
      &:before {
        content: '';
-@@ -54,7 +52,7 @@
+@@ -54,7 +53,7 @@
        position: absolute;
        left: -40%;
        top: -15px;
@@ -58,7 +59,7 @@
      }
    }
    li:first-child:before {
-@@ -63,8 +61,8 @@
+@@ -63,8 +62,8 @@
    li.active {
      &:before,
      &:after {
