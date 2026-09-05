@@ -291,10 +291,33 @@ p.sso-message-block {
   position: relative;
   margin-bottom: $spacer * 1.2;
 
+  .btn-primary {
+    @include button-variant($prelogin-action-blue, $prelogin-action-blue);
+  }
+
+  .btn-outline-primary {
+    @include button-outline-variant($prelogin-action-blue);
+  }
+
+  a:not(.btn) {
+    color: $prelogin-action-blue;
+  }
+
   .valid-feedback,
   .invalid-feedback,
   .ko-delayed-feedback,
   .validating-feedback {
     text-align: left;
   }
+}
+
+.form-control::placeholder {
+  color: $gray-600;
+}
+
+a:focus-visible,
+button:focus-visible,
+.form-control:focus-visible {
+  outline: 2px solid $prelogin-action-blue;
+  outline-offset: 2px;
 }

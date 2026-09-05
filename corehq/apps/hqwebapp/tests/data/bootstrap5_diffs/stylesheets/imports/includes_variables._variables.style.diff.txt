@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,130 +1,254 @@
+@@ -1,130 +1,257 @@
 -@import "@{b3-import-variables}";
 -
 -// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
@@ -271,6 +271,9 @@
 +$light:     $gray-100;
 +$dark:      $gray-800;
 +$periwinkle: #6F76AC;
++
++$prelogin-action-blue: #4d5ec2;
++$prelogin-muted-text: #5b6470;
 +
 +$theme-colors: (
 +  "primary":    $primary,
