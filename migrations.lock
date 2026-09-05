@@ -1317,6 +1317,7 @@ translations
  0009_auto_20200924_1753
  0010_transifex_organization_api_token_encryption
  0011_delete_transifexblacklist_and_more
+ 0012_aitranslation_aitranslationconfig_aitranslationusage
 two_factor
  (no migrations)
 user_importer
