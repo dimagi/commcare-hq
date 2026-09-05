@@ -1,13 +1,20 @@
 --- 
 +++ 
-@@ -1,34 +1,11 @@
+@@ -1,34 +1,26 @@
 -@import "../../../../../../node_modules/bootstrap/less/buttons.less";
--
++// b5 default background color for outline buttons is transparent
++// it looks weird if the container's background is not white.
++.btn-outline-danger {
++  background-color: #ffffff;
++};
+ 
 -.btn-primary {
 -  .button-variant(#ffffff; @call-to-action-mid; @call-to-action-mid);
 -  font-weight: bold;
--}
--
++.btn-purple {
++  @include button-variant($cc-dark-cool-accent-mid, $cc-dark-cool-accent-mid, $white, darken($cc-dark-cool-accent-mid, 5));
+ }
+ 
 -input::file-selector-button {
 -  .btn;
 -  .btn-xs;
@@ -29,19 +36,26 @@
 -.btn-danger {
 -  .button-variant(@cc-att-neg-mid; #ffffff; @cc-att-neg-mid);
 -}
-+// b5 default background color for outline buttons is transparent
-+// it looks weird if the container's background is not white.
-+.btn-outline-danger {
-+  background-color: #ffffff;
-+};
- 
- .btn-purple {
+-
+-.btn-purple {
 -  .button-variant(white; @cc-dark-cool-accent-mid; darken(@cc-dark-cool-accent-mid, 5));
-+  @include button-variant($cc-dark-cool-accent-mid, $cc-dark-cool-accent-mid, $white, darken($cc-dark-cool-accent-mid, 5));
++.btn-prelogin {
++  @include button-variant(
++    $white,
++    $white,
++    $color: $prelogin-deep-blue,
++    $hover-background: $prelogin-action-blue-tint,
++    $hover-border: $prelogin-action-blue-tint,
++    $hover-color: $prelogin-deep-blue,
++    $active-background: $prelogin-action-blue-tint,
++    $active-border: $prelogin-action-blue-tint,
++    $active-color: $prelogin-deep-blue
++  );
++  font-weight: $font-weight-semibold;
  }
  
  .btn-full-width {
-@@ -38,25 +15,51 @@
+@@ -38,25 +30,51 @@
  // Separated button groups in toolbars need more space between them,
  // since the buttons within the group have space between them
  .btn-toolbar > .btn-group-separated:not(:first-child) {

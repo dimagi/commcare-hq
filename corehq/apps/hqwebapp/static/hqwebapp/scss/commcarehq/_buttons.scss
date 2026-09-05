@@ -8,6 +8,21 @@
   @include button-variant($cc-dark-cool-accent-mid, $cc-dark-cool-accent-mid, $white, darken($cc-dark-cool-accent-mid, 5));
 }
 
+.btn-prelogin {
+  @include button-variant(
+    $white,
+    $white,
+    $color: $prelogin-deep-blue,
+    $hover-background: $prelogin-action-blue-tint,
+    $hover-border: $prelogin-action-blue-tint,
+    $hover-color: $prelogin-deep-blue,
+    $active-background: $prelogin-action-blue-tint,
+    $active-border: $prelogin-action-blue-tint,
+    $active-color: $prelogin-deep-blue
+  );
+  font-weight: $font-weight-semibold;
+}
+
 .btn-full-width {
   width: 100%;
 }

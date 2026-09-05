@@ -60,7 +60,7 @@
     {% block head %}
     {% endblock %}
   </head>
-  <body>
+  <body class="{% block body_class %}{% endblock %}">
 
     {% block csrf_token_block %}
       <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
