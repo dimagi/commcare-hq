@@ -899,6 +899,18 @@ def delete_module(request, domain, app_id, module_unique_id):
                                       'you can delete it.').format(module.default_name()))
             return back_to_main(request, domain, app_id)
 
+    dependents = [
+        m.default_name(app=app) for m in app.get_modules()
+        if hasattr(m, 'parent_select') and m.parent_select.active
+        and m.parent_select.module_id == module_unique_id
+    ]
+    if dependents:
+        messages.error(request, _(
+            '"{module}" is used by "{dependents}" for Parent Child Selection. '
+            'Change or turn off that setting before you can delete it.'
+        ).format(module=module.default_name(), dependents=', '.join(dependents)))
+        return back_to_main(request, domain, app_id)
+
     shadow_children = [
         m.unique_id for m in app.get_modules()
         if m.module_type == 'shadow' and m.source_module_id == module_unique_id and m.root_module_id is not None
