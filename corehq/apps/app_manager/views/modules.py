@@ -533,11 +533,10 @@ def _form_endpoint_options(app, module, lang=None):
 def get_parent_select_followup_forms(app, module):
     if not module.parent_select.active or not module.parent_select.module_id:
         return []
-    parent_module = app.get_module_by_unique_id(
-        module.parent_select.module_id,
-        error=_("Case list used by Select Parent First in '{}' not found").format(
-            module.default_name()),
-    )
+    try:
+        parent_module = app.get_module_by_unique_id(module.parent_select.module_id)
+    except ModuleNotFoundException:
+        return []
     parent_case_type = parent_module.case_type
     rel = module.parent_select.relationship
     if (rel == 'parent' and parent_case_type != module.case_type) or rel is None:
