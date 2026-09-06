@@ -400,7 +400,6 @@ def pause_current_subscription(domain_name, web_user, current_subscription):
         FundingSource,
         ProBonoStatus,
         SoftwarePlanEdition,
-        Subscription,
         SubscriptionAdjustmentMethod,
         SubscriptionType,
     )
@@ -409,15 +408,9 @@ def pause_current_subscription(domain_name, web_user, current_subscription):
         SoftwarePlanEdition.PAUSED
     )
     if current_subscription.is_below_minimum_subscription:
-        current_subscription.update_subscription(
-            date_start=current_subscription.date_start,
-            date_end=current_subscription.date_start + datetime.timedelta(days=30)
-        )
-        return Subscription.new_domain_subscription(
-            account=current_subscription.account,
-            domain=domain_name,
-            plan_version=paused_plan_version,
-            date_start=current_subscription.date_start + datetime.timedelta(days=30),
+        return current_subscription.change_plan(
+            paused_plan_version,
+            effective_date=current_subscription.date_start + datetime.timedelta(days=30),
             web_user=web_user,
             adjustment_method=SubscriptionAdjustmentMethod.USER,
             service_type=SubscriptionType.PRODUCT,

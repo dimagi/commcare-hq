@@ -1470,22 +1470,26 @@ class Subscription(models.Model):
                     do_not_email_invoice=False, do_not_email_reminder=False,
                     skip_invoicing_if_no_feature_charges=False,
                     skip_auto_downgrade=False, skip_auto_downgrade_reason=None,
-                    skip_auto_downgrade_until=None, auto_renew=None):
+                    skip_auto_downgrade_until=None, auto_renew=None,
+                    effective_date=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
         This is not the same thing as simply updating the subscription.
 
-        date_end is a date in the future and only applies to the NEW
-        subscription. The current subscription will always end immediately
-        (today) and the date_start of the new subscription will always be today.
+        effective_date controls when the replacement takes effect and defaults
+        to today. date_end is a date in the future and only applies to the NEW
+        subscription.
         """
         from corehq.apps.analytics.tasks import track_workflow_noop
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
+        effective_date = effective_date or today
+        is_immediate_change = effective_date == today
         assert self.is_active
-        assert date_end is None or date_end >= today
+        assert effective_date >= today
+        assert date_end is None or date_end >= effective_date
 
         if new_plan_version.plan.at_max_domains() and self.plan_version.plan != new_plan_version.plan:
             raise SubscriptionAdjustmentError(
@@ -1494,8 +1498,8 @@ class Subscription(models.Model):
                 }
             )
 
-        self.date_end = today
-        self.is_active = False
+        self.date_end = effective_date
+        self.is_active = not is_immediate_change
         self.save()
 
         new_subscription = Subscription(
@@ -1503,9 +1507,9 @@ class Subscription(models.Model):
             plan_version=new_plan_version,
             subscriber=self.subscriber,
             salesforce_contract_id=self.salesforce_contract_id,
-            date_start=today,
+            date_start=effective_date,
             date_end=date_end,
-            is_active=True,
+            is_active=is_immediate_change,
             do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
             do_not_email_invoice=do_not_email_invoice,
@@ -1528,18 +1532,19 @@ class Subscription(models.Model):
         new_subscription.set_billing_account_entry_point()
 
         change_status_result = get_change_status(self.plan_version, new_plan_version)
-        self.subscriber.change_subscription(
-            downgraded_privileges=change_status_result.downgraded_privs,
-            upgraded_privileges=change_status_result.upgraded_privs,
-            new_plan_version=new_plan_version,
-            old_subscription=self,
-            new_subscription=new_subscription,
-            internal_change=internal_change,
-        )
+        if is_immediate_change:
+            self.subscriber.change_subscription(
+                downgraded_privileges=change_status_result.downgraded_privs,
+                upgraded_privileges=change_status_result.upgraded_privs,
+                new_plan_version=new_plan_version,
+                old_subscription=self,
+                new_subscription=new_subscription,
+                internal_change=internal_change,
+            )
 
-        # transfer existing credit lines to the new subscription
-        if transfer_credits:
-            self.transfer_credits(new_subscription)
+            # transfer existing credit lines to the new subscription
+            if transfer_credits:
+                self.transfer_credits(new_subscription)
 
         # record transfer from old subscription
         SubscriptionAdjustment.record_adjustment(
