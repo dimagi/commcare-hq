@@ -500,7 +500,7 @@ def _case_list_form_options(app, module, lang=None):
         'is_registration_form': True,
     } for f in reg_forms})
     if (hasattr(module, 'parent_select')  # AdvancedModule doesn't have parent_select
-            and toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM
+            and toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain)
             and module.parent_select.active):
         followup_forms = get_parent_select_followup_forms(app, module)
         if followup_forms:
