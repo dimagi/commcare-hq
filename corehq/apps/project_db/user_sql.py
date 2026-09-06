@@ -49,6 +49,9 @@ LITERAL_PARAM_PREFIX = 'hq_param'  # Our reserved namespace for parameters
 # restricted to characters that cannot close the placeholder and inject SQL.
 PARAM_NAME = re.compile(r'[A-Za-z_][A-Za-z0-9_]*\Z')
 
+MAX_TREE_DEPTH = 100
+NESTED_TOO_DEEPLY = "SQL is nested too deeply"
+
 
 def _bind(value):
     """Bind a value as a uniquely named parameter"""
@@ -117,10 +120,30 @@ def translate(sql, tables):
         statements = sqlglot.parse(sql, read='postgres')
     except SqlglotError:
         raise UnsupportedSQL("could not parse SQL")
+    except RecursionError:
+        # The parser recurses about 20 stack frames per level of parentheses,
+        # so nesting them exhausts the stack before it can report anything.
+        raise UnsupportedSQL(NESTED_TOO_DEEPLY) from None
     if len(statements) != 1:
         raise UnsupportedSQL("this only supports a single statement")
+    # Reject a parse tree deeper than the conversion can handle
+    _check_tree_depth(statements[0])
 
     return _convert_query(statements[0], tables)
+
+
+def _check_tree_depth(node):
+    """Reject deep parse trees
+
+    Long chains of operators such as ``a = 1 AND b = 2 AND ...`` parse into a
+    deep tree without any nested parentheses.
+    """
+    nodes = [(node, 1)]
+    while nodes:
+        node, depth = nodes.pop()
+        if depth > MAX_TREE_DEPTH:
+            raise UnsupportedSQL(NESTED_TOO_DEEPLY)
+        nodes.extend((child, depth + 1) for child in node.iter_expressions())
 
 
 def _convert_query(node, tables):

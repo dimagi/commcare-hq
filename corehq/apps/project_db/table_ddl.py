@@ -220,7 +220,7 @@ def create_or_update_project_db(domain):
 def get_domain_tables(domain):
     engine = get_project_db_engine()
     metadata = sqlalchemy.MetaData()
-    metadata.reflect(bind=engine, schema=DomainSchema(domain).name)
+    metadata.reflect(bind=engine, schema=DomainSchema(domain).name, resolve_fks=False)
     return {t.comment: t for t in metadata.tables.values()}
 
 
