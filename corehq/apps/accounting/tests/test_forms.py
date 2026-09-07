@@ -2,10 +2,10 @@ import datetime
 import random
 from unittest.mock import patch
 
+import pytest
+from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-
-from dateutil.relativedelta import relativedelta
 
 from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.forms import (
@@ -65,10 +65,10 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance - adjustment_amount, self.invoice.balance)
+        assert original_balance - adjustment_amount == self.invoice.balance
 
     def test_transfer_credit_with_credit(self):
         original_credit_balance = random.randint(5, 10)
@@ -91,14 +91,14 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance - adjustment_amount, self.invoice.balance)
-        self.assertEqual(original_credit_balance - adjustment_amount, sum(
+        assert original_balance - adjustment_amount == self.invoice.balance
+        assert original_credit_balance - adjustment_amount == sum(
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
-        ))
+        )
 
     def test_transfer_credit_without_credit(self):
         original_credit_balance = 0
@@ -121,14 +121,14 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance, self.invoice.balance)
-        self.assertEqual(original_credit_balance, sum(
+        assert original_balance == self.invoice.balance
+        assert original_credit_balance == sum(
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
-        ))
+        )
 
 
 class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
@@ -159,10 +159,10 @@ class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance - adjustment_amount, self.invoice.balance)
+        assert original_balance - adjustment_amount == self.invoice.balance
 
     def test_transfer_credit_with_credit(self):
         original_credit_balance = random.randint(5, 10)
@@ -184,14 +184,14 @@ class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance - adjustment_amount, self.invoice.balance)
-        self.assertEqual(original_credit_balance - adjustment_amount, sum(
+        assert original_balance - adjustment_amount == self.invoice.balance
+        assert original_credit_balance - adjustment_amount == sum(
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_customer_invoice(self.invoice)
-        ))
+        )
 
     def test_transfer_credit_without_credit(self):
         original_credit_balance = 0
@@ -213,14 +213,14 @@ class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance, self.invoice.balance)
-        self.assertEqual(original_credit_balance, sum(
+        assert original_balance == self.invoice.balance
+        assert original_credit_balance == sum(
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_customer_invoice(self.invoice)
-        ))
+        )
 
 
 class TestSubscriptionForm(BaseAccountingTest):
@@ -278,7 +278,8 @@ class TestSubscriptionForm(BaseAccountingTest):
             **self.shared_keywords(),
         }
 
-        self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
+        with pytest.raises(ValidationError):
+            subscription_form.clean_active_accounts()
 
     def test_customer_plan_not_added_to_regular_account(self):
         subscription = Subscription.new_domain_subscription(
@@ -296,7 +297,8 @@ class TestSubscriptionForm(BaseAccountingTest):
             **self.shared_keywords(),
         }
 
-        self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
+        with pytest.raises(ValidationError):
+            subscription_form.clean_active_accounts()
 
     def test_form_data_create_subscription(self):
         required_args = {
@@ -322,8 +324,13 @@ class TestSubscriptionForm(BaseAccountingTest):
         )
         assert kwargs['web_user'] == self.web_user
         assert kwargs['internal_change']
-        for k, v in self.shared_keywords().items():
+        expected = self.shared_keywords()
+        expected_days = expected.pop('skip_auto_downgrade_days')
+        for k, v in expected.items():
             assert kwargs[k] == v
+        assert kwargs['skip_auto_downgrade_until'] == datetime.date.today() + datetime.timedelta(
+            days=expected_days
+        )
 
     def test_form_data_update_subscription(self):
         subscription = Subscription.new_domain_subscription(
@@ -343,8 +350,88 @@ class TestSubscriptionForm(BaseAccountingTest):
             kwargs = update_subscription.call_args.kwargs
 
         assert kwargs['web_user'] == self.web_user
-        for k, v in self.shared_keywords().items():
+        expected = self.shared_keywords()
+        expected_days = expected.pop('skip_auto_downgrade_days')
+        for k, v in expected.items():
             assert kwargs[k] == v
+        assert kwargs['skip_auto_downgrade_until'] == datetime.date.today() + datetime.timedelta(
+            days=expected_days
+        )
+
+    def test_shared_keywords_computes_skip_auto_downgrade_until_from_days(self):
+        subscription_form = SubscriptionForm(
+            subscription=None,
+            account_id=self.plan.id,
+            web_user=self.web_user,
+        )
+        subscription_form.cleaned_data = {**self.shared_keywords(), 'skip_auto_downgrade_days': 5}
+
+        assert subscription_form.shared_keywords['skip_auto_downgrade_until'] == (
+            datetime.date.today() + datetime.timedelta(days=5)
+        )
+
+    def test_shared_keywords_blank_skip_auto_downgrade_days_means_no_expiration(self):
+        subscription_form = SubscriptionForm(
+            subscription=None,
+            account_id=self.plan.id,
+            web_user=self.web_user,
+        )
+        subscription_form.cleaned_data = {**self.shared_keywords(), 'skip_auto_downgrade_days': None}
+
+        assert subscription_form.shared_keywords['skip_auto_downgrade_until'] is None
+
+    def test_editing_subscription_prefills_skip_auto_downgrade_days_remaining(self):
+        subscription = Subscription.new_domain_subscription(
+            domain=self.domain.name,
+            plan_version=self.plan,
+            account=self.account,
+        )
+        subscription.skip_auto_downgrade = True
+        subscription.skip_auto_downgrade_until = datetime.date.today() + datetime.timedelta(days=10)
+        subscription.save()
+
+        subscription_form = SubscriptionForm(
+            subscription=subscription,
+            account_id=self.account.id,
+            web_user=self.web_user,
+        )
+
+        assert subscription_form.fields['skip_auto_downgrade'].initial is True
+        assert subscription_form.fields['skip_auto_downgrade_days'].initial == 10
+
+    def test_editing_subscription_with_expired_skip_auto_downgrade_unchecks_checkbox(self):
+        subscription = Subscription.new_domain_subscription(
+            domain=self.domain.name,
+            plan_version=self.plan,
+            account=self.account,
+        )
+        subscription.skip_auto_downgrade = True
+        subscription.skip_auto_downgrade_until = datetime.date.today() - datetime.timedelta(days=3)
+        subscription.save()
+
+        subscription_form = SubscriptionForm(
+            subscription=subscription,
+            account_id=self.account.id,
+            web_user=self.web_user,
+        )
+
+        assert subscription_form.fields['skip_auto_downgrade'].initial is False
+        assert subscription_form.fields['skip_auto_downgrade_days'].initial is None
+
+    def test_editing_subscription_with_no_expiration_leaves_skip_auto_downgrade_days_blank(self):
+        subscription = Subscription.new_domain_subscription(
+            domain=self.domain.name,
+            plan_version=self.plan,
+            account=self.account,
+        )
+
+        subscription_form = SubscriptionForm(
+            subscription=subscription,
+            account_id=self.account.id,
+            web_user=self.web_user,
+        )
+
+        assert subscription_form.fields['skip_auto_downgrade_days'].initial is None
 
     @staticmethod
     def shared_keywords():
@@ -364,6 +451,7 @@ class TestSubscriptionForm(BaseAccountingTest):
             'funding_source': 'FundingSource',
             'skip_auto_downgrade': True,
             'skip_auto_downgrade_reason': 'You said so',
+            'skip_auto_downgrade_days': 30,
             'auto_renew': True,
         }
 
@@ -399,8 +487,8 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
         self.form.trigger_invoice()
 
         invoice = self.subscription.invoice_set.latest('date_created')
-        self.assertEqual(invoice.date_start, self.statement_start)
-        self.assertEqual(invoice.date_end, self.statement_end)
+        assert invoice.date_start == self.statement_start
+        assert invoice.date_end == self.statement_end
 
     def test_clean_previous_invoices(self):
         prev_invoice = Invoice.objects.create(
@@ -411,18 +499,18 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
         self.init_form(self.form_data())
         self.form.full_clean()
 
-        with self.assertRaises(InvoiceError) as e:
+        with pytest.raises(InvoiceError) as e:
             self.form.clean_previous_invoices(self.statement_start, self.statement_end, self.domain.name)
-        self.assertIn(prev_invoice.invoice_number, str(e.exception))
+        assert prev_invoice.invoice_number in str(e.value)
 
     def test_show_testing_options(self):
         self.init_form(self.form_data(), show_testing_options=False)
-        self.assertNotIn('num_mobile_workers', self.form.fields)
-        self.assertNotIn('num_form_submitting_workers', self.form.fields)
+        assert 'num_mobile_workers' not in self.form.fields
+        assert 'num_form_submitting_workers' not in self.form.fields
 
         self.init_form(self.form_data(), show_testing_options=True)
-        self.assertIn('num_mobile_workers', self.form.fields)
-        self.assertIn('num_form_submitting_workers', self.form.fields)
+        assert 'num_mobile_workers' in self.form.fields
+        assert 'num_form_submitting_workers' in self.form.fields
 
     def test_num_mobile_workers(self):
         num_users = 10
@@ -436,7 +524,7 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
         user_history = DomainUserHistory.objects.get(
             domain=self.domain.name, record_date=self.statement_end
         )
-        self.assertEqual(user_history.num_users, num_users)
+        assert user_history.num_users == num_users
 
     def test_num_form_submitting_mobile_workers(self):
         num_users = 5
@@ -450,7 +538,7 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
         user_history = FormSubmittingMobileWorkerHistory.objects.get(
             domain=self.domain.name, record_date=self.statement_end
         )
-        self.assertEqual(user_history.num_users, num_users)
+        assert user_history.num_users == num_users
 
 
 class TestPlanContactForm(TestCase):
@@ -479,5 +567,5 @@ class TestPlanContactForm(TestCase):
         text_content = args[3]
 
         expected_subject = f'[{request_type}] {self.domain.name}'
-        self.assertEqual(subject, expected_subject)
-        self.assertTrue(all(value in text_content for value in data.values()))
+        assert subject == expected_subject
+        assert all(value in text_content for value in data.values())

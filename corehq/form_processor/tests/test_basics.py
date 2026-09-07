@@ -499,6 +499,12 @@ class FundamentalCaseTests(FundamentalBaseTests):
         with patch.object(get_blob_db(), 'get', side_effect=Exception('unexpected blobdb read')):
             _submit_case_block(True, uuid.uuid4().hex, user_id='user2', update={})
 
+    @flag_enabled('PROJECT_DB')
+    def test_cases_are_sent_to_project_db(self):
+        with patch('corehq.form_processor.submission_post.send_cases_to_project_db') as send:
+            _submit_case_block(True, uuid.uuid4().hex, user_id='user1', update={})
+        send.assert_called()
+
 
 @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
 @patch('corehq.motech.repeaters.models.domain_has_privilege', lambda x, y: True)

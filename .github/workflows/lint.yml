@@ -15,21 +15,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Audit-only: records egress from the runner, never fails the build.
+      # Tighten to egress-policy: block once audit logs confirm the endpoint list.
+      - name: Harden runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+        with:
+          egress-policy: audit
+
       - name: Check out Git repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
         with:
           fetch-depth: 0
 
       - name: Check changed py files
         id: changed-files
-        uses: tj-actions/changed-files@v47
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62  # v47.0.0
         with:
           files: |
             **/*.py
 
       - name: Run ruff linter
         if: ${{ steps.changed-files.outputs.all_changed_files }}
-        uses: astral-sh/ruff-action@v3
+        uses: astral-sh/ruff-action@4919ec5cf1f49eff0871dbcea0da843445b837e6  # v3.6.1
         with:
           src: ${{ steps.changed-files.outputs.all_changed_files }}
 
@@ -39,20 +46,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Audit-only: records egress from the runner, never fails the build.
+      # Tighten to egress-policy: block once audit logs confirm the endpoint list.
+      - name: Harden runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+        with:
+          egress-policy: audit
+
       - name: Check out Git repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
         with:
           fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38  # v6.5.0
         with:
           node-version: 24
 
       - name: Install Node.js dependencies
         run: yarn install --frozen-lockfile
 
-      - uses: sibiraj-s/action-eslint@v3
+      - uses: sibiraj-s/action-eslint@bcf41bb9abce43cdbad51ab9b3da2eddaa17eab3  # v3.0.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           annotations: true

@@ -257,7 +257,7 @@ class RepeatRecordView(View):
             payload = record.get_payload()
         except PayloadNotFoundError:
             return JsonResponse({
-                'error': 'Odd, could not find payload for: {}'.format(record.payload_id)
+                'error': _('The payload could not be found.')
             }, status=404)
 
         if content_type == 'text/xml':

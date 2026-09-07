@@ -7,11 +7,13 @@ from unittest.mock import MagicMock, patch
 import polib
 import pytest
 
-from corehq.apps.translations.management.commands.translate_po_files import (
+from corehq.apps.translations.integrations.llm import (
     LLMTranslator,
     OpenaiTranslator,
-    PoTranslationFormat,
     TranslationFormat,
+)
+from corehq.apps.translations.management.commands.translate_po_files import (
+    PoTranslationFormat,
 )
 from corehq.tests.tools import nottest
 
@@ -59,13 +61,9 @@ def test_llm_translator_base_prompt():
         translation_format=translation_format
     )
 
-    with patch(
-        'corehq.apps.translations.management.commands.translate_po_files.langcode_to_langname_map'
-    ) as mock_lang_map:
-        mock_lang_map.return_value = {"fra": "French"}
-        prompt = translator.base_prompt()
-        assert "professional translator" in prompt
-        assert "French" in prompt
+    prompt = translator.base_prompt()
+    assert "professional translator" in prompt
+    assert "French" in prompt
 
 
 def test_llm_translator_base_prompt_with_unsupported_lang():
@@ -77,13 +75,9 @@ def test_llm_translator_base_prompt_with_unsupported_lang():
         translation_format=translation_format
     )
 
-    with patch(
-        'corehq.apps.translations.management.commands.translate_po_files.langcode_to_langname_map'
-    ) as mock_lang_map:
-        mock_lang_map.return_value = {"fra": "French"}
-        prompt = translator.base_prompt()
-        assert "professional translator" in prompt
-        assert "some_lang_code" in prompt
+    prompt = translator.base_prompt()
+    assert "professional translator" in prompt
+    assert "some_lang_code" in prompt
 
 
 def test_openai_translator_supported_models():
@@ -132,7 +126,7 @@ def test_openai_translator_call_llm():
         translator.client.chat.completions.create.assert_called_once()
 
 
-@patch('corehq.apps.translations.management.commands.translate_po_files.requests.post')
+@patch('corehq.apps.translations.integrations.llm.requests.post')
 def test_openai_translator_call_llm_http(mock_post):
     translation_format = MockTranslationFormat()
     translator = OpenaiTranslator(
@@ -154,7 +148,7 @@ def test_openai_translator_call_llm_http(mock_post):
     mock_post.assert_called_once()
 
 
-@patch('corehq.apps.translations.management.commands.translate_po_files.requests.post')
+@patch('corehq.apps.translations.integrations.llm.requests.post')
 def test_openai_translator_client_fallback_to_http(mock_post):
     translation_format = MockTranslationFormat()
     translator = OpenaiTranslator(

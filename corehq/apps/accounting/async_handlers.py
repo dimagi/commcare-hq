@@ -14,6 +14,7 @@ from corehq.apps.accounting.models import (
     Subscriber,
     Subscription,
     CustomerInvoice,
+    WireInvoice,
 )
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict,
@@ -490,6 +491,18 @@ class CustomerInvoiceNumberAsyncHandler(BaseInvoiceNumberAsyncHandler):
 
     @property
     def customer_invoice_number_response(self):
+        return self.base_response
+
+
+class WireInvoiceNumberAsyncHandler(BaseInvoiceNumberAsyncHandler):
+    slug = 'wire_invoice_number_filter'
+    allowed_actions = [
+        'wire_invoice_number',
+    ]
+    invoice_class = WireInvoice
+
+    @property
+    def wire_invoice_number_response(self):
         return self.base_response
 
 

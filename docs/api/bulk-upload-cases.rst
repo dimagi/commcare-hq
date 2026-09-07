@@ -95,7 +95,7 @@ JSON output with following Parameters. Note that a success code indicates that t
      - Description
      - Example
    * - code
-     - 200: Success, 402: Warning, 500: Fail
+     - 200: Success, 500: Fail
      - ``500``
    * - message
      - Warning or Failure message

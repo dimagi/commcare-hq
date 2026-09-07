@@ -48,6 +48,7 @@ IGNORE_MODELS = {
     'app_manager.PublicFormSession',  # handled by cascading delete of PublicWebform
     'auth.Group',
     'auth.Permission',
+    'builds.CommCareMobileBuild',
     'blobs.BlobMeta',
     'blobs.BlobMigrationState',
     'blobs.DeletedBlobMeta',
@@ -61,6 +62,7 @@ IGNORE_MODELS = {
     'fixtures.UserLookupTableStatus',
     'fixtures.LookupTableRow',          # handled by cascading delete
     'fixtures.LookupTableRowOwner',     # handled by cascading delete
+    'public_webforms.PublicFormSession',  # handled by cascading delete of PublicWebform
     'registration.AsyncSignupRequest',
     'registration.SelfSignupWorkflow',
     'repeaters.RepeatRecord',         # handled by cascading delete

@@ -174,8 +174,9 @@ class LookupTableResource(HqBaseResource):
         return list(LookupTable.objects.by_domain(domain))
 
     def obj_delete(self, bundle, **kwargs):
-        query = LookupTable.objects.filter(id=kwargs['pk'])
-        if not query.exists():
+        try:
+            query = LookupTable.objects.get(id=kwargs['pk'], domain=kwargs['domain'])
+        except LookupTable.DoesNotExist:
             raise NotFound('Lookup table not found')
 
         query.delete()
@@ -358,7 +359,7 @@ class LookupTableItemResource(HqBaseResource):
 
     def obj_delete(self, bundle, **kwargs):
         try:
-            row = LookupTableRow.objects.get(id=kwargs['pk'])
+            row = LookupTableRow.objects.get(id=kwargs['pk'], domain=kwargs['domain'])
         except LookupTableRow.DoesNotExist:
             raise NotFound('Lookup table item not found')
         table_id = row.table_id

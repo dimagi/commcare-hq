@@ -11,12 +11,19 @@ jobs:
     env:
       CCHQ_WITHOUT_SSO: 1
     steps:
-      - uses: actions/checkout@v5
+      # Audit-only: records egress from the runner, never fails the build.
+      # Tighten to egress-policy: block once audit logs confirm the endpoint list.
+      - name: Harden runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
         with:
           ref: master
           submodules: recursive
-      - uses: astral-sh/setup-uv@v7
-      - uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7.6.0
+      - uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a  # v2.1.0
         id: generate-token
         with:
           app_id: ${{ secrets.APP_ID }}
@@ -47,8 +54,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: Create Pull Request
         # https://github.com/marketplace/actions/create-pull-request
-        # Pinned to the commit of https://github.com/peter-evans/create-pull-request/releases/tag/v7.0.5
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1  # v8.1.1
         with:
           token: ${{ steps.generate-token.outputs.token }}
           base: master

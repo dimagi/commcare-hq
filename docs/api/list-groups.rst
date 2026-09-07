@@ -42,10 +42,10 @@ Request & Response Details
    * - Name
      - Description
      - Example
-   * - ``group_id``
+   * - ``id``
      - Group UUID
      - ``ac9d34ff59cf6388e4f5804b12276d8a``
-   * - ``group_name``
+   * - ``name``
      - Group name (e.g., health district)
      - ``Senahú``
 

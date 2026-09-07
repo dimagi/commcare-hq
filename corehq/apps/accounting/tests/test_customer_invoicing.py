@@ -4,7 +4,6 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from dateutil import relativedelta
 from unittest.mock import Mock
 
 from dimagi.utils.dates import add_months_to_date
@@ -15,9 +14,7 @@ from corehq.apps.accounting.models import (
     CreditLine,
     CustomerInvoice,
     DefaultProductPlan,
-    DomainUserHistory,
     FeatureType,
-    InvoicingPlan,
     SoftwarePlanEdition,
     Subscription,
 )
@@ -36,7 +33,6 @@ from corehq.apps.smsbillables.models import (
 from corehq.apps.smsbillables.tests.generator import (
     arbitrary_sms_billables_for_domain,
 )
-from corehq.util.dates import get_previous_month_date_range
 from corehq.apps.domain.shortcuts import create_domain
 
 
@@ -208,46 +204,6 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
                          'One month of CommCare Advanced Edition - Pay Monthly Software Plan.')
         product_cost = product_line_item.base_cost
         self.assertEqual(product_cost, self.product_rate.monthly_fee)
-
-    def test_product_line_items_in_quarterly_invoice(self):
-        self.account.invoicing_plan = InvoicingPlan.QUARTERLY
-        self.account.save()
-        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 14)
-        for months_before_invoice_date in range(3):
-            user_date = date(invoice_date.year, invoice_date.month, 1)
-            user_date -= relativedelta.relativedelta(months=months_before_invoice_date)
-            calculate_users_in_all_domains(user_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
-
-        self.assertEqual(CustomerInvoice.objects.count(), 1)
-        invoice = CustomerInvoice.objects.first()
-        self.assertEqual(invoice.balance, Decimal('3600.0000'))
-        self.assertEqual(invoice.account, self.account)
-
-        num_product_line_item = invoice.lineitem_set.get_products().count()
-        self.assertEqual(num_product_line_item, 1)
-        product_line_item = invoice.lineitem_set.get_products().first()
-        self.assertEqual(product_line_item.quantity, 3)
-
-    def test_product_line_items_in_yearly_invoice(self):
-        self.account.invoicing_plan = InvoicingPlan.YEARLY
-        self.account.save()
-        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 14)
-        for months_before_invoice_date in range(12):
-            user_date = date(invoice_date.year, invoice_date.month, 1)
-            user_date -= relativedelta.relativedelta(months=months_before_invoice_date)
-            calculate_users_in_all_domains(user_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
-
-        self.assertEqual(CustomerInvoice.objects.count(), 1)
-        invoice = CustomerInvoice.objects.first()
-        self.assertEqual(invoice.balance, Decimal('14400.0000'))
-        self.assertEqual(invoice.account, self.account)
-
-        num_product_line_items = invoice.lineitem_set.get_products()
-        self.assertEqual(num_product_line_items.count(), 1)
-        product_line_item = invoice.lineitem_set.get_products().first()
-        self.assertEqual(product_line_item.quantity, 12)
 
     def test_account_level_product_credits(self):
         CreditLine.add_credit(
@@ -576,144 +532,6 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
         SmsGatewayFeeCriteria.objects.all().delete()
         SmsUsageFee.objects.all().delete()
         SmsUsageFeeCriteria.objects.all().delete()
-
-
-class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
-
-    is_using_test_plans = True
-
-    def setUp(self):
-        super(TestQuarterlyInvoicing, self).setUp()
-        self.user_rate = self.main_subscription.plan_version.feature_rates \
-            .filter(feature__feature_type=FeatureType.USER).get()
-        self.initialize_domain_user_history_objects()
-        self.sms_rate = self.main_subscription.plan_version.feature_rates.filter(
-            feature__feature_type=FeatureType.SMS
-        ).get()
-        self.invoice_date = utils.get_first_day_x_months_later(
-            self.main_subscription.date_start, random.randint(3, self.non_main_subscription_length)
-        )
-        self.sms_date = utils.get_first_day_x_months_later(self.invoice_date, -1)
-
-    def initialize_domain_user_history_objects(self):
-        record_dates = []
-        month_end = self.main_subscription.date_end
-        while month_end > self.main_subscription.date_start:
-            record_dates.append(month_end)
-            _, month_end = get_previous_month_date_range(month_end)
-
-        self.num_users = self.user_rate.monthly_limit + 1
-        for record_date in record_dates:
-            DomainUserHistory.objects.create(
-                domain=self.main_domain,
-                num_users=self.num_users,
-                record_date=record_date
-            )
-
-        for record_date in record_dates:
-            DomainUserHistory.objects.create(
-                domain=self.non_main_domain1,
-                num_users=self.num_users,
-                record_date=record_date
-            )
-
-        for record_date in record_dates:
-            DomainUserHistory.objects.create(
-                domain=self.non_main_domain2,
-                num_users=0,
-                record_date=record_date
-            )
-
-    def test_user_over_limit_in_quarterly_invoice(self):
-        self.account.invoicing_plan = InvoicingPlan.QUARTERLY
-        self.account.save()
-        tasks.generate_invoices_based_on_date(self.invoice_date)
-        self.assertEqual(CustomerInvoice.objects.count(), 1)
-
-        invoice = CustomerInvoice.objects.first()
-        user_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.USER)
-        num_excess_users_quarterly = (self.num_users * 2 - self.user_rate.monthly_limit) * 3
-        self.assertEqual(user_line_items.count(), 1)
-        for user_line_item in user_line_items:
-            self.assertEqual(user_line_item.quantity, num_excess_users_quarterly)
-
-    def test_user_over_limit_in_yearly_invoice(self):
-        self.account.invoicing_plan = InvoicingPlan.YEARLY
-        self.account.save()
-        invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 14)
-        tasks.generate_invoices_based_on_date(invoice_date)
-        self.assertEqual(CustomerInvoice.objects.count(), 1)
-
-        invoice = CustomerInvoice.objects.first()
-        user_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.USER)
-        num_excess_users_quarterly = (self.num_users * 2 - self.user_rate.monthly_limit) * 12
-        self.assertEqual(user_line_items.count(), 1)
-        for user_line_item in user_line_items:
-            self.assertEqual(user_line_item.quantity, num_excess_users_quarterly)
-
-    def test_sms_over_limit_in_quarterly_invoice(self):
-        num_sms = random.randint(self.sms_rate.monthly_limit + 1, self.sms_rate.monthly_limit + 2)
-        billables_main_domain = arbitrary_sms_billables_for_domain(
-            self.main_domain, self.sms_date, num_sms
-        )
-        billables_non_main_domain1 = arbitrary_sms_billables_for_domain(
-            self.non_main_domain1, self.sms_date, num_sms
-        )
-
-        tasks.generate_invoices_based_on_date(self.invoice_date)
-        self.assertEqual(CustomerInvoice.objects.count(), 1)
-        invoice = CustomerInvoice.objects.first()
-
-        sms_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)
-        self.assertEqual(sms_line_items.count(), 1)
-        for sms_line_item in sms_line_items:
-            self.assertIsNone(sms_line_item.base_description)
-            self.assertEqual(sms_line_item.base_cost, Decimal('0.0000'))
-            self.assertEqual(sms_line_item.quantity, 1)
-
-            sms_cost = sum(
-                billable.gateway_charge + billable.usage_charge
-                for billable in (
-                    billables_non_main_domain1[self.sms_rate.monthly_limit:]
-                    + billables_main_domain
-                ))
-            self.assertEqual(sms_line_item.unit_cost, sms_cost)
-            self.assertEqual(sms_line_item.total, sms_cost)
-
-    def test_sms_over_limit_in_yearly_invoice(self):
-        num_sms = random.randint(self.sms_rate.monthly_limit + 1, self.sms_rate.monthly_limit + 2)
-        billables_main_domain = arbitrary_sms_billables_for_domain(
-            self.main_domain, self.sms_date, num_sms
-        )
-        billables_non_main_domain1 = arbitrary_sms_billables_for_domain(
-            self.non_main_domain1, self.sms_date, num_sms
-        )
-
-        tasks.generate_invoices_based_on_date(self.invoice_date)
-        self.assertEqual(CustomerInvoice.objects.count(), 1)
-        invoice = CustomerInvoice.objects.first()
-
-        sms_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)
-        self.assertEqual(sms_line_items.count(), 1)
-        for sms_line_item in sms_line_items:
-            self.assertIsNone(sms_line_item.base_description)
-            self.assertEqual(sms_line_item.base_cost, Decimal('0.0000'))
-            self.assertEqual(sms_line_item.quantity, 1)
-
-            sms_cost = sum(
-                billable.gateway_charge + billable.usage_charge
-                for billable in (
-                    billables_non_main_domain1[self.sms_rate.monthly_limit:]
-                    + billables_main_domain
-                ))
-            self.assertEqual(sms_line_item.unit_cost, sms_cost)
-            self.assertEqual(sms_line_item.total, sms_cost)
-
-    def _create_sms_line_items_for_quarter(self):
-        tasks.generate_invoices_based_on_date(self.invoice_date)
-        self.assertEqual(CustomerInvoice.objects.count(), 1)
-        invoice = CustomerInvoice.objects.first()
-        return invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)
 
 
 class TestDomainsInLineItemForCustomerInvoicing(TestCase):

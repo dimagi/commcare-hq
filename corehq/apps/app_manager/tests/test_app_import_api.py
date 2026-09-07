@@ -10,6 +10,7 @@ from django.test import RequestFactory
 from couchdbkit.exceptions import ResourceNotFound
 from soil.exceptions import TaskFailedError
 
+from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.views.app_import_api import (
     _handle_import_app,
     _handle_multimedia_status,
@@ -20,10 +21,12 @@ DOMAIN = 'test-domain'
 MODULE = 'corehq.apps.app_manager.views.app_import_api'
 
 
-def _make_import_request(app_name=None, app_file_content=None):
+def _make_import_request(app_name=None, app_file_content=None, app_id=None):
     data = {}
     if app_name:
         data['app_name'] = app_name
+    if app_id:
+        data['app_id'] = app_id
     if app_file_content is not None:
         f = BytesIO(app_file_content)
         f.name = 'app.json'
@@ -120,6 +123,75 @@ def test_import_app_captures_warnings(mock_import):
     assert data['success'] is True
     assert len(data['warnings']) == 1
     assert 'Missing multimedia' in data['warnings'][0]
+
+
+@patch(f'{MODULE}.overwrite_app_from_source')
+def test_update_app_success(mock_overwrite):
+    mock_app = MagicMock()
+    mock_app._id = 'existing-id'
+    mock_app.version = 8
+    mock_overwrite.return_value = mock_app
+
+    request = _make_import_request(app_file_content=_app_json(), app_id='existing-id')
+    response = _handle_import_app(request, DOMAIN)
+
+    assert response.status_code == 200
+    data = _json(response)
+    assert data['success'] is True
+    assert data['app_id'] == 'existing-id'
+    assert data['version'] == 8
+    mock_overwrite.assert_called_once()
+    # signature: (domain, app_id, source, extra, request=...)
+    assert mock_overwrite.call_args[0][0] == DOMAIN
+    assert mock_overwrite.call_args[0][1] == 'existing-id'
+
+
+@patch(f'{MODULE}.overwrite_app_from_source')
+def test_update_app_allows_missing_app_name(mock_overwrite):
+    mock_app = MagicMock()
+    mock_app._id = 'existing-id'
+    mock_app.version = 2
+    mock_overwrite.return_value = mock_app
+
+    request = _make_import_request(app_file_content=_app_json(), app_id='existing-id')
+    response = _handle_import_app(request, DOMAIN)
+
+    assert response.status_code == 200
+    # extra passed to overwrite has no 'name' when app_name omitted
+    extra = mock_overwrite.call_args[0][3]
+    assert 'name' not in extra
+    assert extra['created_from_template'] == 'import_app_api'
+
+
+@patch(f'{MODULE}.overwrite_app_from_source')
+def test_update_app_sets_name_when_provided(mock_overwrite):
+    mock_app = MagicMock()
+    mock_app._id = 'existing-id'
+    mock_app.version = 2
+    mock_overwrite.return_value = mock_app
+
+    request = _make_import_request(
+        app_name='Renamed', app_file_content=_app_json(), app_id='existing-id'
+    )
+    _handle_import_app(request, DOMAIN)
+
+    extra = mock_overwrite.call_args[0][3]
+    assert extra['name'] == 'Renamed'
+
+
+@patch(f'{MODULE}.overwrite_app_from_source', side_effect=ResourceNotFound())
+def test_update_app_not_found(_mock_overwrite):
+    request = _make_import_request(app_file_content=_app_json(), app_id='missing-id')
+    response = _handle_import_app(request, DOMAIN)
+    assert response.status_code == 404
+
+
+@patch(f'{MODULE}.overwrite_app_from_source', side_effect=AppEditingError('bad type'))
+def test_update_app_incompatible_type(_mock_overwrite):
+    request = _make_import_request(app_file_content=_app_json(), app_id='existing-id')
+    response = _handle_import_app(request, DOMAIN)
+    assert response.status_code == 400
+    assert 'bad type' in _json(response)['error']
 
 
 # --- upload_multimedia_api ---

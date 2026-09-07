@@ -23,6 +23,18 @@ npm packages:
 
    $ yarn install --frozen-lockfile
 
+``.yarnrc`` sets ``ignore-scripts true`` repo-wide as a supply-chain control,
+so no package’s install hooks run — including puppeteer’s, which is what
+downloads the Chrome build the tests drive. You’ll need to install that
+browser explicitly, once:
+
+::
+
+   $ npx puppeteer browsers install chrome
+
+This is only needed to run the tests locally; CI uses the Chrome installed in
+the docker image.
+
 It’s recommended to install grunt globally in order to use grunt from
 the command line:
 

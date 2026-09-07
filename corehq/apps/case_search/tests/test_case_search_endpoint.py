@@ -1,7 +1,11 @@
+import datetime
 import uuid
 from unittest import mock
 
 from django.test import TestCase
+
+import pytest
+from unmagic import fixture, use
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
@@ -12,7 +16,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.case_search.const import IS_RELATED_CASE
-from corehq.apps.data_dictionary.models import CaseType
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
@@ -27,6 +31,9 @@ from corehq.apps.es.tests.utils import (
     case_search_es_setup,
     es_test,
 )
+from corehq.apps.project_db.populate import populate_case_type
+from corehq.apps.project_db.tests.util import project_db_table
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import flag_enabled
 
@@ -44,6 +51,12 @@ class TestCaseSearchEndpoint(TestCase):
         CaseSearchConfig.objects.create(domain=cls.domain, enabled=True)
         cls.person_case_type = CaseType.objects.create(domain=cls.domain, name='person')
         cls.addClassCleanup(cls.person_case_type.delete)
+        # the endpoint query builder validates fields against the data dictionary
+        CaseProperty.objects.create(
+            case_type=cls.person_case_type,
+            name='family',
+            data_type=CaseProperty.DataType.PLAIN,
+        )
         cls.household_1 = str(uuid.uuid4())
         case_blocks = [CaseBlock(
             case_id=cls.household_1,
@@ -115,26 +128,196 @@ class TestCaseSearchEndpoint(TestCase):
             ("Villanueva", "true"),
         ])
 
-    @flag_enabled('CASE_SEARCH_ENDPOINTS')
-    def test_endpoint_id_runs_query(self):
+    def _make_es_endpoint(self, query, parameters=None):
         endpoint = CaseSearchEndpoint.objects.create(
-            domain=self.domain, name='people', case_type='person')
+            domain=self.domain,
+            name='people',
+            target_type=CaseSearchEndpoint.TargetType.ELASTICSEARCH,
+        )
         version = CaseSearchEndpointVersion.objects.create(
             endpoint=endpoint,
             version_number=1,
-            query={'type': 'all', 'children': []},
-            parameters=[],
+            case_type='person',
+            query=query,
+            parameters=parameters or [],
             action=CaseSearchEndpointVersion.Action.CREATE,
         )
         endpoint.current_version = version
         endpoint.save(update_fields=['current_version'])
-        # TODO: pass criteria once CaseSearchEndpointQueryBuilder applies them.
-        # res = self._run_query(['person'], [SearchCriteria('family', 'Ramos')], endpoint_id=endpoint.id)
-        # self.assertItemsEqual(["Jane"], [case.name for case in res])
+        return endpoint
+
+    @flag_enabled('CASE_SEARCH_ENDPOINTS')
+    def test_endpoint_id_runs_query(self):
+        endpoint = self._make_es_endpoint({'type': 'all', 'children': []})
         res = self._run_query(['person'], [], endpoint_id=endpoint.id)
-        self.assertGreater(len(res), 0)
+        self.assertItemsEqual(["Jane", "Xiomara", "Alba", "Rogelio", "Jane"], [
+            case.name for case in res
+        ])
+
+    @flag_enabled('CASE_SEARCH_ENDPOINTS')
+    def test_endpoint_text_parameter(self):
+        endpoint = self._make_es_endpoint(
+            query={
+                'type': 'all',
+                'children': [{
+                    'type': 'component',
+                    'field': 'family',
+                    'operator': 'equals',
+                    'inputs': {'value': {'type': 'parameter', 'value': 'family'}},
+                }],
+            },
+            parameters=[{'name': 'family', 'type': 'text'}],
+        )
+        res = self._run_query(
+            ['person'], [SearchCriteria('family', 'Ramos')], endpoint_id=endpoint.id)
+        self.assertItemsEqual(["Jane"], [case.name for case in res])
+
+    @flag_enabled('CASE_SEARCH_ENDPOINTS')
+    def test_endpoint_text_parameter_not_supplied(self):
+        # an unsupplied parameter drops its condition rather than filtering on ''
+        endpoint = self._make_es_endpoint(
+            query={
+                'type': 'all',
+                'children': [{
+                    'type': 'component',
+                    'field': 'family',
+                    'operator': 'equals',
+                    'inputs': {'value': {'type': 'parameter', 'value': 'family'}},
+                }],
+            },
+            parameters=[{'name': 'family', 'type': 'text'}],
+        )
+        res = self._run_query(['person'], [], endpoint_id=endpoint.id)
+        self.assertItemsEqual(["Jane", "Xiomara", "Alba", "Rogelio", "Jane"], [
+            case.name for case in res
+        ])
 
     @flag_enabled('CASE_SEARCH_ENDPOINTS')
     def test_unknown_endpoint_id_raises(self):
         with self.assertRaises(CaseSearchUserError):
             self._run_query(['person'], [], endpoint_id=404)
+
+
+SQL_DOMAIN = 'test-endpoint-sql'
+PETS = [
+    ('p1', 'Fido', 'brown', '20'),
+    ('p2', 'Rex', 'black', '5'),
+]
+
+
+@fixture(scope="module")
+def pet_table():
+    # The pets are read but never written, so the table is built once for
+    # every test in the module rather than per test.
+    with project_db_table(SQL_DOMAIN, 'pet', {'color': 'plain', 'weight': 'number'}):
+        _populate_pets()
+        yield
+
+
+def _make_sql_endpoint(sql):
+    endpoint = CaseSearchEndpoint.objects.create(
+        domain=SQL_DOMAIN,
+        name='pets',
+        target_type=CaseSearchEndpoint.TargetType.PROJECT_DB,
+    )
+    version = CaseSearchEndpointVersion.objects.create(
+        endpoint=endpoint,
+        version_number=1,
+        case_type='pet',
+        dangerous_sql=sql,
+        action=CaseSearchEndpointVersion.Action.CREATE,
+    )
+    endpoint.current_version = version
+    endpoint.save(update_fields=['current_version'])
+    return endpoint
+
+
+def _populate_pets():
+    populate_case_type(SQL_DOMAIN, 'pet', [
+        CommCareCase(
+            case_id=case_id,
+            domain=SQL_DOMAIN,
+            type='pet',
+            name=name,
+            owner_id='owner1',
+            opened_on=datetime.datetime(2025, 1, 1),
+            modified_on=datetime.datetime(2025, 6, 1),
+            server_modified_on=datetime.datetime(2025, 6, 1),
+            closed=False,
+            external_id='',
+            case_json={'color': color, 'weight': weight},
+            indices=[],
+        ) for case_id, name, color, weight in PETS
+    ])
+
+
+def _run_sql_query(endpoint, criteria):
+    config = CaseSearchRequestConfig(
+        criteria=criteria, case_types=['pet'], endpoint_id=endpoint.id)
+    return get_case_search_results(SQL_DOMAIN, config)
+
+
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_without_parameters():
+    endpoint = _make_sql_endpoint('SELECT * FROM pet')
+
+    cases = sorted(_run_sql_query(endpoint, []), key=lambda case: case.name)
+
+    assert [case.name for case in cases] == ['Fido', 'Rex']
+    assert [case.case_id for case in cases] == ['p1', 'p2']
+    assert [case.case_json for case in cases] == [
+        {'color': 'brown', 'weight': '20'},
+        {'color': 'black', 'weight': '5'},
+    ]
+    assert all(case.domain == SQL_DOMAIN and case.type == 'pet' for case in cases)
+
+
+COLOR_SQL = (
+    "SELECT * FROM pet "
+    "WHERE (:color IS NULL OR prop__color = :color)"
+)
+
+
+@pytest.mark.parametrize('criteria, expected', [
+    ([SearchCriteria('color', 'brown')], ['Fido']),
+    ([SearchCriteria('color', 'black')], ['Rex']),
+    ([SearchCriteria('color', 'chartreuse')], []),
+    # an unsupplied or blank parameter is passed as NULL, which the guard
+    # treats as "any"
+    ([], ['Fido', 'Rex']),
+    ([SearchCriteria('color', '')], ['Fido', 'Rex']),
+])
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_with_text_parameter(criteria, expected):
+    endpoint = _make_sql_endpoint(COLOR_SQL)
+
+    cases = _run_sql_query(endpoint, criteria)
+
+    assert sorted(case.name for case in cases) == expected
+
+
+WEIGHT_SQL = (
+    "SELECT * FROM pet "
+    "WHERE (:weight IS NULL OR number_prop__weight > :weight)"
+)
+
+
+@pytest.mark.parametrize('criteria, expected', [
+    ([SearchCriteria('weight', '12')], ['Fido']),
+    ([SearchCriteria('weight', '1')], ['Fido', 'Rex']),
+    ([SearchCriteria('weight', '100')], []),
+    # NULL is the only sentinel that coerces to a numeric column; an empty
+    # string would fail with "invalid input syntax for type numeric"
+    ([], ['Fido', 'Rex']),
+    ([SearchCriteria('weight', '')], ['Fido', 'Rex']),
+])
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_with_number_parameter(criteria, expected):
+    endpoint = _make_sql_endpoint(WEIGHT_SQL)
+
+    cases = _run_sql_query(endpoint, criteria)
+
+    assert sorted(case.name for case in cases) == expected

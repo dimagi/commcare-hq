@@ -23,7 +23,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_current_app,
     wrap_app,
 )
-from corehq.apps.app_manager.decorators import require_deploy_apps
+from corehq.apps.app_manager.decorators import require_can_edit_or_view_apps
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     AppLinkError,
@@ -61,7 +61,7 @@ CASE_TYPE_CONFLICT_MSG = (
 )
 
 
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def back_to_main(request, domain, app_id, module_id=None, form_id=None,
                  form_unique_id=None, module_unique_id=None):
     """
@@ -179,11 +179,7 @@ def get_default_followup_form_xml(context):
 
 
 def overwrite_app(app, master_build, report_map=None):
-    excluded_fields = set(Application._meta_fields).union([
-        'date_created', 'build_profiles', 'copy_history', 'copy_of',
-        'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id',
-        'custom_base_url', 'family_id', 'multimedia_map',
-    ])
+    excluded_fields = set(Application._update_excluded_fields)
     master_json = master_build.to_json()
     app_json = app.to_json()
 

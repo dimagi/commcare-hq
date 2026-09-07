@@ -7,10 +7,10 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from corehq import toggles
-from corehq.apps.app_manager.models import PublicFormSession
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
+from corehq.apps.public_webforms.models import PublicFormSession
 from corehq.apps.users.models import CouchUser
 from corehq.feature_previews import previews_enabled_for_domain
 from corehq.middleware import TimeoutMiddleware

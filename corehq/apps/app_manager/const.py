@@ -126,5 +126,12 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
 LATEST_APK_VALUE = 'latest'
 LATEST_APP_VALUE = 0
 
-PUBLIC_FORM_SESSION_COOKIE_NAME = 'public_form_session_key'
-PUBLIC_FORM_SESSION_HEADER = 'CommCare-Public-Session'
+NON_BUILD_APP_KEYS = (
+    '_id',
+    '_rev',
+    '_attachments',
+    'external_blobs',
+    'short_odk_url',
+    'short_odk_media_url',
+    'recipients',
+)

@@ -118,17 +118,6 @@ class BillingAccountType(object):
     )
 
 
-class InvoicingPlan(object):
-    MONTHLY = "MONTHLY"
-    QUARTERLY = "QUARTERLY"
-    YEARLY = "YEARLY"
-    CHOICES = (
-        (MONTHLY, "Monthly"),
-        (QUARTERLY, "Quarterly"),
-        (YEARLY, "Yearly")
-    )
-
-
 class FeatureType(object):
     USER = "User"
     SMS = "SMS"
@@ -412,11 +401,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
     is_sms_billable_report_visible = models.BooleanField(default=False)
     enterprise_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
     enterprise_restricted_signup_domains = ArrayField(models.CharField(max_length=128), default=list, blank=True)
-    invoicing_plan = models.CharField(
-        max_length=25,
-        default=InvoicingPlan.MONTHLY,
-        choices=InvoicingPlan.CHOICES
-    )
     entry_point = models.CharField(
         max_length=25,
         default=EntryPoint.NOT_SET,
@@ -1187,6 +1171,9 @@ class DisabledManager(models.Manager):
         raise NotImplementedError
 
 
+_UNSET = object()
+
+
 class Subscription(models.Model):
     """
     Links a Subscriber to a SoftwarePlan and BillingAccount, necessary for invoicing.
@@ -1225,6 +1212,7 @@ class Subscription(models.Model):
     is_hidden_to_ops = models.BooleanField(default=False)
     skip_auto_downgrade = models.BooleanField(default=False)
     skip_auto_downgrade_reason = models.CharField(blank=True, max_length=256)
+    skip_auto_downgrade_until = models.DateField(null=True, blank=True)
     auto_renew = models.BooleanField(default=False)
 
     visible_objects = VisibleSubscriptionManager()
@@ -1291,6 +1279,13 @@ class Subscription(models.Model):
     @property
     def is_free_edition(self):
         return self.plan_version.plan.edition == SoftwarePlanEdition.FREE
+
+    @property
+    def should_skip_downgrade(self):
+        return self.skip_auto_downgrade and (
+            self.skip_auto_downgrade_until is None
+            or self.skip_auto_downgrade_until > datetime.date.today()
+        )
 
     @property
     def allowed_attr_changes(self):
@@ -1362,7 +1357,9 @@ class Subscription(models.Model):
                             web_user=None, note=None, adjustment_method=None,
                             service_type=None, pro_bono_status=None, funding_source=None,
                             skip_invoicing_if_no_feature_charges=None, skip_auto_downgrade=None,
-                            skip_auto_downgrade_reason=None, auto_renew=None):
+                            skip_auto_downgrade_reason=None,
+                            skip_auto_downgrade_until=_UNSET,
+                            auto_renew=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         self._update_dates(date_start, date_end)
@@ -1382,6 +1379,8 @@ class Subscription(models.Model):
             skip_auto_downgrade_reason=skip_auto_downgrade_reason,
             auto_renew=auto_renew,
         )
+        if skip_auto_downgrade_until is not _UNSET:
+            self.skip_auto_downgrade_until = skip_auto_downgrade_until
 
         self.save()
 
@@ -1456,6 +1455,7 @@ class Subscription(models.Model):
             skip_invoicing_if_no_feature_charges=self.skip_invoicing_if_no_feature_charges,
             skip_auto_downgrade=self.skip_auto_downgrade,
             skip_auto_downgrade_reason=self.skip_auto_downgrade_reason,
+            skip_auto_downgrade_until=self.skip_auto_downgrade_until,
             auto_renew=self.auto_renew,
             date_end=self.date_end,
         )
@@ -1469,22 +1469,27 @@ class Subscription(models.Model):
                     auto_generate_credits=False, is_trial=False,
                     do_not_email_invoice=False, do_not_email_reminder=False,
                     skip_invoicing_if_no_feature_charges=False,
-                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None, auto_renew=None):
+                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None,
+                    skip_auto_downgrade_until=None, auto_renew=None,
+                    effective_date=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
         This is not the same thing as simply updating the subscription.
 
-        date_end is a date in the future and only applies to the NEW
-        subscription. The current subscription will always end immediately
-        (today) and the date_start of the new subscription will always be today.
+        effective_date controls when the replacement takes effect and defaults
+        to today. date_end is a date in the future and only applies to the NEW
+        subscription.
         """
         from corehq.apps.analytics.tasks import track_workflow_noop
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
+        effective_date = effective_date or today
+        is_immediate_change = effective_date == today
         assert self.is_active
-        assert date_end is None or date_end >= today
+        assert effective_date >= today
+        assert date_end is None or date_end >= effective_date
 
         if new_plan_version.plan.at_max_domains() and self.plan_version.plan != new_plan_version.plan:
             raise SubscriptionAdjustmentError(
@@ -1493,8 +1498,8 @@ class Subscription(models.Model):
                 }
             )
 
-        self.date_end = today
-        self.is_active = False
+        self.date_end = effective_date
+        self.is_active = not is_immediate_change
         self.save()
 
         new_subscription = Subscription(
@@ -1502,9 +1507,9 @@ class Subscription(models.Model):
             plan_version=new_plan_version,
             subscriber=self.subscriber,
             salesforce_contract_id=self.salesforce_contract_id,
-            date_start=today,
+            date_start=effective_date,
             date_end=date_end,
-            is_active=True,
+            is_active=is_immediate_change,
             do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
             do_not_email_invoice=do_not_email_invoice,
@@ -1517,6 +1522,7 @@ class Subscription(models.Model):
             funding_source=(funding_source or FundingSource.CLIENT),
             skip_auto_downgrade=skip_auto_downgrade,
             skip_auto_downgrade_reason=skip_auto_downgrade_reason or '',
+            skip_auto_downgrade_until=skip_auto_downgrade_until,
         )
         new_subscription.auto_renew = auto_renew if auto_renew is not None else new_subscription.can_auto_renew
 
@@ -1526,18 +1532,19 @@ class Subscription(models.Model):
         new_subscription.set_billing_account_entry_point()
 
         change_status_result = get_change_status(self.plan_version, new_plan_version)
-        self.subscriber.change_subscription(
-            downgraded_privileges=change_status_result.downgraded_privs,
-            upgraded_privileges=change_status_result.upgraded_privs,
-            new_plan_version=new_plan_version,
-            old_subscription=self,
-            new_subscription=new_subscription,
-            internal_change=internal_change,
-        )
+        if is_immediate_change:
+            self.subscriber.change_subscription(
+                downgraded_privileges=change_status_result.downgraded_privs,
+                upgraded_privileges=change_status_result.upgraded_privs,
+                new_plan_version=new_plan_version,
+                old_subscription=self,
+                new_subscription=new_subscription,
+                internal_change=internal_change,
+            )
 
-        # transfer existing credit lines to the new subscription
-        if transfer_credits:
-            self.transfer_credits(new_subscription)
+            # transfer existing credit lines to the new subscription
+            if transfer_credits:
+                self.transfer_credits(new_subscription)
 
         # record transfer from old subscription
         SubscriptionAdjustment.record_adjustment(
@@ -1750,64 +1757,13 @@ class Subscription(models.Model):
                                 date_start=None, date_end=None, note=None,
                                 web_user=None, adjustment_method=None, internal_change=False,
                                 **kwargs):
-        if plan_version.plan.at_max_domains():
-            raise NewSubscriptionError(
-                'The maximum number of project spaces has been reached for %(plan_version)s. ' % {
-                    'plan_version': plan_version,
-                }
-            )
-
-        if plan_version.plan.is_customer_software_plan != account.is_customer_billing_account:
-            if plan_version.plan.is_customer_software_plan:
-                raise NewSubscriptionError(
-                    'You are trying to add a Customer Software Plan to a regular Billing Account. '
-                    'Both or neither must be customer-level.'
-                )
-            else:
-                raise NewSubscriptionError(
-                    'You are trying to add a regular Software Plan to a Customer Billing Account. '
-                    'Both or neither must be customer-level.'
-                )
+        cls._raise_if_plan_or_account_rejects_new_subscription(account, plan_version)
 
         subscriber = Subscriber.objects.get_or_create(domain=domain)[0]
-        today = datetime.date.today()
-        date_start = date_start or today
 
-        # find subscriptions that end in the future / after this subscription
-        available_subs = Subscription.visible_objects.filter(
-            subscriber=subscriber,
-        )
+        date_start = date_start or datetime.date.today()
 
-        future_subscription_no_end = available_subs.filter(
-            date_end__exact=None,
-        )
-        if date_end is not None:
-            future_subscription_no_end = future_subscription_no_end.filter(date_start__lt=date_end)
-        if future_subscription_no_end.count() > 0:
-            raise NewSubscriptionError(_(
-                "There is already a subscription '%s' with no end date "
-                "that conflicts with the start and end dates of this "
-                "subscription.") %
-                future_subscription_no_end.latest('date_created')
-            )
-
-        future_subscriptions = available_subs.filter(
-            date_end__gt=date_start
-        )
-        if date_end is not None:
-            future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
-        if future_subscriptions.count() > 0:
-            raise NewSubscriptionError(str(
-                _(
-                    "There is already a subscription '%(sub)s' that has an end date "
-                    "that conflicts with the start and end dates of this "
-                    "subscription %(start)s - %(end)s."
-                ) % {
-                    'sub': future_subscriptions.latest('date_created'),
-                    'start': date_start,
-                    'end': date_end
-                }
-            ))
+        cls._raise_if_subscription_dates_conflict(subscriber, date_start, date_end)
 
         can_reactivate, last_subscription = cls.can_reactivate_domain_subscription(
             account, domain, plan_version, date_start=date_start
@@ -1845,6 +1801,65 @@ class Subscription(models.Model):
         subscription.set_billing_account_entry_point()
 
         return subscription
+
+    @classmethod
+    def _raise_if_plan_or_account_rejects_new_subscription(cls, account, plan_version):
+        if plan_version.plan.at_max_domains():
+            raise NewSubscriptionError(
+                'The maximum number of project spaces has been reached for %(plan_version)s. ' % {
+                    'plan_version': plan_version,
+                }
+            )
+
+        if plan_version.plan.is_customer_software_plan != account.is_customer_billing_account:
+            if plan_version.plan.is_customer_software_plan:
+                raise NewSubscriptionError(
+                    'You are trying to add a Customer Software Plan to a regular Billing Account. '
+                    'Both or neither must be customer-level.'
+                )
+            else:
+                raise NewSubscriptionError(
+                    'You are trying to add a regular Software Plan to a Customer Billing Account. '
+                    'Both or neither must be customer-level.'
+                )
+
+    @classmethod
+    def _raise_if_subscription_dates_conflict(cls, subscriber, date_start, date_end):
+        # find subscriptions that end in the future / after this subscription
+        available_subs = Subscription.visible_objects.filter(
+            subscriber=subscriber,
+        )
+
+        future_subscription_no_end = available_subs.filter(
+            date_end__exact=None,
+        )
+        if date_end is not None:
+            future_subscription_no_end = future_subscription_no_end.filter(date_start__lt=date_end)
+        if future_subscription_no_end.exists():
+            raise NewSubscriptionError(_(
+                "There is already a subscription '%s' with no end date "
+                "that conflicts with the start and end dates of this "
+                "subscription.") %
+                future_subscription_no_end.latest('date_created')
+            )
+
+        future_subscriptions = available_subs.filter(
+            date_end__gt=date_start
+        )
+        if date_end is not None:
+            future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
+        if future_subscriptions.exists():
+            raise NewSubscriptionError(str(
+                _(
+                    "There is already a subscription '%(sub)s' that has an end date "
+                    "that conflicts with the start and end dates of this "
+                    "subscription %(start)s - %(end)s."
+                ) % {
+                    'sub': future_subscriptions.latest('date_created'),
+                    'start': date_start,
+                    'end': date_end
+                }
+            ))
 
     @classmethod
     def can_reactivate_domain_subscription(cls, account, domain, plan_version,
@@ -2040,6 +2055,63 @@ class WirePrepaymentInvoice(WireInvoice):
     @property
     def is_prepayment(self):
         return True
+
+
+class ScheduledPrepaymentInvoiceStatus(object):
+    PENDING = 'PENDING'
+    SENT = 'SENT'
+    CANCELLED = 'CANCELLED'
+    FAILED = 'FAILED'
+    CHOICES = (
+        (PENDING, 'Pending'),
+        (SENT, 'Sent'),
+        (CANCELLED, 'Cancelled'),
+        (FAILED, 'Failed'),
+    )
+
+
+INACTIVE_SUBSCRIPTION_REASON = 'Subscription is paused or no longer active'
+
+
+class ScheduledPrepaymentInvoice(models.Model):
+    """A prepayment invoice queued for generation on a future date"""
+
+    domain = models.CharField(max_length=100, db_index=True)
+    subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
+    send_date = models.DateField(db_index=True)
+    status = models.CharField(
+        max_length=25,
+        default=ScheduledPrepaymentInvoiceStatus.PENDING,
+        choices=ScheduledPrepaymentInvoiceStatus.CHOICES,
+    )
+    created_by = models.CharField(max_length=80)
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    # data needed to generate the invoice
+    amount = models.DecimalField(max_digits=10, decimal_places=4)
+    credit_label = models.CharField(max_length=256)
+    unit_cost = models.DecimalField(max_digits=10, decimal_places=4)
+    quantity = models.IntegerField()
+    contact_emails = jsonfield.JSONField(default=list)
+    cc_emails = jsonfield.JSONField(default=list)
+    date_start = models.DateField()
+    date_end = models.DateField()
+
+    notified_accounting = models.BooleanField(default=False)
+    failure_count = models.IntegerField(default=0)
+    invoice = models.ForeignKey(
+        WireInvoice, on_delete=models.PROTECT, null=True, blank=True
+    )
+    # blank cancelled_by means the system cancelled it rather than an operator
+    cancelled_by = models.CharField(blank=True, max_length=80)
+    cancelled_reason = models.CharField(blank=True, max_length=256)
+
+    def __str__(self):
+        return (
+            f'Prepayment invoice for {self.domain} scheduled to send on '
+            f'{self.send_date} ({self.status})'
+        )
 
 
 class Invoice(InvoiceBase):
@@ -2610,9 +2682,11 @@ class BillingRecord(BillingRecordBase):
         autogenerate = (subscription.auto_generate_credits and not self.invoice.balance)
         small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD
                             and subscription.service_type == SubscriptionType.IMPLEMENTATION)
+        zero_dollar_annual = (self.invoice.balance <= 0
+                              and subscription.plan_version.plan.is_annual_plan)
         hidden = self.invoice.is_hidden
         do_not_email_invoice = self.invoice.subscription.do_not_email_invoice
-        return not (autogenerate or small_contracted or hidden or do_not_email_invoice)
+        return not (autogenerate  or small_contracted or zero_dollar_annual or hidden or do_not_email_invoice)
 
     def is_email_throttled(self):
         month = self.invoice.date_start.month
@@ -3132,18 +3206,14 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
                 line_items = LineItem.objects.filter(subscription_invoice=invoice)
             for line_item in line_items:
                 is_unit = line_item.unit_description is not None
-                is_quarterly = line_item.invoice.is_customer_invoice and \
-                    line_item.invoice.account.invoicing_plan != InvoicingPlan.MONTHLY
                 unit_cost = line_item.subtotal
                 if is_unit:
                     unit_cost = line_item.unit_cost
-                if is_quarterly and line_item.base_description is not None:
-                    unit_cost = line_item.product_rate.monthly_fee
                 description = line_item.base_description or line_item.unit_description
                 if line_item.quantity > 0:
                     template.add_item(
                         description,
-                        line_item.quantity if is_unit or is_quarterly else 1,
+                        line_item.quantity if is_unit else 1,
                         unit_cost,
                         line_item.subtotal,
                         line_item.applied_credit,
@@ -3233,9 +3303,6 @@ class LineItem(models.Model):
 
     @property
     def subtotal(self):
-        if self.customer_invoice and self.customer_invoice.account.invoicing_plan != InvoicingPlan.MONTHLY:
-            return self.base_cost * self.quantity + self.unit_cost * self.quantity
-
         return self.base_cost + self.unit_cost * self.quantity
 
     @property

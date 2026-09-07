@@ -468,6 +468,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
         '/a/{domain}/clean/',
+        '/a/{domain}/project_db/',
         '/a/{domain}/microplanning/',
         '/a/{domain}/kyc/',
         '/a/{domain}/payments/'
@@ -632,12 +633,6 @@ class ProjectDataTab(UITab):
             items.append([_('CSQL Fixtures'), [{
                 'title': _(CSQLFixtureExpressionView.page_title),
                 'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
-            }]])
-
-        if toggles.CASE_SEARCH_ENDPOINTS.enabled(self.domain):
-            items.append([_('Case Search Endpoints'), [{
-                'title': _(CaseSearchEndpointsView.page_title),
-                'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain]),
             }]])
 
         if self._can_view_data_dictionary:
@@ -1024,6 +1019,24 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': False,
                     'subpages': [],
                 }])
+            if toggles.PROJECT_DB.enabled(self.domain):
+                from corehq.apps.project_db.views import QueryProjectDBView
+                explore_data_views.append({
+                    'title': _(QueryProjectDBView.page_title),
+                    'url': reverse(QueryProjectDBView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-database',
+                    'show_in_dropdown': False,
+                    'subpages': [],
+                })
+        if (toggles.CASE_SEARCH_ENDPOINTS.enabled(self.domain)
+                and self.couch_user.is_domain_admin(self.domain)):
+            explore_data_views.append({
+                'title': _(CaseSearchEndpointsView.page_title),
+                'url': reverse(CaseSearchEndpointsView.urlname, args=(self.domain,)),
+                'icon': 'fa fa-search',
+                'show_in_dropdown': False,
+                'subpages': [],
+            })
         return explore_data_views
 
     def _get_geospatial_views(self):
@@ -1151,7 +1164,10 @@ class ProjectDataTab(UITab):
 class ApplicationsTab(UITab):
     view = "default_new_app"
 
-    url_prefix_formats = ('/a/{domain}/apps/',)
+    url_prefix_formats = (
+        '/a/{domain}/apps/',
+        '/a/{domain}/public_webforms/',
+    )
 
     @property
     def title(self):
@@ -1199,6 +1215,40 @@ class ApplicationsTab(UITab):
                 url=(reverse('default_new_app', args=[self.domain])),
             ))
         return submenu_context
+
+    @property
+    def sidebar_items(self):
+        items = []
+        if self.public_webforms_urls:
+            items.append((_("Public Webforms"), self.public_webforms_urls))
+        return items
+
+    @property
+    def public_webforms_urls(self):
+        from corehq.apps.public_webforms.views import (
+            CreatePublicWebformView,
+            ManagePublicWebformsView,
+        )
+        if not (
+            domain_has_privilege(self.domain, privileges.PUBLIC_WEBFORMS)
+            and self.couch_user.has_permission(self.domain, HqPermissions.edit_public_webforms)
+            and toggles.PUBLIC_WEBFORMS.enabled_for_request(self._request)
+        ):
+            return []
+
+        return [{
+            'title': _(ManagePublicWebformsView.page_title),
+            'url': reverse(
+                ManagePublicWebformsView.urlname, args=[self.domain]
+            ),
+            'description': _('Create and manage public webforms.'),
+            'subpages': [
+                {
+                    'title': _(CreatePublicWebformView.page_title),
+                    'urlname': CreatePublicWebformView.urlname,
+                },
+            ],
+        }]
 
     @property
     def _is_viewable(self):

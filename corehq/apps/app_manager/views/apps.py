@@ -40,7 +40,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
-    require_deploy_apps,
+    require_can_edit_or_view_apps,
 )
 from corehq.apps.app_manager.exceptions import (
     AppLinkError,
@@ -80,8 +80,8 @@ from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig
 from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.decorators import (
+    api_auth,
     login_and_domain_required,
-    login_or_digest,
     track_domain_request,
 )
 from corehq.apps.domain.models import all_app_manager_add_ons_enabled
@@ -409,7 +409,8 @@ def get_apps_base_context(request, domain, app):
     return context
 
 
-@login_or_digest
+@require_GET
+@api_auth()
 @require_can_edit_apps
 def app_source(request, domain, app_id):
     app = get_app(domain, app_id)
@@ -618,14 +619,14 @@ def _valid_exchange_record_exists_helper(app_id, records):
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def app_settings(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id)
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def view_app(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, release_manager=True)

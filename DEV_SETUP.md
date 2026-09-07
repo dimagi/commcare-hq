@@ -1038,6 +1038,18 @@ export PATH="$(yarn global bin):$PATH"
 
 More information can be found [here](https://classic.yarnpkg.com/en/docs/cli/global/)
 
+`.yarnrc` sets `ignore-scripts true` repo-wide as a supply-chain control, so no
+package's install hooks run — including puppeteer's, which is what downloads the
+Chrome build the tests drive. You'll need to install that browser explicitly,
+once:
+
+```sh
+npx puppeteer browsers install chrome
+```
+
+This is only needed to run the tests locally; CI uses the Chrome installed in
+the docker image.
+
 In order for the tests to run the **development server needs to be running on port 8000**.
 
 

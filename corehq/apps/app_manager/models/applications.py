@@ -61,10 +61,12 @@ from corehq.apps.app_manager.const import (
     ANDROID_LOGO_PROPERTY_MAPPING,
     LATEST_APK_VALUE,
     LATEST_APP_VALUE,
+    NON_BUILD_APP_KEYS,
 )
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
+    get_app_doc,
     get_app_languages,
     get_apps_in_domain,
     get_build_ids,
@@ -347,6 +349,12 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     short_odk_media_url = StringProperty()
     _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version',
                     'short_odk_url', 'short_odk_media_url']
+    _update_excluded_fields = _meta_fields + [
+        'date_created', 'name', 'comment', 'doc_type',
+        'multimedia_map', 'family_id', 'copy_history',
+        'build_profiles', 'custom_base_url', 'practice_mobile_worker_id',
+        '_LAZY_ATTACHMENTS', 'copy_of'
+    ]
 
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
@@ -688,12 +696,9 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             copy = copies[0]
         else:
             copy = deepcopy(self.to_json())
-            bad_keys = ('_id', '_rev', '_attachments', 'external_blobs',
-                        'short_odk_url', 'short_odk_media_url', 'recipients')
-
-            for bad_key in bad_keys:
-                if bad_key in copy:
-                    del copy[bad_key]
+            for key in NON_BUILD_APP_KEYS:
+                if key in copy:
+                    del copy[key]
 
             copy = cls.wrap(copy)
             copy.convert_app_to_build(self._id, user_id, comment)
@@ -2030,6 +2035,68 @@ def _update_valid_domains_for_media(app, domain_to_add):
                 media.valid_domains.append(domain_to_add)
                 media.save()
 
+
+def _merge_source_into_app(existing_app_json, source, extra_properties=None):
+    """Return a new app JSON built from ``existing_app_json`` with content
+    fields replaced from ``source``.
+
+    This overlays ``source`` onto a copy of the existing app rather than
+    performing a strict replace: a non-excluded content field present on the
+    existing app but absent from ``source`` is retained, not cleared.
+    """
+    excluded_fields = set(Application._update_excluded_fields + ['build_spec', '_attachments'])
+    source_doc_type = source.get('doc_type')
+    if source_doc_type and source_doc_type != existing_app_json.get('doc_type'):
+        raise AppEditingError(
+            "Uploaded app type '{}' does not match existing app type '{}'".format(
+                source_doc_type, existing_app_json.get('doc_type')
+            )
+        )
+    merged = dict(existing_app_json)
+    for key, value in source.items():
+        if key not in excluded_fields:
+            merged[key] = value
+    if extra_properties:
+        merged.update(extra_properties)
+    return merged
+
+
+def overwrite_app_from_source(domain, app_id, source, extra_properties=None, request=None):
+    """Update the app ``app_id`` in ``domain`` in place from an uploaded JSON
+    ``source``, preserving the app's identity, name, and multimedia.
+
+    The create-time counterpart is :func:`import_app`. Raises
+    ``ResourceNotFound`` if the app does not exist in ``domain`` and
+    ``AppEditingError`` if the source's app type is incompatible.
+    """
+    app = get_app_doc(domain, app_id)
+
+    attachments = _get_attachments(source)
+    source['_attachments'] = {}
+
+    merged = _merge_source_into_app(app, source, extra_properties)
+    app = wrap_app(merged)
+
+    report_map = get_static_report_mapping(source.get('domain'), domain)
+    _update_report_config_ids(app, report_map, source.get('domain'))
+
+    # save_attachments persists the doc and bumps the version (non-copy app);
+    # do not call app.save() again or the version would bump twice.
+    app.save_attachments(attachments)
+
+    try:
+        _update_valid_domains_for_media(app, domain)
+    except ReportConfigurationNotFoundError:
+        if request:
+            messages.warning(request, _("Updating the application succeeded, but the application will have "
+                                        "errors because it contains a Mobile Report Module that references a "
+                                        "custom report (UCR) that isn't available in this project space. "
+                                        "Multimedia may be absent."))
+    except ResourceNotFound:
+        messages.warning(request, _("Updating the application succeeded, but the application is missing "
+                                    "multimedia file(s)."))
+
+    return app
 
 
 class ExchangeApplication(models.Model):

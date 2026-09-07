@@ -2,6 +2,7 @@ import json
 from collections.abc import Sequence
 
 from django import forms
+from django.conf import settings
 from django.forms.utils import flatatt
 from django.forms.widgets import CheckboxInput, Input
 from django.utils.encoding import force_str
@@ -272,4 +273,14 @@ class AlpineSelect(forms.Select):
                 ':selected': f"{x_model} == '{option_value}'"
             })
             context["widget"]['optgroups'][index][1][0] = option_context
+        return context
+
+
+class TurnstileWidget(forms.Widget):
+
+    template_name = "hqwebapp/widgets/turnstile.html"
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['widget']['site_key'] = settings.TURNSTILE_SITE_KEY
         return context

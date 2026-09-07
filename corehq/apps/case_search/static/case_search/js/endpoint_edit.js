@@ -9,6 +9,7 @@ import {
     cloneWithNewIds,
     normalizeRoot,
     removeChild,
+    resetQuery,
 } from "case_search/js/endpoint_tree";
 
 // Input-slot type sentinels. These MUST stay in sync with the constants in
@@ -22,7 +23,6 @@ const SLOT_TYPE_MATCH_FIELD = "match_field";
 Alpine.data("endpointForm", () => {
     return {
         name: initialPageData.get("initial_name"),
-        targetType: initialPageData.get("initial_target_type"),
         targetCasetype: initialPageData.get("initial_case_type"),
         parameters: initialPageData.get("initial_parameters") || [],
         testParamValues: {},
@@ -91,7 +91,7 @@ Alpine.data("endpointForm", () => {
         },
 
         onCasetypeChange() {
-            this.query = { type: "all", children: [] };
+            resetQuery(this.query);
         },
 
         addParameter() {

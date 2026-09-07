@@ -1,9 +1,13 @@
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
 import pytest
+from couchdbkit import ResourceNotFound
 from django.test import TestCase
 
 from corehq.apps.export.dbaccessors import (
+    ODataExportFetcher,
+    _iter_export_instances_by_domain_docs,
     get_brief_deid_exports,
     get_brief_exports,
     get_case_exports_by_domain,
@@ -16,7 +20,6 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
     get_properly_wrapped_export_instance,
-    ODataExportFetcher
 )
 from corehq.apps.export.models import (
     CaseExportDataSchema,
@@ -227,6 +230,41 @@ class TestExportInstanceDBAccessors(TestCase):
 
         stubs = get_brief_deid_exports(self.domain, form_or_case=None)
         self.assertEqual(len(stubs), 2)
+
+
+def test_iter_export_instances_by_domain_docs_yields_wrapped_doc():
+    doc = {'_id': 'abc123', 'doc_type': 'CaseExportInstance', 'domain': 'my-domain'}
+    results = [{'id': 'abc123', 'doc': doc}]
+
+    instance, = list(_iter_export_instances_by_domain_docs(CaseExportInstance, results))
+
+    assert isinstance(instance, CaseExportInstance)
+    assert instance._id == 'abc123'
+
+
+@patch.object(CaseExportInstance, 'get_db')
+def test_iter_export_instances_by_domain_docs_discards_stale_row_for_deleted_doc(get_db_mock):
+    get_db_mock.return_value.get.side_effect = ResourceNotFound
+    results = [{'id': 'deleted-id', 'doc': None}]
+
+    docs = list(_iter_export_instances_by_domain_docs(CaseExportInstance, results))
+
+    assert not docs
+    get_db_mock.return_value.get.assert_called_once_with('deleted-id')
+
+
+@patch('corehq.apps.export.dbaccessors.notify_exception')
+@patch.object(CaseExportInstance, 'get_db')
+def test_iter_export_instances_by_domain_docs_notifies_when_doc_unexpectedly_still_exists(
+    get_db_mock, notify_exception_mock
+):
+    get_db_mock.return_value.get.return_value = {'_id': 'still-there'}
+    results = [{'id': 'still-there', 'doc': None}]
+
+    instance, = list(_iter_export_instances_by_domain_docs(CaseExportInstance, results))
+
+    assert instance._id == 'still-there'
+    assert notify_exception_mock.called
 
 
 class TestInferredSchemasDBAccessors(TestCase):

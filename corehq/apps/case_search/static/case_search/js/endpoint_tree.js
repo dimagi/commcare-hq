@@ -32,6 +32,11 @@ export function normalizeRoot(node) {
     return { type: "all", children: (node && node.children) || [] };
 }
 
+export function resetQuery(query) {
+    query.type = "all";
+    query.children = [];
+}
+
 // Remove `node` from `parent.children` by identity, returning true if found.
 // Identity rather than index because the builder's x-for is keyed by `_id` and
 // Alpine does not re-run a child's scope after the list mutates, so a captured

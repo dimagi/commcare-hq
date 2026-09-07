@@ -171,7 +171,10 @@ def is_domain_available_to_link(upstream_domain_name, candidate_name, user):
         # cannot link to an already linked project
         return False
 
-    return user_has_access_in_all_domains(user, [upstream_domain_name, candidate_name])
+    return (
+        can_domain_access_linked_domains(candidate_name)
+        and user_has_access_in_all_domains(user, [upstream_domain_name, candidate_name])
+    )
 
 
 def is_available_upstream_domain(potential_upstream_domain, downstream_domain, user):

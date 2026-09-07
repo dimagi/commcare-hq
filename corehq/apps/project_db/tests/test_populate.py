@@ -3,13 +3,18 @@ import uuid
 from decimal import Decimal
 
 import pytest
+import sqlalchemy
+from sqlalchemy import func
 from unmagic import use
 
 from corehq.apps.project_db.populate import (
     case_to_row,
     coerce_to_date,
+    coerce_to_gps,
     coerce_to_number,
-    send_to_project_db,
+    coerce_to_select,
+    populate_case_type,
+    send_cases_to_project_db,
     upsert_cases,
 )
 from corehq.apps.project_db.table_ddl import (
@@ -45,6 +50,45 @@ def test_coerce_to_date(value, expected):
 ])
 def test_coerce_to_number(value, expected):
     assert coerce_to_number(value) == expected
+
+
+@pytest.mark.parametrize('value, expected', [
+    ('red',            ['red']),
+    (' red ',         ['red']),
+    ('red  blue',     ['red', 'blue']),
+    ('red green blue', ['red', 'green', 'blue']),
+    (None,            []),
+    ('',              []),
+    ('  ',           []),
+])
+def test_coerce_to_select(value, expected):
+    assert coerce_to_select(value) == expected
+
+
+def assert_gps_equals(actual_str, expected):
+    actual = tuple(float(n) for n in actual_str.strip('()').split(','))
+    # approx match to account for float rounding
+    assert actual == pytest.approx(expected, abs=1e-3)
+
+
+@pytest.mark.parametrize('value, expected', [
+    (None,             None),
+    ('',               None),
+    ('not a gps',      None),
+    ('91 0 0 0',       None),  # latitude out of range
+    ('0 0 0 0',        (6378168.0, 0.0, 0.0)),  # equator / prime meridian
+    ('0 90 0 0',       (0.0, 6378168.0, 0.0)),  # equator, 90°E
+    ('0 90',           (0.0, 6378168.0, 0.0)),  # two-element version works fine too
+    ('90 0 0 0',       (0.0, 0.0, 6378168.0)),  # north pole
+    ('42.365 -71.102', (1526343.604, -4458592.705, 4297935.938)),
+
+])
+def test_coerce_to_gps(value, expected):
+    result = coerce_to_gps(value)
+    if expected is None:
+        assert result is None
+    else:
+        assert_gps_equals(result, expected)
 
 
 def _make_index(identifier, referenced_id):
@@ -109,10 +153,24 @@ def test_static_fields_mapped_to_columns():
       'prop__weight': '70.5', 'number_prop__weight': Decimal('70.5')}),
     # typed value skipped when only the raw column exists
     ({'dob': '1990-05-20'}, {'prop__dob'}, {'prop__dob': '1990-05-20'}),
+    # select property populates both the raw and the text[] column
+    ({'interests': 'sports music'},
+     {'prop__interests', 'select_prop__interests'},
+     {'prop__interests': 'sports music',
+      'select_prop__interests': ['sports', 'music']}),
 ])
 def test_property_columns(case_json, columns, expected_props):
     result = case_to_row(_make_case(case_json=case_json), columns)
     assert {k: v for k, v in result.items() if 'prop__' in k} == expected_props
+
+
+def test_gps_property_column_populated():
+    result = case_to_row(
+        _make_case(case_json={'location': '0 0 0 0'}),
+        {'prop__location', 'gps_prop__location'},
+    )
+    assert result['prop__location'] == '0 0 0 0'
+    assert_gps_equals(result['gps_prop__location'], (6378168.0, 0, 0))
 
 
 @pytest.mark.parametrize('indices, expected_parent, expected_host', [
@@ -156,8 +214,8 @@ def test_upsert():
 
 
 @use('db', project_db_table('test-send', 'patient', {'first_name': 'plain'}))
-def test_send_to_project_db():
-    send_to_project_db('test-send', 'patient', [
+def test_populate_case_type():
+    populate_case_type('test-send', 'patient', [
         _make_case({'first_name': 'Alice'}, type='patient'),
         _make_case({'first_name': 'Bob'}, type='patient'),
         _make_case({}, type='patient'),
@@ -170,12 +228,52 @@ def test_send_to_project_db():
     assert CaseTable('test-upsert', 'clinic').reflect() is None
 
 
+@use('db', project_db_table('test-select', 'patient', {'interests': 'select'}))
+def test_send_select_property_round_trip():
+    populate_case_type('test-select', 'patient', [
+        _make_case({'interests': 'sports music'}, case_id='c1', type='patient'),
+        _make_case({}, case_id='c2', type='patient'),  # absent -> empty array, not NULL
+    ])
+
+    table = CaseTable('test-select', 'patient').reflect()
+    with get_project_db_engine().begin() as conn:
+        rows = conn.execute(
+            table.select().order_by(table.c.case_id)
+        ).fetchall()
+    interests = {r['case_id']: r['select_prop__interests'] for r in rows}
+    assert interests == {'c1': ['sports', 'music'], 'c2': []}
+
+
+@use('db')
+def test_send_gps_property_round_trip():
+    # Stored earth values must line up with postgres ll_to_earth, proving the
+    # Python cube formula stays in sync with the earthdistance extension.
+    domain = 'test-gps'
+    with project_db_table(domain, 'patient', {'location': 'gps'}):
+        populate_case_type(domain, 'patient', [
+            _make_case({'location': '40.7128 -74.006 10 5'}, case_id='c1', type='patient'),
+            _make_case({'location': 'garbage'}, case_id='c2', type='patient'),
+            _make_case({}, case_id='c3', type='patient'),  # absent -> NULL
+        ])
+        table = CaseTable(domain, 'patient').reflect()
+        column = table.c['gps_prop__location']
+        distance = func.earth_distance(column, func.ll_to_earth(40.7128, -74.006))
+        with get_project_db_engine().begin() as conn:
+            rows = conn.execute(
+                sqlalchemy.select([table.c.case_id, distance]).order_by(table.c.case_id)
+            ).fetchall()
+    by_id = {r[0]: r[1] for r in rows}
+    assert by_id['c1'] == pytest.approx(0, abs=0.01)  # within a centimeter
+    assert by_id['c2'] is None  # unparseable -> NULL
+    assert by_id['c3'] is None
+
+
 @use('db', project_db_table('test-long-prop', 'patient', {'x' * 100: 'date'}))
 def test_send_long_property_name_round_trip():
     # A property whose column name exceeds Postgres's 63-byte limit must survive
     # create -> reflect -> upsert with the DDL and populate sides agreeing.
     long_name = 'x' * 100
-    send_to_project_db('test-long-prop', 'patient', [
+    populate_case_type('test-long-prop', 'patient', [
         _make_case({long_name: '1990-05-20'}, type='patient'),
     ])
 
@@ -189,10 +287,29 @@ def test_send_long_property_name_round_trip():
 
 
 @use('db', project_db_table('test-send', 'patient', {'first_name': 'plain'}))
-def test_send_to_project_db_bad_type():
+def test_populate_case_type_bad_type():
     with pytest.raises(ValueError):
-        send_to_project_db('test-send', 'patient', [
+        populate_case_type('test-send', 'patient', [
             _make_case({'first_name': 'Alice'}, type='patient'),
             _make_case({'first_name': 'Bob'}, type='patient'),
             _make_case({}, type='clinic'),
         ])
+
+
+@use('db')
+def test_send_cases_to_project_db():
+    domain = 'test-mixed'
+    with project_db_table(domain, 'patient', {'first_name': 'plain'}), \
+         project_db_table(domain, 'clinic', {'city': 'plain'}):
+        send_cases_to_project_db(domain, [
+            _make_case({'first_name': 'Alice'}, case_id='c1', type='patient'),
+            _make_case({'city': 'Boston'}, case_id='c2', type='clinic'),
+            _make_case({'first_name': 'Bob'}, case_id='c3', type='patient'),
+            _make_case({}, case_id='c4', type='no-such-table'),  # skipped
+        ])
+        with get_project_db_engine().begin() as conn:
+            patients = conn.execute(CaseTable(domain, 'patient').reflect().select()).fetchall()
+            clinics = conn.execute(CaseTable(domain, 'clinic').reflect().select()).fetchall()
+
+    assert sorted(r['case_id'] for r in patients) == ['c1', 'c3']
+    assert [r['case_id'] for r in clinics] == ['c2']
