@@ -5,6 +5,7 @@ from corehq.apps.accounting.dispatcher import (
 )
 from corehq.apps.accounting.views import (
     AccountingSingleOptionResponseView,
+    CancelScheduledInvoiceView,
     CustomerInvoicePdfView,
     CustomerInvoiceSummaryView,
     EditSoftwarePlanView,
@@ -55,6 +56,9 @@ urlpatterns = [
         name=TestRenewalEmailView.urlname),
     url(r'^manage_admins/$', ManageAccountingAdminsView.as_view(),
         name=ManageAccountingAdminsView.urlname),
+    url(r'^scheduled_invoices/(?P<scheduled_invoice_id>\d+)/cancel/$',
+        CancelScheduledInvoiceView.as_view(),
+        name=CancelScheduledInvoiceView.urlname),
     url(r'^accounts/(\d+)/$', ManageBillingAccountView.as_view(), name=ManageBillingAccountView.urlname),
     url(r'^accounts/new/$', NewBillingAccountView.as_view(), name=NewBillingAccountView.urlname),
     url(r'^subscriptions/(\d+)/$', EditSubscriptionView.as_view(), name=EditSubscriptionView.urlname),

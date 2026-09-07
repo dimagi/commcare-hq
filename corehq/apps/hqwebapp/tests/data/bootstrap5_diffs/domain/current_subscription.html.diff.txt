@@ -10,8 +10,8 @@
  
  {% block page_content %}
    {% initial_page_data "stripe_public_key" stripe_public_key %}
-@@ -15,7 +15,7 @@
-   {% registerurl "domain_wire_payment" domain %}
+@@ -16,7 +16,7 @@
+   {% registerurl "domain_schedule_prepayment_invoice" domain %}
  
    <div class="row">
 -    <div class="col-sm-12">
@@ -19,7 +19,7 @@
        <article id="subscriptionSummary" class="form-horizontal">
          <legend>{% trans 'Current Subscription' %}</legend>
          <p>
-@@ -25,9 +25,9 @@
+@@ -26,9 +26,9 @@
              <a href="{{ help_url }}" target="_blank">Help Site</a>.
            {% endblocktrans %}
          </p>
@@ -32,7 +32,7 @@
              <div class="{{ plan.css_class }}">
                <h4>
                  {% if plan.is_paused %}
-@@ -68,7 +68,7 @@
+@@ -69,7 +69,7 @@
              {% endif %}
              {% if can_change_subscription %}
                {% if plan.is_annual_plan and not plan.upgrade_available %}
@@ -41,7 +41,7 @@
                    {% trans "Questions about your plan?" %}
                    <a href="{% url "annual_plan_request_quote" domain %}"
                      >{% trans "Contact us" %}</a
-@@ -76,11 +76,7 @@
+@@ -77,11 +77,7 @@
                  </div>
                {% else %}
                  <p>
@@ -54,7 +54,7 @@
                      {% if plan.is_paused %}
                        {% trans "Subscribe to Plan" %}
                      {% elif plan.is_annual_plan and plan.upgrade_available %}
-@@ -113,21 +109,21 @@
+@@ -114,21 +110,21 @@
          </div>
          {% if not plan.is_trial and not plan.is_paused %}
            {% if plan.date_start %}
@@ -82,7 +82,7 @@
                  <p class="form-control-text">{{ plan.date_end }}</p>
                  {% if plan.is_auto_renew %}
                    <div class="alert alert-success">
-@@ -154,8 +150,8 @@
+@@ -155,8 +151,8 @@
                    <button
                      type="button"
                      class="btn btn-default"
@@ -93,7 +93,7 @@
                    >
                      {% if plan.is_auto_renew %}
                        {% trans "Disable Auto Renewal" %}
-@@ -168,26 +164,26 @@
+@@ -169,26 +165,26 @@
              </div>
            {% endif %}
            <div data-bind="foreach: products">
@@ -127,7 +127,7 @@
                {% endif %}
                (<a href="{{ manage_autopay_url }}#payment-methods">Manage</a>)
              </p>
-@@ -201,29 +197,29 @@
+@@ -202,29 +198,29 @@
            </div>
          </div>
          {% if plan.next_subscription.exists and not plan.next_subscription.is_paused %}
@@ -166,7 +166,7 @@
                <p class="form-control-text">
                  {{ plan.next_subscription.price }}
                </p>
-@@ -236,26 +232,26 @@
+@@ -237,26 +233,26 @@
          <div class="form form-horizontal">
            {% if plan.has_credits_in_non_general_credit_line %}
              <div data-bind="foreach: products">
@@ -199,7 +199,7 @@
                  <p class="form-control-text js-general-credit">
                    {{ plan.general_credit.amount }}
                  </p>
-@@ -263,29 +259,29 @@
+@@ -264,29 +260,29 @@
              </div>
            {% endif %}
            <div data-bind="with: prepayments">
@@ -237,7 +237,7 @@
                      <i class="fa fa-info-circle"></i>
                      {% trans "Not Billing Admin, Can't Add Credit" %}
                    </span>
-@@ -298,8 +294,8 @@
+@@ -299,8 +295,8 @@
            <legend>{% trans 'Account Credit' %}</legend>
            <div class="form form-horizontal">
              <div data-bind="foreach: products">
@@ -248,7 +248,7 @@
                    {% trans 'Plan Credit' %}
                    <div class="hq-help">
                      <a
-@@ -314,7 +310,7 @@
+@@ -315,7 +311,7 @@
                      </a>
                    </div>
                  </label>
@@ -257,7 +257,7 @@
                    <p
                      class="form-control-text"
                      data-bind="text: accountAmount"
-@@ -323,8 +319,8 @@
+@@ -324,8 +320,8 @@
                </div>
              </div>
              {% if plan.account_general_credit and plan.account_general_credit.is_visible %}
@@ -268,7 +268,7 @@
                    {% trans 'General Credit' %}
                    <div class="hq-help">
                      <a
-@@ -340,7 +336,7 @@
+@@ -341,7 +337,7 @@
                      </a>
                    </div>
                  </label>
@@ -277,7 +277,7 @@
                    <p class="form-control-text">
                      {{ plan.account_general_credit.amount }}
                    </p>
-@@ -410,8 +406,8 @@
+@@ -411,8 +407,8 @@
  
  {% block modals %}
    {{ block.super }}

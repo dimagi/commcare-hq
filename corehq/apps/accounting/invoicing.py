@@ -298,24 +298,35 @@ class DomainWireInvoiceFactory(object):
 
         return wire_invoice
 
-    def create_wire_credits_invoice(self, amount, credit_label, unit_cost, quantity, date_due=None):
-
+    def create_wire_credits_invoice(
+        self,
+        amount,
+        credit_label,
+        unit_cost,
+        quantity,
+        date_due=None,
+        send_async=True,
+    ):
         serializable_amount = simplejson.dumps(amount, use_decimal=True)
         serializable_items = get_serializable_wire_invoice_general_credit(
             amount, credit_label, unit_cost, quantity
         )
 
         from corehq.apps.accounting.tasks import create_wire_credits_invoice
-        create_wire_credits_invoice.delay(
-            domain_name=self.domain.name,
-            amount=serializable_amount,
-            invoice_items=serializable_items,
-            date_start=self.date_start,
-            date_end=self.date_end,
-            contact_emails=self.contact_emails,
-            cc_emails=self.cc_emails,
-            date_due=date_due,
-        )
+        task_kwargs = {
+            'domain_name': self.domain.name,
+            'amount': serializable_amount,
+            'invoice_items': serializable_items,
+            'date_start': self.date_start,
+            'date_end': self.date_end,
+            'contact_emails': self.contact_emails,
+            'cc_emails': self.cc_emails,
+            'date_due': date_due,
+        }
+        if send_async:
+            create_wire_credits_invoice.delay(**task_kwargs)
+            return None
+        return create_wire_credits_invoice(**task_kwargs)
 
     def create_subscription_credits_invoice(self, plan_version, date_start, date_end):
         label = f"One month of {plan_version.plan.name}"

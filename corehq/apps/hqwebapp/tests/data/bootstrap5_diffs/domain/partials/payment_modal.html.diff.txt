@@ -104,9 +104,20 @@
            <input
              type="number"
              class="form-control"
-@@ -140,11 +140,11 @@
-       </div>
+@@ -141,8 +141,8 @@
      </div>
+ 
+     {% if can_schedule_prepayment_invoice %}
+-      <div class="form-group">
+-        <label class="control-label col-md-2"> {% trans "Send On" %} </label>
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <label class="form-label col-md-2"> {% trans "Send On" %} </label>
+         <div class="col-md-10">
+           <input
+             type="text"
+@@ -164,11 +164,11 @@
+       </div>
+     {% endif %}
  
 -    <div class="form-group">
 -      <label class="control-label col-sm-2">
@@ -119,7 +130,7 @@
          <p
            class="form-control-text"
            data-bind="text: ('$ ' + invoice_amount())"
-@@ -186,8 +186,8 @@
+@@ -216,8 +216,8 @@
        <div class="modal-header">
          <button
            type="button"
@@ -130,7 +141,7 @@
            aria-label="Close"
          >
            <span aria-hidden="true">&times;</span>
-@@ -240,11 +240,11 @@
+@@ -270,11 +270,11 @@
                  >
                {% endblocktrans %}
              </p>
@@ -145,7 +156,7 @@
                  <input
                    type="text"
                    data-bind="value: wireEmail"
-@@ -256,11 +256,11 @@
+@@ -286,11 +286,11 @@
                </div>
              </div>
  
@@ -160,7 +171,7 @@
                  <input
                    type="text"
                    data-bind="value: wireAdditionalEmails"
-@@ -306,8 +306,8 @@
+@@ -336,8 +336,8 @@
            <button
              type="button"
              data-bind="visible: paymentIsNotComplete"
@@ -171,7 +182,7 @@
            >
              {% trans "Cancel" %}
            </button>
-@@ -328,15 +328,15 @@
+@@ -358,15 +358,15 @@
              data-bind="text: submitBtnText"
              disabled="disabled"
            ></button>
