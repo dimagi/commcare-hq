@@ -61,6 +61,7 @@ from corehq.apps.accounting.models import (
     PaymentType,
     PreOrPostPay,
     ProBonoStatus,
+    ScheduledPrepaymentInvoiceStatus,
     SoftwarePlan,
     SoftwarePlanEdition,
     SoftwarePlanVersion,
@@ -80,6 +81,7 @@ from corehq.apps.accounting.utils import (
     get_account_name_from_default_name,
     get_money_str,
     has_subscription_already_ended,
+    log_accounting_info,
     make_anchor_tag,
 )
 from corehq.apps.accounting.utils.software_plans import (
@@ -1135,6 +1137,50 @@ class CreditForm(forms.Form):
             permit_inactive=True,
         )
         return True
+
+
+class CancelScheduledInvoiceForm(forms.Form):
+    """Confirm cancelling a queued prepayment invoice"""
+
+    reason = forms.CharField(
+        label="Reason",
+        required=True,
+        max_length=256,
+        widget=forms.Textarea(attrs={"class": "vertical-resize", "rows": "2"}),
+        help_text="Describe why this prepayment is being cancelled.",
+    )
+
+    def __init__(self, scheduled, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.scheduled = scheduled
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Cancel Scheduled Invoice',
+                'reason',
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    'Cancel This Invoice',
+                    css_class='btn-danger disable-on-submit',
+                    type='submit',
+                ),
+            ),
+        )
+
+    def cancel(self, cancelled_by):
+        self.scheduled.status = ScheduledPrepaymentInvoiceStatus.CANCELLED
+        self.scheduled.cancelled_by = cancelled_by
+        self.scheduled.cancelled_reason = self.cleaned_data['reason']
+        self.scheduled.save()
+        log_accounting_info(
+            f"Scheduled prepayment invoice {self.scheduled.id} for domain "
+            f"{self.scheduled.domain} cancelled by {cancelled_by}."
+        )
 
 
 class RemoveAutopayForm(forms.Form):

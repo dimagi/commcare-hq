@@ -5,6 +5,7 @@
  */
 import $ from "jquery";
 import ko from "knockout";
+import moment from "moment";
 import _ from "underscore";
 import { createStripeToken, getCardElementPromise } from "accounting/js/stripe";
 import initialPageData from "hqwebapp/js/initial_page_data";
@@ -117,10 +118,38 @@ var paymentMethodHandler = function (formId, opts) {
         self.autopayCard(autopayStripeCard);
     }
 
+    self.confirmedSendDate = ko.observable(null);
+    self.scheduledSendDateInput = ko.observable(null);
+
+    self.isScheduling = ko.pureComputed(function () {
+        return self.paymentMethod() === self.WIRE
+            && !! self.scheduledSendDateInput();
+    });
+
+    self.isSendDateValid = ko.pureComputed(function () {
+        var value = self.scheduledSendDateInput();
+        if (!value) {
+            return true;  // blank means send now
+        }
+        var parsed = moment(value, "YYYY-MM-DD", true);
+        if (!parsed.isValid()) {
+            return false;
+        }
+        return parsed.isAfter(moment().startOf("day"));
+    });
+
+    // The btn label informs user if sending now or scheduling for later
+    self.submitBtnText = ko.computed(function () {
+        if (self.isScheduling() && opts.scheduleBtnText) {
+            return opts.scheduleBtnText;
+        }
+        return opts.submitBtnText;
+    });
+
     self.submitURL = self.submitURL || ko.computed(function () {
         var url = opts.credit_card_url;
         if (self.paymentMethod() === self.WIRE) {
-            url = opts.wire_url;
+            url = self.isScheduling() ? opts.schedule_url : opts.wire_url;
         }
         return url;
     });
@@ -206,7 +235,7 @@ var paymentMethodHandler = function (formId, opts) {
         if (self.paymentMethod() === self.CREDIT_CARD) {
             return !(!! self.costItem() && self.costItem().isValid()) || self.selectedCard().isProcessing();
         } else {
-            return (self.paymentProcessing());
+            return (self.paymentProcessing()) || !self.isSendDateValid();
         }
     });
 
@@ -226,6 +255,8 @@ var paymentMethodHandler = function (formId, opts) {
     self.reset = function () {
         self.paymentIsComplete(false);
         self.serverErrorMsg('');
+        self.confirmedSendDate(null);
+        self.scheduledSendDateInput(null);
         self.newCard().reset();
         self.resetStripeCardUI(true);
     };
@@ -256,6 +287,9 @@ var paymentMethodHandler = function (formId, opts) {
     };
 
     self.handleSuccess = function (response) {
+        if (response.send_date) {
+            self.confirmedSendDate(response.send_date);
+        }
         if (response.success) {
             self.costItem().reset(response);
             if (response.wasSaved) {
@@ -310,7 +344,7 @@ var chargedCostItem = function (initData) {
         try {
             var balance = parseFloat(self.balance());
             return balance - 0.5 <= 0.0;
-        } catch (e) {
+        } catch {
             return false;
         }
     });
@@ -324,7 +358,7 @@ var chargedCostItem = function (initData) {
             var balance = parseFloat(self.balance()),
                 customAmount = parseFloat(self.customPaymentAmount());
             return balance >= customAmount && customAmount >= 0.5;
-        } catch (e) {
+        } catch {
             return false;
         }
     });
@@ -339,7 +373,7 @@ var chargedCostItem = function (initData) {
                 maxPartial = parseFloat(self.maxPartialAmount()),
                 customAmount = parseFloat(self.customPaymentAmount());
             return customAmount === balance || customAmount <= maxPartial;
-        } catch (e) {
+        } catch {
             return false;
         }
     });
