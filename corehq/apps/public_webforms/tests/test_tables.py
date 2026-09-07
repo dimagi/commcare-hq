@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
 import pytz
+from django.utils import timezone
 
 from corehq.apps.public_webforms import tables
 from corehq.apps.public_webforms.models import (
@@ -19,6 +20,10 @@ TIMEZONE = pytz.timezone('America/New_York')
 
 def _table():
     return PublicWebformTable(data=[], domain=DOMAIN, timezone=TIMEZONE)
+
+
+def _webform(**kwargs):
+    return PublicWebform(**{'id': 1, 'expires_at': timezone.now() + timedelta(days=30), **kwargs})
 
 
 def _cells(webform):
@@ -59,7 +64,7 @@ def test_closing_time_is_shown_in_the_projects_timezone(stored_utc, expected):
 
 
 def test_form_column_names_form_and_links_its_app():
-    webform = PublicWebform(id=1, label='Antenatal visit')
+    webform = _webform(label='Antenatal visit')
     path = {
         'app_name': 'Frontline Program',
         'app_url': '/apps/view/app-1/',
@@ -78,12 +83,27 @@ def test_form_column_names_form_and_links_its_app():
 
 
 def test_the_public_url_column_offers_the_url_to_copy():
-    webform = PublicWebform(id=1, public_id=uuid4())
+    webform = _webform(public_id=uuid4())
 
     rendered = _cells(webform)['public_url']
 
     assert webform.public_url in rendered
     assert 'clipboard' in rendered
+
+
+@pytest.mark.parametrize('is_disabled, expected, not_expected', [
+    (True, "Open", "Close"),
+    (False, "Close", "Open"),
+], ids=['closed', 'open'])
+def test_the_actions_column_offers_the_status_a_webform_is_not_in(
+    is_disabled, expected, not_expected
+):
+    webform = _webform(is_disabled=is_disabled)
+
+    rendered = _cells(webform)['actions']
+
+    assert expected in rendered
+    assert not_expected not in rendered
 
 
 @pytest.mark.parametrize('allow_email, allow_sms, expected_titles', [
@@ -94,7 +114,7 @@ def test_the_public_url_column_offers_the_url_to_copy():
 def test_delivery_marks_each_channel_as_on_or_off(
     allow_email, allow_sms, expected_titles
 ):
-    webform = PublicWebform(allow_email=allow_email, allow_sms=allow_sms)
+    webform = _webform(allow_email=allow_email, allow_sms=allow_sms)
 
     rendered = _cells(webform)['delivery']
 
