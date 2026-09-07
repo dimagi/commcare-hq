@@ -1,0 +1,168 @@
+SsoCredentials:
+  type: object
+  description: >-
+    Request body for `authenticateUser` (`v0_4.SingleSignOnResource.post_list`,
+    `corehq/apps/api/resources/v0_4.py:268-297`).
+  required: [username, password]
+  properties:
+    username:
+      type: string
+      description: >-
+        A bare username is qualified as `<username>@<domain>.commcarehq.org`
+        (`format_username`, `v0_4.py:280-281`) unless it already contains `@`.
+      example: jdoe
+    password:
+      type: string
+      format: password
+      example: qwer1234
+SsoMobileWorker:
+  type: object
+  description: >-
+    Returned when the authenticated username belongs to a mobile worker. **Not**
+    the same shape as `MobileWorker`
+    (`components/schemas/user.yaml#/MobileWorker`), despite `sso.rst:25`
+    claiming the output is "identical to the List User API" -- see the
+    discrepancy file. `post_list` dehydrates with a plain
+    `v0_1.CommCareUserResource()` (`v0_4.py:289,295-296`), not the `v0_5`
+    subclass that backs `listMobileWorkers`/`getMobileWorker`, so several
+    `v0_5`-only fields (`primary_location`, `locations`,
+    `require_account_confirmation`, `send_confirmation_email_now`) are absent.
+  properties:
+    id:
+      type: string
+      example: 3c5a623af057e23a32ae4000cf291339
+    username:
+      type: string
+      example: jdoe@example.commcarehq.org
+    first_name:
+      type: string
+      nullable: true
+      example: John
+    last_name:
+      type: string
+      nullable: true
+      example: Doe
+    default_phone_number:
+      type: string
+      nullable: true
+      example: "+50253311399"
+    email:
+      type: string
+      example: jdoe@example.org
+    phone_numbers:
+      type: array
+      items:
+        type: string
+      example: ["+50253311399"]
+    groups:
+      type: array
+      items:
+        type: string
+      description: Group UUIDs the user belongs to (`get_group_ids`).
+      example:
+        - 9a0accdba29e01a61ea099394737c4fb
+    user_data:
+      type: object
+      additionalProperties: true
+      example:
+        chw_id: "13/43/DFA"
+    eulas:
+      type: string
+      description: >-
+        A Python `repr` of a list of `LicenseAgreement` objects, not structured
+        JSON -- same shape as `MobileWorker.eulas`. See the discrepancy file.
+      example: "[]"
+    resource_uri:
+      type: string
+      description: >-
+        Always the empty string here, unlike `MobileWorker.resource_uri`.
+        `v0_1.CommCareUserResource` (used by SSO) does not override
+        `get_resource_uri`; `v0_5.CommCareUserResource` (used by
+        `listMobileWorkers`/`getMobileWorker`) does
+        (`corehq/apps/api/resources/v0_5.py:257-268`). The base
+        `resource_uri_kwargs` omits `domain`, so reversing the detail URL raises
+        `NoReverseMatch`, caught by `get_resource_uri`
+        (`tastypie/resources.py:810-829`) and turned into `''`. See the
+        discrepancy file.
+      example: ""
+    extras:
+      type: object
+      description: >-
+        Present only if the request URL includes a truthy `extras` query
+        parameter (`CommCareUserResource.dehydrate`, `v0_1.py:76-109`) --
+        unusual on a `POST`, but the check reads `bundle.request.GET` regardless
+        of method.
+      properties:
+        submitted_last_30:
+          type: integer
+          example: 4
+        completed_last_30:
+          type: integer
+          example: 3
+        submitted_last_month:
+          type: integer
+          example: 5
+        completed_last_month:
+          type: integer
+          example: 4
+SsoWebUser:
+  type: object
+  description: >-
+    Returned when the authenticated username belongs to a web user. **Not** the
+    same shape as `WebUser` (`components/schemas/user.yaml#/WebUser`), despite
+    `sso.rst:25`'s "identical to ... the List Web User API" claim -- see the
+    discrepancy file. `post_list` dehydrates with a plain
+    `v0_1.WebUserResource()` (`v0_4.py:291,295-296`), not the `v0_5` subclass
+    that backs `listWebUsers`/`getWebUser`, so several `v0_5`-only fields
+    (`user_data`, `primary_location_id`, `assigned_location_ids`, `profile`,
+    `tableau_role`, `tableau_groups`, `is_active_in_domain`) are absent.
+  properties:
+    id:
+      type: string
+      example: 8f9756be9b1c7f28057d707b405d18f6
+    username:
+      type: string
+      example: jdoe@example.com
+    first_name:
+      type: string
+      nullable: true
+      example: John
+    last_name:
+      type: string
+      nullable: true
+      example: Doe
+    default_phone_number:
+      type: string
+      nullable: true
+      example: "+50253311399"
+    email:
+      type: string
+      example: john.doe@example.org
+    phone_numbers:
+      type: array
+      items:
+        type: string
+      example: []
+    role:
+      type: string
+      description: Role name in this domain, or `""` if the user has no role.
+      example: App Editor
+    permissions:
+      type: object
+      additionalProperties: true
+      example:
+        edit_web_users: true
+        edit_commcare_users: true
+    is_admin:
+      type: boolean
+      example: false
+    eulas:
+      type: string
+      description: Same `repr`-of-a-list shape as `SsoMobileWorker.eulas`.
+      example: "[]"
+    resource_uri:
+      type: string
+      description: >-
+        Always the empty string here, unlike `WebUser.resource_uri` -- same
+        mechanism as `SsoMobileWorker.resource_uri`. See the discrepancy file.
+      example: ""

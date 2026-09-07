@@ -1,0 +1,265 @@
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listReports
+    summary: List configurable ("UCR") report definitions
+    description: >-
+      Returns every report configuration in the project space
+      (`SimpleReportConfigurationResource.obj_get_list`,
+      `corehq/apps/api/resources/v0_5.py:988-990`), including static reports.
+      Use `getReport`'s `id` (or this list's `resource_uri`) to run
+      `downloadReportData`.
+
+      **No specific permission is required beyond the generic API-access
+      check.** `SimpleReportConfigurationResource.Meta` (`v0_5.py:998-1001`)
+      declares no `authentication` override, so it inherits
+      `CustomResourceMeta.authentication = LoginAndDomainAuthentication()`
+      (`corehq/apps/api/resources/meta.py:76-78`) -- login, domain membership,
+      and the generic `access_api` permission only. Contrast
+      `downloadReportData`, which does require a specific permission. Neither
+      `list-reports.rst` nor `download-report-data.rst` documents a permission
+      requirement for this operation; see the discrepancy file for how
+      `downloadReportData`'s stated requirement compares to its code.
+
+      `Meta.paginator_class = DoesNothingPaginator`
+      (`corehq/apps/api/resources/pagination.py:42-47`) returns every report
+      unconditionally; `limit`/`offset` query parameters have no effect and are
+      not declared here.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: Every report configuration in the project space.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/report.yaml#/ReportList"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Same mechanism as listFixtures'/getFixture's 403
+        # (RequirePermissionAuthentication/LoginAndDomainAuthentication's
+        # shared _auth_test, corehq/apps/api/resources/auth.py:114-135,
+        # 152-163): a failed permission check raises Django's
+        # PermissionDenied, caught directly and converted to a bare
+        # HttpResponseForbidden() -- no body.
+        description: >-
+          The authenticated user is not a member of this project space, or lacks
+          the generic API-access permission. The response body is empty.
+      "429":
+        # Same mechanism as listFixtures'/getFixture's 429: tastypie's own
+        # throttle_check (tastypie/resources.py:573-598) with the real
+        # HQThrottle (CustomResourceMeta.throttle, meta.py:76-81) -- bare
+        # http.HttpTooManyRequests(), no body.
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty.
+Detail:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: report_id
+      in: path
+      required: true
+      description: Report configuration UUID.
+      example: 9aab0eeb88555a7b3bc8676883e7379a
+      schema:
+        type: string
+  get:
+    operationId: getReport
+    summary: Retrieve a single report definition
+    description: >-
+      Same permission requirements as `listReports` -- generic API access only,
+      no report-specific permission.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: The report configuration.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/report.yaml#/Report"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user is not a member of this project space, or lacks
+          the generic API-access permission. The response body is empty. Same
+          mechanism as `listReports`'s 403.
+      "404":
+        # Deliberately not the shared NotFound ref, and not an empty body.
+        # get_document_or_404 (corehq/util/couch.py:62-77) raises Http404,
+        # caught here and re-raised as tastypie's own NotFound(str(e))
+        # (v0_5.py:979-986) -- but tastypie's get_detail
+        # (tastypie/resources.py:1362-1383) only catches ObjectDoesNotExist,
+        # not tastypie's NotFound, so this propagates to wrap_view's generic
+        # exception handler -> _handle_500 (tastypie/resources.py:
+        # 265-292), which does map NotFound to a 404 status but always
+        # builds a canned message, not the caught exception's real text.
+        description: >-
+          The report configuration does not exist in this project space.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/report.yaml#/ReportErrorMessage"
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listReports`'s 429.
+Download:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: report_id
+      in: path
+      required: true
+      description: Report configuration UUID, from `listReports`.
+      example: 9aab0eeb88555a7b4568676883e7379a
+      schema:
+        type: string
+  get:
+    operationId: downloadReportData
+    summary: Run a report and download its result data
+    description: >-
+      Runs the named report with the given filters and returns a page of result
+      rows (`ConfigurableReportDataResource`,
+      `corehq/apps/api/resources/v0_5.py:812-954`). **Detail only --
+      `Meta.list_allowed_methods = []`** (`v0_5.py:953`), so there is no list
+      operation for this resource; every report is run by its own id.
+
+      Requires the `View Reports` permission
+      (`RequirePermissionAuthentication(HqPermissions.view_reports,
+      allow_session_auth=True)`, `v0_5.py:952`). `download-report-data.rst`
+      states "Permission Required: View Data, Access All Reports" -- neither
+      name is an actual `HqPermissions` field
+      (`corehq/apps/users/models.py:190-221`); the real check is `view_reports`
+      alone. See the discrepancy file.
+
+      **`filter_name` query parameters are user-defined, not literal.** OpenAPI
+      cannot express "any query parameter matching a report's own filter slugs",
+      so the four parameters below (`<filter_name>`, `<filter_name>-start`,
+      `<filter_name>-end`, `<filter_name>-operator`/`<filter_name>-operand`) are
+      listed with an angle-bracket placeholder that you must replace with a real
+      filter slug from that report's `listReports`/`getReport` `filters[].slug`
+      before sending -- e.g. `?owner_name=someone`, not
+      `?<filter_name>=someone`. Send one member of the family per filter you
+      want to apply: a plain value for a simple filter, `-start`/`-end` for a
+      date-range filter (both required together), or `-operator`/`-operand`
+      together for a numeric comparison filter (`download-report-data.rst:
+      44-49`). To match multiple values for one filter, join them with the `%1F`
+      (unit separator) character in a single value, e.g.
+      `?state=vermont%1Fnewyork`. Any filter value that fails to parse (for
+      example, an invalid date for a `-start`/`-end` pair) raises
+      `UserReportsFilterError` uncaught by `obj_get`
+      (`corehq/apps/userreports/reports/view.py:82-96`), which is neither
+      tastypie's `NotFound` nor `BadRequest` and so surfaces as an uncaught 500,
+      not a 400 -- undocumented in `download-report-data.rst`; see the
+      discrepancy file.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+      - name: offset
+        in: query
+        required: false
+        description: The record number to start at.
+        example: 20
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: limit
+        in: query
+        required: false
+        description: >-
+          The maximum number of records to return. `_get_limit_param`
+          (`v0_5.py:834-844`) rejects a value above 50 with a 400.
+        example: 10
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 50
+          default: 50
+      - name: <filter_name>
+        in: query
+        required: false
+        description: >-
+          Substitute a report filter's `slug` for `<filter_name>`, e.g.
+          `?owner_name=someone`. Value for a simple (string/choice) filter.
+        example: someone
+        schema:
+          type: string
+      - name: <filter_name>-start
+        in: query
+        required: false
+        description: >-
+          For a date-range filter, the start of the range, e.g.
+          `?form_date-start=2015-01-01`. Required together with the matching
+          `-end` parameter.
+        example: "2015-01-01"
+        schema:
+          type: string
+      - name: <filter_name>-end
+        in: query
+        required: false
+        description: >-
+          For a date-range filter, the end of the range, e.g.
+          `?form_date-end=2015-02-01`. Required together with the matching
+          `-start` parameter.
+        example: "2015-02-01"
+        schema:
+          type: string
+      - name: <filter_name>-operator
+        in: query
+        required: false
+        description: >-
+          For a numeric filter, a comparison operator: one of `>= <= = != < >`,
+          e.g. `?age-operator=>`. Required together with the matching `-operand`
+          parameter.
+        example: ">"
+        schema:
+          type: string
+          enum: [">=", "<=", "=", "!=", "<", ">"]
+      - name: <filter_name>-operand
+        in: query
+        required: false
+        description: >-
+          For a numeric filter, the value to compare against, e.g.
+          `?age-operand=10`.
+        example: "10"
+        schema:
+          type: string
+    responses:
+      "200":
+        description: A page of report result rows.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/report.yaml#/ConfigurableReportData"
+      "400":
+        $ref: "../components/responses.yaml#/BadRequest"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks the View Reports permission, or is not a
+          member of this project space. The response body is empty. Same
+          mechanism as `listReports`'s 403.
+      "404":
+        # Same mechanism as getReport's 404: _get_report_configuration
+        # (v0_5.py:919-932) raises bare tastypie NotFound() on a
+        # DocumentNotFound, which is not caught by get_detail
+        # (tastypie/resources.py:1362-1383, only ObjectDoesNotExist) and so
+        # reaches the generic exception handler's canned-message path
+        # instead.
+        description: >-
+          The report configuration does not exist in this project space.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/report.yaml#/ReportErrorMessage"
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listReports`'s 429.
