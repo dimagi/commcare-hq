@@ -62,6 +62,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 from corehq.apps.app_manager.util import (
     is_linked_app,
     module_offers_search,
+    module_uses_case_search_endpoint,
     module_uses_smart_links,
     module_offers_registry_search,
     module_uses_inline_search,
@@ -69,6 +70,7 @@ from corehq.apps.app_manager.util import (
     module_uses_inline_search_with_parent_relationship_parent_select,
 )
 from corehq.apps.app_manager.xpath import (
+    all_cases_xpath,
     CaseClaimXpath,
     CaseIDXPath,
     SearchSelectedCasesInstanceXpath,
@@ -235,24 +237,28 @@ class RemoteRequestFactory(object):
             short_detail_id = 'search_short'
             long_detail_id = 'search_long'
 
-        nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=self.storage_instance)
-        if toggles.CASE_SEARCH_ADVANCED.enabled(self.app.domain):
-            additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
-            if additional_types:
-                nodeset = CaseTypeXpath(self.module.case_type).cases(
-                    additional_types, instance_name=self.storage_instance)
-        nodeset += EXCLUDE_RELATED_CASES_FILTER
-
         datum_cls = InstanceDatum if self.module.is_multi_select() else SessionDatum
         return [datum_cls(
             id=self.case_session_var,
-            nodeset=nodeset,
+            nodeset=self._build_datum_nodeset(),
             value='./@case_id',
             detail_select=self._details_helper.get_detail_id_safe(self.module, short_detail_id),
             detail_confirm=self._details_helper.get_detail_id_safe(self.module, long_detail_id),
             autoselect=self.module.is_auto_select(),
             max_select_value=self.module.max_select_value,
         )]
+
+    def _build_datum_nodeset(self):
+        if module_uses_case_search_endpoint(self.module):
+            return all_cases_xpath(instance_name=self.storage_instance)
+
+        nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=self.storage_instance)
+        if toggles.CASE_SEARCH_ADVANCED.enabled(self.app.domain):
+            additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
+            if additional_types:
+                nodeset = CaseTypeXpath(self.module.case_type).cases(
+                    additional_types, instance_name=self.storage_instance)
+        return nodeset + EXCLUDE_RELATED_CASES_FILTER
 
     @cached_property
     def _remote_request_query_datums(self):
@@ -305,10 +311,7 @@ class RemoteRequestFactory(object):
                     ref=f"'{','.join(refs)}'",
                 )
             )
-        if (
-            toggles.CASE_SEARCH_ENDPOINTS.enabled(self.app.domain)
-            and self.module.search_config.case_search_endpoint_id
-        ):
+        if module_uses_case_search_endpoint(self.module):
             datums.append(
                 QueryData(
                     key=CASE_SEARCH_ENDPOINT_ID_KEY,
