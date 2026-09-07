@@ -9,8 +9,10 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
 from jsonobject.exceptions import BadValueError
+from lxml import etree
 
 from casexml.apps.case.fixtures import CaseDBFixture
+from casexml.apps.case.xml.generator import safe_element
 from casexml.apps.phone.data_providers.case.livequery import (
     get_all_related_live_cases,
 )
@@ -75,15 +77,14 @@ from corehq.apps.es.case_search import (
     wrap_case_search_hit,
 )
 from corehq.apps.es.profiling import ESQueryProfiler
-from corehq.apps.project_db.table_ddl import CaseTable
 from corehq.apps.project_db.user_sql import UserSQL
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.form_processor.models.cases import CommCareCase
 from corehq.util.quickcache import quickcache
+from corehq.util.xml_utils import serialize
 
 
 @dataclass
@@ -112,15 +113,19 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
     profiler = CaseSearchProfiler(debug_mode=debug)
     with profiler.timing_context:
         config = extract_search_request_config(request_dict)
-        cases = get_case_search_results(
-            domain,
-            config,
-            app_id=app_id,
-            couch_user=couch_user,
-            profiler=profiler,
-        )
-        with profiler.timing_context('CaseDBFixture.fixture'):
-            fixtures = CaseDBFixture(cases).fixture
+        # ProjectDB endpoints don't get turned into CaseDBFixtures
+        if endpoint := _get_project_db_endpoint(domain, config):
+            fixtures = get_project_db_fixture(domain, endpoint, config)
+        else:
+            cases = get_case_search_results(
+                domain,
+                config,
+                app_id=app_id,
+                couch_user=couch_user,
+                profiler=profiler,
+            )
+            with profiler.timing_context('CaseDBFixture.fixture'):
+                fixtures = CaseDBFixture(cases).fixture
     return fixtures, profiler
 
 
@@ -130,25 +135,27 @@ def get_case_search_results(domain, config, app_id=None, couch_user=None, profil
         helper.profiler = profiler
 
     if config.endpoint_id:
-        if not toggles.CASE_SEARCH_ENDPOINTS.enabled(domain):
-            raise CaseSearchUserError(_("Configurable Endpoints are not available"))
         return get_endpoint_results(helper, config)
     else:
         return get_unconfigured_endpoint_results(helper, config, app_id)
 
 
-def get_endpoint_results(helper, config):
+def get_endpoint(domain, endpoint_id):
+    if not toggles.CASE_SEARCH_ENDPOINTS.enabled(domain):
+        raise CaseSearchUserError(_("Configurable Endpoints are not available"))
     try:
         # TODO: cache? Prefetch endpoint version?
-        endpoint = CaseSearchEndpoint.objects.get(domain=helper.domain, id=config.endpoint_id)
+        endpoint = CaseSearchEndpoint.objects.get(domain=domain, id=endpoint_id)
     except (CaseSearchEndpoint.DoesNotExist, ValueError):
-        raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
+        raise CaseSearchUserError(_("Endpoint '{}' not found").format(endpoint_id))
     if not endpoint.is_active:
-        raise CaseSearchUserError(_("Endpoint '{}' not found").format(config.endpoint_id))
+        raise CaseSearchUserError(_("Endpoint '{}' not found").format(endpoint_id))
+    return endpoint
 
-    if endpoint.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB:
-        return get_project_db_results(endpoint, helper, config)
 
+def get_endpoint_results(helper, config):
+    endpoint = get_endpoint(helper.domain, config.endpoint_id)
+    assert endpoint.target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH, endpoint.target_type
     parameters, errors = parse_parameter_spec(endpoint.current_version.parameters)
     query_root = None
     if not errors:
@@ -170,36 +177,34 @@ def get_endpoint_results(helper, config):
         query_root)
 
 
-def get_project_db_results(endpoint, helper, config):
-    user_sql = UserSQL(helper.domain, endpoint.current_version.dangerous_sql)
+def _get_project_db_endpoint(domain, config):
+    if config.endpoint_id:
+        endpoint = get_endpoint(domain, config.endpoint_id)
+        if endpoint.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB:
+            return endpoint
+
+
+def get_project_db_fixture(domain, endpoint, config):
+    """Run a ``project_db`` endpoint's query and return the results as XML"""
+    user_sql = UserSQL(domain, endpoint.current_version.dangerous_sql)
     all_params = {c.key: c.value for c in config.criteria}
     query_params = {p: all_params.get(p) or None for p in user_sql.parameters}
     result = user_sql.run(query_params, max_rows=CASE_SEARCH_MAX_RESULTS)
-    return _rows_to_cases(result, helper.domain, config.case_types[0])
+    return _rows_to_fixture(result.rows)
 
 
-def _rows_to_cases(result, domain, case_type):
-    table = CaseTable(domain, case_type).reflect()
-    prop_columns = [col for col in table.columns if col.name.startswith('prop__')
-                    and col.name in result.columns]
-    return [
-        CommCareCase(
-            case_id=row['case_id'],
-            domain=domain,
-            type=case_type,
-            name=row['case_name'],
-            owner_id=row['owner_id'],
-            opened_on=row['opened_on'],
-            closed_on=row['closed_on'],
-            closed=row['closed'],
-            modified_on=row['modified_on'],
-            server_modified_on=row['server_modified_on'],
-            external_id=row['external_id'],
-            # The column comment has the raw, untruncated property name
-            case_json={col.comment: str(row[col.name]) for col in prop_columns
-                       if row[col.name]},
-        ) for row in result.rows
-    ]
+def _rows_to_fixture(rows):
+    fixture = safe_element('results')
+    fixture.set('id', CaseDBFixture.id)
+    for row in rows:
+        item = safe_element('case')
+        item.attrib['case_id'] = row['case_id']  # Required for claiming to work
+        for name, value in row.items():
+            element = etree.Element(name)
+            element.text = serialize(value)
+            item.append(element)
+        fixture.append(item)
+    return etree.tostring(fixture, encoding='utf-8')
 
 
 @time_function()
