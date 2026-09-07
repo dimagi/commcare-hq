@@ -1,3 +1,4 @@
+from datetime import timedelta
 from uuid import UUID, uuid4
 
 from django.db import models
@@ -80,15 +81,20 @@ class PublicWebform(models.Model):
     @property
     def public_url(self):
         """The absolute link a respondent opens to request a one-time link."""
-        # TODO: point at the real public route once it exists
-        return f'{get_url_base()}/placeholder/url/{self.public_id.hex}'
+        return f'{get_url_base()}/webforms/{self.public_id.hex}/'
 
     @property
     def is_expired(self):
         return self.expires_at < timezone.now()
 
+    @property
+    def is_open(self):
+        return not self.is_disabled and not self.is_expired
+
 
 class PublicFormSession(models.Model):
+
+    DEFAULT_LIFESPAN = timedelta(hours=1)
 
     id = models.UUIDField(primary_key=True, default=uuid4)
     session_key = models.UUIDField(default=uuid4, unique=True, db_index=True)
@@ -118,6 +124,23 @@ class PublicFormSession(models.Model):
             submitted_at__isnull=True,
             expires_at__gt=timezone.now(),
         ).first()
+
+    @classmethod
+    def get_active_session_for_contact(cls, public_webform, email=None, phone_number=None):
+        assert bool(email) != bool(phone_number)
+        contact = {'email': email} if email else {'phone_number': phone_number}
+        return cls.objects.filter(
+            public_webform=public_webform,
+            submitted_at__isnull=True,
+            expires_at__gt=timezone.now(),
+            **contact,
+        ).order_by('-created_at').first()
+
+    @property
+    def one_time_link(self):
+        """The absolute link sent to the respondent who asked for it."""
+        # TODO: implement real public link handling, at this url or otherwise
+        return f'{self.public_webform.public_url}{self.id.hex}/'
 
     @property
     def session_username(self):
