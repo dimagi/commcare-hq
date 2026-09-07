@@ -1470,22 +1470,26 @@ class Subscription(models.Model):
                     do_not_email_invoice=False, do_not_email_reminder=False,
                     skip_invoicing_if_no_feature_charges=False,
                     skip_auto_downgrade=False, skip_auto_downgrade_reason=None,
-                    skip_auto_downgrade_until=None, auto_renew=None):
+                    skip_auto_downgrade_until=None, auto_renew=None,
+                    effective_date=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
         This is not the same thing as simply updating the subscription.
 
-        date_end is a date in the future and only applies to the NEW
-        subscription. The current subscription will always end immediately
-        (today) and the date_start of the new subscription will always be today.
+        effective_date controls when the replacement takes effect and defaults
+        to today. date_end is a date in the future and only applies to the NEW
+        subscription.
         """
         from corehq.apps.analytics.tasks import track_workflow_noop
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
+        effective_date = effective_date or today
+        is_immediate_change = effective_date == today
         assert self.is_active
-        assert date_end is None or date_end >= today
+        assert effective_date >= today
+        assert date_end is None or date_end >= effective_date
 
         if new_plan_version.plan.at_max_domains() and self.plan_version.plan != new_plan_version.plan:
             raise SubscriptionAdjustmentError(
@@ -1494,8 +1498,8 @@ class Subscription(models.Model):
                 }
             )
 
-        self.date_end = today
-        self.is_active = False
+        self.date_end = effective_date
+        self.is_active = not is_immediate_change
         self.save()
 
         new_subscription = Subscription(
@@ -1503,9 +1507,9 @@ class Subscription(models.Model):
             plan_version=new_plan_version,
             subscriber=self.subscriber,
             salesforce_contract_id=self.salesforce_contract_id,
-            date_start=today,
+            date_start=effective_date,
             date_end=date_end,
-            is_active=True,
+            is_active=is_immediate_change,
             do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
             do_not_email_invoice=do_not_email_invoice,
@@ -1528,18 +1532,19 @@ class Subscription(models.Model):
         new_subscription.set_billing_account_entry_point()
 
         change_status_result = get_change_status(self.plan_version, new_plan_version)
-        self.subscriber.change_subscription(
-            downgraded_privileges=change_status_result.downgraded_privs,
-            upgraded_privileges=change_status_result.upgraded_privs,
-            new_plan_version=new_plan_version,
-            old_subscription=self,
-            new_subscription=new_subscription,
-            internal_change=internal_change,
-        )
+        if is_immediate_change:
+            self.subscriber.change_subscription(
+                downgraded_privileges=change_status_result.downgraded_privs,
+                upgraded_privileges=change_status_result.upgraded_privs,
+                new_plan_version=new_plan_version,
+                old_subscription=self,
+                new_subscription=new_subscription,
+                internal_change=internal_change,
+            )
 
-        # transfer existing credit lines to the new subscription
-        if transfer_credits:
-            self.transfer_credits(new_subscription)
+            # transfer existing credit lines to the new subscription
+            if transfer_credits:
+                self.transfer_credits(new_subscription)
 
         # record transfer from old subscription
         SubscriptionAdjustment.record_adjustment(
@@ -1752,64 +1757,13 @@ class Subscription(models.Model):
                                 date_start=None, date_end=None, note=None,
                                 web_user=None, adjustment_method=None, internal_change=False,
                                 **kwargs):
-        if plan_version.plan.at_max_domains():
-            raise NewSubscriptionError(
-                'The maximum number of project spaces has been reached for %(plan_version)s. ' % {
-                    'plan_version': plan_version,
-                }
-            )
-
-        if plan_version.plan.is_customer_software_plan != account.is_customer_billing_account:
-            if plan_version.plan.is_customer_software_plan:
-                raise NewSubscriptionError(
-                    'You are trying to add a Customer Software Plan to a regular Billing Account. '
-                    'Both or neither must be customer-level.'
-                )
-            else:
-                raise NewSubscriptionError(
-                    'You are trying to add a regular Software Plan to a Customer Billing Account. '
-                    'Both or neither must be customer-level.'
-                )
+        cls._raise_if_plan_or_account_rejects_new_subscription(account, plan_version)
 
         subscriber = Subscriber.objects.get_or_create(domain=domain)[0]
-        today = datetime.date.today()
-        date_start = date_start or today
 
-        # find subscriptions that end in the future / after this subscription
-        available_subs = Subscription.visible_objects.filter(
-            subscriber=subscriber,
-        )
+        date_start = date_start or datetime.date.today()
 
-        future_subscription_no_end = available_subs.filter(
-            date_end__exact=None,
-        )
-        if date_end is not None:
-            future_subscription_no_end = future_subscription_no_end.filter(date_start__lt=date_end)
-        if future_subscription_no_end.count() > 0:
-            raise NewSubscriptionError(_(
-                "There is already a subscription '%s' with no end date "
-                "that conflicts with the start and end dates of this "
-                "subscription.") %
-                future_subscription_no_end.latest('date_created')
-            )
-
-        future_subscriptions = available_subs.filter(
-            date_end__gt=date_start
-        )
-        if date_end is not None:
-            future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
-        if future_subscriptions.count() > 0:
-            raise NewSubscriptionError(str(
-                _(
-                    "There is already a subscription '%(sub)s' that has an end date "
-                    "that conflicts with the start and end dates of this "
-                    "subscription %(start)s - %(end)s."
-                ) % {
-                    'sub': future_subscriptions.latest('date_created'),
-                    'start': date_start,
-                    'end': date_end
-                }
-            ))
+        cls._raise_if_subscription_dates_conflict(subscriber, date_start, date_end)
 
         can_reactivate, last_subscription = cls.can_reactivate_domain_subscription(
             account, domain, plan_version, date_start=date_start
@@ -1847,6 +1801,65 @@ class Subscription(models.Model):
         subscription.set_billing_account_entry_point()
 
         return subscription
+
+    @classmethod
+    def _raise_if_plan_or_account_rejects_new_subscription(cls, account, plan_version):
+        if plan_version.plan.at_max_domains():
+            raise NewSubscriptionError(
+                'The maximum number of project spaces has been reached for %(plan_version)s. ' % {
+                    'plan_version': plan_version,
+                }
+            )
+
+        if plan_version.plan.is_customer_software_plan != account.is_customer_billing_account:
+            if plan_version.plan.is_customer_software_plan:
+                raise NewSubscriptionError(
+                    'You are trying to add a Customer Software Plan to a regular Billing Account. '
+                    'Both or neither must be customer-level.'
+                )
+            else:
+                raise NewSubscriptionError(
+                    'You are trying to add a regular Software Plan to a Customer Billing Account. '
+                    'Both or neither must be customer-level.'
+                )
+
+    @classmethod
+    def _raise_if_subscription_dates_conflict(cls, subscriber, date_start, date_end):
+        # find subscriptions that end in the future / after this subscription
+        available_subs = Subscription.visible_objects.filter(
+            subscriber=subscriber,
+        )
+
+        future_subscription_no_end = available_subs.filter(
+            date_end__exact=None,
+        )
+        if date_end is not None:
+            future_subscription_no_end = future_subscription_no_end.filter(date_start__lt=date_end)
+        if future_subscription_no_end.exists():
+            raise NewSubscriptionError(_(
+                "There is already a subscription '%s' with no end date "
+                "that conflicts with the start and end dates of this "
+                "subscription.") %
+                future_subscription_no_end.latest('date_created')
+            )
+
+        future_subscriptions = available_subs.filter(
+            date_end__gt=date_start
+        )
+        if date_end is not None:
+            future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
+        if future_subscriptions.exists():
+            raise NewSubscriptionError(str(
+                _(
+                    "There is already a subscription '%(sub)s' that has an end date "
+                    "that conflicts with the start and end dates of this "
+                    "subscription %(start)s - %(end)s."
+                ) % {
+                    'sub': future_subscriptions.latest('date_created'),
+                    'start': date_start,
+                    'end': date_end
+                }
+            ))
 
     @classmethod
     def can_reactivate_domain_subscription(cls, account, domain, plan_version,
