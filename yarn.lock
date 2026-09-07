@@ -721,6 +721,11 @@
     tar-fs "^3.1.1"
     yargs "^17.7.2"
 
+"@redocly/cli@^2.46.1":
+  version "2.46.1"
+  resolved "https://registry.yarnpkg.com/@redocly/cli/-/cli-2.46.1.tgz#814e04678a95a2098ccefd23e1ed87e31e6ba92f"
+  integrity sha512-FSUSq2FU8VN7DmTobTmq7zb3zPnDkRKSMd3n38D62JFJUUZKnLMQtn7BUhsD2dCFH2WgF05I3fbN7QHDQyCBeA==
+
 "@rollup/rollup-darwin-arm64@4.34.9":
   version "4.34.9"
   resolved "https://registry.yarnpkg.com/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.34.9.tgz#363467bc49fd0b1e17075798ac8e9ad1e1e29535"

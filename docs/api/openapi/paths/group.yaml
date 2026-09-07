@@ -1,0 +1,407 @@
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listGroups
+    summary: List user groups
+    description: >-
+      Returns groups the authenticated user is permitted to see. Requires the
+      Edit Mobile Workers permission.
+    tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Limit"
+      - $ref: "../components/parameters.yaml#/Offset"
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: A page of groups.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/group.yaml#/GroupList"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Verified
+        # against the source: `RequirePermissionAuthentication`
+        # (corehq/apps/api/resources/auth.py:152-163) delegates to
+        # `LoginAndDomainAuthentication._auth_test` (auth.py:114-135), whose
+        # `except PermissionDenied: response = HttpResponseForbidden()`
+        # (auth.py:129-130) builds a bare, empty-bodied 403. The
+        # `PermissionDenied` comes from `require_api_permission`'s
+        # `permission_check_v2` branch in `require_permission_raw`
+        # (corehq/apps/users/decorators.py:39-43), which raises
+        # unconditionally -- it never reaches the `is_ajax` branch at
+        # decorators.py:52-53 that would return a text body.
+        description: >-
+          The authenticated user lacks the Edit Mobile Workers permission, or the generic
+          API access permission, for this project space. **The response body is
+          empty** -- not the `{"error": ...}` JSON shape most other errors in
+          this spec use.
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
+  post:
+    operationId: createGroup
+    summary: Create a user group
+    description: >-
+      Requires the Edit Mobile Workers permission
+      (`GroupResource.Meta.authentication =
+      RequirePermissionAuthentication(HqPermissions.edit_commcare_users)`,
+      `corehq/apps/api/resources/v0_4.py:253`).
+
+
+      **The 201 body is `{"id": "<uuid>"}` and nothing else** -- not the created
+      group. `v0_5.GroupResource.serialize`
+      (`corehq/apps/api/resources/v0_5.py:662-668`) rewrites the response
+      whenever `request.method == 'POST'`, so the full representation is never
+      returned here. Fetch the detail endpoint if you need the rest of the
+      object.
+
+
+      **The 400 body is keyed `error_message`, not `error`.** `post_list`
+      (`v0_5.py:676-698`) catches the `AssertionError` raised by `obj_create`
+      (for example "Name is required", `v0_5.py:753,759`) and puts its text in
+      `bundle.data['error_message']`, which `serialize` then rewrites into
+      `{"error_message": "..."}`. This is the only 400 in this resource that
+      uses that key: `replaceGroup` uses the shared `{"error": ...}` envelope
+      and `bulkUpdateGroups` returns a bare array of strings.
+
+
+      The 403 body is empty, not JSON.
+    tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/group.yaml#/GroupWrite"
+    responses:
+      "201":
+        description: >-
+          The group was created. Note that this endpoint returns only the new
+          group's id, not the full group object -- fetch the detail endpoint if
+          you need the rest.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: UUID of the newly created group.
+                  example: 1eb59d6938fc7e510254d8c2f63d944f
+      "400":
+        description: >-
+          The request payload was invalid. Note this endpoint's error body uses
+          `error_message`, not the `error` key used elsewhere.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/group.yaml#/GroupErrorMessage"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Verified
+        # against the source: `RequirePermissionAuthentication`
+        # (corehq/apps/api/resources/auth.py:152-163) delegates to
+        # `LoginAndDomainAuthentication._auth_test` (auth.py:114-135), whose
+        # `except PermissionDenied: response = HttpResponseForbidden()`
+        # (auth.py:129-130) builds a bare, empty-bodied 403. The
+        # `PermissionDenied` comes from `require_api_permission`'s
+        # `permission_check_v2` branch in `require_permission_raw`
+        # (corehq/apps/users/decorators.py:39-43), which raises
+        # unconditionally -- it never reaches the `is_ajax` branch at
+        # decorators.py:52-53 that would return a text body.
+        description: >-
+          The authenticated user lacks the Edit Mobile Workers permission, or the generic
+          API access permission, for this project space. **The response body is
+          empty** -- not the `{"error": ...}` JSON shape most other errors in
+          this spec use.
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
+  patch:
+    operationId: bulkUpdateGroups
+    summary: Bulk create or update groups
+    description: >-
+      Accepts a list of group payloads. Declared by
+      `v0_5.GroupResource.patch_list`. Requires the Edit Mobile Workers
+      permission.
+    tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              objects:
+                type: array
+                items:
+                  $ref: "../components/schemas/group.yaml#/GroupWrite"
+    responses:
+      "202":
+        description: >-
+          All groups were created or updated. The body is an array of the new
+          group ids, in the same order as the submitted `objects`.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                description: UUID of a created or updated group.
+              example:
+                - 1eb59d6938fc7e510254d8c2f63d944f
+      "400":
+        description: >-
+          At least one group in the batch failed. The body is an array the same
+          length and order as the submitted `objects`: each element is either
+          the new group's id (that object succeeded) or the raw validation error
+          text (that object failed) -- not an `error`/`error_message` object,
+          and there is no separate flag indicating which elements are which. A
+          client must shape-guess (for example, checking whether an element
+          looks like a group UUID) to tell success from failure.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+              example:
+                - 1eb59d6938fc7e510254d8c2f63d944f
+                - Name is required
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Verified
+        # against the source: `RequirePermissionAuthentication`
+        # (corehq/apps/api/resources/auth.py:152-163) delegates to
+        # `LoginAndDomainAuthentication._auth_test` (auth.py:114-135), whose
+        # `except PermissionDenied: response = HttpResponseForbidden()`
+        # (auth.py:129-130) builds a bare, empty-bodied 403. The
+        # `PermissionDenied` comes from `require_api_permission`'s
+        # `permission_check_v2` branch in `require_permission_raw`
+        # (corehq/apps/users/decorators.py:39-43), which raises
+        # unconditionally -- it never reaches the `is_ajax` branch at
+        # decorators.py:52-53 that would return a text body.
+        description: >-
+          The authenticated user lacks the Edit Mobile Workers permission, or the generic
+          API access permission, for this project space. **The response body is
+          empty** -- not the `{"error": ...}` JSON shape most other errors in
+          this spec use.
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
+Detail:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: group_id
+      in: path
+      required: true
+      description: Group UUID.
+      example: 1eb59d6938fc7e510254d8c2f63d944f
+      schema:
+        type: string
+  get:
+    operationId: getGroup
+    summary: Retrieve a single user group
+    description: >-
+      Requires the Edit Mobile Workers permission
+      (`corehq/apps/api/resources/v0_4.py:253`). Returns the full group,
+      including its `users` list.
+
+
+      **An unknown `group_id` returns a 404 with an empty body.** `obj_get`
+      (`v0_4.py:246-247`) uses `get_object_or_not_exist`
+      (`corehq/apps/api/util.py:15-39`), which raises Django's
+      `ObjectDoesNotExist`; tastypie's `get_detail`
+      (`tastypie/resources.py:1362-1383`) catches it and answers with a bare
+      `http.HttpNotFound()` that never runs through the serializer. Note that
+      `deleteGroup` returns a *different*, JSON-bodied 404 for the same missing
+      id, and `replaceGroup` returns a 500 -- three shapes for one condition on
+      one resource.
+
+
+      The 403 body is empty, not JSON.
+    tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: The group.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/group.yaml#/Group"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Verified
+        # against the source: `RequirePermissionAuthentication`
+        # (corehq/apps/api/resources/auth.py:152-163) delegates to
+        # `LoginAndDomainAuthentication._auth_test` (auth.py:114-135), whose
+        # `except PermissionDenied: response = HttpResponseForbidden()`
+        # (auth.py:129-130) builds a bare, empty-bodied 403. The
+        # `PermissionDenied` comes from `require_api_permission`'s
+        # `permission_check_v2` branch in `require_permission_raw`
+        # (corehq/apps/users/decorators.py:39-43), which raises
+        # unconditionally -- it never reaches the `is_ajax` branch at
+        # decorators.py:52-53 that would return a text body.
+        description: >-
+          The authenticated user lacks the Edit Mobile Workers permission, or the generic
+          API access permission, for this project space. **The response body is
+          empty** -- not the `{"error": ...}` JSON shape most other errors in
+          this spec use.
+      "404":
+        # Deliberately not the shared NotFound ref: tastypie's get_detail
+        # (tastypie/resources.py:1362-1383) catches ObjectDoesNotExist and
+        # returns a bare `http.HttpNotFound()` -- a plain HttpResponse with
+        # no content set, not something built through the serializer. The
+        # real response body is empty. See the discrepancy file.
+        description:
+          The requested group does not exist. The response body is empty.
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
+  put:
+    operationId: replaceGroup
+    summary: Replace a user group
+    # No 404 here -- this is a deliberate exception to the "404 on every
+    # detail operation" convention, not an oversight. `obj_update`
+    # (v0_5.py:762-763) fetches the group with `Group.get(pk)`, which raises
+    # couchdbkit's `ResourceNotFound`. That exception is neither tastypie's
+    # `NotFound` (the only thing `put_detail` catches) nor Django's
+    # `ObjectDoesNotExist`, so it is never converted to a 404 -- it propagates
+    # to a generic 500. Documenting a 404 the code cannot return would
+    # mislead clients; see the discrepancy file for the underlying bug.
+    description: >-
+      Replaces the group in full. Requires the Edit Mobile Workers permission
+      (`corehq/apps/api/resources/v0_4.py:253`). Unlike `createGroup`, the
+      response *is* the complete updated group: `serialize`
+      (`corehq/apps/api/resources/v0_5.py:662-668`) special-cases `POST` only.
+
+
+      **There is no 404 -- a `PUT` to an id that does not exist returns a 500.**
+      `obj_update` (`v0_5.py:762-763`) fetches with `Group.get(pk)`, which
+      raises couchdbkit's `ResourceNotFound`. That is neither tastypie's
+      `NotFound` (all `put_detail` catches, `tastypie/resources.py:1467-1502`)
+      nor Django's `ObjectDoesNotExist`, so it falls through to the generic
+      `except Exception` handler and becomes `HttpApplicationError`. Do not use
+      a `PUT` to probe whether a group exists; see the discrepancy file.
+
+
+      The 400 here uses the shared `{"error": ...}` envelope -- not
+      `createGroup`'s `error_message` key -- because it comes from `_update`
+      (`v0_5.py:706,710`) raising tastypie's `BadRequest`. The 403 body is
+      empty, not JSON.
+    tags: [Users]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/group.yaml#/GroupWrite"
+    responses:
+      "200":
+        description: The updated group.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/group.yaml#/Group"
+      "400":
+        $ref: "../components/responses.yaml#/BadRequest"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Verified
+        # against the source: `RequirePermissionAuthentication`
+        # (corehq/apps/api/resources/auth.py:152-163) delegates to
+        # `LoginAndDomainAuthentication._auth_test` (auth.py:114-135), whose
+        # `except PermissionDenied: response = HttpResponseForbidden()`
+        # (auth.py:129-130) builds a bare, empty-bodied 403. The
+        # `PermissionDenied` comes from `require_api_permission`'s
+        # `permission_check_v2` branch in `require_permission_raw`
+        # (corehq/apps/users/decorators.py:39-43), which raises
+        # unconditionally -- it never reaches the `is_ajax` branch at
+        # decorators.py:52-53 that would return a text body.
+        description: >-
+          The authenticated user lacks the Edit Mobile Workers permission, or the generic
+          API access permission, for this project space. **The response body is
+          empty** -- not the `{"error": ...}` JSON shape most other errors in
+          this spec use.
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
+  delete:
+    operationId: deleteGroup
+    summary: Delete a user group
+    description: >-
+      Requires the Edit Mobile Workers permission
+      (`corehq/apps/api/resources/v0_4.py:253`). On success returns 204 with an
+      empty body. The `format` parameter is not offered here because no
+      successful response carries a body.
+
+
+      **The 404 body is not the same as `getGroup`'s.** `obj_delete` ->
+      `obj_get` raises Django's `ObjectDoesNotExist`, which `delete_detail`
+      (`tastypie/resources.py:1525-1541`) does not catch -- it only catches
+      tastypie's own `NotFound`. The exception reaches tastypie's generic
+      `_handle_500` (`tastypie/resources.py:265-292`), which maps it to a 404
+      status but builds the body itself: in production a canned
+      `{"error_message": "Sorry, this request could not be processed. Please try
+      again later."}`, keyed `error_message` rather than `error` and carrying no
+      resource-specific detail.
+
+
+      The 403 body is empty, not JSON.
+    tags: [Users]
+    responses:
+      "204":
+        description: The group was deleted.
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Deliberately NOT the shared `Forbidden` ref, which declares a JSON
+        # `{"error": ...}` body this operation never produces. Verified
+        # against the source: `RequirePermissionAuthentication`
+        # (corehq/apps/api/resources/auth.py:152-163) delegates to
+        # `LoginAndDomainAuthentication._auth_test` (auth.py:114-135), whose
+        # `except PermissionDenied: response = HttpResponseForbidden()`
+        # (auth.py:129-130) builds a bare, empty-bodied 403. The
+        # `PermissionDenied` comes from `require_api_permission`'s
+        # `permission_check_v2` branch in `require_permission_raw`
+        # (corehq/apps/users/decorators.py:39-43), which raises
+        # unconditionally -- it never reaches the `is_ajax` branch at
+        # decorators.py:52-53 that would return a text body.
+        description: >-
+          The authenticated user lacks the Edit Mobile Workers permission, or the generic
+          API access permission, for this project space. **The response body is
+          empty** -- not the `{"error": ...}` JSON shape most other errors in
+          this spec use.
+      "404":
+        # Deliberately not the shared NotFound ref. `delete_detail`
+        # (tastypie/resources.py:1525-1541) only catches tastypie's own
+        # `NotFound`, but `obj_delete` -> `obj_get` raises Django's
+        # `ObjectDoesNotExist` (via get_object_or_not_exist), which isn't
+        # caught there. It propagates to wrap_view's generic exception
+        # handler (_handle_500), which maps ObjectDoesNotExist to a 404
+        # status but builds the body from its own canned-error path -- keyed
+        # `error_message`, not `error`, and not resource-specific. See the
+        # discrepancy file.
+        description: >-
+          The requested group does not exist. Reached via tastypie's generic
+          exception handler rather than a resource-specific not-found path.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/group.yaml#/GroupErrorMessage"
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"

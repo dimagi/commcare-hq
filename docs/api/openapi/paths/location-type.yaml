@@ -1,0 +1,82 @@
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listLocationTypes
+    summary: List location types
+    description: >-
+      Returns location types the authenticated user is permitted to see.
+      Requires the Edit Locations permission and the Locations privilege on the
+      domain -- `BaseLocationsResource.dispatch`
+      (`corehq/apps/locations/resources/v0_5.py:19-23`) rejects the whole
+      request with a bare 403 if the domain lacks the Locations privilege,
+      before authentication is even checked. Only GET is documented here,
+      matching `location-types.rst`; see the discrepancy file for how this
+      resource actually enforces (or fails to enforce) that.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Limit"
+      - $ref: "../components/parameters.yaml#/Offset"
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: A page of location types.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/location.yaml#/LocationTypeList"
+      "400":
+        $ref: "../components/responses.yaml#/BadRequest"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks the Edit Locations permission, or the
+          domain lacks the Locations privilege. The response body is empty. Same
+          mechanism as `listLocationsV1`'s 403 in `location-v1.yaml`.
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
+Detail:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: id
+      in: path
+      required: true
+      description: >-
+        Integer primary key of the location type -- unlike most ids in this API,
+        this one is a plain integer, not a UUID string.
+      example: 1
+      schema:
+        type: integer
+  get:
+    operationId: getLocationType
+    summary: Retrieve a single location type
+    description: >-
+      Requires the Edit Locations permission and the Locations privilege.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: The location type.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/location.yaml#/LocationType"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks the Edit Locations permission, or the
+          domain lacks the Locations privilege. The response body is empty.
+      "404":
+        # Deliberately not the shared NotFound ref: LocationTypeResource does
+        # not override obj_get/get_detail, so tastypie's default
+        # ModelResource.get_detail (tastypie/resources.py:1362-1383) catches
+        # LocationType.DoesNotExist and returns a bare http.HttpNotFound() --
+        # no body, same mechanism as the location resources' 404s.
+        description: >-
+          The requested location type does not exist. The response body is
+          empty.
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
