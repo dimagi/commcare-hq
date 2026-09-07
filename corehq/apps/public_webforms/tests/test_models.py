@@ -23,7 +23,7 @@ from corehq.apps.public_webforms.models import (
     PublicWebform,
     PublicWebformStatus,
 )
-from corehq.apps.public_webforms.tests.utils import create_webform
+from corehq.apps.public_webforms.tests.utils import create_session, create_webform
 from corehq.apps.users.util import PUBLIC_USER_ID
 
 
@@ -40,6 +40,19 @@ def test_public_url_is_absolute_and_keyed_on_the_public_id():
 ], ids=['past', 'future'])
 def test_is_expired(offset, expected):
     assert PublicWebform(expires_at=timezone.now() + offset).is_expired is expected
+
+
+@pytest.mark.parametrize('offset, is_disabled, expected', [
+    (datetime.timedelta(minutes=1), False, True),
+    (datetime.timedelta(minutes=1), True, False),
+    (datetime.timedelta(minutes=-1), False, False),
+    (datetime.timedelta(minutes=-1), True, False),
+], ids=['open', 'closed', 'expired', 'expired-and-closed'])
+def test_is_open(offset, is_disabled, expected):
+    webform = PublicWebform(
+        expires_at=timezone.now() + offset, is_disabled=is_disabled)
+
+    assert webform.is_open is expected
 
 
 @use('db')
@@ -67,14 +80,53 @@ def test_with_status_derives_status_from_expiry_and_the_open_setting(
 ], ids=['no-submissions', 'one-submission'])
 def test_with_submissions_count(submitted_at, expected_submissions):
     webform = create_webform()
-    PublicFormSession.objects.create(
-        public_webform=webform,
-        expires_at=timezone.now() + datetime.timedelta(days=1),
-        submitted_at=submitted_at,
-    )
+    create_session(webform, submitted_at=submitted_at)
 
     annotated = PublicWebform.objects.with_submissions_count().get(pk=webform.pk)
     assert annotated.submissions == expected_submissions
+
+
+@use('db')
+def test_get_active_session_for_contact():
+    webform = create_webform()
+    session = create_session(webform, email='respondent@example.com')
+
+    found = PublicFormSession.get_active_session_for_contact(
+        webform, email='respondent@example.com', phone_number='')
+
+    assert found == session
+
+
+@use('db')
+def test_get_active_session_for_contact_ignores_another_contact():
+    webform = create_webform()
+    create_session(webform, email='someone-else@example.com')
+
+    assert PublicFormSession.get_active_session_for_contact(
+        webform, email='respondent@example.com', phone_number='') is None
+
+
+@use('db')
+@pytest.mark.parametrize('session_kwargs', [
+    {'expires_at': timezone.now() - datetime.timedelta(minutes=1)},
+    {'submitted_at': timezone.now()},
+], ids=['expired', 'already-submitted'])
+def test_get_active_session_for_contact_ignores_inactive_session(session_kwargs):
+    webform = create_webform()
+    create_session(webform, email='respondent@example.com', **session_kwargs)
+
+    assert PublicFormSession.get_active_session_for_contact(
+        webform, email='respondent@example.com', phone_number='') is None
+
+
+@pytest.mark.parametrize('email, phone_number', [
+    ('respondent@example.com', '15551234567'),
+    ('', ''),
+], ids=['both', 'neither'])
+def test_get_active_session_for_contact_requires_exactly_one_channel(email, phone_number):
+    with pytest.raises(AssertionError):
+        PublicFormSession.get_active_session_for_contact(
+            PublicWebform(), email=email, phone_number=phone_number)
 
 
 def test_public_form_session_username():
@@ -83,6 +135,14 @@ def test_public_form_session_username():
     assert session.session_username == (
         f'{PUBLIC_USER_ID}{session.id.hex}@public-forms-domain.commcarehq.org'
     )
+
+
+def test_public_form_session_one_time_link():
+    webform = PublicWebform(domain='public-forms-domain')
+    session = PublicFormSession(public_webform=webform)
+    # absolute because it is shared over email and SMS
+    assert session.one_time_link.startswith(get_url_base())
+    assert session.id.hex in session.one_time_link
 
 
 class PublicFormUserTests(SimpleTestCase):
@@ -209,10 +269,7 @@ class AllowPublicFormSessionTests(TestCase):
             allow_email=True,
             expires_at=future_expiration,
         )
-        self.session = PublicFormSession.objects.create(
-            public_webform=self.webform,
-            expires_at=future_expiration,
-        )
+        self.session = create_session(self.webform, expires_at=future_expiration)
         self.factory = RequestFactory()
 
     def _request(self, with_header=True, cookie_value=None):
