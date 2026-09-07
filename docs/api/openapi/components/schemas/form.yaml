@@ -1,0 +1,235 @@
+Form:
+  type: object
+  description: >-
+    A single form submission, as returned by the form data API (JSON format).
+    Backed by `ESXFormInstance`, an Elasticsearch-wrapped view of the form
+    (`v0_4.XFormInstanceResource`, `corehq/apps/api/resources/v0_4.py:64-171`).
+    No type conversion is done -- dates are plain strings and some fields are
+    named differently than on the underlying Python model.
+  properties:
+    id:
+      type: string
+      description: Form instance UUID.
+      example: f959449c-8776-42ac-b776-3f564fafc331
+    domain:
+      type: string
+      description: Project space the form belongs to.
+      example: my-project
+    app_id:
+      type: string
+      nullable: true
+      description: UUID of the application the form was submitted against.
+      example: effb341b
+    build_id:
+      type: string
+      nullable: true
+      description:
+        UUID of the specific application build used to submit the form.
+      example: e0a6125
+    type:
+      type: string
+      description: The XForm's root element tag, e.g. `data`.
+      example: data
+    version:
+      type: string
+      description: Version of the application form definition.
+      example: "18"
+    uiversion:
+      type: string
+      nullable: true
+      description: UI version of the application form definition.
+      example: "1"
+    submit_ip:
+      type: string
+      nullable: true
+      description: IP address the form was submitted from.
+      example: 192.168.1.1
+    archived:
+      type: boolean
+      description: >-
+        Whether the form is archived. Derived from `is_archived`
+        (`v0_4.XFormInstanceResource.dehydrate_archived`,
+        `corehq/apps/api/resources/v0_4.py:93-94`), not a stored field.
+      example: false
+    problem:
+      type: string
+      nullable: true
+      description: Error message recorded against the form, if any.
+      example: null
+    initial_processing_complete:
+      type: boolean
+      nullable: true
+      description:
+        Whether initial form processing (e.g. case updates) has completed.
+      example: true
+    is_phone_submission:
+      type: boolean
+      description: >-
+        Whether the submission carried an `X-OpenRosa-Version` header
+        (`v0_4.XFormInstanceResource.dehydrate_is_phone_submission`,
+        `corehq/apps/api/resources/v0_4.py:126-130`).
+      example: false
+    edited_on:
+      type: string
+      nullable: true
+      description: >-
+        Date and time the form was last edited, if it has been. Naive -- carries
+        no timezone marker (source field `edited_on`, serialized with a plain
+        `str()`, no format applied).
+      pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?$'
+      example: null
+    edited_by_user_id:
+      type: string
+      nullable: true
+      description: >-
+        UUID of the user who last edited the form, only populated when
+        `edited_on` is set (`dehydrate_edited_by_user_id`,
+        `corehq/apps/api/resources/v0_4.py:134-136`).
+      example: e7ad965c70802884a7a67add763939e8
+    received_on:
+      type: string
+      description: >-
+        Date and time the form was received by the server. Naive -- the field is
+        a `CharField(attribute="received_on")` on the ES-backed resource
+        (`corehq/apps/api/resources/v0_4.py:80`) that passes through whatever
+        string Elasticsearch stored, which in practice already carries a literal
+        `Z` (see the sample below) but is not validated or reformatted by the
+        resource itself. No `format: date-time` is declared because the resource
+        makes no format guarantee.
+      example: "2016-11-29T14:50:42.530616Z"
+    server_modified_on:
+      type: string
+      description: >-
+        Date and time the form was last modified on the server. Same
+        pass-through behavior as `received_on`.
+      example: "2016-11-29T14:50:42.530616Z"
+    indexed_on:
+      type: string
+      description: >-
+        Date and time this revision of the form was indexed into Elasticsearch
+        (source field `inserted_at`). This is the recommended field to page
+        through results on. Written by `json_format_datetime`
+        (`corehq/ex-submodules/dimagi/utils/parsing.py:48-60`, called from
+        `corehq/apps/es/forms.py`), which always appends a literal `Z`, but --
+        as with `received_on` -- the resource field itself is an untyped
+        `CharField` with no format guarantee, so `format: date-time` is not
+        declared.
+      example: "2016-11-29T14:50:42.530616Z"
+    metadata:
+      type: object
+      additionalProperties: true
+      nullable: true
+      description: >-
+        The form's `meta` block (device ID, timestamps, username, app version,
+        etc.), as submitted. Structure varies by client.
+      example:
+        appVersion: >-
+          CommCare Android, version "2.31.0"(423345). App v18. CommCare Version
+          2.31. Build 423345, built on: 2016-11-02
+        app_build_version: 18
+        commcare_version: "2.31.0"
+        deviceID: "358001070684648"
+        deprecatedID: null
+        doc_type: Metadata
+        geo_point: null
+        instanceID: f959449c-8776-42ac-b776-3f564fafc331
+        location: null
+        timeEnd: "2016-11-29T14:50:41.156000"
+        timeStart: "2016-11-29T14:50:36.155000"
+        userID: e7ad965c70802884a7a67add763939e8
+        username: testuser
+    form:
+      type: object
+      additionalProperties: true
+      description: >-
+        The arbitrary, application-defined XForm instance data, as JSON. Its
+        shape depends entirely on the application's form definition -- field
+        names below are simply the questions of one sample form
+        (`list-forms.rst:84-140`) and are not part of any schema. Always
+        includes a `meta` sub-object and, when the form updates a case, a `case`
+        sub-object describing the case transaction.
+      example:
+        "#type": data
+        "@name": Case Update
+        "@uiVersion": "1"
+        "@version": "18"
+        "@xmlns": http://openrosa.org/formdesigner/4281EB62-46E6-49AD-A08C
+        case:
+          "@case_id": b6996b7b-6b3f-476a-9006
+          "@date_modified": "2016-11-29T14:50:41.156000Z"
+          "@user_id": e7ad965c
+          "@xmlns": http://commcarehq.org/case/transaction/v2
+          update:
+            data_node: "55"
+            dateval: "2012-09-26"
+            geodata: "5.0 5.0 5.0 5.0"
+            intval: "5"
+            multiselect: b
+            singleselect: b
+            text: TEST
+        meta:
+          "@xmlns": http://openrosa.org/jr/xforms
+          appVersion: >-
+            CommCare Android, version "2.31.0"(423345). App v18. CommCare
+            Version 2.31. Build 423345, built on: 2016-11-02
+          instanceID: f959449c-8776-42ac-b776-3f564fafc331
+          timeEnd: "2016-11-29T14:50:41.156000Z"
+          timeStart: "2016-11-29T14:50:36.155000Z"
+          userID: e7ad965c70802884a7a67add763939e8
+          username: testuser
+    attachments:
+      type: object
+      additionalProperties:
+        type: object
+        properties:
+          content_type:
+            type: string
+            example: text/xml
+          length:
+            type: integer
+            example: 1103
+          url:
+            type: string
+            description: >-
+              Relative URL of the `getFormAttachment` operation for this
+              attachment (`dehydrate_attachments`,
+              `corehq/apps/api/resources/v0_4.py:105-122`). Undocumented in
+              `list-forms.rst`'s sample output; see the discrepancy file.
+            example: /a/my-project/api/form_attachment/v1/f959449c-8776-42ac-b776-3f564fafc331/form.xml
+      description: >-
+        Attachments submitted with the form (e.g. `form.xml`, and any media
+        files), keyed by attachment name.
+      example:
+        form.xml:
+          content_type: text/xml
+          length: 1103
+    resource_uri:
+      type: string
+      description: >-
+        Always the empty string in practice. Tastypie auto-adds this field to
+        every resource and dehydrates it via `get_resource_uri`
+        (`tastypie/resources.py:810-829`), which reverses the
+        `api_dispatch_detail` URL using only `resource_name`, `api_name`, and
+        `pk` (`resource_uri_kwargs`, `tastypie/resources.py:787-808`) -- it
+        never includes `domain`, so the reverse lookup always raises
+        `NoReverseMatch` against this domain-scoped urlconf and the caught
+        exception falls back to `''`.
+      example: ""
+    cases:
+      type: array
+      items:
+        type: object
+        additionalProperties: true
+      description: >-
+        Cases referenced by this form's case blocks, each a full case
+        representation. Included only when the `cases__full=true` query
+        parameter is passed (`UseIfRequested`, `corehq/apps/api/fields.py`).
+FormList:
+  allOf:
+    - $ref: "./pagination.yaml#/PaginatedResponse"
+    - type: object
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: "#/Form"

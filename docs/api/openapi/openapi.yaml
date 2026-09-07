@@ -1,0 +1,158 @@
+openapi: 3.0.3
+info:
+  title: CommCare HQ APIs
+  version: "1.0"
+  description: >-
+    APIs for CommCare HQ, covering case and form data, user and location
+    management, reports, form submission, and messaging events.
+
+    Requires a CommCare Software Plan (Standard or above).
+  contact:
+    name: Dimagi Support
+    url: https://dimagi.atlassian.net/wiki/spaces/commcarepublic/overview
+servers:
+  - url: https://{environment}
+    description: CommCare HQ environment
+    variables:
+      environment:
+        default: www.commcarehq.org
+        enum:
+          - www.commcarehq.org
+          - india.commcarehq.org
+          - swiss.commcarehq.org
+        description: >-
+          The CommCare HQ cloud environment hosting the project space.
+tags:
+  - name: Data
+    description: >-
+      APIs for building project-specific applications and integrations.
+  - name: Users
+    description: >-
+      Managing mobile workers, web users, groups, and identity.
+  - name: Submission
+    description: >-
+      OpenRosa-standard XForm submission.
+  - name: SMS
+    description: >-
+      Messaging event history.
+components:
+  securitySchemes:
+    ApiKey:
+      $ref: "./components/securitySchemes.yaml#/ApiKey"
+    Basic:
+      $ref: "./components/securitySchemes.yaml#/Basic"
+    OAuth2:
+      $ref: "./components/securitySchemes.yaml#/OAuth2"
+security:
+  - ApiKey: []
+  - Basic: []
+  - OAuth2: []
+paths:
+  /a/{domain}/api/case/v1/:
+    $ref: "./paths/case-v1.yaml#/List"
+  /a/{domain}/api/case/v1/{case_id}/:
+    $ref: "./paths/case-v1.yaml#/Detail"
+  /a/{domain}/api/case/v2/:
+    $ref: "./paths/case-v2.yaml#/List"
+  /a/{domain}/api/case/v2/{case_id}:
+    $ref: "./paths/case-v2.yaml#/Detail"
+  /a/{domain}/api/case/v2/ext/{external_id}/:
+    $ref: "./paths/case-v2.yaml#/DetailByExternalId"
+  /a/{domain}/api/case/v2/bulk-fetch/:
+    $ref: "./paths/case-v2.yaml#/BulkFetch"
+  /a/{domain}/api/group/v1/:
+    $ref: "./paths/group.yaml#/List"
+  /a/{domain}/api/group/v1/{group_id}/:
+    $ref: "./paths/group.yaml#/Detail"
+  /a/{domain}/api/form/v1/:
+    $ref: "./paths/form.yaml#/List"
+  /a/{domain}/api/form/v1/{form_id}/:
+    $ref: "./paths/form.yaml#/Detail"
+  /a/{domain}/api/form_attachment/v1/{instance_id}/{attachment_id}:
+    $ref: "./paths/form.yaml#/FormAttachment"
+  /a/{domain}/receiver/api/:
+    $ref: "./paths/submission.yaml#/Submit"
+  /a/{domain}/receiver/{app_id}/:
+    $ref: "./paths/submission.yaml#/SubmitForApp"
+  /a/{domain}/api/user/v1/:
+    $ref: "./paths/user.yaml#/List"
+  /a/{domain}/api/user/v1/{user_id}/:
+    $ref: "./paths/user.yaml#/Detail"
+  /a/{domain}/api/user/v1/{user_id}/email_password_reset/:
+    $ref: "./paths/user.yaml#/PasswordReset"
+  /a/{domain}/api/user/v1/{user_id}/activate/:
+    $ref: "./paths/user.yaml#/Activate"
+  /a/{domain}/api/user/v1/{user_id}/deactivate/:
+    $ref: "./paths/user.yaml#/Deactivate"
+  /a/{domain}/api/web-user/v1/:
+    $ref: "./paths/web-user.yaml#/List"
+  /a/{domain}/api/web-user/v1/{user_id}/:
+    $ref: "./paths/web-user.yaml#/Detail"
+  /a/{domain}/api/web-user/v1/{user_id}/activate/:
+    $ref: "./paths/web-user.yaml#/Activate"
+  /a/{domain}/api/web-user/v1/{user_id}/deactivate/:
+    $ref: "./paths/web-user.yaml#/Deactivate"
+  /a/{domain}/api/invitation/v1/:
+    $ref: "./paths/web-user.yaml#/Invitation"
+  /api/identity/v1/:
+    $ref: "./paths/web-user.yaml#/Identity"
+  /a/{domain}/api/location/v1/:
+    $ref: "./paths/location-v1.yaml#/List"
+  /a/{domain}/api/location/v1/{location_id}/:
+    $ref: "./paths/location-v1.yaml#/Detail"
+  /a/{domain}/api/location/v2/:
+    $ref: "./paths/location-v2.yaml#/List"
+  /a/{domain}/api/location/v2/{location_id}/:
+    $ref: "./paths/location-v2.yaml#/Detail"
+  /a/{domain}/api/location_type/v1/:
+    $ref: "./paths/location-type.yaml#/List"
+  /a/{domain}/api/location_type/v1/{id}/:
+    $ref: "./paths/location-type.yaml#/Detail"
+  /a/{domain}/api/bulk-user/v1/:
+    $ref: "./paths/bulk-user.yaml#/List"
+  /a/{domain}/api/sso/v1/:
+    $ref: "./paths/sso.yaml#/List"
+  /api/user_domains/v1/:
+    $ref: "./paths/user-domains.yaml#/List"
+  /a/{domain}/api/fixture/v1/:
+    $ref: "./paths/fixture.yaml#/List"
+  /a/{domain}/api/fixture/v1/{fixture_item_id}/:
+    $ref: "./paths/fixture.yaml#/Detail"
+  /a/{domain}/fixtures/fixapi/:
+    $ref: "./paths/fixture.yaml#/Upload"
+  /a/{domain}/fixtures/fixapi/status/{download_id}/:
+    $ref: "./paths/fixture.yaml#/UploadStatus"
+  /a/{domain}/api/lookup_table/v1/:
+    $ref: "./paths/lookup-table.yaml#/List"
+  /a/{domain}/api/lookup_table/v1/{lookup_table_id}/:
+    $ref: "./paths/lookup-table.yaml#/Detail"
+  /a/{domain}/api/lookup_table_item/v1/:
+    $ref: "./paths/lookup-table.yaml#/ItemList"
+  /a/{domain}/api/lookup_table_item/v1/{lookup_table_item_id}/:
+    $ref: "./paths/lookup-table.yaml#/ItemDetail"
+  /a/{domain}/api/simplereportconfiguration/v1/:
+    $ref: "./paths/report.yaml#/List"
+  /a/{domain}/api/simplereportconfiguration/v1/{report_id}/:
+    $ref: "./paths/report.yaml#/Detail"
+  /a/{domain}/api/configurablereportdata/v1/{report_id}/:
+    $ref: "./paths/report.yaml#/Download"
+  /a/{domain}/api/det_export_instance/v1/:
+    $ref: "./paths/det-export.yaml#/List"
+  /a/{domain}/api/det_export_instance/v1/{det_export_instance_id}/:
+    $ref: "./paths/det-export.yaml#/Detail"
+  /a/{domain}/api/application/v1/:
+    $ref: "./paths/application.yaml#/List"
+  /a/{domain}/api/application/v1/{app_id}/:
+    $ref: "./paths/application.yaml#/Detail"
+  /a/{domain}/apps/api/import_app/:
+    $ref: "./paths/application.yaml#/Import"
+  /a/{domain}/apps/api/{app_id}/multimedia/:
+    $ref: "./paths/application.yaml#/UploadMultimedia"
+  /a/{domain}/apps/api/{app_id}/multimedia/status/{processing_id}/:
+    $ref: "./paths/application.yaml#/MultimediaStatus"
+  /a/{domain}/importer/excel/bulk_upload_api/:
+    $ref: "./paths/bulk-upload-cases.yaml#/Upload"
+  /a/{domain}/api/messaging-event/v1/:
+    $ref: "./paths/messaging-event.yaml#/List"
+  /a/{domain}/api/messaging-event/v1/{event_id}/:
+    $ref: "./paths/messaging-event.yaml#/Detail"

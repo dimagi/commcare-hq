@@ -1,0 +1,40 @@
+UserDomain:
+  type: object
+  description: >-
+    A project space the authenticated web user belongs to, as returned by
+    `v0_5.UserDomainsResource` (`corehq/apps/api/resources/v0_5.py:1091-1142`).
+  properties:
+    domain_name:
+      type: string
+      example: dimagi
+    project_name:
+      type: string
+      description: The project space's human-readable name (`Domain.hr_name`).
+      example: dimagi
+UserDomainList:
+  type: object
+  description: >-
+    Not the shared pagination envelope -- see the discrepancy file.
+    `UserDomainsResource.Meta.paginator_class = DoesNothingPaginator`
+    (`corehq/apps/api/resources/v0_5.py:1100`), whose `page()`
+    (`corehq/apps/api/resources/pagination.py:42-47`) returns only `{"objects":
+    self.objects, "meta": {"total_count": ...}}` -- no `limit`, `offset`,
+    `next`, or `previous` keys at all, and `self.objects` is never sliced, so
+    every request returns the full, unpaginated list. `user-domain-list.rst`'s
+    sample response (`:29-36`) shows a full
+    `limit`/`offset`/`next`/`previous`/`total_count` meta object that the code
+    cannot produce.
+  required: [meta, objects]
+  properties:
+    meta:
+      type: object
+      required: [total_count]
+      properties:
+        total_count:
+          type: integer
+          description: The real count of matching domains (`len(results)`).
+          example: 16
+    objects:
+      type: array
+      items:
+        $ref: "#/UserDomain"

@@ -1,0 +1,22 @@
+ApiKey:
+  type: apiKey
+  in: header
+  name: Authorization
+  description: >-
+    API key authentication. Send the header as `Authorization: ApiKey
+    <email>:<api_key>`.
+
+    This is not a registered HTTP authentication scheme, so it is described here
+    as an apiKey header rather than as `type: http`. Generate a key under
+    Account Settings in CommCare HQ.
+Basic:
+  type: http
+  scheme: basic
+  description: >-
+    HTTP Basic authentication with a CommCare username and password. For mobile
+    workers the username is `<username>@<domain>.commcarehq.org`.
+OAuth2:
+  type: http
+  scheme: bearer
+  description: >-
+    OAuth2 bearer token, sent as `Authorization: Bearer <token>`.
