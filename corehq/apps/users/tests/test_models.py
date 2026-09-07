@@ -358,7 +358,8 @@ class TestCouchUser(TestCase):
 
     def test_check_user(self):
         user = CouchUser(username='test')
-        hasher = get_hasher('md5')  # get a hasher that is not the default
+        hasher = get_hasher('sha1') # get a hasher that is not the default
+        assert hasher.algorithm != get_hasher('default').algorithm
         user.password = hasher.encode('test', hasher.salt())
 
         # should not raise ValueError: Cannot force an update in save() with no primary key.

@@ -40,7 +40,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
-    require_deploy_apps,
+    require_can_edit_or_view_apps,
 )
 from corehq.apps.app_manager.exceptions import (
     AppLinkError,
@@ -619,14 +619,14 @@ def _valid_exchange_record_exists_helper(app_id, records):
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def app_settings(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id)
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def view_app(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, release_manager=True)

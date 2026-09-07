@@ -13,7 +13,8 @@ from corehq.apps.project_db.populate import (
     coerce_to_gps,
     coerce_to_number,
     coerce_to_select,
-    send_to_project_db,
+    populate_case_type,
+    send_cases_to_project_db,
     upsert_cases,
 )
 from corehq.apps.project_db.table_ddl import (
@@ -213,8 +214,8 @@ def test_upsert():
 
 
 @use('db', project_db_table('test-send', 'patient', {'first_name': 'plain'}))
-def test_send_to_project_db():
-    send_to_project_db('test-send', 'patient', [
+def test_populate_case_type():
+    populate_case_type('test-send', 'patient', [
         _make_case({'first_name': 'Alice'}, type='patient'),
         _make_case({'first_name': 'Bob'}, type='patient'),
         _make_case({}, type='patient'),
@@ -229,7 +230,7 @@ def test_send_to_project_db():
 
 @use('db', project_db_table('test-select', 'patient', {'interests': 'select'}))
 def test_send_select_property_round_trip():
-    send_to_project_db('test-select', 'patient', [
+    populate_case_type('test-select', 'patient', [
         _make_case({'interests': 'sports music'}, case_id='c1', type='patient'),
         _make_case({}, case_id='c2', type='patient'),  # absent -> empty array, not NULL
     ])
@@ -249,7 +250,7 @@ def test_send_gps_property_round_trip():
     # Python cube formula stays in sync with the earthdistance extension.
     domain = 'test-gps'
     with project_db_table(domain, 'patient', {'location': 'gps'}):
-        send_to_project_db(domain, 'patient', [
+        populate_case_type(domain, 'patient', [
             _make_case({'location': '40.7128 -74.006 10 5'}, case_id='c1', type='patient'),
             _make_case({'location': 'garbage'}, case_id='c2', type='patient'),
             _make_case({}, case_id='c3', type='patient'),  # absent -> NULL
@@ -272,7 +273,7 @@ def test_send_long_property_name_round_trip():
     # A property whose column name exceeds Postgres's 63-byte limit must survive
     # create -> reflect -> upsert with the DDL and populate sides agreeing.
     long_name = 'x' * 100
-    send_to_project_db('test-long-prop', 'patient', [
+    populate_case_type('test-long-prop', 'patient', [
         _make_case({long_name: '1990-05-20'}, type='patient'),
     ])
 
@@ -286,10 +287,29 @@ def test_send_long_property_name_round_trip():
 
 
 @use('db', project_db_table('test-send', 'patient', {'first_name': 'plain'}))
-def test_send_to_project_db_bad_type():
+def test_populate_case_type_bad_type():
     with pytest.raises(ValueError):
-        send_to_project_db('test-send', 'patient', [
+        populate_case_type('test-send', 'patient', [
             _make_case({'first_name': 'Alice'}, type='patient'),
             _make_case({'first_name': 'Bob'}, type='patient'),
             _make_case({}, type='clinic'),
         ])
+
+
+@use('db')
+def test_send_cases_to_project_db():
+    domain = 'test-mixed'
+    with project_db_table(domain, 'patient', {'first_name': 'plain'}), \
+         project_db_table(domain, 'clinic', {'city': 'plain'}):
+        send_cases_to_project_db(domain, [
+            _make_case({'first_name': 'Alice'}, case_id='c1', type='patient'),
+            _make_case({'city': 'Boston'}, case_id='c2', type='clinic'),
+            _make_case({'first_name': 'Bob'}, case_id='c3', type='patient'),
+            _make_case({}, case_id='c4', type='no-such-table'),  # skipped
+        ])
+        with get_project_db_engine().begin() as conn:
+            patients = conn.execute(CaseTable(domain, 'patient').reflect().select()).fetchall()
+            clinics = conn.execute(CaseTable(domain, 'clinic').reflect().select()).fetchall()
+
+    assert sorted(r['case_id'] for r in patients) == ['c1', 'c3']
+    assert [r['case_id'] for r in clinics] == ['c2']

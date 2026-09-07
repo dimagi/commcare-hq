@@ -61,6 +61,7 @@ from corehq.apps.app_manager.const import (
     ANDROID_LOGO_PROPERTY_MAPPING,
     LATEST_APK_VALUE,
     LATEST_APP_VALUE,
+    NON_BUILD_APP_KEYS,
 )
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
@@ -695,12 +696,9 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             copy = copies[0]
         else:
             copy = deepcopy(self.to_json())
-            bad_keys = ('_id', '_rev', '_attachments', 'external_blobs',
-                        'short_odk_url', 'short_odk_media_url', 'recipients')
-
-            for bad_key in bad_keys:
-                if bad_key in copy:
-                    del copy[bad_key]
+            for key in NON_BUILD_APP_KEYS:
+                if key in copy:
+                    del copy[key]
 
             copy = cls.wrap(copy)
             copy.convert_app_to_build(self._id, user_id, comment)

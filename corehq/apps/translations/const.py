@@ -6,3 +6,7 @@ SINGLE_SHEET_STATIC_HEADERS = [
     'list_or_detail',  # modules only
     'label',  # forms only
 ]
+
+MODE_FILL_MISSING = 'fill_missing'
+MODE_RETRANSLATE = 'retranslate'
+AI_TRANSLATION_CHUNK_SIZE = 100

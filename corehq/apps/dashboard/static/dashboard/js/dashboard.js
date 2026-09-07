@@ -14,6 +14,7 @@ var tileModel = function (options) {
     self.icon = options.icon;
     self.url = options.url;
     self.helpText = options.help_text;
+    self.quickAction = options.quick_action;   // optional {icon, url, label} for a header button
     self.hasError = ko.observable(false);
 
     // Might get updated if this tile supports an item list but it's empty

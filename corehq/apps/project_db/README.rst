@@ -30,16 +30,20 @@ for the ``project_db`` engine (the default database unless
 Evolution
 ---------
 
-Provisioning is **append-only** and idempotent: a domain's schema and tables are
+Tables are created and synced automatically as the data dictionary is modified.
+Provisioning is append-only and idempotent: a domain's schema and tables are
 created if absent, and new columns and indexes are added, but existing ones are
-never dropped or rewritten. A new case property becomes a new column; a new case
-type becomes a new table.
+never dropped or rewritten. A new case property becomes a new column; a new
+case type becomes a new table.
 
 Status
 ------
 
-This module currently defines and provisions the table structure only.
-Populating the tables with case data and querying them are not yet implemented.
+Turning on the ``PROJECT_DB`` feature flag sets up the tables for the domain,
+and thereafter they stay in sync automatically when the data dictionary is
+modified.  New cases are sychronously sent to the ProjectDB during form
+submission.  Pre-existing cases must be manually back-populated using
+``manage_project_db --populate``
 
 TODOs
 ----
@@ -59,5 +63,3 @@ TODOs
 - Index external ID.
 - Put limit on number of property columns
 - Add a SQL user per domain with only access to that domain's schema
-- Set up automatic update call on data dictionary change, and auto population
-  on case update

@@ -100,7 +100,7 @@ def get_change_status(from_plan_version, to_plan_version):
     to_privs = get_privileges(to_plan_version) if to_plan_version is not None else set()
 
     downgraded_privs = from_privs.difference(to_privs)
-    upgraded_privs = to_privs
+    newly_upgraded_privs = to_privs.difference(from_privs)
 
     from corehq.apps.accounting.models import \
         SubscriptionAdjustmentReason as Reason
@@ -108,11 +108,11 @@ def get_change_status(from_plan_version, to_plan_version):
         adjustment_reason = Reason.CREATE
     else:
         adjustment_reason = Reason.SWITCH
-        if len(downgraded_privs) == 0 and len(upgraded_privs) > 0:
+        if not downgraded_privs and newly_upgraded_privs:
             adjustment_reason = Reason.UPGRADE
-        elif len(upgraded_privs) == 0 and len(downgraded_privs) > 0:
+        elif not newly_upgraded_privs and downgraded_privs:
             adjustment_reason = Reason.DOWNGRADE
-    return ChangeStatusResult(adjustment_reason, downgraded_privs, upgraded_privs)
+    return ChangeStatusResult(adjustment_reason, downgraded_privs, to_privs)
 
 
 def domain_has_privilege_cache_args(domain, privilege_slug, **assignment):
@@ -417,7 +417,6 @@ def pause_current_subscription(domain_name, web_user, current_subscription):
         FundingSource,
         ProBonoStatus,
         SoftwarePlanEdition,
-        Subscription,
         SubscriptionAdjustmentMethod,
         SubscriptionType,
     )
@@ -426,15 +425,9 @@ def pause_current_subscription(domain_name, web_user, current_subscription):
         SoftwarePlanEdition.PAUSED
     )
     if current_subscription.is_below_minimum_subscription:
-        current_subscription.update_subscription(
-            date_start=current_subscription.date_start,
-            date_end=current_subscription.date_start + datetime.timedelta(days=30)
-        )
-        return Subscription.new_domain_subscription(
-            account=current_subscription.account,
-            domain=domain_name,
-            plan_version=paused_plan_version,
-            date_start=current_subscription.date_start + datetime.timedelta(days=30),
+        return current_subscription.change_plan(
+            paused_plan_version,
+            effective_date=current_subscription.date_start + datetime.timedelta(days=30),
             web_user=web_user,
             adjustment_method=SubscriptionAdjustmentMethod.USER,
             service_type=SubscriptionType.PRODUCT,

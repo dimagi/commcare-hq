@@ -525,7 +525,6 @@ class CaseSearchEndpoint(models.Model):
         choices=TargetType.choices,
         default=TargetType.PROJECT_DB,
     )
-    case_type = models.CharField(max_length=255)
     current_version = models.ForeignKey(
         'CaseSearchEndpointVersion',
         null=True,
@@ -556,7 +555,10 @@ class CaseSearchEndpointVersion(models.Model):
     )
     version_number = models.IntegerField()
     parameters = models.JSONField(default=list, null=True, blank=True)
+    case_type = models.CharField(max_length=255, null=True, blank=True)
     query = models.JSONField(default=dict, null=True, blank=True)
+    # SQL exactly as the user typed it. Never execute this.
+    dangerous_sql = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.CharField(max_length=255, blank=True, default='')
     action = models.CharField(

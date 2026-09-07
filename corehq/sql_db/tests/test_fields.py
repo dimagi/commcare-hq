@@ -76,3 +76,15 @@ def has_pattern_ops_index(statements):
 def test_ModelClassField_slugs_are_unique():
     slugs = list(ModelClassField()._slug_by_model.values())
     assert len(slugs) == len(set(slugs)), f"Duplicate slugs: {slugs}"
+
+
+def test_ModelClassField_pre_save_returns_slug_for_class():
+    from corehq.form_processor.models import XFormInstance
+
+    @unregistered_django_model
+    class Test(models.Model):
+        model = ModelClassField()
+
+    field = {f.name: f for f in Test._meta.fields}["model"]
+    obj = Test(model=XFormInstance)
+    assert field.pre_save(obj, add=False) == 'xform'

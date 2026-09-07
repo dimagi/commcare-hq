@@ -75,6 +75,7 @@ from corehq.apps.domain.utils import (
     domain_restricts_superusers,
     guess_domain_language,
 )
+from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.mobile_auth.utils import generate_aes_key
 from corehq.apps.reports.const import TABLEAU_ROLES
@@ -664,12 +665,14 @@ class _AuthorizableMixin(IsMemberOfMixin):
             or self.has_permission(domain, 'edit_linked_configurations')
         )
 
-    def get_domains(self):
+    def get_domains(self, allow_enterprise=False):
         domains = [dm.domain for dm in self.domain_memberships]
-        if set(domains) == set(self.domains):
-            return domains
-        else:
+        if set(domains) != set(self.domains):
             raise self.Inconsistent("domains and domain_memberships out of sync")
+        if allow_enterprise:
+            from corehq.apps.enterprise.models import EnterprisePermissions
+            return EnterprisePermissions.expand_domains(domains)
+        return domains
 
     @memoized
     def has_permission(self, domain, permission, data=None):
@@ -1637,7 +1640,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                     domains_to_sync_usercase = getattr(self, 'domains', [])
                 # We need to sync to domains the user is leaving so that usercase is closed
                 for domain in domains_to_sync_usercase + getattr(self, '_leaving_domains', []):
-                    sync_usercases_if_applicable(domain, self, spawn_task)
+                    if not any_migrations_in_progress(domain):
+                        sync_usercases_if_applicable(domain, self, spawn_task)
         self._leaving_domains = []
 
     def fire_signals(self):
@@ -2517,8 +2521,12 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_language_code(self):
         return self.language
 
-    def get_domains(self):
-        return [dm.domain for dm in self.domain_memberships]
+    def get_domains(self, allow_enterprise=False):
+        domains = [dm.domain for dm in self.domain_memberships]
+        if allow_enterprise:
+            from corehq.apps.enterprise.models import EnterprisePermissions
+            return EnterprisePermissions.expand_domains(domains)
+        return domains
 
     @classmethod
     def get_admins_by_domain(cls, domain):

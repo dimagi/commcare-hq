@@ -2,11 +2,15 @@ import datetime
 from uuid import uuid4
 
 import pytest
+from unmagic import use
 
 from django.http import HttpResponse
 from django.test import RequestFactory, SimpleTestCase, TestCase
+from django.utils import timezone
 
 from casexml.apps.phone.xml import get_registration_element_data
+from dimagi.utils.web import get_url_base
+
 from corehq.apps.public_webforms.decorators import (
     PUBLIC_FORM_SESSION_COOKIE_NAME,
     PUBLIC_FORM_SESSION_HEADER,
@@ -17,8 +21,60 @@ from corehq.apps.public_webforms.models import (
     PublicFormSession,
     PublicFormUser,
     PublicWebform,
+    PublicWebformStatus,
 )
+from corehq.apps.public_webforms.tests.utils import create_webform
 from corehq.apps.users.util import PUBLIC_USER_ID
+
+
+def test_public_url_is_absolute_and_keyed_on_the_public_id():
+    webform = PublicWebform(public_id=uuid4())
+    # absolute because it is shared over email, SMS, and QR code
+    assert webform.public_url.startswith(get_url_base())
+    assert webform.public_id.hex in webform.public_url
+
+
+@pytest.mark.parametrize('offset, expected', [
+    (datetime.timedelta(minutes=-1), True),
+    (datetime.timedelta(minutes=1), False),
+], ids=['past', 'future'])
+def test_is_expired(offset, expected):
+    assert PublicWebform(expires_at=timezone.now() + offset).is_expired is expected
+
+
+@use('db')
+@pytest.mark.parametrize('expires_in, is_disabled, expected', [
+    (datetime.timedelta(days=1), False, PublicWebformStatus.OPEN),
+    (datetime.timedelta(days=1), True, PublicWebformStatus.CLOSED),
+    (datetime.timedelta(days=-1), False, PublicWebformStatus.EXPIRED),
+    (datetime.timedelta(days=-1), True, PublicWebformStatus.EXPIRED),
+], ids=['open', 'closed', 'expired', 'expired-and-closed'])
+def test_with_status_derives_status_from_expiry_and_the_open_setting(
+    expires_in, is_disabled, expected
+):
+    webform = create_webform(
+        expires_at=timezone.now() + expires_in, is_disabled=is_disabled)
+
+    annotated = PublicWebform.objects.with_status().get(pk=webform.pk)
+
+    assert annotated.status == expected
+
+
+@use('db')
+@pytest.mark.parametrize('submitted_at, expected_submissions', [
+    (None, 0),
+    (timezone.now(), 1),
+], ids=['no-submissions', 'one-submission'])
+def test_with_submissions_count(submitted_at, expected_submissions):
+    webform = create_webform()
+    PublicFormSession.objects.create(
+        public_webform=webform,
+        expires_at=timezone.now() + datetime.timedelta(days=1),
+        submitted_at=submitted_at,
+    )
+
+    annotated = PublicWebform.objects.with_submissions_count().get(pk=webform.pk)
+    assert annotated.submissions == expected_submissions
 
 
 def test_public_form_session_username():

@@ -1587,6 +1587,15 @@ class ConfirmSelectedPlanView(PlanViewBase):
         return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
 
     def post(self, request, *args, **kwargs):
+        if self.current_subscription.plan_version.plan.is_annual_plan and (
+            self.is_downgrade or self.is_same_edition
+        ):
+            messages.error(
+                request,
+                _("Your annual subscription only allows upgrades. "
+                  "You cannot downgrade, pause, or switch to the same edition during your annual commitment.")
+            )
+            return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
         if not self.can_domain_unpause:
             return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
         return super(ConfirmSelectedPlanView, self).get(request, *args, **kwargs)
