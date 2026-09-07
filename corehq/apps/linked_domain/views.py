@@ -30,6 +30,7 @@ from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.fixtures.models import LookupTable
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.apps.linked_domain.const import (
@@ -244,6 +245,7 @@ def pull_missing_multimedia(request, domain, app_id):
 
 
 @method_decorator(require_access_to_linked_domains, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class DomainLinkView(BaseProjectSettingsView):
     urlname = 'domain_links'
     page_title = gettext_lazy("Linked Project Spaces")
@@ -341,6 +343,7 @@ class DomainLinkView(BaseProjectSettingsView):
 
 
 @method_decorator(require_access_to_linked_domains, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
     urlname = "domain_link_rmi"
 
@@ -544,7 +547,8 @@ def validate_pull(user, domain_link):
 
 class DomainLinkHistoryReport(GenericTabularReport):
     name = 'Linked Project Space History'
-    base_template = "reports/bootstrap3/base_template.html"
+    base_template = "reports/bootstrap5/base_template.html"
+    use_bootstrap5 = True
     section_name = 'Project Settings'
     slug = 'project_link_report'
     dispatcher = ReleaseManagementReportDispatcher
