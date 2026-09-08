@@ -8,13 +8,13 @@ from django.test import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
 
-from corehq.apps.public_webforms.models import PublicFormSession
 from corehq.apps.public_webforms.tables import PublicWebformTable
 from corehq.apps.public_webforms.tests.utils import (
     DOMAIN,
     NORMAL_USER,
     OTHER_DOMAIN,
     PublicWebformViewTestCase,
+    create_session,
     create_webform,
 )
 from corehq.apps.public_webforms.views import PublicWebformTableView
@@ -28,14 +28,6 @@ def _table_view(domain=DOMAIN, **params):
     view.kwargs = {}
     view.request = RequestFactory().get('/', params)
     return view
-
-
-def _create_session(webform, **kwargs):
-    return PublicFormSession.objects.create(
-        public_webform=webform,
-        expires_at=timezone.now() + datetime.timedelta(days=1),
-        **kwargs,
-    )
 
 
 @use('db')
@@ -58,8 +50,8 @@ def test_table_lists_webforms_sorted_by_expiration():
 @use('db')
 def test_table_counts_webforms_submissions():
     webform = create_webform()
-    _create_session(webform, submitted_at=timezone.now())
-    _create_session(webform)
+    create_session(webform, submitted_at=timezone.now())
+    create_session(webform)
 
     [row] = _table_view().get_queryset()
 
@@ -72,7 +64,7 @@ def test_every_column_renders_from_the_queryset():
     """The columns are fed by annotations, so they break away from the table."""
     webform = create_webform(
         expires_at=datetime.datetime(2026, 9, 1, 21, 0), is_disabled=False)
-    _create_session(webform, submitted_at=timezone.now())
+    create_session(webform, submitted_at=timezone.now())
     table = PublicWebformTable(
         data=_table_view().get_queryset(), domain=DOMAIN, timezone=pytz.UTC)
 
