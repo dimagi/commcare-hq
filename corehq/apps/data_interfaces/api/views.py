@@ -52,10 +52,8 @@ def _privilege_error(message, status_code):
 @api_key_auth_header_only
 @toggles.BULK_FORM_ACTIONS_API.required_decorator(plain_message=NOT_FOUND_MESSAGE)
 @require_api_permission(HqPermissions.edit_data)
-@requires_privilege_json_response(
-    privileges.API_ACCESS, http_status_code=403, get_response=_privilege_error)
-@requires_privilege_json_response(
-    privileges.DATA_CLEANUP, http_status_code=403, get_response=_privilege_error)
+@requires_privilege_json_response(privileges.API_ACCESS, get_response=_privilege_error)
+@requires_privilege_json_response(privileges.DATA_CLEANUP, get_response=_privilege_error)
 @require_access_all_locations
 @api_throttle
 def bulk_form_action(request, domain):
@@ -86,10 +84,8 @@ def bulk_form_action(request, domain):
 @api_key_auth_header_only
 @toggles.BULK_FORM_ACTIONS_API.required_decorator(plain_message=NOT_FOUND_MESSAGE)
 @require_api_permission(HqPermissions.edit_data)
-@requires_privilege_json_response(
-    privileges.API_ACCESS, http_status_code=403, get_response=_privilege_error)
-@requires_privilege_json_response(
-    privileges.DATA_CLEANUP, http_status_code=403, get_response=_privilege_error)
+@requires_privilege_json_response(privileges.API_ACCESS, get_response=_privilege_error)
+@requires_privilege_json_response(privileges.DATA_CLEANUP, get_response=_privilege_error)
 @require_access_all_locations
 @api_throttle
 def bulk_form_action_status(request, domain, job_id):
