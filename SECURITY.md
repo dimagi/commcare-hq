@@ -12,7 +12,7 @@ Please report suspected security vulnerabilities **privately**. Do not open a
 public GitHub issue or pull request, and do not post details to the CommCare
 forum, for a security issue.
 
-Email your report to **`support@dimagi.com`**.
+Report a suspected vulnerability via the **[private vulnerability reporting](https://github.com/dimagi/commcare-hq/security/advisories)** feature.
 
 When you report, please include as much of the following as you can:
 
