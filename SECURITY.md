@@ -6,6 +6,13 @@ Dimagi, the maker of CommCare, takes the security of our software products and s
 
 For more information about CommCare’s security policies, please visit the [Dimagi Trust Center](https://dimagi.safebase.us/).
 
+## Security update notifications
+
+If you host CommCare HQ yourself, request to join the
+[Maintainers group](https://forum.dimagi.com/g/maintainers) on the CommCare
+forum. Members are automatically subscribed to a private category where we
+post when a security update is available, ahead of the full advisory.
+
 ## Reporting a vulnerability
 
 Please report suspected security vulnerabilities **privately**. Do not open a
