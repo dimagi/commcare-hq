@@ -907,7 +907,7 @@ def delete_module(request, domain, app_id, module_unique_id):
     if dependents:
         messages.error(request, _(
             '"{module}" is used by "{dependents}" for Parent Child Selection. '
-            'Change or turn off that setting before you can delete it.'
+            'Change or turn off that setting before deleting it.'
         ).format(module=module.default_name(), dependents=', '.join(dependents)))
         return back_to_main(request, domain, app_id)
 
