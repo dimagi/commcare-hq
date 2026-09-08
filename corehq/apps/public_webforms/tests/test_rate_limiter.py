@@ -8,6 +8,7 @@ from unmagic import fixture, use
 from corehq.apps.public_webforms.rate_limiter import (
     link_requests_global,
     link_requests_per_contact,
+    link_requests_per_domain,
     link_requests_per_ip,
     rate_limit_link_request,
 )
@@ -30,6 +31,10 @@ def limiter_on():
 
 def _a_contact():
     return f'{uuid4().hex}@example.com'
+
+
+def _a_domain():
+    return f'project-{uuid4().hex}'
 
 
 def _requests_allowed_per_hour():
@@ -55,25 +60,37 @@ def _exhausted(limiter):
 def test_contact_rate_limiter_allows_multiple_requests():
     # a respondent who did not receive the first message asks a second time
     contact = _a_contact()
+    domain = _a_domain()
 
-    assert rate_limit_link_request(contact) is False
-    assert rate_limit_link_request(contact) is False
+    assert rate_limit_link_request(domain, contact) is False
+    assert rate_limit_link_request(domain, contact) is False
 
 
 @use('db', limiter_on)
 def test_contact_rate_limiter_blocks_too_many_requests():
     contact = _a_contact()
+    domain = _a_domain()
 
     for __ in range(_requests_allowed_per_hour()):
-        assert rate_limit_link_request(contact) is False
+        assert rate_limit_link_request(domain, contact) is False
 
-    assert rate_limit_link_request(contact) is True
+    assert rate_limit_link_request(domain, contact) is True
+
+
+@use('db', limiter_on)
+def test_exhausted_domain_limit_blocks_requests_based_on_domain():
+    domain = _a_domain()
+
+    with _exhausted(link_requests_per_domain) as exceeded:
+        assert rate_limit_link_request(domain, _a_contact()) is True
+
+    assert exceeded.call_args.args == (f'domain:{domain}',)
 
 
 @use('db', limiter_on)
 def test_exhausted_ip_limit_blocks_requests_based_on_ip():
     with _exhausted(link_requests_per_ip) as exceeded:
-        assert rate_limit_link_request(_a_contact()) is True
+        assert rate_limit_link_request(_a_domain(), _a_contact()) is True
 
     # the address the request came from, not the contact it named
     assert exceeded.call_args.args == ('ip:203.0.113.7',)
@@ -82,21 +99,24 @@ def test_exhausted_ip_limit_blocks_requests_based_on_ip():
 @use('db', limiter_on)
 def test_exhausted_global_limit_blocks_everything():
     with _exhausted(link_requests_global):
-        assert rate_limit_link_request(_a_contact()) is True
+        assert rate_limit_link_request(_a_domain(), _a_contact()) is True
 
 
 @use('db', limiter_on)
 def test_accepted_request_counts_toward_all_limits():
     contact = _a_contact()
+    domain = _a_domain()
 
     with (
         mock.patch.object(link_requests_global, 'report_usage') as globally,
+        mock.patch.object(link_requests_per_domain, 'report_usage') as per_domain,
         mock.patch.object(link_requests_per_ip, 'report_usage') as per_ip,
         mock.patch.object(link_requests_per_contact, 'report_usage') as per_contact,
     ):
-        rate_limit_link_request(contact)
+        rate_limit_link_request(domain, contact)
 
     assert globally.called
+    assert per_domain.call_args.args == (f'domain:{domain}',)
     assert per_ip.call_args.args == ('ip:203.0.113.7',)
     assert per_contact.call_args.args == (f'contact:{contact}',)
 
@@ -107,6 +127,6 @@ def test_refused_request_does_not_count_toward_limits():
         with mock.patch.object(
             link_requests_per_contact, 'report_usage'
         ) as per_contact:
-            rate_limit_link_request(_a_contact())
+            rate_limit_link_request(_a_domain(), _a_contact())
 
     assert not per_contact.called

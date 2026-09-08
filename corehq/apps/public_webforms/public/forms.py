@@ -70,7 +70,7 @@ class PublicWebformLinkRequestForm(forms.Form):
                 cleaned_data.get('phone_number'))
 
         contact = cleaned_data.get('email') or cleaned_data.get('phone_number')
-        if contact and rate_limit_link_request(contact):
+        if contact and rate_limit_link_request(self.webform.domain, contact):
             self.add_error(None, _("Please wait a moment before trying again."))
         return cleaned_data
 

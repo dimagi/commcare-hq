@@ -12,6 +12,7 @@ from corehq.util.global_request import get_request
 from corehq.util.metrics import metrics_counter
 
 STATUS_GLOBAL_RATE_LIMITED = 'global_rate_limited'
+STATUS_DOMAIN_RATE_LIMITED = 'domain_rate_limited'
 STATUS_IP_RATE_LIMITED = 'ip_rate_limited'
 STATUS_CONTACT_RATE_LIMITED = 'contact_rate_limited'
 STATUS_ACCEPTED = 'accepted'
@@ -23,11 +24,13 @@ SHOULD_RATE_LIMIT_LINK_REQUESTS = not settings.UNIT_TESTING
 @silence_and_report_error(
     "Exception raised in the public webform link request rate limiter",
     'commcare.public_webforms.link_request_rate_limiter_errors')
-def rate_limit_link_request(contact):
+def rate_limit_link_request(domain, contact):
     ip_address = _get_ip_address()
-    status, window = _check_for_exceeded_rate_limits(contact, ip_address)
+    status, window = _check_for_exceeded_rate_limits(
+        domain, contact, ip_address
+    )
     if status == STATUS_ACCEPTED:
-        _report_usage(contact, ip_address)
+        _report_usage(domain, contact, ip_address)
 
     metrics_counter('commcare.public_webforms.link_requests', 1, tags={
         'status': status,
@@ -41,11 +44,16 @@ def _get_ip_address():
     return get_ip(request) if request else None
 
 
-def _check_for_exceeded_rate_limits(contact, ip_address):
+def _check_for_exceeded_rate_limits(domain, contact, ip_address):
     # widest scope first, so that the metric names the broadest limit reached
     window = link_requests_global.get_window_of_first_exceeded_limit()
     if window:
         return STATUS_GLOBAL_RATE_LIMITED, window
+
+    window = link_requests_per_domain.get_window_of_first_exceeded_limit(
+        'domain:{}'.format(domain))
+    if window:
+        return STATUS_DOMAIN_RATE_LIMITED, window
 
     if ip_address:
         window = link_requests_per_ip.get_window_of_first_exceeded_limit(
@@ -61,8 +69,9 @@ def _check_for_exceeded_rate_limits(contact, ip_address):
     return STATUS_ACCEPTED, None
 
 
-def _report_usage(contact, ip_address):
+def _report_usage(domain, contact, ip_address):
     link_requests_global.report_usage()
+    link_requests_per_domain.report_usage('domain:{}'.format(domain))
     if ip_address:
         link_requests_per_ip.report_usage('ip:{}'.format(ip_address))
     link_requests_per_contact.report_usage('contact:{}'.format(contact))
@@ -94,14 +103,26 @@ link_requests_per_ip = RateLimiter(
     ).get_rate_limits(scope),
 )
 
+link_requests_per_domain = RateLimiter(
+    feature_key='public_webform_link_requests_per_domain',
+    get_rate_limits=lambda scope: get_dynamic_rate_definition(
+        'public_webform_link_requests_per_domain',
+        default=RateDefinition(
+            per_week=60000,
+            per_day=20000,
+            per_hour=3000,
+        )
+    ).get_rate_limits(scope),
+)
+
 link_requests_global = RateLimiter(
     feature_key='public_webform_link_requests_global',
     get_rate_limits=lambda scope: get_dynamic_rate_definition(
         'public_webform_link_requests_global',
-        # a ceiling on what the feature can cost HQ, not a per-project limit
+        # a ceiling on what the feature can cost HQ as a whole
         default=RateDefinition(
-            per_day=50000,
-            per_hour=5000,
+            per_day=500000,
+            per_hour=50000,
         )
     ).get_rate_limits(scope),
 )
