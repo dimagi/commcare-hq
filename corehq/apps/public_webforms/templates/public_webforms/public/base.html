@@ -1,4 +1,5 @@
 {% extends "hqwebapp/bootstrap5/base_page.html" %}
+{% load hq_shared_tags %}
 
 {% block content %}
   <div class="col-sm-9 col-md-8 col-lg-7 col-xl-6 col-xxl-5 m-auto">
@@ -15,7 +16,10 @@
       <div class="navbar-header hq-header">
         <a href="{% url "homepage" %}" class="navbar-brand">
           {% if CUSTOM_LOGO_URL %}
-            <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
+            <img
+              src="{{ CUSTOM_LOGO_URL }}"
+              alt="{% trans_html_attr 'CommCare HQ Logo' %}"
+            />
           {% else %}
             <div></div>
           {% endif %}
