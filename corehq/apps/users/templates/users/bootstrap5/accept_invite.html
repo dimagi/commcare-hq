@@ -69,17 +69,17 @@
                 </p>
               {% endif %}
             </div>
-            <div class="card sign-up-bubble form-bubble-purple">  {# todo B5: css-well #}
+            <div class="card sign-up-bubble form-bubble-cta">  {# todo B5: css-well #}
               <h2 class="text-center break-all-words">
                 {% blocktrans with formatted_username as username %}
                   Not {{ username }}?
                 {% endblocktrans %}
               </h2>
               <p class="text-center">
-                <a href="?create=true" class="btn btn-purple btn-lg">
+                <a href="?create=true" class="btn btn-prelogin btn-lg">
                   {% trans 'Create an Account' %}
                 </a> or
-                <a href="?switch=true" class="btn btn-purple btn-lg">
+                <a href="?switch=true" class="btn btn-prelogin btn-lg">
                   {% trans 'Switch Accounts' %}
                 </a>
               </p>
@@ -116,10 +116,10 @@
                 {% include 'users/partials/bootstrap5/register_user_form_fields.html' %}
               </form>
             </div>
-            <div class="card sign-up-bubble form-bubble-purple">  {# todo B5: css-well #}
+            <div class="card sign-up-bubble form-bubble-cta">  {# todo B5: css-well #}
               <h2 class="text-center">{% trans 'Already have an account?' %}</h2>
               <p class="text-center">
-                <a href="{% url "login" %}?next={{ request.path }}" class="btn btn-purple btn-lg">
+                <a href="{% url "login" %}?next={{ request.path }}" class="btn btn-prelogin btn-lg">
                   {% trans 'Sign In Now' %}
                 </a>
               </p>

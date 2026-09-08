@@ -205,14 +205,27 @@ p.sso-message-block {
 }
 
 .cloud-choice {
-  color: $text-muted;
+  @include button-variant(
+    $white,
+    $prelogin-card-border,
+    $color: $gray-600,
+    $hover-background: $white,
+    $hover-border: $prelogin-action-blue,
+    $hover-color: $gray-600,
+    $active-background: $prelogin-action-blue-tint,
+    $active-border: $prelogin-action-blue,
+    $active-color: $prelogin-deep-blue
+  );
+  --#{$prefix}btn-border-width: 1.5px;
   font-weight: $font-weight-normal !important;
 
   &.selected {
-    color: $blue-800;
+    @include button-variant(
+      $prelogin-action-blue-tint,
+      $prelogin-action-blue,
+      $color: $prelogin-deep-blue
+    );
     font-weight: $font-weight-semibold !important;
-    border-color: $blue-200;
-    background-color: $blue-100;
   }
 }
 
@@ -239,10 +252,6 @@ p.sso-message-block {
     @include font-size($font-size-lg * 1.2);
   }
 
-  .form-step-number {
-    @include font-size($font-size-lg * 0.9);
-  }
-
   .help-block {
     text-align: left;
   }
@@ -267,23 +276,18 @@ p.sso-message-block {
   }
 }
 
-.form-bubble-purple {
-  background-color: $color-purple-dark;
-  color: $color-purple-dark-inverse;
+.form-bubble-cta {
+  background-color: $prelogin-action-blue;
+  color: $white;
   border: none;
 
-  a, a:active, a:hover, a:link {
-    color: $purple-100;
+  a:not(.btn) {
+    color: $white;
   }
 
-  .btn-purple {
-    background-color: $color-purple-dark;
-    color: $color-purple-dark-inverse;;
-    border: 1px solid $color-purple-dark-inverse;;
-
-    &:hover {
-      background-color: lighten($color-purple-dark, 5);
-    }
+  a:focus-visible,
+  button:focus-visible {
+    outline-color: $white;
   }
 }
 
@@ -291,10 +295,40 @@ p.sso-message-block {
   position: relative;
   margin-bottom: $spacer * 1.2;
 
+  .btn-primary {
+    @include button-variant($prelogin-action-blue, $prelogin-action-blue);
+  }
+
+  .btn-outline-primary {
+    @include button-outline-variant($prelogin-action-blue);
+  }
+
+  a:not(.btn) {
+    color: $prelogin-action-blue;
+  }
+
+  .alert-warning {
+    background: $prelogin-warning-bg;
+    border-color: $prelogin-warning-border;
+    color: $prelogin-warning-text;
+    border-radius: $border-radius-lg;
+  }
+
   .valid-feedback,
   .invalid-feedback,
   .ko-delayed-feedback,
   .validating-feedback {
     text-align: left;
   }
+}
+
+.form-control::placeholder {
+  color: $gray-600;
+}
+
+a:focus-visible,
+button:focus-visible,
+.form-control:focus-visible {
+  outline: 2px solid $prelogin-action-blue;
+  outline-offset: 2px;
 }
