@@ -581,21 +581,6 @@ class TestPlanContactForm(TestCase):
         assert all(value in text_content for value in data.values())
 
 
-def wire_prepayment_post_data(**overrides):
-    """Returns the fields that the payment modal posts, with valid values."""
-    data = {
-        'email_to': 'jane@example.com',
-        'email_cc': '',
-        'prepay_date_start': '',
-        'prepay_date_end': '',
-        'credit_label': 'General Credits',
-        'unit_cost': '10.00',
-        'quantity': '1',
-    }
-    data.update(overrides)
-    return data
-
-
 class TestWirePrepaymentForm:
 
     def test_valid_data(self):
@@ -785,17 +770,16 @@ class TestGeneratePrepaymentInvoiceForm(TestCase):
         )
 
 
-def scheduled_prepayment_post_data(**overrides):
+def wire_prepayment_post_data(**overrides):
+    """Returns the fields that the payment modal posts, with valid values."""
     data = {
-        'email_to': 'billing@example.com',
-        'email_cc': 'ap@example.com',
+        'email_to': 'jane@example.com',
+        'email_cc': 'john@example.com',
+        'prepay_date_start': datetime.date(2027, 1, 1).isoformat(),
+        'prepay_date_end': datetime.date(2028, 1, 1).isoformat(),
         'credit_label': '12 month prepayment',
         'unit_cost': '1000.00',
-        'quantity': 12,
-        'amount': '12000.00',
-        'prepay_date_start': '2027-01-01',
-        'prepay_date_end': '2028-01-01',
-        'send_date': in_days(90).isoformat(),
+        'quantity': '12',
     }
     data.update(overrides)
     return data
@@ -818,8 +802,8 @@ class TestPrepaymentFormSave(WirePrepaymentTestCase):
         assert scheduled.unit_cost == Decimal('1000.0000')
         assert scheduled.quantity == 12
         assert scheduled.credit_label == '12 month prepayment'
-        assert scheduled.contact_emails == ['billing@example.com']
-        assert scheduled.cc_emails == ['ap@example.com']
+        assert scheduled.contact_emails == ['jane@example.com']
+        assert scheduled.cc_emails == ['john@example.com']
         assert scheduled.date_start == datetime.date(2027, 1, 1)
         assert scheduled.date_end == datetime.date(2028, 1, 1)
         assert scheduled.subscription == self.subscription
@@ -935,3 +919,10 @@ class TestScheduledPrepaymentForm:
         form = WirePrepaymentForm(scheduled_prepayment_post_data(credit_label='x' * 256))
 
         assert form.is_valid(), form.errors
+
+
+def scheduled_prepayment_post_data(**overrides):
+    return wire_prepayment_post_data(**{
+        'send_date': in_days(90).isoformat(),
+        **overrides,
+    })
