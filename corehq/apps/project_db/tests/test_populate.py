@@ -23,6 +23,7 @@ from corehq.apps.project_db.table_ddl import (
     truncate_identifier,
 )
 from corehq.form_processor.models import CommCareCase
+from corehq.util.metrics.tests.utils import capture_metrics
 
 from .util import project_db_table
 
@@ -300,7 +301,8 @@ def test_populate_case_type_bad_type():
 def test_send_cases_to_project_db():
     domain = 'test-mixed'
     with project_db_table(domain, 'patient', {'first_name': 'plain'}), \
-         project_db_table(domain, 'clinic', {'city': 'plain'}):
+         project_db_table(domain, 'clinic', {'city': 'plain'}), \
+         capture_metrics() as metrics:
         send_cases_to_project_db(domain, [
             _make_case({'first_name': 'Alice'}, case_id='c1', type='patient'),
             _make_case({'city': 'Boston'}, case_id='c2', type='clinic'),
@@ -313,3 +315,4 @@ def test_send_cases_to_project_db():
 
     assert sorted(r['case_id'] for r in patients) == ['c1', 'c3']
     assert [r['case_id'] for r in clinics] == ['c2']
+    assert metrics.list('commcare.project_db.populate.duration', domain=domain), metrics
