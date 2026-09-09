@@ -31,6 +31,7 @@ from corehq.apps.app_manager.views.forms import (
     get_apps_modules,
 )
 from corehq.apps.builds.models import BuildSpec
+from corehq.apps.case_search.models import CaseSearchEndpoint
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.tests.utils import es_test
@@ -780,6 +781,58 @@ class TestModuleViewsBase(ViewsBase):
 
 
 class TestEditModuleDetailScreens(TestModuleViewsBase):
+    def _post_case_search_endpoint(self, endpoint_id):
+        url = reverse('edit_module_detail_screens', kwargs={
+            'domain': self.app.domain,
+            'app_id': self.app.id,
+            'module_unique_id': self.module.unique_id,
+        })
+        return self.client.post(url, {
+            "type": "case",
+            "search_properties": json.dumps({
+                "properties": [{"name": "name", "label": "Name"}],
+                "default_properties": [],
+                "custom_sort_properties": [],
+                "case_search_endpoint_id": endpoint_id,
+            }),
+        })
+
+    @flag_enabled("CASE_SEARCH_ENDPOINTS")
+    def test_case_search_endpoint_in_domain(self):
+        endpoint = CaseSearchEndpoint.objects.create(domain=self.domain, name='mine')
+        self.addCleanup(endpoint.delete)
+
+        response = self._post_case_search_endpoint(endpoint.id)
+
+        assert response.status_code == 200
+        module = Application.get(self.app.id).get_module_by_unique_id(self.module.unique_id)
+        assert module.search_config.case_search_endpoint_id == endpoint.id
+
+    @flag_enabled("CASE_SEARCH_ENDPOINTS")
+    def test_case_search_endpoint_in_other_domain_is_rejected(self):
+        endpoint = CaseSearchEndpoint.objects.create(domain='other-domain', name='theirs')
+        self.addCleanup(endpoint.delete)
+
+        response = self._post_case_search_endpoint(endpoint.id)
+
+        assert response.status_code == 400
+
+    @flag_enabled("CASE_SEARCH_ENDPOINTS")
+    def test_inactive_case_search_endpoint_is_rejected(self):
+        endpoint = CaseSearchEndpoint.objects.create(
+            domain=self.domain, name='inactive', is_active=False)
+        self.addCleanup(endpoint.delete)
+
+        response = self._post_case_search_endpoint(endpoint.id)
+
+        assert response.status_code == 400
+
+    @flag_enabled("CASE_SEARCH_ENDPOINTS")
+    def test_non_numeric_case_search_endpoint_is_rejected(self):
+        response = self._post_case_search_endpoint("not-a-number")
+
+        assert response.status_code == 400
+
     def test_edit_module_detail_screens(self, *args):
         url = reverse('edit_module_detail_screens', kwargs={
             'domain': self.app.domain,
