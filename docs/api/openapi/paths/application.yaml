@@ -1,0 +1,383 @@
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listApplications
+    summary: List applications in a project space
+    description: >-
+      Returns every application in the project space, including linked
+      applications (`BaseApplicationResource.obj_get_list`,
+      `corehq/apps/api/resources/v0_4.py:314-316`), sorted by creation date.
+
+      **No application-specific permission is required.**
+      `BaseApplicationResource.Meta.authentication =
+      LoginAndDomainAuthentication(allow_session_auth=True)` (`v0_4.py:324`) --
+      login, domain membership, and the generic `access_api` permission only.
+      `application-structure.rst:18-19` states "Permission Required: Edit Apps";
+      the code enforces no such check. See the discrepancy file.
+
+      `Meta.paginator_class = DoesNothingPaginatorCompat`
+      (`corehq/apps/api/resources/pagination.py:50-68`, `v0_4.py:329`) returns
+      every application unconditionally regardless of `limit`/ `offset`; the
+      response's `meta.limit` is always `null` and `meta.offset` is always `0`.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+      - name: extras
+        in: query
+        required: false
+        description: >-
+          If `true`, each application object includes its entire raw internal
+          document merged on top of the standard fields (`ApplicationExtras`),
+          instead of the standard `Application` shape (`_safe_bool(bundle,
+          "extras")` -> `dehydrate`, `v0_4.py:415-422`).
+        example: "false"
+        schema:
+          type: string
+    responses:
+      "200":
+        description: Every application in the project space.
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - $ref: "../components/schemas/application.yaml#/ApplicationList"
+                - type: object
+                  required: [meta, objects]
+                  properties:
+                    meta:
+                      $ref: "../components/schemas/pagination.yaml#/PaginationMeta"
+                    objects:
+                      type: array
+                      items:
+                        $ref: "../components/schemas/application.yaml#/ApplicationExtras"
+                  description: Shape when `extras=true`.
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Same mechanism as listFixtures'/listReports's 403.
+        description: >-
+          The authenticated user is not a member of this project space, or lacks
+          the generic API-access permission. The response body is empty.
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listFixtures`'s 429.
+Detail:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: app_id
+      in: path
+      required: true
+      description: Application UUID.
+      example: 6c9c5c1c1b8e4b6e9e6f6b6e9e6f6b6e
+      schema:
+        type: string
+  get:
+    operationId: getApplication
+    summary: Retrieve a single application's structure
+    description: >-
+      Also returns linked applications (`BaseApplicationResource.obj_get`,
+      `v0_4.py:318-321`). Same permission requirement as `listApplications` --
+      no application-specific check despite `application-structure.rst`'s stated
+      "Edit Apps" requirement.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+      - name: extras
+        in: query
+        required: false
+        description: >-
+          If `true`, the response includes the application's entire raw internal
+          document merged on top of the standard fields, instead of the standard
+          `Application` shape.
+        example: "false"
+        schema:
+          type: string
+    responses:
+      "200":
+        description: The application.
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - $ref: "../components/schemas/application.yaml#/Application"
+                - $ref: "../components/schemas/application.yaml#/ApplicationExtras"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user is not a member of this project space, or lacks
+          the generic API-access permission. The response body is empty. Same
+          mechanism as `listApplications`'s 403.
+      "404":
+        # get_object_or_not_exist (corehq/apps/api/util.py:15-39) raises
+        # Django's ObjectDoesNotExist, which tastypie's get_detail
+        # (tastypie/resources.py:1362-1383) catches directly and returns a
+        # bare http.HttpNotFound() -- no body. Same mechanism as
+        # getGroup/getLocationV1/getFixture.
+        description: >-
+          The application does not exist in this project space. The response
+          body is empty.
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `listApplications`'s 429.
+Import:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  post:
+    operationId: importApplication
+    summary: Create or update an application from a JSON source file
+    description: >-
+      Uploads an application source JSON file
+      (`import_app_api`/`_handle_import_app`,
+      `corehq/apps/app_manager/views/app_import_api.py:33-79`). Creates a new
+      application (`201`), or -- when `app_id` is supplied -- updates an
+      existing application in place and bumps its version (`200`)
+      (`overwrite_app_from_source`,
+      `corehq/apps/app_manager/models/applications.py:2066-2101`). Requires the
+      Edit Apps permission (`require_permission(HqPermissions.edit_apps,
+      login_decorator=api_auth())`, `app_import_api.py:30`), matching
+      `import-app.rst:26`.
+    tags: [Data]
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [app_file]
+            properties:
+              app_file:
+                type: string
+                format: binary
+                description: >-
+                  The application source JSON file. Its internal structure is
+                  not modeled here -- it is opaque application-export JSON,
+                  parsed with a plain `json.load` (`app_import_api.py:50`).
+              app_name:
+                type: string
+                description: >-
+                  Required when creating a new application (no `app_id`). When
+                  updating, renames the application if given; otherwise the
+                  existing name is kept.
+                example: My Imported App
+              app_id:
+                type: string
+                description: >-
+                  ID of an existing application to update in place. When
+                  omitted, a new application is created.
+                example: abc123def456
+    responses:
+      "201":
+        description: A new application was created.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/application.yaml#/ImportAppSuccess"
+      "200":
+        description: >-
+          An existing application (`app_id` supplied) was updated in place.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/application.yaml#/ImportAppSuccess"
+      "400":
+        description: >-
+          Missing `app_file`; missing `app_name` when creating; the uploaded
+          file is not valid JSON; or (on update) the uploaded source's app type
+          is incompatible with the existing app (`_handle_import_app`,
+          `app_import_api.py:42-67`; `overwrite_app_from_source` raising
+          `AppEditingError`, `applications.py:2072`).
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/application.yaml#/ImportAppError"
+      "401":
+        # Plain-Django-view endpoint (not a tastypie resource). api_auth()
+        # (corehq/apps/domain/decorators.py:444-450) dispatches to a
+        # digest/basic/api-key/oauth challenge decorator; a failed challenge
+        # returns that decorator's own 401 directly -- empty or plain-text
+        # body, not JSON. Same mechanism as uploadFixtureExcel's 401.
+        description: >-
+          Authentication credentials were missing or invalid. The response body
+          is empty or plain text, not JSON.
+      "403":
+        # require_permission(HqPermissions.edit_apps, ...) ->
+        # require_permission_raw (corehq/apps/users/decorators.py:34-54)
+        # raises Django's PermissionDenied for a non-ajax request lacking the
+        # permission; Django's handler403 = no_permissions
+        # (corehq/apps/hqwebapp/views.py:362-373, wired at urls.py:49)
+        # renders an HTML error page, not JSON. Same mechanism as
+        # uploadFixtureExcel's 403.
+        description: >-
+          The authenticated user lacks the Edit Apps permission, or the domain
+          lacks the required privilege. The response is an HTML error page, not
+          JSON.
+      "404":
+        description: >-
+          `app_id` was supplied but no matching application exists in the domain
+          (`ResourceNotFound`, caught at `app_import_api.py:64-65`). Unlike most
+          other 404s in this API, this one really is a real JSON body, not empty
+          and not the shared `Error`/`NotFound` shape.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/application.yaml#/ImportAppError"
+      "429":
+        # api_throttle (corehq/apps/api/decorators.py:51-61) returns a bare
+        # HttpResponse(status=429) with no body.
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty.
+UploadMultimedia:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: app_id
+      in: path
+      required: true
+      description: Application UUID to attach the multimedia to.
+      example: 6c9c5c1c1b8e4b6e9e6f6b6e9e6f6b6e
+      schema:
+        type: string
+  post:
+    operationId: uploadApplicationMultimedia
+    summary: Upload a ZIP of multimedia files for an application
+    description: >-
+      Uploads a ZIP archive of multimedia files
+      (`upload_multimedia_api`/`_handle_upload_multimedia`,
+      `app_import_api.py:88-125`). The ZIP is validated synchronously (that it
+      opens and is not corrupt) and then queued for asynchronous processing
+      (`process_bulk_upload_zip.delay`, `:121-123`) -- poll
+      `getMultimediaUploadStatus` with the returned `processing_id` to see
+      whether individual files matched. Requires the Edit Apps permission, same
+      mechanism as `importApplication`.
+    tags: [Data]
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [bulk_upload_file]
+            properties:
+              bulk_upload_file:
+                type: string
+                format: binary
+                description:
+                  A ZIP archive containing multimedia files (images, audio,
+                  video).
+    responses:
+      "200":
+        description: The ZIP was accepted and queued for processing.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/application.yaml#/MultimediaUploadAccepted"
+      "400":
+        description: >-
+          Missing `bulk_upload_file`, the file is not a valid ZIP, or the ZIP is
+          corrupt (`_handle_upload_multimedia`, `app_import_api.py: 100-115`).
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/application.yaml#/ImportAppError"
+      "401":
+        description: >-
+          Authentication credentials were missing or invalid. The response body
+          is empty or plain text, not JSON. Same mechanism as
+          `importApplication`'s 401.
+      "403":
+        description: >-
+          The authenticated user lacks the Edit Apps permission. The response is
+          an HTML error page, not JSON. Same mechanism as `importApplication`'s
+          403.
+      "404":
+        description: >-
+          The application does not exist in this domain (`ResourceNotFound`,
+          caught at `app_import_api.py:93-98`). Real JSON body, not empty.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/application.yaml#/ImportAppError"
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `importApplication`'s 429.
+MultimediaStatus:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: app_id
+      in: path
+      required: true
+      description: Application UUID.
+      example: 6c9c5c1c1b8e4b6e9e6f6b6e9e6f6b6e
+      schema:
+        type: string
+    - name: processing_id
+      in: path
+      required: true
+      description: Opaque id returned by `uploadApplicationMultimedia`.
+      example: dl-abc123def456
+      schema:
+        type: string
+  get:
+    operationId: getMultimediaUploadStatus
+    summary: Poll the status of a queued multimedia upload
+    description: >-
+      Polls the background job started by `uploadApplicationMultimedia`
+      (`multimedia_status_api`/`_handle_multimedia_status`,
+      `app_import_api.py:134-163`). Requires the Edit Apps permission, same
+      mechanism as `importApplication`.
+
+      Unlike several other status-polling endpoints in this API (compare
+      `getFixtureUploadStatus`), **this one has genuine 404 and 500 responses
+      with real JSON bodies**, not an always-200 contract.
+    tags: [Data]
+    responses:
+      "200":
+        description: >-
+          Current status. See `MultimediaUploadStatus`'s description for why
+          this is a single shape, not the two the task brief and
+          `import-app.rst` describe.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/application.yaml#/MultimediaUploadStatus"
+      "401":
+        description: >-
+          Authentication credentials were missing or invalid. The response body
+          is empty or plain text, not JSON. Same mechanism as
+          `importApplication`'s 401.
+      "403":
+        description: >-
+          The authenticated user lacks the Edit Apps permission. The response is
+          an HTML error page, not JSON. Same mechanism as `importApplication`'s
+          403.
+      "404":
+        description: >-
+          The application does not exist in this domain (`ResourceNotFound`,
+          `app_import_api.py:140-144`), or the `processing_id` is not found or
+          has expired from cache (`BulkMultimediaStatusCache.get` returning
+          `None`, `app_import_api.py:154-159`). Both cases share this body
+          shape.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/application.yaml#/ImportAppError"
+      "429":
+        description: >-
+          The request was rate limited. Back off and retry. The response body is
+          empty. Same mechanism as `importApplication`'s 429.
+      "500":
+        description: >-
+          The queued Celery task failed (`get_download_context` raising
+          `TaskFailedError`, `soil/util.py:73-91`, caught at
+          `app_import_api.py:146-152`). This is a real, code-verified path,
+          reachable only when a Celery worker actually processes and fails the
+          task -- not exercised by the offline checks in this task.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/application.yaml#/ImportAppError"

@@ -1,0 +1,65 @@
+Domain:
+  name: domain
+  in: path
+  required: true
+  description: The project space name.
+  example: demo
+  schema:
+    type: string
+Limit:
+  name: limit
+  in: query
+  required: false
+  description:
+    "Maximum number of records to return. Default: 20. Maximum: 1000."
+  example: 100
+  schema:
+    type: integer
+    minimum: 1
+    maximum: 1000
+    default: 20
+Offset:
+  name: offset
+  in: query
+  required: false
+  description: "Number of records to skip. Default: 0."
+  example: 100
+  schema:
+    type: integer
+    minimum: 0
+    default: 0
+# Only for operations served by a tastypie resource: `determine_format`
+# (tastypie/utils/mime.py:22-26) honours `?format=` only when the value is in
+# `Meta.serializer.formats`. Every HQ resource inherits `CustomResourceMeta`'s
+# `CustomXMLSerializer` (corehq/apps/api/resources/meta.py:76-81) or another
+# `tastypie.serializers.Serializer` subclass constructed with default formats,
+# which are `['json', 'xml', 'yaml']` -- `xml` and `yaml` are appended because
+# `lxml` and `PyYAML` are both installed (tastypie/serializers.py:76-84;
+# `PyYAML>=6.0.2` is a production dependency, pyproject.toml:94). An
+# unrecognised value is silently ignored and the default format is used.
+#
+# Do NOT add this parameter to:
+#   * plain Django views (case/v2, messaging-event, form submission, the fixture
+#     and application upload endpoints, bulk case upload) -- no tastypie
+#     serializer is involved at all;
+#   * `form/v1`, whose `Meta.serializer` is
+#     `XFormInstanceSerializer(formats=['json'])`
+#     (corehq/apps/api/resources/v0_4.py:171) -- `format=xml` is genuinely
+#     unavailable there;
+#   * operations whose success response has no body (the DELETE operations, and
+#     the activate/deactivate/password-reset actions) -- there is nothing for
+#     the serializer to format.
+Format:
+  name: format
+  in: query
+  required: false
+  description: >-
+    Response serialization format. `yaml` is accepted by every tastypie-served
+    endpoint but is not mentioned in the reST documentation; treat it as
+    undocumented rather than guaranteed. An unrecognised value is ignored and
+    JSON is returned.
+  example: json
+  schema:
+    type: string
+    enum: [json, xml, yaml]
+    default: json
