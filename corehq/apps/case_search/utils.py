@@ -12,7 +12,6 @@ from jsonobject.exceptions import BadValueError
 from lxml import etree
 
 from casexml.apps.case.fixtures import CaseDBFixture
-from casexml.apps.case.xml.generator import safe_element
 from casexml.apps.phone.data_providers.case.livequery import (
     get_all_related_live_cases,
 )
@@ -194,10 +193,10 @@ def get_project_db_fixture(domain, endpoint, config):
 
 
 def _rows_to_fixture(rows):
-    fixture = safe_element('results')
+    fixture = etree.Element('results')
     fixture.set('id', CaseDBFixture.id)
     for row in rows:
-        item = safe_element('case')
+        item = etree.Element('case')
         item.attrib['case_id'] = row['case_id']  # Required for claiming to work
         for name, value in row.items():
             element = etree.Element(name)
