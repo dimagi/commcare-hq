@@ -20,6 +20,14 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: corehq/apps/accounting/static/accounting/js/base_subscriptions_main.js
+msgid "Auto-pause will be skipped indefinitely"
+msgstr "ऑटो-पॉज़ को अनिश्चितकाल के लिए छोड़ दिया जाएगा"
+
+#: corehq/apps/accounting/static/accounting/js/base_subscriptions_main.js
+msgid "Auto-pause will resume on %(date)s"
+msgstr "ऑटो-पॉज़ %(date)s को फिर से शुरू होगा"
+
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 msgid "My project ended"
 msgstr "मेरा प्रोजेक्ट समाप्त हो गया"
@@ -1936,6 +1944,11 @@ msgstr "आपकी सेटिंग्स में बदलाव नह�
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
 msgstr "क्रेडिट्स खरीदें"
+
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+#| msgid "Schedule Broadcast"
+msgid "Schedule Invoice"
+msgstr "इनवॉइस शेड्यूल करें"
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Available Countries"

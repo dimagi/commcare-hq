@@ -20,6 +20,14 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: corehq/apps/accounting/static/accounting/js/base_subscriptions_main.js
+msgid "Auto-pause will be skipped indefinitely"
+msgstr "Kusitisha kiotomatiki kutarukwa bila kikomo"
+
+#: corehq/apps/accounting/static/accounting/js/base_subscriptions_main.js
+msgid "Auto-pause will resume on %(date)s"
+msgstr "Kusitisha kiotomatiki kutaendelea tena tarehe %(date)s"
+
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 msgid "My project ended"
 msgstr "Mradi wangu umeisha"
@@ -1936,6 +1944,11 @@ msgstr "Una mipangilio ambayo haijabadilishwa"
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
 msgstr "Nunua Mikopo"
+
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+#| msgid "Schedule Broadcast"
+msgid "Schedule Invoice"
+msgstr "Panga Ankara"
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Available Countries"
