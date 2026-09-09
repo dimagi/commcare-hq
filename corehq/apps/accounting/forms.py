@@ -2236,6 +2236,7 @@ class WirePrepaymentForm(forms.Form):
             self.cleaned_data['unit_cost'],
             self.cleaned_data['quantity'],
         )
+
     def create_scheduled_invoice(self, domain, subscription, couch_user):
         scheduled = ScheduledPrepaymentInvoice.objects.create(
             domain=domain,
