@@ -1941,8 +1941,17 @@ class LinkedApplication(Application):
             self.create_mapping(mm, ref['path'], save=False)
 
 
-def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
-    source_app = _get_source_app(app_id_or_doc)
+def import_app_from_id(app_id, domain, extra_properties=None, request=None):
+    source_app = get_app(None, app_id)
+    return _import_app(source_app, domain, extra_properties, request)
+
+
+def import_app_from_doc(source_doc, domain, extra_properties=None, request=None):
+    source_app = wrap_app(source_doc)
+    return _import_app(source_app, domain, extra_properties, request)
+
+
+def _import_app(source_app, domain, extra_properties=None, request=None):
     source_doc = source_app.export_json(dump_json=False)
 
     attachments = _get_attachments(source_doc)
@@ -1976,14 +1985,6 @@ def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
                                     "multimedia file(s)."))
 
     return app
-
-
-def _get_source_app(app_id_or_doc):
-    if isinstance(app_id_or_doc, str):
-        source_app = get_app(None, app_id_or_doc)
-    else:
-        source_app = wrap_app(app_id_or_doc)
-    return source_app
 
 
 def _get_attachments(doc):
