@@ -2184,7 +2184,7 @@ class WirePrepaymentForm(forms.Form):
         return self.cleaned_data['prepay_date_end'] or datetime.date.today()
 
     def clean_credit_label(self):
-        credit_label = self.cleaned_data.get('credit_label', 'General Credits')
+        credit_label = self.cleaned_data['credit_label']
         max_length = ScheduledPrepaymentInvoice._meta.get_field('credit_label').max_length
         if len(credit_label) > max_length:
             raise ValidationError(message=_(
