@@ -194,7 +194,7 @@ def get_project_db_fixture(domain, endpoint, config):
 
 def _rows_to_fixture(rows):
     fixture = etree.Element('results')
-    fixture.set('id', CaseDBFixture.id)
+    fixture.attrib['id'] = CaseDBFixture.id
     for row in rows:
         item = etree.Element('case')
         item.attrib['case_id'] = row['case_id']  # Required for claiming to work
