@@ -18,7 +18,8 @@ from corehq.apps.app_manager.models import (
     Module,
     ReportAppConfig,
     ReportModule,
-    import_app,
+    import_app_from_doc,
+    import_app_from_id,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
@@ -175,9 +176,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
         self.app.rearrange_modules(0, 1)
         self.assertModuleOrder(self.app.modules, [m2, m0, m1])
 
-    @patch_default_builds
-    def _test_import_app(self, app_id_or_source):
-        new_app = import_app(app_id_or_source, self.domain)
+    def _assert_imported_app_matches_source(self, new_app):
         self.assertEqual(set(new_app.blobs.keys()).intersection(list(self.app.blobs.keys())), set())
         new_forms = list(new_app.get_forms())
         old_forms = list(self.app.get_forms())
@@ -189,13 +188,15 @@ class AppManagerTest(TestCase, TestXmlMixin):
                 old_config_ids = {config.uuid for config in old_module.report_configs}
                 new_config_ids = {config.uuid for config in new_module.report_configs}
                 self.assertEqual(old_config_ids.intersection(new_config_ids), set())
-        return new_app
 
+    @patch_default_builds
     def testImportApp_from_id(self):
         self.assertTrue(self.app.blobs)
-        imported_app = self._test_import_app(self.app.id)
+        imported_app = import_app_from_id(self.app.id)
+        self._assert_imported_app_matches_source(imported_app)
         self.assertEqual(imported_app.family_id, self.app.id)
 
+    @patch_default_builds
     @patch('corehq.apps.app_manager.models.ReportAppConfig.report')
     def testImportApp_from_source(self, report_mock):
         report_mock.return_value = get_sample_report_config()
@@ -205,7 +206,8 @@ class AppManagerTest(TestCase, TestXmlMixin):
             ReportAppConfig(report_id='config_id2', header={'en': 'CommBugz'})
         ]
         app_source = self.app.export_json(dump_json=False)
-        self._test_import_app(app_source)
+        imported_app = import_app_from_doc(app_source, self.domain)
+        self._assert_imported_app_matches_source(imported_app)
 
     def testAppsBrief(self):
         """Test that ApplicationBase can wrap the
@@ -272,7 +274,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
 
     @patch_default_builds
     def testBuildImportedApp(self):
-        app = import_app(self._yesno_source, self.domain)
+        app = import_app_from_doc(self._yesno_source, self.domain)
         copy = app.make_build()
         copy.save()
         self._check_has_build_files(copy, self.min_paths)

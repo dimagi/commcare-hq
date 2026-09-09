@@ -2056,7 +2056,7 @@ def overwrite_app_from_source(domain, app_id, source, extra_properties=None, req
     """Update the app ``app_id`` in ``domain`` in place from an uploaded JSON
     ``source``, preserving the app's identity, name, and multimedia.
 
-    The create-time counterpart is :func:`import_app`. Raises
+    The create-time counterpart is :func:`import_app_from_doc`. Raises
     ``ResourceNotFound`` if the app does not exist in ``domain`` and
     ``AppEditingError`` if the source's app type is incompatible.
     """
