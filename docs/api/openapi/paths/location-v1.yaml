@@ -1,0 +1,141 @@
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listLocationsV1
+    summary: List locations (v1)
+    description: >-
+      Returns locations the authenticated user is permitted to see. Requires the
+      Edit Locations permission and the Locations privilege on the domain --
+      `BaseLocationsResource.dispatch`
+      (`corehq/apps/locations/resources/v0_5.py:19-23`) rejects the whole
+      request with a bare 403 if the domain lacks the Locations privilege,
+      before authentication is even checked. Read-only:
+      `v0_5.LocationResource.Meta.allowed_methods = ['get']`
+      (`corehq/apps/locations/resources/v0_5.py:77`). See `/api/locations-v2`
+      (`location-v2.yaml`) for a newer version that also supports create and
+      update.
+    tags: [Data]
+    parameters:
+      - name: site_code
+        in: query
+        required: false
+        description: Restrict to locations with this exact site code.
+        example: namibia
+        schema:
+          type: string
+      - name: external_id
+        in: query
+        required: false
+        description: Restrict to locations with this exact external identifier.
+        example: 123abc
+        schema:
+          type: string
+      - name: created_at
+        in: query
+        required: false
+        description: >-
+          Restrict to locations created at this exact naive timestamp.
+          `Meta.filtering` declares `ALL` lookups for this field (`v0_5.py:94`),
+          so Django ORM lookup suffixes such as `created_at__gt` also work,
+          undocumented by `locations-v1.rst`.
+        example: "2023-05-09T16:10:47.225938"
+        schema:
+          type: string
+      - name: last_modified
+        in: query
+        required: false
+        description: >-
+          Restrict to locations last modified at this exact naive timestamp.
+          Same `ALL`-lookup caveat as `created_at`.
+        example: "2023-05-09T16:10:47.225947"
+        schema:
+          type: string
+      - name: latitude
+        in: query
+        required: false
+        description: Restrict to locations at this exact latitude.
+        example: "31.4100000000"
+        schema:
+          type: string
+      - name: longitude
+        in: query
+        required: false
+        description: Restrict to locations at this exact longitude.
+        example: "-97.4100000000"
+        schema:
+          type: string
+      - $ref: "../components/parameters.yaml#/Limit"
+      - $ref: "../components/parameters.yaml#/Offset"
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: A page of locations.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/location.yaml#/LocationList"
+      "400":
+        $ref: "../components/responses.yaml#/BadRequest"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        # Deliberately not the shared Forbidden ref. RequirePermissionAuthentication
+        # (corehq/apps/api/resources/auth.py:152-163) delegates to
+        # LoginAndDomainAuthentication._auth_test (auth.py:114-135): a failed
+        # permission check raises Django's PermissionDenied
+        # (require_permission_raw, corehq/apps/users/decorators.py:34-54),
+        # which _auth_test catches directly and converts to a bare
+        # HttpResponseForbidden() -- no body. The BaseLocationsResource
+        # domain-privilege check (v0_5.py:19-23) returns the identical bare
+        # HttpResponseForbidden() for a missing Locations privilege. See the
+        # discrepancy file.
+        description: >-
+          The authenticated user lacks the Edit Locations permission, or the
+          domain lacks the Locations privilege. The response body is empty.
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"
+Detail:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: location_id
+      in: path
+      required: true
+      description: Location UUID.
+      example: f373a6837c1243938abfc56618cce88b
+      schema:
+        type: string
+  get:
+    operationId: getLocationV1
+    summary: Retrieve a single location (v1)
+    description: >-
+      Requires the Edit Locations permission and the Locations privilege. Same
+      serialization as the list operation.
+    tags: [Data]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Format"
+    responses:
+      "200":
+        description: The location.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/location.yaml#/Location"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "403":
+        description: >-
+          The authenticated user lacks the Edit Locations permission, or the
+          domain lacks the Locations privilege. The response body is empty. Same
+          mechanism as `listLocationsV1`'s 403.
+      "404":
+        # Deliberately not the shared NotFound ref: neither v0_5.LocationResource
+        # nor its base class overrides obj_get/get_detail, so tastypie's
+        # default ModelResource.get_detail (tastypie/resources.py:1362-1383)
+        # catches SQLLocation.DoesNotExist (a Django ObjectDoesNotExist
+        # subclass) and returns a bare http.HttpNotFound() -- no body, same
+        # mechanism as getCase/getGroup elsewhere in this spec.
+        description:
+          The requested location does not exist. The response body is empty.
+      "429":
+        $ref: "../components/responses.yaml#/TooManyRequests"

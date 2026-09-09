@@ -91,6 +91,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
+        "@redocly/cli": "^2.46.1",
         "chai": "4.3.6",
         "colors": "1.4.0",
         "eslint": "10.0.2",
@@ -136,7 +137,11 @@
     "scripts": {
         "dev": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js --watch",
         "test": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js",
-        "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js"
+        "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js",
+        "openapi:lint": "redocly lint --config docs/api/openapi/redocly.yaml",
+        "openapi:bundle": "redocly bundle --config docs/api/openapi/redocly.yaml commcare -o docs/api/openapi/dist/openapi.bundled.yaml",
+        "openapi:docs": "redocly build-docs --config docs/api/openapi/redocly.yaml commcare -o docs/api/openapi/dist/openapi/index.html",
+        "openapi:check": "./scripts/check-openapi-dist.sh"
     },
     "prettier": {
         "plugins": [
