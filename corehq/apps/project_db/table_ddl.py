@@ -10,6 +10,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.types import UserDefinedType
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.util.metrics import metrics_histogram_timer
 from corehq.sql_db.connections import PROJECT_DB_ENGINE_ID, connection_manager
 
 MAX_IDENTIFIER_LENGTH = 63
@@ -199,11 +200,19 @@ class CaseTable:
 
 
 def create_or_update_project_db(domain):
-    metadata = sqlalchemy.MetaData()
+    with metrics_histogram_timer(
+        'commcare.project_db.schema_sync.duration.seconds',
+        timing_buckets=(.5, 1, 5, 20, 60),
+        tags={'domain': domain},
+    ):
+        _create_or_update_project_db(domain)
 
+
+def _create_or_update_project_db(domain):
     case_types = _get_case_types(domain)
     if not case_types:
         return
+    metadata = sqlalchemy.MetaData()
     case_tables = [
         CaseTable(domain, case_type).build_definition(metadata)
         for case_type in case_types
