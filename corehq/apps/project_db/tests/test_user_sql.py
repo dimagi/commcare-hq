@@ -45,6 +45,7 @@ SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
 
 @pytest.mark.parametrize('sql, expected', [
     ('SELECT * FROM client', select([CLIENT])),
+    ('SELECT * FROM client;', select([CLIENT])),  # semi-colon is fine
     ('SELECT name, case_id FROM client', select([CLIENT.c.name, CLIENT.c.case_id])),
 
     # Column aliases
@@ -197,6 +198,9 @@ def _compiled(query):
 
 @pytest.mark.parametrize('sql', [
     # Invalid SQL
+    '',                             # Nothing
+    '   ',                          # Only whitespace
+    ';',                            # Hmmm
     'SELECT * FROM (((',            # unbalanced parens
     'SELECT FROM',                  # missing projection
     "SELECT * FROM 'unclosed",      # unterminated string literal

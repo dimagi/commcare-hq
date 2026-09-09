@@ -121,12 +121,10 @@ def translate(sql, tables):
     except SqlglotError:
         raise UnsupportedSQL("could not parse SQL")
     except RecursionError:
-        # The parser recurses about 20 stack frames per level of parentheses,
-        # so nesting them exhausts the stack before it can report anything.
-        raise UnsupportedSQL(NESTED_TOO_DEEPLY) from None
+        raise UnsupportedSQL(NESTED_TOO_DEEPLY)
+    statements = [s for s in statements if s]
     if len(statements) != 1:
         raise UnsupportedSQL("this only supports a single statement")
-    # Reject a parse tree deeper than the conversion can handle
     _check_tree_depth(statements[0])
 
     return _convert_query(statements[0], tables)
