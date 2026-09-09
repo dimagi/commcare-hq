@@ -307,6 +307,12 @@ Edit or Delete Lookup Table
         ]
     }
 
+**Response**
+
+PUT only updates an existing lookup table; it never creates one. If no lookup
+table with the given ID exists in the domain, the response is 404 Not Found.
+Use the Create Lookup Table endpoint to add a new lookup table.
+
 
 Lookup Table Rows API
 =====================
@@ -461,3 +467,9 @@ Edit or Delete Lookup Table Row
         }
       }
     }
+
+**Response**
+
+PUT only updates an existing lookup table row; it never creates one. If no row
+with the given ID exists in the domain, the response is 404 Not Found. Use the
+Create Lookup Table Row endpoint to add a new row.

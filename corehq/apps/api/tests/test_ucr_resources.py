@@ -163,6 +163,24 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         self.assertEqual(response.status_code, 403)  # 403 is "Forbidden"
 
 
+class TestDataSourceConfigurationResource(APIResourceTest):
+    resource = v0_5.DataSourceConfigurationResource
+    api_name = "v0.5"
+
+    @flag_enabled('USER_CONFIGURABLE_REPORTS')
+    def test_cant_update_missing_data_source(self):
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(uuid.uuid4().hex),
+            json.dumps({"display_name": "renamed"}),
+            method="PUT",
+        )
+
+        assert response.status_code == 404, response.content
+        # put_detail must not echo the exception message: some carry internal
+        # detail, and get_document_or_404 even embeds a traceback
+        assert response.content == b""
+
+
 class TestConfigurableReportDataResource(APIResourceTest):
     resource = v0_5.ConfigurableReportDataResource
     api_name = "v0.5"
