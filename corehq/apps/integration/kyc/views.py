@@ -2,7 +2,7 @@ from functools import cached_property
 
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
