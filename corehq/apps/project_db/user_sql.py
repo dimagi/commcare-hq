@@ -21,6 +21,7 @@ from sqlalchemy import (
     union_all,
 )
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import ProgrammingError
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
@@ -41,6 +42,10 @@ class UnsupportedSQL(UserSQLValidationError):
 
 class BadParameters(UserSQLValidationError):
     """The parameters don't match the query"""
+
+
+class UserSQLProgrammingError(UserSQLValidationError):
+    """The SQL was found to be invalid at runtime"""
 
 
 LITERAL_PARAM_PREFIX = 'hq_param'  # Our reserved namespace for parameters
@@ -96,7 +101,10 @@ class UserSQL:
         params = self._clean_parameters(parameter_values)
         with get_project_db_engine().connect() as conn:
             start = time.perf_counter()
-            result = conn.execute(self.query, params)
+            try:
+                result = conn.execute(self.query, params)
+            except ProgrammingError as e:
+                raise UserSQLProgrammingError(str(e.orig)) from e
             rows = result.fetchmany(max_rows)
             return QueryResult(
                 columns=list(result.keys()),
@@ -121,12 +129,10 @@ def translate(sql, tables):
     except SqlglotError:
         raise UnsupportedSQL("could not parse SQL")
     except RecursionError:
-        # The parser recurses about 20 stack frames per level of parentheses,
-        # so nesting them exhausts the stack before it can report anything.
-        raise UnsupportedSQL(NESTED_TOO_DEEPLY) from None
+        raise UnsupportedSQL(NESTED_TOO_DEEPLY)
+    statements = [s for s in statements if s]
     if len(statements) != 1:
         raise UnsupportedSQL("this only supports a single statement")
-    # Reject a parse tree deeper than the conversion can handle
     _check_tree_depth(statements[0])
 
     return _convert_query(statements[0], tables)

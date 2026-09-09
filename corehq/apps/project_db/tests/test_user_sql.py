@@ -1,6 +1,6 @@
 import sys
 from decimal import Decimal
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy import (
@@ -17,6 +17,7 @@ from sqlalchemy import (
     union_all,
 )
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import ProgrammingError
 from unmagic import fixture, use
 
 from corehq.apps.project_db.user_sql import (
@@ -24,6 +25,7 @@ from corehq.apps.project_db.user_sql import (
     BadParameters,
     UnsupportedSQL,
     UserSQL,
+    UserSQLProgrammingError,
     _bind,
     translate,
 )
@@ -45,6 +47,7 @@ SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
 
 @pytest.mark.parametrize('sql, expected', [
     ('SELECT * FROM client', select([CLIENT])),
+    ('SELECT * FROM client;', select([CLIENT])),  # semi-colon is fine
     ('SELECT name, case_id FROM client', select([CLIENT.c.name, CLIENT.c.case_id])),
 
     # Column aliases
@@ -197,6 +200,9 @@ def _compiled(query):
 
 @pytest.mark.parametrize('sql', [
     # Invalid SQL
+    '',                             # Nothing
+    '   ',                          # Only whitespace
+    ';',                            # Hmmm
     'SELECT * FROM (((',            # unbalanced parens
     'SELECT FROM',                  # missing projection
     "SELECT * FROM 'unclosed",      # unterminated string literal
@@ -401,3 +407,16 @@ def test_allows_nesting_up_to_the_limit():
     sql = ('SELECT * FROM client WHERE '
            + ' AND '.join(['name = 1'] * (MAX_TREE_DEPTH - 5)))
     assert translate(sql, TABLES) is not None
+
+
+def test_run_reports_a_database_error():
+    msg = 'column "nope" does not exist\nLINE 1: ...'
+    engine = MagicMock()
+    engine.connect().__enter__().execute.side_effect = ProgrammingError(
+        'SELECT 1', {}, Exception(msg))
+    user_sql = _user_sql('SELECT * FROM client')
+    with patch('corehq.apps.project_db.user_sql.get_project_db_engine',
+               return_value=engine):
+        with pytest.raises(UserSQLProgrammingError) as error:
+            user_sql.run({}, max_rows=10)
+    assert msg in error.value.msg
