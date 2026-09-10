@@ -1,5 +1,8 @@
+from unittest.mock import patch
+
 from django.test import SimpleTestCase, TestCase
 
+from corehq.apps.app_manager import lookup_table_import
 from corehq.apps.app_manager.lookup_table_import import (
     _destination_tag,
     _get_referenced_lookup_table_tags,
@@ -130,3 +133,24 @@ class TestCopyLookupTables(TestCase):
 
         assert LookupTable.objects.filter(id=existing.id).exists()
         assert not LookupTable.objects.filter(id__in=result.created_table_ids).exists()
+
+    def test_keeps_successful_tables_when_one_copy_fails(self):
+        LookupTable.objects.create(domain=self.source_domain, tag="vegetable")
+        copy_table = lookup_table_import._copy_lookup_table
+
+        def fail_on_vegetable(source_table, destination_domain):
+            if source_table.tag == "vegetable":
+                raise RuntimeError
+            return copy_table(source_table, destination_domain)
+
+        app_doc = {
+            "fruit": "instance('item-list:fruit')",
+            "vegetable": "instance('item-list:vegetable')",
+        }
+        with patch.object(lookup_table_import, "_copy_lookup_table", side_effect=fail_on_vegetable):
+            result = copy_lookup_tables(app_doc, self.source_domain, self.destination_domain)
+
+        assert result.tag_mapping == {"fruit": "fruit"}
+        assert result.failed_tags == ("vegetable",)
+        assert LookupTable.objects.filter(domain=self.destination_domain, tag="fruit").exists()
+        assert not LookupTable.objects.filter(domain=self.destination_domain, tag="vegetable").exists()

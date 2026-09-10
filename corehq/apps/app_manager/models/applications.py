@@ -1976,6 +1976,10 @@ def _notify_lookup_table_import(request, result):
         messages.warning(request, _(
             "Could not copy lookup tables missing from the source project: {}."
         ).format(", ".join(result.missing_tags)))
+    if result.failed_tags:
+        messages.warning(request, _(
+            "An error occurred while copying the following lookup tables: {}."
+        ).format(", ".join(result.failed_tags)))
 
 
 def import_app_from_doc(source_doc, domain, extra_properties=None, request=None):

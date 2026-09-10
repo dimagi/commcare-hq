@@ -4,14 +4,13 @@ import re
 from copy import deepcopy
 from dataclasses import dataclass
 
-from django.db import IntegrityError, transaction
-
 from dimagi.utils.chunked import chunked
+from dimagi.utils.logging import notify_exception
+from django.db import IntegrityError, transaction
 
 from corehq.apps.fixtures.constants import LOOKUP_TABLE_TAG_MAX_LENGTH
 from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.fixtures.upload.const import LOOKUP_TABLE_ROW_BATCH_SIZE
-
 
 _ITEM_LIST_REFERENCE = re.compile(
     rf"item-list:(?P<tag>[\w.-]{{1,{LOOKUP_TABLE_TAG_MAX_LENGTH}}})(?![\w.-])"
@@ -23,6 +22,7 @@ class LookupTableImportResult:
     tag_mapping: dict
     created_table_ids: tuple
     missing_tags: tuple
+    failed_tags: tuple
 
 
 def copy_lookup_tables(source_app_doc, source_domain, destination_domain):
@@ -35,16 +35,29 @@ def copy_lookup_tables(source_app_doc, source_domain, destination_domain):
     missing_tags = referenced_tags - source_tables.keys()
     tag_mapping = {}
     created_table_ids = []
+    failed_tags = []
     for source_tag in sorted(source_tables):
-        with transaction.atomic():
-            copied_table = _copy_lookup_table(source_tables[source_tag], destination_domain)
-        tag_mapping[source_tag] = copied_table.tag
-        created_table_ids.append(copied_table.id)
+        try:
+            with transaction.atomic():
+                copied_table = _copy_lookup_table(source_tables[source_tag], destination_domain)
+        except Exception:
+            notify_exception(
+                None,
+                message=(
+                    f"Failed to copy lookup table '{source_tag}' "
+                    f"from '{source_domain}' to '{destination_domain}'"
+                ),
+            )
+            failed_tags.append(source_tag)
+        else:
+            tag_mapping[source_tag] = copied_table.tag
+            created_table_ids.append(copied_table.id)
 
     return LookupTableImportResult(
         tag_mapping=tag_mapping,
         created_table_ids=tuple(created_table_ids),
         missing_tags=tuple(sorted(missing_tags)),
+        failed_tags=tuple(failed_tags),
     )
 
 
