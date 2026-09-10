@@ -127,11 +127,12 @@ class CaseSearchEndpointForm(forms.Form):
 
     def clean(self):
         cleaned = super().clean()
+        parameters = self._clean_parameters(cleaned)
         # An endpoint is configured one way or the other, so the fields
         # belonging to the other kind are dropped rather than saved unchecked.
         if self.target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH:
             cleaned['sql'] = ''
-            self._clean_query(cleaned)
+            self._clean_query(cleaned, parameters)
         elif self.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB:
             cleaned['case_type'] = None
             cleaned['query'] = None
@@ -139,19 +140,25 @@ class CaseSearchEndpointForm(forms.Form):
 
         return cleaned
 
-    def _clean_query(self, cleaned):
+    def _clean_parameters(self, cleaned):
+        parameter_spec = cleaned.get('parameters')
+        if parameter_spec is None:
+            return None
+        parameters, errors = parse_parameter_spec(parameter_spec)
+        for error in errors:
+            self.add_error('parameters', error)
+        return parameters
+
+    def _clean_query(self, cleaned, parameters):
         query = cleaned.get('query')
-        parameters = cleaned.get('parameters')
         # Only run semantic validation when both fields parsed cleanly.
         if query is not None and parameters is not None:
             capability = self.capability or get_capability(self.domain)
-            parameters, errors = parse_parameter_spec(parameters)
-            if not errors:
-                _, errors = parse_query_spec(
-                    query, parameters, cleaned.get('case_type') or '', capability
-                )
+            _, errors = parse_query_spec(
+                query, parameters, cleaned.get('case_type') or '', capability
+            )
             for error in errors:
-                self.add_error(None, error)
+                self.add_error('query', error)
 
     def _clean_sql(self, cleaned):
         sql = (cleaned.get('sql') or '').strip()
@@ -411,6 +418,11 @@ class CaseSearchEndpointTestView(BaseDomainView):
     _results_template = 'case_search/partials/test_results.html'
     _row_limit = 20
 
+    #: Containers on the edit page holding each card's validation errors
+    PARAMETER_ERRORS = 'parameter-errors'
+    QUERY_ERRORS = 'query-errors'
+    SQL_ERRORS = 'sql-errors'
+
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
@@ -428,13 +440,16 @@ class CaseSearchEndpointTestView(BaseDomainView):
 
         parameters, errors = parse_parameter_spec(spec)
         if errors:
-            return self._render_results(request, errors=errors)
+            return self._render_results(
+                request, validation={self.PARAMETER_ERRORS: errors})
+        validation = {self.PARAMETER_ERRORS: [], self.QUERY_ERRORS: [],
+                      self.SQL_ERRORS: []}
 
         if request.POST.get('target_type') == CaseSearchEndpoint.TargetType.PROJECT_DB:
-            return self._run_sql(request, test_param_values)
-        return self._run_query(request, parameters, test_param_values)
+            return self._run_sql(request, test_param_values, validation)
+        return self._run_query(request, parameters, test_param_values, validation)
 
-    def _run_query(self, request, parameters, test_param_values):
+    def _run_query(self, request, parameters, test_param_values, validation):
         """Run the query builder's spec and render the cases it matched."""
         case_type = request.POST.get('case_type', '')
         try:
@@ -443,12 +458,11 @@ class CaseSearchEndpointTestView(BaseDomainView):
             return self._render_results(request, errors=['Invalid query JSON.'])
 
         capability = get_capability(domain=self.domain)
-        if case_type not in capability['case_types']:
-            return self._render_results(request, errors=[f"Unknown case type: '{case_type}'"])
-        fields = capability['case_types'][case_type]
         query_root, errors = parse_query_spec(query, parameters, case_type, capability)
         if errors:
-            return self._render_results(request, errors=errors)
+            validation[self.QUERY_ERRORS] = errors
+            return self._render_results(request, validation=validation)
+        fields = capability['case_types'][case_type]
         try:
             criteria = criteria_dict_to_criteria_list(test_param_values)
             results = get_primary_case_search_endpoint_results(
@@ -456,25 +470,30 @@ class CaseSearchEndpointTestView(BaseDomainView):
                 self._row_limit)
         except Exception as e:
             notify_exception(request, str(e))
-            return self._render_results(request, errors=['Query Execution Failed'])
-        return self._render_results(request, fields=fields, results=results)
+            return self._render_results(request, errors=['Query Execution Failed'],
+                                        validation=validation)
+        return self._render_results(request, fields=fields, results=results,
+                                    validation=validation)
 
-    def _run_sql(self, request, test_param_values):
+    def _run_sql(self, request, test_param_values, validation):
         user_sql = UserSQL(self.domain, request.POST.get('sql', ''), max_rows=self._row_limit)
         try:
             values = {name: test_param_values.get(name) or None
                       for name in user_sql.parameters}
             result = user_sql.run(values)
         except UserSQLValidationError as error:
-            return self._render_results(request, errors=[error.msg])
+            validation[self.SQL_ERRORS] = [error.msg]
+            return self._render_results(request, validation=validation)
         except (ImproperlyConfigured, SQLAlchemyError) as error:
             notify_exception(
                 request, f'project_db unavailable for {self.domain}: {error}')
             return self._render_results(
                 request, errors=['The project database is unavailable.'])
-        return self._render_table(request, result.columns, result.rows)
+        return self._render_table(request, result.columns, result.rows,
+                                  validation=validation)
 
-    def _render_results(self, request, *, errors=None, fields=None, results=None):
+    def _render_results(self, request, *, errors=None, fields=None, results=None,
+                        validation=None):
         field_names = (fields or {}).keys()
         if results:
             rows = [
@@ -486,12 +505,13 @@ class CaseSearchEndpointTestView(BaseDomainView):
             rows = []
         return self._render_table(
             request, ['Case Name'] + [k for k in field_names], rows,
-            errors=errors)
+            errors=errors, validation=validation)
 
-    def _render_table(self, request, columns, rows, errors=None):
+    def _render_table(self, request, columns, rows, errors=None, validation=None):
         # Always 200 so HTMX swaps the partial in (it ignores error statuses).
         return render(request, self._results_template, {
             'errors': errors or [],
             'columns': columns,
             'rows': rows or [],
+            'validation': validation or {},
         })

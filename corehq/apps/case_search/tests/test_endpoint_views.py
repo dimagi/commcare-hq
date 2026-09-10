@@ -558,3 +558,60 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
             'parameters': 'not json',
         })
         assert 'Invalid parameters JSON' in response.content.decode()
+
+    def _region(self, content, region):
+        """The markup a response swapped into one card's error container.
+
+        ``None`` when the response said nothing about that card.
+        """
+        marker = f'<div id="{region}" hx-swap-oob="innerHTML">'
+        if marker not in content:
+            return None
+        start = content.index(marker) + len(marker)
+        return content[start:content.index('</div>', start)]
+
+    def test_a_successful_sql_run_clears_the_cards_it_checked(self):
+        # A card may still be showing why the last save failed. Running the
+        # query settles that, so what it checked is emptied out of band.
+        with self._project_db_table():
+            self._add_pets()
+            response = self._post_sql('SELECT case_id FROM my_case_type')
+        content = response.content.decode()
+        assert self._region(content, 'sql-errors').strip() == ''
+        assert self._region(content, 'parameter-errors').strip() == ''
+
+    def test_a_failed_sql_run_reports_into_the_sql_card(self):
+        with self._project_db_table():
+            response = self._post_sql('DELETE FROM my_case_type')
+        content = response.content.decode()
+        assert 'unsupported statement' in self._region(content, 'sql-errors')
+
+    def test_a_failed_query_reports_into_the_query_card(self):
+        response = self.client.post(self._test_url(), {
+            'case_type': 'my_case_type',
+            'query': json.dumps({'type': 'bogus'}),
+        })
+        content = response.content.decode()
+        assert self._region(content, 'query-errors').strip() != ''
+
+    def test_an_unchosen_case_type_reports_into_the_query_card(self):
+        # Reachable from the UI: the select starts on the blank option
+        response = self.client.post(self._test_url(), {
+            'case_type': '',
+            'query': json.dumps(EMPTY_QUERY),
+        })
+        content = response.content.decode()
+        assert "Unknown case type" in self._region(content, 'query-errors')
+
+    def test_a_bad_spec_says_nothing_about_the_sql_it_did_not_check(self):
+        response = self.client.post(self._test_url(), {
+            'target_type': 'project_db',
+            'sql': 'DELETE FROM my_case_type',
+            'parameters': json.dumps([
+                {'name': 'who', 'type': 'text'},
+                {'name': 'who', 'type': 'text'},
+            ]),
+        })
+        content = response.content.decode()
+        assert 'Duplicate parameter name' in self._region(content, 'parameter-errors')
+        assert self._region(content, 'sql-errors') is None

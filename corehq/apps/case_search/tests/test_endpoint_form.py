@@ -78,7 +78,7 @@ def test_invalid_query_spec_is_a_non_field_error():
     # A spec that parses as JSON but is not a query the builder understands
     # is a semantic error, so it belongs to the form rather than a field.
     form = bound_form(query='{"type": "bogus"}')
-    assert form.errors == {'__all__': ['Invalid query']}
+    assert form.errors == {'query': ['Invalid query']}
 
 
 @use('db')
