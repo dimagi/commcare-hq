@@ -51,6 +51,7 @@ from corehq.apps.api.resources.v0_5 import (
     DomainUsernames,
     UserDomainsResource,
 )
+from corehq.apps.app_manager.views.single_form_api import SingleFormApiView
 from corehq.apps.zapier.api.v0_5 import ZapierUserDomains
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
 from corehq.apps.fixtures import resources as fixtures
@@ -193,6 +194,8 @@ urlpatterns = [
     v1_0.CommCareAnalyticsUserResource.get_urlpattern('v1'),
     v1_0.InvitationResource.get_urlpattern('v1'),
     v1_0.DETExportInstanceResource.get_urlpattern('v1'),
+    url(r'^apps/v1/(?P<app_id>[\w-]+)/modules/(?P<module_id>[\w-]+)/forms/(?P<form_id>[\w-]+)/$',
+        SingleFormApiView.as_view(), name='single_form_api'),
 ]
 
 
@@ -250,3 +253,7 @@ user_urlpatterns = [
 ]
 
 waf_allow('XSS_BODY', hard_code_pattern=r'^/a/([\w\.:-]+)/api/v([\d\.]+)/form/$')
+waf_allow(
+    'XSS_BODY',
+    hard_code_pattern=r'^/a/([\w\.:-]+)/api/apps/v1/[\w-]+/modules/[\w-]+/forms/[\w-]+/$',
+)
