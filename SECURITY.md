@@ -21,7 +21,7 @@ When you report, please include as much of the following as you can:
 - The affected component(s), endpoint(s), or file(s), and the commit or
   deployment you tested against.
 
-## What to expect
+### What to expect
 
 - We aim to acknowledge your report as fast as reasonably possible.
 - We follow **coordinated disclosure**. Accordingly we request that 
@@ -32,6 +32,10 @@ When you report, please include as much of the following as you can:
 
 Where appropriate for confirmed vulnerabilities, we publish a 
 [GitHub Security Advisory](https://github.com/dimagi/commcare-hq/security/advisories).
+
+## Notifications of Confirmed Vulnerabilities
+
+To receive notifications of confirmed vulnerabilities, log into or create an account on the [Dimagi Forum](https://forum.dimagi.com/) and watch the [Security Announcements category](https://forum.dimagi.com/c/developers/security-announcements/24). You must have an account in order to see this category.
 
 ## Supported versions
 
