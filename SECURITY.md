@@ -31,7 +31,7 @@ When you report, please include as much of the following as you can:
   have discovered vulnerabilities.
 
 Where appropriate for confirmed vulnerabilities, we publish a 
-[GitHub Security Advisory](https://github.com/dimagi/commcare-hq/security/advisories).
+[GitHub Security Advisory](https://github.com/dimagi/commcare-hq/security/advisories). To receive notifications of confirmed vulnerabilities, log into or create an account on the Dimagi Forum and watch the [Security Announcements category](https://forum.dimagi.com/c/developers/security-announcements/24). You must have an account in order to see this category.
 
 ## Supported versions
 
