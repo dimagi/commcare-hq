@@ -1,7 +1,7 @@
 import json
 from functools import wraps
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -20,6 +20,20 @@ from corehq.util.view_utils import reverse
 from .bulk_form_action import UserError, serialize_job, validate_payload
 
 NOT_FOUND_MESSAGE = 'Not found'
+
+
+def json_permission_errors(view):
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        try:
+            return view(request, *args, **kwargs)
+        except PermissionDenied:
+            return JsonResponse(
+                {'error': "You do not have permission to use this API"},
+                status=403,
+            )
+
+    return wrapped
 
 
 def require_access_all_locations(view):
@@ -51,6 +65,7 @@ def _privilege_error(message, status_code):
 @csrf_exempt
 @api_key_auth_header_only
 @toggles.BULK_FORM_ACTIONS_API.required_decorator(plain_message=NOT_FOUND_MESSAGE)
+@json_permission_errors
 @require_api_permission(HqPermissions.edit_data)
 @requires_privilege_json_response(privileges.API_ACCESS, get_response=_privilege_error)
 @requires_privilege_json_response(privileges.DATA_CLEANUP, get_response=_privilege_error)
@@ -83,6 +98,7 @@ def bulk_form_action(request, domain):
 @csrf_exempt
 @api_key_auth_header_only
 @toggles.BULK_FORM_ACTIONS_API.required_decorator(plain_message=NOT_FOUND_MESSAGE)
+@json_permission_errors
 @require_api_permission(HqPermissions.edit_data)
 @requires_privilege_json_response(privileges.API_ACCESS, get_response=_privilege_error)
 @requires_privilege_json_response(privileges.DATA_CLEANUP, get_response=_privilege_error)
