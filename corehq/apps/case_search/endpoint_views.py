@@ -491,7 +491,8 @@ class CaseSearchEndpointTestView(BaseDomainView):
                 request, f'project_db unavailable for {self.domain}: {error}')
             return self._render_results(
                 request, errors=['The project database is unavailable.'])
-        return self._render_table(request, result.columns, result.rows)
+        return self._render_table(request, result.columns, result.rows,
+                                  clear_sql_errors=True)
 
     def _render_results(self, request, *, errors=None, fields=None, results=None):
         field_names = (fields or {}).keys()
@@ -507,10 +508,15 @@ class CaseSearchEndpointTestView(BaseDomainView):
             request, ['Case Name'] + [k for k in field_names], rows,
             errors=errors)
 
-    def _render_table(self, request, columns, rows, errors=None):
+    def _render_table(self, request, columns, rows, errors=None,
+                      clear_sql_errors=False):
         # Always 200 so HTMX swaps the partial in (it ignores error statuses).
         return render(request, self._results_template, {
             'errors': errors or [],
             'columns': columns,
             'rows': rows or [],
+            # Running the query settles whether the SQL is valid, so the save
+            # error the card is showing about it no longer applies. Errors
+            # the run does not settle must not be reported there.
+            'clear_sql_errors': clear_sql_errors,
         })

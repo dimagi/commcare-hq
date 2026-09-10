@@ -173,9 +173,13 @@
           >
 {{ form.sql.value|default:"" }}</textarea
           >
-          {% for error in form.sql.errors %}
-            <div class="alert alert-danger mt-2">{{ error }}</div>
-          {% endfor %}
+          {# Only errors about the SQL itself: a successful test clears them, #}
+          {# so anything still true of unrun SQL belongs somewhere else.      #}
+          <div id="sql-errors">
+            {% for error in form.sql.errors %}
+              <div class="alert alert-danger mt-2">{{ error }}</div>
+            {% endfor %}
+          </div>
         </div>
       </div>
     {% else %}

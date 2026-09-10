@@ -9,6 +9,10 @@
     </ul>
   </div>
 {% else %}
+  {% if clear_sql_errors %}
+    {# The query ran, so whatever the SQL card said about it is stale #}
+    <div id="sql-errors" hx-swap-oob="innerHTML"></div>
+  {% endif %}
   {% if rows %}
     <div class="table-responsive">
       <table class="table table-striped">
