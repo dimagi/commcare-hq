@@ -175,11 +175,6 @@
         ></p>
       </div>
     </div>
-    <input
-      type="hidden"
-      name="invoice_amount"
-      data-bind="value: invoice_amount"
-    />
     <!-- /ko -->
   </fieldset>
 </script>
@@ -189,7 +184,15 @@
   {% trans 'Prepay by Credit Card' %}
   <!-- /ko -->
   <!-- ko if: $root.paymentMethod() === $root.WIRE -->
+  <!-- ko if: $root.domain() -->
+  {% blocktrans %}
+    Generate Prepayment Invoice for
+    <span data-bind="text: $root.domain"></span>
+  {% endblocktrans %}
+  <!-- /ko -->
+  <!-- ko ifnot: $root.domain() -->
   {% trans 'Generate Prepayment Invoice' %}
+  <!-- /ko -->
   <!-- /ko -->
 </script>
 
@@ -240,6 +243,7 @@
                    }"
       >
         {% csrf_token %}
+        <input type="hidden" name="domain" data-bind="value: domain" />
         <div class="modal-body">
           <div
             data-bind="template: {
