@@ -16,6 +16,7 @@ from corehq.apps.fixtures.upload.const import LOOKUP_TABLE_ROW_BATCH_SIZE
 _ITEM_LIST_REFERENCE = re.compile(
     rf"item-list:(?P<tag>[\w.-]{{1,{LOOKUP_TABLE_TAG_MAX_LENGTH}}})(?![\w.-])"
 )
+_MAX_TAG_SUFFIX = 99
 
 
 @dataclass(frozen=True)
@@ -114,8 +115,7 @@ def _copy_lookup_table(source_table, destination_domain):
 
 
 def _create_lookup_table(source_table, destination_domain):
-    suffix = 0
-    while True:
+    for suffix in range(_MAX_TAG_SUFFIX + 1):
         destination_tag = _destination_tag(source_table.tag, suffix)
         try:
             with transaction.atomic():
@@ -131,7 +131,10 @@ def _create_lookup_table(source_table, destination_domain):
         except IntegrityError:
             if not LookupTable.objects.domain_tag_exists(destination_domain, destination_tag):
                 raise
-            suffix += 1
+    raise RuntimeError(
+        f"Could not find unused lookup table tag for '{source_table.tag}' "
+        f"in '{destination_domain}' after {_MAX_TAG_SUFFIX} suffixes"
+    )
 
 
 def _destination_tag(source_tag, suffix):
