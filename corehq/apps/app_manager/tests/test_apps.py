@@ -32,6 +32,7 @@ from corehq.apps.app_manager.views.apps import load_app_from_slug
 from corehq.apps.app_manager.views.utils import update_linked_app
 from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.linked_domain.applications import link_app
 from corehq.apps.userreports.tests.utils import get_sample_report_config
 from corehq.apps.app_manager.views.releases import make_app_build
@@ -195,6 +196,30 @@ class AppManagerTest(TestCase, TestXmlMixin):
         imported_app = import_app_from_id(self.app.id, self.domain)
         self._assert_imported_app_matches_source(imported_app)
         self.assertEqual(imported_app.family_id, self.app.id)
+
+    @patch_default_builds
+    def test_import_app_from_id_copies_lookup_tables(self):
+        self._add_country_lookup_table_reference()
+
+        imported_app = import_app_from_id(self.app.id, self.domain)
+
+        assert imported_app.get_module(0).fixture_select.fixture_type == "country-1"
+        assert "item-list:country-1" in imported_app.get_module(0).forms[0].source
+        assert LookupTable.objects.filter(domain=self.domain, tag="country-1").exists()
+
+    def _add_country_lookup_table_reference(self):
+        table = LookupTable.objects.create(domain=self.domain, tag="country")
+        LookupTableRow.objects.create(
+            domain=self.domain,
+            table=table,
+            fields={},
+            item_attributes={},
+            sort_key=0,
+        )
+        module = self.app.get_module(0)
+        module.fixture_select.fixture_type = "country"
+        module.forms[0].source = self.get_xml("form_with_fixtures").decode("utf-8")
+        self.app.save()
 
     @patch_default_builds
     @patch('corehq.apps.app_manager.models.ReportAppConfig.report')

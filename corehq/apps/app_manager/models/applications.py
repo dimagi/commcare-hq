@@ -88,6 +88,10 @@ from corehq.apps.app_manager.helpers.validators import (
     ApplicationBaseValidator,
     ApplicationValidator,
 )
+from corehq.apps.app_manager.lookup_table_import import (
+    copy_lookup_tables,
+    rewrite_lookup_table_references,
+)
 from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
@@ -1943,7 +1947,11 @@ class LinkedApplication(Application):
 
 def import_app_from_id(app_id, domain, extra_properties=None, request=None):
     source_app = get_app(None, app_id)
-    return _import_app(source_app, domain, extra_properties, request)
+    source_doc = source_app.export_json(dump_json=False)
+
+    lookup_table_result = copy_lookup_tables(source_doc, source_app.domain, domain)
+    rewrite_lookup_table_references(source_doc, lookup_table_result.tag_mapping)
+    return _import_app(source_app, domain, extra_properties, request, source_doc=source_doc)
 
 
 def import_app_from_doc(source_doc, domain, extra_properties=None, request=None):
@@ -1951,8 +1959,9 @@ def import_app_from_doc(source_doc, domain, extra_properties=None, request=None)
     return _import_app(source_app, domain, extra_properties, request)
 
 
-def _import_app(source_app, domain, extra_properties=None, request=None):
-    source_doc = source_app.export_json(dump_json=False)
+def _import_app(source_app, domain, extra_properties=None, request=None, source_doc=None):
+    if source_doc is None:
+        source_doc = source_app.export_json(dump_json=False)
 
     attachments = _get_attachments(source_doc)
     source_doc['_attachments'] = {}
