@@ -21,6 +21,7 @@ _ITEM_LIST_REFERENCE = re.compile(
 @dataclass(frozen=True)
 class LookupTableImportResult:
     tag_mapping: dict
+    created_table_ids: tuple
     missing_tags: tuple
 
 
@@ -33,13 +34,16 @@ def copy_lookup_tables(source_app_doc, source_domain, destination_domain):
     }
     missing_tags = referenced_tags - source_tables.keys()
     tag_mapping = {}
+    created_table_ids = []
     for source_tag in sorted(source_tables):
         with transaction.atomic():
             copied_table = _copy_lookup_table(source_tables[source_tag], destination_domain)
         tag_mapping[source_tag] = copied_table.tag
+        created_table_ids.append(copied_table.id)
 
     return LookupTableImportResult(
         tag_mapping=tag_mapping,
+        created_table_ids=tuple(created_table_ids),
         missing_tags=tuple(sorted(missing_tags)),
     )
 
@@ -48,6 +52,10 @@ def rewrite_lookup_table_references(app_doc, tag_mapping):
     """Update structured and string lookup-table references in ``app_doc`` in place."""
     _rewrite_fixture_type_fields(app_doc, tag_mapping)
     _rewrite_string_values(app_doc, tag_mapping)
+
+
+def delete_copied_lookup_tables(destination_domain, table_ids):
+    LookupTable.objects.filter(domain=destination_domain, id__in=table_ids).delete()
 
 
 def _get_referenced_lookup_table_tags(value):

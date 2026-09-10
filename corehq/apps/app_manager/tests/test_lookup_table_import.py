@@ -4,6 +4,7 @@ from corehq.apps.app_manager.lookup_table_import import (
     _destination_tag,
     _get_referenced_lookup_table_tags,
     copy_lookup_tables,
+    delete_copied_lookup_tables,
     rewrite_lookup_table_references,
 )
 from corehq.apps.fixtures.constants import LOOKUP_TABLE_TAG_MAX_LENGTH
@@ -116,3 +117,16 @@ class TestCopyLookupTables(TestCase):
         assert result.tag_mapping == {}
         assert result.missing_tags == ("missing",)
         assert not LookupTable.objects.filter(domain=self.destination_domain).exists()
+
+    def test_cleanup_only_deletes_tables_created_by_import(self):
+        existing = LookupTable.objects.create(domain=self.destination_domain, tag="existing")
+        result = copy_lookup_tables(
+            {"fixture_type": "fruit"},
+            self.source_domain,
+            self.destination_domain,
+        )
+
+        delete_copied_lookup_tables(self.destination_domain, result.created_table_ids)
+
+        assert LookupTable.objects.filter(id=existing.id).exists()
+        assert not LookupTable.objects.filter(id__in=result.created_table_ids).exists()

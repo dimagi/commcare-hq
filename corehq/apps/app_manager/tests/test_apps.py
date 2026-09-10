@@ -207,6 +207,15 @@ class AppManagerTest(TestCase, TestXmlMixin):
         assert "item-list:country-1" in imported_app.get_module(0).forms[0].source
         assert LookupTable.objects.filter(domain=self.domain, tag="country-1").exists()
 
+    @patch("corehq.apps.app_manager.models.applications._import_app", side_effect=RuntimeError)
+    def test_import_app_from_id_removes_lookup_tables_on_failure(self, _import_app):
+        self._add_country_lookup_table_reference()
+
+        with self.assertRaises(RuntimeError):
+            import_app_from_id(self.app.id, self.domain)
+
+        assert not LookupTable.objects.filter(domain=self.domain, tag="country-1").exists()
+
     def _add_country_lookup_table_reference(self):
         table = LookupTable.objects.create(domain=self.domain, tag="country")
         LookupTableRow.objects.create(

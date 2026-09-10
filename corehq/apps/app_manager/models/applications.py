@@ -90,6 +90,7 @@ from corehq.apps.app_manager.helpers.validators import (
 )
 from corehq.apps.app_manager.lookup_table_import import (
     copy_lookup_tables,
+    delete_copied_lookup_tables,
     rewrite_lookup_table_references,
 )
 from corehq.apps.app_manager.suite_xml.generator import (
@@ -1951,7 +1952,11 @@ def import_app_from_id(app_id, domain, extra_properties=None, request=None):
 
     lookup_table_result = copy_lookup_tables(source_doc, source_app.domain, domain)
     rewrite_lookup_table_references(source_doc, lookup_table_result.tag_mapping)
-    return _import_app(source_app, domain, extra_properties, request, source_doc=source_doc)
+    try:
+        return _import_app(source_app, domain, extra_properties, request, source_doc=source_doc)
+    except Exception:
+        delete_copied_lookup_tables(domain, lookup_table_result.created_table_ids)
+        raise
 
 
 def import_app_from_doc(source_doc, domain, extra_properties=None, request=None):
