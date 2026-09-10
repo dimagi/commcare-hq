@@ -151,9 +151,13 @@
           name="parameters"
           :value="JSON.stringify(parameters)"
         />
-        {% for error in form.parameters.errors %}
-          <div class="alert alert-danger mt-2">{{ error }}</div>
-        {% endfor %}
+        {# Testing reports into these too, so a card always shows the #}
+        {# current verdict on what it holds, whichever button was used. #}
+        <div id="parameter-errors">
+          {% for error in form.parameters.errors %}
+            <div class="alert alert-danger mt-2">{{ error }}</div>
+          {% endfor %}
+        </div>
       </div>
     </div>
 
@@ -173,8 +177,6 @@
           >
 {{ form.sql.value|default:"" }}</textarea
           >
-          {# Only errors about the SQL itself: a successful test clears them, #}
-          {# so anything still true of unrun SQL belongs somewhere else.      #}
           <div id="sql-errors">
             {% for error in form.sql.errors %}
               <div class="alert alert-danger mt-2">{{ error }}</div>
@@ -214,6 +216,11 @@
           </div>
 
           {% include "case_search/partials/query_builder.html" %}
+          <div id="query-errors">
+            {% for error in form.query.errors %}
+              <div class="alert alert-danger mt-2">{{ error }}</div>
+            {% endfor %}
+          </div>
         </div>
       </div>
     {% endif %}
