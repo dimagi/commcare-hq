@@ -558,3 +558,27 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
             'parameters': 'not json',
         })
         assert 'Invalid parameters JSON' in response.content.decode()
+
+    def test_a_successful_sql_run_clears_the_save_error(self):
+        # The SQL card may still be showing why the last save failed. Running
+        # the query settles that, so the card is emptied out of band.
+        with self._project_db_table():
+            self._add_pets()
+            response = self._post_sql('SELECT case_id FROM my_case_type')
+        content = response.content.decode()
+        assert '<div id="sql-errors" hx-swap-oob="innerHTML">' in content
+
+    def test_a_failed_sql_run_leaves_the_save_error_alone(self):
+        with self._project_db_table():
+            response = self._post_sql('DELETE FROM my_case_type')
+        assert 'hx-swap-oob' not in response.content.decode()
+
+    def test_the_query_builder_does_not_clear_the_sql_card(self):
+        with patch('corehq.apps.case_search.endpoint_views'
+                   '.get_primary_case_search_endpoint_results',
+                   return_value=[]):
+            response = self.client.post(self._test_url(), {
+                'case_type': 'my_case_type',
+                'query': json.dumps(EMPTY_QUERY),
+            })
+        assert 'hx-swap-oob' not in response.content.decode()
