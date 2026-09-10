@@ -3,6 +3,7 @@ from unittest.mock import patch
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.app_manager import lookup_table_import
+from corehq.apps.app_manager.const import CASE_LIST_FILTER_LOCATIONS_FIXTURE
 from corehq.apps.app_manager.lookup_table_import import (
     _destination_tag,
     _get_referenced_lookup_table_tags,
@@ -29,6 +30,11 @@ class TestLookupTableReferenceHandling(SimpleTestCase):
         }
 
         assert _get_referenced_lookup_table_tags(app_doc) == {"district", "província"}
+
+    def test_ignores_builtin_locations_fixture(self):
+        app_doc = {"fixture_select": {"fixture_type": CASE_LIST_FILTER_LOCATIONS_FIXTURE}}
+
+        assert _get_referenced_lookup_table_tags(app_doc) == set()
 
     def test_rewrites_exact_references_and_fixture_paths(self):
         app_doc = {

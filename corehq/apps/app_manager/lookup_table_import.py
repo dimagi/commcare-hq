@@ -8,6 +8,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 from django.db import IntegrityError, transaction
 
+from corehq.apps.app_manager.const import CASE_LIST_FILTER_LOCATIONS_FIXTURE
 from corehq.apps.fixtures.constants import LOOKUP_TABLE_TAG_MAX_LENGTH
 from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.fixtures.upload.const import LOOKUP_TABLE_ROW_BATCH_SIZE
@@ -80,7 +81,7 @@ def _get_referenced_lookup_table_tags(value):
 def _collect_referenced_tags(value, tags):
     if isinstance(value, dict):
         fixture_type = value.get("fixture_type")
-        if isinstance(fixture_type, str):
+        if isinstance(fixture_type, str) and fixture_type != CASE_LIST_FILTER_LOCATIONS_FIXTURE:
             tags.add(fixture_type)
         for child in value.values():
             _collect_referenced_tags(child, tags)
