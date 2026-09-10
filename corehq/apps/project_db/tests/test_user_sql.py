@@ -314,7 +314,7 @@ def test_query_parameters_are_left_unbound():
 
 def _user_sql(sql):
     """A ``UserSQL`` over the test tables, with the domain lookup already done"""
-    user_sql = UserSQL('test-domain', sql)
+    user_sql = UserSQL('test-domain', sql, max_rows=None)
     with patch('corehq.apps.project_db.user_sql.get_domain_tables', return_value=TABLES):
         user_sql.query  # a cached_property, so the tables are resolved just once
     return user_sql
@@ -418,5 +418,13 @@ def test_run_reports_a_database_error():
     with patch('corehq.apps.project_db.user_sql.get_project_db_engine',
                return_value=engine):
         with pytest.raises(UserSQLProgrammingError) as error:
-            user_sql.run({}, max_rows=10)
+            user_sql.run({})
     assert msg in error.value.msg
+
+
+def test_max_rows_applies_limit():
+    user_sql = UserSQL('test-domain', 'SELECT name FROM client', max_rows=5)
+    with patch('corehq.apps.project_db.user_sql.get_domain_tables', return_value=TABLES):
+        actual = _compiled(user_sql.query)
+    expected = _compiled(select([CLIENT.c.name]).limit(_bind(5)))
+    assert actual == expected

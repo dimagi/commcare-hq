@@ -68,13 +68,18 @@ QueryResult = namedtuple('QueryResult', 'columns rows duration')
 
 
 class UserSQL:
-    def __init__(self, domain, raw_sql):
+    def __init__(self, domain, raw_sql, max_rows=100):
+        """Set max_rows to None to prevent a limit from being applied"""
         self.domain = domain
         self.raw_sql = raw_sql
+        self.max_rows = max_rows
 
     @cached_property
     def query(self):
-        return translate(self.raw_sql, get_domain_tables(self.domain))
+        q = translate(self.raw_sql, get_domain_tables(self.domain))
+        if self.max_rows is not None:
+            q = q.limit(_bind(self.max_rows))
+        return q
 
     @cached_property
     def _compiled(self):
@@ -97,7 +102,7 @@ class UserSQL:
         """Return the parameters a translated query leaves for the caller to supply"""
         return [name for name, bind in self._compiled.binds.items() if bind.required]
 
-    def run(self, parameter_values, max_rows):
+    def run(self, parameter_values):
         params = self._clean_parameters(parameter_values)
         with get_project_db_engine().connect() as conn:
             start = time.perf_counter()
@@ -105,7 +110,7 @@ class UserSQL:
                 result = conn.execute(self.query, params)
             except ProgrammingError as e:
                 raise UserSQLProgrammingError(str(e.orig)) from e
-            rows = result.fetchmany(max_rows)
+            rows = result.fetchall()
             return QueryResult(
                 columns=list(result.keys()),
                 rows=rows,
