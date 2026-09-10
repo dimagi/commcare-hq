@@ -32,7 +32,12 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import not_found
 from corehq.apps.project_db.table_ddl import get_domain_tables
-from corehq.apps.project_db.user_sql import UnsupportedSQL, translate
+from corehq.apps.project_db.user_sql import (
+    UnsupportedSQL,
+    UserSQL,
+    UserSQLValidationError,
+    translate,
+)
 from corehq.apps.settings.views import BaseProjectDataView
 
 from dimagi.utils.logging import notify_exception
@@ -394,8 +399,11 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
 
 @method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
 class CaseSearchEndpointTestView(BaseDomainView):
-    """Runs a query builder spec against the project's cases and returns an
-    HTMX partial with the matching results (or validation errors).
+    """Runs an unsaved endpoint against the project and returns an HTMX
+    partial with the results (or validation errors).
+
+    One branch per endpoint type, since a query builder spec and a SQL
+    statement share neither their inputs nor their output.
 
     Domain-scoped rather than endpoint-scoped so it works for unsaved
     queries on the new-endpoint page too.
@@ -404,15 +412,18 @@ class CaseSearchEndpointTestView(BaseDomainView):
     urlname = 'case_search_endpoint_test'
     http_method_names = ['post']
     _results_template = 'case_search/partials/test_results.html'
+    _row_limit = 20
 
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
 
     def post(self, request, *args, **kwargs):
-        case_type = request.POST.get('case_type', '')
+        # The parameter spec and the values to test it with belong to the
+        # endpoint rather than to either way of querying, so both kinds are
+        # held to them.
         try:
-            parameters = json.loads(request.POST.get('parameters', '[]'))
+            spec = json.loads(request.POST.get('parameters', '[]'))
         except (json.JSONDecodeError, ValueError):
             return self._render_results(request, errors=['Invalid parameters JSON.'])
 
@@ -421,14 +432,21 @@ class CaseSearchEndpointTestView(BaseDomainView):
         except (json.JSONDecodeError, ValueError):
             return self._render_results(request, errors=['Invalid test parameter values.'])
 
+        parameters, errors = parse_parameter_spec(spec)
+        if errors:
+            return self._render_results(request, errors=errors)
+
+        if request.POST.get('target_type') == CaseSearchEndpoint.TargetType.PROJECT_DB:
+            return self._run_sql(request, test_param_values)
+        return self._run_query(request, parameters, test_param_values)
+
+    def _run_query(self, request, parameters, test_param_values):
+        """Run the query builder's spec and render the cases it matched."""
+        case_type = request.POST.get('case_type', '')
         try:
             query = json.loads(request.POST.get('query') or '{}')
         except (json.JSONDecodeError, ValueError):
             return self._render_results(request, errors=['Invalid query JSON.'])
-
-        parameters, errors = parse_parameter_spec(parameters)
-        if errors:
-            return self._render_results(request, errors=errors)
 
         capability = get_capability(domain=self.domain)
         if case_type not in capability['case_types']:
@@ -438,19 +456,44 @@ class CaseSearchEndpointTestView(BaseDomainView):
         if errors:
             return self._render_results(request, errors=errors)
         try:
-            results = self._run_query(case_type, query_root, test_param_values)
+            criteria = criteria_dict_to_criteria_list(test_param_values)
+            results = get_primary_case_search_endpoint_results(
+                QueryHelper(self.domain), [case_type], criteria, query_root,
+                self._row_limit)
         except Exception as e:
             notify_exception(request, str(e))
             return self._render_results(request, errors=['Query Execution Failed'])
         return self._render_results(request, fields=fields, results=results)
 
-    def _run_query(self, case_type, query, test_param_values):
-        helper = QueryHelper(self.domain)
-        criteria = criteria_dict_to_criteria_list(test_param_values)
-        return get_primary_case_search_endpoint_results(helper, [case_type], criteria, query, 20)
+    def _run_sql(self, request, test_param_values):
+        """Run the SQL card's contents and render the rows it selected.
+
+        Every selected column is shown. Unlike case search, which keeps only
+        what maps onto a case, the point here is seeing what the query itself
+        returns.
+
+        The declared parameters are not consulted: values bind to the
+        placeholders the SQL actually has, which is what the endpoint does
+        when it runs.
+        """
+        user_sql = UserSQL(self.domain, request.POST.get('sql', ''))
+        try:
+            # Reading `parameters` is what translates the SQL, so an
+            # unsupported query surfaces here. A blank value binds as NULL,
+            # the rule get_project_db_results applies when the endpoint runs.
+            values = {name: test_param_values.get(name) or None
+                      for name in user_sql.parameters}
+            result = user_sql.run(values, max_rows=self._row_limit)
+        except UserSQLValidationError as error:
+            return self._render_results(request, errors=[error.msg])
+        except (ImproperlyConfigured, SQLAlchemyError) as error:
+            notify_exception(
+                request, f'project_db unavailable for {self.domain}: {error}')
+            return self._render_results(
+                request, errors=['The project database is unavailable.'])
+        return self._render_table(request, result.columns, result.rows)
 
     def _render_results(self, request, *, errors=None, fields=None, results=None):
-        # Always 200 so HTMX swaps the partial in (it ignores error statuses).
         field_names = (fields or {}).keys()
         if results:
             rows = [
@@ -460,8 +503,14 @@ class CaseSearchEndpointTestView(BaseDomainView):
             ]
         else:
             rows = []
+        return self._render_table(
+            request, ['Case Name'] + [k for k in field_names], rows,
+            errors=errors)
+
+    def _render_table(self, request, columns, rows, errors=None):
+        # Always 200 so HTMX swaps the partial in (it ignores error statuses).
         return render(request, self._results_template, {
             'errors': errors or [],
-            'columns': (['Case Name'] + [k for k in field_names]),
+            'columns': columns,
             'rows': rows or [],
         })
