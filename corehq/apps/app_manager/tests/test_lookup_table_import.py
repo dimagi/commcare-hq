@@ -1,0 +1,99 @@
+from django.test import SimpleTestCase, TestCase
+
+from corehq.apps.app_manager.lookup_table_import import (
+    _get_referenced_lookup_table_tags,
+    copy_lookup_tables,
+    rewrite_lookup_table_references,
+)
+from corehq.apps.fixtures.models import (
+    Field,
+    LookupTable,
+    LookupTableRow,
+    LookupTableRowOwner,
+    OwnerType,
+    TypeField,
+)
+
+
+class TestLookupTableReferenceHandling(SimpleTestCase):
+    def test_finds_structured_xml_and_unicode_references(self):
+        app_doc = {
+            "modules": [{"fixture_select": {"fixture_type": "district"}}],
+            "forms": ["instance('item-list:província')/província_list/província"],
+        }
+
+        assert _get_referenced_lookup_table_tags(app_doc) == {"district", "província"}
+
+    def test_rewrites_exact_references_and_fixture_paths(self):
+        app_doc = {
+            "fixture_type": "fruit",
+            "form": (
+                "instance('item-list:fruit')/fruit_list/fruit "
+                "instance('item-list:fruit-basket')/fruit-basket_list/fruit-basket"
+            ),
+        }
+
+        rewrite_lookup_table_references(app_doc, {"fruit": "fruit-1"})
+
+        assert app_doc["fixture_type"] == "fruit-1"
+        assert "item-list:fruit-1')/fruit-1_list/fruit-1" in app_doc["form"]
+        assert "item-list:fruit-basket')/fruit-basket_list/fruit-basket" in app_doc["form"]
+
+class TestCopyLookupTables(TestCase):
+    source_domain = "lookup-table-import-source"
+    destination_domain = "lookup-table-import-destination"
+
+    def setUp(self):
+        self.source_table = LookupTable.objects.create(
+            domain=self.source_domain,
+            tag="fruit",
+            fields=[TypeField("name", ["lang"], True)],
+            item_attributes=["color"],
+            description="Fruit table",
+            is_global=False,
+            is_synced=True,
+        )
+        self.source_row = LookupTableRow.objects.create(
+            domain=self.source_domain,
+            table=self.source_table,
+            fields={"name": [Field("Apple", {"lang": "en"})]},
+            item_attributes={"color": "red"},
+            sort_key=0,
+        )
+        LookupTableRowOwner.objects.create(
+            domain=self.source_domain,
+            row=self.source_row,
+            owner_type=OwnerType.User,
+            owner_id="user-id",
+        )
+
+    def test_copies_schema_rows_without_ownership(self):
+        result = copy_lookup_tables(
+            {"source": "instance('item-list:fruit')/fruit_list/fruit"},
+            self.source_domain,
+            self.destination_domain,
+        )
+
+        copied_table = LookupTable.objects.get(domain=self.destination_domain, tag="fruit")
+        copied_row = LookupTableRow.objects.get(table=copied_table)
+        assert copied_table.fields == self.source_table.fields
+        assert copied_table.item_attributes == ["color"]
+        assert copied_table.description == "Fruit table"
+        assert copied_table.is_global
+        assert not copied_table.is_synced
+        assert copied_row.fields == self.source_row.fields
+        assert copied_row.item_attributes == {"color": "red"}
+        assert not LookupTableRowOwner.objects.filter(row=copied_row).exists()
+        assert result.tag_mapping == {"fruit": "fruit"}
+        assert result.missing_tags == ()
+
+    def test_reports_missing_and_does_not_copy_unreferenced_tables(self):
+        result = copy_lookup_tables(
+            {"source": "instance('item-list:missing')"},
+            self.source_domain,
+            self.destination_domain,
+        )
+
+        assert result.tag_mapping == {}
+        assert result.missing_tags == ("missing",)
+        assert not LookupTable.objects.filter(domain=self.destination_domain).exists()
