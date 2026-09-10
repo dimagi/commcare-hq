@@ -192,7 +192,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
     @patch_default_builds
     def testImportApp_from_id(self):
         self.assertTrue(self.app.blobs)
-        imported_app = import_app_from_id(self.app.id)
+        imported_app = import_app_from_id(self.app.id, self.domain)
         self._assert_imported_app_matches_source(imported_app)
         self.assertEqual(imported_app.family_id, self.app.id)
 
