@@ -1953,10 +1953,29 @@ def import_app_from_id(app_id, domain, extra_properties=None, request=None):
     lookup_table_result = copy_lookup_tables(source_doc, source_app.domain, domain)
     rewrite_lookup_table_references(source_doc, lookup_table_result.tag_mapping)
     try:
-        return _import_app(source_app, domain, extra_properties, request, source_doc=source_doc)
+        app = _import_app(source_app, domain, extra_properties, request, source_doc=source_doc)
     except Exception:
         delete_copied_lookup_tables(domain, lookup_table_result.created_table_ids)
         raise
+    _notify_lookup_table_import(request, lookup_table_result)
+    return app
+
+
+def _notify_lookup_table_import(request, result):
+    if not request:
+        return
+    if result.tag_mapping:
+        messages.success(request, _(
+            "Application successfully copied. The following lookup tables were also copied: {}."
+        ).format(
+            ", ".join(sorted(result.tag_mapping.values()))
+        ))
+    else:
+        messages.success(request, _("Application successfully copied."))
+    if result.missing_tags:
+        messages.warning(request, _(
+            "Could not copy lookup tables missing from the source project: {}."
+        ).format(", ".join(result.missing_tags)))
 
 
 def import_app_from_doc(source_doc, domain, extra_properties=None, request=None):
