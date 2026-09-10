@@ -1,0 +1,381 @@
+# Messaging Events API (`docs/api/messaging-events.rst`). Served by
+# `messaging_events` (`corehq/apps/api/resources/messaging_event/view.py:29-41`),
+# a plain Django view -- like the Case v2 API, not a tastypie resource. Its own
+# dispatch is the whole story on allowed methods:
+#
+#   GET  + event_id     -> _get_individual  (single event)
+#   GET  (no event_id)  -> _get_list        (paginated, filtered list)
+#   anything else       -> 405 `{"error": "Request method not allowed"}`
+#
+# urlconf: `corehq/apps/api/urls.py:138-141` (v1; there is also a v0.5 alias at
+# :134-137 with an identical view, not documented separately here since
+# `messaging-events.rst` only documents v1).
+#
+# **This is the only cursor-paginated resource in the spec** -- see
+# `MessagingEventList` in `../components/schemas/messaging-event.yaml`, which
+# references `pagination.yaml#/CursorMeta` rather than `PaginationMeta`.
+List:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+  get:
+    operationId: listMessagingEvents
+    summary: List messaging events
+    description: >-
+      Returns a cursor-paginated page of messaging events (technically
+      `MessagingSubEvent` rows -- see the schema description) for the domain.
+      Requires the Edit Data permission and API access
+      (`@require_can_edit_data`, `@requires_privilege_with_fallback`,
+      `view.py:26-27`).
+
+
+      **Pagination is cursor-based, not offset-based.** There is no `offset`
+      parameter; follow `meta.next` until it is null. Results are always ordered
+      by `date_last_activity` then `id` (`sort_query`,
+      `corehq/apps/api/resources/messaging_event/utils.py:27-32`) unless
+      `order_by` requests descending order.
+
+
+      **Filters are combined with AND.** Every parameter below except `limit`
+      and `cursor` narrows the result set further when combined with another.
+    tags: [SMS]
+    parameters:
+      - $ref: "../components/parameters.yaml#/Limit"
+      - name: cursor
+        in: query
+        required: false
+        description: >-
+          Opaque pagination token. **Always copy this verbatim from a previous
+          response's `meta.next` URL -- never construct or edit it yourself.**
+          When present, every other query parameter on the request is ignored:
+          the cursor itself re-encodes the original filters plus the id of the
+          last object already seen (`get_request_params`,
+          `corehq/apps/api/resources/messaging_event/utils.py:55-63`, and
+          `_get_cursor`, `.../pagination.py:49-70`).
+        example: ZGF0ZS5ndGU9MjAyMC0wNS0xN1QyMCUzQTM3JTNBMTEuNzU3OTQwJmxhc3Rfb2JqZWN0X2lkPTEwMjUwOTYw
+        schema:
+          type: string
+      - name: "date.gte"
+        in: query
+        required: false
+        description: >-
+          Only events with `event.date` on or after this moment. Parsed by
+          `parse_str_to_date` (`corehq/apps/api/util.py:96-105`) -- a bare
+          `YYYY-MM-DD` date, or anything `dateutil.parser.parse` accepts,
+          **which includes a `Z` or a `+HH:MM` offset**. The parsed value is
+          applied as a plain Django ORM filter (`django_date_filter`,
+          `corehq/apps/api/util.py:108-129`, via
+          `MessagingSubEvent.objects...filter(**filters)`, `view.py:56,63`);
+          because `settings.USE_TZ = False` (`settings.py:57`),
+          `DateTimeField.get_prep_value`
+          (`django/db/models/fields/__init__.py:1663-1677`) never rewrites an
+          aware value, so an offset is accepted and passed through to Postgres
+          unconverted -- the same mechanism traced for `last_modified.gte` on
+          locations/v2, and the same acceptance as cases/v2's date filters (both
+          reuse this same `parse_str_to_date` helper). Unlike case/v1's
+          `*_start`/`*_end`, an offset here is **not** rejected. An unparsable
+          value raises `InvalidFilterError` (a `BadRequest` subclass,
+          `filters.py:44-48`), returned as the standard `{"error": ...}` 400
+          body. `format: date-time` is deliberately not declared since the
+          bare-date form is not itself an RFC3339 date-time, and response values
+          are naive (see the `MessagingEvent.date` schema description).
+        example: "2020-07-13T06:30:21.109409"
+        schema:
+          type: string
+      - name: "date.gt"
+        in: query
+        required: false
+        description:
+          Only events with `event.date` strictly after this moment. Same parsing
+          as `date.gte`.
+        example: "2020-07-13T06:30:21.109409"
+        schema:
+          type: string
+      - name: "date.lte"
+        in: query
+        required: false
+        description:
+          Only events with `event.date` on or before this moment. Same parsing
+          as `date.gte`.
+        example: "2021-05-01"
+        schema:
+          type: string
+      - name: "date.lt"
+        in: query
+        required: false
+        description:
+          Only events with `event.date` strictly before this moment. Same
+          parsing as `date.gte`.
+        example: "2021-05-01"
+        schema:
+          type: string
+      - name: "date_last_activity.gte"
+        in: query
+        required: false
+        description: >-
+          Only events with `event.date_last_activity` on or after this moment.
+          Same parsing and offset acceptance as `date.gte` (`COMPOUND_FILTERS`,
+          `filters.py:169-172`, applies the identical
+          `_get_date_filter_consumer` machinery to this field). **Not listed in
+          `messaging-events.rst`'s filter table** (`:31-95`), which documents
+          only the `date.*` family -- see the discrepancy file.
+        example: "2020-07-13T06:30:21.109409"
+        schema:
+          type: string
+      - name: "date_last_activity.gt"
+        in: query
+        required: false
+        description: >-
+          Only events with `event.date_last_activity` strictly after this
+          moment. Undocumented in `messaging-events.rst`; see
+          `date_last_activity.gte`.
+        example: "2020-07-13T06:30:21.109409"
+        schema:
+          type: string
+      - name: "date_last_activity.lte"
+        in: query
+        required: false
+        description: >-
+          Only events with `event.date_last_activity` on or before this moment.
+          Undocumented in `messaging-events.rst`; see `date_last_activity.gte`.
+        example: "2021-05-01"
+        schema:
+          type: string
+      - name: "date_last_activity.lt"
+        in: query
+        required: false
+        description: >-
+          Only events with `event.date_last_activity` strictly before this
+          moment. Undocumented in `messaging-events.rst`; see
+          `date_last_activity.gte`.
+        example: "2021-05-01"
+        schema:
+          type: string
+      - name: content_type
+        in: query
+        required: false
+        description: >-
+          Filter on the event's content type, e.g. `sms`, `sms-survey`, `email`,
+          `manual-sms`, `api-sms`, `chat-sms`. Comma-separate several values to
+          OR them; some values additionally expand to related types (e.g.
+          `sms-survey` also matches `ivr-survey`)
+          (`_get_content_type_filter_consumer`, `filters.py:76-91`). **If not
+          one comma-separated value matches a known slug, the request raises an
+          uncaught `TypeError` and returns an unhandled 500, not a 400** --
+          `_make_slug_filter_consumer`'s inner function (`filters.py:100-113`)
+          falls through to an implicit `None` return when nothing matches, and
+          `filter_query` (`.../filters.py:19-22`) does `filters.update(None)`.
+          See the discrepancy file; this is unlike `status`, which validates and
+          raises a proper `BadRequest`.
+        example: sms
+        schema:
+          type: string
+      - name: source
+        in: query
+        required: false
+        description: >-
+          Filter on the event's source, e.g. `broadcast` (also matches
+          `scheduled-broadcast`/`immediate-broadcast`), `scheduled-broadcast`,
+          `immediate-broadcast`, `keyword`, `reminder` (also matches the
+          internal case-rule source), `conditional-alert`
+          (`_get_source_filter_consumer`, `filters.py:61-74`). Comma-separate
+          several values to OR them. Same all-unrecognized-values 500 caveat as
+          `content_type` -- see the discrepancy file.
+        example: broadcast
+        schema:
+          type: string
+      - name: status
+        in: query
+        required: false
+        description: >-
+          Filter on the event's status: `error`, `completed`, `in-progress`, or
+          `not-completed` (unlike the response field, this filter does not
+          accept `unknown`). Applied to the event and, for `error` and
+          `in-progress`, to related messages/XForm sessions too
+          (`_status_filter_consumer`, `filters.py:116-136`, matching
+          `MessagingEventsReport.get_filters`). An unrecognized value raises a
+          proper `BadRequest` -- `'<value>' is not a valid value for the
+          'status' filter` -- returned as the standard 400 body.
+        example: error
+        schema:
+          type: string
+      - name: error_code
+        in: query
+        required: false
+        description: >-
+          Exact match on the event's error code, e.g. `NO_PHONE_NUMBER`,
+          `NO_RECIPIENT`, `NO_MESSAGE`. Not validated against a known list of
+          codes.
+        example: NO_MESSAGE
+        schema:
+          type: string
+      - name: phone_number
+        in: query
+        required: false
+        description: >-
+          Substring match (`__contains`, not exact) against the phone number of
+          any SMS linked to the event (`SIMPLE_FILTERS["phone_number"]`,
+          `filters.py:161-163`). Must be a value `validate_phone_number`
+          (`corehq/apps/sms/util.py`) accepts, or the request fails with a 400.
+        example: "1234567"
+        schema:
+          type: string
+      - name: email_address
+        in: query
+        required: false
+        description: >-
+          Exact match against the recipient email address of any email linked to
+          the event. Must be a value Django's `validate_email` accepts, or the
+          request fails with a 400.
+        example: user@example.com
+        schema:
+          type: string
+      - name: case_id
+        in: query
+        required: false
+        description: Exact match on the event's related case ID.
+        example: 523132e0-a562-4be1-bbc8-a634423c5c0c
+        schema:
+          type: string
+      - name: order_by
+        in: query
+        required: false
+        description: >-
+          Sort order. `date_last_activity` (default, ascending) or
+          `-date_last_activity` (descending) -- the only two accepted values
+          (`get_order_by_field`,
+          `corehq/apps/api/resources/messaging_event/utils.py:35-45`); a note in
+          that function records that sorting by `date` was removed because it
+          would require too large an index. Any other value raises a 400 `"No
+          matching '<field_name>' field for ordering"`. Sorting by
+          `date_last_activity` also determines whether the next cursor's
+          synthetic filter is `date.gte` (ascending) or `date.lte` (descending)
+          (`_get_cursor`, `.../pagination.py:58-61`).
+        example: date_last_activity
+        schema:
+          type: string
+          enum: [date_last_activity, -date_last_activity]
+    responses:
+      "200":
+        description: A cursor-paginated page of messaging events.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/messaging-event.yaml#/MessagingEventList"
+      "400":
+        description: >-
+          An invalid `limit`, an unparsable date filter value, an unrecognized
+          `order_by` or `status` value, or a `phone_number` / `email_address`
+          that fails validation. Every one of these is a
+          `tastypie.exceptions.BadRequest` (or subclass) caught by the view's
+          own `try`/`except` (`view.py:34,40-41`) and rendered as `{"error":
+          ...}`. **Not** raised for an unrecognized `content_type` or `source`
+          value -- see that parameter's description and the discrepancy file.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/error.yaml#/Error"
+      "401":
+        # Traced, not verified against a live server (no reachable Postgres
+        # service in this environment -- see the discrepancy file). Like
+        # case/v2, `api_auth()` (`corehq/apps/domain/decorators.py:444-450`)
+        # dispatches to one of several auth-scheme decorators depending on
+        # the request's `Authorization` header
+        # (`get_auth_decorator_map`/`_login_or_challenge`,
+        # `decorators.py:264-334,463-492`). The digest/basic/api-key/OAuth
+        # challenge decorators issue their own failure responses before
+        # `messaging_events` is ever called -- typically a bare response
+        # carrying a `WWW-Authenticate` challenge header, not the shared
+        # `{"error": ...}` JSON body.
+        description: >-
+          Authentication failed. The response is scheme-dependent and typically
+          has no JSON body (a bare challenge response, e.g. a `WWW-Authenticate`
+          header for digest auth) rather than the `{"error": ...}` shape most
+          other resources in this spec use.
+      "403":
+        # Also traced rather than verified live. Two distinct causes, both
+        # non-JSON:
+        #  - Authenticated but not a member of this domain:
+        #    `_login_or_challenge`'s inner `_inner` returns a bare
+        #    `HttpResponseForbidden()` (`decorators.py:303,329`) -- empty
+        #    body.
+        #  - A domain member who lacks the `edit_data` permission:
+        #    `require_permission_raw` (`corehq/apps/users/decorators.py:44-54`)
+        #    raises an uncaught `django.core.exceptions.PermissionDenied`,
+        #    handled by the project's own registered `handler403 = no_permissions`
+        #    (`urls.py:49`, `corehq/apps/hqwebapp/views.py:361-373`), which
+        #    renders the `403.html` template (via `_no_permissions_message`,
+        #    `views.py:348-357`) inside an `HttpResponseForbidden` -- an HTML
+        #    page, not JSON.
+        description: >-
+          The authenticated user is not a member of this domain, or lacks the
+          Edit Data permission. Either way the body is not the shared `{"error":
+          ...}` shape -- either an empty `HttpResponseForbidden`, or the
+          project's custom HTML 403 page rendered by `handler403`.
+      "429":
+        # Matches case/v2's already-documented finding for the identical
+        # `api_throttle` decorator.
+        description: >-
+          The request was rate limited. The response body is empty; the
+          `Retry-After` header carries the number of seconds to wait.
+        headers:
+          Retry-After:
+            description: Seconds to wait before retrying.
+            schema:
+              type: integer
+Detail:
+  parameters:
+    - $ref: "../components/parameters.yaml#/Domain"
+    - name: event_id
+      in: path
+      required: true
+      description: >-
+        Numeric `MessagingSubEvent` ID. The urlconf pattern is `\d+`
+        (`corehq/apps/api/urls.py:140`), so non-digit values do not resolve to
+        this operation at all.
+      example: "10215869"
+      schema:
+        type: string
+        pattern: '^\d+$'
+  get:
+    operationId: getMessagingEvent
+    summary: Retrieve a single messaging event
+    description: >-
+      Requires the Edit Data permission and API access, same as the list
+      operation. Looks the event up scoped to this domain
+      (`_get_base_query(request.domain).get(id=event_id)`, `view.py:46,62-63`)
+      -- an id that exists but belongs to another domain is reported as not
+      found, the same as one that does not exist at all.
+    tags: [SMS]
+    responses:
+      "200":
+        description: The messaging event.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/messaging-event.yaml#/MessagingEvent"
+      "401":
+        description: >-
+          Authentication failed. Same scheme-dependent, typically non-JSON
+          response as `listMessagingEvents`'s 401 -- see that operation's
+          description for the full trace.
+      "403":
+        description: >-
+          The authenticated user is not a member of this domain, or lacks the
+          Edit Data permission. Same two non-JSON shapes as
+          `listMessagingEvents`'s 403 -- see that operation's description.
+      "404":
+        # `MessagingSubEvent.DoesNotExist` is caught explicitly and turned
+        # into `HttpResponseNotFound()` (view.py:44-48) -- an empty body, not
+        # the shared `{"error": ...}` NotFound shape.
+        description:
+          No event with this id exists in this project space. The response body
+          is empty.
+      "429":
+        description: >-
+          The request was rate limited. The response body is empty; the
+          `Retry-After` header carries the number of seconds to wait.
+        headers:
+          Retry-After:
+            description: Seconds to wait before retrying.
+            schema:
+              type: integer

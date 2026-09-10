@@ -18,6 +18,12 @@ integration.
 Table of contents
 -----------------
 
+The complete machine-readable reference for these APIs is published as an
+`OpenAPI 3.0 specification <../openapi/index.html>`_, browsable as an
+interactive reference. The raw spec is also available at
+`openapi.bundled.yaml <../openapi.bundled.yaml>`_ for codegen tools and
+agents. The pages below remain the narrative documentation.
+
 Data APIs
 ~~~~~~~~~
 
