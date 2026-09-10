@@ -1,6 +1,8 @@
 """Translate user-supplied SQL into SQLAlchemy Core expressions.
 
-Only a strict subset of SQL is supported; anything outside it errors
+Only a strict subset of SQL is supported; anything outside it errors.
+See describe.py for a text description of this subset, which should be
+kept up-to-date.
 """
 import operator
 import re
