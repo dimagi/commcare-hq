@@ -32,6 +32,13 @@ FULL_PERMISSIONS = {'edit_data': True, 'access_api': True}
 ARCHIVE_PAYLOAD = {'action': 'archive', 'form_ids': ['a']}
 
 
+def assert_forbidden(response):
+    """Every rejection uses the same JSON format, not an HTML error page"""
+    assert response.status_code == 403
+    assert response['Content-Type'] == 'application/json'
+    assert 'error' in response.json()
+
+
 def test_create_url_is_not_shadowed_by_the_form_resource():
     match = resolve(f'/a/{DOMAIN}/api/form/v1/bulk-action/')
     assert match.url_name == 'bulk_form_action'
@@ -143,27 +150,27 @@ class TestBulkFormActionApi(BulkFormActionApiTestBase):
 
     def test_requires_edit_data(self):
         with self.logged_in({'edit_data': False, 'access_api': True}):
-            assert self.post().status_code == 403
+            assert_forbidden(self.post())
             assert not BulkAsyncJob.objects.exists()
 
             job = self._job()
-            assert self.client.get(self.status_url(job.id.hex)).status_code == 403
+            assert_forbidden(self.client.get(self.status_url(job.id.hex)))
 
     def test_requires_access_api(self):
         with self.logged_in({'edit_data': True, 'access_api': False}):
-            assert self.post().status_code == 403
+            assert_forbidden(self.post())
             assert not BulkAsyncJob.objects.exists()
 
             job = self._job()
-            assert self.client.get(self.status_url(job.id.hex)).status_code == 403
+            assert_forbidden(self.client.get(self.status_url(job.id.hex)))
 
     def test_rejects_location_restricted_user(self):
         with self.logged_in(FULL_PERMISSIONS | {'access_all_locations': False}):
-            assert self.post().status_code == 403
+            assert_forbidden(self.post())
             assert not BulkAsyncJob.objects.exists()
 
             job = self._job()
-            assert self.client.get(self.status_url(job.id.hex)).status_code == 403
+            assert_forbidden(self.client.get(self.status_url(job.id.hex)))
 
     @flag_disabled('BULK_FORM_ACTIONS_API')
     def test_requires_feature_flag(self):
@@ -221,13 +228,8 @@ class TestBulkFormActionApiWithoutPrivileges(BulkFormActionApiTestBase):
 
     def test_requires_privileges(self):
         with self.logged_in():
-            response = self.post()
-            assert response.status_code == 403
-            assert response['Content-Type'] == 'application/json'
-            assert 'error' in response.json()
+            assert_forbidden(self.post())
             assert not BulkAsyncJob.objects.exists()
 
             job = self._job()
-            status_response = self.client.get(self.status_url(job.id.hex))
-            assert status_response.status_code == 403
-            assert status_response['Content-Type'] == 'application/json'
+            assert_forbidden(self.client.get(self.status_url(job.id.hex)))
