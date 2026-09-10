@@ -1039,6 +1039,8 @@ scheduling_partitioned
  0009_rename_alertscheduleinstance_active_next_event_due_scheduling__active_c8422f_idx_and_more
 sessions
  0001_initial
+short_links
+ 0001_initial
 sites
  0001_initial
  0002_alter_domain_unique
