@@ -4,7 +4,7 @@ import re
 from copy import deepcopy
 from dataclasses import dataclass
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 
 from dimagi.utils.chunked import chunked
 
@@ -92,15 +92,31 @@ def _copy_lookup_table(source_table, destination_domain):
 
 
 def _create_lookup_table(source_table, destination_domain):
-    return LookupTable.objects.create(
-        domain=destination_domain,
-        tag=source_table.tag,
-        fields=deepcopy(source_table.fields),
-        item_attributes=deepcopy(source_table.item_attributes),
-        description=source_table.description,
-        is_global=True,
-        is_synced=False,
-    )
+    suffix = 0
+    while True:
+        destination_tag = _destination_tag(source_table.tag, suffix)
+        try:
+            with transaction.atomic():
+                return LookupTable.objects.create(
+                    domain=destination_domain,
+                    tag=destination_tag,
+                    fields=deepcopy(source_table.fields),
+                    item_attributes=deepcopy(source_table.item_attributes),
+                    description=source_table.description,
+                    is_global=True,
+                    is_synced=False,
+                )
+        except IntegrityError:
+            if not LookupTable.objects.domain_tag_exists(destination_domain, destination_tag):
+                raise
+            suffix += 1
+
+
+def _destination_tag(source_tag, suffix):
+    if suffix == 0:
+        return source_tag
+    suffix_text = f"-{suffix}"
+    return f"{source_tag[:LOOKUP_TABLE_TAG_MAX_LENGTH - len(suffix_text)]}{suffix_text}"
 
 
 def _rewrite_fixture_type_fields(value, tag_mapping):

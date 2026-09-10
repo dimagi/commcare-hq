@@ -1,10 +1,12 @@
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.app_manager.lookup_table_import import (
+    _destination_tag,
     _get_referenced_lookup_table_tags,
     copy_lookup_tables,
     rewrite_lookup_table_references,
 )
+from corehq.apps.fixtures.constants import LOOKUP_TABLE_TAG_MAX_LENGTH
 from corehq.apps.fixtures.models import (
     Field,
     LookupTable,
@@ -38,6 +40,11 @@ class TestLookupTableReferenceHandling(SimpleTestCase):
         assert app_doc["fixture_type"] == "fruit-1"
         assert "item-list:fruit-1')/fruit-1_list/fruit-1" in app_doc["form"]
         assert "item-list:fruit-basket')/fruit-basket_list/fruit-basket" in app_doc["form"]
+
+    def test_destination_tag_stays_within_limit(self):
+        source_tag = "a" * LOOKUP_TABLE_TAG_MAX_LENGTH
+
+        assert _destination_tag(source_tag, 12) == f"{'a' * 28}-12"
 
 class TestCopyLookupTables(TestCase):
     source_domain = "lookup-table-import-source"
@@ -86,6 +93,18 @@ class TestCopyLookupTables(TestCase):
         assert not LookupTableRowOwner.objects.filter(row=copied_row).exists()
         assert result.tag_mapping == {"fruit": "fruit"}
         assert result.missing_tags == ()
+
+    def test_uses_next_available_suffix(self):
+        LookupTable.objects.create(domain=self.destination_domain, tag="fruit")
+        LookupTable.objects.create(domain=self.destination_domain, tag="fruit-1")
+
+        result = copy_lookup_tables(
+            {"fixture_type": "fruit"},
+            self.source_domain,
+            self.destination_domain,
+        )
+
+        assert result.tag_mapping == {"fruit": "fruit-2"}
 
     def test_reports_missing_and_does_not_copy_unreferenced_tables(self):
         result = copy_lookup_tables(
