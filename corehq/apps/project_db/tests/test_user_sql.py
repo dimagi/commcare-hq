@@ -17,7 +17,6 @@ from sqlalchemy import (
     or_,
     select,
     table,
-    text,
     union,
     union_all,
 )
@@ -25,10 +24,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import ProgrammingError
 from unmagic import fixture, use
 
-from corehq.apps.project_db.table_ddl import (
-    DomainSchema,
-    get_project_db_engine,
-)
+from corehq.apps.project_db.populate import coerce_to_gps
 from corehq.apps.project_db.user_sql import (
     MAX_TREE_DEPTH,
     BadParameters,
@@ -452,16 +448,16 @@ def test_allows_nesting_up_to_the_limit():
     assert translate(sql, TABLES) is not None
 
 
-@use('db', project_db_table('test-within-distance', 'patient', {'location': 'gps'}))
-def test_within_distance_runs_against_the_database():
-    schema = DomainSchema('test-within-distance')._quoted_name
-    with get_project_db_engine().begin() as conn:
-        conn.execute(text(f"""
-            INSERT INTO {schema}.patient (case_id, owner_id, gps_prop__location)
-            VALUES ('far',  'o', ll_to_earth(44.1710, -71.1097)),
-                   ('near', 'o', ll_to_earth(42.3736, -71.1097)),
-                   ('null', 'o', NULL)
-        """))
+@use('db', project_db_table('test-within-distance', 'patient', {'location': 'gps'}, (
+    ['case_id', 'owner_id', 'gps_prop__location'], [
+        ['far', 'o', coerce_to_gps('44.1710 -71.1097')],
+        ['near', 'o', coerce_to_gps('42.3736 -71.1097')],
+        # 5.5km away, but inside the 5km bounding box, which is square.
+        ['corner', 'o', coerce_to_gps('42.4086 -71.0623')],
+        ['null', 'o', None],
+    ]
+)))
+def test_within_distance_db_test():
 
     def matching(radius):
         user_sql = UserSQL('test-within-distance', (
@@ -473,7 +469,7 @@ def test_within_distance_runs_against_the_database():
 
     assert matching(5000) == ['near']
     # A case with no location never matches, whatever the radius
-    assert matching(300_000) == ['far', 'near']
+    assert matching(300_000) == ['corner', 'far', 'near']
 
 
 def test_run_reports_a_database_error():
