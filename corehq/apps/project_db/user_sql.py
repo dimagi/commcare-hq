@@ -12,8 +12,13 @@ from functools import cached_property
 
 import sqlglot
 from sqlalchemy import (
+    Float,
+    Text,
     and_,
     bindparam,
+    cast,
+    func,
+    literal_column,
     not_,
     nullsfirst,
     nullslast,
@@ -332,8 +337,74 @@ def _convert_predicate(node, columns):
         left, right = _unpack(node, 'this', 'expression')
         return compare(_convert_value(left, columns),
                        _convert_value(right, columns))
+    if isinstance(node, exp.Anonymous):
+        return _convert_function(node, columns)
+    raise UnsupportedSQL(f"unsupported predicate: {type(node).__name__}")
+
+
+def _convert_function(node, columns):
+    """Convert a call to one of the boolean-valued functions we support"""
+    name, args = _unpack(node, 'this', 'expressions')
+    convert = PREDICATE_FUNCTIONS.get(name.lower())
+    if convert is None:
+        raise UnsupportedSQL(f"unsupported function: {name}")
+    return convert(args or [], columns)
+
+
+def _convert_within_distance(args, columns):
+    """Convert ``within_distance`` to bounding box and exact distance filters"""
+    if len(args) != 3:
+        raise UnsupportedSQL(
+            "within_distance takes 3 arguments: a GPS column, coordinates, "
+            f"and a distance in meters. Got {len(args)}")
+    column, coordinates, meters = args
+    location = _convert_column(column, columns)
+    center = _convert_coordinates(coordinates)
+    distance = _convert_meters(meters)
+    return and_(
+        # earth_box provides a pre-filter that is indexable and more performant
+        func.earth_box(center, distance).bool_op('@>')(location),
+        func.earth_distance(center, location) < distance,
+    )
+
+
+def _convert_coordinates(node):
+    """Build an ``earth`` value from a ``'<latitude> <longitude>'`` string"""
+    # The string is split in the database so it can accept params
+    if isinstance(node, exp.Placeholder):
+        coordinates = _convert_placeholder(node, type_=Text)
+    elif isinstance(node, exp.Literal) and node.is_string:
+        _unpack(node, 'this', 'is_string')
+        coordinates = _bind(node.to_py())
     else:
-        raise UnsupportedSQL(f"unsupported predicate: {type(node).__name__}")
+        raise UnsupportedSQL(
+            "within_distance coordinates must be a '<latitude> <longitude>' "
+            f"string or a query parameter, got {str(node)}"
+        )
+    latitude, longitude = (
+        cast(
+            func.split_part(coordinates, literal_column("' '"), literal_column(i)),
+            Float
+        )
+        for i in ('1', '2')
+    )
+    return func.ll_to_earth(latitude, longitude)
+
+
+def _convert_meters(node):
+    if isinstance(node, exp.Placeholder):
+        return _convert_placeholder(node, type_=Float)
+    if isinstance(node, exp.Literal) and not node.is_string:
+        _unpack(node, 'this', 'is_string')
+        return _bind(float(node.to_py()))
+    raise UnsupportedSQL(
+        "within_distance's distance must be a positive number of meters or a "
+        f"query parameter, got {str(node)}")
+
+
+PREDICATE_FUNCTIONS = {
+    'within_distance': _convert_within_distance,
+}
 
 
 def _convert_value(node, columns):
@@ -351,14 +422,14 @@ def _convert_value(node, columns):
     return _convert_column(node, columns)
 
 
-def _convert_placeholder(node, expanding=False):
+def _convert_placeholder(node, expanding=False, type_=None):
     """Convert a ``:name`` placeholder to a parameter for the caller to bind"""
     name, = _unpack(node, 'this')
     if not isinstance(name, str) or not PARAM_NAME.match(name):
         raise UnsupportedSQL("query parameters must be written as `:name`")
     if name.startswith(LITERAL_PARAM_PREFIX):
         raise UnsupportedSQL(f"query parameter names may not begin with '{LITERAL_PARAM_PREFIX}'")
-    return bindparam(name, expanding=expanding)
+    return bindparam(name, expanding=expanding, type_=type_)
 
 
 def _convert_array(node):

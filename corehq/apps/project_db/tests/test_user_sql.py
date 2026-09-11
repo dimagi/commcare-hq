@@ -4,15 +4,20 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy import (
+    Float,
     and_,
     bindparam,
+    cast,
     column,
+    func,
+    literal_column,
     not_,
     nullsfirst,
     nullslast,
     or_,
     select,
     table,
+    text,
     union,
     union_all,
 )
@@ -20,6 +25,10 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import ProgrammingError
 from unmagic import fixture, use
 
+from corehq.apps.project_db.table_ddl import (
+    DomainSchema,
+    get_project_db_engine,
+)
 from corehq.apps.project_db.user_sql import (
     MAX_TREE_DEPTH,
     BadParameters,
@@ -30,11 +39,15 @@ from corehq.apps.project_db.user_sql import (
     translate,
 )
 
+from .util import project_db_table
+
 CLIENT = table('client', column('case_id'), column('name'))
 VISIT = table('visit', column('visit_id'), column('parent_id'), column('name'))
 FORM = table('form', column('form_id'), column('visit_id'))
 SURVEY = table('survey', column('symptoms'))
-TABLES = {'client': CLIENT, 'visit': VISIT, 'form': FORM, 'survey': SURVEY}
+GEO = table('geo', column('case_id'), column('gps_prop__location'))
+TABLES = {'client': CLIENT, 'visit': VISIT, 'form': FORM, 'survey': SURVEY,
+          'geo': GEO}
 
 ON = CLIENT.c.case_id == VISIT.c.parent_id
 CLIENT_VISIT = CLIENT.join(VISIT, ON)
@@ -43,6 +56,22 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
 # An alias is what makes joining a table to itself possible
 VISIT_V, VISIT_P = VISIT.alias('v'), VISIT.alias('p')
 SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
+
+
+def _within_distance(coordinates, meters):
+    """The bounding box and exact distance test `within_distance` stands for"""
+    location = GEO.c.gps_prop__location
+    center = func.ll_to_earth(*(
+        cast(
+            func.split_part(coordinates, literal_column("' '"), literal_column(i)),
+            Float
+        )
+        for i in ('1', '2')
+    ))
+    return and_(
+        func.earth_box(center, meters).bool_op('@>')(location),
+        func.earth_distance(center, location) < meters,
+    )
 
 
 @pytest.mark.parametrize('sql, expected', [
@@ -187,6 +216,12 @@ SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
      select([SURVEY]).where(SURVEY.c.symptoms.bool_op('&&')(_bind(['fever'])))),
     ("SELECT * FROM survey WHERE symptoms @> '{fever,cough}'",
      select([SURVEY]).where(SURVEY.c.symptoms.bool_op('@>')(_bind('{fever,cough}')))),
+
+    # Geopoint filtering
+    ("SELECT * FROM geo WHERE within_distance(gps_prop__location, '42.44 -71.14', 5000)",
+     select([GEO]).where(_within_distance(_bind('42.44 -71.14'), _bind(5000.0)))),
+    ('SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius)',
+     select([GEO]).where(_within_distance(bindparam('center'), bindparam('radius')))),
 ])
 def test_valid_queries(sql, expected):
     assert _compiled(translate(sql, TABLES)) == _compiled(expected)
@@ -251,6 +286,12 @@ def _compiled(query):
     'SELECT * FROM client WHERE name IN (SELECT name FROM client)',  # IN a subquery
     'SELECT * FROM client WHERE name',            # not a comparison
     "SELECT * FROM client WHERE LOWER(name) = 'x'",  # function call
+    'SELECT * FROM client WHERE bogus(name)',        # unknown function call
+
+    # `within_distance` takes 3 args, GPS column, coordinates, and a distance
+    "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2')",
+    "SELECT * FROM geo WHERE within_distance(gps_prop__location, case_id, 5)",
+    "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2', '5')",
 
     # Only `JOIN` and `LEFT JOIN` are supported for now.
     'SELECT * FROM client INNER JOIN visit ON client.case_id = visit.parent_id',
@@ -328,6 +369,8 @@ def _user_sql(sql):
     # Literals are already bound, and a parameter used twice is listed once
     ("SELECT * FROM client WHERE name = :who AND case_id = 'c1' OR name = :who",
      ['who']),
+    ('SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius)',
+     ['center', 'radius']),
 ])
 def test_parameters(sql, expected):
     assert _user_sql(sql).parameters == expected
@@ -407,6 +450,30 @@ def test_allows_nesting_up_to_the_limit():
     sql = ('SELECT * FROM client WHERE '
            + ' AND '.join(['name = 1'] * (MAX_TREE_DEPTH - 5)))
     assert translate(sql, TABLES) is not None
+
+
+@use('db', project_db_table('test-within-distance', 'patient', {'location': 'gps'}))
+def test_within_distance_runs_against_the_database():
+    schema = DomainSchema('test-within-distance')._quoted_name
+    with get_project_db_engine().begin() as conn:
+        conn.execute(text(f"""
+            INSERT INTO {schema}.patient (case_id, owner_id, gps_prop__location)
+            VALUES ('far',  'o', ll_to_earth(44.1710, -71.1097)),
+                   ('near', 'o', ll_to_earth(42.3736, -71.1097)),
+                   ('null', 'o', NULL)
+        """))
+
+    def matching(radius):
+        user_sql = UserSQL('test-within-distance', (
+            'SELECT case_id FROM patient '
+            'WHERE within_distance(gps_prop__location, :center, :radius) '
+            'ORDER BY case_id'))
+        result = user_sql.run({'center': '42.3736 -71.1097', 'radius': radius})
+        return [row['case_id'] for row in result.rows]
+
+    assert matching(5000) == ['near']
+    # A case with no location never matches, whatever the radius
+    assert matching(300_000) == ['far', 'near']
 
 
 def test_run_reports_a_database_error():
