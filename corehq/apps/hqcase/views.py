@@ -28,10 +28,13 @@ from corehq.apps.locations.permissions import user_can_access_case
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.models import CommCareCase
 
+from corehq.apps.api.openapi.view_declarations import api_docs
+
 from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
 from .api.field_filters import get_fields_filter_fn
 from .api.get_list import get_list
 from .api.get_bulk import get_bulk
+from .api.openapi_docs import CASE_API_DOCS, CASE_BULK_FETCH_DOCS
 from .api.updates import handle_case_update
 from .tasks import delete_exploded_case_task, explode_case_task
 
@@ -84,6 +87,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
         return redirect('hq_soil_download', self.domain, download.download_id)
 
 
+@api_docs(**CASE_API_DOCS)
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @allow_cors(['OPTIONS', 'GET', 'POST', 'PUT'])
@@ -112,6 +116,7 @@ def case_api(request, domain, case_id=None, external_id=None):
         return JsonResponse({'error': e.message}, status=400)
 
 
+@api_docs(**CASE_BULK_FETCH_DOCS)
 @waf_allow('XSS_BODY')
 @csrf_exempt
 @allow_cors(['OPTIONS', 'GET', 'POST'])

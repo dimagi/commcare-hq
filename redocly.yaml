@@ -1,0 +1,19 @@
+# Lint rules for the generated OpenAPI specs under docs/api/spec/.
+#
+# Redocly rather than Spectral: @redocly/cli is already a dependency, and
+# already builds the reference pages (`yarn openapi:docs`). A second OpenAPI
+# linter would buy nothing.
+
+extends:
+  - recommended
+
+rules:
+  # CommCare's API URLs genuinely end in a slash -- that is how the Django
+  # and Tastypie routing works, it is what every documented URL in the
+  # existing docs shows, and it is not something this project may change.
+  # The rule does not apply to this API rather than being violated by it.
+  no-path-trailing-slash: off
+
+  # Contact and licence live on the docs site, not in each spec.
+  info-license: off
+  info-contact: off

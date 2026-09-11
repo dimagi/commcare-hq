@@ -30,15 +30,14 @@ import json
 import os
 from typing import Optional
 
+from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models
-
-from couchdbkit import ResourceNotFound
 from jsonfield import JSONField
-from jsonschema import RefResolver
 from jsonschema import ValidationError as JSONValidationError
 from jsonschema import validate
+from referencing import Registry, Resource
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
@@ -114,10 +113,16 @@ class FHIRResourceType(models.Model):
 
     def validate_resource(self, fhir_resource):
         schema = self.get_json_schema()
-        resolver = RefResolver(base_uri=f'file://{self._schema_file}',
-                               referrer=schema)
+        base_uri = f'file://{self._schema_file}'
+        registry = Registry(retrieve=_retrieve_fhir_schema).with_resource(
+            base_uri, Resource.from_contents(schema))
+        # The schema's own "id"/"$ref" keywords don't identify its base
+        # URI unambiguously, so bind the resolver to `base_uri` directly
+        # instead of letting it get that URI from the schema.
+        resolver = registry.resolver(base_uri=base_uri)
         try:
-            validate(fhir_resource, schema, resolver=resolver)
+            validate(fhir_resource, schema, registry=registry,
+                     _resolver=resolver)
         except JSONValidationError as err:
             raise ConfigurationError(
                 f'Validation failed for resource {fhir_resource!r}: {err}'
@@ -136,6 +141,18 @@ def get_schema_dir(version):
     ver = dict(FHIR_VERSIONS)[version].lower()
     return os.path.join(settings.BASE_DIR, 'corehq', 'motech', 'fhir',
                         'json-schema', ver)
+
+
+def _retrieve_fhir_schema(uri):
+    """
+    Loads a FHIR JSON schema file referenced by another schema's
+    ``$ref``, so cross-file references (e.g. ``Address.schema.json``)
+    resolve the same way local ``uri`` schemes did under the deprecated
+    ``jsonschema.RefResolver``.
+    """
+    path = uri.removeprefix('file://')
+    with open(path, 'r') as file:
+        return Resource.from_contents(json.load(file))
 
 
 class FHIRResourceProperty(models.Model):
