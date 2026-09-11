@@ -25,6 +25,7 @@ from sqlalchemy.exc import ProgrammingError
 from unmagic import fixture, use
 
 from corehq.apps.project_db.populate import coerce_to_gps
+from corehq.apps.project_db.table_ddl import Earth
 from corehq.apps.project_db.user_sql import (
     MAX_TREE_DEPTH,
     BadParameters,
@@ -41,7 +42,7 @@ CLIENT = table('client', column('case_id'), column('name'))
 VISIT = table('visit', column('visit_id'), column('parent_id'), column('name'))
 FORM = table('form', column('form_id'), column('visit_id'))
 SURVEY = table('survey', column('symptoms'))
-GEO = table('geo', column('case_id'), column('gps_prop__location'))
+GEO = table('geo', column('case_id'), column('gps_prop__location', Earth))
 TABLES = {'client': CLIENT, 'visit': VISIT, 'form': FORM, 'survey': SURVEY,
           'geo': GEO}
 
@@ -288,6 +289,8 @@ def _compiled(query):
     "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2')",
     "SELECT * FROM geo WHERE within_distance(gps_prop__location, case_id, 5)",
     "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2', '5')",
+    # The column must be a GPS column, not just any column
+    "SELECT * FROM geo WHERE within_distance(case_id, '1 2', 5)",
 
     # Only `JOIN` and `LEFT JOIN` are supported for now.
     'SELECT * FROM client INNER JOIN visit ON client.case_id = visit.parent_id',

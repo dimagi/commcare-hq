@@ -33,6 +33,7 @@ from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
 from corehq.apps.project_db.table_ddl import (
+    Earth,
     get_domain_tables,
     get_project_db_engine,
 )
@@ -359,6 +360,10 @@ def _convert_within_distance(args, columns):
             f"and a distance in meters. Got {len(args)}")
     column, coordinates, meters = args
     location = _convert_column(column, columns)
+    if not isinstance(location.type, Earth):
+        raise UnsupportedSQL(
+            f"within_distance must be given a GPS column, got {str(column)}"
+        )
     center = _convert_coordinates(coordinates)
     distance = _convert_meters(meters)
     return and_(
