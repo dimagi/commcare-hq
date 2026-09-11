@@ -7,7 +7,7 @@ from corehq.apps.app_manager.models import (
     Form,
     FormLink,
     Module,
-    import_app,
+    import_app_from_doc,
 )
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -100,7 +100,7 @@ class FormVersioningTest(TestCase):
         self.assertEqual(self.get_form_versions(build4), [6, 1])
 
         # copy app
-        xxx_app = import_app(app.export_json(dump_json=False), domain)
+        xxx_app = import_app_from_doc(app.export_json(dump_json=False), domain)
 
         # make build of copy
         xxx_build1 = xxx_app.make_build()
