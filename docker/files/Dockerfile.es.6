@@ -1,3 +1,12 @@
 FROM docker.elastic.co/elasticsearch/elasticsearch:6.8.23
 
 RUN bin/elasticsearch-plugin install --silent analysis-phonetic
+
+# HQ uses no machine learning features. Drop X-Pack ML's bundled native controller so
+# Elasticsearch does not try to exec it at startup. ES 6.x spawns any native controller
+# found on disk regardless of `xpack.ml.enabled`, and the binary is linux-x86_64 only, so
+# on arm64 hosts (Apple Silicon) the emulated JVM fails to spawn it and the node dies:
+#   Cannot run program ".../modules/x-pack-ml/platform/linux-x86_64/bin/controller":
+#   error=0, Failed to exec spawn helper
+# Spawner skips the module when no controller file is present.
+RUN rm -rf modules/x-pack-ml/platform

@@ -11,6 +11,23 @@ an Ubuntu virtual machine.
 Once your environment is up and running, bookmark the [dev FAQ](https://github.com/dimagi/commcare-hq/blob/master/DEV_FAQ.md)
 for common issues encountered in day-to-day HQ development.
 
+## Automated setup (macOS)
+
+On macOS, `scripts/setup-dev.sh` performs the steps below for you. It is safe to
+re-run, since each step checks its own precondition and skips work that is
+already done:
+
+```sh
+scripts/setup-dev.sh           # set up, prompting before installing anything
+scripts/setup-dev.sh --check   # report what is missing, change nothing
+```
+
+`--check` is also useful on an environment that has stopped working, since it
+reports the state of every prerequisite and service in one place.
+
+The rest of this document is the reference, and is worth reading either way. If
+you are on Linux, follow it directly; the script does not support Linux yet.
+
 ## (Optional) Copying data from an existing HQ install
 
 If you're setting up HQ on a new computer, you may have an old, functional
@@ -117,6 +134,12 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
     brew install postgresql
     ```
 
+    `postgresql` aliases a versioned, keg-only formula (currently `postgresql@18`), so
+    Homebrew does not link `psql`, `createdb`, etc. onto your `PATH`. Add the keg's `bin`
+    directory (`brew --prefix postgresql` prints it) to `PATH` in your shell profile. If you
+    only want the client tools, `brew install libpq` is a smaller alternative that is
+    keg-only for the same reason.
+
     Possible alternative to installing postgres (from [this SO answer](https://stackoverflow.com/a/39800677)).
     Do this prior to `uv` commands (outlined later in this doc):
 
@@ -167,6 +190,13 @@ git-hooks/install.sh
     already exist. To activate the environment:
     ```sh
     source .venv/bin/activate
+    ```
+
+    Commands below are written as `./manage.py ...`, which assumes an activated
+    environment. Prefixing with `uv run` instead uses the project environment
+    without activating anything, which is handy in a fresh terminal:
+    ```sh
+    uv run ./manage.py runserver localhost:8000
     ```
 
     For convenience, you can create an alias to activate virtual environments in
@@ -247,8 +277,11 @@ needs of most developers.
 
 1. Install docker packages.
 
-  - **Mac**: see [Install Docker Desktop on Mac](https://docs.docker.com/docker-for-mac/install/)
-    for docker installation and setup.
+  - **Mac**: you need a container engine, and there is more than one option. Docker
+    Desktop is one, but it requires a paid subscription for larger organizations, so it
+    may not be the right choice for you. See
+    [Container engines](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md#container-engines)
+    in the Supplementary Guide to pick one and set it up.
   - **Linux**:
 
     ```sh
@@ -267,7 +300,10 @@ needs of most developers.
     ```
 
 2. Install `docker compose`
-  - **Mac**: comes with Docker Desktop
+  - **Mac**: depends on the engine you chose. Docker Desktop and OrbStack bundle it;
+    with Colima you install and register it yourself. Either way, confirm with
+    `docker compose version` — see
+    [Container engines](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md#container-engines).
   - **Linux**:
     ```sh
     sudo apt install docker-compose-plugin
@@ -504,15 +540,9 @@ populate them with any data that's in the database.
 
 #### Install Dart Sass
 
-We are transitioning to using `sass`/`scss` for our stylesheets. In order to compile `*.scss`,
-Dart Sass is required.
-
-We recommend using `npm` to install this globally with:
-```
-npm install -g sass
-```
-
-You can also [follow the instructions here](https://sass-lang.com/install) if you encounter issues with this method.
+We are transitioning to using `sass`/`scss` for our stylesheets, so compiling `*.scss`
+requires Dart Sass. See [Requirements: Install Dart Sass](#requirements-install-dart-sass)
+under Step 8, which covers the installation options.
 
 
 #### Installing Yarn
@@ -572,15 +602,20 @@ At present, we are undergoing a migration from Bootstrap 3 to 5. Bootstrap 3 use
 as its CSS precompiler, and Bootstrap 5 using SASS / SCSS. You will need both installed.
 
 LESS is already taken care of by `package.json` when you run `yarn install`. In order to
-compile SASS, we need Dart Sass. There is a `sass` npm package that can be installed globally with
-`npm install -g sass`, however this installs the pure javascript version without a binary. For speed in a
-development environment, it is recommended to install `sass` with homebrew:
+compile SASS, we need Dart Sass. Installing it globally via `npm` works on any platform:
 
 ```sh
-brew install sass/sass/sass
+npm install -g sass
 ```
 
-You can also view [alternative installation instructions](https://sass-lang.com/install/) if homebrew doesn't work for you.
+This is the pure JavaScript build, which compiles more slowly than the native binary. If you
+want the native build:
+
+- **macOS**: see [Dart Sass](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md#dart-sass)
+  in the Supplementary Guide — the Homebrew formula needs extra steps and fails quietly
+  without them.
+- Otherwise, follow the [installation instructions](https://sass-lang.com/install/) for your
+  platform.
 
 #### Option 1: Compile CSS on page-load without compression
 
@@ -680,10 +715,45 @@ in docker, it will of course fail. Don't worry about celery for now.
 Then run the django server with the following command:
 
 ```sh
-./manage.py runserver localhost:8000
+uv run ./manage.py runserver localhost:8000
 ```
 
 You should now be able to load CommCare HQ in a browser at [http://localhost:8000](http://localhost:8000).
+
+#### Running the dev processes
+
+Day to day you need the Webpack watcher, a Celery worker and Formplayer running
+alongside Django. `Procfile.dev` in the repo root defines those three, and
+[honcho](https://github.com/nickstenning/honcho) runs them as a group, so two
+terminals are enough:
+
+```sh
+# terminal 1: supporting processes
+uvx honcho start -f Procfile.dev
+
+# terminal 2: the app
+uv run ./manage.py runserver localhost:8000
+```
+
+`uvx` runs honcho without installing it into the project. Output from each
+process is prefixed with its name, and Ctrl-C stops all of them.
+
+Django is kept out of the Procfile on purpose. honcho passes its terminal through
+to child processes, but they all share it, so an interactive prompt competes with
+Webpack and Celery output and keystrokes cannot be aimed at one process. Running
+Django separately gives `breakpoint()`/`pdb` a terminal to itself, keeps request
+logs readable, and lets you restart the app without cycling everything else. To
+break inside a Celery task, use `celery.contrib.rdb` rather than `breakpoint()`.
+
+Note that honcho stops every process as soon as *any* one of them exits, so if
+the group dies immediately, read the message from the first process that failed.
+
+The worker runs with `-B`, which embeds the Celery beat scheduler in the worker so
+it does not need its own process. That is convenient for development but is wrong
+anywhere you run more than one worker, since each would run its own scheduler.
+
+The backing services are not included, since they run in containers: start those
+with `./scripts/docker up -d` first.
 
 #### Troubleshooting Javascript Errors
 
@@ -703,18 +773,21 @@ useful background and tips.
 
 Formplayer is a Java service that allows us to use applications on the web  instead of on a mobile device.
 
-In `localsettings.py`:
+No `localsettings.py` changes are needed for this — all three settings this used to ask for
+are already defaults: `FORMPLAYER_URL` in `settings.py`, and
+`FORMPLAYER_INTERNAL_AUTH_KEY` plus `django_extensions` in `LOCAL_APPS` in
+`dev_settings.py`.
 
-```python
-FORMPLAYER_URL = 'http://localhost:8080'
-FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
-LOCAL_APPS += ('django_extensions',)
-```
-
-**IMPORTANT:** When running HQ, be sure to use `runserver_plus`
+Run HQ as usual:
 
 ```sh
-./manage.py runserver_plus localhost:8000
+uv run ./manage.py runserver localhost:8000
+```
+
+If you want the Werkzeug debugger, `runserver_plus` (from `django-extensions`) works too:
+
+```sh
+uv run ./manage.py runserver_plus localhost:8000
 ```
 
 Then you need to have Formplayer running.
@@ -829,6 +902,10 @@ If you want to run periodic tasks you would need to start `beat` service along w
 ```sh
 celery -A corehq beat
 ```
+
+Note that `./manage.py check_services` reports celery queues as "blocked as long as we can
+see" until `beat` is running, because the queue heartbeats it checks are written by periodic
+tasks. A worker on its own is not enough to make that check pass.
 
 ## Running Formdesigner (Vellum) in Development mode
 
