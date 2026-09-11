@@ -6,7 +6,7 @@ services:
     platform: linux/amd64
   couch:
     platform: linux/amd64
-  redis:
+  valkey:
     platform: linux/amd64
   zookeeper:
     platform: linux/amd64
