@@ -104,6 +104,19 @@ class TestCopyLookupTables(TestCase):
         assert result.tag_mapping == {"fruit": "fruit"}
         assert result.missing_tags == ()
 
+    def test_does_not_copy_tables_within_same_domain(self):
+        result = copy_lookup_tables(
+            {"source": "instance('item-list:fruit')/fruit_list/fruit"},
+            self.source_domain,
+            self.source_domain,
+        )
+
+        assert result.tag_mapping == {}
+        assert result.created_table_ids == ()
+        assert result.missing_tags == ()
+        assert result.failed_tags == ()
+        assert LookupTable.objects.filter(domain=self.source_domain, tag="fruit").count() == 1
+
     def test_uses_next_available_suffix(self):
         LookupTable.objects.create(domain=self.destination_domain, tag="fruit")
         LookupTable.objects.create(domain=self.destination_domain, tag="fruit-1")

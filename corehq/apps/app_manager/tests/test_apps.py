@@ -60,6 +60,10 @@ class AppManagerTest(TestCase, TestXmlMixin):
         domain = create_domain(cls.domain)
         cls.addClassCleanup(domain.delete)
 
+        cls.destination_domain = 'test-destination-domain'
+        destination_domain = create_domain(cls.destination_domain)
+        cls.addClassCleanup(destination_domain.delete)
+
         cls.xform_str = cls.get_xml('very_simple_form').decode('utf-8')
 
     def setUp(self):
@@ -200,21 +204,32 @@ class AppManagerTest(TestCase, TestXmlMixin):
     @patch_default_builds
     def test_import_app_from_id_copies_lookup_tables(self):
         self._add_country_lookup_table_reference()
+        LookupTable.objects.create(domain=self.destination_domain, tag="country")
 
-        imported_app = import_app_from_id(self.app.id, self.domain)
+        imported_app = import_app_from_id(self.app.id, self.destination_domain)
 
         assert imported_app.get_module(0).fixture_select.fixture_type == "country-1"
         assert "item-list:country-1" in imported_app.get_module(0).forms[0].source
-        assert LookupTable.objects.filter(domain=self.domain, tag="country-1").exists()
+        assert LookupTable.objects.filter(domain=self.destination_domain, tag="country-1").exists()
+
+    @patch_default_builds
+    def test_import_app_from_id_does_not_copy_lookup_tables_within_same_domain(self):
+        self._add_country_lookup_table_reference()
+
+        imported_app = import_app_from_id(self.app.id, self.domain)
+
+        assert imported_app.get_module(0).fixture_select.fixture_type == "country"
+        assert "item-list:country" in imported_app.get_module(0).forms[0].source
+        assert not LookupTable.objects.filter(domain=self.domain, tag="country-1").exists()
 
     @patch("corehq.apps.app_manager.models.applications._import_app", side_effect=RuntimeError)
     def test_import_app_from_id_removes_lookup_tables_on_failure(self, _import_app):
         self._add_country_lookup_table_reference()
 
         with self.assertRaises(RuntimeError):
-            import_app_from_id(self.app.id, self.domain)
+            import_app_from_id(self.app.id, self.destination_domain)
 
-        assert not LookupTable.objects.filter(domain=self.domain, tag="country-1").exists()
+        assert not LookupTable.objects.filter(domain=self.destination_domain, tag="country").exists()
 
     def _add_country_lookup_table_reference(self):
         table = LookupTable.objects.create(domain=self.domain, tag="country")

@@ -29,6 +29,14 @@ class LookupTableImportResult:
 
 def copy_lookup_tables(source_app_doc, source_domain, destination_domain):
     """Copy referenced tables and return information needed for rewriting and cleanup."""
+    if source_domain == destination_domain:
+        return LookupTableImportResult(
+            tag_mapping={},
+            created_table_ids=(),
+            missing_tags=(),
+            failed_tags=(),
+        )
+
     referenced_tags = _get_referenced_lookup_table_tags(source_app_doc)
     source_tables = {
         table.tag: table
