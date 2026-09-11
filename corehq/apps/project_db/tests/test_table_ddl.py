@@ -18,6 +18,7 @@ from corehq.apps.project_db.table_ddl import (
     update_table,
 )
 from corehq.sql_db.connections import ConnectionManager
+from corehq.util.metrics.tests.utils import capture_metrics
 
 from .util import project_db_table
 
@@ -223,8 +224,10 @@ def test_create_project_db(get_dd_properties, get_case_types):
     get_case_types.return_value = ['patient']
     get_dd_properties.return_value = [
         ('nickname', 'plain'), ('dob', 'plain'), ('interests', 'select')]
-    create_or_update_project_db(domain)
+    with capture_metrics() as metrics:
+        create_or_update_project_db(domain)
     _assert_db_created_as_expected(schema.name)
+    assert metrics.list('commcare.project_db.schema_sync.duration', domain=domain), metrics
 
     # Drop nickname, make dob a date, add a new prop
     get_dd_properties.return_value = [('favorite_color', 'plain'), ('dob', 'date')]
