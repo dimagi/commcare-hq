@@ -128,6 +128,9 @@ Repository = "https://github.com/dimagi/commcare-hq"
 [tool.uv]
 required-version = ">=0.7.0"
 default-groups = ["dev", "sso"]
+# Skip package versions released in the last 7 days during resolution.
+# Evaluated relative to "now" on each `uv lock` / `uv lock --upgrade`.
+exclude-newer = "7 days"
 
 [dependency-groups]
 dev = [
