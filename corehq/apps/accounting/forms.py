@@ -6,8 +6,12 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
-from django.core.validators import MinLengthValidator, validate_slug
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
+from django.core.validators import (
+    MinLengthValidator,
+    validate_email,
+    validate_slug,
+)
 from django.db import transaction
 from django.forms.utils import ErrorList
 from django.template.loader import render_to_string
@@ -31,6 +35,7 @@ from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
     SoftwareProductRateAsyncHandler,
 )
+from corehq.apps.accounting.const import MAX_INVOICE_AMOUNT
 from corehq.apps.accounting.exceptions import (
     CreateAccountingAdminError,
     InvoiceError,
@@ -38,6 +43,7 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.invoicing import (
     CustomerAccountInvoiceFactory,
     DomainInvoiceFactory,
+    DomainWireInvoiceFactory,
 )
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -61,6 +67,8 @@ from corehq.apps.accounting.models import (
     PaymentType,
     PreOrPostPay,
     ProBonoStatus,
+    ScheduledPrepaymentInvoice,
+    ScheduledPrepaymentInvoiceStatus,
     SoftwarePlan,
     SoftwarePlanEdition,
     SoftwarePlanVersion,
@@ -80,6 +88,7 @@ from corehq.apps.accounting.utils import (
     get_account_name_from_default_name,
     get_money_str,
     has_subscription_already_ended,
+    log_accounting_info,
     make_anchor_tag,
 )
 from corehq.apps.accounting.utils.software_plans import (
@@ -1137,6 +1146,50 @@ class CreditForm(forms.Form):
         return True
 
 
+class CancelScheduledInvoiceForm(forms.Form):
+    """Confirm cancelling a queued prepayment invoice"""
+
+    reason = forms.CharField(
+        label="Reason",
+        required=True,
+        max_length=256,
+        widget=forms.Textarea(attrs={"class": "vertical-resize", "rows": "2"}),
+        help_text="Describe why this prepayment is being cancelled.",
+    )
+
+    def __init__(self, scheduled, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.scheduled = scheduled
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Cancel Scheduled Invoice',
+                'reason',
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    'Cancel This Invoice',
+                    css_class='btn-danger disable-on-submit',
+                    type='submit',
+                ),
+            ),
+        )
+
+    def cancel(self, cancelled_by):
+        self.scheduled.status = ScheduledPrepaymentInvoiceStatus.CANCELLED
+        self.scheduled.cancelled_by = cancelled_by
+        self.scheduled.cancelled_reason = self.cleaned_data['reason']
+        self.scheduled.save()
+        log_accounting_info(
+            f"Scheduled prepayment invoice {self.scheduled.id} for domain "
+            f"{self.scheduled.domain} cancelled by {cancelled_by}."
+        )
+
+
 class RemoveAutopayForm(forms.Form):
 
     remove_autopay = forms.CharField(widget=forms.HiddenInput, required=False)
@@ -2036,6 +2089,211 @@ class PlanContactForm(forms.Form):
         send_html_email_async.delay(subject, settings.BILLING_EMAIL,
                                     html_content, text_content,
                                     email_from=settings.DEFAULT_FROM_EMAIL)
+
+
+class WirePrepaymentForm(forms.Form):
+    """Validates a request to generate a wire prepayment invoice.
+
+    A blank ``send_date`` generates the invoice now; a future one schedules it.
+
+    These fields are rendered by Knockout, in
+    ``domain/partials/payment_modal.html``. Field labels are duplicated here
+    and in that template.
+    """
+    email_to = forms.EmailField(
+        label=gettext_lazy("Email To"),
+    )
+    email_cc = forms.CharField(
+        label=gettext_lazy("Additional Recipients"),
+        required=False,
+    )
+    prepay_date_start = forms.DateField(
+        label=gettext_lazy("Prepayment Start Date"),
+        required=False,
+        input_formats=['%Y-%m-%d'],
+    )
+    prepay_date_end = forms.DateField(
+        label=gettext_lazy("Prepayment End Date"),
+        required=False,
+        input_formats=['%Y-%m-%d'],
+    )
+    credit_label = forms.CharField(
+        label=gettext_lazy("Credit Label"),
+        required=False,
+        empty_value="General Credits",
+    )
+    unit_cost = forms.DecimalField(
+        label=gettext_lazy("Unit Cost"),
+        min_value=0,
+        max_digits=8,
+        decimal_places=2,
+    )
+    quantity = forms.IntegerField(
+        label=gettext_lazy("Quantity"),
+        min_value=1,
+    )
+    send_date = forms.DateField(
+        label=gettext_lazy("Send On"),
+        required=False,
+        input_formats=['%Y-%m-%d'],
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        date_start = cleaned_data.get('prepay_date_start')
+        date_end = cleaned_data.get('prepay_date_end')
+        if date_start and date_end and date_end < date_start:
+            self.add_error('prepay_date_end', _("Prepayment end date must be after start date."))
+
+        unit_cost = cleaned_data.get('unit_cost')
+        quantity = cleaned_data.get('quantity')
+        if unit_cost is not None and quantity is not None:
+            amount = unit_cost * quantity
+            if amount > MAX_INVOICE_AMOUNT:
+                self.add_error(None, _(
+                    "The total prepayment amount cannot be more than ${max_amount}."
+                ).format(max_amount=MAX_INVOICE_AMOUNT))
+            cleaned_data['amount'] = amount
+        return cleaned_data
+
+    def clean_email_cc(self):
+        """Returns the comma-separated recipients as a list of addresses."""
+        emails = [
+            email.strip()
+            for email in self.cleaned_data['email_cc'].split(',')
+            if email.strip()
+        ]
+        invalid_emails = []
+        for email in emails:
+            try:
+                validate_email(email)
+            except ValidationError:
+                invalid_emails.append(email)
+        if invalid_emails:
+            raise ValidationError(
+                _("The following e-mail addresses contain invalid characters, or are missing "
+                  "required characters: ")
+                + ', '.join('"{}"'.format(email) for email in invalid_emails)
+            )
+        return emails
+
+    def clean_prepay_date_start(self):
+        return self.cleaned_data['prepay_date_start'] or datetime.date.today()
+
+    def clean_prepay_date_end(self):
+        return self.cleaned_data['prepay_date_end'] or datetime.date.today()
+
+    def clean_credit_label(self):
+        credit_label = self.cleaned_data['credit_label']
+        max_length = ScheduledPrepaymentInvoice._meta.get_field('credit_label').max_length
+        if len(credit_label) > max_length:
+            raise ValidationError(message=_(
+                'The credit label must be %(max_length)d characters or fewer.'
+            ) % {'max_length': max_length})
+        return credit_label
+
+    def clean_send_date(self):
+        # The modal leaves this blank to send the invoice now
+        send_date = self.cleaned_data.get('send_date')
+        if send_date and send_date <= datetime.date.today():
+            raise ValidationError(message=_('The send date must be in the future.'))
+        return send_date
+
+    def save(self, domain, couch_user):
+        """Generates the invoice for ``domain``, or schedules it.
+
+        :returns: the scheduled invoice, or ``None`` if one was generated now.
+        :raises InvoiceError: if the invoice can be neither generated nor
+            scheduled.
+        """
+        if not self.cleaned_data['send_date']:
+            self.create_invoice(domain)
+            return None
+
+        subscription = Subscription.get_active_subscription_by_domain(domain)
+        if subscription is None:
+            raise InvoiceError(_(
+                'This project space has no active subscription, so an invoice '
+                'cannot be scheduled for it.'
+            ))
+        return self.create_scheduled_invoice(domain, subscription, couch_user)
+
+    def create_invoice(self, domain):
+        """Emails a wire prepayment invoice for ``domain``.
+
+        :raises InvoiceError: if the domain does not exist.
+        """
+        invoice_factory = DomainWireInvoiceFactory(
+            domain,
+            date_start=self.cleaned_data['prepay_date_start'].isoformat(),
+            date_end=self.cleaned_data['prepay_date_end'].isoformat(),
+            contact_emails=[self.cleaned_data['email_to']],
+            cc_emails=self.cleaned_data['email_cc'],
+        )
+        invoice_factory.create_wire_credits_invoice(
+            self.cleaned_data['amount'],
+            self.cleaned_data['credit_label'],
+            self.cleaned_data['unit_cost'],
+            self.cleaned_data['quantity'],
+        )
+
+    def create_scheduled_invoice(self, domain, subscription, couch_user):
+        scheduled = ScheduledPrepaymentInvoice.objects.create(
+            domain=domain,
+            subscription=subscription,
+            send_date=self.cleaned_data['send_date'],
+            amount=self.cleaned_data['amount'],
+            credit_label=self.cleaned_data['credit_label'],
+            unit_cost=self.cleaned_data['unit_cost'],
+            quantity=self.cleaned_data['quantity'],
+            contact_emails=[self.cleaned_data['email_to']],
+            cc_emails=self.cleaned_data['email_cc'],
+            date_start=self.cleaned_data['prepay_date_start'],
+            date_end=self.cleaned_data['prepay_date_end'],
+            created_by=couch_user.username,
+        )
+        log_accounting_info(
+            f"Scheduled prepayment invoice {scheduled.id} for domain "
+            f"{scheduled.domain} on {scheduled.send_date} by {scheduled.created_by}."
+        )
+        return scheduled
+
+    def get_error_message(self):
+        """Returns all of the form's errors as a single string."""
+        return ' '.join(
+            ' '.join(errors) if field == NON_FIELD_ERRORS
+            else '{}: {}'.format(self.fields[field].label, ' '.join(errors))
+            for field, errors in self.errors.items()
+        )
+
+
+class GeneratePrepaymentInvoiceForm(WirePrepaymentForm):
+
+    domain = forms.CharField(
+        label=gettext_lazy("Project Space"),
+        widget=forms.Select(choices=[]),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Generate Prepayment Invoice',
+                crispy.Field(
+                    'domain',
+                    css_class="accounting-async-select2",
+                ),
+            ),
+        )
+
+    def clean_domain(self):
+        domain_name = self.cleaned_data['domain']
+        if Domain.get_by_name(domain_name) is None:
+            raise ValidationError(
+                _("Project space '{}' was not found.").format(domain_name)
+            )
+        return domain_name
 
 
 class TriggerInvoiceForm(forms.Form):

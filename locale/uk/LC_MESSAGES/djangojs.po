@@ -21,6 +21,14 @@ msgstr ""
 "100 > 14) ? 1 : n % 1 == 0 && (n % 10 ==0 || (n % 10 >=5 && n % 10 <=9) || "
 "(n % 100 >=11 && n % 100 <=14 )) ? 2: 3);\n"
 
+#: corehq/apps/accounting/static/accounting/js/base_subscriptions_main.js
+msgid "Auto-pause will be skipped indefinitely"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/base_subscriptions_main.js
+msgid "Auto-pause will resume on %(date)s"
+msgstr ""
+
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 msgid "My project ended"
 msgstr "Мій проєкт завершився"
@@ -1956,6 +1964,12 @@ msgstr "У вас є незмінені налаштування"
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
 msgstr "Купити кредити"
+
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+#, fuzzy
+#| msgid "Schedule Broadcast"
+msgid "Schedule Invoice"
+msgstr "Запланувати розсилку"
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Available Countries"

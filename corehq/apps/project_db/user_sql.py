@@ -21,6 +21,7 @@ from sqlalchemy import (
     union_all,
 )
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import ProgrammingError
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
@@ -43,11 +44,18 @@ class BadParameters(UserSQLValidationError):
     """The parameters don't match the query"""
 
 
+class UserSQLProgrammingError(UserSQLValidationError):
+    """The SQL was found to be invalid at runtime"""
+
+
 LITERAL_PARAM_PREFIX = 'hq_param'  # Our reserved namespace for parameters
 
 # A query parameter's name is interpolated into the compiled SQL, so it is
 # restricted to characters that cannot close the placeholder and inject SQL.
 PARAM_NAME = re.compile(r'[A-Za-z_][A-Za-z0-9_]*\Z')
+
+MAX_TREE_DEPTH = 100
+NESTED_TOO_DEEPLY = "SQL is nested too deeply"
 
 
 def _bind(value):
@@ -60,13 +68,18 @@ QueryResult = namedtuple('QueryResult', 'columns rows duration')
 
 
 class UserSQL:
-    def __init__(self, domain, raw_sql):
+    def __init__(self, domain, raw_sql, max_rows=100):
+        """Set max_rows to None to prevent a limit from being applied"""
         self.domain = domain
         self.raw_sql = raw_sql
+        self.max_rows = max_rows
 
     @cached_property
     def query(self):
-        return translate(self.raw_sql, get_domain_tables(self.domain))
+        q = translate(self.raw_sql, get_domain_tables(self.domain))
+        if self.max_rows is not None:
+            q = q.limit(_bind(self.max_rows))
+        return q
 
     @cached_property
     def _compiled(self):
@@ -89,12 +102,15 @@ class UserSQL:
         """Return the parameters a translated query leaves for the caller to supply"""
         return [name for name, bind in self._compiled.binds.items() if bind.required]
 
-    def run(self, parameter_values, max_rows):
+    def run(self, parameter_values):
         params = self._clean_parameters(parameter_values)
         with get_project_db_engine().connect() as conn:
             start = time.perf_counter()
-            result = conn.execute(self.query, params)
-            rows = result.fetchmany(max_rows)
+            try:
+                result = conn.execute(self.query, params)
+            except ProgrammingError as e:
+                raise UserSQLProgrammingError(str(e.orig)) from e
+            rows = result.fetchall()
             return QueryResult(
                 columns=list(result.keys()),
                 rows=rows,
@@ -117,10 +133,28 @@ def translate(sql, tables):
         statements = sqlglot.parse(sql, read='postgres')
     except SqlglotError:
         raise UnsupportedSQL("could not parse SQL")
+    except RecursionError:
+        raise UnsupportedSQL(NESTED_TOO_DEEPLY)
+    statements = [s for s in statements if s]
     if len(statements) != 1:
         raise UnsupportedSQL("this only supports a single statement")
+    _check_tree_depth(statements[0])
 
     return _convert_query(statements[0], tables)
+
+
+def _check_tree_depth(node):
+    """Reject deep parse trees
+
+    Long chains of operators such as ``a = 1 AND b = 2 AND ...`` parse into a
+    deep tree without any nested parentheses.
+    """
+    nodes = [(node, 1)]
+    while nodes:
+        node, depth = nodes.pop()
+        if depth > MAX_TREE_DEPTH:
+            raise UnsupportedSQL(NESTED_TOO_DEEPLY)
+        nodes.extend((child, depth + 1) for child in node.iter_expressions())
 
 
 def _convert_query(node, tables):

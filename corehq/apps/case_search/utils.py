@@ -185,10 +185,10 @@ def _get_project_db_endpoint(domain, config):
 
 def get_project_db_fixture(domain, endpoint, config):
     """Run a ``project_db`` endpoint's query and return the results as XML"""
-    user_sql = UserSQL(domain, endpoint.current_version.dangerous_sql)
+    user_sql = UserSQL(domain, endpoint.current_version.dangerous_sql, CASE_SEARCH_MAX_RESULTS)
     all_params = {c.key: c.value for c in config.criteria}
     query_params = {p: all_params.get(p) or None for p in user_sql.parameters}
-    result = user_sql.run(query_params, max_rows=CASE_SEARCH_MAX_RESULTS)
+    result = user_sql.run(query_params)
     return _rows_to_fixture(result.rows)
 
 

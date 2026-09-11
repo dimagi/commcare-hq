@@ -1,0 +1,14 @@
+{% extends "public_webforms/public/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "One-Time Link Request" %}{% endblock title %}
+
+{% block page_name %}{% trans "Requests Closed" %}{% endblock page_name %}
+
+{% block page_content %}
+  <div class="lead">
+    {% blocktrans %}
+      This form is not currently accepting submissions.
+    {% endblocktrans %}
+  </div>
+{% endblock page_content %}
