@@ -1246,7 +1246,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
 
-    _gather_and_update_search_properties(params, app, module, lang)
+    error_response = _gather_and_update_search_properties(params, app, module, lang)
+    if error_response:
+        return error_response
 
     resp = {}
     app.save(resp)
@@ -1359,11 +1361,18 @@ def _gather_and_update_search_properties(params, app, module, lang):
                 "'{}' is an invalid instance name. It can contain only letters, numbers, and underscores."
             ).format(instance_name))
 
+        case_search_endpoint_id = None
         if toggles.CASE_SEARCH_ENDPOINTS.enabled(app.domain):
             endpoint_id_raw = search_properties.get('case_search_endpoint_id')
-            case_search_endpoint_id = int(endpoint_id_raw) if endpoint_id_raw else None
-        else:
-            case_search_endpoint_id = None
+            if endpoint_id_raw:
+                try:
+                    case_search_endpoint_id = int(endpoint_id_raw)
+                except (TypeError, ValueError):
+                    return HttpResponseBadRequest(_("Invalid case search endpoint."))
+                if not CaseSearchEndpoint.objects.filter(
+                    id=case_search_endpoint_id, domain=app.domain, is_active=True
+                ).exists():
+                    return HttpResponseBadRequest(_("Invalid case search endpoint."))
 
         module.search_config = CaseSearch(
             title_label=title_label,
