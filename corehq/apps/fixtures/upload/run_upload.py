@@ -21,7 +21,7 @@ from corehq.apps.fixtures.models import (
     LookupTableRowOwner,
 )
 from corehq.apps.fixtures.upload.definitions import FixtureUploadResult
-from corehq.apps.fixtures.upload.const import INVALID, MULTIPLE
+from corehq.apps.fixtures.upload.const import INVALID, LOOKUP_TABLE_ROW_BATCH_SIZE, MULTIPLE
 from corehq.apps.fixtures.upload.workbook import Deleted, get_workbook
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.users.models import CommCareUser
@@ -85,7 +85,7 @@ def _run_upload(domain, workbook, replace=False, task=None):
             delete_missing=replace,
             on_change=partial(modified_table_ids.add, table.id),
         )
-        if len(rows.to_create) > 1000 or len(rows.to_delete) > 1000:
+        if len(rows.to_create) > LOOKUP_TABLE_ROW_BATCH_SIZE or len(rows.to_delete) > LOOKUP_TABLE_ROW_BATCH_SIZE:
             for table in chain(tables.to_create, tables.to_delete):
                 ignore_table_ids.add(table.id)
             flush(tables, rows, owners)
@@ -171,12 +171,12 @@ class Mutation:
 
 def flush(tables, rows, owners):
     def bulk_create(model_class, to_create):
-        for chunk in chunked(to_create, 1000, list):
+        for chunk in chunked(to_create, LOOKUP_TABLE_ROW_BATCH_SIZE, list):
             model_class.objects.bulk_create(chunk)
 
     def bulk_delete(model_class, to_delete):
         ids = (obj.id for obj in to_delete)
-        for chunk in chunked(ids, 1000, list):
+        for chunk in chunked(ids, LOOKUP_TABLE_ROW_BATCH_SIZE, list):
             model_class.objects.filter(id__in=chunk).delete()
 
     with atomic():

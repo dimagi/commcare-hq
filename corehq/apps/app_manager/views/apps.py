@@ -58,7 +58,10 @@ from corehq.apps.app_manager.models import (
     LinkedApplication,
     Module,
 )
-from corehq.apps.app_manager.models import import_app as import_app_util
+from corehq.apps.app_manager.models import (
+    import_app_from_doc,
+    import_app_from_id,
+)
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
 from corehq.apps.app_manager.util import (
     app_doc_types,
@@ -474,7 +477,7 @@ def _create_linked_app(request, app_id, build_id, from_domain, to_domain, link_a
 
 def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
     extra_properties = {'name': to_app_name}
-    app_copy = import_app_util(from_app_id, to_domain, extra_properties, request)
+    app_copy = import_app_from_id(from_app_id, to_domain, extra_properties, request)
     if is_linked_app(app_copy):
         app_copy = app_copy.convert_to_application()
         app_copy.save()
@@ -513,7 +516,7 @@ def _load_app_template(slug):
 def load_app_from_slug(domain, username, slug):
     # Import app itself
     template = _load_app_template(slug)
-    app = import_app_util(template, domain, {
+    app = import_app_from_doc(template, domain, {
         'created_from_template': '%s' % slug,
     })
 
@@ -602,7 +605,7 @@ def app_exchange(request, domain):
             messages.error(request, _("Invalid application id requested for exchange import"))
             return render(request, template, context)
 
-        app_copy = import_app_util(from_app_id, domain, {
+        app_copy = import_app_from_id(from_app_id, domain, {
             'created_from_template': from_app_id,
         })
         return back_to_main(request, domain, app_id=app_copy._id)
