@@ -1,5 +1,17 @@
 {% load i18n %}
-{# HTMX swap target for the query tester: validation errors or a results table. #}
+{# HTMX swap target for the query tester: what the run itself had to say. #}
+{#                                                                        #}
+{# Validation belongs to the card that holds the thing being validated,   #}
+{# so those errors are swapped into the cards out of band. A card is      #}
+{# listed only when this run actually checked it: an empty list clears    #}
+{# it, and being absent leaves whatever it already showed alone.          #}
+{% for region, region_errors in validation.items %}
+  <div id="{{ region }}" hx-swap-oob="innerHTML">
+    {% for error in region_errors %}
+      <div class="alert alert-danger mt-2">{{ error }}</div>
+    {% endfor %}
+  </div>
+{% endfor %}
 {% if errors %}
   <div class="alert alert-danger mt-3" role="alert">
     <ul class="mb-0">
