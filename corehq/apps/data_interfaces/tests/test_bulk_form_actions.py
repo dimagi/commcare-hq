@@ -12,12 +12,13 @@ from corehq.apps.data_interfaces.bulk_form_actions import (
     _apply_form_action,
     _save_interval,
     build_form_action,
+    create_bulk_form_job,
     mark_job_failed,
     run_bulk_form_action,
 )
 from corehq.apps.data_interfaces.models import BulkAsyncJob
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.form_processor.models.forms import XFormInstance
 from corehq.form_processor.tests.utils import create_form_for_test, sharded
@@ -135,6 +136,40 @@ class TestRunBulkFormAction(TestCase):
         assert job.status == BulkAsyncJob.Status.FAILED
         assert job.started_at is None
         assert job.completed_at is not None
+
+
+class TestCreateBulkFormJob(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.blob_db = TemporaryFilesystemBlobDB()
+        cls.addClassCleanup(cls.blob_db.close)
+        cls.domain = create_domain(DOMAIN)
+        cls.addClassCleanup(cls.domain.delete)
+        cls.user = WebUser.create(DOMAIN, USERNAME, '***', None, None)
+        cls.addClassCleanup(cls.user.delete, None, None)
+
+    def test_api_key_defaults_to_none(self):
+        job = create_bulk_form_job(
+            DOMAIN, BulkAsyncJob.Action.ARCHIVE, USERNAME, ['form-1'])
+        job.refresh_from_db()
+        assert job.api_key is None
+
+    def test_api_key_is_recorded(self):
+        api_key = HQApiKey.objects.create(
+            user=self.user.get_django_user(), name='test-key')
+
+        job = create_bulk_form_job(
+            DOMAIN,
+            BulkAsyncJob.Action.ARCHIVE,
+            USERNAME,
+            ['form-1'],
+            api_key=api_key,
+        )
+
+        job.refresh_from_db()
+        assert job.api_key == api_key
 
 
 class TestMarkJobFailed(TestCase):
