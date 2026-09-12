@@ -1108,3 +1108,32 @@ This script goes through the steps to prepare a report for test coverage of
 JavaScript files _that are touched by tests_, i.e., apps and files with 0% test
 coverage will not be shown. A coverage summary is output to the terminal and a
 detailed html report is generated at ``coverage-js/index.html``.
+
+## Checking an API against its OpenAPI spec
+
+[Schemathesis](https://schemathesis.readthedocs.io/) generates requests from an
+OpenAPI spec and reports where the responses disagree with it. `uv sync`
+installs it. 
+
+
+To see what it does, run it against Schemathesis' own demo service, whose
+endpoints are named after the defects they contain. The run is meant to report
+failures:
+
+```sh
+uv run schemathesis run https://example.schemathesis.io/openapi.json \
+    --include-path-regex '/response-conformance/' -n 2
+```
+
+To run it against a commcare-hq spec, give it a file path or the URL that serves one.
+Copy the example config first and add a valid API key and project slug:
+
+```sh
+cp schemathesis.toml.example schemathesis.toml
+export CCHQ_API_KEY="me@example.com:<key>"
+export CCHQ_DOMAIN=my-project
+uv run schemathesis run <spec.json> --exclude-method-regex 'POST|PUT|PATCH|DELETE'
+```
+
+Generated requests are real requests. Excluding the write methods, together
+with the settings in the example config, keeps the run read-only.
