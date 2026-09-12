@@ -12,12 +12,17 @@ from corehq.apps.project_db.table_ddl import (
     DomainSchema,
     Earth,
     create_or_update_project_db,
+    get_domain_query_engine,
     get_project_db_engine,
     preview_drop,
     truncate_identifier,
     update_table,
 )
-from corehq.sql_db.connections import ConnectionManager
+from corehq.sql_db.connections import (
+    PROJECT_DB_ENGINE_ID,
+    ConnectionManager,
+    connection_manager,
+)
 
 from .util import project_db_table
 
@@ -69,18 +74,38 @@ def test_quoted_name(domain, expected):
 @use('db')
 def test_schema_lifecycle():
     engine = get_project_db_engine()
-    schema = DomainSchema('testprojectdb')
+    schema = DomainSchema('test_schema_lifecycle')
     with engine.begin() as conn:
         schema.create(conn)
         assert schema.name in sqlalchemy.inspect(conn).get_schema_names()
+        assert _role_exists(conn, schema)
 
-        schema.set_local_search_path(conn)
-        search_path = conn.execute(sqlalchemy.text('SHOW search_path')).scalar()
-        assert search_path == schema.name
+        schema.create(conn)  # a second sync leaves both in place
+        assert _role_exists(conn, schema)
 
         schema.drop(conn)
         assert schema.name not in sqlalchemy.inspect(conn).get_schema_names()
+        assert not _role_exists(conn, schema)
 
+        schema.drop(conn)  # dropping an absent schema and role is a no-op
+
+
+def _role_exists(conn, schema):
+    return bool(conn.execute(
+        sqlalchemy.text('SELECT 1 FROM pg_roles WHERE rolname = :name'),
+        {'name': schema.role_name},
+    ).scalar())
+
+
+@use('db')
+def test_set_local_search_path():
+    schema = DomainSchema('projectdbtestsearchpath')
+    with get_project_db_engine().begin() as conn:
+        schema.create(conn)
+        schema.set_local_search_path(conn)
+        search_path = conn.execute(sqlalchemy.text('SHOW search_path')).scalar()
+        schema.drop(conn)
+    assert search_path == f'{schema.name}, public'
 
 @use('db')
 def test_long_domain_schema_lifecycle():
@@ -93,9 +118,123 @@ def test_long_domain_schema_lifecycle():
         try:
             assert schema.name in sqlalchemy.inspect(conn).get_schema_names()
             assert schema.get_comment(conn) == 'd' * 100
+            assert _role_exists(conn, schema)
         finally:
             schema.drop(conn)
         assert schema.name not in sqlalchemy.inspect(conn).get_schema_names()
+        assert not _role_exists(conn, schema)
+
+
+@override_settings(SECRET_KEY='thisismysecretkey')
+@pytest.mark.parametrize('domain, expected', [
+    ('my-domain', 'e656f61aff26f54fdf0037e3f120b38c2683437a2cd0efbb0fb21116eb34fcce'),
+    ('my-other-domain', 'f70d9db254cab3b9e057e330b3d72b0d80fa69e24a062f20028539c225828d84'),
+    ('long' * 100, '87ac4e25583ac8a98685d123011c339578e7d2f98a7c5fc8a9840f24e0e08489'),
+    ('long' * 101, 'be0558082b24015ee9bca36c014615c7fe8190784fdc2b56b90cdaf50ba42c87'),
+])
+def test_role_password(domain, expected):
+    assert DomainSchema(domain)._get_password() == expected
+
+
+@use('db', project_db_table('projectdbtest-grants', 'patient', {'nickname': 'plain'}))
+def test_role_is_granted_read_only_access():
+    schema = DomainSchema('projectdbtest-grants')
+    with get_project_db_engine().begin() as conn:
+        # Schema privileges
+        assert _has_schema_privilege(conn, schema.role_name, schema.name, 'USAGE')
+        assert not _has_schema_privilege(conn, schema.role_name, schema.name, 'CREATE')
+
+        # Table privileges
+        assert _has_table_privilege(conn, schema, 'patient', 'SELECT')
+        for privilege in ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER'):
+            assert not _has_table_privilege(conn, schema, 'patient', privilege)
+
+
+@use('db', project_db_table('projectdbtest-public', 'patient', {'nickname': 'plain'}))
+def test_role_cannot_create_in_the_public_schema():
+    schema = DomainSchema('projectdbtest-public')
+    with get_project_db_engine().begin() as conn:
+        assert _has_schema_privilege(conn, schema.role_name, 'public', 'USAGE')
+        assert not _has_schema_privilege(conn, schema.role_name, 'public', 'CREATE')
+
+@use('db', project_db_table('projectdbtest-new-table', 'patient', {'nickname': 'plain'}))
+def test_a_later_sync_grants_read_on_a_new_table():
+    # GRANT ON ALL TABLES is evaluated as the grant is made, so a table created
+    # by a later sync is only readable because the grants are re-run
+    domain = 'projectdbtest-new-table'
+    with patch('corehq.apps.project_db.table_ddl._get_case_types',
+               return_value=['patient', 'household']), \
+         patch.object(CaseTable, '_get_dd_properties', return_value=[]):
+        create_or_update_project_db(domain)
+
+    schema = DomainSchema(domain)
+    with get_project_db_engine().begin() as conn:
+        assert _has_table_privilege(conn, schema, 'household', 'SELECT')
+
+
+def _has_schema_privilege(conn, role, target, privilege):
+    return _has_privilege(conn, 'has_schema_privilege', role, target, privilege)
+
+
+def _has_table_privilege(conn, schema, table, privilege):
+    target = f'{schema._quoted_name}.{table}'
+    return _has_privilege(conn, 'has_table_privilege', schema.role_name, target, privilege)
+
+
+def _has_privilege(conn, function, role, target, privilege):
+    return conn.execute(
+        sqlalchemy.text(f'SELECT {function}(:role, :target, :privilege)'),
+        {'role': role, 'target': target, 'privilege': privilege},
+    ).scalar()
+
+
+@use('db', project_db_table('projectdbtest-mine', 'patient', {'nickname': 'plain'}),
+     project_db_table('projectdbtest-yours', 'patient', {'nickname': 'plain'}))
+def test_domain_query_engine_reads_only_its_own_schema():
+    mine = DomainSchema('projectdbtest-mine')
+    yours = DomainSchema('projectdbtest-yours')
+    engine = get_domain_query_engine('projectdbtest-mine')
+    with engine.connect() as conn:
+        assert conn.execute(sqlalchemy.text('SELECT current_user')).scalar() == mine.role_name
+
+        count = conn.execute(sqlalchemy.text(
+            f'SELECT count(*) FROM {mine._quoted_name}.patient'
+        )).scalar()
+        assert count == 0
+
+        # Fail when attempting to access another schema
+        with pytest.raises(sqlalchemy.exc.ProgrammingError, match='permission denied'):
+            conn.execute(sqlalchemy.text(
+                f'SELECT count(*) FROM {yours._quoted_name}.patient'
+            ))
+
+
+@use('db', project_db_table('projectdbtest-readonly', 'patient', {'nickname': 'plain'}))
+def test_domain_query_engine_cannot_write():
+    schema = DomainSchema('projectdbtest-readonly')
+    engine = get_domain_query_engine('projectdbtest-readonly')
+    with engine.connect() as conn:
+        with pytest.raises(sqlalchemy.exc.ProgrammingError, match='permission denied'):
+            conn.execute(sqlalchemy.text(
+                f"INSERT INTO {schema._quoted_name}.patient (case_id) VALUES ('abc')"
+            ))
+
+
+@use('db')
+def test_domain_query_engine_is_cached_per_domain():
+    engine = get_domain_query_engine('projectdbtest-cached')
+    assert get_domain_query_engine('projectdbtest-cached') is engine
+    assert get_domain_query_engine('projectdbtest-other') is not engine
+    # Not ConnectionManager's engine, whose cache is unbounded
+    assert connection_manager.get_engine(PROJECT_DB_ENGINE_ID) is not engine
+
+
+# DEBUG/UNIT_TESTING off so the dev/test fallback doesn't supply project_db
+@override_settings(REPORTING_DATABASES={'default': 'default'}, DEBUG=False, UNIT_TESTING=False)
+def test_domain_query_engine_not_configured():
+    with patch('corehq.apps.project_db.table_ddl.connection_manager', ConnectionManager()):
+        with pytest.raises(ImproperlyConfigured, match='project_db'):
+            get_domain_query_engine('projectdbtest-not-configured')
 
 
 def test_case_table_basics():
