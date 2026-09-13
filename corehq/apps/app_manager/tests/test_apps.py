@@ -195,7 +195,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
                 self.assertEqual(old_config_ids.intersection(new_config_ids), set())
 
     @patch_default_builds
-    def testImportApp_from_id(self):
+    def test_import_app_from_id(self):
         self.assertTrue(self.app.blobs)
         imported_app = import_app_from_id(self.app.id, self.domain)
         self._assert_imported_app_matches_source(imported_app)
@@ -247,7 +247,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
 
     @patch_default_builds
     @patch('corehq.apps.app_manager.models.ReportAppConfig.report')
-    def testImportApp_from_source(self, report_mock):
+    def test_import_app_from_source(self, report_mock):
         report_mock.return_value = get_sample_report_config()
         report_module = self.app.add_module(ReportModule.new_module('Reports', None))
         report_module.report_configs = [
