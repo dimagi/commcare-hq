@@ -13,6 +13,9 @@ from corehq.apps.fixtures.constants import LOOKUP_TABLE_TAG_MAX_LENGTH
 from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.fixtures.upload.const import LOOKUP_TABLE_ROW_BATCH_SIZE
 
+# Match lookup table instance IDs such as ``item-list:health-facility``.
+# ``(?P<tag>...)`` captures the tag. The negative lookahead rejects
+# a longer candidate instead of matching its first maximum-length characters.
 _ITEM_LIST_REFERENCE = re.compile(
     rf"item-list:(?P<tag>[\w.-]{{1,{LOOKUP_TABLE_TAG_MAX_LENGTH}}})(?![\w.-])"
 )
