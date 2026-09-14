@@ -12,6 +12,7 @@ from functools import cached_property
 
 import sqlglot
 from sqlalchemy import (
+    ARRAY,
     Float,
     Text,
     and_,
@@ -424,7 +425,21 @@ def _convert_value(node, columns):
         return _convert_array(node)
     if isinstance(node, exp.Placeholder):
         return _convert_placeholder(node)
+    if isinstance(node, exp.StringToArray):
+        return _convert_string_to_array(node, columns)
     return _convert_column(node, columns)
+
+
+def _convert_string_to_array(node, columns):
+    value, delimiter = _unpack(node, 'this', 'expression')
+    if not (isinstance(delimiter, exp.Literal) and delimiter.is_string):
+        raise UnsupportedSQL("string_to_array's delimiter must be a string literal")
+    _unpack(delimiter, 'this', 'is_string')
+    return func.string_to_array(
+        _convert_value(value, columns),
+        _bind(delimiter.to_py()),
+        type_=ARRAY(Text),
+    )
 
 
 def _convert_placeholder(node, expanding=False, type_=None):

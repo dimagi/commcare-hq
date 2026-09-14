@@ -4,7 +4,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy import (
+    ARRAY,
     Float,
+    Text,
     and_,
     bindparam,
     cast,
@@ -24,7 +26,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DataError, ProgrammingError
 from unmagic import fixture, use
 
-from corehq.apps.project_db.populate import coerce_to_gps
+from corehq.apps.project_db.populate import coerce_to_gps, coerce_to_select
 from corehq.apps.project_db.table_ddl import Earth
 from corehq.apps.project_db.user_sql import (
     MAX_TREE_DEPTH,
@@ -53,6 +55,10 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
 # An alias is what makes joining a table to itself possible
 VISIT_V, VISIT_P = VISIT.alias('v'), VISIT.alias('p')
 SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
+
+
+def _string_to_array(value, delimiter):
+    return func.string_to_array(value, delimiter, type_=ARRAY(Text))
 
 
 def _within_distance(coordinates, meters):
@@ -214,6 +220,17 @@ def _within_distance(coordinates, meters):
     ("SELECT * FROM survey WHERE symptoms @> '{fever,cough}'",
      select([SURVEY]).where(SURVEY.c.symptoms.bool_op('@>')(_bind('{fever,cough}')))),
 
+    # Split a string param to an array
+    ("SELECT * FROM survey WHERE string_to_array(:s, ',') <@ symptoms",
+     select([SURVEY]).where(
+         _string_to_array(bindparam('s'), _bind(','))
+         .bool_op('<@')( SURVEY.c.symptoms))),
+    # A text column can be split too
+    ("SELECT * FROM client WHERE string_to_array(name, ' ') && ARRAY['fever']",
+     select([CLIENT]).where(
+         _string_to_array(CLIENT.c.name, _bind(' ')).bool_op('&&')(
+             _bind(['fever'])))),
+
     # Geopoint filtering
     ("SELECT * FROM geo WHERE within_distance(gps_prop__location, '42.44 -71.14', 5000)",
      select([GEO]).where(_within_distance(_bind('42.44 -71.14'), _bind(5000.0)))),
@@ -291,6 +308,12 @@ def _compiled(query):
     "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2', '5')",
     # The column must be a GPS column, not just any column
     "SELECT * FROM geo WHERE within_distance(case_id, '1 2', 5)",
+
+    # `string_to_array` takes a string and a literal delimiter
+    "SELECT * FROM survey WHERE symptoms && string_to_array(:s, :delim)",
+    "SELECT * FROM survey WHERE symptoms && string_to_array(:s, ',', 'NULL')",
+    # Only columns can be selected or ordered by
+    "SELECT string_to_array(name, ' ') FROM client",
 
     # Only `JOIN` and `LEFT JOIN` are supported for now.
     'SELECT * FROM client INNER JOIN visit ON client.case_id = visit.parent_id',
@@ -473,6 +496,34 @@ def test_within_distance_db_test():
     assert matching(5000) == ['near']
     # A case with no location never matches, whatever the radius
     assert matching(300_000) == ['corner', 'far', 'near']
+
+
+@use('db', project_db_table('test-string-to-array', 'survey', {'symptoms': 'select'}, (
+    ['case_id', 'owner_id', 'select_prop__symptoms'], [
+        ['both', 'o', ['fever', 'cough']],
+        ['fever', 'o', ['fever']],
+        ['none', 'o', []],
+    ]
+)))
+def test_string_to_array_db_test():
+
+    def matching(operator, symptoms):
+        user_sql = UserSQL('test-string-to-array', (
+            'SELECT case_id FROM survey '
+            f"WHERE select_prop__symptoms {operator} string_to_array(:symptoms, ' ') "
+            'ORDER BY case_id'))
+        result = user_sql.run({'symptoms': symptoms})
+        return [row['case_id'] for row in result.rows]
+
+    # 'fever cough' and 'fever' both overlap with 'fever rash'
+    assert matching('&&', 'fever rash') == ['both', 'fever']
+    # 'fever cough' and 'fever' both contain 'fever'
+    assert matching('@>', 'fever') == ['both', 'fever']
+    # Only 'fever cough' contains the items 'fever cough'
+    assert matching('@>', 'fever cough') == ['both']
+    # An empty array is contained by every row, including the empty one
+    # 'fever' and '' are contained by 'fever'
+    assert matching('<@', 'fever') == ['fever', 'none']
 
 
 @pytest.mark.parametrize('error_class', [ProgrammingError, DataError])
