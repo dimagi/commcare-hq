@@ -18,7 +18,8 @@ from corehq.apps.app_manager.models import (
     Module,
     ReportAppConfig,
     ReportModule,
-    import_app,
+    import_app_from_doc,
+    import_app_from_id,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
@@ -31,6 +32,7 @@ from corehq.apps.app_manager.views.apps import load_app_from_slug
 from corehq.apps.app_manager.views.utils import update_linked_app
 from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.linked_domain.applications import link_app
 from corehq.apps.userreports.tests.utils import get_sample_report_config
 from corehq.apps.app_manager.views.releases import make_app_build
@@ -57,6 +59,10 @@ class AppManagerTest(TestCase, TestXmlMixin):
         cls.domain = 'test-domain'
         domain = create_domain(cls.domain)
         cls.addClassCleanup(domain.delete)
+
+        cls.destination_domain = 'test-destination-domain'
+        destination_domain = create_domain(cls.destination_domain)
+        cls.addClassCleanup(destination_domain.delete)
 
         cls.xform_str = cls.get_xml('very_simple_form').decode('utf-8')
 
@@ -175,9 +181,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
         self.app.rearrange_modules(0, 1)
         self.assertModuleOrder(self.app.modules, [m2, m0, m1])
 
-    @patch_default_builds
-    def _test_import_app(self, app_id_or_source):
-        new_app = import_app(app_id_or_source, self.domain)
+    def _assert_imported_app_matches_source(self, new_app):
         self.assertEqual(set(new_app.blobs.keys()).intersection(list(self.app.blobs.keys())), set())
         new_forms = list(new_app.get_forms())
         old_forms = list(self.app.get_forms())
@@ -189,13 +193,59 @@ class AppManagerTest(TestCase, TestXmlMixin):
                 old_config_ids = {config.uuid for config in old_module.report_configs}
                 new_config_ids = {config.uuid for config in new_module.report_configs}
                 self.assertEqual(old_config_ids.intersection(new_config_ids), set())
-        return new_app
 
+    @patch_default_builds
     def testImportApp_from_id(self):
         self.assertTrue(self.app.blobs)
-        imported_app = self._test_import_app(self.app.id)
+        imported_app = import_app_from_id(self.app.id, self.domain)
+        self._assert_imported_app_matches_source(imported_app)
         self.assertEqual(imported_app.family_id, self.app.id)
 
+    @patch_default_builds
+    def test_import_app_from_id_copies_lookup_tables(self):
+        self._add_country_lookup_table_reference()
+        LookupTable.objects.create(domain=self.destination_domain, tag="country")
+
+        imported_app = import_app_from_id(self.app.id, self.destination_domain)
+
+        assert imported_app.get_module(0).fixture_select.fixture_type == "country-1"
+        assert "item-list:country-1" in imported_app.get_module(0).forms[0].source
+        assert LookupTable.objects.filter(domain=self.destination_domain, tag="country-1").exists()
+
+    @patch_default_builds
+    def test_import_app_from_id_does_not_copy_lookup_tables_within_same_domain(self):
+        self._add_country_lookup_table_reference()
+
+        imported_app = import_app_from_id(self.app.id, self.domain)
+
+        assert imported_app.get_module(0).fixture_select.fixture_type == "country"
+        assert "item-list:country" in imported_app.get_module(0).forms[0].source
+        assert not LookupTable.objects.filter(domain=self.domain, tag="country-1").exists()
+
+    @patch("corehq.apps.app_manager.models.applications._import_app", side_effect=RuntimeError)
+    def test_import_app_from_id_removes_lookup_tables_on_failure(self, _import_app):
+        self._add_country_lookup_table_reference()
+
+        with self.assertRaises(RuntimeError):
+            import_app_from_id(self.app.id, self.destination_domain)
+
+        assert not LookupTable.objects.filter(domain=self.destination_domain, tag="country").exists()
+
+    def _add_country_lookup_table_reference(self):
+        table = LookupTable.objects.create(domain=self.domain, tag="country")
+        LookupTableRow.objects.create(
+            domain=self.domain,
+            table=table,
+            fields={},
+            item_attributes={},
+            sort_key=0,
+        )
+        module = self.app.get_module(0)
+        module.fixture_select.fixture_type = "country"
+        module.forms[0].source = self.get_xml("form_with_fixtures").decode("utf-8")
+        self.app.save()
+
+    @patch_default_builds
     @patch('corehq.apps.app_manager.models.ReportAppConfig.report')
     def testImportApp_from_source(self, report_mock):
         report_mock.return_value = get_sample_report_config()
@@ -205,7 +255,8 @@ class AppManagerTest(TestCase, TestXmlMixin):
             ReportAppConfig(report_id='config_id2', header={'en': 'CommBugz'})
         ]
         app_source = self.app.export_json(dump_json=False)
-        self._test_import_app(app_source)
+        imported_app = import_app_from_doc(app_source, self.domain)
+        self._assert_imported_app_matches_source(imported_app)
 
     def testAppsBrief(self):
         """Test that ApplicationBase can wrap the
@@ -272,7 +323,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
 
     @patch_default_builds
     def testBuildImportedApp(self):
-        app = import_app(self._yesno_source, self.domain)
+        app = import_app_from_doc(self._yesno_source, self.domain)
         copy = app.make_build()
         copy.save()
         self._check_has_build_files(copy, self.min_paths)
