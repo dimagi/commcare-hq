@@ -82,6 +82,7 @@ from corehq.apps.registry.exceptions import (
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.util.metrics import metrics_histogram_timer
 from corehq.util.quickcache import quickcache
 from corehq.util.xml_utils import serialize
 
@@ -188,7 +189,12 @@ def get_project_db_fixture(domain, endpoint, config):
     user_sql = UserSQL(domain, endpoint.current_version.dangerous_sql, CASE_SEARCH_MAX_RESULTS)
     all_params = {c.key: c.value for c in config.criteria}
     query_params = {p: all_params.get(p) or None for p in user_sql.parameters}
-    result = user_sql.run(query_params)
+    with metrics_histogram_timer(
+        'commcare.project_db.endpoint_query.duration',
+        timing_buckets=(.1, .5, 1, 2, 5, 10),
+        tags={'domain': domain, 'endpoint_id': str(endpoint.id)},
+    ):
+        result = user_sql.run(query_params)
     return _rows_to_fixture(result.rows)
 
 
