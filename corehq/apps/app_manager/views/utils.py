@@ -4,6 +4,8 @@ from collections import Counter, defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import partial, wraps
+from xml.sax.saxutils import escape, quoteattr
+
 from lxml import etree
 
 from django.contrib import messages
@@ -52,6 +54,7 @@ from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
 from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.util.metrics import metrics_gauge, metrics_histogram_timer
+from corehq.util.xml_utils import safe_fromstring
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -731,9 +734,10 @@ def validate_custom_assertions(custom_assertions_string, existing_assertions, la
                 raise AppMisconfigurationError(_("Custom assertions must not be blank."))
             if (len(assertion['text']) == 0):
                 raise AppMisconfigurationError(_("Please add a message for assertion."))
-            etree.fromstring(
-                '<assertion test="{test}"><text><locale id="abc.def"/>{text}</text></assertion>'.format(
-                    **assertion
+            safe_fromstring(
+                '<assertion test={test}><text><locale id="abc.def"/>{text}</text></assertion>'.format(
+                    test=quoteattr(assertion['test']),
+                    text=escape(assertion['text']),
                 )
             )
     except etree.XMLSyntaxError as error:
