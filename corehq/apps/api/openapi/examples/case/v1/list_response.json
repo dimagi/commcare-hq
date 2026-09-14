@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "limit": 20,
+    "next": null,
+    "offset": 0,
+    "previous": null,
+    "total_count": 1
+  },
+  "objects": [
+    {
+      "case_id": "45WKYXQRFFU3AT4Y022EX7HF2",
+      "id": "45WKYXQRFFU3AT4Y022EX7HF2",
+      "domain": "demo",
+      "closed": false,
+      "closed_by": null,
+      "date_closed": null,
+      "date_modified": "2012-03-13T18:21:52Z",
+      "indexed_on": "2012-04-05T23:56:41Z",
+      "indices": {},
+      "opened_by": "06414101dc45bcfdc963b8cb1a1ebdfd",
+      "properties": {
+        "case_name": "ryan",
+        "case_type": "programmer",
+        "date_opened": "2012-03-13T18:21:52Z",
+        "external_id": "45WKYXQRFFU3AT4Y022EX7HF2",
+        "gender": "m",
+        "languages": "python java javascript c php erlang love",
+        "owner_id": null,
+        "role": "artisan"
+      },
+      "resource_uri": "/a/demo/api/case/v1/45WKYXQRFFU3AT4Y022EX7HF2/",
+      "server_date_modified": "2012-04-05T23:56:41Z",
+      "server_date_opened": "2012-04-05T23:56:41Z",
+      "user_id": "06414101dc45bcfdc963b8cb1a1ebdfd",
+      "xform_ids": ["3HQEXR2S0GIRFY2GF40HAR7ZE"]
+    }
+  ]
+}
