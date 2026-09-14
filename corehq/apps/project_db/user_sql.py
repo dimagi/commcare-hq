@@ -28,7 +28,7 @@ from sqlalchemy import (
     union_all,
 )
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.exc import DataError, ProgrammingError
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
@@ -116,7 +116,7 @@ class UserSQL:
             start = time.perf_counter()
             try:
                 result = conn.execute(self.query, params)
-            except ProgrammingError as e:
+            except (DataError, ProgrammingError) as e:
                 raise UserSQLProgrammingError(str(e.orig)) from e
             rows = result.fetchall()
             return QueryResult(

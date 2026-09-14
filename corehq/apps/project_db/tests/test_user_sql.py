@@ -21,7 +21,7 @@ from sqlalchemy import (
     union_all,
 )
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.exc import DataError, ProgrammingError
 from unmagic import fixture, use
 
 from corehq.apps.project_db.populate import coerce_to_gps
@@ -475,10 +475,11 @@ def test_within_distance_db_test():
     assert matching(300_000) == ['corner', 'far', 'near']
 
 
-def test_run_reports_a_database_error():
+@pytest.mark.parametrize('error_class', [ProgrammingError, DataError])
+def test_run_reports_a_database_error(error_class):
     msg = 'column "nope" does not exist\nLINE 1: ...'
     engine = MagicMock()
-    engine.connect().__enter__().execute.side_effect = ProgrammingError(
+    engine.connect().__enter__().execute.side_effect = error_class(
         'SELECT 1', {}, Exception(msg))
     user_sql = _user_sql('SELECT * FROM client')
     with patch('corehq.apps.project_db.user_sql.get_project_db_engine',
