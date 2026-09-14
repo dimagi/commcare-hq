@@ -183,16 +183,25 @@ def _rewrite_string_values(value, tag_mapping):
 
 
 def _rewrite_lookup_table_string(value, tag_mapping):
+    """Rewrite fixture instance IDs and row XPaths for renamed lookup tables.
+
+    A table tagged ``fruit`` uses ``item-list:fruit`` as its instance ID and
+    ``fruit_list/fruit`` as the XPath to its rows.
+    """
     referenced_tags = {match.group("tag") for match in _ITEM_LIST_REFERENCE.finditer(value)}
     for source_tag in referenced_tags:
         destination_tag = tag_mapping.get(source_tag)
         if not destination_tag or destination_tag == source_tag:
             continue
+        # Rewrite the tag-derived ``<tag>_list/<tag>`` XPath.
+        # eg. "fruit_list/fruit" -> "fruit-1_list/fruit-1"
         value = re.sub(
             rf"(?<![\w.-]){re.escape(source_tag)}_list/{re.escape(source_tag)}(?![\w.-])",
             f"{destination_tag}_list/{destination_tag}",
             value,
         )
+        # Rewrite the fixture instance ID.
+        # eg. "item-list:fruit" -> "item-list:fruit-1"
         value = re.sub(
             rf"item-list:{re.escape(source_tag)}(?![\w.-])",
             f"item-list:{destination_tag}",
