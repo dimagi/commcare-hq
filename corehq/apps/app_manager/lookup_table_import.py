@@ -74,12 +74,6 @@ def copy_lookup_tables(source_app_doc, source_domain, destination_domain):
     )
 
 
-def rewrite_lookup_table_references(app_doc, tag_mapping):
-    """Update structured and string lookup-table references in ``app_doc`` in place."""
-    _rewrite_fixture_type_fields(app_doc, tag_mapping)
-    _rewrite_string_values(app_doc, tag_mapping)
-
-
 def delete_copied_lookup_tables(destination_domain, table_ids):
     LookupTable.objects.filter(domain=destination_domain, id__in=table_ids).delete()
 
@@ -153,6 +147,12 @@ def _destination_tag(source_tag, suffix):
         return source_tag
     suffix_text = f"-{suffix}"
     return f"{source_tag[:LOOKUP_TABLE_TAG_MAX_LENGTH - len(suffix_text)]}{suffix_text}"
+
+
+def rewrite_lookup_table_references(app_doc, tag_mapping):
+    """Update structured and string lookup-table references in ``app_doc`` in place."""
+    _rewrite_fixture_type_fields(app_doc, tag_mapping)
+    _rewrite_string_values(app_doc, tag_mapping)
 
 
 def _rewrite_fixture_type_fields(value, tag_mapping):
