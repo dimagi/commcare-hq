@@ -23,8 +23,8 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy, gettext_noop
+from django.utils.translation import gettext_noop
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import (
     require_GET,
     require_http_methods,
@@ -191,7 +191,7 @@ def reports_home(request, domain):
 
 
 class BaseProjectReportSectionView(BaseDomainView):
-    section_name = gettext_lazy("Project Reports")
+    section_name = _("Project Reports")
 
     def dispatch(self, request, *args, **kwargs):
         request.project = Domain.get_by_name(self.domain)
@@ -833,7 +833,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 self.report_notification.update_attributes(list(self.scheduled_report_form.cleaned_data.items()))
             except ValidationError as err:
                 kwargs['error'] = str(err)
-                messages.error(request, gettext_lazy(kwargs['error']))
+                messages.error(request, _(kwargs['error']))
                 return self.get(request, *args, **kwargs)
 
             soft_shift_to_server_timezone(self.report_notification)
@@ -876,9 +876,9 @@ class ReportNotificationUnsubscribeView(TemplateView):
                 kwargs['error'] = err.message
 
         if 'error' in kwargs:
-            messages.error(request, gettext_lazy(kwargs['error']))
+            messages.error(request, _(kwargs['error']))
         elif 'success' in kwargs:
-            messages.success(request, gettext_lazy(kwargs['success']))
+            messages.success(request, _(kwargs['success']))
 
         return super(ReportNotificationUnsubscribeView, self).get(request, *args, **kwargs)
 
@@ -1201,10 +1201,10 @@ def _get_form_render_context(request, domain, instance, case_id=None):
     instance_history = []
     if instance.history:
         form_operations = {
-            'archive': gettext_lazy('Archive'),
-            'unarchive': gettext_lazy('Un-Archive'),
-            'edit': gettext_lazy('Edit'),
-            'uuid_data_fix': gettext_lazy('Duplicate ID fix')
+            'archive': _('Archive'),
+            'unarchive': _('Un-Archive'),
+            'edit': _('Edit'),
+            'uuid_data_fix': _('Duplicate ID fix')
         }
         for operation in instance.history:
             user_date = ServerTime(operation.date).user_time(timezone).done()
@@ -1424,7 +1424,7 @@ def safely_get_form(request, domain, instance_id):
 @location_safe
 class FormDataView(BaseProjectReportSectionView):
     urlname = 'render_form_data'
-    page_title = gettext_lazy("Untitled Form")
+    page_title = _("Untitled Form")
     template_name = "reports/reportdata/bootstrap3/form_data.html"
     http_method_names = ['get']
 
@@ -1836,7 +1836,7 @@ def project_health_user_details(request, domain, user_id):
 
 class TableauServerView(BaseProjectReportSectionView):
     urlname = 'tableau_server_view'
-    page_title = gettext_lazy('Tableau Server Config')
+    page_title = _('Tableau Server Config')
     template_name = 'hqwebapp/crispy/bootstrap3/single_crispy_form.html'
 
     @method_decorator(require_superuser)
@@ -1886,11 +1886,11 @@ class TableauServerView(BaseProjectReportSectionView):
         if self.tableau_server_form.is_valid():
             self.tableau_server_form.save()
             messages.success(
-                request, gettext_lazy("Tableau Server Settings Updated")
+                request, _("Tableau Server Settings Updated")
             )
         else:
             messages.error(
-                request, gettext_lazy("Could not update Tableau Server Settings")
+                request, _("Could not update Tableau Server Settings")
             )
         return self.get(request, *args, **kwargs)
 
