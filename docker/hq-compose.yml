@@ -164,7 +164,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka:}/kafka/kafka-logs-1
 
   minio:
-    image: docker.io/minio/minio
+    image: quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
     command: server --address :9980 --console-address :9981 /data
     expose:
       - "9980"
