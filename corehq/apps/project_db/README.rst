@@ -27,6 +27,13 @@ Definitions are built with `SQLAlchemy Core
 for the ``project_db`` engine (the default database unless
 ``REPORTING_DATABASES`` maps it elsewhere).
 
+Querying
+--------
+
+``user_sql.py`` translates user-written SQL into SQLAlchemy Core, accepting only
+a strict subset of ``SELECT`` and binding every literal. ``describe.py``
+documents that subset.
+
 Evolution
 ---------
 
@@ -61,5 +68,6 @@ TODOs
   properties, not datetime - does it intend the latter? Should we
   support both?
 - Index external ID.
+- Add units arg to ``within_distance``
 - Put limit on number of property columns
 - Add a SQL user per domain with only access to that domain's schema
