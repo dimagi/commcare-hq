@@ -408,6 +408,14 @@ def module_offers_search(module):
     )
 
 
+def module_uses_case_search_endpoint(module):
+    return bool(
+        module_offers_search(module)
+        and toggles.CASE_SEARCH_ENDPOINTS.enabled(module.get_app().domain)
+        and module.search_config.case_search_endpoint_id
+    )
+
+
 def module_uses_inline_search(module):
     """In 'inline search' mode the query and post are added to the form entry directly instead
     of creating a separate RemoteRequest entry."""

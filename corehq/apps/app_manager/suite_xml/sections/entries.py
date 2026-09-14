@@ -38,6 +38,7 @@ from corehq.apps.app_manager.util import (
     actions_use_usercase,
     module_loads_registry_case,
     module_offers_search,
+    module_uses_case_search_endpoint,
     module_uses_inline_search,
     module_uses_inline_search_with_parent_relationship_parent_select,
 )
@@ -639,12 +640,16 @@ class EntriesHelper(object):
                     instance_name, root_element = "results", "results"
                 filter_xpath += EXCLUDE_RELATED_CASES_FILTER
 
-            nodeset = EntriesHelper._get_nodeset_xpath(
-                instance_name, root_element,
-                datum['case_type'],
-                filter_xpath=filter_xpath,
-                additional_types=datum['module'].additional_case_types
-            )
+            if uses_inline_search and module_uses_case_search_endpoint(detail_module):
+                # Don't apply any post-facto filtering to case search endpoint results
+                nodeset = f"instance('{instance_name}')/{root_element}/case"
+            else:
+                nodeset = EntriesHelper._get_nodeset_xpath(
+                    instance_name, root_element,
+                    datum['case_type'],
+                    filter_xpath=filter_xpath,
+                    additional_types=datum['module'].additional_case_types
+                )
 
             datum_cls = InstanceDatum if datum['module'].is_multi_select() else SessionDatum
             datums.append(FormDatumMeta(

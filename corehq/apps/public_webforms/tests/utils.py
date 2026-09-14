@@ -1,17 +1,33 @@
 import datetime
 
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
+from unmagic import fixture, use
+
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.public_webforms.models import PublicWebform
+from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
+from corehq.privileges import PUBLIC_WEBFORMS
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 DOMAIN = 'public-forms-domain'
 OTHER_DOMAIN = 'public-forms-other-domain'
 PASSWORD = 'Passw0rd!'
 ADMIN_USER = 'webform-admin@example.com'
 NORMAL_USER = 'normal-user@example.com'
+
+
+@fixture
+def public_webforms_available():
+    with flag_enabled('PUBLIC_WEBFORMS'), privilege_enabled(PUBLIC_WEBFORMS):
+        yield
+
+
+@fixture
+def skip_turnstile():
+    with override_settings(TURNSTILE_SECRET_KEY=''):
+        yield
 
 
 def create_webform(**kwargs):
@@ -28,6 +44,24 @@ def create_webform(**kwargs):
         'expires_at': timezone.now() + datetime.timedelta(days=30),
         **kwargs,
     })
+
+
+def create_session(webform, **kwargs):
+    return PublicFormSession.objects.create(**{
+        'public_webform': webform,
+        'expires_at': timezone.now() + datetime.timedelta(hours=1),
+        **kwargs,
+    })
+
+
+@use('db')
+@fixture
+def webform_domain():
+    domain_obj = create_domain(DOMAIN)
+    try:
+        yield domain_obj
+    finally:
+        domain_obj.delete()
 
 
 class PublicWebformViewTestCase(TestCase):

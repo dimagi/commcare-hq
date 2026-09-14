@@ -1,0 +1,24 @@
+{% extends "public_webforms/public/base.html" %}
+{% load i18n %}
+
+{% block page_name %}{% trans "Check Your Messages" %}{% endblock page_name %}
+
+{% block page_content %}
+  <div class="lead">
+    {% blocktrans %}
+      We sent a link using the contact information you provided.
+    {% endblocktrans %}
+  </div>
+  <p class="mt-4">
+    {% blocktrans %}
+      The link expires in {{ link_lifespan }} and only works once.
+    {% endblocktrans %}
+  </p>
+  {% if request_url %}
+    <div class="mt-4">
+      <a class="btn btn-lg btn-outline-primary" href="{{ request_url }}"
+        >{% trans "Request another link" %}</a
+      >
+    </div>
+  {% endif %}
+{% endblock page_content %}

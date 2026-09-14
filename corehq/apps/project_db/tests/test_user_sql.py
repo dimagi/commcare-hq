@@ -1,5 +1,6 @@
+import sys
 from decimal import Decimal
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy import (
@@ -16,11 +17,15 @@ from sqlalchemy import (
     union_all,
 )
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import ProgrammingError
+from unmagic import fixture, use
 
 from corehq.apps.project_db.user_sql import (
+    MAX_TREE_DEPTH,
     BadParameters,
     UnsupportedSQL,
     UserSQL,
+    UserSQLProgrammingError,
     _bind,
     translate,
 )
@@ -42,6 +47,7 @@ SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
 
 @pytest.mark.parametrize('sql, expected', [
     ('SELECT * FROM client', select([CLIENT])),
+    ('SELECT * FROM client;', select([CLIENT])),  # semi-colon is fine
     ('SELECT name, case_id FROM client', select([CLIENT.c.name, CLIENT.c.case_id])),
 
     # Column aliases
@@ -194,6 +200,9 @@ def _compiled(query):
 
 @pytest.mark.parametrize('sql', [
     # Invalid SQL
+    '',                             # Nothing
+    '   ',                          # Only whitespace
+    ';',                            # Hmmm
     'SELECT * FROM (((',            # unbalanced parens
     'SELECT FROM',                  # missing projection
     "SELECT * FROM 'unclosed",      # unterminated string literal
@@ -305,7 +314,7 @@ def test_query_parameters_are_left_unbound():
 
 def _user_sql(sql):
     """A ``UserSQL`` over the test tables, with the domain lookup already done"""
-    user_sql = UserSQL('test-domain', sql)
+    user_sql = UserSQL('test-domain', sql, max_rows=None)
     with patch('corehq.apps.project_db.user_sql.get_domain_tables', return_value=TABLES):
         user_sql.query  # a cached_property, so the tables are resolved just once
     return user_sql
@@ -359,3 +368,63 @@ def test_handle_quoted_tables():
     tables = {'hyphenated-table': hyphenated_table}
     result = translate('SELECT * FROM "hyphenated-table"', tables)
     assert str(result) == str(select([hyphenated_table]))
+
+
+@fixture
+def restore_trace_function():
+    """Put back a trace function that exhausting the stack has dropped
+
+    CPython disables tracing when the stack overflows while calling the trace
+    function, which makes coverage warn that its data is unreliable, failing
+    the whole test run at interpreter shutdown.
+    """
+    trace = sys.gettrace()
+    try:
+        yield
+    finally:
+        if sys.gettrace() is not trace:
+            sys.settrace(trace)
+
+
+@use(restore_trace_function)
+def test_rejects_nesting_that_exhausts_the_parser():
+    sql = 'SELECT * FROM client WHERE ' + '(' * 100 + 'name = 1' + ')' * 100
+    with pytest.raises(UnsupportedSQL, match='nested too deeply'):
+        translate(sql, TABLES)
+
+
+def test_rejects_a_parse_tree_too_deep_to_convert():
+    # This parses fine: the nesting is in the tree, not in parentheses
+    sql = 'SELECT * FROM client WHERE ' + ' AND '.join(['name = 1'] * 1000)
+    with pytest.raises(UnsupportedSQL, match='nested too deeply'):
+        translate(sql, TABLES)
+
+
+def test_allows_nesting_up_to_the_limit():
+    # The deepest tree the limit allows must still be translatable, so that
+    # raising the limit past what the stack allows fails here rather than
+    # crashing the interpreter.
+    sql = ('SELECT * FROM client WHERE '
+           + ' AND '.join(['name = 1'] * (MAX_TREE_DEPTH - 5)))
+    assert translate(sql, TABLES) is not None
+
+
+def test_run_reports_a_database_error():
+    msg = 'column "nope" does not exist\nLINE 1: ...'
+    engine = MagicMock()
+    engine.connect().__enter__().execute.side_effect = ProgrammingError(
+        'SELECT 1', {}, Exception(msg))
+    user_sql = _user_sql('SELECT * FROM client')
+    with patch('corehq.apps.project_db.user_sql.get_project_db_engine',
+               return_value=engine):
+        with pytest.raises(UserSQLProgrammingError) as error:
+            user_sql.run({})
+    assert msg in error.value.msg
+
+
+def test_max_rows_applies_limit():
+    user_sql = UserSQL('test-domain', 'SELECT name FROM client', max_rows=5)
+    with patch('corehq.apps.project_db.user_sql.get_domain_tables', return_value=TABLES):
+        actual = _compiled(user_sql.query)
+    expected = _compiled(select([CLIENT.c.name]).limit(_bind(5)))
+    assert actual == expected

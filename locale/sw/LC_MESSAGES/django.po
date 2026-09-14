@@ -73,6 +73,7 @@ msgid "Account Name"
 msgstr "Jina la Akaunti"
 
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
@@ -199,6 +200,47 @@ msgstr "Imepunguzwa Bei"
 #: corehq/apps/accounting/filters.py
 msgid "Is Hidden"
 msgstr "Imefichwa"
+
+#: corehq/apps/accounting/filters.py
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/invoice.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/data_cleaning/tables.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
+#: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/hqadmin/templates/hqadmin/email_status.html
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/reports/standard/cases/basic.py
+#: corehq/apps/reports/standard/sms.py
+#: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
+#: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
+#: corehq/apps/settings/templates/settings/my_projects.html
+#: corehq/apps/settings/views.py corehq/apps/sms/filters.py
+#: corehq/apps/sms/templates/sms/whatsapp_templates.html
+#: corehq/apps/sms/views.py corehq/apps/sso/forms.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
+#: corehq/ex-submodules/casexml/apps/case/views.py
+#: corehq/messaging/scheduling/forms.py
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+#: corehq/motech/generic_inbound/reports.py
+#: corehq/motech/repeaters/views/repeat_records.py
+#: corehq/motech/templates/motech/log_detail.html
+#: corehq/motech/templates/motech/logs.html
+msgid "Status"
+msgstr "Hali"
 
 #: corehq/apps/accounting/filters.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/reports/standard/cases/basic.py
@@ -408,6 +450,11 @@ msgid "Justify why \"Skip Auto Pause\""
 msgstr "Eleza sababu ya \"Ruka Kusitisha Kiotomatiki\""
 
 #: corehq/apps/accounting/forms.py
+#| msgid "Extend session"
+msgid "Extension length"
+msgstr "Urefu wa muda wa nyongeza"
+
+#: corehq/apps/accounting/forms.py
 msgid "Enable auto renewal"
 msgstr "Wezesha upyaaji kiotomatiki"
 
@@ -463,6 +510,7 @@ msgstr "%s Usajili"
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
 #: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
 #: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -819,6 +867,7 @@ msgstr ""
 #: corehq/apps/accounting/models.py corehq/apps/data_dictionary/models.py
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/integration/payments/tables.py
+#: corehq/apps/public_webforms/public/forms.py
 #: corehq/apps/registration/forms.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/settings/forms.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/templates/sms/add_gateway.html
@@ -1260,7 +1309,9 @@ msgstr ""
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
-#: corehq/apps/public_webforms/forms.py corehq/apps/registration/forms.py
+#: corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+#: corehq/apps/registration/forms.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/forms.py
@@ -1364,6 +1415,86 @@ msgstr "Mikopo"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Autopay"
 msgstr "Malipo ya Moja kwa Moja"
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#| msgid "Send on"
+msgid "Send On"
+msgstr "Tuma Tarehe"
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
+#: corehq/apps/campaign/forms.py
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/views.py
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+#: corehq/apps/export/templates/export/customize_export_new.html
+#: corehq/apps/export/templates/export/download_data_files.html
+#: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
+#: corehq/apps/hqadmin/reports.py
+#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/programs/templates/programs/manage/program.html
+#: corehq/apps/registry/templates/registry/registry_list.html
+#: corehq/apps/reminders/forms.py corehq/apps/reminders/views.py
+#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
+#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
+#: corehq/apps/sms/forms.py corehq/apps/sms/views.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
+#: corehq/apps/userreports/views.py corehq/motech/dhis2/forms.py
+#: corehq/motech/dhis2/views.py corehq/motech/generic_inbound/views.py
+msgid "Description"
+msgstr "Maelezo"
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/accounting/templates/accounting/invoice.html
+#: corehq/apps/integration/payments/tables.py
+msgid "Amount"
+msgstr "Kiasi"
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#| msgid "Prepayment Amount"
+msgid "Prepayment Term"
+msgstr "Muda wa Malipo ya Awali"
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/accounting/templates/accounting/invoice.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/messaging/scheduling/forms.py
+msgid "Recipients"
+msgstr "Wapokeaji"
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#| msgid "Scheduled end"
+msgid "Scheduled By"
+msgstr "Imepangwa Na"
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+msgid ""
+"\n"
+"        Cancelling stops this invoice from being generated and emailed. It\n"
+"        cannot be undone. Schedule a replacement if the amount or dates need\n"
+"        to change.\n"
+"      "
+msgstr ""
+"\n"
+"        Kufuta kunazuia ankara hii isitengenezwe na kutumwa kwa barua pepe.\n"
+"        Hii haiwezi kutenduliwa. Panga mbadala ikiwa kiasi au tarehe zinahitaji\n"
+"        kubadilishwa.\n"
+"      "
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+msgid "This invoice is no longer pending, so there is nothing to cancel."
+msgstr ""
+"Ankara hii haipo tena kwenye hali ya kusubiri, hivyo hakuna cha kufuta."
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_card_removed.html
 #, python-format
@@ -1920,45 +2051,6 @@ msgstr ""
 #: corehq/apps/domain/views/accounting.py corehq/apps/enterprise/views.py
 msgid "Statement No."
 msgstr "Nambari ya Taarifa"
-
-#: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
-#: corehq/apps/accounting/templates/accounting/email/invoice.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
-#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/data_cleaning/tables.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
-#: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
-#: corehq/apps/enterprise/enterprise.py
-#: corehq/apps/hqadmin/templates/hqadmin/email_status.html
-#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/reports/standard/cases/basic.py
-#: corehq/apps/reports/standard/sms.py
-#: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
-#: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
-#: corehq/apps/settings/templates/settings/my_projects.html
-#: corehq/apps/settings/views.py corehq/apps/sms/filters.py
-#: corehq/apps/sms/templates/sms/whatsapp_templates.html
-#: corehq/apps/sms/views.py corehq/apps/sso/forms.py
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
-#: corehq/ex-submodules/casexml/apps/case/views.py
-#: corehq/messaging/scheduling/forms.py
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-#: corehq/motech/generic_inbound/reports.py
-#: corehq/motech/repeaters/views/repeat_records.py
-#: corehq/motech/templates/motech/log_detail.html
-#: corehq/motech/templates/motech/logs.html
-msgid "Status"
-msgstr "Hali"
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
@@ -4113,13 +4205,6 @@ msgid "Date"
 msgstr "Tarehe"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/messaging/scheduling/forms.py
-msgid "Recipients"
-msgstr "Wapokeaji"
-
-#: corehq/apps/accounting/templates/accounting/invoice.html
 msgid "View PDF"
 msgstr "Tazama PDF"
 
@@ -4148,11 +4233,6 @@ msgstr "Aina ya Malipo"
 #: corehq/motech/fhir/const.py
 msgid "User"
 msgstr "Mtumiaji"
-
-#: corehq/apps/accounting/templates/accounting/invoice.html
-#: corehq/apps/integration/payments/tables.py
-msgid "Amount"
-msgstr "Kiasi"
 
 #: corehq/apps/accounting/templates/accounting/partials/adjust_balance.html
 msgid "Adjust Balance for Invoice #"
@@ -5416,7 +5496,7 @@ msgstr "Kesi"
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/public_webforms/tables.py
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
 #: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py
 #: corehq/apps/reports/standard/inspect.py
@@ -5439,7 +5519,7 @@ msgstr "Chanzo cha Data"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/linked_domain/const.py
+#: corehq/apps/linked_domain/const.py corehq/apps/public_webforms/forms.py
 #: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/deployments.py
@@ -5488,6 +5568,7 @@ msgstr "Chagua aina ya kesi au fomu ambayo data itachukuliwa kwa ripoti hii."
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+#: corehq/apps/public_webforms/forms.py
 #: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py
 msgid "Menu"
@@ -7826,7 +7907,9 @@ msgstr "Sakinisha CommCare"
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_feedback.html
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
 #: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/async/bootstrap5/default.html
@@ -12692,35 +12775,6 @@ msgstr "Ripoti"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
-#: corehq/apps/campaign/forms.py
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/views.py
-#: corehq/apps/domain/templates/domain/admin/feature_previews.html
-#: corehq/apps/export/templates/export/customize_export_new.html
-#: corehq/apps/export/templates/export/download_data_files.html
-#: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/hqadmin/reports.py
-#: corehq/apps/products/templates/products/manage/products.html
-#: corehq/apps/programs/templates/programs/manage/program.html
-#: corehq/apps/registry/templates/registry/registry_list.html
-#: corehq/apps/reminders/forms.py corehq/apps/reminders/views.py
-#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
-#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/sms/forms.py corehq/apps/sms/views.py
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
-#: corehq/apps/userreports/views.py corehq/motech/dhis2/forms.py
-#: corehq/motech/dhis2/views.py corehq/motech/generic_inbound/views.py
-msgid "Description"
-msgstr "Maelezo"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
 msgid "Sync Delay (in hours)"
 msgstr "Muda wa Kusawazisha (kwa saa)"
 
@@ -16155,7 +16209,6 @@ msgstr "Weka jina la endpoint"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#| msgid "Input Type"
 msgid "Endpoint Type"
 msgstr "Aina ya Endpoint"
 
@@ -16216,12 +16269,10 @@ msgstr "Unda Endpoint"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #, python-format
-#| msgid "New Endpoint"
 msgid "New Endpoint (%(label)s)"
 msgstr "Endpoint Mpya (%(label)s)"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#| msgid "File Dropzone"
 msgid "Toggle Dropdown"
 msgstr "Fungua Orodha ya Chaguo"
 
@@ -20640,16 +20691,11 @@ msgstr ""
 "  "
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
-#| msgid "Please try again."
 msgid "The job failed. Please try again."
 msgstr "Kazi imeshindwa. Tafadhali jaribu tena."
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Changes have been saved successfully!\n"
-#| "        "
 msgid ""
 "\n"
 "            %(counter)s form processed successfully\n"
@@ -20662,16 +20708,11 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
-#| msgid "No Forms are supplied"
 msgid "Some forms were skipped:"
 msgstr "Baadhi ya fomu zilirukwa:"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to reverse this.</span>\n"
-#| "  "
 msgid ""
 "\n"
 "    <span\n"
@@ -20868,7 +20909,6 @@ msgid "Form Management"
 msgstr "Usimamizi wa Fomu"
 
 #: corehq/apps/data_interfaces/views.py
-#| msgid "No Forms are supplied"
 msgid "No forms were supplied."
 msgstr "Hakuna fomu zilizowasilishwa."
 
@@ -21676,6 +21716,7 @@ msgstr "Tafadhali taja kikomo cha OData feeds."
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
 #: corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/public/forms.py
 #: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py
@@ -24620,6 +24661,24 @@ msgstr "Idadi"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#| msgid "Level to expand to"
+msgid "Leave blank to send now."
+msgstr "Acha wazi kutuma sasa."
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/domain/views/accounting.py
+#| msgid "Expiration Date must be in the future"
+msgid "The send date must be in the future."
+msgstr "Tarehe ya kutuma lazima iwe siku zijazo."
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Scheduled. It will be generated and emailed on"
+msgstr "Imepangwa. Itatengenezwa na kutumwa kwa barua pepe tarehe"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 msgid ""
 " Thank you! You will receive an invoice via email with\n"
 "  instructions for wire payment. Please include the invoice ID in the wire\n"
@@ -26076,6 +26135,26 @@ msgid "Quantity must be a whole number greater than 0."
 msgstr "Kiasi lazima kiwe namba kamili iliyo kubwa kuliko 0."
 
 #: corehq/apps/domain/views/accounting.py
+#| msgid "A valid end date is required"
+msgid "A send date is required."
+msgstr "Tarehe ya kutuma inahitajika."
+
+#: corehq/apps/domain/views/accounting.py
+#, python-format
+#| msgid ""
+#| "Username %(username)s is too long.  Must be under %(max_length)s characters."
+msgid "The credit label must be %(max_length)d characters or fewer."
+msgstr "Lebo ya mkopo lazima iwe na herufi %(max_length)d au chini yake."
+
+#: corehq/apps/domain/views/accounting.py
+msgid ""
+"This project space has no active subscription, so an invoice cannot be "
+"scheduled for it."
+msgstr ""
+"Eneo hili la mradi halina usajili unaofanya kazi, hivyo ankara haiwezi "
+"kupangwa kwa ajili yake."
+
+#: corehq/apps/domain/views/accounting.py
 msgid "Dimagi Internal Subscription Management"
 msgstr "Usimamizi wa Usajili wa Ndani wa Dimagi"
 
@@ -26167,6 +26246,15 @@ msgstr "2. Thibitisha Kusitisha"
 #: corehq/apps/domain/views/accounting.py
 msgid "2. Confirm Subscription"
 msgstr "2. Thibitisha Usajili"
+
+#: corehq/apps/domain/views/accounting.py
+msgid ""
+"Your annual subscription only allows upgrades. You cannot downgrade, pause, "
+"or switch to the same edition during your annual commitment."
+msgstr ""
+"Usajili wako wa mwaka unaruhusu tu kuboresha. Huwezi kushusha kiwango, "
+"kusitisha, au kubadilisha hadi toleo lile lile wakati wa ahadi yako ya "
+"mwaka."
 
 #: corehq/apps/domain/views/accounting.py corehq/apps/users/forms.py
 #: corehq/apps/users/views/mobile/users.py
@@ -26674,6 +26762,7 @@ msgstr "OData Feeds Zinazopatikana"
 
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/forms.py
 #: corehq/apps/integration/payments/tables.py
+#: corehq/apps/public_webforms/public/forms.py
 #: corehq/apps/registration/forms.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
@@ -33256,12 +33345,10 @@ msgid "Case Group"
 msgstr "Kundi la Kesi"
 
 #: corehq/apps/hqwebapp/fields.py
-#| msgid "Please confirm that you want to proceed?"
 msgid "Please confirm that you are not a robot."
 msgstr "Tafadhali thibitisha kuwa wewe si roboti."
 
 #: corehq/apps/hqwebapp/fields.py
-#| msgid "There was an error saving your alert. Please try again!"
 msgid "We could not confirm that you are not a robot. Please try again."
 msgstr "Hatukuweza kuthibitisha kuwa wewe si roboti. Tafadhali jaribu tena."
 
@@ -38262,7 +38349,6 @@ msgid "Edit Program"
 msgstr "Hariri Programu"
 
 #: corehq/apps/project_db/templates/project_db/partials/query_results.html
-#| msgid "Translate Me"
 msgid "Translated SQL"
 msgstr "SQL Iliyotafsiriwa"
 
@@ -38276,29 +38362,24 @@ msgstr "Endesha"
 
 #: corehq/apps/project_db/templates/project_db/partials/query_results.html
 #, python-format
-#| msgid "Duration: %(duration)s"
 msgid "Evaluated in %(duration)s seconds"
 msgstr "Imekadiriwa kwa sekunde %(duration)s"
 
 #: corehq/apps/project_db/templates/project_db/partials/query_results.html
 #, python-format
-#| msgid "Showing the first"
 msgid "Showing the first %(max_rows)s rows."
 msgstr "Inaonyesha safu %(max_rows)s za kwanza."
 
 #: corehq/apps/project_db/templates/project_db/partials/query_results.html
-#| msgid "results"
 msgid "No results"
 msgstr "Hakuna matokeo"
 
 #: corehq/apps/project_db/templates/project_db/query_project_db.html
 #: corehq/apps/project_db/views.py
-#| msgid "My Projects"
 msgid "Query ProjectDB"
 msgstr "Uliza ProjectDB"
 
 #: corehq/apps/project_db/templates/project_db/query_project_db.html
-#| msgid "Table "
 msgid "Tables"
 msgstr "Jedwali"
 
@@ -38307,27 +38388,22 @@ msgid "This project has no ProjectDB tables yet."
 msgstr "Mradi huu hauna majedwali ya ProjectDB bado."
 
 #: corehq/apps/project_db/templates/project_db/query_project_db.html
-#| msgid "Custom SMS Content"
 msgid "Copy DB Context"
 msgstr "Nakili Muktadha wa DB"
 
 #: corehq/apps/public_webforms/form_paths.py
-#| msgid "Deleted"
 msgid "(Deleted)"
 msgstr "(Imefutwa)"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "Search Filter"
 msgid "Search labels"
 msgstr "Tafuta lebo"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "All statuses"
 msgid "Any status"
 msgstr "Hali yoyote"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "type"
 msgid "Any type"
 msgstr "Aina yoyote"
 
@@ -38391,7 +38467,32 @@ msgstr "Tafadhali chagua programu, menyu, na fomu."
 msgid "The selected form can't be used for a public webform."
 msgstr "Fomu iliyochaguliwa haiwezi kutumika kwa fomu ya umma ya wavuti."
 
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/views.py
+#| msgid "Public Webforms"
+msgid "Edit Public Webform"
+msgstr "Hariri Fomu ya Wavuti ya Umma"
+
+#: corehq/apps/public_webforms/forms.py corehq/apps/userreports/ui/forms.py
+#: corehq/motech/dhis2/forms.py
+#: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
+#: corehq/motech/openmrs/forms.py
+msgid "Save Changes"
+msgstr "Hifadhi Mabadiliko"
+
+#: corehq/apps/public_webforms/messaging.py
+#, python-brace-format
+#| msgid "Continue To {form_name}"
+msgid "Your one-time link for {form_name}"
+msgstr "Kiungo chako cha mara moja kwa {form_name}"
+
+#: corehq/apps/public_webforms/messaging.py
+#, python-brace-format
+msgid "Your one-time link for {form_name} is: {url}"
+msgstr "Kiungo chako cha mara moja kwa {form_name} ni: {url}"
+
 #: corehq/apps/public_webforms/models.py
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Open"
 msgstr "Fungua"
@@ -38405,25 +38506,164 @@ msgstr "Fungua"
 msgid "Expired"
 msgstr "Imeisha muda"
 
+#: corehq/apps/public_webforms/public/forms.py
+msgid "How would you like to receive your link?"
+msgstr "Ungependa kupokea kiungo chako kwa njia gani?"
+
+#: corehq/apps/public_webforms/public/forms.py
+#| msgid "Rich Text Message"
+msgid "Text Message"
+msgstr "Ujumbe wa Maandishi"
+
+#: corehq/apps/public_webforms/public/forms.py
+msgid "Enter the email address to send your link to."
+msgstr "Weka anwani ya barua pepe ya kutumiwa kiungo chako."
+
+#: corehq/apps/public_webforms/public/forms.py
+#| msgid "Please enter client secret again."
+msgid "Please wait a moment before trying again."
+msgstr "Tafadhali subiri kidogo kabla ya kujaribu tena."
+
+#: corehq/apps/public_webforms/public/forms.py
+msgid "Enter the phone number to send your link to."
+msgstr "Weka nambari ya simu ili kutuma kiungo chako."
+
+#: corehq/apps/public_webforms/public/forms.py
+#| msgid "%s is an invalid phone number."
+msgid "Enter a valid phone number."
+msgstr "Weka nambari ya simu halali."
+
+#: corehq/apps/public_webforms/public/views.py
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
+msgid "One-Time Link Request"
+msgstr "Ombi la Kiungo cha Mara Moja"
+
 #: corehq/apps/public_webforms/tables.py
-#| msgid "View Submissions"
 msgid "Submissions"
 msgstr "Michango"
 
 #: corehq/apps/public_webforms/tables.py
-#| msgid "Expired"
 msgid "Expires"
 msgstr "Inaisha"
 
 #: corehq/apps/public_webforms/tables.py
-#| msgid "Delivered"
 msgid "Delivery"
 msgstr "Uwasilishaji"
 
 #: corehq/apps/public_webforms/tables.py
-#| msgid "Public Name"
 msgid "Public URL"
 msgstr "URL ya Umma"
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "    You are almost in, %(first_name)s!\n"
+#| "  "
+msgid ""
+"\n"
+"    Your one-time link for %(form_name)s\n"
+"  "
+msgstr ""
+"\n"
+"    Kiungo chako cha mara moja kwa ajili ya %(form_name)s\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+#| msgid "Your file is ready."
+msgid ""
+"\n"
+"    Your link is ready\n"
+"  "
+msgstr ""
+"\n"
+"    Kiungo chako kiko tayari\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+#| msgid ""
+#| "\n"
+#| "    Worker performance\n"
+#| "  "
+msgid ""
+"\n"
+"    Open the form\n"
+"  "
+msgstr ""
+"\n"
+"    Fungua fomu\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "    You are almost in, %(first_name)s!\n"
+#| "  "
+msgid ""
+"\n"
+"    You asked for a link to complete %(form_name)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Uliomba kiungo ili kukamilisha %(form_name)s.\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+msgid ""
+"\n"
+"      Click the button or copy and paste the link below.\n"
+"    "
+msgstr ""
+"\n"
+"      Bofya kitufe au nakili na ubandike kiungo hapa chini.\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+#, python-format
+msgid ""
+"\n"
+"      This link expires in %(expires_in)s and can only be used once. If you\n"
+"      didn't request this, you can ignore this email.\n"
+"    "
+msgstr ""
+"\n"
+"      Kiungo hiki kitaisha muda wake baada ya %(expires_in)s na kinaweza kutumika mara moja tu. Ikiwa\n"
+"      hukuomba hiki, unaweza kupuuza barua pepe hii.\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+#| msgid ""
+#| "\n"
+#| "    You received this message because we received a new user request\n"
+#| "  "
+msgid ""
+"\n"
+"    You received this message because a one-time link was requested\n"
+"  "
+msgstr ""
+"\n"
+"    Umepewa ujumbe huu kwa sababu kiungo cha mara moja kiliombwa\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.txt
+#, python-format
+msgid "You asked for a link to complete %(form_name)s."
+msgstr "Uliomba kiungo ili kukamilisha %(form_name)s."
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.txt
+#| msgid "Copy and paste admin emails"
+msgid "Copy and paste the link below."
+msgstr "Nakili na ubandike kiungo hapa chini."
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.txt
+#, python-format
+msgid ""
+"This link expires in %(expires_in)s and can only be used once. If you "
+"received this by mistake, you can ignore this email."
+msgstr ""
+"Kiungo hiki kitaisha muda wake baada ya %(expires_in)s na kinaweza kutumika "
+"mara moja tu. Ikiwa umepokea hii kimakosa, unaweza kupuuza barua pepe hii."
 
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
 #: corehq/apps/public_webforms/views.py corehq/privileges.py
@@ -38448,12 +38688,10 @@ msgstr ""
 "    "
 
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
-#| msgid "New Public Webform"
 msgid "How public forms work"
 msgstr "Jinsi fomu za umma zinavyofanya kazi"
 
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
-#| msgid "forms"
 msgid "Webforms"
 msgstr "Fomu za Wavuti"
 
@@ -38485,13 +38723,161 @@ msgstr ""
 "            ambapo wanaweza kuomba kiungo cha mara moja.\n"
 "          "
 
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+#| msgid "New Public Webform"
+msgid "Open Public Webform"
+msgstr "Fungua Fomu ya Wazi Mtandaoni"
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+#| msgid "New Public Webform"
+msgid "Close Public Webform"
+msgstr "Funga Fomu ya Wazi Mtandaoni"
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+#| msgid ""
+#| "\n"
+#| "              Once deleted, you will not be able to recover this form. Are you sure you want to delete this form?\n"
+#| "            "
+msgid ""
+"\n"
+"              Respondents will be able to request a one-time link to complete\n"
+"              this form.\n"
+"            "
+msgstr ""
+"\n"
+"              Wajibu wataweza kuomba kiungo cha mara moja ili kukamilisha\n"
+"              fomu hii.\n"
+"            "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+msgid ""
+"\n"
+"              Respondents will no longer be able to request a one-time link to\n"
+"              complete this form. Links already sent can be used until they\n"
+"              expire.\n"
+"            "
+msgstr ""
+"\n"
+"              Wajibu hawataweza tena kuomba kiungo cha mara moja ili\n"
+"              kukamilisha fomu hii. Viungo vilivyotumwa tayari vinaweza kutumika hadi\n"
+"              muda wake uishe.\n"
+"            "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
+#| msgid ""
+#| "\n"
+#| "              This feature is made available as a <strong>Beta Service</strong> under\n"
+#| "              <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
+#| "                >Dimagi's Terms of Service</a\n"
+#| "              >\n"
+#| "              and\n"
+#| "              <a href=\"https://dimagi.com/terms/latest/ba\" target=\"_blank\"\n"
+#| "                >Business Agreement</a\n"
+#| "              >.\n"
+#| "            "
+msgid ""
+"\n"
+"      Information you submit will be used in accordance with Dimagi's\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
+"        >Privacy Policy</a\n"
+"      >,\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
+"        >Terms of Service</a\n"
+"      >, and\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
+"        >Business Agreement</a\n"
+"      >.\n"
+"    "
+msgstr ""
+"\n"
+"      Taarifa utakazowasilisha zitatumika kulingana na\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
+"        >Sera ya Faragha</a\n"
+"      > ya Dimagi,\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
+"        >Masharti ya Huduma</a\n"
+"      >, na\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
+"        >Makubaliano ya Biashara</a\n"
+"      >.\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
+msgid "Message and data rates may apply."
+msgstr "Ada za ujumbe na data zinaweza kutozwa."
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
+#| msgid "Send Email"
+msgid "Send my link"
+msgstr "Tuma kiungo changu"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
+#| msgid "Request failed"
+msgid "Requests Closed"
+msgstr "Maombi Yamefungwa"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
+#| msgid ""
+#| "\n"
+#| "        Thank you for staying with your current subscription.\n"
+#| "      "
+msgid ""
+"\n"
+"      This form is not currently accepting submissions.\n"
+"    "
+msgstr ""
+"\n"
+"      Fomu hii haikubali mawasilisho kwa sasa.\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#| msgid "Change Message"
+msgid "Check Your Messages"
+msgstr "Angalia Ujumbe Wako"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+msgid ""
+"\n"
+"      We sent a link using the contact information you provided.\n"
+"    "
+msgstr ""
+"\n"
+"      Tumetuma kiungo kwa kutumia taarifa za mawasiliano ulizotoa.\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, python-format
+msgid ""
+"\n"
+"      The link expires in %(link_lifespan)s and only works once.\n"
+"    "
+msgstr ""
+"\n"
+"      Kiungo kitaisha muda wake baada ya %(link_lifespan)s na kinafanya kazi mara moja tu.\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#| msgid "Request Path"
+msgid "Request another link"
+msgstr "Omba kiungo kingine"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_request.html
+msgid ""
+"\n"
+"        We'll send a private, single-use link to complete the form using the\n"
+"        contact information you provide below.\n"
+"      "
+msgstr ""
+"\n"
+"        Tutatuma kiungo cha faragha, kinachotumika mara moja kukamilisha fomu kwa kutumia\n"
+"        taarifa za mawasiliano utakazotoa hapa chini.\n"
+"      "
+
 #: corehq/apps/public_webforms/templates/public_webforms/tables/public_webform.html
-#| msgid "Public webform created."
 msgid "No public webforms match these filters."
 msgstr "Hakuna fomu za umma za wavuti zinazolingana na vichujio hivi."
 
 #: corehq/apps/public_webforms/templates/public_webforms/tables/public_webform.html
-#| msgid "No grants have been created."
 msgid "No public webforms have been created yet."
 msgstr "Hakuna fomu za umma za wavuti zilizoundwa bado."
 
@@ -38502,6 +38888,21 @@ msgstr "Dhibiti Fomu za Umma za Wavuti"
 #: corehq/apps/public_webforms/views.py
 msgid "Public webform created."
 msgstr "Fomu ya umma ya wavuti imeundwa."
+
+#: corehq/apps/public_webforms/views.py
+#| msgid "Public webform created."
+msgid "Public webform updated."
+msgstr "Fomu ya wazi mtandaoni imesasishwa."
+
+#: corehq/apps/public_webforms/views.py
+#| msgid "Public webform created."
+msgid "Public webform closed to new requests."
+msgstr "Fomu ya wazi mtandaoni imefungwa kwa maombi mapya."
+
+#: corehq/apps/public_webforms/views.py
+#| msgid "Public webform created."
+msgid "Public webform opened to new requests."
+msgstr "Fomu ya wazi mtandaoni imefunguliwa kwa maombi mapya."
 
 #: corehq/apps/registration/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
@@ -50458,12 +50859,6 @@ msgstr "Tafadhali weka JSON halali. Hii si halali: {}"
 msgid "Expected {} but was {}"
 msgstr "Iliyotarajiwa {} lakini ilikuwa {}"
 
-#: corehq/apps/userreports/ui/forms.py corehq/motech/dhis2/forms.py
-#: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
-#: corehq/motech/openmrs/forms.py
-msgid "Save Changes"
-msgstr "Hifadhi Mabadiliko"
-
 #: corehq/apps/userreports/ui/forms.py
 msgid "all users"
 msgstr "watumiaji wote"
@@ -60035,9 +60430,6 @@ msgstr "Weka JSON halali"
 
 #~ msgid "User data profile not found"
 #~ msgstr "Wasifu wa data ya mtumiaji haujapatikana"
-
-#~ msgid "Please enter client secret again."
-#~ msgstr "Tafadhali ingiza siri ya mteja tena."
 
 #~ msgid "Please enter API password again."
 #~ msgstr "Tafadhali ingiza nenosiri la API tena."

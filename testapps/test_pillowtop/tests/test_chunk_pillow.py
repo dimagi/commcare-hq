@@ -1,7 +1,7 @@
 import uuid
 
 from django.test import TestCase
-from kafka.errors import KafkaUnavailableError
+from kafka.errors import NoBrokersAvailable
 from unittest.mock import MagicMock
 
 from corehq.apps.change_feed import topics
@@ -25,7 +25,7 @@ class ChunkedProcessingTest(TestCase):
             )
             producer.send_change(topics.CASE_SQL, meta)
 
-    @trap_extra_setup(KafkaUnavailableError)
+    @trap_extra_setup(NoBrokersAvailable)
     def test_basic(self):
         # setup
         feed = KafkaChangeFeed(topics=[topics.CASE_SQL], client_id='test-kafka-feed')

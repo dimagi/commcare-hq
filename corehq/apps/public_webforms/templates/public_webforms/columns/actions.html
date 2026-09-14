@@ -1,0 +1,32 @@
+{% load i18n %}
+
+<a
+  class="btn btn-sm btn-outline-primary"
+  href="{% url 'edit_public_webform' domain record.id %}"
+>
+  <i class="fa fa-pencil"></i>
+  {% trans "Edit" %}
+</a>
+{% if record.is_disabled %}
+  <button
+    type="button"
+    class="btn btn-sm btn-outline-success fw-normal"
+    data-bs-toggle="modal"
+    data-bs-target="#confirm-status-{{ record.id }}"
+    {% if record.is_expired %}disabled{% endif %}
+  >
+    <i class="fa fa-play"></i>
+    {% trans "Open" %}
+  </button>
+{% else %}
+  <button
+    type="button"
+    class="btn btn-sm btn-outline-secondary fw-normal"
+    data-bs-toggle="modal"
+    data-bs-target="#confirm-status-{{ record.id }}"
+    {% if record.is_expired %}disabled{% endif %}
+  >
+    <i class="fa fa-pause"></i>
+    {% trans "Close" %}
+  </button>
+{% endif %}

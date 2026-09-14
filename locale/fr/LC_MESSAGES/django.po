@@ -66,6 +66,7 @@ msgid "Account Name"
 msgstr ""
 
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
@@ -191,6 +192,47 @@ msgstr ""
 
 #: corehq/apps/accounting/filters.py
 msgid "Is Hidden"
+msgstr ""
+
+#: corehq/apps/accounting/filters.py
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/invoice.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/data_cleaning/tables.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
+#: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/hqadmin/templates/hqadmin/email_status.html
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/reports/standard/cases/basic.py
+#: corehq/apps/reports/standard/sms.py
+#: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
+#: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
+#: corehq/apps/settings/templates/settings/my_projects.html
+#: corehq/apps/settings/views.py corehq/apps/sms/filters.py
+#: corehq/apps/sms/templates/sms/whatsapp_templates.html
+#: corehq/apps/sms/views.py corehq/apps/sso/forms.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
+#: corehq/ex-submodules/casexml/apps/case/views.py
+#: corehq/messaging/scheduling/forms.py
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+#: corehq/motech/generic_inbound/reports.py
+#: corehq/motech/repeaters/views/repeat_records.py
+#: corehq/motech/templates/motech/log_detail.html
+#: corehq/motech/templates/motech/logs.html
+msgid "Status"
 msgstr ""
 
 #: corehq/apps/accounting/filters.py corehq/apps/enterprise/enterprise.py
@@ -397,6 +439,10 @@ msgid "Justify why \"Skip Auto Pause\""
 msgstr ""
 
 #: corehq/apps/accounting/forms.py
+msgid "Extension length"
+msgstr ""
+
+#: corehq/apps/accounting/forms.py
 msgid "Enable auto renewal"
 msgstr ""
 
@@ -450,6 +496,7 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
 #: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
 #: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -794,9 +841,11 @@ msgstr ""
 
 #: corehq/apps/accounting/models.py corehq/apps/data_dictionary/models.py
 #: corehq/apps/data_interfaces/views.py
-#: corehq/apps/integration/payments/tables.py corehq/apps/registration/forms.py
-#: corehq/apps/reports/standard/sms.py corehq/apps/settings/forms.py
-#: corehq/apps/sms/filters.py corehq/apps/sms/templates/sms/add_gateway.html
+#: corehq/apps/integration/payments/tables.py
+#: corehq/apps/public_webforms/public/forms.py
+#: corehq/apps/registration/forms.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/settings/forms.py corehq/apps/sms/filters.py
+#: corehq/apps/sms/templates/sms/add_gateway.html
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
@@ -1197,7 +1246,9 @@ msgstr ""
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
-#: corehq/apps/public_webforms/forms.py corehq/apps/registration/forms.py
+#: corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+#: corehq/apps/registration/forms.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/forms.py
@@ -1300,6 +1351,78 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Autopay"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Send On"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
+#: corehq/apps/campaign/forms.py
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/views.py
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+#: corehq/apps/export/templates/export/customize_export_new.html
+#: corehq/apps/export/templates/export/download_data_files.html
+#: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
+#: corehq/apps/hqadmin/reports.py
+#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/programs/templates/programs/manage/program.html
+#: corehq/apps/registry/templates/registry/registry_list.html
+#: corehq/apps/reminders/forms.py corehq/apps/reminders/views.py
+#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
+#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
+#: corehq/apps/sms/forms.py corehq/apps/sms/views.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
+#: corehq/apps/userreports/views.py corehq/motech/dhis2/forms.py
+#: corehq/motech/dhis2/views.py corehq/motech/generic_inbound/views.py
+msgid "Description"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/accounting/templates/accounting/invoice.html
+#: corehq/apps/integration/payments/tables.py
+msgid "Amount"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+msgid "Prepayment Term"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/accounting/templates/accounting/invoice.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/messaging/scheduling/forms.py
+msgid "Recipients"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+msgid "Scheduled By"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+msgid ""
+"\n"
+"        Cancelling stops this invoice from being generated and emailed. It\n"
+"        cannot be undone. Schedule a replacement if the amount or dates "
+"need\n"
+"        to change.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+msgid "This invoice is no longer pending, so there is nothing to cancel."
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_card_removed.html
@@ -1713,45 +1836,6 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #: corehq/apps/domain/views/accounting.py corehq/apps/enterprise/views.py
 msgid "Statement No."
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
-#: corehq/apps/accounting/templates/accounting/email/invoice.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
-#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/data_cleaning/tables.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
-#: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
-#: corehq/apps/enterprise/enterprise.py
-#: corehq/apps/hqadmin/templates/hqadmin/email_status.html
-#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/reports/standard/cases/basic.py
-#: corehq/apps/reports/standard/sms.py
-#: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
-#: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
-#: corehq/apps/settings/templates/settings/my_projects.html
-#: corehq/apps/settings/views.py corehq/apps/sms/filters.py
-#: corehq/apps/sms/templates/sms/whatsapp_templates.html
-#: corehq/apps/sms/views.py corehq/apps/sso/forms.py
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
-#: corehq/ex-submodules/casexml/apps/case/views.py
-#: corehq/messaging/scheduling/forms.py
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-#: corehq/motech/generic_inbound/reports.py
-#: corehq/motech/repeaters/views/repeat_records.py
-#: corehq/motech/templates/motech/log_detail.html
-#: corehq/motech/templates/motech/logs.html
-msgid "Status"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
@@ -3377,13 +3461,6 @@ msgid "Date"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/messaging/scheduling/forms.py
-msgid "Recipients"
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/invoice.html
 msgid "View PDF"
 msgstr ""
 
@@ -3411,11 +3488,6 @@ msgstr ""
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_property_modal.html
 #: corehq/motech/fhir/const.py
 msgid "User"
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/invoice.html
-#: corehq/apps/integration/payments/tables.py
-msgid "Amount"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/adjust_balance.html
@@ -4537,7 +4609,7 @@ msgstr ""
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/public_webforms/tables.py
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
 #: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py corehq/apps/reports/standard/inspect.py
 #: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
@@ -4559,7 +4631,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/linked_domain/const.py
+#: corehq/apps/linked_domain/const.py corehq/apps/public_webforms/forms.py
 #: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/deployments.py
@@ -4604,6 +4676,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+#: corehq/apps/public_webforms/forms.py
 #: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py
 msgid "Menu"
@@ -6690,7 +6763,9 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_feedback.html
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
 #: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/async/bootstrap5/default.html
@@ -10948,35 +11023,6 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
 #: corehq/apps/userreports/reports/builder/forms.py
 msgid "Report"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
-#: corehq/apps/campaign/forms.py
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/views.py
-#: corehq/apps/domain/templates/domain/admin/feature_previews.html
-#: corehq/apps/export/templates/export/customize_export_new.html
-#: corehq/apps/export/templates/export/download_data_files.html
-#: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/hqadmin/reports.py
-#: corehq/apps/products/templates/products/manage/products.html
-#: corehq/apps/programs/templates/programs/manage/program.html
-#: corehq/apps/registry/templates/registry/registry_list.html
-#: corehq/apps/reminders/forms.py corehq/apps/reminders/views.py
-#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
-#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/sms/forms.py corehq/apps/sms/views.py
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
-#: corehq/apps/userreports/views.py corehq/motech/dhis2/forms.py
-#: corehq/motech/dhis2/views.py corehq/motech/generic_inbound/views.py
-msgid "Description"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
@@ -18915,6 +18961,7 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
 #: corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/public/forms.py
 #: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py
@@ -21345,6 +21392,22 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Leave blank to send now."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/domain/views/accounting.py
+msgid "The send date must be in the future."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Scheduled. It will be generated and emailed on"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 msgid ""
 " Thank you! You will receive an invoice via email with\n"
 "  instructions for wire payment. Please include the invoice ID in the wire\n"
@@ -22553,6 +22616,21 @@ msgid "Quantity must be a whole number greater than 0."
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
+msgid "A send date is required."
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
+#, python-format
+msgid "The credit label must be %(max_length)d characters or fewer."
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
+msgid ""
+"This project space has no active subscription, so an invoice cannot be "
+"scheduled for it."
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
 msgid "Dimagi Internal Subscription Management"
 msgstr ""
 
@@ -22631,6 +22709,12 @@ msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
 msgid "2. Confirm Subscription"
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
+msgid ""
+"Your annual subscription only allows upgrades. You cannot downgrade, pause, "
+"or switch to the same edition during your annual commitment."
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py corehq/apps/users/forms.py
@@ -23082,8 +23166,10 @@ msgid "OData Feeds Available"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/forms.py
-#: corehq/apps/integration/payments/tables.py corehq/apps/registration/forms.py
-#: corehq/apps/reports/standard/sms.py corehq/apps/users/forms.py
+#: corehq/apps/integration/payments/tables.py
+#: corehq/apps/public_webforms/public/forms.py
+#: corehq/apps/registration/forms.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
 msgid "Email Address"
@@ -33426,7 +33512,30 @@ msgstr ""
 msgid "The selected form can't be used for a public webform."
 msgstr ""
 
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/views.py
+msgid "Edit Public Webform"
+msgstr ""
+
+#: corehq/apps/public_webforms/forms.py corehq/apps/userreports/ui/forms.py
+#: corehq/motech/dhis2/forms.py
+#: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
+#: corehq/motech/openmrs/forms.py
+msgid "Save Changes"
+msgstr ""
+
+#: corehq/apps/public_webforms/messaging.py
+#, python-brace-format
+msgid "Your one-time link for {form_name}"
+msgstr ""
+
+#: corehq/apps/public_webforms/messaging.py
+#, python-brace-format
+msgid "Your one-time link for {form_name} is: {url}"
+msgstr ""
+
 #: corehq/apps/public_webforms/models.py
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Open"
 msgstr ""
@@ -33438,6 +33547,35 @@ msgstr ""
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
 msgid "Expired"
+msgstr ""
+
+#: corehq/apps/public_webforms/public/forms.py
+msgid "How would you like to receive your link?"
+msgstr ""
+
+#: corehq/apps/public_webforms/public/forms.py
+msgid "Text Message"
+msgstr ""
+
+#: corehq/apps/public_webforms/public/forms.py
+msgid "Enter the email address to send your link to."
+msgstr ""
+
+#: corehq/apps/public_webforms/public/forms.py
+msgid "Please wait a moment before trying again."
+msgstr ""
+
+#: corehq/apps/public_webforms/public/forms.py
+msgid "Enter the phone number to send your link to."
+msgstr ""
+
+#: corehq/apps/public_webforms/public/forms.py
+msgid "Enter a valid phone number."
+msgstr ""
+
+#: corehq/apps/public_webforms/public/views.py
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
+msgid "One-Time Link Request"
 msgstr ""
 
 #: corehq/apps/public_webforms/tables.py
@@ -33454,6 +33592,75 @@ msgstr ""
 
 #: corehq/apps/public_webforms/tables.py
 msgid "Public URL"
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+#, python-format
+msgid ""
+"\n"
+"    Your one-time link for %(form_name)s\n"
+"  "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+msgid ""
+"\n"
+"    Your link is ready\n"
+"  "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+msgid ""
+"\n"
+"    Open the form\n"
+"  "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+#, python-format
+msgid ""
+"\n"
+"    You asked for a link to complete %(form_name)s.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+msgid ""
+"\n"
+"      Click the button or copy and paste the link below.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+#, python-format
+msgid ""
+"\n"
+"      This link expires in %(expires_in)s and can only be used once. If you\n"
+"      didn't request this, you can ignore this email.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+msgid ""
+"\n"
+"    You received this message because a one-time link was requested\n"
+"  "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.txt
+#, python-format
+msgid "You asked for a link to complete %(form_name)s."
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.txt
+msgid "Copy and paste the link below."
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.txt
+#, python-format
+msgid ""
+"This link expires in %(expires_in)s and can only be used once. If you "
+"received this by mistake, you can ignore this email."
 msgstr ""
 
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
@@ -33505,6 +33712,102 @@ msgid ""
 "          "
 msgstr ""
 
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+msgid "Open Public Webform"
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+msgid "Close Public Webform"
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+msgid ""
+"\n"
+"              Respondents will be able to request a one-time link to "
+"complete\n"
+"              this form.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+msgid ""
+"\n"
+"              Respondents will no longer be able to request a one-time link "
+"to\n"
+"              complete this form. Links already sent can be used until they\n"
+"              expire.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
+msgid ""
+"\n"
+"      Information you submit will be used in accordance with Dimagi's\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/privacy/\" "
+"target=\"_blank\"\n"
+"        >Privacy Policy</a\n"
+"      >,\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/tos/\" "
+"target=\"_blank\"\n"
+"        >Terms of Service</a\n"
+"      >, and\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
+"        >Business Agreement</a\n"
+"      >.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
+msgid "Message and data rates may apply."
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
+msgid "Send my link"
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
+msgid "Requests Closed"
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
+msgid ""
+"\n"
+"      This form is not currently accepting submissions.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+msgid "Check Your Messages"
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+msgid ""
+"\n"
+"      We sent a link using the contact information you provided.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, python-format
+msgid ""
+"\n"
+"      The link expires in %(link_lifespan)s and only works once.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+msgid "Request another link"
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_request.html
+msgid ""
+"\n"
+"        We'll send a private, single-use link to complete the form using "
+"the\n"
+"        contact information you provide below.\n"
+"      "
+msgstr ""
+
 #: corehq/apps/public_webforms/templates/public_webforms/tables/public_webform.html
 msgid "No public webforms match these filters."
 msgstr ""
@@ -33519,6 +33822,18 @@ msgstr ""
 
 #: corehq/apps/public_webforms/views.py
 msgid "Public webform created."
+msgstr ""
+
+#: corehq/apps/public_webforms/views.py
+msgid "Public webform updated."
+msgstr ""
+
+#: corehq/apps/public_webforms/views.py
+msgid "Public webform closed to new requests."
+msgstr ""
+
+#: corehq/apps/public_webforms/views.py
+msgid "Public webform opened to new requests."
 msgstr ""
 
 #: corehq/apps/registration/forms.py
@@ -44145,12 +44460,6 @@ msgstr ""
 
 #: corehq/apps/userreports/ui/fields.py
 msgid "Expected {} but was {}"
-msgstr ""
-
-#: corehq/apps/userreports/ui/forms.py corehq/motech/dhis2/forms.py
-#: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
-#: corehq/motech/openmrs/forms.py
-msgid "Save Changes"
 msgstr ""
 
 #: corehq/apps/userreports/ui/forms.py

@@ -18,12 +18,19 @@ def get_public_webform_form_paths(domain, webforms):
     builds = _get_apps(domain, {webform.app_build_id for webform in webforms})
     apps = _get_apps(domain, {webform.app_id for webform in webforms})
     return {
-        webform.id: {
-            'app_name': _app_name(webform, apps, builds),
-            'app_url': _app_url(webform, apps, domain),
-            'app_version': _app_version(webform, builds),
-            'form_name': _form_name(webform, builds),
-        } for webform in webforms
+        webform.id: _form_path(webform, apps, builds, domain)
+        for webform in webforms
+    }
+
+
+def _form_path(webform, apps, builds, domain):
+    menu_name, form_name = _menu_and_form_names(webform, builds)
+    return {
+        'app_name': _app_name(webform, apps, builds),
+        'app_url': _app_url(webform, apps, domain),
+        'app_version': _app_version(webform, builds),
+        'menu_name': menu_name,
+        'form_name': form_name,
     }
 
 
@@ -55,12 +62,16 @@ def _app_version(webform, builds):
     return build['version'] if build else None
 
 
-def _form_name(webform, builds):
+def _menu_and_form_names(webform, builds):
     build = builds.get(webform.app_build_id)
     if not build:
-        return None
+        return None, None
     langs = [build.get('default_language')] + build.get('langs', [])
     for module in build.get('modules', []):
         for form in module.get('forms', []):
             if form.get('unique_id') == webform.form_unique_id:
-                return clean_trans(form['name'], langs)
+                return (
+                    clean_trans(module['name'], langs),
+                    clean_trans(form['name'], langs),
+                )
+    return None, None

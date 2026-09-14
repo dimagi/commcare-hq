@@ -1227,6 +1227,7 @@ class ApplicationsTab(UITab):
     def public_webforms_urls(self):
         from corehq.apps.public_webforms.views import (
             CreatePublicWebformView,
+            EditPublicWebformView,
             ManagePublicWebformsView,
         )
         if not (
@@ -1246,6 +1247,10 @@ class ApplicationsTab(UITab):
                 {
                     'title': _(CreatePublicWebformView.page_title),
                     'urlname': CreatePublicWebformView.urlname,
+                },
+                {
+                    'title': _(EditPublicWebformView.page_title),
+                    'urlname': EditPublicWebformView.urlname,
                 },
             ],
         }]
@@ -2451,6 +2456,7 @@ class AccountingTab(UITab):
         )))
 
         from corehq.apps.accounting.views import (
+            GeneratePrepaymentInvoiceView,
             TestRenewalEmailView,
             TriggerBookkeeperEmailView,
             TriggerCustomerInvoiceView,
@@ -2464,6 +2470,10 @@ class AccountingTab(UITab):
             {
                 'title': _(TriggerCustomerInvoiceView.page_title),
                 'url': reverse(TriggerCustomerInvoiceView.urlname),
+            },
+            {
+                'title': _(GeneratePrepaymentInvoiceView.page_title),
+                'url': reverse(GeneratePrepaymentInvoiceView.urlname),
             },
             {
                 'title': _(TriggerBookkeeperEmailView.page_title),

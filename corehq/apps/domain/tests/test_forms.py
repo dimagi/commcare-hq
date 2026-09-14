@@ -14,6 +14,9 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan,
     SoftwarePlanEdition,
     Subscription,
+    SubscriptionAdjustment,
+    SubscriptionAdjustmentMethod,
+    SubscriptionAdjustmentReason,
     WirePrepaymentInvoice,
 )
 from corehq.apps.accounting.tests import generator
@@ -284,11 +287,22 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         form = self.create_form_for_submission(new_plan_version)
         form.save()
         assert form.is_valid()
+        self.subscription.refresh_from_db()
         assert self.subscription.date_end == old_date_start + timedelta(days=30)
+        assert self.subscription.is_active
 
         next_subscription = self.subscription.next_subscription
         assert next_subscription.plan_version == new_plan_version
         assert next_subscription.date_start == old_date_start + timedelta(days=30)
+        assert not next_subscription.is_active
+
+        old_adjustment = SubscriptionAdjustment.objects.get(subscription=self.subscription)
+        assert old_adjustment.reason == SubscriptionAdjustmentReason.DOWNGRADE
+        assert old_adjustment.method == SubscriptionAdjustmentMethod.USER
+        assert old_adjustment.related_subscription == next_subscription
+
+        new_adjustment = SubscriptionAdjustment.objects.get(subscription=next_subscription)
+        assert new_adjustment.reason == SubscriptionAdjustmentReason.CREATE
 
     def test_autopay_required_for_monthly_plan(self):
         new_plan_version = DefaultProductPlan.get_default_plan_version(

@@ -500,7 +500,7 @@ def _case_list_form_options(app, module, lang=None):
         'is_registration_form': True,
     } for f in reg_forms})
     if (hasattr(module, 'parent_select')  # AdvancedModule doesn't have parent_select
-            and toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM
+            and toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain)
             and module.parent_select.active):
         followup_forms = get_parent_select_followup_forms(app, module)
         if followup_forms:
@@ -533,11 +533,10 @@ def _form_endpoint_options(app, module, lang=None):
 def get_parent_select_followup_forms(app, module):
     if not module.parent_select.active or not module.parent_select.module_id:
         return []
-    parent_module = app.get_module_by_unique_id(
-        module.parent_select.module_id,
-        error=_("Case list used by Select Parent First in '{}' not found").format(
-            module.default_name()),
-    )
+    try:
+        parent_module = app.get_module_by_unique_id(module.parent_select.module_id)
+    except ModuleNotFoundException:
+        return []
     parent_case_type = parent_module.case_type
     rel = module.parent_select.relationship
     if (rel == 'parent' and parent_case_type != module.case_type) or rel is None:
@@ -900,6 +899,18 @@ def delete_module(request, domain, app_id, module_unique_id):
                                       'you can delete it.').format(module.default_name()))
             return back_to_main(request, domain, app_id)
 
+    dependents = [
+        m.default_name(app=app) for m in app.get_modules()
+        if hasattr(m, 'parent_select') and m.parent_select.active
+        and m.parent_select.module_id == module_unique_id
+    ]
+    if dependents:
+        messages.error(request, _(
+            '"{module}" is used by "{dependents}" for Parent Child Selection. '
+            'Change or turn off that setting before deleting it.'
+        ).format(module=module.default_name(), dependents=', '.join(dependents)))
+        return back_to_main(request, domain, app_id)
+
     shadow_children = [
         m.unique_id for m in app.get_modules()
         if m.module_type == 'shadow' and m.source_module_id == module_unique_id and m.root_module_id is not None
@@ -1235,7 +1246,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
 
-    _gather_and_update_search_properties(params, app, module, lang)
+    error_response = _gather_and_update_search_properties(params, app, module, lang)
+    if error_response:
+        return error_response
 
     resp = {}
     app.save(resp)
@@ -1348,11 +1361,18 @@ def _gather_and_update_search_properties(params, app, module, lang):
                 "'{}' is an invalid instance name. It can contain only letters, numbers, and underscores."
             ).format(instance_name))
 
+        case_search_endpoint_id = None
         if toggles.CASE_SEARCH_ENDPOINTS.enabled(app.domain):
             endpoint_id_raw = search_properties.get('case_search_endpoint_id')
-            case_search_endpoint_id = int(endpoint_id_raw) if endpoint_id_raw else None
-        else:
-            case_search_endpoint_id = None
+            if endpoint_id_raw:
+                try:
+                    case_search_endpoint_id = int(endpoint_id_raw)
+                except (TypeError, ValueError):
+                    return HttpResponseBadRequest(_("Invalid case search endpoint."))
+                if not CaseSearchEndpoint.objects.filter(
+                    id=case_search_endpoint_id, domain=app.domain, is_active=True
+                ).exists():
+                    return HttpResponseBadRequest(_("Invalid case search endpoint."))
 
         module.search_config = CaseSearch(
             title_label=title_label,

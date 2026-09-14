@@ -17,6 +17,7 @@ from corehq.apps.public_webforms.models import PublicWebform
 
 DOMAIN = 'public-webform-form-paths'
 APP_NAME = 'Frontline Program'
+MENU_NAME = 'Patient Intake'
 FORM_NAME = 'Cohort Registration'
 
 
@@ -26,7 +27,8 @@ def app_with_build():
     """An app with one named form, and a build pinning that name."""
     domain_obj = Domain.get_or_create_with_name(DOMAIN)
     factory = AppFactory(DOMAIN, name=APP_NAME, build_version='2.51.0')
-    __, form = factory.new_basic_module('survey', 'patient')
+    menu, form = factory.new_basic_module('survey', 'patient')
+    menu.name = {'en': MENU_NAME}
     form.name = {'en': FORM_NAME}
     form.source = get_simple_form(xmlns=form.unique_id)
     try:
@@ -72,6 +74,7 @@ class TestGetPublicWebformPaths:
 
         assert path['app_name'] == APP_NAME
         assert path['app_version'] == app.version
+        assert path['menu_name'] == MENU_NAME
         assert path['form_name'] == FORM_NAME
         assert path['app_url'].endswith(f'/{app.app_id}/')
 
