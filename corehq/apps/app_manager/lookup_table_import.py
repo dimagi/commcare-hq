@@ -111,7 +111,7 @@ def _copy_lookup_table(source_table, destination_domain):
         table=source_table,
     )
 
-    for rows in chunked(source_rows.iterator(), LOOKUP_TABLE_ROW_BATCH_SIZE, list):
+    for rows in chunked(source_rows.iterator(), LOOKUP_TABLE_ROW_BATCH_SIZE):
         LookupTableRow.objects.bulk_create([
             LookupTableRow(
                 domain=destination_domain,
