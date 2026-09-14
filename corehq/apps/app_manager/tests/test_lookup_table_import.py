@@ -56,6 +56,7 @@ class TestLookupTableReferenceHandling(SimpleTestCase):
 
         assert _destination_tag(source_tag, 12) == f"{'a' * 28}-12"
 
+
 class TestCopyLookupTables(TestCase):
     source_domain = "lookup-table-import-source"
     destination_domain = "lookup-table-import-destination"
