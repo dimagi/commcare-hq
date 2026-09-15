@@ -129,3 +129,52 @@ class DatadogOffboardingClient(PlatformOffboardingClient):
             headers=self._headers, expected_statuses=(204,),
         )
         return _("Disabled Datadog user {label}").format(label=account.label)
+
+
+class SentryOffboardingClient(PlatformOffboardingClient):
+    """
+    Sentry Organization Members API. Sentry has no "disable member", so
+    offboarding removes the member from the organization.
+    """
+    slug = 'sentry'
+    name = 'Sentry'
+    action_verb = gettext_lazy("Remove")
+    is_reversible = False
+    required_config = ('auth_token', 'org_slug')
+
+    @property
+    def default_config(self):
+        return {'api_url': 'https://sentry.io/api/0/', 'org_slug': settings.SENTRY_ORGANIZATION_SLUG}
+
+    @property
+    def _members_url(self):
+        config = self.config
+        return f"{config['api_url'].rstrip('/')}/organizations/{config['org_slug']}/members/"
+
+    @property
+    def _headers(self):
+        return {'Authorization': f"Bearer {self.config['auth_token']}"}
+
+    def find_account(self, email):
+        email = normalize_email(email)
+        response = self._request(
+            'GET', self._members_url, headers=self._headers,
+            params={'query': f"email:{email}"},
+        )
+        for member in response.json():
+            user = member.get('user') or {}
+            emails = {normalize_email(member.get('email')), normalize_email(user.get('email'))}
+            if email in emails:
+                name = member.get('name') or user.get('name') or email
+                label = f"{name} <{member.get('email') or email}>"
+                if member.get('pending'):
+                    label += " (pending invite)"
+                return AccountInfo(account_id=str(member['id']), label=label)
+        return None
+
+    def offboard(self, account):
+        self._request(
+            'DELETE', f"{self._members_url}{account.account_id}/",
+            headers=self._headers, expected_statuses=(204,),
+        )
+        return _("Removed {label} from the Sentry organization").format(label=account.label)

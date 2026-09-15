@@ -1014,6 +1014,11 @@ OFFBOARDING_PLATFORMS = {
         'app_key': None,
         'site': 'datadoghq.com',
     },
+    'sentry': {
+        'auth_token': None,
+        'api_url': 'https://sentry.io/api/0/',
+        'org_slug': None,
+    },
 }
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'
