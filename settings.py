@@ -1008,6 +1008,8 @@ METRICS_PROVIDERS = []
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
 
+OFFBOARDING_PLATFORMS = {}
+
 SYNCLOGS_SQL_DB_ALIAS = 'default'
 
 # A dict of django apps in which the reads are
