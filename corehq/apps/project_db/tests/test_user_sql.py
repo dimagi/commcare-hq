@@ -543,67 +543,43 @@ def test_string_to_array_db_test():
     assert matching('<@', 'fever') == ['fever', 'none']
 
 
-@use('db', project_db_table('test-sounds-like', 'client', {'name': 'plain'}, (
-    ['case_id', 'owner_id', 'prop__name'], [
-        ['smith', 'o', 'Smith'],
-        ['smyth', 'o', 'Smyth'],
-        ['brown', 'o', 'Brown'],
-    ]
-)))
-def test_sounds_like_db_test():
-
-    def matching(name):
-        user_sql = UserSQL('test-sounds-like', (
-            'SELECT case_id FROM client '
-            'WHERE sounds_like(prop__name, :name) '
-            'ORDER BY case_id'))
-        return [row['case_id'] for row in user_sql.run({'name': name}).rows]
-
-    assert matching('Smythe') == ['smith', 'smyth']
-    assert matching('Braun') == ['brown']
+NAME_MATCH_DOMAIN = 'test-name-matching'
 
 
-@use('db', project_db_table('test-fuzzy-match', 'client', {'name': 'plain'}, (
-    ['case_id', 'owner_id', 'prop__name'], [
-        ['michael', 'o', 'Michael'],
-        ['mitchell', 'o', 'Mitchell'],
-        ['robert', 'o', 'Robert'],
-    ]
-)))
-def test_fuzzy_match_db_test():
-
-    def matching(name):
-        user_sql = UserSQL('test-fuzzy-match', (
-            'SELECT case_id FROM client '
-            'WHERE fuzzy_match(prop__name, :name) '
-            'ORDER BY case_id'))
-        return [row['case_id'] for row in user_sql.run({'name': name}).rows]
-
-    assert matching('Micheal') == ['michael']  # Note that Mitchell doesn't match
-    assert matching('Roberto') == ['robert']
-    assert matching('Richard') == []
+@fixture(scope='module')
+def name_table():
+    return project_db_table(NAME_MATCH_DOMAIN, 'client', {'name': 'plain'}, (
+        ['case_id', 'owner_id', 'prop__name'], [
+            ['smith', 'o', 'Smith'],
+            ['smyth', 'o', 'Smyth'],
+            ['brown', 'o', 'Brown'],
+            ['michael', 'o', 'Michael'],
+            ['mitchell', 'o', 'Mitchell'],
+            ['john', 'o', 'John'],
+            ['robert', 'o', 'Robert'],
+        ]
+    ))
 
 
-@use('db', project_db_table('test-similar-name', 'client', {'name': 'plain'}, (
-    ['case_id', 'owner_id', 'prop__name'], [
-        ['michael', 'o', 'Michael'],
-        ['john', 'o', 'John'],
-        ['robert', 'o', 'Robert'],
-    ]
-)))
-def test_similar_name_db_test():
-
-    def matching(name):
-        user_sql = UserSQL('test-similar-name', (
-            'SELECT case_id FROM client '
-            'WHERE similar_name(prop__name, :name) '
-            'ORDER BY case_id'))
-        return [row['case_id'] for row in user_sql.run({'name': name}).rows]
-
-    # Micheal is only caught by trigram similarity, Jon only by phonetics
-    assert matching('Micheal') == ['michael']
-    assert matching('Jon') == ['john']
-    assert matching('Richard') == []
+@use('db', name_table)
+@pytest.mark.parametrize('predicate, name, expected', [
+    ('sounds_like', 'Smythe', ['smith', 'smyth']),
+    ('sounds_like', 'Braun', ['brown']),
+    ('sounds_like', 'Micheal', ['mitchell']),
+    ('fuzzy_match', 'Micheal', ['michael']),
+    ('fuzzy_match', 'Roberto', ['robert']),
+    ('fuzzy_match', 'Braun', []),
+    ('similar_name', 'Micheal', ['michael', 'mitchell']),
+    ('similar_name', 'Braun', ['brown']),
+    ('similar_name', 'Richard', []),
+])
+def test_name_matching(predicate, name, expected):
+    user_sql = UserSQL(NAME_MATCH_DOMAIN, (
+        'SELECT case_id FROM client '
+        f'WHERE {predicate}(prop__name, :name) '
+        'ORDER BY case_id'))
+    rows = user_sql.run({'name': name}).rows
+    assert [row['case_id'] for row in rows] == expected
 
 
 @pytest.mark.parametrize('error_class', [ProgrammingError, DataError])
