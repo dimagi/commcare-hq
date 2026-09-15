@@ -480,6 +480,9 @@ login_or_api_key = login_or_api_key_ex()
 
 api_key_auth = login_or_api_key_ex(allow_sessions=False)
 
+api_key_auth_header_only = login_or_api_key_ex(
+    allow_sessions=False, allow_creds_in_data=False)
+
 basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
 
 
