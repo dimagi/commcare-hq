@@ -178,3 +178,49 @@ class SentryOffboardingClient(PlatformOffboardingClient):
             headers=self._headers, expected_statuses=(204,),
         )
         return _("Removed {label} from the Sentry organization").format(label=account.label)
+
+
+class SumologicOffboardingClient(PlatformOffboardingClient):
+    """
+    Sumo Logic User Management API v1. There is no dedicated disable
+    endpoint; the user is updated with ``isActive: false``, which requires
+    echoing back their names and role ids.
+    """
+    slug = 'sumologic'
+    name = 'Sumo Logic'
+    default_config = {'api_url': 'https://api.sumologic.com/api/'}
+    required_config = ('access_id', 'access_key')
+
+    @property
+    def _users_url(self):
+        return f"{self.config['api_url'].rstrip('/')}/v1/users"
+
+    @property
+    def _auth(self):
+        config = self.config
+        return (config['access_id'], config['access_key'])
+
+    def find_account(self, email):
+        email = normalize_email(email)
+        response = self._request('GET', self._users_url, auth=self._auth, params={'email': email})
+        for user in response.json().get('data', []):
+            if normalize_email(user.get('email')) == email:
+                name = f"{user.get('firstName', '')} {user.get('lastName', '')}".strip() or email
+                return AccountInfo(
+                    account_id=user['id'],
+                    label=f"{name} <{user.get('email')}>",
+                    is_active=user.get('isActive', True),
+                    data={
+                        'firstName': user.get('firstName', ''),
+                        'lastName': user.get('lastName', ''),
+                        'roleIds': user.get('roleIds', []),
+                    },
+                )
+        return None
+
+    def offboard(self, account):
+        self._request(
+            'PUT', f"{self._users_url}/{account.account_id}", auth=self._auth,
+            json={**account.data, 'isActive': False}, expected_statuses=(200,),
+        )
+        return _("Deactivated Sumo Logic user {label}").format(label=account.label)

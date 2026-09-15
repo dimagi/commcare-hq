@@ -1019,6 +1019,11 @@ OFFBOARDING_PLATFORMS = {
         'api_url': 'https://sentry.io/api/0/',
         'org_slug': None,
     },
+    'sumologic': {
+        'access_id': None,
+        'access_key': None,
+        'api_url': 'https://api.sumologic.com/api/',
+    },
 }
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'
