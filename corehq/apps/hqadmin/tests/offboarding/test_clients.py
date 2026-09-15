@@ -5,6 +5,7 @@ from django.test import override_settings
 from unmagic import fixture
 
 from corehq.apps.hqadmin.offboarding.clients import (
+    HubspotOffboardingClient,
     OffboardingClientError,
     PlatformOffboardingClient,
     normalize_email,
@@ -96,3 +97,24 @@ def test_requests_carry_a_timeout():
     m.get(STUB_USERS, json={'data': []})
     StubClient().find_account('jane@dimagi.com')
     assert m.last_request.timeout == 15
+
+
+@fixture
+def hubspot_http():
+    with override_settings(OFFBOARDING_PLATFORMS={'hubspot': {'access_token': 't'}}), requests_mock.Mocker() as m:
+        yield m
+
+
+@hubspot_http
+def test_hubspot_find_account_encodes_email_in_path():
+    m = hubspot_http()
+    m.get(requests_mock.ANY, json={'id': 7, 'email': 'jane#ops@dimagi.com'})
+    account = HubspotOffboardingClient().find_account('Jane#ops@dimagi.com')
+    assert m.last_request.url == 'https://api.hubapi.com/settings/v3/users/jane%23ops%40dimagi.com?idProperty=EMAIL'
+    assert (account.account_id, account.label) == ('7', 'jane#ops@dimagi.com')
+
+
+@hubspot_http
+def test_hubspot_find_account_treats_404_as_absent():
+    hubspot_http().get(requests_mock.ANY, status_code=404, json={'message': 'not found'})
+    assert HubspotOffboardingClient().find_account('jane@dimagi.com') is None

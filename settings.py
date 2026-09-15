@@ -1024,6 +1024,9 @@ OFFBOARDING_PLATFORMS = {
         'access_key': None,
         'api_url': 'https://api.sumologic.com/api/',
     },
+    'hubspot': {
+        'access_token': None,
+    },
 }
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'

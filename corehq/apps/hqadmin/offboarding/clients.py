@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass, field
+from urllib.parse import quote
 
 import requests
 from django.conf import settings
@@ -224,3 +225,46 @@ class SumologicOffboardingClient(PlatformOffboardingClient):
             json={**account.data, 'isActive': False}, expected_statuses=(200,),
         )
         return _("Deactivated Sumo Logic user {label}").format(label=account.label)
+
+
+class HubspotOffboardingClient(PlatformOffboardingClient):
+    """
+    HubSpot Settings Users API v3. The public API only supports removing a
+    user (deactivation is a UI-only feature); HubSpot keeps the removed
+    user's historical activity attributed to them.
+    """
+    slug = 'hubspot'
+    name = 'HubSpot'
+    action_verb = gettext_lazy("Remove")
+    is_reversible = False
+
+    required_config = ('access_token',)
+
+    _users_url = 'https://api.hubapi.com/settings/v3/users'
+
+    @property
+    def _headers(self):
+        return {'Authorization': f"Bearer {self.config['access_token']}"}
+
+    def find_account(self, email):
+        email = normalize_email(email)
+        # Valid local parts may contain '#', '?', '/' or '%', all of which
+        # would otherwise change the meaning of the URL.
+        response = self._request(
+            'GET', f"{self._users_url}/{quote(email, safe='')}", headers=self._headers,
+            params={'idProperty': 'EMAIL'}, expected_statuses=(200, 404),
+        )
+        if response.status_code == 404:
+            return None
+        user = response.json()
+        label = user.get('email') or email
+        if user.get('superAdmin'):
+            label += " (super admin)"
+        return AccountInfo(account_id=str(user['id']), label=label)
+
+    def offboard(self, account):
+        self._request(
+            'DELETE', f"{self._users_url}/{account.account_id}",
+            headers=self._headers, expected_statuses=(204,),
+        )
+        return _("Removed HubSpot user {label}").format(label=account.label)
