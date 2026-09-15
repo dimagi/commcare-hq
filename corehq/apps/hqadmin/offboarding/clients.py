@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 
 import requests
 from django.conf import settings
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 logger = logging.getLogger(__name__)
@@ -80,3 +81,51 @@ class PlatformOffboardingClient:
                 f"{self.name} returned HTTP {response.status_code}: {detail}"
             )
         return response
+
+
+class DatadogOffboardingClient(PlatformOffboardingClient):
+    """
+    Datadog Users API v2. Disabling is a ``DELETE`` on the user, which
+    Datadog documents as "disable a user" and which an admin can undo.
+    """
+    slug = 'datadog'
+    name = 'Datadog'
+    default_config = {'site': 'datadoghq.com'}
+    required_config = ('api_key', 'app_key')
+
+    @property
+    def _users_url(self):
+        return f"https://api.{self.config['site']}/api/v2/users"
+
+    @property
+    def _headers(self):
+        config = self.config
+        return {
+            'DD-API-KEY': config['api_key'],
+            'DD-APPLICATION-KEY': config['app_key'],
+            'Accept': 'application/json',
+        }
+
+    def find_account(self, email):
+        email = normalize_email(email)
+        response = self._request(
+            'GET', self._users_url, headers=self._headers,
+            params={'filter': email, 'page[size]': 100},
+        )
+        for user in response.json().get('data', []):
+            attrs = user.get('attributes', {})
+            if normalize_email(attrs.get('email')) == email:
+                name = attrs.get('name') or attrs.get('handle') or email
+                return AccountInfo(
+                    account_id=user['id'],
+                    label=f"{name} <{attrs.get('email')}>",
+                    is_active=not attrs.get('disabled', False),
+                )
+        return None
+
+    def offboard(self, account):
+        self._request(
+            'DELETE', f"{self._users_url}/{account.account_id}",
+            headers=self._headers, expected_statuses=(204,),
+        )
+        return _("Disabled Datadog user {label}").format(label=account.label)

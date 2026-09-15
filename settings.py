@@ -1008,7 +1008,13 @@ METRICS_PROVIDERS = []
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
 
-OFFBOARDING_PLATFORMS = {}
+OFFBOARDING_PLATFORMS = {
+    'datadog': {
+        'api_key': None,
+        'app_key': None,
+        'site': 'datadoghq.com',
+    },
+}
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'
 
