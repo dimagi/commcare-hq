@@ -1,12 +1,18 @@
 import json
 from unittest.mock import patch
 
+from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.html import escape
 
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.project_db.table_ddl import (
+    get_domain_tables,
+    get_project_db_engine,
+    property_column,
+)
 from corehq.apps.project_db.tests.util import project_db_table
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
@@ -448,3 +454,172 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
     def test_requires_post(self):
         response = self.client.get(self._test_url())
         assert response.status_code == 405
+
+    def _post_sql(self, sql, **param_values):
+        return self.client.post(self._test_url(), {
+            'target_type': 'project_db',
+            'sql': sql,
+            'test_param_values': json.dumps(param_values),
+        })
+
+    def _add_pets(self):
+        table = get_domain_tables(self.domain)['my_case_type']
+        with get_project_db_engine().begin() as conn:
+            conn.execute(table.insert().values([
+                {'case_id': 'c1', 'owner_id': 'o1', 'case_name': 'Ann',
+                 'closed': False, 'external_id': '',
+                 property_column('nickname'): 'Annie'},
+                {'case_id': 'c2', 'owner_id': 'o1', 'case_name': 'Bob',
+                 'closed': False, 'external_id': '',
+                 property_column('nickname'): 'Bobby'},
+            ]))
+
+    def test_sql_shows_every_selected_column(self):
+        with self._project_db_table():
+            self._add_pets()
+            response = self._post_sql(
+                'SELECT case_id, case_name FROM my_case_type ORDER BY case_name')
+        content = response.content.decode()
+        assert response.status_code == 200
+        assert 'alert-danger' not in content
+        # the projection's own columns, not a case's
+        for value in ['case_id', 'case_name', 'c1', 'Ann', 'Bob']:
+            assert value in content
+        # a column the query did not select
+        assert 'owner_id' not in content
+
+    def test_sql_binds_supplied_parameter_values(self):
+        sql = ('SELECT case_name FROM my_case_type '
+               'WHERE (:who IS NULL OR case_name = :who)')
+        with self._project_db_table():
+            self._add_pets()
+            response = self._post_sql(sql, who='Bob')
+        content = response.content.decode()
+        assert 'Bob' in content
+        assert 'Ann' not in content
+
+    def test_sql_binds_a_blank_parameter_as_null(self):
+        # NULL leaves the guard open, matching how an endpoint runs when a
+        # criterion is not supplied
+        sql = ('SELECT case_name FROM my_case_type '
+               'WHERE (:who IS NULL OR case_name = :who)')
+        with self._project_db_table():
+            self._add_pets()
+            response = self._post_sql(sql, who='')
+        content = response.content.decode()
+        assert 'alert-danger' not in content
+        assert 'Ann' in content
+        assert 'Bob' in content
+
+    def test_sql_errors_are_rendered(self):
+        cases = [
+            ('DELETE FROM my_case_type', 'unsupported statement'),
+            ('SELECT nope FROM my_case_type', 'unknown column'),
+            ('SELECT case_id FROM no_such_table', 'unknown table'),
+        ]
+        for sql, expected in cases:
+            with self.subTest(sql=sql), self._project_db_table():
+                response = self._post_sql(sql)
+                content = response.content.decode()
+                assert response.status_code == 200
+                assert 'alert-danger' in content
+                assert expected in content
+                assert '<table' not in content
+
+    def test_sql_reports_an_unavailable_project_db(self):
+        # The engine falls back to the default database under DEBUG or
+        # UNIT_TESTING, so the failure has to be injected to be reachable.
+        with patch('corehq.apps.project_db.user_sql.get_domain_tables',
+                   side_effect=ImproperlyConfigured('nope')):
+            response = self._post_sql('SELECT case_id FROM my_case_type')
+        content = response.content.decode()
+        assert response.status_code == 200
+        assert 'unavailable' in content
+    def test_sql_is_held_to_the_parameter_spec(self):
+        # Two parameters of the same name is the one spec error the editor
+        # lets through, and it was previously ignored for SQL endpoints.
+        response = self.client.post(self._test_url(), {
+            'target_type': 'project_db',
+            'sql': 'SELECT case_id FROM my_case_type',
+            'parameters': json.dumps([
+                {'name': 'who', 'type': 'text'},
+                {'name': 'who', 'type': 'text'},
+            ]),
+        })
+        content = response.content.decode()
+        assert response.status_code == 200
+        assert escape("Duplicate parameter name: 'who'") in content
+        assert '<table' not in content
+
+    def test_sql_rejects_an_unparseable_parameter_spec(self):
+        response = self.client.post(self._test_url(), {
+            'target_type': 'project_db',
+            'sql': 'SELECT case_id FROM my_case_type',
+            'parameters': 'not json',
+        })
+        assert 'Invalid parameters JSON' in response.content.decode()
+
+    def _region(self, content, region):
+        """The markup a response swapped into one card's error container.
+
+        ``None`` when the response said nothing about that card.
+        """
+        marker = f'<div id="{region}" hx-swap-oob="innerHTML">'
+        if marker not in content:
+            return None
+        start = content.index(marker) + len(marker)
+        return content[start:content.index('</div>', start)]
+
+    def test_a_successful_sql_run_clears_the_cards_it_checked(self):
+        # A card may still be showing why the last save failed. Running the
+        # query settles that, so what it checked is emptied out of band.
+        with self._project_db_table():
+            self._add_pets()
+            response = self._post_sql('SELECT case_id FROM my_case_type')
+        content = response.content.decode()
+        assert self._region(content, 'sql-errors').strip() == ''
+        assert self._region(content, 'parameter-errors').strip() == ''
+
+    def test_a_failed_sql_run_reports_into_the_sql_card(self):
+        with self._project_db_table():
+            response = self._post_sql('DELETE FROM my_case_type')
+        content = response.content.decode()
+        assert 'unsupported statement' in self._region(content, 'sql-errors')
+
+    def test_a_sql_run_says_nothing_about_the_query_card(self):
+        with self._project_db_table():
+            self._add_pets()
+            response = self._post_sql('SELECT case_id FROM my_case_type')
+        assert self._region(response.content.decode(), 'query-errors') is None
+
+    def test_a_failed_query_reports_into_the_query_card(self):
+        response = self.client.post(self._test_url(), {
+            'case_type': 'my_case_type',
+            'query': json.dumps({'type': 'bogus'}),
+        })
+        content = response.content.decode()
+        assert self._region(content, 'query-errors').strip() != ''
+        # ...and nothing about the SQL it never looked at
+        assert self._region(content, 'sql-errors') is None
+
+    def test_an_unchosen_case_type_reports_into_the_query_card(self):
+        # Reachable from the UI: the select starts on the blank option
+        response = self.client.post(self._test_url(), {
+            'case_type': '',
+            'query': json.dumps(EMPTY_QUERY),
+        })
+        content = response.content.decode()
+        assert "Unknown case type" in self._region(content, 'query-errors')
+
+    def test_a_bad_spec_says_nothing_about_the_sql_it_did_not_check(self):
+        response = self.client.post(self._test_url(), {
+            'target_type': 'project_db',
+            'sql': 'DELETE FROM my_case_type',
+            'parameters': json.dumps([
+                {'name': 'who', 'type': 'text'},
+                {'name': 'who', 'type': 'text'},
+            ]),
+        })
+        content = response.content.decode()
+        assert 'Duplicate parameter name' in self._region(content, 'parameter-errors')
+        assert self._region(content, 'sql-errors') is None
