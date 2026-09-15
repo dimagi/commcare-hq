@@ -416,9 +416,18 @@ def _convert_sounds_like(args, columns):
     return func.dmetaphone(left) == func.dmetaphone(right)
 
 
+def _convert_fuzzy_match(args, columns):
+    """Compare two values by trigram similarity"""
+    if len(args) != 2:
+        raise UnsupportedSQL(f"fuzzy_match takes 2 args. Got {len(args)}")
+    left, right = (_convert_value(arg, columns) for arg in args)
+    return left % right
+
+
 PREDICATE_FUNCTIONS = {
     'within_distance': _convert_within_distance,
     'sounds_like': _convert_sounds_like,
+    'fuzzy_match': _convert_fuzzy_match,
 }
 
 

@@ -231,12 +231,11 @@ def _within_distance(coordinates, meters):
          _string_to_array(CLIENT.c.name, _bind(' ')).bool_op('&&')(
              _bind(['fever'])))),
 
-    # Phonetic matching
     ('SELECT * FROM client WHERE sounds_like(name, :name)',
      select([CLIENT]).where(
          func.dmetaphone(CLIENT.c.name) == func.dmetaphone(bindparam('name')))),
-
-    # Geopoint filtering
+    ('SELECT * FROM client WHERE fuzzy_match(name, :name)',
+     select([CLIENT]).where(CLIENT.c.name % bindparam('name'))),
     ("SELECT * FROM geo WHERE within_distance(gps_prop__location, '42.44 -71.14', 5000)",
      select([GEO]).where(_within_distance(_bind('42.44 -71.14'), _bind(5000.0)))),
     ('SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius)',
@@ -320,6 +319,9 @@ def _compiled(query):
     # `sounds_like` takes exactly two values
     "SELECT * FROM client WHERE sounds_like(name)",
     "SELECT * FROM client WHERE sounds_like(name, 'a', 'b')",
+    # `fuzzy_match` takes exactly two values; the threshold is fixed
+    "SELECT * FROM client WHERE fuzzy_match(name)",
+    "SELECT * FROM client WHERE fuzzy_match(name, 'a', 0.5)",
 
     # Only columns can be selected or ordered by
     "SELECT string_to_array(name, ' ') FROM client",
@@ -553,6 +555,27 @@ def test_sounds_like_db_test():
 
     assert matching('Smythe') == ['smith', 'smyth']
     assert matching('Braun') == ['brown']
+
+
+@use('db', project_db_table('test-fuzzy-match', 'client', {'name': 'plain'}, (
+    ['case_id', 'owner_id', 'prop__name'], [
+        ['michael', 'o', 'Michael'],
+        ['mitchell', 'o', 'Mitchell'],
+        ['robert', 'o', 'Robert'],
+    ]
+)))
+def test_fuzzy_match_db_test():
+
+    def matching(name):
+        user_sql = UserSQL('test-fuzzy-match', (
+            'SELECT case_id FROM client '
+            'WHERE fuzzy_match(prop__name, :name) '
+            'ORDER BY case_id'))
+        return [row['case_id'] for row in user_sql.run({'name': name}).rows]
+
+    assert matching('Micheal') == ['michael']  # Note that Mitchell doesn't match
+    assert matching('Roberto') == ['robert']
+    assert matching('Richard') == []
 
 
 @pytest.mark.parametrize('error_class', [ProgrammingError, DataError])
