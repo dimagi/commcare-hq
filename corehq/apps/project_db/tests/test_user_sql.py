@@ -26,7 +26,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DataError, ProgrammingError
 from unmagic import fixture, use
 
-from corehq.apps.project_db.populate import coerce_to_gps, coerce_to_select
+from corehq.apps.project_db.populate import coerce_to_gps
 from corehq.apps.project_db.table_ddl import Earth
 from corehq.apps.project_db.user_sql import (
     MAX_TREE_DEPTH,
@@ -231,6 +231,11 @@ def _within_distance(coordinates, meters):
          _string_to_array(CLIENT.c.name, _bind(' ')).bool_op('&&')(
              _bind(['fever'])))),
 
+    # Phonetic matching
+    ('SELECT * FROM client WHERE sounds_like(name, :name)',
+     select([CLIENT]).where(
+         func.dmetaphone(CLIENT.c.name) == func.dmetaphone(bindparam('name')))),
+
     # Geopoint filtering
     ("SELECT * FROM geo WHERE within_distance(gps_prop__location, '42.44 -71.14', 5000)",
      select([GEO]).where(_within_distance(_bind('42.44 -71.14'), _bind(5000.0)))),
@@ -312,6 +317,10 @@ def _compiled(query):
     # `string_to_array` takes a string and a literal delimiter
     "SELECT * FROM survey WHERE symptoms && string_to_array(:s, :delim)",
     "SELECT * FROM survey WHERE symptoms && string_to_array(:s, ',', 'NULL')",
+    # `sounds_like` takes exactly two values
+    "SELECT * FROM client WHERE sounds_like(name)",
+    "SELECT * FROM client WHERE sounds_like(name, 'a', 'b')",
+
     # Only columns can be selected or ordered by
     "SELECT string_to_array(name, ' ') FROM client",
 
@@ -524,6 +533,26 @@ def test_string_to_array_db_test():
     # An empty array is contained by every row, including the empty one
     # 'fever' and '' are contained by 'fever'
     assert matching('<@', 'fever') == ['fever', 'none']
+
+
+@use('db', project_db_table('test-sounds-like', 'client', {'name': 'plain'}, (
+    ['case_id', 'owner_id', 'prop__name'], [
+        ['smith', 'o', 'Smith'],
+        ['smyth', 'o', 'Smyth'],
+        ['brown', 'o', 'Brown'],
+    ]
+)))
+def test_sounds_like_db_test():
+
+    def matching(name):
+        user_sql = UserSQL('test-sounds-like', (
+            'SELECT case_id FROM client '
+            'WHERE sounds_like(prop__name, :name) '
+            'ORDER BY case_id'))
+        return [row['case_id'] for row in user_sql.run({'name': name}).rows]
+
+    assert matching('Smythe') == ['smith', 'smyth']
+    assert matching('Braun') == ['brown']
 
 
 @pytest.mark.parametrize('error_class', [ProgrammingError, DataError])

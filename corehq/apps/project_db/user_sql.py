@@ -408,8 +408,17 @@ def _convert_meters(node):
         f"query parameter, got {str(node)}")
 
 
+def _convert_sounds_like(args, columns):
+    """Compare two values by phonetic code"""
+    if len(args) != 2:
+        raise UnsupportedSQL(f"sounds_like takes 2 args. Got {len(args)}")
+    left, right = (_convert_value(arg, columns) for arg in args)
+    return func.dmetaphone(left) == func.dmetaphone(right)
+
+
 PREDICATE_FUNCTIONS = {
     'within_distance': _convert_within_distance,
+    'sounds_like': _convert_sounds_like,
 }
 
 
