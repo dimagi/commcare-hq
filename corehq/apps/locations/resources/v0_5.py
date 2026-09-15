@@ -24,7 +24,64 @@ class BaseLocationsResource(ModelResource, HqBaseResource):
 
 
 class LocationTypeResource(BaseLocationsResource):
-    parent = fields.ForeignKey('self', 'parent_type', null=True)
+    id = fields.IntegerField(
+        attribute='id',
+        readonly=True,
+        unique=True,
+        help_text='Numeric identifier of the location type.',
+    )
+    domain = fields.CharField(
+        attribute='domain',
+        help_text='Domain (project space) that owns the location type.',
+    )
+    name = fields.CharField(
+        attribute='name',
+        help_text='Name of the location type.',
+    )
+    code = fields.CharField(
+        attribute='code',
+        null=True,
+        help_text='Slug identifying the location type, used to filter '
+                  'locations and in bulk data imports.',
+    )
+    parent = fields.ForeignKey(
+        'self',
+        'parent_type',
+        null=True,
+        help_text='URI of the parent location type, or null if this is '
+                  'a root-level type.',
+    )
+    administrative = fields.BooleanField(
+        attribute='administrative',
+        help_text='Whether this is an administrative location type '
+                  '(a fixed geographic boundary, e.g. state or '
+                  'district) as opposed to an inventory-management '
+                  'type (e.g. facility).',
+    )
+    shares_cases = fields.BooleanField(
+        attribute='shares_cases',
+        help_text='Whether users assigned to a location of this type '
+                  'share cases owned by that location.',
+    )
+    view_descendants = fields.BooleanField(
+        attribute='view_descendants',
+        help_text='Whether users assigned to a location of this type '
+                  'can view data belonging to descendant locations.',
+    )
+
+    class Docs:
+        summary = 'Location Types'
+        description = (
+            'List the location types configured in a project space, or '
+            'fetch a single location type by identifier. Location '
+            'types define the organizational hierarchy (for example '
+            'state, district, or facility) that locations belong to.'
+        )
+        field_schemas = {
+            'resource_uri': {
+                'description': 'URI of this record in the API.',
+            },
+        }
 
     class Meta(object):
         resource_name = 'location_type'
@@ -43,6 +100,13 @@ class LocationTypeResource(BaseLocationsResource):
         filtering = {
             "domain": ('exact',),
         }
+        # This resource implements no obj_create/obj_update/obj_delete,
+        # and relies on the default ReadOnlyAuthorization, which rejects
+        # any write with 401. Without these, Tastypie's own default
+        # ``allowed_methods`` would still publish POST/PUT/PATCH/DELETE
+        # as if they worked.
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_list'):
         if isinstance(bundle_or_obj, Bundle):
@@ -65,9 +129,87 @@ class LocationTypeResource(BaseLocationsResource):
 
 
 class LocationResource(BaseLocationsResource):
-    location_data = fields.DictField('metadata')
-    location_type = fields.ForeignKey(LocationTypeResource, 'location_type')
-    parent = fields.ForeignKey('self', 'parent', null=True)
+    id = fields.IntegerField(
+        attribute='id',
+        readonly=True,
+        unique=True,
+        help_text='Numeric identifier of the location.',
+    )
+    name = fields.CharField(
+        attribute='name',
+        null=True,
+        help_text='Name of the location.',
+    )
+    domain = fields.CharField(
+        attribute='domain',
+        help_text='Domain (project space) that owns the location.',
+    )
+    location_id = fields.CharField(
+        attribute='location_id',
+        unique=True,
+        help_text='UUID of the location.',
+    )
+    site_code = fields.CharField(
+        attribute='site_code',
+        help_text='Unique (within the domain) code identifying the '
+                  'location, used in case sharing and bulk data.',
+    )
+    external_id = fields.CharField(
+        attribute='external_id',
+        null=True,
+        help_text='Identifier of the location in an external system, '
+                  'if any.',
+    )
+    created_at = fields.DateTimeField(
+        attribute='created_at',
+        help_text='Date and time the location was created.',
+    )
+    last_modified = fields.DateTimeField(
+        attribute='last_modified',
+        help_text='Date and time the location was last modified.',
+    )
+    latitude = fields.DecimalField(
+        attribute='latitude',
+        null=True,
+        help_text='Latitude coordinate of the location.',
+    )
+    longitude = fields.DecimalField(
+        attribute='longitude',
+        null=True,
+        help_text='Longitude coordinate of the location.',
+    )
+    location_data = fields.DictField(
+        'metadata',
+        help_text='Custom data associated with the location, keyed by '
+                  'field name.',
+    )
+    location_type = fields.ForeignKey(
+        LocationTypeResource,
+        'location_type',
+        help_text='URI of the location type of this location.',
+    )
+    parent = fields.ForeignKey(
+        'self',
+        'parent',
+        null=True,
+        help_text='URI of the parent location, or null if this is a '
+                  'root-level location.',
+    )
+
+    class Docs:
+        summary = 'Locations'
+        description = (
+            'List locations in a project space, or fetch a single '
+            'location by identifier. Locations represent the places, '
+            'facilities or administrative areas where a project '
+            'operates, arranged in a hierarchy of location types.'
+        )
+        examples = {'list_response': 'location/v1/list_response.json'}
+        field_schemas = {
+            'resource_uri': {
+                'description': 'URI of this record in the API.',
+            },
+        }
 
     class Meta(object):
         resource_name = 'location'
