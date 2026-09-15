@@ -236,6 +236,10 @@ def _within_distance(coordinates, meters):
          func.dmetaphone(CLIENT.c.name) == func.dmetaphone(bindparam('name')))),
     ('SELECT * FROM client WHERE fuzzy_match(name, :name)',
      select([CLIENT]).where(CLIENT.c.name % bindparam('name'))),
+    ('SELECT * FROM client WHERE similar_name(name, :name)',
+     select([CLIENT]).where(or_(
+         CLIENT.c.name % bindparam('name'),
+         func.dmetaphone(CLIENT.c.name) == func.dmetaphone(bindparam('name'))))),
     ("SELECT * FROM geo WHERE within_distance(gps_prop__location, '42.44 -71.14', 5000)",
      select([GEO]).where(_within_distance(_bind('42.44 -71.14'), _bind(5000.0)))),
     ('SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius)',
@@ -322,6 +326,8 @@ def _compiled(query):
     # `fuzzy_match` takes exactly two values; the threshold is fixed
     "SELECT * FROM client WHERE fuzzy_match(name)",
     "SELECT * FROM client WHERE fuzzy_match(name, 'a', 0.5)",
+    "SELECT * FROM client WHERE similar_name(name)",
+    "SELECT * FROM client WHERE similar_name(name, 'a', 'b')",
 
     # Only columns can be selected or ordered by
     "SELECT string_to_array(name, ' ') FROM client",
@@ -575,6 +581,28 @@ def test_fuzzy_match_db_test():
 
     assert matching('Micheal') == ['michael']  # Note that Mitchell doesn't match
     assert matching('Roberto') == ['robert']
+    assert matching('Richard') == []
+
+
+@use('db', project_db_table('test-similar-name', 'client', {'name': 'plain'}, (
+    ['case_id', 'owner_id', 'prop__name'], [
+        ['michael', 'o', 'Michael'],
+        ['john', 'o', 'John'],
+        ['robert', 'o', 'Robert'],
+    ]
+)))
+def test_similar_name_db_test():
+
+    def matching(name):
+        user_sql = UserSQL('test-similar-name', (
+            'SELECT case_id FROM client '
+            'WHERE similar_name(prop__name, :name) '
+            'ORDER BY case_id'))
+        return [row['case_id'] for row in user_sql.run({'name': name}).rows]
+
+    # Micheal is only caught by trigram similarity, Jon only by phonetics
+    assert matching('Micheal') == ['michael']
+    assert matching('Jon') == ['john']
     assert matching('Richard') == []
 
 

@@ -424,10 +424,19 @@ def _convert_fuzzy_match(args, columns):
     return left % right
 
 
+def _convert_similar_name(args, columns):
+    """Compare two values that could have typos or misspellings"""
+    if len(args) != 2:
+        raise UnsupportedSQL(f"similar_name takes 2 args. Got {len(args)}")
+    return or_(_convert_fuzzy_match(args, columns),
+               _convert_sounds_like(args, columns))
+
+
 PREDICATE_FUNCTIONS = {
     'within_distance': _convert_within_distance,
     'sounds_like': _convert_sounds_like,
     'fuzzy_match': _convert_fuzzy_match,
+    'similar_name': _convert_similar_name,
 }
 
 
