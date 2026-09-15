@@ -10,7 +10,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.mail import mail_admins
-from django.db.models import Q
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -55,7 +54,7 @@ from corehq.apps.hqadmin.forms import (
     OffboardingUserListForm,
     SuperuserManagementForm,
 )
-from corehq.apps.hqadmin.utils import unset_password
+from corehq.apps.hqadmin.utils import privileged_users_query, unset_password
 from corehq.apps.hqadmin.views.utils import (
     BaseAdminSectionView,
     get_breadcrumbs,
@@ -271,9 +270,10 @@ def augmented_superusers(
     include_contractor=False,
 ):
     if not users:
-        user_query = (Q(is_superuser=True) | Q(is_staff=True))
-        if include_contractor:
-            user_query = (user_query | Q(username__in=IS_CONTRACTOR.get_enabled_users()))
+        user_query = privileged_users_query(
+            include_contractor=include_contractor,
+            include_accounting_admin=include_accounting_admin,
+        )
         users = User.objects.filter(user_query).order_by("username")
 
     augmented_users = _augment_users_with_two_factor_enabled(users)
@@ -905,7 +905,10 @@ class OffboardingUserList(UserAdministration):
         return {
             'form': OffboardingUserListForm(data=form_data),
             'users': self.users,
-            'table_title': _('All superusers and staff users') if not self.table_title else self.table_title,
+            'table_title': (
+                _('All superusers, staff users, and accounting admins')
+                if not self.table_title else self.table_title
+            ),
             'validation_errors': self.validation_errors,
         }
 
