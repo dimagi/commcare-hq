@@ -268,3 +268,17 @@ class HubspotOffboardingClient(PlatformOffboardingClient):
             headers=self._headers, expected_statuses=(204,),
         )
         return _("Removed HubSpot user {label}").format(label=account.label)
+
+
+OFFBOARDING_CLIENTS = [
+    DatadogOffboardingClient(),
+    SentryOffboardingClient(),
+    SumologicOffboardingClient(),
+    HubspotOffboardingClient(),
+]
+
+CLIENTS_BY_SLUG = {client.slug: client for client in OFFBOARDING_CLIENTS}
+
+
+def get_client(slug):
+    return CLIENTS_BY_SLUG.get(slug)

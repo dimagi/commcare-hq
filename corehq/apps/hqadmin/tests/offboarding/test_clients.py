@@ -5,9 +5,12 @@ from django.test import override_settings
 from unmagic import fixture
 
 from corehq.apps.hqadmin.offboarding.clients import (
+    CLIENTS_BY_SLUG,
     HubspotOffboardingClient,
+    OFFBOARDING_CLIENTS,
     OffboardingClientError,
     PlatformOffboardingClient,
+    get_client,
     normalize_email,
 )
 
@@ -36,6 +39,12 @@ def stub_http():
 def test_normalize_email():
     assert normalize_email('  Jane@Dimagi.COM ') == 'jane@dimagi.com'
     assert normalize_email(None) == ''
+
+
+def test_registry_matches_clients():
+    assert set(CLIENTS_BY_SLUG) == {client.slug for client in OFFBOARDING_CLIENTS}
+    assert all(get_client(client.slug) is client for client in OFFBOARDING_CLIENTS)
+    assert get_client('nope') is None
 
 
 def test_config_merges_deployment_values_over_defaults():
