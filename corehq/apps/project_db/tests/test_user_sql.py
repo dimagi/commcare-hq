@@ -4,9 +4,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy import (
+    ARRAY,
+    Float,
+    Text,
     and_,
     bindparam,
+    cast,
     column,
+    func,
+    literal_column,
     not_,
     nullsfirst,
     nullslast,
@@ -17,9 +23,11 @@ from sqlalchemy import (
     union_all,
 )
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.exc import DataError, ProgrammingError
 from unmagic import fixture, use
 
+from corehq.apps.project_db.populate import coerce_to_gps
+from corehq.apps.project_db.table_ddl import Earth
 from corehq.apps.project_db.user_sql import (
     MAX_TREE_DEPTH,
     BadParameters,
@@ -30,11 +38,15 @@ from corehq.apps.project_db.user_sql import (
     translate,
 )
 
+from .util import project_db_table
+
 CLIENT = table('client', column('case_id'), column('name'))
 VISIT = table('visit', column('visit_id'), column('parent_id'), column('name'))
 FORM = table('form', column('form_id'), column('visit_id'))
 SURVEY = table('survey', column('symptoms'))
-TABLES = {'client': CLIENT, 'visit': VISIT, 'form': FORM, 'survey': SURVEY}
+GEO = table('geo', column('case_id'), column('gps_prop__location', Earth))
+TABLES = {'client': CLIENT, 'visit': VISIT, 'form': FORM, 'survey': SURVEY,
+          'geo': GEO}
 
 ON = CLIENT.c.case_id == VISIT.c.parent_id
 CLIENT_VISIT = CLIENT.join(VISIT, ON)
@@ -43,6 +55,26 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
 # An alias is what makes joining a table to itself possible
 VISIT_V, VISIT_P = VISIT.alias('v'), VISIT.alias('p')
 SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
+
+
+def _string_to_array(value, delimiter):
+    return func.string_to_array(value, delimiter, type_=ARRAY(Text))
+
+
+def _within_distance(coordinates, meters):
+    """The bounding box and exact distance test `within_distance` stands for"""
+    location = GEO.c.gps_prop__location
+    center = func.ll_to_earth(*(
+        cast(
+            func.split_part(coordinates, literal_column("' '"), literal_column(i)),
+            Float
+        )
+        for i in ('1', '2')
+    ))
+    return and_(
+        func.earth_box(center, meters).bool_op('@>')(location),
+        func.earth_distance(center, location) < meters,
+    )
 
 
 @pytest.mark.parametrize('sql, expected', [
@@ -187,6 +219,31 @@ SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
      select([SURVEY]).where(SURVEY.c.symptoms.bool_op('&&')(_bind(['fever'])))),
     ("SELECT * FROM survey WHERE symptoms @> '{fever,cough}'",
      select([SURVEY]).where(SURVEY.c.symptoms.bool_op('@>')(_bind('{fever,cough}')))),
+
+    # Split a string param to an array
+    ("SELECT * FROM survey WHERE string_to_array(:s, ',') <@ symptoms",
+     select([SURVEY]).where(
+         _string_to_array(bindparam('s'), _bind(','))
+         .bool_op('<@')( SURVEY.c.symptoms))),
+    # A text column can be split too
+    ("SELECT * FROM client WHERE string_to_array(name, ' ') && ARRAY['fever']",
+     select([CLIENT]).where(
+         _string_to_array(CLIENT.c.name, _bind(' ')).bool_op('&&')(
+             _bind(['fever'])))),
+
+    ('SELECT * FROM client WHERE sounds_like(name, :name)',
+     select([CLIENT]).where(
+         func.dmetaphone(CLIENT.c.name) == func.dmetaphone(bindparam('name')))),
+    ('SELECT * FROM client WHERE fuzzy_match(name, :name)',
+     select([CLIENT]).where(CLIENT.c.name % bindparam('name'))),
+    ('SELECT * FROM client WHERE similar_name(name, :name)',
+     select([CLIENT]).where(or_(
+         CLIENT.c.name % bindparam('name'),
+         func.dmetaphone(CLIENT.c.name) == func.dmetaphone(bindparam('name'))))),
+    ("SELECT * FROM geo WHERE within_distance(gps_prop__location, '42.44 -71.14', 5000)",
+     select([GEO]).where(_within_distance(_bind('42.44 -71.14'), _bind(5000.0)))),
+    ('SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius)',
+     select([GEO]).where(_within_distance(bindparam('center'), bindparam('radius')))),
 ])
 def test_valid_queries(sql, expected):
     assert _compiled(translate(sql, TABLES)) == _compiled(expected)
@@ -251,6 +308,29 @@ def _compiled(query):
     'SELECT * FROM client WHERE name IN (SELECT name FROM client)',  # IN a subquery
     'SELECT * FROM client WHERE name',            # not a comparison
     "SELECT * FROM client WHERE LOWER(name) = 'x'",  # function call
+    'SELECT * FROM client WHERE bogus(name)',        # unknown function call
+
+    # `within_distance` takes 3 args, GPS column, coordinates, and a distance
+    "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2')",
+    "SELECT * FROM geo WHERE within_distance(gps_prop__location, case_id, 5)",
+    "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2', '5')",
+    # The column must be a GPS column, not just any column
+    "SELECT * FROM geo WHERE within_distance(case_id, '1 2', 5)",
+
+    # `string_to_array` takes a string and a literal delimiter
+    "SELECT * FROM survey WHERE symptoms && string_to_array(:s, :delim)",
+    "SELECT * FROM survey WHERE symptoms && string_to_array(:s, ',', 'NULL')",
+    # `sounds_like` takes exactly two values
+    "SELECT * FROM client WHERE sounds_like(name)",
+    "SELECT * FROM client WHERE sounds_like(name, 'a', 'b')",
+    # `fuzzy_match` takes exactly two values; the threshold is fixed
+    "SELECT * FROM client WHERE fuzzy_match(name)",
+    "SELECT * FROM client WHERE fuzzy_match(name, 'a', 0.5)",
+    "SELECT * FROM client WHERE similar_name(name)",
+    "SELECT * FROM client WHERE similar_name(name, 'a', 'b')",
+
+    # Only columns can be selected or ordered by
+    "SELECT string_to_array(name, ' ') FROM client",
 
     # Only `JOIN` and `LEFT JOIN` are supported for now.
     'SELECT * FROM client INNER JOIN visit ON client.case_id = visit.parent_id',
@@ -328,6 +408,8 @@ def _user_sql(sql):
     # Literals are already bound, and a parameter used twice is listed once
     ("SELECT * FROM client WHERE name = :who AND case_id = 'c1' OR name = :who",
      ['who']),
+    ('SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius)',
+     ['center', 'radius']),
 ])
 def test_parameters(sql, expected):
     assert _user_sql(sql).parameters == expected
@@ -409,10 +491,102 @@ def test_allows_nesting_up_to_the_limit():
     assert translate(sql, TABLES) is not None
 
 
-def test_run_reports_a_database_error():
+@use('db', project_db_table('test-within-distance', 'patient', {'location': 'gps'}, (
+    ['case_id', 'owner_id', 'gps_prop__location'], [
+        ['far', 'o', coerce_to_gps('44.1710 -71.1097')],
+        ['near', 'o', coerce_to_gps('42.3736 -71.1097')],
+        # 5.5km away, but inside the 5km bounding box, which is square.
+        ['corner', 'o', coerce_to_gps('42.4086 -71.0623')],
+        ['null', 'o', None],
+    ]
+)))
+def test_within_distance_db_test():
+
+    def matching(radius):
+        user_sql = UserSQL('test-within-distance', (
+            'SELECT case_id FROM patient '
+            'WHERE within_distance(gps_prop__location, :center, :radius) '
+            'ORDER BY case_id'))
+        result = user_sql.run({'center': '42.3736 -71.1097', 'radius': radius})
+        return [row['case_id'] for row in result.rows]
+
+    assert matching(5000) == ['near']
+    # A case with no location never matches, whatever the radius
+    assert matching(300_000) == ['corner', 'far', 'near']
+
+
+@use('db', project_db_table('test-string-to-array', 'survey', {'symptoms': 'select'}, (
+    ['case_id', 'owner_id', 'select_prop__symptoms'], [
+        ['both', 'o', ['fever', 'cough']],
+        ['fever', 'o', ['fever']],
+        ['none', 'o', []],
+    ]
+)))
+def test_string_to_array_db_test():
+
+    def matching(operator, symptoms):
+        user_sql = UserSQL('test-string-to-array', (
+            'SELECT case_id FROM survey '
+            f"WHERE select_prop__symptoms {operator} string_to_array(:symptoms, ' ') "
+            'ORDER BY case_id'))
+        result = user_sql.run({'symptoms': symptoms})
+        return [row['case_id'] for row in result.rows]
+
+    # 'fever cough' and 'fever' both overlap with 'fever rash'
+    assert matching('&&', 'fever rash') == ['both', 'fever']
+    # 'fever cough' and 'fever' both contain 'fever'
+    assert matching('@>', 'fever') == ['both', 'fever']
+    # Only 'fever cough' contains the items 'fever cough'
+    assert matching('@>', 'fever cough') == ['both']
+    # An empty array is contained by every row, including the empty one
+    # 'fever' and '' are contained by 'fever'
+    assert matching('<@', 'fever') == ['fever', 'none']
+
+
+NAME_MATCH_DOMAIN = 'test-name-matching'
+
+
+@fixture(scope='module')
+def name_table():
+    return project_db_table(NAME_MATCH_DOMAIN, 'client', {'name': 'plain'}, (
+        ['case_id', 'owner_id', 'prop__name'], [
+            ['smith', 'o', 'Smith'],
+            ['smyth', 'o', 'Smyth'],
+            ['brown', 'o', 'Brown'],
+            ['michael', 'o', 'Michael'],
+            ['mitchell', 'o', 'Mitchell'],
+            ['john', 'o', 'John'],
+            ['robert', 'o', 'Robert'],
+        ]
+    ))
+
+
+@use('db', name_table)
+@pytest.mark.parametrize('predicate, name, expected', [
+    ('sounds_like', 'Smythe', ['smith', 'smyth']),
+    ('sounds_like', 'Braun', ['brown']),
+    ('sounds_like', 'Micheal', ['mitchell']),
+    ('fuzzy_match', 'Micheal', ['michael']),
+    ('fuzzy_match', 'Roberto', ['robert']),
+    ('fuzzy_match', 'Braun', []),
+    ('similar_name', 'Micheal', ['michael', 'mitchell']),
+    ('similar_name', 'Braun', ['brown']),
+    ('similar_name', 'Richard', []),
+])
+def test_name_matching(predicate, name, expected):
+    user_sql = UserSQL(NAME_MATCH_DOMAIN, (
+        'SELECT case_id FROM client '
+        f'WHERE {predicate}(prop__name, :name) '
+        'ORDER BY case_id'))
+    rows = user_sql.run({'name': name}).rows
+    assert [row['case_id'] for row in rows] == expected
+
+
+@pytest.mark.parametrize('error_class', [ProgrammingError, DataError])
+def test_run_reports_a_database_error(error_class):
     msg = 'column "nope" does not exist\nLINE 1: ...'
     engine = MagicMock()
-    engine.connect().__enter__().execute.side_effect = ProgrammingError(
+    engine.connect().__enter__().execute.side_effect = error_class(
         'SELECT 1', {}, Exception(msg))
     user_sql = _user_sql('SELECT * FROM client')
     with patch('corehq.apps.project_db.user_sql.get_project_db_engine',
