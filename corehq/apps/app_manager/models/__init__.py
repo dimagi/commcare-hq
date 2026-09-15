@@ -13,7 +13,8 @@ from .applications import (  # noqa: F401
     RemoteApp,
     SavedAppBuild,
     absolute_url_property,
-    import_app,
+    import_app_from_doc,
+    import_app_from_id,
     overwrite_app_from_source,
     validate_lang,
 )
