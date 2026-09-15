@@ -190,7 +190,7 @@ def get_encounter_uuid(element):
     >>> get_encounter_uuid(element)
     '0f54fe40-89af-4412-8dd4-5eaebe8684dc'
 
-    """
+    """  # noqa: E501
     content = element.xpath("./*[local-name()='content']")
     pattern = re.compile(r'/bahmniencounter/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b')
     if content and len(content) == 1:

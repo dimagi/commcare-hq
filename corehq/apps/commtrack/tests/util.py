@@ -149,7 +149,7 @@ def get_single_balance_block(case_id, product_id, quantity, date_string=None, se
     return """
 <balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="{date}" section-id="{section_id}"{type}>
     <entry id="{product_id}" quantity="{quantity}" />
-</balance>""".format(
+</balance>""".format(  # noqa: E501
         case_id=case_id, product_id=product_id, quantity=quantity, date=date_string, section_id=section_id,
         type=' type="{}"'.format(type) if type else ''
     ).strip()
