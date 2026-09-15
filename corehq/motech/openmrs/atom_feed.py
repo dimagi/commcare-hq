@@ -59,6 +59,8 @@ from corehq.motech.value_source import (
     get_import_value,
 )
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.xml_utils import XML  # noqa: F401 used in doctest
+from corehq.util.xml_utils import safe_fromstring
 from dimagi.utils.parsing import json_format_datetime
 
 CASE_BLOCK_ARGS = ("case_name", "owner_id")
@@ -118,7 +120,7 @@ def get_feed_xml(requests, feed_name, page: str):
         raise exception
 
     try:
-        root = etree.fromstring(resp.content)
+        root = safe_fromstring(resp.content)
     except etree.XMLSyntaxError as err:
         requests.notify_exception(
             str(err),
@@ -133,7 +135,7 @@ def get_timestamp(element, xpath='./atom:updated'):
     """
     Returns a datetime instance of the text at the given xpath.
 
-    >>> element = etree.XML('''<feed xmlns="http://www.w3.org/2005/Atom">
+    >>> element = XML('''<feed xmlns="http://www.w3.org/2005/Atom">
     ...     <updated>2018-05-15T14:02:08Z</updated>
     ... </feed>''')
     >>> get_timestamp(element)
@@ -153,7 +155,7 @@ def get_patient_uuid(element):
     """
     Extracts the UUID of a patient from an entry's "content" node.
 
-    >>> element = etree.XML('''<entry>
+    >>> element = XML('''<entry>
     ...     <content type="application/vnd.atomfeed+xml">
     ...         <![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]>
     ...     </content>
@@ -179,7 +181,7 @@ def get_encounter_uuid(element):
     """
     Extracts the UUID of an encounter from an entry's "content" node.
 
-    >>> element = etree.XML('''<entry>
+    >>> element = XML('''<entry>
     ...   <title>Encounter</title>
     ...   <content type="application/vnd.atomfeed+xml">
     ...     <![CDATA[/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/0f54fe40-89af-4412-8dd4-5eaebe8684dc?includeAll=true]]>
