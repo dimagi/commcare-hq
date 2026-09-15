@@ -75,6 +75,7 @@ IGNORE_MODELS = {
     "form_processor.DeprecatedXFormAttachmentSQL",
     "hqadmin.HistoricalPillowCheckpoint",
     "hqadmin.HqDeploy",
+    "hqadmin.PlatformDeactivationLog",
     "hqwebapp.HQOauthApplication",
     "hqwebapp.UserAccessLog",
     "hqwebapp.UserAgent",

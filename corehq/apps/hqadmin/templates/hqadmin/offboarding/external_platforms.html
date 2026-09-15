@@ -1,0 +1,206 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block page_content %}
+  <p class="lead">
+    {% blocktrans %}
+      Look up a departing staff member's accounts on external platforms and
+      deactivate or remove them.
+    {% endblocktrans %}
+  </p>
+  <p>
+    {% blocktrans %}
+      This only covers platforms with a user-management API. Every other step in
+      the offboarding checklist remains a manual one. Removals on Sentry and
+      HubSpot cannot be undone from here.
+    {% endblocktrans %}
+  </p>
+
+  <form method="GET" action="" class="mb-4">
+    <div class="row g-2">
+      <div class="col-sm-5">
+        <input
+          name="email"
+          type="email"
+          class="form-control {% if email_error %}is-invalid{% endif %}"
+          value="{{ email }}"
+          placeholder="name@dimagi.com"
+          aria-label="{% trans 'Email address' %}"
+          required
+          autofocus
+        />
+        {% if email_error %}
+          <div class="invalid-feedback">{{ email_error }}</div>
+        {% endif %}
+      </div>
+      <div class="col-sm-3">
+        <button class="btn btn-primary" type="submit">
+          {% trans "Look up accounts" %}
+        </button>
+      </div>
+    </div>
+  </form>
+
+  {% if is_protected_email %}
+    <div class="alert alert-danger" role="alert">
+      <i class="fa fa-shield-halved"></i>
+      {% blocktrans %}
+        <strong>{{ email }}</strong> is on the protected list and cannot be
+        offboarded with this tool.
+      {% endblocktrans %}
+    </div>
+  {% endif %}
+
+  {% if rows %}
+    {{ platforms|json_script:"offboarding-platforms" }}
+    <div
+      x-data="{
+        selected: [],
+        available: [],
+        accounts: {},
+        platforms: JSON.parse(document.getElementById('offboarding-platforms').textContent),
+      }"
+      x-on:htmx:after-swap="
+        available = [...$el.querySelectorAll(`input[name='platforms']`)].map(el => el.value);
+        selected = selected.filter(slug => available.includes(slug));
+      "
+    >
+      {% if not is_dimagi_email %}
+        <div class="alert alert-warning" role="alert">
+          <i class="fa fa-triangle-exclamation"></i>
+          {% blocktrans %}
+            <strong>{{ email }}</strong> is not a dimagi.com address. Reach out
+            to TechOps or Support to confirm it before deactivating anything.
+          {% endblocktrans %}
+        </div>
+      {% endif %}
+
+      <form id="offboarding-form">
+        <input type="hidden" name="email" value="{{ email }}" />
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th scope="col" style="width: 3rem">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  aria-label="{% trans 'Select all platforms' %}"
+                  :disabled="available.length === 0"
+                  :checked="available.length > 0 && selected.length === available.length"
+                  x-effect="$el.indeterminate = selected.length > 0 && selected.length < available.length"
+                  x-on:change="selected = $event.target.checked ? [...available] : []"
+                />
+              </th>
+              <th scope="col">{% trans "Platform" %}</th>
+              <th scope="col">{% trans "Account" %}</th>
+              <th scope="col">{% trans "Status" %}</th>
+              <th scope="col">{% trans "Action" %}</th>
+            </tr>
+          </thead>
+          <tbody id="platform-rows">
+            {% for row in rows %}
+              {% include "hqadmin/offboarding/partials/platform_row.html" %}
+            {% endfor %}
+          </tbody>
+        </table>
+        <button
+          type="button"
+          class="btn btn-danger"
+          :disabled="selected.length === 0"
+          data-bs-toggle="modal"
+          data-bs-target="#confirm-offboarding-modal"
+        >
+          <i class="fa fa-user-slash"></i>
+          {% trans "Deactivate selected…" %}
+        </button>
+        <span
+          id="execute-indicator"
+          class="htmx-indicator ms-2 text-body-secondary"
+        >
+          <i class="fa fa-spinner fa-spin"></i>
+          {% trans "Working…" %}
+        </span>
+      </form>
+
+      <div
+        class="modal fade"
+        id="confirm-offboarding-modal"
+        tabindex="-1"
+        aria-labelledby="confirm-offboarding-title"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="confirm-offboarding-title">
+                {% trans "Confirm offboarding" %}
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="{% trans 'Close' %}"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <p>{% blocktrans %}You are about to:{% endblocktrans %}</p>
+              <ul>
+                <template x-for="slug in selected" :key="slug">
+                  <li>
+                    <strong x-text="platforms[slug].verb"></strong>
+                    <code x-text="accounts[slug]"></code>
+                    {% trans "on" %}
+                    <span x-text="platforms[slug].name"></span>
+                    <span
+                      x-show="!platforms[slug].reversible"
+                      class="badge text-bg-danger ms-1"
+                      >{% trans "irreversible" %}</span
+                    >
+                  </li>
+                </template>
+              </ul>
+              {% if not is_dimagi_email %}
+                <p class="text-warning-emphasis mb-0">
+                  <i class="fa fa-triangle-exclamation"></i>
+                  {% blocktrans %}
+                    This is not a dimagi.com address. Only continue once TechOps
+                    or Support has confirmed it.
+                  {% endblocktrans %}
+                </p>
+              {% endif %}
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                data-bs-dismiss="modal"
+              >
+                {% trans "Cancel" %}
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                data-bs-dismiss="modal"
+                hx-post="{% url 'offboard_external_platforms' %}"
+                hq-hx-action="execute"
+                hx-include="#offboarding-form"
+                hx-target="#platform-rows"
+                hx-swap="innerHTML"
+                hx-indicator="#execute-indicator"
+              >
+                {% trans "Confirm" %}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endblock page_content %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}
