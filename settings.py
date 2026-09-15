@@ -1028,6 +1028,7 @@ OFFBOARDING_PLATFORMS = {
         'access_token': None,
     },
 }
+OFFBOARDING_PROTECTED_EMAILS = []
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'
 

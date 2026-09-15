@@ -1,0 +1,128 @@
+{% load i18n %}
+{% with slug=row.client.slug %}
+  {% if row.state == "loading" %}
+    <tr
+      hx-get="{% url 'offboard_external_platforms' %}"
+      hx-vals='{"email": "{{ email|escapejs }}", "platform": "{{ slug }}"}'
+      hq-hx-action="lookup"
+      hx-trigger="load"
+      hx-target="this"
+      hx-swap="outerHTML"
+    >
+      <td></td>
+      <td>{{ row.client.name }}</td>
+      <td colspan="3" class="text-body-secondary">
+        <i class="fa fa-spinner fa-spin"></i>
+        {% trans "Looking up account…" %}
+      </td>
+    </tr>
+  {% elif row.state == "found" %}
+    <tr x-init="accounts['{{ slug }}'] = '{{ row.label|escapejs }}'">
+      <td>
+        <input
+          class="form-check-input"
+          type="checkbox"
+          name="platforms"
+          value="{{ slug }}"
+          id="platform-{{ slug }}"
+          x-model="selected"
+        />
+      </td>
+      <td>
+        <label for="platform-{{ slug }}" class="mb-0"
+          >{{ row.client.name }}</label
+        >
+      </td>
+      <td><code>{{ row.label }}</code></td>
+      <td><span class="badge text-bg-success">{% trans "Active" %}</span></td>
+      <td>
+        {{ row.client.action_verb }}
+        {% if not row.client.is_reversible %}
+          <span class="badge text-bg-danger ms-1"
+            >{% trans "irreversible" %}</span
+          >
+        {% endif %}
+      </td>
+    </tr>
+  {% else %}
+    <tr
+      class="{% if row.state == 'not_configured' %}text-body-tertiary{% endif %}"
+    >
+      <td>
+        {% if row.state == "done" %}
+          <i class="fa fa-check text-success" aria-hidden="true"></i>
+        {% elif row.state == "failed" or row.state == "error" %}
+          <i class="fa fa-xmark text-danger" aria-hidden="true"></i>
+        {% endif %}
+      </td>
+      <td>{{ row.client.name }}</td>
+      <td>
+        {% if row.label %}
+          <code>{{ row.label }}</code>
+        {% else %}
+          &mdash;
+        {% endif %}
+      </td>
+      {% if row.state == "not_configured" %}
+        <td colspan="2">
+          <span class="badge text-bg-secondary"
+            >{% trans "Not configured" %}</span
+          >
+          {% trans "Credentials are not configured on this environment." %}
+        </td>
+      {% elif row.state == "not_found" %}
+        <td colspan="2">
+          <span class="badge text-bg-light"
+            >{% trans "No account found" %}</span
+          >
+        </td>
+      {% elif row.state == "inactive" %}
+        <td colspan="2">
+          <span class="badge text-bg-secondary"
+            >{% trans "Already deactivated" %}</span
+          >
+        </td>
+      {% elif row.state == "done" %}
+        <td colspan="2" class="text-success">{{ row.message }}</td>
+      {% elif row.state == "error" %}
+        <td class="text-danger">
+          {% trans "Lookup failed:" %} {{ row.message }}
+        </td>
+        <td>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            hx-get="{% url 'offboard_external_platforms' %}"
+            hx-vals='{"email": "{{ email|escapejs }}", "platform": "{{ slug }}"}'
+            hq-hx-action="lookup"
+            hx-target="closest tr"
+            hx-swap="outerHTML"
+            hx-disabled-elt="this"
+          >
+            <i class="fa fa-rotate-right"></i> {% trans "Retry" %}
+          </button>
+        </td>
+      {% elif row.state == "failed" %}
+        <td class="text-danger">
+          {% blocktrans with verb=row.client.action_verb %}{{ verb }} failed:{% endblocktrans %}
+          {{ row.message }}
+        </td>
+        <td>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger"
+            hx-post="{% url 'offboard_external_platforms' %}"
+            hx-vals='{"email": "{{ email|escapejs }}", "platforms": "{{ slug }}"}'
+            hq-hx-action="execute"
+            hx-target="#platform-rows"
+            hx-swap="innerHTML"
+            hx-indicator="#execute-indicator"
+            hx-disabled-elt="this"
+          >
+            <i class="fa fa-rotate-right"></i> {% trans "Retry" %}
+          </button>
+        </td>
+      {% endif %}
+    </tr>
+  {% endif %}
+{% endwith %}
