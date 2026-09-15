@@ -108,15 +108,20 @@ class DomainSchema:
     _quoted_role_name = _quoted_name
 
     def _create_role(self, conn):
-        try:
-            with conn.begin_nested():
-                conn.execute(
+        # Runs in its own transaction, independent of the caller's: role
+        # provisioning doesn't need to be atomic with schema/table DDL, and
+        # nesting it as a savepoint inside a much larger transaction (schema
+        # creation, metadata.create_all, per-table updates) has been observed
+        # to silently lose the role write despite no exception being raised.
+        with conn.engine.begin() as role_conn:
+            try:
+                role_conn.execute(
                     sqlalchemy.text('SELECT public.projectdb_provision_role(:name, :password)'),
                     {'name': self.role_name, 'password': self._get_password()},
                 )
-        except sqlalchemy.exc.ProgrammingError as err:
-            if err.orig.pgcode != errorcodes.DUPLICATE_OBJECT:
-                raise
+            except sqlalchemy.exc.ProgrammingError as err:
+                if err.orig.pgcode != errorcodes.DUPLICATE_OBJECT:
+                    raise
 
     def grant_role_read_access(self, conn):
         # Must be reapplied after every new table is added
