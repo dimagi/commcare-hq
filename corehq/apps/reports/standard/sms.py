@@ -1004,19 +1004,22 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                 timestamp = ServerTime(messaging_subevent.date).user_time(self.timezone).done()
                 status = get_status_display(messaging_subevent)
                 content = '-'
-                recipient_address = '-'
+                recipient = '-'
+                direction = '-'
                 try:
                     msg = ConnectMessage.objects.get(messaging_subevent=messaging_subevent.pk)
                 except ConnectMessage.DoesNotExist:
-                    pass
-                content = msg.text
-                recipient = msg.couch_recipient
+                    msg = None
+                if msg:
+                    content = msg.text
+                    recipient = msg.couch_recipient
+                    direction = msg.direction
                 result.append([
                     self._fmt_timestamp(timestamp),
                     self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
                     self._fmt(content),
                     self._fmt(recipient),
-                    self._fmt_direction(msg.direction),
+                    self._fmt_direction(direction),
                     self._fmt(_('Connect Message')),
                     self._fmt(status),
                 ])
