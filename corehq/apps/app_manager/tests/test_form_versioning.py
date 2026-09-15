@@ -119,10 +119,10 @@ class FormVersioningTest(TestCase):
 
     @staticmethod
     def get_form_versions(build):
-        from lxml import etree
+        from corehq.util.xml_utils import safe_fromstring
 
         suite = suite_models.Suite(
-            etree.fromstring(build.fetch_attachment('files/suite.xml'))
+            safe_fromstring(build.fetch_attachment('files/suite.xml'))
         )
         return [r.version for r in suite.xform_resources]
 

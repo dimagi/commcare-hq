@@ -5,7 +5,6 @@ from unittest import mock
 from django.test import TestCase
 
 import pytest
-from lxml import etree
 from unmagic import fixture, use
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
@@ -35,6 +34,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.tests.util.xml import assert_xml_equal
 from corehq.util.test_utils import flag_enabled
+from corehq.util.xml_utils import safe_fromstring
 
 from ..utils import get_case_search_results, get_project_db_fixture
 
@@ -303,5 +303,5 @@ def test_sql_endpoint_with_text_parameter(sql, criteria, expected):
     _populate_pets()
     endpoint = _make_sql_endpoint(sql)
     fixture = _run_sql_query(endpoint, criteria)
-    names = sorted(case.findtext('case_name') for case in etree.fromstring(fixture))
+    names = sorted(case.findtext('case_name') for case in safe_fromstring(fixture))
     assert names == expected
