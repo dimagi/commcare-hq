@@ -9,7 +9,7 @@ from dimagi.utils.logging import notify_exception
 from django.db import IntegrityError, transaction
 
 from corehq.apps.app_manager.const import CASE_LIST_FILTER_LOCATIONS_FIXTURE
-from corehq.apps.fixtures.constants import LOOKUP_TABLE_TAG_MAX_LENGTH
+from corehq.apps.fixtures.const import LOOKUP_TABLE_TAG_MAX_LENGTH
 from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.fixtures.upload.const import LOOKUP_TABLE_ROW_BATCH_SIZE
 

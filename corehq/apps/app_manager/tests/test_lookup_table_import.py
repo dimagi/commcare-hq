@@ -11,7 +11,7 @@ from corehq.apps.app_manager.lookup_table_import import (
     delete_copied_lookup_tables,
     rewrite_lookup_table_references,
 )
-from corehq.apps.fixtures.constants import LOOKUP_TABLE_TAG_MAX_LENGTH
+from corehq.apps.fixtures.const import LOOKUP_TABLE_TAG_MAX_LENGTH
 from corehq.apps.fixtures.models import (
     Field,
     LookupTable,

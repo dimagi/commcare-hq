@@ -35,7 +35,7 @@ from soil.util import expose_cached_download, get_download_context
 from corehq.apps.api.decorators import api_throttle
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.fixtures.constants import LOOKUP_TABLE_TAG_MAX_LENGTH
+from corehq.apps.fixtures.const import LOOKUP_TABLE_TAG_MAX_LENGTH
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
 from corehq.apps.fixtures.download import prepare_fixture_html
 from corehq.apps.fixtures.exceptions import (
