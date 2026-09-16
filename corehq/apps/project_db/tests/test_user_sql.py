@@ -245,6 +245,16 @@ def _within_distance(coordinates, meters):
      select([GEO]).where(_within_distance(_bind('42.44 -71.14'), _bind(5000.0)))),
     ('SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius)',
      select([GEO]).where(_within_distance(bindparam('center'), bindparam('radius')))),
+
+    ('SELECT * FROM client WHERE name = today()',
+     select([CLIENT]).where(CLIENT.c.name == func.current_date())),
+    ('SELECT * FROM client WHERE name < now()',
+     select([CLIENT]).where(CLIENT.c.name < func.now())),
+    # Each is also spelled as a SQL keyword
+    ('SELECT * FROM client WHERE name = CURRENT_DATE',
+     select([CLIENT]).where(CLIENT.c.name == func.current_date())),
+    ('SELECT * FROM client WHERE name < CURRENT_TIMESTAMP',
+     select([CLIENT]).where(CLIENT.c.name < func.now())),
 ])
 def test_valid_queries(sql, expected):
     assert _compiled(translate(sql, TABLES)) == _compiled(expected)
@@ -349,6 +359,11 @@ def _compiled(query):
     "SELECT * FROM client AS c WHERE client.name = 'x'",  # table must be referenced by alias
     f'SELECT name {JOIN_SQL}',              # ambiguous, both tables have `name`
     f'SELECT client.visit_id {JOIN_SQL}',   # column belongs to the other table
+
+    'SELECT * FROM client WHERE name = today(1)',     # This doesn't take an arg
+    'SELECT * FROM client WHERE name = now(1)',       # This doesn't take an arg
+    'SELECT * FROM client WHERE name = yesterday()',  # not a valid value function
+
 ])
 def test_rejects_unsupported(sql):
     with pytest.raises(UnsupportedSQL):
@@ -634,6 +649,9 @@ def date_table():
     # A case with no date never matches
     ("date_prop__visit_date < '2026-01-01'", {}, ['dec', 'jan', 'jun']),
     ('date_prop__visit_date IS NULL', {}, ['undated']),
+    ('date_prop__visit_date < today()', {}, ['dec', 'jan', 'jun']),
+    ('opened_on < now()', {}, ['dec', 'jan', 'jun']),
+    ('date_prop__visit_date > today()', {}, []),
 ])
 def test_absolute_date_bounds(where, params, expected):
     user_sql = UserSQL(DATE_DOMAIN, f'SELECT case_id FROM visit WHERE {where} ORDER BY case_id')

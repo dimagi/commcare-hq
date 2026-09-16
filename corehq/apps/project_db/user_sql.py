@@ -495,9 +495,30 @@ def _convert_array(node, columns):
     return _bind([element.to_py() for element in elements])
 
 
+def _convert_now(node, columns):
+    _no_arguments(node)
+    return func.now()
+
+
+def _convert_today(node, columns):
+    _no_arguments(node)
+    return func.current_date()
+
+
+def _no_arguments(node):
+    """Reject any argument to a function that takes none"""
+    if isinstance(node, exp.Anonymous):
+        _unpack(node, 'this')  # an Anonymous node holds its name in 'this'
+    else:
+        _unpack(node)
+
+
 VALUE_FUNCTIONS = {
     'array': _convert_array,
     'string_to_array': _convert_string_to_array,
+    'current_timestamp': _convert_now,  # now() also resolves here
+    'current_date': _convert_today,
+    'today': _convert_today,
 }
 
 
