@@ -67,6 +67,16 @@ msgstr "मुझे अतिरिक्त/कस्टम सुविधा
 msgid "Other"
 msgstr "अन्य"
 
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#| msgid "Schedule Invoice"
+msgid "Generate Invoice"
+msgstr "इनवॉइस जनरेट करें"
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+msgid "Schedule Invoice"
+msgstr "इनवॉइस शेड्यूल करें"
+
 #: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
 msgid "Response from Stripe did not complete properly."
 msgstr "Stripe से प्रतिक्रिया सही तरीके से पूरी नहीं हुई।"
@@ -1944,11 +1954,6 @@ msgstr "आपकी सेटिंग्स में बदलाव नह�
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
 msgstr "क्रेडिट्स खरीदें"
-
-#: corehq/apps/domain/static/domain/js/current_subscription.js
-#| msgid "Schedule Broadcast"
-msgid "Schedule Invoice"
-msgstr "इनवॉइस शेड्यूल करें"
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Available Countries"

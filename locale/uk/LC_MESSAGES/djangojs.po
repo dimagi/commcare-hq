@@ -68,6 +68,19 @@ msgstr "Мені потрібні додаткові/індивідуальні 
 msgid "Other"
 msgstr "Інше"
 
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#, fuzzy
+#| msgid "Schedule Broadcast"
+msgid "Generate Invoice"
+msgstr "Запланувати розсилку"
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+#, fuzzy
+#| msgid "Schedule Broadcast"
+msgid "Schedule Invoice"
+msgstr "Запланувати розсилку"
+
 #: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
 msgid "Response from Stripe did not complete properly."
 msgstr "Відповідь від Stripe не була завершена належним чином."
@@ -1964,12 +1977,6 @@ msgstr "У вас є незмінені налаштування"
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
 msgstr "Купити кредити"
-
-#: corehq/apps/domain/static/domain/js/current_subscription.js
-#, fuzzy
-#| msgid "Schedule Broadcast"
-msgid "Schedule Invoice"
-msgstr "Запланувати розсилку"
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Available Countries"

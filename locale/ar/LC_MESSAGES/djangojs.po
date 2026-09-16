@@ -66,6 +66,19 @@ msgstr "أحتاج إلى ميزات إضافية/مخصصة"
 msgid "Other"
 msgstr "أخرى"
 
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#, fuzzy
+#| msgid "Schedule Broadcast"
+msgid "Generate Invoice"
+msgstr "جدولة بث"
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+#, fuzzy
+#| msgid "Schedule Broadcast"
+msgid "Schedule Invoice"
+msgstr "جدولة بث"
+
 #: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
 msgid "Response from Stripe did not complete properly."
 msgstr "لم تكتمل الاستجابة من Stripe بشكل صحيح."
@@ -1932,12 +1945,6 @@ msgstr "لديك إعدادات لم تتغير"
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
 msgstr "شراء أرصدة"
-
-#: corehq/apps/domain/static/domain/js/current_subscription.js
-#, fuzzy
-#| msgid "Schedule Broadcast"
-msgid "Schedule Invoice"
-msgstr "جدولة بث"
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Available Countries"

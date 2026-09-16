@@ -70,6 +70,16 @@ msgstr "Preciso de recursos adicionais/personalizados"
 msgid "Other"
 msgstr "Outro"
 
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#| msgid "Schedule Invoice"
+msgid "Generate Invoice"
+msgstr "Gerar Fatura"
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+msgid "Schedule Invoice"
+msgstr "Agendar Fatura"
+
 #: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
 msgid "Response from Stripe did not complete properly."
 msgstr "A resposta do Stripe não foi concluída corretamente."
@@ -1959,11 +1969,6 @@ msgstr "Você tem configurações não alteradas"
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
 msgstr "Comprar Créditos"
-
-#: corehq/apps/domain/static/domain/js/current_subscription.js
-#| msgid "Schedule Broadcast"
-msgid "Schedule Invoice"
-msgstr "Agendar Fatura"
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Available Countries"
