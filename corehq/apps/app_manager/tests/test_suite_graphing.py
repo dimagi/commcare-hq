@@ -3,6 +3,15 @@ from django.test import SimpleTestCase
 from lxml.etree import tostring
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    ConfigurationGroup,
+    ConfigurationItem,
+    Detail,
+    Field,
+    Graph,
+    GraphTemplate,
+    Series,
+)
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     parse_normalize,
@@ -40,3 +49,29 @@ class SuiteGraphingTest(SimpleTestCase, SuiteMixin):
         actual_suite.find('detail/field/template/graph').remove(actual_configuration)
 
         assert_xml_equal(tostring(expected_suite), tostring(actual_suite))
+
+    def test_get_all_xpaths_includes_graph_field_xpaths(self, *args):
+        template = GraphTemplate(
+            form='graph',
+            graph=Graph(
+                type='xy',
+                series=[
+                    Series(
+                        nodeset="instance('casedb')/casedb/case",
+                        configuration=ConfigurationGroup(configs=[
+                            ConfigurationItem(id='color', xpath_function="'blue'"),
+                        ]),
+                    ),
+                ],
+                configuration=ConfigurationGroup(configs=[
+                    ConfigurationItem(id='title', xpath_function="'My Graph'"),
+                ]),
+            ),
+        )
+        detail = Detail(fields=[Field(template=template)])
+
+        assert detail.get_all_xpaths() == {
+            "'My Graph'",
+            "instance('casedb')/casedb/case",
+            "'blue'",
+        }
