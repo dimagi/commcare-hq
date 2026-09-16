@@ -1,4 +1,5 @@
 import sys
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
@@ -602,3 +603,39 @@ def test_max_rows_applies_limit():
         actual = _compiled(user_sql.query)
     expected = _compiled(select([CLIENT.c.name]).limit(_bind(5)))
     assert actual == expected
+
+
+DATE_DOMAIN = 'test-dates'
+UTC = timezone.utc
+
+
+@fixture(scope='module')
+def date_table():
+    return project_db_table(DATE_DOMAIN, 'visit', {'visit_date': 'date'}, (
+        ['case_id', 'owner_id', 'date_prop__visit_date', 'opened_on'], [
+            ['jan', 'o', date(2025, 1, 15), datetime(2025, 1, 15, 9, 30, tzinfo=UTC)],
+            ['jun', 'o', date(2025, 6, 1), datetime(2025, 6, 1, 0, 0, tzinfo=UTC)],
+            ['dec', 'o', date(2025, 12, 31), datetime(2025, 12, 31, 23, 59, tzinfo=UTC)],
+            ['undated', 'o', None, None],
+        ]
+    ))
+
+
+@use('db', date_table)
+@pytest.mark.parametrize('where, params, expected', [
+    ('date_prop__visit_date >= :start AND date_prop__visit_date < :end',
+     {'start': '2025-01-01', 'end': '2025-07-01'}, ['jan', 'jun']),
+    ('opened_on >= :start', {'start': '2025-06-01'}, ['dec', 'jun']),
+    ("date_prop__visit_date > '2025-06-01'", {}, ['dec']),
+    ("date_prop__visit_date = '2025-06-01'", {}, ['jun']),
+    # A datetime bound is midnight, so an inclusive upper bound drops that day
+    ("opened_on <= '2025-12-31'", {}, ['jan', 'jun']),
+    ("opened_on < '2026-01-01'", {}, ['dec', 'jan', 'jun']),
+    # A case with no date never matches
+    ("date_prop__visit_date < '2026-01-01'", {}, ['dec', 'jan', 'jun']),
+    ('date_prop__visit_date IS NULL', {}, ['undated']),
+])
+def test_absolute_date_bounds(where, params, expected):
+    user_sql = UserSQL(DATE_DOMAIN, f'SELECT case_id FROM visit WHERE {where} ORDER BY case_id')
+    rows = user_sql.run(params).rows
+    assert [row['case_id'] for row in rows] == expected
