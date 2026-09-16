@@ -26,6 +26,56 @@ class LocationResource(v0_5.LocationResource):
     resource_name = 'location'
     patch_limit = 100
 
+    class Docs:
+        summary = 'Locations (v2)'
+        description = (
+            'List locations in a project space, create locations, or '
+            'fetch and update a single location. Version 2 returns '
+            'location data as a nested object and supports filtering by '
+            'last modified date.'
+        )
+        examples = {'list_response': 'location/v2/list_response.json'}
+        field_schemas = {
+            'parent_location_id': {
+                'type': 'string',
+                'description': 'Location ID of the parent location, or '
+                              'an empty string if this is a root-level '
+                              'location.',
+            },
+            'location_type_name': {
+                'type': 'string',
+                'readOnly': True,
+                'description': 'Name of the location type of this '
+                              'location. Derived from location_type_code '
+                              'and not itself writable.',
+            },
+            'location_type_code': {
+                'type': 'string',
+                'description': 'Code of the location type of this '
+                              'location.',
+            },
+        }
+        list_write_responses = {
+            # patch_list() below calls patch_list_replica() (defined in
+            # corehq/apps/api/resources/__init__.py), which returns a
+            # bare array of location IDs, not an object.
+            'patch': {
+                '202': {
+                    'description': 'The IDs of the created or updated '
+                                  'locations, in the same order as the '
+                                  'request.',
+                    'content': {
+                        'application/json': {
+                            'schema': {
+                                'type': 'array',
+                                'items': {'type': 'string'},
+                            },
+                        },
+                    },
+                },
+            },
+        }
+
     class Meta:
         max_limit = 5000
         queryset = SQLLocation.active_objects.all()
