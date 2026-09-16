@@ -1,13 +1,19 @@
-from decimal import Decimal
 import datetime
 import tempfile
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
 from django.test import SimpleTestCase
 from lxml import etree
 
-from ..xml_utils import XML, get_safe_xml_parser, safe_fromstring, serialize
+from ..xml_utils import (
+    XML,
+    get_safe_xml_parser,
+    indent_xml,
+    safe_fromstring,
+    serialize,
+)
 
 
 class XMLSerializeTest(SimpleTestCase):
@@ -120,3 +126,27 @@ def test_safe_fromstring_returns_the_element_it_validated():
     xml_string = b'<root><!-- comment --><child/></root>'
     root = safe_fromstring(xml_string, remove_comments=True)
     assert list(root.iter(etree.Comment)) == []
+
+
+def test_indent_xml_pretty_prints():
+    result = indent_xml('<root><child>value</child></root>')
+    assert '\n<root>\n\t<child>value</child>\n' in result
+    assert result.startswith('<?xml version=')
+
+
+def test_indent_xml_blocks_entity_expansion():
+    # A small "billion laughs" style payload: each entity multiplies the
+    # next, so unresolved-entity handling must leave this as a handful of
+    # unexpanded characters rather than exponentially expanding "lol".
+    payload = (
+        '<?xml version="1.0"?>'
+        '<!DOCTYPE root ['
+        '<!ENTITY a "lol">'
+        '<!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;">'
+        '<!ENTITY c "&b;&b;&b;&b;&b;&b;&b;&b;&b;&b;">'
+        '<!ENTITY d "&c;&c;&c;&c;&c;&c;&c;&c;&c;&c;">'
+        ']>'
+        '<root>&d;</root>'
+    )
+    result = indent_xml(payload)
+    assert 'lol' not in result

@@ -1,10 +1,8 @@
-from decimal import Decimal
-from xml.dom import minidom
 import datetime
-
-from lxml import etree
+from decimal import Decimal
 
 from dimagi.utils.parsing import json_format_datetime
+from lxml import etree
 
 
 def serialize(value):
@@ -27,9 +25,9 @@ def indent_xml(xml_string):
     """
     Takes an xml string and returns an indented and properly tabbed version of the string
     """
-    if isinstance(xml_string, str):
-        xml_string = xml_string.encode('utf-8')
-    return minidom.parseString(xml_string).toprettyxml()
+    parsed = safe_fromstring(xml_string, remove_blank_text=True)
+    etree.indent(parsed, space='\t')
+    return etree.tostring(parsed, xml_declaration=True, encoding='UTF-8').decode('utf-8')
 
 
 def get_safe_xml_parser(**kwargs):
