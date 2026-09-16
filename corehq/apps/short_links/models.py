@@ -1,10 +1,11 @@
 import secrets
 import string
 
-from django.db import models
+from django.db import IntegrityError, models, transaction
 from django.db.models import Q
 from django.utils import timezone
 
+from dimagi.utils.retry import retry_on
 from dimagi.utils.web import get_url_base
 
 CODE_ALPHABET = string.ascii_letters + string.digits
@@ -20,6 +21,8 @@ class ShortLinkManager(models.Manager):
     def active(self):
         return self.exclude(expires_at__lt=timezone.now())
 
+    @retry_on(IntegrityError, delays=[0, 0])
+    @transaction.atomic
     def get_or_create_for_url(self, domain, target_url, expires_at=None):
         """Get or create a short link standing in for an absolute ``target_url``.
 

@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest import mock
 
 from django.test import Client
 from django.urls import reverse
@@ -28,6 +29,19 @@ def test_shorten_returns_an_absolute_url_carrying_the_code():
 
     code = ShortLink.objects.get(target_url=TARGET).code
     assert short_url == f'{get_url_base()}/s/{code}'
+
+
+@use('db')
+def test_a_code_that_collides_is_generated_again():
+    taken = ShortLink.objects.create(domain=DOMAIN, target_url='https://example.org/')
+    codes = iter([taken.code, 'zzzzzzzzzzzz'])
+
+    with mock.patch.object(
+        ShortLink._meta.get_field('code'), '_get_default', lambda: next(codes)
+    ):
+        link = ShortLink.objects.get_or_create_for_url(DOMAIN, TARGET)
+
+    assert link.code == 'zzzzzzzzzzzz'
 
 
 @use('db')
