@@ -5,10 +5,10 @@ from lxml.etree import tostring
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
     parse_normalize,
     patch_get_xform_resource_overrides,
 )
+from corehq.tests.util.xml import assert_xml_equal
 
 
 @patch_get_xform_resource_overrides()
@@ -32,12 +32,11 @@ class SuiteGraphingTest(SimpleTestCase, SuiteMixin):
         expected_configuration = expected_configuration_list[0]
         actual_configuration = actual_configuration_list[0]
 
-        self.assertItemsEqual(
-            [tostring(text_element) for text_element in expected_configuration],
-            [tostring(text_element) for text_element in actual_configuration]
-        )
+        expect = [tostring(text_element) for text_element in expected_configuration]
+        actual = [tostring(text_element) for text_element in actual_configuration]
+        assert sorted(expect) == sorted(actual)
 
         expected_suite.find('detail/field/template/graph').remove(expected_configuration)
         actual_suite.find('detail/field/template/graph').remove(actual_configuration)
 
-        self.assertXmlEqual(tostring(expected_suite), tostring(actual_suite))
+        assert_xml_equal(tostring(expected_suite), tostring(actual_suite))
