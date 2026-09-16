@@ -1,5 +1,6 @@
 import tempfile
 from pathlib import Path
+from unittest.mock import PropertyMock, patch
 
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.exceptions import CaseTileMisconfigurationError, SuiteValidationError
@@ -14,9 +15,13 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.suite_xml.features.case_tiles import (
     CUSTOM,
+    CaseTileHelper,
     CaseTileTemplates,
     case_tile_template_config
 )
+from corehq.apps.app_manager.suite_xml.sections.details import get_detail_column_infos
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.app_manager.suite_xml.xml_models import Detail
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -237,6 +242,40 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             app.create_suite(),
             "./detail[@id='m0_case_short']/field[5]/template"
         )
+
+    def test_case_tile_template_blocks_xxe(self, *args):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
+        add_columns_for_case_details(module)
+
+        detail = module.case_details.short
+        detail_column_infos = get_detail_column_infos('case_short', detail, include_sort=True)
+        helper = CaseTileHelper(
+            app, module, detail, 'm0_case_short', 'case_short', None,
+            detail_column_infos, EntriesHelper(app),
+        )
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.dtd') as secret_file:
+            secret_file.write('<!ENTITY leaked "SECRET">')
+            secret_file.flush()
+            path = Path(secret_file.name).as_posix()
+            malicious_template = (
+                '<?xml version="1.0"?>'
+                f'<!DOCTYPE detail [<!ENTITY % xxe SYSTEM "file://{path}"> %xxe;]>'
+                '<detail id="m0_case_short">&leaked;</detail>'
+            )
+            with patch.object(
+                CaseTileHelper, '_case_tile_template_string',
+                new_callable=PropertyMock, return_value=malicious_template,
+            ):
+                result = helper.build_case_tile_detail(
+                    Detail(id='m0_case_short'), 0, len(detail_column_infos)
+                )
+
+        self.assertNotIn(b'SECRET', bytes(result.serialize()))
 
     def test_inline_case_detail_from_another_module(self, *args):
         factory = AppFactory()
