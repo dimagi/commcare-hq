@@ -340,11 +340,11 @@ def _convert_predicate(node, columns):
         return compare(_convert_value(left, columns),
                        _convert_value(right, columns))
     if isinstance(node, exp.Anonymous):
-        return _convert_function(node, columns)
+        return _convert_predicate_function(node, columns)
     raise UnsupportedSQL(f"unsupported predicate: {type(node).__name__}")
 
 
-def _convert_function(node, columns):
+def _convert_predicate_function(node, columns):
     """Convert a call to one of the boolean-valued functions we support"""
     name, args = _unpack(node, 'this', 'expressions')
     convert = PREDICATE_FUNCTIONS.get(name.lower())
@@ -448,13 +448,19 @@ def _convert_value(node, columns):
     if isinstance(node, exp.Boolean):
         value, = _unpack(node, 'this')
         return _bind(bool(value))
-    if isinstance(node, exp.Array):
-        return _convert_array(node)
     if isinstance(node, exp.Placeholder):
         return _convert_placeholder(node)
-    if isinstance(node, exp.StringToArray):
-        return _convert_string_to_array(node, columns)
+    if isinstance(node, exp.Func):
+        return _convert_value_function(node, columns)
     return _convert_column(node, columns)
+
+
+def _convert_value_function(node, columns):
+    """Convert a call to one of the value-producing functions we support"""
+    name = node.name if isinstance(node, exp.Anonymous) else node.sql_name()
+    if convert := VALUE_FUNCTIONS.get(name.lower()):
+        return convert(node, columns)
+    raise UnsupportedSQL(f"unsupported function: {name}")
 
 
 def _convert_string_to_array(node, columns):
@@ -479,7 +485,7 @@ def _convert_placeholder(node, expanding=False, type_=None):
     return bindparam(name, expanding=expanding, type_=type_)
 
 
-def _convert_array(node):
+def _convert_array(node, columns):
     """Convert an ``ARRAY[...]`` literal into a single bound parameter"""
     elements, = _unpack(node, 'expressions')
     for element in elements:
@@ -487,6 +493,12 @@ def _convert_array(node):
             raise UnsupportedSQL(f"array elements must be literals: {str(element)}")
         _unpack(element, 'this', 'is_string')
     return _bind([element.to_py() for element in elements])
+
+
+VALUE_FUNCTIONS = {
+    'array': _convert_array,
+    'string_to_array': _convert_string_to_array,
+}
 
 
 def _convert_table_ref(node, tables):
