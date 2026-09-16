@@ -3,6 +3,7 @@ import os
 import uuid
 from datetime import datetime
 
+import pytest
 from django.test import TestCase
 
 from collections import namedtuple
@@ -226,7 +227,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
     def test_import_app_from_id_removes_lookup_tables_on_failure(self, _import_app):
         self._add_country_lookup_table_reference()
 
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             import_app_from_id(self.app.id, self.destination_domain)
 
         assert not LookupTable.objects.filter(domain=self.destination_domain, tag="country").exists()
