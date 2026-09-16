@@ -450,7 +450,6 @@ msgid "Justify why \"Skip Auto Pause\""
 msgstr "Eleza sababu ya \"Ruka Kusitisha Kiotomatiki\""
 
 #: corehq/apps/accounting/forms.py
-#| msgid "Extend session"
 msgid "Extension length"
 msgstr "Urefu wa muda wa nyongeza"
 
@@ -761,6 +760,99 @@ msgstr "Ujumbe"
 #: corehq/apps/accounting/forms.py
 msgid "Submit Request"
 msgstr "Tuma Ombi"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Email To"
+msgstr "Barua Pepe Kwa"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/reports/forms.py
+msgid "Additional Recipients"
+msgstr "Wapokeaji wa Ziada"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Prepayment Start Date"
+msgstr "Tarehe ya Kuanza ya Malipo ya Awali"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Prepayment End Date"
+msgstr "Tarehe ya Mwisho ya Malipo ya Awali"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Credit Label"
+msgstr "Lebo ya Mkopo"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Unit Cost"
+msgstr "Gharama kwa Kila Kitengo"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Quantity"
+msgstr "Idadi"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Send On"
+msgstr "Tuma Tarehe"
+
+#: corehq/apps/accounting/forms.py
+msgid "Prepayment end date must be after start date."
+msgstr ""
+"Tarehe ya mwisho ya malipo ya awali lazima iwe baada ya tarehe ya kuanza."
+
+#: corehq/apps/accounting/forms.py
+#, python-brace-format
+msgid "The total prepayment amount cannot be more than ${max_amount}."
+msgstr ""
+"Jumla ya kiasi cha malipo ya awali haiwezi kuwa zaidi ya ${max_amount}."
+
+#: corehq/apps/accounting/forms.py corehq/apps/domain/views/accounting.py
+msgid ""
+"The following e-mail addresses contain invalid characters, or are missing "
+"required characters: "
+msgstr ""
+"Anwani zifuatazo za barua pepe zina herufi zisizokubalika, au zinakosa "
+"herufi zinazohitajika: "
+
+#: corehq/apps/accounting/forms.py
+#, python-format
+msgid "The credit label must be %(max_length)d characters or fewer."
+msgstr "Lebo ya mkopo lazima iwe na herufi %(max_length)d au chini yake."
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "The send date must be in the future."
+msgstr "Tarehe ya kutuma lazima iwe siku zijazo."
+
+#: corehq/apps/accounting/forms.py
+msgid ""
+"This project space has no active subscription, so an invoice cannot be "
+"scheduled for it."
+msgstr ""
+"Eneo hili la mradi halina usajili unaofanya kazi, hivyo ankara haiwezi "
+"kupangwa kwa ajili yake."
+
+#: corehq/apps/accounting/forms.py
+#| msgid "No project spaces found."
+msgid "Project space '{}' was not found."
+msgstr "Nafasi ya mradi '{}' haikupatikana."
 
 #: corehq/apps/accounting/forms.py
 msgid "Renewal Reminder"
@@ -1417,13 +1509,6 @@ msgid "Autopay"
 msgstr "Malipo ya Moja kwa Moja"
 
 #: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-#| msgid "Send on"
-msgid "Send On"
-msgstr "Tuma Tarehe"
-
-#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
 #: corehq/apps/campaign/forms.py
@@ -1460,7 +1545,6 @@ msgid "Amount"
 msgstr "Kiasi"
 
 #: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
-#| msgid "Prepayment Amount"
 msgid "Prepayment Term"
 msgstr "Muda wa Malipo ya Awali"
 
@@ -1473,7 +1557,6 @@ msgid "Recipients"
 msgstr "Wapokeaji"
 
 #: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
-#| msgid "Scheduled end"
 msgid "Scheduled By"
 msgstr "Imepangwa Na"
 
@@ -4155,6 +4238,11 @@ msgstr ""
 "Taarifa Kutoka:\n"
 "CommCare na kampuni ya Dimagi, Inc.\n"
 "245 Main Street, Ghorofa ya 2, Cambridge, MA 02142 USA\n"
+
+#: corehq/apps/accounting/templates/accounting/generate_prepayment_invoice.html
+#| msgid "Generate Prepayment Invoice"
+msgid "Generate Invoice"
+msgstr "Tengeneza Ankara"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #, python-format
@@ -14315,11 +14403,6 @@ msgid "Smart link to external domain"
 msgstr "Kiungo mahiri kwa domain ya nje"
 
 #: corehq/apps/app_manager/views/modules.py
-msgid "Case list used by Select Parent First in '{}' not found"
-msgstr ""
-"Orodha ya kesi inayotumiwa na Chagua Mzazi Kwanza katika '{}' haikupatikana"
-
-#: corehq/apps/app_manager/views/modules.py
 msgid "Product List"
 msgstr "Orodha ya Bidhaa"
 
@@ -14350,6 +14433,15 @@ msgstr "Mpangilio wa kesi una marejeleo ya mzunguko."
 #: corehq/apps/app_manager/views/modules.py
 msgid "\"{}\" has sub-menus. You must remove these before you can delete it."
 msgstr "\"{}\" ina menyu ndogo. Lazima uondoe hizi kabla ya kuifuta."
+
+#: corehq/apps/app_manager/views/modules.py
+#, python-brace-format
+msgid ""
+"\"{module}\" is used by \"{dependents}\" for Parent Child Selection. Change "
+"or turn off that setting before deleting it."
+msgstr ""
+"\"{module}\" inatumiwa na \"{dependents}\" kwa Uchaguzi wa Mzazi na Mtoto. "
+"Badilisha au zima mpangilio huo kabla ya kuufuta."
 
 #: corehq/apps/app_manager/views/modules.py
 #, python-brace-format
@@ -14397,6 +14489,11 @@ msgid ""
 msgstr ""
 "'{}' si jina halali la mfano. Linaweza kuwa na herufi, nambari, na alama ya "
 "underscore pekee."
+
+#: corehq/apps/app_manager/views/modules.py
+#| msgid "Edit Case Search Endpoint"
+msgid "Invalid case search endpoint."
+msgstr "Mwisho wa utafutaji wa kesi si sahihi."
 
 #: corehq/apps/app_manager/views/modules.py
 msgid "There was a problem processing your request."
@@ -24636,41 +24733,26 @@ msgstr "Jumla ya Mikopo"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Prepayment Start Date"
-msgstr "Tarehe ya Kuanza ya Malipo ya Awali"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Prepayment End Date"
-msgstr "Tarehe ya Mwisho ya Malipo ya Awali"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Credit Label"
-msgstr "Lebo ya Mkopo"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Unit Cost"
-msgstr "Gharama kwa Kila Kitengo"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Quantity"
-msgstr "Idadi"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-#| msgid "Level to expand to"
 msgid "Leave blank to send now."
 msgstr "Acha wazi kutuma sasa."
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-#: corehq/apps/domain/views/accounting.py
-#| msgid "Expiration Date must be in the future"
-msgid "The send date must be in the future."
-msgstr "Tarehe ya kutuma lazima iwe siku zijazo."
+#| msgid ""
+#| "\n"
+#| "      Payment for Statement No.\n"
+#| "      <span data-bind=\"text: invoiceNumber\"></span>\n"
+#| "    "
+msgid ""
+"\n"
+"    Generate Prepayment Invoice for\n"
+"    <span data-bind=\"text: $root.domain\"></span>\n"
+"  "
+msgstr ""
+"\n"
+"    Tengeneza Ankara ya Malipo ya Awali kwa\n"
+"    <span data-bind=\"text: $root.domain\"></span>\n"
+"  "
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
@@ -24719,17 +24801,6 @@ msgstr ""
 "                  >Maelezo zaidi...</a\n"
 "                >\n"
 "              "
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Email To"
-msgstr "Barua Pepe Kwa"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-#: corehq/apps/reports/forms.py
-msgid "Additional Recipients"
-msgstr "Wapokeaji wa Ziada"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
@@ -26105,54 +26176,6 @@ msgstr ""
 "Kulikuwa na tatizo wakati wa kushughulikia malipo yako. Hakuna malipo "
 "yaliyofanyika. Tunachunguza tatizo hili haraka iwezekanavyo. Samahani kwa "
 "usumbufu."
-
-#: corehq/apps/domain/views/accounting.py
-msgid ""
-"The following e-mail addresses contain invalid characters, or are missing "
-"required characters: "
-msgstr ""
-"Anwani zifuatazo za barua pepe zina herufi zisizokubalika, au zinakosa "
-"herufi zinazohitajika: "
-
-#: corehq/apps/domain/views/accounting.py
-msgid "There was an error processing your request. Please try again."
-msgstr ""
-"Kulikuwa na hitilafu wakati wa kushughulikia ombi lako. Tafadhali jaribu "
-"tena."
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Prepayment end date must be after start date."
-msgstr ""
-"Tarehe ya mwisho ya malipo ya awali lazima iwe baada ya tarehe ya kuanza."
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Unit cost must be a decimal number greater than 0."
-msgstr ""
-"Gharama kwa kila kitengo lazima iwe namba ya desimali iliyo kubwa kuliko 0."
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Quantity must be a whole number greater than 0."
-msgstr "Kiasi lazima kiwe namba kamili iliyo kubwa kuliko 0."
-
-#: corehq/apps/domain/views/accounting.py
-#| msgid "A valid end date is required"
-msgid "A send date is required."
-msgstr "Tarehe ya kutuma inahitajika."
-
-#: corehq/apps/domain/views/accounting.py
-#, python-format
-#| msgid ""
-#| "Username %(username)s is too long.  Must be under %(max_length)s characters."
-msgid "The credit label must be %(max_length)d characters or fewer."
-msgstr "Lebo ya mkopo lazima iwe na herufi %(max_length)d au chini yake."
-
-#: corehq/apps/domain/views/accounting.py
-msgid ""
-"This project space has no active subscription, so an invoice cannot be "
-"scheduled for it."
-msgstr ""
-"Eneo hili la mradi halina usajili unaofanya kazi, hivyo ankara haiwezi "
-"kupangwa kwa ajili yake."
 
 #: corehq/apps/domain/views/accounting.py
 msgid "Dimagi Internal Subscription Management"
@@ -38468,7 +38491,6 @@ msgid "The selected form can't be used for a public webform."
 msgstr "Fomu iliyochaguliwa haiwezi kutumika kwa fomu ya umma ya wavuti."
 
 #: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/views.py
-#| msgid "Public Webforms"
 msgid "Edit Public Webform"
 msgstr "Hariri Fomu ya Wavuti ya Umma"
 
@@ -38481,7 +38503,6 @@ msgstr "Hifadhi Mabadiliko"
 
 #: corehq/apps/public_webforms/messaging.py
 #, python-brace-format
-#| msgid "Continue To {form_name}"
 msgid "Your one-time link for {form_name}"
 msgstr "Kiungo chako cha mara moja kwa {form_name}"
 
@@ -38511,7 +38532,6 @@ msgid "How would you like to receive your link?"
 msgstr "Ungependa kupokea kiungo chako kwa njia gani?"
 
 #: corehq/apps/public_webforms/public/forms.py
-#| msgid "Rich Text Message"
 msgid "Text Message"
 msgstr "Ujumbe wa Maandishi"
 
@@ -38520,7 +38540,6 @@ msgid "Enter the email address to send your link to."
 msgstr "Weka anwani ya barua pepe ya kutumiwa kiungo chako."
 
 #: corehq/apps/public_webforms/public/forms.py
-#| msgid "Please enter client secret again."
 msgid "Please wait a moment before trying again."
 msgstr "Tafadhali subiri kidogo kabla ya kujaribu tena."
 
@@ -38529,7 +38548,6 @@ msgid "Enter the phone number to send your link to."
 msgstr "Weka nambari ya simu ili kutuma kiungo chako."
 
 #: corehq/apps/public_webforms/public/forms.py
-#| msgid "%s is an invalid phone number."
 msgid "Enter a valid phone number."
 msgstr "Weka nambari ya simu halali."
 
@@ -38556,10 +38574,6 @@ msgstr "URL ya Umma"
 
 #: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    You are almost in, %(first_name)s!\n"
-#| "  "
 msgid ""
 "\n"
 "    Your one-time link for %(form_name)s\n"
@@ -38570,7 +38584,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
-#| msgid "Your file is ready."
 msgid ""
 "\n"
 "    Your link is ready\n"
@@ -38581,10 +38594,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
-#| msgid ""
-#| "\n"
-#| "    Worker performance\n"
-#| "  "
 msgid ""
 "\n"
 "    Open the form\n"
@@ -38596,10 +38605,6 @@ msgstr ""
 
 #: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    You are almost in, %(first_name)s!\n"
-#| "  "
 msgid ""
 "\n"
 "    You asked for a link to complete %(form_name)s.\n"
@@ -38633,10 +38638,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
-#| msgid ""
-#| "\n"
-#| "    You received this message because we received a new user request\n"
-#| "  "
 msgid ""
 "\n"
 "    You received this message because a one-time link was requested\n"
@@ -38652,7 +38653,6 @@ msgid "You asked for a link to complete %(form_name)s."
 msgstr "Uliomba kiungo ili kukamilisha %(form_name)s."
 
 #: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.txt
-#| msgid "Copy and paste admin emails"
 msgid "Copy and paste the link below."
 msgstr "Nakili na ubandike kiungo hapa chini."
 
@@ -38724,20 +38724,14 @@ msgstr ""
 "          "
 
 #: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
-#| msgid "New Public Webform"
 msgid "Open Public Webform"
 msgstr "Fungua Fomu ya Wazi Mtandaoni"
 
 #: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
-#| msgid "New Public Webform"
 msgid "Close Public Webform"
 msgstr "Funga Fomu ya Wazi Mtandaoni"
 
 #: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
-#| msgid ""
-#| "\n"
-#| "              Once deleted, you will not be able to recover this form. Are you sure you want to delete this form?\n"
-#| "            "
 msgid ""
 "\n"
 "              Respondents will be able to request a one-time link to complete\n"
@@ -38764,17 +38758,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
-#| msgid ""
-#| "\n"
-#| "              This feature is made available as a <strong>Beta Service</strong> under\n"
-#| "              <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
-#| "                >Dimagi's Terms of Service</a\n"
-#| "              >\n"
-#| "              and\n"
-#| "              <a href=\"https://dimagi.com/terms/latest/ba\" target=\"_blank\"\n"
-#| "                >Business Agreement</a\n"
-#| "              >.\n"
-#| "            "
 msgid ""
 "\n"
 "      Information you submit will be used in accordance with Dimagi's\n"
@@ -38807,20 +38790,14 @@ msgid "Message and data rates may apply."
 msgstr "Ada za ujumbe na data zinaweza kutozwa."
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
-#| msgid "Send Email"
 msgid "Send my link"
 msgstr "Tuma kiungo changu"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
-#| msgid "Request failed"
 msgid "Requests Closed"
 msgstr "Maombi Yamefungwa"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
-#| msgid ""
-#| "\n"
-#| "        Thank you for staying with your current subscription.\n"
-#| "      "
 msgid ""
 "\n"
 "      This form is not currently accepting submissions.\n"
@@ -38831,7 +38808,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
-#| msgid "Change Message"
 msgid "Check Your Messages"
 msgstr "Angalia Ujumbe Wako"
 
@@ -38857,7 +38833,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
-#| msgid "Request Path"
 msgid "Request another link"
 msgstr "Omba kiungo kingine"
 
@@ -38890,17 +38865,14 @@ msgid "Public webform created."
 msgstr "Fomu ya umma ya wavuti imeundwa."
 
 #: corehq/apps/public_webforms/views.py
-#| msgid "Public webform created."
 msgid "Public webform updated."
 msgstr "Fomu ya wazi mtandaoni imesasishwa."
 
 #: corehq/apps/public_webforms/views.py
-#| msgid "Public webform created."
 msgid "Public webform closed to new requests."
 msgstr "Fomu ya wazi mtandaoni imefungwa kwa maombi mapya."
 
 #: corehq/apps/public_webforms/views.py
-#| msgid "Public webform created."
 msgid "Public webform opened to new requests."
 msgstr "Fomu ya wazi mtandaoni imefunguliwa kwa maombi mapya."
 
@@ -60166,6 +60138,25 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#~ msgid "Case list used by Select Parent First in '{}' not found"
+#~ msgstr ""
+#~ "Orodha ya kesi inayotumiwa na Chagua Mzazi Kwanza katika '{}' haikupatikana"
+
+#~ msgid "There was an error processing your request. Please try again."
+#~ msgstr ""
+#~ "Kulikuwa na hitilafu wakati wa kushughulikia ombi lako. Tafadhali jaribu "
+#~ "tena."
+
+#~ msgid "Unit cost must be a decimal number greater than 0."
+#~ msgstr ""
+#~ "Gharama kwa kila kitengo lazima iwe namba ya desimali iliyo kubwa kuliko 0."
+
+#~ msgid "Quantity must be a whole number greater than 0."
+#~ msgstr "Kiasi lazima kiwe namba kamili iliyo kubwa kuliko 0."
+
+#~ msgid "A send date is required."
+#~ msgstr "Tarehe ya kutuma inahitajika."
 
 #~ msgid "Target Type"
 #~ msgstr "Aina Lengwa"
