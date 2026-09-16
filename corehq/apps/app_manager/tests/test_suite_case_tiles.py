@@ -1,3 +1,6 @@
+import tempfile
+from pathlib import Path
+
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.exceptions import CaseTileMisconfigurationError, SuiteValidationError
 from corehq.apps.app_manager.models import (
@@ -488,6 +491,21 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
         module.case_details.short.custom_xml = '<detail id="m1_case_short"></detail>'
         with self.assertRaises(SuiteValidationError):
             factory.app.create_suite()
+
+    def test_custom_xml_blocks_xxe(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_advanced_module("my_module", "person")
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.dtd') as secret_file:
+            secret_file.write('<!ENTITY leaked "SECRET">')
+            secret_file.flush()
+            path = Path(secret_file.name).as_posix()
+            module.case_details.short.custom_xml = (
+                '<?xml version="1.0"?>'
+                f'<!DOCTYPE detail [<!ENTITY % xxe SYSTEM "file://{path}"> %xxe;]>'
+                '<detail id="m0_case_short">&leaked;</detail>'
+            )
+            suite = factory.app.create_suite()
+        self.assertNotIn(b'SECRET', suite)
 
     @flag_enabled('CASE_LIST_TILE')
     @flag_enabled('USH_EMPTY_CASE_LIST_TEXT')
