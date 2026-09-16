@@ -15,10 +15,29 @@ def make_code():
     return ''.join(secrets.choice(CODE_ALPHABET) for __ in range(CODE_LENGTH))
 
 
-class ShortLinkQuerySet(models.QuerySet):
+class ShortLinkManager(models.Manager):
 
     def active(self):
         return self.exclude(expires_at__lt=timezone.now())
+
+    def get_or_create_for_url(self, domain, target_url, expires_at=None):
+        """Get or create a short link standing in for an absolute ``target_url``.
+
+        Re-uses an existing link with an expiration greater than or equal to
+        expires_at, or one that has no expiration.
+        """
+
+        expiration_filter = Q(expires_at__isnull=True)
+        if expires_at:
+            expiration_filter = (expiration_filter | Q(expires_at__gte=expires_at))
+
+        return self.active().filter(
+            expiration_filter,
+            domain=domain,
+            target_url=target_url,
+        ).order_by('created_at').first() or self.create(
+            domain=domain, target_url=target_url, expires_at=expires_at,
+        )
 
 
 class ShortLink(models.Model):
@@ -36,32 +55,10 @@ class ShortLink(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True)
 
-    objects = ShortLinkQuerySet.as_manager()
+    objects = ShortLinkManager()
 
     class Meta:
         indexes = [models.Index(fields=['domain', 'target_url'])]
-
-    @classmethod
-    def shorten(cls, domain, target_url, expires_at=None):
-        """Get or create a short URL standing in for an absolute ``target_url``.
-
-        Re-uses an existing link with an expiration greater than or equal to
-        expires_at, or one that has no expiration.
-        """
-
-        expiration_filter = Q(expires_at__isnull=True)
-        if expires_at:
-            expiration_filter = (expiration_filter | Q(expires_at__gte=expires_at))
-
-        link = cls.objects.active().filter(
-            expiration_filter,
-            domain=domain,
-            target_url=target_url,
-        ).order_by('created_at').first() or cls.objects.create(
-            domain=domain, target_url=target_url, expires_at=expires_at,
-        )
-
-        return link
 
     @property
     def short_url(self):
