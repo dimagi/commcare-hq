@@ -86,6 +86,7 @@ def _get_referenced_lookup_table_tags(value):
 
 def _collect_referenced_tags(value, tags):
     if isinstance(value, dict):
+        # Fixture case selection feature stores its lookup table tag in fixture_type.
         fixture_type = value.get("fixture_type")
         if isinstance(fixture_type, str) and fixture_type != CASE_LIST_FILTER_LOCATIONS_FIXTURE:
             tags.add(fixture_type)
@@ -95,6 +96,7 @@ def _collect_referenced_tags(value, tags):
         for child in value:
             _collect_referenced_tags(child, tags)
     elif isinstance(value, str):
+        # Form questions reference lookup tables by item-list instance ID.
         tags.update(match.group("tag") for match in _ITEM_LIST_REFERENCE.finditer(value))
 
 
