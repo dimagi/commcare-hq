@@ -20,15 +20,16 @@ from sqlalchemy import (
     or_,
     select,
     table,
+    text,
     union,
     union_all,
 )
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DataError, ProgrammingError
-from unmagic import fixture, use
+from unmagic import autouse, fixture, use
 
 from corehq.apps.project_db.populate import coerce_to_gps
-from corehq.apps.project_db.table_ddl import Earth
+from corehq.apps.project_db.table_ddl import Earth, get_project_db_engine
 from corehq.apps.project_db.user_sql import (
     MAX_TREE_DEPTH,
     BadParameters,
@@ -36,10 +37,22 @@ from corehq.apps.project_db.user_sql import (
     UserSQL,
     UserSQLProgrammingError,
     _bind,
+    _set_timezone,
     translate,
 )
 
 from .util import project_db_table
+
+
+@fixture
+def utc_project():
+    """The test domains are not real projects, so they have no timezone"""
+    with patch.object(UserSQL, '_get_timezone', return_value='UTC'):
+        yield
+
+
+autouse(utc_project, __file__)
+
 
 CLIENT = table('client', column('case_id'), column('name'))
 VISIT = table('visit', column('visit_id'), column('parent_id'), column('name'))
@@ -598,12 +611,22 @@ def test_name_matching(predicate, name, expected):
     assert [row['case_id'] for row in rows] == expected
 
 
+@use('db')
+def test_set_timezone_lasts_for_one_transaction():
+    with get_project_db_engine().begin() as conn:
+        _set_timezone(conn, 'Asia/Kolkata')
+        assert conn.execute(text('SHOW TimeZone')).scalar() == 'Asia/Kolkata'
+    with get_project_db_engine().begin() as conn:
+        assert conn.execute(text('SHOW TimeZone')).scalar() != 'Asia/Kolkata'
+
+
 @pytest.mark.parametrize('error_class', [ProgrammingError, DataError])
 def test_run_reports_a_database_error(error_class):
     msg = 'column "nope" does not exist\nLINE 1: ...'
     engine = MagicMock()
-    engine.connect().__enter__().execute.side_effect = error_class(
-        'SELECT 1', {}, Exception(msg))
+    # The first side_effect is from setting the timezone
+    engine.begin().__enter__().execute.side_effect = [
+        None, error_class('SELECT 1', {}, Exception(msg))]
     user_sql = _user_sql('SELECT * FROM client')
     with patch('corehq.apps.project_db.user_sql.get_project_db_engine',
                return_value=engine):
@@ -645,7 +668,6 @@ def date_table():
     ("date_prop__visit_date = '2025-06-01'", {}, ['jun']),
     # A datetime bound is midnight, so an inclusive upper bound drops that day
     ("opened_on <= '2025-12-31'", {}, ['jan', 'jun']),
-    ("opened_on < '2026-01-01'", {}, ['dec', 'jan', 'jun']),
     # A case with no date never matches
     ("date_prop__visit_date < '2026-01-01'", {}, ['dec', 'jan', 'jun']),
     ('date_prop__visit_date IS NULL', {}, ['undated']),
@@ -653,7 +675,20 @@ def date_table():
     ('opened_on < now()', {}, ['dec', 'jan', 'jun']),
     ('date_prop__visit_date > today()', {}, []),
 ])
-def test_absolute_date_bounds(where, params, expected):
+def test_date_bounds(where, params, expected):
     user_sql = UserSQL(DATE_DOMAIN, f'SELECT case_id FROM visit WHERE {where} ORDER BY case_id')
     rows = user_sql.run(params).rows
+    assert [row['case_id'] for row in rows] == expected
+
+
+@use('db', date_table)
+@pytest.mark.parametrize('project_timezone, expected', [
+    ('UTC', ['dec', 'jan', 'jun']),
+    ('Asia/Kolkata', ['jan', 'jun']),
+])
+def test_bounds_resolve_in_the_project_timezone(project_timezone, expected):
+    # 2026-01-01 in Kolkata is 2025-12-31T18:30 UTC
+    user_sql = UserSQL(DATE_DOMAIN, "SELECT case_id FROM visit WHERE opened_on < '2026-01-01' ORDER BY case_id")
+    with patch.object(UserSQL, '_get_timezone', return_value=project_timezone):
+        rows = user_sql.run({}).rows
     assert [row['case_id'] for row in rows] == expected

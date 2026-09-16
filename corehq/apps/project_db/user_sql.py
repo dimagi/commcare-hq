@@ -33,6 +33,7 @@ from sqlalchemy.exc import DataError, ProgrammingError
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.project_db.table_ddl import (
     Earth,
     get_domain_tables,
@@ -113,7 +114,8 @@ class UserSQL:
 
     def run(self, parameter_values):
         params = self._clean_parameters(parameter_values)
-        with get_project_db_engine().connect() as conn:
+        with get_project_db_engine().begin() as conn:
+            _set_timezone(conn, self._get_timezone())
             start = time.perf_counter()
             try:
                 result = conn.execute(self.query, params)
@@ -130,6 +132,15 @@ class UserSQL:
         if set(raw_parameters) != set(self.parameters):
             raise BadParameters(f"Expected params {set(self.parameters)}, got {set(raw_parameters)}")
         return {name: raw_parameters[name] for name in self.parameters}
+
+    def _get_timezone(self):
+        return Domain.get_by_name(self.domain).default_timezone
+
+
+def _set_timezone(conn, timezone):
+    """Resolve naive dates and times in ``timezone`` for the current transaction"""
+    is_local = True
+    conn.execute(select([func.set_config('TimeZone', timezone, is_local)]))
 
 
 def translate(sql, tables):
