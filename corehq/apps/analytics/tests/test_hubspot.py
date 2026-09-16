@@ -50,6 +50,17 @@ class TestSendToHubspot(TestCase):
         self.assertEqual(form_id, HUBSPOT_SIGNUP_FORM_ID)
         self.assertEqual(data['buyer_persona'], 'Old-Timey Prospector')
 
+    def test_registration_without_hubspot_cookie(self, _send_hubspot_form_request):
+        request = self.get_request()
+        del request.COOKIES[HUBSPOT_COOKIE]
+        track_web_user_registration_hubspot(request, self.user, {})
+
+        _send_hubspot_form_request.assert_called_once()
+        hubspot_id, form_id, data = _send_hubspot_form_request.call_args[0]
+        self.assertEqual(form_id, HUBSPOT_SIGNUP_FORM_ID)
+        self.assertEqual(data['email'], self.user.username)
+        self.assertIn('"hutk": null', data['hs_context'])
+
     @classmethod
     def setUpClass(cls):
         super(TestSendToHubspot, cls).setUpClass()
