@@ -808,6 +808,105 @@ msgid "Submit Request"
 msgstr "Надіслати запит"
 
 #: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Email To"
+msgstr "Email для"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/reports/forms.py
+msgid "Additional Recipients"
+msgstr "Додаткові одержувачі"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Prepayment Start Date"
+msgstr "Дата початку передплати"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Prepayment End Date"
+msgstr "Дата завершення передплати"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Credit Label"
+msgstr "Мітка кредиту"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Unit Cost"
+msgstr "Вартість одиниці"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Quantity"
+msgstr "Кількість"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#, fuzzy
+#| msgid "Send on"
+msgid "Send On"
+msgstr "Надіслати о"
+
+#: corehq/apps/accounting/forms.py
+msgid "Prepayment end date must be after start date."
+msgstr "Дата закінчення передоплати має бути після дати початку."
+
+#: corehq/apps/accounting/forms.py
+#, python-brace-format
+msgid "The total prepayment amount cannot be more than ${max_amount}."
+msgstr ""
+
+#: corehq/apps/accounting/forms.py corehq/apps/domain/views/accounting.py
+msgid ""
+"The following e-mail addresses contain invalid characters, or are missing "
+"required characters: "
+msgstr ""
+"Наступні електронні адреси містять недопустимі символи або відсутні "
+"обов'язкові символи: "
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy, python-format
+#| msgid ""
+#| "Username %(username)s is too long.  Must be under %(max_length)s "
+#| "characters."
+msgid "The credit label must be %(max_length)d characters or fewer."
+msgstr ""
+"Ім'я користувача %(username)s занадто довге. Має бути менше ніж "
+"%(max_length)s символів."
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#, fuzzy
+#| msgid "Expiration Date must be in the future"
+msgid "The send date must be in the future."
+msgstr "Дата завершення дії має бути в майбутньому"
+
+#: corehq/apps/accounting/forms.py
+msgid ""
+"This project space has no active subscription, so an invoice cannot be "
+"scheduled for it."
+msgstr ""
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "No project spaces found."
+msgid "Project space '{}' was not found."
+msgstr "Просторів проєктів не знайдено."
+
+#: corehq/apps/accounting/forms.py
 #, fuzzy
 #| msgid "Reminder"
 msgid "Renewal Reminder"
@@ -1467,14 +1566,6 @@ msgstr "Кредити"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Autopay"
 msgstr "Автоплатіж"
-
-#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-#, fuzzy
-#| msgid "Send on"
-msgid "Send On"
-msgstr "Надіслати о"
 
 #: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
@@ -4809,6 +4900,12 @@ msgstr ""
 "Виписано від:\n"
 "CommCare HQ та корпорації Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+
+#: corehq/apps/accounting/templates/accounting/generate_prepayment_invoice.html
+#, fuzzy
+#| msgid "Generate Prepayment Invoice"
+msgid "Generate Invoice"
+msgstr "Створити рахунок для передплати"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #, python-format
@@ -16326,12 +16423,6 @@ msgid "Smart link to external domain"
 msgstr "Розумне посилання на зовнішній домен"
 
 #: corehq/apps/app_manager/views/modules.py
-msgid "Case list used by Select Parent First in '{}' not found"
-msgstr ""
-"Список справ, який використовується для Вибору Батьків Першим у '{}' не "
-"знайдено"
-
-#: corehq/apps/app_manager/views/modules.py
 msgid "Product List"
 msgstr "Список продуктів"
 
@@ -16364,6 +16455,13 @@ msgid "\"{}\" has sub-menus. You must remove these before you can delete it."
 msgstr ""
 "\"{}\" має підменю. Ви повинні видалити їх, перш ніж зможете видалити цей "
 "елемент."
+
+#: corehq/apps/app_manager/views/modules.py
+#, python-brace-format
+msgid ""
+"\"{module}\" is used by \"{dependents}\" for Parent Child Selection. Change "
+"or turn off that setting before deleting it."
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py
 #, python-brace-format
@@ -16413,6 +16511,12 @@ msgid ""
 msgstr ""
 "'{}' є некоректною назвою екземпляра. Вона може містити лише літери, цифри "
 "та підкреслення."
+
+#: corehq/apps/app_manager/views/modules.py
+#, fuzzy
+#| msgid "Edit Case Data Export"
+msgid "Invalid case search endpoint."
+msgstr "Редагувати експорт даних кейсу"
 
 #: corehq/apps/app_manager/views/modules.py
 msgid "There was a problem processing your request."
@@ -27883,31 +27987,6 @@ msgstr "Загальна кількість кредитів"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Prepayment Start Date"
-msgstr "Дата початку передплати"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Prepayment End Date"
-msgstr "Дата завершення передплати"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Credit Label"
-msgstr "Мітка кредиту"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Unit Cost"
-msgstr "Вартість одиниці"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Quantity"
-msgstr "Кількість"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 #, fuzzy
 #| msgid "Level to expand to"
 msgid "Leave blank to send now."
@@ -27915,11 +27994,22 @@ msgstr "Рівень для розгортання до"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-#: corehq/apps/domain/views/accounting.py
 #, fuzzy
-#| msgid "Expiration Date must be in the future"
-msgid "The send date must be in the future."
-msgstr "Дата завершення дії має бути в майбутньому"
+#| msgid ""
+#| "\n"
+#| "      Payment for Statement No.\n"
+#| "      <span data-bind=\"text: invoiceNumber\"></span>\n"
+#| "    "
+msgid ""
+"\n"
+"    Generate Prepayment Invoice for\n"
+"    <span data-bind=\"text: $root.domain\"></span>\n"
+"  "
+msgstr ""
+"\n"
+"      Платіж за випискою №\n"
+"      <span data-bind=\"text: invoiceNumber\"></span>\n"
+"    "
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
@@ -27990,17 +28080,6 @@ msgstr ""
 "                  >Детальніше...</a\n"
 "                >\n"
 "              "
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Email To"
-msgstr "Email для"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-#: corehq/apps/reports/forms.py
-msgid "Additional Recipients"
-msgstr "Додаткові одержувачі"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
@@ -29537,53 +29616,6 @@ msgid ""
 msgstr ""
 "Виникла проблема з обробкою вашого платежу. Жодних списань не було "
 "здійснено. Ми розглядаємо це питання якомога швидше. Вибачте за незручності."
-
-#: corehq/apps/domain/views/accounting.py
-msgid ""
-"The following e-mail addresses contain invalid characters, or are missing "
-"required characters: "
-msgstr ""
-"Наступні електронні адреси містять недопустимі символи або відсутні "
-"обов'язкові символи: "
-
-#: corehq/apps/domain/views/accounting.py
-msgid "There was an error processing your request. Please try again."
-msgstr ""
-"Сталася помилка під час обробки вашого запиту. Будь ласка, спробуйте ще раз."
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Prepayment end date must be after start date."
-msgstr "Дата закінчення передоплати має бути після дати початку."
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Unit cost must be a decimal number greater than 0."
-msgstr "Вартість одиниці має бути десятковим числом, більшим за 0."
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Quantity must be a whole number greater than 0."
-msgstr "Кількість має бути цілим числом, більшим за 0."
-
-#: corehq/apps/domain/views/accounting.py
-#, fuzzy
-#| msgid "A valid end date is required"
-msgid "A send date is required."
-msgstr "Потрібна дійсна кінцева дата"
-
-#: corehq/apps/domain/views/accounting.py
-#, fuzzy, python-format
-#| msgid ""
-#| "Username %(username)s is too long.  Must be under %(max_length)s "
-#| "characters."
-msgid "The credit label must be %(max_length)d characters or fewer."
-msgstr ""
-"Ім'я користувача %(username)s занадто довге. Має бути менше ніж "
-"%(max_length)s символів."
-
-#: corehq/apps/domain/views/accounting.py
-msgid ""
-"This project space has no active subscription, so an invoice cannot be "
-"scheduled for it."
-msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
 msgid "Dimagi Internal Subscription Management"
@@ -66078,6 +66110,27 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "Case list used by Select Parent First in '{}' not found"
+#~ msgstr ""
+#~ "Список справ, який використовується для Вибору Батьків Першим у '{}' не "
+#~ "знайдено"
+
+#~ msgid "There was an error processing your request. Please try again."
+#~ msgstr ""
+#~ "Сталася помилка під час обробки вашого запиту. Будь ласка, спробуйте ще "
+#~ "раз."
+
+#~ msgid "Unit cost must be a decimal number greater than 0."
+#~ msgstr "Вартість одиниці має бути десятковим числом, більшим за 0."
+
+#~ msgid "Quantity must be a whole number greater than 0."
+#~ msgstr "Кількість має бути цілим числом, більшим за 0."
+
+#, fuzzy
+#~| msgid "A valid end date is required"
+#~ msgid "A send date is required."
+#~ msgstr "Потрібна дійсна кінцева дата"
 
 #, fuzzy
 #~| msgid "Parent Type"
