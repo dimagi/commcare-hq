@@ -4,16 +4,12 @@ from uuid import uuid4
 from django.test import override_settings
 
 import pytest
-from django_prbac.models import Role
 from unmagic import fixture, use
 
 from corehq.apps.accounting.models import (
     BillingAccount,
-    Currency,
-    SoftwarePlan,
+    DefaultProductPlan,
     SoftwarePlanEdition,
-    SoftwarePlanVersion,
-    SoftwareProductRate,
     Subscriber,
     Subscription,
 )
@@ -28,31 +24,32 @@ def make_user(domains=(), username='chat@example.com'):
     )
 
 
+def _subscribe(domain_name, edition, is_active=True):
+    account = BillingAccount.get_or_create_account_by_domain(
+        domain_name, created_by='test@example.com',
+    )[0]
+    subscriber, _ = Subscriber.objects.get_or_create(domain=domain_name)
+    # SQL only — Subscription.save() would publish a Couch domain change.
+    Subscription.visible_objects.bulk_create([Subscription(
+        account=account,
+        subscriber=subscriber,
+        plan_version=DefaultProductPlan.get_default_plan_version(edition=edition),
+        date_start=date.today(),
+        is_active=is_active,
+    )])
+    Subscription._get_active_subscription_by_domain.clear(Subscription, domain_name)
+
+
 @fixture
 def domain_on_plan():
     """Return a domain name, optionally with an active subscription of the given edition."""
-    name = uuid4().hex
-    currency, _ = Currency.objects.get_or_create(code='USD')
-    account = BillingAccount.objects.create(name=name, currency=currency, created_by='chat@example.com')
-    role = Role.objects.create(slug=name, name=name)
-    rate = SoftwareProductRate.objects.create(name=name)
     domains = []
 
     def create(edition=None, is_active=True):
         domain = f'test-{uuid4().hex}'
         domains.append(domain)
-        if edition is None:
-            return domain
-
-        subscriber, _ = Subscriber.objects.get_or_create(domain=domain)
-        plan = SoftwarePlan.objects.create(name=uuid4().hex, edition=edition)
-        version = SoftwarePlanVersion.objects.create(plan=plan, product_rate=rate, role=role)
-        # Only the SQL records are needed; avoid Subscription.save's Couch domain publication.
-        Subscription.visible_objects.bulk_create([Subscription(
-            account=account, subscriber=subscriber, plan_version=version,
-            date_start=date.today(), is_active=is_active,
-        )])
-        Subscription._get_active_subscription_by_domain.clear(Subscription, domain)
+        if edition is not None:
+            _subscribe(domain, edition, is_active=is_active)
         return domain
 
     yield create
