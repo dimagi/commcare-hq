@@ -9,7 +9,7 @@ import sqlalchemy
 from corehq.apps.hqadmin.utils import get_download_url
 from corehq.apps.project_db.table_ddl import (
     DomainSchema,
-    get_project_db_engine,
+    get_domain_query_engine,
 )
 from corehq.util.markup import SimpleTableWriter, TableRowFormatter
 
@@ -46,7 +46,7 @@ class Command(BaseCommand):
 
     def handle(self, domain, sql, full, **options):
         start = time.monotonic()
-        engine = get_project_db_engine()
+        engine = get_domain_query_engine(domain)
 
         with engine.begin() as conn:
             # In sqlalchemy 1.4+, use execution_options postgresql_readonly
