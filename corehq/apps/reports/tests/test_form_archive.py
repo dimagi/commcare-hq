@@ -29,6 +29,21 @@ class TestGetCasesWithOtherForms(TestCase):
         self._submit(CaseBlock(case_id, update={'color': 'red'}))
         assert _get_cases_with_other_forms(DOMAIN, create_form) == {case_id: 'Ann'}
 
+    def test_followup_form_that_creates_an_existing_case(self):
+        case_id = uuid.uuid4().hex
+        self._submit(CaseBlock(case_id, create=True, case_name='Ann'))
+        followup_form = self._submit(
+            CaseBlock(case_id, create=True, case_name='Ann', update={'color': 'red'}))
+        assert _get_cases_with_other_forms(DOMAIN, followup_form) == {}
+
+    def test_creating_form_that_arrives_after_an_update(self):
+        case_id = uuid.uuid4().hex
+        # an update for a case that does not exist yet opens the case, so the
+        # create block that follows it only updates the case
+        self._submit(CaseBlock(case_id, update={'color': 'red'}))
+        create_form = self._submit(CaseBlock(case_id, create=True, case_name='Ann'))
+        assert _get_cases_with_other_forms(DOMAIN, create_form) == {}
+
     def test_creating_form_whose_followup_form_is_archived(self):
         case_id = uuid.uuid4().hex
         create_form = self._submit(CaseBlock(case_id, create=True, case_name='Ann'))
