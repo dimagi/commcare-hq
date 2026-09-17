@@ -1,6 +1,7 @@
 from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
+from django.contrib.auth.models import User
 
 import pytest
 
@@ -145,10 +146,6 @@ class TestCreateBulkFormJob(TestCase):
         super().setUpClass()
         cls.blob_db = TemporaryFilesystemBlobDB()
         cls.addClassCleanup(cls.blob_db.close)
-        cls.domain = create_domain(DOMAIN)
-        cls.addClassCleanup(cls.domain.delete)
-        cls.user = WebUser.create(DOMAIN, USERNAME, '***', None, None)
-        cls.addClassCleanup(cls.user.delete, None, None)
 
     def test_api_key_defaults_to_none(self):
         job = create_bulk_form_job(
@@ -157,8 +154,9 @@ class TestCreateBulkFormJob(TestCase):
         assert job.api_key is None
 
     def test_api_key_is_recorded(self):
+        django_user = User.objects.create_user(USERNAME)
         api_key = HQApiKey.objects.create(
-            user=self.user.get_django_user(), name='test-key')
+            user=django_user, name='test-key')
 
         job = create_bulk_form_job(
             DOMAIN,
