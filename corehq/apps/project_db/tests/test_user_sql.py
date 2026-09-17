@@ -75,6 +75,11 @@ def _string_to_array(value, delimiter):
     return func.string_to_array(value, delimiter, type_=ARRAY(Text))
 
 
+def _interval(unit, count):
+    """The make_interval() call an INTERVAL literal stands for"""
+    return func.make_interval(literal_column(unit).op('=>')(_bind(count)))
+
+
 def _within_distance(coordinates, meters):
     """The bounding box and exact distance test `within_distance` stands for"""
     location = GEO.c.gps_prop__location
@@ -268,6 +273,23 @@ def _within_distance(coordinates, meters):
      select([CLIENT]).where(CLIENT.c.name == func.current_date())),
     ('SELECT * FROM client WHERE name < CURRENT_TIMESTAMP',
      select([CLIENT]).where(CLIENT.c.name < func.now())),
+
+    # An interval shifts a date or time, and its count is bound like a literal
+    ("SELECT * FROM client WHERE name > now() - INTERVAL '30 days'",
+     select([CLIENT]).where(CLIENT.c.name > func.now() - _interval('days', 30))),
+    ("SELECT * FROM client WHERE name > today() - INTERVAL '3 months'",
+     select([CLIENT]).where(
+         CLIENT.c.name > func.current_date() - _interval('months', 3))),
+    ("SELECT * FROM client WHERE name < today() + INTERVAL '1 week'",
+     select([CLIENT]).where(
+         CLIENT.c.name < func.current_date() + _interval('weeks', 1))),
+    # The SQL standard spelling gives a singular unit
+    ("SELECT * FROM client WHERE name > now() - INTERVAL '2' YEAR",
+     select([CLIENT]).where(CLIENT.c.name > func.now() - _interval('years', 2))),
+    # A column can be shifted too
+    ("SELECT * FROM client WHERE name > case_id + INTERVAL '90 minutes'",
+     select([CLIENT]).where(
+         CLIENT.c.name > CLIENT.c.case_id + _interval('mins', 90))),
 ])
 def test_valid_queries(sql, expected):
     assert _compiled(translate(sql, TABLES)) == _compiled(expected)
@@ -376,6 +398,13 @@ def _compiled(query):
     'SELECT * FROM client WHERE name = today(1)',     # This doesn't take an arg
     'SELECT * FROM client WHERE name = now(1)',       # This doesn't take an arg
     'SELECT * FROM client WHERE name = yesterday()',  # not a valid value function
+
+    # An interval gives one count and one unit, and only ever shifts a value
+    "SELECT * FROM client WHERE name > now() - INTERVAL '1 month 2 days'",
+    "SELECT * FROM client WHERE name > now() - INTERVAL 'abc days'",
+    "SELECT * FROM client WHERE name > now() - INTERVAL '2 fortnights'",
+    'SELECT * FROM client WHERE name > now() - 30',      # a shift needs an interval
+    'SELECT * FROM client WHERE name > case_id - name',  # arithmetic is unsupported
 
 ])
 def test_rejects_unsupported(sql):
@@ -674,6 +703,10 @@ def date_table():
     ('date_prop__visit_date < today()', {}, ['dec', 'jan', 'jun']),
     ('opened_on < now()', {}, ['dec', 'jan', 'jun']),
     ('date_prop__visit_date > today()', {}, []),
+    # Every visit is more than a month old, and none is in the future
+    ("date_prop__visit_date < today() - INTERVAL '1 month'", {}, ['dec', 'jan', 'jun']),
+    ("opened_on > now() - INTERVAL '30 days'", {}, []),
+    ("opened_on < now() + INTERVAL '1 day'", {}, ['dec', 'jan', 'jun']),
 ])
 def test_date_bounds(where, params, expected):
     user_sql = UserSQL(DATE_DOMAIN, f'SELECT case_id FROM visit WHERE {where} ORDER BY case_id')
