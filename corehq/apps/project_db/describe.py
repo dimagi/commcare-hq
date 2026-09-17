@@ -36,12 +36,21 @@ Supported SQL:
    literals with =, <>, <, <=, >, >=, IS NULL/TRUE/FALSE and IN.
  * Array containment against an ARRAY['a', 'b'] literal, for select_prop__
    columns: @> holds all of these, <@ holds only these, && holds any of these.
+ * string_to_array(value, '<delimiter>'), which splits text into an array to
+   compare against those columns. The delimiter must be a literal, so a
+   parameter holding 'fever cough' is written string_to_array(:symptoms, ' ').
+ * within_distance(gps_prop__ column, '<latitude> <longitude>', meters), which
+   matches cases within that distance of the point.
+ * Name matching, comparing two values case-insensitively:
+   sounds_like(a, b) matches by pronunciation (Smith/Smyth, Brown/Braun),
+   fuzzy_match(a, b) by spelling (Michael/Micheal, Robert/Roberto), and
+   similar_name(a, b) matches if either does.
  * ORDER BY a column, with ASC/DESC and NULLS FIRST/LAST.
  * UNION and UNION ALL of the above.
  * Named :parameters wherever a literal is allowed
 
 Not supported:
- * Aggregates, function calls, arithmetic and casts (::type).
+ * Aggregates, other function calls, arithmetic and casts (::type).
  * GROUP BY, LIMIT, LIKE and BETWEEN.
  * Negative numbers.
  * Subqueries and CTEs.
