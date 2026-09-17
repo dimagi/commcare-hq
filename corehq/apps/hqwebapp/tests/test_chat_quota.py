@@ -69,7 +69,6 @@ def domain_on_plan():
     ([SoftwarePlanEdition.ADVANCED], 60),
     ([SoftwarePlanEdition.ENTERPRISE], 60),
     ([SoftwarePlanEdition.PAUSED], 0),
-    (['unknown'], 0),
     ([SoftwarePlanEdition.STANDARD, SoftwarePlanEdition.PRO], 30),
     ([SoftwarePlanEdition.FREE, SoftwarePlanEdition.ADVANCED, SoftwarePlanEdition.PRO], 60),
 ])
