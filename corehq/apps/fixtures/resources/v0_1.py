@@ -1,8 +1,10 @@
+import json
+
 from django.db.models import Max
 
 from tastypie import fields as tp_f
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
-from tastypie.http import HttpAccepted
+from tastypie.http import HttpAccepted, HttpNotFound
 from tastypie.resources import Resource
 
 from corehq.apps.api.fields import UUIDField
@@ -209,10 +211,10 @@ class LookupTableResource(HqBaseResource):
         try:
             bundle.obj = LookupTable.objects.get(id=kwargs['pk'])
         except LookupTable.DoesNotExist:
-            raise NotFound('Lookup table not found')
+            raise not_found('Lookup table not found')
 
         if bundle.obj.domain != kwargs['domain']:
-            raise NotFound('Lookup table not found')
+            raise not_found('Lookup table not found')
 
         if bundle.obj.tag != bundle.data['tag']:
             raise BadRequest("Lookup table tag cannot be changed")
@@ -394,10 +396,10 @@ class LookupTableItemResource(HqBaseResource):
         try:
             bundle.obj = LookupTableRow.objects.get(id=kwargs['pk'])
         except LookupTableRow.DoesNotExist:
-            raise NotFound('Lookup table item not found')
+            raise not_found('Lookup table item not found')
 
         if bundle.obj.domain != kwargs['domain']:
-            raise NotFound('Lookup table item not found')
+            raise not_found('Lookup table item not found')
 
         bundle = self.full_hydrate(bundle)
         if 'fields' in bundle.data or 'item_attributes' in bundle.data:
@@ -431,3 +433,15 @@ def get_sql_object_or_not_exist(cls, obj_id, domain):
     except cls.DoesNotExist:
         pass
     raise object_does_not_exist(cls.__name__, obj_id)
+
+
+def not_found(message):
+    """Build a 404 that survives tastypie
+
+    ``Resource.put_detail`` catches ``tastypie.exceptions.NotFound`` and
+    retries the request as ``obj_create``, which creates a new object at a
+    server-generated id rather than the one named in the URL. Raising an
+    ``ImmediateHttpResponse`` instead bypasses that fallback.
+    """
+    return ImmediateHttpResponse(response=HttpNotFound(
+        json.dumps({"error": message}), content_type="application/json"))
