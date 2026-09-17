@@ -13,7 +13,8 @@ from django.utils.dateparse import parse_datetime
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, HqPermissions
+from corehq.apps.users.models_role import UserRole
 from corehq.util.hmac_request import get_hmac_digest
 from corehq.util.test_utils import flag_enabled, softer_assert
 
@@ -37,6 +38,7 @@ class SessionDetailsViewTest(TestCase):
             'public': False,
             'enabled_toggles': [],
             'enabled_previews': [],
+            'permissions': [],
         }
         cls.url = reverse('session_details')
 
@@ -219,6 +221,36 @@ class SessionDetailsViewTest(TestCase):
         expected_response['enabled_toggles'] = ['SECURE_SESSION_TIMEOUT']
         expected_response['enabled_previews'] = ['CALC_XPATHS']
         self.assertJSONEqual(response.content, expected_response)
+
+    @softer_assert()
+    def test_session_details_view_permissions(self):
+        def reset_role():
+            couch_user.set_role(self.domain.name, 'none')
+            couch_user.save()
+
+        role = UserRole.create(
+            self.domain.name,
+            'edit data role',
+            permissions=HqPermissions(edit_data=True),
+        )
+        # re-fetch class-level couch_user to avoid a stale _rev
+        couch_user = CommCareUser.get_by_username(self.couch_user.username)
+        couch_user.set_role(self.domain.name, role.get_qualified_id())
+        self.addCleanup(reset_role)
+        couch_user.save()
+
+        data = json.dumps({'sessionId': self.session_key, 'domain': self.domain.name})
+        response = _post_with_hmac(self.url, data, content_type="application/json")
+
+        self.assertEqual(200, response.status_code)
+        self.assertIn('edit_data', json.loads(response.content)['permissions'])
+
+    @softer_assert()
+    def test_session_details_view_no_domain_grants_no_permissions(self):
+        data = json.dumps({'sessionId': self.session_key})
+        response = _post_with_hmac(self.url, data, content_type="application/json")
+        self.assertEqual(200, response.status_code)
+        self.assertEqual([], json.loads(response.content)['permissions'])
 
 
 class PublicSessionDetailsViewTest(TestCase):
