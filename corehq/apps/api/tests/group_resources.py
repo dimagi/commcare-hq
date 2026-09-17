@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.es.groups import group_adapter
@@ -233,6 +234,45 @@ class TestGroupResource(APIResourceTest):
 
         modified_group = Group.get(backend_id)
         self.assertTrue(modified_group.case_sharing)
+
+    def test_cant_update_missing_group(self):
+        missing_id = uuid.uuid4().hex
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(missing_id),
+            json.dumps({"name": "test group"}),
+            content_type='application/json',
+            method='PUT',
+        )
+
+        assert response.status_code == 404, response.content
+        assert not Group.by_domain(self.domain.name)
+
+    def test_cant_update_group_in_another_domain(self):
+        not_my_group = self._add_group(Group({"name": "test", "domain": 'not-my-project'}))
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(not_my_group._id),
+            json.dumps({"name": "test group"}),
+            content_type='application/json',
+            method='PUT',
+        )
+
+        assert response.status_code == 404, response.content
+        assert Group.get(not_my_group._id).name == "test"
+
+    def test_cant_move_group_into_another_domain(self):
+        group = self._add_group(Group({"name": "test", "domain": self.domain.name}))
+
+        with self.assertRaises(AssertionError):
+            self._assert_auth_post_resource(
+                self.single_endpoint(group._id),
+                json.dumps({"domain": "somewhere-else"}),
+                content_type='application/json',
+                method='PUT',
+            )
+
+        assert Group.get(group._id).domain == self.domain.name
 
     def _add_group(self, group, send_to_es=False):
         group.save()
