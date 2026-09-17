@@ -7,8 +7,18 @@ CREATE EXTENSION IF NOT EXISTS earthdistance;  -- `earth` column type and associ
 CREATE EXTENSION IF NOT EXISTS pg_trgm;  -- trigram-based similarity() function for fuzzy search
 CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;  -- phonetic match dmetaphone() function, also soundex and levenshtein
 
+-- RDS doesn't expose pg_authid, create our own stand-in
+-- Dev/test never reads it (no pgbouncer here), but the provisioning
+-- functions are shared with prod, so it has to exist for them to write to.
+CREATE SCHEMA IF NOT EXISTS pgbouncer;
+CREATE TABLE IF NOT EXISTS pgbouncer.project_db_passwords (
+    rolname text PRIMARY KEY,
+    passwd text NOT NULL
+);
+REVOKE ALL ON pgbouncer.project_db_passwords FROM PUBLIC;
+
 -- In production environments, we can't create roles directly, so we need
--- SECURITY DEFINER functions, which run with their owner's permission.  In
+-- SECURITY DEFINER functions, which run with their owner's permission. In
 -- prod these are provisioned during db setup with superuser access.
 CREATE OR REPLACE FUNCTION projectdb_provision_role(role_name text, role_password text)
 RETURNS void
@@ -21,6 +31,15 @@ BEGIN
     RAISE EXCEPTION 'refusing to manage role %', role_name;
   END IF;
   EXECUTE format('CREATE ROLE %I WITH LOGIN PASSWORD %L', role_name, role_password);
+  EXECUTE format('GRANT %I TO %I', role_name, current_user);
+  INSERT INTO pgbouncer.project_db_passwords (rolname, passwd)
+  VALUES (role_name, role_password);
+EXCEPTION WHEN duplicate_object THEN
+  -- Role already exists. Membership was granted when it was first created
+  EXECUTE format('ALTER ROLE %I WITH PASSWORD %L', role_name, role_password);
+  INSERT INTO pgbouncer.project_db_passwords (rolname, passwd)
+  VALUES (role_name, role_password)
+  ON CONFLICT (rolname) DO UPDATE SET passwd = EXCLUDED.passwd;
 END;
 $$;
 
@@ -39,6 +58,7 @@ BEGIN
     EXECUTE format('DROP OWNED BY %I', role_name);
     EXECUTE format('DROP ROLE %I', role_name);
   END IF;
+  DELETE FROM pgbouncer.project_db_passwords WHERE rolname = role_name;
 END;
 $$;
 
