@@ -38,8 +38,8 @@ def domain_on_plan():
     rate = SoftwareProductRate.objects.create(name=name)
     domains = []
 
-    def create(edition=None, domain=None, is_active=True):
-        domain = domain or f'test-{uuid4().hex}'
+    def create(edition=None, is_active=True):
+        domain = f'test-{uuid4().hex}'
         domains.append(domain)
         if edition is None:
             return domain
