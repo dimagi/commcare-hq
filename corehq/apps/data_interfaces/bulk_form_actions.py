@@ -7,7 +7,9 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from functools import partial
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.data_interfaces.models import BulkAsyncJob
@@ -98,10 +100,18 @@ def create_bulk_form_job(domain, action, requested_by, form_ids, api_key=None):
 def build_form_action(job, user_id):
     """Return the per-form action callable for ``job.action``."""
     if job.action == BulkAsyncJob.Action.ARCHIVE:
-        return lambda f: f.archive(user_id=user_id)
+        return partial(archive_forms, user_id=user_id)
     if job.action == BulkAsyncJob.Action.UNARCHIVE:
-        return lambda f: f.unarchive(user_id=user_id)
+        return partial(unarchive_forms, user_id=user_id)
     raise BulkFormActionError(f'unknown bulk action: {job.action}')
+
+
+def archive_forms(forms, user_id):
+    yield from _apply_to_each(forms, lambda f: f.archive(user_id=user_id))
+
+
+def unarchive_forms(forms, user_id):
+    yield from _apply_to_each(forms, lambda f: f.unarchive(user_id=user_id))
 
 
 def mark_job_failed(job_id):
@@ -118,25 +128,34 @@ def mark_job_failed(job_id):
 
 
 def _apply_form_action(domain, form_ids, action_fn):
-    """Apply ``action_fn`` to each form and yield a ``FormActionResult`` per id."""
+    """Apply ``action_fn`` to each batch of forms, yielding a result per id"""
     unresolved_ids = set(form_ids)
-    for xform in XFormInstance.objects.iter_forms(form_ids):
-        if xform.domain != domain:
-            # skip forms not belonging to the specified domain
-            continue
-        unresolved_ids.discard(xform.form_id)
+    all_forms = XFormInstance.objects.iter_forms(form_ids)
+    # iter_forms returns one form at a time, but an action takes a batch
+    for batch in chunked(all_forms, 100):
+        forms = []
+        for form in batch:
+            if form.domain == domain:
+                forms.append(form)
+                unresolved_ids.discard(form.form_id)
+        yield from action_fn(forms)
+    for form_id in unresolved_ids:
+        yield FormActionResult(form_id, SKIPPED, NOT_FOUND)
+
+
+def _apply_to_each(forms, apply_to_form):
+    """Apply ``apply_to_form`` to each form, yielding its result."""
+    for xform in forms:
         try:
-            action_fn(xform)
+            apply_to_form(xform)
         except Exception:
             notify_exception(None, "Error applying bulk form action", {
-                'domain': domain,
+                'domain': xform.domain,
                 'form_id': xform.form_id,
             })
             yield FormActionResult(xform.form_id, SKIPPED, UNEXPECTED_ERROR)
         else:
             yield FormActionResult(xform.form_id, SUCCEEDED)
-    for form_id in unresolved_ids:
-        yield FormActionResult(form_id, SKIPPED, NOT_FOUND)
 
 
 def _save_interval(requested_count):
