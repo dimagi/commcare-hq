@@ -468,36 +468,42 @@ def _convert_value(node, columns):
 
 def _convert_arithmetic(node, columns):
     left, right = _unpack(node, 'this', 'expression')
-    if isinstance(right, exp.Interval):  # Datetime interval
+    if isinstance(right, exp.MakeInterval):  # Datetime interval
         operand = _convert_value(left, columns)
-        interval = _convert_interval(right)
+        interval = _convert_value(right, columns)
         return operand - interval if isinstance(node, exp.Sub) else operand + interval
     raise UnsupportedSQL(f"unsupported expression: {type(node).__name__}")
 
 
-# Units of an INTERVAL literal, mapped to the make_interval argument they fill
-INTERVAL_UNITS = {
-    'YEAR': 'years', 'YEARS': 'years',
-    'MONTH': 'months', 'MONTHS': 'months',
-    'WEEK': 'weeks', 'WEEKS': 'weeks',
-    'DAY': 'days', 'DAYS': 'days',
-    'HOUR': 'hours', 'HOURS': 'hours',
-    'MINUTE': 'mins', 'MINUTES': 'mins',
-    'SECOND': 'secs', 'SECONDS': 'secs',
-}
+DATETIME_INTERVALS = {'years', 'months', 'weeks', 'days', 'hours', 'mins', 'secs'}
 
 
-def _convert_interval(node):
-    """Convert an ``INTERVAL '<count> <unit>'`` literal"""
-    count, unit = _unpack(node, 'this', 'unit')
-    if unit is None or unit.name.upper() not in INTERVAL_UNITS:
-        raise UnsupportedSQL(f'Intervals need a name and valid unit, got {str(node)}')
-    try:
-        count = int(_literal_value(count))  # These come through as quoted strings
-    except ValueError:
+def _convert_make_interval(node, columns):
+    """Convert make_interval(<unit> => <count>)"""
+    args = []
+    for argument in node.args.values():
+        if not isinstance(argument, exp.Kwarg):
+            raise UnsupportedSQL('make_interval args must be named, as in '
+                                 f'make_interval(days => 30), got {str(argument)}')
+        unit, count = _unpack(argument, 'this', 'expression')
+        if unit.name.lower() not in DATETIME_INTERVALS:
+            raise UnsupportedSQL(f'unsupported interval unit: {unit.name}')
+        args.append(literal_column(unit.name.lower())
+                    .op('=>')
+                    (_convert_interval_count(count)))
+    if not args:
+        raise UnsupportedSQL('make_interval needs a unit, as in "days => 30"')
+    return func.make_interval(*args)
+
+
+def _convert_interval_count(node):
+    """Convert how many of a unit an interval covers"""
+    if isinstance(node, exp.Placeholder):
+        return _convert_placeholder(node)
+    count = _literal_value(node)
+    if not isinstance(count, int):
         raise UnsupportedSQL(f"an interval's count must be a whole number, got {str(node)}")
-    unit_arg = INTERVAL_UNITS[unit.name.upper()]
-    return func.make_interval(literal_column(unit_arg).op('=>')(_bind(count)))
+    return _bind(count)
 
 
 def _convert_value_function(node, columns):
@@ -553,6 +559,7 @@ def _no_arguments(node):
 
 VALUE_FUNCTIONS = {
     'array': _convert_array,
+    'make_interval': _convert_make_interval,
     'string_to_array': _convert_string_to_array,
     'current_timestamp': _convert_now,  # now() also resolves here
     'current_date': _convert_today,
