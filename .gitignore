@@ -93,4 +93,5 @@ extensions/
 ruff.toml
 CLAUDE.local.md
 .schemathesis/
+schemathesis-report/
 schemathesis.toml
