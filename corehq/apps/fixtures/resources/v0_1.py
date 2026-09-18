@@ -1,17 +1,15 @@
-import json
-
 from django.db.models import Max
 
 from tastypie import fields as tp_f
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
-from tastypie.http import HttpAccepted, HttpNotFound
+from tastypie.http import HttpAccepted
 from tastypie.resources import Resource
 
 from corehq.apps.api.fields import UUIDField
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.util import get_obj, object_does_not_exist
+from corehq.apps.api.util import get_obj, not_found, object_does_not_exist
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from corehq.apps.fixtures.models import (
     Field,
@@ -433,15 +431,3 @@ def get_sql_object_or_not_exist(cls, obj_id, domain):
     except cls.DoesNotExist:
         pass
     raise object_does_not_exist(cls.__name__, obj_id)
-
-
-def not_found(message):
-    """Build a 404 that survives tastypie
-
-    ``Resource.put_detail`` catches ``tastypie.exceptions.NotFound`` and
-    retries the request as ``obj_create``, which creates a new object at a
-    server-generated id rather than the one named in the URL. Raising an
-    ``ImmediateHttpResponse`` instead bypasses that fallback.
-    """
-    return ImmediateHttpResponse(response=HttpNotFound(
-        json.dumps({"error": message}), content_type="application/json"))
