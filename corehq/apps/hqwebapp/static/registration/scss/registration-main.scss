@@ -209,8 +209,8 @@ p.sso-message-block {
     $white,
     $prelogin-card-border,
     $color: $gray-600,
-    $hover-background: $white,
-    $hover-border: $prelogin-action-blue,
+    $hover-background: shade-color($white, 15%),
+    $hover-border: shade-color($white, 15%),
     $hover-color: $gray-600,
     $active-background: $prelogin-action-blue-tint,
     $active-border: $prelogin-action-blue,
@@ -305,6 +305,10 @@ p.sso-message-block {
 
   a:not(.btn) {
     color: $prelogin-action-blue;
+
+    &:hover {
+      color: shade-color($prelogin-action-blue, 80%);
+    }
   }
 
   .alert-warning {
