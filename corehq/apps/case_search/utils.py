@@ -188,7 +188,7 @@ def get_project_db_fixture(domain, endpoint, config):
     """Run a ``project_db`` endpoint's query and return the results as XML"""
     user_sql = UserSQL(domain, endpoint.current_version.dangerous_sql, CASE_SEARCH_MAX_RESULTS)
     all_params = {c.key: c.value for c in config.criteria}
-    query_params = {p: all_params.get(p) or None for p in user_sql.parameters}
+    query_params = user_sql.bind_parameters(all_params)
     with metrics_histogram_timer(
         'commcare.project_db.endpoint_query.duration',
         timing_buckets=(.1, .5, 1, 2, 5, 10),

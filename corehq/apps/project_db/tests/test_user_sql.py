@@ -445,6 +445,29 @@ def test_clean_parameters_rejects_a_mismatched_set(sql, raw):
         _user_sql(sql)._clean_parameters(raw)
 
 
+@pytest.mark.parametrize('sql, values, expected', [
+    ('SELECT * FROM client', {'who': 'ann'}, {}),
+    ('SELECT * FROM client WHERE name = :who', {'who': 'ann'}, {'who': 'ann'}),
+    # what the query asks for and was not given
+    ('SELECT * FROM client WHERE name = :who', {}, {'who': None}),
+    # a criterion left blank was not supplied
+    ('SELECT * FROM client WHERE name = :who', {'who': ''}, {'who': None}),
+    # ...and what it did not ask for is dropped
+    ('SELECT * FROM client WHERE name = :who',
+     {'who': 'ann', 'stale': 'x'}, {'who': 'ann'}),
+])
+def test_bind_parameters(sql, values, expected):
+    assert _user_sql(sql).bind_parameters(values) == expected
+
+
+def test_bound_parameters_are_what_run_accepts():
+    # The two halves have to agree: narrowing here is what keeps callers
+    # clear of the mismatch _clean_parameters raises on.
+    user_sql = _user_sql('SELECT * FROM client WHERE name = :who')
+    bound = user_sql.bind_parameters({'stale': 'x'})
+    assert user_sql._clean_parameters(bound) == {'who': None}
+
+
 def test_handle_quoted_tables():
     hyphenated_table = table('hyphenated-table', column('case_id'))
     tables = {'hyphenated-table': hyphenated_table}
