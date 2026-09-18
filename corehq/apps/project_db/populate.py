@@ -73,12 +73,12 @@ def case_to_row(case, table_columns):
         'case_id': case.case_id,
         'owner_id': case.owner_id,
         'case_name': case.name,
-        'opened_on': case.opened_on,
-        'closed_on': case.closed_on,
-        'modified_on': case.modified_on,
+        'opened_on': _as_utc(case.opened_on),
+        'closed_on': _as_utc(case.closed_on),
+        'modified_on': _as_utc(case.modified_on),
         'closed': case.closed,
         'external_id': case.external_id,
-        'server_modified_on': case.server_modified_on,
+        'server_modified_on': _as_utc(case.server_modified_on),
         'parent_id': ids_by_identifier.get('parent'),
         'host_id': ids_by_identifier.get('host'),
     }
@@ -91,6 +91,11 @@ def case_to_row(case, table_columns):
                 if typed_col in table_columns:
                     row[typed_col] = coerce_fn(value)
     return row
+
+
+def _as_utc(value):
+    """Attach explicit UTC timezone to naive datetime values"""
+    return value.replace(tzinfo=datetime.timezone.utc) if value else None
 
 
 def coerce_to_date(value):
