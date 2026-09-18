@@ -47,7 +47,7 @@ from .util import project_db_table
 @fixture
 def utc_project():
     """The test domains are not real projects, so they have no timezone"""
-    with patch.object(UserSQL, '_get_timezone', return_value='UTC'):
+    with patch.object(UserSQL, 'timezone', 'UTC'):
         yield
 
 
@@ -718,6 +718,6 @@ def test_date_bounds(where, params, expected):
 def test_bounds_resolve_in_the_project_timezone(project_timezone, expected):
     # 2026-01-01 in Kolkata is 2025-12-31T18:30 UTC
     user_sql = UserSQL(DATE_DOMAIN, "SELECT case_id FROM visit WHERE opened_on < '2026-01-01' ORDER BY case_id")
-    with patch.object(UserSQL, '_get_timezone', return_value=project_timezone):
+    with patch.object(UserSQL, 'timezone', project_timezone):
         rows = user_sql.run({}).rows
     assert [row['case_id'] for row in rows] == expected

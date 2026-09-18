@@ -84,7 +84,7 @@ def _literal_value(node, py_type=None):
 
 
 QueryInfo = namedtuple('QueryInfo', 'translated_sql bound_literals parameters')
-QueryResult = namedtuple('QueryResult', 'columns rows duration')
+QueryResult = namedtuple('QueryResult', 'columns rows duration timezone')
 
 
 class UserSQL:
@@ -125,7 +125,7 @@ class UserSQL:
     def run(self, parameter_values):
         params = self._clean_parameters(parameter_values)
         with get_project_db_engine().begin() as conn:
-            _set_timezone(conn, self._get_timezone())
+            _set_timezone(conn, self.timezone)
             start = time.perf_counter()
             try:
                 result = conn.execute(self.query, params)
@@ -136,6 +136,7 @@ class UserSQL:
                 columns=list(result.keys()),
                 rows=rows,
                 duration=time.perf_counter() - start,
+                timezone=self.timezone,
             )
 
     def _clean_parameters(self, raw_parameters):
@@ -143,7 +144,8 @@ class UserSQL:
             raise BadParameters(f"Expected params {set(self.parameters)}, got {set(raw_parameters)}")
         return {name: raw_parameters[name] for name in self.parameters}
 
-    def _get_timezone(self):
+    @cached_property
+    def timezone(self):
         return Domain.get_by_name(self.domain).default_timezone
 
 
