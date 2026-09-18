@@ -14,7 +14,7 @@ from corehq.apps.app_manager.models import (
     Module,
     ReportAppConfig,
     ReportModule,
-    import_app,
+    import_app_from_id,
     FormLink,
 )
 from corehq.apps.app_manager.suite_xml.post_process.resources import (
@@ -380,7 +380,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         build1 = self._make_linked_build()
 
         # Make a copy of master and pull it.
-        master_copy = import_app(self.master1.get_id, self.master1.domain)
+        master_copy = import_app_from_id(self.master1.get_id, self.master1.domain)
         self._make_build(master_copy, True)
         self._pull_linked_app(master_copy.get_id)
         build2 = self._make_linked_build()
