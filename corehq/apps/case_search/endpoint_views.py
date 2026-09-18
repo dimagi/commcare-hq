@@ -46,6 +46,12 @@ _ADMIN_ENDPOINT_DECORATORS = [
     domain_admin_required,
 ]
 
+# Said by both the form and the test view about the same SQL, so they are
+# written once rather than kept in step by hand.
+SQL_REQUIRED = 'SQL is required.'
+PROJECT_DB_UNAVAILABLE = 'The project database is unavailable. Please try again.'
+
+
 def empty_query():
     return {'type': 'all', 'children': []}
 
@@ -166,7 +172,7 @@ class CaseSearchEndpointForm(forms.Form):
     def _clean_sql(self, cleaned):
         sql = (cleaned.get('sql') or '').strip()
         if not sql:
-            self.add_error('sql', 'SQL is required.')
+            self.add_error('sql', SQL_REQUIRED)
             return
         try:
             # Translating is the validation, and it is spelled the same way
@@ -182,9 +188,7 @@ class CaseSearchEndpointForm(forms.Form):
             notify_exception(
                 None, f'project_db unavailable for {self.domain}: {error}'
             )
-            self.add_error(
-                None, 'The project database is unavailable. Please try again.'
-            )
+            self.add_error(None, PROJECT_DB_UNAVAILABLE)
 
 
 @method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
@@ -500,7 +504,13 @@ class CaseSearchEndpointTestView(BaseDomainView):
         placeholders the SQL actually has, which is what the endpoint does
         when it runs.
         """
-        user_sql = UserSQL(self.domain, request.POST.get('sql', ''), max_rows=self._row_limit)
+        sql = request.POST.get('sql', '').strip()
+        if not sql:
+            # Said here rather than left to the translator, which would
+            # otherwise report no statement as the wrong number of them.
+            validation[self.SQL_ERRORS] = [SQL_REQUIRED]
+            return self._render_results(request, validation=validation)
+        user_sql = UserSQL(self.domain, sql, max_rows=self._row_limit)
         try:
             values = {name: test_param_values.get(name) or None
                       for name in user_sql.parameters}
@@ -513,7 +523,7 @@ class CaseSearchEndpointTestView(BaseDomainView):
             notify_exception(
                 request, f'project_db unavailable for {self.domain}: {error}')
             return self._render_results(
-                request, errors=['The project database is unavailable.'])
+                request, errors=[PROJECT_DB_UNAVAILABLE])
         return self._render_table(request, result.columns, result.rows,
                                   validation=validation)
 
