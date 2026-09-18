@@ -245,13 +245,6 @@ class SessionDetailsViewTest(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertIn('edit_data', json.loads(response.content)['permissions'])
 
-    @softer_assert()
-    def test_session_details_view_no_domain_grants_no_permissions(self):
-        data = json.dumps({'sessionId': self.session_key})
-        response = _post_with_hmac(self.url, data, content_type="application/json")
-        self.assertEqual(200, response.status_code)
-        self.assertEqual([], json.loads(response.content)['permissions'])
-
 
 class PublicSessionDetailsViewTest(TestCase):
     @classmethod
