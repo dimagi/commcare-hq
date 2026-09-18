@@ -78,7 +78,7 @@ def test_invalid_query_spec_is_a_non_field_error():
     # A spec that parses as JSON but is not a query the builder understands
     # is a semantic error, so it belongs to the form rather than a field.
     form = bound_form(query='{"type": "bogus"}')
-    assert form.errors == {'__all__': ['Invalid query']}
+    assert form.errors == {'query': ['Invalid query']}
 
 
 @use('db')
@@ -134,7 +134,7 @@ def test_project_db_unavailable_is_not_the_authors_fault(error):
     # The engine falls back to the default database under DEBUG or
     # UNIT_TESTING, so the failure has to be injected to be reachable.
     with patch(
-        'corehq.apps.case_search.endpoint_views.get_domain_tables',
+        'corehq.apps.project_db.user_sql.get_domain_tables',
         side_effect=error,
     ):
         form = bound_form(target_type=PROJECT_DB, sql='SELECT case_id FROM x')
