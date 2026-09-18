@@ -1,4 +1,4 @@
-"""Execution logic for bulk form actions (archive/unarchive).
+"""Execution logic for bulk form actions (archive/unarchive/delete).
 
 Kept separate from ``tasks.py`` so the job lifecycle can be tested without
 Celery. The Celery task is a thin wrapper around ``run_bulk_form_action``.
@@ -27,6 +27,7 @@ MAX_SAVE_INTERVAL = 100
 
 # the API passes these keys back, so changing these values is
 # effectively a breaking change for callers
+NOT_ARCHIVED = 'not_archived'
 NOT_FOUND = 'not_found'
 UNEXPECTED_ERROR = 'unexpected_error'
 
@@ -40,7 +41,7 @@ class FormActionResult:
     """Outcome of a bulk form action for a single requested form id."""
     form_id: str
     status: str  # SUCCEEDED | SKIPPED
-    reason: str | None = None  # NOT_FOUND | UNEXPECTED_ERROR
+    reason: str | None = None  # NOT_FOUND | NOT_ARCHIVED | UNEXPECTED_ERROR
 
 
 def run_bulk_form_action(job):
@@ -105,6 +106,8 @@ def build_form_action(job, user_id):
         return partial(archive_forms, user_id=user_id)
     if job.action == BulkAsyncJob.Action.UNARCHIVE:
         return partial(unarchive_forms, user_id=user_id)
+    if job.action == BulkAsyncJob.Action.DELETE:
+        return partial(delete_forms, domain=job.domain, deletion_id=job.id.hex)
     raise BulkFormActionError(f'unknown bulk action: {job.action}')
 
 
@@ -114,6 +117,36 @@ def archive_forms(forms, user_id):
 
 def unarchive_forms(forms, user_id):
     yield from _apply_to_each(forms, lambda f: f.unarchive(user_id=user_id))
+
+
+def delete_forms(forms, domain, deletion_id):
+    to_delete = []
+    for form in forms:
+        if not form.is_archived:
+            # archiving is what ensures affected cases are rebuilt
+            yield FormActionResult(form.form_id, SKIPPED, NOT_ARCHIVED)
+        elif form.is_deleted:
+            # treat as noop
+            yield FormActionResult(form.form_id, SUCCEEDED)
+        else:
+            to_delete.append(form.form_id)
+
+    if not to_delete:
+        return
+
+    try:
+        XFormInstance.objects.soft_delete_forms(
+            domain, to_delete, deletion_id=deletion_id)
+    except Exception:
+        notify_exception(None, "Error deleting forms in bulk", {
+            'domain': domain,
+            'form_ids': to_delete,
+        })
+        for form_id in to_delete:
+            yield FormActionResult(form_id, SKIPPED, UNEXPECTED_ERROR)
+    else:
+        for form_id in to_delete:
+            yield FormActionResult(form_id, SUCCEEDED)
 
 
 def mark_job_failed(job_id):
