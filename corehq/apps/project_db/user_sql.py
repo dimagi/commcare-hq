@@ -106,6 +106,10 @@ class UserSQL:
             parameters=self.parameters,
         )
 
+    def validate(self):
+        """Raise ``UserSQLValidationError`` if the statement cannot be translated"""
+        self.query
+
     @property
     def parameters(self):
         """Return the parameters a translated query leaves for the caller to supply"""
