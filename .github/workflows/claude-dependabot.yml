@@ -24,7 +24,10 @@ on:
 
 jobs:
   dependabot-review:
-    if: github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
+    # Only run on the canonical repo, not on forks or mirrors
+    if: >-
+      github.repository == 'dimagi/commcare-hq'
+      && (github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
