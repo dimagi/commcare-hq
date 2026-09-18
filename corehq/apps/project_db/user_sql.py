@@ -73,6 +73,16 @@ def _bind(value):
     return bindparam(LITERAL_PARAM_PREFIX, value, unique=True)
 
 
+def _literal_value(node, py_type=None):
+    """Unpack a SQL literal, requiring and coercing to py_type if provided"""
+    if isinstance(node, exp.Literal) and (
+            py_type is None or node.is_string == (py_type is str)):
+        _unpack(node, 'this', 'is_string')
+        return py_type(node.to_py()) if py_type else node.to_py()
+    expected = f'{py_type.__name__} ' if py_type else ''
+    raise UnsupportedSQL(f'expected a {expected}literal value, got {str(node)}')
+
+
 QueryInfo = namedtuple('QueryInfo', 'translated_sql bound_literals parameters')
 QueryResult = namedtuple('QueryResult', 'columns rows duration')
 
@@ -389,15 +399,9 @@ def _convert_coordinates(node):
     """Build an ``earth`` value from a ``'<latitude> <longitude>'`` string"""
     # The string is split in the database so it can accept params
     if isinstance(node, exp.Placeholder):
-        coordinates = _convert_placeholder(node, type_=Text)
-    elif isinstance(node, exp.Literal) and node.is_string:
-        _unpack(node, 'this', 'is_string')
-        coordinates = _bind(node.to_py())
+        coordinates = _convert_placeholder(node, Text)
     else:
-        raise UnsupportedSQL(
-            "within_distance coordinates must be a '<latitude> <longitude>' "
-            f"string or a query parameter, got {str(node)}"
-        )
+        coordinates = _bind(_literal_value(node, str))
     latitude, longitude = (
         cast(
             func.split_part(coordinates, literal_column("' '"), literal_column(i)),
@@ -410,13 +414,8 @@ def _convert_coordinates(node):
 
 def _convert_meters(node):
     if isinstance(node, exp.Placeholder):
-        return _convert_placeholder(node, type_=Float)
-    if isinstance(node, exp.Literal) and not node.is_string:
-        _unpack(node, 'this', 'is_string')
-        return _bind(float(node.to_py()))
-    raise UnsupportedSQL(
-        "within_distance's distance must be a positive number of meters or a "
-        f"query parameter, got {str(node)}")
+        return _convert_placeholder(node, Float)
+    return _bind(_literal_value(node, float))
 
 
 def _convert_sounds_like(args, columns):
@@ -454,8 +453,7 @@ PREDICATE_FUNCTIONS = {
 def _convert_value(node, columns):
     """Convert a SQL value expression to a ``ColumnElement``"""
     if isinstance(node, exp.Literal):
-        _unpack(node, 'this', 'is_string')
-        return _bind(node.to_py())  # Bind it so the value never reaches the SQL
+        return _bind(_literal_value(node))
     if isinstance(node, exp.Boolean):
         value, = _unpack(node, 'this')
         return _bind(bool(value))
@@ -494,13 +492,10 @@ def _convert_interval(node):
     count, unit = _unpack(node, 'this', 'unit')
     if unit is None or unit.name.upper() not in INTERVAL_UNITS:
         raise UnsupportedSQL(f'Intervals need a name and valid unit, got {str(node)}')
-    if not isinstance(count, exp.Literal):
-        raise UnsupportedSQL(f"an interval's count must be a number, got {str(count)}")
-    _unpack(count, 'this', 'is_string')
     try:
-        count = int(count.to_py())
+        count = int(_literal_value(count))  # These come through as quoted strings
     except ValueError:
-        raise UnsupportedSQL(f"an interval's count must be a number, got {str(node)}")
+        raise UnsupportedSQL(f"an interval's count must be a whole number, got {str(node)}")
     unit_arg = INTERVAL_UNITS[unit.name.upper()]
     return func.make_interval(literal_column(unit_arg).op('=>')(_bind(count)))
 
@@ -515,34 +510,27 @@ def _convert_value_function(node, columns):
 
 def _convert_string_to_array(node, columns):
     value, delimiter = _unpack(node, 'this', 'expression')
-    if not (isinstance(delimiter, exp.Literal) and delimiter.is_string):
-        raise UnsupportedSQL("string_to_array's delimiter must be a string literal")
-    _unpack(delimiter, 'this', 'is_string')
     return func.string_to_array(
         _convert_value(value, columns),
-        _bind(delimiter.to_py()),
+        _bind(_literal_value(delimiter, str)),
         type_=ARRAY(Text),
     )
 
 
-def _convert_placeholder(node, expanding=False, type_=None):
+def _convert_placeholder(node, db_type=None, expanding=False):
     """Convert a ``:name`` placeholder to a parameter for the caller to bind"""
     name, = _unpack(node, 'this')
     if not isinstance(name, str) or not PARAM_NAME.match(name):
         raise UnsupportedSQL("query parameters must be written as `:name`")
     if name.startswith(LITERAL_PARAM_PREFIX):
         raise UnsupportedSQL(f"query parameter names may not begin with '{LITERAL_PARAM_PREFIX}'")
-    return bindparam(name, expanding=expanding, type_=type_)
+    return bindparam(name, expanding=expanding, type_=db_type)
 
 
 def _convert_array(node, columns):
     """Convert an ``ARRAY[...]`` literal into a single bound parameter"""
     elements, = _unpack(node, 'expressions')
-    for element in elements:
-        if not isinstance(element, exp.Literal):
-            raise UnsupportedSQL(f"array elements must be literals: {str(element)}")
-        _unpack(element, 'this', 'is_string')
-    return _bind([element.to_py() for element in elements])
+    return _bind([_literal_value(element) for element in elements])
 
 
 def _convert_now(node, columns):
