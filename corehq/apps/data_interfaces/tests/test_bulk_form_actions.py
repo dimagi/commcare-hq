@@ -6,14 +6,20 @@ from django.contrib.auth.models import User
 import pytest
 
 from corehq.apps.data_interfaces.bulk_form_actions import (
+    MAX_SAVE_INTERVAL,
+    NOT_ARCHIVED,
+    NOT_FOUND,
     SKIPPED,
     SUCCEEDED,
+    UNEXPECTED_ERROR,
     BulkFormActionError,
     FormActionResult,
     _apply_form_action,
+    _apply_to_each,
     _save_interval,
     build_form_action,
     create_bulk_form_job,
+    delete_forms,
     mark_job_failed,
     run_bulk_form_action,
 )
@@ -41,6 +47,10 @@ class TestBuildFormAction(TestCase):
 
     def test_unarchive_action(self):
         action_fn = build_form_action(self._job(BulkAsyncJob.Action.UNARCHIVE), user_id='uid')
+        assert callable(action_fn)
+
+    def test_delete_action(self):
+        action_fn = build_form_action(self._job(BulkAsyncJob.Action.DELETE), user_id='uid')
         assert callable(action_fn)
 
     def test_unsupported_action(self):
@@ -88,7 +98,7 @@ class TestRunBulkFormAction(TestCase):
         run_bulk_form_action(job)
         job.refresh_from_db()
         assert job.succeeded_count == 0
-        assert job.get_skipped() == {'not_found': ['does-not-exist']}
+        assert job.get_skipped() == {NOT_FOUND: ['does-not-exist']}
 
     def test_unarchive_already_unarchived_is_noop(self):
         # unarchive is idempotent: a normal form is a no-op success, not a skip
@@ -98,6 +108,53 @@ class TestRunBulkFormAction(TestCase):
         job.refresh_from_db()
         assert job.succeeded_count == 1
         assert job.get_skipped() == {}
+
+    def test_delete_archived_form(self):
+        form = create_form_for_test(DOMAIN, state=XFormInstance.ARCHIVED)
+        job = self._job(BulkAsyncJob.Action.DELETE, [form.form_id])
+
+        run_bulk_form_action(job)
+
+        job.refresh_from_db()
+        assert job.status == BulkAsyncJob.Status.COMPLETE
+        assert job.succeeded_count == 1
+        assert job.get_skipped() == {}
+        deleted = XFormInstance.objects.get_form(form.form_id, DOMAIN)
+        assert deleted.is_deleted
+        # the job that deleted a form can be traced from the form itself
+        assert deleted.deletion_id == job.id.hex
+
+    def test_delete_skips_forms_that_are_not_archived(self):
+        normal = create_form_for_test(DOMAIN, state=XFormInstance.NORMAL)
+        archived = create_form_for_test(DOMAIN, state=XFormInstance.ARCHIVED)
+        job = self._job(
+            BulkAsyncJob.Action.DELETE, [normal.form_id, archived.form_id])
+
+        run_bulk_form_action(job)
+
+        job.refresh_from_db()
+        assert job.processed_count == 2
+        assert job.succeeded_count == 1
+        assert job.get_skipped() == {NOT_ARCHIVED: [normal.form_id]}
+        assert not XFormInstance.objects.get_form(normal.form_id, DOMAIN).is_deleted
+        assert XFormInstance.objects.get_form(archived.form_id, DOMAIN).is_deleted
+
+    def test_delete_leaves_an_already_deleted_form_alone(self):
+        # re-deleting would overwrite the original deleted_on and deletion_id
+        form = create_form_for_test(DOMAIN, state=XFormInstance.ARCHIVED)
+        XFormInstance.objects.soft_delete_forms(
+            DOMAIN, [form.form_id], deletion_id='an-earlier-deletion')
+        original = XFormInstance.objects.get_form(form.form_id, DOMAIN)
+        job = self._job(BulkAsyncJob.Action.DELETE, [form.form_id])
+
+        run_bulk_form_action(job)
+
+        job.refresh_from_db()
+        assert job.succeeded_count == 1
+        assert job.get_skipped() == {}
+        unchanged = XFormInstance.objects.get_form(form.form_id, DOMAIN)
+        assert unchanged.deletion_id == 'an-earlier-deletion'
+        assert unchanged.deleted_on == original.deleted_on
 
     def test_persists_progress_before_completion(self):
         # A small job (interval == 1) must persist counts as it goes, not only
@@ -210,9 +267,14 @@ def test_save_interval(requested_count, expected):
     assert _save_interval(requested_count) == expected
 
 
+def _successful_action(forms):
+    for form in forms:
+        yield FormActionResult(form.form_id, SUCCEEDED)
+
+
 class TestApplyFormAction(SimpleTestCase):
 
-    def _patched_apply_form_action(self, form_ids, forms, action_fn):
+    def _patched_apply_form_action(self, form_ids, forms, action_fn=_successful_action):
         with patch(
             'corehq.apps.data_interfaces.bulk_form_actions.XFormInstance.objects.iter_forms',
             return_value=forms,
@@ -220,25 +282,56 @@ class TestApplyFormAction(SimpleTestCase):
             return list(_apply_form_action(DOMAIN, form_ids, action_fn))
 
     def test_empty_form_ids(self):
-        assert self._patched_apply_form_action([], [], lambda f: None) == []
+        assert self._patched_apply_form_action([], []) == []
+
+    def test_success(self):
+        form = Mock(form_id='f1', domain=DOMAIN)
+        results = self._patched_apply_form_action(['f1'], [form])
+        assert results == [FormActionResult('f1', SUCCEEDED)]
+
+    def test_missing_is_not_found(self):
+        results = self._patched_apply_form_action(['missing'], [])
+        assert results == [FormActionResult('missing', SKIPPED, NOT_FOUND)]
+
+    def test_wrong_domain_is_not_found(self):
+        # the action never sees it, so there is no success to report
+        form = Mock(form_id='f1', domain='other-domain')
+        results = self._patched_apply_form_action(['f1'], [form])
+        assert results == [FormActionResult('f1', SKIPPED, NOT_FOUND)]
+
+    def test_mixed_results(self):
+        found = Mock(form_id='f1', domain=DOMAIN)
+        results = self._patched_apply_form_action(['f1', 'missing'], [found])
+        assert results == [
+            FormActionResult('f1', SUCCEEDED),
+            FormActionResult('missing', SKIPPED, NOT_FOUND),
+        ]
+
+    def test_forms_are_handed_to_the_action_in_batches(self):
+        forms = [
+            Mock(form_id=f'f{i}', domain=DOMAIN)
+            for i in range(MAX_SAVE_INTERVAL + 1)
+        ]
+        sizes = []
+
+        def record_size(batch):
+            sizes.append(len(batch))
+            yield from _successful_action(batch)
+
+        self._patched_apply_form_action(
+            [f.form_id for f in forms], forms, record_size)
+
+        assert sizes == [MAX_SAVE_INTERVAL, 1]
+
+
+class TestApplyToEach(SimpleTestCase):
 
     def test_success(self):
         form = Mock(form_id='f1', domain=DOMAIN)
         calls = []
-        results = self._patched_apply_form_action(['f1'], [form], calls.append)
+        results = list(_apply_to_each([form], calls.append))
         assert calls == [form]
         assert results == [FormActionResult('f1', SUCCEEDED)]
-
-    def test_missing_is_not_found(self):
-        results = self._patched_apply_form_action(['missing'], [], lambda f: None)
-        assert results == [FormActionResult('missing', SKIPPED, 'not_found')]
-
-    def test_wrong_domain_is_not_found(self):
-        form = Mock(form_id='f1', domain='other-domain')
-        called = []
-        results = self._patched_apply_form_action(['f1'], [form], called.append)
-        assert called == []  # action not applied to out-of-domain forms
-        assert results == [FormActionResult('f1', SKIPPED, 'not_found')]
 
     def test_exception_is_unexpected_error(self):
         form = Mock(form_id='f1', domain=DOMAIN)
@@ -249,14 +342,114 @@ class TestApplyFormAction(SimpleTestCase):
         with patch(
             'corehq.apps.data_interfaces.bulk_form_actions.notify_exception'
         ) as notify:
-            results = self._patched_apply_form_action(['f1'], [form], unexpected_error)
-        assert results == [FormActionResult('f1', SKIPPED, 'unexpected_error')]
+            results = list(_apply_to_each([form], unexpected_error))
+        assert results == [FormActionResult('f1', SKIPPED, UNEXPECTED_ERROR)]
         notify.assert_called_once()
 
-    def test_mixed_results(self):
-        found = Mock(form_id='f1', domain=DOMAIN)
-        results = self._patched_apply_form_action(['f1', 'missing'], [found], lambda f: None)
+    def test_one_failure_does_not_stop_the_batch(self):
+        forms = [Mock(form_id=f'f{i}', domain=DOMAIN) for i in range(3)]
+
+        def fail_on_second(xform):
+            if xform.form_id == 'f1':
+                raise Exception('error')
+
+        with patch('corehq.apps.data_interfaces.bulk_form_actions.notify_exception'):
+            results = list(_apply_to_each(forms, fail_on_second))
+
+        assert results == [
+            FormActionResult('f0', SUCCEEDED),
+            FormActionResult('f1', SKIPPED, UNEXPECTED_ERROR),
+            FormActionResult('f2', SUCCEEDED),
+        ]
+
+
+class TestDeleteForms(SimpleTestCase):
+    """``delete_forms`` decides what is eligible; the query is mocked out"""
+
+    DELETION_ID = 'the-job-id'
+
+    def _form(self, form_id, is_archived=True, is_deleted=False):
+        return Mock(
+            form_id=form_id,
+            domain=DOMAIN,
+            is_archived=is_archived,
+            is_deleted=is_deleted,
+        )
+
+    def _delete(self, forms):
+        with patch(
+            'corehq.apps.data_interfaces.bulk_form_actions.'
+            'XFormInstance.objects.soft_delete_forms'
+        ) as soft_delete:
+            results = list(delete_forms(forms, DOMAIN, self.DELETION_ID))
+        return results, soft_delete
+
+    def test_empty_batch_runs_no_query(self):
+        results, soft_delete = self._delete([])
+        soft_delete.assert_not_called()
+        assert results == []
+
+    def test_archived_form_is_deleted(self):
+        results, soft_delete = self._delete([self._form('f1')])
+        soft_delete.assert_called_once_with(
+            DOMAIN, ['f1'], deletion_id=self.DELETION_ID)
+        assert results == [FormActionResult('f1', SUCCEEDED)]
+
+    def test_form_that_is_not_archived_is_skipped(self):
+        results, soft_delete = self._delete([self._form('f1', is_archived=False)])
+        soft_delete.assert_not_called()
+        assert results == [FormActionResult('f1', SKIPPED, NOT_ARCHIVED)]
+
+    def test_already_deleted_form_is_left_alone(self):
+        # re-deleting would overwrite the original deleted_on and deletion_id
+        results, soft_delete = self._delete([self._form('f1', is_deleted=True)])
+        soft_delete.assert_not_called()
+        assert results == [FormActionResult('f1', SUCCEEDED)]
+
+    def test_batch_is_deleted_in_a_single_query(self):
+        forms = [self._form('f1'), self._form('f2'), self._form('f3')]
+
+        results, soft_delete = self._delete(forms)
+
+        soft_delete.assert_called_once_with(
+            DOMAIN, ['f1', 'f2', 'f3'], deletion_id=self.DELETION_ID)
         assert results == [
             FormActionResult('f1', SUCCEEDED),
-            FormActionResult('missing', SKIPPED, 'not_found'),
+            FormActionResult('f2', SUCCEEDED),
+            FormActionResult('f3', SUCCEEDED),
         ]
+
+    def test_only_eligible_forms_of_a_mixed_batch_are_deleted(self):
+        forms = [
+            self._form('archived'),
+            self._form('normal', is_archived=False),
+            self._form('deleted', is_deleted=True),
+        ]
+
+        results, soft_delete = self._delete(forms)
+
+        soft_delete.assert_called_once_with(
+            DOMAIN, ['archived'], deletion_id=self.DELETION_ID)
+        assert results == [
+            FormActionResult('normal', SKIPPED, NOT_ARCHIVED),
+            FormActionResult('deleted', SUCCEEDED),
+            FormActionResult('archived', SUCCEEDED),
+        ]
+
+    def test_a_failed_query_skips_the_whole_batch(self):
+        forms = [self._form('f1'), self._form('f2')]
+
+        with patch(
+            'corehq.apps.data_interfaces.bulk_form_actions.'
+            'XFormInstance.objects.soft_delete_forms',
+            side_effect=Exception('error'),
+        ), patch(
+            'corehq.apps.data_interfaces.bulk_form_actions.notify_exception'
+        ) as notify:
+            results = list(delete_forms(forms, DOMAIN, self.DELETION_ID))
+
+        assert results == [
+            FormActionResult('f1', SKIPPED, UNEXPECTED_ERROR),
+            FormActionResult('f2', SKIPPED, UNEXPECTED_ERROR),
+        ]
+        notify.assert_called_once()

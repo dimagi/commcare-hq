@@ -131,6 +131,17 @@ class TestBulkFormActionApi(BulkFormActionApiTestBase):
 
         assert data['status_url'].endswith(self.status_url(data['id']))
 
+    def test_creates_a_delete_job(self):
+        with self.logged_in(), patch(
+            'corehq.apps.data_interfaces.api.views.bulk_form_action_async'
+        ) as task:
+            response = self.post({'action': 'delete', 'form_ids': ['a']})
+
+        assert response.status_code == 202
+        job = BulkAsyncJob.objects.get(id=response.json()['id'])
+        assert job.action == 'delete'
+        task.delay.assert_called_once_with(job.id.hex, DOMAIN)
+
     def test_invalid_json_is_a_400(self):
         with self.logged_in():
             response = self.client.post(
