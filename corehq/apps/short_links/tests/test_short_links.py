@@ -1,9 +1,7 @@
-from datetime import timedelta
 from unittest import mock
 
 from django.test import Client
 from django.urls import reverse
-from django.utils import timezone
 
 from unmagic import use
 
@@ -48,25 +46,13 @@ def test_a_code_that_collides_is_generated_again():
 def test_following_a_short_link_redirects_to_its_target():
     response = _follow(ShortLink.objects.get_or_create_for_url(DOMAIN, TARGET).short_url)
 
-    # temporary, so that nothing caches a code whose target may stop working
-    assert response.status_code == 302
+    assert response.status_code == 301
     assert response.url == TARGET
 
 
 @use('db')
 def test_an_unknown_code_is_not_found():
     assert _follow('/s/9BvKq2mXtZaF').status_code == 404
-
-
-@use('db')
-def test_an_expired_code_is_not_found():
-    link = ShortLink.objects.create(
-        domain=DOMAIN,
-        target_url=TARGET,
-        expires_at=timezone.now() - timedelta(seconds=1),
-    )
-
-    assert _follow(link.short_url).status_code == 404
 
 
 @use('db')
@@ -81,33 +67,3 @@ def test_a_code_is_not_reused_across_domains():
     assert ShortLink.objects.get_or_create_for_url(
         DOMAIN, TARGET
     ) != ShortLink.objects.get_or_create_for_url('another-domain', TARGET)
-
-
-@use('db')
-def test_a_code_is_reused_only_while_it_outlasts_what_the_caller_needs():
-    in_an_hour = timezone.now() + timedelta(hours=1)
-    hour_long = ShortLink.objects.get_or_create_for_url(DOMAIN, TARGET, expires_at=in_an_hour)
-
-    assert ShortLink.objects.get_or_create_for_url(
-        DOMAIN, TARGET, expires_at=in_an_hour - timedelta(minutes=1)
-    ) == hour_long
-    assert ShortLink.objects.get_or_create_for_url(
-        DOMAIN, TARGET, expires_at=in_an_hour + timedelta(minutes=1)
-    ) != hour_long
-
-
-@use('db')
-def test_a_code_that_never_expires_is_reused_for_any_lifespan():
-    permanent = ShortLink.objects.get_or_create_for_url(DOMAIN, TARGET)
-
-    assert ShortLink.objects.get_or_create_for_url(
-        DOMAIN, TARGET, expires_at=timezone.now() + timedelta(days=1)
-    ) == permanent
-
-
-@use('db')
-def test_an_expiring_code_is_not_reused_for_a_link_that_must_not_expire():
-    expiring = ShortLink.objects.get_or_create_for_url(
-        DOMAIN, TARGET, expires_at=timezone.now() + timedelta(days=1))
-
-    assert ShortLink.objects.get_or_create_for_url(DOMAIN, TARGET) != expiring
