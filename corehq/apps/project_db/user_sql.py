@@ -115,6 +115,15 @@ class UserSQL:
         """Return the parameters a translated query leaves for the caller to supply"""
         return [name for name, bind in self._compiled.binds.items() if bind.required]
 
+    def bind_parameters(self, values):
+        """Take from ``values`` what this query's parameters need.
+
+        A missing or blank value binds as NULL, which is how a criterion the
+        caller did not supply reaches the query. Callers that would rather
+        hear about a mismatch pass their own dict to :meth:`run` instead.
+        """
+        return {name: values.get(name) or None for name in self.parameters}
+
     def run(self, parameter_values):
         params = self._clean_parameters(parameter_values)
         with get_project_db_engine().connect() as conn:
