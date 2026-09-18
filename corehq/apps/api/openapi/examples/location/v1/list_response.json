@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "limit": 20,
+    "next": null,
+    "offset": 0,
+    "previous": null,
+    "total_count": 1
+  },
+  "objects": [
+    {
+      "created_at": "2023-05-09T16:10:47.225938",
+      "domain": "demo",
+      "external_id": null,
+      "id": 1,
+      "last_modified": "2023-05-09T16:10:47.225947",
+      "latitude": null,
+      "location_data": {},
+      "location_id": "f373a6837c1243938abfc56618cce88b",
+      "location_type": "https://www.commcarehq.org/a/demo/api/location_type/v1/1/",
+      "longitude": null,
+      "name": "Namibia",
+      "parent": null,
+      "resource_uri": "https://www.commcarehq.org/a/demo/api/location/v1/f373a6837c1243938abfc56618cce88b/",
+      "site_code": "namibia"
+    }
+  ]
+}

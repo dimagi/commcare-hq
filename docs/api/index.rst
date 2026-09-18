@@ -15,6 +15,14 @@ integration.
     `CommCare Pricing Overview <https://commcare.dimagi.com/pricing/>`_
 
 
+Machine-readable specifications
+--------------------------------
+
+These pages are generated from OpenAPI 3.0.3 specifications under
+``docs/api/spec/``. ``bundle.json`` covers every documented endpoint and is
+intended for code generation and for tools that consume the whole API
+surface.
+
 Table of contents
 -----------------
 
