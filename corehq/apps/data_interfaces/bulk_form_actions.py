@@ -23,6 +23,8 @@ log = logging.getLogger(__name__)
 SUCCEEDED = 'succeeded'
 SKIPPED = 'skipped'
 
+MAX_SAVE_INTERVAL = 100
+
 # the API passes these keys back, so changing these values is
 # effectively a breaking change for callers
 NOT_FOUND = 'not_found'
@@ -132,7 +134,7 @@ def _apply_form_action(domain, form_ids, action_fn):
     unresolved_ids = set(form_ids)
     all_forms = XFormInstance.objects.iter_forms(form_ids)
     # iter_forms returns one form at a time, but an action takes a batch
-    for batch in chunked(all_forms, 100):
+    for batch in chunked(all_forms, MAX_SAVE_INTERVAL):
         forms = []
         for form in batch:
             if form.domain == domain:
@@ -159,8 +161,8 @@ def _apply_to_each(forms, apply_to_form):
 
 
 def _save_interval(requested_count):
-    """Every 5% or 100 forms, whichever is lower"""
-    return max(1, min(100, requested_count // 20))
+    """Every 5% or MAX_SAVE_INTERVAL forms, whichever is lower"""
+    return max(1, min(MAX_SAVE_INTERVAL, requested_count // 20))
 
 
 def _resolve_user_id(username):

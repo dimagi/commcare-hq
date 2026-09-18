@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 import pytest
 
 from corehq.apps.data_interfaces.bulk_form_actions import (
+    MAX_SAVE_INTERVAL,
     NOT_FOUND,
     SKIPPED,
     SUCCEEDED,
@@ -255,7 +256,7 @@ class TestApplyFormAction(SimpleTestCase):
     def test_forms_are_handed_to_the_action_in_batches(self):
         forms = [
             Mock(form_id=f'f{i}', domain=DOMAIN)
-            for i in range(101)
+            for i in range(MAX_SAVE_INTERVAL + 1)
         ]
         sizes = []
 
@@ -266,7 +267,7 @@ class TestApplyFormAction(SimpleTestCase):
         self._patched_apply_form_action(
             [f.form_id for f in forms], forms, record_size)
 
-        assert sizes == [100, 1]
+        assert sizes == [MAX_SAVE_INTERVAL, 1]
 
 
 class TestApplyToEach(SimpleTestCase):
