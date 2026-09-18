@@ -14,20 +14,6 @@ def make_code():
     return ''.join(secrets.choice(CODE_ALPHABET) for __ in range(CODE_LENGTH))
 
 
-class ShortLinkManager(models.Manager):
-
-    @retry_on(IntegrityError, delays=[0, 0])
-    @transaction.atomic
-    def get_or_create_for_url(self, domain, target_url):
-        """Get or create a short link standing in for an absolute ``target_url``."""
-        return self.filter(
-            domain=domain,
-            target_url=target_url,
-        ).order_by('created_at').first() or self.create(
-            domain=domain, target_url=target_url,
-        )
-
-
 class ShortLink(models.Model):
     """A code that redirects to a longer URL.
 
@@ -42,11 +28,16 @@ class ShortLink(models.Model):
     target_url = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
-    objects = ShortLinkManager()
-
     class Meta:
         indexes = [models.Index(fields=['domain', 'target_url'])]
 
     @property
     def short_url(self):
         return f'{get_url_base()}/s/{self.code}'
+
+    @classmethod
+    @retry_on(IntegrityError, delays=[0, 0])
+    @transaction.atomic
+    def shorten(cls, domain, target_url):
+        short_link, __ = cls.objects.get_or_create(domain=domain, target_url=target_url)
+        return short_link

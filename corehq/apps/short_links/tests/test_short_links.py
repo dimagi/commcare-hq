@@ -23,7 +23,7 @@ def _follow(short_url):
 
 @use('db')
 def test_shorten_returns_an_absolute_url_carrying_the_code():
-    short_url = ShortLink.objects.get_or_create_for_url(DOMAIN, TARGET).short_url
+    short_url = ShortLink.shorten(DOMAIN, TARGET).short_url
 
     code = ShortLink.objects.get(target_url=TARGET).code
     assert short_url == f'{get_url_base()}/s/{code}'
@@ -37,14 +37,14 @@ def test_a_code_that_collides_is_generated_again():
     with mock.patch.object(
         ShortLink._meta.get_field('code'), '_get_default', lambda: next(codes)
     ):
-        link = ShortLink.objects.get_or_create_for_url(DOMAIN, TARGET)
+        link = ShortLink.shorten(DOMAIN, TARGET)
 
     assert link.code == 'zzzzzzzzzzzz'
 
 
 @use('db')
 def test_following_a_short_link_redirects_to_its_target():
-    response = _follow(ShortLink.objects.get_or_create_for_url(DOMAIN, TARGET).short_url)
+    response = _follow(ShortLink.shorten(DOMAIN, TARGET).short_url)
 
     assert response.status_code == 301
     assert response.url == TARGET
@@ -57,13 +57,9 @@ def test_an_unknown_code_is_not_found():
 
 @use('db')
 def test_shortening_the_same_target_twice_reuses_the_code():
-    assert ShortLink.objects.get_or_create_for_url(
-        DOMAIN, TARGET
-    ) == ShortLink.objects.get_or_create_for_url(DOMAIN, TARGET)
+    assert ShortLink.shorten(DOMAIN, TARGET) == ShortLink.shorten(DOMAIN, TARGET)
 
 
 @use('db')
 def test_a_code_is_not_reused_across_domains():
-    assert ShortLink.objects.get_or_create_for_url(
-        DOMAIN, TARGET
-    ) != ShortLink.objects.get_or_create_for_url('another-domain', TARGET)
+    assert ShortLink.shorten(DOMAIN, TARGET) != ShortLink.shorten('another-domain', TARGET)
