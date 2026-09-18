@@ -108,6 +108,8 @@ def _within_distance(coordinates, meters):
 
     ("SELECT * FROM client WHERE name = 'x'",
      select([CLIENT]).where(CLIENT.c.name == _bind('x'))),
+    ("SELECT * FROM client WHERE name = ('x')",
+     select([CLIENT]).where(CLIENT.c.name == _bind('x'))),
     ("SELECT * FROM client WHERE name <> 'x'",
      select([CLIENT]).where(CLIENT.c.name != _bind('x'))),
     ('SELECT * FROM client WHERE case_id > 5',
@@ -278,6 +280,8 @@ def _within_distance(coordinates, meters):
          CLIENT.c.name > func.now() - func.make_interval(
              literal_column('days').op('=>')(bindparam('window'))))),
     ('SELECT * FROM client WHERE name > now() - make_interval(days => 30)',
+     select([CLIENT]).where(CLIENT.c.name > func.now() - _interval('days', 30))),
+    ('SELECT * FROM client WHERE name > (now() - make_interval(days => 30))',
      select([CLIENT]).where(CLIENT.c.name > func.now() - _interval('days', 30))),
     ('SELECT * FROM client WHERE name > now() - make_interval(years => :y, mins => :m)',
      select([CLIENT]).where(

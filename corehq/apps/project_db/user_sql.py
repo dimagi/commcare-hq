@@ -454,6 +454,9 @@ PREDICATE_FUNCTIONS = {
 
 def _convert_value(node, columns):
     """Convert a SQL value expression to a ``ColumnElement``"""
+    if isinstance(node, exp.Paren):
+        inner, = _unpack(node, 'this')
+        return _convert_value(inner, columns)
     if isinstance(node, exp.Literal):
         return _bind(_literal_value(node))
     if isinstance(node, exp.Boolean):
