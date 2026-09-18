@@ -31,12 +31,10 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import not_found
-from corehq.apps.project_db.table_ddl import get_domain_tables
 from corehq.apps.project_db.user_sql import (
     UnsupportedSQL,
     UserSQL,
     UserSQLValidationError,
-    translate,
 )
 from corehq.apps.settings.views import BaseProjectDataView
 
@@ -166,7 +164,9 @@ class CaseSearchEndpointForm(forms.Form):
             self.add_error('sql', 'SQL is required.')
             return
         try:
-            tables = get_domain_tables(self.domain)
+            UserSQL(self.domain, sql, max_rows=None).validate()
+        except UnsupportedSQL as error:
+            self.add_error('sql', str(error.msg))
         except (ImproperlyConfigured, SQLAlchemyError) as error:
             # Not the author's fault, so report it against the form rather
             # than the field, and let them keep what they wrote.
@@ -176,13 +176,6 @@ class CaseSearchEndpointForm(forms.Form):
             self.add_error(
                 None, 'The project database is unavailable. Please try again.'
             )
-            return
-        try:
-            # Called for its exceptions: the query is rebuilt when the
-            # endpoint runs, since the domain's tables change over time.
-            translate(sql, tables)
-        except UnsupportedSQL as error:
-            self.add_error('sql', str(error.msg))
 
 
 @method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')

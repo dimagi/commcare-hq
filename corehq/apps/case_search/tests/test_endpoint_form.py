@@ -134,7 +134,7 @@ def test_project_db_unavailable_is_not_the_authors_fault(error):
     # The engine falls back to the default database under DEBUG or
     # UNIT_TESTING, so the failure has to be injected to be reachable.
     with patch(
-        'corehq.apps.case_search.endpoint_views.get_domain_tables',
+        'corehq.apps.project_db.user_sql.get_domain_tables',
         side_effect=error,
     ):
         form = bound_form(target_type=PROJECT_DB, sql='SELECT case_id FROM x')
