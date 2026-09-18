@@ -18,6 +18,7 @@ from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
 from ..endpoint_views import (
+    SQL_REQUIRED,
     CaseSearchEndpointDeactivateView,
     CaseSearchEndpointEditView,
     CaseSearchEndpointNewView,
@@ -525,6 +526,15 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
                 assert 'alert-danger' in content
                 assert expected in content
                 assert '<table' not in content
+
+    def test_empty_sql_reports_what_a_save_would_report(self):
+        # The translator sees no statement as the wrong number of them, so
+        # without a guard the tester answers differently than saving does.
+        with self._project_db_table():
+            response = self._post_sql('   ')
+        content = response.content.decode()
+        assert SQL_REQUIRED in self._region(content, 'sql-errors')
+        assert 'single statement' not in content
 
     def test_sql_reports_an_unavailable_project_db(self):
         # The engine falls back to the default database under DEBUG or
