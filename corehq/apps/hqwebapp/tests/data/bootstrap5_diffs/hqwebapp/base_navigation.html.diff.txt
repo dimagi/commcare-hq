@@ -9,7 +9,7 @@
    {% if show_trial_banner %}
      {% include "hqwebapp/partials/trial_banner.html" %}
    {% endif %}
-@@ -17,39 +17,64 @@
+@@ -17,47 +17,11 @@
  {% endblock pre_navigation_content %}
  
  {% block navigation %}
@@ -20,24 +20,60 @@
 +    class="navbar navbar-expand-lg bg-light border-bottom-1 navbar-hq-main-menu"
    >
      <div class="container-fluid">
-+      <div class="navbar-header hq-header">
-+        <a
-+          href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% elif request.user.is_authenticated or not is_saas_environment %}{% url "homepage" %}{% else %}{% prelogin_url "home" %}{% endif %}"
-+          class="navbar-brand"
-+        >
-+          {% if CUSTOM_LOGO_URL %}
-+            <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
-+          {% else %}
-+            <!-- _navbar.scss supplies the default logo -->
-+            <div></div>
-+          {% endif %}
-+        </a>
-+      </div>
-+
-       {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
+-      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
 -        <ul
 -          class="nav navbar-nav collapse-fullmenu-toggle"
 -          id="hq-fullmenu-responsive"
+-          role="menu"
+-        >
+-          <li>
+-            <a href="#hq-full-menu" data-toggle="collapse">
+-              <i class="fa fa-bars"></i>
+-              {% trans "Menu" %}
+-            </a>
+-          </li>
+-        </ul>
+-      {% endif %}
+-
+-      {% if not request.user.is_authenticated %}
+-        <nav class="navbar-menus navbar-signin" role="navigation">
+-          <div class="nav-settings-bar pull-right">
+-            {% include "hqwebapp/partials/bootstrap3/language_dropdown.html" %}
+-            <a href="{% url "login" %}" class="btn btn-primary navbar-btn"
+-              >{% trans 'Sign In' %}</a
+-            >
+-            {% if ANALYTICS_IDS.HUBSPOT_API_ID %}
+-              <a
+-                href="#cta-form-get-demo"
+-                data-toggle="modal"
+-                id="cta-form-get-demo-button-header"
+-                class="btn btn-purple navbar-btn"
+-              >
+-                {% trans 'Schedule a Demo' %}
+-              </a>
+-            {% endif %}
+-          </div>
+-        </nav>
+-      {% endif %}
+-
+       <div class="navbar-header hq-header">
+         <a
+           href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}"
+@@ -66,50 +30,69 @@
+           {% if CUSTOM_LOGO_URL %}
+             <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
+           {% else %}
+-            <!-- navbar.less supplies the default logo -->
++            <!-- _navbar.scss supplies the default logo -->
+             <div></div>
+           {% endif %}
+         </a>
+       </div>
+ 
+       {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
+-        <ul
+-          class="nav navbar-nav collapse-mainmenu-toggle"
+-          id="hq-mainmenu-responsive"
 -          role="menu"
 +        <button
 +          class="navbar-toggler"
@@ -49,7 +85,7 @@
 +          aria-label="toggle menu"
          >
 -          <li>
--            <a href="#hq-full-menu" data-toggle="collapse">
+-            <a href="#hq-main-tabs" data-toggle="collapse">
 -              <i class="fa fa-bars"></i>
 -              {% trans "Menu" %}
 -            </a>
@@ -59,73 +95,7 @@
 +          {% trans "Menu" %}
 +        </button>
 +      {% endif %}
-+
-+      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
-+        <div class="collapse navbar-collapse ms-2" id="hq-full-menu">
-+          <div class="nav-settings-bar pe-2">
-+            {% include 'hqwebapp/includes/bootstrap5/global_navigation_bar.html' %}
-+          </div>
-+          {% block tabs %}
-+            {% format_main_menu %}
-+          {% endblock %}
-+        </div>
-       {% endif %}
  
-       {% if not request.user.is_authenticated %}
--        <nav class="navbar-menus navbar-signin" role="navigation">
--          <div class="nav-settings-bar pull-right">
--            {% include "hqwebapp/partials/bootstrap3/language_dropdown.html" %}
--            <a href="{% url "login" %}" class="btn btn-primary navbar-btn"
-+        <nav class="navbar-signin ms-2" role="navigation">
-+          <div class="nav-settings-bar">
-+            {% include "hqwebapp/partials/bootstrap5/language_dropdown.html" %}
-+            <a href="{% url "login" %}" class="btn btn-primary me-2"
-               >{% trans 'Sign In' %}</a
-             >
-             {% if ANALYTICS_IDS.HUBSPOT_API_ID %}
-               <a
-                 href="#cta-form-get-demo"
--                data-toggle="modal"
-+                data-bs-toggle="modal"
-                 id="cta-form-get-demo-button-header"
--                class="btn btn-purple navbar-btn"
-+                class="btn btn-purple me-2"
-               >
-                 {% trans 'Schedule a Demo' %}
-               </a>
-@@ -57,59 +82,17 @@
-           </div>
-         </nav>
-       {% endif %}
--
--      <div class="navbar-header hq-header">
--        <a
--          href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}"
--          class="navbar-brand"
--        >
--          {% if CUSTOM_LOGO_URL %}
--            <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
--          {% else %}
--            <!-- navbar.less supplies the default logo -->
--            <div></div>
--          {% endif %}
--        </a>
--      </div>
--
--      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
--        <ul
--          class="nav navbar-nav collapse-mainmenu-toggle"
--          id="hq-mainmenu-responsive"
--          role="menu"
--        >
--          <li>
--            <a href="#hq-main-tabs" data-toggle="collapse">
--              <i class="fa fa-bars"></i>
--              {% trans "Menu" %}
--            </a>
--          </li>
--        </ul>
--
 -        <nav
 -          class="navbar-menus fullmenu collapse"
 -          id="hq-full-menu"
@@ -133,12 +103,37 @@
 -        >
 -          <div class="nav-settings-bar pull-right">
 -            {% include 'hqwebapp/includes/bootstrap3/global_navigation_bar.html' %}
--          </div>
--          {% block tabs %}
--            {% format_main_menu %}
--          {% endblock %}
--        </nav>
--      {% endif %}
++      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
++        <div class="collapse navbar-collapse ms-2" id="hq-full-menu">
++          <div class="nav-settings-bar pe-2">
++            {% include 'hqwebapp/includes/bootstrap5/global_navigation_bar.html' %}
+           </div>
+           {% block tabs %}
+             {% format_main_menu %}
+           {% endblock %}
++        </div>
++      {% endif %}
++
++      {% if not request.user.is_authenticated %}
++        <nav class="navbar-signin ms-2" role="navigation">
++          <div class="nav-settings-bar">
++            {% include "hqwebapp/partials/bootstrap5/language_dropdown.html" %}
++            <a href="{% url "login" %}" class="btn btn-primary me-2"
++              >{% trans 'Sign In' %}</a
++            >
++            {% if ANALYTICS_IDS.HUBSPOT_API_ID %}
++              <a
++                href="#cta-form-get-demo"
++                data-bs-toggle="modal"
++                id="cta-form-get-demo-button-header"
++                class="btn btn-purple me-2"
++              >
++                {% trans 'Schedule a Demo' %}
++              </a>
++            {% endif %}
++          </div>
+         </nav>
+       {% endif %}
      </div>
 -  </div>
 +  </nav>
