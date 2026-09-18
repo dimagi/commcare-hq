@@ -21,6 +21,11 @@ log = logging.getLogger(__name__)
 SUCCEEDED = 'succeeded'
 SKIPPED = 'skipped'
 
+# the API passes these keys back, so changing these values is
+# effectively a breaking change for callers
+NOT_FOUND = 'not_found'
+UNEXPECTED_ERROR = 'unexpected_error'
+
 
 class BulkFormActionError(Exception):
     """A job cannot be run because its row is invalid"""
@@ -31,7 +36,7 @@ class FormActionResult:
     """Outcome of a bulk form action for a single requested form id."""
     form_id: str
     status: str  # SUCCEEDED | SKIPPED
-    reason: str | None  = None  # not_found | unexpected_error
+    reason: str | None = None  # NOT_FOUND | UNEXPECTED_ERROR
 
 
 def run_bulk_form_action(job):
@@ -127,11 +132,11 @@ def _apply_form_action(domain, form_ids, action_fn):
                 'domain': domain,
                 'form_id': xform.form_id,
             })
-            yield FormActionResult(xform.form_id, SKIPPED, 'unexpected_error')
+            yield FormActionResult(xform.form_id, SKIPPED, UNEXPECTED_ERROR)
         else:
             yield FormActionResult(xform.form_id, SUCCEEDED)
     for form_id in unresolved_ids:
-        yield FormActionResult(form_id, SKIPPED, 'not_found')
+        yield FormActionResult(form_id, SKIPPED, NOT_FOUND)
 
 
 def _save_interval(requested_count):

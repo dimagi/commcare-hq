@@ -6,8 +6,10 @@ from django.contrib.auth.models import User
 import pytest
 
 from corehq.apps.data_interfaces.bulk_form_actions import (
+    NOT_FOUND,
     SKIPPED,
     SUCCEEDED,
+    UNEXPECTED_ERROR,
     BulkFormActionError,
     FormActionResult,
     _apply_form_action,
@@ -88,7 +90,7 @@ class TestRunBulkFormAction(TestCase):
         run_bulk_form_action(job)
         job.refresh_from_db()
         assert job.succeeded_count == 0
-        assert job.get_skipped() == {'not_found': ['does-not-exist']}
+        assert job.get_skipped() == {NOT_FOUND: ['does-not-exist']}
 
     def test_unarchive_already_unarchived_is_noop(self):
         # unarchive is idempotent: a normal form is a no-op success, not a skip
@@ -231,14 +233,14 @@ class TestApplyFormAction(SimpleTestCase):
 
     def test_missing_is_not_found(self):
         results = self._patched_apply_form_action(['missing'], [], lambda f: None)
-        assert results == [FormActionResult('missing', SKIPPED, 'not_found')]
+        assert results == [FormActionResult('missing', SKIPPED, NOT_FOUND)]
 
     def test_wrong_domain_is_not_found(self):
         form = Mock(form_id='f1', domain='other-domain')
         called = []
         results = self._patched_apply_form_action(['f1'], [form], called.append)
         assert called == []  # action not applied to out-of-domain forms
-        assert results == [FormActionResult('f1', SKIPPED, 'not_found')]
+        assert results == [FormActionResult('f1', SKIPPED, NOT_FOUND)]
 
     def test_exception_is_unexpected_error(self):
         form = Mock(form_id='f1', domain=DOMAIN)
@@ -250,7 +252,7 @@ class TestApplyFormAction(SimpleTestCase):
             'corehq.apps.data_interfaces.bulk_form_actions.notify_exception'
         ) as notify:
             results = self._patched_apply_form_action(['f1'], [form], unexpected_error)
-        assert results == [FormActionResult('f1', SKIPPED, 'unexpected_error')]
+        assert results == [FormActionResult('f1', SKIPPED, UNEXPECTED_ERROR)]
         notify.assert_called_once()
 
     def test_mixed_results(self):
@@ -258,5 +260,5 @@ class TestApplyFormAction(SimpleTestCase):
         results = self._patched_apply_form_action(['f1', 'missing'], [found], lambda f: None)
         assert results == [
             FormActionResult('f1', SUCCEEDED),
-            FormActionResult('missing', SKIPPED, 'not_found'),
+            FormActionResult('missing', SKIPPED, NOT_FOUND),
         ]
