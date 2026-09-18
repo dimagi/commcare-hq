@@ -300,7 +300,7 @@ class SessionDetailsAccessChecksTest(TestCase):
 
     def _login(self, domain_name, **domain_attrs):
         domain = Domain.get_or_create_with_name(domain_name, is_active=True)
-        self.addCleanup(lambda: Domain.get_by_name(domain_name).delete())
+        self.addCleanup(domain.delete)
         WebUser.create(domain_name, f'u-{domain_name}', 'shhh', None, None)
         self.addCleanup(
             lambda: WebUser.get_by_username(f'u-{domain_name}').delete(domain_name, deleted_by=None)
@@ -362,7 +362,7 @@ class SessionDetailsAccessChecksTest(TestCase):
 
     def test_deactivated_mobile_worker_is_refused(self):
         domain = Domain.get_or_create_with_name('checks-mobile', is_active=True)
-        self.addCleanup(lambda: Domain.get_by_name('checks-mobile').delete())
+        self.addCleanup(domain.delete)
         CommCareUser.create('checks-mobile', 'mw', 'shhh', None, None)
         self.addCleanup(
             lambda: CommCareUser.get_by_username('mw').delete('checks-mobile', deleted_by=None)
@@ -385,7 +385,7 @@ class SessionDetailsAccessChecksTest(TestCase):
         restricted = Domain.get_or_create_with_name('checks-restricted', is_active=True)
         restricted.restrict_superusers = True
         restricted.save()
-        self.addCleanup(lambda: Domain.get_by_name('checks-restricted').delete())
+        self.addCleanup(restricted.delete)
 
         assert self._post(session_key, 'checks-restricted').status_code == 404
 
@@ -397,8 +397,8 @@ class SessionDetailsAccessChecksTest(TestCase):
 
     def test_domains_omits_a_space_they_are_deactivated_in(self):
         session_key = self._login('checks-listed')
-        Domain.get_or_create_with_name('checks-unlisted', is_active=True)
-        self.addCleanup(lambda: Domain.get_by_name('checks-unlisted').delete())
+        domain = Domain.get_or_create_with_name('checks-unlisted', is_active=True)
+        self.addCleanup(domain.delete)
         web_user = WebUser.get_by_username('u-checks-listed')
         web_user.add_domain_membership('checks-unlisted')
         web_user.set_is_active('checks-unlisted', False)
