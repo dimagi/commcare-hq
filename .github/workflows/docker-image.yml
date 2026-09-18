@@ -7,7 +7,8 @@ on:
 
 jobs:
   build:
-    if: ${{ github.secret_source == 'Actions' }}
+    # Only run on the canonical repo, not on forks or mirrors
+    if: ${{ github.repository == 'dimagi/commcare-hq' && github.secret_source == 'Actions' }}
     runs-on: ubuntu-latest
     steps:
       # Audit-only: records egress from the runner, never fails the build.
