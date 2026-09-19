@@ -305,7 +305,7 @@ if [ "$CMD" == "test" ]; then
     # Print service versions
     docker compose run --no-deps --rm minio minio --version
     docker compose run --no-deps --rm postgres postgres --version
-    docker compose run --no-deps --rm redis redis-server --version
+    docker compose run --no-deps --rm valkey valkey-server --version
     # Cannot get Couch version easily before it is running.
     #
     # The major version of elasticsearch is hard-coded in the container name
