@@ -211,7 +211,6 @@ p.sso-message-block {
     $color: $gray-600,
     $hover-background: shade-color($white, 15%),
     $hover-border: shade-color($white, 15%),
-    $hover-color: $gray-600,
     $active-background: $prelogin-action-blue-tint,
     $active-border: $prelogin-action-blue,
     $active-color: $prelogin-deep-blue
@@ -223,7 +222,13 @@ p.sso-message-block {
     @include button-variant(
       $prelogin-action-blue-tint,
       $prelogin-action-blue,
-      $color: $prelogin-deep-blue
+      $color: $prelogin-deep-blue,
+      $hover-background: $prelogin-action-blue-tint,
+      $hover-border: $prelogin-action-blue,
+      $hover-color: $prelogin-deep-blue,
+      $active-background: $prelogin-action-blue-tint,
+      $active-border: $prelogin-action-blue,
+      $active-color: $prelogin-deep-blue
     );
     font-weight: $font-weight-semibold !important;
   }
