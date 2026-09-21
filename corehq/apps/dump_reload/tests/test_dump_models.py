@@ -146,6 +146,7 @@ UNKNOWN_MODELS = {
     "reminders.EmailUsage",
     "scheduling.MigratedReminder",
     "scheduling.SMSCallbackContent",
+    "short_links.ShortLink",
     "sms.DailyOutboundSMSLimitReached",
     "sms.Email",
     "sms.ExpectedCallback",
