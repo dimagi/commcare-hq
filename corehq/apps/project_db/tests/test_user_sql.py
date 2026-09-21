@@ -41,14 +41,7 @@ from corehq.apps.project_db.user_sql import (
     translate,
 )
 
-from .util import project_db_table
-
-
-@fixture
-def utc_project():
-    """The test domains are not real projects, so they have no timezone"""
-    with patch.object(UserSQL, 'timezone', 'UTC'):
-        yield
+from .util import project_db_table, utc_project
 
 
 autouse(utc_project, __file__)
