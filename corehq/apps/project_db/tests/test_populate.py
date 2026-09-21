@@ -131,15 +131,19 @@ def test_static_fields_mapped_to_columns():
         'case_id': 'abc123',
         'owner_id': 'owner1',
         'case_name': 'My Case',
-        'opened_on': datetime.datetime(2025, 1, 1),
-        'closed_on': datetime.datetime(2025, 3, 1),
-        'modified_on': datetime.datetime(2025, 6, 1),
+        'opened_on': _utc_datetime(2025, 1, 1),
+        'closed_on': _utc_datetime(2025, 3, 1),
+        'modified_on': _utc_datetime(2025, 6, 1),
         'closed': True,
         'external_id': 'ext-1',
-        'server_modified_on': datetime.datetime(2025, 6, 2),
+        'server_modified_on': _utc_datetime(2025, 6, 2),
         'parent_id': 'p1',
         'host_id': 'h1',
     }
+
+
+def _utc_datetime(*args):
+    return datetime.datetime(*args, tzinfo=datetime.timezone.utc)
 
 
 @pytest.mark.parametrize('case_json, columns, expected_props', [
