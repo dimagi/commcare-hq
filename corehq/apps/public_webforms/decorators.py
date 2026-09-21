@@ -19,19 +19,22 @@ def allow_public_form_session(view_func):
     """
 
     @wraps(view_func)
-    def _inner(request, *args, **kwargs):
-        session = _get_public_form_session(request)
+    def _inner(request, domain, *args, **kwargs):
+        session = get_public_form_session(request, domain)
         if session is not None:
             request.couch_user = PublicFormUser(session)
-        return view_func(request, *args, **kwargs)
+        return view_func(request, domain, *args, **kwargs)
 
     return _inner
 
 
-def _get_public_form_session(request):
+def get_public_form_session(request, domain):
     if request.headers.get(PUBLIC_FORM_SESSION_HEADER) != 'true':
         return None
     raw_key = request.COOKIES.get(PUBLIC_FORM_SESSION_COOKIE_NAME)
     if not raw_key:
         return None
-    return PublicFormSession.get_active_session_by_key(raw_key)
+    session = PublicFormSession.get_active_session_by_key(raw_key)
+    if session is None or session.public_webform.domain != domain:
+        return None
+    return session
