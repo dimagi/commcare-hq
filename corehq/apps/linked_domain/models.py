@@ -190,6 +190,10 @@ class UCRExpressionLinkDetail(jsonobject.JsonObject):
     ucr_expression_id = jsonobject.StringProperty()
 
 
+class CaseSearchEndpointLinkDetail(jsonobject.JsonObject):
+    endpoint_id = jsonobject.StringProperty()
+
+
 def wrap_detail(model, detail_json):
     return {
         'app': AppLinkDetail,
@@ -197,5 +201,6 @@ def wrap_detail(model, detail_json):
         'report': ReportLinkDetail,
         'keyword': KeywordLinkDetail,
         'ucr_expression': UCRExpressionLinkDetail,
+        'case_search_endpoint': CaseSearchEndpointLinkDetail,
         'auto_update_rule': UpdateRuleLinkDetail,
     }[model].wrap(detail_json)
