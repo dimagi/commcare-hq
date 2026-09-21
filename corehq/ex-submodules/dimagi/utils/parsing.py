@@ -48,15 +48,19 @@ ISO_DATE_FORMAT = '%Y-%m-%d'
 def json_format_datetime(dt):
     """
     includes microseconds (always)
-    >>> json_format_datetime(datetime.datetime(2015, 4, 8, 12, 0, 1))
+    >>> json_format_datetime(datetime(2015, 4, 8, 12, 0, 1))
     '2015-04-08T12:00:01.000000Z'
+
+    Offset-aware datetimes are converted to UTC
+    >>> kolkata = dateutil.tz.gettz('Asia/Kolkata')
+    >>> json_format_datetime(datetime(2015, 4, 8, 12, 0, 1, tzinfo=kolkata))
+    '2015-04-08T06:30:01.000000Z'
     """
     from dimagi.ext.jsonobject import _assert
     _assert(isinstance(dt, datetime),
             'json_format_datetime expects a datetime: {!r}'.format(dt))
-    if isinstance(dt, datetime):
-        _assert(dt.tzinfo is None,
-                'json_format_datetime expects offset-naive: {!r}'.format(dt))
+    if isinstance(dt, datetime) and dt.tzinfo is not None:
+        dt = dt.astimezone(dateutil.tz.tzutc()).replace(tzinfo=None)
     return dt.strftime(ISO_DATETIME_FORMAT)
 
 
