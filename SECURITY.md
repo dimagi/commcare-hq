@@ -35,7 +35,7 @@ Where appropriate for confirmed vulnerabilities, we publish a
 
 ## Notifications for new security advisories
 
-To receive notifications of confirmed vulnerabilities, log into or create an account on the [Dimagi Forum](https://forum.dimagi.com/) and watch the [Security Announcements category](https://forum.dimagi.com/c/developers/security-announcements/24). You must have an account in order to see this category.
+To receive notifications for new security advisories, log into or create an account on the [Dimagi Forum](https://forum.dimagi.com/) and watch the [Security Announcements category](https://forum.dimagi.com/c/developers/security-announcements/24). You must have an account in order to see this category.
 
 ## Supported versions
 
