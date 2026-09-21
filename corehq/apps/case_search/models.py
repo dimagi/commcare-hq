@@ -534,6 +534,7 @@ class CaseSearchEndpoint(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    upstream_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
         unique_together = [('domain', 'name')]

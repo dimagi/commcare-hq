@@ -277,6 +277,7 @@ case_search
  0019_rename_target_name_casesearchendpoint_case_type
  0020_remove_casesearchendpoint_case_type_and_more
  0021_casesearchendpointversion_dangerous_sql
+ 0022_casesearchendpoint_upstream_id
 celery
  0001_taskrecord
  0002_taskrecord_kombu_serialization
