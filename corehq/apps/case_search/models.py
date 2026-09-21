@@ -572,3 +572,27 @@ class CaseSearchEndpointVersion(models.Model):
 
     def __str__(self):
         return f'{self.endpoint}@v{self.version_number}'
+
+
+def add_endpoint_version(endpoint, *, action, created_by, case_type=None, query=None,
+                         parameters=None, dangerous_sql='', extra_update_fields=()):
+    """Create the next version for ``endpoint`` and make it the current version.
+
+    Must be called within a transaction. ``extra_update_fields`` are saved on the
+    endpoint alongside ``current_version`` (e.g. fields the caller also changed).
+    """
+    current = endpoint.current_version
+    next_num = (current.version_number + 1) if current else 1
+    version = CaseSearchEndpointVersion.objects.create(
+        endpoint=endpoint,
+        version_number=next_num,
+        case_type=case_type,
+        query=query,
+        parameters=parameters,
+        dangerous_sql=dangerous_sql,
+        created_by=created_by,
+        action=action,
+    )
+    endpoint.current_version = version
+    endpoint.save(update_fields=['current_version', *extra_update_fields])
+    return version

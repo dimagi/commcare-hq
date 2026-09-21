@@ -24,6 +24,7 @@ from corehq.apps.case_search.endpoint_query_spec import (
 from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     CaseSearchEndpointVersion,
+    add_endpoint_version,
     criteria_dict_to_criteria_list,
 )
 from corehq.apps.case_search.utils import QueryHelper, get_primary_case_search_endpoint_results
@@ -53,30 +54,6 @@ def _get_endpoint(domain, endpoint_id):
         .filter(pk=endpoint_id, domain=domain, is_active=True)
         .first()
     )
-
-
-def _add_endpoint_version(endpoint, *, action, created_by, case_type=None, query=None,
-                          parameters=None, dangerous_sql='', extra_update_fields=()):
-    """Create the next version for ``endpoint`` and make it the current version.
-
-    Must be called within a transaction. ``extra_update_fields`` are saved on the
-    endpoint alongside ``current_version`` (e.g. fields the caller also changed).
-    """
-    current = endpoint.current_version
-    next_num = (current.version_number + 1) if current else 1
-    version = CaseSearchEndpointVersion.objects.create(
-        endpoint=endpoint,
-        version_number=next_num,
-        case_type=case_type,
-        query=query,
-        parameters=parameters,
-        dangerous_sql=dangerous_sql,
-        created_by=created_by,
-        action=action,
-    )
-    endpoint.current_version = version
-    endpoint.save(update_fields=['current_version', *extra_update_fields])
-    return version
 
 
 class CaseSearchEndpointForm(forms.Form):
@@ -281,7 +258,7 @@ class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
                 name=cd['name'],
                 target_type=self.target_type,
             )
-            _add_endpoint_version(
+            add_endpoint_version(
                 endpoint,
                 action=CaseSearchEndpointVersion.Action.CREATE,
                 created_by=request.couch_user.username,
@@ -349,7 +326,7 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
         endpoint = self._endpoint
         with transaction.atomic():
             endpoint.name = cd['name']
-            _add_endpoint_version(
+            add_endpoint_version(
                 endpoint,
                 action=CaseSearchEndpointVersion.Action.UPDATE,
                 created_by=request.couch_user.username,
@@ -381,7 +358,7 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
             return not_found(request)
         with transaction.atomic():
             endpoint.is_active = False
-            _add_endpoint_version(
+            add_endpoint_version(
                 endpoint,
                 action=CaseSearchEndpointVersion.Action.DEACTIVATE,
                 created_by=request.couch_user.username,
