@@ -86,6 +86,15 @@ def _add_endpoint_version(endpoint, *, action, created_by, case_type=None, query
     return version
 
 
+class TargetTypeMixin:
+    @cached_property
+    def allowed_target_types(self):
+        target_types = [CaseSearchEndpoint.TargetType.ELASTICSEARCH]
+        if toggles.PROJECT_DB.enabled(self.domain):
+            target_types.append(CaseSearchEndpoint.TargetType.PROJECT_DB)
+        return target_types
+
+
 class CaseSearchEndpointForm(forms.Form):
     name = forms.CharField()
     case_type = forms.CharField(required=False)
@@ -181,7 +190,7 @@ class CaseSearchEndpointForm(forms.Form):
 
 
 @method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointsView(BaseProjectDataView):
+class CaseSearchEndpointsView(TargetTypeMixin, BaseProjectDataView):
     urlname = 'case_search_endpoints'
     page_title = gettext_lazy('Case Search Endpoints')
     template_name = 'case_search/endpoint_list.html'
@@ -196,13 +205,11 @@ class CaseSearchEndpointsView(BaseProjectDataView):
             'endpoints': CaseSearchEndpoint.objects.filter(
                 domain=self.domain,
                 is_active=True,
+                target_type__in=self.allowed_target_types,
             )
             .select_related('current_version')
             .order_by('name'),
-            'target_types': [
-                CaseSearchEndpoint.TargetType.ELASTICSEARCH,
-                CaseSearchEndpoint.TargetType.PROJECT_DB,
-            ],
+            'target_types': self.allowed_target_types,
         }
 
 
@@ -249,7 +256,7 @@ class CaseSearchEndpointEditBaseView(BaseProjectDataView):
 
 
 @method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
+class CaseSearchEndpointNewView(TargetTypeMixin, CaseSearchEndpointEditBaseView):
     urlname = 'case_search_endpoint_new'
     page_title = gettext_lazy('New Case Search Endpoint')
     mode = 'new'
@@ -257,7 +264,7 @@ class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
     @cached_property
     def target_type(self):
         value = self.request.GET.get('target_type')
-        if value not in CaseSearchEndpoint.TargetType.values:
+        if value not in self.allowed_target_types:
             raise Http404(f"Unknown target_type: {value!r}")
         return value
 
@@ -400,7 +407,7 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
 
 
 @method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointTestView(BaseDomainView):
+class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
     """Runs an unsaved endpoint against the project and returns an HTMX
     partial with the results (or validation errors).
 
@@ -423,6 +430,9 @@ class CaseSearchEndpointTestView(BaseDomainView):
         return reverse(self.urlname, args=[self.domain])
 
     def post(self, request, *args, **kwargs):
+        if request.POST.get('target_type') not in self.allowed_target_types:
+            return self._render_results(request, errors=['Invalid target type'])
+
         try:
             spec = json.loads(request.POST.get('parameters', '[]'))
         except (json.JSONDecodeError, ValueError):

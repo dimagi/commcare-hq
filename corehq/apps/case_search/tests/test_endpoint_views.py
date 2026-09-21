@@ -156,6 +156,7 @@ class TestCaseSearchEndpointsListView(EndpointViewTestCase):
         assert response.status_code == 200
         assert ep in response.context['endpoints']
 
+    @flag_enabled('PROJECT_DB')
     def test_new_endpoint_button_per_target_type(self):
         response = self.client.get(self._list_url())
         content = response.content.decode()
@@ -181,6 +182,7 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         form = response.context['form']
         assert json.loads(form['query'].value()) == EMPTY_QUERY
 
+    @flag_enabled('PROJECT_DB')
     def test_target_type_comes_from_querystring(self):
         cases = [
             ('project_db', CaseSearchEndpoint.TargetType.PROJECT_DB),
@@ -198,6 +200,7 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
                 response = self.client.get(self._new_url(target_type=param))
                 assert response.status_code == 404
 
+    @flag_enabled('PROJECT_DB')
     def test_create_project_db_endpoint(self):
         with self._project_db_table():
             response = self.client.post(
@@ -426,11 +429,13 @@ class TestCaseSearchEndpointDeactivateView(EndpointViewTestCase):
         assert response.status_code == 404
 
 
+@flag_enabled('PROJECT_DB')
 class TestCaseSearchEndpointTestView(EndpointViewTestCase):
     def test_valid_query_returns_no_errors(self):
         with patch('corehq.apps.case_search.endpoint_views.get_primary_case_search_endpoint_results',
                    return_value=[]):
             response = self.client.post(self._test_url(), {
+                'target_type': 'es',
                 'case_type': 'my_case_type',
                 'query': json.dumps(EMPTY_QUERY),
             })
@@ -439,10 +444,10 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
 
     def test_invalid_request_returns_error(self):
         cases = [
-            ({'case_type': 'my_case_type', 'query': 'not json'}, 'Invalid query JSON'),
-            ({'case_type': 'my_case_type', 'query': '{"type": "bogus"}'}, 'alert-danger'),
-            ({'case_type': 'nonexistent_type', 'query': EMPTY_QUERY_JSON}, 'alert-danger'),
-            ({'query': EMPTY_QUERY_JSON}, 'alert-danger'),
+            ({'target_type': 'es', 'case_type': 'my_case_type', 'query': 'not json'}, 'Invalid query JSON'),
+            ({'target_type': 'es', 'case_type': 'my_case_type', 'query': '{"type": "bogus"}'}, 'alert-danger'),
+            ({'target_type': 'es', 'case_type': 'nonexistent_type', 'query': EMPTY_QUERY_JSON}, 'alert-danger'),
+            ({'target_type': 'es', 'query': EMPTY_QUERY_JSON}, 'alert-danger'),
         ]
         for data, expected_text in cases:
             with self.subTest(data=data):
@@ -598,6 +603,7 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
 
     def test_a_failed_query_reports_into_the_query_card(self):
         response = self.client.post(self._test_url(), {
+            'target_type': 'es',
             'case_type': 'my_case_type',
             'query': json.dumps({'type': 'bogus'}),
         })
@@ -607,6 +613,7 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
     def test_an_unchosen_case_type_reports_into_the_query_card(self):
         # Reachable from the UI: the select starts on the blank option
         response = self.client.post(self._test_url(), {
+            'target_type': 'es',
             'case_type': '',
             'query': json.dumps(EMPTY_QUERY),
         })
