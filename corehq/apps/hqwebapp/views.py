@@ -37,7 +37,6 @@ from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
-from django.views.decorators.cache import never_cache
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
@@ -207,7 +206,6 @@ def not_found(request, template_name='404.html', exception=None):
     ))
 
 
-@never_cache
 @login_required
 @require_GET
 def chat_quota(request):
