@@ -28,6 +28,7 @@ def create_public_webform_build(domain, app_id, form_unique_id):
     new_build = _copy_for_build(released_build)
     new_build._force_session_endpoints = True
     new_build.get_form(form_unique_id).session_endpoint_id = endpoint_id
+    _restrict_multimedia_to_form(new_build, form_unique_id)
     new_build.convert_app_to_build(
         _public_webform_copy_of(released_build.copy_of),
         user_id=None,
@@ -38,6 +39,17 @@ def create_public_webform_build(domain, app_id, form_unique_id):
     new_build.create_build_files()
     new_build.save()
     return new_build._id, endpoint_id
+
+
+def _restrict_multimedia_to_form(build, form_unique_id):
+    """Drop every media path the target form does not reference.
+    """
+    form_paths = build.get_form(form_unique_id).all_media_paths()
+    build.multimedia_map = {
+        path: media
+        for path, media in (build.multimedia_map or {}).items()
+        if path in form_paths
+    }
 
 
 def delete_public_webform_build(domain, app_build_id):
