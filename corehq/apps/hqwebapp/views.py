@@ -215,9 +215,9 @@ def chat_quota(request):
     if limit == UNLIMITED or limit == 0:
         return JsonResponse({'limit': limit, 'used': None})
 
-    refresh = request.GET.get('refresh', 'false')
+    refresh = request.GET.get('refresh', 'false') == 'true'
     try:
-        used = get_chat_usage(couch_user.user_id, refresh=refresh == 'true')
+        used = get_chat_usage(couch_user.user_id, refresh=refresh)
     except ChatUsageUnavailable:
         return JsonResponse({'error': 'chat_usage_unavailable'}, status=503)
     return JsonResponse({'limit': limit, 'used': used})
