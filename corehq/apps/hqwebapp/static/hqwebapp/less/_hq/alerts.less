@@ -20,6 +20,19 @@
   margin-bottom: 0;
 }
 
+.alert-lockout {
+  // the "Log out" link submits a POST form, so it is a button styled as a link
+  form {
+    display: none;
+  }
+
+  .btn-link {
+    padding: 0;
+    border: 0;
+    vertical-align: baseline;
+  }
+}
+
 .alert-setting {
   background-color: @color-purple-dark;
   color: #ffffff;
