@@ -73,6 +73,9 @@ FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm = function () {
 };
 
 FormplayerFrontend.showRestoreAs = function (user) {
+    if (user.displayOptions.publicFormMode) {
+        return;
+    }
     import("cloudcare/js/formplayer/users/views").then(function (UsersViews) {
         FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
             UsersViews.default.RestoreAsBanner({model: user, smallScreen: false}));
