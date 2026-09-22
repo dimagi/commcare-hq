@@ -14,6 +14,7 @@ from corehq.apps.public_webforms.decorators import (
     PUBLIC_FORM_SESSION_COOKIE_NAME,
 )
 from corehq.apps.public_webforms.public.views import (
+    PublicFormSubmittedView,
     PublicFormView,
     PublicWebformLinkSentView,
     PublicWebformRequestView,
@@ -125,6 +126,9 @@ def test_public_form_page_context():
     assert response.context['endpoint_id'] == session.public_webform.endpoint_id
     assert response.context['toggles_dict'] is not None
     assert response.context['previews_dict'] is not None
+    assert response.context['submitted_url'] == reverse(
+        PublicFormSubmittedView.urlname,
+        kwargs={'public_id': session.public_webform.public_id.hex})
 
 
 @use('db', public_webforms_available, stub_app_doc)
