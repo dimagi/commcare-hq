@@ -41,14 +41,7 @@ from corehq.apps.project_db.user_sql import (
     translate,
 )
 
-from .util import project_db_table
-
-
-@fixture
-def utc_project():
-    """The test domains are not real projects, so they have no timezone"""
-    with patch.object(UserSQL, 'timezone', 'UTC'):
-        yield
+from .util import project_db_table, utc_project
 
 
 autouse(utc_project, __file__)
@@ -107,6 +100,8 @@ def _within_distance(coordinates, meters):
      select([CLIENT.c.case_id.label('My Id')])),
 
     ("SELECT * FROM client WHERE name = 'x'",
+     select([CLIENT]).where(CLIENT.c.name == _bind('x'))),
+    ("SELECT * FROM client WHERE name = ('x')",
      select([CLIENT]).where(CLIENT.c.name == _bind('x'))),
     ("SELECT * FROM client WHERE name <> 'x'",
      select([CLIENT]).where(CLIENT.c.name != _bind('x'))),
@@ -278,6 +273,8 @@ def _within_distance(coordinates, meters):
          CLIENT.c.name > func.now() - func.make_interval(
              literal_column('days').op('=>')(bindparam('window'))))),
     ('SELECT * FROM client WHERE name > now() - make_interval(days => 30)',
+     select([CLIENT]).where(CLIENT.c.name > func.now() - _interval('days', 30))),
+    ('SELECT * FROM client WHERE name > (now() - make_interval(days => 30))',
      select([CLIENT]).where(CLIENT.c.name > func.now() - _interval('days', 30))),
     ('SELECT * FROM client WHERE name > now() - make_interval(years => :y, mins => :m)',
      select([CLIENT]).where(
