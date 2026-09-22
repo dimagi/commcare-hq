@@ -35,9 +35,11 @@ var selectMenu = function (options) {
 
         gtx.logNavigateMenu(menuResponse);
 
-        //set title of tab to application name
+        // set title of tab to application name, or form name for public sessions
         if (menuResponse.breadcrumbs) {
-            document.title = menuResponse.breadcrumbs[0];
+            document.title = UsersModels.getCurrentUser().displayOptions.publicFormMode
+                ? _.last(menuResponse.breadcrumbs)
+                : menuResponse.breadcrumbs[0];
         }
 
         // show any notifications from Formplayer
