@@ -20,11 +20,11 @@ STUB_USERS = 'https://stub.example.com/users'
 class StubClient(PlatformOffboardingClient):
     slug = 'stub'
     name = 'Stub'
-    default_config = {'api_url': 'https://stub.example.com/', 'region': 'us'}
+    default_config = {'region': 'us'}
     required_config = ('token', 'secret')
 
     def find_account(self, email):
-        return self._request('GET', f"{self.config['api_url']}users", params={'email': email})
+        return self._request('GET', STUB_USERS, params={'email': email})
 
 
 STUB_CONFIGURED = {'stub': {'token': 't', 'secret': 's'}}
@@ -49,8 +49,7 @@ def test_registry_matches_clients():
 
 def test_config_merges_deployment_values_over_defaults():
     with override_settings(OFFBOARDING_PLATFORMS={'stub': {'token': 't', 'secret': 's', 'region': 'eu'}}):
-        assert StubClient().config == {
-            'api_url': 'https://stub.example.com/', 'region': 'eu', 'token': 't', 'secret': 's'}
+        assert StubClient().config == {'region': 'eu', 'token': 't', 'secret': 's'}
 
 
 def test_none_values_do_not_mask_defaults():
