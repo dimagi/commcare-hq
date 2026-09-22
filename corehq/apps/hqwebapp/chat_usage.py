@@ -47,15 +47,10 @@ def _get_chat_usage(user_id, current_month, refresh=False):
         if response.status_code != 200:
             raise ChatUsageUnavailable('OCS usage request failed')
         used = response.json()['results']['messages']['human']
+        assert used >= 0
     except (requests.RequestException, ValueError, KeyError, TypeError) as exc:
         raise ChatUsageUnavailable(
             'Invalid or unavailable OCS usage response'
         ) from exc
 
-    return _validate_message_count(used)
-
-
-def _validate_message_count(used):
-    if type(used) is not int or used < 0:
-        raise ChatUsageUnavailable('Invalid OCS message count')
     return used
