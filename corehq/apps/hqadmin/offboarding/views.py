@@ -77,8 +77,9 @@ def validate_target_email(raw_email):
 
 def is_protected_email(email):
     """True for addresses on ``settings.OFFBOARDING_PROTECTED_EMAILS``, which the tool never touches."""
+    email = normalize_email(email)
     protected = {normalize_email(address) for address in settings.OFFBOARDING_PROTECTED_EMAILS}
-    return normalize_email(email) in protected
+    return bool(email) and email in protected
 
 
 def _lookup(client, email):
@@ -145,7 +146,7 @@ class ExternalPlatformOffboardingView(HqHtmxActionMixin, UserAdministration):
     @property
     def page_context(self):
         email, error = validate_target_email(self.request.GET.get('email', ''))
-        protected = bool(email) and error is None and is_protected_email(email)
+        protected = is_protected_email(email)
         show_results = bool(email) and error is None and not protected
         return {
             'email': email,
