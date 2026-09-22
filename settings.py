@@ -1188,6 +1188,7 @@ DATA_RETENTION_WINDOW = 90  # days
 # ID of the chatbot in Open Chat Studio
 AI_CHATBOT_ID = None
 AI_CHATBOT_TOKEN = None
+OCS_API_KEY = None
 
 # Platform-wide defaults for AI app translations, used where no
 # AITranslationConfig row overrides them. Override in localsettings.py.
