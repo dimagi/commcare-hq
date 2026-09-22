@@ -17,12 +17,26 @@
       </td>
     </tr>
   {% elif row.state == "found" %}
-    <tr x-init="accounts['{{ slug }}'] = '{{ row.label|escapejs }}'">
+    {# The modal's Confirm button dispatches `offboard` to each selected row. #}
+    <tr
+      id="platform-row-{{ slug }}"
+      x-init="accounts['{{ slug }}'] = '{{ row.label|escapejs }}'"
+      hx-post="{% url 'offboard_external_platforms' %}"
+      hx-vals='{"email": "{{ email|escapejs }}", "platform": "{{ slug }}"}'
+      hq-hx-action="execute"
+      hx-trigger="offboard"
+      hx-target="this"
+      hx-swap="outerHTML"
+      hx-indicator="#execute-indicator"
+      hx-disabled-elt="find input"
+      {# 15s lookup + 15s offboard can outlast the 20s default in htmx_base.js #}
+      hx-request='{"timeout": 40000}'
+    >
       <td>
         <input
           class="form-check-input"
           type="checkbox"
-          name="platforms"
+          data-platform="{{ slug }}"
           value="{{ slug }}"
           id="platform-{{ slug }}"
           x-model="selected"
@@ -112,12 +126,13 @@
             type="button"
             class="btn btn-sm btn-outline-danger"
             hx-post="{% url 'offboard_external_platforms' %}"
-            hx-vals='{"email": "{{ email|escapejs }}", "platforms": "{{ slug }}"}'
+            hx-vals='{"email": "{{ email|escapejs }}", "platform": "{{ slug }}"}'
             hq-hx-action="execute"
-            hx-target="#platform-rows"
-            hx-swap="innerHTML"
+            hx-target="closest tr"
+            hx-swap="outerHTML"
             hx-indicator="#execute-indicator"
             hx-disabled-elt="this"
+            hx-request='{"timeout": 40000}'
           >
             <i class="fa fa-rotate-right"></i> {% trans "Retry" %}
           </button>

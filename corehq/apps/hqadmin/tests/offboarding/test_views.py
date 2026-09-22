@@ -174,7 +174,7 @@ class TestExternalPlatformOffboardingView(TestCase):
 
     def test_non_superuser_cannot_execute(self):
         self.login(self.regular_user)
-        response = self.client.post(self.url, {'email': EMAIL, 'platforms': ['datadog']},
+        response = self.client.post(self.url, {'email': EMAIL, 'platform': 'datadog'},
                                     headers={'HQ-HX-Action': 'execute'})
         assert response.status_code == 302
         assert not PlatformDeactivationLog.objects.exists()
@@ -220,8 +220,9 @@ class TestExternalPlatformOffboardingView(TestCase):
         assert response.status_code == 200
         assert response.context['row'].state == 'found'
         content = response.content.decode()
-        assert 'name="platforms"' in content
-        assert 'value="datadog"' in content
+        assert 'data-platform="datadog"' in content
+        assert 'id="platform-row-datadog"' in content
+        assert 'hq-hx-action="execute"' in content
         assert 'Jane Doe &lt;jane@dimagi.com&gt;' in content
 
     def test_lookup_action_renders_error_row_with_retry(self):
@@ -232,7 +233,7 @@ class TestExternalPlatformOffboardingView(TestCase):
         content = response.content.decode()
         assert 'Datadog returned HTTP 503: down' in content
         assert 'Retry' in content
-        assert 'name="platforms"' not in content
+        assert 'data-platform=' not in content
 
     def test_lookup_action_rejects_unknown_platform(self):
         self.login(self.superuser)
@@ -246,32 +247,37 @@ class TestExternalPlatformOffboardingView(TestCase):
                                    headers={'HQ-HX-Action': 'lookup'})
         assert response.status_code == 400
 
-    def test_execute_action_acts_only_on_selected_platforms(self):
+    def test_execute_action_acts_only_on_the_posted_platform(self):
         self.login(self.superuser)
         with _patch_find(ACCOUNT), _patch_offboard() as offboard, \
                 patch.object(SentryOffboardingClient, 'find_account') as sentry_find:
-            response = self.client.post(self.url, {'email': EMAIL, 'platforms': ['datadog']},
+            response = self.client.post(self.url, {'email': EMAIL, 'platform': 'datadog'},
                                         headers={'HQ-HX-Action': 'execute'})
         assert response.status_code == 200
         offboard.assert_called_once_with(ACCOUNT)
         sentry_find.assert_not_called()
-        states = [(ctx['row'].client.slug, ctx['row'].state) for ctx in response.context]
-        assert states == [
-            ('datadog', 'done'), ('sentry', 'loading'), ('sumologic', 'loading'), ('hubspot', 'loading')]
+        row = response.context['row']
+        assert (row.client.slug, row.state) == ('datadog', 'done')
         log = PlatformDeactivationLog.objects.get()
         assert (log.performed_by, log.platform, log.succeeded) == ('super@dimagi.com', 'datadog', True)
 
-    def test_execute_action_requires_a_selection(self):
+    def test_execute_action_renders_failed_row_with_retry(self):
         self.login(self.superuser)
-        response = self.client.post(self.url, {'email': EMAIL}, headers={'HQ-HX-Action': 'execute'})
-        assert response.status_code == 400
-        assert not PlatformDeactivationLog.objects.exists()
+        error = OffboardingClientError('Datadog returned HTTP 403: forbidden')
+        with _patch_find(ACCOUNT), _patch_offboard(side_effect=error):
+            response = self.client.post(self.url, {'email': EMAIL, 'platform': 'datadog'},
+                                        headers={'HQ-HX-Action': 'execute'})
+        assert response.context['row'].state == 'failed'
+        content = response.content.decode()
+        assert 'Datadog returned HTTP 403: forbidden' in content
+        assert 'Retry' in content
 
-    def test_execute_action_rejects_unknown_platform(self):
+    def test_execute_action_rejects_a_missing_or_unknown_platform(self):
         self.login(self.superuser)
-        response = self.client.post(self.url, {'email': EMAIL, 'platforms': ['datadog', 'myspace']},
-                                    headers={'HQ-HX-Action': 'execute'})
-        assert response.status_code == 400
+        for params in [{'email': EMAIL}, {'email': EMAIL, 'platform': 'myspace'}]:
+            with self.subTest(params=params):
+                response = self.client.post(self.url, params, headers={'HQ-HX-Action': 'execute'})
+                assert response.status_code == 400
         assert not PlatformDeactivationLog.objects.exists()
 
     @override_settings(OFFBOARDING_PROTECTED_EMAILS=[EMAIL])
@@ -297,7 +303,7 @@ class TestExternalPlatformOffboardingView(TestCase):
     def test_protected_email_execute_is_refused(self):
         self.login(self.superuser)
         with _patch_find(ACCOUNT), _patch_offboard() as offboard:
-            response = self.client.post(self.url, {'email': EMAIL, 'platforms': ['datadog']},
+            response = self.client.post(self.url, {'email': EMAIL, 'platform': 'datadog'},
                                         headers={'HQ-HX-Action': 'execute'})
         assert response.status_code == 403
         offboard.assert_not_called()
@@ -305,5 +311,5 @@ class TestExternalPlatformOffboardingView(TestCase):
 
     def test_execute_without_action_header_is_not_allowed(self):
         self.login(self.superuser)
-        response = self.client.post(self.url, {'email': EMAIL, 'platforms': ['datadog']})
+        response = self.client.post(self.url, {'email': EMAIL, 'platform': 'datadog'})
         assert response.status_code == 405

@@ -3,8 +3,6 @@ from dataclasses import dataclass
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.http import HttpResponse
-from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.text import Truncator
@@ -193,15 +191,8 @@ class ExternalPlatformOffboardingView(HqHtmxActionMixin, UserAdministration):
     @hq_hx_action('post')
     def execute(self, request, *args, **kwargs):
         email = self._get_email(request.POST)
-        selected = {self._get_client(slug) for slug in request.POST.getlist('platforms')}
-        if not selected:
-            raise HtmxResponseException(_("Select at least one platform."), status_code=400)
-        rows = [
-            execute_row(client, email, request.user.username)
-            if client in selected else PlatformRow(client, 'loading')
-            for client in OFFBOARDING_CLIENTS
-        ]
-        return HttpResponse(''.join(
-            render_to_string(ROW_TEMPLATE, {'row': row, 'email': email}, request=request)
-            for row in rows
-        ))
+        client = self._get_client(request.POST.get('platform'))
+        return self.render_htmx_partial_response(request, ROW_TEMPLATE, {
+            'row': execute_row(client, email, request.user.username),
+            'email': email,
+        })

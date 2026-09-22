@@ -63,7 +63,7 @@
         platforms: JSON.parse(document.getElementById('offboarding-platforms').textContent),
       }"
       x-on:htmx:after-swap="
-        available = [...$el.querySelectorAll(`input[name='platforms']`)].map(el => el.value);
+        available = [...$el.querySelectorAll('input[data-platform]')].map(el => el.value);
         selected = selected.filter(slug => available.includes(slug));
       "
     >
@@ -77,52 +77,49 @@
         </div>
       {% endif %}
 
-      <form id="offboarding-form">
-        <input type="hidden" name="email" value="{{ email }}" />
-        <table class="table table-hover align-middle">
-          <thead>
-            <tr>
-              <th scope="col" style="width: 3rem">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  aria-label="{% trans 'Select all platforms' %}"
-                  :disabled="available.length === 0"
-                  :checked="available.length > 0 && selected.length === available.length"
-                  x-effect="$el.indeterminate = selected.length > 0 && selected.length < available.length"
-                  x-on:change="selected = $event.target.checked ? [...available] : []"
-                />
-              </th>
-              <th scope="col">{% trans "Platform" %}</th>
-              <th scope="col">{% trans "Account" %}</th>
-              <th scope="col">{% trans "Status" %}</th>
-              <th scope="col">{% trans "Action" %}</th>
-            </tr>
-          </thead>
-          <tbody id="platform-rows">
-            {% for row in rows %}
-              {% include "hqadmin/offboarding/partials/platform_row.html" %}
-            {% endfor %}
-          </tbody>
-        </table>
-        <button
-          type="button"
-          class="btn btn-danger"
-          :disabled="selected.length === 0"
-          data-bs-toggle="modal"
-          data-bs-target="#confirm-offboarding-modal"
-        >
-          <i class="fa fa-user-slash"></i>
-          {% trans "Deactivate selected…" %}
-        </button>
-        <span
-          id="execute-indicator"
-          class="htmx-indicator ms-2 text-body-secondary"
-        >
-          <i class="fa fa-spinner fa-spin"></i>
-          {% trans "Working…" %}
-        </span>
-      </form>
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th scope="col" style="width: 3rem">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                aria-label="{% trans 'Select all platforms' %}"
+                :disabled="available.length === 0"
+                :checked="available.length > 0 && selected.length === available.length"
+                x-effect="$el.indeterminate = selected.length > 0 && selected.length < available.length"
+                x-on:change="selected = $event.target.checked ? [...available] : []"
+              />
+            </th>
+            <th scope="col">{% trans "Platform" %}</th>
+            <th scope="col">{% trans "Account" %}</th>
+            <th scope="col">{% trans "Status" %}</th>
+            <th scope="col">{% trans "Action" %}</th>
+          </tr>
+        </thead>
+        <tbody id="platform-rows">
+          {% for row in rows %}
+            {% include "hqadmin/offboarding/partials/platform_row.html" %}
+          {% endfor %}
+        </tbody>
+      </table>
+      <button
+        type="button"
+        class="btn btn-danger"
+        :disabled="selected.length === 0"
+        data-bs-toggle="modal"
+        data-bs-target="#confirm-offboarding-modal"
+      >
+        <i class="fa fa-user-slash"></i>
+        {% trans "Deactivate selected…" %}
+      </button>
+      <span
+        id="execute-indicator"
+        class="htmx-indicator ms-2 text-body-secondary"
+      >
+        <i class="fa fa-spinner fa-spin"></i>
+        {% trans "Working…" %}
+      </span>
 
       <div
         class="modal fade"
@@ -183,12 +180,9 @@
                 type="button"
                 class="btn btn-danger"
                 data-bs-dismiss="modal"
-                hx-post="{% url 'offboard_external_platforms' %}"
-                hq-hx-action="execute"
-                hx-include="#offboarding-form"
-                hx-target="#platform-rows"
-                hx-swap="innerHTML"
-                hx-indicator="#execute-indicator"
+                x-on:click="selected.forEach(
+                  slug => document.getElementById(`platform-row-${slug}`).dispatchEvent(new Event('offboard'))
+                )"
               >
                 {% trans "Confirm" %}
               </button>
