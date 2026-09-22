@@ -7,14 +7,19 @@ from django.urls import reverse
 from django.utils import timezone
 
 import pytest
-from unmagic import use
+from unmagic import fixture, use
 
 from corehq.apps.public_webforms.models import PublicFormSession
+from corehq.apps.public_webforms.decorators import (
+    PUBLIC_FORM_SESSION_COOKIE_NAME,
+)
 from corehq.apps.public_webforms.public.views import (
+    PublicFormView,
     PublicWebformLinkSentView,
     PublicWebformRequestView,
 )
 from corehq.apps.public_webforms.tests.utils import (
+    create_session,
     create_webform,
     public_webforms_available,
     skip_turnstile,
@@ -95,3 +100,50 @@ def test_a_requested_link_is_sent():
 
     session = PublicFormSession.objects.get(public_webform=webform)
     assert send.call_args.args[0] == session
+
+
+@fixture
+def stub_app_doc():
+    with mock.patch(
+        'corehq.apps.public_webforms.public.views.get_app_doc',
+        return_value={'_id': 'build', 'name': 'Antenatal visit', 'langs': ['en']},
+    ):
+        yield
+
+
+def _open_form(public_id, session_id):
+    return Client().get(reverse(PublicFormView.urlname, kwargs={
+        'public_id': public_id.hex, 'session_id': session_id}))
+
+
+@use('db', public_webforms_available, stub_app_doc)
+def test_public_form_page_context():
+    session = create_session(create_webform(), email='respondent@example.com')
+
+    response = _open_form(session.public_webform.public_id, session.id.hex)
+    assert response.context['app_build_id'] == session.public_webform.app_build_id
+    assert response.context['endpoint_id'] == session.public_webform.endpoint_id
+    assert response.context['toggles_dict'] is not None
+    assert response.context['previews_dict'] is not None
+
+
+@use('db', public_webforms_available, stub_app_doc)
+def test_opening_a_one_time_link_sets_public_session_key_cookie():
+    session = create_session(create_webform(), email='respondent@example.com')
+
+    response = _open_form(session.public_webform.public_id, session.id.hex)
+
+    cookie = response.cookies[PUBLIC_FORM_SESSION_COOKIE_NAME]
+    assert cookie.value == session.session_key.hex
+    assert cookie['httponly']
+    assert cookie['samesite'] == 'Lax'
+
+
+@use('db', public_webforms_available, stub_app_doc)
+def test_opening_a_one_time_link_records_when_it_was_opened():
+    session = create_session(create_webform(), email='respondent@example.com')
+
+    _open_form(session.public_webform.public_id, session.id.hex)
+
+    session.refresh_from_db()
+    assert session.opened_at is not None
