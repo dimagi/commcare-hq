@@ -37,6 +37,7 @@ from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
+from django.views.decorators.cache import never_cache
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
@@ -86,6 +87,8 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
     DEPLOY_IN_PROGRESS_FLAG,
 )
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
+from corehq.apps.hqwebapp.chat_quota import UNLIMITED, get_chatbot_message_quota
+from corehq.apps.hqwebapp.chat_usage import ChatUsageUnavailable, get_chat_usage
 from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
@@ -202,6 +205,24 @@ def not_found(request, template_name='404.html', exception=None):
         },
         request=request,
     ))
+
+
+@never_cache
+@login_required
+@require_GET
+def chat_quota(request):
+    couch_user = getattr(request, 'couch_user', None)
+
+    limit = get_chatbot_message_quota(couch_user)
+    if limit == UNLIMITED or limit == 0:
+        return JsonResponse({'limit': limit, 'used': None})
+
+    refresh = request.GET.get('refresh', 'false')
+    try:
+        used = get_chat_usage(couch_user.user_id, refresh=refresh == 'true')
+    except ChatUsageUnavailable:
+        return JsonResponse({'error': 'chat_usage_unavailable'}, status=503)
+    return JsonResponse({'limit': limit, 'used': used})
 
 
 @require_GET
