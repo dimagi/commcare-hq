@@ -203,6 +203,18 @@ class PublicFormUser:
     def get_domains(self):
         return [self._session.public_webform.domain]
 
+    def get_domain_membership(self, domain, allow_enterprise=False):
+        # no membership, so timezone and similar lookups fall back to the project
+        return None
+
+    @property
+    def analytics_enabled(self):
+        return False
+
+    def is_member_of(self, domain_qs, allow_enterprise=False):
+        domain = getattr(domain_qs, 'name', domain_qs)
+        return domain == self._session.public_webform.domain
+
     def to_ota_restore_user(self, domain, request_user=None):
         return OTARestorePublicFormUser(domain, self, request_user=request_user)
 
