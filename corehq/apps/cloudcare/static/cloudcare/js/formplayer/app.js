@@ -428,6 +428,11 @@ FormplayerFrontend.getChannel().reply('getCurrentAppId', function () {
 });
 
 FormplayerFrontend.on('navigation:back', function () {
+    if (UsersModels.getCurrentUser().displayOptions.publicFormMode) {
+        // a one-time link has nothing behind it: leaving the page would strand
+        // the respondent outside a link they cannot reopen
+        return;
+    }
     var url = Backbone.history.getFragment();
     if (url.includes('single_app')) {
         return;
