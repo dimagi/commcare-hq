@@ -190,6 +190,20 @@ class PublicFormUserTests(SimpleTestCase):
         user = PublicFormUser(self.session)
         assert user.has_permission(self.domain, 'edit_data') is False
 
+    def test_has_no_domain_membership(self):
+        # a restore reads this to decide a timezone, and falls back to the
+        # project's when there is none
+        user = PublicFormUser(self.session)
+        assert user.get_domain_membership(self.domain) is None
+
+    def test_has_no_role(self):
+        user = PublicFormUser(self.session)
+        assert user.get_role(self.domain, allow_enterprise=True) is None
+
+    def test_has_no_user_data(self):
+        user = PublicFormUser(self.session)
+        assert user.get_user_data(self.domain) == {}
+
     def test_to_ota_restore_user(self):
         restore_user = PublicFormUser(self.session).to_ota_restore_user(self.domain)
         assert isinstance(restore_user, OTARestorePublicFormUser)
