@@ -106,47 +106,14 @@ def get_upstream_and_downstream_reports(domain):
 
 
 def get_upstream_and_downstream_keywords(domain):
-    """
-    Return 2 lists of keywords
-    The upstream_list contains keywords that originated in the specified domain
-    The downstream_list contains keywords that have been pulled from a domain upstream of the specified domain
-    """
-    upstream_list = {}
-    downstream_list = {}
-    keywords = Keyword.objects.filter(domain=domain)
-    for keyword in keywords:
-        if keyword.upstream_id:
-            downstream_list[str(keyword.id)] = keyword
-        else:
-            upstream_list[str(keyword.id)] = keyword
-    return upstream_list, downstream_list
+    return partition_by_upstream_id(Keyword.objects.filter(domain=domain))
 
 
 def get_upstream_and_downstream_ucr_expressions(domain):
-    """
-    Return 2 lists of ucr expressions
-    The upstream_list contains ucr expressions that originated in the specified domain
-    The downstream_list contains ucr expressions that have been pulled from a domain
-    upstream of the specified domain
-    """
-    upstream_list = {}
-    downstream_list = {}
-    ucr_expressions = UCRExpression.objects.filter(domain=domain)
-    for ucr_expression in ucr_expressions:
-        if ucr_expression.upstream_id:
-            downstream_list[str(ucr_expression.id)] = ucr_expression
-        else:
-            upstream_list[str(ucr_expression.id)] = ucr_expression
-    return upstream_list, downstream_list
+    return partition_by_upstream_id(UCRExpression.objects.filter(domain=domain))
 
 
 def get_upstream_and_downstream_case_search_endpoints(domain):
-    """
-    Return 2 lists of case search endpoints
-    The upstream_list contains endpoints that originated in the specified domain
-    The downstream_list contains endpoints that have been pulled from a domain
-    upstream of the specified domain
-    """
     return partition_by_upstream_id(
         CaseSearchEndpoint.objects.filter(domain=domain, is_active=True)
     )
