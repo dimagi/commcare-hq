@@ -46,7 +46,13 @@ class SessionDetailsViewTest(TestCase):
             'public': False,
             'enabled_toggles': [],
             'enabled_previews': [],
-            'permissions': [],
+            'permissions': [
+                'access_all_locations',
+                'access_mobile_endpoints',
+                'access_web_apps',
+                'edit_user_profile',
+                'report_an_issue',
+            ],
         }
         cls.url = reverse('session_details')
 
