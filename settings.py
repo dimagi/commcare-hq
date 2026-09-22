@@ -1009,6 +1009,28 @@ METRICS_PROVIDERS = []
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
 
+OFFBOARDING_PLATFORMS = {
+    'datadog': {
+        'api_key': None,
+        'app_key': None,
+        'site': 'datadoghq.com',
+    },
+    'sentry': {
+        'auth_token': None,
+        'api_url': 'https://sentry.io/api/0/',
+        'org_slug': None,
+    },
+    'sumologic': {
+        'access_id': None,
+        'access_key': None,
+        'api_url': 'https://api.sumologic.com/api/',
+    },
+    'hubspot': {
+        'access_token': None,
+    },
+}
+OFFBOARDING_PROTECTED_EMAILS = []
+
 SYNCLOGS_SQL_DB_ALIAS = 'default'
 
 # A dict of django apps in which the reads are
