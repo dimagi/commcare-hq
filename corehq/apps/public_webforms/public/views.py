@@ -175,7 +175,17 @@ class PublicFormView(BasePublicWebformView):
         context.update({
             'app_build_id': webform.app_build_id,
             'endpoint_id': webform.endpoint_id,
+            'submitted_url': reverse(
+                PublicFormSubmittedView.urlname,
+                kwargs={'public_id': webform.public_id.hex},
+            ),
             'toggles_dict': toggles.toggle_values_by_name(None, webform.domain),
             'previews_dict': feature_previews.preview_values_by_name(webform.domain),
         })
         return context
+
+
+@method_decorator(use_bootstrap5, name='dispatch')
+class PublicFormSubmittedView(BasePublicWebformView):
+    urlname = 'public_form_submitted'
+    template_name = 'cloudcare/public_form_submitted.html'
