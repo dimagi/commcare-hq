@@ -309,40 +309,19 @@ def build_view_models_from_data_models(
     feature_flag_view_models = build_feature_flag_view_models(domain, ignore_models=ignore_models)
     view_models.extend(feature_flag_view_models)
 
-    for app in apps.values():
-        app_view_model = build_app_view_model(app)
-        if app_view_model:
-            view_models.append(app_view_model)
-
-    for fixture in fixtures.values():
-        fixture_view_model = build_fixture_view_model(fixture)
-        if fixture_view_model:
-            view_models.append(fixture_view_model)
-
-    for report in reports.values():
-        report_view_model = build_report_view_model(report)
-        if report_view_model:
-            view_models.append(report_view_model)
-
-    for keyword in keywords.values():
-        keyword_view_model = build_keyword_view_model(keyword)
-        if keyword_view_model:
-            view_models.append(keyword_view_model)
-
-    for ucr_expression in ucr_expressions.values():
-        ucr_expression_view_model = build_ucr_expression_view_model(ucr_expression)
-        if ucr_expression_view_model:
-            view_models.append(ucr_expression_view_model)
-
-    for endpoint in case_search_endpoints.values():
-        endpoint_view_model = build_case_search_endpoint_view_model(endpoint)
-        if endpoint_view_model:
-            view_models.append(endpoint_view_model)
-
-    for update_rule in update_rules.values():
-        update_rule_view_model = build_update_rule_model(update_rule)
-        if update_rule_view_model:
-            view_models.append(update_rule_view_model)
+    for model_instances, builder in [
+        (apps, build_app_view_model),
+        (fixtures, build_fixture_view_model),
+        (reports, build_report_view_model),
+        (keywords, build_keyword_view_model),
+        (ucr_expressions, build_ucr_expression_view_model),
+        (case_search_endpoints, build_case_search_endpoint_view_model),
+        (update_rules, build_update_rule_model),
+    ]:
+        for model in model_instances:
+            view_model = builder(model)
+            if view_model:
+                view_models.append(view_model)
 
     return view_models
 
