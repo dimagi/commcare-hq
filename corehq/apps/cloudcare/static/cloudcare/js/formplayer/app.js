@@ -209,6 +209,11 @@ FormplayerFrontend.on('startForm', function (data) {
     gtx.logStartForm(data.title);
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
+            if (user.displayOptions.publicFormMode) {
+                FormplayerFrontend.trigger('clearForm');
+                window.location.href = initialPageData.get('submitted_url');
+                return;
+            }
             var $alert;
             if (resp.submitResponseMessage) {
                 var analyticsLinks = [
