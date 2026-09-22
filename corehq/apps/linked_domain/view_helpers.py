@@ -324,7 +324,7 @@ def build_linked_data_view_model(model_type, name, detail,
 
 def build_view_models_from_data_models(
     domain, apps, fixtures, reports, keywords, ucr_expressions, update_rules,
-    case_search_endpoints=None, ignore_models=None, is_superuser=False
+    case_search_endpoints, ignore_models=None, is_superuser=False
 ):
     """
     Based on the provided data models, convert to view models, ignoring any models specified in ignore_models
@@ -367,7 +367,7 @@ def build_view_models_from_data_models(
         if ucr_expression_view_model:
             view_models.append(ucr_expression_view_model)
 
-    for endpoint in (case_search_endpoints or {}).values():
+    for endpoint in case_search_endpoints.values():
         endpoint_view_model = build_case_search_endpoint_view_model(endpoint)
         if endpoint_view_model:
             view_models.append(endpoint_view_model)
@@ -447,7 +447,7 @@ def pop_case_search_endpoint(endpoint_id, case_search_endpoints):
 
 def build_pullable_view_models_from_data_models(
     domain, upstream_link, apps, fixtures, reports, keywords, ucr_expressions, update_rules,
-    timezone, case_search_endpoints=None, is_superuser=False
+    case_search_endpoints, timezone, is_superuser=False
 ):
     """
     Data models that originated in this domain's upstream domain that are available to pull
@@ -486,8 +486,7 @@ def build_pullable_view_models_from_data_models(
             ucr_expression = pop_ucr_expression(action.wrapped_detail.ucr_expression_id, ucr_expressions)
             view_model = build_ucr_expression_view_model(ucr_expression, last_update=last_update)
         elif action.model == MODEL_CASE_SEARCH_ENDPOINT:
-            endpoint = pop_case_search_endpoint(
-                action.wrapped_detail.endpoint_id, case_search_endpoints or {})
+            endpoint = pop_case_search_endpoint(action.wrapped_detail.endpoint_id, case_search_endpoints)
             view_model = build_case_search_endpoint_view_model(endpoint, last_update=last_update)
         elif action.model == MODEL_AUTO_UPDATE_RULE:
             rule = pop_update_rule(action.wrapped_detail.id, update_rules)
@@ -518,7 +517,7 @@ def build_pullable_view_models_from_data_models(
             keywords,
             ucr_expressions,
             update_rules,
-            case_search_endpoints=case_search_endpoints,
+            case_search_endpoints,
             ignore_models=models_seen,
             is_superuser=is_superuser
         )

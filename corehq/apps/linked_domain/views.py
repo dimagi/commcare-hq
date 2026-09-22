@@ -283,8 +283,8 @@ class DomainLinkView(BaseProjectSettingsView):
             downstream_keywords,
             downstream_ucr_expressions,
             downstream_rules,
+            downstream_endpoints,
             timezone,
-            case_search_endpoints=downstream_endpoints,
             is_superuser=is_superuser
         )
 
@@ -296,7 +296,7 @@ class DomainLinkView(BaseProjectSettingsView):
             upstream_keywords,
             upstream_ucr_expressions,
             upstream_rules,
-            case_search_endpoints=upstream_endpoints,
+            upstream_endpoints,
             is_superuser=is_superuser
         )
 
