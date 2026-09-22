@@ -10,7 +10,6 @@ from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LogoutView
@@ -68,6 +67,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
+    login_required,
     require_superuser,
     track_domain_request,
     two_factor_exempt,
