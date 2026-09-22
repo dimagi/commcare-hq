@@ -209,7 +209,7 @@ def not_found(request, template_name='404.html', exception=None):
 @login_required
 @require_GET
 def chat_quota(request):
-    couch_user = getattr(request, 'couch_user', None)
+    couch_user = getattr(request, 'couch_user')
 
     limit = get_chatbot_message_quota(couch_user)
     if limit == UNLIMITED or limit == 0:
