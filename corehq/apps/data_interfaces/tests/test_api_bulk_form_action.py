@@ -16,7 +16,7 @@ from corehq.form_processor.models import XFormInstance
 DOMAIN = 'bulk-action-api-test'
 
 
-@pytest.mark.parametrize("action", ['archive', 'unarchive'])
+@pytest.mark.parametrize("action", ['archive', 'unarchive', 'delete'])
 def test_valid_actions_are_accepted(action):
     assert validate_payload({'action': action, 'form_ids': ['a']}) == (action, ['a'])
 
@@ -24,7 +24,6 @@ def test_valid_actions_are_accepted(action):
 @pytest.mark.parametrize("action", [
     None,
     'destroy',
-    'delete',
     ['archive'],
 ])
 def test_invalid_action_raises(action):
