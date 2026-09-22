@@ -142,8 +142,7 @@ def delete_forms(forms, domain, deletion_id):
             'domain': domain,
             'form_ids': to_delete,
         })
-        for form_id in to_delete:
-            yield FormActionResult(form_id, SKIPPED, UNEXPECTED_ERROR)
+        yield from _results_for_failed_delete(domain, to_delete)
     else:
         for form_id in to_delete:
             yield FormActionResult(form_id, SUCCEEDED)
@@ -191,6 +190,23 @@ def _apply_to_each(forms, apply_to_form):
             yield FormActionResult(xform.form_id, SKIPPED, UNEXPECTED_ERROR)
         else:
             yield FormActionResult(xform.form_id, SUCCEEDED)
+
+
+def _results_for_failed_delete(domain, form_ids):
+    """Check which forms were deleted after failed delete"""
+    try:
+        deleted_ids = set(XFormInstance.objects.get_deleted_form_ids(domain, form_ids))
+    except Exception:
+        notify_exception(None, "Error checking bulk deleted forms", {
+            'domain': domain,
+            'form_ids': form_ids,
+        })
+        deleted_ids = set()
+    for form_id in form_ids:
+        if form_id in deleted_ids:
+            yield FormActionResult(form_id, SUCCEEDED)
+        else:
+            yield FormActionResult(form_id, SKIPPED, UNEXPECTED_ERROR)
 
 
 def _save_interval(requested_count):

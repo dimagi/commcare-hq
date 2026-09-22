@@ -196,6 +196,18 @@ class XFormInstanceManager(RequireDBManager):
             )
         return result
 
+    def get_deleted_form_ids(self, domain, form_ids):
+        """Return the subset of ``form_ids`` that are soft deleted in ``domain``"""
+        deleted_ids = []
+        for db_name, db_form_ids in split_list_by_db_partition(form_ids):
+            deleted_ids.extend(
+                self.using(db_name)
+                .filter(domain=domain, form_id__in=db_form_ids,
+                        deleted_on__isnull=False)
+                .values_list('form_id', flat=True)
+            )
+        return deleted_ids
+
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
         if xmlns:

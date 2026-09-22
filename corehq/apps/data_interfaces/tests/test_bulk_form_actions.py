@@ -16,6 +16,7 @@ from corehq.apps.data_interfaces.bulk_form_actions import (
     FormActionResult,
     _apply_form_action,
     _apply_to_each,
+    _results_for_failed_delete,
     _save_interval,
     build_form_action,
     create_bulk_form_job,
@@ -410,17 +411,23 @@ class TestDeleteForms(SimpleTestCase):
             FormActionResult('archived', SUCCEEDED),
         ]
 
-    def test_a_failed_query_skips_the_whole_batch(self):
+    def test_a_failed_query_reports_what_the_shards_deleted(self):
         forms = [self._archived('f1'), self._archived('f2')]
 
-        with patch(
-            'corehq.apps.data_interfaces.bulk_form_actions.notify_exception'
-        ) as notify:
+        with (
+            patch(
+                'corehq.apps.data_interfaces.bulk_form_actions.notify_exception'
+            ) as notify,
+            patch(
+                'corehq.apps.data_interfaces.bulk_form_actions.XFormInstance.objects.get_deleted_form_ids',
+                return_value=['f2'],
+            ),
+        ):
             results, _ = self._delete(forms, side_effect=Exception('error'))
 
         assert results == [
             FormActionResult('f1', SKIPPED, UNEXPECTED_ERROR),
-            FormActionResult('f2', SKIPPED, UNEXPECTED_ERROR),
+            FormActionResult('f2', SUCCEEDED),
         ]
         notify.assert_called_once()
 
@@ -444,3 +451,40 @@ class TestDeleteForms(SimpleTestCase):
         ) as mocked_delete:
             results = list(delete_forms(forms, DOMAIN, self.DELETION_ID))
         return results, mocked_delete
+
+
+class TestResultsForFailedDelete(SimpleTestCase):
+
+    def test_forms_deleted_before_the_failure_succeed(self):
+        results = self._results(['f1', 'f2', 'f3'], deleted_ids=['f1', 'f3'])
+
+        assert results == [
+            FormActionResult('f1', SUCCEEDED),
+            FormActionResult('f2', SKIPPED, UNEXPECTED_ERROR),
+            FormActionResult('f3', SUCCEEDED),
+        ]
+
+    def test_all_forms_are_skipped_when_none_were_deleted(self):
+        results = self._results(['f1', 'f2'], deleted_ids=[])
+
+        assert results == [
+            FormActionResult('f1', SKIPPED, UNEXPECTED_ERROR),
+            FormActionResult('f2', SKIPPED, UNEXPECTED_ERROR),
+        ]
+
+    def test_all_forms_are_skipped_when_the_check_fails(self):
+        with patch(
+            'corehq.apps.data_interfaces.bulk_form_actions.notify_exception'
+        ) as notify:
+            results = self._results(['f1'], side_effect=Exception('shard is down'))
+
+        assert results == [FormActionResult('f1', SKIPPED, UNEXPECTED_ERROR)]
+        notify.assert_called_once()
+
+    def _results(self, form_ids, deleted_ids=None, side_effect=None):
+        with patch(
+            'corehq.apps.data_interfaces.bulk_form_actions.XFormInstance.objects.get_deleted_form_ids',
+            return_value=deleted_ids,
+            side_effect=side_effect,
+        ):
+            return list(_results_for_failed_delete(DOMAIN, form_ids))
