@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 from django.db import models
@@ -195,16 +195,54 @@ class PublicFormUser:
         return False
 
     def has_permission(self, domain, permission, data=None):
-        return (
-            permission == 'access_mobile_endpoints'
-            and domain == self._session.public_webform.domain
-        )
+        if domain != self._session.public_webform.domain:
+            return False
+        if permission == 'access_web_app':
+            return data == self._session.public_webform.app_id
+        return permission == 'access_mobile_endpoints'
+
+    def can_access_any_web_apps(self, domain=None):
+        return domain == self._session.public_webform.domain
 
     def get_domains(self):
         return [self._session.public_webform.domain]
 
+    def get_domain_membership(self, domain, allow_enterprise=False):
+        # no membership, so timezone and similar lookups fall back to the project
+        return None
+
+    def get_role(self, domain=None, checking_global_admin=True, allow_enterprise=False):
+        return None
+
+    def get_user_data(self, domain):
+        return {}
+
+    @property
+    def analytics_enabled(self):
+        return False
+
+    @property
+    def created_on(self):
+        # a respondent never registered, so use the same sentinel CouchUser defaults to
+        return datetime(1900, 1, 1)
+
+    def is_member_of(self, domain_qs, allow_enterprise=False):
+        domain = getattr(domain_qs, 'name', domain_qs)
+        return domain == self._session.public_webform.domain
+
     def to_ota_restore_user(self, domain, request_user=None):
         return OTARestorePublicFormUser(domain, self, request_user=request_user)
+
+    def __getattr__(self, item):
+        # CouchUser answers the whole can_* family from has_permission rather
+        # than defining each one, so anything reading a permission off a real
+        # user finds it here too
+        if item.startswith('can_') and len(item) > len('can_'):
+            def check(domain=None, data=None):
+                return self.has_permission(domain, item[len('can_'):], data)
+            return check
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute '{item}'")
 
 
 class OTARestorePublicFormUser(OTARestoreUser):
@@ -242,9 +280,6 @@ class OTARestorePublicFormUser(OTARestoreUser):
 
     def get_sql_locations(self, domain):
         return SQLLocation.objects.none()
-
-    def get_role(self, domain):
-        return None
 
     def get_case_sharing_groups(self):
         return []
