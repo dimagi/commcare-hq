@@ -29,6 +29,7 @@ def create_public_webform_build(domain, app_id, form_unique_id):
     new_build._force_session_endpoints = True
     new_build.get_form(form_unique_id).session_endpoint_id = endpoint_id
     _restrict_multimedia_to_form(new_build, form_unique_id)
+    new_build.profile.pop('custom_properties', None)
     new_build.convert_app_to_build(
         _public_webform_copy_of(released_build.copy_of),
         user_id=None,

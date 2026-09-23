@@ -27,7 +27,7 @@ OTHER_MEDIA = 'jr://file/commcare/image/other.png'
 @use('db')
 @fixture
 def released_app():
-    """A released build of an app with two forms, each with its own icon.
+    """A released build of an app with two forms, each with its own icon and a profile.
     """
     domain_obj = Domain.get_or_create_with_name(DOMAIN)
     # session endpoints require CommCare 2.51+ (feature_support)
@@ -41,6 +41,10 @@ def released_app():
     try:
         with patch_validate_xform():
             app = factory.app
+            app.profile = {
+                'properties': {'cc-autoup-freq': 'freq-never'},
+                'custom_properties': {'cc-internal-thing': 'do not publish'},
+            }
             app.multimedia_map = {
                 path: HQMediaMapItem(
                     multimedia_id=f'{name}-media-id',
@@ -118,6 +122,14 @@ class TestCreatePublicWebformBuild:
         build = get_app(app.domain, build_id)
         assert set(build.multimedia_map) == {TARGET_MEDIA}
 
+    def test_drops_the_projects_custom_properties(self):
+        app = released_app()
+
+        build_id, __ = create_public_webform_build(
+            app.domain, app.app_id, app.form_unique_id)
+
+        build = get_app(app.domain, build_id)
+        assert 'custom_properties' not in build.profile
 
 
 @use(released_app)
