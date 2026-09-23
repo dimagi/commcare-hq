@@ -1,5 +1,8 @@
 from django.conf import settings
 
+from couchforms.const import VALID_ATTACHMENT_FILE_EXTENSION_MAP
+from langcodes import get_name
+
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_app_ids_in_domain,
@@ -10,7 +13,31 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_doc,
     get_latest_released_build_id,
 )
+from corehq.apps.cloudcare.const import WEB_APPS_ENVIRONMENT
+from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.quickcache import quickcache
+
+
+def format_app_doc(doc):
+    keys = ['_id', 'copy_of', 'langs', 'multimedia_map', 'name', 'profile', 'upstream_app_id']
+    context = {key: doc.get(key) for key in keys}
+    context['imageUri'] = doc.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
+    return context
+
+
+def get_web_apps_context(domain, username, language, apps):
+    lang_codes = set().union(*(app.get("langs", []) for app in apps))
+    return {
+        "domain": domain,
+        "username": username,
+        "language": language,
+        "apps": apps,
+        "formplayer_url": get_formplayer_url(for_js=True),
+        "environment": WEB_APPS_ENVIRONMENT,
+        "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
+        "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
+        "lang_code_name_mapping": {code: get_name(code) for code in lang_codes},
+    }
 
 
 def can_user_access_web_app(domain, user, app_id):
