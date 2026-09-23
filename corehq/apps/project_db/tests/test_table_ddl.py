@@ -126,15 +126,10 @@ def test_long_domain_schema_lifecycle():
         assert not _role_exists(conn, schema)
 
 
-@override_settings(SECRET_KEY='thisismysecretkey')
-@pytest.mark.parametrize('domain, expected', [
-    ('my-domain', 'e656f61aff26f54fdf0037e3f120b38c2683437a2cd0efbb0fb21116eb34fcce'),
-    ('my-other-domain', 'f70d9db254cab3b9e057e330b3d72b0d80fa69e24a062f20028539c225828d84'),
-    ('long' * 100, '87ac4e25583ac8a98685d123011c339578e7d2f98a7c5fc8a9840f24e0e08489'),
-    ('long' * 101, 'be0558082b24015ee9bca36c014615c7fe8190784fdc2b56b90cdaf50ba42c87'),
-])
-def test_role_password(domain, expected):
-    assert DomainSchema(domain)._get_password() == expected
+@override_settings(PROJECTDB_USERS_PASSWORD='shared-projectdb-password')
+def test_role_password():
+    assert DomainSchema('my-domain')._get_password() == 'shared-projectdb-password'
+    assert DomainSchema('my-other-domain')._get_password() == 'shared-projectdb-password'
 
 
 @use('db', project_db_table('projectdbtest-grants', 'patient', {'nickname': 'plain'}))
