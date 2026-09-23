@@ -1195,6 +1195,14 @@ class ApplicationsTab(UITab):
         if not apps:
             return submenu_context
 
+        if self._can_access_public_webforms:
+            submenu_context.append(dropdown_dict(_("Public Webforms"), is_header=True))
+            submenu_context.append(dropdown_dict(
+                _("Manage Public Webforms"),
+                url=(reverse('manage_public_webforms', args=[self.domain])),
+            ))
+            submenu_context.append(self.divider)
+
         submenu_context.append(dropdown_dict(_('My Applications'),
                                is_header=True))
         for app in apps:
