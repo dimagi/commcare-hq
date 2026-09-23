@@ -58,7 +58,10 @@ from corehq.apps.locations.permissions import (
     location_safe,
     location_safe_bypass,
 )
-from corehq.apps.ota.decorators import mobile_auth, mobile_auth_or_formplayer
+from corehq.apps.ota.decorators import (
+    mobile_auth,
+    mobile_auth_or_public_form_session,
+)
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
@@ -104,7 +107,7 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @tracer.wrap(name="ota.restore")
 @location_safe
 @handle_401_response
-@mobile_auth_or_formplayer
+@mobile_auth_or_public_form_session
 @check_domain_mobile_access
 @set_request_duration_reporting_threshold(seconds=300)
 def restore(request, domain, app_id=None):

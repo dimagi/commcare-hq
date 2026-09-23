@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 from django.db import models
@@ -203,6 +203,29 @@ class PublicFormUser:
     def get_domains(self):
         return [self._session.public_webform.domain]
 
+    def get_domain_membership(self, domain, allow_enterprise=False):
+        # no membership, so timezone and similar lookups fall back to the project
+        return None
+
+    def get_role(self, domain=None, checking_global_admin=True, allow_enterprise=False):
+        return None
+
+    def get_user_data(self, domain):
+        return {}
+
+    @property
+    def analytics_enabled(self):
+        return False
+
+    @property
+    def created_on(self):
+        # a respondent never registered, so use the same sentinel CouchUser defaults to
+        return datetime(1900, 1, 1)
+
+    def is_member_of(self, domain_qs, allow_enterprise=False):
+        domain = getattr(domain_qs, 'name', domain_qs)
+        return domain == self._session.public_webform.domain
+
     def to_ota_restore_user(self, domain, request_user=None):
         return OTARestorePublicFormUser(domain, self, request_user=request_user)
 
@@ -242,9 +265,6 @@ class OTARestorePublicFormUser(OTARestoreUser):
 
     def get_sql_locations(self, domain):
         return SQLLocation.objects.none()
-
-    def get_role(self, domain):
-        return None
 
     def get_case_sharing_groups(self):
         return []
