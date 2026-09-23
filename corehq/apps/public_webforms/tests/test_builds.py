@@ -16,24 +16,43 @@ from corehq.apps.public_webforms.app_builds import (
     create_public_webform_build,
     delete_public_webform_build,
 )
+from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.blobs import get_blob_db
 
 DOMAIN = 'public-webform-endpoints'
+TARGET_MEDIA = 'jr://file/commcare/image/target.png'
+OTHER_MEDIA = 'jr://file/commcare/image/other.png'
 
 
 @use('db')
 @fixture
 def released_app():
-    """A released build of an app with a basic survey form and no endpoint."""
+    """A released build of an app with two forms, each with its own icon and a profile.
+    """
     domain_obj = Domain.get_or_create_with_name(DOMAIN)
     # session endpoints require CommCare 2.51+ (feature_support)
     factory = AppFactory(DOMAIN, name='PWF App', build_version='2.51.0')
     __, form = factory.new_basic_module('survey', 'patient')
     form.source = get_simple_form(xmlns=form.unique_id)
+    form.set_icon('en', TARGET_MEDIA)
+    __, other_form = factory.new_basic_module('other', 'patient')
+    other_form.source = get_simple_form(xmlns=other_form.unique_id)
+    other_form.set_icon('en', OTHER_MEDIA)
     try:
-        # patch covers the test body too (generate rebuilds, which validates forms)
         with patch_validate_xform():
             app = factory.app
+            app.profile = {
+                'properties': {'cc-autoup-freq': 'freq-never'},
+                'custom_properties': {'cc-internal-thing': 'do not publish'},
+            }
+            app.multimedia_map = {
+                path: HQMediaMapItem(
+                    multimedia_id=f'{name}-media-id',
+                    media_type='CommCareImage',
+                    version=1,
+                )
+                for name, path in [('target', TARGET_MEDIA), ('other', OTHER_MEDIA)]
+            }
             app.save()
             build = app.make_build()
             build.is_released = True
@@ -50,7 +69,7 @@ def released_app():
 
 
 @use(released_app)
-class TestCreatePublicWebformEndpoint:
+class TestCreatePublicWebformBuild:
 
     def test_generates_detached_build_emitting_the_endpoint(self):
         app = released_app()
@@ -93,6 +112,24 @@ class TestCreatePublicWebformEndpoint:
 
         assert build_id != app.build_id
         assert endpoint_id != 'existing-endpoint'
+
+    def test_maps_only_the_media_its_form_uses(self):
+        app = released_app()
+
+        build_id, __ = create_public_webform_build(
+            app.domain, app.app_id, app.form_unique_id)
+
+        build = get_app(app.domain, build_id)
+        assert set(build.multimedia_map) == {TARGET_MEDIA}
+
+    def test_drops_the_projects_custom_properties(self):
+        app = released_app()
+
+        build_id, __ = create_public_webform_build(
+            app.domain, app.app_id, app.form_unique_id)
+
+        build = get_app(app.domain, build_id)
+        assert 'custom_properties' not in build.profile
 
 
 @use(released_app)
