@@ -189,7 +189,7 @@ class SumologicOffboardingClient(PlatformOffboardingClient):
     """
     slug = 'sumologic'
     name = 'Sumo Logic'
-    default_config = {'api_url': 'https://api.sumologic.com/api/'}
+    default_config = {'api_url': 'https://api.us2.sumologic.com/api/'}
     required_config = ('access_id', 'access_key')
 
     @property
