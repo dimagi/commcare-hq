@@ -417,6 +417,26 @@ def test_parameter_input_error(params, input_value, error_fragment):
     assert any(error_fragment in e for e in errors)
 
 
+@use(sample_capability)
+def test_within_requires_daterange_parameter():
+    params = [Parameter(name='dob_range', type=FIELD_TYPE_DATE)]
+    _, errors = parse_query_spec(
+        _component_spec('dob', 'within', {'type': 'parameter', 'value': 'dob_range'}),
+        params, 'patient', sample_capability(),
+    )
+    assert any("has type 'date', expected 'daterange'" in e for e in errors)
+
+
+@use(sample_capability)
+def test_within_accepts_daterange_parameter():
+    params = [Parameter(name='dob_range', type=FIELD_TYPE_DATERANGE)]
+    _, errors = parse_query_spec(
+        _component_spec('dob', 'within', {'type': 'parameter', 'value': 'dob_range'}),
+        params, 'patient', sample_capability(),
+    )
+    assert errors == []
+
+
 # ── binding parameters into SQL ──────────────────────────────────────────────
 
 TEXT = Parameter(name='color', type=FIELD_TYPE_TEXT)

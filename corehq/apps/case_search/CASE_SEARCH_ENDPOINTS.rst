@@ -63,7 +63,9 @@ array on the ``CaseSearchEndpointVersion`` and validated against
 ``PARAMETER_TYPES`` from ``endpoint_capability``. That is the field types
 (``text``, ``number``, ``date``, ``select``, ``geopoint``) plus ``daterange``,
 which is parameter-only: no case property has that type, so it has no
-operations and cannot be referenced from an Elasticsearch query spec.
+operations of its own. It fills the ``value`` slot of a ``date``/``datetime``
+field's ``within`` operator, and (see below) a project DB endpoint binds it
+as two SQL placeholders.
 
 In the query spec, condition inputs can reference a parameter by name via a
 ``ParameterInput`` node (``{"type": "parameter", "value": "param_name"}``).

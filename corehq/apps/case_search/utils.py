@@ -37,6 +37,7 @@ from corehq.apps.case_search.endpoint_capability import (
 from corehq.apps.case_search.endpoint_query_spec import (
     ParameterInput,
     bind_values,
+    parse_date_range,
     parse_parameter_spec,
     parse_query_spec,
 )
@@ -114,6 +115,7 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
     profiler = CaseSearchProfiler(debug_mode=debug)
     with profiler.timing_context:
         config = extract_search_request_config(request_dict)
+        print(config)
         # ProjectDB endpoints don't get turned into CaseDBFixtures
         if endpoint := _get_project_db_endpoint(domain, config):
             fixtures = get_project_db_fixture(domain, endpoint, config)
@@ -131,6 +133,7 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
 
 
 def get_case_search_results(domain, config, app_id=None, couch_user=None, profiler=None):
+    print(config)
     helper = _get_helper(couch_user, domain, config.case_types, config.data_registry)
     if profiler:
         helper.profiler = profiler
@@ -484,6 +487,7 @@ class CaseSearchEndpointQueryBuilder:
         self.config = helper.config
 
     def build_query(self, search_criteria):
+        print(search_criteria)
         self.param_values = {c.key: c.value for c in search_criteria}
         search_es = self._get_initial_search_es()
         query = self._parse_query(self.query_root)
@@ -566,6 +570,9 @@ class CaseSearchEndpointQueryBuilder:
                 if not validate_date(value):
                     return None
                 return case_property_query(field, date_permutations(value), boost_first=True)
+            elif operator == 'within':
+                start, end = parse_date_range(field, value)
+                return case_property_date_range(field, gte=start, lte=end)
         elif node.field_type == FIELD_TYPE_NUMBER:
             if operator == 'equals':
                 return case_property_query(field, value)

@@ -18,6 +18,7 @@ from corehq.apps.case_search.endpoint_query_spec import (
     GroupNode,
     ParameterInput,
 )
+from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.utils import (
     CaseSearchEndpointQueryBuilder,
     CaseSearchProfiler,
@@ -202,6 +203,31 @@ def test_parse_component_node_fuzzy_date_invalid_returns_none():
     assert result is None
 
 
+def test_parse_component_node_within():
+    node = _make_date_node('within', value='__range__2020-01-01__2020-01-31')
+    result = _make_builder()._parse_component_node(node)
+    assert result == case_property_date_range('dob', gte='2020-01-01', lte='2020-01-31')
+
+
+def test_parse_component_node_within_parameter_input():
+    node = ComponentNode(
+        operator='within',
+        field='dob',
+        field_type=FIELD_TYPE_DATE,
+        inputs={'value': ParameterInput(value='dob_range')},
+    )
+    builder = _make_builder()
+    builder.param_values = {'dob_range': '__range__2020-01-01__2020-01-31'}
+    result = builder._parse_component_node(node)
+    assert result == case_property_date_range('dob', gte='2020-01-01', lte='2020-01-31')
+
+
+def test_parse_component_node_within_malformed_value_raises():
+    node = _make_date_node('within', value='2020-01-01')
+    with pytest.raises(CaseSearchUserError):
+        _make_builder()._parse_component_node(node)
+
+
 def _valid_component():
     # An equals component with a literal value always produces a query.
     return ComponentNode(
@@ -290,6 +316,8 @@ def _inputs_for_operator(operator, field_type):
             'distance': ConstantInput(value='10'),
             'unit': ConstantInput(value=DISTANCE_UNITS[0]),
         }
+    if operator == 'within':
+        return {'value': ConstantInput(value='__range__2020-01-01__2020-01-31')}
     # Every non-geopoint operator resolves its value through the single
     # 'value' slot, which the builder reads unconditionally.
     return {'value': ConstantInput(value=_VALUE_BY_FIELD_TYPE[field_type])}

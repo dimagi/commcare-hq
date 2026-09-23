@@ -21,8 +21,9 @@ FIELD_TYPE_DATETIME = 'datetime'
 FIELD_TYPE_SELECT = 'select'
 FIELD_TYPE_GEOPOINT = 'geopoint'
 # Parameter-only: never the type of a case property, so it has no operations
-# and cannot be used in an Elasticsearch query builder spec. A project DB
-# endpoint binds it as two SQL placeholders -- see ``sql_placeholders``.
+# of its own. It fills the ``value`` slot of a date field's ``within``
+# operator, and a project DB endpoint binds it as two SQL placeholders --
+# see ``sql_placeholders``.
 FIELD_TYPE_DATERANGE = 'daterange'
 
 # DataType -> field type mapping
@@ -69,6 +70,7 @@ _OPERATOR_BY_TYPE = {
         ('lte', _('on or before')),
         ('gte', _('on or after')),
         ('fuzzy_date', _('is approximately')),
+        ('within', _('within')),
     ],
     FIELD_TYPE_DATETIME: [
         ('equals', _('on')),
@@ -76,6 +78,7 @@ _OPERATOR_BY_TYPE = {
         ('gt', _('after')),
         ('lte', _('on or before')),
         ('gte', _('on or after')),
+        ('within', _('within')),
     ],
     FIELD_TYPE_SELECT: [
         ('selected_any', _('is any')),
@@ -122,6 +125,9 @@ OPERATOR_INPUT_SCHEMAS = {
     'lt': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'lte': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'fuzzy_date': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
+    # A daterange parameter's single value carries both bounds, unlike
+    # gt/gte/lt/lte which each take one bound of the field's own type.
+    'within': [{'name': 'value', 'type': FIELD_TYPE_DATERANGE}],
     'within_distance': [
         {'name': 'point', 'type': FIELD_TYPE_GEOPOINT},
         {'name': 'distance', 'type': FIELD_TYPE_NUMBER},

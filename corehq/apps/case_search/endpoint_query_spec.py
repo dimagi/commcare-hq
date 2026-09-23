@@ -191,16 +191,19 @@ def _as_list(value):
 
 
 def _as_date_range(param, value):
+    return parse_date_range(param.name, value)
+
+def parse_date_range(name, value):
     if value is None:
         return None, None
     if isinstance(value, list) or not str(value).startswith(DATE_RANGE_PREFIX):
         raise CaseSearchUserError(
-            _("'{}' must be given as a date range").format(param.name)
+            _("'{}' must be given as a date range").format(name)
         )
     start, _sep, end = str(value).removeprefix(DATE_RANGE_PREFIX).partition('__')
     if not start or not end:
         raise CaseSearchUserError(
-            _("Invalid date range for '{}'").format(param.name)
+            _("Invalid date range for '{}'").format(name)
         )
     return start, end
 

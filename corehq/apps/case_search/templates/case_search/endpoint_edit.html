@@ -125,9 +125,10 @@
               <option value="text">{% trans "text" %}</option>
               <option value="number">{% trans "number" %}</option>
               <option value="date">{% trans "date" %}</option>
+              <option value="daterange">{% trans "date range" %}</option>
               {% if target_type == 'project_db' %}
-                {# Only bindable in SQL: neither has an operation in the query builder #}
-                <option value="daterange">{% trans "date range" %}</option>
+                {# Only bindable in SQL: no case property has this type, so #}
+                {# it has no operation in the query builder #}
                 <option value="select">{% trans "select" %}</option>
               {% endif %}
               <option value="geopoint">{% trans "geopoint" %}</option>

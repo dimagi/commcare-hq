@@ -92,6 +92,7 @@ def test_date_operations_use_operator_names_not_before_after():
         'lte': 'on or before',
         'gte': 'on or after',
         'fuzzy_date': 'is approximately',
+        'within': 'within',
     }
 
 
