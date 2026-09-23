@@ -24,7 +24,7 @@ from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
 from corehq.apps.public_webforms.models import PublicFormSession
 from corehq.apps.users.middleware import UsersMiddleware
-from corehq.apps.users.models import CouchUser, HqPermissions
+from corehq.apps.users.models import CouchUser
 from corehq.feature_previews import previews_enabled_for_domain
 from corehq.middleware import TimeoutMiddleware
 from corehq.toggles import toggles_enabled_for_user, toggles_enabled_for_domain
@@ -32,6 +32,8 @@ from corehq.util.metrics import (
     limit_domains,
     metrics_histogram
 )
+
+FORMPLAYER_PERMISSIONS = ['edit_data']
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -105,10 +107,10 @@ class SessionDetailsView(View):
 
         enabled_toggles = toggles_enabled_for_user(user.username) | toggles_enabled_for_domain(domain)
         enabled_previews = previews_enabled_for_domain(domain)
-        permissions = sorted(
-            name for name in HqPermissions.permission_names()
+        permissions = [
+            name for name in FORMPLAYER_PERMISSIONS
             if couch_user.has_permission(domain, name)
-        ) if domain else []
+        ] if domain else []
         self._record_processing_time(start_time, domain)
         return JsonResponse({
             'username': user.username,
