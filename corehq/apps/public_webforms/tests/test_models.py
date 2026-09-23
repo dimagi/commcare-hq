@@ -11,6 +11,7 @@ from django.utils import timezone
 from casexml.apps.phone.xml import get_registration_element_data
 from dimagi.utils.web import get_url_base
 
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import is_new_user
 from corehq.apps.public_webforms.decorators import (
     PUBLIC_FORM_SESSION_COOKIE_NAME,
     PUBLIC_FORM_SESSION_HEADER,
@@ -189,6 +190,22 @@ class PublicFormUserTests(SimpleTestCase):
     def test_has_no_other_permission(self):
         user = PublicFormUser(self.session)
         assert user.has_permission(self.domain, 'edit_data') is False
+
+    def test_has_no_domain_membership(self):
+        user = PublicFormUser(self.session)
+        assert user.get_domain_membership(self.domain) is None
+
+    def test_has_no_role(self):
+        user = PublicFormUser(self.session)
+        assert user.get_role(self.domain, allow_enterprise=True) is None
+
+    def test_has_no_user_data(self):
+        user = PublicFormUser(self.session)
+        assert user.get_user_data(self.domain) == {}
+
+    def test_is_not_a_new_user(self):
+        user = PublicFormUser(self.session)
+        assert is_new_user(user) is False
 
     def test_to_ota_restore_user(self):
         restore_user = PublicFormUser(self.session).to_ota_restore_user(self.domain)
