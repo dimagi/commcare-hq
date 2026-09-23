@@ -13,7 +13,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.web import parse_int
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.app_manager.const import (
     FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS,
