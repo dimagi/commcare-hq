@@ -35,9 +35,11 @@ var selectMenu = function (options) {
 
         gtx.logNavigateMenu(menuResponse);
 
-        //set title of tab to application name
+        // set title of tab to application name, or form name for public sessions
         if (menuResponse.breadcrumbs) {
-            document.title = menuResponse.breadcrumbs[0];
+            document.title = UsersModels.getCurrentUser().displayOptions.publicFormMode
+                ? _.last(menuResponse.breadcrumbs)
+                : menuResponse.breadcrumbs[0];
         }
 
         // show any notifications from Formplayer
@@ -116,8 +118,11 @@ var selectDetail = function (caseId, detailIndex, isPersistent, isMultiSelect) {
 
 var showMenu = function (menuResponse) {
     var menuListView = menusUtils.getMenuView(menuResponse);
-    var appPreview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
-    var sidebarEnabled = !appPreview && menusUtils.isSidebarEnabled(menuResponse);
+    var displayOptions = UsersModels.getCurrentUser().displayOptions;
+    var appPreview = displayOptions.singleAppMode;
+    var publicFormMode = displayOptions.publicFormMode;
+    var showNavigation = !appPreview && !publicFormMode;
+    var sidebarEnabled = showNavigation && menusUtils.isSidebarEnabled(menuResponse);
     if (menuListView && !sidebarEnabled) {
         FormplayerFrontend.regions.getRegion('main').show(menuListView);
     }
@@ -126,22 +131,22 @@ var showMenu = function (menuResponse) {
     } else {
         FormplayerFrontend.regions.getRegion('sidebar').empty();
     }
-    if (menuResponse.persistentCaseTile && !appPreview) {
+    if (menuResponse.persistentCaseTile && showNavigation) {
         showPersistentCaseTile(menuResponse.persistentCaseTile);
     } else {
         FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
     }
 
-    if (menuResponse.breadcrumbs) {
+    if (menuResponse.breadcrumbs && !publicFormMode) {
         menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
-        if (!appPreview) {
-            menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
-        }
     } else {
         FormplayerFrontend.regions.getRegion('breadcrumb').empty();
     }
+    if (menuResponse.breadcrumbs && !appPreview) {
+        menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
+    }
 
-    if (!appPreview && menuResponse.persistentMenu) {
+    if (showNavigation && menuResponse.persistentMenu) {
         FormplayerFrontend.regions.getRegion('persistentMenu').show(
             views.PersistentMenuView({
                 collection: _toMenuCommands(menuResponse.persistentMenu, [], menuResponse.selections),
