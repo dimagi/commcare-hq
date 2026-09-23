@@ -1,0 +1,30 @@
+{% load i18n %}
+
+<div class="alert alert-warning alert-lockout" id="lockout-banner">
+  <i class="fa fa-exclamation-triangle"></i>
+  {% if lockout_banner_can_change_password %}
+    {% url 'change_my_password' as url_change_password %}
+    {% blocktrans trimmed %}
+      New sign-ins to your account are blocked after too many failed attempts.
+      You can keep working in this session, but integrations using your email
+      address will stop working.
+      <a href="{{ url_change_password }}">Change your password</a> to remove the
+      block, then make sure each integration uses valid credentials (such as API
+      keys and passwords).
+    {% endblocktrans %}
+  {% else %}
+    <form id="lockout-banner-logout" action="{% url 'logout' %}" method="post">
+      {% csrf_token %}
+    </form>
+    {% blocktrans trimmed %}
+      New sign-ins to your account are blocked after too many failed attempts.
+      You can keep working in this session, but integrations using your email
+      address will stop working.
+      <button type="submit" form="lockout-banner-logout" class="btn btn-link">
+        Log out
+      </button>
+      and log back in to remove the block, then make sure each integration uses
+      valid credentials (such as API keys).
+    {% endblocktrans %}
+  {% endif %}
+</div>
