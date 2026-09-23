@@ -11,6 +11,7 @@ from django.utils import timezone
 from casexml.apps.phone.xml import get_registration_element_data
 from dimagi.utils.web import get_url_base
 
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import is_new_user
 from corehq.apps.public_webforms.decorators import (
     PUBLIC_FORM_SESSION_COOKIE_NAME,
     PUBLIC_FORM_SESSION_HEADER,
@@ -150,7 +151,7 @@ class PublicFormUserTests(SimpleTestCase):
     def setUp(self):
         super().setUp()
         self.domain = 'public-forms-domain'
-        webform = PublicWebform(domain=self.domain)
+        webform = PublicWebform(domain=self.domain, app_id='the-app')
         self.session = PublicFormSession(public_webform=webform)
 
     def test_user_id_is_shared_public_user_id(self):
@@ -189,6 +190,43 @@ class PublicFormUserTests(SimpleTestCase):
     def test_has_no_other_permission(self):
         user = PublicFormUser(self.session)
         assert user.has_permission(self.domain, 'edit_data') is False
+
+    def test_can_access_only_the_app_the_link_is_bound_to(self):
+        # a form's report fixtures only restore for an app the user can reach
+        user = PublicFormUser(self.session)
+        assert user.can_access_any_web_apps(self.domain) is True
+        assert user.can_access_web_app(self.domain, 'the-app') is True
+        assert user.can_access_web_app(self.domain, 'another-app') is False
+
+    def test_cannot_access_web_apps_in_other_domain(self):
+        user = PublicFormUser(self.session)
+        assert user.can_access_any_web_apps('other-domain') is False
+        assert user.can_access_web_app('other-domain', 'the-app') is False
+
+    def test_denies_an_unlisted_permission_check(self):
+        user = PublicFormUser(self.session)
+        assert user.can_edit_data(self.domain) is False
+
+    def test_raises_on_an_attribute_that_is_not_a_permission(self):
+        user = PublicFormUser(self.session)
+        with pytest.raises(AttributeError):
+            user.some_other_attribute
+
+    def test_has_no_domain_membership(self):
+        user = PublicFormUser(self.session)
+        assert user.get_domain_membership(self.domain) is None
+
+    def test_has_no_role(self):
+        user = PublicFormUser(self.session)
+        assert user.get_role(self.domain, allow_enterprise=True) is None
+
+    def test_has_no_user_data(self):
+        user = PublicFormUser(self.session)
+        assert user.get_user_data(self.domain) == {}
+
+    def test_is_not_a_new_user(self):
+        user = PublicFormUser(self.session)
+        assert is_new_user(user) is False
 
     def test_to_ota_restore_user(self):
         restore_user = PublicFormUser(self.session).to_ota_restore_user(self.domain)
