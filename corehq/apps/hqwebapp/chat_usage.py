@@ -48,7 +48,7 @@ def _get_chat_usage(user_id, current_month, refresh=False):
             raise ChatUsageUnavailable('OCS usage request failed')
         used = response.json()['results']['messages']['human']
         assert used >= 0
-    except (requests.RequestException, ValueError, KeyError, TypeError) as exc:
+    except (requests.RequestException, ValueError, KeyError, TypeError, AssertionError) as exc:
         raise ChatUsageUnavailable(
             'Invalid or unavailable OCS usage response'
         ) from exc
