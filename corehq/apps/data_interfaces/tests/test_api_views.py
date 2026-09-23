@@ -16,11 +16,7 @@ from corehq.apps.users.models import (
 )
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.util.test_utils import (
-    flag_disabled,
-    flag_enabled,
-    privilege_enabled,
-)
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 DOMAIN = 'bulk-action-view-test'
 OTHER_DOMAIN = 'bulk-action-other-domain'
@@ -109,7 +105,6 @@ class BulkFormActionApiTestBase(TestCase):
 
 
 @flag_enabled('API_THROTTLE_WHITELIST')
-@flag_enabled('BULK_FORM_ACTIONS_API')
 @privilege_enabled(privileges.API_ACCESS, privileges.DATA_CLEANUP)
 class TestBulkFormActionApi(BulkFormActionApiTestBase):
 
@@ -183,15 +178,6 @@ class TestBulkFormActionApi(BulkFormActionApiTestBase):
             job = self._job()
             assert_forbidden(self.client.get(self.status_url(job.id.hex)))
 
-    @flag_disabled('BULK_FORM_ACTIONS_API')
-    def test_requires_feature_flag(self):
-        with self.logged_in():
-            assert self.post().status_code == 404
-            assert not BulkAsyncJob.objects.exists()
-
-            job = self._job()
-            assert self.client.get(self.status_url(job.id.hex)).status_code == 404
-
     def test_requires_authentication(self):
         assert self.post().status_code == 401
         assert not BulkAsyncJob.objects.exists()
@@ -233,7 +219,6 @@ class TestBulkFormActionApi(BulkFormActionApiTestBase):
 
 
 @flag_enabled('API_THROTTLE_WHITELIST')
-@flag_enabled('BULK_FORM_ACTIONS_API')
 class TestBulkFormActionApiWithoutPrivileges(BulkFormActionApiTestBase):
     """The project's plan grants neither API Access nor Data Cleanup"""
 
