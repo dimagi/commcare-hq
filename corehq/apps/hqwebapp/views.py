@@ -301,7 +301,7 @@ def _two_factor_needed(domain_name, request):
         )
 
 
-@login_required()
+@login_required
 def password_change(req):
     user_to_edit = User.objects.get(id=req.user.id)
     if req.method == 'POST':
