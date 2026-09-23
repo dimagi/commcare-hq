@@ -141,6 +141,8 @@ class SessionDetailsView(View):
             'authToken': str(public_session_key),
             'domains': [domain],
             'public': True,
+            'app_build_id': session.public_webform.app_build_id,
+            'endpoint_id': session.public_webform.endpoint_id,
             'enabled_toggles': list(sorted(toggles_enabled_for_domain(domain))),
             'enabled_previews': list(previews_enabled_for_domain(domain)),
         })
