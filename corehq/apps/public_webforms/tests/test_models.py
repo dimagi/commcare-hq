@@ -190,6 +190,20 @@ class PublicFormUserTests(SimpleTestCase):
         user = PublicFormUser(self.session)
         assert user.has_permission(self.domain, 'edit_data') is False
 
+    def test_has_no_domain_membership(self):
+        # a restore reads this to decide a timezone, and falls back to the
+        # project's when there is none
+        user = PublicFormUser(self.session)
+        assert user.get_domain_membership(self.domain) is None
+
+    def test_has_no_role(self):
+        user = PublicFormUser(self.session)
+        assert user.get_role(self.domain, allow_enterprise=True) is None
+
+    def test_has_no_user_data(self):
+        user = PublicFormUser(self.session)
+        assert user.get_user_data(self.domain) == {}
+
     def test_to_ota_restore_user(self):
         restore_user = PublicFormUser(self.session).to_ota_restore_user(self.domain)
         assert isinstance(restore_user, OTARestorePublicFormUser)
@@ -283,47 +297,52 @@ class AllowPublicFormSessionTests(TestCase):
     @staticmethod
     def _decorated_view():
         @allow_public_form_session
-        def view(request):
+        def view(request, domain):
             return HttpResponse('ok')
         return view
 
     def test_valid_header_and_cookie_sets_public_form_user(self):
         request = self._request(cookie_value=str(self.session.session_key))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert isinstance(request.couch_user, PublicFormUser)
         assert request.couch_user.user_id == PUBLIC_USER_ID
 
     def test_no_header_leaves_couch_user_untouched(self):
         request = self._request(
             with_header=False, cookie_value=str(self.session.session_key))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_no_cookie_leaves_couch_user_untouched(self):
         request = self._request(cookie_value=None)
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_invalid_cookie_leaves_couch_user_untouched(self):
         request = self._request(cookie_value='not-a-uuid')
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_unknown_key_leaves_couch_user_untouched(self):
         request = self._request(cookie_value=str(uuid4()))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_expired_session_leaves_couch_user_untouched(self):
         self.session.expires_at = datetime.datetime(2000, 1, 1)
         self.session.save()
         request = self._request(cookie_value=str(self.session.session_key))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_submitted_session_leaves_couch_user_untouched(self):
         self.session.submitted_at = datetime.datetime(2020, 1, 1)
         self.session.save()
         request = self._request(cookie_value=str(self.session.session_key))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
+        assert request.couch_user is self.existing_user
+
+    def test_a_different_domain_leaves_couch_user_untouched(self):
+        request = self._request(cookie_value=str(self.session.session_key))
+        self._decorated_view()(request, f'not-{self.webform.domain}')
         assert request.couch_user is self.existing_user
