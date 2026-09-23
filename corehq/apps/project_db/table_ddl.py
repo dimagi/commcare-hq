@@ -2,8 +2,8 @@ import hashlib
 from functools import lru_cache
 from pathlib import Path
 
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.crypto import salted_hmac
 
 import sqlalchemy
 from alembic.migration import MigrationContext
@@ -129,11 +129,9 @@ class DomainSchema:
         ))
 
     def _get_password(self):
-        return salted_hmac(
-            key_salt='corehq.apps.project_db.role_password',
-            value=self.domain,
-            algorithm='sha256',
-        ).hexdigest()
+        # All projectdb_ roles share one password; access is scoped by which
+        # role a domain is given, not by that role having its own secret.
+        return settings.PROJECTDB_USERS_PASSWORD
 
     def get_comment(self, conn):
         """Return the raw domain stored as this schema's Postgres comment"""
