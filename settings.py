@@ -1023,7 +1023,7 @@ OFFBOARDING_PLATFORMS = {
     'sumologic': {
         'access_id': None,
         'access_key': None,
-        'api_url': 'https://api.sumologic.com/api/',
+        'api_url': 'https://api.us2.sumologic.com/api/',
     },
     'hubspot': {
         'access_token': None,
