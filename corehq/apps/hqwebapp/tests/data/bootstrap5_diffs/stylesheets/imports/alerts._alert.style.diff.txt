@@ -16,7 +16,7 @@
    position: relative;
    text-align: center;
    margin-bottom: 0;
-@@ -34,7 +34,7 @@
+@@ -33,7 +33,7 @@
  }
  
  .alert-setting {
@@ -25,7 +25,7 @@
    color: #ffffff;
    border: none;
  
-@@ -42,11 +42,15 @@
+@@ -41,11 +41,15 @@
    a:active,
    a:hover,
    a:link {
@@ -43,7 +43,7 @@
      border: 1px solid #ffffff;
  
      &:active,
-@@ -61,8 +65,8 @@
+@@ -60,8 +64,8 @@
  }
  
  .alert-trial {
@@ -54,7 +54,7 @@
    border: none;
    border-radius: 0;
    font-size: 1.1em;
-@@ -74,18 +78,18 @@
+@@ -73,18 +77,18 @@
      text-decoration: underline;
    }
    a:hover {
