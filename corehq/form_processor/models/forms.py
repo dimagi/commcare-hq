@@ -9,7 +9,6 @@ from django.db import InternalError, models, transaction
 from django.db.models import Q
 
 from jsonfield.fields import JSONField
-from lxml import etree
 from memoized import memoized
 
 from couchforms import const
@@ -35,6 +34,7 @@ from corehq.sql_db.util import (
     paginate_query_across_partitioned_databases,
     split_list_by_db_partition,
 )
+from corehq.util.xml_utils import safe_fromstring
 
 from ..exceptions import (
     AttachmentNotFound,
@@ -751,7 +751,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         xml = self.get_xml()
         if not xml:
             return None
-        return etree.fromstring(xml)
+        return safe_fromstring(xml)
 
     def get_data(self, path):
         """

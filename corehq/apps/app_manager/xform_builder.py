@@ -24,6 +24,8 @@ import uuid
 from lxml import etree
 from lxml.builder import E
 
+from corehq.util.xml_utils import get_safe_xml_parser, safe_fromstring
+
 EMPTY_XFORM = """<?xml version="1.0"?>
 <h:html xmlns:h="http://www.w3.org/1999/xhtml"
         xmlns:orx="http://openrosa.org/jr/xforms"
@@ -86,7 +88,7 @@ class XFormBuilder(object):
             'jr': "http://openrosa.org/javarosa",
             'jrm': "http://dev.commcarehq.org/jr/xforms",
         }
-        strip_spaces = etree.XMLParser(remove_blank_text=True)
+        strip_spaces = get_safe_xml_parser(remove_blank_text=True)
         if source is None:
             xmlns = 'http://openrosa.org/formdesigner/{}'.format(uuid.uuid4())
             self._etree = etree.XML(EMPTY_XFORM.format(name=name, xmlns=xmlns), parser=strip_spaces)
@@ -235,7 +237,7 @@ class XFormBuilder(object):
             if label_safe:
                 return E.text(
                     {'id': self.get_text_id(name, group, choice_name, is_hint)},
-                    etree.fromstring('<value>{}</value>'.format(label))
+                    safe_fromstring('<value>{}</value>'.format(label))
                 )
             return E.text(
                 {'id': self.get_text_id(name, group, choice_name, is_hint)},

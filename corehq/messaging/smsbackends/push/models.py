@@ -1,6 +1,7 @@
 import requests
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.push.forms import PushBackendForm
+from corehq.util.xml_utils import safe_fromstring
 from django.conf import settings
 from lxml import etree
 from xml.sax.saxutils import escape
@@ -85,7 +86,7 @@ class PushBackend(SQLSMSBackend):
             return
 
         try:
-            xml = etree.fromstring(response.text.encode('utf-8'))
+            xml = safe_fromstring(response.text)
         except etree.XMLSyntaxError:
             return
 
