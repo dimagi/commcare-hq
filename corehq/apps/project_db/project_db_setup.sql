@@ -21,6 +21,7 @@ BEGIN
     RAISE EXCEPTION 'refusing to manage role %', role_name;
   END IF;
   EXECUTE format('CREATE ROLE %I WITH LOGIN PASSWORD %L', role_name, role_password);
+  EXECUTE format('GRANT %I TO %I', role_name, current_user);
 END;
 $$;
 
