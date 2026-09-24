@@ -4,7 +4,7 @@ import pytest
 from unmagic import fixture, use
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_id
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     delete_all_apps,
@@ -13,6 +13,7 @@ from corehq.apps.app_manager.tests.util import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.public_webforms.app_builds import (
+    _restrict_reports_to_form,
     create_public_webform_build,
     delete_public_webform_build,
 )
@@ -22,6 +23,36 @@ from corehq.blobs import get_blob_db
 DOMAIN = 'public-webform-endpoints'
 TARGET_MEDIA = 'jr://file/commcare/image/target.png'
 OTHER_MEDIA = 'jr://file/commcare/image/other.png'
+
+
+def _form_source_referencing(*instance_names):
+    refs = ', '.join(f"instance('{name}')/rows" for name in instance_names)
+    return get_simple_form(xmlns='target-form').replace(
+        '<bind nodeset="/data/question1" type="xsd:string" />',
+        f'<bind nodeset="/data/question1" type="xsd:string" calculate="concat({refs})" />',
+    )
+
+
+@pytest.mark.parametrize('instance_name, expected', [
+    ('commcare-reports:used', ['used']),
+    ('commcare-reports-filters:used', ['used']),
+    ('casedb', []),
+], ids=['report', 'report-filter', 'unrelated-instance'])
+def test_restrict_reports_to_form_keeps_only_what_the_form_references(
+    instance_name, expected
+):
+    factory = AppFactory(DOMAIN, build_version='2.51.0')
+    __, form = factory.new_basic_module('survey', 'patient')
+    form.source = _form_source_referencing(instance_name)
+    report_module = factory.new_report_module('reports')
+    report_module.report_configs = [
+        ReportAppConfig(report_id='report-1', report_slug='used'),
+        ReportAppConfig(report_id='report-2', report_slug='unused'),
+    ]
+
+    _restrict_reports_to_form(factory.app, form.unique_id)
+
+    assert [c.report_slug for c in report_module.report_configs] == expected
 
 
 @use('db')
