@@ -4,7 +4,7 @@ import pytest
 from unmagic import fixture, use
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_id
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     delete_all_apps,
@@ -13,27 +13,77 @@ from corehq.apps.app_manager.tests.util import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.public_webforms.app_builds import (
+    _restrict_reports_to_form,
     create_public_webform_build,
     delete_public_webform_build,
 )
+from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.blobs import get_blob_db
 
 DOMAIN = 'public-webform-endpoints'
+TARGET_MEDIA = 'jr://file/commcare/image/target.png'
+OTHER_MEDIA = 'jr://file/commcare/image/other.png'
+
+
+def _form_source_referencing(*instance_names):
+    refs = ', '.join(f"instance('{name}')/rows" for name in instance_names)
+    return get_simple_form(xmlns='target-form').replace(
+        '<bind nodeset="/data/question1" type="xsd:string" />',
+        f'<bind nodeset="/data/question1" type="xsd:string" calculate="concat({refs})" />',
+    )
+
+
+@pytest.mark.parametrize('instance_name, expected', [
+    ('commcare-reports:used', ['used']),
+    ('commcare-reports-filters:used', ['used']),
+    ('casedb', []),
+], ids=['report', 'report-filter', 'unrelated-instance'])
+def test_restrict_reports_to_form_keeps_only_what_the_form_references(
+    instance_name, expected
+):
+    factory = AppFactory(DOMAIN, build_version='2.51.0')
+    __, form = factory.new_basic_module('survey', 'patient')
+    form.source = _form_source_referencing(instance_name)
+    report_module = factory.new_report_module('reports')
+    report_module.report_configs = [
+        ReportAppConfig(report_id='report-1', report_slug='used'),
+        ReportAppConfig(report_id='report-2', report_slug='unused'),
+    ]
+
+    _restrict_reports_to_form(factory.app, form.unique_id)
+
+    assert [c.report_slug for c in report_module.report_configs] == expected
 
 
 @use('db')
 @fixture
 def released_app():
-    """A released build of an app with a basic survey form and no endpoint."""
+    """A released build of an app with two forms, each with its own icon and a profile.
+    """
     domain_obj = Domain.get_or_create_with_name(DOMAIN)
     # session endpoints require CommCare 2.51+ (feature_support)
     factory = AppFactory(DOMAIN, name='PWF App', build_version='2.51.0')
     __, form = factory.new_basic_module('survey', 'patient')
     form.source = get_simple_form(xmlns=form.unique_id)
+    form.set_icon('en', TARGET_MEDIA)
+    __, other_form = factory.new_basic_module('other', 'patient')
+    other_form.source = get_simple_form(xmlns=other_form.unique_id)
+    other_form.set_icon('en', OTHER_MEDIA)
     try:
-        # patch covers the test body too (generate rebuilds, which validates forms)
         with patch_validate_xform():
             app = factory.app
+            app.profile = {
+                'properties': {'cc-autoup-freq': 'freq-never'},
+                'custom_properties': {'cc-internal-thing': 'do not publish'},
+            }
+            app.multimedia_map = {
+                path: HQMediaMapItem(
+                    multimedia_id=f'{name}-media-id',
+                    media_type='CommCareImage',
+                    version=1,
+                )
+                for name, path in [('target', TARGET_MEDIA), ('other', OTHER_MEDIA)]
+            }
             app.save()
             build = app.make_build()
             build.is_released = True
@@ -50,7 +100,7 @@ def released_app():
 
 
 @use(released_app)
-class TestCreatePublicWebformEndpoint:
+class TestCreatePublicWebformBuild:
 
     def test_generates_detached_build_emitting_the_endpoint(self):
         app = released_app()
@@ -93,6 +143,24 @@ class TestCreatePublicWebformEndpoint:
 
         assert build_id != app.build_id
         assert endpoint_id != 'existing-endpoint'
+
+    def test_maps_only_the_media_its_form_uses(self):
+        app = released_app()
+
+        build_id, __ = create_public_webform_build(
+            app.domain, app.app_id, app.form_unique_id)
+
+        build = get_app(app.domain, build_id)
+        assert set(build.multimedia_map) == {TARGET_MEDIA}
+
+    def test_drops_the_projects_custom_properties(self):
+        app = released_app()
+
+        build_id, __ = create_public_webform_build(
+            app.domain, app.app_id, app.form_unique_id)
+
+        build = get_app(app.domain, build_id)
+        assert 'custom_properties' not in build.profile
 
 
 @use(released_app)
