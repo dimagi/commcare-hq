@@ -11,6 +11,10 @@ from uuid import uuid4
 
 from corehq.apps.app_manager.const import NON_BUILD_APP_KEYS
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
+from corehq.apps.app_manager.exceptions import AppManagerException
+from corehq.apps.app_manager.suite_xml.post_process.instances import (
+    get_instance_names,
+)
 from corehq.blobs import get_blob_db
 
 BUILD_COMMENT = "Automatically created for a public webform"
@@ -27,7 +31,17 @@ def create_public_webform_build(domain, app_id, form_unique_id):
     endpoint_id = uuid4().hex
     new_build = _copy_for_build(released_build)
     new_build._force_session_endpoints = True
+    if not new_build.supports_session_endpoints:
+        # the suite would build without the endpoint, leaving a link that only
+        # fails once a respondent opens it
+        raise AppManagerException(
+            f"app {app_id} targets CommCare {released_build.build_version}, "
+            "which cannot emit a session endpoint"
+        )
     new_build.get_form(form_unique_id).session_endpoint_id = endpoint_id
+    _restrict_multimedia_to_form(new_build, form_unique_id)
+    _restrict_reports_to_form(new_build, form_unique_id)
+    new_build.profile.pop('custom_properties', None)
     new_build.convert_app_to_build(
         _public_webform_copy_of(released_build.copy_of),
         user_id=None,
@@ -38,6 +52,35 @@ def create_public_webform_build(domain, app_id, form_unique_id):
     new_build.create_build_files()
     new_build.save()
     return new_build._id, endpoint_id
+
+
+def _restrict_multimedia_to_form(build, form_unique_id):
+    """Drop every media path the target form does not reference.
+    """
+    form_paths = build.get_form(form_unique_id).all_media_paths()
+    build.multimedia_map = {
+        path: media
+        for path, media in (build.multimedia_map or {}).items()
+        if path in form_paths
+    }
+
+
+def _restrict_reports_to_form(build, form_unique_id):
+    """Drop every mobile report the target form does not reference.
+
+    Report fixtures carry project data and restore in full, so a respondent
+    should receive only the ones their form asks for.
+    """
+    source = build.get_form(form_unique_id).source
+    referenced = {
+        name.split(':', 1)[1] for name in get_instance_names(source)
+        if name.startswith(('commcare-reports:', 'commcare-reports-filters:'))
+    }
+    for module in build.get_report_modules():
+        module.report_configs = [
+            config for config in module.report_configs
+            if config.instance_id in referenced
+        ]
 
 
 def delete_public_webform_build(domain, app_build_id):
