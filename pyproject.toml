@@ -76,6 +76,7 @@ dependencies = [
     "lxml",
     "markdown",
     "oic",
+    "openai",
     "pulp", # Used in Geospatial features to solve routing problems - SolTech
     "openpyxl",
     "packaging",
