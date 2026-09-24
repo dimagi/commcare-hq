@@ -796,6 +796,104 @@ msgid "Submit Request"
 msgstr "إرسال الطلب"
 
 #: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Email To"
+msgstr "البريد الإلكتروني إلى"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/reports/forms.py
+msgid "Additional Recipients"
+msgstr "مستلمون إضافيون"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Prepayment Start Date"
+msgstr "تاريخ بدء الدفع المسبق"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Prepayment End Date"
+msgstr "تاريخ انتهاء الدفع المسبق"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Credit Label"
+msgstr "تسمية الرصيد"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Unit Cost"
+msgstr "تكلفة الوحدة"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Quantity"
+msgstr "الكمية"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#, fuzzy
+#| msgid "Send on"
+msgid "Send On"
+msgstr "الإرسال في"
+
+#: corehq/apps/accounting/forms.py
+msgid "Prepayment end date must be after start date."
+msgstr "يجب أن يكون تاريخ نهاية الدفع المسبق بعد تاريخ البدء."
+
+#: corehq/apps/accounting/forms.py
+#, python-brace-format
+msgid "The total prepayment amount cannot be more than ${max_amount}."
+msgstr ""
+
+#: corehq/apps/accounting/forms.py corehq/apps/domain/views/accounting.py
+msgid ""
+"The following e-mail addresses contain invalid characters, or are missing "
+"required characters: "
+msgstr ""
+"عناوين البريد الإلكتروني التالية تحتوي على أحرف غير صالحة أو تفتقد إلى أحرف "
+"مطلوبة: "
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy, python-format
+#| msgid ""
+#| "Username %(username)s is too long.  Must be under %(max_length)s "
+#| "characters."
+msgid "The credit label must be %(max_length)d characters or fewer."
+msgstr ""
+"اسم المستخدم %(username)s طويل جدًا. يجب أن يكون أقل من %(max_length)s حرفًا."
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#, fuzzy
+#| msgid "Expiration Date must be in the future"
+msgid "The send date must be in the future."
+msgstr "يجب أن يكون تاريخ الانتهاء في المستقبل"
+
+#: corehq/apps/accounting/forms.py
+msgid ""
+"This project space has no active subscription, so an invoice cannot be "
+"scheduled for it."
+msgstr ""
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "No project spaces found."
+msgid "Project space '{}' was not found."
+msgstr "لم يتم العثور على مساحات مشاريع."
+
+#: corehq/apps/accounting/forms.py
 #, fuzzy
 #| msgid "Reminder"
 msgid "Renewal Reminder"
@@ -1447,14 +1545,6 @@ msgstr "الأرصدة"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Autopay"
 msgstr "الدفع التلقائي"
-
-#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-#, fuzzy
-#| msgid "Send on"
-msgid "Send On"
-msgstr "الإرسال في"
 
 #: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
@@ -4714,6 +4804,12 @@ msgstr ""
 "بيان من:\n"
 "CommCare HQ والشركة Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+
+#: corehq/apps/accounting/templates/accounting/generate_prepayment_invoice.html
+#, fuzzy
+#| msgid "Generate Prepayment Invoice"
+msgid "Generate Invoice"
+msgstr "إنشاء فاتورة دفع مسبق"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #, python-format
@@ -16053,10 +16149,6 @@ msgid "Smart link to external domain"
 msgstr "رابط ذكي إلى نطاق خارجي"
 
 #: corehq/apps/app_manager/views/modules.py
-msgid "Case list used by Select Parent First in '{}' not found"
-msgstr "قائمة الحالات المستخدمة بواسطة اختيار الأصل أولاً في '{}' غير موجودة"
-
-#: corehq/apps/app_manager/views/modules.py
 msgid "Product List"
 msgstr "قائمة المنتجات"
 
@@ -16088,6 +16180,13 @@ msgstr "تحتوي تسلسل الحالات على مرجع دائري."
 msgid "\"{}\" has sub-menus. You must remove these before you can delete it."
 msgstr ""
 "\"{}\" يحتوي على قوائم فرعية. يجب إزالة هذه القوائم قبل أن تتمكن من حذفها."
+
+#: corehq/apps/app_manager/views/modules.py
+#, python-brace-format
+msgid ""
+"\"{module}\" is used by \"{dependents}\" for Parent Child Selection. Change "
+"or turn off that setting before deleting it."
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py
 #, python-brace-format
@@ -16136,6 +16235,12 @@ msgid ""
 "underscores."
 msgstr ""
 "'{}' هو اسم مثيل غير صالح. يمكن أن يحتوي فقط على أحرف وأرقام وشرطات سفلية."
+
+#: corehq/apps/app_manager/views/modules.py
+#, fuzzy
+#| msgid "Edit Case Data Export"
+msgid "Invalid case search endpoint."
+msgstr "تعديل تصدير بيانات الحالة"
 
 #: corehq/apps/app_manager/views/modules.py
 msgid "There was a problem processing your request."
@@ -27442,31 +27547,6 @@ msgstr "إجمالي الأرصدة"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Prepayment Start Date"
-msgstr "تاريخ بدء الدفع المسبق"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Prepayment End Date"
-msgstr "تاريخ انتهاء الدفع المسبق"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Credit Label"
-msgstr "تسمية الرصيد"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Unit Cost"
-msgstr "تكلفة الوحدة"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Quantity"
-msgstr "الكمية"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 #, fuzzy
 #| msgid "Level to expand to"
 msgid "Leave blank to send now."
@@ -27474,11 +27554,22 @@ msgstr "المستوى الذي يتم التوسيع إليه"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-#: corehq/apps/domain/views/accounting.py
 #, fuzzy
-#| msgid "Expiration Date must be in the future"
-msgid "The send date must be in the future."
-msgstr "يجب أن يكون تاريخ الانتهاء في المستقبل"
+#| msgid ""
+#| "\n"
+#| "      Payment for Statement No.\n"
+#| "      <span data-bind=\"text: invoiceNumber\"></span>\n"
+#| "    "
+msgid ""
+"\n"
+"    Generate Prepayment Invoice for\n"
+"    <span data-bind=\"text: $root.domain\"></span>\n"
+"  "
+msgstr ""
+"\n"
+"      دفع عن الفاتورة رقم\n"
+"      <span data-bind=\"text: invoiceNumber\"></span>\n"
+"    "
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
@@ -27549,17 +27640,6 @@ msgstr ""
 "                  >مزيد من المعلومات...</a\n"
 "                >\n"
 "              "
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Email To"
-msgstr "البريد الإلكتروني إلى"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-#: corehq/apps/reports/forms.py
-msgid "Additional Recipients"
-msgstr "مستلمون إضافيون"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
@@ -29064,51 +29144,6 @@ msgid ""
 msgstr ""
 "حدثت مشكلة أثناء معالجة دفعتك. لم يتم خصم أي مبالغ. نحن نبحث في المشكلة "
 "بأسرع وقت ممكن. نعتذر عن الإزعاج."
-
-#: corehq/apps/domain/views/accounting.py
-msgid ""
-"The following e-mail addresses contain invalid characters, or are missing "
-"required characters: "
-msgstr ""
-"عناوين البريد الإلكتروني التالية تحتوي على أحرف غير صالحة أو تفتقد إلى أحرف "
-"مطلوبة: "
-
-#: corehq/apps/domain/views/accounting.py
-msgid "There was an error processing your request. Please try again."
-msgstr "حدث خطأ أثناء معالجة طلبك. يرجى المحاولة مرة أخرى."
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Prepayment end date must be after start date."
-msgstr "يجب أن يكون تاريخ نهاية الدفع المسبق بعد تاريخ البدء."
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Unit cost must be a decimal number greater than 0."
-msgstr "يجب أن تكون تكلفة الوحدة رقماً عشرياً أكبر من 0."
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Quantity must be a whole number greater than 0."
-msgstr "يجب أن تكون الكمية رقماً صحيحاً أكبر من 0."
-
-#: corehq/apps/domain/views/accounting.py
-#, fuzzy
-#| msgid "A valid end date is required"
-msgid "A send date is required."
-msgstr "مطلوب تاريخ انتهاء صالح"
-
-#: corehq/apps/domain/views/accounting.py
-#, fuzzy, python-format
-#| msgid ""
-#| "Username %(username)s is too long.  Must be under %(max_length)s "
-#| "characters."
-msgid "The credit label must be %(max_length)d characters or fewer."
-msgstr ""
-"اسم المستخدم %(username)s طويل جدًا. يجب أن يكون أقل من %(max_length)s حرفًا."
-
-#: corehq/apps/domain/views/accounting.py
-msgid ""
-"This project space has no active subscription, so an invoice cannot be "
-"scheduled for it."
-msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
 msgid "Dimagi Internal Subscription Management"
@@ -64966,6 +65001,23 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid "Case list used by Select Parent First in '{}' not found"
+#~ msgstr "قائمة الحالات المستخدمة بواسطة اختيار الأصل أولاً في '{}' غير موجودة"
+
+#~ msgid "There was an error processing your request. Please try again."
+#~ msgstr "حدث خطأ أثناء معالجة طلبك. يرجى المحاولة مرة أخرى."
+
+#~ msgid "Unit cost must be a decimal number greater than 0."
+#~ msgstr "يجب أن تكون تكلفة الوحدة رقماً عشرياً أكبر من 0."
+
+#~ msgid "Quantity must be a whole number greater than 0."
+#~ msgstr "يجب أن تكون الكمية رقماً صحيحاً أكبر من 0."
+
+#, fuzzy
+#~| msgid "A valid end date is required"
+#~ msgid "A send date is required."
+#~ msgstr "مطلوب تاريخ انتهاء صالح"
 
 #, fuzzy
 #~| msgid "Parent Type"

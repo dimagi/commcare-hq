@@ -67,6 +67,16 @@ msgstr "Nahitaji vipengele vya ziada/mahususi"
 msgid "Other"
 msgstr "Nyingine"
 
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#| msgid "Schedule Invoice"
+msgid "Generate Invoice"
+msgstr "Tengeneza Ankara"
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+msgid "Schedule Invoice"
+msgstr "Panga Ankara"
+
 #: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
 msgid "Response from Stripe did not complete properly."
 msgstr "Majibu kutoka Stripe hayajakamilika ipasavyo."
@@ -1944,11 +1954,6 @@ msgstr "Una mipangilio ambayo haijabadilishwa"
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
 msgstr "Nunua Mikopo"
-
-#: corehq/apps/domain/static/domain/js/current_subscription.js
-#| msgid "Schedule Broadcast"
-msgid "Schedule Invoice"
-msgstr "Panga Ankara"
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Available Countries"

@@ -10,7 +10,7 @@ from dimagi.utils.parsing import string_to_boolean
 
 from django.urls import re_path as url
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Max, Min, Q
 from django.db.models.functions import TruncDate
 from django.http import (
@@ -68,6 +68,7 @@ from corehq.apps.api.util import (
     django_date_filter,
     get_obj,
     make_date_filter,
+    not_found,
     parse_str_to_date,
     cursor_based_query_for_datasource
 )
@@ -802,8 +803,10 @@ class GroupResource(v0_4.GroupResource):
         return bundle
 
     def obj_update(self, bundle, **kwargs):
-        bundle.obj = Group.get(kwargs['pk'])
-        assert bundle.obj.domain == kwargs['domain']
+        try:
+            bundle.obj = self.obj_get(bundle, **kwargs)
+        except ObjectDoesNotExist:
+            raise not_found('Group not found')
         if self._update(bundle):
             assert bundle.obj.domain == kwargs['domain']
             bundle.obj.save()

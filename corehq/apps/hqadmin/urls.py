@@ -2,6 +2,7 @@ from django.urls import include, re_path as url
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 from corehq.apps.domain.views.tombstone import TombstoneManagement, create_tombstone
+from corehq.apps.hqadmin.offboarding.views import ExternalPlatformOffboardingView
 from corehq.apps.hqadmin.views.data import doc_in_es, download_blob, raw_doc
 from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
@@ -48,6 +49,8 @@ urlpatterns = [
     # username and domain in the url via audit
     url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
     url(r'^get_offboarding_list/$', OffboardingUserList.as_view(), name=OffboardingUserList.urlname),
+    url(r'^offboarding/external_platforms/$', ExternalPlatformOffboardingView.as_view(),
+        name=ExternalPlatformOffboardingView.urlname),
     url(r'^superuser_table.csv$', superuser_table, name='superuser_table'),
     url(r'^tombstone_management/$', TombstoneManagement.as_view(), name=TombstoneManagement.urlname),
     url(r'^email_status/$', email_status, name='email_status'),

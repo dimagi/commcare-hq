@@ -11,6 +11,8 @@ concurrency:
 
 jobs:
   check-branch:
+    # Only run on the canonical repo, not on forks or mirrors
+    if: github.repository == 'dimagi/commcare-hq'
     runs-on: ubuntu-latest
     outputs:
       should-rebuild: >-

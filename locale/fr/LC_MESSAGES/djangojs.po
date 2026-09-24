@@ -62,6 +62,15 @@ msgstr ""
 msgid "Other"
 msgstr ""
 
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+msgid "Generate Invoice"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+msgid "Schedule Invoice"
+msgstr ""
+
 #: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
 msgid "Response from Stripe did not complete properly."
 msgstr ""
@@ -1827,10 +1836,6 @@ msgstr ""
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
-msgstr ""
-
-#: corehq/apps/domain/static/domain/js/current_subscription.js
-msgid "Schedule Invoice"
 msgstr ""
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js

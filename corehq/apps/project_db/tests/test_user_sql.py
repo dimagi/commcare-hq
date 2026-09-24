@@ -1,25 +1,35 @@
 import sys
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy import (
+    ARRAY,
+    Float,
+    Text,
     and_,
     bindparam,
+    cast,
     column,
+    func,
+    literal_column,
     not_,
     nullsfirst,
     nullslast,
     or_,
     select,
     table,
+    text,
     union,
     union_all,
 )
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.exc import ProgrammingError
-from unmagic import fixture, use
+from sqlalchemy.exc import DataError, ProgrammingError
+from unmagic import autouse, fixture, use
 
+from corehq.apps.project_db.populate import coerce_to_gps
+from corehq.apps.project_db.table_ddl import Earth, get_project_db_engine
 from corehq.apps.project_db.user_sql import (
     MAX_TREE_DEPTH,
     BadParameters,
@@ -27,14 +37,23 @@ from corehq.apps.project_db.user_sql import (
     UserSQL,
     UserSQLProgrammingError,
     _bind,
+    _set_timezone,
     translate,
 )
+
+from .util import project_db_table, utc_project
+
+
+autouse(utc_project, __file__)
+
 
 CLIENT = table('client', column('case_id'), column('name'))
 VISIT = table('visit', column('visit_id'), column('parent_id'), column('name'))
 FORM = table('form', column('form_id'), column('visit_id'))
 SURVEY = table('survey', column('symptoms'))
-TABLES = {'client': CLIENT, 'visit': VISIT, 'form': FORM, 'survey': SURVEY}
+GEO = table('geo', column('case_id'), column('gps_prop__location', Earth))
+TABLES = {'client': CLIENT, 'visit': VISIT, 'form': FORM, 'survey': SURVEY,
+          'geo': GEO}
 
 ON = CLIENT.c.case_id == VISIT.c.parent_id
 CLIENT_VISIT = CLIENT.join(VISIT, ON)
@@ -43,6 +62,30 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
 # An alias is what makes joining a table to itself possible
 VISIT_V, VISIT_P = VISIT.alias('v'), VISIT.alias('p')
 SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
+
+
+def _string_to_array(value, delimiter):
+    return func.string_to_array(value, delimiter, type_=ARRAY(Text))
+
+
+def _interval(unit, count):
+    return func.make_interval(literal_column(unit).op('=>')(_bind(count)))
+
+
+def _within_distance(coordinates, meters):
+    """The bounding box and exact distance test `within_distance` stands for"""
+    location = GEO.c.gps_prop__location
+    center = func.ll_to_earth(*(
+        cast(
+            func.split_part(coordinates, literal_column("' '"), literal_column(i)),
+            Float
+        )
+        for i in ('1', '2')
+    ))
+    return and_(
+        func.earth_box(center, meters).bool_op('@>')(location),
+        func.earth_distance(center, location) < meters,
+    )
 
 
 @pytest.mark.parametrize('sql, expected', [
@@ -57,6 +100,8 @@ SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
      select([CLIENT.c.case_id.label('My Id')])),
 
     ("SELECT * FROM client WHERE name = 'x'",
+     select([CLIENT]).where(CLIENT.c.name == _bind('x'))),
+    ("SELECT * FROM client WHERE name = ('x')",
      select([CLIENT]).where(CLIENT.c.name == _bind('x'))),
     ("SELECT * FROM client WHERE name <> 'x'",
      select([CLIENT]).where(CLIENT.c.name != _bind('x'))),
@@ -187,6 +232,55 @@ SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
      select([SURVEY]).where(SURVEY.c.symptoms.bool_op('&&')(_bind(['fever'])))),
     ("SELECT * FROM survey WHERE symptoms @> '{fever,cough}'",
      select([SURVEY]).where(SURVEY.c.symptoms.bool_op('@>')(_bind('{fever,cough}')))),
+
+    # Split a string param to an array
+    ("SELECT * FROM survey WHERE string_to_array(:s, ',') <@ symptoms",
+     select([SURVEY]).where(
+         _string_to_array(bindparam('s'), _bind(','))
+         .bool_op('<@')( SURVEY.c.symptoms))),
+    # A text column can be split too
+    ("SELECT * FROM client WHERE string_to_array(name, ' ') && ARRAY['fever']",
+     select([CLIENT]).where(
+         _string_to_array(CLIENT.c.name, _bind(' ')).bool_op('&&')(
+             _bind(['fever'])))),
+
+    ('SELECT * FROM client WHERE sounds_like(name, :name)',
+     select([CLIENT]).where(
+         func.dmetaphone(CLIENT.c.name) == func.dmetaphone(bindparam('name')))),
+    ('SELECT * FROM client WHERE fuzzy_match(name, :name)',
+     select([CLIENT]).where(CLIENT.c.name % bindparam('name'))),
+    ('SELECT * FROM client WHERE similar_name(name, :name)',
+     select([CLIENT]).where(or_(
+         CLIENT.c.name % bindparam('name'),
+         func.dmetaphone(CLIENT.c.name) == func.dmetaphone(bindparam('name'))))),
+    ("SELECT * FROM geo WHERE within_distance(gps_prop__location, '42.44 -71.14', 5000)",
+     select([GEO]).where(_within_distance(_bind('42.44 -71.14'), _bind(5000.0)))),
+    ('SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius)',
+     select([GEO]).where(_within_distance(bindparam('center'), bindparam('radius')))),
+
+    ('SELECT * FROM client WHERE name = today()',
+     select([CLIENT]).where(CLIENT.c.name == func.current_date())),
+    ('SELECT * FROM client WHERE name < now()',
+     select([CLIENT]).where(CLIENT.c.name < func.now())),
+    # Each is also spelled as a SQL keyword
+    ('SELECT * FROM client WHERE name = CURRENT_DATE',
+     select([CLIENT]).where(CLIENT.c.name == func.current_date())),
+    ('SELECT * FROM client WHERE name < CURRENT_TIMESTAMP',
+     select([CLIENT]).where(CLIENT.c.name < func.now())),
+
+    ('SELECT * FROM client WHERE name > now() - make_interval(days => :window)',
+     select([CLIENT]).where(
+         CLIENT.c.name > func.now() - func.make_interval(
+             literal_column('days').op('=>')(bindparam('window'))))),
+    ('SELECT * FROM client WHERE name > now() - make_interval(days => 30)',
+     select([CLIENT]).where(CLIENT.c.name > func.now() - _interval('days', 30))),
+    ('SELECT * FROM client WHERE name > (now() - make_interval(days => 30))',
+     select([CLIENT]).where(CLIENT.c.name > func.now() - _interval('days', 30))),
+    ('SELECT * FROM client WHERE name > now() - make_interval(years => :y, mins => :m)',
+     select([CLIENT]).where(
+         CLIENT.c.name > func.now() - func.make_interval(
+             literal_column('years').op('=>')(bindparam('y')),
+             literal_column('mins').op('=>')(bindparam('m'))))),
 ])
 def test_valid_queries(sql, expected):
     assert _compiled(translate(sql, TABLES)) == _compiled(expected)
@@ -251,6 +345,29 @@ def _compiled(query):
     'SELECT * FROM client WHERE name IN (SELECT name FROM client)',  # IN a subquery
     'SELECT * FROM client WHERE name',            # not a comparison
     "SELECT * FROM client WHERE LOWER(name) = 'x'",  # function call
+    'SELECT * FROM client WHERE bogus(name)',        # unknown function call
+
+    # `within_distance` takes 3 args, GPS column, coordinates, and a distance
+    "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2')",
+    "SELECT * FROM geo WHERE within_distance(gps_prop__location, case_id, 5)",
+    "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2', '5')",
+    # The column must be a GPS column, not just any column
+    "SELECT * FROM geo WHERE within_distance(case_id, '1 2', 5)",
+
+    # `string_to_array` takes a string and a literal delimiter
+    "SELECT * FROM survey WHERE symptoms && string_to_array(:s, :delim)",
+    "SELECT * FROM survey WHERE symptoms && string_to_array(:s, ',', 'NULL')",
+    # `sounds_like` takes exactly two values
+    "SELECT * FROM client WHERE sounds_like(name)",
+    "SELECT * FROM client WHERE sounds_like(name, 'a', 'b')",
+    # `fuzzy_match` takes exactly two values; the threshold is fixed
+    "SELECT * FROM client WHERE fuzzy_match(name)",
+    "SELECT * FROM client WHERE fuzzy_match(name, 'a', 0.5)",
+    "SELECT * FROM client WHERE similar_name(name)",
+    "SELECT * FROM client WHERE similar_name(name, 'a', 'b')",
+
+    # Only columns can be selected or ordered by
+    "SELECT string_to_array(name, ' ') FROM client",
 
     # Only `JOIN` and `LEFT JOIN` are supported for now.
     'SELECT * FROM client INNER JOIN visit ON client.case_id = visit.parent_id',
@@ -268,6 +385,20 @@ def _compiled(query):
     "SELECT * FROM client AS c WHERE client.name = 'x'",  # table must be referenced by alias
     f'SELECT name {JOIN_SQL}',              # ambiguous, both tables have `name`
     f'SELECT client.visit_id {JOIN_SQL}',   # column belongs to the other table
+
+    'SELECT * FROM client WHERE name = today(1)',     # This doesn't take an arg
+    'SELECT * FROM client WHERE name = now(1)',       # This doesn't take an arg
+    'SELECT * FROM client WHERE name = yesterday()',  # not a valid value function
+
+    # make_interval names its units, and counts them in whole numbers
+    'SELECT * FROM client WHERE name > now() - make_interval(0, 0, 0, 30)',
+    'SELECT * FROM client WHERE name > now() - make_interval(fortnights => 1)',
+    'SELECT * FROM client WHERE name > now() - make_interval()',
+    "SELECT * FROM client WHERE name > now() - make_interval(days => '30')",
+    'SELECT * FROM client WHERE name > now() - make_interval(days => 1.5)',
+    'SELECT * FROM client WHERE name > now() - make_interval(days => case_id)',
+    'SELECT * FROM client WHERE name > case_id - name',  # arithmetic is unsupported
+
 ])
 def test_rejects_unsupported(sql):
     with pytest.raises(UnsupportedSQL):
@@ -328,6 +459,8 @@ def _user_sql(sql):
     # Literals are already bound, and a parameter used twice is listed once
     ("SELECT * FROM client WHERE name = :who AND case_id = 'c1' OR name = :who",
      ['who']),
+    ('SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius)',
+     ['center', 'radius']),
 ])
 def test_parameters(sql, expected):
     assert _user_sql(sql).parameters == expected
@@ -409,11 +542,113 @@ def test_allows_nesting_up_to_the_limit():
     assert translate(sql, TABLES) is not None
 
 
-def test_run_reports_a_database_error():
+@use('db', project_db_table('test-within-distance', 'patient', {'location': 'gps'}, (
+    ['case_id', 'owner_id', 'gps_prop__location'], [
+        ['far', 'o', coerce_to_gps('44.1710 -71.1097')],
+        ['near', 'o', coerce_to_gps('42.3736 -71.1097')],
+        # 5.5km away, but inside the 5km bounding box, which is square.
+        ['corner', 'o', coerce_to_gps('42.4086 -71.0623')],
+        ['null', 'o', None],
+    ]
+)))
+def test_within_distance_db_test():
+
+    def matching(radius):
+        user_sql = UserSQL('test-within-distance', (
+            'SELECT case_id FROM patient '
+            'WHERE within_distance(gps_prop__location, :center, :radius) '
+            'ORDER BY case_id'))
+        result = user_sql.run({'center': '42.3736 -71.1097', 'radius': radius})
+        return [row['case_id'] for row in result.rows]
+
+    assert matching(5000) == ['near']
+    # A case with no location never matches, whatever the radius
+    assert matching(300_000) == ['corner', 'far', 'near']
+
+
+@use('db', project_db_table('test-string-to-array', 'survey', {'symptoms': 'select'}, (
+    ['case_id', 'owner_id', 'select_prop__symptoms'], [
+        ['both', 'o', ['fever', 'cough']],
+        ['fever', 'o', ['fever']],
+        ['none', 'o', []],
+    ]
+)))
+def test_string_to_array_db_test():
+
+    def matching(operator, symptoms):
+        user_sql = UserSQL('test-string-to-array', (
+            'SELECT case_id FROM survey '
+            f"WHERE select_prop__symptoms {operator} string_to_array(:symptoms, ' ') "
+            'ORDER BY case_id'))
+        result = user_sql.run({'symptoms': symptoms})
+        return [row['case_id'] for row in result.rows]
+
+    # 'fever cough' and 'fever' both overlap with 'fever rash'
+    assert matching('&&', 'fever rash') == ['both', 'fever']
+    # 'fever cough' and 'fever' both contain 'fever'
+    assert matching('@>', 'fever') == ['both', 'fever']
+    # Only 'fever cough' contains the items 'fever cough'
+    assert matching('@>', 'fever cough') == ['both']
+    # An empty array is contained by every row, including the empty one
+    # 'fever' and '' are contained by 'fever'
+    assert matching('<@', 'fever') == ['fever', 'none']
+
+
+NAME_MATCH_DOMAIN = 'test-name-matching'
+
+
+@fixture(scope='module')
+def name_table():
+    return project_db_table(NAME_MATCH_DOMAIN, 'client', {'name': 'plain'}, (
+        ['case_id', 'owner_id', 'prop__name'], [
+            ['smith', 'o', 'Smith'],
+            ['smyth', 'o', 'Smyth'],
+            ['brown', 'o', 'Brown'],
+            ['michael', 'o', 'Michael'],
+            ['mitchell', 'o', 'Mitchell'],
+            ['john', 'o', 'John'],
+            ['robert', 'o', 'Robert'],
+        ]
+    ))
+
+
+@use('db', name_table)
+@pytest.mark.parametrize('predicate, name, expected', [
+    ('sounds_like', 'Smythe', ['smith', 'smyth']),
+    ('sounds_like', 'Braun', ['brown']),
+    ('sounds_like', 'Micheal', ['mitchell']),
+    ('fuzzy_match', 'Micheal', ['michael']),
+    ('fuzzy_match', 'Roberto', ['robert']),
+    ('fuzzy_match', 'Braun', []),
+    ('similar_name', 'Micheal', ['michael', 'mitchell']),
+    ('similar_name', 'Braun', ['brown']),
+    ('similar_name', 'Richard', []),
+])
+def test_name_matching(predicate, name, expected):
+    user_sql = UserSQL(NAME_MATCH_DOMAIN, (
+        'SELECT case_id FROM client '
+        f'WHERE {predicate}(prop__name, :name) '
+        'ORDER BY case_id'))
+    rows = user_sql.run({'name': name}).rows
+    assert [row['case_id'] for row in rows] == expected
+
+
+@use('db')
+def test_set_timezone_lasts_for_one_transaction():
+    with get_project_db_engine().begin() as conn:
+        _set_timezone(conn, 'Asia/Kolkata')
+        assert conn.execute(text('SHOW TimeZone')).scalar() == 'Asia/Kolkata'
+    with get_project_db_engine().begin() as conn:
+        assert conn.execute(text('SHOW TimeZone')).scalar() != 'Asia/Kolkata'
+
+
+@pytest.mark.parametrize('error_class', [ProgrammingError, DataError])
+def test_run_reports_a_database_error(error_class):
     msg = 'column "nope" does not exist\nLINE 1: ...'
     engine = MagicMock()
-    engine.connect().__enter__().execute.side_effect = ProgrammingError(
-        'SELECT 1', {}, Exception(msg))
+    # The first side_effect is from setting the timezone
+    engine.begin().__enter__().execute.side_effect = [
+        None, error_class('SELECT 1', {}, Exception(msg))]
     user_sql = _user_sql('SELECT * FROM client')
     with patch('corehq.apps.project_db.user_sql.get_project_db_engine',
                return_value=engine):
@@ -428,3 +663,58 @@ def test_max_rows_applies_limit():
         actual = _compiled(user_sql.query)
     expected = _compiled(select([CLIENT.c.name]).limit(_bind(5)))
     assert actual == expected
+
+
+DATE_DOMAIN = 'test-dates'
+UTC = timezone.utc
+
+
+@fixture(scope='module')
+def date_table():
+    return project_db_table(DATE_DOMAIN, 'visit', {'visit_date': 'date'}, (
+        ['case_id', 'owner_id', 'date_prop__visit_date', 'opened_on'], [
+            ['jan', 'o', date(2025, 1, 15), datetime(2025, 1, 15, 9, 30, tzinfo=UTC)],
+            ['jun', 'o', date(2025, 6, 1), datetime(2025, 6, 1, 0, 0, tzinfo=UTC)],
+            ['dec', 'o', date(2025, 12, 31), datetime(2025, 12, 31, 23, 59, tzinfo=UTC)],
+            ['undated', 'o', None, None],
+        ]
+    ))
+
+
+@use('db', date_table)
+@pytest.mark.parametrize('where, params, expected', [
+    ('date_prop__visit_date >= :start AND date_prop__visit_date < :end',
+     {'start': '2025-01-01', 'end': '2025-07-01'}, ['jan', 'jun']),
+    ('opened_on >= :start', {'start': '2025-06-01'}, ['dec', 'jun']),
+    ("date_prop__visit_date > '2025-06-01'", {}, ['dec']),
+    ("date_prop__visit_date = '2025-06-01'", {}, ['jun']),
+    # A datetime bound is midnight, so an inclusive upper bound drops that day
+    ("opened_on <= '2025-12-31'", {}, ['jan', 'jun']),
+    # A case with no date never matches
+    ("date_prop__visit_date < '2026-01-01'", {}, ['dec', 'jan', 'jun']),
+    ('date_prop__visit_date IS NULL', {}, ['undated']),
+    ('date_prop__visit_date < today()', {}, ['dec', 'jan', 'jun']),
+    ('opened_on < now()', {}, ['dec', 'jan', 'jun']),
+    ('date_prop__visit_date > today()', {}, []),
+    # Every visit is more than a month old, and none is in the future
+    ('opened_on > now() - make_interval(days => :days)', {'days': 30}, []),
+    ('date_prop__visit_date > today() - make_interval(years => :years)',
+     {'years': 5}, ['dec', 'jan', 'jun']),
+])
+def test_date_bounds(where, params, expected):
+    user_sql = UserSQL(DATE_DOMAIN, f'SELECT case_id FROM visit WHERE {where} ORDER BY case_id')
+    rows = user_sql.run(params).rows
+    assert [row['case_id'] for row in rows] == expected
+
+
+@use('db', date_table)
+@pytest.mark.parametrize('project_timezone, expected', [
+    ('UTC', ['dec', 'jan', 'jun']),
+    ('Asia/Kolkata', ['jan', 'jun']),
+])
+def test_bounds_resolve_in_the_project_timezone(project_timezone, expected):
+    # 2026-01-01 in Kolkata is 2025-12-31T18:30 UTC
+    user_sql = UserSQL(DATE_DOMAIN, "SELECT case_id FROM visit WHERE opened_on < '2026-01-01' ORDER BY case_id")
+    with patch.object(UserSQL, 'timezone', project_timezone):
+        rows = user_sql.run({}).rows
+    assert [row['case_id'] for row in rows] == expected

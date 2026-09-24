@@ -7,8 +7,8 @@ from corehq.messaging.smsbackends.ivory_coast_mtn.forms import IvoryCoastMTNBack
 from corehq.apps.sms.models import SMS
 from corehq.apps.sms.util import strip_plus
 from corehq.util.timezones.conversions import ServerTime
+from corehq.util.xml_utils import safe_fromstring
 from django.conf import settings
-from lxml import etree
 
 
 class IvoryCoastMTNBackend(SQLSMSBackend):
@@ -84,7 +84,7 @@ class IvoryCoastMTNBackend(SQLSMSBackend):
 
     @staticmethod
     def get_result_and_transaction_id(response_text):
-        root_tag = etree.fromstring(response_text.encode('utf-8'))
+        root_tag = safe_fromstring(response_text.encode('utf-8'))
         result_tag = root_tag.find('{http://pmmsoapmessenger.com/}Result')
         transaction_id_tag = root_tag.find('{http://pmmsoapmessenger.com/}TransactionID')
 
