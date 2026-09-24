@@ -126,6 +126,19 @@ class PublicFormSession(models.Model):
         ).first()
 
     @classmethod
+    def get_active_session_by_id(cls, public_webform, session_id):
+        try:
+            session_uuid = UUID(str(session_id))
+        except (ValueError, TypeError):
+            return None
+        return cls.objects.filter(
+            public_webform=public_webform,
+            id=session_uuid,
+            submitted_at__isnull=True,
+            expires_at__gt=timezone.now(),
+        ).first()
+
+    @classmethod
     def get_active_session_for_contact(cls, public_webform, email=None, phone_number=None):
         assert bool(email) != bool(phone_number)
         contact = {'email': email} if email else {'phone_number': phone_number}

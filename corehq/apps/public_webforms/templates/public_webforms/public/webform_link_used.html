@@ -1,0 +1,19 @@
+{% extends "public_webforms/public/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "One-Time Link" %}{% endblock title %}
+
+{% block page_name %}{% trans "Link No Longer Available" %}{% endblock page_name %}
+
+{% block page_content %}
+  <div class="lead">
+    {% blocktrans %}
+      One-time links expire after a short time, and can only be used once.
+    {% endblocktrans %}
+  </div>
+  <p class="mt-4">
+    {% blocktrans %}
+      Request a new link to fill out this form.
+    {% endblocktrans %}
+  </p>
+{% endblock page_content %}
