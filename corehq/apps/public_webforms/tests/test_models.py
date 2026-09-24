@@ -275,8 +275,10 @@ class OTARestorePublicFormUserTests(SimpleTestCase):
         assert self.restore_user.user_session_data == {}
         assert self.restore_user.date_joined == self.session.created_at
 
-    def test_no_owner_ids(self):
-        assert self.restore_user.get_owner_ids() == []
+    def test_owns_only_itself(self):
+        # never empty: a restore drops an empty owner filter and syncs the
+        # whole project, so this has to be an id nothing can be owned by
+        assert self.restore_user.get_owner_ids() == [self.session.session_username]
 
     def test_no_locations(self):
         assert self.restore_user.get_location_ids(self.domain) == []
