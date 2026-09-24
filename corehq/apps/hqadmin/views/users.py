@@ -72,6 +72,7 @@ from corehq.toggles.sql_models import ToggleEditPermission
 from corehq.util import reverse
 from corehq.util.bounced_email_utils import get_email_statuses
 from corehq.util.timer import TimingContext
+from corehq.util.xml_utils import safe_fromstring
 
 
 class UserAdministration(BaseAdminSectionView):
@@ -462,7 +463,7 @@ class AdminRestoreView(TemplateView):
         timing_context = timing_context or TimingContext(self.user.username)
         if isinstance(response, StreamingHttpResponse):
             string_payload = b''.join(response.streaming_content)
-            xml_payload = etree.fromstring(string_payload)
+            xml_payload = safe_fromstring(string_payload)
             context.update(self.get_stats_from_xml(xml_payload))
         else:
             if response.status_code in (401, 404):
@@ -470,7 +471,7 @@ class AdminRestoreView(TemplateView):
                 xml_payload = E.error(response.content.decode())
             elif response.status_code == 412:
                 # RestoreConfig.get_response returned HttpResponse 412. Response content is already XML
-                xml_payload = etree.fromstring(response.content)
+                xml_payload = safe_fromstring(response.content)
             else:
                 message = _(
                     'Unexpected restore response {}: {}. '

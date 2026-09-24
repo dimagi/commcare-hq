@@ -25,6 +25,7 @@ Schema:
  * prop__ columns are not nullable; unset properties are stored as the empty string.
  * Cases link to each other through parent_id and host_id, which hold the
    case_id of a case in another table.
+ * Datetime columns carry a timezone, and will be queried in the project timezone
 
 Supported SQL:
  * SELECT of a column list or *, with optional AS aliases.
@@ -36,12 +37,29 @@ Supported SQL:
    literals with =, <>, <, <=, >, >=, IS NULL/TRUE/FALSE and IN.
  * Array containment against an ARRAY['a', 'b'] literal, for select_prop__
    columns: @> holds all of these, <@ holds only these, && holds any of these.
+ * string_to_array(value, '<delimiter>'), which splits text into an array to
+   compare against those columns. The delimiter must be a literal, so a
+   parameter holding 'fever cough' is written string_to_array(:symptoms, ' ').
+ * within_distance(gps_prop__ column, '<latitude> <longitude>', meters), which
+   matches cases within that distance of the point.
+ * Name matching, comparing two values case-insensitively:
+   sounds_like(a, b) matches by pronunciation (Smith/Smyth, Brown/Braun),
+   fuzzy_match(a, b) by spelling (Michael/Micheal, Robert/Roberto), and
+   similar_name(a, b) matches if either does.
+ * Dates and times, which resolve in the project's timezone. now() gives the
+   current time and today() the current date. A date or time written as a
+   literal is read in that same timezone, so '2026-01-01' means midnight there.
+ * make_interval(days => 30), added to or subtracted from a date or time, as in
+   opened_on > now() - make_interval(months => 3). Its units are years, months,
+   weeks, days, hours, mins and secs, and a count may be a parameter or integer literal
  * ORDER BY a column, with ASC/DESC and NULLS FIRST/LAST.
  * UNION and UNION ALL of the above.
  * Named :parameters wherever a literal is allowed
 
 Not supported:
- * Aggregates, function calls, arithmetic and casts (::type).
+ * Aggregates, other function calls and casts (::type).
+ * Arithmetic, apart from shifting a date or time by an interval.
+ * INTERVAL literals, such as INTERVAL '30 days'. Use make_interval() instead.
  * GROUP BY, LIMIT, LIKE and BETWEEN.
  * Negative numbers.
  * Subqueries and CTEs.

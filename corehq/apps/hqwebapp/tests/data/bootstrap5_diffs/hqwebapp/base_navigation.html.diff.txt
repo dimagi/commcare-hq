@@ -9,7 +9,7 @@
    {% if show_trial_banner %}
      {% include "hqwebapp/partials/trial_banner.html" %}
    {% endif %}
-@@ -17,47 +17,11 @@
+@@ -20,47 +20,11 @@
  {% endblock pre_navigation_content %}
  
  {% block navigation %}
@@ -59,7 +59,7 @@
        <div class="navbar-header hq-header">
          <a
            href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}"
-@@ -66,50 +30,69 @@
+@@ -69,50 +33,69 @@
            {% if CUSTOM_LOGO_URL %}
              <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
            {% else %}
@@ -151,7 +151,7 @@
  {% endblock post_navigation_content %}
  
  {% block messages %}
-@@ -119,10 +102,15 @@
+@@ -122,10 +105,15 @@
          {% if messages %}
            {% for message in messages %}
              <div
@@ -169,7 +169,7 @@
              </div>
            {% endfor %}
          {% endif %}
-@@ -131,9 +119,17 @@
+@@ -134,9 +122,17 @@
            class="ko-template"
            data-bind="foreach: {data: alerts, beforeRemove: fadeOut}"
          >
@@ -189,7 +189,7 @@
            </div>
          </div>
        </div>
-@@ -143,16 +139,16 @@
+@@ -146,16 +142,16 @@
  
  {% block footer %}
    {% if not enterprise_mode %}

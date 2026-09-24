@@ -8,8 +8,6 @@ from django.db.models import Q
 from django.test import TestCase
 from django.test.utils import override_settings
 
-from lxml import etree
-
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import (
     check_xml_line_by_line,
@@ -59,6 +57,7 @@ from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.models import CommCareCase, LedgerTransaction, XFormInstance
 from corehq.form_processor.tests.utils import sharded
 from corehq.sql_db.util import paginate_query_across_partitioned_databases
+from corehq.util.xml_utils import safe_fromstring
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
@@ -223,7 +222,7 @@ class CommTrackOTATest(XMLTest):
         balance_blocks = _get_ota_balance_blocks(self.domain, self.user)
         self.assertEqual(1, len(balance_blocks))
         [balance_block] = balance_blocks
-        element = etree.fromstring(balance_block)
+        element = safe_fromstring(balance_block)
         self.assertEqual(3, len([child for child in element]))
 
     def _save_settings_and_clear_cache(self):

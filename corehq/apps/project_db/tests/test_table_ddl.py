@@ -257,6 +257,7 @@ def test_case_table_basics():
     assert isinstance(table.c['select_prop__favorite_color'].type.item_type, sqlalchemy.Text)
     assert isinstance(table.c['prop__dob'].type, sqlalchemy.Text)
     assert isinstance(table.c['date_prop__dob'].type, sqlalchemy.Date)
+    assert table.c['opened_on'].type.timezone is True
     assert isinstance(table.c['prop__children_count'].type, sqlalchemy.Text)
     assert isinstance(table.c['number_prop__children_count'].type, sqlalchemy.Numeric)
     assert isinstance(table.c['prop__location'].type, sqlalchemy.Text)
@@ -381,6 +382,7 @@ def _assert_db_created_as_expected(schema):
         col_types = {name: col['type'] for name, col in cols.items()}
         assert isinstance(col_types['case_name'], sqlalchemy.Text)
         assert isinstance(col_types['opened_on'], sqlalchemy.DateTime)
+        assert col_types['opened_on'].timezone is True
         assert isinstance(col_types['prop__nickname'], sqlalchemy.Text)
         assert isinstance(col_types['prop__dob'], sqlalchemy.Text)
         assert 'date_prop__dob' not in cols
@@ -436,3 +438,4 @@ def test_case_table_reflect():
     assert isinstance(table.c['prop__nickname'].type, sqlalchemy.Text)
     assert isinstance(table.c['prop__dob'].type, sqlalchemy.Text)
     assert isinstance(table.c['date_prop__dob'].type, sqlalchemy.Date)
+    assert table.c['opened_on'].type.timezone is True

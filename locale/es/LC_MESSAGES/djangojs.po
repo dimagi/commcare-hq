@@ -69,6 +69,16 @@ msgstr "Necesito funciones adicionales/personalizadas"
 msgid "Other"
 msgstr "Otro"
 
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#| msgid "Schedule Invoice"
+msgid "Generate Invoice"
+msgstr "Generar factura"
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+msgid "Schedule Invoice"
+msgstr "Programar factura"
+
 #: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
 msgid "Response from Stripe did not complete properly."
 msgstr "La respuesta de Stripe no se completó correctamente."
@@ -1960,11 +1970,6 @@ msgstr "Tiene configuraciones sin cambiar"
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
 msgstr "Comprar Créditos"
-
-#: corehq/apps/domain/static/domain/js/current_subscription.js
-#| msgid "Schedule Broadcast"
-msgid "Schedule Invoice"
-msgstr "Programar factura"
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js
 msgid "Available Countries"

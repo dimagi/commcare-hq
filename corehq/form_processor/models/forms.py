@@ -9,7 +9,6 @@ from django.db import InternalError, models, transaction
 from django.db.models import Q
 
 from jsonfield.fields import JSONField
-from lxml import etree
 from memoized import memoized
 
 from couchforms import const
@@ -35,6 +34,7 @@ from corehq.sql_db.util import (
     paginate_query_across_partitioned_databases,
     split_list_by_db_partition,
 )
+from corehq.util.xml_utils import safe_fromstring
 
 from ..exceptions import (
     AttachmentNotFound,
@@ -195,6 +195,18 @@ class XFormInstanceManager(RequireDBManager):
                 .values_list('form_id', flat=True)
             )
         return result
+
+    def get_deleted_form_ids(self, domain, form_ids):
+        """Return the subset of ``form_ids`` that are soft deleted in ``domain``"""
+        deleted_ids = []
+        for db_name, db_form_ids in split_list_by_db_partition(form_ids):
+            deleted_ids.extend(
+                self.using(db_name)
+                .filter(domain=domain, form_id__in=db_form_ids,
+                        deleted_on__isnull=False)
+                .values_list('form_id', flat=True)
+            )
+        return deleted_ids
 
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
@@ -739,7 +751,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         xml = self.get_xml()
         if not xml:
             return None
-        return etree.fromstring(xml)
+        return safe_fromstring(xml)
 
     def get_data(self, path):
         """

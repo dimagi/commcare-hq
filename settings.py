@@ -297,6 +297,7 @@ HQ_APPS = (
     'corehq.apps.programs',
     'corehq.apps.project_db',
     'corehq.apps.public_webforms',
+    'corehq.apps.short_links',
     'corehq.apps.registry.app_config.RegistryAppConfig',
     'corehq.project_limits',
     'corehq.apps.commtrack',
@@ -1011,6 +1012,28 @@ METRICS_PROVIDERS = []
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
 
+OFFBOARDING_PLATFORMS = {
+    'datadog': {
+        'api_key': None,
+        'app_key': None,
+        'site': 'datadoghq.com',
+    },
+    'sentry': {
+        'auth_token': None,
+        'api_url': 'https://sentry.io/api/0/',
+        'org_slug': None,
+    },
+    'sumologic': {
+        'access_id': None,
+        'access_key': None,
+        'api_url': 'https://api.us2.sumologic.com/api/',
+    },
+    'hubspot': {
+        'access_token': None,
+    },
+}
+OFFBOARDING_PROTECTED_EMAILS = []
+
 SYNCLOGS_SQL_DB_ALIAS = 'default'
 
 # A dict of django apps in which the reads are
@@ -1190,6 +1213,7 @@ DATA_RETENTION_WINDOW = 90  # days
 # ID of the chatbot in Open Chat Studio
 AI_CHATBOT_ID = None
 AI_CHATBOT_TOKEN = None
+OCS_API_KEY = None
 
 # Platform-wide defaults for AI app translations, used where no
 # AITranslationConfig row overrides them. Override in localsettings.py.
@@ -1320,6 +1344,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.get_demo',
                 'corehq.util.context_processors.subscription_banners',
+                'corehq.util.context_processors.lockout_banner',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.commcare_hq_names',

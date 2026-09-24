@@ -56,11 +56,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain, sync, drop, populate, since, describe, **options):
-        if drop and (sync or populate):
-            raise CommandError("--drop cannot be combined with --sync or --populate.")
         if since and not populate:
             raise CommandError("--since is only used in conjunction with --populate.")
 
+        if drop:
+            _drop(domain, self.stdout)
         if sync:
             if settings.DEBUG:
                 setup_project_db()
@@ -69,8 +69,6 @@ class Command(BaseCommand):
         if populate:
             _populate(domain, since)
             self.stdout.write("Populated ProjectDB")
-        if drop:
-            _drop(domain, self.stdout)
         if describe:
             self.stdout.write(describe_project_db(domain))
 

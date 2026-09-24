@@ -153,11 +153,17 @@ PR 3: Cleanup
 ^^^^^^^^^^^^^
 This is the cleanup PR. Wait a few weeks after the previous PR to merge this one; there's no rush. Clean up:
 
-* If your sql model uses a ``couch_id``, remove it. `Sample commit for HqDeploy <https://github.com/dimagi/commcare-hq/pull/26442/commits/79a1c49013fb09fb47690ebcd0a51bc85fb1d560>`_
+* If your sql model uses a ``couch_id``, remove it from the state using ``migrations.SeparateDatabaseAndState``. Here is an `example <https://github.com/dimagi/commcare-hq/pull/37956/changes#diff-073ac46a213a0e35b7e6d5e176b11b856462103b7efc9cb8a90f8ced6a532fd5>`_.
 * Remove the old couch model, which at this point should have no references. This includes removing any syncing code.
 * Now that the couch model is gone, rename the sql model from ``SQLMyModel`` to ``MyModel``. Assuming you set up ``db_table`` in the initial PR, this is just removing that and running ``makemigrations``.
 * Add the couch class to ``DELETABLE_COUCH_DOC_TYPES``. `Blame deletable_doc_types.py <https://github.com/dimagi/commcare-hq/blame/74bc31910f692126f03c46a350ab8ae5700f87dd/corehq/apps/cleanup/deletable_doc_types.py>`_ for examples.
 * Remove any couch views that are no longer used. Remember this may require a reindex; see the `main db migration docs <https://commcare-hq.readthedocs.io/migrations.html>`_.
+
+PR 4: Remove couch_id from database
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This should contain a database migration to remove the ``couch_id`` column from the SQL model.
+This PR should not be merged until PR 3 has been merged for 6 weeks.
 
 Current State of Migration
 ##########################

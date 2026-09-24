@@ -33,7 +33,6 @@ would be called ``case_calculated_property_1``.
 """
 from collections import defaultdict, namedtuple
 
-from eulxml.xmlmap.core import load_xmlobject_from_string
 from memoized import memoized
 
 from corehq import toggles
@@ -79,6 +78,7 @@ from corehq.apps.app_manager.util import (
 )
 from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, interpolate_xpath, session_var
 from corehq.util.timer import time_method
+from corehq.util.xml_utils import safe_fromstring
 
 AUTO_LAUNCH_EXPRESSIONS = {
     "single-select": "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0",
@@ -456,10 +456,7 @@ class DetailContributor(SectionContributor):
         return auto_launch_expression
 
     def _get_custom_xml_detail(self, module, detail, detail_type):
-        d = load_xmlobject_from_string(
-            detail.custom_xml,
-            xmlclass=Detail
-        )
+        d = Detail(safe_fromstring(detail.custom_xml))
 
         expected = id_strings.detail(module, detail_type)
         if not id_strings.is_custom_app_string(d.id) and d.id != expected:
