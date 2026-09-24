@@ -1,5 +1,6 @@
 from memoized import memoized
 
+from django.conf import settings
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -8,12 +9,16 @@ from django.utils.decorators import method_decorator
 from django.utils.timesince import timeuntil
 from django.utils.translation import get_language, gettext_lazy as _
 
-from corehq import privileges, toggles
+from corehq import feature_previews, privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_app_doc
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
+from corehq.apps.cloudcare.utils import format_app_doc, get_web_apps_context
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.public_webforms.decorators import (
+    PUBLIC_FORM_SESSION_COOKIE_NAME,
+)
 from corehq.apps.public_webforms.messaging import send_one_time_link
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.public_webforms.public.forms import (
@@ -118,3 +123,69 @@ class PublicWebformLinkSentView(BasePublicWebformView):
             ) if self.webform.is_open else None,
         })
         return context
+
+
+@method_decorator(use_bootstrap5, name='dispatch')
+class PublicFormView(BasePublicWebformView):
+    urlname = 'public_form'
+    template_name = 'cloudcare/public_form.html'
+
+    @property
+    @memoized
+    def session(self):
+        return PublicFormSession.get_active_session_by_id(
+            self.webform, self.kwargs.get('session_id'))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, kwargs={
+            'public_id': self.webform.public_id.hex,
+            'session_id': self.kwargs.get('session_id'),
+        })
+
+    def get(self, request, *args, **kwargs):
+        if self.session is None:
+            return render(
+                request,
+                'public_webforms/public/webform_link_used.html',
+                status=404,
+            )
+        if self.session.opened_at is None:
+            self.session.opened_at = timezone.now()
+            self.session.save(update_fields=['opened_at'])
+        response = super().get(request, *args, **kwargs)
+        response.set_cookie(
+            PUBLIC_FORM_SESSION_COOKIE_NAME,
+            self.session.session_key.hex,
+            httponly=True,
+            secure=settings.SECURE_COOKIES,
+            samesite='Lax',
+        )
+        return response
+
+    @property
+    def page_context(self):
+        webform = self.webform
+        context = get_web_apps_context(
+            webform.domain,
+            self.session.session_username,
+            get_language(),
+            [format_app_doc(get_app_doc(webform.domain, webform.app_build_id))],
+        )
+        context.update({
+            'app_build_id': webform.app_build_id,
+            'endpoint_id': webform.endpoint_id,
+            'submitted_url': reverse(
+                PublicFormSubmittedView.urlname,
+                kwargs={'public_id': webform.public_id.hex},
+            ),
+            'toggles_dict': toggles.toggle_values_by_name(None, webform.domain),
+            'previews_dict': feature_previews.preview_values_by_name(webform.domain),
+        })
+        return context
+
+
+@method_decorator(use_bootstrap5, name='dispatch')
+class PublicFormSubmittedView(BasePublicWebformView):
+    urlname = 'public_form_submitted'
+    template_name = 'cloudcare/public_form_submitted.html'

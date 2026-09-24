@@ -1,0 +1,30 @@
+{% extends "cloudcare/public_form_base.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block main_content %}
+  <div
+    id="sidebar-and-content"
+    class="d-lg-flex justify-content-center m-3 remove-margins-on-mobile"
+  >
+    <div id="content-container" class="mx-0 flex-grow-1">
+      <div class="form-container">
+        <div class="page-header">
+          <h1 class="title">{% trans "Response Received" %}</h1>
+        </div>
+        <div class="question-container pb-2">
+          <p>
+            {% blocktrans %}
+              Thank you. Your response has been submitted.
+            {% endblocktrans %}
+          </p>
+          <p class="text-body-secondary">
+            {% blocktrans %}
+              You can close this page.
+            {% endblocktrans %}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
