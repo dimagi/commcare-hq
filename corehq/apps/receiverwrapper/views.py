@@ -461,6 +461,7 @@ def _secure_post_api_key(request, domain, app_id=None):
 @require_POST
 @check_domain_mobile_access
 @set_request_duration_reporting_threshold(60)
+@allow_public_form_session
 def secure_post(request, domain, app_id=None):
     authtype_map = {
         DIGEST: _secure_post_digest,
@@ -469,6 +470,16 @@ def secure_post(request, domain, app_id=None):
         API_KEY: _secure_post_api_key,
         OAUTH2: _secure_post_oauth2,
     }
+
+    if isinstance(getattr(request, 'couch_user', None), PublicFormUser):
+        # no mobile credential; _process_form authorizes against the public form session
+        return _process_form(
+            request=request,
+            domain=domain,
+            app_id=app_id,
+            user_id=None,
+            authenticated=False,
+        )
 
     if request.GET.get('authtype'):
         authtype = request.GET['authtype']
