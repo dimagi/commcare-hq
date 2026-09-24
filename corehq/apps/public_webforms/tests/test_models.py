@@ -138,6 +138,15 @@ def test_public_form_session_username():
     )
 
 
+def test_public_form_session_restore_device_id_is_per_session():
+    webform = PublicWebform(domain='public-forms-domain')
+    one = PublicFormSession(public_webform=webform)
+    two = PublicFormSession(public_webform=webform)
+    # HQ recognizes a Web Apps sync, and skips device rate limiting, by prefix
+    assert one.restore_device_id.startswith('WebAppsLogin')
+    assert one.restore_device_id != two.restore_device_id
+
+
 def test_public_form_session_one_time_link():
     webform = PublicWebform(domain='public-forms-domain')
     session = PublicFormSession(public_webform=webform)

@@ -146,6 +146,16 @@ class PublicFormSession(models.Model):
     def session_username(self):
         return f"{PUBLIC_USER_ID}{self.id.hex}@{self.public_webform.domain}.commcarehq.org"
 
+    @property
+    def restore_device_id(self):
+        """Distinct per session, so respondents never share a restore cache entry.
+
+        Every session restores as the same user id, which is otherwise the whole
+        of that cache key. Keeps formplayer's ``WebAppsLogin`` prefix, which HQ
+        tests to recognize a Web Apps sync and to skip device rate limiting.
+        """
+        return f'WebAppsLogin*{self.session_username}'
+
 
 class PublicFormUser:
     """
