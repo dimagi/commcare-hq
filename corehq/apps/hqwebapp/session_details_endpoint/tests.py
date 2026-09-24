@@ -293,6 +293,8 @@ class PublicSessionDetailsViewTest(TestCase):
             'authToken': str(session.session_key),
             'domains': [self.domain.name],
             'public': True,
+            'app_build_id': 'build',
+            'endpoint_id': 'endpoint',
             'enabled_toggles': [],
             'enabled_previews': [],
         }
