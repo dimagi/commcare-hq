@@ -6,7 +6,12 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import (
+    delete_all_apps,
+    get_simple_form,
+    patch_validate_xform,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.public_webforms.decorators import (
@@ -33,16 +38,24 @@ class PublicFormSessionRestoreTest(TestCase):
         cls.addClassCleanup(delete_all_domains)
         # without an app in the project, the fixture providers that filter by
         # app access return before ever reaching the user
-        app = Application.new_app(cls.domain, 'Test App')
-        app.save()
-        cls.addClassCleanup(app.delete)
+        factory = AppFactory(cls.domain, name='Test App')
+        __, form = factory.new_basic_module('survey', 'patient')
+        form.source = get_simple_form(xmlns=form.unique_id)
+        with patch_validate_xform():
+            app = factory.app
+            app.save()
+            build = app.make_build()
+            build.save()
+        cls.addClassCleanup(delete_all_apps)
+        cls.app_id = app.get_id
+        cls.app_build_id = build.get_id
 
     def _make_session(self, domain):
         webform = PublicWebform.objects.create(
             domain=domain,
             label='Antenatal visit',
-            app_id='app',
-            app_build_id='build',
+            app_id=self.app_id,
+            app_build_id=self.app_build_id,
             form_unique_id='form',
             endpoint_id='endpoint',
             session_type='survey',
@@ -89,6 +102,24 @@ class PublicFormSessionRestoreTest(TestCase):
                 response = self._restore(self.domain, session)
 
                 assert response.status_code == 200, response.content
+
+    def test_a_session_restores_as_itself(self):
+        session = self._make_session(self.domain)
+
+        response = self._restore(self.domain, session)
+
+        payload = b''.join(response.streaming_content).decode()
+        assert session.session_username in payload
+
+    def test_a_session_restores_the_build_its_link_is_pinned_to(self):
+        session = self._make_session(self.domain)
+        session.public_webform.app_build_id = 'not-a-build'
+        session.public_webform.save()
+
+        response = self._restore(self.domain, session)
+
+        # the client cannot choose the app, so a link whose build is gone is dead
+        assert response.status_code == 404
 
     def test_a_session_is_not_a_credential_for_another_domain(self):
         session = self._make_session(self.other_domain)
