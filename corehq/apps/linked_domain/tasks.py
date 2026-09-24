@@ -19,7 +19,6 @@ from corehq.apps.linked_domain.const import (
     MODEL_APP,
     MODEL_KEYWORD,
     MODEL_REPORT,
-    MODEL_CASE_SEARCH_ENDPOINT,
     MODEL_UCR_EXPRESSION,
 )
 from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
@@ -31,17 +30,12 @@ from corehq.apps.linked_domain.keywords import (
 from corehq.apps.linked_domain.models import (
     KeywordLinkDetail,
     ReportLinkDetail,
-    CaseSearchEndpointLinkDetail,
     UCRExpressionLinkDetail,
 )
 from corehq.apps.linked_domain.ucr import (
     create_linked_ucr,
     get_downstream_report,
     update_linked_ucr,
-)
-from corehq.apps.linked_domain.case_search_endpoints import (
-    create_linked_case_search_endpoint,
-    update_linked_case_search_endpoint,
 )
 from corehq.apps.linked_domain.ucr_expressions import (
     create_linked_ucr_expression,
@@ -52,7 +46,6 @@ from corehq.apps.linked_domain.util import (
     pull_missing_multimedia_for_app_and_notify,
 )
 from corehq.apps.sms.models import Keyword
-from corehq.apps.case_search.models import CaseSearchEndpoint
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.users.models import CouchUser
 
@@ -227,24 +220,6 @@ The following linked project spaces received content:
             model_detail=UCRExpressionLinkDetail(ucr_expression_id=str(linked_ucr_expression_id)).to_json(),
         )
 
-    def _release_case_search_endpoint(self, domain_link, model, user_id, overwrite=False):
-        if not toggles.CASE_SEARCH_ENDPOINTS.enabled(domain_link.linked_domain):
-            return self._error_tuple(_("Case Search Endpoints feature flag is not enabled"))
-
-        upstream_id = model['detail']['endpoint_id']
-        try:
-            linked_endpoint_id = CaseSearchEndpoint.objects.get(
-                domain=domain_link.linked_domain, upstream_id=upstream_id
-            ).values_list('id', flat=True)
-        except CaseSearchEndpoint.DoesNotExist:
-            linked_endpoint_id = create_linked_case_search_endpoint(domain_link, upstream_id)
-        else:
-            update_linked_case_search_endpoint(domain_link, linked_endpoint_id,
-                                               is_pull=False, overwrite=overwrite)
-
-        detail = CaseSearchEndpointLinkDetail(endpoint_id=str(linked_endpoint_id)).to_json()
-        domain_link.update_last_pull(MODEL_CASE_SEARCH_ENDPOINT, user_id, model_detail=detail)
-
     def _release_model(self, domain_link, model, user, overwrite=False):
         try:
             update_model_type(domain_link, model['type'], model_detail=model['detail'],
@@ -284,9 +259,6 @@ def release_domain(upstream_domain, downstream_domain, username, models, build_a
                 errors = manager._release_keyword(domain_link, model, manager.user._id, overwrite)
             elif model['type'] == MODEL_UCR_EXPRESSION:
                 errors = manager._release_ucr_expression(domain_link, model, manager.user._id, overwrite)
-            elif model['type'] == MODEL_CASE_SEARCH_ENDPOINT:
-                errors = manager._release_case_search_endpoint(
-                    domain_link, model, manager.user._id, overwrite)
             else:
                 errors = manager._release_model(domain_link, model, manager.user, overwrite)
         except Exception as e:   # intentionally broad

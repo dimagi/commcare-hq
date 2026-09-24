@@ -191,7 +191,7 @@ class UCRExpressionLinkDetail(jsonobject.JsonObject):
 
 
 class CaseSearchEndpointLinkDetail(jsonobject.JsonObject):
-    endpoint_id = jsonobject.StringProperty()
+    upstream_endpoint_id = jsonobject.StringProperty()
 
 
 def wrap_detail(model, detail_json):

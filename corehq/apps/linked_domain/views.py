@@ -262,14 +262,8 @@ class DomainLinkView(BaseProjectSettingsView):
         upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(self.domain, upstream_link)
         upstream_reports, downstream_reports = get_upstream_and_downstream_reports(self.domain)
         upstream_keywords, downstream_keywords = get_upstream_and_downstream_keywords(self.domain)
-        upstream_ucr_expressions, downstream_ucr_expressions = get_upstream_and_downstream_ucr_expressions(
-            self.domain
-        )
-
-        upstream_endpoints, downstream_endpoints = get_upstream_and_downstream_case_search_endpoints(
-            self.domain
-        )
-
+        upstream_ucr_expressions, downstream_ucr_expressions = get_upstream_and_downstream_ucr_expressions(self.domain)
+        upstream_endpoints, downstream_endpoints = get_upstream_and_downstream_case_search_endpoints(self.domain)
         upstream_rules, downstream_rules = get_upstream_and_downstream_update_rules(self.domain, upstream_link)
 
         is_superuser = self.request.couch_user.is_superuser

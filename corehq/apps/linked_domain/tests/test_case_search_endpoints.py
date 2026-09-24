@@ -8,7 +8,6 @@ from corehq.apps.case_search.models import (
     add_endpoint_version,
 )
 from corehq.apps.linked_domain.case_search_endpoints import (
-    create_linked_case_search_endpoint,
     update_linked_case_search_endpoint,
 )
 from corehq.apps.linked_domain.exceptions import DomainLinkError
@@ -32,7 +31,7 @@ def _create_endpoint(domain, name='patients', case_type='patient', sql='SELECT 1
     return endpoint
 
 
-class TestCreateLinkedCaseSearchEndpoint(TestCase):
+class TestFirstLinkCreatesDownstreamEndpoint(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -43,9 +42,9 @@ class TestCreateLinkedCaseSearchEndpoint(TestCase):
     def test_copies_endpoint_and_current_version(self):
         upstream_endpoint = _create_endpoint(UPSTREAM)
 
-        downstream_id = create_linked_case_search_endpoint(self.domain_link, upstream_endpoint.id)
+        update_linked_case_search_endpoint(self.domain_link, upstream_endpoint.id)
 
-        downstream = CaseSearchEndpoint.objects.get(id=downstream_id)
+        downstream = CaseSearchEndpoint.objects.get(domain=DOWNSTREAM)
         assert downstream.domain == DOWNSTREAM
         assert downstream.name == 'patients'
         assert downstream.upstream_id == upstream_endpoint.id
@@ -60,23 +59,23 @@ class TestCreateLinkedCaseSearchEndpoint(TestCase):
         self.addCleanup(setattr, self.domain_link, 'remote_base_url', None)
 
         with pytest.raises(DomainLinkError, match='remote'):
-            create_linked_case_search_endpoint(self.domain_link, upstream_endpoint.id)
+            update_linked_case_search_endpoint(self.domain_link, upstream_endpoint.id)
 
     def test_rejects_name_already_used_downstream(self):
         upstream_endpoint = _create_endpoint(UPSTREAM)
         _create_endpoint(DOWNSTREAM)
 
         with pytest.raises(DomainLinkError, match='already exists'):
-            create_linked_case_search_endpoint(self.domain_link, upstream_endpoint.id)
+            update_linked_case_search_endpoint(self.domain_link, upstream_endpoint.id)
 
     def test_rejects_endpoint_from_another_domain(self):
         other_endpoint = _create_endpoint('somewhere-else')
 
         with pytest.raises(DomainLinkError, match='does not exist in the upstream domain'):
-            create_linked_case_search_endpoint(self.domain_link, other_endpoint.id)
+            update_linked_case_search_endpoint(self.domain_link, other_endpoint.id)
 
 
-class TestUpdateLinkedCaseSearchEndpoint(TestCase):
+class TestLaterLinksUpdateDownstreamEndpoint(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -87,13 +86,11 @@ class TestUpdateLinkedCaseSearchEndpoint(TestCase):
     def setUp(self):
         super().setUp()
         self.upstream_endpoint = _create_endpoint(UPSTREAM)
-        self.downstream_id = create_linked_case_search_endpoint(
-            self.domain_link, self.upstream_endpoint.id
-        )
+        update_linked_case_search_endpoint(self.domain_link, self.upstream_endpoint.id)
 
     def _update_and_reload(self):
-        update_linked_case_search_endpoint(self.domain_link, self.downstream_id)
-        return CaseSearchEndpoint.objects.get(id=self.downstream_id)
+        update_linked_case_search_endpoint(self.domain_link, self.upstream_endpoint.id)
+        return CaseSearchEndpoint.objects.get(domain=DOWNSTREAM)
 
     def _change_upstream_query(self):
         add_endpoint_version(
@@ -137,12 +134,9 @@ class TestUpdateLinkedCaseSearchEndpoint(TestCase):
 
         assert not self._update_and_reload().is_active
 
-    def test_rejects_missing_downstream_endpoint(self):
-        with pytest.raises(DomainLinkError, match='Linked endpoint could not be found'):
-            update_linked_case_search_endpoint(self.domain_link, 0)
-
     def test_rejects_deleted_upstream_endpoint(self):
+        upstream_id = self.upstream_endpoint.id
         self.upstream_endpoint.delete()
 
         with pytest.raises(DomainLinkError, match='Maybe it has been deleted'):
-            update_linked_case_search_endpoint(self.domain_link, self.downstream_id)
+            update_linked_case_search_endpoint(self.domain_link, upstream_id)

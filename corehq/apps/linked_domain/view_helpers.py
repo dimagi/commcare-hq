@@ -114,9 +114,12 @@ def get_upstream_and_downstream_ucr_expressions(domain):
 
 
 def get_upstream_and_downstream_case_search_endpoints(domain):
-    return partition_by_upstream_id(
+    upstream_list, downstream_list = partition_by_upstream_id(
         CaseSearchEndpoint.objects.filter(domain=domain, is_active=True)
     )
+    # Link history identifies a downstream endpoint by the upstream endpoint it copies from
+    downstream_list = {str(endpoint.upstream_id): endpoint for endpoint in downstream_list.values()}
+    return upstream_list, downstream_list
 
 
 def partition_by_upstream_id(objects):
@@ -218,7 +221,9 @@ def build_case_search_endpoint_view_model(endpoint, last_update=None):
     return build_linked_data_view_model(
         model_type=MODEL_CASE_SEARCH_ENDPOINT,
         name=f"{LINKED_MODELS_MAP[MODEL_CASE_SEARCH_ENDPOINT]} ({endpoint.name})",
-        detail=CaseSearchEndpointLinkDetail(endpoint_id=str(endpoint.id)).to_json(),
+        detail=CaseSearchEndpointLinkDetail(
+            upstream_endpoint_id=str(endpoint.upstream_id or endpoint.id)
+        ).to_json(),
         last_update=last_update,
     )
 
@@ -384,11 +389,8 @@ def pop_ucr_expression(ucr_expression_id, ucr_expressions):
     return ucr_expression
 
 
-def pop_case_search_endpoint(endpoint_id, case_search_endpoints):
-    endpoint = case_search_endpoints.pop(endpoint_id, None)
-    if endpoint is None:
-        endpoint = CaseSearchEndpoint.objects.filter(id=endpoint_id).first()
-    return endpoint
+def pop_case_search_endpoint(upstream_endpoint_id, case_search_endpoints):
+    return case_search_endpoints.pop(upstream_endpoint_id, None)
 
 
 def build_pullable_view_models_from_data_models(
@@ -432,7 +434,7 @@ def build_pullable_view_models_from_data_models(
             ucr_expression = pop_ucr_expression(action.wrapped_detail.ucr_expression_id, ucr_expressions)
             view_model = build_ucr_expression_view_model(ucr_expression, last_update=last_update)
         elif action.model == MODEL_CASE_SEARCH_ENDPOINT:
-            endpoint = pop_case_search_endpoint(action.wrapped_detail.endpoint_id, case_search_endpoints)
+            endpoint = pop_case_search_endpoint(action.wrapped_detail.upstream_endpoint_id, case_search_endpoints)
             view_model = build_case_search_endpoint_view_model(endpoint, last_update=last_update)
         elif action.model == MODEL_AUTO_UPDATE_RULE:
             rule = pop_update_rule(action.wrapped_detail.id, update_rules)
