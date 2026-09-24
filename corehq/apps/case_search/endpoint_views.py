@@ -358,12 +358,16 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
             return not_found(request)
         with transaction.atomic():
             endpoint.is_active = False
-            add_endpoint_version(
-                endpoint,
-                action=CaseSearchEndpointVersion.Action.DEACTIVATE,
-                created_by=request.couch_user.username,
-                extra_update_fields=['is_active'],
-            )
+            if endpoint.upstream_id:
+                # Don't create new version of a linked endpoint, upstream controls them
+                endpoint.save(update_fields=['is_active'])
+            else:
+                add_endpoint_version(
+                    endpoint,
+                    action=CaseSearchEndpointVersion.Action.DEACTIVATE,
+                    created_by=request.couch_user.username,
+                    extra_update_fields=['is_active'],
+                )
         return redirect(
             reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
         )

@@ -1,14 +1,11 @@
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.utils.translation import gettext as _
 
 from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     CaseSearchEndpointVersion,
-    add_endpoint_version,
 )
 from corehq.apps.linked_domain.exceptions import DomainLinkError
-
-VERSION_FIELDS = ['case_type', 'query', 'parameters', 'dangerous_sql']
 
 
 def update_linked_case_search_endpoint(domain_link, upstream_endpoint_id, is_pull=False, overwrite=False):
@@ -23,7 +20,7 @@ def update_linked_case_search_endpoint(domain_link, upstream_endpoint_id, is_pul
         if downstream_endpoint is None:
             _create_downstream_endpoint(domain_link, upstream_endpoint)
         else:
-            _update_downstream_endpoint(domain_link, upstream_endpoint, downstream_endpoint)
+            _update_downstream_endpoint(upstream_endpoint, downstream_endpoint)
 
 
 def _get_upstream_endpoint(domain_link, endpoint_id):
@@ -47,39 +44,27 @@ def _create_downstream_endpoint(domain_link, upstream_endpoint):
     except IntegrityError:
         raise DomainLinkError(_("Endpoint {name} conflicts with an existing endpoint in {domain}")
                               .format(name=upstream_endpoint.name, domain=domain_link.linked_domain))
-    _copy_version(domain_link, upstream_endpoint, endpoint, CaseSearchEndpointVersion.Action.CREATE)
+    _sync_version(upstream_endpoint, endpoint)
 
 
-def _update_downstream_endpoint(domain_link, upstream_endpoint, endpoint):
+def _update_downstream_endpoint(upstream_endpoint, endpoint):
     endpoint.name = upstream_endpoint.name
     endpoint.target_type = upstream_endpoint.target_type
     endpoint.is_active = upstream_endpoint.is_active
     endpoint.save(update_fields=['name', 'target_type', 'is_active'])
-    if not _version_matches(upstream_endpoint.current_version, endpoint.current_version):
-        _copy_version(domain_link, upstream_endpoint, endpoint, CaseSearchEndpointVersion.Action.UPDATE)
+    _sync_version(upstream_endpoint, endpoint)
 
 
-def _version_matches(upstream_version, downstream_version):
-    if upstream_version is None or downstream_version is None:
-        return upstream_version is downstream_version
-    return all(
-        getattr(upstream_version, field) == getattr(downstream_version, field)
-        for field in VERSION_FIELDS
-    )
-
-
-def _copy_version(domain_link, upstream_endpoint, endpoint, action):
-    """Record the upstream endpoint's current content as a new downstream version.
-
-    Downstream version numbering is independent of the upstream's, since a
-    downstream endpoint is only updated when it is pushed or pulled.
-    """
+def _sync_version(upstream_endpoint, endpoint):
+    """Copy the upstream endpoint's current version, keeping its version number"""
     upstream_version = upstream_endpoint.current_version
     if upstream_version is None:
         return
-    add_endpoint_version(
-        endpoint,
-        action=action,
-        created_by=f'{domain_link.master_domain} (upstream)',
-        **{field: getattr(upstream_version, field) for field in VERSION_FIELDS},
+    if endpoint.current_version and endpoint.current_version.version_number == upstream_version.version_number:
+        return
+    fields = ['version_number', 'parameters', 'case_type', 'query', 'dangerous_sql', 'created_by', 'action']
+    endpoint.current_version = CaseSearchEndpointVersion.objects.create(
+        endpoint=endpoint,
+        **{field: getattr(upstream_version, field) for field in fields},
     )
+    endpoint.save(update_fields=['current_version'])

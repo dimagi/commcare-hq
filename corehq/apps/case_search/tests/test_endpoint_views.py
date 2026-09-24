@@ -402,6 +402,18 @@ class TestCaseSearchEndpointDeactivateView(EndpointViewTestCase):
         assert ep.current_version.parameters is None
         assert ep.versions.count() == 2
 
+    def test_deactivating_linked_endpoint_adds_no_version(self):
+        ep = self._make_endpoint()
+        ep.upstream_id = 1
+        ep.save(update_fields=['upstream_id'])
+
+        self.client.post(self._deactivate_url(ep.id))
+
+        ep.refresh_from_db()
+        assert not ep.is_active
+        assert ep.current_version.version_number == 1
+        assert ep.versions.count() == 1
+
     def test_404_for_wrong_domain(self):
         ep = self._make_endpoint()
         url = reverse(

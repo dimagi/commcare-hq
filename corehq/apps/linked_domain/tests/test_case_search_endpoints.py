@@ -52,6 +52,7 @@ class TestFirstLinkCreatesDownstreamEndpoint(TestCase):
         assert downstream.current_version.case_type == 'patient'
         assert downstream.current_version.dangerous_sql == 'SELECT 1'
         assert downstream.current_version.action == CaseSearchEndpointVersion.Action.CREATE
+        assert downstream.current_version.created_by == 'someone@example.com'
 
     def test_rejects_remote_link(self):
         upstream_endpoint = _create_endpoint(UPSTREAM)
@@ -65,7 +66,7 @@ class TestFirstLinkCreatesDownstreamEndpoint(TestCase):
         upstream_endpoint = _create_endpoint(UPSTREAM)
         _create_endpoint(DOWNSTREAM)
 
-        with pytest.raises(DomainLinkError, match='already exists'):
+        with pytest.raises(DomainLinkError, match='conflicts with an existing endpoint'):
             update_linked_case_search_endpoint(self.domain_link, upstream_endpoint.id)
 
     def test_rejects_endpoint_from_another_domain(self):
@@ -112,6 +113,16 @@ class TestLaterLinksUpdateDownstreamEndpoint(TestCase):
         assert downstream.current_version.case_type == 'household'
         assert downstream.current_version.dangerous_sql == 'SELECT 2'
         assert downstream.current_version.action == CaseSearchEndpointVersion.Action.UPDATE
+
+    def test_skipped_upstream_versions_keep_their_numbers(self):
+        self._change_upstream_query()
+        self._change_upstream_query()
+
+        downstream = self._update_and_reload()
+
+        assert downstream.current_version.version_number == 3
+        version_numbers = downstream.versions.order_by('version_number').values_list('version_number', flat=True)
+        assert list(version_numbers) == [1, 3]
 
     def test_unchanged_content_does_not_add_a_version(self):
         downstream = self._update_and_reload()
