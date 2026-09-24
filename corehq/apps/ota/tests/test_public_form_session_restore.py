@@ -19,6 +19,7 @@ from corehq.apps.public_webforms.decorators import (
     PUBLIC_FORM_SESSION_HEADER,
 )
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
+from corehq.form_processor.tests.utils import create_case
 from corehq.util.test_utils import flag_enabled
 
 SESSION_HEADER = 'HTTP_' + PUBLIC_FORM_SESSION_HEADER.upper().replace('-', '_')
@@ -102,6 +103,18 @@ class PublicFormSessionRestoreTest(TestCase):
                 response = self._restore(self.domain, session)
 
                 assert response.status_code == 200, response.content
+
+    def test_a_session_restores_no_project_case_data(self):
+        case = create_case(self.domain, case_type='patient', save=True)
+        self.addCleanup(case.delete)
+        session = self._make_session(self.domain)
+
+        response = self._restore(self.domain, session)
+
+        # an owner id the restore cannot filter on syncs the whole project
+        payload = b''.join(response.streaming_content).decode()
+        assert case.case_id not in payload
+        assert '<case ' not in payload
 
     def test_a_session_restores_as_itself(self):
         session = self._make_session(self.domain)

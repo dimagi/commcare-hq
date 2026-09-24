@@ -257,7 +257,7 @@ class PublicFormUser:
 
 class OTARestorePublicFormUser(OTARestoreUser):
     """
-    OTA restore user for a public form session. Sandboxed: no owner ids, no
+    OTA restore user for a public form session. Sandboxed: owns nothing, no
     locations, no role, no case sharing, so the restore payload contains only
     the user registration block and global fixtures, never project case data.
     """
@@ -283,7 +283,7 @@ class OTARestorePublicFormUser(OTARestoreUser):
         return None
 
     def get_owner_ids(self):
-        return []
+        return [self.username]
 
     def get_location_ids(self, domain):
         return []
