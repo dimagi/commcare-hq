@@ -58,7 +58,15 @@
       <tbody>
         {% for endpoint in endpoints %}
           <tr>
-            <td>{{ endpoint.name }}</td>
+            <td>
+              {{ endpoint.name }}
+              {% if endpoint.upstream_id %}
+                <i
+                  class="fa fa-link"
+                  title="{% trans 'Linked from an upstream project space' %}"
+                ></i>
+              {% endif %}
+            </td>
             <td>{{ endpoint.get_target_type_display }}</td>
             <td>{{ endpoint.current_version.case_type }}</td>
             <td>
@@ -83,12 +91,14 @@
               {% endif %}
             </td>
             <td>
-              <a
-                href="{% url 'case_search_endpoint_edit' domain endpoint.id %}"
-                class="btn btn-outline-primary"
-              >
-                {% trans "Edit" %}
-              </a>
+              {% if not endpoint.upstream_id %}
+                <a
+                  href="{% url 'case_search_endpoint_edit' domain endpoint.id %}"
+                  class="btn btn-outline-primary"
+                >
+                  {% trans "Edit" %}
+                </a>
+              {% endif %}
               <button
                 type="button"
                 class="btn btn-outline-danger"

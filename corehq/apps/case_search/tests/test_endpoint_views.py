@@ -163,6 +163,16 @@ class TestCaseSearchEndpointsListView(EndpointViewTestCase):
         response = self.client.get(self._list_url())
         assert ep not in response.context['endpoints']
 
+    def test_linked_endpoint_has_no_edit_button(self):
+        ep = self._make_endpoint()
+        ep.upstream_id = 1
+        ep.save(update_fields=['upstream_id'])
+
+        content = self.client.get(self._list_url()).content.decode()
+
+        assert self._edit_url(ep.id) not in content
+        assert self._deactivate_url(ep.id) in content
+
 
 class TestCaseSearchEndpointNewView(EndpointViewTestCase):
     def test_get(self):
@@ -382,6 +392,21 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
             ),
         )
         assert response.status_code == 302
+
+    def test_linked_endpoint_is_not_editable(self):
+        ep = self._make_endpoint()
+        ep.upstream_id = 1
+        ep.save(update_fields=['upstream_id'])
+
+        assert self.client.get(self._edit_url(ep.id)).status_code == 403
+        response = self.client.post(
+            self._edit_url(ep.id),
+            self._post_data(name='renamed', case_type=ep.current_version.case_type),
+        )
+        assert response.status_code == 403
+        ep.refresh_from_db()
+        assert ep.name == 'my-endpoint'
+        assert ep.versions.count() == 1
 
 
 class TestCaseSearchEndpointDeactivateView(EndpointViewTestCase):
