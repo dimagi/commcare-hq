@@ -11,6 +11,7 @@ from uuid import uuid4
 
 from corehq.apps.app_manager.const import NON_BUILD_APP_KEYS
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
+from corehq.apps.app_manager.exceptions import AppManagerException
 from corehq.apps.app_manager.suite_xml.post_process.instances import (
     get_instance_names,
 )
@@ -30,6 +31,13 @@ def create_public_webform_build(domain, app_id, form_unique_id):
     endpoint_id = uuid4().hex
     new_build = _copy_for_build(released_build)
     new_build._force_session_endpoints = True
+    if not new_build.supports_session_endpoints:
+        # the suite would build without the endpoint, leaving a link that only
+        # fails once a respondent opens it
+        raise AppManagerException(
+            f"app {app_id} targets CommCare {released_build.build_version}, "
+            "which cannot emit a session endpoint"
+        )
     new_build.get_form(form_unique_id).session_endpoint_id = endpoint_id
     _restrict_multimedia_to_form(new_build, form_unique_id)
     _restrict_reports_to_form(new_build, form_unique_id)

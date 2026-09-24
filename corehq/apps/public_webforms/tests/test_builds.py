@@ -4,6 +4,7 @@ import pytest
 from unmagic import fixture, use
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_id
+from corehq.apps.app_manager.exceptions import AppManagerException
 from corehq.apps.app_manager.models import Application, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
@@ -152,6 +153,20 @@ class TestCreatePublicWebformBuild:
 
         build = get_app(app.domain, build_id)
         assert set(build.multimedia_map) == {TARGET_MEDIA}
+
+    def test_refuses_an_app_that_does_not_support_session_endpoints(self):
+        factory = AppFactory(DOMAIN, name='Old App', build_version='2.50.0')
+        __, form = factory.new_basic_module('survey', 'patient')
+        form.source = get_simple_form(xmlns=form.unique_id)
+        with patch_validate_xform():
+            old_app = factory.app
+            old_app.save()
+            old_build = old_app.make_build()
+            old_build.is_released = True
+            old_build.save()
+
+        with pytest.raises(AppManagerException):
+            create_public_webform_build(DOMAIN, old_app.get_id, form.unique_id)
 
     def test_drops_the_projects_custom_properties(self):
         app = released_app()
