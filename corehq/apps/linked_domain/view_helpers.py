@@ -318,7 +318,7 @@ def build_view_models_from_data_models(
         (case_search_endpoints, build_case_search_endpoint_view_model),
         (update_rules, build_update_rule_model),
     ]:
-        for model in model_instances:
+        for model in model_instances.values():
             view_model = builder(model)
             if view_model:
                 view_models.append(view_model)
