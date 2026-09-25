@@ -57,7 +57,7 @@ if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
 
 S3_BLOB_DB_SETTINGS = {
-    "url": "http://minio:9980/",
+    "url": "http://seaweedfs:8333/",
     "access_key": "admin-key",
     "secret_key": "admin-secret",
     "config": {

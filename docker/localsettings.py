@@ -89,7 +89,7 @@ ELASTICSEARCH_PORT = 9200  # ES 6 port
 ELASTICSEARCH_MAJOR_VERSION = 6
 
 S3_BLOB_DB_SETTINGS = {
-    "url": "http://minio:9980/",
+    "url": "http://seaweedfs:8333/",
     "access_key": "admin-key",
     "secret_key": "admin-secret",
     "config": {

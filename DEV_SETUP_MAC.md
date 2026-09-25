@@ -139,7 +139,7 @@ Docker images that may not run on Mac OS (as of 11.x Big Sur and above):
 ### M1 (OS 11.x and above) Recommended Docker Up Command
 
 ```sh
-./scripts/docker up -d postgres couch redis zookeeper kafka minio
+./scripts/docker up -d postgres couch redis zookeeper kafka seaweedfs
 ```
 
 Note: `kafka` will be very cranky on start up. You might have to restart it if you see `kafka` errors.
