@@ -144,12 +144,12 @@
     display: inline-block;
   }
 
-  @media (max-width: map-get($grid-breakpoints, "sm")) {
+  @include media-breakpoint-down(lg) {
     height: $navbar-footer-height * 2;
     min-height: $navbar-footer-height * 2;
   }
 
-  @media (max-width: map-get($grid-breakpoints, "xs")) {
+  @include media-breakpoint-down(md) {
     height: $navbar-footer-height * 3;
     min-height: $navbar-footer-height * 3;
   }
