@@ -2208,7 +2208,21 @@ COMMCARE_CONNECT = StaticToggle(
     'Enable CommCare Connect features',
     tag=TAG_CONNECT_DIVISION,
     namespaces=[NAMESPACE_DOMAIN],
-    description='More details to come',
+    description='Enables CommCare Connect features, along with the other '
+                'feature flags that Connect projects require.',
+    parent_toggles=[SESSION_ENDPOINTS, CUSTOM_PROPERTIES],
+)
+
+OCS_CONNECT_INTEGRATION = StaticToggle(
+    'ocs_connect_integration',
+    'Enable feature flags required for Open Chat Studio (OCS) and Connect integration',
+    tag=TAG_CONNECT_DIVISION,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='A bundle flag that does not add any functionality itself. '
+                'Enabling it through this page also enables the feature flags '
+                'listed below. Disabling it does not disable them, they'
+                'will need to be disabled individually',
+    parent_toggles=[UCR_EXPRESSION_REGISTRY, EXPRESSION_REPEATER],
 )
 
 SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
