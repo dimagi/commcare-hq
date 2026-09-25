@@ -20,6 +20,7 @@ from corehq.apps.users.models import DomainMembership, WebUser
 def make_user(domains=(), username='chat@example.com'):
     return WebUser(
         username=username,
+        domains=domains,
         domain_memberships=[DomainMembership(domain=domain) for domain in domains],
     )
 
