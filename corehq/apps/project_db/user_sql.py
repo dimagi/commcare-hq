@@ -33,6 +33,7 @@ from sqlalchemy.exc import DataError, ProgrammingError
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.project_db.table_ddl import (
     Earth,
     get_domain_tables,
@@ -72,8 +73,18 @@ def _bind(value):
     return bindparam(LITERAL_PARAM_PREFIX, value, unique=True)
 
 
+def _literal_value(node, py_type=None):
+    """Unpack a SQL literal, requiring and coercing to py_type if provided"""
+    if isinstance(node, exp.Literal) and (
+            py_type is None or node.is_string == (py_type is str)):
+        _unpack(node, 'this', 'is_string')
+        return py_type(node.to_py()) if py_type else node.to_py()
+    expected = f'{py_type.__name__} ' if py_type else ''
+    raise UnsupportedSQL(f'expected a {expected}literal value, got {str(node)}')
+
+
 QueryInfo = namedtuple('QueryInfo', 'translated_sql bound_literals parameters')
-QueryResult = namedtuple('QueryResult', 'columns rows duration')
+QueryResult = namedtuple('QueryResult', 'columns rows duration timezone')
 
 
 class UserSQL:
@@ -115,18 +126,10 @@ class UserSQL:
         """Return the parameters a translated query leaves for the caller to supply"""
         return [name for name, bind in self._compiled.binds.items() if bind.required]
 
-    def bind_parameters(self, values):
-        """Take from ``values`` what this query's parameters need.
-
-        A missing or blank value binds as NULL, which is how a criterion the
-        caller did not supply reaches the query. Callers that would rather
-        hear about a mismatch pass their own dict to :meth:`run` instead.
-        """
-        return {name: values.get(name) or None for name in self.parameters}
-
     def run(self, parameter_values):
         params = self._clean_parameters(parameter_values)
-        with get_project_db_engine().connect() as conn:
+        with get_project_db_engine().begin() as conn:
+            _set_timezone(conn, self.timezone)
             start = time.perf_counter()
             try:
                 result = conn.execute(self.query, params)
@@ -137,12 +140,25 @@ class UserSQL:
                 columns=list(result.keys()),
                 rows=rows,
                 duration=time.perf_counter() - start,
+                timezone=self.timezone,
             )
 
     def _clean_parameters(self, raw_parameters):
-        if set(raw_parameters) != set(self.parameters):
-            raise BadParameters(f"Expected params {set(self.parameters)}, got {set(raw_parameters)}")
-        return {name: raw_parameters[name] for name in self.parameters}
+        unexpected_parameters = set(raw_parameters) - set(self.parameters)
+        if unexpected_parameters:
+            raise BadParameters(f"Unexpected params {unexpected_parameters} not defined in query")
+
+        return {name: raw_parameters.get(name, None) for name in self.parameters}
+
+    @cached_property
+    def timezone(self):
+        return Domain.get_by_name(self.domain).default_timezone
+
+
+def _set_timezone(conn, timezone):
+    """Resolve naive dates and times in ``timezone`` for the current transaction"""
+    is_local = True
+    conn.execute(select([func.set_config('TimeZone', timezone, is_local)]))
 
 
 def translate(sql, tables):
@@ -151,6 +167,8 @@ def translate(sql, tables):
     :param sql: the user-supplied SQL statement
     :param tables: mapping of table name to SQLAlchemy ``Table``
     """
+    if not sql:
+        raise UnsupportedSQL("SQL is required")
     try:
         statements = sqlglot.parse(sql, read='postgres')
     except SqlglotError:
@@ -353,11 +371,11 @@ def _convert_predicate(node, columns):
         return compare(_convert_value(left, columns),
                        _convert_value(right, columns))
     if isinstance(node, exp.Anonymous):
-        return _convert_function(node, columns)
+        return _convert_predicate_function(node, columns)
     raise UnsupportedSQL(f"unsupported predicate: {type(node).__name__}")
 
 
-def _convert_function(node, columns):
+def _convert_predicate_function(node, columns):
     """Convert a call to one of the boolean-valued functions we support"""
     name, args = _unpack(node, 'this', 'expressions')
     convert = PREDICATE_FUNCTIONS.get(name.lower())
@@ -391,15 +409,9 @@ def _convert_coordinates(node):
     """Build an ``earth`` value from a ``'<latitude> <longitude>'`` string"""
     # The string is split in the database so it can accept params
     if isinstance(node, exp.Placeholder):
-        coordinates = _convert_placeholder(node, type_=Text)
-    elif isinstance(node, exp.Literal) and node.is_string:
-        _unpack(node, 'this', 'is_string')
-        coordinates = _bind(node.to_py())
+        coordinates = _convert_placeholder(node, Text)
     else:
-        raise UnsupportedSQL(
-            "within_distance coordinates must be a '<latitude> <longitude>' "
-            f"string or a query parameter, got {str(node)}"
-        )
+        coordinates = _bind(_literal_value(node, str))
     latitude, longitude = (
         cast(
             func.split_part(coordinates, literal_column("' '"), literal_column(i)),
@@ -412,13 +424,8 @@ def _convert_coordinates(node):
 
 def _convert_meters(node):
     if isinstance(node, exp.Placeholder):
-        return _convert_placeholder(node, type_=Float)
-    if isinstance(node, exp.Literal) and not node.is_string:
-        _unpack(node, 'this', 'is_string')
-        return _bind(float(node.to_py()))
-    raise UnsupportedSQL(
-        "within_distance's distance must be a positive number of meters or a "
-        f"query parameter, got {str(node)}")
+        return _convert_placeholder(node, Float)
+    return _bind(_literal_value(node, float))
 
 
 def _convert_sounds_like(args, columns):
@@ -455,51 +462,122 @@ PREDICATE_FUNCTIONS = {
 
 def _convert_value(node, columns):
     """Convert a SQL value expression to a ``ColumnElement``"""
+    if isinstance(node, exp.Paren):
+        inner, = _unpack(node, 'this')
+        return _convert_value(inner, columns)
     if isinstance(node, exp.Literal):
-        _unpack(node, 'this', 'is_string')
-        return _bind(node.to_py())  # Bind it so the value never reaches the SQL
+        return _bind(_literal_value(node))
     if isinstance(node, exp.Boolean):
         value, = _unpack(node, 'this')
         return _bind(bool(value))
-    if isinstance(node, exp.Array):
-        return _convert_array(node)
     if isinstance(node, exp.Placeholder):
         return _convert_placeholder(node)
-    if isinstance(node, exp.StringToArray):
-        return _convert_string_to_array(node, columns)
+    if isinstance(node, (exp.Add, exp.Sub)):
+        return _convert_arithmetic(node, columns)
+    if isinstance(node, exp.Func):
+        return _convert_value_function(node, columns)
     return _convert_column(node, columns)
+
+
+def _convert_arithmetic(node, columns):
+    left, right = _unpack(node, 'this', 'expression')
+    if isinstance(right, exp.MakeInterval):  # Datetime interval
+        operand = _convert_value(left, columns)
+        interval = _convert_value(right, columns)
+        return operand - interval if isinstance(node, exp.Sub) else operand + interval
+    raise UnsupportedSQL(f"unsupported expression: {type(node).__name__}")
+
+
+DATETIME_INTERVALS = {'years', 'months', 'weeks', 'days', 'hours', 'mins', 'secs'}
+
+
+def _convert_make_interval(node, columns):
+    """Convert make_interval(<unit> => <count>)"""
+    args = []
+    for argument in node.args.values():
+        if not isinstance(argument, exp.Kwarg):
+            raise UnsupportedSQL('make_interval args must be named, as in '
+                                 f'make_interval(days => 30), got {str(argument)}')
+        unit, count = _unpack(argument, 'this', 'expression')
+        if unit.name.lower() not in DATETIME_INTERVALS:
+            raise UnsupportedSQL(f'unsupported interval unit: {unit.name}')
+        args.append(literal_column(unit.name.lower())
+                    .op('=>')
+                    (_convert_interval_count(count)))
+    if not args:
+        raise UnsupportedSQL('make_interval needs a unit, as in "days => 30"')
+    return func.make_interval(*args)
+
+
+def _convert_interval_count(node):
+    """Convert how many of a unit an interval covers"""
+    if isinstance(node, exp.Placeholder):
+        return _convert_placeholder(node)
+    count = _literal_value(node)
+    if not isinstance(count, int):
+        raise UnsupportedSQL(f"an interval's count must be a whole number, got {str(node)}")
+    return _bind(count)
+
+
+def _convert_value_function(node, columns):
+    """Convert a call to one of the value-producing functions we support"""
+    name = node.name if isinstance(node, exp.Anonymous) else node.sql_name()
+    if convert := VALUE_FUNCTIONS.get(name.lower()):
+        return convert(node, columns)
+    raise UnsupportedSQL(f"unsupported function: {name}")
 
 
 def _convert_string_to_array(node, columns):
     value, delimiter = _unpack(node, 'this', 'expression')
-    if not (isinstance(delimiter, exp.Literal) and delimiter.is_string):
-        raise UnsupportedSQL("string_to_array's delimiter must be a string literal")
-    _unpack(delimiter, 'this', 'is_string')
     return func.string_to_array(
         _convert_value(value, columns),
-        _bind(delimiter.to_py()),
+        _bind(_literal_value(delimiter, str)),
         type_=ARRAY(Text),
     )
 
 
-def _convert_placeholder(node, expanding=False, type_=None):
+def _convert_placeholder(node, db_type=None, expanding=False):
     """Convert a ``:name`` placeholder to a parameter for the caller to bind"""
     name, = _unpack(node, 'this')
     if not isinstance(name, str) or not PARAM_NAME.match(name):
         raise UnsupportedSQL("query parameters must be written as `:name`")
     if name.startswith(LITERAL_PARAM_PREFIX):
         raise UnsupportedSQL(f"query parameter names may not begin with '{LITERAL_PARAM_PREFIX}'")
-    return bindparam(name, expanding=expanding, type_=type_)
+    return bindparam(name, expanding=expanding, type_=db_type)
 
 
-def _convert_array(node):
+def _convert_array(node, columns):
     """Convert an ``ARRAY[...]`` literal into a single bound parameter"""
     elements, = _unpack(node, 'expressions')
-    for element in elements:
-        if not isinstance(element, exp.Literal):
-            raise UnsupportedSQL(f"array elements must be literals: {str(element)}")
-        _unpack(element, 'this', 'is_string')
-    return _bind([element.to_py() for element in elements])
+    return _bind([_literal_value(element) for element in elements])
+
+
+def _convert_now(node, columns):
+    _no_arguments(node)
+    return func.now()
+
+
+def _convert_today(node, columns):
+    _no_arguments(node)
+    return func.current_date()
+
+
+def _no_arguments(node):
+    """Reject any argument to a function that takes none"""
+    if isinstance(node, exp.Anonymous):
+        _unpack(node, 'this')  # an Anonymous node holds its name in 'this'
+    else:
+        _unpack(node)
+
+
+VALUE_FUNCTIONS = {
+    'array': _convert_array,
+    'make_interval': _convert_make_interval,
+    'string_to_array': _convert_string_to_array,
+    'current_timestamp': _convert_now,  # now() also resolves here
+    'current_date': _convert_today,
+    'today': _convert_today,
+}
 
 
 def _convert_table_ref(node, tables):

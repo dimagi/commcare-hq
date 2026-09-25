@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from datetime import date, datetime
 
-from django.db import DEFAULT_DB_ALIAS, models
+from django.db import models
 
 from dimagi.ext.couchdbkit import *
 from pillowtop.exceptions import PillowNotFoundError
@@ -86,3 +86,13 @@ class HistoricalPillowCheckpoint(models.Model):
 
     class Meta(object):
         ordering = ['-date_updated']
+
+
+class PlatformDeactivationLog(models.Model):
+    performed_by = models.CharField(max_length=255, db_index=True)
+    target_email = models.CharField(max_length=255, db_index=True)
+    platform = models.CharField(max_length=32)
+    account_label = models.CharField(max_length=255, blank=True)
+    succeeded = models.BooleanField()
+    detail = models.TextField(blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)

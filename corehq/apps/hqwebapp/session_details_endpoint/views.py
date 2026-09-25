@@ -1,16 +1,29 @@
 import json
 from datetime import datetime
 
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.conf import settings
+from django.contrib.auth.middleware import AuthenticationMiddleware
+from django.contrib.messages.middleware import MessageMiddleware
+from django.http import (
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    JsonResponse,
+)
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+from django_otp.middleware import OTPMiddleware
 
 from corehq import toggles
 from corehq.apps.domain.auth import formplayer_auth
+from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
 from corehq.apps.public_webforms.models import PublicFormSession
+from corehq.apps.users.middleware import UsersMiddleware
 from corehq.apps.users.models import CouchUser
 from corehq.feature_previews import previews_enabled_for_domain
 from corehq.middleware import TimeoutMiddleware
@@ -19,6 +32,8 @@ from corehq.util.metrics import (
     limit_domains,
     metrics_histogram
 )
+
+FORMPLAYER_PERMISSIONS = ['edit_data']
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -31,9 +46,12 @@ class SessionDetailsView(View):
     Authentication is done by HMAC signing of the request body:
 
         secret = settings.FORMPLAYER_INTERNAL_AUTH_KEY
-        data = '{"session_id": "123"}'
+        data = '{"sessionId": "123", "domain": "my-project-space"}'
         digest = base64.b64encode(hmac.new(secret, data, hashlib.sha256).digest())
         requests.post(url, data=data, headers={'X-MAC-DIGEST': digest})
+
+    A 404 response means the session is not valid for the project space it
+    asks about.
     """
     urlname = 'session_details'
     http_method_names = ['post']
@@ -66,8 +84,14 @@ class SessionDetailsView(View):
             raise Http404
 
         domain = data.get('domain')
-        if domain and toggles.DISABLE_WEB_APPS.enabled(domain):
+        if not domain:
+            return HttpResponseBadRequest()
+
+        if toggles.DISABLE_WEB_APPS.enabled(domain):
             return HttpResponse('Service Temporarily Unavailable', content_type='text/plain', status=503)
+
+        if not _may_act_in_domain(session, domain):
+            raise Http404
 
         # reset the session's expiry if there's some formplayer activity
         secure_session = session.get('secure_session')
@@ -75,12 +99,18 @@ class SessionDetailsView(View):
         session.save()
 
         domains = set()
-        for member_domain in couch_user.domains:
-            domains.add(member_domain)
-            domains.update(EnterprisePermissions.get_domains(member_domain))
+        for membership in couch_user.domain_memberships:
+            if not membership.is_active:
+                continue
+            domains.add(membership.domain)
+            domains.update(EnterprisePermissions.get_domains(membership.domain))
 
         enabled_toggles = toggles_enabled_for_user(user.username) | toggles_enabled_for_domain(domain)
         enabled_previews = previews_enabled_for_domain(domain)
+        permissions = [
+            name for name in FORMPLAYER_PERMISSIONS
+            if couch_user.has_permission(domain, name)
+        ] if domain else []
         self._record_processing_time(start_time, domain)
         return JsonResponse({
             'username': user.username,
@@ -90,7 +120,8 @@ class SessionDetailsView(View):
             'domains': list(domains),
             'public': False,
             'enabled_toggles': list(sorted(enabled_toggles)),
-            'enabled_previews': list(enabled_previews)
+            'enabled_previews': list(enabled_previews),
+            'permissions': permissions,
         })
 
     def _public_session_details(self, public_session_key, start_time):
@@ -123,3 +154,51 @@ class SessionDetailsView(View):
                       buckets=(250, 1000, 3000),
                       bucket_unit='ms',
                       tags={'domain': limit_domains(domain)})
+
+
+ALLOWED = object()
+
+ACCESS_CHECK_MIDDLEWARE = (
+    AuthenticationMiddleware,
+    MessageMiddleware,
+    OTPMiddleware,
+    UsersMiddleware,
+    CCHQPRBACMiddleware,
+)
+
+
+def _may_act_in_domain(session, domain):
+    """
+    Whether the session's user may act in ``domain``, according to the decorator
+    that guards HQ's own project-space views.
+    """
+    request = HttpRequest()
+    request.method = 'GET'
+    # a refusal is rendered before being discarded, and rendering needs an origin
+    request.META = {'SERVER_NAME': settings.BASE_ADDRESS.split(':')[0], 'SERVER_PORT': '443'}
+    # Any path that's not in PAGES_NOT_RESTRICTED_FOR_DIMAGI would do
+    request.path = f'/a/{domain}/'
+    request.session = session
+    view_kwargs = {'domain': domain}
+
+    process_view_hooks = []
+
+    def call_view(request):
+        for process_view in process_view_hooks:
+            process_view(request, _sentinel_view, (), view_kwargs)
+        return _sentinel_view(request, domain)
+
+    handle = call_view
+    for middleware_class in reversed(ACCESS_CHECK_MIDDLEWARE):
+        handle = middleware_class(handle)
+        if hasattr(handle, 'process_view'):
+            process_view_hooks.insert(0, handle.process_view)
+    try:
+        return handle(request) is ALLOWED
+    except Http404:
+        return False
+
+
+@login_and_domain_required
+def _sentinel_view(request, domain):
+    return ALLOWED

@@ -349,6 +349,26 @@ class XFormInstanceManagerTest(TestCase):
         form = manager.get_form('f3')
         self.assertFalse(form.is_deleted)
 
+    def test_get_deleted_form_ids(self):
+        meta = TestFormMetadata(domain=DOMAIN)
+        for form_id in ['d1', 'd2', 'not-deleted']:
+            get_simple_wrapped_form(form_id, metadata=meta)
+        other_domain = 'other-forms-manager'
+        get_simple_wrapped_form(
+            'other-domain', metadata=TestFormMetadata(domain=other_domain))
+        self.addCleanup(FormProcessorTestUtils.delete_all_sql_forms, other_domain)
+        manager = XFormInstance.objects
+        manager.soft_delete_forms(DOMAIN, ['d1', 'd2'])
+        manager.soft_delete_forms(other_domain, ['other-domain'])
+
+        deleted_ids = manager.get_deleted_form_ids(
+            DOMAIN, ['d1', 'd2', 'not-deleted', 'other-domain', 'missing'])
+
+        self.assertEqual(sorted(deleted_ids), ['d1', 'd2'])
+
+    def test_get_deleted_form_ids_of_empty_list(self):
+        self.assertEqual(XFormInstance.objects.get_deleted_form_ids(DOMAIN, []), [])
+
     def assert_form_xml_attachment(self, form):
         attachments = XFormInstance.objects.get_attachments(form.form_id)
         self.assertEqual([a.name for a in attachments], ["form.xml"])

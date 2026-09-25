@@ -46,8 +46,14 @@ _ADMIN_ENDPOINT_DECORATORS = [
     domain_admin_required,
 ]
 
-SQL_REQUIRED = 'SQL is required.'
 PROJECT_DB_UNAVAILABLE = 'The project database is unavailable. Please try again.'
+
+
+def _bind_parameters(parameters, values):
+    """Take from ``values`` what the query's ``parameters`` need.
+    A missing or blank value binds as NULL
+    """
+    return {name: values.get(name) or None for name in parameters}
 
 
 def empty_query():
@@ -173,9 +179,6 @@ class CaseSearchEndpointForm(forms.Form):
 
     def _clean_sql(self, cleaned):
         sql = (cleaned.get('sql') or '').strip()
-        if not sql:
-            self.add_error('sql', SQL_REQUIRED)
-            return
         try:
             UserSQL(self.domain, sql, max_rows=None).validate()
         except UnsupportedSQL as error:
@@ -452,9 +455,9 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
 
         if request.POST.get('target_type') == CaseSearchEndpoint.TargetType.PROJECT_DB:
             return self._run_sql(request, test_param_values, validation)
-        return self._run_query(request, parameters, test_param_values, validation)
+        return self._run_es_query(request, parameters, test_param_values, validation)
 
-    def _run_query(self, request, parameters, test_param_values, validation):
+    def _run_es_query(self, request, parameters, test_param_values, validation):
         """Run the query builder's spec and render the cases it matched."""
         case_type = request.POST.get('case_type', '')
         try:
@@ -477,19 +480,14 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
             notify_exception(request, str(e))
             return self._render_results(request, errors=['Query Execution Failed'],
                                         validation=validation)
-        return self._render_results(request, fields=fields, results=results,
-                                    validation=validation)
+        columns, rows = self._es_results_to_columns_and_rows(fields, results)
+        return self._render_results(request, columns, rows, validation=validation)
 
     def _run_sql(self, request, test_param_values, validation):
         sql = request.POST.get('sql', '').strip()
-        if not sql:
-            # Said here rather than left to the translator, which would
-            # otherwise report no statement as the wrong number of them.
-            validation[self.SQL_ERRORS] = [SQL_REQUIRED]
-            return self._render_results(request, validation=validation)
         user_sql = UserSQL(self.domain, sql, max_rows=self._row_limit)
         try:
-            result = user_sql.run(user_sql.bind_parameters(test_param_values))
+            result = user_sql.run(_bind_parameters(user_sql.parameters, test_param_values))
         except UserSQLValidationError as error:
             validation[self.SQL_ERRORS] = [error.msg]
             return self._render_results(request, validation=validation)
@@ -498,12 +496,11 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
                 request, f'project_db unavailable for {self.domain}: {error}')
             return self._render_results(
                 request, errors=[PROJECT_DB_UNAVAILABLE])
-        return self._render_table(request, result.columns, result.rows,
-                                  validation=validation)
+        return self._render_results(request, result.columns, result.rows, validation=validation)
 
-    def _render_results(self, request, *, errors=None, fields=None, results=None,
-                        validation=None):
+    def _es_results_to_columns_and_rows(self, fields, results):
         field_names = (fields or {}).keys()
+        columns = ['Case Name'] + [k for k in field_names]
         if results:
             rows = [
                 [case.name] +
@@ -512,11 +509,9 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
             ]
         else:
             rows = []
-        return self._render_table(
-            request, ['Case Name'] + [k for k in field_names], rows,
-            errors=errors, validation=validation)
+        return columns, rows
 
-    def _render_table(self, request, columns, rows, errors=None, validation=None):
+    def _render_results(self, request, columns=None, rows=None, errors=None, validation=None):
         # Always 200 so HTMX swaps the partial in (it ignores error statuses).
         return render(request, self._results_template, {
             'errors': errors or [],

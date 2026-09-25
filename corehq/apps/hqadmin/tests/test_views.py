@@ -6,7 +6,6 @@ from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 from django_prbac.models import Grant, Role, UserRole
-from lxml import etree
 from unittest.mock import Mock, patch
 
 from corehq import privileges
@@ -17,6 +16,7 @@ from corehq.apps.hqadmin.views.users import AdminRestoreView, DisableUserView
 from corehq.apps.users.models import WebUser
 from corehq.toggles import TAG_RELEASE, TAG_GA_PATH
 from corehq.toggles.sql_models import ToggleEditPermission
+from corehq.util.xml_utils import safe_fromstring
 
 
 class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
@@ -49,7 +49,7 @@ class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
             })
 
     def test_admin_restore_counts(self):
-        xml_payload = etree.fromstring(self.get_xml('restore'))
+        xml_payload = safe_fromstring(self.get_xml('restore'))
         self.assertEqual(AdminRestoreView.get_stats_from_xml(xml_payload), {
             'restore_id': '02bbfb3ea17711e8adb9bc764e203eaf',
             'num_cases': 2,

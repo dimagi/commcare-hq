@@ -1,6 +1,8 @@
 import json
 from unittest.mock import patch
 
+import pytest
+
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.urls import reverse
@@ -18,12 +20,12 @@ from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
 from ..endpoint_views import (
-    SQL_REQUIRED,
     CaseSearchEndpointDeactivateView,
     CaseSearchEndpointEditView,
     CaseSearchEndpointNewView,
     CaseSearchEndpointsView,
     CaseSearchEndpointTestView,
+    _bind_parameters,
 )
 from ..models import CaseSearchEndpoint, CaseSearchEndpointVersion
 
@@ -538,7 +540,7 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         with self._project_db_table():
             response = self._post_sql('   ')
         content = response.content.decode()
-        assert SQL_REQUIRED in self._region(content, 'sql-errors')
+        assert 'SQL is required' in self._region(content, 'sql-errors')
         assert 'single statement' not in content
 
     def test_sql_reports_an_unavailable_project_db(self):
@@ -632,3 +634,16 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         content = response.content.decode()
         assert 'Duplicate parameter name' in self._region(content, 'parameter-errors')
         assert self._region(content, 'sql-errors') is None
+
+
+@pytest.mark.parametrize('parameters, values, expected', [
+    (['who'], {'who': 'ann'}, {'who': 'ann'}),
+    # what the query asks for and was not given
+    (['who'], {}, {'who': None}),
+    # a criterion left blank was not supplied
+    (['who'], {'who': ''}, {'who': None}),
+    # ...and what it did not ask for is dropped
+    (['who'], {'who': 'ann', 'stale': 'x'}, {'who': 'ann'}),
+])
+def test_bind_parameters(parameters, values, expected):
+    assert _bind_parameters(parameters, values) == expected

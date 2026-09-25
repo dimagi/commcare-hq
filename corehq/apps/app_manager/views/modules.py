@@ -283,7 +283,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 'instance_name': module.search_config.instance_name or "",
                 'include_all_related_cases': module.search_config.include_all_related_cases,
                 'search_on_clear': module.search_config.search_on_clear,
-                'case_search_endpoint_id': module.search_config.case_search_endpoint_id or "",
+                'case_search_endpoint_id': str(module.search_config.case_search_endpoint_id or ""),
             },
         },
     }

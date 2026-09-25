@@ -7,6 +7,7 @@ MAX_FORM_IDS = 5000
 ALLOWED_ACTIONS = (
     BulkAsyncJob.Action.ARCHIVE,
     BulkAsyncJob.Action.UNARCHIVE,
+    BulkAsyncJob.Action.DELETE,
 )
 
 
