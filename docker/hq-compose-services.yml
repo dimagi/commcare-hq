@@ -57,10 +57,9 @@ services:
     ports:
       - "2181:2181"
 
-  minio:
+  seaweedfs:
     extends:
       file: hq-compose.yml
-      service: minio
+      service: seaweedfs
     ports:
-      - "9980:9980"
-      - "9981:9981"
+      - "8333:8333"

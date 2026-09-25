@@ -38,7 +38,7 @@ etc.), you should stop them now.
 
 Run ::
 
-    $ scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka minio
+    $ scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka seaweedfs
 
 to build and start those Docker services in the background. (Omit ``-d``
 to run them in the foreground.)
@@ -125,7 +125,7 @@ so you can connect to them directly.
 * Redis (6397)
 * Zookeeper (2181)
 * Kafka (9092)
-* MinIO (9980)
+* SeaweedFS (S3 API, 8333)
 
 CommCare HQ and the services
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
