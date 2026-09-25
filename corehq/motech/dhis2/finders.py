@@ -1,4 +1,5 @@
 from collections import namedtuple
+from decimal import Decimal
 from functools import partial
 
 from django.utils.translation import gettext as _
@@ -24,7 +25,7 @@ class TrackedEntityInstanceFinder:
 
     @property
     def confidence_margin(self):
-        return self.case_config['finder_config']['confidence_margin']
+        return Decimal(self.case_config['finder_config']['confidence_margin'])
 
     @memoized_property
     def attr_type_id_value_source_by_case_property(self):
@@ -100,7 +101,7 @@ class TrackedEntityInstanceFinder:
             candidate_value = get_tei_attr(candidate, attr_type_id)
             case_value = case_trigger_info.extra_fields[case_property]
 
-            weight = property_weight['weight']
+            weight = Decimal(property_weight['weight'])
             match_type = property_weight['match_type']
             match_params = property_weight['match_params']
             match_function = partial(MATCH_FUNCTIONS[match_type], *match_params)
