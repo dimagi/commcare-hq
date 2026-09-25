@@ -249,7 +249,7 @@ class DeferredDatabaseContext:
 @unit_testing_only
 @contextmanager
 def couch_sql_context(config):
-    from corehq.apps.project_db.table_ddl import create_project_db_extensions
+    from corehq.apps.project_db.table_ddl import setup_project_db
 
     if config.skip_setup_for_reuse_db and sql_databases_ok():
         if config.reuse_db == "migrate":
@@ -270,8 +270,7 @@ def couch_sql_context(config):
             keepdb=config.skip_setup_for_reuse_db,
             serialized_aliases=(),
         )
-
-    create_project_db_extensions()
+        setup_project_db()
 
     try:
         yield

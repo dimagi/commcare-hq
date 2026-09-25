@@ -37,7 +37,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.project_db.table_ddl import (
     Earth,
     get_domain_tables,
-    get_project_db_engine,
+    get_domain_query_engine,
 )
 
 
@@ -124,7 +124,7 @@ class UserSQL:
 
     def run(self, parameter_values):
         params = self._clean_parameters(parameter_values)
-        with get_project_db_engine().begin() as conn:
+        with get_domain_query_engine(self.domain).begin() as conn:
             _set_timezone(conn, self.timezone)
             start = time.perf_counter()
             try:
