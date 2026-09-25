@@ -23,6 +23,7 @@ from corehq.apps.app_manager.suite_xml.post_process.resources import (
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, get_simple_form, patch_validate_xform
+from corehq.apps.case_search.models import CaseSearchEndpoint
 from corehq.apps.app_manager.views.utils import (
     overwrite_app,
     update_linked_app,
@@ -34,6 +35,7 @@ from corehq.apps.hqmedia.models import (
     CommCareMultimedia,
 )
 from corehq.apps.linked_domain.applications import get_downstream_app_id
+from corehq.apps.linked_domain.case_search_endpoints import update_linked_case_search_endpoint
 from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
@@ -166,6 +168,23 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         # report config added with the linked report id updated in report config
         self.assertEqual(updated_app.modules[0].report_configs[0].report_id, link_info.report.get_id)
+
+    def test_case_search_endpoint_points_at_downstream_copy(self):
+        upstream_endpoint = CaseSearchEndpoint.objects.create(domain=self.domain, name='patients')
+        update_linked_case_search_endpoint(self.domain_link, upstream_endpoint.id)
+        downstream_endpoint = CaseSearchEndpoint.objects.get(domain=self.linked_domain)
+        self.master1.modules[0].search_config.case_search_endpoint_id = upstream_endpoint.id
+
+        updated_app = update_linked_app(self.linked_app, self.master1, 'a-user-id')
+
+        assert updated_app.modules[0].search_config.case_search_endpoint_id == downstream_endpoint.id
+
+    def test_case_search_endpoint_must_be_pushed_first(self):
+        upstream_endpoint = CaseSearchEndpoint.objects.create(domain=self.domain, name='patients')
+        self.master1.modules[0].search_config.case_search_endpoint_id = upstream_endpoint.id
+
+        with self.assertRaisesRegex(AppLinkError, 'M1 module'):
+            update_linked_app(self.linked_app, self.master1, 'a-user-id')
 
     def _create_report_and_datasource(self):
         master_data_source = get_sample_data_source()

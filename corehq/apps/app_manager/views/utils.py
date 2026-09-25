@@ -40,6 +40,7 @@ from corehq.apps.app_manager.models import (
     ShadowModule,
 )
 from corehq.apps.app_manager.util import generate_xmlns, update_form_unique_ids
+from corehq.apps.case_search.models import CaseSearchEndpoint
 from corehq.apps.es import FormES
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.exceptions import (
@@ -201,6 +202,8 @@ def overwrite_app(app, master_build, report_map=None):
             except KeyError:
                 raise AppEditingError(config.report_id)
 
+    _update_case_search_endpoint_ids(wrapped_app)
+
     # Legacy linked apps have different form unique ids than their master app(s). These mappings
     # are stored as ResourceOverride objects. Look up to see if this app has any.
     from corehq.apps.app_manager.suite_xml.post_process.resources import get_xform_resource_overrides
@@ -212,6 +215,33 @@ def overwrite_app(app, master_build, report_map=None):
     wrapped_app.set_media_versions()
 
     return wrapped_app
+
+
+def _update_case_search_endpoint_ids(app):
+    configs_by_module = [
+        (module.default_name(), module.search_config) for module in app.get_modules()
+        if getattr(module, 'search_config', None) and module.search_config.case_search_endpoint_id
+    ]
+    if not configs_by_module:
+        return
+
+    endpoint_map = _get_endpoints_by_upstream_id(app.domain)
+    for module_name, search_config in configs_by_module:
+        upstream_id = search_config.case_search_endpoint_id
+        if upstream_id not in endpoint_map:
+            raise AppLinkError(_(
+                "Endpoint for module '{}' not found. Try pushing endpoints first"
+            ).format(module_name))
+        search_config.case_search_endpoint_id = endpoint_map[upstream_id]
+
+
+def _get_endpoints_by_upstream_id(downstream_domain):
+    return dict(
+        CaseSearchEndpoint.objects
+        .filter(domain=downstream_domain, is_active=True)
+        .exclude(upstream_id=None)
+        .values_list('upstream_id', 'id')
+    )
 
 
 def _update_multimedia_map(old_map, new_map):
