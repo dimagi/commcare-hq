@@ -431,18 +431,16 @@ def test_get_info_separates_literals_from_parameters():
     ('SELECT * FROM client WHERE name = :who', {'who': 'ann'}, {'who': 'ann'}),
     # A falsy value is passed through as-is
     ('SELECT * FROM client WHERE name = :who', {'who': ''}, {'who': ''}),
+    # A missing value binds as NULL
+    ('SELECT * FROM client WHERE name = :who', {}, {'who': None}),
 ])
 def test_clean_parameters(sql, raw, expected):
     assert _user_sql(sql)._clean_parameters(raw) == expected
 
 
-@pytest.mark.parametrize('sql, raw', [
-    ('SELECT * FROM client WHERE name = :who', {}),
-    ('SELECT * FROM client', {'stale': 'x'}),
-])
-def test_clean_parameters_rejects_a_mismatched_set(sql, raw):
+def test_clean_parameters_rejects_unexpected_params():
     with pytest.raises(BadParameters):
-        _user_sql(sql)._clean_parameters(raw)
+        _user_sql('SELECT * FROM client')._clean_parameters({'stale': 'x'})
 
 
 
