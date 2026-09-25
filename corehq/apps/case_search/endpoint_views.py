@@ -49,6 +49,13 @@ _ADMIN_ENDPOINT_DECORATORS = [
 PROJECT_DB_UNAVAILABLE = 'The project database is unavailable. Please try again.'
 
 
+def _bind_parameters(parameters, values):
+    """Take from ``values`` what the query's ``parameters`` need.
+    A missing or blank value binds as NULL
+    """
+    return {name: values.get(name) or None for name in parameters}
+
+
 def empty_query():
     return {'type': 'all', 'children': []}
 
@@ -470,8 +477,7 @@ class CaseSearchEndpointTestView(BaseDomainView):
         sql = request.POST.get('sql', '').strip()
         user_sql = UserSQL(self.domain, sql, max_rows=self._row_limit)
         try:
-            result = user_sql.run(
-                user_sql.bind_parameters(test_param_values, set_falsy_to_null=True))
+            result = user_sql.run(_bind_parameters(user_sql.parameters, test_param_values))
         except UserSQLValidationError as error:
             validation[self.SQL_ERRORS] = [error.msg]
             return self._render_results(request, validation=validation)

@@ -115,20 +115,6 @@ class UserSQL:
         """Return the parameters a translated query leaves for the caller to supply"""
         return [name for name, bind in self._compiled.binds.items() if bind.required]
 
-    def bind_parameters(self, values, set_falsy_to_null=False):
-        """Take from ``values`` what this query's parameters need.
-
-        A missing value binds as NULL
-        Pass ``set_falsy_to_null=True`` to also treat a blank value
-        (e.g. an empty string) as not supplied.
-        """
-        def clean(value):
-            if set_falsy_to_null and not value:
-                return None
-            return value
-
-        return {name: clean(values.get(name)) for name in self.parameters}
-
     def run(self, parameter_values):
         params = self._clean_parameters(parameter_values)
         with get_project_db_engine().connect() as conn:
@@ -145,9 +131,11 @@ class UserSQL:
             )
 
     def _clean_parameters(self, raw_parameters):
-        if set(raw_parameters) != set(self.parameters):
-            raise BadParameters(f"Expected params {set(self.parameters)}, got {set(raw_parameters)}")
-        return {name: raw_parameters[name] for name in self.parameters}
+        unexpected_parameters = set(raw_parameters) - set(self.parameters)
+        if unexpected_parameters:
+            raise BadParameters(f"Unexpected params {unexpected_parameters} not defined in query")
+
+        return {name: raw_parameters.get(name, None) for name in self.parameters}
 
 
 def translate(sql, tables):
