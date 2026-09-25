@@ -65,6 +65,16 @@ Alpine.data("endpointForm", () => {
             return f ? f.type : "";
         },
 
+        // Must stay in sync with placeholders_for() in endpoint_query_spec.py
+        placeholderHint(param) {
+            if (!param.name) {
+                return "";
+            }
+            return param.type === "daterange"
+                ? `:${param.name}_from  :${param.name}_to`
+                : `:${param.name}`;
+        },
+
         typeIconClass(type) {
             return (
                 {
@@ -72,6 +82,7 @@ Alpine.data("endpointForm", () => {
                     number: "fa-solid fa-hashtag",
                     date: "fa-solid fa-calendar-days",
                     datetime: "fa-solid fa-calendar-days",
+                    daterange: "fa-solid fa-calendar-week",
                     select: "fa-solid fa-list",
                     geopoint: "fa-solid fa-location-dot",
                 }[type] || "fa-solid fa-circle"

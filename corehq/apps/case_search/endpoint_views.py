@@ -10,16 +10,21 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
+from sqlalchemy import ARRAY
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.sql.sqltypes import NullType
 
 from corehq import toggles
 from corehq.apps.case_search.endpoint_capability import (
+    FIELD_TYPE_SELECT,
     get_capability,
 )
 from corehq.apps.case_search.endpoint_query_spec import (
     MAX_QUERY_DEPTH,
     parse_parameter_spec,
     parse_query_spec,
+    placeholders_for,
+    sql_placeholders,
 )
 from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
@@ -144,7 +149,7 @@ class CaseSearchEndpointForm(forms.Form):
 
     def clean(self):
         cleaned = super().clean()
-        parameters = self._clean_parameters(cleaned)
+        parameters = self._parse_parameters(cleaned)
         # An endpoint is configured one way or the other, so the fields
         # belonging to the other kind are dropped rather than saved unchecked.
         if self.target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH:
@@ -153,17 +158,21 @@ class CaseSearchEndpointForm(forms.Form):
         elif self.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB:
             cleaned['case_type'] = None
             cleaned['query'] = None
-            self._clean_sql(cleaned)
+            self._clean_sql(cleaned, parameters)
 
         return cleaned
 
-    def _clean_parameters(self, cleaned):
-        parameter_spec = cleaned.get('parameters')
-        if parameter_spec is None:
+    def _parse_parameters(self, cleaned):
+        """Parse the parameter spec both kinds of endpoint share.
+
+        Returns ``None`` when the spec did not parse, having reported why.
+        """
+        spec = cleaned.get('parameters')
+        if spec is None:
             return None
-        parameters, errors = parse_parameter_spec(parameter_spec)
+        parameters, errors = parse_parameter_spec(spec)
         for error in errors:
-            self.add_error('parameters', error)
+            self.add_error(None, error)
         return parameters
 
     def _clean_query(self, cleaned, parameters):
@@ -177,12 +186,16 @@ class CaseSearchEndpointForm(forms.Form):
             for error in errors:
                 self.add_error('query', error)
 
-    def _clean_sql(self, cleaned):
+    def _clean_sql(self, cleaned, parameters):
         sql = (cleaned.get('sql') or '').strip()
         try:
-            UserSQL(self.domain, sql, max_rows=None).validate()
+            # The query is rebuilt when the endpoint runs, since the domain's
+            # tables change over time. This is to validate what was written.
+            user_sql = UserSQL(self.domain, sql)
+            binds = user_sql.parameter_binds
         except UnsupportedSQL as error:
             self.add_error('sql', str(error.msg))
+            return
         except (ImproperlyConfigured, SQLAlchemyError) as error:
             # Not the author's fault, so report it against the form rather
             # than the field, and let them keep what they wrote.
@@ -190,6 +203,52 @@ class CaseSearchEndpointForm(forms.Form):
                 None, f'project_db unavailable for {self.domain}: {error}'
             )
             self.add_error(None, PROJECT_DB_UNAVAILABLE)
+            return
+        if parameters is not None:
+            for error in sql_parameter_errors(binds, parameters):
+                self.add_error('sql', error)
+
+
+def sql_parameter_errors(binds, parameters):
+    """Report placeholders in the SQL that the parameter spec does not support.
+
+    Catches at save time what would otherwise fail when the endpoint runs:
+    ``UserSQL.run`` rejects a value set that does not match the query's
+    placeholders, and a list bound to the wrong construct fails inside
+    psycopg2 rather than as anything a caller can report.
+
+    :param binds: ``UserSQL.parameter_binds`` for the endpoint's SQL
+    """
+    expected = set(sql_placeholders(parameters))
+    for name in sorted(set(binds) - expected):
+        yield (f"Undefined parameter ':{name}'. Add it under Parameters, "
+               f"or remove it from the SQL.")
+    for name in sorted(expected - set(binds)):
+        yield f"Parameter ':{name}' is not used by the SQL."
+    for param in parameters:
+        for name in placeholders_for(param):
+            if name in binds:
+                yield from _bind_shape_errors(param, name, binds[name])
+
+
+def _bind_shape_errors(param, name, bind):
+    is_list_param = param.type == FIELD_TYPE_SELECT
+    if bind.expanding:
+        # `IN :name` renders nothing at all for an unsupplied parameter, so
+        # its NULL guard raises out of psycopg2 rather than matching everything
+        yield (f"':{name}' is used with IN, which is not supported. Compare a "
+               f"select_prop__ column with && (any of) or @> (all of) instead.")
+        return
+    if isinstance(bind.type, NullType):
+        # Only ever compared against another parameter or NULL, so the query
+        # says nothing about the shape this parameter should take
+        return
+    if is_list_param and not isinstance(bind.type, ARRAY):
+        yield (f"':{name}' is a select parameter, so it must be compared with a "
+               f"select_prop__ column using && (any of) or @> (all of).")
+    elif not is_list_param and isinstance(bind.type, ARRAY):
+        yield (f"':{name}' is compared with a select_prop__ column, so it must "
+               f"be declared as a select parameter.")
 
 
 @method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')

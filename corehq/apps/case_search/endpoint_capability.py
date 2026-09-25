@@ -20,6 +20,11 @@ FIELD_TYPE_DATE = 'date'
 FIELD_TYPE_DATETIME = 'datetime'
 FIELD_TYPE_SELECT = 'select'
 FIELD_TYPE_GEOPOINT = 'geopoint'
+# Parameter-only: never the type of a case property, so it has no operations
+# of its own. It fills the ``value`` slot of a date field's ``within``
+# operator, and a project DB endpoint binds it as two SQL placeholders --
+# see ``sql_placeholders``.
+FIELD_TYPE_DATERANGE = 'daterange'
 
 # DataType -> field type mapping
 _DATA_TYPE_MAP = {
@@ -65,6 +70,7 @@ _OPERATOR_BY_TYPE = {
         ('lte', _('on or before')),
         ('gte', _('on or after')),
         ('fuzzy_date', _('is approximately')),
+        ('within', _('within')),
     ],
     FIELD_TYPE_DATETIME: [
         ('equals', _('on')),
@@ -72,6 +78,7 @@ _OPERATOR_BY_TYPE = {
         ('gt', _('after')),
         ('lte', _('on or before')),
         ('gte', _('on or after')),
+        ('within', _('within')),
     ],
     FIELD_TYPE_SELECT: [
         ('selected_any', _('is any')),
@@ -84,6 +91,10 @@ _OPERATOR_BY_TYPE = {
 }
 
 FIELD_TYPES = _OPERATOR_BY_TYPE.keys()
+
+# Types a parameter may declare. A superset of the field types, since a
+# parameter need not correspond to a case property.
+PARAMETER_TYPES = (*FIELD_TYPES, FIELD_TYPE_DATERANGE)
 
 # Sentinel input-slot type: the slot has no fixed type of its own and instead
 # takes the type of the field the condition is applied to. Used by operators
@@ -114,6 +125,9 @@ OPERATOR_INPUT_SCHEMAS = {
     'lt': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'lte': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'fuzzy_date': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
+    # A daterange parameter's single value carries both bounds, unlike
+    # gt/gte/lt/lte which each take one bound of the field's own type.
+    'within': [{'name': 'value', 'type': FIELD_TYPE_DATERANGE}],
     'within_distance': [
         {'name': 'point', 'type': FIELD_TYPE_GEOPOINT},
         {'name': 'distance', 'type': FIELD_TYPE_NUMBER},
