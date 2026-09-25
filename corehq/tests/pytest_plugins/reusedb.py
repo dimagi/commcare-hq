@@ -270,8 +270,7 @@ def couch_sql_context(config):
             keepdb=config.skip_setup_for_reuse_db,
             serialized_aliases=(),
         )
-
-    setup_project_db()
+        setup_project_db()
 
     try:
         yield
