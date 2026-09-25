@@ -8,6 +8,7 @@
 /loadtest/test_scripts/localsettings.py
 !localsettings.example.py
 /.claude/*.local.json
+/.claude/skills/*/config.json
 .settings/
 .project
 .pydevproject
