@@ -58,7 +58,11 @@ from corehq.apps.locations.permissions import (
     location_safe,
     location_safe_bypass,
 )
-from corehq.apps.ota.decorators import mobile_auth, mobile_auth_or_formplayer
+from corehq.apps.ota.decorators import (
+    mobile_auth,
+    mobile_auth_or_public_form_session,
+)
+from corehq.apps.public_webforms.models import PublicFormUser
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
@@ -103,7 +107,7 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @tracer.wrap(name="ota.restore")
 @location_safe
 @handle_401_response
-@mobile_auth_or_formplayer
+@mobile_auth_or_public_form_session
 @check_domain_mobile_access
 @set_request_duration_reporting_threshold(seconds=300)
 def restore(request, domain, app_id=None):
@@ -114,8 +118,16 @@ def restore(request, domain, app_id=None):
     if rate_limit_restore(domain):
         return HttpTooManyRequests()
 
+    params = get_restore_params(request, domain)
+    if isinstance(request.couch_user, PublicFormUser):
+        session = request.couch_user.session
+        # restore the build the link is pinned to, as this session's own device,
+        # so respondents get their own reports and their own cache entry
+        app_id = session.public_webform.app_build_id
+        params['device_id'] = session.restore_device_id
+
     response, timing_context = get_restore_response(
-        domain, request.couch_user, app_id, **get_restore_params(request, domain))
+        domain, request.couch_user, app_id, **params)
     if timing_context:
         timing_context.add_to_sentry_breadcrumbs()
     return response
