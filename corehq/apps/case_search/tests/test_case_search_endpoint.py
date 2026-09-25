@@ -30,6 +30,7 @@ from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import case_search_es_setup, es_test
 from corehq.apps.project_db.populate import populate_case_type
 from corehq.apps.project_db.tests.util import project_db_table, utc_project
+from corehq.apps.project_db.user_sql import UserSQLProgrammingError
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.tests.util.xml import assert_xml_equal
@@ -292,12 +293,12 @@ WEIGHT_SQL = "SELECT * FROM pet WHERE (:weight IS NULL OR number_prop__weight > 
     (COLOR_SQL, {'color': 'black'}, ['Rex']),
     (COLOR_SQL, {'color': 'chartreuse'}, []),
     (COLOR_SQL, {}, ['Fido', 'Rex']),
-    (COLOR_SQL, {'color': ''}, ['Fido', 'Rex']),
+    # a blank value is a value someone purposefully supplied, not "unset"
+    (COLOR_SQL, {'color': ''}, []),
     (WEIGHT_SQL, {'weight': '12'}, ['Fido']),
     (WEIGHT_SQL, {'weight': '1'}, ['Fido', 'Rex']),
     (WEIGHT_SQL, {'weight': '100'}, []),
     (WEIGHT_SQL, {}, ['Fido', 'Rex']),
-    (WEIGHT_SQL, {'weight': ''}, ['Fido', 'Rex']),
 ])
 @use('db', pet_table)
 @flag_enabled('CASE_SEARCH_ENDPOINTS')
@@ -307,3 +308,13 @@ def test_sql_endpoint_with_text_parameter(sql, criteria, expected):
     fixture = _run_sql_query(endpoint, criteria)
     names = sorted(case.findtext('case_name') for case in safe_fromstring(fixture))
     assert names == expected
+
+
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_blank_numeric_parameter_errors():
+    # blank values need to be handled in sql
+    _populate_pets()
+    endpoint = _make_sql_endpoint(WEIGHT_SQL)
+    with pytest.raises(UserSQLProgrammingError):
+        _run_sql_query(endpoint, {'weight': ''})
