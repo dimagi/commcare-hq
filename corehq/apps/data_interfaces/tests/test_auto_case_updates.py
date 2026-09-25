@@ -31,6 +31,10 @@ from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import set_parent_case as set_actual_parent_case
 
+from celery.utils.log import get_task_logger
+logger = get_task_logger('data_interfaces')
+logger.info("Test file log")
+
 
 @contextmanager
 def _with_case(domain, case_type, last_modified, **kwargs):
@@ -95,6 +99,7 @@ class BaseCaseRuleTest(TestCase):
     domain = 'case-rule-test'
 
     def tearDown(self):
+        logger.info("tear down")
         for rule in AutomaticUpdateRule.objects.filter(domain=self.domain):
             rule.hard_delete()
 
@@ -1176,6 +1181,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
 
     @classmethod
     def setUpClass(cls):
+        print("setting up!")
         super(CaseRuleEndToEndTests, cls).setUpClass()
         cls.domain_object = Domain(name=cls.domain)
         cls.domain_object.save()
