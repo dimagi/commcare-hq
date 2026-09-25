@@ -650,7 +650,7 @@ def test_run_reports_a_database_error(error_class):
     engine.begin().__enter__().execute.side_effect = [
         None, error_class('SELECT 1', {}, Exception(msg))]
     user_sql = _user_sql('SELECT * FROM client')
-    with patch('corehq.apps.project_db.user_sql.get_project_db_engine',
+    with patch('corehq.apps.project_db.user_sql.get_domain_query_engine',
                return_value=engine):
         with pytest.raises(UserSQLProgrammingError) as error:
             user_sql.run({})
