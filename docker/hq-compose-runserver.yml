@@ -20,7 +20,7 @@ x-commcarehq_base: &commcarehq_base
       condition: service_healthy
     zookeeper:
       condition: service_started
-    minio:
+    garage:
       condition: service_healthy
   volumes:
     - shared_files:/sharedfiles
@@ -97,7 +97,7 @@ services:
       zookeeper:
         condition: service_started
 
-  minio:
+  garage:
     extends:
       file: hq-compose-services.yml
-      service: minio
+      service: garage

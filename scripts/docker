@@ -303,7 +303,7 @@ if [ "$CMD" == "test" ]; then
     docker compose pull --quiet
 
     # Print service versions
-    docker compose run --no-deps --rm minio minio --version
+    docker compose run --no-deps --rm garage /garage --version
     docker compose run --no-deps --rm postgres postgres --version
     docker compose run --no-deps --rm redis redis-server --version
     # Cannot get Couch version easily before it is running.
@@ -359,8 +359,8 @@ else
             ${VOLUME_PREFIX}lib \
             ${VOLUME_PREFIX}postgresql \
             ${VOLUME_PREFIX}redis \
-            ${VOLUME_PREFIX}minio-conf \
-            ${VOLUME_PREFIX}minio-data \
+            ${VOLUME_PREFIX}garage-meta \
+            ${VOLUME_PREFIX}garage-data \
             ${VOLUME_PREFIX}zookeeper
     fi
 fi
