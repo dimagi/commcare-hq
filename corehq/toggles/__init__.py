@@ -2208,7 +2208,9 @@ COMMCARE_CONNECT = StaticToggle(
     'Enable CommCare Connect features',
     tag=TAG_CONNECT_DIVISION,
     namespaces=[NAMESPACE_DOMAIN],
-    description='More details to come',
+    description='Enables CommCare Connect features, along with the other '
+                'feature flags that Connect projects require.',
+    parent_toggles=[SESSION_ENDPOINTS, CUSTOM_PROPERTIES],
 )
 
 SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
