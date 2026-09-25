@@ -1,0 +1,13 @@
+# Single-node Garage for local development. NOT FOR PRODUCTION.
+# The RPC secret and S3 keys are set in docker/hq-compose.yml.
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+replication_factor = 1
+rpc_bind_addr = "[::]:3901"
+
+[s3_api]
+# boto3 signs with us-east-1 when no region is configured, which is how
+# S3_BLOB_DB_SETTINGS is used by HQ; Garage rejects bucket requests
+# signed for any other region
+s3_region = "us-east-1"
+api_bind_addr = "[::]:3900"

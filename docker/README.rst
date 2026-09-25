@@ -126,6 +126,7 @@ so you can connect to them directly.
 * Zookeeper (2181)
 * Kafka (9092)
 * MinIO (9980)
+* Garage (S3 API, 3900)
 
 CommCare HQ and the services
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
