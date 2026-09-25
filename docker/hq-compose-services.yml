@@ -57,10 +57,9 @@ services:
     ports:
       - "2181:2181"
 
-  minio:
+  garage:
     extends:
       file: hq-compose.yml
-      service: minio
+      service: garage
     ports:
-      - "9980:9980"
-      - "9981:9981"
+      - "3900:3900"

@@ -44,7 +44,7 @@ services:
         condition: service_healthy
       zookeeper:
         condition: service_started
-      minio:
+      garage:
         condition: service_healthy
     volumes:
       - ..:/mnt/commcare-hq-ro${RO}
@@ -163,23 +163,26 @@ services:
       - ${DOCKER_SOCK}:${DOCKER_SOCK}
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka:}/kafka/kafka-logs-1
 
-  minio:
-    image: docker.io/dimagi/minio
-    command: server --address :9980 --console-address :9981 /data
+  garage:
+    image: docker.io/dxflrs/garage:v2.3.0
+    # --single-node assigns the storage layout and --default-bucket creates
+    # the key and bucket from the environment, so no manual setup is needed
+    command: /garage server --single-node --default-bucket
     expose:
-      - "9980"
-      - "9981"
+      - "3900"
     healthcheck:
-      # The docker image ships with the expectation that minio runs on port 9000.
-      # If we ran on port 9000, we wouldn't need to update the local alias,
-      # but we felt it was less disruptive to use this workaround
-      test: mc alias set local http://localhost:9980 "" "" >/dev/null && mc ready local
-      start_period: 15s
+      # the image has no shell, so use the garage binary directly
+      test: ["CMD", "/garage", "status"]
+      start_period: 10s
       interval: 10s
       retries: 10
     volumes:
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-minio-conf:}/root/.minio
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-minio-data:}/data
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-garage-meta:}/var/lib/garage/meta
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-garage-data:}/var/lib/garage/data
+      - ./garage/garage.toml:/etc/garage.toml:ro
     environment:
-      MINIO_ROOT_USER: admin-key
-      MINIO_ROOT_PASSWORD: admin-secret
+      # Garage requires keys in its own format: GK + 24 hex / 64 hex secret.
+      # NOTE: THESE KEYS ARE INSECURE AND MEANT FOR LOCAL DEVELOPMENT ONLY
+      GARAGE_DEFAULT_ACCESS_KEY: GK31c2f218a2e44f485b94239e
+      GARAGE_DEFAULT_SECRET_KEY: b892c0665f0ada8a4755dae98baa3b133590e11dae3bcc1f9d2d1d12b6c1cb2b
+      GARAGE_DEFAULT_BUCKET: blobdb
