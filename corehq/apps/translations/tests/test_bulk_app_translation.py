@@ -10,8 +10,6 @@ from unittest.mock import patch
 from couchexport.export import export_raw
 from couchexport.models import Format
 
-from lxml import etree
-
 from corehq.apps.app_manager.models import Application, Module, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -49,6 +47,7 @@ from corehq.apps.translations.const import (
 from corehq.apps.translations.generators import EligibleForTransifexChecker
 from corehq.util.test_utils import flag_enabled
 from corehq.util.workbook_json.excel import WorkbookJSONReader, get_workbook
+from corehq.util.xml_utils import safe_fromstring
 
 EXCEL_HEADERS = (
     (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'image_en',
@@ -1590,7 +1589,7 @@ class GetLockedLabelIdsTest(SimpleTestCase):
 class TranslationWouldChangeTest(SimpleTestCase):
     def setUp(self):
         self.updater = _make_minimal_updater()
-        self.translation_element = WrappedNode(etree.fromstring(
+        self.translation_element = WrappedNode(safe_fromstring(
             '<translation xmlns="http://www.w3.org/2002/xforms" lang="en">'
             '<text id="q-label"><value>Current</value></text>'
             '</translation>'

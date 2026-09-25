@@ -1,4 +1,4 @@
-"""Execution logic for bulk form actions (archive/unarchive).
+"""Execution logic for bulk form actions (archive/unarchive/delete).
 
 Kept separate from ``tasks.py`` so the job lifecycle can be tested without
 Celery. The Celery task is a thin wrapper around ``run_bulk_form_action``.
@@ -7,7 +7,9 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from functools import partial
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.data_interfaces.models import BulkAsyncJob
@@ -21,6 +23,14 @@ log = logging.getLogger(__name__)
 SUCCEEDED = 'succeeded'
 SKIPPED = 'skipped'
 
+MAX_SAVE_INTERVAL = 100
+
+# the API passes these keys back, so changing these values is
+# effectively a breaking change for callers
+NOT_ARCHIVED = 'not_archived'
+NOT_FOUND = 'not_found'
+UNEXPECTED_ERROR = 'unexpected_error'
+
 
 class BulkFormActionError(Exception):
     """A job cannot be run because its row is invalid"""
@@ -31,7 +41,7 @@ class FormActionResult:
     """Outcome of a bulk form action for a single requested form id."""
     form_id: str
     status: str  # SUCCEEDED | SKIPPED
-    reason: str | None  = None  # not_found | unexpected_error
+    reason: str | None = None  # NOT_FOUND | NOT_ARCHIVED | UNEXPECTED_ERROR
 
 
 def run_bulk_form_action(job):
@@ -93,10 +103,49 @@ def create_bulk_form_job(domain, action, requested_by, form_ids, api_key=None):
 def build_form_action(job, user_id):
     """Return the per-form action callable for ``job.action``."""
     if job.action == BulkAsyncJob.Action.ARCHIVE:
-        return lambda f: f.archive(user_id=user_id)
+        return partial(archive_forms, user_id=user_id)
     if job.action == BulkAsyncJob.Action.UNARCHIVE:
-        return lambda f: f.unarchive(user_id=user_id)
+        return partial(unarchive_forms, user_id=user_id)
+    if job.action == BulkAsyncJob.Action.DELETE:
+        return partial(delete_forms, domain=job.domain, deletion_id=job.id.hex)
     raise BulkFormActionError(f'unknown bulk action: {job.action}')
+
+
+def archive_forms(forms, user_id):
+    yield from _apply_to_each(forms, lambda f: f.archive(user_id=user_id))
+
+
+def unarchive_forms(forms, user_id):
+    yield from _apply_to_each(forms, lambda f: f.unarchive(user_id=user_id))
+
+
+def delete_forms(forms, domain, deletion_id):
+    to_delete = []
+    for form in forms:
+        if not form.is_archived:
+            # archiving is what ensures affected cases are rebuilt
+            yield FormActionResult(form.form_id, SKIPPED, NOT_ARCHIVED)
+        elif form.is_deleted:
+            # treat as noop
+            yield FormActionResult(form.form_id, SUCCEEDED)
+        else:
+            to_delete.append(form.form_id)
+
+    if not to_delete:
+        return
+
+    try:
+        XFormInstance.objects.soft_delete_forms(
+            domain, to_delete, deletion_id=deletion_id)
+    except Exception:
+        notify_exception(None, "Error deleting forms in bulk", {
+            'domain': domain,
+            'form_ids': to_delete,
+        })
+        yield from _results_for_failed_delete(domain, to_delete)
+    else:
+        for form_id in to_delete:
+            yield FormActionResult(form_id, SUCCEEDED)
 
 
 def mark_job_failed(job_id):
@@ -113,30 +162,56 @@ def mark_job_failed(job_id):
 
 
 def _apply_form_action(domain, form_ids, action_fn):
-    """Apply ``action_fn`` to each form and yield a ``FormActionResult`` per id."""
+    """Apply ``action_fn`` to each batch of forms, yielding a result per id"""
     unresolved_ids = set(form_ids)
-    for xform in XFormInstance.objects.iter_forms(form_ids):
-        if xform.domain != domain:
-            # skip forms not belonging to the specified domain
-            continue
-        unresolved_ids.discard(xform.form_id)
+    all_forms = XFormInstance.objects.iter_forms(form_ids)
+    # iter_forms returns one form at a time, but an action takes a batch
+    for batch in chunked(all_forms, MAX_SAVE_INTERVAL):
+        forms = []
+        for form in batch:
+            if form.domain == domain:
+                forms.append(form)
+                unresolved_ids.discard(form.form_id)
+        yield from action_fn(forms)
+    for form_id in unresolved_ids:
+        yield FormActionResult(form_id, SKIPPED, NOT_FOUND)
+
+
+def _apply_to_each(forms, apply_to_form):
+    """Apply ``apply_to_form`` to each form, yielding its result."""
+    for xform in forms:
         try:
-            action_fn(xform)
+            apply_to_form(xform)
         except Exception:
             notify_exception(None, "Error applying bulk form action", {
-                'domain': domain,
+                'domain': xform.domain,
                 'form_id': xform.form_id,
             })
-            yield FormActionResult(xform.form_id, SKIPPED, 'unexpected_error')
+            yield FormActionResult(xform.form_id, SKIPPED, UNEXPECTED_ERROR)
         else:
             yield FormActionResult(xform.form_id, SUCCEEDED)
-    for form_id in unresolved_ids:
-        yield FormActionResult(form_id, SKIPPED, 'not_found')
+
+
+def _results_for_failed_delete(domain, form_ids):
+    """Check which forms were deleted after failed delete"""
+    try:
+        deleted_ids = set(XFormInstance.objects.get_deleted_form_ids(domain, form_ids))
+    except Exception:
+        notify_exception(None, "Error checking bulk deleted forms", {
+            'domain': domain,
+            'form_ids': form_ids,
+        })
+        deleted_ids = set()
+    for form_id in form_ids:
+        if form_id in deleted_ids:
+            yield FormActionResult(form_id, SUCCEEDED)
+        else:
+            yield FormActionResult(form_id, SKIPPED, UNEXPECTED_ERROR)
 
 
 def _save_interval(requested_count):
-    """Every 5% or 100 forms, whichever is lower"""
-    return max(1, min(100, requested_count // 20))
+    """Every 5% or MAX_SAVE_INTERVAL forms, whichever is lower"""
+    return max(1, min(MAX_SAVE_INTERVAL, requested_count // 20))
 
 
 def _resolve_user_id(username):

@@ -1195,6 +1195,14 @@ class ApplicationsTab(UITab):
         if not apps:
             return submenu_context
 
+        if self._can_access_public_webforms:
+            submenu_context.append(dropdown_dict(_("Public Webforms"), is_header=True))
+            submenu_context.append(dropdown_dict(
+                _("Manage Public Webforms"),
+                url=(reverse('manage_public_webforms', args=[self.domain])),
+            ))
+            submenu_context.append(self.divider)
+
         submenu_context.append(dropdown_dict(_('My Applications'),
                                is_header=True))
         for app in apps:
@@ -1230,11 +1238,7 @@ class ApplicationsTab(UITab):
             EditPublicWebformView,
             ManagePublicWebformsView,
         )
-        if not (
-            domain_has_privilege(self.domain, privileges.PUBLIC_WEBFORMS)
-            and self.couch_user.has_permission(self.domain, HqPermissions.edit_public_webforms)
-            and toggles.PUBLIC_WEBFORMS.enabled_for_request(self._request)
-        ):
+        if not self._can_access_public_webforms:
             return []
 
         return [{
@@ -1262,6 +1266,14 @@ class ApplicationsTab(UITab):
                 and couch_user.can_view_apps()
                 and (couch_user.is_member_of(self.domain, allow_enterprise=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
+
+    @property
+    def _can_access_public_webforms(self):
+        return (
+            domain_has_privilege(self.domain, privileges.PUBLIC_WEBFORMS)
+            and self.couch_user.has_permission(self.domain, HqPermissions.edit_public_webforms)
+            and toggles.PUBLIC_WEBFORMS.enabled_for_request(self._request)
+        )
 
 
 class CloudcareTab(UITab):
@@ -2636,6 +2648,9 @@ class AdminTab(UITab):
                 {'title': _('Get users for offboarding'),
                  'url': reverse('get_offboarding_list'),
                  'icon': 'fa fa-sign-out'},
+                {'title': _('Offboard staff from external platforms'),
+                 'url': reverse('offboard_external_platforms'),
+                 'icon': 'fa fa-user-slash'},
                 {'title': _('Manage deleted domains'),
                  'url': reverse('tombstone_management'),
                  'icon': 'fa fa-minus-circle'},

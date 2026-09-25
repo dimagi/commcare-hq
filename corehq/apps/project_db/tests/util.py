@@ -1,12 +1,22 @@
 from contextlib import contextmanager
 from unittest.mock import patch
 
+from unmagic import fixture
+
 from corehq.apps.project_db.table_ddl import (
     CaseTable,
     DomainSchema,
     create_or_update_project_db,
     get_project_db_engine,
 )
+from corehq.apps.project_db.user_sql import UserSQL
+
+
+@fixture
+def utc_project():
+    """Mock out Domain object query for timezone"""
+    with patch.object(UserSQL, 'timezone', 'UTC'):
+        yield
 
 
 @contextmanager

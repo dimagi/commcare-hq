@@ -1,7 +1,6 @@
 from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
 from corehq.toggles import CASE_LIST_CUSTOM_VARIABLES
-
-from lxml import etree
+from corehq.util.xml_utils import safe_fromstring
 
 
 class Command(AppMigrationCommandBase):
@@ -28,7 +27,7 @@ class Command(AppMigrationCommandBase):
 
     @staticmethod
     def parse(xml):
-        elems = etree.fromstring(f"<w>{xml}</w>")
+        elems = safe_fromstring(f"<w>{xml}</w>")
         return {e.tag: e.get("function") for e in elems}
 
     @staticmethod
