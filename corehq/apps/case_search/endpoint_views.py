@@ -467,8 +467,8 @@ class CaseSearchEndpointTestView(BaseDomainView):
             notify_exception(request, str(e))
             return self._render_results(request, errors=['Query Execution Failed'],
                                         validation=validation)
-        return self._render_results(request, fields=fields, results=results,
-                                    validation=validation)
+        columns, rows = self._es_results_to_columns_and_rows(fields, results)
+        return self._render_results(request, columns, rows, validation=validation)
 
     def _run_sql(self, request, test_param_values, validation):
         sql = request.POST.get('sql', '').strip()
@@ -488,12 +488,11 @@ class CaseSearchEndpointTestView(BaseDomainView):
                 request, f'project_db unavailable for {self.domain}: {error}')
             return self._render_results(
                 request, errors=[PROJECT_DB_UNAVAILABLE])
-        return self._render_table(request, result.columns, result.rows,
-                                  validation=validation)
+        return self._render_results(request, result.columns, result.rows, validation=validation)
 
-    def _render_results(self, request, *, errors=None, fields=None, results=None,
-                        validation=None):
+    def _es_results_to_columns_and_rows(self, fields=None, results=None):
         field_names = (fields or {}).keys()
+        columns = ['Case Name'] + [k for k in field_names]
         if results:
             rows = [
                 [case.name] +
@@ -502,11 +501,11 @@ class CaseSearchEndpointTestView(BaseDomainView):
             ]
         else:
             rows = []
-        return self._render_table(
-            request, ['Case Name'] + [k for k in field_names], rows,
-            errors=errors, validation=validation)
+        return columns, rows
 
-    def _render_table(self, request, columns, rows, errors=None, validation=None):
+    def _render_results(self, request, columns=None, rows=None, errors=None, validation=None):
+        print(f"columns: {columns}, rows: {rows}, errors: {errors}, validation: {validation}")
+
         # Always 200 so HTMX swaps the partial in (it ignores error statuses).
         return render(request, self._results_template, {
             'errors': errors or [],
