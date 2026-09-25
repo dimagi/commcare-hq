@@ -2213,6 +2213,18 @@ COMMCARE_CONNECT = StaticToggle(
     parent_toggles=[SESSION_ENDPOINTS, CUSTOM_PROPERTIES],
 )
 
+OCS_CONNECT_INTEGRATION = StaticToggle(
+    'ocs_connect_integration',
+    'Enable feature flags required for Open Chat Studio (OCS) and Connect integration',
+    tag=TAG_CONNECT_DIVISION,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='A bundle flag that does not add any functionality itself. '
+                'Enabling it through this page also enables the feature flags '
+                'listed below. Disabling it does not disable them, they'
+                'will need to be disabled individually',
+    parent_toggles=[UCR_EXPRESSION_REGISTRY, EXPRESSION_REPEATER],
+)
+
 SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
     'show_owner_location_property_in_report_builder',
     label='Show an additional "Owner (Location)" property in report builder reports.',
