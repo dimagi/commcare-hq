@@ -442,9 +442,9 @@ class CaseSearchEndpointTestView(BaseDomainView):
 
         if request.POST.get('target_type') == CaseSearchEndpoint.TargetType.PROJECT_DB:
             return self._run_sql(request, test_param_values, validation)
-        return self._run_query(request, parameters, test_param_values, validation)
+        return self._run_es_query(request, parameters, test_param_values, validation)
 
-    def _run_query(self, request, parameters, test_param_values, validation):
+    def _run_es_query(self, request, parameters, test_param_values, validation):
         """Run the query builder's spec and render the cases it matched."""
         case_type = request.POST.get('case_type', '')
         try:
