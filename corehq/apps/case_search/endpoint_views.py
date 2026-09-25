@@ -470,7 +470,8 @@ class CaseSearchEndpointTestView(BaseDomainView):
         sql = request.POST.get('sql', '').strip()
         user_sql = UserSQL(self.domain, sql, max_rows=self._row_limit)
         try:
-            result = user_sql.run(user_sql.bind_parameters(test_param_values))
+            result = user_sql.run(
+                user_sql.bind_parameters(test_param_values, set_falsy_to_null=True))
         except UserSQLValidationError as error:
             validation[self.SQL_ERRORS] = [error.msg]
             return self._render_results(request, validation=validation)

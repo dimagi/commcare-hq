@@ -450,14 +450,25 @@ def test_clean_parameters_rejects_a_mismatched_set(sql, raw):
     ('SELECT * FROM client WHERE name = :who', {'who': 'ann'}, {'who': 'ann'}),
     # what the query asks for and was not given
     ('SELECT * FROM client WHERE name = :who', {}, {'who': None}),
-    # a criterion left blank was not supplied
-    ('SELECT * FROM client WHERE name = :who', {'who': ''}, {'who': None}),
+    # a blank value is passed through as-is by default
+    ('SELECT * FROM client WHERE name = :who', {'who': ''}, {'who': ''}),
     # ...and what it did not ask for is dropped
     ('SELECT * FROM client WHERE name = :who',
      {'who': 'ann', 'stale': 'x'}, {'who': 'ann'}),
 ])
 def test_bind_parameters(sql, values, expected):
     assert _user_sql(sql).bind_parameters(values) == expected
+
+
+@pytest.mark.parametrize('sql, values, expected', [
+    # what the query asks for and was not given
+    ('SELECT * FROM client WHERE name = :who', {}, {'who': None}),
+    # a criterion left blank was not supplied
+    ('SELECT * FROM client WHERE name = :who', {'who': ''}, {'who': None}),
+    ('SELECT * FROM client WHERE name = :who', {'who': 'ann'}, {'who': 'ann'}),
+])
+def test_bind_parameters_set_falsy_to_null(sql, values, expected):
+    assert _user_sql(sql).bind_parameters(values, set_falsy_to_null=True) == expected
 
 
 def test_bound_parameters_are_what_run_accepts():
