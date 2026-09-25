@@ -64,3 +64,10 @@ services:
     ports:
       - "9980:9980"
       - "9981:9981"
+
+  seaweedfs:
+    extends:
+      file: hq-compose.yml
+      service: seaweedfs
+    ports:
+      - "8333:8333"

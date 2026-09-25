@@ -183,3 +183,20 @@ services:
     environment:
       MINIO_ROOT_USER: admin-key
       MINIO_ROOT_PASSWORD: admin-secret
+
+  seaweedfs:
+    image: docker.io/chrislusf/seaweedfs:4.47
+    # single-node master + volume + filer + S3 gateway
+    command: >-
+      server -dir=/data -master.volumeSizeLimitMB=1024
+      -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
+    expose:
+      - "8333"
+    healthcheck:
+      test: wget -q -O /dev/null http://127.0.0.1:8333/healthz
+      start_period: 15s
+      interval: 10s
+      retries: 10
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-seaweedfs-data:}/data
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
