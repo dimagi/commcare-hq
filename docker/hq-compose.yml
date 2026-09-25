@@ -183,3 +183,27 @@ services:
     environment:
       MINIO_ROOT_USER: admin-key
       MINIO_ROOT_PASSWORD: admin-secret
+
+  garage:
+    image: docker.io/dxflrs/garage:v2.3.0
+    # --single-node assigns the storage layout and --default-bucket creates
+    # the key and bucket from the environment, so no manual setup is needed
+    command: /garage server --single-node --default-bucket
+    expose:
+      - "3900"
+    healthcheck:
+      # the image has no shell, so use the garage binary directly
+      test: ["CMD", "/garage", "status"]
+      start_period: 10s
+      interval: 10s
+      retries: 10
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-garage-meta:}/var/lib/garage/meta
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-garage-data:}/var/lib/garage/data
+      - ./garage/garage.toml:/etc/garage.toml:ro
+    environment:
+      # Garage requires keys in its own format: GK + 24 hex / 64 hex secret.
+      # NOTE: THESE KEYS ARE INSECURE AND MEANT FOR LOCAL DEVELOPMENT ONLY
+      GARAGE_DEFAULT_ACCESS_KEY: GK31c2f218a2e44f485b94239e
+      GARAGE_DEFAULT_SECRET_KEY: b892c0665f0ada8a4755dae98baa3b133590e11dae3bcc1f9d2d1d12b6c1cb2b
+      GARAGE_DEFAULT_BUCKET: blobdb
