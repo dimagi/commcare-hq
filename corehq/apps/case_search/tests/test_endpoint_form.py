@@ -114,7 +114,7 @@ def test_project_db_target_drops_elasticsearch_fields():
 
 
 @pytest.mark.parametrize('sql,expected', [
-    ('', 'SQL is required.'),
+    ('', 'SQL is required'),
     # translate() rejects plenty more; see project_db's own tests
     (f'SELECT nope FROM {CASE_TYPE}', 'unknown column'),
 ])

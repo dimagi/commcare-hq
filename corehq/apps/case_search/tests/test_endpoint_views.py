@@ -18,7 +18,6 @@ from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
 from ..endpoint_views import (
-    SQL_REQUIRED,
     CaseSearchEndpointDeactivateView,
     CaseSearchEndpointEditView,
     CaseSearchEndpointNewView,
@@ -533,7 +532,7 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         with self._project_db_table():
             response = self._post_sql('   ')
         content = response.content.decode()
-        assert SQL_REQUIRED in self._region(content, 'sql-errors')
+        assert 'SQL is required' in self._region(content, 'sql-errors')
         assert 'single statement' not in content
 
     def test_sql_reports_an_unavailable_project_db(self):

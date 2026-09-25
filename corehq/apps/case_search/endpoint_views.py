@@ -46,7 +46,6 @@ _ADMIN_ENDPOINT_DECORATORS = [
     domain_admin_required,
 ]
 
-SQL_REQUIRED = 'SQL is required.'
 PROJECT_DB_UNAVAILABLE = 'The project database is unavailable. Please try again.'
 
 
@@ -164,9 +163,6 @@ class CaseSearchEndpointForm(forms.Form):
 
     def _clean_sql(self, cleaned):
         sql = (cleaned.get('sql') or '').strip()
-        if not sql:
-            self.add_error('sql', SQL_REQUIRED)
-            return
         try:
             UserSQL(self.domain, sql, max_rows=None).validate()
         except UnsupportedSQL as error:
@@ -472,11 +468,6 @@ class CaseSearchEndpointTestView(BaseDomainView):
 
     def _run_sql(self, request, test_param_values, validation):
         sql = request.POST.get('sql', '').strip()
-        if not sql:
-            # Said here rather than left to the translator, which would
-            # otherwise report no statement as the wrong number of them.
-            validation[self.SQL_ERRORS] = [SQL_REQUIRED]
-            return self._render_results(request, validation=validation)
         user_sql = UserSQL(self.domain, sql, max_rows=self._row_limit)
         try:
             result = user_sql.run(user_sql.bind_parameters(test_param_values))
@@ -490,7 +481,7 @@ class CaseSearchEndpointTestView(BaseDomainView):
                 request, errors=[PROJECT_DB_UNAVAILABLE])
         return self._render_results(request, result.columns, result.rows, validation=validation)
 
-    def _es_results_to_columns_and_rows(self, fields=None, results=None):
+    def _es_results_to_columns_and_rows(self, fields, results):
         field_names = (fields or {}).keys()
         columns = ['Case Name'] + [k for k in field_names]
         if results:
@@ -504,8 +495,6 @@ class CaseSearchEndpointTestView(BaseDomainView):
         return columns, rows
 
     def _render_results(self, request, columns=None, rows=None, errors=None, validation=None):
-        print(f"columns: {columns}, rows: {rows}, errors: {errors}, validation: {validation}")
-
         # Always 200 so HTMX swaps the partial in (it ignores error statuses).
         return render(request, self._results_template, {
             'errors': errors or [],

@@ -151,6 +151,8 @@ def translate(sql, tables):
     :param sql: the user-supplied SQL statement
     :param tables: mapping of table name to SQLAlchemy ``Table``
     """
+    if not sql:
+        raise UnsupportedSQL("SQL is required")
     try:
         statements = sqlglot.parse(sql, read='postgres')
     except SqlglotError:
