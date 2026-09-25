@@ -4,6 +4,11 @@ http.port: 9200
 
 discovery.type: single-node
 
+# HQ does not use machine learning features. Note this setting alone does not stop ES 6.x
+# from spawning X-Pack ML's native controller at startup, which breaks arm64 hosts; see the
+# `rm -rf modules/x-pack-ml/platform` step in Dockerfile.es.6 for that.
+xpack.ml.enabled: false
+
 # dev-only setting to allow client-side ES front-ends
 http.cors.allow-origin: "*"
 http.cors.enabled: true

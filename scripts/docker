@@ -116,7 +116,7 @@ compose_os_prefix='hq-compose-os-'
 if [ -n "$COMPOSE_OS_FILE" ]; then
     # Allow overriding in the local shell env to bypass OS detection logic.
     here=$(dirname "$0")
-    dockerdir=$(python -c 'import os, sys; print(os.path.abspath(sys.argv[1]))' "${here}/../docker")
+    dockerdir=$(cd "${here}/../docker" && pwd)
     if ! [ -f "$COMPOSE_OS_FILE" ] && ! [ -f "${dockerdir}/${COMPOSE_OS_FILE}" ]; then
         echo "ERROR: invalid compose OS file: $COMPOSE_OS_FILE"
         echo "Please specify a valid YAML file, or consider using an existing one:"
@@ -125,28 +125,20 @@ if [ -n "$COMPOSE_OS_FILE" ]; then
     fi
 else
     # This exists because of M1 Macs
+    # The third field is the Darwin kernel major version, not the macOS product
+    # version: kernel 20 is macOS 11, kernel 21 is macOS 12, and so on.
     os_info=$(uname -s)-$(uname -m)-$(uname -r | cut -d. -f1)
     os_suffix='default'
     case "$os_info" in
         Darwin-arm64-20)
             os_suffix='macos-m1-11'
             ;;
-        Darwin-arm64-21)
-            os_suffix='macos-m1-12'
-            ;;
         Darwin-arm64-*)
+            # macOS 12 (kernel 21) and every later release share this configuration.
+            # If some future release needs its own, add a
+            # ${compose_os_prefix}macos-m1-<product-version>.yml file and give its
+            # kernel major version a case of its own above.
             os_suffix='macos-m1-12'
-            echo "WARNING: You are entering new territory with your new M1 Mac. Congratulations!"
-            echo "Defaulting to most recently known M1 setup: $os_suffix"
-            echo ""
-            echo "To remove this message in the future, create a new 'base OS'"
-            echo "(or copy an existing, working) docker compose configuration"
-            echo "for your OS. For example:"
-            echo ""
-            macos_version=$(sw_vers -productVersion | cut -d. -f1)
-            suggested_file="${compose_os_prefix}macos-m1-${macos_version}.yml"
-            echo "$ cp -pv ${compose_os_prefix}${os_suffix}.yml $suggested_file"
-            echo ""
             ;;
     esac
     export COMPOSE_OS_FILE="${compose_os_prefix}${os_suffix}.yml"
@@ -342,6 +334,11 @@ elif [ "$CMD" == "rebuild" ]; then
     fi
 else
     docker compose $CMD "$@"
+    # Remember this before anything else runs, and exit with it at the end.
+    # Without that, the trailing `if` below becomes the last command evaluated and
+    # its status (0, when TEARDOWN is unset) is what the script returns, hiding
+    # every docker compose failure from callers and from CI.
+    compose_status=$?
     if [ "$TEARDOWN" == "yes" ]; then
         if [ "$COMPOSE_PROJECT_NAME" == "hqservice" ]; then
             echo "THIS WILL DELETE ALL SERVICE DATA"
@@ -349,7 +346,7 @@ else
             echo
             if [[ ! $REPLY =~ ^[Yy]$ ]]; then
                 echo "Volumes not deleted."
-                exit
+                exit $compose_status
             fi
         fi
         docker volume rm \
@@ -363,4 +360,5 @@ else
             ${VOLUME_PREFIX}minio-data \
             ${VOLUME_PREFIX}zookeeper
     fi
+    exit $compose_status
 fi

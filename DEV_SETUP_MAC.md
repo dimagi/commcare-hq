@@ -82,6 +82,25 @@
 
   [oracle_jdk17]: https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
 
+## Dart Sass
+
+`npm install -g sass` (see [Step 8 in the Main Developer Setup
+Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md#step-8-configure-css-precompilers-2-options))
+is the simplest option and needs nothing extra. Homebrew provides the faster native binary,
+but the formula lives in a third-party tap and declares a build dependency on another one,
+so both must be trusted first:
+
+```sh
+brew tap dart-lang/dart
+brew trust dart-lang/dart   # Homebrew refuses to load formulae from untrusted taps
+brew install sass/sass/sass
+```
+
+Only do this if you are comfortable trusting those taps. Without the `brew trust` step the
+install fails with `Refusing to load formula dart-lang/dart/dart from untrusted tap` — and it
+exits 0 having installed nothing, so confirm with `command -v sass`.
+
+
 ## Issues With `uv sync`
 
 - `psycopg2` may complain
@@ -100,6 +119,9 @@
   ```
 
 - `uv pip install xmlsec` gives `ImportError`
+
+  This is no longer expected — `uv sync` installs a prebuilt `xmlsec` wheel that needs none of
+  the steps below. Only reach for this if you actually hit the `ImportError`.
 
   Due to issues with recent versions of `libxmlsec1` (v1.3 and after) `uv pip install xmlsec` may be broken.
   This is a workaround. This solution also assumes your `homebrew` version is greater than `4.0.13`*:
@@ -128,18 +150,64 @@ and [thread](https://github.com/xmlsec/python-xmlsec/issues/254) are good starti
 
 ## Docker
 
+### Container engines
+
+macOS cannot run Linux containers directly, so you need an engine that provides a
+Docker-compatible daemon in a VM. Any of these work for HQ's services:
+
+| Engine | Notes |
+| --- | --- |
+| [Docker Desktop](https://docs.docker.com/desktop/install/mac-install/) | GUI app. Bundles `docker compose`. Requires a paid subscription for larger organizations, so check whether yours is covered. |
+| [Colima](https://github.com/abiosoft/colima) | CLI only, no licensing question. Needs `docker compose` installed and registered separately (below). |
+| [OrbStack](https://orbstack.dev/) | Fast on Apple Silicon. Bundles `docker compose`. Free for personal use, paid for commercial. |
+
+Whichever you pick, `docker` on its own is only the client — it needs one of the above behind
+it, or every command fails with `Cannot connect to the Docker daemon`.
+
+#### Colima
+
+```sh
+brew install colima docker docker-compose
+colima start --cpu 4 --memory 8 --disk 60 --vm-type vz --vz-rosetta
+```
+
+`--vm-type vz --vz-rosetta` enables Rosetta translation, which matters because two of HQ's
+images are amd64-only (see [Image architectures](#image-architectures)).
+
+Homebrew's `docker-compose` is not automatically visible to the Docker CLI, so `docker
+compose` (and therefore `./scripts/docker`) will not resolve until you point the CLI at it.
+Add the plugin directory to `~/.docker/config.json`, merging with whatever is already in
+that file:
+
+```json
+{
+  "cliPluginsExtraDirs": ["/opt/homebrew/lib/docker/cli-plugins"]
+}
+```
+
+That path is for Apple Silicon; on Intel it is `/usr/local/lib/docker/cli-plugins`. JSON has
+no shell expansion, so the literal path is required — `brew --prefix` prints yours. Verify
+with `docker compose version`.
+
+### Image architectures
+
 Docker images that will not run on Mac OS (Intel or M1):
 
 - `formplayer` (See section on Running Formplayer Outside of Docker in the [Main Developer Setup Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md))
 
-Docker images that may not run on Mac OS (as of 11.x Big Sur and above):
+Images published only for `amd64`, which therefore run emulated on Apple Silicon:
 
-- `elasticsearch6` (Image is not optimized for arm but can run on apple silicon)
+- `elasticsearch6`
+- `postgres` (`dimagi/docker-postgresql`)
+
+Emulation makes these noticeably slower but they do work. Rosetta translation is much
+faster than QEMU, so enable it if your container engine supports it — with Colima that
+means `colima start --vm-type vz --vz-rosetta`.
 
 ### M1 (OS 11.x and above) Recommended Docker Up Command
 
 ```sh
-./scripts/docker up -d postgres couch redis zookeeper kafka minio
+./scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka minio
 ```
 
 Note: `kafka` will be very cranky on start up. You might have to restart it if you see `kafka` errors.
@@ -148,6 +216,10 @@ Note: `kafka` will be very cranky on start up. You might have to restart it if y
 ```
 
 ### Installing and running Elasticsearch 6.8.23 outside of Docker
+
+You should not need this — `elasticsearch6` runs fine in Docker on Apple Silicon. Keep it as
+a fallback if the container gives you trouble, or if you want to avoid the emulation
+overhead.
 
 First, ensure that you have Java 17 running. `java -version` should output something like `openjdk version "17.0.7" 2023-04-18 LTS"`.
 Use `sdkman` or `jenv` to manage your local java versions.
@@ -158,12 +230,13 @@ Download the `tar` file for elasticsearch 6.8.23
 curl https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.8.23.tar.gz --output elasticsearch-6.8.23.tar.gz
 ```
 
-Un-tar and put the folder somewhere you can find it. Take note of that path (`pwd`) and add the following to your `~/.zshrc`:
+Un-tar it and put the folder somewhere you can find it:
 
 ```sh
 tar -xvzf elasticsearch-6.8.23.tar.gz
 ```
 
+Take note of that path (`pwd`), then add the following to your `~/.zshrc`:
 
 ```sh
 export PATH="/path/to/elasticsearch-6.8.23/bin:$PATH"
@@ -187,7 +260,7 @@ sed -i '' '/10-:-XX:UseAVX=2/ s/^/# /' config/jvm.options
 - In `config/elasticsearch.yml`, add xpack.ml.enabled: false
 
 ```sh
-echo "xpack.ml.enabled: false" | sudo tee -a config/elasticsearch.yml
+echo "xpack.ml.enabled: false" >> config/elasticsearch.yml
 ```
 
 After this you can open a new terminal window and run elasticsearch with `elasticsearch`.

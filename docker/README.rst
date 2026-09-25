@@ -12,13 +12,18 @@ Install `Docker`_. You should `manage Docker as a non-root user`_.
 MacOS
 ~~~~
 
-Install `Docker Desktop`_. It is available for Mac with Intel, and Mac
-with Apple silicon.
+Install a container engine. `Docker Desktop`_ is one option, available for
+Mac with Intel and Mac with Apple silicon, but it requires a paid
+subscription for larger organizations. Colima and OrbStack also work. See
+`Container engines`_ in the macOS supplementary guide for the options and
+their setup, including the extra step Colima needs before ``docker
+compose`` resolves.
 
 .. _Docker: https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
 .. _manage Docker as a non-root user: https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user
 .. _Docker Compose: https://docs.docker.com/compose/install/
 .. _Docker Desktop: https://docs.docker.com/desktop/install/mac-install/
+.. _Container engines: https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md#container-engines
 
 
 Running only services in Docker
