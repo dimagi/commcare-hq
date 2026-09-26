@@ -10,3 +10,6 @@ SINGLE_SHEET_STATIC_HEADERS = [
 MODE_FILL_MISSING = 'fill_missing'
 MODE_RETRANSLATE = 'retranslate'
 AI_TRANSLATION_CHUNK_SIZE = 100
+# saves tried when applying a run: the first against the copy the run
+# translated, the rest rebased onto a fresh copy after a conflict
+AI_TRANSLATION_APPLY_ATTEMPTS = 3
