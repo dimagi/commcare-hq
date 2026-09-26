@@ -11,6 +11,7 @@ from corehq.apps.translations.const import (
     MODE_FILL_MISSING,
     MODE_RETRANSLATE,
 )
+from corehq.apps.translations.exceptions import AppChangedDuringTranslation
 
 
 class Command(BaseCommand):
@@ -41,15 +42,21 @@ class Command(BaseCommand):
             self.stdout.write(f"Would translate {len(units)} strings ({words} words)")
             return
 
-        summary = run_app_translation(
-            app, lang, options['mode'], model=options['model'],
-            chunk_size=options['chunk_size'],
-            progress_callback=lambda done, total: self.stdout.write(
-                f"batch {done}/{total}"),
-        )
+        try:
+            summary = run_app_translation(
+                app, lang, options['mode'], model=options['model'],
+                chunk_size=options['chunk_size'],
+                progress_callback=lambda done, total: self.stdout.write(
+                    f"batch {done}/{total}"),
+            )
+        except AppChangedDuringTranslation:
+            raise CommandError(
+                "The app kept being saved while the translations were being "
+                "applied, so none were saved. Run the command again.")
         pct = (100 * summary['translated'] // summary['total']) if summary['total'] else 100
         self.stdout.write(self.style.SUCCESS(
             f"{summary['translated']} of {summary['total']} strings translated ({pct}%), "
-            f"{summary['skipped']} skipped, {summary['failed']} failed"))
+            f"{summary['skipped']} skipped, {summary['changed']} changed during the run, "
+            f"{summary['failed']} failed; app is at version {summary['app_version']}"))
         for error in summary['errors']:
             self.stderr.write(error)
