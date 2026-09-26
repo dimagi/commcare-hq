@@ -1,19 +1,25 @@
 import json
 from collections import defaultdict
+from unittest.mock import patch
 
 from django.test import TestCase
 
 import pytest
 
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
+from corehq.apps.translations.app_translations import ai_translator
 from corehq.apps.translations.app_translations.ai_translator import (
     AppTranslationFormat,
+    _apply_translations,
+    _rebase_results,
     _string_key,
     is_valid_app_translation,
     run_app_translation,
 )
 from corehq.apps.translations.const import MODE_FILL_MISSING, MODE_RETRANSLATE
+from corehq.apps.translations.exceptions import AppChangedDuringTranslation
 
 
 @pytest.mark.parametrize("source, translated, valid", [
@@ -207,6 +213,81 @@ def test_parse_output_buffers_valid_and_skips_invalid():
     assert fmt.parse_output('not json') == {}
 
 
+def test_for_app_copies_settings_not_state():
+    app = _make_app()
+    fmt = AppTranslationFormat(
+        app, 'fra', mode=MODE_RETRANSLATE, manually_edited_keys={'k'},
+        treat_default_copies_as_missing=True)
+    fmt.load_input()
+    fmt.results = {'0': 'traduction'}
+    other_app = _make_app()
+
+    copy = fmt.for_app(other_app)
+
+    assert copy.app is other_app
+    assert (copy.target_lang, copy.mode) == ('fra', MODE_RETRANSLATE)
+    assert copy.manually_edited_keys == {'k'}
+    assert copy.treat_default_copies_as_missing is True
+    assert (copy.units_by_id, copy.results, copy.skipped_ids) == ({}, {}, set())
+
+
+def test_for_app_keeps_subclass():
+    class CustomFormat(AppTranslationFormat):
+        pass
+
+    fmt = CustomFormat(_make_app(), 'fra')
+    assert type(fmt.for_app(_make_app())) is CustomFormat
+
+
+def _edit_module_name_source(app):
+    app.get_module(0).name['en'] = 'enrol module'
+
+
+def _fill_module_name_target(app):
+    app.get_module(0).name['fra'] = 'mon module'
+
+
+def _replace_question(app):
+    xform = XFormBuilder()
+    xform.new_question('age', {'en': 'How old?', 'fra': ''})
+    app.get_module(0).get_form(0).source = xform.tostring().decode('utf-8')
+
+
+def _add_module_first(app):
+    factory = AppFactory(build_version='2.40.0')
+    factory.app = app
+    factory.new_basic_module('aaa_first', 'case')
+    app.rearrange_modules(len(app.modules) - 1, 0)
+
+
+@pytest.mark.parametrize("change_app, dropped_source", [
+    (lambda app: None, None),
+    (_edit_module_name_source, 'register module'),
+    (_fill_module_name_target, 'register module'),
+    (_replace_question, 'What is the name?'),
+    (_add_module_first, None),  # unit ids shift; keys must not
+], ids=['unchanged', 'source-edited', 'target-filled', 'row-gone', 'ids-shift'])
+def test_rebase_results(change_app, dropped_source):
+    app = _make_app()
+    stale_fmt = AppTranslationFormat(app, 'fra')
+    stale_units = stale_fmt.load_input()
+    stale_fmt.results = {
+        uid: f'FR:{unit.source_text}' for uid, unit in stale_units.items()}
+
+    change_app(app)
+    fresh_fmt = AppTranslationFormat(app, 'fra')
+    fresh_fmt.load_input()
+
+    changed = _rebase_results(stale_fmt, fresh_fmt)
+
+    assert changed == (0 if dropped_source is None else 1)
+    assert len(fresh_fmt.results) == len(stale_units) - changed
+    # every carried result landed on the unit it was translated from
+    for fresh_id, translated in fresh_fmt.results.items():
+        assert translated == f'FR:{fresh_fmt.units_by_id[fresh_id].source_text}'
+    assert f'FR:{dropped_source}' not in fresh_fmt.results.values()
+
+
 class TestSaveOutput(TestCase):
     """save_output writes through the app document, which needs the test
     couch database."""
@@ -254,6 +335,94 @@ class TestSaveOutput(TestCase):
         assert app.get_module(0).name['fra'] == 'existing manual translation'
 
 
+class TestApplyTranslations(TestCase):
+    """Conflicts are real: a second copy of the app is saved after the
+    run's copy was read, so the run's ``app.save()`` fails its _rev check."""
+
+    def _saved_app(self):
+        app = _make_app()
+        app.save()
+        # refetch on cleanup: the local copy's _rev goes stale in these tests
+        self.addCleanup(lambda: get_app(app.domain, app.get_id).delete())
+        return app
+
+    def _translated_fmt(self, app):
+        fmt = AppTranslationFormat(app, 'fra')
+        units = fmt.load_input()
+        fmt.results = {uid: f'FR:{u.source_text}' for uid, u in units.items()}
+        return fmt
+
+    def _save_other_copy(self, app, change):
+        other = get_app(app.domain, app.get_id)
+        change(other)
+        other.save()
+
+    def _current(self, app):
+        return get_app(app.domain, app.get_id)
+
+    def test_no_conflict_saves_once_without_refetching(self):
+        app = self._saved_app()
+        fmt = self._translated_fmt(app)
+
+        applied = _apply_translations(fmt)
+
+        assert applied.fmt is fmt
+        assert applied.changed == 0
+        assert self._current(app).get_module(0).name['fra'] == 'FR:register module'
+
+    def test_conflict_with_unrelated_edit_keeps_both(self):
+        app = self._saved_app()
+        fmt = self._translated_fmt(app)
+        self._save_other_copy(app, lambda other: setattr(other, 'name', 'Renamed'))
+
+        applied = _apply_translations(fmt)
+
+        current = self._current(app)
+        assert applied.changed == 0
+        assert current.name == 'Renamed'
+        assert current.get_module(0).name['fra'] == 'FR:register module'
+        assert applied.fmt.app.version == current.version
+
+    def test_conflict_keeps_translation_the_user_typed(self):
+        app = self._saved_app()
+        fmt = self._translated_fmt(app)
+        self._save_other_copy(app, _fill_module_name_target)
+
+        applied = _apply_translations(fmt)
+
+        current = self._current(app)
+        assert applied.changed == 1
+        assert current.get_module(0).name['fra'] == 'mon module'
+        # everything else still landed
+        assert AppTranslationFormat(current, 'fra').load_input() == {}
+
+    def test_conflict_on_last_attempt_applies_nothing(self):
+        app = self._saved_app()
+        fmt = self._translated_fmt(app)
+        self._save_other_copy(app, lambda other: setattr(other, 'name', 'Renamed'))
+
+        with pytest.raises(AppChangedDuringTranslation):
+            _apply_translations(fmt, attempts=1)
+
+        assert self._current(app).get_module(0).name.get('fra', '') == ''
+
+    def test_conflict_on_every_attempt_raises(self):
+        app = self._saved_app()
+        fmt = self._translated_fmt(app)
+        self._save_other_copy(app, lambda other: setattr(other, 'name', 'Renamed'))
+
+        def get_app_then_save_again(domain, app_id):
+            fresh = get_app(domain, app_id)
+            self._save_other_copy(fresh, lambda other: None)  # beats our save
+            return fresh
+
+        with patch.object(ai_translator, 'get_app', get_app_then_save_again):
+            with pytest.raises(AppChangedDuringTranslation):
+                _apply_translations(fmt, attempts=2)
+
+        assert self._current(app).get_module(0).name.get('fra', '') == ''
+
+
 class _FakeTranslator:
     """Translates every batch by prefixing 'FR:', failing when asked."""
     model = 'fake-model'
@@ -280,7 +449,8 @@ class TestRunAppTranslation(TestCase):
             app, 'fra', MODE_FILL_MISSING, translation_format=fmt,
             translator=_FakeTranslator(fmt), chunk_size=2)
         assert summary == {
-            'total': 5, 'translated': 5, 'skipped': 0, 'failed': 0, 'errors': []}
+            'total': 5, 'translated': 5, 'skipped': 0, 'changed': 0, 'failed': 0,
+            'app_version': app.version, 'errors': []}
         assert app.get_module(0).name['fra'] == 'FR:register module'
 
     def test_partial_apply_on_batch_failure(self):
