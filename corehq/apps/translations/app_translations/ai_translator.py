@@ -7,8 +7,11 @@ from dataclasses import dataclass
 
 from django.contrib import messages
 
+from couchdbkit import ResourceConflict
+
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
 )
@@ -21,11 +24,13 @@ from corehq.apps.translations.app_translations.utils import (
     get_module_sheet_name,
 )
 from corehq.apps.translations.const import (
+    AI_TRANSLATION_APPLY_ATTEMPTS,
     AI_TRANSLATION_CHUNK_SIZE,
     MODE_FILL_MISSING,
     MODE_RETRANSLATE,
     MODULES_AND_FORMS_SHEET_NAME,
 )
+from corehq.apps.translations.exceptions import AppChangedDuringTranslation
 from corehq.apps.translations.integrations.llm import (
     TranslationFormat,
     get_llm_translator,
@@ -40,13 +45,15 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
                         translation_format=None, translator=None,
                         translator_factory=None, progress_callback=None):
     """Batches that raise are recorded as failed and the run continues;
-    whatever succeeded is applied in one write at the end.
+    whatever succeeded is applied in one write at the end, rebased onto a
+    fresh copy of the app if it was saved in the meantime.
     ``progress_callback(batches_done, batches_total)`` is optional.
     """
     fmt = translation_format or AppTranslationFormat(app, target_lang, mode=mode)
     units = fmt.load_input()
     if not units:
-        return {'total': 0, 'translated': 0, 'skipped': 0, 'failed': 0, 'errors': []}
+        return {'total': 0, 'translated': 0, 'skipped': 0, 'changed': 0,
+                'failed': 0, 'app_version': app.version, 'errors': []}
     if translator is None:
         factory = translator_factory or get_llm_translator
         translator = factory(target_lang, fmt,
@@ -65,16 +72,65 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
             })
         if progress_callback:
             progress_callback(i + 1, len(batches))
-    errors = fmt.save_output()
-    translated = len(fmt.results)
+    applied = _apply_translations(fmt)
+    translated = len(applied.fmt.results)
     skipped = len(fmt.skipped_ids)
     return {
         'total': len(units),
         'translated': translated,
         'skipped': skipped,
-        'failed': len(units) - translated - skipped,
-        'errors': errors,
+        'changed': applied.changed,
+        'failed': len(units) - translated - skipped - applied.changed,
+        'app_version': applied.fmt.app.version,
+        'errors': applied.errors,
     }
+
+
+def _rebase_results(stale_fmt, fresh_fmt):
+    fresh_ids = {
+        unit.string_key: unit_id
+        for unit_id, unit in fresh_fmt.units_by_id.items()
+    }
+    changed = 0
+    for unit_id, translated in stale_fmt.results.items():
+        unit = stale_fmt.units_by_id[unit_id]
+        fresh_id = fresh_ids.get(unit.string_key)
+        if (
+            fresh_id is None
+            or fresh_fmt.units_by_id[fresh_id].source_text != unit.source_text
+        ):
+            changed += 1
+            continue
+        fresh_fmt.results[fresh_id] = translated
+    return changed
+
+
+@dataclass
+class AppliedTranslations:
+    """The outcome of applying a run's results to the app."""
+    fmt: 'AppTranslationFormat'
+    changed: int  # results dropped because the app changed under them
+    errors: list  # save_output()'s error messages
+
+
+def _apply_translations(fmt, attempts=AI_TRANSLATION_APPLY_ATTEMPTS):
+    """Save ``fmt``'s results, rebasing them onto a fresh copy of the app
+    whenever the save conflicts with someone else's.
+    """
+    if not fmt.results:
+        return AppliedTranslations(fmt=fmt, changed=0, errors=[])
+    changed = 0
+    for attempt in range(1, attempts + 1):
+        try:
+            errors = fmt.save_output()
+            return AppliedTranslations(fmt=fmt, changed=changed, errors=errors)
+        except ResourceConflict as e:
+            if attempt == attempts:
+                raise AppChangedDuringTranslation() from e
+            fresh_fmt = fmt.for_app(get_app(fmt.app.domain, fmt.app.get_id))
+            fresh_fmt.load_input()
+            changed += _rebase_results(fmt, fresh_fmt)
+            fmt = fresh_fmt
 
 
 class AppTranslationFormat(TranslationFormat):
@@ -100,6 +156,17 @@ class AppTranslationFormat(TranslationFormat):
         self.units_by_sheet = {}
         self.results = {}
         self.skipped_ids = set()
+
+    def for_app(self, app):
+        """A new format with these settings over another copy of the app.
+        It starts with no units or results; call ``load_input()``."""
+        return type(self)(
+            app,
+            self.target_lang,
+            mode=self.mode,
+            manually_edited_keys=self.manually_edited_keys,
+            treat_default_copies_as_missing=self.treat_default_copies_as_missing,
+        )
 
     def load_input(self, input_source=None):
         self.units_by_id = {}
