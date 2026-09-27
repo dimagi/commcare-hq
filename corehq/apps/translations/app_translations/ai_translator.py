@@ -182,7 +182,21 @@ class AppTranslationFormat(TranslationFormat):
     def load_input(self, input_source=None):
         self.units_by_id = {}
         self.units_by_sheet = {}
-        index = 0
+        for unit in self._iter_strings():
+            if unit.string_key in self.manually_edited_keys:
+                continue
+            already_translated = bool(unit.target_text)
+            if self.treat_default_copies_as_missing and unit.target_text == unit.source_text:
+                already_translated = False
+            if self.mode == MODE_FILL_MISSING and already_translated:
+                continue
+            unit_id = str(len(self.units_by_id))
+            self.units_by_id[unit_id] = unit
+            self.units_by_sheet.setdefault(unit.sheet_name, []).append(unit_id)
+        return self.units_by_id
+
+    def _iter_strings(self):
+        """Yields a TranslationUnit for each row with source text."""
         for sheet_name, rows in self.sheets.items():
             headers = list(self.headers_by_sheet.get(sheet_name, ()))
             src_i = self._lang_index(headers, self.app.default_language)
@@ -190,28 +204,15 @@ class AppTranslationFormat(TranslationFormat):
             if src_i is None or tgt_i is None:
                 continue
             for row_index, row, string_key in self.iter_rows_with_keys(sheet_name, rows):
-                source = row[src_i] if len(row) > src_i else ''
-                target = row[tgt_i] if len(row) > tgt_i else ''
-                if not source:
-                    continue
-                if string_key in self.manually_edited_keys:
-                    continue
-                already_translated = bool(target)
-                if self.treat_default_copies_as_missing and target == source:
-                    already_translated = False
-                if self.mode == MODE_FILL_MISSING and already_translated:
-                    continue
-                unit_id = str(index)
-                self.units_by_id[unit_id] = TranslationUnit(
-                    sheet_name=sheet_name,
-                    row_index=row_index,
-                    source_text=str(source),
-                    target_text=str(target) if target else '',
-                    string_key=string_key,
-                )
-                self.units_by_sheet.setdefault(sheet_name, []).append(unit_id)
-                index += 1
-        return self.units_by_id
+                source = _cell(row, src_i)
+                if source:
+                    yield TranslationUnit(
+                        sheet_name=sheet_name,
+                        row_index=row_index,
+                        source_text=source,
+                        target_text=_cell(row, tgt_i),
+                        string_key=string_key,
+                    )
 
     def create_batches(self, chunk_size=AI_TRANSLATION_CHUNK_SIZE):
         # a batch never mixes sheets: each request gets one context
