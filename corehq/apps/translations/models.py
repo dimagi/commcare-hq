@@ -54,8 +54,8 @@ class AITranslationUsage(models.Model):
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255)
     lang = models.CharField(max_length=32)
-    word_count = models.PositiveIntegerField()
-    string_count = models.PositiveIntegerField()
+    words_translated = models.PositiveIntegerField()
+    strings_translated = models.PositiveIntegerField()
     model = models.CharField(max_length=64)
     created_on = models.DateTimeField(auto_now_add=True)
 
