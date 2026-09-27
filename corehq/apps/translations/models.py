@@ -29,9 +29,11 @@ class AITranslation(models.Model):
     """
     STATUS_APPLIED = 'applied'
     STATUS_MANUALLY_EDITED = 'manually_edited'
+    STATUS_REMOVED = 'removed'
     STATUS_CHOICES = [
         (STATUS_APPLIED, STATUS_APPLIED),
         (STATUS_MANUALLY_EDITED, STATUS_MANUALLY_EDITED),
+        (STATUS_REMOVED, STATUS_REMOVED),
     ]
 
     domain = models.CharField(max_length=255)

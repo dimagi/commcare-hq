@@ -1322,6 +1322,7 @@ translations
  0011_delete_transifexblacklist_and_more
  0012_aitranslation_aitranslationconfig_aitranslationusage
  0013_rename_aitranslationusage_counts
+ 0014_alter_aitranslation_status
 two_factor
  (no migrations)
 user_importer
