@@ -122,9 +122,17 @@ class UserSQL:
         self.query
 
     @property
+    def parameter_binds(self):
+        """The bind parameters a translated query leaves for the caller to supply."""
+        return {
+            name: bind for name, bind in self._compiled.binds.items()
+            if bind.required
+        }
+
+    @property
     def parameters(self):
         """Return the parameters a translated query leaves for the caller to supply"""
-        return [name for name, bind in self._compiled.binds.items() if bind.required]
+        return list(self.parameter_binds)
 
     def run(self, parameter_values):
         params = self._clean_parameters(parameter_values)
