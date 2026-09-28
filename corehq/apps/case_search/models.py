@@ -534,6 +534,8 @@ class CaseSearchEndpoint(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    deactivated_on = models.DateTimeField(null=True, blank=True)
+    deactivated_by = models.CharField(max_length=255, blank=True, default='')
 
     class Meta:
         unique_together = [('domain', 'name')]
