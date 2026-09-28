@@ -51,10 +51,7 @@ class AITranslation(models.Model):
 
 
 class AITranslationUsage(models.Model):
-    """Append-only event log, one row per translation run that applied
-    strings: meters plan limits and records the run for the Languages
-    page. The ``total_app_*`` counts are a snapshot of the whole app
-    taken at the end of the run."""
+    """Append-only event log, one row per translation run, for plan limits."""
 
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255)
@@ -62,6 +59,8 @@ class AITranslationUsage(models.Model):
     strings_attempted = models.PositiveIntegerField()
     words_translated = models.PositiveIntegerField()
     strings_translated = models.PositiveIntegerField()
+    # snapshot of the whole app at the end of the run, so the Languages
+    # page can show what share of the app is AI-translated
     total_app_strings = models.PositiveIntegerField()
     total_app_strings_ai_translated = models.PositiveIntegerField()
     app_version = models.PositiveIntegerField()
@@ -72,6 +71,7 @@ class AITranslationUsage(models.Model):
         indexes = [
             # serves the monthly limit check: domain + created_on range
             models.Index(fields=['domain', 'created_on']),
+            # serves the Languages page: latest run per language of an app
             models.Index(fields=['domain', 'app_id', 'lang', 'created_on']),
         ]
 
