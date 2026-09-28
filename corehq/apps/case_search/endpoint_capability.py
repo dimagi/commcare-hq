@@ -22,6 +22,7 @@ FIELD_TYPE_GEOPOINT = 'geopoint'
 
 # Parameter-only
 FIELD_TYPE_SELECT = 'select'
+FIELD_TYPE_DATERANGE = 'daterange'
 
 # DataType -> field type mapping
 _DATA_TYPE_MAP = {
@@ -84,7 +85,7 @@ FIELD_TYPES = _OPERATOR_BY_TYPE.keys()
 
 # Types a parameter may declare. A superset of the field types, since a
 # parameter need not correspond to a case property.
-PARAMETER_TYPES = (*FIELD_TYPES, FIELD_TYPE_SELECT)
+PARAMETER_TYPES = (*FIELD_TYPES, FIELD_TYPE_SELECT, FIELD_TYPE_DATERANGE)
 
 # Sentinel input-slot type: the slot has no fixed type of its own and instead
 # takes the type of the field the condition is applied to. Used by operators
