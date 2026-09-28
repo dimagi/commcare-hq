@@ -5,6 +5,7 @@ from unittest.mock import patch
 from django.test import TestCase
 
 import pytest
+from unmagic import use
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -12,14 +13,17 @@ from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.translations.app_translations import ai_translator
 from corehq.apps.translations.app_translations.ai_translator import (
     AppTranslationFormat,
+    ChangedAITranslations,
     _apply_translations,
     _rebase_results,
     _string_key,
+    find_changed_ai_translations,
     is_valid_app_translation,
     run_app_translation,
 )
 from corehq.apps.translations.const import MODE_FILL_MISSING, MODE_RETRANSLATE
 from corehq.apps.translations.exceptions import AppChangedDuringTranslation
+from corehq.apps.translations.models import AITranslation
 
 
 @pytest.mark.parametrize("source, translated, valid", [
@@ -120,6 +124,67 @@ def test_all_app_strings_leaves_out_strings_without_source():
 
     assert 'Quel nom ?' not in {u.target_text for u in all_strings.values()}
     assert len(all_strings) == 5
+
+
+def _key_for(app, source_text):
+    [key] = [
+        u.string_key for u in AppTranslationFormat(app, 'fra').all_app_strings().values()
+        if u.source_text == source_text
+    ]
+    return key
+
+
+def _module_name_key(app):
+    return _key_for(app, 'register module')
+
+
+def _record_ai_translation(app, string_key, translated, lang='fra'):
+    AITranslation.objects.create(
+        domain=app.domain, app_id=app.get_id, lang=lang, string_key=string_key,
+        source_value='register module', translated_value=translated)
+
+
+@pytest.mark.parametrize("current_source, current_target, edited, stale", [
+    ('register module', 'module inscription', False, False),
+    ('register module', 'module enregistrement', True, False),
+    ('register module', '', False, False),  # fill_missing translates it again
+    ('enrol module', 'module inscription', False, True),
+    ('enrol module', 'module enregistrement', True, False),  # the edit wins
+], ids=['unchanged', 'edited', 'cleared', 'source-changed', 'source-and-target-changed'])
+@use('db')
+def test_find_changed_ai_translations(current_source, current_target, edited, stale):
+    app = _make_app()
+    app._id = 'test-app-id'
+    key = _module_name_key(app)
+    _record_ai_translation(app, key, 'module inscription')
+    app.get_module(0).name.update({'en': current_source, 'fra': current_target})
+
+    changed = find_changed_ai_translations(AppTranslationFormat(app, 'fra'))
+
+    assert changed.manually_edited == ({key} if edited else set())
+    assert changed.stale == ({key} if stale else set())
+
+
+@use('db')
+def test_find_changed_ai_translations_ignores_strings_gone_from_app():
+    app = _make_app()
+    app._id = 'test-app-id'
+    _record_ai_translation(app, '["deleted_module","name",1]', 'module inscription')
+
+    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == (
+        ChangedAITranslations(manually_edited=set(), stale=set()))
+
+
+@use('db')
+def test_find_changed_ai_translations_ignores_other_languages():
+    app = _make_app()
+    app._id = 'test-app-id'
+    app.langs = ['en', 'fra', 'hin']
+    _record_ai_translation(app, _module_name_key(app), 'module inscription', lang='hin')
+    app.get_module(0).name['fra'] = 'module enregistrement'
+
+    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == (
+        ChangedAITranslations(manually_edited=set(), stale=set()))
 
 
 def test_string_keys_use_unique_ids_not_sheet_names():

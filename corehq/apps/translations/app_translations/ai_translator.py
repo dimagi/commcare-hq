@@ -35,6 +35,7 @@ from corehq.apps.translations.integrations.llm import (
     TranslationFormat,
     get_llm_translator,
 )
+from corehq.apps.translations.models import AITranslation
 
 MODULES_AND_FORMS_KEY_PREFIX = 'menus_and_forms'
 MAX_STRING_KEY_LENGTH = 512  # AITranslation.string_key max_length
@@ -85,6 +86,37 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
         'app_version': applied.app_version,
         'errors': applied.errors,
     }
+
+
+def _provenance_rows(fmt):
+    return AITranslation.objects.filter(
+        domain=fmt.app.domain, app_id=fmt.app.get_id, lang=fmt.target_lang)
+
+
+@dataclass
+class ChangedAITranslations:
+    """Keys of AI-translated strings that changed since the AI wrote them."""
+    manually_edited: set
+    stale: set
+
+
+def find_changed_ai_translations(fmt):
+    """A cleared value is neither, so fill_missing translates it again."""
+    changed = ChangedAITranslations(manually_edited=set(), stale=set())
+    rows = list(
+        _provenance_rows(fmt).values_list('string_key', 'source_value', 'translated_value'))
+    if not rows:
+        return changed
+    all_strings = fmt.all_app_strings()
+    for string_key, source_value, translated_value in rows:
+        unit = all_strings.get(string_key)
+        if unit is None or not unit.target_text:
+            continue
+        if unit.target_text != translated_value:
+            changed.manually_edited.add(string_key)
+        elif unit.source_text != source_value:
+            changed.stale.add(string_key)
+    return changed
 
 
 def _rebase_results(stale_fmt, fresh_fmt):
