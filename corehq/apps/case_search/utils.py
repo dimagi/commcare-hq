@@ -31,7 +31,6 @@ from corehq.apps.case_search.endpoint_capability import (
     FIELD_TYPE_DATETIME,
     FIELD_TYPE_GEOPOINT,
     FIELD_TYPE_NUMBER,
-    FIELD_TYPE_SELECT,
     get_capability,
 )
 from corehq.apps.case_search.endpoint_query_spec import (
@@ -562,13 +561,6 @@ class CaseSearchEndpointQueryBuilder:
                 return filters.NOT(case_property_query(field, value))
             elif operator in ('lt', 'gt', 'lte', 'gte'):
                 return case_property_numeric_range(field, **{operator: value})
-        elif node.field_type == FIELD_TYPE_SELECT:
-            if operator == 'selected_any':
-                return case_property_query(field, value, multivalue_mode='or')
-            elif operator == 'selected_all':
-                return case_property_query(field, value, multivalue_mode='and')
-            elif operator == 'is_empty':
-                return case_property_missing(field)
         else:
             if operator == 'equals':
                 return case_property_query(field, value)

@@ -58,9 +58,11 @@ Parameters
 ----------
 
 Endpoints can declare named, typed parameters (``text``, ``number``, ``date``,
-``geopoint``). Parameters are stored as a JSON array on the
-``CaseSearchEndpointVersion`` and validated against ``FIELD_TYPES`` from
-``endpoint_capability``.
+``geopoint``, ``select``). Parameters are stored as a JSON array on the
+``CaseSearchEndpointVersion`` and validated against ``PARAMETER_TYPES`` from
+``endpoint_capability``. That is the field types plus ``select``, which is
+parameter-only: a multiple choice case property is plain text to case search,
+so it is a ``text`` field.
 
 In the query spec, condition inputs can reference a parameter by name via a
 ``ParameterInput`` node (``{"type": "parameter", "value": "param_name"}``).
