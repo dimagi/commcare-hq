@@ -117,6 +117,10 @@ class UserSQL:
             parameters=self.parameters,
         )
 
+    def validate(self):
+        """Raise ``UserSQLValidationError`` if the statement cannot be translated"""
+        self.query
+
     @property
     def parameters(self):
         """Return the parameters a translated query leaves for the caller to supply"""
@@ -140,9 +144,11 @@ class UserSQL:
             )
 
     def _clean_parameters(self, raw_parameters):
-        if set(raw_parameters) != set(self.parameters):
-            raise BadParameters(f"Expected params {set(self.parameters)}, got {set(raw_parameters)}")
-        return {name: raw_parameters[name] for name in self.parameters}
+        unexpected_parameters = set(raw_parameters) - set(self.parameters)
+        if unexpected_parameters:
+            raise BadParameters(f"Unexpected params {unexpected_parameters} not defined in query")
+
+        return {name: raw_parameters.get(name, None) for name in self.parameters}
 
     @cached_property
     def timezone(self):
@@ -161,6 +167,8 @@ def translate(sql, tables):
     :param sql: the user-supplied SQL statement
     :param tables: mapping of table name to SQLAlchemy ``Table``
     """
+    if not sql:
+        raise UnsupportedSQL("SQL is required")
     try:
         statements = sqlglot.parse(sql, read='postgres')
     except SqlglotError:
