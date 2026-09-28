@@ -1322,6 +1322,9 @@ translations
  0010_transifex_organization_api_token_encryption
  0011_delete_transifexblacklist_and_more
  0012_aitranslation_aitranslationconfig_aitranslationusage
+ 0013_rename_aitranslationusage_counts
+ 0014_alter_aitranslation_status
+ 0015_aitranslationusage_run_counts
 two_factor
  (no migrations)
 user_importer

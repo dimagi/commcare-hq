@@ -29,9 +29,11 @@ class AITranslation(models.Model):
     """
     STATUS_APPLIED = 'applied'
     STATUS_MANUALLY_EDITED = 'manually_edited'
+    STATUS_REMOVED = 'removed'
     STATUS_CHOICES = [
         (STATUS_APPLIED, STATUS_APPLIED),
         (STATUS_MANUALLY_EDITED, STATUS_MANUALLY_EDITED),
+        (STATUS_REMOVED, STATUS_REMOVED),
     ]
 
     domain = models.CharField(max_length=255)
@@ -54,8 +56,14 @@ class AITranslationUsage(models.Model):
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255)
     lang = models.CharField(max_length=32)
-    word_count = models.PositiveIntegerField()
-    string_count = models.PositiveIntegerField()
+    strings_attempted = models.PositiveIntegerField()
+    words_translated = models.PositiveIntegerField()
+    strings_translated = models.PositiveIntegerField()
+    # snapshot of the whole app at the end of the run, so the Languages
+    # page can show what share of the app is AI-translated
+    total_app_strings = models.PositiveIntegerField()
+    total_app_strings_ai_translated = models.PositiveIntegerField()
+    app_version = models.PositiveIntegerField()
     model = models.CharField(max_length=64)
     created_on = models.DateTimeField(auto_now_add=True)
 
@@ -63,6 +71,8 @@ class AITranslationUsage(models.Model):
         indexes = [
             # serves the monthly limit check: domain + created_on range
             models.Index(fields=['domain', 'created_on']),
+            # serves the Languages page: latest run per language of an app
+            models.Index(fields=['domain', 'app_id', 'lang', 'created_on']),
         ]
 
 
