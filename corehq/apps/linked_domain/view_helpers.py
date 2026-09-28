@@ -13,6 +13,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_FIXTURE,
     MODEL_KEYWORD,
     MODEL_REPORT,
+    MODEL_CASE_SEARCH_ENDPOINT,
     MODEL_UCR_EXPRESSION,
     MODEL_AUTO_UPDATE_RULE,
     SUPERUSER_DATA_MODELS,
@@ -25,12 +26,14 @@ from corehq.apps.linked_domain.models import (
     FixtureLinkDetail,
     KeywordLinkDetail,
     ReportLinkDetail,
+    CaseSearchEndpointLinkDetail,
     UCRExpressionLinkDetail,
     UpdateRuleLinkDetail
 )
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.linked_domain.util import server_to_user_time, is_keyword_linkable
 from corehq.apps.sms.models import Keyword
+from corehq.apps.case_search.models import CaseSearchEndpoint
 from corehq.apps.userreports.models import ReportConfiguration, UCRExpression
 from corehq.apps.userreports.util import get_existing_reports
 
@@ -108,6 +111,15 @@ def get_upstream_and_downstream_keywords(domain):
 
 def get_upstream_and_downstream_ucr_expressions(domain):
     return _partition_by_upstream_id(UCRExpression.objects.filter(domain=domain))
+
+
+def get_upstream_and_downstream_case_search_endpoints(domain):
+    upstream_list, downstream_list = _partition_by_upstream_id(
+        CaseSearchEndpoint.objects.filter(domain=domain, is_active=True)
+    )
+    # Link history identifies a downstream endpoint by the upstream endpoint it copies from
+    downstream_list = {str(endpoint.upstream_id): endpoint for endpoint in downstream_list.values()}
+    return upstream_list, downstream_list
 
 
 def _partition_by_upstream_id(objects):
@@ -202,6 +214,20 @@ def build_ucr_expression_view_model(ucr_expression, last_update=None):
     )
 
 
+def build_case_search_endpoint_view_model(endpoint, last_update=None):
+    if not endpoint:
+        return None
+
+    return build_linked_data_view_model(
+        model_type=MODEL_CASE_SEARCH_ENDPOINT,
+        name=f"{LINKED_MODELS_MAP[MODEL_CASE_SEARCH_ENDPOINT]} ({endpoint.name})",
+        detail=CaseSearchEndpointLinkDetail(
+            upstream_endpoint_id=str(endpoint.upstream_id or endpoint.id)
+        ).to_json(),
+        last_update=last_update,
+    )
+
+
 def build_feature_flag_view_models(domain, ignore_models=None):
     ignore_models = ignore_models or []
     view_models = []
@@ -270,7 +296,7 @@ def build_linked_data_view_model(model_type, name, detail,
 
 def build_view_models_from_data_models(
     domain, apps, fixtures, reports, keywords, ucr_expressions, update_rules,
-    ignore_models=None, is_superuser=False
+    case_search_endpoints, ignore_models=None, is_superuser=False
 ):
     """
     Based on the provided data models, convert to view models, ignoring any models specified in ignore_models
@@ -294,6 +320,7 @@ def build_view_models_from_data_models(
         (reports, build_report_view_model),
         (keywords, build_keyword_view_model),
         (ucr_expressions, build_ucr_expression_view_model),
+        (case_search_endpoints, build_case_search_endpoint_view_model),
         (update_rules, build_update_rule_model),
     ]:
         for model in model_instances.values():
@@ -362,9 +389,13 @@ def pop_ucr_expression(ucr_expression_id, ucr_expressions):
     return ucr_expression
 
 
+def pop_case_search_endpoint(upstream_endpoint_id, case_search_endpoints):
+    return case_search_endpoints.pop(upstream_endpoint_id, None)
+
+
 def build_pullable_view_models_from_data_models(
     domain, upstream_link, apps, fixtures, reports, keywords, ucr_expressions, update_rules,
-    timezone, is_superuser=False
+    case_search_endpoints, timezone, is_superuser=False
 ):
     """
     Data models that originated in this domain's upstream domain that are available to pull
@@ -402,6 +433,9 @@ def build_pullable_view_models_from_data_models(
         elif action.model == MODEL_UCR_EXPRESSION:
             ucr_expression = pop_ucr_expression(action.wrapped_detail.ucr_expression_id, ucr_expressions)
             view_model = build_ucr_expression_view_model(ucr_expression, last_update=last_update)
+        elif action.model == MODEL_CASE_SEARCH_ENDPOINT:
+            endpoint = pop_case_search_endpoint(action.wrapped_detail.upstream_endpoint_id, case_search_endpoints)
+            view_model = build_case_search_endpoint_view_model(endpoint, last_update=last_update)
         elif action.model == MODEL_AUTO_UPDATE_RULE:
             rule = pop_update_rule(action.wrapped_detail.id, update_rules)
             view_model = build_update_rule_model(rule, last_update=last_update)
@@ -431,6 +465,7 @@ def build_pullable_view_models_from_data_models(
             keywords,
             ucr_expressions,
             update_rules,
+            case_search_endpoints,
             ignore_models=models_seen,
             is_superuser=is_superuser
         )

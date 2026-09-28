@@ -164,7 +164,7 @@ def _create_update_rule(domain, name="update_rule", workflow=AutomaticUpdateRule
 
 def _set_default_args(kwargs):
     # Let tests pass these args by name instead of positionally
-    args = ['apps', 'fixtures', 'reports', 'keywords', 'ucr_expressions', 'update_rules']
+    args = ['apps', 'fixtures', 'reports', 'keywords', 'ucr_expressions', 'update_rules', 'case_search_endpoints']
     return [kwargs.pop(name, {}) for name in args]
 
 
