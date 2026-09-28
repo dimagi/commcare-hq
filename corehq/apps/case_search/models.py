@@ -548,7 +548,6 @@ class CaseSearchEndpointVersion(models.Model):
     class Action(models.TextChoices):
         CREATE = 'create', _('Create')
         UPDATE = 'update', _('Update')
-        DEACTIVATE = 'deactivate', _('Deactivate')
 
     endpoint = models.ForeignKey(
         CaseSearchEndpoint,

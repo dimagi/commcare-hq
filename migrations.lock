@@ -278,6 +278,7 @@ case_search
  0020_remove_casesearchendpoint_case_type_and_more
  0021_casesearchendpointversion_dangerous_sql
  0022_casesearchendpoint_deactivated
+ 0023_delete_inactive_endpoints
 celery
  0001_taskrecord
  0002_taskrecord_kombu_serialization
