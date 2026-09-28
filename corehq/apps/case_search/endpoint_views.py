@@ -21,14 +21,17 @@ from corehq.apps.case_search.endpoint_capability import (
 )
 from corehq.apps.case_search.endpoint_query_spec import (
     MAX_QUERY_DEPTH,
+    bind_values,
     parse_parameter_spec,
     parse_query_spec,
     placeholders_for,
     sql_placeholders,
 )
+from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     CaseSearchEndpointVersion,
+    SearchCriteria,
     criteria_dict_to_criteria_list,
 )
 from corehq.apps.case_search.utils import QueryHelper, get_primary_case_search_endpoint_results
@@ -54,11 +57,13 @@ _ADMIN_ENDPOINT_DECORATORS = [
 PROJECT_DB_UNAVAILABLE = 'The project database is unavailable. Please try again.'
 
 
-def _bind_parameters(parameters, values):
-    """Take from ``values`` what the query's ``parameters`` need.
-    A missing or blank value binds as NULL
+def _tester_criteria(values):
+    """The query tester's parameter values as search criteria.
+
+    The tester has an input for every parameter, so one left blank was not
+    filled in rather than purposefully searched for, and is left out.
     """
-    return {name: values.get(name) or None for name in parameters}
+    return [SearchCriteria(name, value) for name, value in values.items() if value]
 
 
 def empty_query():
@@ -509,7 +514,7 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
                       self.SQL_ERRORS: []}
 
         if request.POST.get('target_type') == CaseSearchEndpoint.TargetType.PROJECT_DB:
-            return self._run_sql(request, test_param_values, validation)
+            return self._run_sql(request, parameters, test_param_values, validation)
         return self._run_es_query(request, parameters, test_param_values, validation)
 
     def _run_es_query(self, request, parameters, test_param_values, validation):
@@ -538,11 +543,15 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
         columns, rows = self._es_results_to_columns_and_rows(fields, results)
         return self._render_results(request, columns, rows, validation=validation)
 
-    def _run_sql(self, request, test_param_values, validation):
+    def _run_sql(self, request, parameters, test_param_values, validation):
         sql = request.POST.get('sql', '').strip()
         user_sql = UserSQL(self.domain, sql, max_rows=self._row_limit)
         try:
-            result = user_sql.run(_bind_parameters(user_sql.parameters, test_param_values))
+            query_params = bind_values(parameters, _tester_criteria(test_param_values))
+        except CaseSearchUserError as error:
+            return self._render_results(request, errors=[str(error)], validation=validation)
+        try:
+            result = user_sql.run(query_params)
         except UserSQLValidationError as error:
             validation[self.SQL_ERRORS] = [error.msg]
             return self._render_results(request, validation=validation)

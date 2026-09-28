@@ -18,7 +18,8 @@ Backend
 - ``endpoint_capability.py`` — domain capability metadata (case types, fields,
   operators, input schemas); drives both UI and query validation
 - ``endpoint_query_spec.py`` — query AST (``GroupNode``, ``ComponentNode``),
-  parameter spec (``Parameter``, ``ParameterInput``), and validation logic
+  parameter spec (``Parameter``, ``ParameterInput``), validation logic, and
+  the SQL parameter binding (``sql_placeholders``, ``bind_values``)
 - ``endpoint_views.py`` — Django views wired to the models
 - ``utils.py`` — ``CaseSearchEndpointQueryBuilder``: compiles the validated
   AST and parameter values into an ES query
@@ -57,18 +58,38 @@ This feature is gated behind the ``CASE_SEARCH_ENDPOINTS`` static toggle
 Parameters
 ----------
 
-Endpoints can declare named, typed parameters (``text``, ``number``, ``date``,
-``geopoint``, ``select``). Parameters are stored as a JSON array on the
-``CaseSearchEndpointVersion`` and validated against ``PARAMETER_TYPES`` from
-``endpoint_capability``. That is the field types plus ``select``, which is
-parameter-only: a multiple choice case property is plain text to case search,
-so it is a ``text`` field.
+Endpoints of both kinds declare named, typed parameters, stored as a JSON
+array on the ``CaseSearchEndpointVersion`` and validated against
+``PARAMETER_TYPES`` from ``endpoint_capability``. That is the field types
+(``text``, ``number``, ``date``, ``geopoint``) plus two parameter-only types
+that no field has, so they have no operations and cannot be referenced from
+an Elasticsearch query spec: ``daterange``, and ``select``, since a multiple
+choice case property is plain text to case search.
 
 In the query spec, condition inputs can reference a parameter by name via a
 ``ParameterInput`` node (``{"type": "parameter", "value": "param_name"}``).
 At query execution time, ``CaseSearchEndpointQueryBuilder`` resolves each
 ``ParameterInput`` against the supplied criteria values before building the ES
 filter.
+
+Project DB endpoints bind parameters into their SQL instead.
+``sql_placeholders`` gives the placeholder names a spec implies — a
+``daterange`` named ``dob`` becomes ``:dob_from`` and ``:dob_to``, every other
+type keeps its own name — and ``bind_values`` maps a request's search criteria
+onto the values those placeholders take:
+
+- An absent criterion binds as ``None``. NULL coerces to any column type, so
+  endpoint SQL guards each parameter with ``(:p IS NULL OR ...)``.
+- A blank criterion binds as ``None`` too, except for ``text``, where blank
+  is a value the searcher typed and is bound as given.
+- ``date`` and ``daterange`` values are parsed with ``date.fromisoformat``,
+  and ``number`` values as finite ``Decimal``\s, so a bad value is a
+  ``CaseSearchUserError`` rather than a database error, and Postgres-only
+  input like ``'today'`` or ``'NaN'`` is rejected.
+- A ``select`` parameter always binds as a list, however many values were
+  searched for, so that the SQL comparing it against an array column works
+  whatever the searcher chose.
+- Multiple values for a scalar parameter are a ``CaseSearchUserError``.
 
 Query Builder
 -------------
@@ -79,12 +100,39 @@ condition row triggers an HTMX fetch to ``condition_row.html``, which renders
 the appropriate operator/input controls for the selected field type. Condition
 inputs can be set to a literal value or bound to a declared parameter.
 
+Project DB Endpoints
+--------------------
+
+An endpoint's ``target_type`` selects its backend. A ``project_db`` endpoint
+stores SQL in ``dangerous_sql`` instead of a query spec, and runs it through
+``corehq.apps.project_db.user_sql``, which translates a restricted subset of
+SQL into SQLAlchemy Core. Rows are mapped back to ``CommCareCase`` objects by
+``_rows_to_cases``, so both kinds of endpoint return the same thing.
+
+The SQL is validated when the endpoint is saved (``sql_parameter_errors``),
+which reports at save time what would otherwise fail at run time:
+
+- a placeholder the parameter spec does not declare, or a declared parameter
+  the SQL never uses — ``UserSQL.run`` rejects a mismatched value set
+- a parameter used with ``IN``, whose unsupplied form renders nothing at all
+  and raises out of psycopg2
+- a ``select`` parameter not compared against a ``select_prop__`` array
+  column, or a scalar parameter that is
+
+List comparisons therefore go through the ``select_prop__`` columns, using
+``&&`` (any of) or ``@>`` (all of). Multi-value search over a plain text
+property is deliberately not expressible.
+
 Query Tester
 ------------
 
 The query tester partial (``query_tester.html``) renders one input per
 declared parameter and POSTs the query + parameter values to
-``CaseSearchEndpointTestView``. Results are swapped in via HTMX. The test
+``CaseSearchEndpointTestView``, in the shape an endpoint receives them: a
+``daterange`` has a from and a to picker sent as one ``__range__`` value, and
+a ``select`` takes comma-separated values sent as a list. An input left blank
+is not sent. A project DB query binds the values through ``bind_values``,
+just as the endpoint does. Results are swapped in via HTMX. The test
 view validates the case type and query spec before executing; unknown case
 types and malformed queries return user-readable errors rather than 500s.
 

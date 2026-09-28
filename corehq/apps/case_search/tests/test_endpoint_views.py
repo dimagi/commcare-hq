@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from unittest.mock import patch
 
 import pytest
@@ -34,7 +35,6 @@ from ..endpoint_views import (
     CaseSearchEndpointNewView,
     CaseSearchEndpointsView,
     CaseSearchEndpointTestView,
-    _bind_parameters,
     sql_parameter_errors,
 )
 from ..models import CaseSearchEndpoint, CaseSearchEndpointVersion
@@ -596,10 +596,11 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         response = self.client.get(self._test_url())
         assert response.status_code == 405
 
-    def _post_sql(self, sql, **param_values):
+    def _post_sql(self, sql, parameters=(), **param_values):
         return self.client.post(self._test_url(), {
             'target_type': 'project_db',
             'sql': sql,
+            'parameters': json.dumps(list(parameters)),
             'test_param_values': json.dumps(param_values),
         })
 
@@ -609,10 +610,14 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
             conn.execute(table.insert().values([
                 {'case_id': 'c1', 'owner_id': 'o1', 'case_name': 'Ann',
                  'closed': False, 'external_id': '',
-                 property_column('nickname'): 'Annie'},
+                 'opened_on': datetime(2026, 1, 5),
+                 property_column('nickname'): 'Annie',
+                 property_column('tags', 'select'): ['red', 'blue']},
                 {'case_id': 'c2', 'owner_id': 'o1', 'case_name': 'Bob',
                  'closed': False, 'external_id': '',
-                 property_column('nickname'): 'Bobby'},
+                 'opened_on': datetime(2026, 8, 18),
+                 property_column('nickname'): 'Bobby',
+                 property_column('tags', 'select'): ['green']},
             ]))
 
     def test_sql_shows_every_selected_column(self):
@@ -629,28 +634,67 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         # a column the query did not select
         assert 'owner_id' not in content
 
-    def test_sql_binds_supplied_parameter_values(self):
-        sql = ('SELECT case_name FROM my_case_type '
+    WHO_SQL = ('SELECT case_name FROM my_case_type '
                'WHERE (:who IS NULL OR case_name = :who)')
-        with self._project_db_table():
-            self._add_pets()
-            response = self._post_sql(sql, who='Bob')
-        content = response.content.decode()
-        assert 'Bob' in content
-        assert 'Ann' not in content
+    WHO_PARAMS = [{'name': 'who', 'type': 'text'}]
 
-    def test_sql_binds_a_blank_parameter_as_null(self):
-        # NULL leaves the guard open, matching how an endpoint runs when a
-        # criterion is not supplied
-        sql = ('SELECT case_name FROM my_case_type '
-               'WHERE (:who IS NULL OR case_name = :who)')
-        with self._project_db_table():
-            self._add_pets()
-            response = self._post_sql(sql, who='')
+    def _names(self, response):
         content = response.content.decode()
         assert 'alert-danger' not in content
-        assert 'Ann' in content
-        assert 'Bob' in content
+        return [name for name in ['Ann', 'Bob'] if name in content]
+
+    def test_sql_binds_supplied_parameter_values(self):
+        with self._project_db_table():
+            self._add_pets()
+            response = self._post_sql(self.WHO_SQL, self.WHO_PARAMS, who='Bob')
+        assert self._names(response) == ['Bob']
+
+    def test_sql_binds_a_blank_parameter_as_null(self):
+        # An input left blank was not filled in, so NULL leaves the guard
+        # open, matching how an endpoint runs when a criterion is not supplied
+        with self._project_db_table():
+            self._add_pets()
+            response = self._post_sql(self.WHO_SQL, self.WHO_PARAMS, who='')
+        assert self._names(response) == ['Ann', 'Bob']
+
+    def test_sql_binds_a_select_parameter_as_a_list(self):
+        sql = ('SELECT case_name FROM my_case_type '
+               'WHERE (:tags IS NULL OR select_prop__tags && :tags)')
+        params = [{'name': 'tags', 'type': 'select'}]
+        cases = [
+            (['blue'], ['Ann']),
+            (['blue', 'green'], ['Ann', 'Bob']),
+            ([], ['Ann', 'Bob']),
+        ]
+        with self._project_db_table():
+            self._add_pets()
+            for tags, expected in cases:
+                with self.subTest(tags=tags):
+                    response = self._post_sql(sql, params, tags=tags)
+                    assert self._names(response) == expected
+
+    def test_sql_binds_a_daterange_parameter(self):
+        sql = ('SELECT case_name FROM my_case_type '
+               'WHERE (:opened_from IS NULL OR opened_on >= :opened_from) '
+               'AND (:opened_to IS NULL OR opened_on <= :opened_to)')
+        params = [{'name': 'opened', 'type': 'daterange'}]
+        with self._project_db_table():
+            self._add_pets()
+            response = self._post_sql(
+                sql, params, opened='__range__2026-08-01__2026-08-31')
+        assert self._names(response) == ['Bob']
+
+    def test_sql_reports_an_invalid_parameter_value(self):
+        sql = ('SELECT case_name FROM my_case_type '
+               'WHERE (:opened_from IS NULL OR opened_on >= :opened_from) '
+               'AND (:opened_to IS NULL OR opened_on <= :opened_to)')
+        params = [{'name': 'opened', 'type': 'daterange'}]
+        with self._project_db_table():
+            response = self._post_sql(sql, params, opened='__range__2026-08-01__')
+        content = response.content.decode()
+        assert 'alert-danger' in content
+        assert escape("Invalid date range for 'opened'") in content
+        assert '<table' not in content
 
     def test_sql_errors_are_rendered(self):
         cases = [
@@ -767,19 +811,6 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         content = response.content.decode()
         assert 'Duplicate parameter name' in self._region(content, 'parameter-errors')
         assert self._region(content, 'sql-errors') is None
-
-
-@pytest.mark.parametrize('parameters, values, expected', [
-    (['who'], {'who': 'ann'}, {'who': 'ann'}),
-    # what the query asks for and was not given
-    (['who'], {}, {'who': None}),
-    # a criterion left blank was not supplied
-    (['who'], {'who': ''}, {'who': None}),
-    # ...and what it did not ask for is dropped
-    (['who'], {'who': 'ann', 'stale': 'x'}, {'who': 'ann'}),
-])
-def test_bind_parameters(parameters, values, expected):
-    assert _bind_parameters(parameters, values) == expected
 
 
 # ── matching a parameter spec against the SQL that binds it ──────────────────
