@@ -111,7 +111,6 @@ class PublicFormSessionRestoreTest(TestCase):
 
         response = self._restore(self.domain, session)
 
-        # an owner id the restore cannot filter on syncs the whole project
         payload = b''.join(response.streaming_content).decode()
         assert case.case_id not in payload
         assert '<case ' not in payload
