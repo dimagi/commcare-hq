@@ -103,37 +103,22 @@ def get_upstream_and_downstream_reports(domain):
 
 
 def get_upstream_and_downstream_keywords(domain):
-    """
-    Return 2 lists of keywords
-    The upstream_list contains keywords that originated in the specified domain
-    The downstream_list contains keywords that have been pulled from a domain upstream of the specified domain
-    """
-    upstream_list = {}
-    downstream_list = {}
-    keywords = Keyword.objects.filter(domain=domain)
-    for keyword in keywords:
-        if keyword.upstream_id:
-            downstream_list[str(keyword.id)] = keyword
-        else:
-            upstream_list[str(keyword.id)] = keyword
-    return upstream_list, downstream_list
+    return _partition_by_upstream_id(Keyword.objects.filter(domain=domain))
 
 
 def get_upstream_and_downstream_ucr_expressions(domain):
-    """
-    Return 2 lists of ucr expressions
-    The upstream_list contains ucr expressions that originated in the specified domain
-    The downstream_list contains ucr expressions that have been pulled from a domain
-    upstream of the specified domain
-    """
+    return _partition_by_upstream_id(UCRExpression.objects.filter(domain=domain))
+
+
+def _partition_by_upstream_id(objects):
+    """Split objects into (originating here, pulled from upstream), keyed by id"""
     upstream_list = {}
     downstream_list = {}
-    ucr_expressions = UCRExpression.objects.filter(domain=domain)
-    for ucr_expression in ucr_expressions:
-        if ucr_expression.upstream_id:
-            downstream_list[str(ucr_expression.id)] = ucr_expression
+    for obj in objects:
+        if obj.upstream_id:
+            downstream_list[str(obj.id)] = obj
         else:
-            upstream_list[str(ucr_expression.id)] = ucr_expression
+            upstream_list[str(obj.id)] = obj
     return upstream_list, downstream_list
 
 
