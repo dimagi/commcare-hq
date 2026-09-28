@@ -536,9 +536,10 @@ class CaseSearchEndpoint(models.Model):
     is_active = models.BooleanField(default=True)
     deactivated_on = models.DateTimeField(null=True, blank=True)
     deactivated_by = models.CharField(max_length=255, blank=True, default='')
+    upstream_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
-        unique_together = [('domain', 'name')]
+        unique_together = [('domain', 'name'), ('domain', 'upstream_id')]
 
     def __str__(self):
         return f'{self.domain}/{self.name}'
