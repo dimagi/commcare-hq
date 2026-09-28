@@ -16,10 +16,10 @@ from typing import ClassVar
 from attr import Factory, define, field as attr_field, validators
 
 from corehq.apps.case_search.endpoint_capability import (
-    FIELD_TYPES,
     INPUT_TYPE_CHOICE,
     INPUT_TYPE_MATCH_FIELD,
     OPERATORS,
+    PARAMETER_TYPES,
 )
 
 # Group node types: all = AND, any = OR, none = NOR (no child matches).
@@ -35,7 +35,7 @@ MAX_TOTAL_NODES = 200
 @define
 class Parameter:
     name: str = attr_field(converter=str.strip, validator=validators.min_len(1))
-    type: str = attr_field(validator=validators.in_(FIELD_TYPES))
+    type: str = attr_field(validator=validators.in_(PARAMETER_TYPES))
 
 def parse_parameter_spec(spec):
     """Validate a parameter list spec and parse it.
@@ -64,10 +64,10 @@ def parse_parameter_spec(spec):
             seen_names.add(name)
 
         param_type = item.get('type', '')
-        if param_type not in FIELD_TYPES:
+        if param_type not in PARAMETER_TYPES:
             item_errors.append(
                 f"Parameter '{name or i}': invalid type '{param_type}'."
-                f" Must be one of: {', '.join(FIELD_TYPES)}"
+                f" Must be one of: {', '.join(PARAMETER_TYPES)}"
             )
 
         if item_errors:
