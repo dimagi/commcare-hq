@@ -19,6 +19,7 @@ from corehq.apps.translations.app_translations.ai_translator import (
     _string_key,
     find_changed_ai_translations,
     is_valid_app_translation,
+    prepare_translation_format,
     run_app_translation,
 )
 from corehq.apps.translations.const import MODE_FILL_MISSING, MODE_RETRANSLATE
@@ -185,6 +186,22 @@ def test_find_changed_ai_translations_ignores_other_languages():
     assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == UNCHANGED
 
 
+@use('db')
+def test_prepare_translation_format_finds_edited_and_stale_strings():
+    app = _make_app()
+    app._id = 'test-app-id'
+    form = app.get_module(0).get_form(0)
+    _record_ai_translation(app, MODULE_NAME_KEY, AI_SOURCE, AI_TRANSLATION)
+    _record_ai_translation(app, FORM_NAME_KEY, form.name['en'], 'formulaire')
+    app.get_module(0).name['fra'] = 'mon module'  # a user edited the AI translation
+    form.name.update({'en': 'enrol form', 'fra': 'formulaire'})  # its source changed
+
+    fmt = prepare_translation_format(app, 'fra', MODE_FILL_MISSING)
+
+    assert fmt.manually_edited_keys == {MODULE_NAME_KEY}
+    assert fmt.stale_keys == {FORM_NAME_KEY}
+
+
 def test_string_keys_use_unique_ids_not_sheet_names():
     app = _make_app()
     fmt = AppTranslationFormat(app, 'fra', mode=MODE_RETRANSLATE)
@@ -251,6 +268,16 @@ def test_load_input_skips_manually_edited_keys():
     assert len(units) == len(all_units) - 1
 
 
+def test_load_input_extracts_stale_keys():
+    app = _make_app()
+    app.get_module(0).name['fra'] = 'module inscription'
+    fmt = AppTranslationFormat(app, 'fra', stale_keys={MODULE_NAME_KEY})
+
+    unit_keys = {u.string_key for u in fmt.load_input().values()}
+
+    assert MODULE_NAME_KEY in unit_keys
+
+
 def test_create_batches_are_sheet_scoped_with_context_header():
     app = _make_app()
     fmt = AppTranslationFormat(app, 'fra')
@@ -315,7 +342,7 @@ def test_for_app_copies_settings_not_state():
     app = _make_app()
     fmt = AppTranslationFormat(
         app, 'fra', mode=MODE_RETRANSLATE, manually_edited_keys={'k'},
-        treat_default_copies_as_missing=True)
+        stale_keys={'s'}, treat_default_copies_as_missing=True)
     fmt.load_input()
     fmt.results = {'0': 'traduction'}
     other_app = _make_app()
@@ -325,6 +352,7 @@ def test_for_app_copies_settings_not_state():
     assert copy.app is other_app
     assert (copy.target_lang, copy.mode) == ('fra', MODE_RETRANSLATE)
     assert copy.manually_edited_keys == {'k'}
+    assert copy.stale_keys == {'s'}
     assert copy.treat_default_copies_as_missing is True
     assert (copy.units_by_id, copy.results, copy.skipped_ids) == ({}, {}, set())
 
@@ -390,6 +418,21 @@ def test_rebase_results(mode, change_app, dropped_source):
     for fresh_id, translated in fresh_fmt.results.items():
         assert translated == f'FR:{fresh_fmt.units_by_id[fresh_id].source_text}'
     assert f'FR:{dropped_source}' not in fresh_fmt.results.values()
+
+
+def test_rebase_results_keeps_stale_results():
+    app = _make_app()
+    app.get_module(0).name['fra'] = 'module inscription'
+    stale_fmt = AppTranslationFormat(app, 'fra', stale_keys={MODULE_NAME_KEY})
+    stale_fmt.results = {uid: 'FR' for uid in stale_fmt.load_input()}
+    fresh_fmt = stale_fmt.for_app(app)
+    fresh_fmt.load_input()
+
+    changed = _rebase_results(stale_fmt, fresh_fmt)
+
+    carried_keys = {fresh_fmt.units_by_id[uid].string_key for uid in fresh_fmt.results}
+    assert changed == 0
+    assert MODULE_NAME_KEY in carried_keys
 
 
 class TestSaveOutput(TestCase):

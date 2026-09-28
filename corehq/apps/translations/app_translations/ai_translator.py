@@ -50,7 +50,9 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
     fresh copy of the app if it was saved in the meantime.
     ``progress_callback(batches_done, batches_total)`` is optional.
     """
-    fmt = translation_format or AppTranslationFormat(app, target_lang, mode=mode)
+    fmt = translation_format
+    if fmt is None:
+        fmt = prepare_translation_format(app, target_lang, mode)
     units = fmt.load_input()
     if not units:
         return {'total': 0, 'translated': 0, 'skipped': 0, 'changed': 0,
@@ -86,6 +88,16 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
         'app_version': applied.app_version,
         'errors': applied.errors,
     }
+
+
+def prepare_translation_format(app, target_lang, mode):
+    """A format for ``app`` that skips AI translations a user has edited
+    and retranslates those whose source text has changed."""
+    fmt = AppTranslationFormat(app, target_lang, mode=mode)
+    changed_strings = find_changed_ai_translations(fmt)
+    fmt.manually_edited_keys = changed_strings.manually_edited
+    fmt.stale_keys = changed_strings.stale
+    return fmt
 
 
 def _provenance_rows(fmt):
@@ -189,12 +201,14 @@ class AppTranslationFormat(TranslationFormat):
     """
 
     def __init__(self, app, target_lang, mode=MODE_FILL_MISSING,
-                 manually_edited_keys=None, treat_default_copies_as_missing=False):
+                 manually_edited_keys=None, stale_keys=None,
+                 treat_default_copies_as_missing=False):
         assert mode in (MODE_FILL_MISSING, MODE_RETRANSLATE), mode
         self.app = app
         self.target_lang = target_lang
         self.mode = mode
         self.manually_edited_keys = manually_edited_keys or set()
+        self.stale_keys = stale_keys or set()
         self.treat_default_copies_as_missing = treat_default_copies_as_missing
         self.headers_by_sheet = dict(get_bulk_app_sheet_headers(app))
         self.sheets = get_bulk_app_sheets_by_name(app)
@@ -212,6 +226,7 @@ class AppTranslationFormat(TranslationFormat):
             self.target_lang,
             mode=self.mode,
             manually_edited_keys=self.manually_edited_keys,
+            stale_keys=self.stale_keys,
             treat_default_copies_as_missing=self.treat_default_copies_as_missing,
         )
 
@@ -228,10 +243,12 @@ class AppTranslationFormat(TranslationFormat):
         for unit in self._iter_strings():
             if unit.string_key in self.manually_edited_keys:
                 continue
-            already_translated = bool(unit.target_text)
+            keep_existing = bool(unit.target_text)
             if self.treat_default_copies_as_missing and unit.target_text == unit.source_text:
-                already_translated = False
-            if self.mode == MODE_FILL_MISSING and already_translated:
+                keep_existing = False
+            if unit.string_key in self.stale_keys:
+                keep_existing = False
+            if self.mode == MODE_FILL_MISSING and keep_existing:
                 continue
             yield unit
 
