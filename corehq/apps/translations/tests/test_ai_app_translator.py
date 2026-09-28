@@ -87,6 +87,41 @@ def test_load_input_fill_missing_extracts_untranslated_source_strings():
     assert len({u.string_key for u in units.values()}) == len(units)  # keys unique
 
 
+def test_all_app_strings_includes_strings_load_input_skips():
+    app = _make_app()
+    app.get_module(0).name['fra'] = 'mon module'
+    question_key = next(
+        u.string_key for u in AppTranslationFormat(app, 'fra').load_input().values()
+        if u.source_text == 'What is the name?')
+    fmt = AppTranslationFormat(app, 'fra', manually_edited_keys={question_key})
+
+    all_strings = fmt.all_app_strings()
+    units = fmt.load_input()
+
+    # skipped by load_input: the submit label (the download fills every
+    # language with the 'Submit' default), the module name (translated
+    # above) and the edited question
+    assert len(all_strings) == 6
+    assert len(units) == 3
+    assert {u.string_key for u in units.values()} < set(all_strings)
+    assert question_key in all_strings
+    targets = {u.source_text: u.target_text for u in all_strings.values()}
+    assert targets['register module'] == 'mon module'
+    assert targets['Submit'] == 'Submit'
+
+
+def test_all_app_strings_leaves_out_strings_without_source():
+    app = _make_app()
+    xform = XFormBuilder()
+    xform.new_question('name', {'en': '', 'fra': 'Quel nom ?'})
+    app.get_module(0).get_form(0).source = xform.tostring().decode('utf-8')
+
+    all_strings = AppTranslationFormat(app, 'fra').all_app_strings()
+
+    assert 'Quel nom ?' not in {u.target_text for u in all_strings.values()}
+    assert len(all_strings) == 5
+
+
 def test_string_keys_use_unique_ids_not_sheet_names():
     app = _make_app()
     fmt = AppTranslationFormat(app, 'fra', mode=MODE_RETRANSLATE)

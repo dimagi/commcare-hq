@@ -195,6 +195,11 @@ class AppTranslationFormat(TranslationFormat):
             self.units_by_sheet.setdefault(unit.sheet_name, []).append(unit_id)
         return self.units_by_id
 
+    def all_app_strings(self):
+        """Every string in the app by ``string_key``, whether or not it
+        needs translating."""
+        return {unit.string_key: unit for unit in self._iter_strings()}
+
     def _iter_strings(self):
         """Yields a TranslationUnit for each row with source text."""
         for sheet_name, rows in self.sheets.items():
