@@ -55,8 +55,7 @@ def create_public_webform_build(domain, app_id, form_unique_id):
 
 
 def _restrict_multimedia_to_form(build, form_unique_id):
-    """Drop every media path the target form does not reference.
-    """
+    """Drop every media path the target form does not reference."""
     form_paths = build.get_form(form_unique_id).all_media_paths()
     build.multimedia_map = {
         path: media

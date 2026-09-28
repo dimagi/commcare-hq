@@ -59,8 +59,7 @@ def test_restrict_reports_to_form_keeps_only_what_the_form_references(
 @use('db')
 @fixture
 def released_app():
-    """A released build of an app with two forms, each with its own icon and a profile.
-    """
+    """A released build of an app with two forms, each with its own icon and a profile."""
     domain_obj = Domain.get_or_create_with_name(DOMAIN)
     # session endpoints require CommCare 2.51+ (feature_support)
     factory = AppFactory(DOMAIN, name='PWF App', build_version='2.51.0')
