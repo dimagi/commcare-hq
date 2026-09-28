@@ -183,3 +183,18 @@ services:
     environment:
       MINIO_ROOT_USER: admin-key
       MINIO_ROOT_PASSWORD: admin-secret
+
+  rustfs:
+    image: docker.io/rustfs/rustfs:1.0.0
+    expose:
+      - "9000"
+    healthcheck:
+      test: wget -q -O /dev/null http://127.0.0.1:9000/health
+      start_period: 15s
+      interval: 10s
+      retries: 10
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-rustfs-data:}/data
+    environment:
+      RUSTFS_ACCESS_KEY: admin-key
+      RUSTFS_SECRET_KEY: admin-secret

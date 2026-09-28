@@ -64,3 +64,10 @@ services:
     ports:
       - "9980:9980"
       - "9981:9981"
+
+  rustfs:
+    extends:
+      file: hq-compose.yml
+      service: rustfs
+    ports:
+      - "9000:9000"
