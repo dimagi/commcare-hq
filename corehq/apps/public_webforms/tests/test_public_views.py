@@ -144,6 +144,17 @@ def test_opening_a_one_time_link_sets_public_session_key_cookie():
 
 
 @use('db', public_webforms_available, stub_app_doc)
+def test_opening_a_one_time_link_puts_the_session_on_the_request():
+    # the only request with a session but no couch_user, which is how
+    # CloudcareMiddleware knows what to route formplayer on
+    session = create_session(create_webform(), email='respondent@example.com')
+
+    response = _open_form(session.public_webform.public_id, session.id.hex)
+
+    assert response.wsgi_request.public_form_session == session
+
+
+@use('db', public_webforms_available, stub_app_doc)
 def test_opening_a_one_time_link_records_when_it_was_opened():
     session = create_session(create_webform(), email='respondent@example.com')
 

@@ -153,6 +153,8 @@ class PublicFormView(BasePublicWebformView):
         if self.session.opened_at is None:
             self.session.opened_at = timezone.now()
             self.session.save(update_fields=['opened_at'])
+        request.public_form_session = self.session
+
         response = super().get(request, *args, **kwargs)
         response.set_cookie(
             PUBLIC_FORM_SESSION_COOKIE_NAME,
