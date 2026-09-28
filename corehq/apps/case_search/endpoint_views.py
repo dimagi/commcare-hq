@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from django import forms
 from django.core.exceptions import ImproperlyConfigured
@@ -379,14 +380,10 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
         endpoint = _get_endpoint(self.domain, kwargs['endpoint_id'])
         if endpoint is None:
             return not_found(request)
-        with transaction.atomic():
-            endpoint.is_active = False
-            _add_endpoint_version(
-                endpoint,
-                action=CaseSearchEndpointVersion.Action.DEACTIVATE,
-                created_by=request.couch_user.username,
-                extra_update_fields=['is_active'],
-            )
+        endpoint.is_active = False
+        endpoint.deactivated_on = datetime.utcnow()
+        endpoint.deactivated_by = request.couch_user.username
+        endpoint.save(update_fields=['is_active', 'deactivated_on', 'deactivated_by'])
         return redirect(
             reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
         )

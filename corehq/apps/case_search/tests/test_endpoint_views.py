@@ -391,16 +391,9 @@ class TestCaseSearchEndpointDeactivateView(EndpointViewTestCase):
         self.assertRedirects(response, self._list_url())
         ep.refresh_from_db()
         assert not ep.is_active
-        assert ep.current_version is not None
-        assert (
-            ep.current_version.action
-            == CaseSearchEndpointVersion.Action.DEACTIVATE
-        )
-        assert ep.current_version.created_by == self.username
-        assert ep.current_version.case_type is None
-        assert ep.current_version.query is None
-        assert ep.current_version.parameters is None
-        assert ep.versions.count() == 2
+        assert ep.deactivated_on is not None
+        assert ep.deactivated_by == self.username
+        assert ep.versions.count() == 1
 
     def test_404_for_wrong_domain(self):
         ep = self._make_endpoint()
