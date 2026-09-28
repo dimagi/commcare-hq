@@ -6,6 +6,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 
 from django.contrib import messages
+from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceConflict
 
@@ -24,6 +25,7 @@ from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
     get_form_sheet_name,
     get_module_sheet_name,
+    is_module_sheet,
 )
 from corehq.apps.translations.const import (
     AI_TRANSLATION_APPLY_ATTEMPTS,
@@ -268,22 +270,46 @@ class AppTranslationFormat(TranslationFormat):
         return valid
 
     def save_output(self, output_data=None, output_path=None):
-        """Rows without buffered results are omitted and left untouched
-        (partial-upload semantics); the app is saved once. Returns
-        error messages, [] on success."""
+        """Rows without buffered results keep their values; the app is
+        saved once. Returns error messages, [] on success."""
         if not self.results:
             return []
 
-        msgs = []
+        errors = []
         for sheet_name, translated_by_row in self._results_by_sheet().items():
-            rows = [
-                self._translated_row(sheet_name, row_index, translated)
-                for row_index, translated in sorted(translated_by_row.items())
-            ]
-            msgs += process_sheet_rows(
-                self.app, sheet_name, rows, names_map=self.sheet_unique_ids)
+            if is_module_sheet(sheet_name):
+                errors += self._save_module_sheet(sheet_name, translated_by_row)
+            else:
+                errors += self._save_sheet(sheet_name, translated_by_row)
         self.app.save()
-        return [msg for func, msg in msgs if func == messages.error]
+        return errors
+
+    def _save_sheet(self, sheet_name, translated_by_row):
+        rows = [
+            self._upload_row(sheet_name, row_index, translated)
+            for row_index, translated in sorted(translated_by_row.items())
+        ]
+        return _errors(process_sheet_rows(
+            self.app, sheet_name, rows, names_map=self.sheet_unique_ids))
+
+    def _save_module_sheet(self, sheet_name, translated_by_row):
+        # The module updater matches case list, case detail and ID Mapping
+        # rows to the module's columns by position, so it needs every row
+        # of the sheet. Untranslated rows go back with their current
+        # values, for the target language only, so they change nothing.
+        rows = [
+            self._upload_row(sheet_name, row_index, translated_by_row.get(row_index))
+            for row_index in range(len(self.sheets[sheet_name]))
+        ]
+        errors = _errors(process_sheet_rows(
+            self.app, sheet_name, rows, names_map=self.sheet_unique_ids,
+            lang=self.target_lang))
+        # results are never empty, so a blank row is one the run didn't touch
+        blank_row_errors = {
+            _blank_row_error(row['case_property'])
+            for row in rows if not row.get(f'default_{self.target_lang}')
+        }
+        return [error for error in errors if error not in blank_row_errors]
 
     def _results_by_sheet(self):
         by_sheet = defaultdict(dict)
@@ -292,11 +318,12 @@ class AppTranslationFormat(TranslationFormat):
             by_sheet[unit.sheet_name][unit.row_index] = translated
         return by_sheet
 
-    def _translated_row(self, sheet_name, row_index, translated):
+    def _upload_row(self, sheet_name, row_index, translated):
         headers = self.headers_by_sheet[sheet_name]
         raw = self.sheets[sheet_name][row_index]
         row = {header: _cell(raw, i) for i, header in enumerate(headers)}
-        row[f'default_{self.target_lang}'] = translated
+        if translated is not None:
+            row[f'default_{self.target_lang}'] = translated
         return row
 
     def applied_units(self):
@@ -383,6 +410,16 @@ class TranslationUnit:
     source_text: str
     target_text: str
     string_key: str
+
+
+def _errors(msgs):
+    return [msg for func, msg in msgs if func == messages.error]
+
+
+def _blank_row_error(case_property):
+    # must match BulkAppTranslationModuleUpdater._update_translation
+    return _("You must provide at least one translation"
+             " of the case property '%s'") % case_property
 
 
 def _cell(row, index):
