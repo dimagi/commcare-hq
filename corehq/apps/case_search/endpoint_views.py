@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 
 from django import forms
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import redirect, render
@@ -309,6 +309,8 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
         self._endpoint = _get_endpoint(self.domain, kwargs['endpoint_id'])
         if self._endpoint is None:
             return not_found(request)
+        if self._endpoint.upstream_id:
+            raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
 
     @property
