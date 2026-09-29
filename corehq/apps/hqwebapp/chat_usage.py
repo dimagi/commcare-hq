@@ -16,9 +16,17 @@ class ChatUsageUnavailable(Exception):
     """OCS usage could not be obtained or validated."""
 
 
-def get_chat_usage(user_id, refresh=False):
+def get_or_increase_chat_usage(user_id, increment=False):
     current_month = datetime.now(timezone.utc).strftime('%Y-%m')
-    return _fetch_chat_usage_from_ocs(user_id, current_month, refresh)
+    cached_usage = _fetch_chat_usage_from_ocs(user_id, current_month, refresh=False)
+    if increment:
+        cached_usage += 1
+        _fetch_chat_usage_from_ocs.set_cached_value(user_id, current_month).to(cached_usage)
+    return cached_usage
+
+def fetch_chat_usage_from_ocs(user_id):
+    current_month = datetime.now(timezone.utc).strftime('%Y-%m')
+    return _fetch_chat_usage_from_ocs(user_id, current_month, refresh=True)
 
 
 @quickcache(
