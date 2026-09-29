@@ -18,7 +18,10 @@ class ChatUsageUnavailable(Exception):
 
 def get_or_increase_chat_usage(user_id, increment=False):
     current_month = datetime.now(timezone.utc).strftime('%Y-%m')
-    cached_usage = _fetch_chat_usage_from_ocs(user_id, current_month, refresh=False)
+    cached_usage = _fetch_chat_usage_from_ocs.get_cached_value(user_id, current_month)
+    # If the cache is not set, return 0
+    if cached_usage is Ellipsis:
+        cached_usage = 0
     if increment:
         cached_usage += 1
         _fetch_chat_usage_from_ocs.set_cached_value(user_id, current_month).to(cached_usage)
