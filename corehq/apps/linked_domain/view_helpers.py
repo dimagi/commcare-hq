@@ -114,9 +114,7 @@ def get_upstream_and_downstream_ucr_expressions(domain):
 
 
 def get_upstream_and_downstream_case_search_endpoints(domain):
-    upstream_list, downstream_list = _partition_by_upstream_id(
-        CaseSearchEndpoint.objects.filter(domain=domain, is_active=True)
-    )
+    upstream_list, downstream_list = _partition_by_upstream_id(CaseSearchEndpoint.objects.filter(domain=domain))
     # Link history identifies a downstream endpoint by the upstream endpoint it copies from
     downstream_list = {str(endpoint.upstream_id): endpoint for endpoint in downstream_list.values()}
     return upstream_list, downstream_list
@@ -218,9 +216,10 @@ def build_case_search_endpoint_view_model(endpoint, last_update=None):
     if not endpoint:
         return None
 
+    name = f"{endpoint.name} ({_('Inactive')})" if not endpoint.is_active else endpoint.name
     return build_linked_data_view_model(
         model_type=MODEL_CASE_SEARCH_ENDPOINT,
-        name=f"{LINKED_MODELS_MAP[MODEL_CASE_SEARCH_ENDPOINT]} ({endpoint.name})",
+        name=f"{LINKED_MODELS_MAP[MODEL_CASE_SEARCH_ENDPOINT]} ({name})",
         detail=CaseSearchEndpointLinkDetail(
             upstream_endpoint_id=str(endpoint.upstream_id or endpoint.id)
         ).to_json(),
