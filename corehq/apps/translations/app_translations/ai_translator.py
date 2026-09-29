@@ -115,19 +115,19 @@ class AppliedTranslations:
     errors: list  # save_output()'s error messages
 
 
-def _apply_translations(fmt, attempts=AI_TRANSLATION_APPLY_ATTEMPTS):
+def _apply_translations(fmt):
     """Save ``fmt``'s results, rebasing them onto a fresh copy of the app
     whenever the save conflicts with someone else's.
     """
     if not fmt.results:
         return AppliedTranslations(fmt=fmt, changed=0, errors=[])
     changed = 0
-    for attempt in range(1, attempts + 1):
+    for attempt in range(1, AI_TRANSLATION_APPLY_ATTEMPTS + 1):
         try:
             errors = fmt.save_output()
             return AppliedTranslations(fmt=fmt, changed=changed, errors=errors)
         except ResourceConflict as e:
-            if attempt == attempts:
+            if attempt == AI_TRANSLATION_APPLY_ATTEMPTS:
                 raise AppChangedDuringTranslation() from e
             fresh_fmt = fmt.for_app(get_app(fmt.app.domain, fmt.app.get_id))
             fresh_fmt.load_input()

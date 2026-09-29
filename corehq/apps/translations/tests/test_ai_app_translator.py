@@ -408,7 +408,8 @@ class TestApplyTranslations(TestCase):
         self._save_other_copy(app, lambda other: setattr(other, 'name', 'Renamed'))
 
         with pytest.raises(AppChangedDuringTranslation):
-            _apply_translations(fmt, attempts=1)
+            with patch.object(ai_translator, 'AI_TRANSLATION_APPLY_ATTEMPTS', 1):
+                _apply_translations(fmt)
 
         assert self._current(app).get_module(0).name.get('fra', '') == ''
 
@@ -422,9 +423,12 @@ class TestApplyTranslations(TestCase):
             self._save_other_copy(fresh, lambda other: None)  # beats our save
             return fresh
 
-        with patch.object(ai_translator, 'get_app', get_app_then_save_again):
-            with pytest.raises(AppChangedDuringTranslation):
-                _apply_translations(fmt, attempts=2)
+        with (
+            patch.object(ai_translator, 'get_app', get_app_then_save_again),
+            patch.object(ai_translator, 'AI_TRANSLATION_APPLY_ATTEMPTS', 2),
+            pytest.raises(AppChangedDuringTranslation),
+        ):
+            _apply_translations(fmt)
 
         assert self._current(app).get_module(0).name.get('fra', '') == ''
 
