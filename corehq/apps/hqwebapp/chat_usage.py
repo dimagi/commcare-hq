@@ -18,13 +18,13 @@ class ChatUsageUnavailable(Exception):
 
 def get_chat_usage(user_id, refresh=False):
     current_month = datetime.now(timezone.utc).strftime('%Y-%m')
-    return _get_chat_usage(user_id, current_month, refresh)
+    return _fetch_chat_usage_from_ocs(user_id, current_month, refresh)
 
 
 @quickcache(
     ['user_id', 'current_month'], skip_arg='refresh', timeout=_CACHE_TIMEOUT
 )
-def _get_chat_usage(user_id, current_month, refresh=False):
+def _fetch_chat_usage_from_ocs(user_id, current_month, refresh=False):
     api_key = settings.OCS_API_KEY
     if not user_id or not api_key:
         raise ChatUsageUnavailable(
