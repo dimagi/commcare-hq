@@ -68,6 +68,5 @@ TODOs
   properties, not datetime - does it intend the latter? Should we
   support both?
 - Index external ID.
-- Add units arg to ``within_distance``
 - Put limit on number of property columns
 - Add a SQL user per domain with only access to that domain's schema

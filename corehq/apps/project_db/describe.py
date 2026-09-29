@@ -40,8 +40,10 @@ Supported SQL:
  * string_to_array(value, '<delimiter>'), which splits text into an array to
    compare against those columns. The delimiter must be a literal, so a
    parameter holding 'fever cough' is written string_to_array(:symptoms, ' ').
- * within_distance(gps_prop__ column, '<latitude> <longitude>', meters), which
-   matches cases within that distance of the point.
+ * within_distance(gps_prop__ column, '<latitude> <longitude>', distance, unit),
+   which matches cases within that distance of the point. The unit is optional
+   and defaults to 'meters'. It may be 'meters', 'kilometers', 'miles',
+   'yards', 'feet' or 'nauticalmiles', and must be a literal.
  * Name matching, comparing two values case-insensitively:
    sounds_like(a, b) matches by pronunciation (Smith/Smyth, Brown/Braun),
    fuzzy_match(a, b) by spelling (Michael/Micheal, Robert/Roberto), and
