@@ -44,7 +44,7 @@ services:
         condition: service_healthy
       zookeeper:
         condition: service_started
-      minio:
+      garage:
         condition: service_healthy
     volumes:
       - ..:/mnt/commcare-hq-ro${RO}
