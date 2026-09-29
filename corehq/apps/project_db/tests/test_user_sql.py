@@ -36,7 +36,7 @@ from corehq.apps.project_db.user_sql import (
     UnsupportedSQL,
     UserSQL,
     UserSQLProgrammingError,
-    _bind,
+    _bind_literal,
     _set_timezone,
     translate,
 )
@@ -69,7 +69,7 @@ def _string_to_array(value, delimiter):
 
 
 def _interval(unit, count):
-    return func.make_interval(literal_column(unit).op('=>')(_bind(count)))
+    return func.make_interval(literal_column(unit).op('=>')(_bind_literal('datetime_intervals', count)))
 
 
 def _within_distance(coordinates, meters):
@@ -100,23 +100,23 @@ def _within_distance(coordinates, meters):
      select([CLIENT.c.case_id.label('My Id')])),
 
     ("SELECT * FROM client WHERE name = 'x'",
-     select([CLIENT]).where(CLIENT.c.name == _bind('x'))),
+     select([CLIENT]).where(CLIENT.c.name == _bind_literal('literal', 'x'))),
     ("SELECT * FROM client WHERE name = ('x')",
-     select([CLIENT]).where(CLIENT.c.name == _bind('x'))),
+     select([CLIENT]).where(CLIENT.c.name == _bind_literal('literal', 'x'))),
     ("SELECT * FROM client WHERE name <> 'x'",
-     select([CLIENT]).where(CLIENT.c.name != _bind('x'))),
+     select([CLIENT]).where(CLIENT.c.name != _bind_literal('literal', 'x'))),
     ('SELECT * FROM client WHERE case_id > 5',
-     select([CLIENT]).where(CLIENT.c.case_id > _bind(5))),
+     select([CLIENT]).where(CLIENT.c.case_id > _bind_literal('literal', 5))),
     ('SELECT * FROM client WHERE case_id <= 5.5',
-     select([CLIENT]).where(CLIENT.c.case_id <= _bind(Decimal('5.5')))),
+     select([CLIENT]).where(CLIENT.c.case_id <= _bind_literal('literal', Decimal('5.5')))),
     # Operands may appear in either order
     ("SELECT * FROM client WHERE 'x' = name",
-     select([CLIENT]).where(_bind('x') == CLIENT.c.name)),
+     select([CLIENT]).where(_bind_literal('literal', 'x') == CLIENT.c.name)),
 
     # Columns may be qualified by their table
     ('SELECT client.name FROM client', select([CLIENT.c.name])),
     ("SELECT * FROM client WHERE client.name = 'x'",
-     select([CLIENT]).where(CLIENT.c.name == _bind('x'))),
+     select([CLIENT]).where(CLIENT.c.name == _bind_literal('literal', 'x'))),
 
     # Joins
     (f'SELECT * {JOIN_SQL}', select([CLIENT_VISIT])),
@@ -126,14 +126,14 @@ def _within_distance(coordinates, meters):
     (f'SELECT parent_id {JOIN_SQL}',
      select([VISIT.c.parent_id]).select_from(CLIENT_VISIT)),
     (f"SELECT * {JOIN_SQL} WHERE visit.name = 'x'",
-     select([CLIENT_VISIT]).where(VISIT.c.name == _bind('x'))),
+     select([CLIENT_VISIT]).where(VISIT.c.name == _bind_literal('literal', 'x'))),
     (f'SELECT client.name, form.form_id {JOIN_SQL} '
      'JOIN form ON visit.visit_id = form.visit_id',
      select([CLIENT.c.name, FORM.c.form_id]).select_from(
          CLIENT_VISIT.join(FORM, VISIT.c.visit_id == FORM.c.visit_id))),
     ("SELECT * FROM client JOIN visit "
      "ON client.case_id = visit.parent_id AND visit.name = 'x'",
-     select([CLIENT.join(VISIT, and_(ON, VISIT.c.name == _bind('x')))])),
+     select([CLIENT.join(VISIT, and_(ON, VISIT.c.name == _bind_literal('literal', 'x')))])),
     ('SELECT * FROM client LEFT JOIN visit ON client.case_id = visit.parent_id',
      select([CLIENT.join(VISIT, ON, isouter=True)])),
 
@@ -171,38 +171,38 @@ def _within_distance(coordinates, meters):
      union(union(select([CLIENT.c.case_id]), select([VISIT.c.visit_id])),
            select([FORM.c.form_id]))),
     ("SELECT case_id FROM client WHERE name = 'x' UNION SELECT visit_id FROM visit",
-     union(select([CLIENT.c.case_id]).where(CLIENT.c.name == _bind('x')),
+     union(select([CLIENT.c.case_id]).where(CLIENT.c.name == _bind_literal('literal', 'x')),
            select([VISIT.c.visit_id]))),
 
     # WHERE clauses
     ("SELECT * FROM client WHERE name = 'x' AND case_id = 'c1'",
-     select([CLIENT]).where(and_(CLIENT.c.name == _bind('x'),
-                                 CLIENT.c.case_id == _bind('c1')))),
+     select([CLIENT]).where(and_(CLIENT.c.name == _bind_literal('literal', 'x'),
+                                 CLIENT.c.case_id == _bind_literal('literal', 'c1')))),
     ("SELECT * FROM client WHERE name = 'x' OR case_id = 'c1'",
-     select([CLIENT]).where(or_(CLIENT.c.name == _bind('x'),
-                                CLIENT.c.case_id == _bind('c1')))),
+     select([CLIENT]).where(or_(CLIENT.c.name == _bind_literal('literal', 'x'),
+                                CLIENT.c.case_id == _bind_literal('literal', 'c1')))),
     ("SELECT * FROM client WHERE NOT name = 'x'",
-     select([CLIENT]).where(not_(CLIENT.c.name == _bind('x')))),
+     select([CLIENT]).where(not_(CLIENT.c.name == _bind_literal('literal', 'x')))),
     ("SELECT * FROM client WHERE (name = 'x')",
-     select([CLIENT]).where(CLIENT.c.name == _bind('x'))),
+     select([CLIENT]).where(CLIENT.c.name == _bind_literal('literal', 'x'))),
     # Parentheses override the usual AND-before-OR precedence
     ("SELECT * FROM client WHERE (name = 'x' OR name = 'y') AND case_id = 'c1'",
-     select([CLIENT]).where(and_(or_(CLIENT.c.name == _bind('x'),
-                                     CLIENT.c.name == _bind('y')),
-                                 CLIENT.c.case_id == _bind('c1')))),
+     select([CLIENT]).where(and_(or_(CLIENT.c.name == _bind_literal('literal', 'x'),
+                                     CLIENT.c.name == _bind_literal('literal', 'y')),
+                                 CLIENT.c.case_id == _bind_literal('literal', 'c1')))),
     ("SELECT * FROM client WHERE name = 'x' AND case_id = 'c1' AND name = 'y'",
-     select([CLIENT]).where(and_(and_(CLIENT.c.name == _bind('x'),
-                                      CLIENT.c.case_id == _bind('c1')),
-                                 CLIENT.c.name == _bind('y')))),
+     select([CLIENT]).where(and_(and_(CLIENT.c.name == _bind_literal('literal', 'x'),
+                                      CLIENT.c.case_id == _bind_literal('literal', 'c1')),
+                                 CLIENT.c.name == _bind_literal('literal', 'y')))),
     ("SELECT * FROM client WHERE name IN ('x', 'y')",
-     select([CLIENT]).where(CLIENT.c.name.in_([_bind('x'), _bind('y')]))),
+     select([CLIENT]).where(CLIENT.c.name.in_([_bind_literal('literal', 'x'), _bind_literal('literal', 'y')]))),
     # The values may be any supported value expression, not just literals
     ('SELECT * FROM client WHERE name IN (case_id)',
      select([CLIENT]).where(CLIENT.c.name.in_([CLIENT.c.case_id]))),
     ("SELECT * FROM client WHERE name NOT IN ('x')",
-     select([CLIENT]).where(not_(CLIENT.c.name.in_([_bind('x')])))),
+     select([CLIENT]).where(not_(CLIENT.c.name.in_([_bind_literal('literal', 'x')])))),
     ('SELECT * FROM client WHERE name = TRUE',
-     select([CLIENT]).where(CLIENT.c.name == _bind(True))),
+     select([CLIENT]).where(CLIENT.c.name == _bind_literal('bool', True))),
     ('SELECT * FROM client WHERE name IS NULL',
      select([CLIENT]).where(CLIENT.c.name.is_(None))),
     ('SELECT * FROM client WHERE name IS NOT NULL',
@@ -225,24 +225,24 @@ def _within_distance(coordinates, meters):
 
     # Array operators
     ("SELECT * FROM survey WHERE symptoms @> ARRAY['fever', 'cough']",
-     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('@>')(_bind(['fever', 'cough'])))),
+     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('@>')(_bind_literal('array', ['fever', 'cough'])))),
     ("SELECT * FROM survey WHERE symptoms <@ ARRAY['fever']",
-     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('<@')(_bind(['fever'])))),
+     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('<@')(_bind_literal('array', ['fever'])))),
     ("SELECT * FROM survey WHERE symptoms && ARRAY['fever']",
-     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('&&')(_bind(['fever'])))),
+     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('&&')(_bind_literal('array', ['fever'])))),
     ("SELECT * FROM survey WHERE symptoms @> '{fever,cough}'",
-     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('@>')(_bind('{fever,cough}')))),
+     select([SURVEY]).where(SURVEY.c.symptoms.bool_op('@>')(_bind_literal('literal', '{fever,cough}')))),
 
     # Split a string param to an array
     ("SELECT * FROM survey WHERE string_to_array(:s, ',') <@ symptoms",
      select([SURVEY]).where(
-         _string_to_array(bindparam('s'), _bind(','))
+         _string_to_array(bindparam('s'), _bind_literal('delimiter', ','))
          .bool_op('<@')( SURVEY.c.symptoms))),
     # A text column can be split too
     ("SELECT * FROM client WHERE string_to_array(name, ' ') && ARRAY['fever']",
      select([CLIENT]).where(
-         _string_to_array(CLIENT.c.name, _bind(' ')).bool_op('&&')(
-             _bind(['fever'])))),
+         _string_to_array(CLIENT.c.name, _bind_literal('delimiter', ' ')).bool_op('&&')(
+             _bind_literal('array', ['fever'])))),
 
     ('SELECT * FROM client WHERE sounds_like(name, :name)',
      select([CLIENT]).where(
@@ -254,15 +254,17 @@ def _within_distance(coordinates, meters):
          CLIENT.c.name % bindparam('name'),
          func.dmetaphone(CLIENT.c.name) == func.dmetaphone(bindparam('name'))))),
     ("SELECT * FROM geo WHERE within_distance(gps_prop__location, '42.44 -71.14', 5000)",
-     select([GEO]).where(_within_distance(_bind('42.44 -71.14'), _bind(5000.0)))),
+     select([GEO]).where(_within_distance(_bind_literal('coordinates', '42.44 -71.14'),
+                                          _bind_literal('distance', 5000.0)))),
     ('SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius)',
      select([GEO]).where(_within_distance(bindparam('center'), bindparam('radius')))),
     ("SELECT * FROM geo WHERE within_distance(gps_prop__location, '42.44 -71.14', 3, 'miles')",
      select([GEO]).where(_within_distance(
-         _bind('42.44 -71.14'), _bind(3.0) * _bind(1609.344)))),
+         _bind_literal('coordinates', '42.44 -71.14'),
+         _bind_literal('distance', 3.0) * _bind_literal('meters_per_unit', 1609.344)))),
     ("SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius, 'kilometers')",
      select([GEO]).where(_within_distance(
-         bindparam('center'), bindparam('radius') * _bind(1000)))),
+         bindparam('center'), bindparam('radius') * _bind_literal('meters_per_unit', 1000)))),
 
     ('SELECT * FROM client WHERE name = today()',
      select([CLIENT]).where(CLIENT.c.name == func.current_date())),
@@ -344,7 +346,7 @@ def _compiled(query):
     'SELECT * FROM client WHERE name = ?',            # unnamed
     'SELECT * FROM client WHERE name = $1',           # positional
     'SELECT * FROM client WHERE name = %(who)s',      # not the supported spelling
-    'SELECT * FROM client WHERE name = :hq_param_1',  # reserved prefix
+    'SELECT * FROM client WHERE name = :hq_literal_1',  # reserved prefix
     'SELECT * FROM client WHERE name IN tbl',         # IN takes a list or parameter
     'SELECT * FROM client WHERE name = :"a)s; DROP TABLE client; --"',
     'SELECT * FROM survey WHERE symptoms @> ARRAY[symptoms]', # Array literals only
@@ -441,9 +443,9 @@ def test_escapes_alias_identifiers(alias, expected):
 def test_literals_bind_under_our_own_prefix():
     sql, params = _compiled(translate("SELECT name FROM client WHERE name = 'x' AND case_id = 5", TABLES))
     assert sql == ('SELECT client.name \nFROM client \n'
-                   'WHERE client.name = %(hq_param_1)s '
-                   'AND client.case_id = %(hq_param_2)s')
-    assert params == {'hq_param_1': (str, 'x'), 'hq_param_2': (int, 5)}
+                   'WHERE client.name = %(hq_literal_1)s '
+                   'AND client.case_id = %(hq_literal_2)s')
+    assert params == {'hq_literal_1': (str, 'x'), 'hq_literal_2': (int, 5)}
 
 
 def test_query_parameters_are_left_unbound():
@@ -451,8 +453,8 @@ def test_query_parameters_are_left_unbound():
     compiled = query.compile(dialect=postgresql.dialect())
     assert str(compiled) == ('SELECT client.name \nFROM client \n'
                              'WHERE client.name = %(who)s '
-                             'AND client.case_id = %(hq_param_1)s')
-    assert compiled.params == {'hq_param_1': 'c1', 'who': None}
+                             'AND client.case_id = %(hq_literal_1)s')
+    assert compiled.params == {'hq_literal_1': 'c1', 'who': None}
 
 
 def _user_sql(sql):
@@ -485,10 +487,10 @@ def test_get_info_separates_literals_from_parameters():
     info = _user_sql(
         "SELECT name FROM client WHERE name = :who AND case_id = 'c1'").get_info()
     assert info.parameters == ['who']
-    assert info.bound_literals == {'hq_param_1': 'c1'}
+    assert info.bound_literals == {'hq_literal_1': 'c1'}
     # sqlglot rewrites the placeholders to pyformat when it pretty-prints
     assert '%(who)s' in info.translated_sql
-    assert '%(hq_param_1)s' in info.translated_sql
+    assert '%(hq_literal_1)s' in info.translated_sql
 
 
 @pytest.mark.parametrize('sql, raw, expected', [
@@ -681,7 +683,7 @@ def test_max_rows_applies_limit():
     user_sql = UserSQL('test-domain', 'SELECT name FROM client', max_rows=5)
     with patch('corehq.apps.project_db.user_sql.get_domain_tables', return_value=TABLES):
         actual = _compiled(user_sql.query)
-    expected = _compiled(select([CLIENT.c.name]).limit(_bind(5)))
+    expected = _compiled(select([CLIENT.c.name]).limit(_bind_literal('max_rows', 5)))
     assert actual == expected
 
 
