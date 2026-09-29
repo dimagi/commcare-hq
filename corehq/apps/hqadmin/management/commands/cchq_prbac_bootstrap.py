@@ -265,6 +265,9 @@ class Command(BaseCommand):
         Role(slug=privileges.PUBLIC_WEBFORMS,
              name='Public Webforms',
              description="Allow creating publicly accessible webforms."),
+        Role(slug=privileges.AI_APP_TRANSLATION,
+             name='AI App Translations',
+             description="Allow translating app content with AI from the Languages page."),
     ]
 
     BOOTSTRAP_PLANS = [
