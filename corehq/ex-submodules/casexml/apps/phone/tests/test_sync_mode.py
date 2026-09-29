@@ -31,6 +31,8 @@ from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.utils import MockDevice, get_restore_config
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -58,6 +60,9 @@ class BaseSyncTest(TestCase):
         cls.project = Domain(name=TEST_DOMAIN_NAME)
         cls.project.save()
         cls.addClassCleanup(cls.project.delete)
+        # A prior test class may have cached a USERCASE privilege for this
+        # shared domain name, which would give the user an unexpected usercase
+        domain_has_privilege.clear(TEST_DOMAIN_NAME, privileges.USERCASE)
         cls.user = create_restore_user(
             cls.project.name,
             USERNAME,
