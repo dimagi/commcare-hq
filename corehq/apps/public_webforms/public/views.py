@@ -14,6 +14,8 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_doc
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.cloudcare.utils import format_app_doc, get_web_apps_context
+from corehq.apps.cloudcare.views import has_geocoder_privs
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.public_webforms.decorators import (
@@ -181,6 +183,10 @@ class PublicFormView(BasePublicWebformView):
                 PublicFormSubmittedView.urlname,
                 kwargs={'public_id': webform.public_id.hex},
             ),
+            'default_geocoder_location': getattr(
+                Domain.get_by_name(webform.domain),
+                'default_geocoder_location', None),
+            'has_geocoder_privs': has_geocoder_privs(webform.domain),
             'toggles_dict': toggles.toggle_values_by_name(None, webform.domain),
             'previews_dict': feature_previews.preview_values_by_name(webform.domain),
         })
