@@ -102,6 +102,7 @@ def mobile_auth_or_public_form_session(view_func):
         if session is None:
             return mobile_auth_or_formplayer(view_func)(request, domain, *args, **kwargs)
 
+        request.public_form_session = session
         request.couch_user = PublicFormUser(session)
         return view_func(request, domain, *args, **kwargs)
 
