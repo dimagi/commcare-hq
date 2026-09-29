@@ -21,7 +21,6 @@ BEGIN
     RAISE EXCEPTION 'refusing to manage role %', role_name;
   END IF;
   EXECUTE format('CREATE ROLE %I WITH LOGIN PASSWORD %L', role_name, role_password);
-  EXECUTE format('GRANT %I TO %I', role_name, current_user);
 END;
 $$;
 
@@ -36,7 +35,9 @@ BEGIN
     RAISE EXCEPTION 'refusing to manage role %', role_name;
   END IF;
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = role_name) THEN
-    -- drop grants to the role, which would otherwise block DROP ROLE
+    -- Membership is needed only for this DROP OWNED BY; the role (and with
+    -- it, this membership) is gone by the time the function returns.
+    EXECUTE format('GRANT %I TO %I', role_name, current_user);
     EXECUTE format('DROP OWNED BY %I', role_name);
     EXECUTE format('DROP ROLE %I', role_name);
   END IF;
