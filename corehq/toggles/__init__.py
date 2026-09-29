@@ -2556,3 +2556,11 @@ CHUNKED_LIVEQUERY = FeatureRelease(
     namespaces=[NAMESPACE_DOMAIN],
     owner='Daniel Miller',
 )
+
+AI_APP_TRANSLATION = FeatureRelease(
+    slug='ai_app_translation',
+    label='Translate app content with AI from the Languages page',
+    tag=TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Amit Phulera',
+)
