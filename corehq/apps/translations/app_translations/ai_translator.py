@@ -72,16 +72,17 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
             })
         if progress_callback:
             progress_callback(i + 1, len(batches))
-    applied = _apply_translations(fmt)
-    translated = len(applied.fmt.results)
+    # parse_output() records skipped ids on the run's own format; a
+    # rebase carries over only its results
     skipped = len(fmt.skipped_ids)
+    applied = _apply_translations(fmt)
     return {
         'total': len(units),
-        'translated': translated,
+        'translated': applied.translated,
         'skipped': skipped,
         'changed': applied.changed,
-        'failed': len(units) - translated - skipped - applied.changed,
-        'app_version': applied.fmt.app.version,
+        'failed': len(units) - applied.translated - skipped - applied.changed,
+        'app_version': applied.app_version,
         'errors': applied.errors,
     }
 
@@ -110,9 +111,17 @@ def _rebase_results(stale_fmt, fresh_fmt):
 @dataclass
 class AppliedTranslations:
     """The outcome of applying a run's results to the app."""
-    fmt: 'AppTranslationFormat'
+    saved_fmt: 'AppTranslationFormat'  # rebased onto a fresh app after a conflict
     changed: int  # results dropped because the app changed under them
     errors: list  # save_output()'s error messages
+
+    @property
+    def translated(self):
+        return len(self.saved_fmt.results)
+
+    @property
+    def app_version(self):
+        return self.saved_fmt.app.version
 
 
 def _apply_translations(fmt):
@@ -120,12 +129,12 @@ def _apply_translations(fmt):
     whenever the save conflicts with someone else's.
     """
     if not fmt.results:
-        return AppliedTranslations(fmt=fmt, changed=0, errors=[])
+        return AppliedTranslations(saved_fmt=fmt, changed=0, errors=[])
     changed = 0
     for attempt in range(1, AI_TRANSLATION_APPLY_ATTEMPTS + 1):
         try:
             errors = fmt.save_output()
-            return AppliedTranslations(fmt=fmt, changed=changed, errors=errors)
+            return AppliedTranslations(saved_fmt=fmt, changed=changed, errors=errors)
         except ResourceConflict as e:
             if attempt == AI_TRANSLATION_APPLY_ATTEMPTS:
                 raise AppChangedDuringTranslation() from e

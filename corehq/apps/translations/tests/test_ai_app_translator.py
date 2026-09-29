@@ -372,8 +372,9 @@ class TestApplyTranslations(TestCase):
 
         applied = _apply_translations(fmt)
 
-        assert applied.fmt is fmt
+        assert applied.saved_fmt is fmt
         assert applied.changed == 0
+        assert applied.translated == len(fmt.results)
         assert self._current(app).get_module(0).name['fra'] == 'FR:register module'
 
     def test_conflict_with_unrelated_edit_keeps_both(self):
@@ -387,7 +388,7 @@ class TestApplyTranslations(TestCase):
         assert applied.changed == 0
         assert current.name == 'Renamed'
         assert current.get_module(0).name['fra'] == 'FR:register module'
-        assert applied.fmt.app.version == current.version
+        assert applied.app_version == current.version
 
     def test_conflict_keeps_translation_the_user_typed(self):
         app = self._saved_app()
