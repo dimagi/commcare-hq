@@ -44,7 +44,7 @@ MAX_STRING_KEY_LENGTH = 512  # AITranslation.string_key max_length
 
 def ai_translation_enabled(domain):
     return (
-        toggles.AI_APP_TRANSLATION.enabled(domain)
+        toggles.AI_APP_TRANSLATION.enabled(domain, namespace=toggles.NAMESPACE_DOMAIN)
         and domain_has_privilege(domain, privileges.AI_APP_TRANSLATION)
     )
 
