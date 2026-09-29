@@ -11,6 +11,8 @@ from couchdbkit import ResourceConflict
 
 from dimagi.utils.logging import notify_exception
 
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
@@ -38,6 +40,13 @@ from corehq.apps.translations.integrations.llm import (
 
 MODULES_AND_FORMS_KEY_PREFIX = 'menus_and_forms'
 MAX_STRING_KEY_LENGTH = 512  # AITranslation.string_key max_length
+
+
+def ai_translation_enabled(domain):
+    return (
+        toggles.AI_APP_TRANSLATION.enabled(domain, namespace=toggles.NAMESPACE_DOMAIN)
+        and domain_has_privilege(domain, privileges.AI_APP_TRANSLATION)
+    )
 
 
 def run_app_translation(app, target_lang, mode, provider=None, model=None,
