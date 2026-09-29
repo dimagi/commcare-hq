@@ -22,6 +22,7 @@ $(function () {
         environment: initialPageData.get('environment'),
         singleAppMode: false,
         publicFormMode: true,
+        debuggerEnabled: false,
     };
 
     // land straight in the target form by reusing the get_endpoint deep link.
