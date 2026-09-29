@@ -27,7 +27,15 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
-from corehq.apps.users.util import normalize_username
+from corehq.apps.public_webforms.decorators import (
+    PUBLIC_FORM_SESSION_COOKIE_NAME,
+    PUBLIC_FORM_SESSION_HEADER,
+)
+from corehq.apps.public_webforms.models import (
+    PublicFormSession,
+    PublicWebform,
+)
+from corehq.apps.users.util import PUBLIC_USER_ID, normalize_username
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import sharded
 
@@ -70,6 +78,12 @@ class AuthTestMixin(object):
         )
 
     @property
+    def public_form(self):
+        return os.path.join(
+            os.path.dirname(__file__), "data", 'public_form.xml'
+        )
+
+    @property
     def simple_form(self):
         return os.path.join(
             os.path.dirname(__file__), "data", 'simple_form.xml'
@@ -95,7 +109,7 @@ class AuthTestMixin(object):
 
     def _test_post(self, file_path, authtype=None, client=None,
                    expected_status=201, expected_auth_context=None,
-                   submit_mode=None, expected_response=None):
+                   submit_mode=None, expected_response=None, user_id=None):
         if not client:
             client = django_digest.test.Client()
 
@@ -113,7 +127,7 @@ class AuthTestMixin(object):
         with open(file_path, "r", encoding='utf-8') as f:
             fileobj = FakeFile(
                 f.read().format(
-                    userID=self.user.user_id,
+                    userID=user_id or self.user.user_id,
                     instanceID=uuid.uuid4().hex,
                     case_id=uuid.uuid4().hex,
                 ),
@@ -261,6 +275,35 @@ class _AuthTestsBothBackends(object):
                 'authenticated': False,
                 'user_id': None,
             }
+        )
+
+    def test_public_form_session(self):
+        webform = PublicWebform.objects.create(
+            domain=self.domain,
+            label='Antenatal visit',
+            app_id=self.app.get_id,
+            app_build_id=self.app.get_id,
+            form_unique_id='form',
+            endpoint_id='endpoint',
+            session_type='survey',
+            allow_sms=False,
+            allow_email=True,
+            expires_at=datetime.utcnow() + timedelta(days=30),
+        )
+        session = PublicFormSession.objects.create(
+            public_webform=webform,
+            expires_at=datetime.utcnow() + timedelta(hours=1),
+        )
+        client = Client(**{
+            'HTTP_' + PUBLIC_FORM_SESSION_HEADER.upper().replace('-', '_'): 'true',
+        })
+        client.cookies[PUBLIC_FORM_SESSION_COOKIE_NAME] = str(session.session_key)
+
+        self._test_post(
+            file_path=self.public_form,
+            client=client,
+            user_id=PUBLIC_USER_ID,
+            expected_status=201,
         )
 
     def test_oauth2_good_scope(self):
