@@ -257,6 +257,12 @@ def _within_distance(coordinates, meters):
      select([GEO]).where(_within_distance(_bind('42.44 -71.14'), _bind(5000.0)))),
     ('SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius)',
      select([GEO]).where(_within_distance(bindparam('center'), bindparam('radius')))),
+    ("SELECT * FROM geo WHERE within_distance(gps_prop__location, '42.44 -71.14', 3, 'miles')",
+     select([GEO]).where(_within_distance(
+         _bind('42.44 -71.14'), _bind(3.0) * _bind(1609.344)))),
+    ("SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius, 'kilometers')",
+     select([GEO]).where(_within_distance(
+         bindparam('center'), bindparam('radius') * _bind(1000)))),
 
     ('SELECT * FROM client WHERE name = today()',
      select([CLIENT]).where(CLIENT.c.name == func.current_date())),
@@ -347,12 +353,18 @@ def _compiled(query):
     "SELECT * FROM client WHERE LOWER(name) = 'x'",  # function call
     'SELECT * FROM client WHERE bogus(name)',        # unknown function call
 
-    # `within_distance` takes 3 args, GPS column, coordinates, and a distance
+    # `within_distance` takes a GPS column, coordinates, a distance, and
+    # optionally a unit
     "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2')",
+    "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2', 5, 'miles', 'x')",
     "SELECT * FROM geo WHERE within_distance(gps_prop__location, case_id, 5)",
     "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2', '5')",
     # The column must be a GPS column, not just any column
     "SELECT * FROM geo WHERE within_distance(case_id, '1 2', 5)",
+    # The unit must be a supported unit, given as a string literal
+    "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2', 5, 'inch')",
+    "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2', 5, :unit)",
+    "SELECT * FROM geo WHERE within_distance(gps_prop__location, '1 2', 5, 1000)",
 
     # `string_to_array` takes a string and a literal delimiter
     "SELECT * FROM survey WHERE symptoms && string_to_array(:s, :delim)",
@@ -461,6 +473,8 @@ def _user_sql(sql):
      ['who']),
     ('SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius)',
      ['center', 'radius']),
+    ("SELECT * FROM geo WHERE within_distance(gps_prop__location, :center, :radius, 'miles')",
+     ['center', 'radius']),
 ])
 def test_parameters(sql, expected):
     assert _user_sql(sql).parameters == expected
@@ -553,10 +567,11 @@ def test_allows_nesting_up_to_the_limit():
 )))
 def test_within_distance_db_test():
 
-    def matching(radius):
+    def matching(radius, unit=None):
+        unit_arg = f", '{unit}'" if unit else ''
         user_sql = UserSQL('test-within-distance', (
             'SELECT case_id FROM patient '
-            'WHERE within_distance(gps_prop__location, :center, :radius) '
+            f'WHERE within_distance(gps_prop__location, :center, :radius{unit_arg}) '
             'ORDER BY case_id'))
         result = user_sql.run({'center': '42.3736 -71.1097', 'radius': radius})
         return [row['case_id'] for row in result.rows]
@@ -564,6 +579,11 @@ def test_within_distance_db_test():
     assert matching(5000) == ['near']
     # A case with no location never matches, whatever the radius
     assert matching(300_000) == ['corner', 'far', 'near']
+    # 'corner' is about 5.5km, or 3.4 miles, away
+    assert matching(5, 'kilometers') == ['near']
+    assert matching(6, 'kilometers') == ['corner', 'near']
+    assert matching(3, 'miles') == ['near']
+    assert matching(4, 'miles') == ['corner', 'near']
 
 
 @use('db', project_db_table('test-string-to-array', 'survey', {'symptoms': 'select'}, (

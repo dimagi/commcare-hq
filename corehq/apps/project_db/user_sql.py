@@ -384,20 +384,30 @@ def _convert_predicate_function(node, columns):
     return convert(args or [], columns)
 
 
+METERS_PER_UNIT = {
+    'meters': 1,
+    'kilometers': 1000,
+    'miles': 1609.344,
+    'yards': 0.9144,
+    'feet': 0.3048,
+    'nauticalmiles': 1852,
+}
+
+
 def _convert_within_distance(args, columns):
     """Convert ``within_distance`` to bounding box and exact distance filters"""
-    if len(args) != 3:
+    if len(args) not in (3, 4):
         raise UnsupportedSQL(
-            "within_distance takes 3 arguments: a GPS column, coordinates, "
-            f"and a distance in meters. Got {len(args)}")
-    column, coordinates, meters = args
+            "within_distance takes 3 or 4 arguments: a GPS column, coordinates, "
+            f"a distance, and optionally a unit. Got {len(args)}")
+    column, coordinates, distance, *unit = args
     location = _convert_column(column, columns)
     if not isinstance(location.type, Earth):
         raise UnsupportedSQL(
             f"within_distance must be given a GPS column, got {str(column)}"
         )
     center = _convert_coordinates(coordinates)
-    distance = _convert_meters(meters)
+    distance = _convert_distance(distance, *unit)
     return and_(
         # earth_box provides a pre-filter that is indexable and more performant
         func.earth_box(center, distance).bool_op('@>')(location),
@@ -422,10 +432,20 @@ def _convert_coordinates(node):
     return func.ll_to_earth(latitude, longitude)
 
 
-def _convert_meters(node):
+def _convert_distance(node, unit_node=None):
+    """Convert a distance to meters"""
     if isinstance(node, exp.Placeholder):
-        return _convert_placeholder(node, Float)
-    return _bind(_literal_value(node, float))
+        distance = _convert_placeholder(node, Float)
+    else:
+        distance = _bind(_literal_value(node, float))
+    if unit_node is None:
+        return distance
+    unit = _literal_value(unit_node, str)
+    if unit not in METERS_PER_UNIT:
+        raise UnsupportedSQL(
+            f"within_distance unit must be one of {', '.join(METERS_PER_UNIT)}, "
+            f"got {unit!r}")
+    return distance * _bind(METERS_PER_UNIT[unit])
 
 
 def _convert_sounds_like(args, columns):
