@@ -137,24 +137,30 @@ def _record_ai_translation(app, string_key, source, translated, lang='fra'):
         source_value=source, translated_value=translated)
 
 
-@pytest.mark.parametrize("current_source, current_target, edited, stale", [
-    ('register module', 'module inscription', False, False),
-    ('register module', 'module enregistrement', True, False),
-    ('register module', '', False, False),  # fill_missing translates it again
-    ('enrol module', 'module inscription', False, True),
-    ('enrol module', 'module enregistrement', True, False),  # the edit wins
-], ids=['unchanged', 'edited', 'cleared', 'source-changed', 'source-and-target-changed'])
+AI_SOURCE = 'register module'
+AI_TRANSLATION = 'module inscription'
+UNCHANGED = ChangedAITranslations(manually_edited=set(), stale=set())
+EDITED = ChangedAITranslations(manually_edited={MODULE_NAME_KEY}, stale=set())
+STALE = ChangedAITranslations(manually_edited=set(), stale={MODULE_NAME_KEY})
+
+
+@pytest.mark.parametrize("app_source, app_translation, expected", [
+    pytest.param(AI_SOURCE, AI_TRANSLATION, UNCHANGED, id='unchanged'),
+    pytest.param(AI_SOURCE, 'module enregistrement', EDITED, id='edited'),
+    # missing again, so fill_missing translates it like any other
+    pytest.param(AI_SOURCE, '', UNCHANGED, id='cleared'),
+    pytest.param('enrol module', AI_TRANSLATION, STALE, id='source-changed'),
+    # the edit wins
+    pytest.param('enrol module', 'module enregistrement', EDITED, id='both-changed'),
+])
 @use('db')
-def test_find_changed_ai_translations(current_source, current_target, edited, stale):
+def test_find_changed_ai_translations(app_source, app_translation, expected):
     app = _make_app()
     app._id = 'test-app-id'
-    _record_ai_translation(app, MODULE_NAME_KEY, 'register module', 'module inscription')
-    app.get_module(0).name.update({'en': current_source, 'fra': current_target})
+    _record_ai_translation(app, MODULE_NAME_KEY, AI_SOURCE, AI_TRANSLATION)
+    app.get_module(0).name.update({'en': app_source, 'fra': app_translation})
 
-    changed = find_changed_ai_translations(AppTranslationFormat(app, 'fra'))
-
-    assert changed.manually_edited == ({MODULE_NAME_KEY} if edited else set())
-    assert changed.stale == ({MODULE_NAME_KEY} if stale else set())
+    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == expected
 
 
 @use('db')
@@ -164,8 +170,7 @@ def test_find_changed_ai_translations_ignores_strings_gone_from_app():
     _record_ai_translation(
         app, '["deleted_module","name",1]', 'register module', 'module inscription')
 
-    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == (
-        ChangedAITranslations(manually_edited=set(), stale=set()))
+    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == UNCHANGED
 
 
 @use('db')
@@ -177,8 +182,7 @@ def test_find_changed_ai_translations_ignores_other_languages():
         app, MODULE_NAME_KEY, 'register module', 'module inscription', lang='hin')
     app.get_module(0).name['fra'] = 'module enregistrement'
 
-    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == (
-        ChangedAITranslations(manually_edited=set(), stale=set()))
+    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == UNCHANGED
 
 
 def test_string_keys_use_unique_ids_not_sheet_names():
