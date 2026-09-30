@@ -2,7 +2,6 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 import dateutil.parser
-import sqlalchemy
 
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.project_db.describe import describe_project_db
@@ -76,9 +75,10 @@ class Command(BaseCommand):
 def _drop(domain, stdout):
     schema = DomainSchema(domain)
     engine = get_project_db_engine()
-    if schema.name not in sqlalchemy.inspect(engine).get_schema_names():
-        stdout.write(f"No ProjectDB schema found for domain '{domain}'")
-        return
+    with engine.connect() as conn:
+        if not schema.exists(conn):
+            stdout.write(f"No ProjectDB schema found for domain '{domain}'")
+            return
 
     stdout.write("The following objects will be dropped:")
     for notice in preview_drop(domain):
