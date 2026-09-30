@@ -215,7 +215,7 @@ def not_found(request, template_name='404.html', exception=None):
 def chat_quota(request):
     couch_user = getattr(request, 'couch_user')
 
-    limit = get_chatbot_message_quota(couch_user)
+    limit = 10;
     if limit == UNLIMITED or limit == 0:
         return JsonResponse({'limit': limit, 'used': None})
 
