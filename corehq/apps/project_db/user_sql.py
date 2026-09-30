@@ -408,7 +408,7 @@ def _convert_within_distance(args, columns):
             f"within_distance must be given a GPS column, got {str(column)}"
         )
     center = _convert_coordinates(coordinates)
-    distance = _convert_distance(distance, *unit)
+    distance = _convert_distance_to_meters(distance, *unit)
     return and_(
         # earth_box provides a pre-filter that is indexable and more performant
         func.earth_box(center, distance).bool_op('@>')(location),
@@ -433,8 +433,7 @@ def _convert_coordinates(node):
     return func.ll_to_earth(latitude, longitude)
 
 
-def _convert_distance(node, unit_node=None):
-    """Convert a distance to meters"""
+def _convert_distance_to_meters(node, unit_node=None):
     if isinstance(node, exp.Placeholder):
         distance = _convert_placeholder(node, Float)
     else:
