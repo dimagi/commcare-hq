@@ -1,5 +1,6 @@
 import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
+import toggles from "hqwebapp/js/toggles";
 
 function bindUsageController(widget) {
     let usageState;
@@ -71,7 +72,12 @@ function bindUsageController(widget) {
 
 $(function () {
     const widget = document.querySelector('open-chat-studio-widget');
-    if (widget) {
+    if (!widget) {
+        return;
+    }
+    if (toggles.toggleEnabled('OCS_CHATBOT_PAGE_CONTEXT')) {
         bindUsageController(widget);
+    } else {
+        widget.disabled = false;
     }
 });
