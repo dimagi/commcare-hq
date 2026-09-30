@@ -53,7 +53,7 @@ class BasePublicWebformView(BasePageView):
     @property
     def main_context(self):
         context = super().main_context
-        context['section'] = {'page_name': _("One-Time Link Request")}
+        context['section'] = {'page_name': _("Webform Request")}
         return context
 
 

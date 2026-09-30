@@ -38,7 +38,7 @@ var selectMenu = function (options) {
         // set title of tab to application name, or form name for public sessions
         if (menuResponse.breadcrumbs) {
             document.title = UsersModels.getCurrentUser().displayOptions.publicFormMode
-                ? _.last(menuResponse.breadcrumbs)
+                ? _.last(menuResponse.breadcrumbs) + " - CommCare HQ"
                 : menuResponse.breadcrumbs[0];
         }
 
