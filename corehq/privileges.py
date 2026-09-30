@@ -141,6 +141,8 @@ VELLUM_SAVE_TO_CASE = 'save_to_case'
 
 PUBLIC_WEBFORMS = 'public_webforms'
 
+AI_APP_TRANSLATION = 'ai_app_translation'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -214,6 +216,7 @@ MAX_PRIVILEGES = [
     LOCKED_ADMIN_QUESTIONS,
     VELLUM_SAVE_TO_CASE,
     PUBLIC_WEBFORMS,
+    AI_APP_TRANSLATION,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -304,4 +307,5 @@ class Titles(object):
             LOCKED_ADMIN_QUESTIONS: _("Locked Admin Questions"),
             VELLUM_SAVE_TO_CASE: _("Save to Case"),
             PUBLIC_WEBFORMS: _("Public Webforms"),
+            AI_APP_TRANSLATION: _("AI App Translations"),
         }.get(privilege, privilege)

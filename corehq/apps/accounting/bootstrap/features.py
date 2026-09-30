@@ -92,6 +92,7 @@ standard_v2 = community_v2 + [
     privileges.FORM_CASE_IDS_CASE_IMPORTER,
     privileges.EXPORT_MULTISORT,
     privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
+    privileges.AI_APP_TRANSLATION,
 ]
 
 

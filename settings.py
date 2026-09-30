@@ -143,6 +143,9 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 # Make this unique, and don't share it with anybody - put into localsettings.py
 SECRET_KEY = 'you should really change this'
 
+# Shared password for all ProjectDB projectdb_<domain> roles - put into localsettings.py
+PROJECTDB_USERS_PASSWORD = 'you should really change this'
+
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
     'corehq.middleware.SecureCookiesMiddleware',

@@ -11,6 +11,7 @@ from django.utils import timezone
 from casexml.apps.phone.xml import get_registration_element_data
 from dimagi.utils.web import get_url_base
 
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import is_new_user
 from corehq.apps.public_webforms.decorators import (
     PUBLIC_FORM_SESSION_COOKIE_NAME,
     PUBLIC_FORM_SESSION_HEADER,
@@ -137,6 +138,15 @@ def test_public_form_session_username():
     )
 
 
+def test_public_form_session_restore_device_id_is_per_session():
+    webform = PublicWebform(domain='public-forms-domain')
+    one = PublicFormSession(public_webform=webform)
+    two = PublicFormSession(public_webform=webform)
+    # HQ recognizes a Web Apps sync, and skips device rate limiting, by prefix
+    assert one.restore_device_id.startswith('WebAppsLogin')
+    assert one.restore_device_id != two.restore_device_id
+
+
 def test_public_form_session_one_time_link():
     webform = PublicWebform(domain='public-forms-domain')
     session = PublicFormSession(public_webform=webform)
@@ -150,7 +160,7 @@ class PublicFormUserTests(SimpleTestCase):
     def setUp(self):
         super().setUp()
         self.domain = 'public-forms-domain'
-        webform = PublicWebform(domain=self.domain)
+        webform = PublicWebform(domain=self.domain, app_id='the-app')
         self.session = PublicFormSession(public_webform=webform)
 
     def test_user_id_is_shared_public_user_id(self):
@@ -190,6 +200,43 @@ class PublicFormUserTests(SimpleTestCase):
         user = PublicFormUser(self.session)
         assert user.has_permission(self.domain, 'edit_data') is False
 
+    def test_can_access_only_the_app_the_link_is_bound_to(self):
+        # a form's report fixtures only restore for an app the user can reach
+        user = PublicFormUser(self.session)
+        assert user.can_access_any_web_apps(self.domain) is True
+        assert user.can_access_web_app(self.domain, 'the-app') is True
+        assert user.can_access_web_app(self.domain, 'another-app') is False
+
+    def test_cannot_access_web_apps_in_other_domain(self):
+        user = PublicFormUser(self.session)
+        assert user.can_access_any_web_apps('other-domain') is False
+        assert user.can_access_web_app('other-domain', 'the-app') is False
+
+    def test_denies_an_unlisted_permission_check(self):
+        user = PublicFormUser(self.session)
+        assert user.can_edit_data(self.domain) is False
+
+    def test_raises_on_an_attribute_that_is_not_a_permission(self):
+        user = PublicFormUser(self.session)
+        with pytest.raises(AttributeError):
+            user.some_other_attribute
+
+    def test_has_no_domain_membership(self):
+        user = PublicFormUser(self.session)
+        assert user.get_domain_membership(self.domain) is None
+
+    def test_has_no_role(self):
+        user = PublicFormUser(self.session)
+        assert user.get_role(self.domain, allow_enterprise=True) is None
+
+    def test_has_no_user_data(self):
+        user = PublicFormUser(self.session)
+        assert user.get_user_data(self.domain) == {}
+
+    def test_is_not_a_new_user(self):
+        user = PublicFormUser(self.session)
+        assert is_new_user(user) is False
+
     def test_to_ota_restore_user(self):
         restore_user = PublicFormUser(self.session).to_ota_restore_user(self.domain)
         assert isinstance(restore_user, OTARestorePublicFormUser)
@@ -228,8 +275,10 @@ class OTARestorePublicFormUserTests(SimpleTestCase):
         assert self.restore_user.user_session_data == {}
         assert self.restore_user.date_joined == self.session.created_at
 
-    def test_no_owner_ids(self):
-        assert self.restore_user.get_owner_ids() == []
+    def test_owns_only_itself(self):
+        # never empty: a restore drops an empty owner filter and syncs the
+        # whole project, so this has to be an id nothing can be owned by
+        assert self.restore_user.get_owner_ids() == [self.session.session_username]
 
     def test_no_locations(self):
         assert self.restore_user.get_location_ids(self.domain) == []
@@ -283,47 +332,52 @@ class AllowPublicFormSessionTests(TestCase):
     @staticmethod
     def _decorated_view():
         @allow_public_form_session
-        def view(request):
+        def view(request, domain):
             return HttpResponse('ok')
         return view
 
     def test_valid_header_and_cookie_sets_public_form_user(self):
         request = self._request(cookie_value=str(self.session.session_key))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert isinstance(request.couch_user, PublicFormUser)
         assert request.couch_user.user_id == PUBLIC_USER_ID
 
     def test_no_header_leaves_couch_user_untouched(self):
         request = self._request(
             with_header=False, cookie_value=str(self.session.session_key))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_no_cookie_leaves_couch_user_untouched(self):
         request = self._request(cookie_value=None)
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_invalid_cookie_leaves_couch_user_untouched(self):
         request = self._request(cookie_value='not-a-uuid')
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_unknown_key_leaves_couch_user_untouched(self):
         request = self._request(cookie_value=str(uuid4()))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_expired_session_leaves_couch_user_untouched(self):
         self.session.expires_at = datetime.datetime(2000, 1, 1)
         self.session.save()
         request = self._request(cookie_value=str(self.session.session_key))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_submitted_session_leaves_couch_user_untouched(self):
         self.session.submitted_at = datetime.datetime(2020, 1, 1)
         self.session.save()
         request = self._request(cookie_value=str(self.session.session_key))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
+        assert request.couch_user is self.existing_user
+
+    def test_a_different_domain_leaves_couch_user_untouched(self):
+        request = self._request(cookie_value=str(self.session.session_key))
+        self._decorated_view()(request, f'not-{self.webform.domain}')
         assert request.couch_user is self.existing_user

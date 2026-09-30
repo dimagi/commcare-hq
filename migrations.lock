@@ -144,6 +144,7 @@ accounting
  0122_stop_declaring_invoicing_plan
  0123_subscription_skip_auto_downgrade_until
  0124_scheduled_prepayment_invoice
+ 0125_ai_app_translation_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
