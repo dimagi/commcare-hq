@@ -3,6 +3,7 @@ from collections import namedtuple
 
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import NoReverseMatch, reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -373,7 +374,4 @@ def resume_repeater(request, domain, repeater_id):
 
 
 def _get_repeater_or_404(domain, repeater_id):
-    try:
-        return Repeater.objects.get(id=repeater_id, domain=domain)
-    except Repeater.DoesNotExist:
-        raise Http404
+    return get_object_or_404(Repeater, domain=domain, id=repeater_id)
