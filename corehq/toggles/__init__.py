@@ -2578,3 +2578,10 @@ AI_APP_TRANSLATION = FeatureRelease(
     namespaces=[NAMESPACE_DOMAIN],
     owner='Amit Phulera',
 )
+
+LETTER_TEMPLATES = StaticToggle(
+    slug='letter_templates',
+    label='Letter templates and batch letter printing report',
+    tag=TAG_GA_PATH,
+    namespaces=[NAMESPACE_DOMAIN],
+)

@@ -739,6 +739,8 @@ ip_access
 ivr
  0001_initial
  0002_call_app_id
+letters
+ 0001_initial
 linked_domain
  0001_initial
  0002_migrate_linked_apps
