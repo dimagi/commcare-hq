@@ -2,6 +2,7 @@ import json
 from collections import defaultdict
 from unittest.mock import patch
 
+from django.forms.models import model_to_dict
 from django.test import TestCase
 
 import pytest
@@ -16,6 +17,9 @@ from corehq.apps.translations.app_translations.ai_translator import (
     ChangedAITranslations,
     _apply_translations,
     _rebase_results,
+    _record_run,
+    _refresh_provenance_statuses,
+    _saved_units,
     _string_key,
     find_changed_ai_translations,
     is_valid_app_translation,
@@ -24,7 +28,7 @@ from corehq.apps.translations.app_translations.ai_translator import (
 )
 from corehq.apps.translations.const import MODE_FILL_MISSING, MODE_RETRANSLATE
 from corehq.apps.translations.exceptions import AppChangedDuringTranslation
-from corehq.apps.translations.models import AITranslation
+from corehq.apps.translations.models import AITranslation, AITranslationUsage
 
 
 @pytest.mark.parametrize("source, translated, valid", [
@@ -133,7 +137,7 @@ def test_all_app_strings_leaves_out_strings_without_source():
 
 
 def _record_ai_translation(app, string_key, source, translated, lang='fra'):
-    AITranslation.objects.create(
+    return AITranslation.objects.create(
         domain=app.domain, app_id=app.get_id, lang=lang, string_key=string_key,
         source_value=source, translated_value=translated)
 
@@ -184,6 +188,45 @@ def test_find_changed_ai_translations_ignores_other_languages():
     app.get_module(0).name['fra'] = 'module enregistrement'
 
     assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == UNCHANGED
+
+
+def test_saved_units_keeps_result_the_ai_returned_unchanged():
+    app = _make_app()
+    # French translation present for the app
+    app.get_module(0).name['fra'] = 'ancien'
+    fmt = AppTranslationFormat(app, 'fra', mode=MODE_RETRANSLATE)
+    [uid] = [uid for uid, u in fmt.load_input().items() if u.string_key == MODULE_NAME_KEY]
+    # AI results also returned the same translation
+    fmt.results = {uid: 'ancien'}
+    saved_units = _saved_units(fmt, fmt.for_app(app).all_app_strings())
+
+    # No other strings were translated only the one we sent, and it was unchanged
+    assert [u.target_text for u in saved_units] == ['ancien']
+
+
+@use('db')
+def test_refresh_provenance_statuses():
+    app = _make_app()
+    app._id = 'test-app-id'
+
+    form = app.get_module(0).get_form(0)
+
+    # Translation already present in the app
+    app.get_module(0).name['fra'] = AI_TRANSLATION
+    form.name['fra'] = 'formulaire modifié'
+
+    unchanged = _record_ai_translation(app, MODULE_NAME_KEY, AI_SOURCE, AI_TRANSLATION)
+    edited = _record_ai_translation(app, FORM_NAME_KEY, form.name['en'], 'formulaire')
+    removed = _record_ai_translation(app, '["deleted_module","name",1]', 'old', 'ancien')
+    fmt = AppTranslationFormat(app, 'fra')
+
+    assert _refresh_provenance_statuses(fmt, fmt.all_app_strings()) == 1
+    assert dict(AITranslation.objects.filter(app_id=app.get_id).values_list('id', 'status')) == {
+        unchanged.id: AITranslation.STATUS_APPLIED,
+        edited.id: AITranslation.STATUS_MANUALLY_EDITED,
+        removed.id: AITranslation.STATUS_REMOVED,
+    }
+    assert AITranslation.objects.get(id=unchanged.id).updated_on == unchanged.updated_on
 
 
 @use('db')
@@ -575,18 +618,111 @@ class TestApplyTranslations(TestCase):
         assert self._current(app).get_module(0).name.get('fra', '') == ''
 
 
+class TestRecordRun(TestCase):
+
+    def test_records_provenance_and_usage(self):
+        app = _make_app()
+        fmt = AppTranslationFormat(app, 'fra')
+        units = fmt.load_input()
+
+        # the AI returned translations for two of the five units we sent
+        fmt.results = {
+            uid: f'FR:{unit.source_text}' for uid, unit in units.items()
+            if unit.string_key in (MODULE_NAME_KEY, QUESTION_KEY)
+        }
+        fmt.save_output()
+        self.addCleanup(app.delete)
+
+        _record_run(fmt, strings_attempted=5, model='gpt-4.1')
+
+        usage = AITranslationUsage.objects.get(app_id=app.get_id)
+        assert model_to_dict(usage, exclude=['id']) == {
+            'domain': app.domain,
+            'app_id': app.get_id,
+            'lang': 'fra',
+            'strings_attempted': 5,
+            'strings_translated': 2,
+            'words_translated': 6,  # "register module", "What is the name?"
+            'total_app_strings': len(ALL_STRING_KEYS),
+            'total_app_strings_ai_translated': 2,
+            'app_version': app.version,
+            'model': 'gpt-4.1',
+        }
+        assert set(AITranslation.objects.filter(app_id=app.get_id).values_list(
+            'string_key', 'translated_value', 'status',
+        )) == {
+            (MODULE_NAME_KEY, 'FR:register module', AITranslation.STATUS_APPLIED),
+            (QUESTION_KEY, 'FR:What is the name?', AITranslation.STATUS_APPLIED),
+        }
+
+    def test_stores_values_as_the_app_holds_them(self):
+        app = _make_app()
+        fmt = AppTranslationFormat(app, 'fra')
+        units = fmt.load_input()
+        translations = {
+            MODULE_NAME_KEY: 'Sel & poivre',  # a JSON string on the app
+            QUESTION_KEY: 'Quel <b>nom</b> & prénom ?',  # form XML
+        }
+        fmt.results = {
+            uid: translations[unit.string_key] for uid, unit in units.items()
+            if unit.string_key in translations
+        }
+        fmt.save_output()
+        self.addCleanup(app.delete)
+
+        _record_run(fmt, strings_attempted=2, model='gpt-4.1')
+
+        assert dict(
+            AITranslation.objects.filter(app_id=app.get_id).values_list('source_value', 'translated_value')
+        ) == {
+            'register module': 'Sel & poivre',
+            'What is the name?': 'Quel &lt;b&gt;nom&lt;/b&gt; &amp; prénom ?',
+        }
+        usage = AITranslationUsage.objects.get(app_id=app.get_id)
+        assert usage.total_app_strings_ai_translated == 2
+        # the next run sees them as untouched AI translations
+        assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == (
+            ChangedAITranslations(manually_edited=set(), stale=set()))
+
+    def test_unapplied_result_keeps_the_string_stale(self):
+        app = _make_app()
+        app.get_module(0).name['fra'] = AI_TRANSLATION
+        app.save()
+        self.addCleanup(app.delete)
+        # earlier run would have recorded this AI Translation
+        _record_ai_translation(app, MODULE_NAME_KEY, AI_SOURCE, AI_TRANSLATION)
+
+        # the module name's AI translation goes stale when its source text changes
+        app.get_module(0).name['en'] = 'New Module Name'
+        fmt = AppTranslationFormat(app, 'fra', stale_keys={MODULE_NAME_KEY})
+        uids = {u.string_key: uid for uid, u in fmt.load_input().items()}
+
+        # the AI retranslated it, but save_output() never applied the result,
+        # so the app still holds the old translation
+        fmt.results = {uids[MODULE_NAME_KEY]: 'nouveau module'}
+
+        _record_run(fmt, strings_attempted=1, model='gpt-4.1')
+
+        assert AITranslationUsage.objects.get(app_id=app.get_id).strings_translated == 0
+        row = AITranslation.objects.get(app_id=app.get_id, string_key=MODULE_NAME_KEY)
+        assert (row.source_value, row.translated_value) == (AI_SOURCE, AI_TRANSLATION)
+        # so the next run still sees it as stale and retranslates it
+        assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')).stale == {MODULE_NAME_KEY}
+
+
 class _FakeTranslator:
     """Translates every batch by prefixing 'FR:', failing when asked."""
     model = 'fake-model'
 
-    def __init__(self, fmt, fail_batches=()):
+    def __init__(self, fmt, fail_batches=(), fail_all=False):
         self.fmt = fmt
         self.fail_batches = set(fail_batches)
+        self.fail_all = fail_all
         self.calls = 0
 
     def translate(self, batch):
         self.calls += 1
-        if self.calls in self.fail_batches:
+        if self.fail_all or self.calls in self.fail_batches:
             raise Exception('LLM exploded')
         return self.fmt.parse_output(json.dumps(
             {uid: f'FR:{unit.source_text}' for uid, unit in batch.items()}))
@@ -631,3 +767,47 @@ class TestRunAppTranslation(TestCase):
         assert summary['total'] == 0
         assert summary['translated'] == 0
         assert translator2.calls == 0
+
+    def _run(self, app, fail_all=False):
+        return run_app_translation(
+            app, 'fra', MODE_FILL_MISSING, chunk_size=50,
+            translator_factory=lambda lang, fmt, **kw: _FakeTranslator(fmt, fail_all=fail_all))
+
+    def test_next_run_skips_edits_and_retranslates_stale_strings(self):
+        app = _make_app()
+        self._run(app)
+        app.get_module(0).name['fra'] = 'mon module'  # manual edit
+        app.get_module(0).get_form(0).name['en'] = 'enrol form'  # AI text goes stale
+
+        # Second run: the module name should be skipped,
+        # the form name should be retranslated
+        summary = self._run(app)
+
+        assert summary['total'] == 1
+        assert app.get_module(0).name['fra'] == 'mon module'
+        assert app.get_module(0).get_form(0).name['fra'] == 'FR:enrol form'
+
+        usage = AITranslationUsage.objects.filter(app_id=app.get_id).latest('created_on')
+        # Only the form's name was retranslated;
+        # the module's name was skipped because it was manually edited
+        assert (usage.strings_attempted, usage.strings_translated, usage.model) == (1, 1, 'fake-model')
+        # the first run's 5, less the edited module name
+        assert usage.total_app_strings_ai_translated == 4
+
+        statuses = dict(
+            AITranslation.objects.filter(app_id=app.get_id).values_list('string_key', 'status'))
+        assert statuses[MODULE_NAME_KEY] == AITranslation.STATUS_MANUALLY_EDITED
+        # applied only if the row now holds the retranslation
+        assert statuses[FORM_NAME_KEY] == AITranslation.STATUS_APPLIED
+        # and the new source, so the next run doesn't see it as stale again
+        assert AITranslation.objects.get(
+            app_id=app.get_id, string_key=FORM_NAME_KEY).source_value == 'enrol form'
+
+    def test_records_nothing_when_nothing_is_applied(self):
+        app = _make_app()
+
+        summary = self._run(app, fail_all=True)
+
+        assert summary['translated'] == 0
+        assert not AITranslationUsage.objects.filter(app_id=app.get_id).exists()
+        assert not AITranslation.objects.filter(app_id=app.get_id).exists()
