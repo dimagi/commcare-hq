@@ -77,6 +77,10 @@ def counts_by_plural_index_from_header(plural_forms_header):
     return counts
 
 
+# msgfmt errors look like "<file>.po:<line>: <message>"
+MSGFMT_ERROR_RE = re.compile(r'^.+\.po:(\d+):\s*(.*)$')
+
+
 class PoTranslationFormat(TranslationFormat):
     """
     Translation format for PO files. The class expects gettext installed in the system.
@@ -389,22 +393,17 @@ class PoTranslationFormat(TranslationFormat):
         line_num_error_map = {}
 
         for line in error_output.splitlines():
-            # Error format: <filename>:<line_number>:<error_message>
-            # Warning format: <filename>:<line_number>: warning<warning_message>
-            error_parts = line.split(':')
-            if len(error_parts) == 3 or len(error_parts) == 4:
-                if error_parts[2].strip() == 'warning':
-                    # Ignore warnings
-                    continue
-                # Some msgfmt lines lack a line number (e.g.
-                # "<file>: warning: Charset missing in header."). These don't map
-                # to a msgstr, so skip anything without a numeric line number.
-                # We expect these errors to be caught by msgfmt itself, not us.
-                try:
-                    line_num = int(error_parts[1].strip())
-                except ValueError:
-                    continue
-                line_num_error_map[line_num] = ": ".join(error_parts[2:]).strip()
+            # Only trust lines that point at a PO file line. Anything else, like
+            # lines without a line number ("<file>: warning: Charset missing in
+            # header.") or stray output from native libraries in the subprocess
+            # ("…/driver.rs:196:23: …"), must not map to a msgstr.
+            match = MSGFMT_ERROR_RE.match(line)
+            if not match:
+                continue
+            line_num, message = match.groups()
+            if message.startswith('warning'):
+                continue
+            line_num_error_map[int(line_num)] = message.strip()
         print(f"Line num error map: {line_num_error_map}")
         return line_num_error_map
 

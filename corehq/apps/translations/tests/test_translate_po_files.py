@@ -641,7 +641,7 @@ def test_extract_errored_msgstr_ids():
     assert 15 not in result
     assert result[10] == "some error message"
     assert result[20] == "another error message"
-    assert result[25] == "yet another error message : with a reason"
+    assert result[25] == "yet another error message :with a reason"
 
 
 def test_run_msgfmt_returns_stderr():
@@ -710,6 +710,18 @@ def test_extract_errored_msgstr_ids_skips_lines_without_line_number():
     )
     result = po_format._extract_errored_msgstr_ids(error_output)
     assert list(result.keys()) == [42]
+
+
+def test_extract_errored_msgstr_ids_ignores_non_po_lines():
+    po_format = PoTranslationFormat("test_file.po")
+    error_output = (
+        "thread 'tokio-rt-worker' panicked at /Users/x/.cargo/registry/src/tokio-1.50.0/"
+        "src/runtime/io/driver.rs:196:23:\n"
+        "unexpected error when polling the I/O driver: Os { code: 9 }\n"
+        "locale/fra/LC_MESSAGES/django.po:32940: 'msgid' and 'msgstr' entries do not both end with '\\n'\n"
+    )
+    result = po_format._extract_errored_msgstr_ids(error_output)
+    assert list(result.keys()) == [32940]
 
 
 def test_remove_errored_translations_clears_plural_forms():
