@@ -107,8 +107,8 @@ class TestRepeaterViews(BaseViewTest):
             'connection_settings_id': self.connection_setting.id,
         }
 
-        self.client.raise_request_exception = False  # The POST raises a 500
-        self.client.post(url, post_data)
+        response = self.client.post(url, post_data)
+        assert response.status_code == 404
 
         # Verify that the repeater remains untouched
         victim_repeater.refresh_from_db()
