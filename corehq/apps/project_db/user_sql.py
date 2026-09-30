@@ -58,7 +58,7 @@ class UserSQLProgrammingError(UserSQLValidationError):
     """The SQL was found to be invalid at runtime"""
 
 
-LITERAL_PARAM_PREFIX = 'hq_param'  # Our reserved namespace for parameters
+LITERAL_PARAM_PREFIX = 'hq_'  # Our reserved namespace for parameters
 
 # A query parameter's name is interpolated into the compiled SQL, so it is
 # restricted to characters that cannot close the placeholder and inject SQL.
@@ -68,9 +68,10 @@ MAX_TREE_DEPTH = 100
 NESTED_TOO_DEEPLY = "SQL is nested too deeply"
 
 
-def _bind(value):
+def _bind_literal(name, value):
     """Bind a value as a uniquely named parameter"""
-    return bindparam(LITERAL_PARAM_PREFIX, value, unique=True)
+    # name is just there to make the query more readable
+    return bindparam(f'{LITERAL_PARAM_PREFIX}{name}', value, unique=True)
 
 
 def _literal_value(node, py_type=None):
@@ -98,7 +99,7 @@ class UserSQL:
     def query(self):
         q = translate(self.raw_sql, get_domain_tables(self.domain))
         if self.max_rows is not None:
-            q = q.limit(_bind(self.max_rows))
+            q = q.limit(_bind_literal('max_rows', self.max_rows))
         return q
 
     @cached_property
@@ -384,20 +385,30 @@ def _convert_predicate_function(node, columns):
     return convert(args or [], columns)
 
 
+METERS_PER_UNIT = {
+    'meters': 1,
+    'kilometers': 1000,
+    'miles': 1609.344,
+    'yards': 0.9144,
+    'feet': 0.3048,
+    'nauticalmiles': 1852,
+}
+
+
 def _convert_within_distance(args, columns):
     """Convert ``within_distance`` to bounding box and exact distance filters"""
-    if len(args) != 3:
+    if len(args) not in (3, 4):
         raise UnsupportedSQL(
-            "within_distance takes 3 arguments: a GPS column, coordinates, "
-            f"and a distance in meters. Got {len(args)}")
-    column, coordinates, meters = args
+            "within_distance takes 3 or 4 arguments: a GPS column, coordinates, "
+            f"a distance, and optionally a unit. Got {len(args)}")
+    column, coordinates, distance, *unit = args
     location = _convert_column(column, columns)
     if not isinstance(location.type, Earth):
         raise UnsupportedSQL(
             f"within_distance must be given a GPS column, got {str(column)}"
         )
     center = _convert_coordinates(coordinates)
-    distance = _convert_meters(meters)
+    distance = _convert_distance_to_meters(distance, *unit)
     return and_(
         # earth_box provides a pre-filter that is indexable and more performant
         func.earth_box(center, distance).bool_op('@>')(location),
@@ -411,7 +422,7 @@ def _convert_coordinates(node):
     if isinstance(node, exp.Placeholder):
         coordinates = _convert_placeholder(node, Text)
     else:
-        coordinates = _bind(_literal_value(node, str))
+        coordinates = _bind_literal('coordinates', _literal_value(node, str))
     latitude, longitude = (
         cast(
             func.split_part(coordinates, literal_column("' '"), literal_column(i)),
@@ -422,10 +433,19 @@ def _convert_coordinates(node):
     return func.ll_to_earth(latitude, longitude)
 
 
-def _convert_meters(node):
+def _convert_distance_to_meters(node, unit_node=None):
     if isinstance(node, exp.Placeholder):
-        return _convert_placeholder(node, Float)
-    return _bind(_literal_value(node, float))
+        distance = _convert_placeholder(node, Float)
+    else:
+        distance = _bind_literal('distance', _literal_value(node, float))
+    if unit_node is None:
+        return distance
+    unit = _literal_value(unit_node, str)
+    if unit not in METERS_PER_UNIT:
+        raise UnsupportedSQL(
+            f"within_distance unit must be one of {', '.join(METERS_PER_UNIT)}, "
+            f"got {unit!r}")
+    return distance * _bind_literal('meters_per_unit', METERS_PER_UNIT[unit])
 
 
 def _convert_sounds_like(args, columns):
@@ -466,10 +486,10 @@ def _convert_value(node, columns):
         inner, = _unpack(node, 'this')
         return _convert_value(inner, columns)
     if isinstance(node, exp.Literal):
-        return _bind(_literal_value(node))
+        return _bind_literal('literal', _literal_value(node))
     if isinstance(node, exp.Boolean):
         value, = _unpack(node, 'this')
-        return _bind(bool(value))
+        return _bind_literal('bool', bool(value))
     if isinstance(node, exp.Placeholder):
         return _convert_placeholder(node)
     if isinstance(node, (exp.Add, exp.Sub)):
@@ -516,7 +536,7 @@ def _convert_interval_count(node):
     count = _literal_value(node)
     if not isinstance(count, int):
         raise UnsupportedSQL(f"an interval's count must be a whole number, got {str(node)}")
-    return _bind(count)
+    return _bind_literal('datetime_intervals', count)
 
 
 def _convert_value_function(node, columns):
@@ -531,7 +551,7 @@ def _convert_string_to_array(node, columns):
     value, delimiter = _unpack(node, 'this', 'expression')
     return func.string_to_array(
         _convert_value(value, columns),
-        _bind(_literal_value(delimiter, str)),
+        _bind_literal('delimiter', _literal_value(delimiter, str)),
         type_=ARRAY(Text),
     )
 
@@ -549,7 +569,7 @@ def _convert_placeholder(node, db_type=None, expanding=False):
 def _convert_array(node, columns):
     """Convert an ``ARRAY[...]`` literal into a single bound parameter"""
     elements, = _unpack(node, 'expressions')
-    return _bind([_literal_value(element) for element in elements])
+    return _bind_literal('array', [_literal_value(element) for element in elements])
 
 
 def _convert_now(node, columns):
