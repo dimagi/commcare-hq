@@ -80,38 +80,44 @@ def _make_app():
     return factory.app
 
 
+# The string keys below are the ones that _make_app() produces for its total six strings.
+MODULE_NAME_KEY = '["menus_and_forms","register_module","Menu"]'  # 'register module'
+FORM_NAME_KEY = '["menus_and_forms","register_form_0","Form"]'  # 'register form 0'
+CASE_LIST_KEY = '["register_module","name","list",1]'  # 'Name'
+CASE_DETAIL_KEY = '["register_module","name","detail",1]'  # 'Name'
+QUESTION_KEY = '["register_form_0","name-label",1]'  # 'What is the name?'
+SUBMIT_LABEL_KEY = '["register_form_0","submit_label",1]'  # 'Submit'
+ALL_STRING_KEYS = {
+    MODULE_NAME_KEY, FORM_NAME_KEY, CASE_LIST_KEY, CASE_DETAIL_KEY,
+    QUESTION_KEY, SUBMIT_LABEL_KEY,
+}
+
+
 def test_load_input_fill_missing_extracts_untranslated_source_strings():
     app = _make_app()
     fmt = AppTranslationFormat(app, 'fra', mode=MODE_FILL_MISSING)
     units = fmt.load_input()
-    # 2 names (Menus_and_forms), 2 case list/detail rows, 1 question label
-    assert len(units) == 5
-    sources = {u.source_text for u in units.values()}
-    assert 'register module' in sources
-    assert len({u.string_key for u in units.values()}) == len(units)  # keys unique
+    # the submit label already has its 'Submit' default
+    assert sorted(u.string_key for u in units.values()) == sorted(
+        ALL_STRING_KEYS - {SUBMIT_LABEL_KEY})
 
 
 def test_all_app_strings_includes_strings_load_input_skips():
     app = _make_app()
+    # add a french translation for MODULE_NAME_KEY in app.
     app.get_module(0).name['fra'] = 'mon module'
-    question_key = next(
-        u.string_key for u in AppTranslationFormat(app, 'fra').load_input().values()
-        if u.source_text == 'What is the name?')
-    fmt = AppTranslationFormat(app, 'fra', manually_edited_keys={question_key})
+    fmt = AppTranslationFormat(app, 'fra', manually_edited_keys={QUESTION_KEY})
 
     all_strings = fmt.all_app_strings()
     units = fmt.load_input()
 
-    # skipped by load_input: the submit label (the download fills every
-    # language with the 'Submit' default), the module name (translated
-    # above) and the edited question
-    assert len(all_strings) == 6
-    assert len(units) == 3
-    assert {u.string_key for u in units.values()} < set(all_strings)
-    assert question_key in all_strings
-    targets = {u.source_text: u.target_text for u in all_strings.values()}
-    assert targets['register module'] == 'mon module'
-    assert targets['Submit'] == 'Submit'
+    assert all_strings.keys() == ALL_STRING_KEYS
+    # load_input skips the translated module name and submit label, and
+    # the edited question
+    unit_keys = {u.string_key for u in units.values()}
+    assert unit_keys == {FORM_NAME_KEY, CASE_LIST_KEY, CASE_DETAIL_KEY}
+    assert all_strings[MODULE_NAME_KEY].target_text == 'mon module'
+    assert all_strings[SUBMIT_LABEL_KEY].target_text == 'Submit'
 
 
 def test_all_app_strings_leaves_out_strings_without_source():
@@ -122,26 +128,13 @@ def test_all_app_strings_leaves_out_strings_without_source():
 
     all_strings = AppTranslationFormat(app, 'fra').all_app_strings()
 
-    assert 'Quel nom ?' not in {u.target_text for u in all_strings.values()}
-    assert len(all_strings) == 5
+    assert all_strings.keys() == ALL_STRING_KEYS - {QUESTION_KEY}
 
 
-def _key_for(app, source_text):
-    [key] = [
-        u.string_key for u in AppTranslationFormat(app, 'fra').all_app_strings().values()
-        if u.source_text == source_text
-    ]
-    return key
-
-
-def _module_name_key(app):
-    return _key_for(app, 'register module')
-
-
-def _record_ai_translation(app, string_key, translated, lang='fra'):
+def _record_ai_translation(app, string_key, source, translated, lang='fra'):
     AITranslation.objects.create(
         domain=app.domain, app_id=app.get_id, lang=lang, string_key=string_key,
-        source_value='register module', translated_value=translated)
+        source_value=source, translated_value=translated)
 
 
 @pytest.mark.parametrize("current_source, current_target, edited, stale", [
@@ -155,21 +148,21 @@ def _record_ai_translation(app, string_key, translated, lang='fra'):
 def test_find_changed_ai_translations(current_source, current_target, edited, stale):
     app = _make_app()
     app._id = 'test-app-id'
-    key = _module_name_key(app)
-    _record_ai_translation(app, key, 'module inscription')
+    _record_ai_translation(app, MODULE_NAME_KEY, 'register module', 'module inscription')
     app.get_module(0).name.update({'en': current_source, 'fra': current_target})
 
     changed = find_changed_ai_translations(AppTranslationFormat(app, 'fra'))
 
-    assert changed.manually_edited == ({key} if edited else set())
-    assert changed.stale == ({key} if stale else set())
+    assert changed.manually_edited == ({MODULE_NAME_KEY} if edited else set())
+    assert changed.stale == ({MODULE_NAME_KEY} if stale else set())
 
 
 @use('db')
 def test_find_changed_ai_translations_ignores_strings_gone_from_app():
     app = _make_app()
     app._id = 'test-app-id'
-    _record_ai_translation(app, '["deleted_module","name",1]', 'module inscription')
+    _record_ai_translation(
+        app, '["deleted_module","name",1]', 'register module', 'module inscription')
 
     assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == (
         ChangedAITranslations(manually_edited=set(), stale=set()))
@@ -180,7 +173,8 @@ def test_find_changed_ai_translations_ignores_other_languages():
     app = _make_app()
     app._id = 'test-app-id'
     app.langs = ['en', 'fra', 'hin']
-    _record_ai_translation(app, _module_name_key(app), 'module inscription', lang='hin')
+    _record_ai_translation(
+        app, MODULE_NAME_KEY, 'register module', 'module inscription', lang='hin')
     app.get_module(0).name['fra'] = 'module enregistrement'
 
     assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == (
