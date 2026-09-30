@@ -25,9 +25,9 @@ $(function () {
         debuggerEnabled: false,
     };
 
-    // land straight in the target form by reusing the get_endpoint deep link.
-    // Set before start() so it routes there rather than to the app list, and
-    // with replaceState so the respondent's Back does not leave the form
+    // Build a url using endpoint_id to navigate straight into the target form.
+    // Set before start() so it routes there first, and with replaceState so
+    // the browser's Back would not leave the form.
     const url = new Utils.CloudcareUrl({
         appId: initialPageData.get('app_build_id'),
         endpointId: initialPageData.get('endpoint_id'),
