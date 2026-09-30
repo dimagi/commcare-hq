@@ -214,6 +214,13 @@ class AppTranslationFormat(TranslationFormat):
     def load_input(self, input_source=None):
         self.units_by_id = {}
         self.units_by_sheet = {}
+        for index, unit in enumerate(self._iter_strings_to_translate()):
+            unit_id = str(index)
+            self.units_by_id[unit_id] = unit
+            self.units_by_sheet.setdefault(unit.sheet_name, []).append(unit_id)
+        return self.units_by_id
+
+    def _iter_strings_to_translate(self):
         for unit in self._iter_strings():
             if unit.string_key in self.manually_edited_keys:
                 continue
@@ -222,10 +229,7 @@ class AppTranslationFormat(TranslationFormat):
                 already_translated = False
             if self.mode == MODE_FILL_MISSING and already_translated:
                 continue
-            unit_id = str(len(self.units_by_id))
-            self.units_by_id[unit_id] = unit
-            self.units_by_sheet.setdefault(unit.sheet_name, []).append(unit_id)
-        return self.units_by_id
+            yield unit
 
     def all_app_strings(self):
         """Every string in the app by ``string_key``, whether or not it
