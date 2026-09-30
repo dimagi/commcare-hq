@@ -152,7 +152,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
 
     def set_repeater_attr(self, repeater, cleaned_data):
         assert repeater.repeater_id, repeater
-        repeater.domain = self.domain
+        assert repeater.domain
         repeater.connection_settings_id = int(cleaned_data['connection_settings_id'])
         repeater.request_method = cleaned_data['request_method']
         repeater.format = cleaned_data['format']
@@ -192,7 +192,7 @@ class AddRepeaterView(BaseRepeaterView):
         )
 
     def initialize_repeater(self):
-        return self.repeater_class()
+        return self.repeater_class(domain=self.domain)
 
     def post_save(self, request, repeater):
         messages.success(request, _("Forwarding set up to {}").format(repeater.name))
