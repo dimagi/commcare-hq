@@ -101,7 +101,11 @@ class ChangedAITranslations:
 
 
 def find_changed_ai_translations(fmt):
-    """A cleared value is neither, so fill_missing translates it again."""
+    """
+    Find translations a user has manually edited, and those whose
+    source text has since changed. A cleared translation is in neither
+    set, so fill_missing translates it again.
+    """
     changed = ChangedAITranslations(manually_edited=set(), stale=set())
     rows = list(
         _provenance_rows(fmt).values_list('string_key', 'source_value', 'translated_value'))
