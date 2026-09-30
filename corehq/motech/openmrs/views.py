@@ -2,7 +2,7 @@ import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -84,9 +84,11 @@ class OpenmrsModelListViewHelper(object):
     @property
     @memoized
     def repeater(self):
-        repeater = OpenmrsRepeater.objects.get(id=self.repeater_id)
-        assert repeater.domain == self.domain
-        return repeater
+        return get_object_or_404(
+            OpenmrsRepeater,
+            id=self.repeater_id,
+            domain=self.domain,
+        )
 
 
 def _filter_out_links(json):
@@ -116,8 +118,7 @@ def openmrs_person_attribute_types(request, domain, repeater_id):
 def openmrs_raw_api(request, domain, repeater_id, rest_uri):
     get_params = dict(request.GET)
     no_links = get_params.pop('links', None) is None
-    repeater = OpenmrsRepeater.objects.get(id=repeater_id)
-    assert repeater.domain == domain
+    repeater = get_object_or_404(OpenmrsRepeater, id=repeater_id, domain=domain)
     raw_json = repeater.requests.get('/ws/rest/v1' + rest_uri, get_params).json()
     if no_links:
         return JsonResponse(_filter_out_links(raw_json))
