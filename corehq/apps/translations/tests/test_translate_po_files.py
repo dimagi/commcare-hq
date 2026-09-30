@@ -303,6 +303,14 @@ class TestPoTranslationFormat:
         assert fuzzy_entry in result
         assert translated_entry not in result
 
+    def test_untranslated_messages_includes_control_chars(self):
+        po_format = PoTranslationFormat("test_file.po")
+        corrupted = polib.POEntry(msgid="Save \u2014 now", msgstr="Enregistrer \x14 maintenant")
+        clean = polib.POEntry(msgid="Save \u2014 now", msgstr="Enregistrer \u2014 maintenant")
+        po_format.all_message_objects = [corrupted, clean]
+
+        assert po_format.untranslated_messages == [corrupted]
+
     @use(po_dir)
     def test_untranslated_messages_plural(self):
         po_format = _po_format(SPANISH_PLURAL_PO)
@@ -552,6 +560,8 @@ msgstr[1] ""
         ("Hello &amp; World", "Hola et Mundo"),  # msgstr with HTML entity but msgid is not
         ("Hello ", "Hola "),  # msgstr preserves whitespace
         ("  Hello  ", "  Hola  "),  # msgstr preserves whitespace
+        ("Hello\tWorld", "Hola\tMundo"),  # tab is not a control character we reject
+        ("Save \u2014 now", "Guardar \u2014 ahora"),  # non-ASCII punctuation
     ])
     def test_is_valid_msgstr(self, msgid, msgstr):
         assert PoTranslationFormat.is_valid_msgstr(msgid, msgstr)
@@ -565,6 +575,8 @@ msgstr[1] ""
         ("<a>Hello</a>", "<b>Hola</b>"),  # Different tags
         ("<a>Hello</a>", "<a>Hola"),  # Missing tags
         ("<a>Hello</a>", "Hola"),  # Missing tags
+        ("Save \u2014 now", "Guardar \x14 ahora"),  # "\u2014" mangled to "\u0014"
+        ("U\u200bI translation", "Traduction U\x0bI"),  # "\u200b" mangled to "\u000b"
     ])
     def test_is_valid_msgstr_invalid(self, msgid, msgstr):
         assert not PoTranslationFormat.is_valid_msgstr(msgid, msgstr)
@@ -753,6 +765,34 @@ def test_remove_errored_translations_clears_plural_forms():
         assert all(v == "" for v in entry.msgstr_plural.values())
         # No compile errors remain
         assert not po_format._extract_errored_msgstr_ids(po_format._run_msgfmt(po_file_path))
+    finally:
+        os.remove(po_file_path)
+
+
+def test_check_and_remove_errored_messages_clears_control_chars():
+    po_content = (
+        'msgid ""\n'
+        'msgstr ""\n'
+        '"Content-Type: text/plain; charset=UTF-8\\n"\n\n'
+        'msgid "Save — now"\n'
+        'msgstr "Enregistrer \x14 maintenant"\n\n'
+        'msgid "Cancel — later"\n'
+        'msgstr "Annuler — plus tard"\n'
+    )
+    with tempfile.NamedTemporaryFile("w", suffix=".po", delete=False, encoding="utf-8") as tmp:
+        tmp.write(po_content)
+        po_file_path = tmp.name
+
+    try:
+        po_format = PoTranslationFormat(po_file_path)
+        # Sanity check: msgfmt alone doesn't catch the control character.
+        assert not po_format._extract_errored_msgstr_ids(po_format._run_msgfmt(po_file_path))
+
+        po_format.check_and_remove_errored_messages(po_file_path)
+
+        updated = polib.pofile(po_file_path)
+        assert updated.find("Save — now").msgstr == ""
+        assert updated.find("Cancel — later").msgstr == "Annuler — plus tard"
     finally:
         os.remove(po_file_path)
 

@@ -77,6 +77,16 @@ def counts_by_plural_index_from_header(plural_forms_header):
     return counts
 
 
+# C0 control characters other than tab, newline and carriage return, plus DEL.
+# The LLM sometimes turns escapes like "\u2014" into "\u0014", which msgfmt
+# accepts.
+CONTROL_CHARS_RE = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]')
+
+
+def has_control_chars(msgid, msgstr):
+    return bool(set(CONTROL_CHARS_RE.findall(msgstr)) - set(CONTROL_CHARS_RE.findall(msgid)))
+
+
 # msgfmt errors look like "<file>.po:<line>: <message>"
 MSGFMT_ERROR_RE = re.compile(r'^.+\.po:(\d+):\s*(.*)$')
 
@@ -117,7 +127,10 @@ class PoTranslationFormat(TranslationFormat):
 
     @property
     def untranslated_messages(self):
-        return [msg for msg in self.all_message_objects if msg.fuzzy or not self._is_translated(msg)]
+        return [
+            msg for msg in self.all_message_objects
+            if msg.fuzzy or not self._is_translated(msg) or has_control_chars(msg.msgid, msg.msgstr)
+        ]
 
     def _is_translated(self, msg):
         if msg.msgid_plural:
@@ -306,7 +319,12 @@ class PoTranslationFormat(TranslationFormat):
                 print_error(f"URLs mismatch. msgid: {msgid_urls}, msgstr: {msgstr_urls}")
                 return False
 
-        # 4. Encoding
+        # 4. Control characters
+        if has_control_chars(msgid, msgstr):
+            print_error(f"Control characters in msgstr: {CONTROL_CHARS_RE.findall(msgstr)}")
+            return False
+
+        # 5. Encoding
         try:
             msgstr.encode('utf-8')
         except UnicodeEncodeError as e:
@@ -362,6 +380,7 @@ class PoTranslationFormat(TranslationFormat):
         Checks PO files using gettext's msgfmt and removes translations that are problematic.
         These problematic translations are those that cause errors during compilemessages or runtime.
         """
+        self._remove_control_char_translations()
         error_output = self._run_msgfmt(lang_path)
         if not error_output:
             print(f"No errors found in the PO file - {lang_path}")
@@ -369,6 +388,23 @@ class PoTranslationFormat(TranslationFormat):
         line_num_error_map = self._extract_errored_msgstr_ids(error_output)
         if line_num_error_map:
             self._remove_errored_translations(line_num_error_map)
+
+    def _remove_control_char_translations(self):
+        """
+        Clears msgstrs containing control characters that are not in the msgid.
+        msgfmt accepts these, so they would otherwise ship whenever
+        re-translating them fails.
+        """
+        all_translations = polib.pofile(self.file_path)
+        count = 0
+        for entry in all_translations:
+            if has_control_chars(entry.msgid, entry.msgstr):
+                print(f"Removing translation with control characters for msgid: {entry.msgid}")
+                entry.msgstr = ""
+                count += 1
+        if count > 0:
+            all_translations.save()
+            print(f"Removed {count} translations with control characters")
 
     def _run_msgfmt(self, lang_path):
         """
