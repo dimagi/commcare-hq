@@ -2,6 +2,7 @@
 Renders LetterTemplate bodies against case properties and arranges the
 results into printable sections for the Letters report.
 """
+import html
 from collections import defaultdict, namedtuple
 
 from django.utils.translation import gettext as _
@@ -32,7 +33,7 @@ _TAGS = set(ALLOWED_HTML_TAGS) | {'style'}
 def _allow_attribute(tag, name, value):
     if tag == 'img' and name == 'src':
         return value.startswith(('data:image/', 'http://', 'https://'))
-    if name == 'href' and ''.join(value.split()).lower().startswith('data:'):
+    if name == 'href' and ''.join(html.unescape(value).split()).lower().startswith('data:'):
         return False  # 'data' is an allowed protocol (for img src), so gate it here
     allowed = list(ALLOWED_HTML_ATTRIBUTES.get(tag, [])) + list(ALLOWED_HTML_ATTRIBUTES.get('*', []))
     return name in allowed

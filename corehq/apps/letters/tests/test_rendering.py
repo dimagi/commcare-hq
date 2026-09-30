@@ -115,3 +115,14 @@ def test_build_sections_all_skipped_returns_no_sections():
     sections, skipped = build_sections([_case('a', tpl='9')], {}, 'tpl')
     assert sections == []
     assert len(skipped) == 1
+
+
+@pytest.mark.parametrize('href', [
+    '&#x64;ata:text/html,hi',
+    '&#100;ata:text/html,hi',
+    'DATA:text/html,hi',
+    '  data:text/html,hi',
+])
+def test_render_strips_obfuscated_data_href(href):
+    out = render_letter(f'<a href="{href}">x</a>', {})
+    assert 'href' not in out
