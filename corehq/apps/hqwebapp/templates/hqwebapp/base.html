@@ -83,6 +83,7 @@
 
       {% block content %}{% endblock content %}
       {% if CHATBOT_ID and CHATBOT_TOKEN and request|feature_preview_enabled:"OCS_CHATBOT" and request.couch_user|has_chatbot_allowance %}
+        {% registerurl 'chat_quota' %}
         <div class="ocs-widget-container">
           <open-chat-studio-widget
             visible="false"
