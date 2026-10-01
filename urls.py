@@ -69,6 +69,7 @@ domain_specific = [
     url(r'^email/', include('corehq.apps.email.urls')),
     url(r'^reminders/', include('corehq.apps.reminders.urls')),
     url(r'^reports/', include('corehq.apps.reports.urls')),
+    url(r'^messaging/letters/', include('corehq.apps.letters.urls')),
     url(r'^messaging/', include('corehq.messaging.scheduling.urls')),
     url(r'^data/', include('corehq.apps.data_interfaces.urls')),
     url(r'^data_dictionary/', include('corehq.apps.data_dictionary.urls')),

@@ -1417,6 +1417,21 @@ class MessagingTab(UITab):
                 },
             ])
 
+        if self.can_use_outbound_sms and toggles.LETTER_TEMPLATES.enabled(self.domain):
+            from corehq.apps.letters.views import (
+                LetterTemplateCreateView,
+                LetterTemplateEditView,
+                LetterTemplateListView,
+            )
+            messages_urls.append({
+                'title': _("Letter Templates"),
+                'url': reverse(LetterTemplateListView.urlname, args=[self.domain]),
+                'subpages': [
+                    {'title': _("New"), 'urlname': LetterTemplateCreateView.urlname},
+                    {'title': _("Edit"), 'urlname': LetterTemplateEditView.urlname},
+                ],
+            })
+
         return messages_urls
 
     @property
