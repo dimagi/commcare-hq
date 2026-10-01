@@ -21,27 +21,7 @@
 {% endblock %}
 
 {% block stylesheets %}
-  {% compress css %}
-    <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}" />
-    <link
-      rel="stylesheet"
-      href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}"
-    />
-  {% endcompress %}
-  {% compress css %}
-    <link
-      type="text/scss"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'cloudcare/scss/formplayer-common.scss' %}"
-    />
-    <link
-      type="text/scss"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'cloudcare/scss/formplayer-webapp.scss' %}"
-    />
-  {% endcompress %}
+  {% include 'cloudcare/partials/web_apps_stylesheets.html' %}
 {% endblock %}
 {% js_entry "cloudcare/js/formplayer/main" %}
 
