@@ -1,14 +1,17 @@
 import datetime
 import json
+import pytest
 import os
 from io import BytesIO
 from unittest.mock import patch
+from urllib.parse import urlencode
 
 from django.http import HttpResponse
 from django.test import TestCase
 from django.urls import reverse
 
 from botocore.response import StreamingBody
+from couchdbkit.exceptions import ResourceNotFound
 
 from corehq import privileges
 from corehq.apps.domain.models import Domain
@@ -509,3 +512,78 @@ class ExportSchemaAndMultimediaCrossDomainTest(ViewTestCase):
             'download-det-schema', args=[self.domain.name, self.other_export._id]))
         assert other.status_code == 404
         assert render_det.call_count == 1  # still at 1
+
+
+class ExportEditDeleteCopyCrossDomainTest(ViewTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.export = FormExportInstance(domain=self.domain.name, name='mine')
+        self.export.save()
+        self.other_export = FormExportInstance(domain='other-domain', name='theirs')
+        self.other_export.save()
+
+    def tearDown(self):
+        delete_all_export_instances()
+        super().tearDown()
+
+    def _delete(self, export_id, post=None):
+        return self.client.post(
+            reverse('delete_new_custom_export', args=[self.domain.name, 'form', export_id]),
+            urlencode(post or {}),
+            content_type='application/x-www-form-urlencoded'
+        )
+
+    def test_delete_url_export(self):
+        assert self._delete(self.export._id).status_code == 302
+        with pytest.raises(ResourceNotFound):
+            FormExportInstance.get(self.export._id)
+        assert self._delete(self.other_export._id).status_code == 404
+        assert FormExportInstance.get(self.other_export._id) is not None
+
+    def test_delete_list_export(self):
+        response = self._delete(self.export._id, post={
+            'count': '2',
+            'deleteList': json.dumps([{'id': self.other_export._id}]),
+        })
+        assert response.status_code == 404
+        assert FormExportInstance.get(self.export._id) is not None
+        assert FormExportInstance.get(self.other_export._id) is not None
+
+        tmp_export = FormExportInstance(domain=self.domain.name, name='my-tmp-export')
+        tmp_export.save()
+        response = self._delete(self.export._id, post={
+            'count': '2',
+            'deleteList': json.dumps([{'id': tmp_export._id}]),
+        })
+        assert response.status_code == 200
+        with pytest.raises(ResourceNotFound):
+            FormExportInstance.get(self.export._id)
+        with pytest.raises(ResourceNotFound):
+            FormExportInstance.get(tmp_export._id)
+
+    def test_copy_export(self):
+        def _copy(export_id):
+            return self.client.get(
+                reverse('copy_export', args=[self.domain.name, export_id]),
+                follow=False,
+            )
+        before = len(get_form_exports_by_domain(self.domain.name))
+        assert _copy(self.export._id).status_code == 302
+        assert len(get_form_exports_by_domain(self.domain.name)) == before + 1
+
+        assert _copy(self.other_export._id).status_code == 404
+
+
+    def test_edit_export_name(self):
+        def _edit_name(export_id, value):
+            return self.client.post(
+                reverse('edit_export_name', args=[self.domain.name, export_id]),
+                urlencode({'value': value}),
+                content_type='application/x-www-form-urlencoded',
+            )
+        assert _edit_name(self.export._id, 'renamed').status_code == 200
+        assert FormExportInstance.get(self.export._id).name == 'renamed'
+
+        assert _edit_name(self.other_export._id, 'hacked').status_code == 404
+        assert FormExportInstance.get(self.other_export._id).name == 'theirs'

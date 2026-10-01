@@ -13,7 +13,8 @@ from corehq.apps.export.const import (
     FORM_EXPORT,
     ALL_CASE_TYPE_EXPORT,
 )
-from corehq.apps.export.models import ExportInstance, CaseExportInstance
+from corehq.apps.export.dbaccessors import get_export_instance_or_404
+from corehq.apps.export.models import CaseExportInstance
 from corehq.apps.export.views.new import BaseExportView
 from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
@@ -34,7 +35,7 @@ class BaseEditNewCustomExportView(BaseExportView):
     @property
     @memoized
     def new_export_instance(self):
-        return self.export_instance_cls.get(self.export_id)
+        return get_export_instance_or_404(self.domain, self.export_id)
 
     def get_export_instance(self, schema, original_export_instance):
         load_deprecated = self.request.GET.get('load_deprecated', 'False') == 'True'
@@ -160,7 +161,7 @@ class EditExportAttrView(BaseEditNewCustomExportView):
     @property
     @memoized
     def export_type(self):
-        return ExportInstance.get(self.export_id).type
+        return get_export_instance_or_404(self.domain, self.export_id).type
 
     def get(self, request, *args, **kwargs):
         raise Http404
