@@ -8,6 +8,7 @@ from corehq.apps.letters.rendering import (
     LetterRenderError,
     build_sections,
     render_letter,
+    render_preview,
     validate_template,
 )
 
@@ -225,3 +226,21 @@ def test_render_keeps_common_letter_markup(body, kept):
     out = render_letter(body, {})
     for fragment in kept:
         assert fragment in out
+
+
+@pytest.mark.parametrize('body, expected', [
+    ('<p>Dear {{ case_name }}</p>', '<p>Dear </p>'),
+    ('{{ owner.address }}|{{ species|upper }}', '|'),
+    ('{% if species %}yes{% else %}no{% endif %}', 'no'),
+])
+def test_render_preview_uses_empty_strings(body, expected):
+    assert render_preview(body) == expected
+
+
+def test_render_preview_is_sanitized():
+    assert '<script' not in render_preview('<script>alert(1)</script><p>x</p>')
+
+
+def test_render_preview_syntax_error_raises():
+    with pytest.raises(LetterRenderError):
+        render_preview('{% if %}')

@@ -77,6 +77,32 @@ class TestLetterTemplateViews(TestCase):
         assert 'Listed' in content
         assert f'<td>{tpl.pk}</td>' in content
 
+    def test_edit_page_has_preview_button(self):
+        self._login(self.editor)
+        resp = self.client.get(reverse('letter_template_create', args=[DOMAIN]))
+        preview_url = reverse('letter_template_preview', args=[DOMAIN])
+        assert f'formaction="{preview_url}"' in resp.content.decode()
+
+    def test_preview_renders_posted_body(self):
+        self._login(self.editor)
+        resp = self.client.post(reverse('letter_template_preview', args=[DOMAIN]),
+                                {'body': '<p>Dear {{ case_name }}!</p><script>x</script>'})
+        assert resp.status_code == 200
+        content = resp.content.decode()
+        assert '<p>Dear !</p>' in content
+        assert '<script>x' not in content
+
+    def test_preview_shows_template_error(self):
+        self._login(self.editor)
+        resp = self.client.post(reverse('letter_template_preview', args=[DOMAIN]), {'body': '{% if %}'})
+        assert resp.status_code == 200
+        assert 'could not be rendered' in resp.content.decode()
+
+    def test_preview_requires_messaging_permission(self):
+        self._login(self.viewer)
+        resp = self.client.post(reverse('letter_template_preview', args=[DOMAIN]), {'body': 'x'})
+        assert resp.status_code in (302, 403)
+
     def test_create_page_help_text_does_not_open_style_tag(self):
         # crispy renders help text unescaped; a literal <style> would swallow the Save button
         self._login(self.editor)

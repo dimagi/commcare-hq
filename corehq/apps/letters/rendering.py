@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy
 
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
-from jinja2 import StrictUndefined, TemplateError
+from jinja2 import ChainableUndefined, StrictUndefined, TemplateError
 from jinja2.sandbox import SandboxedEnvironment
 
 from corehq.messaging.scheduling.const import (
@@ -27,6 +27,7 @@ Section = namedtuple('Section', 'title letters')
 Skipped = namedtuple('Skipped', 'case_id case_name reason')
 
 _env = SandboxedEnvironment(autoescape=True, undefined=StrictUndefined)
+_preview_env = SandboxedEnvironment(autoescape=True, undefined=ChainableUndefined)
 _css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_CSS_PROPERTIES)
 _TAGS = set(ALLOWED_HTML_TAGS) | {'style', 'th', 'thead', 'tfoot', 'hr', 'col', 'colgroup', 'caption'}
 # Letters-specific additions to the shared (email) allowlist; the imported constants are not mutated
@@ -84,8 +85,17 @@ def validate_template(body):
 
 
 def render_letter(body, context):
+    return _render(_env, body, context)
+
+
+def render_preview(body):
+    """Renders with every property as "" so a template can be checked without a case."""
+    return _render(_preview_env, body, {})
+
+
+def _render(env, body, context):
     try:
-        html = _env.from_string(body).render(context)
+        html = env.from_string(body).render(context)
     except TemplateError as e:
         raise LetterRenderError(str(e))
     except Exception as e:  # user-authored template: any runtime error skips just this case

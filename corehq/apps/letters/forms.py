@@ -2,6 +2,7 @@ from django import forms
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
+from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from jinja2 import TemplateSyntaxError
 
@@ -23,13 +24,23 @@ class LetterTemplateForm(forms.ModelForm):
                                  'url() and @import are removed.'),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, preview_url, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             'name',
             'body',
-            hqcrispy.FormActions(crispy.Submit('submit', _('Save'))),
+            hqcrispy.FormActions(
+                crispy.Submit('submit', _('Save')),
+                twbscrispy.StrictButton(
+                    _('Preview'),
+                    type='submit',
+                    css_class='btn btn-outline-primary',
+                    formaction=preview_url,
+                    formtarget='_blank',
+                    formnovalidate='formnovalidate',
+                ),
+            ),
         )
 
     def clean_body(self):

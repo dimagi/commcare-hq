@@ -1,0 +1,15 @@
+{% load i18n %}
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>{% trans "Letter preview" %}</title>
+  </head>
+  <body>
+    {% if error %}
+      <p>{% trans "This template could not be rendered:" %} {{ error }}</p>
+    {% else %}
+      <div class="letter">{{ letter|safe }}</div>
+    {% endif %}
+  </body>
+</html>

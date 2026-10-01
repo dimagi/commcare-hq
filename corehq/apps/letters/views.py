@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -11,6 +11,7 @@ from corehq import toggles
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.letters.forms import LetterTemplateForm
 from corehq.apps.letters.models import LetterTemplate
+from corehq.apps.letters.rendering import LetterRenderError, render_preview
 from corehq.apps.sms.views import BaseMessagingSectionView
 
 
@@ -50,7 +51,11 @@ class LetterTemplateEditView(BaseMessagingSectionView):
 
     @cached_property
     def form(self):
-        return LetterTemplateForm(self.request.POST or None, instance=self.instance)
+        return LetterTemplateForm(
+            self.request.POST or None,
+            instance=self.instance,
+            preview_url=reverse(LetterTemplatePreviewView.urlname, args=[self.domain]),
+        )
 
     @property
     def page_context(self):
@@ -88,3 +93,16 @@ class LetterTemplateDeleteView(BaseMessagingSectionView):
         get_object_or_404(LetterTemplate, domain=self.domain, pk=kwargs['template_id']).delete()
         messages.success(request, _('Letter template deleted.'))
         return HttpResponseRedirect(reverse(LetterTemplateListView.urlname, args=[self.domain]))
+
+
+@method_decorator(toggles.LETTER_TEMPLATES.required_decorator(), name='dispatch')
+class LetterTemplatePreviewView(BaseMessagingSectionView):
+    urlname = 'letter_template_preview'
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        try:
+            context = {'letter': render_preview(request.POST.get('body', ''))}
+        except LetterRenderError as e:
+            context = {'error': str(e)}
+        return render(request, 'letters/preview.html', context)
