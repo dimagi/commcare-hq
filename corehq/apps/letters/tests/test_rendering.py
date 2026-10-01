@@ -13,7 +13,7 @@ from corehq.apps.letters.rendering import (
 
 
 def _case(case_id, name='n', **props):
-    return SimpleNamespace(case_id=case_id, name=name, case_json=props)
+    return SimpleNamespace(case_id=case_id, name=name, external_id=None, owner_id='o1', case_json=props)
 
 
 def test_render_substitutes_properties():
@@ -126,3 +126,31 @@ def test_build_sections_all_skipped_returns_no_sections():
 def test_render_strips_obfuscated_data_href(href):
     out = render_letter(f'<a href="{href}">x</a>', {})
     assert 'href' not in out
+
+
+def test_build_sections_sort_by_name_column():
+    cases = [_case('a', 'Zed', tpl='1'), _case('b', 'Amy', tpl='1')]
+    sections, _ = build_sections(cases, {'1': '{{ name }}'}, 'tpl', sort_by='owner_id')
+    assert sections[0].letters == ['Amy', 'Zed']  # equal keys tie-break on case name
+    sections, _ = build_sections(cases, {'1': '{{ name }}'}, 'tpl', sort_by='name')
+    assert sections[0].letters == ['Amy', 'Zed']
+
+
+def test_build_sections_group_by_name_column():
+    cases = [_case('a', 'Zed', tpl='1'), _case('b', 'Amy', tpl='1')]
+    sections, _ = build_sections(cases, {'1': 'x'}, 'tpl', group_by='name')
+    assert [s.title for s in sections] == ['Amy', 'Zed']
+
+
+def test_build_sections_template_id_from_column():
+    case = _case('a', 'Ana')
+    case.owner_id = '1'
+    sections, skipped = build_sections([case], {'1': '{{ name }}-{{ owner_id }}'}, 'owner_id')
+    assert skipped == []
+    assert sections[0].letters == ['Ana-1']
+
+
+def test_build_sections_sort_ties_break_by_name():
+    cases = [_case('a', 'Zed', tpl='1', rank='1'), _case('b', 'Amy', tpl='1', rank='1')]
+    sections, _ = build_sections(cases, {'1': '{{ case_name }}'}, 'tpl', sort_by='rank')
+    assert sections[0].letters == ['Amy', 'Zed']

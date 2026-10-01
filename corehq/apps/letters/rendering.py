@@ -65,26 +65,35 @@ def render_letter(body, context):
 
 
 def case_context(case):
-    return {**case.case_json, 'case_name': case.name, 'case_id': case.case_id}
+    return {
+        **case.case_json,
+        'case_name': case.name,
+        'case_id': case.case_id,
+        'name': case.name,
+        'external_id': case.external_id,
+        'owner_id': case.owner_id,
+    }
 
 
 def build_sections(cases, templates, template_prop, group_by=None, sort_by=None):
     def sort_key(case):
-        return case.case_json.get(sort_by) or '' if sort_by else case.name or ''
+        value = case_context(case).get(sort_by) if sort_by else None
+        return (value or '', case.name or '')
 
     grouped = defaultdict(list)
     skipped = []
     for case in sorted(cases, key=sort_key):
-        body = templates.get(case.case_json.get(template_prop) or '')
+        context = case_context(case)
+        body = templates.get(context.get(template_prop) or '')
         if body is None:
             skipped.append(Skipped(case.case_id, case.name, _('No valid letter template')))
             continue
         try:
-            letter = render_letter(body, case_context(case))
+            letter = render_letter(body, context)
         except LetterRenderError as e:
             skipped.append(Skipped(case.case_id, case.name, str(e)))
             continue
-        key = (case.case_json.get(group_by) or _UNGROUPED_KEY) if group_by else None
+        key = (context.get(group_by) or _UNGROUPED_KEY) if group_by else None
         grouped[key].append(letter)
 
     ungrouped = grouped.pop(_UNGROUPED_KEY, None)

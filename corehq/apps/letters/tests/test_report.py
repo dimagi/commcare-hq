@@ -25,7 +25,7 @@ class TestLetterReport(TestCase):
         cls.user = WebUser(username='t@x.com', domains=[DOMAIN])
         cls.user.domain_memberships = [DomainMembership(domain=DOMAIN, role_id='admin')]
         client_type = CaseType.objects.create(domain=DOMAIN, name='client')
-        for prop in ('tpl', 'district'):
+        for prop in ('tpl', 'district', 'name', 'parent/x'):
             CaseProperty.objects.create(case_type=client_type, name=prop)
         # Data dictionary properties are only read when the domain has the privilege
         privilege_patch = patch(
@@ -75,3 +75,14 @@ class TestLetterReport(TestCase):
         with patch.object(letter_reports, 'MAX_LETTERS', 1):
             ctx = self._context(case_type='client', template_property='tpl')
         assert ctx == {'too_many': 1}
+
+    def test_property_filter_options_exclude_parent_props(self):
+        from corehq.apps.letters.filters import SortByFilter
+        request = RequestFactory().get('/', {'case_type': 'client'})
+        options = [value for value, _ in SortByFilter(request, DOMAIN).options]
+        assert 'name' in options
+        assert 'parent/x' not in options
+
+    def test_sort_by_name_property(self):
+        ctx = self._context(case_type='client', template_property='tpl', sort_by='name')
+        assert ctx['sections'][0].letters == ['<p>Dear Ana</p>']

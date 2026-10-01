@@ -21,7 +21,8 @@ class CasePropertyFilter(BaseSingleOptionFilter):
         case_type = self.request.GET.get('case_type')
         if not case_type:
             return []
-        return [(p, p) for p in get_all_case_properties_for_case_type(self.domain, case_type)]
+        props = get_all_case_properties_for_case_type(self.domain, case_type)
+        return [(p, p) for p in props if '/' not in p]  # parent/* props aren't resolvable
 
 
 class TemplatePropertyFilter(CasePropertyFilter):
