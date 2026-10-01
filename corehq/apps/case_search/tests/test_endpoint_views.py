@@ -184,8 +184,9 @@ class TestCaseSearchEndpointsListView(EndpointViewTestCase):
         response = self.client.get(self._list_url())
         assert ep not in response.context['endpoints']
 
+    @flag_enabled('PROJECT_DB')
     def test_linked_endpoint_has_no_edit_button(self):
-        ep = self._make_endpoint()
+        ep = self._make_endpoint(target_type=CaseSearchEndpoint.TargetType.PROJECT_DB)
         ep.upstream_id = 1
         ep.save(update_fields=['upstream_id'])
 
