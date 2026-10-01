@@ -3,15 +3,20 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.test.client import RequestFactory
 
-from corehq.apps.app_manager.app_schemas.case_properties import all_case_properties_by_domain
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    all_case_properties_by_domain,
+)
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.letters import reports as letter_reports
 from corehq.apps.letters.models import LetterTemplate
 from corehq.apps.letters.reports import LetterReport
 from corehq.apps.users.models import DomainMembership, WebUser
 from corehq.form_processor.tests.utils import create_case
+from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'letters-report'
 
@@ -86,3 +91,39 @@ class TestLetterReport(TestCase):
     def test_sort_by_name_property(self):
         ctx = self._context(case_type='client', template_property='tpl', sort_by='name')
         assert ctx['sections'][0].letters == ['<p>Dear Ana</p>']
+
+
+@es_test(requires=[case_adapter, user_adapter], setup_class=True)
+@flag_enabled('LETTER_TEMPLATES')
+class TestLetterReportView(TestCase):
+    domain = 'letters-report-http'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.user = WebUser.create(cls.domain, 'admin@letters-http.com', 'pw', None, None, is_admin=True)
+        cls.addClassCleanup(cls.user.delete, cls.domain, deleted_by=None)
+        user_adapter.index(cls.user, refresh=True)
+        CaseProperty.objects.create(
+            case_type=CaseType.objects.create(domain=cls.domain, name='client'), name='tpl')
+        privilege_patch = patch(
+            'corehq.apps.app_manager.app_schemas.case_properties.domain_has_privilege',
+            return_value=True,
+        )
+        privilege_patch.start()
+        cls.addClassCleanup(privilege_patch.stop)
+        all_case_properties_by_domain.clear(cls.domain, True, True)
+        cls.addClassCleanup(all_case_properties_by_domain.clear, cls.domain, True, True)
+        tpl = LetterTemplate.objects.create(domain=cls.domain, name='t', body='<p>Dear {{ case_name }}</p>')
+        case = create_case(cls.domain, case_type='client', name='Ana', save=True,
+                           case_json={'tpl': str(tpl.pk)})
+        case_adapter.index(case, refresh=True)
+
+    def test_async_report_renders_letters(self):
+        self.client.login(username=self.user.username, password='pw')
+        url = LetterReport.get_url(self.domain, render_as='async')
+        response = self.client.get(url, {'case_type': 'client', 'template_property': 'tpl'})
+        assert response.status_code == 200
+        assert 'Dear Ana' in response.json()['report']

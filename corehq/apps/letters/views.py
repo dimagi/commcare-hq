@@ -23,7 +23,7 @@ class LetterTemplateListView(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        return {'letter_templates': LetterTemplate.objects.filter(domain=self.domain)}
+        return {'letter_templates': LetterTemplate.objects.filter(domain=self.domain).defer('body')}
 
 
 @method_decorator(toggles.LETTER_TEMPLATES.required_decorator(), name='dispatch')
