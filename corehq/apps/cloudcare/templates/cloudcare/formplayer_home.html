@@ -12,12 +12,7 @@
 
 {% block head %}
   {{ block.super }}
-  <style id="persistent-cell-layout-style"></style>
-  <style id="persistent-cell-grid-style"></style>
-  <style id="list-cell-layout-style"></style>
-  <style id="list-cell-grid-style"></style>
-  <style id="list-cell-wrapper-style"></style>
-  <style id="list-cell-container-style"></style>
+  {% include 'cloudcare/partials/web_apps_head_styles.html' %}
 {% endblock %}
 
 {% block stylesheets %}
