@@ -28,7 +28,15 @@ Skipped = namedtuple('Skipped', 'case_id case_name reason')
 
 _env = SandboxedEnvironment(autoescape=True, undefined=StrictUndefined)
 _css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_CSS_PROPERTIES)
-_TAGS = set(ALLOWED_HTML_TAGS) | {'style'}
+_TAGS = set(ALLOWED_HTML_TAGS) | {'style', 'th', 'thead', 'tfoot', 'hr', 'col', 'colgroup', 'caption'}
+# Letters-specific additions to the shared (email) allowlist; the imported constants are not mutated
+_EXTRA_ATTRIBUTES = {
+    'td': ['colspan', 'rowspan', 'width', 'style'],
+    'th': ['colspan', 'rowspan', 'width', 'style', 'valign'],
+    'col': ['width'],
+    'img': ['alt'],
+    'table': ['width', 'border', 'cellpadding', 'cellspacing'],
+}
 
 
 def _allow_attribute(tag, name, value):
@@ -40,7 +48,11 @@ def _allow_attribute(tag, name, value):
         css = html.unescape(value)
         if '\\' in css or _CSS_FETCH_RE.search(css):
             return False  # e.g. cursor: url(http://...) would make viewers' browsers fetch it
-    allowed = list(ALLOWED_HTML_ATTRIBUTES.get(tag, [])) + list(ALLOWED_HTML_ATTRIBUTES.get('*', []))
+    allowed = (
+        ALLOWED_HTML_ATTRIBUTES.get(tag, [])
+        + ALLOWED_HTML_ATTRIBUTES.get('*', [])
+        + _EXTRA_ATTRIBUTES.get(tag, [])
+    )
     return name in allowed
 
 

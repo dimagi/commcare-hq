@@ -208,3 +208,20 @@ def test_render_drops_style_attribute_with_external_url(style):
 
 def test_render_keeps_plain_style_attribute():
     assert 'color: red' in render_letter('<p style="color: red">x</p>', {})
+
+
+@pytest.mark.parametrize('body, kept', [
+    ('<table><thead><tr><th colspan="2" style="color: red">h</th></tr></thead>'
+     '<tbody><tr><td rowspan="2" width="10" style="color: red">x</td></tr></tbody>'
+     '<tfoot><tr><td>f</td></tr></tfoot></table>',
+     ['<thead>', '<th colspan="2" style="color: red;">', '<tfoot>', 'rowspan="2"', 'width="10"']),
+    ('<hr>', ['<hr>']),
+    ('<table border="1"><caption>c</caption><colgroup><col width="5"></colgroup></table>',
+     ['<caption>', '<colgroup>', '<col width="5">', 'border="1"']),
+    ('<img src="data:image/png;base64,AAAA" alt="logo" width="10" height="10">',
+     ['alt="logo"', 'width="10"', 'height="10"']),
+])
+def test_render_keeps_common_letter_markup(body, kept):
+    out = render_letter(body, {})
+    for fragment in kept:
+        assert fragment in out
